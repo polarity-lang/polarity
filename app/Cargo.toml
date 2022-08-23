@@ -1,0 +1,13 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# cli
+clap = { version = "3", features = ["derive"] }
+reedline = "0.10"
+# workspace members
+core = { path = "../core" }
+syntax = { path = "../syntax" }
+parser = { path = "../parser" }

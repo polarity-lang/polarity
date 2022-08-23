@@ -1,0 +1,13 @@
+[package]
+name = "syntax"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# serde
+serde = { version = "1", features = ["rc"], optional = true }
+serde_derive = { version = "1", optional = true }
+
+[features]
+default = ["use-serde"]
+use-serde = ["serde", "serde_derive"]

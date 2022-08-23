@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "syntax",
+    "parser",
+    "core",
+    "app",
+]

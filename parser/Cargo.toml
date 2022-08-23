@@ -1,0 +1,14 @@
+[package]
+name = "parser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lalrpop = "0.19"
+lalrpop-util = "0.19"
+# workspace members
+syntax = { path = "../syntax" }
+
+[build-dependencies.lalrpop]
+version = "0.19"
+features = ["lexer"]
