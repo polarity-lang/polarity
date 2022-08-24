@@ -1,0 +1,111 @@
+use std::rc::Rc;
+
+use syntax::cst::*;
+
+#[LALR]
+grammar;
+
+// Tokens
+match {
+    // Symbols
+    "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".",
+    // Names
+    r"[a-zA-Z_][a-zA-Z0-9_]*[']*",
+    // Keywords
+    "def", "codef", "data", "codata",
+    "match", "comatch",
+    "Type",
+    // Comments and whitespace
+    r"\s*" => { }, // Skip whitespace
+    r"--[^\n\r]*[\n\r]*" => { }, // Skip `--` comments
+}
+
+// Utils
+// Based in part on Gluons grammar (https://github.com/gluon-lang/gluon/blob/fac08dcff7a019440dd8d0a886abdb18baa58198/parser/src/grammar.lalrpop)
+
+Comma<Rule>: Vec<Rule> =
+    <rules: (<Rule> ",")*> <last: Rule?> => {
+        let mut rules = rules;
+        rules.extend(last);
+        rules
+    };
+
+Parens<Rule>: Rule =
+    "(" <rule: Rule> ")" => rule;
+
+Args<Rule>: Vec<Rule> = Parens<Comma<Rule>>;
+
+OptArgs<Rule>: Vec<Rule> = <args: Parens<Comma<Rule>>?> => args.unwrap_or_default();
+
+Param: Param = <name: Ident> ":" <typ: Exp> => Param { name, typ } ;
+
+OptParams: Vec<Param> = OptArgs<Param>;
+Params: Vec<Param> = Args<Param>;
+
+OptSubst: Vec<Rc<Exp>> = OptArgs<Exp>;
+Subst: Vec<Rc<Exp>> = Args<Exp>;
+
+// Program
+
+pub Prg: Prg = {
+    <decls: (<Decl> ";")*> <exp: Exp?> => Prg { decls, exp },
+}
+
+pub Decl: Decl = {
+    "data" <name: Ident> <params: OptParams> ":" "Type" ":=" <ctors: Comma<Ctor>> => Decl::Data(Data { name, params, ctors }),
+    "codata" <name: Ident> <params: OptParams> ":" "Type" ":=" <ctors: Comma<Dtor>> => Decl::Codata(Codata { name, params, ctors }),
+    "def" <on_typ: TypApp> "." <name: Ident> <params: Params> ":" <in_typ: Exp> ":=" <body: Match> => Decl::Cns(Cns { name, params, on_typ, in_typ, body }),
+    "codef" <name: Ident> <params: Params> ":" <typ: TypApp> ":=" <body: Comatch> => Decl::Prd(Prd { name, params, typ, body }),
+}
+
+Ctor: Ctor = {
+    <name: Ident> <params: OptParams> ":" <typ: TypApp> => Ctor { name, params, typ },
+}
+
+Dtor: Dtor = {
+    <on_typ: TypApp> "." <name: Ident> <params: OptParams> ":" <in_typ: Exp> => Dtor { name, params, on_typ, in_typ },
+}
+
+pub Comatch : Comatch = {
+    "comatch" <cases: Comma<Case>> => Comatch { cases },
+}
+
+pub Match : Match = {
+    "match" <cases: Comma<Case>> => Match { cases },
+}
+
+pub Case : Case = {
+    <name: Ident> <args: OptParams> "=>" <body: Exp> => Case { name, args, body },
+}
+
+pub TypApp: TypApp = {
+    <name: Ident> <subst: OptSubst> => TypApp { name, subst },
+}
+
+pub Exp: Rc<Exp> = {
+    <exp: Ops> ":" <typ: Exp> => Rc::new(Exp::Ano { exp, typ }),
+    Ops,
+}
+
+pub Ops = {
+    <exp: Ops> "." <name: Ident> <subst: Subst> => Rc::new(Exp::Dtor { exp, name, subst }),
+    App,
+}
+
+pub App = {
+    <name: Ident> <subst: Subst> => Rc::new(Exp::Ctor { name, subst }),
+    Builtins,
+}
+
+pub Builtins: Rc<Exp> = {
+    "Type" => Rc::new(Exp::Type),
+    Atom,
+}
+
+pub Atom: Rc<Exp> = {
+    "{" <exp: Exp> "}" => exp,
+    <name: Ident> => Rc::new(Exp::Var { name }),
+}
+
+// Names
+Ident: String = <s:r"[a-zA-Z_][a-zA-Z0-9_]*[']*"> => s.to_owned();
