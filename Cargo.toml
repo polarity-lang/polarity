@@ -3,6 +3,7 @@
 members = [
     "syntax",
     "parser",
+    "lowering",
     "core",
     "app",
 ]

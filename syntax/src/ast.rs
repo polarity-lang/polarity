@@ -1,11 +1,27 @@
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use super::common::*;
+use super::var::*;
 
 #[derive(Debug, Clone)]
 pub struct Prg {
-    pub decls: Vec<Decl>,
+    pub decls: Decls,
     pub exp: Option<Rc<Exp>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Decls {
+    /// Map from identifiers to declarations
+    pub map: HashMap<Ident, Decl>,
+    /// Order in which declarations are defined in the source
+    pub order: Vec<Ident>,
+}
+
+impl Decls {
+    pub fn empty() -> Self {
+        Self { map: HashMap::new(), order: Vec::new() }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -98,7 +114,7 @@ pub struct TypApp {
 
 #[derive(Debug, Clone)]
 pub enum Exp {
-    Var { name: Ident },
+    Var { var: Var },
     Ctor { name: Ident, subst: Subst },
     Dtor { exp: Rc<Exp>, name: Ident, subst: Subst },
     Ano { exp: Rc<Exp>, typ: Rc<Exp> },
@@ -107,7 +123,7 @@ pub enum Exp {
 
 /// Wrapper type signifying the wrapped parameters have telescope
 /// semantics. I.e. each parameter binding in the parameter list is in scope
-/// for the following parameters. This influences the lowering semantic.
+/// for the following parameters.
 #[derive(Debug, Clone)]
 pub struct Telescope(pub Params);
 

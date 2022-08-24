@@ -5,6 +5,7 @@ use std::io;
 pub enum Error {
     IO(io::Error),
     Parser(parser::ParseError<usize, parser::common::OwnedToken, &'static str>),
+    Lowering(lowering::LoweringError),
 }
 
 pub trait HandleErrorExt<T> {
@@ -24,5 +25,6 @@ fn pretty_print(err: Error) {
     match err {
         Error::IO(err) => println!("IO error: {}", err),
         Error::Parser(err) => println!("Parse error: {}", err),
+        Error::Lowering(err) => println!("Lowering error: {}", err),
     }
 }

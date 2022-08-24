@@ -42,6 +42,9 @@ Param: Param = <name: Ident> ":" <typ: Exp> => Param { name, typ } ;
 OptParams: Vec<Param> = OptArgs<Param>;
 Params: Vec<Param> = Args<Param>;
 
+OptTelescope: Telescope = <params: OptParams> => Telescope(params);
+Telescope: Telescope = <params: Params> => Telescope(params);
+
 OptSubst: Vec<Rc<Exp>> = OptArgs<Exp>;
 Subst: Vec<Rc<Exp>> = Args<Exp>;
 
@@ -52,18 +55,18 @@ pub Prg: Prg = {
 }
 
 pub Decl: Decl = {
-    "data" <name: Ident> <params: OptParams> ":" "Type" ":=" <ctors: Comma<Ctor>> => Decl::Data(Data { name, params, ctors }),
-    "codata" <name: Ident> <params: OptParams> ":" "Type" ":=" <ctors: Comma<Dtor>> => Decl::Codata(Codata { name, params, ctors }),
-    "def" <on_typ: TypApp> "." <name: Ident> <params: Params> ":" <in_typ: Exp> ":=" <body: Match> => Decl::Cns(Cns { name, params, on_typ, in_typ, body }),
-    "codef" <name: Ident> <params: Params> ":" <typ: TypApp> ":=" <body: Comatch> => Decl::Prd(Prd { name, params, typ, body }),
+    "data" <name: Ident> <params: OptTelescope> ":" "Type" ":=" <ctors: Comma<Ctor>> => Decl::Data(Data { name, params, ctors }),
+    "codata" <name: Ident> <params: OptTelescope> ":" "Type" ":=" <ctors: Comma<Dtor>> => Decl::Codata(Codata { name, params, ctors }),
+    "def" <on_typ: TypApp> "." <name: Ident> <params: Telescope> ":" <in_typ: Exp> ":=" <body: Match> => Decl::Def(Def { name, params, on_typ, in_typ, body }),
+    "codef" <name: Ident> <params: Telescope> ":" <typ: TypApp> ":=" <body: Comatch> => Decl::Codef(Codef { name, params, typ, body }),
 }
 
 Ctor: Ctor = {
-    <name: Ident> <params: OptParams> ":" <typ: TypApp> => Ctor { name, params, typ },
+    <name: Ident> <params: OptTelescope> ":" <typ: TypApp> => Ctor { name, params, typ },
 }
 
 Dtor: Dtor = {
-    <on_typ: TypApp> "." <name: Ident> <params: OptParams> ":" <in_typ: Exp> => Dtor { name, params, on_typ, in_typ },
+    <on_typ: TypApp> "." <name: Ident> <params: OptTelescope> ":" <in_typ: Exp> => Dtor { name, params, on_typ, in_typ },
 }
 
 pub Comatch : Comatch = {
@@ -75,7 +78,7 @@ pub Match : Match = {
 }
 
 pub Case : Case = {
-    <name: Ident> <args: OptParams> "=>" <body: Exp> => Case { name, args, body },
+    <name: Ident> <args: OptTelescope> "=>" <body: Exp> => Case { name, args, body },
 }
 
 pub TypApp: TypApp = {

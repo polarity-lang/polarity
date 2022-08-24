@@ -5,12 +5,14 @@ use crate::result::Error;
 
 pub fn run_filepath(filepath: &Path) -> Result<String, Error> {
     let prg = load_filepath(filepath)?;
-    Ok(format!("{:?}", prg))
+    let ast = lowering::lower(prg).map_err(Error::Lowering)?;
+    Ok(format!("{:?}", ast))
 }
 
 pub fn run_string(text: &str) -> Result<String, Error> {
     let prg = load_string(text)?;
-    Ok(format!("{:?}", prg))
+    let ast = lowering::lower(prg).map_err(Error::Lowering)?;
+    Ok(format!("{:?}", ast))
 }
 
 fn load_filepath(filepath: &Path) -> Result<syntax::cst::Prg, Error> {

@@ -11,3 +11,4 @@ reedline = "0.10"
 core = { path = "../core" }
 syntax = { path = "../syntax" }
 parser = { path = "../parser" }
+lowering = { path = "../lowering" }
