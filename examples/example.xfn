@@ -1,0 +1,22 @@
+data Nat : Type :=
+    Z : Nat,
+    S(n: Nat) : Nat;
+
+def Nat.add(y: Nat) : Nat := match
+    Z => y,
+    S(x' : Nat) => S(add(x', y));
+
+data Vec(n: Nat) : Type :=
+    Nil : Vec(Z),
+    Cons(n: Nat, x: Nat, xs: Vec(n)) : Vec(S(n));
+
+def Vec(n).append(n: Nat, m: Nat, ys: Vec(m)) : Vec(n.add(m)) := match
+    Nil => ys,
+    Cons(n': Nat, x: Nat, xs: Vec(m)) => Cons(S(n'.add(m)), x, append(n', m, xs, ys));
+
+codata Stream : Type :=
+    Stream.head : Nat,
+    Stream.tail : Stream;
+
+codata NatToNat : Type :=
+    NatToNat.apply(x: Nat) : Nat;
