@@ -71,7 +71,7 @@ impl Ctx {
     ///
     /// * `iter` - An iterator of binders implementing `Named`.
     /// * `acc` - Accumulator for folding the iterator
-    /// * `f_acc` - Accumulator function
+    /// * `f_acc` - Accumulator function run for each binder
     /// * `f_inner` - Inner function computing the final result under the context of all binders
     pub fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
         &mut self,
