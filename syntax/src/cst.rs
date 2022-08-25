@@ -16,17 +16,6 @@ pub enum Decl {
     Codef(Codef),
 }
 
-impl Decl {
-    pub fn name(&self) -> &Ident {
-        match self {
-            Decl::Data(Data { name, .. }) => name,
-            Decl::Codata(Codata { name, .. }) => name,
-            Decl::Def(Def { name, .. }) => name,
-            Decl::Codef(Codef { name, .. }) => name,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Data {
     pub name: Ident,

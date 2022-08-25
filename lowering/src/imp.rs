@@ -3,7 +3,10 @@ use std::rc::Rc;
 use syntax::ast;
 use syntax::cst;
 use syntax::cst::Telescope;
+use syntax::named::Named;
 
+use super::ctx::*;
+use super::result::*;
 use super::types::*;
 
 pub fn lower(prg: cst::Prg) -> Result<ast::Prg, LoweringError> {
@@ -219,20 +222,26 @@ impl<T: Lower> Lower for Rc<T> {
 impl LowerTelescope for Telescope {
     type Target = ast::Telescope;
 
-    #[rustfmt::skip]
-    fn lower_telescope<T, F: Fn(&mut Ctx, Self::Target) -> Result<T, LoweringError>>(&self, ctx: &mut Ctx, f: F) -> Result<T, LoweringError> {
-        fn bind_inner<'a, T, F: Fn(&mut Ctx, ast::Telescope) -> Result<T, LoweringError>, I: Iterator<Item = &'a cst::Param>>(ctx: &mut Ctx, f: F, mut iter: I, mut out: ast::Params) -> Result<T, LoweringError> {
-            match iter.next() {
-                Some(cst::Param { name, typ }) => {
-                    let typ = typ.lower_in_ctx(ctx)?;
-                    let param = ast::Param { name: name.clone(), typ };
-                    out.push(param);
-                    ctx.bind(name.clone(), |ctx| bind_inner(ctx, f, iter, out))
-                },
-                None => f(ctx, ast::Telescope(out)),
-            }
-        }
-
-        bind_inner(ctx, f, self.0.iter(), ast::Params::new())
+    /// Lower a telescope
+    ///
+    /// Execute a function `f` under the context where all binders
+    /// of the telescope are in scope.
+    fn lower_telescope<T, F>(&self, ctx: &mut Ctx, f: F) -> Result<T, LoweringError>
+    where
+        F: Fn(&mut Ctx, Self::Target) -> Result<T, LoweringError>,
+    {
+        ctx.bind_fold(
+            self.0.iter(),
+            Ok(ast::Params::new()),
+            |ctx, params_out, param| {
+                let mut params_out = params_out?;
+                let cst::Param { name, typ } = param;
+                let typ_out = typ.lower_in_ctx(ctx)?;
+                let param_out = ast::Param { name: name.clone(), typ: typ_out };
+                params_out.push(param_out);
+                Ok(params_out)
+            },
+            |ctx, params| f(ctx, params.map(ast::Telescope)?),
+        )
     }
 }
