@@ -53,12 +53,12 @@ impl Lower for cst::Codata {
     type Target = ast::Codata;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Codata { name, params, ctors } = self;
+        let cst::Codata { name, params, dtors } = self;
 
         Ok(ast::Codata {
             name: name.clone(),
             params: params.lower_in_ctx(ctx)?,
-            ctors: ctors.lower_in_ctx(ctx)?,
+            dtors: dtors.lower_in_ctx(ctx)?,
         })
     }
 }

@@ -43,7 +43,7 @@ pub struct Data {
 pub struct Codata {
     pub name: Ident,
     pub params: Telescope,
-    pub ctors: Vec<Dtor>,
+    pub dtors: Vec<Dtor>,
 }
 
 #[derive(Debug, Clone)]

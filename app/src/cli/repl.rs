@@ -3,6 +3,7 @@ use reedline::{Reedline, Signal};
 use crate::result::HandleErrorExt;
 
 use super::prompt::CustomPrompt;
+use super::terminal;
 
 #[derive(Default, clap::Args)]
 pub struct Args {}
@@ -16,7 +17,7 @@ pub fn exec(_cmd: Args) {
         match sig {
             Signal::Success(s) => {
                 if !s.trim().is_empty() {
-                    crate::rt::run_string(&s).handle(|res| println!("{}", res))
+                    crate::rt::run_string(&s).handle(terminal::print_prg)
                 }
             }
             Signal::CtrlD | Signal::CtrlC => {

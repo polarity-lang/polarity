@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 mod prompt;
 mod repl;
 mod run;
+mod terminal;
 
 pub fn exec() {
     use Command::*;

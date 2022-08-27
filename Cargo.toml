@@ -4,6 +4,7 @@ members = [
     "syntax",
     "parser",
     "lowering",
+    "printer",
     "core",
     "app",
 ]

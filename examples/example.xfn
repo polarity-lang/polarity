@@ -4,7 +4,7 @@ data Nat : Type :=
 
 def Nat.add(y: Nat) : Nat := match
     Z => y,
-    S(x' : Nat) => S(add(x', y));
+    S(x' : Nat) => S(x'.add(y));
 
 data Vec(n: Nat) : Type :=
     Nil : Vec(Z),
@@ -12,7 +12,7 @@ data Vec(n: Nat) : Type :=
 
 def Vec(n).append(n: Nat, m: Nat, ys: Vec(m)) : Vec(n.add(m)) := match
     Nil => ys,
-    Cons(n': Nat, x: Nat, xs: Vec(m)) => Cons(S(n'.add(m)), x, append(n', m, xs, ys));
+    Cons(n': Nat, x: Nat, xs: Vec(m)) => Cons(S(n'.add(m)), x, n'.append(m, xs, ys));
 
 codata Stream : Type :=
     Stream.head : Nat,
