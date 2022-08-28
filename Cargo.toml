@@ -1,10 +1,10 @@
 [workspace]
 
 members = [
-    "syntax",
-    "parser",
-    "lowering",
-    "printer",
-    "core",
+    "lang/syntax",
+    "lang/parser",
+    "lang/lowering",
+    "lang/printer",
+    "lang/core",
     "app",
 ]

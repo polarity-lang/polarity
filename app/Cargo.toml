@@ -9,8 +9,8 @@ clap = { version = "3", features = ["derive"] }
 reedline = "0.10"
 termsize = "0.1"
 # workspace members
-core = { path = "../core" }
-syntax = { path = "../syntax" }
-parser = { path = "../parser" }
-lowering = { path = "../lowering" }
-printer = { path = "../printer" }
+core = { path = "../lang/core" }
+syntax = { path = "../lang/syntax" }
+parser = { path = "../lang/parser" }
+lowering = { path = "../lang/lowering" }
+printer = { path = "../lang/printer" }
