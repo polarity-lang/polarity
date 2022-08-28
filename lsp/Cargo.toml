@@ -1,0 +1,8 @@
+[package]
+name = "lsp-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lsp = { version = "0.93", package = "lsp-types" }
+tower-lsp = { version = "0.17", default-features = false }

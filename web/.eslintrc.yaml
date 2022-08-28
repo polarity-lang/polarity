@@ -1,0 +1,23 @@
+---
+parser: "@typescript-eslint/parser"
+plugins:
+  - "@typescript-eslint"
+extends:
+  - eslint:recommended
+  - plugin:prettier/recommended
+  - prettier
+overrides:
+  - files: "webpack.config.js"
+    env:
+      "node": true
+  - files: ["*.ts", "*.tsx"]
+    extends:
+      - plugin:@typescript-eslint/eslint-recommended
+      - plugin:@typescript-eslint/recommended-requiring-type-checking
+      - plugin:@typescript-eslint/recommended
+    rules:
+      "@typescript-eslint/no-inferrable-types": ["off"]
+    parserOptions:
+      project:
+        - "./tsconfig.json"
+        - "./packages/app/tsconfig.json"

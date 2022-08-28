@@ -1,0 +1,30 @@
+[package]
+publish = false
+edition = "2021"
+name = "lsp-browser"
+version = "0.0.0"
+
+[features]
+default = ["tower-lsp/runtime-agnostic"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+console_error_panic_hook = "0.1"
+lsp-server = { path = "../../../lsp" }
+futures = "0.3"
+js-sys = "0.3"
+tower-lsp = { version = "0.17", default-features = false }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = { version = "0.4", features = ["futures-core-03-stream"] }
+wasm-streams = "0.2"
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+  "console",
+  "HtmlTextAreaElement",
+  "ReadableStream",
+  "WritableStream",
+]

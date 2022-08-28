@@ -20,5 +20,9 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           # JSCPD is disabled because it falsely flags duplicated Rust generic parameter definitions
           VALIDATE_JSCPD: false
+          # We use eslint instead of the linter named "standard"
+          VALIDATE_JAVASCRIPT_STANDARD: false
+          # We use prettier rather than ts-standard
+          TYPESCRIPT_DEFAULT_STYLE: prettier
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -3,5 +3,6 @@
 # from the root of the repository
 
 cargo test
-cargo clippy --tests --benches -- -Dwarnings
-cargo fmt -- --check
+cargo clippy --all -- -Dwarnings
+cargo fmt --all --check
+(cd web; make lint)

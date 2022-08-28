@@ -3,7 +3,7 @@ name = "app"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # cli
 clap = { version = "3", features = ["derive"] }
 reedline = "0.10"

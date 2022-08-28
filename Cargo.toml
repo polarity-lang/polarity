@@ -1,10 +1,11 @@
 [workspace]
-
 members = [
     "lang/syntax",
     "lang/parser",
     "lang/lowering",
     "lang/printer",
     "lang/core",
+    "lsp",
+    "web/crates/browser",
     "app",
 ]

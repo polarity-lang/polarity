@@ -1,0 +1,41 @@
+body,
+html {
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #1e1e1e;
+  color: white;
+  height: 100vh;
+}
+
+section[class="content"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+div[class="editor-container"] {
+  display: flex;
+  flex: 1;
+}
+
+div[id="editor"] {
+  flex: 1;
+}
+
+div[class="console-container"] {
+  display: flex;
+  flex-direction: column;
+}
+
+div[class="col"] {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}

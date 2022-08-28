@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Editor</title>
+</head>
+
+<body style="background-color: #1e1e1e; color: white;">
+  <section class="content">
+    <div class="editor-container">
+      <div id="editor"></div>
+    </div>
+    <div class="console-container">
+      <div class="col">
+        <label for="channel-console">console</label>
+        <textarea id="channel-console" autocomplete="off" spellcheck="off" wrap="off" readonly rows="3"></textarea>
+      </div>
+
+      <div class="col">
+        <label for="channel-client">message trace (client ⇒ server)</label>
+        <textarea id="channel-client" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
+      </div>
+
+      <div class="col">
+        <label for="channel-server">message trace (client ⇐ server)</label>
+        <textarea id="channel-server" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
+      </div>
+    </div>
+  </section>
+</body>
+
+</html>
