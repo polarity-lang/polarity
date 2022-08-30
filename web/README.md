@@ -2,14 +2,19 @@
 
 Based on [tower-lsp-web-demo](https://github.com/silvanshade/tower-lsp-web-demo/), commit `f44085e39430f0f9a9f98e251f67a40a00e3da56`.
 
-## Building
+## Requirements
+
+* [Rust and Cargo](https://www.rust-lang.org/tools/install)
+* [Node.js](https://nodejs.org/en/download) and [npm](https://www.npmjs.com/package/npm)
+
+## Build
 
 ```sh
 make deps
 make build
 ```
 
-## Running
+## Run
 
 ```sh
 make run
