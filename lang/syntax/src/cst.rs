@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use super::common::*;
+use super::de_bruijn::*;
 
 #[derive(Debug, Clone)]
 pub struct Prg {
@@ -87,9 +88,8 @@ pub struct TypApp {
 
 #[derive(Debug, Clone)]
 pub enum Exp {
-    Var { name: Ident },
-    Ctor { name: Ident, subst: Subst },
-    Dtor { exp: Rc<Exp>, name: Ident, subst: Subst },
+    Call { name: Ident, subst: Subst },
+    DotCall { exp: Rc<Exp>, name: Ident, subst: Subst },
     Ano { exp: Rc<Exp>, typ: Rc<Exp> },
     Type,
 }
@@ -107,4 +107,10 @@ pub type Subst = Vec<Rc<Exp>>;
 pub struct Param {
     pub name: Ident,
     pub typ: Rc<Exp>,
+}
+
+#[derive(Debug, Clone)]
+pub enum Var {
+    Bound(Idx),
+    Free(Ident),
 }

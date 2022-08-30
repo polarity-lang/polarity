@@ -7,6 +7,7 @@ use syntax::common::*;
 pub enum LoweringError {
     UndefinedIdent(Ident),
     AlreadyDefined(Ident),
+    MustUseAsDtor(Ident),
 }
 
 impl fmt::Display for LoweringError {
@@ -14,6 +15,8 @@ impl fmt::Display for LoweringError {
         match self {
             Self::UndefinedIdent(ident) => write!(f, "Undefined identifier {}", ident),
             Self::AlreadyDefined(ident) => write!(f, "Duplicate definition of {}", ident),
+            // TODO: Improve error message
+            Self::MustUseAsDtor(ident) => write!(f, "{} must be used as destructor", ident),
         }
     }
 }

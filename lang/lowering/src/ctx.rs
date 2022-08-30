@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use syntax::ast;
 use syntax::common::*;
+use syntax::cst;
 use syntax::de_bruijn::*;
 use syntax::named::Named;
-use syntax::var::*;
 
 use super::result::LoweringError;
 
@@ -26,21 +26,19 @@ impl Ctx {
         Self { map: HashMap::new(), decls: ast::Decls::empty(), levels: Vec::new() }
     }
 
-    pub fn lookup(&self, name: &Ident) -> Result<Var, LoweringError> {
-        let res = self
-            .map
+    pub fn lookup(&self, name: &Ident) -> Result<&Elem, LoweringError> {
+        self.map
             .get(name)
             .and_then(|stack| stack.last())
-            .map(|var| match var {
-                Elem::Bound(lvl) => Var::Bound(self.level_to_index(*lvl)),
-                Elem::Free(name) => Var::Free(name.clone()),
-            })
-            .ok_or_else(|| LoweringError::UndefinedIdent(name.clone()));
-        res
+            .ok_or_else(|| LoweringError::UndefinedIdent(name.clone()))
     }
 
-    pub fn add_name(&mut self, name: &Ident) -> Result<(), LoweringError> {
-        let var = Elem::Free(name.clone());
+    pub fn lower_bound(&self, lvl: Lvl) -> Idx {
+        self.level_to_index(lvl)
+    }
+
+    pub fn add_name(&mut self, name: &Ident, decl_kind: DeclKind) -> Result<(), LoweringError> {
+        let var = Elem::Decl(decl_kind);
         let stack = self.map.entry(name.clone()).or_insert_with(Default::default);
         stack.push(var);
         Ok(())
@@ -167,7 +165,28 @@ impl Ctx {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum Elem {
+pub enum Elem {
     Bound(Lvl),
-    Free(Ident),
+    Decl(DeclKind),
+}
+
+#[derive(Clone, Debug)]
+pub enum DeclKind {
+    Data,
+    Codata,
+    Def,
+    Codef,
+    Ctor,
+    Dtor,
+}
+
+impl From<&cst::Decl> for DeclKind {
+    fn from(decl: &cst::Decl) -> Self {
+        match decl {
+            cst::Decl::Data(_) => Self::Data,
+            cst::Decl::Codata(_) => Self::Codata,
+            cst::Decl::Def(_) => Self::Def,
+            cst::Decl::Codef(_) => Self::Codef,
+        }
+    }
 }

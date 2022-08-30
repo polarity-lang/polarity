@@ -230,7 +230,8 @@ impl<'a> Print<'a> for TypApp {
 impl<'a> Print<'a> for Exp {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Exp::Var { var } => var.print(alloc),
+            Exp::Var { idx } => idx.print(alloc),
+            Exp::TyCtor { name, subst } => alloc.typ(name).append(subst.print(alloc)),
             Exp::Ctor { name, subst } => alloc.ctor(name).append(subst.print(alloc)),
             Exp::Dtor { exp, name, subst } => {
                 exp.print(alloc).append(DOT).append(alloc.dtor(name)).append(subst.print(alloc))
@@ -251,7 +252,11 @@ impl<'a, T: Print<'a>> Print<'a> for Rc<T> {
 
 impl<'a, T: Print<'a>> Print<'a> for Vec<T> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let sep = alloc.text(COMMA).append(alloc.space());
-        alloc.intersperse(self.iter().map(|x| x.print(alloc)), sep).parens()
+        if self.is_empty() {
+            alloc.nil()
+        } else {
+            let sep = alloc.text(COMMA).append(alloc.space());
+            alloc.intersperse(self.iter().map(|x| x.print(alloc)), sep).parens()
+        }
     }
 }

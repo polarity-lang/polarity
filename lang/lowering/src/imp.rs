@@ -23,7 +23,7 @@ impl Lower for cst::Decl {
     type Target = ();
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        ctx.add_name(self.name())?;
+        ctx.add_name(self.name(), DeclKind::from(self))?;
         let decl = match self {
             cst::Decl::Data(data) => ast::Decl::Data(data.lower_in_ctx(ctx)?),
             cst::Decl::Codata(codata) => ast::Decl::Codata(codata.lower_in_ctx(ctx)?),
@@ -69,7 +69,7 @@ impl Lower for cst::Ctor {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Ctor { name, params, typ } = self;
 
-        ctx.add_name(name)?;
+        ctx.add_name(name, DeclKind::Ctor)?;
 
         params.lower_telescope(ctx, |ctx, params| {
             Ok(ast::Ctor { name: name.clone(), params, typ: typ.lower_in_ctx(ctx)? })
@@ -83,7 +83,7 @@ impl Lower for cst::Dtor {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Dtor { name, params, on_typ, in_typ } = self;
 
-        ctx.add_name(name)?;
+        ctx.add_name(name, DeclKind::Dtor)?;
 
         params.lower_telescope(ctx, |ctx, params| {
             Ok(ast::Dtor {
@@ -178,11 +178,23 @@ impl Lower for cst::Exp {
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         match self {
-            cst::Exp::Var { name } => Ok(ast::Exp::Var { var: ctx.lookup(name)? }),
-            cst::Exp::Ctor { name, subst } => {
-                Ok(ast::Exp::Ctor { name: name.clone(), subst: subst.lower_in_ctx(ctx)? })
-            }
-            cst::Exp::Dtor { exp, name, subst } => Ok(ast::Exp::Dtor {
+            cst::Exp::Call { name, subst } => match ctx.lookup(name)? {
+                Elem::Bound(lvl) => Ok(ast::Exp::Var { idx: ctx.lower_bound(*lvl) }),
+                Elem::Decl(decl_kind) => match decl_kind {
+                    DeclKind::Codata | DeclKind::Data => Ok(ast::Exp::TyCtor {
+                        name: name.to_owned(),
+                        subst: subst.lower_in_ctx(ctx)?,
+                    }),
+                    DeclKind::Def | DeclKind::Dtor => {
+                        Err(LoweringError::MustUseAsDtor(name.to_owned()))
+                    }
+                    DeclKind::Codef | DeclKind::Ctor => Ok(ast::Exp::Ctor {
+                        name: name.to_owned(),
+                        subst: subst.lower_in_ctx(ctx)?,
+                    }),
+                },
+            },
+            cst::Exp::DotCall { exp, name, subst } => Ok(ast::Exp::Dtor {
                 exp: exp.lower_in_ctx(ctx)?,
                 name: name.clone(),
                 subst: subst.lower_in_ctx(ctx)?,

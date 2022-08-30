@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use super::common::*;
-use super::var::*;
+use super::de_bruijn::*;
 
 #[derive(Debug, Clone)]
 pub struct Prg {
@@ -103,7 +103,8 @@ pub struct TypApp {
 
 #[derive(Debug, Clone)]
 pub enum Exp {
-    Var { var: Var },
+    Var { idx: Idx },
+    TyCtor { name: Ident, subst: Subst },
     Ctor { name: Ident, subst: Subst },
     Dtor { exp: Rc<Exp>, name: Ident, subst: Subst },
     Ano { exp: Rc<Exp>, typ: Rc<Exp> },

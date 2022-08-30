@@ -5,7 +5,7 @@ pub use pretty::termcolor::StandardStream;
 pub use pretty::termcolor::WriteColor;
 
 mod ast;
-mod common;
+mod de_bruijn;
 mod theme;
 mod tokens;
 mod types;

@@ -91,12 +91,12 @@ pub Exp: Rc<Exp> = {
 }
 
 pub Ops = {
-    <exp: Ops> "." <name: Ident> <subst: Subst> => Rc::new(Exp::Dtor { exp, name, subst }),
+    <exp: Ops> "." <name: Ident> <subst: Subst> => Rc::new(Exp::DotCall { exp, name, subst }),
     App,
 }
 
 pub App = {
-    <name: Ident> <subst: Subst> => Rc::new(Exp::Ctor { name, subst }),
+    <name: Ident> <subst: Subst> => Rc::new(Exp::Call { name, subst }),
     Builtins,
 }
 
@@ -107,7 +107,7 @@ pub Builtins: Rc<Exp> = {
 
 pub Atom: Rc<Exp> = {
     "(" <exp: Exp> ")" => exp,
-    <name: Ident> => Rc::new(Exp::Var { name }),
+    <name: Ident> => Rc::new(Exp::Call { name, subst: Subst::new() }),
 }
 
 // Names
