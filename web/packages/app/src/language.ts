@@ -40,6 +40,7 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
   private registerLanguage(client: Client): void {
     void client;
     monaco.languages.register(Language.extensionPoint());
+    monaco.languages.setMonarchTokensProvider(this.id, Language.syntaxDefinition());
     monaco.languages.registerDocumentSymbolProvider(this.id, {
       // eslint-disable-next-line
       async provideDocumentSymbols(model, token): Promise<monaco.languages.DocumentSymbol[]> {
@@ -56,6 +57,40 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
         return result;
       },
     });
+  }
+
+  private static syntaxDefinition(): monaco.languages.IMonarchLanguage {
+    return {
+      keywords: ["data", "codata", "def", "codef", "match", "comatch"],
+
+      typeKeywords: ["Type"],
+
+      operators: [";", ":=", "=>", ",", ":", "."],
+
+      tokenizer: {
+        root: [
+          // identifiers and keywords
+          [
+            /[a-z_][a-zA-Z0-9_]*[']*/,
+            { cases: { "@typeKeywords": "keyword", "@keywords": "keyword", "@default": "identifier" } },
+          ],
+          [/[A-Z_][a-zA-Z0-9_]*[']*/, "type.identifier"],
+
+          // whitespace
+          { include: "@whitespace" },
+
+          // delimiter
+          [/[;,.]/, "delimiter"],
+        ],
+
+        comment: [[/--/, "comment"]],
+
+        whitespace: [
+          [/[ \t\r\n]+/, "white"],
+          [/--.*$/, "comment"],
+        ],
+      },
+    };
   }
 
   static initialize(client: Client): Language {
