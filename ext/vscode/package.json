@@ -1,0 +1,25 @@
+{
+  "name": "xfn",
+  "displayName": "xfn",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.69.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "xfn",
+      "aliases": ["xfn"],
+      "extensions": [".xfn"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "xfn",
+      "scopeName": "source.xfn",
+      "path": "./syntaxes/xfn.tmLanguage.json"
+    }]
+  }
+}
