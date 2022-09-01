@@ -14,11 +14,11 @@ pub struct Ctx {
     /// the remaining entries represent the binders which are currently shadowed.
     ///
     /// Bound variables in this map are De-Bruijn levels rather than indices:
-    pub(super) map: HashMap<Ident, Vec<Elem>>,
+    map: HashMap<Ident, Vec<Elem>>,
     /// Accumulates top-level declarations
-    pub(super) decls: ast::Decls,
+    decls: ast::Decls,
     /// Counts the number of entries for each De-Bruijn level
-    pub(super) levels: Vec<usize>,
+    levels: Vec<usize>,
 }
 
 impl Ctx {
@@ -44,6 +44,13 @@ impl Ctx {
         Ok(())
     }
 
+    pub fn add_decls<I>(&mut self, decls: I) -> Result<(), LoweringError>
+    where
+        I: IntoIterator<Item = ast::Decl>,
+    {
+        decls.into_iter().try_for_each(|decl| self.add_decl(decl))
+    }
+
     pub fn add_decl(&mut self, decl: ast::Decl) -> Result<(), LoweringError> {
         match self.decls.map.get(decl.name()) {
             Some(_) => Err(LoweringError::AlreadyDefined(decl.name().clone())),
@@ -53,6 +60,10 @@ impl Ctx {
                 Ok(())
             }
         }
+    }
+
+    pub fn into_decls(self) -> ast::Decls {
+        self.decls
     }
 
     /// Bind a single name

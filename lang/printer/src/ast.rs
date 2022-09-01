@@ -22,25 +22,35 @@ impl<'a> Print<'a> for Prg {
 impl<'a> Print<'a> for Decls {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Decls { map, order } = self;
-        let decls_in_order = order.iter().map(|name| &map[name]).map(|x| x.print(alloc));
+        let decls_in_order = order
+            .iter()
+            .map(|name| &map[name])
+            .filter(|x| !matches!(x, Decl::Ctor(_) | Decl::Dtor(_)))
+            .map(|x| x.print_in_ctx(self, alloc));
         let sep = alloc.text(SEMI).append(alloc.line()).append(alloc.line());
         alloc.intersperse(decls_in_order, sep)
     }
 }
 
-impl<'a> Print<'a> for Decl {
-    fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl<'a> PrintInCtx<'a> for Decl {
+    type Ctx = Decls;
+
+    fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Decl::Data(data) => data.print(alloc),
-            Decl::Codata(codata) => codata.print(alloc),
+            Decl::Data(data) => data.print_in_ctx(ctx, alloc),
+            Decl::Codata(codata) => codata.print_in_ctx(ctx, alloc),
             Decl::Def(def) => def.print(alloc),
             Decl::Codef(codef) => codef.print(alloc),
+            Decl::Ctor(ctor) => ctor.print(alloc),
+            Decl::Dtor(dtor) => dtor.print(alloc),
         }
     }
 }
 
-impl<'a> Print<'a> for Data {
-    fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl<'a> PrintInCtx<'a> for Data {
+    type Ctx = Decls;
+
+    fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Data { name, params, ctors } = self;
 
         let head = alloc
@@ -59,15 +69,19 @@ impl<'a> Print<'a> for Data {
 
         let body = alloc
             .hardline()
-            .append(alloc.intersperse(ctors.iter().map(|x| x.print(alloc)), sep))
+            .append(
+                alloc.intersperse(ctors.iter().map(|x| ctx.map[x].print_in_ctx(ctx, alloc)), sep),
+            )
             .nest(INDENT);
 
         head.append(body)
     }
 }
 
-impl<'a> Print<'a> for Codata {
-    fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl<'a> PrintInCtx<'a> for Codata {
+    type Ctx = Decls;
+
+    fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Codata { name, params, dtors } = self;
         let head = alloc
             .keyword(CODATA)
@@ -85,7 +99,9 @@ impl<'a> Print<'a> for Codata {
 
         let body = alloc
             .hardline()
-            .append(alloc.intersperse(dtors.iter().map(|x| x.print(alloc)), sep))
+            .append(
+                alloc.intersperse(dtors.iter().map(|x| ctx.map[x].print_in_ctx(ctx, alloc)), sep),
+            )
             .nest(INDENT);
 
         head.append(body)

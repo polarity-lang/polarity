@@ -24,6 +24,8 @@ impl Named for ast::Decl {
             ast::Decl::Codata(ast::Codata { name, .. }) => name,
             ast::Decl::Def(ast::Def { name, .. }) => name,
             ast::Decl::Codef(ast::Codef { name, .. }) => name,
+            ast::Decl::Ctor(ast::Ctor { name, .. }) => name,
+            ast::Decl::Dtor(ast::Dtor { name, .. }) => name,
         }
     }
 }

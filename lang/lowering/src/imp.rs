@@ -16,7 +16,7 @@ pub fn lower(prg: cst::Prg) -> Result<ast::Prg, LoweringError> {
     decls.lower_in_ctx(&mut ctx)?;
     let exp = exp.lower_in_ctx(&mut ctx)?;
 
-    Ok(ast::Prg { decls: ctx.decls, exp })
+    Ok(ast::Prg { decls: ctx.into_decls(), exp })
 }
 
 impl Lower for cst::Decl {
@@ -41,11 +41,13 @@ impl Lower for cst::Data {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Data { name, params, ctors } = self;
 
-        Ok(ast::Data {
-            name: name.clone(),
-            params: params.lower_in_ctx(ctx)?,
-            ctors: ctors.lower_in_ctx(ctx)?,
-        })
+        let ctor_decls = ctors.lower_in_ctx(ctx)?.into_iter().map(ast::Decl::Ctor);
+
+        let ctor_names = ctors.iter().map(|ctor| ctor.name.clone()).collect();
+
+        ctx.add_decls(ctor_decls)?;
+
+        Ok(ast::Data { name: name.clone(), params: params.lower_in_ctx(ctx)?, ctors: ctor_names })
     }
 }
 
@@ -55,11 +57,13 @@ impl Lower for cst::Codata {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Codata { name, params, dtors } = self;
 
-        Ok(ast::Codata {
-            name: name.clone(),
-            params: params.lower_in_ctx(ctx)?,
-            dtors: dtors.lower_in_ctx(ctx)?,
-        })
+        let dtor_decls = dtors.lower_in_ctx(ctx)?.into_iter().map(ast::Decl::Dtor);
+
+        let dtor_names = dtors.iter().map(|dtor| dtor.name.clone()).collect();
+
+        ctx.add_decls(dtor_decls)?;
+
+        Ok(ast::Codata { name: name.clone(), params: params.lower_in_ctx(ctx)?, dtors: dtor_names })
     }
 }
 

@@ -28,6 +28,8 @@ impl Decls {
 pub enum Decl {
     Data(Data),
     Codata(Codata),
+    Ctor(Ctor),
+    Dtor(Dtor),
     Def(Def),
     Codef(Codef),
 }
@@ -36,14 +38,14 @@ pub enum Decl {
 pub struct Data {
     pub name: Ident,
     pub params: Telescope,
-    pub ctors: Vec<Ctor>,
+    pub ctors: Vec<Ident>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Codata {
     pub name: Ident,
     pub params: Telescope,
-    pub dtors: Vec<Dtor>,
+    pub dtors: Vec<Ident>,
 }
 
 #[derive(Debug, Clone)]
