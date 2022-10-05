@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 # workspace members
+data = { path = "../../util/data" }
 syntax = { path = "../syntax" }

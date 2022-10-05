@@ -42,6 +42,18 @@ impl Named for ast::Param {
     }
 }
 
+impl Named for cst::EqnParam {
+    fn name(&self) -> &Ident {
+        &self.name
+    }
+}
+
+impl Named for ast::EqnParam {
+    fn name(&self) -> &Ident {
+        &self.name
+    }
+}
+
 impl Named for Ident {
     fn name(&self) -> &Ident {
         self

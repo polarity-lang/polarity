@@ -1,0 +1,17 @@
+data Nat : Type :=
+    Z : Nat,
+    S(n: Nat) : Nat;
+
+data Option(a: Type) : Type :=
+    None(a: Type) : Option(a),
+    Some(a: Type, x: a) : Option(a);
+
+data List(a: Type) : Type :=
+    Nil(a: Type) : List(a),
+    Cons(a: Type, x: a, xs: List(a)) : List(a);
+
+def List(a).head(a: Type) : Option(a) := match
+    Nil(a: Type) => None(a),
+    Cons(a: Type, x: a, xs: List(a)) => Some(a, x);
+
+Cons(Nat, Z, Cons(Nat, Z, Nil(Nat)))

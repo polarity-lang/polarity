@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use syntax::ast;
 use syntax::cst;
-use syntax::cst::Telescope;
 use syntax::named::Named;
 
 use super::ctx::*;
@@ -47,7 +46,11 @@ impl Lower for cst::Data {
 
         ctx.add_decls(ctor_decls)?;
 
-        Ok(ast::Data { name: name.clone(), params: params.lower_in_ctx(ctx)?, ctors: ctor_names })
+        Ok(ast::Data {
+            name: name.clone(),
+            typ: Rc::new(ast::TypAbs { params: params.lower_in_ctx(ctx)? }),
+            ctors: ctor_names,
+        })
     }
 }
 
@@ -63,7 +66,11 @@ impl Lower for cst::Codata {
 
         ctx.add_decls(dtor_decls)?;
 
-        Ok(ast::Codata { name: name.clone(), params: params.lower_in_ctx(ctx)?, dtors: dtor_names })
+        Ok(ast::Codata {
+            name: name.clone(),
+            typ: Rc::new(ast::TypAbs { params: params.lower_in_ctx(ctx)? }),
+            dtors: dtor_names,
+        })
     }
 }
 
@@ -159,10 +166,26 @@ impl Lower for cst::Case {
     type Target = ast::Case;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Case { name, args, body } = self;
+        let cst::Case { name, args, body, eqns } = self;
 
         args.lower_telescope(ctx, |ctx, args| {
-            Ok(ast::Case { name: name.clone(), args, body: body.lower_in_ctx(ctx)? })
+            eqns.lower_params(ctx, move |ctx, eqns| {
+                Ok(ast::Case { name: name.clone(), args, eqns, body: body.lower_in_ctx(ctx)? })
+            })
+        })
+    }
+}
+
+impl Lower for cst::Cocase {
+    type Target = ast::Cocase;
+
+    fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        let cst::Cocase { name, args, body, eqns } = self;
+
+        args.lower_telescope(ctx, |ctx, args| {
+            eqns.lower_params(ctx, |ctx, eqns| {
+                Ok(ast::Cocase { name: name.clone(), args, eqns, body: body.lower_in_ctx(ctx)? })
+            })
         })
     }
 }
@@ -171,9 +194,19 @@ impl Lower for cst::TypApp {
     type Target = ast::TypApp;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::TypApp { name, subst } = self;
+        let cst::TypApp { name, args: subst } = self;
 
-        Ok(ast::TypApp { name: name.clone(), subst: subst.lower_in_ctx(ctx)? })
+        Ok(ast::TypApp { name: name.clone(), args: subst.lower_in_ctx(ctx)? })
+    }
+}
+
+impl Lower for cst::Eqn {
+    type Target = ast::Eqn;
+
+    fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        let cst::Eqn { lhs, rhs } = self;
+
+        Ok(ast::Eqn { lhs: lhs.lower_in_ctx(ctx)?, rhs: rhs.lower_in_ctx(ctx)? })
     }
 }
 
@@ -182,29 +215,28 @@ impl Lower for cst::Exp {
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         match self {
-            cst::Exp::Call { name, subst } => match ctx.lookup(name)? {
+            cst::Exp::Call { name, args: subst } => match ctx.lookup(name)? {
                 Elem::Bound(lvl) => Ok(ast::Exp::Var { idx: ctx.lower_bound(*lvl) }),
                 Elem::Decl(decl_kind) => match decl_kind {
-                    DeclKind::Codata | DeclKind::Data => Ok(ast::Exp::TyCtor {
+                    DeclKind::Codata | DeclKind::Data => Ok(ast::Exp::TypCtor {
                         name: name.to_owned(),
-                        subst: subst.lower_in_ctx(ctx)?,
+                        args: subst.lower_in_ctx(ctx)?,
                     }),
                     DeclKind::Def | DeclKind::Dtor => {
                         Err(LoweringError::MustUseAsDtor(name.to_owned()))
                     }
-                    DeclKind::Codef | DeclKind::Ctor => Ok(ast::Exp::Ctor {
-                        name: name.to_owned(),
-                        subst: subst.lower_in_ctx(ctx)?,
-                    }),
+                    DeclKind::Codef | DeclKind::Ctor => {
+                        Ok(ast::Exp::Ctor { name: name.to_owned(), args: subst.lower_in_ctx(ctx)? })
+                    }
                 },
             },
-            cst::Exp::DotCall { exp, name, subst } => Ok(ast::Exp::Dtor {
+            cst::Exp::DotCall { exp, name, args: subst } => Ok(ast::Exp::Dtor {
                 exp: exp.lower_in_ctx(ctx)?,
                 name: name.clone(),
-                subst: subst.lower_in_ctx(ctx)?,
+                args: subst.lower_in_ctx(ctx)?,
             }),
-            cst::Exp::Ano { exp, typ } => {
-                Ok(ast::Exp::Ano { exp: exp.lower_in_ctx(ctx)?, typ: typ.lower_in_ctx(ctx)? })
+            cst::Exp::Anno { exp, typ } => {
+                Ok(ast::Exp::Anno { exp: exp.lower_in_ctx(ctx)?, typ: typ.lower_in_ctx(ctx)? })
             }
             cst::Exp::Type => Ok(ast::Exp::Type),
         }
@@ -231,11 +263,39 @@ impl<T: Lower> Lower for Rc<T> {
     type Target = Rc<T::Target>;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        Ok(Rc::new((&**self).lower_in_ctx(ctx)?))
+        Ok(Rc::new((**self).lower_in_ctx(ctx)?))
     }
 }
 
-impl LowerTelescope for Telescope {
+impl LowerParams for cst::EqnParams {
+    type Target = ast::EqnParams;
+
+    /// Lower a list of parameters
+    ///
+    /// Execute a function `f` under the context where all binders
+    /// of the telescope are in scope.
+    fn lower_params<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, LoweringError>>(
+        &self,
+        ctx: &mut Ctx,
+        f: F,
+    ) -> Result<T, LoweringError> {
+        ctx.bind_fold(
+            self.iter(),
+            Ok(ast::EqnParams::new()),
+            |ctx, params_out, param| {
+                let mut params_out = params_out?;
+                let cst::EqnParam { name, eqn } = param;
+                let eqn_out = eqn.lower_in_ctx(ctx)?;
+                let param_out = ast::EqnParam { name: name.clone(), eqn: eqn_out };
+                params_out.push(param_out);
+                Ok(params_out)
+            },
+            |ctx, params| f(ctx, params?),
+        )
+    }
+}
+
+impl LowerTelescope for cst::Telescope {
     type Target = ast::Telescope;
 
     /// Lower a telescope
@@ -244,7 +304,7 @@ impl LowerTelescope for Telescope {
     /// of the telescope are in scope.
     fn lower_telescope<T, F>(&self, ctx: &mut Ctx, f: F) -> Result<T, LoweringError>
     where
-        F: Fn(&mut Ctx, Self::Target) -> Result<T, LoweringError>,
+        F: FnOnce(&mut Ctx, Self::Target) -> Result<T, LoweringError>,
     {
         ctx.bind_fold(
             self.0.iter(),

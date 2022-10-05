@@ -1,0 +1,8 @@
+[package]
+name = "tracer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# workspace members
+tracer_macros = { path = "../tracer_macros" }

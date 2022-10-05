@@ -1,0 +1,19 @@
+data Nat : Type :=
+    Z : Nat,
+    S(n: Nat) : Nat;
+
+data NotZero(n: Nat) : Type :=
+    SNotZero(n: Nat) : NotZero(S(n));
+
+data Bot : Type := ;
+
+data Foo(a: Type) : Type :=
+    Ok(a: Type, x: a) : Foo(a),
+    Absurd(x: NotZero(Z)) : Foo(Bot);
+
+def NotZero(Z).elim_zero(a: Type) : a := match
+    SNotZero(n: Nat) absurd;
+
+def Foo(a).elim(a: Type) : a := match
+    Ok(a: Type, x: a) => x,
+    Absurd(x: NotZero(Z)) => x.elim_zero(Bot);

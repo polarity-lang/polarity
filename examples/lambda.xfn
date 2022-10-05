@@ -1,0 +1,12 @@
+data Nat : Type :=
+    Z : Nat,
+    S(n: Nat) : Nat;
+
+def Nat.add(y: Nat) : Nat := match
+    Z => y,
+    S(x' : Nat) => S(x'.add(y));
+
+data Exp : Type :=
+    Var(n: Nat) : Exp,
+    Lam(body: Exp) : Exp,
+    App(lhs: Exp, rhs: Exp) : Exp;

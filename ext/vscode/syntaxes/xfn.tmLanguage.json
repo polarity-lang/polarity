@@ -10,7 +10,7 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control",
-				"match": "\\b(data|codata|def|codef|match|comatch)\\b"
+				"match": "\\b(data|codata|def|codef|match|comatch|absurd)\\b"
 			}]
 		},
 		"symbols": {

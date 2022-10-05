@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use data::HashMap;
 use syntax::ast;
 use syntax::common::*;
 use syntax::cst;
@@ -23,7 +22,7 @@ pub struct Ctx {
 
 impl Ctx {
     pub fn empty() -> Self {
-        Self { map: HashMap::new(), decls: ast::Decls::empty(), levels: Vec::new() }
+        Self { map: HashMap::default(), decls: ast::Decls::empty(), levels: Vec::new() }
     }
 
     pub fn lookup(&self, name: &Ident) -> Result<&Elem, LoweringError> {
@@ -92,7 +91,7 @@ impl Ctx {
     where
         T: Named,
         F1: Fn(&mut Ctx, O1, T) -> O1,
-        F2: Fn(&mut Ctx, O1) -> O2,
+        F2: FnOnce(&mut Ctx, O1) -> O2,
     {
         fn bind_inner<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
             ctx: &mut Ctx,
@@ -104,13 +103,13 @@ impl Ctx {
         where
             T: Named,
             F1: Fn(&mut Ctx, O1, T) -> O1,
-            F2: Fn(&mut Ctx, O1) -> O2,
+            F2: FnOnce(&mut Ctx, O1) -> O2,
         {
             match iter.next() {
                 Some(x) => {
                     let name = x.name().clone();
-                    ctx.push_idx(name.clone());
                     let acc = f_acc(ctx, acc, x);
+                    ctx.push_idx(name.clone());
                     let res = bind_inner(ctx, iter, acc, f_acc, f_inner);
                     ctx.pop_idx(&name);
                     res

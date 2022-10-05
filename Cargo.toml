@@ -1,11 +1,14 @@
 [workspace]
 members = [
+    "util/data",
+    "util/tracer",
+    "util/tracer_macros",
+    "util/lsp",
     "lang/syntax",
     "lang/parser",
     "lang/lowering",
     "lang/printer",
     "lang/core",
-    "lsp",
     "web/crates/browser",
     "app",
 ]

@@ -139,6 +139,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1ad822118d20d2c234f427000d5acc36eabe1e29a348c89b63dd60b13f28e5d"
 
 [[package]]
+name = "byteorder"
+version = "1.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
+
+[[package]]
 name = "bytes"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -224,8 +230,10 @@ dependencies = [
 name = "core"
 version = "0.1.0"
 dependencies = [
- "parser",
+ "data",
+ "printer",
  "syntax",
+ "tracer",
 ]
 
 [[package]]
@@ -276,6 +284,13 @@ dependencies = [
  "hashbrown",
  "lock_api",
  "parking_lot_core",
+]
+
+[[package]]
+name = "data"
+version = "0.1.0"
+dependencies = [
+ "fxhash",
 ]
 
 [[package]]
@@ -458,6 +473,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fxhash"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -602,6 +626,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "lazy_static"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+
+[[package]]
 name = "libc"
 version = "0.2.132"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -636,6 +666,7 @@ dependencies = [
 name = "lowering"
 version = "0.1.0"
 dependencies = [
+ "data",
  "syntax",
 ]
 
@@ -1175,6 +1206,7 @@ dependencies = [
 name = "syntax"
 version = "0.1.0"
 dependencies = [
+ "data",
  "serde",
  "serde_derive",
 ]
@@ -1343,6 +1375,23 @@ name = "tower-service"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
+
+[[package]]
+name = "tracer"
+version = "0.1.0"
+dependencies = [
+ "tracer_macros",
+]
+
+[[package]]
+name = "tracer_macros"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "typed-arena"

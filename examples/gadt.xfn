@@ -1,0 +1,13 @@
+data Foo : Type :=
+    MkFoo : Foo;
+
+data Bar : Type :=
+    MkBar : Bar;
+
+data GADT(a: Type) : Type :=
+    WrapFoo(x: Foo) : GADT(Foo),
+    WrapBar(x: Bar) : GADT(Bar);
+
+def GADT(a).unwrap(a: Type) : a := match
+    WrapFoo(x: Foo){h: a = Foo} => x,
+    WrapBar(x: Bar){h: a = Bar} => x;

@@ -10,8 +10,6 @@ const CTOR: Color = Color::Blue;
 const DTOR: Color = Color::Green;
 const TYPE: Color = Color::Red;
 
-// TODO: Continue here
-
 pub trait ThemeExt<'a> {
     fn keyword(&'a self, text: &'a str) -> Builder<'a>;
     fn ctor(&'a self, text: &'a str) -> Builder<'a>;
@@ -37,7 +35,7 @@ impl<'a> ThemeExt<'a> for Alloc<'a> {
     }
 }
 
-trait ColorExt {
+pub trait ColorExt {
     fn spec(self) -> ColorSpec;
 }
 

@@ -1,0 +1,31 @@
+data Nat : Type :=
+    Z : Nat,
+    S(n: Nat) : Nat;
+
+data Bool : Type :=
+    True : Bool,
+    False : Bool;
+
+def Bool.not() : Bool := match
+    True => False,
+    False => True;
+
+def Bool.if_then_else(a: Type, then: a, else: a) : a := match
+    True => then,
+    False => else;
+
+codata Stream : Type :=
+    Stream.head : Nat,
+    Stream.tail : Stream;
+
+codef Zeroes() : Stream := comatch
+    head() => Z,
+    tail() => Zeroes();
+
+codef Ones() : Stream := comatch
+    head() => S(Z),
+    tail() => Ones();
+
+codef Alternate(choose: Bool) : Stream := comatch
+    head() => choose.if_then_else(Nat, S(Z), Z),
+    tail() => Alternate(choose.not());

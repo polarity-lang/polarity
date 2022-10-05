@@ -8,13 +8,14 @@ grammar;
 // Tokens
 match {
     // Symbols
-    "(", ")", ";", ":=", "=>", ",", ":", ".",
+    "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".", "=",
     // Names
     r"[a-zA-Z_][a-zA-Z0-9_]*[']*",
     // Keywords
     "def", "codef", "data", "codata",
     "match", "comatch",
     "Type",
+    "absurd",
     // Comments and whitespace
     r"\s*" => { }, // Skip whitespace
     r"--[^\n\r]*[\n\r]*" => { }, // Skip `--` comments
@@ -33,20 +34,29 @@ Comma<Rule>: Vec<Rule> =
 Parens<Rule>: Rule =
     "(" <rule: Rule> ")" => rule;
 
-Args<Rule>: Vec<Rule> = Parens<Comma<Rule>>;
+Braces<Rule>: Rule =
+    "{" <rule: Rule> "}" => rule;
 
-OptArgs<Rule>: Vec<Rule> = <args: Parens<Comma<Rule>>?> => args.unwrap_or_default();
+ParenthesizedArgs<Rule>: Vec<Rule> = Parens<Comma<Rule>>;
+OptParenthesizedArgs<Rule>: Vec<Rule> = <args: Parens<Comma<Rule>>?> => args.unwrap_or_default();
+
+BracedArgs<Rule>: Vec<Rule> = Braces<Comma<Rule>>;
+OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_default();
 
 Param: Param = <name: Ident> ":" <typ: Exp> => Param { name, typ } ;
+EqnParam : EqnParam = <name: Ident> ":" <eqn: Eqn> => EqnParam { name, eqn } ;
 
-OptParams: Vec<Param> = OptArgs<Param>;
-Params: Vec<Param> = Args<Param>;
+Params: Vec<Param> = ParenthesizedArgs<Param>;
+OptParams: Vec<Param> = OptParenthesizedArgs<Param>;
 
-OptTelescope: Telescope = <params: OptParams> => Telescope(params);
+EqnParams: Vec<EqnParam> = BracedArgs<EqnParam>;
+OptEqnParams: Vec<EqnParam> = OptBracedArgs<EqnParam>;
+
 Telescope: Telescope = <params: Params> => Telescope(params);
+OptTelescope: Telescope = <params: OptParams> => Telescope(params);
 
-OptSubst: Vec<Rc<Exp>> = OptArgs<Exp>;
-Subst: Vec<Rc<Exp>> = Args<Exp>;
+Args: Vec<Rc<Exp>> = ParenthesizedArgs<Exp>;
+OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
 
 // Program
 
@@ -70,7 +80,7 @@ Dtor: Dtor = {
 }
 
 pub Comatch : Comatch = {
-    "comatch" <cases: Comma<Case>> => Comatch { cases },
+    "comatch" <cases: Comma<Cocase>> => Comatch { cases },
 }
 
 pub Match : Match = {
@@ -78,25 +88,38 @@ pub Match : Match = {
 }
 
 pub Case : Case = {
-    <name: Ident> <args: OptTelescope> "=>" <body: Exp> => Case { name, args, body },
+    <name: Ident> <args: OptTelescope> <eqns: OptEqnParams> <body: AbsurdOrBody> => Case { name, args, eqns, body },
+}
+
+pub Cocase : Cocase = {
+    <name: Ident> <args: OptTelescope> <eqns: OptEqnParams> <body: AbsurdOrBody> => Cocase { name, args, eqns, body },
+}
+
+pub AbsurdOrBody: Option<Rc<Exp>> = {
+    "absurd" => None,
+    "=>" <body: Exp> => Some(body),
 }
 
 pub TypApp: TypApp = {
-    <name: Ident> <subst: OptSubst> => TypApp { name, subst },
+    <name: Ident> <args: OptArgs> => TypApp { name, args },
+}
+
+pub Eqn: Eqn = {
+    <lhs: Exp> "=" <rhs: Exp> => Eqn { lhs, rhs }
 }
 
 pub Exp: Rc<Exp> = {
-    <exp: Ops> ":" <typ: Exp> => Rc::new(Exp::Ano { exp, typ }),
+    <exp: Ops> ":" <typ: Exp> => Rc::new(Exp::Anno { exp, typ }),
     Ops,
 }
 
 pub Ops = {
-    <exp: Ops> "." <name: Ident> <subst: Subst> => Rc::new(Exp::DotCall { exp, name, subst }),
+    <exp: Ops> "." <name: Ident> <args: Args> => Rc::new(Exp::DotCall { exp, name, args }),
     App,
 }
 
 pub App = {
-    <name: Ident> <subst: Subst> => Rc::new(Exp::Call { name, subst }),
+    <name: Ident> <args: Args> => Rc::new(Exp::Call { name, args }),
     Builtins,
 }
 
@@ -107,7 +130,7 @@ pub Builtins: Rc<Exp> = {
 
 pub Atom: Rc<Exp> = {
     "(" <exp: Exp> ")" => exp,
-    <name: Ident> => Rc::new(Exp::Call { name, subst: Subst::new() }),
+    <name: Ident> => Rc::new(Exp::Call { name, args: Args::new() }),
 }
 
 // Names

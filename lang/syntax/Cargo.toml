@@ -7,6 +7,8 @@ edition = "2021"
 # serde
 serde = { version = "1", features = ["rc"], optional = true }
 serde_derive = { version = "1", optional = true }
+# workspace members
+data = { path = "../../util/data" }
 
 [features]
 default = ["use-serde"]
