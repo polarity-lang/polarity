@@ -1,5 +1,7 @@
 use lalrpop_util::lalrpop_mod;
 
+mod util;
+
 lalrpop_mod!(
     #[allow(clippy::all)]
     #[allow(dead_code)]

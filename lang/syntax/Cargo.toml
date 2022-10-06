@@ -7,6 +7,10 @@ edition = "2021"
 # serde
 serde = { version = "1", features = ["rc"], optional = true }
 serde_derive = { version = "1", optional = true }
+# source code locations
+codespan = "0.11"
+# ignoring fields when deriving traits (e.g. Eq, Hash)
+derivative = "2"
 # workspace members
 data = { path = "../../util/data" }
 

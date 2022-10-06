@@ -10,7 +10,7 @@ use std::rc::Rc;
 use data::HashSet;
 use syntax::ast::{self, Substitutable};
 use syntax::de_bruijn::*;
-use syntax::elab;
+use syntax::elab::{self, ElabInfoExt};
 use syntax::equiv::AlphaEq;
 use syntax::named::Named;
 use tracer::trace;
@@ -190,11 +190,16 @@ impl Infer for ast::Data {
     type Target = elab::Data;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::Data { name, typ, ctors } = self;
+        let ast::Data { info, name, typ, ctors } = self;
 
         let typ_out = (**typ).infer(ctx)?;
 
-        Ok(elab::Data { name: name.clone(), typ: typ_out, ctors: ctors.clone() })
+        Ok(elab::Data {
+            info: info.clone().into(),
+            name: name.clone(),
+            typ: typ_out,
+            ctors: ctors.clone(),
+        })
     }
 }
 
@@ -209,11 +214,16 @@ impl Infer for ast::Codata {
     type Target = elab::Codata;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::Codata { name, typ, dtors } = self;
+        let ast::Codata { info, name, typ, dtors } = self;
 
         let typ_out = (**typ).infer(ctx)?;
 
-        Ok(elab::Codata { name: name.clone(), typ: typ_out, dtors: dtors.clone() })
+        Ok(elab::Codata {
+            info: info.clone().into(),
+            name: name.clone(),
+            typ: typ_out,
+            dtors: dtors.clone(),
+        })
     }
 }
 
@@ -247,7 +257,7 @@ impl Infer for ast::Ctor {
     type Target = elab::Ctor;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::Ctor { name, params, typ } = self;
+        let ast::Ctor { info, name, params, typ } = self;
 
         // Check that the constructor lies in the data type it is defined in
         let expected = ctx.typ_for_xtor(name);
@@ -261,7 +271,12 @@ impl Infer for ast::Ctor {
         params.infer_telescope(ctx, |ctx, params_out| {
             let typ_out = typ.infer(ctx)?;
 
-            Ok(elab::Ctor { name: name.clone(), params: params_out, typ: typ_out })
+            Ok(elab::Ctor {
+                info: info.clone().into(),
+                name: name.clone(),
+                params: params_out,
+                typ: typ_out,
+            })
         })
     }
 }
@@ -280,7 +295,7 @@ impl Infer for ast::Dtor {
     type Target = elab::Dtor;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::Dtor { name, params, on_typ, in_typ } = self;
+        let ast::Dtor { info, name, params, on_typ, in_typ } = self;
 
         // Check that the destructor lies in the codata type it is defined in
         let expected = ctx.typ_for_xtor(name);
@@ -296,6 +311,7 @@ impl Infer for ast::Dtor {
             let in_typ_out = in_typ.infer(ctx)?;
 
             Ok(elab::Dtor {
+                info: info.clone().into(),
                 name: name.clone(),
                 params: params_out,
                 on_typ: on_typ_out,
@@ -319,13 +335,14 @@ impl Infer for ast::Def {
     type Target = elab::Def;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::Def { name, params, on_typ, in_typ, body } = self;
+        let ast::Def { info, name, params, on_typ, in_typ, body } = self;
 
         params.infer_telescope(ctx, |ctx, params_out| {
             let on_typ_out = on_typ.infer(ctx)?;
             let in_typ_out = in_typ.infer(ctx)?;
             let body_out = body.with_def(self).check(ctx, in_typ.clone())?;
             Ok(elab::Def {
+                info: info.clone().into(),
                 name: name.clone(),
                 params: params_out,
                 on_typ: on_typ_out,
@@ -349,12 +366,18 @@ impl Infer for ast::Codef {
     type Target = elab::Codef;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::Codef { name, params, typ, body } = self;
+        let ast::Codef { info, name, params, typ, body } = self;
 
         params.infer_telescope(ctx, |ctx, params_out| {
             let typ_out = typ.infer(ctx)?;
             let body_out = body.with_codef(self).infer(ctx)?;
-            Ok(elab::Codef { name: name.clone(), params: params_out, typ: typ_out, body: body_out })
+            Ok(elab::Codef {
+                info: info.clone().into(),
+                name: name.clone(),
+                params: params_out,
+                typ: typ_out,
+                body: body_out,
+            })
         })
     }
 }
@@ -375,7 +398,7 @@ impl<'a> Check for WithDef<'a, ast::Match> {
     type Target = elab::Match;
 
     fn check(&self, ctx: &mut Ctx, t: Rc<ast::Exp>) -> Result<Self::Target, TypeError> {
-        let ast::Match { cases } = &self.inner;
+        let ast::Match { info, cases } = &self.inner;
 
         // Check exhaustiveness
         let ctors_expected = ctx.xtors_for_typ(ctx.typ_for_xtor(&self.def.name));
@@ -424,7 +447,7 @@ impl<'a> Check for WithDef<'a, ast::Match> {
             })
             .collect::<Result<_, _>>()?;
 
-        Ok(elab::Match { cases: cases_out })
+        Ok(elab::Match { info: info.clone().into(), cases: cases_out })
     }
 }
 
@@ -444,7 +467,7 @@ impl<'a> Infer for WithCodef<'a, ast::Comatch> {
     type Target = elab::Comatch;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::Comatch { cases } = &self.inner;
+        let ast::Comatch { info, cases } = &self.inner;
 
         // Check exhaustiveness
         let dtors_expected = ctx.xtors_for_typ(ctx.typ_for_xtor(&self.codef.name));
@@ -495,7 +518,7 @@ impl<'a> Infer for WithCodef<'a, ast::Comatch> {
             })
             .collect::<Result<_, _>>()?;
 
-        Ok(elab::Comatch { cases: cases_out })
+        Ok(elab::Comatch { info: info.clone().into(), cases: cases_out })
     }
 }
 
@@ -517,7 +540,7 @@ impl<'a> Check for WithEqns<'a, ast::Case> {
 
     #[trace("{} |- {:P} <= {:P}", ctx, self.inner, t)]
     fn check(&self, ctx: &mut Ctx, t: Rc<ast::Exp>) -> Result<Self::Target, TypeError> {
-        let ast::Case { name, args, body, eqns: eqns_anno } = self.inner;
+        let ast::Case { info, name, args, body, eqns: eqns_anno } = self.inner;
         let ast::Ctor { name, params, .. } = &*ctx.ctor(name);
 
         args.check_telescope(ctx, params, |ctx, args_out| {
@@ -553,6 +576,7 @@ impl<'a> Check for WithEqns<'a, ast::Case> {
                 };
 
                 Ok(elab::Case {
+                    info: info.clone().into(),
                     name: name.clone(),
                     args: args_out,
                     eqns: eqns_out,
@@ -581,7 +605,7 @@ impl<'a> Check for WithEqns<'a, ast::Cocase> {
 
     #[trace("{} |- {:P} <= {:P}", ctx, self.inner, t)]
     fn check(&self, ctx: &mut Ctx, t: Rc<ast::Exp>) -> Result<Self::Target, TypeError> {
-        let ast::Cocase { name, args, body, eqns: eqns_anno } = self.inner;
+        let ast::Cocase { info, name, args, body, eqns: eqns_anno } = self.inner;
         let ast::Dtor { name, params, .. } = &*ctx.dtor(name);
 
         args.check_telescope(ctx, params, |ctx, args_out| {
@@ -617,6 +641,7 @@ impl<'a> Check for WithEqns<'a, ast::Cocase> {
                 };
 
                 Ok(elab::Cocase {
+                    info: info.clone().into(),
                     name: name.clone(),
                     args: args_out,
                     eqns: eqns_out,
@@ -693,35 +718,35 @@ impl Infer for ast::Exp {
     #[trace("{} |- {:P} => {return:P}", ctx, self, |ret| ret.as_ref().map(|e| e.typ()))]
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         match self {
-            ast::Exp::Var { idx } => {
+            ast::Exp::Var { info, idx } => {
                 let typ = ctx.bound(*idx);
-                Ok(elab::Exp::Var { info: typ.into(), idx: *idx })
+                Ok(elab::Exp::Var { info: info.with_type(typ), idx: *idx })
             }
-            ast::Exp::TypCtor { name, args } => {
+            ast::Exp::TypCtor { info, name, args } => {
                 let ast::TypAbs { params } = &*ctx.typ(name);
 
                 let args_out = args.check_args(ctx, params)?;
 
                 Ok(elab::Exp::TyCtor {
-                    info: Rc::new(ast::Exp::Type).into(),
+                    info: info.with_type(Rc::new(ast::Exp::Type { info: ast::Info::empty() })),
                     name: name.clone(),
                     args: args_out,
                 })
             }
-            ast::Exp::Ctor { name, args } => {
-                let ast::Ctor { name, params, typ } = &*ctx.ctor(name);
+            ast::Exp::Ctor { info, name, args } => {
+                let ast::Ctor { name, params, typ, .. } = &*ctx.ctor(name);
 
                 let args_out = args.check_args(ctx, params)?;
                 let typ_out = typ.subst_under_telescope(params, args).to_exp();
 
                 Ok(elab::Exp::Ctor {
-                    info: Rc::new(typ_out).into(),
+                    info: info.with_type(Rc::new(typ_out)),
                     name: name.clone(),
                     args: args_out,
                 })
             }
-            ast::Exp::Dtor { exp, name, args } => {
-                let ast::Dtor { name, params, on_typ, in_typ } = &*ctx.dtor(name);
+            ast::Exp::Dtor { info, exp, name, args } => {
+                let ast::Dtor { name, params, on_typ, in_typ, .. } = &*ctx.dtor(name);
 
                 let args_out = args.check_args(ctx, params)?;
 
@@ -731,22 +756,25 @@ impl Infer for ast::Exp {
                 let exp_out = exp.check(ctx, Rc::new(on_typ_out.to_exp()))?;
 
                 Ok(elab::Exp::Dtor {
-                    info: typ_out.into(),
+                    info: info.with_type(typ_out),
                     exp: exp_out,
                     name: name.clone(),
                     args: args_out,
                 })
             }
-            ast::Exp::Anno { exp, typ } => {
-                let typ_out = typ.check(ctx, Rc::new(ast::Exp::Type))?;
+            ast::Exp::Anno { info, exp, typ } => {
+                let typ_out =
+                    typ.check(ctx, Rc::new(ast::Exp::Type { info: ast::Info::empty() }))?;
                 let exp_out = (**exp).check(ctx, typ.clone())?;
                 Ok(elab::Exp::Anno {
-                    info: typ.clone().into(),
+                    info: info.with_type(typ.clone()),
                     exp: Rc::new(exp_out),
                     typ: typ_out,
                 })
             }
-            ast::Exp::Type => Ok(elab::Exp::Type { info: Rc::new(ast::Exp::Type).into() }),
+            ast::Exp::Type { info } => Ok(elab::Exp::Type {
+                info: info.with_type(Rc::new(ast::Exp::Type { info: ast::Info::empty() })),
+            }),
         }
     }
 }
@@ -761,11 +789,11 @@ impl Infer for ast::TypApp {
     type Target = elab::TypApp;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::TypApp { name, args } = self;
+        let ast::TypApp { info, name, args } = self;
         let ast::TypAbs { params } = &*ctx.typ(name);
 
         let args_out = args.check_args(ctx, params)?;
-        Ok(elab::TypApp { name: name.clone(), args: args_out })
+        Ok(elab::TypApp { info: info.clone().into(), name: name.clone(), args: args_out })
     }
 }
 
@@ -779,12 +807,12 @@ impl Infer for ast::Eqn {
     type Target = elab::Eqn;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::Eqn { lhs, rhs } = self;
+        let ast::Eqn { info, lhs, rhs } = self;
 
         let lhs_out = lhs.infer(ctx)?;
         let rhs_out = rhs.infer(ctx)?;
 
-        Ok(elab::Eqn { lhs: lhs_out, rhs: rhs_out })
+        Ok(elab::Eqn { info: info.clone().into(), lhs: lhs_out, rhs: rhs_out })
     }
 }
 
@@ -892,7 +920,8 @@ impl CheckTelescope for ast::Telescope {
                 let ast::Param { typ: typ_expected, .. } = param_expected;
                 let mut params_out = params_out?;
                 typ_actual.convert(typ_expected)?;
-                let typ_out = typ_actual.check(ctx, Rc::new(ast::Exp::Type))?;
+                let typ_out =
+                    typ_actual.check(ctx, Rc::new(ast::Exp::Type { info: ast::Info::empty() }))?;
                 let param_out = elab::Param { name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
                 Ok(params_out)
@@ -998,7 +1027,7 @@ impl Typed for elab::Exp {
 impl Typed for &syntax::ast::Eqn {
     fn typ(&self) -> Rc<ast::Exp> {
         // TODO: Record an appropriate type
-        Rc::new(ast::Exp::Type)
+        Rc::new(ast::Exp::Type { info: ast::Info::empty() })
     }
 }
 

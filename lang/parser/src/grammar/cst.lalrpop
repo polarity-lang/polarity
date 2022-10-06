@@ -2,6 +2,8 @@ use std::rc::Rc;
 
 use syntax::cst::*;
 
+use super::util::span;
+
 #[LALR]
 grammar;
 
@@ -65,34 +67,34 @@ pub Prg: Prg = {
 }
 
 pub Decl: Decl = {
-    "data" <name: Ident> <params: OptTelescope> ":" "Type" ":=" <ctors: Comma<Ctor>> => Decl::Data(Data { name, params, ctors }),
-    "codata" <name: Ident> <params: OptTelescope> ":" "Type" ":=" <dtors: Comma<Dtor>> => Decl::Codata(Codata { name, params, dtors }),
-    "def" <on_typ: TypApp> "." <name: Ident> <params: Telescope> ":" <in_typ: Exp> ":=" <body: Match> => Decl::Def(Def { name, params, on_typ, in_typ, body }),
-    "codef" <name: Ident> <params: Telescope> ":" <typ: TypApp> ":=" <body: Comatch> => Decl::Codef(Codef { name, params, typ, body }),
+    <l: @L> "data" <name: Ident> <params: OptTelescope> ":" "Type" ":=" <ctors: Comma<Ctor>> <r: @R> => Decl::Data(Data { info: span(l, r), name, params, ctors }),
+    <l: @L> "codata" <name: Ident> <params: OptTelescope> ":" "Type" ":=" <dtors: Comma<Dtor>> <r: @R> => Decl::Codata(Codata { info: span(l, r), name, params, dtors }),
+    <l: @L> "def" <on_typ: TypApp> "." <name: Ident> <params: Telescope> ":" <in_typ: Exp> ":=" <body: Match> <r: @R> => Decl::Def(Def { info: span(l, r), name, params, on_typ, in_typ, body }),
+    <l: @L> "codef" <name: Ident> <params: Telescope> ":" <typ: TypApp> ":=" <body: Comatch> <r: @R> => Decl::Codef(Codef { info: span(l, r), name, params, typ, body }),
 }
 
 Ctor: Ctor = {
-    <name: Ident> <params: OptTelescope> ":" <typ: TypApp> => Ctor { name, params, typ },
+    <l: @L> <name: Ident> <params: OptTelescope> ":" <typ: TypApp> <r: @R> => Ctor { info: span(l, r), name, params, typ },
 }
 
 Dtor: Dtor = {
-    <on_typ: TypApp> "." <name: Ident> <params: OptTelescope> ":" <in_typ: Exp> => Dtor { name, params, on_typ, in_typ },
+    <l: @L> <on_typ: TypApp> "." <name: Ident> <params: OptTelescope> ":" <in_typ: Exp> <r: @R> => Dtor { info: span(l, r), name, params, on_typ, in_typ },
 }
 
 pub Comatch : Comatch = {
-    "comatch" <cases: Comma<Cocase>> => Comatch { cases },
+    <l: @L> "comatch" <cases: Comma<Cocase>> <r: @R> => Comatch { info: span(l, r), cases },
 }
 
 pub Match : Match = {
-    "match" <cases: Comma<Case>> => Match { cases },
+    <l: @L> "match" <cases: Comma<Case>> <r: @R> => Match { info: span(l, r), cases },
 }
 
 pub Case : Case = {
-    <name: Ident> <args: OptTelescope> <eqns: OptEqnParams> <body: AbsurdOrBody> => Case { name, args, eqns, body },
+    <l: @L> <name: Ident> <args: OptTelescope> <eqns: OptEqnParams> <body: AbsurdOrBody> <r: @R> => Case { info: span(l, r), name, args, eqns, body },
 }
 
 pub Cocase : Cocase = {
-    <name: Ident> <args: OptTelescope> <eqns: OptEqnParams> <body: AbsurdOrBody> => Cocase { name, args, eqns, body },
+    <l: @L> <name: Ident> <args: OptTelescope> <eqns: OptEqnParams> <body: AbsurdOrBody> <r: @R> => Cocase { info: span(l, r), name, args, eqns, body },
 }
 
 pub AbsurdOrBody: Option<Rc<Exp>> = {
@@ -101,36 +103,36 @@ pub AbsurdOrBody: Option<Rc<Exp>> = {
 }
 
 pub TypApp: TypApp = {
-    <name: Ident> <args: OptArgs> => TypApp { name, args },
+    <l: @L> <name: Ident> <args: OptArgs> <r: @R> => TypApp { info: span(l, r), name, args },
 }
 
 pub Eqn: Eqn = {
-    <lhs: Exp> "=" <rhs: Exp> => Eqn { lhs, rhs }
+    <l: @L> <lhs: Exp> "=" <rhs: Exp> <r: @R> => Eqn { info: span(l, r), lhs, rhs }
 }
 
 pub Exp: Rc<Exp> = {
-    <exp: Ops> ":" <typ: Exp> => Rc::new(Exp::Anno { exp, typ }),
+    <l: @L> <exp: Ops> ":" <typ: Exp> <r: @R> => Rc::new(Exp::Anno { info: span(l, r), exp, typ }),
     Ops,
 }
 
 pub Ops = {
-    <exp: Ops> "." <name: Ident> <args: Args> => Rc::new(Exp::DotCall { exp, name, args }),
+    <l: @L> <exp: Ops> "." <name: Ident> <args: Args> <r: @R> => Rc::new(Exp::DotCall { info: span(l, r), exp, name, args }),
     App,
 }
 
 pub App = {
-    <name: Ident> <args: Args> => Rc::new(Exp::Call { name, args }),
+    <l: @L> <name: Ident> <args: Args> <r: @R> => Rc::new(Exp::Call { info: span(l, r), name, args }),
     Builtins,
 }
 
 pub Builtins: Rc<Exp> = {
-    "Type" => Rc::new(Exp::Type),
+    <l: @L>"Type" <r: @R> => Rc::new(Exp::Type { info: span(l, r) }),
     Atom,
 }
 
 pub Atom: Rc<Exp> = {
     "(" <exp: Exp> ")" => exp,
-    <name: Ident> => Rc::new(Exp::Call { name, args: Args::new() }),
+    <l: @L> <name: Ident> <r: @R> => Rc::new(Exp::Call { info: span(l, r), name, args: Args::new() }),
 }
 
 // Names

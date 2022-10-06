@@ -40,33 +40,40 @@ pub trait SubstTelescope {
 impl Substitutable for Rc<Exp> {
     fn subst<L: Leveled, S: Substitution>(&self, lvl: &L, by: &S) -> Self {
         match &**self {
-            Exp::Var { idx } => match by.get(lvl.relative(*idx)) {
+            Exp::Var { info, idx } => match by.get(lvl.relative(*idx)) {
                 Some(exp) => exp,
-                None => Rc::new(Exp::Var { idx: *idx }),
+                None => Rc::new(Exp::Var { info: info.clone(), idx: *idx }),
             },
-            Exp::TypCtor { name, args: subst } => {
-                Rc::new(Exp::TypCtor { name: name.clone(), args: subst.subst(lvl, by) })
-            }
-            Exp::Ctor { name, args: subst } => {
-                Rc::new(Exp::Ctor { name: name.clone(), args: subst.subst(lvl, by) })
-            }
-            Exp::Dtor { exp, name, args: subst } => Rc::new(Exp::Dtor {
+            Exp::TypCtor { info, name, args: subst } => Rc::new(Exp::TypCtor {
+                info: info.clone(),
+                name: name.clone(),
+                args: subst.subst(lvl, by),
+            }),
+            Exp::Ctor { info, name, args: subst } => Rc::new(Exp::Ctor {
+                info: info.clone(),
+                name: name.clone(),
+                args: subst.subst(lvl, by),
+            }),
+            Exp::Dtor { info, exp, name, args: subst } => Rc::new(Exp::Dtor {
+                info: info.clone(),
                 exp: exp.subst(lvl, by),
                 name: name.clone(),
                 args: subst.subst(lvl, by),
             }),
-            Exp::Anno { exp, typ } => {
-                Rc::new(Exp::Anno { exp: exp.subst(lvl, by), typ: typ.subst(lvl, by) })
-            }
-            Exp::Type => Rc::new(Exp::Type),
+            Exp::Anno { info, exp, typ } => Rc::new(Exp::Anno {
+                info: info.clone(),
+                exp: exp.subst(lvl, by),
+                typ: typ.subst(lvl, by),
+            }),
+            Exp::Type { info } => Rc::new(Exp::Type { info: info.clone() }),
         }
     }
 }
 
 impl Substitutable for TypApp {
     fn subst<L: Leveled, S: Substitution>(&self, lvl: &L, by: &S) -> Self {
-        let TypApp { name, args: subst } = self;
-        TypApp { name: name.clone(), args: subst.subst(lvl, by) }
+        let TypApp { info, name, args: subst } = self;
+        TypApp { info: info.clone(), name: name.clone(), args: subst.subst(lvl, by) }
     }
 }
 

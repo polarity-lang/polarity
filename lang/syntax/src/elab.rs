@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use codespan::Span;
 use data::HashMap;
 
 use super::ast;
@@ -38,6 +39,7 @@ pub enum Decl {
 
 #[derive(Debug, Clone)]
 pub struct Data {
+    pub info: Info,
     pub name: Ident,
     pub typ: TypAbs,
     pub ctors: Vec<Ident>,
@@ -45,6 +47,7 @@ pub struct Data {
 
 #[derive(Debug, Clone)]
 pub struct Codata {
+    pub info: Info,
     pub name: Ident,
     pub typ: TypAbs,
     pub dtors: Vec<Ident>,
@@ -57,6 +60,7 @@ pub struct TypAbs {
 
 #[derive(Debug, Clone)]
 pub struct Ctor {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub typ: TypApp,
@@ -64,6 +68,7 @@ pub struct Ctor {
 
 #[derive(Debug, Clone)]
 pub struct Dtor {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub on_typ: TypApp,
@@ -72,6 +77,7 @@ pub struct Dtor {
 
 #[derive(Debug, Clone)]
 pub struct Def {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub on_typ: TypApp,
@@ -81,6 +87,7 @@ pub struct Def {
 
 #[derive(Debug, Clone)]
 pub struct Codef {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub typ: TypApp,
@@ -89,17 +96,20 @@ pub struct Codef {
 
 #[derive(Debug, Clone)]
 pub struct Match {
+    pub info: Info,
     pub cases: Vec<Case>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Comatch {
+    pub info: Info,
     // TODO: Consider renaming this field to "cocases"
     pub cases: Vec<Cocase>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Case {
+    pub info: Info,
     pub name: Ident,
     pub args: Telescope,
     pub eqns: Eqns,
@@ -109,6 +119,7 @@ pub struct Case {
 
 #[derive(Debug, Clone)]
 pub struct Cocase {
+    pub info: Info,
     pub name: Ident,
     pub args: Telescope,
     pub eqns: Eqns,
@@ -118,24 +129,26 @@ pub struct Cocase {
 
 #[derive(Debug, Clone)]
 pub struct Eqn {
+    pub info: Info,
     pub lhs: Rc<Exp>,
     pub rhs: Rc<Exp>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TypApp {
+    pub info: Info,
     pub name: Ident,
     pub args: Args,
 }
 
 #[derive(Debug, Clone)]
 pub enum Exp {
-    Var { info: Info, idx: Idx },
-    TyCtor { info: Info, name: Ident, args: Args },
-    Ctor { info: Info, name: Ident, args: Args },
-    Dtor { info: Info, exp: Rc<Exp>, name: Ident, args: Args },
-    Anno { info: Info, exp: Rc<Exp>, typ: Rc<Exp> },
-    Type { info: Info },
+    Var { info: TypedInfo, idx: Idx },
+    TyCtor { info: TypedInfo, name: Ident, args: Args },
+    Ctor { info: TypedInfo, name: Ident, args: Args },
+    Dtor { info: TypedInfo, exp: Rc<Exp>, name: Ident, args: Args },
+    Anno { info: TypedInfo, exp: Rc<Exp>, typ: Rc<Exp> },
+    Type { info: TypedInfo },
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope
@@ -167,21 +180,25 @@ pub struct EqnParam {
 
 #[derive(Debug, Clone)]
 pub struct Info {
-    pub typ: Rc<ast::Exp>,
+    pub span: Option<Span>,
 }
 
-impl From<Rc<ast::Exp>> for Info {
+#[derive(Debug, Clone)]
+pub struct TypedInfo {
+    pub typ: Rc<ast::Exp>,
+    pub span: Option<Span>,
+}
+
+impl From<Rc<ast::Exp>> for TypedInfo {
     fn from(typ: Rc<ast::Exp>) -> Self {
-        Info { typ }
+        TypedInfo { span: typ.span().cloned(), typ }
     }
 }
 
-pub trait HasInfo {
-    fn info(&self) -> &Info;
-}
-
 impl HasInfo for Exp {
-    fn info(&self) -> &Info {
+    type Info = TypedInfo;
+
+    fn info(&self) -> &Self::Info {
         match self {
             Exp::Var { info, .. } => info,
             Exp::TyCtor { info, .. } => info,
@@ -191,14 +208,34 @@ impl HasInfo for Exp {
             Exp::Type { info } => info,
         }
     }
+
+    fn span(&self) -> Option<&Span> {
+        self.info().span.as_ref()
+    }
 }
 
 pub trait HasType {
     fn typ(&self) -> &Rc<ast::Exp>;
 }
 
-impl<T: HasInfo> HasType for T {
+impl<T: HasInfo<Info = TypedInfo>> HasType for T {
     fn typ(&self) -> &Rc<ast::Exp> {
         &self.info().typ
+    }
+}
+
+impl From<ast::Info> for Info {
+    fn from(info: ast::Info) -> Self {
+        Self { span: info.span }
+    }
+}
+
+pub trait ElabInfoExt {
+    fn with_type(&self, typ: Rc<ast::Exp>) -> TypedInfo;
+}
+
+impl ElabInfoExt for ast::Info {
+    fn with_type(&self, typ: Rc<ast::Exp>) -> TypedInfo {
+        TypedInfo { typ, span: self.span }
     }
 }

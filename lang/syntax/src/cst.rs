@@ -1,5 +1,8 @@
 use std::rc::Rc;
 
+use codespan::ByteIndex;
+use codespan::Span;
+
 use super::common::*;
 use super::de_bruijn::*;
 
@@ -19,6 +22,7 @@ pub enum Decl {
 
 #[derive(Debug, Clone)]
 pub struct Data {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub ctors: Vec<Ctor>,
@@ -26,6 +30,7 @@ pub struct Data {
 
 #[derive(Debug, Clone)]
 pub struct Codata {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub dtors: Vec<Dtor>,
@@ -33,6 +38,7 @@ pub struct Codata {
 
 #[derive(Debug, Clone)]
 pub struct Ctor {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub typ: TypApp,
@@ -40,6 +46,7 @@ pub struct Ctor {
 
 #[derive(Debug, Clone)]
 pub struct Dtor {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub on_typ: TypApp,
@@ -48,6 +55,7 @@ pub struct Dtor {
 
 #[derive(Debug, Clone)]
 pub struct Def {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub on_typ: TypApp,
@@ -57,6 +65,7 @@ pub struct Def {
 
 #[derive(Debug, Clone)]
 pub struct Codef {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub typ: TypApp,
@@ -65,16 +74,19 @@ pub struct Codef {
 
 #[derive(Debug, Clone)]
 pub struct Match {
+    pub info: Info,
     pub cases: Vec<Case>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Comatch {
+    pub info: Info,
     pub cases: Vec<Cocase>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Case {
+    pub info: Info,
     pub name: Ident,
     pub args: Telescope,
     pub eqns: EqnParams,
@@ -84,6 +96,7 @@ pub struct Case {
 
 #[derive(Debug, Clone)]
 pub struct Cocase {
+    pub info: Info,
     pub name: Ident,
     pub args: Telescope,
     pub eqns: EqnParams,
@@ -93,22 +106,24 @@ pub struct Cocase {
 
 #[derive(Debug, Clone)]
 pub struct Eqn {
+    pub info: Info,
     pub lhs: Rc<Exp>,
     pub rhs: Rc<Exp>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TypApp {
+    pub info: Info,
     pub name: Ident,
     pub args: Args,
 }
 
 #[derive(Debug, Clone)]
 pub enum Exp {
-    Call { name: Ident, args: Args },
-    DotCall { exp: Rc<Exp>, name: Ident, args: Args },
-    Anno { exp: Rc<Exp>, typ: Rc<Exp> },
-    Type,
+    Call { info: Info, name: Ident, args: Args },
+    DotCall { info: Info, exp: Rc<Exp>, name: Ident, args: Args },
+    Anno { info: Info, exp: Rc<Exp>, typ: Rc<Exp> },
+    Type { info: Info },
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope
@@ -137,4 +152,15 @@ pub struct EqnParam {
 pub enum Var {
     Bound(Idx),
     Free(Ident),
+}
+
+#[derive(Debug, Clone)]
+pub struct Info {
+    pub span: Span,
+}
+
+impl Info {
+    pub fn spanned<I: Into<ByteIndex>>(l: I, r: I) -> Self {
+        Self { span: Span::new(l, r) }
+    }
 }

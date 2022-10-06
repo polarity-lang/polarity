@@ -7,6 +7,12 @@ pub trait Lower {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError>;
 }
 
+pub trait LowerPure {
+    type Target;
+
+    fn lower_pure(&self) -> Self::Target;
+}
+
 pub trait LowerParams {
     type Target;
 

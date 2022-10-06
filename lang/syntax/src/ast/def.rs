@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
+use codespan::Span;
 use data::HashMap;
+use derivative::Derivative;
 
 use crate::common::*;
 use crate::de_bruijn::*;
@@ -37,6 +39,7 @@ pub enum Decl {
 
 #[derive(Debug, Clone)]
 pub struct Data {
+    pub info: Info,
     pub name: Ident,
     pub typ: Rc<TypAbs>,
     pub ctors: Vec<Ident>,
@@ -44,6 +47,7 @@ pub struct Data {
 
 #[derive(Debug, Clone)]
 pub struct Codata {
+    pub info: Info,
     pub name: Ident,
     pub typ: Rc<TypAbs>,
     pub dtors: Vec<Ident>,
@@ -56,6 +60,7 @@ pub struct TypAbs {
 
 #[derive(Debug, Clone)]
 pub struct Ctor {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub typ: TypApp,
@@ -63,6 +68,7 @@ pub struct Ctor {
 
 #[derive(Debug, Clone)]
 pub struct Dtor {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub on_typ: TypApp,
@@ -71,6 +77,7 @@ pub struct Dtor {
 
 #[derive(Debug, Clone)]
 pub struct Def {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub on_typ: TypApp,
@@ -81,6 +88,7 @@ pub struct Def {
 impl Def {
     pub fn to_dtor(&self) -> Dtor {
         Dtor {
+            info: self.info.clone(),
             name: self.name.clone(),
             params: self.params.clone(),
             on_typ: self.on_typ.clone(),
@@ -91,6 +99,7 @@ impl Def {
 
 #[derive(Debug, Clone)]
 pub struct Codef {
+    pub info: Info,
     pub name: Ident,
     pub params: Telescope,
     pub typ: TypApp,
@@ -99,22 +108,30 @@ pub struct Codef {
 
 impl Codef {
     pub fn to_ctor(&self) -> Ctor {
-        Ctor { name: self.name.clone(), params: self.params.clone(), typ: self.typ.clone() }
+        Ctor {
+            info: self.info.clone(),
+            name: self.name.clone(),
+            params: self.params.clone(),
+            typ: self.typ.clone(),
+        }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct Match {
+    pub info: Info,
     pub cases: Vec<Case>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Comatch {
+    pub info: Info,
     pub cases: Vec<Cocase>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Case {
+    pub info: Info,
     pub name: Ident,
     pub args: Telescope,
     pub eqns: EqnParams,
@@ -124,6 +141,7 @@ pub struct Case {
 
 #[derive(Debug, Clone)]
 pub struct Cocase {
+    pub info: Info,
     pub name: Ident,
     pub args: Telescope,
     pub eqns: EqnParams,
@@ -131,38 +149,71 @@ pub struct Cocase {
     pub body: Option<Rc<Exp>>,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
 pub struct Eqn {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: Info,
     pub lhs: Rc<Exp>,
     pub rhs: Rc<Exp>,
 }
 
 impl From<(Rc<Exp>, Rc<Exp>)> for Eqn {
     fn from((lhs, rhs): (Rc<Exp>, Rc<Exp>)) -> Self {
-        Eqn { lhs, rhs }
+        Eqn { info: Info::empty(), lhs, rhs }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct TypApp {
+    pub info: Info,
     pub name: Ident,
     pub args: Args,
 }
 
 impl TypApp {
     pub fn to_exp(&self) -> Exp {
-        Exp::TypCtor { name: self.name.clone(), args: self.args.clone() }
+        Exp::TypCtor { info: self.info.clone(), name: self.name.clone(), args: self.args.clone() }
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
 pub enum Exp {
-    Var { idx: Idx },
-    TypCtor { name: Ident, args: Args },
-    Ctor { name: Ident, args: Args },
-    Dtor { exp: Rc<Exp>, name: Ident, args: Args },
-    Anno { exp: Rc<Exp>, typ: Rc<Exp> },
-    Type,
+    Var {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: Info,
+        idx: Idx,
+    },
+    TypCtor {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: Info,
+        name: Ident,
+        args: Args,
+    },
+    Ctor {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: Info,
+        name: Ident,
+        args: Args,
+    },
+    Dtor {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: Info,
+        exp: Rc<Exp>,
+        name: Ident,
+        args: Args,
+    },
+    Anno {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: Info,
+        exp: Rc<Exp>,
+        typ: Rc<Exp>,
+    },
+    Type {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: Info,
+    },
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope
@@ -195,4 +246,15 @@ pub struct Param {
 pub struct EqnParam {
     pub name: Ident,
     pub eqn: Eqn,
+}
+
+#[derive(Debug, Clone)]
+pub struct Info {
+    pub span: Option<Span>,
+}
+
+impl Info {
+    pub fn empty() -> Self {
+        Self { span: None }
+    }
 }

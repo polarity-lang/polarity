@@ -51,7 +51,7 @@ impl<'a> PrintInCtx<'a> for Data {
     type Ctx = Decls;
 
     fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Data { name, typ, ctors } = self;
+        let Data { info: _, name, typ, ctors } = self;
 
         let head = alloc
             .keyword(DATA)
@@ -82,7 +82,7 @@ impl<'a> PrintInCtx<'a> for Codata {
     type Ctx = Decls;
 
     fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codata { name, typ, dtors } = self;
+        let Codata { info: _, name, typ, dtors } = self;
         let head = alloc
             .keyword(CODATA)
             .append(alloc.space())
@@ -110,7 +110,7 @@ impl<'a> PrintInCtx<'a> for Codata {
 
 impl<'a> Print<'a> for Def {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { name, params, on_typ, in_typ, body } = self;
+        let Def { info: _, name, params, on_typ, in_typ, body } = self;
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
@@ -133,7 +133,7 @@ impl<'a> Print<'a> for Def {
 
 impl<'a> Print<'a> for Codef {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codef { name, params, typ, body } = self;
+        let Codef { info: _, name, params, typ, body } = self;
         let head = alloc
             .keyword(CODEF)
             .append(alloc.space())
@@ -154,7 +154,7 @@ impl<'a> Print<'a> for Codef {
 
 impl<'a> Print<'a> for Ctor {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Ctor { name, params, typ } = self;
+        let Ctor { info: _, name, params, typ } = self;
         alloc
             .ctor(name)
             .append(params.print(alloc))
@@ -167,7 +167,7 @@ impl<'a> Print<'a> for Ctor {
 
 impl<'a> Print<'a> for Dtor {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Dtor { name, params, on_typ, in_typ } = self;
+        let Dtor { info: _, name, params, on_typ, in_typ } = self;
         on_typ
             .print(alloc)
             .append(DOT)
@@ -182,7 +182,7 @@ impl<'a> Print<'a> for Dtor {
 
 impl<'a> Print<'a> for Comatch {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Comatch { cases } = self;
+        let Comatch { info: _, cases } = self;
         let head = alloc.keyword(COMATCH);
 
         let sep = alloc.text(COMMA).append(alloc.hardline());
@@ -197,7 +197,7 @@ impl<'a> Print<'a> for Comatch {
 
 impl<'a> Print<'a> for Match {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Match { cases } = self;
+        let Match { info: _, cases } = self;
         let head = alloc.keyword(MATCH);
 
         let sep = alloc.text(COMMA).append(alloc.hardline());
@@ -212,7 +212,7 @@ impl<'a> Print<'a> for Match {
 
 impl<'a> Print<'a> for Case {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Case { name, args, eqns, body } = self;
+        let Case { info: _, name, args, eqns, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -232,7 +232,7 @@ impl<'a> Print<'a> for Case {
 
 impl<'a> Print<'a> for Cocase {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Cocase { name, args, eqns, body } = self;
+        let Cocase { info: _, name, args, eqns, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -272,14 +272,14 @@ impl<'a> Print<'a> for EqnParam {
 
 impl<'a> Print<'a> for TypApp {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let TypApp { name, args: subst } = self;
+        let TypApp { info: _, name, args: subst } = self;
         alloc.typ(name).append(subst.print(alloc).parens())
     }
 }
 
 impl<'a> Print<'a> for Eqn {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Eqn { lhs, rhs } = self;
+        let Eqn { info: _, lhs, rhs } = self;
         lhs.print(alloc)
             .append(alloc.space())
             .append(EQ)
@@ -291,20 +291,22 @@ impl<'a> Print<'a> for Eqn {
 impl<'a> Print<'a> for Exp {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Exp::Var { idx } => idx.print(alloc),
-            Exp::TypCtor { name, args: subst } => {
+            Exp::Var { info: _, idx } => idx.print(alloc),
+            Exp::TypCtor { info: _, name, args: subst } => {
                 alloc.typ(name).append(subst.print(alloc).parens())
             }
-            Exp::Ctor { name, args: subst } => alloc.ctor(name).append(subst.print(alloc).parens()),
-            Exp::Dtor { exp, name, args: subst } => exp
+            Exp::Ctor { info: _, name, args: subst } => {
+                alloc.ctor(name).append(subst.print(alloc).parens())
+            }
+            Exp::Dtor { info: _, exp, name, args: subst } => exp
                 .print(alloc)
                 .append(DOT)
                 .append(alloc.dtor(name))
                 .append(subst.print(alloc).parens()),
-            Exp::Anno { exp, typ } => {
+            Exp::Anno { info: _, exp, typ } => {
                 exp.print(alloc).parens().append(COLON).append(typ.print(alloc))
             }
-            Exp::Type => alloc.typ(TYPE),
+            Exp::Type { info: _ } => alloc.typ(TYPE),
         }
     }
 }

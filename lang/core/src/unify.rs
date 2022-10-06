@@ -76,30 +76,37 @@ impl<'l, L: Leveled> Ctx<'l, L> {
     fn unify_eqn(&mut self, eqn: &ast::Eqn) -> Result<Dec, UnifyError> {
         use ast::Exp::*;
 
-        let ast::Eqn { lhs, rhs } = eqn;
+        let ast::Eqn { lhs, rhs, .. } = eqn;
         // FIXME: This is only temporary (not compatible with xfunc in general)
         if lhs.alpha_eq(rhs) {
             return Ok(Yes(()));
         }
         match (&**lhs, &**rhs) {
-            (Var { idx }, _) => self.add_assignment(*idx, rhs.clone()),
-            (_, Var { idx }) => self.add_assignment(*idx, lhs.clone()),
-            (TypCtor { name, args: subst }, TypCtor { name: name2, args: subst2 })
+            (Var { idx, .. }, _) => self.add_assignment(*idx, rhs.clone()),
+            (_, Var { idx, .. }) => self.add_assignment(*idx, lhs.clone()),
+            (TypCtor { name, args: subst, .. }, TypCtor { name: name2, args: subst2, .. })
                 if name == name2 =>
             {
                 self.unify_args(subst, subst2)
             }
-            (Ctor { name, args: subst }, Ctor { name: name2, args: subst2 }) if name == name2 => {
+            (Ctor { name, args: subst, .. }, Ctor { name: name2, args: subst2, .. })
+                if name == name2 =>
+            {
                 self.unify_args(subst, subst2)
             }
             (Ctor { name, .. }, Ctor { name: name2, .. }) if name != name2 => Ok(No(())),
-            (Dtor { exp, name, args: subst }, Dtor { exp: exp2, name: name2, args: subst2 })
-                if name == name2 =>
-            {
-                self.add_equation(ast::Eqn { lhs: exp.clone(), rhs: exp2.clone() })?;
+            (
+                Dtor { exp, name, args: subst, .. },
+                Dtor { exp: exp2, name: name2, args: subst2, .. },
+            ) if name == name2 => {
+                self.add_equation(ast::Eqn {
+                    info: ast::Info::empty(),
+                    lhs: exp.clone(),
+                    rhs: exp2.clone(),
+                })?;
                 self.unify_args(subst, subst2)
             }
-            (Type, Type) => Ok(Yes(())),
+            (Type { .. }, Type { .. }) => Ok(Yes(())),
             (Anno { .. }, _) => Err(UnifyError::UnsupportedAnnotation { exp: lhs.clone() }),
             (_, Anno { .. }) => Err(UnifyError::UnsupportedAnnotation { exp: lhs.clone() }),
             (_, _) => Err(UnifyError::StructurallyDifferent { lhs: lhs.clone(), rhs: rhs.clone() }),
@@ -125,7 +132,7 @@ impl<'l, L: Leveled> Ctx<'l, L> {
         self.unif.subst(self.lvl, &Assign(insert_lvl, &exp));
         match self.unif.map.get(&insert_lvl) {
             Some(other_exp) => {
-                let eqn = ast::Eqn { lhs: exp, rhs: other_exp.clone() };
+                let eqn = ast::Eqn { info: ast::Info::empty(), lhs: exp, rhs: other_exp.clone() };
                 self.add_equation(eqn)
             }
             None => {
