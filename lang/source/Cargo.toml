@@ -1,0 +1,19 @@
+[package]
+name = "source"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# source code spans
+codespan = "0.11"
+# index of source code intervals
+rust-lapper = "1"
+# workspace members
+data = { path = "../../util/data" }
+syntax = { path = "../syntax" }
+parser = { path = "../parser" }
+lowering = { path = "../lowering" }
+core = { path = "../core" }
+printer = { path = "../printer" }

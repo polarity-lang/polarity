@@ -183,7 +183,7 @@ pub struct Info {
     pub span: Option<Span>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TypedInfo {
     pub typ: Rc<ast::Exp>,
     pub span: Option<Span>,

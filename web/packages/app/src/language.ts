@@ -30,7 +30,7 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
     extensions: string[];
     mimetypes: string[];
   } {
-    const id = "xfunc";
+    const id = "xfn";
     const aliases: string[] = [];
     const extensions = [".xfn"];
     const mimetypes: string[] = [];
@@ -42,7 +42,6 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
     monaco.languages.register(Language.extensionPoint());
     monaco.languages.setMonarchTokensProvider(this.id, Language.syntaxDefinition());
     monaco.languages.registerDocumentSymbolProvider(this.id, {
-      // eslint-disable-next-line
       async provideDocumentSymbols(model, token): Promise<monaco.languages.DocumentSymbol[]> {
         void token;
         const response = await (client.request(proto.DocumentSymbolRequest.type.method, {
@@ -53,6 +52,23 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const result: monaco.languages.DocumentSymbol[] = protocolToMonaco.asSymbolInformations(response, uri);
+
+        return result;
+      },
+    });
+    monaco.languages.registerHoverProvider(this.id, {
+      async provideHover(model, position, token): Promise<monaco.languages.Hover> {
+        void token;
+        const response = await (client.request(proto.HoverRequest.type.method, {
+          textDocument: {
+            version: 0,
+            uri: model.uri.toString(),
+          },
+          position: monacoToProtocol.asPosition(position.lineNumber, position.column),
+        } as proto.TextDocumentPositionParams) as Promise<proto.Hover>);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const result: monaco.languages.Hover = protocolToMonaco.asHover(response);
 
         return result;
       },

@@ -9,6 +9,7 @@ members = [
     "lang/lowering",
     "lang/printer",
     "lang/core",
+    "lang/source",
     "web/crates/browser",
     "app",
 ]
