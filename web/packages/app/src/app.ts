@@ -32,15 +32,10 @@ export default class App {
   createModel(client: Client): monaco.editor.ITextModel {
     const language = Language.initialize(client);
 
-    const value = `
-data Nat : Type :=
-    Z : Nat,
-    S(n: Nat) : Nat;
-`.replace(/^\s*\n/gm, "");
     const id = language.id;
     const uri = monaco.Uri.parse("inmemory://demo.xfn");
 
-    const model = monaco.editor.createModel(value, id, uri);
+    const model = monaco.editor.createModel("", id, uri);
 
     model.onDidChangeContent(
       debounce(() => {
@@ -72,6 +67,20 @@ data Nat : Type :=
       } as proto.DidOpenTextDocumentParams);
     });
 
+    async function handleHashChange() {
+      const filepath = location.hash.slice(1);
+      const slash = location.pathname.endsWith("/") ? "" : "/";
+      const url = `${location.protocol}//${location.host}${location.pathname}${slash}examples/${filepath}`;
+      const response = await fetch(url);
+      const text = await response.text();
+      model.setValue(text);
+    }
+
+    addEventListener("hashchange", (event) => {
+      void event;
+      void handleHashChange();
+    });
+
     return model;
   }
 
@@ -90,6 +99,9 @@ data Nat : Type :=
     const client = new Client(this.#fromServer, this.#intoServer);
     const server = await Server.initialize(this.#intoServer, this.#fromServer);
     this.createEditor(client);
+    if (location.hash !== "") {
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    }
     await Promise.all([server.start(), client.start()]);
   }
 }

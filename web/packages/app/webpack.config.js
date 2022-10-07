@@ -59,6 +59,9 @@ const config = {
   plugins: [
     new webpack.ProgressPlugin(),
     new CleanWebpackPlugin(),
+    new CopyWebpackPlugin({
+      patterns: [{ from: "../../../examples", to: "examples" }],
+    }),
     new HtmlWebpackPlugin({
       template: "assets/index.html",
       scriptLoading: "defer",
