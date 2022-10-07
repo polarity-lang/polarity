@@ -59,13 +59,6 @@ const config = {
   plugins: [
     new webpack.ProgressPlugin(),
     new CleanWebpackPlugin(),
-    new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: "../../node_modules/web-tree-sitter/tree-sitter.wasm",
-        },
-      ],
-    }),
     new HtmlWebpackPlugin({
       template: "assets/index.html",
       scriptLoading: "defer",
