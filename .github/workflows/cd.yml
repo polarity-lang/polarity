@@ -1,0 +1,26 @@
+name: Deploy Demo
+on: [push]
+# on:
+#   push: { branches: [main] }
+permissions:
+  contents: write
+jobs:
+  build-and-deploy:
+    concurrency: ci-${{ github.ref }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          target: wasm32-unknown-unknown
+          toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v2
+      - run: |
+          cd web
+          make deps
+          make build
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: web/packages/app/dist

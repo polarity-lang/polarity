@@ -1,5 +1,5 @@
 deps:
-	@cargo install wasm-bindgen-cli --version 0.2.81
+	@cargo install wasm-bindgen-cli --version 0.2.83
 	@npm install
 
 build: build-server build-app
