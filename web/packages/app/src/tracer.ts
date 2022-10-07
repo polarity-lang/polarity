@@ -5,13 +5,11 @@ const serverChannel = document.getElementById("channel-server") as HTMLTextAreaE
 
 export default class Tracer {
   static client(message: string): void {
-    clientChannel.value += message;
-    clientChannel.value += "\n";
+    clientChannel.value = message + "\n" + clientChannel.value;
   }
 
   static server(input: string | proto.Message): void {
     const message: string = typeof input === "string" ? input : JSON.stringify(input);
-    serverChannel.value += message;
-    serverChannel.value += "\n";
+    serverChannel.value = message + "\n" + serverChannel.value;
   }
 }
