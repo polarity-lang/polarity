@@ -53,20 +53,29 @@ impl LanguageServer for Server {
     }
 
     async fn did_open(&self, params: lsp::DidOpenTextDocumentParams) {
-        let message = format!("did open: {}", params.text_document.uri.as_str());
-        self.client.log_message(MessageType::INFO, message).await;
         let text_document = params.text_document;
         let mut index = self.index.write().await;
-        index.add(text_document.uri.as_str(), text_document.text);
+        let (msg_t, msg) = index
+            .add(text_document.uri.as_str(), text_document.text)
+            .map(|()| format!("Loaded successfully: {}", text_document.uri.as_str()))
+            .map(|msg| (MessageType::INFO, msg))
+            .map_err(|msg| (MessageType::ERROR, msg))
+            .extract();
+        self.client.log_message(msg_t, msg).await;
     }
 
     async fn did_change(&self, params: lsp::DidChangeTextDocumentParams) {
-        self.client.log_message(MessageType::INFO, "did change").await;
         let text_document = params.text_document;
         let mut content_changes = params.content_changes;
         let mut index = self.index.write().await;
         let text = content_changes.drain(0..).next().unwrap().text;
-        index.update(text_document.uri.as_str(), text);
+        let (msg_t, msg) = index
+            .update(text_document.uri.as_str(), text)
+            .map(|()| format!("Loaded successfully: {}", text_document.uri.as_str()))
+            .map(|msg| (MessageType::INFO, msg))
+            .map_err(|msg| (MessageType::ERROR, msg))
+            .extract();
+        self.client.log_message(msg_t, msg).await;
     }
 
     async fn hover(&self, params: HoverParams) -> jsonrpc::Result<Option<Hover>> {
@@ -89,6 +98,23 @@ impl LanguageServer for Server {
             }
         });
         Ok(res)
+    }
+}
+
+trait Extract {
+    type Target;
+
+    fn extract(self) -> Self::Target;
+}
+
+impl<T> Extract for Result<T, T> {
+    type Target = T;
+
+    fn extract(self) -> Self::Target {
+        match self {
+            Ok(x) => x,
+            Err(x) => x,
+        }
     }
 }
 

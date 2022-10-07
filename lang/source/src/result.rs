@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug)]
 pub enum Error {
     Parser(parser::ParseError<usize, parser::common::OwnedToken, &'static str>),
@@ -5,26 +7,14 @@ pub enum Error {
     Type(core::TypeError),
 }
 
-pub trait HandleErrorExt<T>: Sized {
-    fn handle(self) {
-        self.handle_with(|_| ())
-    }
-    fn handle_with<F: FnOnce(T)>(self, f: F);
-}
+impl std::error::Error for Error {}
 
-impl<T> HandleErrorExt<T> for Result<T, Error> {
-    fn handle_with<F: FnOnce(T)>(self, f: F) {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Ok(res) => f(res),
-            Err(err) => pretty_print(err),
+            Error::Parser(err) => write!(f, "Parse error: {}", err),
+            Error::Lowering(err) => write!(f, "Lowering error: {}", err),
+            Error::Type(err) => write!(f, "Type error: {}", err),
         }
-    }
-}
-
-fn pretty_print(err: Error) {
-    match err {
-        Error::Parser(err) => println!("Parse error: {}", err),
-        Error::Lowering(err) => println!("Lowering error: {}", err),
-        Error::Type(err) => println!("Type error: {}", err),
     }
 }

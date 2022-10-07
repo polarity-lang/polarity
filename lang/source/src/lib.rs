@@ -34,17 +34,16 @@ impl Index {
         }
     }
 
-    pub fn add(&mut self, name: &str, source: String) -> FileId {
+    pub fn add(&mut self, name: &str, source: String) -> Result<(), String> {
         let id = self.files.add(name, source);
         self.id_by_name.insert(name.to_owned(), id);
-        self.reload(id);
-        id
+        self.reload(id)
     }
 
-    pub fn update(&mut self, name: &str, source: String) {
+    pub fn update(&mut self, name: &str, source: String) -> Result<(), String> {
         let id = self.id_by_name[name];
         self.files.update(id, source);
-        self.reload(id);
+        self.reload(id)
     }
 
     pub fn index(&self, name: &str, location: Location) -> Option<ByteIndex> {
@@ -78,16 +77,20 @@ impl Index {
         largest_interval.map(|interval| &self.infos_by_id[&id][interval.val])
     }
 
-    fn reload(&mut self, id: FileId) {
+    fn reload(&mut self, id: FileId) -> Result<(), String> {
         let source = self.files.source(id);
-        let prg = load(source);
-        if let Ok(ref prg) = prg {
-            let (lapper, infos) = collect_info(prg);
-            self.info_index_by_id.insert(id, lapper);
-            self.infos_by_id.insert(id, infos);
-        } else {
-            self.info_index_by_id.insert(id, Lapper::new(vec![]));
-            self.infos_by_id.insert(id, vec![]);
+        match load(source) {
+            Ok(ref prg) => {
+                let (lapper, infos) = collect_info(prg);
+                self.info_index_by_id.insert(id, lapper);
+                self.infos_by_id.insert(id, infos);
+                Ok(())
+            }
+            Err(err) => {
+                self.info_index_by_id.insert(id, Lapper::new(vec![]));
+                self.infos_by_id.insert(id, vec![]);
+                Err(format!("{}", err))
+            }
         }
     }
 }
