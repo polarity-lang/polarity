@@ -1,0 +1,23 @@
+[package]
+name = "test-runner"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# cli
+clap = { version = "3", features = ["derive"] }
+# full text search engine
+tantivy = "0.18"
+# config
+serde = "1"
+serde_derive = "1"
+toml = "0.5"
+# workspace members
+data = { path = "../../util/data" }
+syntax = { path = "../../lang/syntax" }
+parser = { path = "../../lang/parser" }
+lowering = { path = "../../lang/lowering" }
+core = { path = "../../lang/core" }
+printer = { path = "../../lang/printer" }

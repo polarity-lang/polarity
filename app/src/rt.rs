@@ -19,11 +19,11 @@ pub fn run_string(text: &str) -> Result<elab::Prg, Error> {
 
 pub fn lower_filepath(filepath: &Path) -> Result<ast::Prg, Error> {
     let prg = load_filepath(filepath)?;
-    lowering::lower(prg).map_err(Error::Lowering)
+    lowering::lower(&prg).map_err(Error::Lowering)
 }
 
 fn run_program(prg: cst::Prg) -> Result<elab::Prg, Error> {
-    let ast = lowering::lower(prg).map_err(Error::Lowering)?;
+    let ast = lowering::lower(&prg).map_err(Error::Lowering)?;
     core::check(&ast).map_err(Error::Type)
 }
 

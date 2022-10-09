@@ -2,7 +2,8 @@
 # Place into `.git/hooks` or use `git config core.hooksPath scripts/git-hooks`
 # from the root of the repository
 
-cargo test
+cargo test --all
 cargo clippy --all -- -Dwarnings
 cargo fmt --all --check
+cargo run -p test-runner -- run
 (cd web; make lint)

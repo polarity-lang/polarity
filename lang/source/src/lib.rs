@@ -97,7 +97,7 @@ impl Index {
 
 fn load(source: &str) -> Result<elab::Prg, Error> {
     let cst = parser::cst::parse_program(source).map_err(Error::Parser)?;
-    let ast = lowering::lower(cst).map_err(Error::Lowering)?;
+    let ast = lowering::lower(&cst).map_err(Error::Lowering)?;
     core::check(&ast).map_err(Error::Type)
 }
 

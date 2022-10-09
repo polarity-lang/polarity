@@ -23,7 +23,7 @@ jobs:
           (cd web && make deps && make build)
           cp -r web/packages/app/dist gh-pages/editor
       - run: |
-          cargo doc --no-deps --document-private-items
+          cargo doc --workspace --no-deps --document-private-items
           cp -r target/doc gh-pages/docs
       - uses: JamesIves/github-pages-deploy-action@v4
         with:

@@ -1,0 +1,5 @@
+codata Fun(a: Type, b: Type) : Type :=
+    Fun(a, b).apply(a: Type, b: Type, x: a) : b;
+
+codef ConvertAny(a: Type, b: Type): Fun(a, b) := comatch
+    apply(a: Type, b: Type, x: a) => x;

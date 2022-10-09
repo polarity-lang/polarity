@@ -12,4 +12,6 @@ members = [
     "lang/source",
     "web/crates/browser",
     "app",
+    "test/test-runner",
 ]
+default-members = ["app"]

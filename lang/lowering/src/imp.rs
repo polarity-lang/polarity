@@ -8,7 +8,7 @@ use super::ctx::*;
 use super::result::*;
 use super::types::*;
 
-pub fn lower(prg: cst::Prg) -> Result<ast::Prg, LoweringError> {
+pub fn lower(prg: &cst::Prg) -> Result<ast::Prg, LoweringError> {
     let cst::Prg { decls, exp } = prg;
     let mut ctx = Ctx::empty();
 

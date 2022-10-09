@@ -21,10 +21,10 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --tests --benches
+          args: --all
 
-  test:
-    name: Test Suite
+  unit-tests:
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -37,6 +37,23 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --all
+
+  integration-tests:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: -p test-runner -- run
 
   fmt:
     name: Rustfmt
@@ -70,4 +87,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --tests --benches -- -D warnings
+          args: --all -- -D warnings
