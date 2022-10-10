@@ -1,5 +1,8 @@
 codata Prop(a: Type, x: a) : Type :=
-    Prop(a, x).apply(a: Type, x: a) : Type;
+    Prop(a, x).apply'(a: Type, x: a) : Type;
+
+codata Fun(a: Type, b: Type) : Type :=
+    Fun(a, b).apply(a: Type, b: Type, x: a) : b;
 
 data Eq (a: Type, x: a, y: a) : Type :=
     Refl(a: Type, x: a) : Eq(a, x, x);
@@ -12,3 +15,6 @@ def Eq(a, x, y).subst(a: Type, x: a, y: a, p: Prop(a, x)) : Prop(a, y) := match
 
 def Eq(a, x, y).trans(a: Type, x: a, y: a, z: a, h: Eq(a, y, z)) : Eq(a, x, z) := match
     Refl(a: Type, x: a) => h;
+
+def Eq(a, x, y).cong(a: Type, b: Type, x: a, y: a, f: Fun(a, b)) : Eq(b, f.apply(a, b, x), f.apply(a, b, y)) := match
+    Refl(a: Type, x: a) => Refl(b, f.apply(a, b, x));
