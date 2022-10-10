@@ -1,0 +1,78 @@
+data Nat : Type :=
+    Z : Nat,
+    S(n: Nat) : Nat;
+
+def Nat.add(y: Nat) : Nat := match
+    Z => y,
+    S(x' : Nat) => S(x'.add(y));
+
+data Bool : Type :=
+    True : Bool,
+    False : Bool;
+
+def Bool.and(y: Bool) : Bool := match
+    True => y,
+    False => False;
+
+data Top : Type :=
+    Unit : Top;
+
+-- FIXME: Implement typed holes
+def Top.unimplemented(a: Type) : a := match
+    Unit => Unit.unimplemented(a);
+
+data Exp : Type :=
+    Num(n: Nat) : Exp,
+    Boo(b: Bool) : Exp,
+    Add(lhs: Exp, rhs: Exp) : Exp,
+    IsZero(e: Exp) : Exp,
+    And(lhs: Exp, rhs: Exp) : Exp;
+
+data Typ : Type :=
+    NumT : Typ,
+    BooT : Typ;
+
+data HasType(e: Exp, t: Typ) : Type :=
+    TNum(n: Nat) : HasType(Num(n), NumT),
+    TBoo(b: Bool) : HasType(Boo(b), BooT),
+    TAdd(lhs: Exp, rhs: Exp, h_lhs: HasType(lhs, NumT), h_rhs: HasType(rhs, NumT)) : HasType(Add(lhs, rhs), NumT),
+    TIsZero(e: Exp, h: HasType(e, NumT)) : HasType(IsZero(e), BooT),
+    TAnd(lhs: Exp, rhs: Exp, h_lhs: HasType(lhs, BooT), h_rhs: HasType(rhs, BooT)) : HasType(And(lhs, rhs), BooT);
+
+def Top.example(): Exp := match
+    Unit => And(IsZero(Add(Num(Z), Num(Z))), Boo(True));
+
+def Top.example_has_type(): HasType(And(IsZero(Add(Num(Z()), Num(Z()))), Boo(True())), BooT) := match
+    Unit => TAnd(IsZero(Add(Num(Z), Num(Z))), Boo(True),
+        TIsZero(Add(Num(Z), Num(Z)), TAdd(Num(Z), Num(Z), TNum(Z), TNum(Z))),
+        TBoo(True)
+    );
+
+data IsVal(e: Exp) : Type :=
+    VNum(n: Nat) : IsVal(Num(n)),
+    VBoo(b: Bool) : IsVal(Boo(b));
+
+data Eval(e1: Exp, e2: Exp) : Type :=
+    EAddCongL(lhs: Exp, lhs': Exp, rhs: Exp, h_lhs: Eval(lhs, lhs')): Eval(Add(lhs, rhs), Add(lhs', rhs)),
+    EAddCongR(lhs: Exp, rhs: Exp, rhs': Exp, h_rhs: Eval(rhs, rhs')): Eval(Add(lhs, rhs), Add(lhs, rhs')),
+    EAddRed(n1: Nat, n2: Nat): Eval(Add(Num(n1), Num(n2)), Num(n1.add(n2))),
+    EIsZeroCong(e: Exp, e': Exp, h_e: Eval(e, e')) : Eval(IsZero(e), IsZero(e')),
+    EAndCongL(lhs: Exp, lhs': Exp, rhs: Exp, h_lhs: Eval(lhs, lhs')): Eval(And(lhs, rhs), And(lhs', rhs)),
+    EAndCongR(lhs: Exp, rhs: Exp, rhs': Exp, h_rhs: Eval(rhs, rhs')): Eval(And(lhs, rhs), And(lhs, rhs')),
+    EAndRed(b1: Bool, b2: Bool): Eval(And(Boo(b1), Boo(b2)), Boo(b1.and(b2)));
+
+def Eval(e1, e2).preserves(e1: Exp, e2: Exp, t: Typ, h1: HasType(e1, t)) : HasType(e2, t) := match
+    EAddCongL(lhs: Exp, lhs': Exp, rhs: Exp, h_lhs: Eval(lhs, lhs'))
+        => Unit.unimplemented(HasType(e2, t)),
+    EAddCongR(lhs: Exp, rhs: Exp, rhs': Exp, h_rhs: Eval(rhs, rhs'))
+        => Unit.unimplemented(HasType(e2, t)),
+    EAddRed(n1: Nat, n2: Nat)
+        => Unit.unimplemented(HasType(e2, t)),
+    EIsZeroCong(e: Exp, e': Exp, h_e: Eval(e, e'))
+        => Unit.unimplemented(HasType(e2, t)),
+    EAndCongL(lhs: Exp, lhs': Exp, rhs: Exp, h_lhs: Eval(lhs, lhs'))
+        => Unit.unimplemented(HasType(e2, t)),
+    EAndCongR(lhs: Exp, rhs: Exp, rhs': Exp, h_rhs: Eval(rhs, rhs'))
+        => Unit.unimplemented(HasType(e2, t)),
+    EAndRed(b1: Bool, b2: Bool)
+        => Unit.unimplemented(HasType(e2, t));
