@@ -5,6 +5,7 @@ use std::rc::Rc;
 
 use data::{HashMap, HashSet};
 use syntax::ast;
+use syntax::ast::Substitutable;
 use syntax::common::*;
 use syntax::de_bruijn::*;
 use tracer::trace;
@@ -179,6 +180,22 @@ impl Ctx {
         res
     }
 
+    fn map<F>(&self, f: F) -> Self
+    where
+        F: Fn(&Rc<ast::Exp>) -> Rc<ast::Exp>,
+    {
+        let bound = self.bound.iter().map(|inner| inner.iter().map(&f).collect()).collect();
+        // FIXME: inefficient clones
+        Self {
+            types: self.types.clone(),
+            ctors: self.ctors.clone(),
+            dtors: self.dtors.clone(),
+            type_for_xtor: self.type_for_xtor.clone(),
+            xtors_in_type: self.xtors_in_type.clone(),
+            bound,
+        }
+    }
+
     fn shift(&mut self, by: (isize, isize)) {
         for lvl in 0..self.bound.len() {
             self.shift_at_lvl(lvl, by)
@@ -222,6 +239,12 @@ impl Leveled for Ctx {
         let fst = self.bound.len() - 1 - idx.fst;
         let snd = self.bound[fst].len() - 1 - idx.snd;
         Lvl { fst, snd }
+    }
+}
+
+impl Substitutable for Ctx {
+    fn subst<L: Leveled, S: ast::Substitution>(&self, _lvl: &L, by: &S) -> Self {
+        self.map(|exp| exp.subst(self, by))
     }
 }
 

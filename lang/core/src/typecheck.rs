@@ -551,17 +551,19 @@ impl<'a> Check for WithEqns<'a, ast::Case> {
 
                 let body_out = match body {
                     Some(body) => {
-                        let body_out = body.infer(ctx)?;
-
                         let unif = unify(ctx, eqns)
                             .map_err(TypeError::Unify)?
                             .map_no(|()| TypeError::PatternIsAbsurd { name: name.clone() })
                             .ok_yes()?;
 
-                        body_out
-                            .typ()
-                            .subst(ctx, &unif)
-                            .convert(&t.shift((2, 0)).subst(ctx, &unif))?;
+                        // FIXME: Track substitution in context instead
+                        let mut ctx = ctx.subst(ctx, &unif);
+                        let body = body.subst(&ctx, &unif);
+                        let ctx = &mut ctx;
+
+                        let body_out = body.infer(ctx)?;
+
+                        body_out.typ().convert(&t.shift((2, 0)).subst(ctx, &unif))?;
 
                         Some(body_out)
                     }
@@ -616,17 +618,19 @@ impl<'a> Check for WithEqns<'a, ast::Cocase> {
 
                 let body_out = match body {
                     Some(body) => {
-                        let body_out = body.infer(ctx)?;
-
                         let unif = unify(ctx, eqns)
                             .map_err(TypeError::Unify)?
                             .map_no(|()| TypeError::PatternIsAbsurd { name: name.clone() })
                             .ok_yes()?;
 
-                        body_out
-                            .typ()
-                            .subst(ctx, &unif)
-                            .convert(&t.shift((1, 0)).subst(ctx, &unif))?;
+                        // FIXME: Track substitution in context instead
+                        let mut ctx = ctx.subst(ctx, &unif);
+                        let body = body.subst(&ctx, &unif);
+                        let ctx = &mut ctx;
+
+                        let body_out = body.infer(ctx)?;
+
+                        body_out.typ().convert(&t.shift((1, 0)).subst(ctx, &unif))?;
 
                         Some(body_out)
                     }

@@ -1,0 +1,5 @@
+codata Fun(a: Type, b: Type) : Type :=
+    Fun(a, b).apply(a: Type, b: Type, x: a) : b;
+
+codef Compose(a: Type, b: Type, c: Type, f: Fun(a, b), g: Fun(b, c)) : Fun(a, c) := comatch
+    apply(a': Type, c': Type, x: a') => g.apply(b, c, f.apply(a, b, x: a') : b) : c';
