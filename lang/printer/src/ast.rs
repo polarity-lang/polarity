@@ -13,7 +13,14 @@ impl<'a> Print<'a> for Prg {
         let Prg { decls, exp } = self;
 
         match exp {
-            Some(exp) => decls.print(alloc).append(exp.print(alloc)),
+            Some(exp) => {
+                let top = if decls.is_empty() {
+                    alloc.nil()
+                } else {
+                    decls.print(alloc).append(alloc.hardline()).append(alloc.hardline())
+                };
+                top.append(exp.print(alloc))
+            }
             None => decls.print(alloc),
         }
     }
@@ -25,9 +32,9 @@ impl<'a> Print<'a> for Decls {
         let decls_in_order = order
             .iter()
             .map(|name| &map[name])
-            .filter(|x| !matches!(x, Decl::Ctor(_) | Decl::Dtor(_)))
+            .filter(|x| matches!(x, Decl::Data(_) | Decl::Codata(_)))
             .map(|x| x.print_in_ctx(self, alloc));
-        let sep = alloc.text(SEMI).append(alloc.line()).append(alloc.line());
+        let sep = alloc.line().append(alloc.line());
         alloc.intersperse(decls_in_order, sep)
     }
 }
@@ -51,7 +58,7 @@ impl<'a> PrintInCtx<'a> for Data {
     type Ctx = Decls;
 
     fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Data { info: _, name, typ, ctors } = self;
+        let Data { info: _, name, typ, ctors, impl_block } = self;
 
         let head = alloc
             .keyword(DATA)
@@ -62,8 +69,7 @@ impl<'a> PrintInCtx<'a> for Data {
             .append(COLON)
             .append(alloc.space())
             .append(alloc.typ(TYPE))
-            .append(alloc.space())
-            .append(COLON_EQ);
+            .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.hardline());
 
@@ -72,9 +78,19 @@ impl<'a> PrintInCtx<'a> for Data {
             .append(
                 alloc.intersperse(ctors.iter().map(|x| ctx.map[x].print_in_ctx(ctx, alloc)), sep),
             )
-            .nest(INDENT);
+            .nest(INDENT)
+            .append(alloc.hardline())
+            .braces();
 
-        head.append(body)
+        let data = head.append(body);
+
+        match impl_block {
+            Some(block) => data
+                .append(alloc.hardline())
+                .append(alloc.hardline())
+                .append(block.print_in_ctx(ctx, alloc)),
+            None => data,
+        }
     }
 }
 
@@ -82,7 +98,7 @@ impl<'a> PrintInCtx<'a> for Codata {
     type Ctx = Decls;
 
     fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codata { info: _, name, typ, dtors } = self;
+        let Codata { info: _, name, typ, dtors, impl_block } = self;
         let head = alloc
             .keyword(CODATA)
             .append(alloc.space())
@@ -92,8 +108,7 @@ impl<'a> PrintInCtx<'a> for Codata {
             .append(COLON)
             .append(alloc.space())
             .append(alloc.typ(TYPE))
-            .append(alloc.space())
-            .append(COLON_EQ);
+            .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.hardline());
 
@@ -102,7 +117,41 @@ impl<'a> PrintInCtx<'a> for Codata {
             .append(
                 alloc.intersperse(dtors.iter().map(|x| ctx.map[x].print_in_ctx(ctx, alloc)), sep),
             )
-            .nest(INDENT);
+            .nest(INDENT)
+            .append(alloc.hardline())
+            .braces();
+
+        let codata = head.append(body);
+
+        match impl_block {
+            Some(block) => codata
+                .append(alloc.hardline())
+                .append(alloc.hardline())
+                .append(block.print_in_ctx(ctx, alloc)),
+            None => codata,
+        }
+    }
+}
+
+impl<'a> PrintInCtx<'a> for Impl {
+    type Ctx = Decls;
+
+    fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Impl { info: _, name, defs } = self;
+
+        let head =
+            alloc.keyword(IMPL).append(alloc.space()).append(alloc.typ(name)).append(alloc.space());
+
+        let sep = alloc.text(SEMI).append(alloc.hardline()).append(alloc.hardline());
+
+        let body = alloc
+            .hardline()
+            .append(
+                alloc.intersperse(defs.iter().map(|x| ctx.map[x].print_in_ctx(ctx, alloc)), sep),
+            )
+            .nest(INDENT)
+            .append(alloc.hardline())
+            .braces();
 
         head.append(body)
     }
@@ -121,9 +170,7 @@ impl<'a> Print<'a> for Def {
             .append(alloc.space())
             .append(COLON)
             .append(alloc.space())
-            .append(in_typ.print(alloc))
-            .append(alloc.space())
-            .append(COLON_EQ);
+            .append(in_typ.print(alloc));
 
         let body = body.print(alloc);
 
@@ -142,9 +189,7 @@ impl<'a> Print<'a> for Codef {
             .append(alloc.space())
             .append(COLON)
             .append(alloc.space())
-            .append(typ.print(alloc))
-            .append(alloc.space())
-            .append(COLON_EQ);
+            .append(typ.print(alloc));
 
         let body = body.print(alloc);
 
@@ -183,30 +228,27 @@ impl<'a> Print<'a> for Dtor {
 impl<'a> Print<'a> for Comatch {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Comatch { info: _, cases } = self;
-        let head = alloc.keyword(COMATCH);
-
         let sep = alloc.text(COMMA).append(alloc.hardline());
-        let body = alloc
+
+        alloc
             .hardline()
             .append(alloc.intersperse(cases.iter().map(|x| x.print(alloc)), sep))
-            .nest(INDENT);
-
-        head.append(body)
+            .nest(INDENT)
+            .append(alloc.hardline())
+            .braces()
     }
 }
 
 impl<'a> Print<'a> for Match {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { info: _, cases } = self;
-        let head = alloc.keyword(MATCH);
-
         let sep = alloc.text(COMMA).append(alloc.hardline());
-        let body = alloc
+        alloc
             .hardline()
             .append(alloc.intersperse(cases.iter().map(|x| x.print(alloc)), sep))
-            .nest(INDENT);
-
-        head.append(body)
+            .nest(INDENT)
+            .append(alloc.hardline())
+            .braces()
     }
 }
 

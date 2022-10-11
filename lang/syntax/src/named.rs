@@ -6,13 +6,29 @@ pub trait Named {
     fn name(&self) -> &Ident;
 }
 
-impl Named for cst::Decl {
+impl Named for cst::Item {
     fn name(&self) -> &Ident {
         match self {
-            cst::Decl::Data(cst::Data { name, .. }) => name,
-            cst::Decl::Codata(cst::Codata { name, .. }) => name,
-            cst::Decl::Def(cst::Def { name, .. }) => name,
-            cst::Decl::Codef(cst::Codef { name, .. }) => name,
+            cst::Item::Type(typ_decl) => typ_decl.name(),
+            cst::Item::Impl(cst::Impl { name, .. }) => name,
+        }
+    }
+}
+
+impl Named for cst::TypDecl {
+    fn name(&self) -> &Ident {
+        match self {
+            cst::TypDecl::Data(cst::Data { name, .. }) => name,
+            cst::TypDecl::Codata(cst::Codata { name, .. }) => name,
+        }
+    }
+}
+
+impl Named for cst::DefDecl {
+    fn name(&self) -> &Ident {
+        match self {
+            cst::DefDecl::Def(cst::Def { name, .. }) => name,
+            cst::DefDecl::Codef(cst::Codef { name, .. }) => name,
         }
     }
 }

@@ -1,18 +1,25 @@
-data Nat : Type :=
+data Nat : Type {
     Z : Nat,
-    S(n: Nat) : Nat;
+    S(n: Nat) : Nat,
+}
 
-def Nat.add(y: Nat) : Nat := match
-    Z => y,
-    S(x' : Nat) => S(x'.add(y));
+impl Nat {
+    def Nat.add(y: Nat) : Nat {
+        Z => y,
+        S(x' : Nat) => S(x'.add(y)),
+    }
+}
 
-data Vec(n: Nat) : Type :=
+data Vec(n: Nat) : Type {
     Nil : Vec(Z),
-    Cons(n: Nat, x: Nat, xs: Vec(n)) : Vec(S(n));
+    Cons(n: Nat, x: Nat, xs: Vec(n)) : Vec(S(n)),
+}
 
-codata Stream : Type :=
+codata Stream : Type {
     Stream.head : Nat,
-    Stream.tail : Stream;
+    Stream.tail : Stream
+}
 
-codata NatToNat : Type :=
-    NatToNat.apply(x: Nat) : Nat;
+codata NatToNat : Type {
+    NatToNat.apply(x: Nat) : Nat
+}

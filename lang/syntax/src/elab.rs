@@ -43,6 +43,7 @@ pub struct Data {
     pub name: Ident,
     pub typ: TypAbs,
     pub ctors: Vec<Ident>,
+    pub impl_block: Option<Impl>,
 }
 
 #[derive(Debug, Clone)]
@@ -51,6 +52,22 @@ pub struct Codata {
     pub name: Ident,
     pub typ: TypAbs,
     pub dtors: Vec<Ident>,
+    pub impl_block: Option<Impl>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Impl {
+    pub info: Info,
+    pub name: Ident,
+    pub defs: Vec<Ident>,
+}
+
+impl From<ast::Impl> for Impl {
+    fn from(ast: ast::Impl) -> Self {
+        let ast::Impl { info, name, defs } = ast;
+
+        Self { info: info.into(), name, defs }
+    }
 }
 
 #[derive(Debug, Clone)]

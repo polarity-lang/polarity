@@ -44,7 +44,7 @@ impl Collect for Decl {
 
 impl Collect for Data {
     fn collect<C: Collector>(&self, c: &mut C) {
-        let Data { info, name: _, typ, ctors: _ } = self;
+        let Data { info, name: _, typ, ctors: _, impl_block: _ } = self;
         c.add(info);
         typ.collect(c);
     }
@@ -52,7 +52,7 @@ impl Collect for Data {
 
 impl Collect for Codata {
     fn collect<C: Collector>(&self, c: &mut C) {
-        let Codata { info, name: _, typ, dtors: _ } = self;
+        let Codata { info, name: _, typ, dtors: _, impl_block: _ } = self;
 
         c.add(info);
         typ.collect(c);

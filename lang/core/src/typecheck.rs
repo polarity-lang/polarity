@@ -190,7 +190,7 @@ impl Infer for ast::Data {
     type Target = elab::Data;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::Data { info, name, typ, ctors } = self;
+        let ast::Data { info, name, typ, ctors, impl_block } = self;
 
         let typ_out = (**typ).infer(ctx)?;
 
@@ -199,6 +199,7 @@ impl Infer for ast::Data {
             name: name.clone(),
             typ: typ_out,
             ctors: ctors.clone(),
+            impl_block: impl_block.clone().map(|block| block.into()),
         })
     }
 }
@@ -214,7 +215,7 @@ impl Infer for ast::Codata {
     type Target = elab::Codata;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::Codata { info, name, typ, dtors } = self;
+        let ast::Codata { info, name, typ, dtors, impl_block } = self;
 
         let typ_out = (**typ).infer(ctx)?;
 
@@ -223,6 +224,7 @@ impl Infer for ast::Codata {
             name: name.clone(),
             typ: typ_out,
             dtors: dtors.clone(),
+            impl_block: impl_block.clone().map(|block| block.into()),
         })
     }
 }

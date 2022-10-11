@@ -1,5 +1,9 @@
-codata Fun(a: Type, b: Type) : Type :=
-    Fun(a, b).apply(a: Type, b: Type, x: a) : b;
+codata Fun(a: Type, b: Type) : Type {
+    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+}
 
-codef Id(a: Type): Fun(a, a) := comatch
-    apply(a: Type, b: Type, x: a) => x;
+impl Fun {
+    codef Id(a: Type): Fun(a, a) {
+        apply(a: Type, b: Type, x: a) => x
+    }
+}

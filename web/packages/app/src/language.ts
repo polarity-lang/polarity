@@ -77,11 +77,11 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
 
   private static syntaxDefinition(): monaco.languages.IMonarchLanguage {
     return {
-      keywords: ["data", "codata", "def", "codef", "match", "comatch", "absurd"],
+      keywords: ["data", "codata", "impl", "def", "codef", "absurd"],
 
       typeKeywords: ["Type"],
 
-      operators: [";", ":=", "=>", ",", ":", "."],
+      operators: [";", "=>", ",", ":", "."],
 
       tokenizer: {
         root: [

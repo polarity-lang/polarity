@@ -18,12 +18,16 @@ pub struct Decls {
     /// Map from identifiers to declarations
     pub map: HashMap<Ident, Decl>,
     /// Order in which declarations are defined in the source
-    pub order: Vec<Ident>,
+    pub order: Vec<Ident>, // TODO: Create a more appropriate mapping that also tracks impl blocks
 }
 
 impl Decls {
     pub fn empty() -> Self {
         Self { map: HashMap::default(), order: Vec::new() }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.map.is_empty()
     }
 }
 
@@ -43,6 +47,7 @@ pub struct Data {
     pub name: Ident,
     pub typ: Rc<TypAbs>,
     pub ctors: Vec<Ident>,
+    pub impl_block: Option<Impl>,
 }
 
 #[derive(Debug, Clone)]
@@ -51,6 +56,14 @@ pub struct Codata {
     pub name: Ident,
     pub typ: Rc<TypAbs>,
     pub dtors: Vec<Ident>,
+    pub impl_block: Option<Impl>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Impl {
+    pub info: Info,
+    pub name: Ident,
+    pub defs: Vec<Ident>,
 }
 
 #[derive(Debug, Clone)]

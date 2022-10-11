@@ -14,10 +14,11 @@ match {
     // Names
     r"[a-zA-Z_][a-zA-Z0-9_]*[']*",
     // Keywords
-    "def", "codef", "data", "codata",
+    "data", "codata", "impl",
+    "def", "codef",
     "match", "comatch",
-    "Type",
     "absurd",
+    "Type",
     // Comments and whitespace
     r"\s*" => { }, // Skip whitespace
     r"--[^\n\r]*[\n\r]*" => { }, // Skip `--` comments
@@ -63,14 +64,26 @@ OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
 // Program
 
 pub Prg: Prg = {
-    <decls: (<Decl> ";")*> <exp: Exp?> => Prg { decls, exp },
+    <items: Item*> <exp: Exp?> => Prg { items, exp },
 }
 
-pub Decl: Decl = {
-    <l: @L> "data" <name: Ident> <params: OptTelescope> ":" "Type" ":=" <ctors: Comma<Ctor>> <r: @R> => Decl::Data(Data { info: span(l, r), name, params, ctors }),
-    <l: @L> "codata" <name: Ident> <params: OptTelescope> ":" "Type" ":=" <dtors: Comma<Dtor>> <r: @R> => Decl::Codata(Codata { info: span(l, r), name, params, dtors }),
-    <l: @L> "def" <on_typ: TypApp> "." <name: Ident> <params: Telescope> ":" <in_typ: Exp> ":=" <body: Match> <r: @R> => Decl::Def(Def { info: span(l, r), name, params, on_typ, in_typ, body }),
-    <l: @L> "codef" <name: Ident> <params: Telescope> ":" <typ: TypApp> ":=" <body: Comatch> <r: @R> => Decl::Codef(Codef { info: span(l, r), name, params, typ, body }),
+pub Item: Item = {
+    <decl: TypDecl> => Item::Type(decl),
+    <decl: Impl> => Item::Impl(decl),
+}
+
+pub Impl: Impl = {
+    <l: @L> "impl" <name: Ident> "{" <decls: DefDecl*> "}" <r: @R> => Impl { info: span(l, r), name, decls },
+}
+
+pub TypDecl: TypDecl = {
+    <l: @L> "data" <name: Ident> <params: OptTelescope> ":" "Type" "{" <ctors: Comma<Ctor>> "}" <r: @R> => TypDecl::Data(Data { info: span(l, r), name, params, ctors }),
+    <l: @L> "codata" <name: Ident> <params: OptTelescope> ":" "Type" "{" <dtors: Comma<Dtor>> <r: @R> "}" => TypDecl::Codata(Codata { info: span(l, r), name, params, dtors }),
+}
+
+pub DefDecl: DefDecl = {
+    <l: @L> "def" <on_typ: TypApp> "." <name: Ident> <params: Telescope> ":" <in_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), name, params, on_typ, in_typ, body }),
+    <l: @L> "codef" <name: Ident> <params: Telescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => DefDecl::Codef(Codef { info: span(l, r), name, params, typ, body }),
 }
 
 Ctor: Ctor = {
@@ -82,11 +95,11 @@ Dtor: Dtor = {
 }
 
 pub Comatch : Comatch = {
-    <l: @L> "comatch" <cases: Comma<Cocase>> <r: @R> => Comatch { info: span(l, r), cases },
+    <l: @L> <cases: Comma<Cocase>> <r: @R> => Comatch { info: span(l, r), cases },
 }
 
 pub Match : Match = {
-    <l: @L> "match" <cases: Comma<Case>> <r: @R> => Match { info: span(l, r), cases },
+    <l: @L> <cases: Comma<Case>> <r: @R> => Match { info: span(l, r), cases },
 }
 
 pub Case : Case = {

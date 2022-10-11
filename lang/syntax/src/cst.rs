@@ -8,16 +8,20 @@ use super::de_bruijn::*;
 
 #[derive(Debug, Clone)]
 pub struct Prg {
-    pub decls: Vec<Decl>,
+    pub items: Vec<Item>,
     pub exp: Option<Rc<Exp>>,
 }
 
 #[derive(Debug, Clone)]
-pub enum Decl {
+pub enum Item {
+    Type(TypDecl),
+    Impl(Impl),
+}
+
+#[derive(Debug, Clone)]
+pub enum TypDecl {
     Data(Data),
     Codata(Codata),
-    Def(Def),
-    Codef(Codef),
 }
 
 #[derive(Debug, Clone)]
@@ -51,6 +55,19 @@ pub struct Dtor {
     pub params: Telescope,
     pub on_typ: TypApp,
     pub in_typ: Rc<Exp>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Impl {
+    pub info: Info,
+    pub name: Ident,
+    pub decls: Vec<DefDecl>,
+}
+
+#[derive(Debug, Clone)]
+pub enum DefDecl {
+    Def(Def),
+    Codef(Codef),
 }
 
 #[derive(Debug, Clone)]

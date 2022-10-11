@@ -9,25 +9,119 @@ use super::result::*;
 use super::types::*;
 
 pub fn lower(prg: &cst::Prg) -> Result<ast::Prg, LoweringError> {
-    let cst::Prg { decls, exp } = prg;
+    let cst::Prg { items, exp } = prg;
     let mut ctx = Ctx::empty();
 
-    decls.lower_in_ctx(&mut ctx)?;
+    // Register names and metadata
+    let (types, defs) = register_names(&mut ctx, &items[..])?;
+
+    // Lower deferred definitions
+    for typ in types {
+        typ.lower_in_ctx(&mut ctx)?;
+    }
+    for def in defs {
+        def.lower_in_ctx(&mut ctx)?;
+    }
+
     let exp = exp.lower_in_ctx(&mut ctx)?;
 
     Ok(ast::Prg { decls: ctx.into_decls(), exp })
 }
 
-impl Lower for cst::Decl {
+/// Register names for all top-level declarations
+/// Returns definitions whose lowering has been deferred
+fn register_names<'a>(
+    ctx: &mut Ctx,
+    items: &'a [cst::Item],
+) -> Result<(Vec<&'a cst::TypDecl>, Vec<&'a cst::DefDecl>), LoweringError> {
+    let mut types = Vec::new();
+    let mut defs = Vec::new();
+
+    for item in items {
+        match item {
+            cst::Item::Type(type_decl) => {
+                register_type_name(ctx, type_decl)?;
+                types.push(type_decl);
+            }
+            cst::Item::Impl(impl_decl) => {
+                register_impl_meta(ctx, impl_decl)?;
+                defs.extend(impl_decl.decls.iter());
+            }
+        }
+    }
+
+    Ok((types, defs))
+}
+
+fn register_type_name(ctx: &mut Ctx, type_decl: &cst::TypDecl) -> Result<(), LoweringError> {
+    // Register type name in the context
+    // Don't lower any of the contents, yet
+    ctx.add_name(type_decl.name(), DeclKind::from(type_decl))?;
+    // Register names for all xtors
+    match type_decl {
+        cst::TypDecl::Data(data) => {
+            for ctor in &data.ctors {
+                ctx.add_name(&ctor.name, DeclKind::Ctor)?;
+            }
+        }
+        cst::TypDecl::Codata(codata) => {
+            for dtor in &codata.dtors {
+                ctx.add_name(&dtor.name, DeclKind::Ctor)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn register_impl_meta(ctx: &mut Ctx, impl_decl: &cst::Impl) -> Result<(), LoweringError> {
+    // Add metadata of impl block to context
+    // This does not lower any of the contents, yet
+    impl_decl.lower_in_ctx(ctx)?;
+    for def in &impl_decl.decls {
+        // Add names for all contained definitions
+        ctx.add_name(def.name(), DeclKind::from(def))?;
+    }
+    Ok(())
+}
+
+impl Lower for cst::TypDecl {
     type Target = ();
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        ctx.add_name(self.name(), DeclKind::from(self))?;
         let decl = match self {
-            cst::Decl::Data(data) => ast::Decl::Data(data.lower_in_ctx(ctx)?),
-            cst::Decl::Codata(codata) => ast::Decl::Codata(codata.lower_in_ctx(ctx)?),
-            cst::Decl::Def(def) => ast::Decl::Def(def.lower_in_ctx(ctx)?),
-            cst::Decl::Codef(codef) => ast::Decl::Codef(codef.lower_in_ctx(ctx)?),
+            cst::TypDecl::Data(data) => ast::Decl::Data(data.lower_in_ctx(ctx)?),
+            cst::TypDecl::Codata(codata) => ast::Decl::Codata(codata.lower_in_ctx(ctx)?),
+        };
+        ctx.add_decl(decl)?;
+        Ok(())
+    }
+}
+
+impl Lower for cst::Impl {
+    type Target = ();
+
+    fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        let cst::Impl { info, name, decls } = self;
+
+        let impl_block = ast::Impl {
+            info: info.lower_pure(),
+            name: name.clone(),
+            defs: decls.iter().map(Named::name).cloned().collect(),
+        };
+
+        ctx.add_impl_block(impl_block);
+
+        Ok(())
+    }
+}
+
+impl Lower for cst::DefDecl {
+    type Target = ();
+
+    fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        let decl = match self {
+            cst::DefDecl::Def(def) => ast::Decl::Def(def.lower_in_ctx(ctx)?),
+            cst::DefDecl::Codef(codef) => ast::Decl::Codef(codef.lower_in_ctx(ctx)?),
         };
         ctx.add_decl(decl)?;
         Ok(())
@@ -51,6 +145,7 @@ impl Lower for cst::Data {
             name: name.clone(),
             typ: Rc::new(ast::TypAbs { params: params.lower_in_ctx(ctx)? }),
             ctors: ctor_names,
+            impl_block: ctx.impl_block(name).cloned(),
         })
     }
 }
@@ -72,6 +167,7 @@ impl Lower for cst::Codata {
             name: name.clone(),
             typ: Rc::new(ast::TypAbs { params: params.lower_in_ctx(ctx)? }),
             dtors: dtor_names,
+            impl_block: ctx.impl_block(name).cloned(),
         })
     }
 }
@@ -81,8 +177,6 @@ impl Lower for cst::Ctor {
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Ctor { info, name, params, typ } = self;
-
-        ctx.add_name(name, DeclKind::Ctor)?;
 
         params.lower_telescope(ctx, |ctx, params| {
             Ok(ast::Ctor {
@@ -100,8 +194,6 @@ impl Lower for cst::Dtor {
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Dtor { info, name, params, on_typ, in_typ } = self;
-
-        ctx.add_name(name, DeclKind::Dtor)?;
 
         params.lower_telescope(ctx, |ctx, params| {
             Ok(ast::Dtor {

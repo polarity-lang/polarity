@@ -16,13 +16,20 @@ pub struct Ctx {
     map: HashMap<Ident, Vec<Elem>>,
     /// Accumulates top-level declarations
     decls: ast::Decls,
+    /// Mapping each type name to its impl block (if any)
+    impls: HashMap<Ident, ast::Impl>,
     /// Counts the number of entries for each De-Bruijn level
     levels: Vec<usize>,
 }
 
 impl Ctx {
     pub fn empty() -> Self {
-        Self { map: HashMap::default(), decls: ast::Decls::empty(), levels: Vec::new() }
+        Self {
+            map: HashMap::default(),
+            decls: ast::Decls::empty(),
+            impls: HashMap::default(),
+            levels: Vec::new(),
+        }
     }
 
     pub fn lookup(&self, name: &Ident) -> Result<&Elem, LoweringError> {
@@ -30,6 +37,14 @@ impl Ctx {
             .get(name)
             .and_then(|stack| stack.last())
             .ok_or_else(|| LoweringError::UndefinedIdent(name.clone()))
+    }
+
+    pub fn impl_block(&self, name: &Ident) -> Option<&ast::Impl> {
+        self.impls.get(name)
+    }
+
+    pub fn add_impl_block(&mut self, block: ast::Impl) {
+        self.impls.insert(block.name.clone(), block);
     }
 
     pub fn lower_bound(&self, lvl: Lvl) -> Idx {
@@ -190,13 +205,20 @@ pub enum DeclKind {
     Dtor,
 }
 
-impl From<&cst::Decl> for DeclKind {
-    fn from(decl: &cst::Decl) -> Self {
+impl From<&cst::TypDecl> for DeclKind {
+    fn from(decl: &cst::TypDecl) -> Self {
         match decl {
-            cst::Decl::Data(_) => Self::Data,
-            cst::Decl::Codata(_) => Self::Codata,
-            cst::Decl::Def(_) => Self::Def,
-            cst::Decl::Codef(_) => Self::Codef,
+            cst::TypDecl::Data(_) => Self::Data,
+            cst::TypDecl::Codata(_) => Self::Codata,
+        }
+    }
+}
+
+impl From<&cst::DefDecl> for DeclKind {
+    fn from(decl: &cst::DefDecl) -> Self {
+        match decl {
+            cst::DefDecl::Def(_) => Self::Def,
+            cst::DefDecl::Codef(_) => Self::Codef,
         }
     }
 }
