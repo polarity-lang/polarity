@@ -1,0 +1,35 @@
+data Bool : Type {
+    True : Bool,
+    False : Bool
+}
+
+data ExtNat : Type {
+    Z: ExtNat,
+    S(n: ExtNat): ExtNat,
+    Omega : ExtNat,
+}
+
+data NotZero(n: ExtNat) : Type {
+    SNotZero(n: ExtNat): NotZero(S(n)),
+    OmegaNotZero: NotZero(Omega),
+}
+
+impl ExtNat {
+    def ExtNat.pred() : ExtNat {
+        Z => Z,
+        S(n: ExtNat) => n,
+        Omega => Omega,
+    }
+}
+
+codata Stream(n: ExtNat) : Type {
+    Stream(n).head(n: ExtNat, p: NotZero(n)) : Bool,
+    Stream(n).tail(n: ExtNat) : Stream(n.pred()),
+}
+
+-- impl Stream {
+--     codef Zeroes() : Stream(Omega) {
+--         head(n: ExtNat, p: NotZero(n)) => True,
+--         tail(n: ExtNat) => Zeroes()
+--     }
+-- }
