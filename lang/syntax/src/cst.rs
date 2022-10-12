@@ -4,7 +4,6 @@ use codespan::ByteIndex;
 use codespan::Span;
 
 use super::common::*;
-use super::de_bruijn::*;
 
 #[derive(Debug, Clone)]
 pub struct Prg {
@@ -53,7 +52,9 @@ pub struct Dtor {
     pub info: Info,
     pub name: Ident,
     pub params: Telescope,
+    // QUESTION: Implement Self?
     pub on_typ: TypApp,
+    // TODO: Rename to ret_typ
     pub in_typ: Rc<Exp>,
 }
 
@@ -163,12 +164,6 @@ pub struct Param {
 pub struct EqnParam {
     pub name: Ident,
     pub eqn: Eqn,
-}
-
-#[derive(Debug, Clone)]
-pub enum Var {
-    Bound(Idx),
-    Free(Ident),
 }
 
 #[derive(Debug, Clone)]
