@@ -1,0 +1,20 @@
+data Bool : Type { True: Bool, False: Bool }
+
+data Nat : Type {
+    Z: Nat,
+    S(n: Nat) : Nat,
+}
+
+data Foo(b: Bool) : Type {
+    Bar : Foo(True),
+    Baz : Foo(False),
+}
+
+impl Foo {
+    def Foo(True).foo() : Nat {
+        Bar() => Z,
+        Baz() absurd,
+    }
+}
+
+Baz.foo()
