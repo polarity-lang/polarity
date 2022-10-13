@@ -1,0 +1,20 @@
+data Nat : Type {
+    Z : Nat,
+    S(n: Nat) : Nat,
+}
+
+codata Vec(n: Nat) : Type {
+    Vec(S(n)).tail(n: Nat) : Vec(n)
+--    Vec(n).append(n: Nat, m: Nat, ys: Vec(m)) : Vec(n.add(m))
+}
+
+impl Vec {
+    codef Nil() : Vec(Z) {
+--        append(n: Nat, m: Nat, ys: Vec(m)) => ys
+        tail(n: Nat) absurd
+    }
+    codef Cons(n: Nat, xs: Vec(n)): Vec(S(n)) {
+        tail(n: Nat) => xs
+--        append(n': Nat, m: Nat, xs: Vec(n')) => Cons(S(n'.add(m)), x, xs.append(n', m, ys))
+    }
+}
