@@ -16,7 +16,7 @@ impl Vec {
 
 --    def Vec(n).append(n: Nat, m: Nat, ys: Vec(m)) : Vec(n.add(m)) {
 --        Nil => ys,
---        Cons(n': Nat, x: Nat, xs: Vec(m)) => Cons(S(n'.add(m)), x, xs.append(n', m, ys))
+--        Cons(n': Nat, x: Nat, xs: Vec(n')) => Cons(S(n'.add(m)), x, xs.append(n', m, ys))
 --    }
 }
 
