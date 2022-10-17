@@ -53,21 +53,21 @@ impl Substitutable for Rc<Exp> {
                 Some(exp) => exp,
                 None => Rc::new(Exp::Var { info: info.clone(), name: name.clone(), idx: *idx }),
             },
-            Exp::TypCtor { info, name, args: subst } => Rc::new(Exp::TypCtor {
+            Exp::TypCtor { info, name, args } => Rc::new(Exp::TypCtor {
                 info: info.clone(),
                 name: name.clone(),
-                args: subst.subst(ctx, by),
+                args: args.subst(ctx, by),
             }),
-            Exp::Ctor { info, name, args: subst } => Rc::new(Exp::Ctor {
+            Exp::Ctor { info, name, args } => Rc::new(Exp::Ctor {
                 info: info.clone(),
                 name: name.clone(),
-                args: subst.subst(ctx, by),
+                args: args.subst(ctx, by),
             }),
-            Exp::Dtor { info, exp, name, args: subst } => Rc::new(Exp::Dtor {
+            Exp::Dtor { info, exp, name, args } => Rc::new(Exp::Dtor {
                 info: info.clone(),
                 exp: exp.subst(ctx, by),
                 name: name.clone(),
-                args: subst.subst(ctx, by),
+                args: args.subst(ctx, by),
             }),
             Exp::Anno { info, exp, typ } => Rc::new(Exp::Anno {
                 info: info.clone(),
