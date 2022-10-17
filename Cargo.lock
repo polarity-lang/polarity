@@ -1910,6 +1910,7 @@ dependencies = [
  "lowering",
  "parser",
  "printer",
+ "renaming",
  "serde",
  "serde_derive",
  "syntax",

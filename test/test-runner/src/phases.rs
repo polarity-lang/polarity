@@ -2,19 +2,35 @@ use std::error::Error;
 use std::fmt;
 
 use printer::PrintToString;
+use renaming::Rename;
+use syntax::forget::Forget as _;
 use syntax::{ast, cst, elab};
+
+use super::infallible::NoError;
 
 pub trait Phase {
     type In;
     type Out: TestOutput;
     type Err;
 
-    fn name() -> &'static str;
+    fn new(name: &'static str) -> Self;
+    fn name(&self) -> &'static str;
     fn run(input: &Self::In) -> Result<Self::Out, Self::Err>;
 }
 
 pub struct Phases<O> {
     result: Result<O, PhasesError>,
+    report_phases: Vec<PhaseReport>,
+}
+
+pub struct Report {
+    pub phases: Vec<PhaseReport>,
+    pub result: Result<String, Failure>,
+}
+
+pub struct PhaseReport {
+    pub name: &'static str,
+    pub output: String,
 }
 
 pub trait TestOutput {
@@ -26,10 +42,10 @@ where
     O: TestOutput,
 {
     pub fn start(input: O) -> Phases<O> {
-        Phases { result: Ok(input) }
+        Phases { result: Ok(input), report_phases: vec![] }
     }
 
-    pub fn then<O2, E, P>(self, expect: Expect<P>) -> Phases<O2>
+    pub fn then<O2, E, P>(mut self, expect: Expect<P>) -> Phases<O2>
     where
         O2: TestOutput,
         E: Error + 'static,
@@ -37,6 +53,8 @@ where
     {
         let result = self.result.and_then(|out| match P::run(&out) {
             Ok(out2) => {
+                self.report_phases
+                    .push(PhaseReport { name: expect.phase.name(), output: out2.test_output() });
                 if !expect.success {
                     return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
                 }
@@ -49,6 +67,8 @@ where
                 Ok(out2)
             }
             Err(err) => {
+                self.report_phases
+                    .push(PhaseReport { name: expect.phase.name(), output: err.to_string() });
                 if expect.success {
                     return Err(PhasesError::ExpectedSuccess { got: Box::new(err) });
                 }
@@ -62,11 +82,11 @@ where
             }
         });
 
-        Phases { result }
+        Phases { result, report_phases: self.report_phases }
     }
 
-    pub fn end(self) -> Result<String, Failure> {
-        match self.result {
+    pub fn report(self) -> Report {
+        let result = match self.result {
             Ok(out) => Ok(out.test_output()),
             Err(PhasesError::AsExpected { err }) => Ok(format!("{:?}", err)),
             Err(PhasesError::Mismatch { expected, actual }) => {
@@ -74,6 +94,19 @@ where
             }
             Err(PhasesError::ExpectedFailure { got }) => Err(Failure::ExpectedFailure { got }),
             Err(PhasesError::ExpectedSuccess { got }) => Err(Failure::ExpectedSuccess { got }),
+        };
+
+        Report { result, phases: self.report_phases }
+    }
+}
+
+impl Report {
+    pub fn print(&self) {
+        for PhaseReport { name, output } in &self.phases {
+            println!("phase {name}:");
+            println!();
+            println!("{output}");
+            println!();
         }
     }
 }
@@ -115,26 +148,42 @@ enum PhasesError {
 pub struct Expect<P: Phase> {
     success: bool,
     output: Option<String>,
-    _phase: P,
+    phase: P,
 }
 
 impl<P: Phase> Expect<P> {
     pub fn new(phase: P, success: bool, output: Option<String>) -> Self {
-        Self { success, output, _phase: phase }
+        Self { success, output, phase }
     }
 }
 
-pub struct Parse;
-pub struct Lower;
-pub struct Check;
+pub struct Parse {
+    name: &'static str,
+}
+pub struct Lower {
+    name: &'static str,
+}
+pub struct Check {
+    name: &'static str,
+}
+pub struct Forget {
+    name: &'static str,
+}
+pub struct Print {
+    name: &'static str,
+}
 
 impl Phase for Parse {
     type In = String;
     type Out = cst::Prg;
     type Err = parser::ParseError<usize, parser::common::OwnedToken, &'static str>;
 
-    fn name() -> &'static str {
-        "parse"
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
     }
 
     fn run(input: &Self::In) -> Result<Self::Out, Self::Err> {
@@ -147,8 +196,12 @@ impl Phase for Lower {
     type Out = ast::Prg;
     type Err = lowering::LoweringError;
 
-    fn name() -> &'static str {
-        "lower"
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
     }
 
     fn run(input: &Self::In) -> Result<Self::Out, Self::Err> {
@@ -161,12 +214,52 @@ impl Phase for Check {
     type Out = elab::Prg;
     type Err = core::TypeError;
 
-    fn name() -> &'static str {
-        "check"
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
     }
 
     fn run(input: &Self::In) -> Result<Self::Out, Self::Err> {
         core::check(input)
+    }
+}
+
+impl Phase for Forget {
+    type In = elab::Prg;
+    type Out = ast::Prg;
+    type Err = NoError;
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    fn run(input: &Self::In) -> Result<Self::Out, Self::Err> {
+        Ok(input.forget())
+    }
+}
+
+impl Phase for Print {
+    type In = ast::Prg;
+    type Out = String;
+    type Err = NoError;
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    fn run(input: &Self::In) -> Result<Self::Out, Self::Err> {
+        Ok(input.rename().print_to_string())
     }
 }
 

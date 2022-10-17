@@ -5,11 +5,16 @@ use data::HashMap;
 use super::cases::Case;
 use super::index::Index;
 use super::phases::*;
-use super::suites::{self, Config, Suite};
+use super::suites::{self, Suite};
 
 pub struct Runner {
     suites: HashMap<String, Suite>,
     index: Index,
+}
+
+pub struct Config {
+    pub filter: String,
+    pub debug: bool,
 }
 
 impl Runner {
@@ -37,8 +42,8 @@ impl Runner {
         Self { suites, index }
     }
 
-    pub fn run(&self, filter: &str) -> RunResult {
-        let mut results: Vec<_> = self.index.searcher().search(filter).collect();
+    pub fn run(&self, run_config: &Config) -> RunResult {
+        let mut results: Vec<_> = self.index.searcher().search(&run_config.filter).collect();
         results.sort_by(|a, b| a.suite.cmp(&b.suite).then(a.name.cmp(&b.name)));
 
         let mut failure_count = 0;
@@ -60,7 +65,11 @@ impl Runner {
                 case_results = Vec::new();
                 curr_config = curr_suite.config();
             }
-            let result = self.run_case(&curr_config, &case);
+            let report = self.run_case(&curr_config, &case);
+            if run_config.debug {
+                report.print();
+            }
+            let result = report.result;
             if result.is_err() {
                 failure_count += 1;
             }
@@ -72,24 +81,26 @@ impl Runner {
         RunResult { results: suite_results, cases_count, failure_count }
     }
 
-    pub fn run_case(&self, config: &Config, case: &Case) -> Result<String, Failure> {
+    pub fn run_case(&self, config: &suites::Config, case: &Case) -> Report {
         let input = case.content().unwrap();
 
         Phases::start(input)
-            .then(expect(config, case, Parse))
-            .then(expect(config, case, Lower))
-            .then(expect(config, case, Check))
-            .end()
+            .then(expect(config, case, Parse::new("parse")))
+            .then(expect(config, case, Lower::new("lower")))
+            .then(expect(config, case, Check::new("check")))
+            .then(expect(config, case, Forget::new("forget")))
+            .then(expect(config, case, Print::new("print")))
+            .then(expect(config, case, Parse::new("reparse")))
+            .then(expect(config, case, Lower::new("relower")))
+            .then(expect(config, case, Check::new("recheck")))
+            .report()
     }
 }
 
-pub fn expect<P: Phase>(config: &Config, case: &Case, p: P) -> Expect<P> {
-    let success = config.fail.as_ref().map(|fail| fail != P::name()).unwrap_or(true);
+pub fn expect<P: Phase>(config: &suites::Config, case: &Case, p: P) -> Expect<P> {
+    let success = config.fail.as_ref().map(|fail| fail != p.name()).unwrap_or(true);
     let output =
-        config
-            .fail
-            .as_ref()
-            .and_then(|fail| if fail == P::name() { case.expected() } else { None });
+        config.fail.as_ref().and_then(|fail| if fail == p.name() { case.expected() } else { None });
     Expect::new(p, success, output)
 }
 

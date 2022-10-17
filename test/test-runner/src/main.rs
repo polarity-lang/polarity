@@ -1,6 +1,7 @@
 mod cases;
 mod cli;
 mod index;
+mod infallible;
 mod phases;
 mod runner;
 mod suites;

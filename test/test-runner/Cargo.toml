@@ -20,4 +20,5 @@ syntax = { path = "../../lang/syntax" }
 parser = { path = "../../lang/parser" }
 lowering = { path = "../../lang/lowering" }
 core = { path = "../../lang/core" }
+renaming = { path = "../../lang/renaming" }
 printer = { path = "../../lang/printer" }
