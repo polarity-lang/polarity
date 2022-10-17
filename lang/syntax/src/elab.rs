@@ -102,6 +102,18 @@ pub struct Def {
     pub body: Match,
 }
 
+impl Def {
+    pub fn to_dtor(&self) -> Dtor {
+        Dtor {
+            info: self.info.clone(),
+            name: self.name.clone(),
+            params: self.params.clone(),
+            on_typ: self.on_typ.clone(),
+            in_typ: self.in_typ.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Codef {
     pub info: Info,
@@ -109,6 +121,17 @@ pub struct Codef {
     pub params: Telescope,
     pub typ: TypApp,
     pub body: Comatch,
+}
+
+impl Codef {
+    pub fn to_ctor(&self) -> Ctor {
+        Ctor {
+            info: self.info.clone(),
+            name: self.name.clone(),
+            params: self.params.clone(),
+            typ: self.typ.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -160,7 +183,7 @@ pub struct TypApp {
 
 #[derive(Debug, Clone)]
 pub enum Exp {
-    Var { info: TypedInfo, idx: Idx },
+    Var { info: TypedInfo, name: Ident, idx: Idx },
     TyCtor { info: TypedInfo, name: Ident, args: Args },
     Ctor { info: TypedInfo, name: Ident, args: Args },
     Dtor { info: TypedInfo, exp: Rc<Exp>, name: Ident, args: Args },
@@ -189,6 +212,12 @@ pub struct Eqns {
     pub params: Vec<EqnParam>,
 }
 
+impl Eqns {
+    pub fn empty() -> Self {
+        Self { eqns: vec![], params: vec![] }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct EqnParam {
     pub name: Ident,
@@ -198,6 +227,12 @@ pub struct EqnParam {
 #[derive(Debug, Clone)]
 pub struct Info {
     pub span: Option<Span>,
+}
+
+impl Info {
+    pub fn empty() -> Self {
+        Self { span: None }
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

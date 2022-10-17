@@ -1,8 +1,10 @@
+use std::collections::HashMap;
+
 use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
 use async_lock::RwLock;
 
-use source::Index;
+use source::{Index, Xfunc};
 
 pub fn capabilities() -> lsp::ServerCapabilities {
     let document_symbol_provider = Some(lsp::OneOf::Left(true));
@@ -18,10 +20,13 @@ pub fn capabilities() -> lsp::ServerCapabilities {
 
     let hover_provider = Some(HoverProviderCapability::Simple(true));
 
+    let code_action_provider = Some(lsp::CodeActionProviderCapability::Simple(true));
+
     lsp::ServerCapabilities {
         text_document_sync,
         document_symbol_provider,
         hover_provider,
+        code_action_provider,
         ..Default::default()
     }
 }
@@ -99,6 +104,46 @@ impl LanguageServer for Server {
         });
         Ok(res)
     }
+
+    async fn code_action(
+        &self,
+        params: CodeActionParams,
+    ) -> jsonrpc::Result<Option<CodeActionResponse>> {
+        let text_document = params.text_document;
+        let range = params.range;
+
+        let index = self.index.read().await;
+        let file_name = text_document.uri.as_str();
+        let span_start = index.index(file_name, range.start.into_location());
+        let span_end = index.index(file_name, range.end.into_location());
+        let span = span_start.and_then(|start| span_end.map(|end| codespan::Span::new(start, end)));
+        let item = span.and_then(|span| index.item_at_span(file_name, span));
+
+        if let Some(item) = item {
+            let Xfunc { title, edits } = index.xfunc(file_name, item.name()).unwrap();
+            let edits = edits
+                .into_iter()
+                .map(|edit| TextEdit {
+                    range: index.range(file_name, edit.span).unwrap().into_range(),
+                    new_text: edit.text,
+                })
+                .collect();
+
+            let mut changes = HashMap::new();
+            changes.insert(text_document.uri, edits);
+
+            let res = vec![CodeActionOrCommand::CodeAction(CodeAction {
+                title,
+                kind: Some(CodeActionKind::REFACTOR_REWRITE),
+                edit: Some(WorkspaceEdit { changes: Some(changes), ..Default::default() }),
+                ..Default::default()
+            })];
+
+            Ok(Some(res))
+        } else {
+            Ok(Some(vec![]))
+        }
+    }
 }
 
 trait Extract {
@@ -128,6 +173,10 @@ trait IntoPosition {
 
 trait IntoRange {
     fn into_range(self) -> Range;
+}
+
+trait IntoSpan {
+    fn into_span(self) -> codespan::Span;
 }
 
 impl IntoLocation for Position {

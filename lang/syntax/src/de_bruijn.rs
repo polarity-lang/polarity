@@ -44,7 +44,8 @@ impl Lvl {
 /// * the current number of binders per De-Bruijn level (maximum second component for each first component).
 /// This is satisfied by the context type during typechecking.
 pub trait Leveled {
-    fn relative(&self, idx: Idx) -> Lvl;
+    fn idx_to_lvl(&self, idx: Idx) -> Lvl;
+    fn lvl_to_idx(&self, lvl: Lvl) -> Idx;
 }
 
 /// De-Bruijn shifting

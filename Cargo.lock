@@ -286,6 +286,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "console"
+version = "0.1.0"
+dependencies = [
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "console_error_panic_hook"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1486,6 +1494,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "renaming"
+version = "0.1.0"
+dependencies = [
+ "data",
+ "syntax",
+]
+
+[[package]]
 name = "rust-lapper"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1654,8 +1670,10 @@ dependencies = [
  "lowering",
  "parser",
  "printer",
+ "renaming",
  "rust-lapper",
  "syntax",
+ "xfunc",
 ]
 
 [[package]]
@@ -1727,6 +1745,7 @@ name = "syntax"
 version = "0.1.0"
 dependencies = [
  "codespan",
+ "console",
  "data",
  "derivative",
  "serde",
@@ -2470,6 +2489,14 @@ name = "windows_x86_64_msvc"
 version = "0.36.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c811ca4a8c853ef420abd8592ba53ddbbac90410fab6903b3e79972a631f7680"
+
+[[package]]
+name = "xfunc"
+version = "0.1.0"
+dependencies = [
+ "data",
+ "syntax",
+]
 
 [[package]]
 name = "yansi"

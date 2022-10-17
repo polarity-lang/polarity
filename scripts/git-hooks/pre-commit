@@ -2,6 +2,8 @@
 # Place into `.git/hooks` or use `git config core.hooksPath scripts/git-hooks`
 # from the root of the repository
 
+set -e
+
 cargo test --all
 cargo clippy --all -- -Dwarnings
 cargo fmt --all --check

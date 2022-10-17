@@ -196,6 +196,8 @@ pub enum Exp {
     Var {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Info,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        name: Ident,
         idx: Idx,
     },
     TypCtor {

@@ -338,9 +338,11 @@ impl Lower for cst::Exp {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         match self {
             cst::Exp::Call { info, name, args: subst } => match ctx.lookup(name)? {
-                Elem::Bound(lvl) => {
-                    Ok(ast::Exp::Var { info: info.lower_pure(), idx: ctx.lower_bound(*lvl) })
-                }
+                Elem::Bound(lvl) => Ok(ast::Exp::Var {
+                    info: info.lower_pure(),
+                    name: name.clone(),
+                    idx: ctx.lower_bound(*lvl),
+                }),
                 Elem::Decl(decl_kind) => match decl_kind {
                     DeclKind::Codata | DeclKind::Data => Ok(ast::Exp::TypCtor {
                         info: info.lower_pure(),

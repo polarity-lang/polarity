@@ -17,3 +17,5 @@ parser = { path = "../parser" }
 lowering = { path = "../lowering" }
 core = { path = "../core" }
 printer = { path = "../printer" }
+renaming = { path = "../renaming" }
+xfunc = { path = "../xfunc" }

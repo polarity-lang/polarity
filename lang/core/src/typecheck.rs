@@ -724,9 +724,9 @@ impl Infer for ast::Exp {
     #[trace("{} |- {:P} => {return:P}", ctx, self, |ret| ret.as_ref().map(|e| e.typ()))]
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         match self {
-            ast::Exp::Var { info, idx } => {
+            ast::Exp::Var { info, name, idx } => {
                 let typ = ctx.bound(*idx);
-                Ok(elab::Exp::Var { info: info.with_type(typ), idx: *idx })
+                Ok(elab::Exp::Var { info: info.with_type(typ), name: name.clone(), idx: *idx })
             }
             ast::Exp::TypCtor { info, name, args } => {
                 let ast::TypAbs { params } = &*ctx.typ(name);

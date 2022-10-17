@@ -127,7 +127,7 @@ impl<'l, L: Leveled> Ctx<'l, L> {
         if ast::occurs_in(self.lvl, idx, &exp) {
             return Err(UnifyError::OccursCheckFailed { idx, exp });
         }
-        let insert_lvl = self.lvl.relative(idx);
+        let insert_lvl = self.lvl.idx_to_lvl(idx);
         let exp = exp.subst(self.lvl, &self.unif);
         self.unif.subst(self.lvl, &Assign(insert_lvl, &exp));
         match self.unif.map.get(&insert_lvl) {

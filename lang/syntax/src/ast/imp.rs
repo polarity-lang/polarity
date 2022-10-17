@@ -21,9 +21,11 @@ impl ShiftCutoff for Eqn {
 impl ShiftCutoff for Exp {
     fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
         match self {
-            Exp::Var { info, idx } => {
-                Exp::Var { info: info.clone(), idx: idx.shift_cutoff(cutoff, by) }
-            }
+            Exp::Var { info, name, idx } => Exp::Var {
+                info: info.clone(),
+                name: name.clone(),
+                idx: idx.shift_cutoff(cutoff, by),
+            },
             Exp::TypCtor { info, name, args: subst } => Exp::TypCtor {
                 info: info.clone(),
                 name: name.clone(),
@@ -53,7 +55,9 @@ impl ShiftCutoff for Exp {
 impl AlphaEq for Exp {
     fn alpha_eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Exp::Var { info: _, idx }, Exp::Var { info: _, idx: idx2 }) => idx.alpha_eq(idx2),
+            (Exp::Var { info: _, name: _, idx }, Exp::Var { info: _, name: _, idx: idx2 }) => {
+                idx.alpha_eq(idx2)
+            }
             (
                 Exp::TypCtor { info: _, name, args: subst },
                 Exp::TypCtor { info: _, name: name2, args: subst2 },

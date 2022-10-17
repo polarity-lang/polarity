@@ -4,4 +4,7 @@ pub mod cst;
 pub mod de_bruijn;
 pub mod elab;
 pub mod equiv;
+pub mod forget;
+pub mod leveled_ctx;
+pub mod matrix;
 pub mod named;

@@ -1,10 +1,29 @@
 use std::rc::Rc;
 
+use codespan::Span;
 use syntax::elab::*;
 
 pub trait Collector {
-    fn add(&mut self, info: &Info);
-    fn add_typed(&mut self, info: &TypedInfo);
+    fn add_info(&mut self, info: &Info);
+    fn add_typed_info(&mut self, info: &TypedInfo);
+    fn add_item_span(&mut self, item: Item, span: Span);
+}
+
+#[derive(PartialEq, Eq, Clone)]
+pub enum Item {
+    Data(String),
+    Codata(String),
+    Impl(String),
+}
+
+impl Item {
+    pub fn name(&self) -> &str {
+        match self {
+            Item::Data(name) => name,
+            Item::Codata(name) => name,
+            Item::Impl(name) => name,
+        }
+    }
 }
 
 pub trait Collect {
@@ -44,17 +63,24 @@ impl Collect for Decl {
 
 impl Collect for Data {
     fn collect<C: Collector>(&self, c: &mut C) {
-        let Data { info, name: _, typ, ctors: _, impl_block: _ } = self;
-        c.add(info);
+        let Data { info, name, typ, ctors: _, impl_block } = self;
+        c.add_info(info);
+        c.add_item_span(Item::Data(name.clone()), info.span.unwrap());
+        if let Some(impl_block) = impl_block {
+            c.add_item_span(Item::Impl(name.clone()), impl_block.info.span.unwrap());
+        }
         typ.collect(c);
     }
 }
 
 impl Collect for Codata {
     fn collect<C: Collector>(&self, c: &mut C) {
-        let Codata { info, name: _, typ, dtors: _, impl_block: _ } = self;
-
-        c.add(info);
+        let Codata { info, name, typ, dtors: _, impl_block } = self;
+        c.add_info(info);
+        c.add_item_span(Item::Codata(name.clone()), info.span.unwrap());
+        if let Some(impl_block) = impl_block {
+            c.add_item_span(Item::Impl(name.clone()), impl_block.info.span.unwrap());
+        }
         typ.collect(c);
     }
 }
@@ -63,7 +89,7 @@ impl Collect for Ctor {
     fn collect<C: Collector>(&self, c: &mut C) {
         let Ctor { info, name: _, params, typ } = self;
 
-        c.add(info);
+        c.add_info(info);
         params.collect(c);
         typ.collect(c);
     }
@@ -73,7 +99,7 @@ impl Collect for Dtor {
     fn collect<C: Collector>(&self, c: &mut C) {
         let Dtor { info, name: _, params, on_typ, in_typ } = self;
 
-        c.add(info);
+        c.add_info(info);
         params.collect(c);
         on_typ.collect(c);
         in_typ.collect(c);
@@ -84,7 +110,7 @@ impl Collect for Def {
     fn collect<C: Collector>(&self, c: &mut C) {
         let Def { info, name: _, params, on_typ, in_typ, body } = self;
 
-        c.add(info);
+        c.add_info(info);
         params.collect(c);
         on_typ.collect(c);
         in_typ.collect(c);
@@ -96,7 +122,7 @@ impl Collect for Codef {
     fn collect<C: Collector>(&self, c: &mut C) {
         let Codef { info, name: _, params, typ, body } = self;
 
-        c.add(info);
+        c.add_info(info);
         params.collect(c);
         typ.collect(c);
         body.collect(c);
@@ -106,27 +132,27 @@ impl Collect for Codef {
 impl Collect for Exp {
     fn collect<C: Collector>(&self, c: &mut C) {
         match self {
-            Exp::Var { info, idx: _ } => c.add_typed(info),
+            Exp::Var { info, name: _, idx: _ } => c.add_typed_info(info),
             Exp::TyCtor { info, name: _, args } => {
-                c.add_typed(info);
+                c.add_typed_info(info);
                 args.collect(c)
             }
             Exp::Ctor { info, name: _, args } => {
-                c.add_typed(info);
+                c.add_typed_info(info);
                 args.collect(c);
             }
             Exp::Dtor { info, exp, name: _, args } => {
-                c.add_typed(info);
+                c.add_typed_info(info);
                 exp.collect(c);
                 args.collect(c);
             }
             Exp::Anno { info, exp, typ } => {
-                c.add_typed(info);
+                c.add_typed_info(info);
                 exp.collect(c);
                 typ.collect(c);
             }
             Exp::Type { info } => {
-                c.add_typed(info);
+                c.add_typed_info(info);
             }
         }
     }
@@ -135,7 +161,7 @@ impl Collect for Exp {
 impl Collect for Match {
     fn collect<C: Collector>(&self, c: &mut C) {
         let Match { info, cases } = self;
-        c.add(info);
+        c.add_info(info);
         for case in cases {
             case.collect(c);
         }
@@ -145,7 +171,7 @@ impl Collect for Match {
 impl Collect for Comatch {
     fn collect<C: Collector>(&self, c: &mut C) {
         let Comatch { info, cases } = self;
-        c.add(info);
+        c.add_info(info);
         for case in cases {
             case.collect(c);
         }
@@ -156,7 +182,7 @@ impl Collect for Case {
     fn collect<C: Collector>(&self, c: &mut C) {
         let Case { info, name: _, args, eqns, body } = self;
 
-        c.add(info);
+        c.add_info(info);
         args.collect(c);
         eqns.collect(c);
         body.collect(c);
@@ -167,7 +193,7 @@ impl Collect for Cocase {
     fn collect<C: Collector>(&self, c: &mut C) {
         let Cocase { info, name: _, args, eqns, body } = self;
 
-        c.add(info);
+        c.add_info(info);
         args.collect(c);
         eqns.collect(c);
         body.collect(c);
@@ -195,7 +221,7 @@ impl Collect for Eqn {
     fn collect<C: Collector>(&self, c: &mut C) {
         let Eqn { info, lhs, rhs } = self;
 
-        c.add(info);
+        c.add_info(info);
         lhs.collect(c);
         rhs.collect(c);
     }
@@ -213,7 +239,7 @@ impl Collect for TypApp {
     fn collect<C: Collector>(&self, c: &mut C) {
         let TypApp { info, name: _, args } = self;
 
-        c.add(info);
+        c.add_info(info);
         args.collect(c);
     }
 }

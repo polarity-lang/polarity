@@ -44,8 +44,30 @@ impl<'a> PrintInCtx<'a> for Decl {
 
     fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Decl::Data(data) => data.print_in_ctx(ctx, alloc),
-            Decl::Codata(codata) => codata.print_in_ctx(ctx, alloc),
+            Decl::Data(data) => {
+                let impl_block = &data.impl_block;
+                let data = data.print_in_ctx(ctx, alloc);
+
+                match impl_block {
+                    Some(block) => data
+                        .append(alloc.hardline())
+                        .append(alloc.hardline())
+                        .append(block.print_in_ctx(ctx, alloc)),
+                    None => data,
+                }
+            }
+            Decl::Codata(codata) => {
+                let impl_block = &codata.impl_block;
+                let codata = codata.print_in_ctx(ctx, alloc);
+
+                match impl_block {
+                    Some(block) => codata
+                        .append(alloc.hardline())
+                        .append(alloc.hardline())
+                        .append(block.print_in_ctx(ctx, alloc)),
+                    None => codata,
+                }
+            }
             Decl::Def(def) => def.print(alloc),
             Decl::Codef(codef) => codef.print(alloc),
             Decl::Ctor(ctor) => ctor.print(alloc),
@@ -58,7 +80,7 @@ impl<'a> PrintInCtx<'a> for Data {
     type Ctx = Decls;
 
     fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Data { info: _, name, typ, ctors, impl_block } = self;
+        let Data { info: _, name, typ, ctors, impl_block: _ } = self;
 
         let head = alloc
             .keyword(DATA)
@@ -82,15 +104,7 @@ impl<'a> PrintInCtx<'a> for Data {
             .append(alloc.hardline())
             .braces();
 
-        let data = head.append(body);
-
-        match impl_block {
-            Some(block) => data
-                .append(alloc.hardline())
-                .append(alloc.hardline())
-                .append(block.print_in_ctx(ctx, alloc)),
-            None => data,
-        }
+        head.append(body)
     }
 }
 
@@ -98,7 +112,7 @@ impl<'a> PrintInCtx<'a> for Codata {
     type Ctx = Decls;
 
     fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codata { info: _, name, typ, dtors, impl_block } = self;
+        let Codata { info: _, name, typ, dtors, impl_block: _ } = self;
         let head = alloc
             .keyword(CODATA)
             .append(alloc.space())
@@ -121,15 +135,7 @@ impl<'a> PrintInCtx<'a> for Codata {
             .append(alloc.hardline())
             .braces();
 
-        let codata = head.append(body);
-
-        match impl_block {
-            Some(block) => codata
-                .append(alloc.hardline())
-                .append(alloc.hardline())
-                .append(block.print_in_ctx(ctx, alloc)),
-            None => codata,
-        }
+        head.append(body)
     }
 }
 
@@ -142,7 +148,7 @@ impl<'a> PrintInCtx<'a> for Impl {
         let head =
             alloc.keyword(IMPL).append(alloc.space()).append(alloc.typ(name)).append(alloc.space());
 
-        let sep = alloc.text(SEMI).append(alloc.hardline()).append(alloc.hardline());
+        let sep = alloc.hardline().append(alloc.hardline());
 
         let body = alloc
             .hardline()
@@ -258,16 +264,19 @@ impl<'a> Print<'a> for Case {
 
         let body = match body {
             None => alloc.keyword(ABSURD),
-            Some(body) => body.print(alloc),
+            Some(body) => {
+                alloc.text(FAT_ARROW).append(alloc.line()).append(body.print(alloc)).nest(INDENT)
+            }
         };
+
+        let eqns = if eqns.is_empty() { alloc.nil() } else { eqns.print(alloc).braces() };
 
         alloc
             .ctor(name)
             .append(args.print(alloc))
-            .append(eqns.print(alloc).braces())
+            .append(eqns)
             .append(alloc.space())
-            .append(FAT_ARROW)
-            .append(alloc.line().append(body).nest(INDENT))
+            .append(body)
             .group()
     }
 }
@@ -278,16 +287,19 @@ impl<'a> Print<'a> for Cocase {
 
         let body = match body {
             None => alloc.keyword(ABSURD),
-            Some(body) => body.print(alloc),
+            Some(body) => {
+                alloc.text(FAT_ARROW).append(alloc.line()).append(body.print(alloc)).nest(INDENT)
+            }
         };
+
+        let eqns = if eqns.is_empty() { alloc.nil() } else { eqns.print(alloc).braces() };
 
         alloc
             .ctor(name)
             .append(args.print(alloc))
-            .append(eqns.print(alloc).braces())
+            .append(eqns)
             .append(alloc.space())
-            .append(FAT_ARROW)
-            .append(alloc.line().append(body).nest(INDENT))
+            .append(body)
             .group()
     }
 }
@@ -333,7 +345,7 @@ impl<'a> Print<'a> for Eqn {
 impl<'a> Print<'a> for Exp {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Exp::Var { info: _, idx } => idx.print(alloc),
+            Exp::Var { info: _, name, idx: _ } => alloc.text(name),
             Exp::TypCtor { info: _, name, args: subst } => {
                 alloc.typ(name).append(subst.print(alloc).parens())
             }

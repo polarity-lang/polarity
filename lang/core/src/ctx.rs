@@ -235,10 +235,16 @@ impl Ctx {
 }
 
 impl Leveled for Ctx {
-    fn relative(&self, idx: Idx) -> Lvl {
+    fn idx_to_lvl(&self, idx: Idx) -> Lvl {
         let fst = self.bound.len() - 1 - idx.fst;
         let snd = self.bound[fst].len() - 1 - idx.snd;
         Lvl { fst, snd }
+    }
+
+    fn lvl_to_idx(&self, lvl: Lvl) -> Idx {
+        let fst = self.bound.len() - 1 - lvl.fst;
+        let snd = self.bound[lvl.fst].len() - 1 - lvl.snd;
+        Idx { fst, snd }
     }
 }
 

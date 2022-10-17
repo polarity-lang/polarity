@@ -73,6 +73,31 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
         return result;
       },
     });
+    monaco.languages.registerCodeActionProvider(this.id, {
+      async provideCodeActions(model, range, context, token): Promise<monaco.languages.CodeActionList> {
+        void token;
+        const response = await (client.request(proto.CodeActionRequest.type.method, {
+          textDocument: {
+            version: 0,
+            uri: model.uri.toString(),
+          },
+          range: monacoToProtocol.asRange(range),
+          context: monacoToProtocol.asCodeActionContext(context, []),
+        } as proto.CodeActionParams) as Promise<proto.CodeAction[]>);
+
+        if (response === null) {
+          return { actions: [], dispose: () => undefined };
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const result: monaco.languages.CodeActionList = protocolToMonaco.asCodeActionList(response);
+
+        console.log(result);
+        console.log(model.uri);
+
+        return result;
+      },
+    });
   }
 
   private static syntaxDefinition(): monaco.languages.IMonarchLanguage {

@@ -3,7 +3,6 @@ pub const INDENT: isize = 4;
 
 // Symbols
 
-pub const SEMI: &str = ";";
 pub const EQ: &str = "=";
 pub const FAT_ARROW: &str = "=>";
 pub const COMMA: &str = ",";

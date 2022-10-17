@@ -78,7 +78,7 @@ pub Impl: Impl = {
 
 pub TypDecl: TypDecl = {
     <l: @L> "data" <name: Ident> <params: OptTelescope> ":" "Type" "{" <ctors: Comma<Ctor>> "}" <r: @R> => TypDecl::Data(Data { info: span(l, r), name, params, ctors }),
-    <l: @L> "codata" <name: Ident> <params: OptTelescope> ":" "Type" "{" <dtors: Comma<Dtor>> <r: @R> "}" => TypDecl::Codata(Codata { info: span(l, r), name, params, dtors }),
+    <l: @L> "codata" <name: Ident> <params: OptTelescope> ":" "Type" "{" <dtors: Comma<Dtor>> "}" <r: @R> => TypDecl::Codata(Codata { info: span(l, r), name, params, dtors }),
 }
 
 pub DefDecl: DefDecl = {
