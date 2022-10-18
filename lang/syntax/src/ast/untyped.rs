@@ -7,9 +7,9 @@ use crate::de_bruijn::*;
 use super::generic;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub struct AST;
+pub struct UST;
 
-impl generic::Phase for AST {
+impl generic::Phase for UST {
     type Info = Info;
     type TypeInfo = Info;
 
@@ -20,27 +20,27 @@ impl generic::Phase for AST {
     }
 }
 
-pub type Prg = generic::Prg<AST>;
-pub type Decls = generic::Decls<AST>;
-pub type Decl = generic::Decl<AST>;
-pub type Data = generic::Data<AST>;
-pub type Codata = generic::Codata<AST>;
-pub type Impl = generic::Impl<AST>;
-pub type TypAbs = generic::TypAbs<AST>;
-pub type Ctor = generic::Ctor<AST>;
-pub type Dtor = generic::Dtor<AST>;
-pub type Def = generic::Def<AST>;
-pub type Codef = generic::Codef<AST>;
-pub type Match = generic::Match<AST>;
-pub type Comatch = generic::Comatch<AST>;
-pub type Case = generic::Case<AST>;
-pub type Cocase = generic::Cocase<AST>;
-pub type TypApp = generic::TypApp<AST>;
-pub type Exp = generic::Exp<AST>;
-pub type Telescope = generic::Telescope<AST>;
-pub type Params = generic::Params<AST>;
-pub type Args = generic::Args<AST>;
-pub type Param = generic::Param<AST>;
+pub type Prg = generic::Prg<UST>;
+pub type Decls = generic::Decls<UST>;
+pub type Decl = generic::Decl<UST>;
+pub type Data = generic::Data<UST>;
+pub type Codata = generic::Codata<UST>;
+pub type Impl = generic::Impl<UST>;
+pub type TypAbs = generic::TypAbs<UST>;
+pub type Ctor = generic::Ctor<UST>;
+pub type Dtor = generic::Dtor<UST>;
+pub type Def = generic::Def<UST>;
+pub type Codef = generic::Codef<UST>;
+pub type Match = generic::Match<UST>;
+pub type Comatch = generic::Comatch<UST>;
+pub type Case = generic::Case<UST>;
+pub type Cocase = generic::Cocase<UST>;
+pub type TypApp = generic::TypApp<UST>;
+pub type Exp = generic::Exp<UST>;
+pub type Telescope = generic::Telescope<UST>;
+pub type Params = generic::Params<UST>;
+pub type Args = generic::Args<UST>;
+pub type Param = generic::Param<UST>;
 
 #[derive(Default, Debug, Clone)]
 pub struct Info {

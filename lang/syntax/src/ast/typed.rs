@@ -9,9 +9,9 @@ use super::generic;
 use super::untyped;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub struct Elab;
+pub struct TST;
 
-impl generic::Phase for Elab {
+impl generic::Phase for TST {
     type Info = Info;
     type TypeInfo = TypeInfo;
 
@@ -22,27 +22,27 @@ impl generic::Phase for Elab {
     }
 }
 
-pub type Prg = generic::Prg<Elab>;
-pub type Decls = generic::Decls<Elab>;
-pub type Decl = generic::Decl<Elab>;
-pub type Data = generic::Data<Elab>;
-pub type Codata = generic::Codata<Elab>;
-pub type Impl = generic::Impl<Elab>;
-pub type TypAbs = generic::TypAbs<Elab>;
-pub type Ctor = generic::Ctor<Elab>;
-pub type Dtor = generic::Dtor<Elab>;
-pub type Def = generic::Def<Elab>;
-pub type Codef = generic::Codef<Elab>;
-pub type Match = generic::Match<Elab>;
-pub type Comatch = generic::Comatch<Elab>;
-pub type Case = generic::Case<Elab>;
-pub type Cocase = generic::Cocase<Elab>;
-pub type TypApp = generic::TypApp<Elab>;
-pub type Exp = generic::Exp<Elab>;
-pub type Telescope = generic::Telescope<Elab>;
-pub type Params = generic::Params<Elab>;
-pub type Args = generic::Args<Elab>;
-pub type Param = generic::Param<Elab>;
+pub type Prg = generic::Prg<TST>;
+pub type Decls = generic::Decls<TST>;
+pub type Decl = generic::Decl<TST>;
+pub type Data = generic::Data<TST>;
+pub type Codata = generic::Codata<TST>;
+pub type Impl = generic::Impl<TST>;
+pub type TypAbs = generic::TypAbs<TST>;
+pub type Ctor = generic::Ctor<TST>;
+pub type Dtor = generic::Dtor<TST>;
+pub type Def = generic::Def<TST>;
+pub type Codef = generic::Codef<TST>;
+pub type Match = generic::Match<TST>;
+pub type Comatch = generic::Comatch<TST>;
+pub type Case = generic::Case<TST>;
+pub type Cocase = generic::Cocase<TST>;
+pub type TypApp = generic::TypApp<TST>;
+pub type Exp = generic::Exp<TST>;
+pub type Telescope = generic::Telescope<TST>;
+pub type Params = generic::Params<TST>;
+pub type Args = generic::Args<TST>;
+pub type Param = generic::Param<TST>;
 
 impl From<untyped::Impl> for Impl {
     fn from(untyped::Impl { info, name, defs }: untyped::Impl) -> Self {

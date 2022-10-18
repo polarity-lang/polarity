@@ -54,7 +54,7 @@ impl Item {
     }
 }
 
-impl Visitor<tst::Elab> for InfoCollector {
+impl Visitor<tst::TST> for InfoCollector {
     fn visit_info(&mut self, info: &tst::Info) {
         self.add_info(info);
     }
