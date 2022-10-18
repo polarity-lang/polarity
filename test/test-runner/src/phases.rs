@@ -1,10 +1,11 @@
 use std::error::Error;
 use std::fmt;
+use std::marker::PhantomData;
 
 use printer::PrintToString;
 use renaming::Rename;
-use syntax::forget::Forget as _;
-use syntax::{ast, cst, elab};
+use syntax::common::Ident;
+use syntax::{ast, cst, elab, generic};
 
 use super::infallible::NoError;
 
@@ -166,11 +167,10 @@ pub struct Lower {
 pub struct Check {
     name: &'static str,
 }
-pub struct Forget {
+
+pub struct Print<P: generic::Phase> {
     name: &'static str,
-}
-pub struct Print {
-    name: &'static str,
+    phantom: PhantomData<P>,
 }
 
 impl Phase for Parse {
@@ -227,31 +227,13 @@ impl Phase for Check {
     }
 }
 
-impl Phase for Forget {
-    type In = elab::Prg;
-    type Out = ast::Prg;
-    type Err = NoError;
-
-    fn new(name: &'static str) -> Self {
-        Self { name }
-    }
-
-    fn name(&self) -> &'static str {
-        self.name
-    }
-
-    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        Ok(input.forget())
-    }
-}
-
-impl Phase for Print {
-    type In = ast::Prg;
+impl<P: generic::Phase<VarName = Ident>> Phase for Print<P> {
+    type In = generic::Prg<P>;
     type Out = String;
     type Err = NoError;
 
     fn new(name: &'static str) -> Self {
-        Self { name }
+        Self { name, phantom: Default::default() }
     }
 
     fn name(&self) -> &'static str {

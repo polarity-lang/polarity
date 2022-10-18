@@ -6,7 +6,6 @@ use rust_lapper::Lapper;
 use data::HashMap;
 use syntax::ast;
 use syntax::elab;
-use syntax::forget::Forget;
 
 mod info;
 mod result;
@@ -58,9 +57,7 @@ impl Index {
     pub fn xfunc(&self, file_name: &str, type_name: &str) -> Result<Xfunc, String> {
         let id = self.id_by_name[file_name];
         let source = self.files.source(id);
-        // FIXME: don't `load` and then `.forget`
-        let prg = load(source).map_err(|err| format!("{}", err))?;
-        let prg = prg.forget();
+        let prg = load_ast(source).map_err(|err| format!("{}", err))?;
         let mat = xfunc::as_matrix(&prg);
         let type_span = mat.map[type_name].info.span.unwrap();
         let impl_span = mat.map[type_name].impl_block.as_ref().and_then(|block| block.info.span);
@@ -188,7 +185,7 @@ impl Index {
 
     fn reload(&mut self, id: FileId) -> Result<(), String> {
         let source = self.files.source(id);
-        match load(source) {
+        match load_elab(source) {
             Ok(ref prg) => {
                 let (info_lapper, item_lapper, infos) = collect_info(prg);
                 self.info_index_by_id.insert(id, info_lapper);
@@ -206,8 +203,12 @@ impl Index {
     }
 }
 
-fn load(source: &str) -> Result<elab::Prg, Error> {
-    let cst = parser::cst::parse_program(source).map_err(Error::Parser)?;
-    let ast = lowering::lower(&cst).map_err(Error::Lowering)?;
+fn load_elab(source: &str) -> Result<elab::Prg, Error> {
+    let ast = load_ast(source)?;
     core::check(&ast).map_err(Error::Type)
+}
+
+fn load_ast(source: &str) -> Result<ast::Prg, Error> {
+    let cst = parser::cst::parse_program(source).map_err(Error::Parser)?;
+    lowering::lower(&cst).map_err(Error::Lowering)
 }

@@ -4,6 +4,7 @@ use codespan::Span;
 
 use crate::ast;
 use crate::common::{HasInfo, Ident};
+use crate::de_bruijn::Idx;
 use crate::generic;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -14,6 +15,10 @@ impl generic::Phase for Elab {
     type TypeInfo = TypedInfo;
 
     type VarName = Ident;
+
+    fn print_var(name: &Self::VarName, _idx: Idx) -> String {
+        name.clone()
+    }
 }
 
 pub type Prg = generic::Prg<Elab>;

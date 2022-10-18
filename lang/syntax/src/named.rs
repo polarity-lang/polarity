@@ -1,4 +1,3 @@
-use super::ast;
 use super::common::*;
 use super::cst;
 use super::generic;
@@ -34,15 +33,15 @@ impl Named for cst::DefDecl {
     }
 }
 
-impl Named for ast::Decl {
+impl<P: generic::Phase> Named for generic::Decl<P> {
     fn name(&self) -> &Ident {
         match self {
-            ast::Decl::Data(ast::Data { name, .. }) => name,
-            ast::Decl::Codata(ast::Codata { name, .. }) => name,
-            ast::Decl::Def(ast::Def { name, .. }) => name,
-            ast::Decl::Codef(ast::Codef { name, .. }) => name,
-            ast::Decl::Ctor(ast::Ctor { name, .. }) => name,
-            ast::Decl::Dtor(ast::Dtor { name, .. }) => name,
+            generic::Decl::Data(generic::Data { name, .. }) => name,
+            generic::Decl::Codata(generic::Codata { name, .. }) => name,
+            generic::Decl::Def(generic::Def { name, .. }) => name,
+            generic::Decl::Codef(generic::Codef { name, .. }) => name,
+            generic::Decl::Ctor(generic::Ctor { name, .. }) => name,
+            generic::Decl::Dtor(generic::Dtor { name, .. }) => name,
         }
     }
 }

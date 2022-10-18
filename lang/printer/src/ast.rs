@@ -2,13 +2,13 @@ use std::rc::Rc;
 
 use pretty::DocAllocator;
 
-use syntax::ast::*;
+use syntax::generic::*;
 
 use super::theme::ThemeExt;
 use super::tokens::*;
 use super::types::*;
 
-impl<'a> Print<'a> for Prg {
+impl<'a, P: Phase> Print<'a> for Prg<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Prg { decls, exp } = self;
 
@@ -26,7 +26,7 @@ impl<'a> Print<'a> for Prg {
     }
 }
 
-impl<'a> Print<'a> for Decls {
+impl<'a, P: Phase> Print<'a> for Decls<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Decls { map, order } = self;
         let decls_in_order = order
@@ -39,8 +39,8 @@ impl<'a> Print<'a> for Decls {
     }
 }
 
-impl<'a> PrintInCtx<'a> for Decl {
-    type Ctx = Decls;
+impl<'a, P: Phase> PrintInCtx<'a> for Decl<P> {
+    type Ctx = Decls<P>;
 
     fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
@@ -76,8 +76,8 @@ impl<'a> PrintInCtx<'a> for Decl {
     }
 }
 
-impl<'a> PrintInCtx<'a> for Data {
-    type Ctx = Decls;
+impl<'a, P: Phase> PrintInCtx<'a> for Data<P> {
+    type Ctx = Decls<P>;
 
     fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Data { info: _, name, typ, ctors, impl_block: _ } = self;
@@ -108,8 +108,8 @@ impl<'a> PrintInCtx<'a> for Data {
     }
 }
 
-impl<'a> PrintInCtx<'a> for Codata {
-    type Ctx = Decls;
+impl<'a, P: Phase> PrintInCtx<'a> for Codata<P> {
+    type Ctx = Decls<P>;
 
     fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Codata { info: _, name, typ, dtors, impl_block: _ } = self;
@@ -139,8 +139,8 @@ impl<'a> PrintInCtx<'a> for Codata {
     }
 }
 
-impl<'a> PrintInCtx<'a> for Impl {
-    type Ctx = Decls;
+impl<'a, P: Phase> PrintInCtx<'a> for Impl<P> {
+    type Ctx = Decls<P>;
 
     fn print_in_ctx(&'a self, ctx: &'a Self::Ctx, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Impl { info: _, name, defs } = self;
@@ -163,7 +163,7 @@ impl<'a> PrintInCtx<'a> for Impl {
     }
 }
 
-impl<'a> Print<'a> for Def {
+impl<'a, P: Phase> Print<'a> for Def<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Def { info: _, name, params, on_typ, in_typ, body } = self;
         let head = alloc
@@ -184,7 +184,7 @@ impl<'a> Print<'a> for Def {
     }
 }
 
-impl<'a> Print<'a> for Codef {
+impl<'a, P: Phase> Print<'a> for Codef<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Codef { info: _, name, params, typ, body } = self;
         let head = alloc
@@ -203,7 +203,7 @@ impl<'a> Print<'a> for Codef {
     }
 }
 
-impl<'a> Print<'a> for Ctor {
+impl<'a, P: Phase> Print<'a> for Ctor<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Ctor { info: _, name, params, typ } = self;
         alloc
@@ -216,7 +216,7 @@ impl<'a> Print<'a> for Ctor {
     }
 }
 
-impl<'a> Print<'a> for Dtor {
+impl<'a, P: Phase> Print<'a> for Dtor<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Dtor { info: _, name, params, on_typ, in_typ } = self;
         on_typ
@@ -231,7 +231,7 @@ impl<'a> Print<'a> for Dtor {
     }
 }
 
-impl<'a> Print<'a> for Comatch {
+impl<'a, P: Phase> Print<'a> for Comatch<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Comatch { info: _, cases } = self;
         let sep = alloc.text(COMMA).append(alloc.hardline());
@@ -245,7 +245,7 @@ impl<'a> Print<'a> for Comatch {
     }
 }
 
-impl<'a> Print<'a> for Match {
+impl<'a, P: Phase> Print<'a> for Match<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { info: _, cases } = self;
         let sep = alloc.text(COMMA).append(alloc.hardline());
@@ -258,7 +258,7 @@ impl<'a> Print<'a> for Match {
     }
 }
 
-impl<'a> Print<'a> for Case {
+impl<'a, P: Phase> Print<'a> for Case<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Case { info: _, name, args, body } = self;
 
@@ -273,7 +273,7 @@ impl<'a> Print<'a> for Case {
     }
 }
 
-impl<'a> Print<'a> for Cocase {
+impl<'a, P: Phase> Print<'a> for Cocase<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Cocase { info: _, name, args, body } = self;
 
@@ -288,30 +288,30 @@ impl<'a> Print<'a> for Cocase {
     }
 }
 
-impl<'a> Print<'a> for Telescope {
+impl<'a, P: Phase> Print<'a> for Telescope<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.params.print(alloc).parens()
     }
 }
 
-impl<'a> Print<'a> for Param {
+impl<'a, P: Phase> Print<'a> for Param<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Param { name, typ } = self;
         alloc.text(name).append(COLON).append(alloc.space()).append(typ.print(alloc))
     }
 }
 
-impl<'a> Print<'a> for TypApp {
+impl<'a, P: Phase> Print<'a> for TypApp<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypApp { info: _, name, args: subst } = self;
         alloc.typ(name).append(subst.print(alloc).parens())
     }
 }
 
-impl<'a> Print<'a> for Exp {
+impl<'a, P: Phase> Print<'a> for Exp<P> {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Exp::Var { info: _, name, idx: _ } => alloc.text(name),
+            Exp::Var { info: _, name, idx } => alloc.text(P::print_var(name, *idx)),
             Exp::TypCtor { info: _, name, args: subst } => {
                 alloc.typ(name).append(subst.print(alloc).parens())
             }

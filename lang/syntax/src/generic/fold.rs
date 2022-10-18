@@ -9,7 +9,7 @@ use crate::generic::*;
 
 #[rustfmt::skip]
 pub trait Folder<P: Phase, O: Out> {
-    fn fold_prg(&mut self, decls: O::Decls, exp: Option<Rc<O::Exp>>) -> O::Prg;
+    fn fold_prg(&mut self, decls: O::Decls, exp: Option<O::Exp>) -> O::Prg;
     fn fold_decls(&mut self, map: HashMap<Ident, O::Decl>, order: Vec<Ident>) -> O::Decls;
     fn fold_decl_data(&mut self, data: O::Data) -> O::Decl;
     fn fold_decl_codata(&mut self, codata: O::Codata) -> O::Decl;
@@ -17,24 +17,24 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_decl_dtor(&mut self, dtor: O::Dtor) -> O::Decl;
     fn fold_decl_def(&mut self, def: O::Def) -> O::Decl;
     fn fold_decl_codef(&mut self, codef: O::Codef) -> O::Decl;
-    fn fold_data(&mut self, info: O::Info, name: Ident, typ: Rc<O::TypAbs>, ctors: Vec<Ident>, impl_block: Option<O::Impl>) -> O::Data;
-    fn fold_codata(&mut self, info: O::Info, name: Ident, typ: Rc<O::TypAbs>, dtors: Vec<Ident>, impl_block: Option<O::Impl>) -> O::Codata;
+    fn fold_data(&mut self, info: O::Info, name: Ident, typ: O::TypAbs, ctors: Vec<Ident>, impl_block: Option<O::Impl>) -> O::Data;
+    fn fold_codata(&mut self, info: O::Info, name: Ident, typ: O::TypAbs, dtors: Vec<Ident>, impl_block: Option<O::Impl>) -> O::Codata;
     fn fold_impl(&mut self, info: O::Info, name: Ident, defs: Vec<Ident>) -> O::Impl;
     fn fold_typ_abs(&mut self, params: O::Telescope) -> O::TypAbs;
     fn fold_ctor(&mut self, info: O::Info, name: Ident, params: O::Telescope, typ: O::TypApp) -> O::Ctor;
-    fn fold_dtor(&mut self, info: O::Info, name: Ident, params: O::Telescope, on_typ: O::TypApp, in_typ: Rc<O::Exp>) -> O::Dtor;
-    fn fold_def(&mut self, info: O::Info, name: Ident, params: O::Telescope, on_typ: O::TypApp, in_typ: Rc<O::Exp>, body: O::Match) -> O::Def;
+    fn fold_dtor(&mut self, info: O::Info, name: Ident, params: O::Telescope, on_typ: O::TypApp, in_typ: O::Exp) -> O::Dtor;
+    fn fold_def(&mut self, info: O::Info, name: Ident, params: O::Telescope, on_typ: O::TypApp, in_typ: O::Exp, body: O::Match) -> O::Def;
     fn fold_codef(&mut self, info: O::Info, name: Ident, params: O::Telescope, typ: O::TypApp, body: O::Comatch) -> O::Codef;
     fn fold_match(&mut self, info: O::Info, cases: Vec<O::Case>) -> O::Match;
     fn fold_comatch(&mut self, info: O::Info, cases: Vec<O::Cocase>) -> O::Comatch;
-    fn fold_case(&mut self, info: O::Info, name: Ident, args: O::Telescope, body: Option<Rc<O::Exp>>) -> O::Case;
-    fn fold_cocase(&mut self, info: O::Info, name: Ident, args: O::Telescope, body: Option<Rc<O::Exp>>) -> O::Cocase;
-    fn fold_typ_app(&mut self, info: O::TypeInfo, name: Ident, args: Vec<Rc<O::Exp>>) -> O::TypApp;
+    fn fold_case(&mut self, info: O::Info, name: Ident, args: O::Telescope, body: Option<O::Exp>) -> O::Case;
+    fn fold_cocase(&mut self, info: O::Info, name: Ident, args: O::Telescope, body: Option<O::Exp>) -> O::Cocase;
+    fn fold_typ_app(&mut self, info: O::TypeInfo, name: Ident, args: Vec<O::Exp>) -> O::TypApp;
     fn fold_exp_var(&mut self, info: O::TypeInfo, name: P::VarName, idx: O::Idx) -> O::Exp;
-    fn fold_exp_typ_ctor(&mut self, info: O::TypeInfo, name: Ident, args: Vec<Rc<O::Exp>>) -> O::Exp;
-    fn fold_exp_ctor(&mut self, info: O::TypeInfo, name: Ident, args: Vec<Rc<O::Exp>>) -> O::Exp;
-    fn fold_exp_dtor(&mut self, info: O::TypeInfo, exp: Rc<O::Exp>, name: Ident, args: Vec<Rc<O::Exp>>) -> O::Exp;
-    fn fold_exp_anno(&mut self, info: O::TypeInfo, exp: Rc<O::Exp>, typ: Rc<O::Exp>) -> O::Exp;
+    fn fold_exp_typ_ctor(&mut self, info: O::TypeInfo, name: Ident, args: Vec<O::Exp>) -> O::Exp;
+    fn fold_exp_ctor(&mut self, info: O::TypeInfo, name: Ident, args: Vec<O::Exp>) -> O::Exp;
+    fn fold_exp_dtor(&mut self, info: O::TypeInfo, exp: O::Exp, name: Ident, args: Vec<O::Exp>) -> O::Exp;
+    fn fold_exp_anno(&mut self, info: O::TypeInfo, exp: O::Exp, typ: O::Exp) -> O::Exp;
     fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
@@ -42,7 +42,7 @@ pub trait Folder<P: Phase, O: Out> {
         F1: Fn(&mut Self, Param<P>) -> O::Param,
         F2: FnOnce(&mut Self, O::Telescope) -> X
     ;
-    fn fold_param(&mut self, name: Ident, typ: Rc<O::Exp>) -> O::Param;
+    fn fold_param(&mut self, name: Ident, typ: O::Exp) -> O::Param;
     fn fold_info(&mut self, info: P::Info) -> O::Info;
     fn fold_type_info(&mut self, info: P::TypeInfo) -> O::TypeInfo;
     fn fold_idx(&mut self, idx: Idx) -> O::Idx;
@@ -101,8 +101,8 @@ impl<P: Phase> Out for Id<P> {
     type Comatch = Comatch<P>;
     type Case = Case<P>;
     type Cocase = Cocase<P>;
-    type TypApp = TypApp<P>;
-    type Exp = Exp<P>;
+    type TypApp = Rc<TypApp<P>>;
+    type Exp = Rc<Exp<P>>;
     type Telescope = Telescope<P>;
     type Param = Param<P>;
     type Info = P::Info;
@@ -110,15 +110,44 @@ impl<P: Phase> Out for Id<P> {
     type Idx = Idx;
 }
 
+pub struct Const<T> {
+    phantom: PhantomData<T>,
+}
+
+impl<T> Out for Const<T> {
+    type Prg = T;
+    type Decls = T;
+    type Decl = T;
+    type Data = T;
+    type Codata = T;
+    type Impl = T;
+    type TypAbs = T;
+    type Ctor = T;
+    type Dtor = T;
+    type Def = T;
+    type Codef = T;
+    type Match = T;
+    type Comatch = T;
+    type Case = T;
+    type Cocase = T;
+    type TypApp = T;
+    type Exp = T;
+    type Telescope = T;
+    type Param = T;
+    type Info = T;
+    type TypeInfo = T;
+    type Idx = T;
+}
+
 impl<P: Phase, O: Out, T: Fold<P, O> + Clone> Fold<P, O> for Rc<T> {
-    type Out = Rc<T::Out>;
+    type Out = T::Out;
 
     fn fold<F>(self, f: &mut F) -> Self::Out
     where
         F: Folder<P, O>,
     {
         let x = (*self).clone();
-        Rc::new(T::fold(x, f))
+        T::fold(x, f)
     }
 }
 

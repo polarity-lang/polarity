@@ -1,6 +1,7 @@
 use codespan::Span;
 
 use crate::common::Ident;
+use crate::de_bruijn::*;
 use crate::generic;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -11,6 +12,10 @@ impl generic::Phase for AST {
     type TypeInfo = Info;
 
     type VarName = Ident;
+
+    fn print_var(name: &Self::VarName, _idx: Idx) -> String {
+        name.clone()
+    }
 }
 
 pub type Prg = generic::Prg<AST>;

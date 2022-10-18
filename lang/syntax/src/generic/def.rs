@@ -17,6 +17,8 @@ where
     type TypeInfo: Clone + fmt::Debug;
     /// Type of the `name` field of `Exp::Var`
     type VarName: Clone + fmt::Debug;
+
+    fn print_var(name: &Self::VarName, idx: Idx) -> String;
 }
 
 pub trait HasPhase {
