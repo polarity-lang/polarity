@@ -70,7 +70,7 @@ pub trait CheckEqns {
     fn check_eqns<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
         ctx: &mut Ctx,
-        eqns: &[ast::Eqn],
+        eqns: &[Eqn],
         f: F,
     ) -> Result<T, TypeError>;
 }
@@ -110,16 +110,16 @@ impl<T> WithCodefExt for T {
 }
 
 struct WithEqns<'a, T> {
-    eqns: Vec<ast::Eqn>,
+    eqns: Vec<Eqn>,
     inner: &'a T,
 }
 
 trait WithEqnsExt: Sized {
-    fn with_eqns(&self, eqns: Vec<ast::Eqn>) -> WithEqns<'_, Self>;
+    fn with_eqns(&self, eqns: Vec<Eqn>) -> WithEqns<'_, Self>;
 }
 
 impl<T> WithEqnsExt for T {
-    fn with_eqns(&self, eqns: Vec<ast::Eqn>) -> WithEqns<'_, Self> {
+    fn with_eqns(&self, eqns: Vec<Eqn>) -> WithEqns<'_, Self> {
         WithEqns { eqns, inner: self }
     }
 }
@@ -192,7 +192,7 @@ impl Infer for ast::Data {
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ast::Data { info, name, typ, ctors, impl_block } = self;
 
-        let typ_out = (**typ).infer(ctx)?;
+        let typ_out = typ.infer(ctx)?;
 
         Ok(elab::Data {
             info: info.clone().into(),
@@ -217,7 +217,7 @@ impl Infer for ast::Codata {
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ast::Codata { info, name, typ, dtors, impl_block } = self;
 
-        let typ_out = (**typ).infer(ctx)?;
+        let typ_out = typ.infer(ctx)?;
 
         Ok(elab::Codata {
             info: info.clone().into(),
@@ -437,12 +437,8 @@ impl<'a> Check for WithDef<'a, ast::Match> {
                 let ast::TypApp { args: on_args, .. } = &self.def.on_typ;
                 let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
-                let eqns: Vec<_> = on_args
-                    .iter()
-                    .cloned()
-                    .zip(def_args.iter().cloned())
-                    .map(ast::Eqn::from)
-                    .collect();
+                let eqns: Vec<_> =
+                    on_args.iter().cloned().zip(def_args.iter().cloned()).map(Eqn::from).collect();
 
                 // Check the case given the equations
                 case.with_eqns(eqns).check(ctx, t.clone())
@@ -508,12 +504,8 @@ impl<'a> Infer for WithCodef<'a, ast::Comatch> {
                 let ast::TypApp { args: on_args, .. } = &self.codef.typ;
                 let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
-                let eqns: Vec<_> = on_args
-                    .iter()
-                    .cloned()
-                    .zip(def_args.iter().cloned())
-                    .map(ast::Eqn::from)
-                    .collect();
+                let eqns: Vec<_> =
+                    on_args.iter().cloned().zip(def_args.iter().cloned()).map(Eqn::from).collect();
 
                 // Check the case given the equations
                 case.with_eqns(eqns).check(ctx, in_typ.clone())
@@ -542,50 +534,43 @@ impl<'a> Check for WithEqns<'a, ast::Case> {
 
     #[trace("{} |- {:P} <= {:P}", ctx, self.inner, t)]
     fn check(&self, ctx: &mut Ctx, t: Rc<ast::Exp>) -> Result<Self::Target, TypeError> {
-        let ast::Case { info, name, args, body, eqns: eqns_anno } = self.inner;
+        let ast::Case { info, name, args, body } = self.inner;
         let ast::Ctor { name, params, .. } = &*ctx.ctor(name);
 
         args.check_telescope(ctx, params, |ctx, args_out| {
-            let eqns = self.eqns.shift((1, 0));
+            let body_out = match body {
+                Some(body) => {
+                    let unif = unify(ctx, self.eqns.clone())
+                        .map_err(TypeError::Unify)?
+                        .map_no(|()| TypeError::PatternIsAbsurd { name: name.clone() })
+                        .ok_yes()?;
 
-            eqns_anno.check_eqns(ctx, &eqns[..], |ctx, eqns_out| {
-                let eqns = self.eqns.shift((1, 0));
+                    // FIXME: Track substitution in context instead
+                    let mut ctx = ctx.subst(ctx, &unif);
+                    let body = body.subst(&ctx, &unif);
+                    let ctx = &mut ctx;
 
-                let body_out = match body {
-                    Some(body) => {
-                        let unif = unify(ctx, eqns)
-                            .map_err(TypeError::Unify)?
-                            .map_no(|()| TypeError::PatternIsAbsurd { name: name.clone() })
-                            .ok_yes()?;
+                    let body_out = body.infer(ctx)?;
 
-                        // FIXME: Track substitution in context instead
-                        let mut ctx = ctx.subst(ctx, &unif);
-                        let body = body.subst(&ctx, &unif);
-                        let ctx = &mut ctx;
+                    body_out.typ().convert(&t.shift((1, 0)).subst(ctx, &unif))?;
 
-                        let body_out = body.infer(ctx)?;
+                    Some(body_out)
+                }
+                None => {
+                    unify(ctx, self.eqns.clone())
+                        .map_err(TypeError::Unify)?
+                        .map_yes(|_| TypeError::PatternIsNotAbsurd { name: name.clone() })
+                        .ok_no()?;
 
-                        body_out.typ().convert(&t.shift((2, 0)).subst(ctx, &unif))?;
+                    None
+                }
+            };
 
-                        Some(body_out)
-                    }
-                    None => {
-                        unify(ctx, eqns)
-                            .map_err(TypeError::Unify)?
-                            .map_yes(|_| TypeError::PatternIsNotAbsurd { name: name.clone() })
-                            .ok_no()?;
-
-                        None
-                    }
-                };
-
-                Ok(elab::Case {
-                    info: info.clone().into(),
-                    name: name.clone(),
-                    args: args_out,
-                    eqns: eqns_out,
-                    body: body_out,
-                })
+            Ok(elab::Case {
+                info: info.clone().into(),
+                name: name.clone(),
+                args: args_out,
+                body: body_out,
             })
         })
     }
@@ -609,50 +594,43 @@ impl<'a> Check for WithEqns<'a, ast::Cocase> {
 
     #[trace("{} |- {:P} <= {:P}", ctx, self.inner, t)]
     fn check(&self, ctx: &mut Ctx, t: Rc<ast::Exp>) -> Result<Self::Target, TypeError> {
-        let ast::Cocase { info, name, args, body, eqns: eqns_anno } = self.inner;
+        let ast::Cocase { info, name, args, body } = self.inner;
         let ast::Dtor { name, params, .. } = &*ctx.dtor(name);
 
         args.check_telescope(ctx, params, |ctx, args_out| {
-            let eqns = self.eqns.shift((1, 0));
+            let body_out = match body {
+                Some(body) => {
+                    let unif = unify(ctx, self.eqns.clone())
+                        .map_err(TypeError::Unify)?
+                        .map_no(|()| TypeError::PatternIsAbsurd { name: name.clone() })
+                        .ok_yes()?;
 
-            eqns_anno.check_eqns(ctx, &eqns[..], |ctx, eqns_out| {
-                let eqns = self.eqns.shift((1, 0));
+                    // FIXME: Track substitution in context instead
+                    let mut ctx = ctx.subst(ctx, &unif);
+                    let body = body.subst(&ctx, &unif);
+                    let ctx = &mut ctx;
 
-                let body_out = match body {
-                    Some(body) => {
-                        let unif = unify(ctx, eqns)
-                            .map_err(TypeError::Unify)?
-                            .map_no(|()| TypeError::PatternIsAbsurd { name: name.clone() })
-                            .ok_yes()?;
+                    let body_out = body.infer(ctx)?;
 
-                        // FIXME: Track substitution in context instead
-                        let mut ctx = ctx.subst(ctx, &unif);
-                        let body = body.subst(&ctx, &unif);
-                        let ctx = &mut ctx;
+                    body_out.typ().convert(&t.shift((0, 0)).subst(ctx, &unif))?;
 
-                        let body_out = body.infer(ctx)?;
+                    Some(body_out)
+                }
+                None => {
+                    unify(ctx, self.eqns.clone())
+                        .map_err(TypeError::Unify)?
+                        .map_yes(|_| TypeError::PatternIsNotAbsurd { name: name.clone() })
+                        .ok_no()?;
 
-                        body_out.typ().convert(&t.shift((1, 0)).subst(ctx, &unif))?;
+                    None
+                }
+            };
 
-                        Some(body_out)
-                    }
-                    None => {
-                        unify(ctx, eqns)
-                            .map_err(TypeError::Unify)?
-                            .map_yes(|_| TypeError::PatternIsNotAbsurd { name: name.clone() })
-                            .ok_no()?;
-
-                        None
-                    }
-                };
-
-                Ok(elab::Cocase {
-                    info: info.clone().into(),
-                    name: name.clone(),
-                    args: args_out,
-                    eqns: eqns_out,
-                    body: body_out,
-                })
+            Ok(elab::Cocase {
+                info: info.clone().into(),
+                name: name.clone(),
+                args: args_out,
+                body: body_out,
             })
         })
     }
@@ -733,7 +711,7 @@ impl Infer for ast::Exp {
 
                 let args_out = args.check_args(ctx, params)?;
 
-                Ok(elab::Exp::TyCtor {
+                Ok(elab::Exp::TypCtor {
                     info: info.with_type(Rc::new(ast::Exp::Type { info: ast::Info::empty() })),
                     name: name.clone(),
                     args: args_out,
@@ -799,26 +777,11 @@ impl Infer for ast::TypApp {
         let ast::TypAbs { params } = &*ctx.typ(name);
 
         let args_out = args.check_args(ctx, params)?;
-        Ok(elab::TypApp { info: info.clone().into(), name: name.clone(), args: args_out })
-    }
-}
-
-/// ```text
-/// Γ ⊢ α ⇒ ok
-/// Γ ⊢ β ⇒ ok
-/// ――――――――――――――――――――――――――
-/// Γ ⊢ { α = β } ⇒ ok
-/// ```
-impl Infer for ast::Eqn {
-    type Target = elab::Eqn;
-
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ast::Eqn { info, lhs, rhs } = self;
-
-        let lhs_out = lhs.infer(ctx)?;
-        let rhs_out = rhs.infer(ctx)?;
-
-        Ok(elab::Eqn { info: info.clone().into(), lhs: lhs_out, rhs: rhs_out })
+        Ok(elab::TypApp {
+            info: info.with_type(Rc::new(ast::Exp::Type { info: ast::Info::empty() })),
+            name: name.clone(),
+            args: args_out,
+        })
     }
 }
 
@@ -840,53 +803,9 @@ impl CheckArgs for ast::Args {
             return Err(TypeError::ArgLenMismatch { expected: params.len(), actual: self.len() });
         }
 
-        let ast::Telescope(params) = params.subst_in_telescope(self);
+        let ast::Telescope { params } = params.subst_in_telescope(self);
 
         self.iter().zip(params).map(|(exp, ast::Param { typ, .. })| exp.check(ctx, typ)).collect()
-    }
-}
-
-/// ```text
-/// ∀i,
-///     Γ,[h₀,…,hᵢ₋₁] ⊢ hᵢ ⇒ ok
-///     Γ,[h₀,…,hᵢ₋₁] ⊢ hᵢ = Hᵢ
-/// ――――――――――――――――――――――――――――
-/// Γ ⊢ {h₀,…,hₙ} ⇐ {H₀,…,Hₙ}
-/// ```
-impl CheckEqns for ast::EqnParams {
-    type Target = elab::Eqns;
-
-    fn check_eqns<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
-        &self,
-        ctx: &mut Ctx,
-        eqns: &[ast::Eqn],
-        f: F,
-    ) -> Result<T, TypeError> {
-        let iter = self.iter().zip(eqns);
-
-        ctx.bind_fold(
-            iter,
-            Ok(Vec::new()),
-            |ctx, params_out, (eqn_param, eqn)| {
-                let ast::EqnParam { name, eqn: eqn_anno } = eqn_param;
-                let mut params_out = params_out?;
-
-                let eqn_out = eqn_anno.infer(ctx)?;
-
-                eqn_anno.convert(eqn)?;
-
-                let param_out = elab::EqnParam { name: name.clone(), eqn: eqn_out };
-
-                params_out.push(param_out);
-                Ok(params_out)
-            },
-            |ctx, params_out| {
-                let eqns_out: Vec<_> =
-                    eqns.iter().map(|eqn| eqn.infer(ctx)).collect::<Result<_, _>>()?;
-
-                f(ctx, elab::Eqns { eqns: eqns_out, params: params_out? })
-            },
-        )
     }
 }
 
@@ -906,8 +825,8 @@ impl CheckTelescope for ast::Telescope {
         param_types: &ast::Telescope,
         f: F,
     ) -> Result<T, TypeError> {
-        let ast::Telescope(param_types) = param_types;
-        let ast::Telescope(params) = self;
+        let ast::Telescope { params: param_types } = param_types;
+        let ast::Telescope { params } = self;
 
         if params.len() != param_types.len() {
             return Err(TypeError::ArgLenMismatch {
@@ -932,7 +851,7 @@ impl CheckTelescope for ast::Telescope {
                 params_out.push(param_out);
                 Ok(params_out)
             },
-            |ctx, params| f(ctx, elab::Telescope(params?)),
+            |ctx, params| f(ctx, elab::Telescope { params: params? }),
         )
     }
 }
@@ -951,7 +870,7 @@ impl InferTelescope for ast::Telescope {
         ctx: &mut Ctx,
         f: F,
     ) -> Result<T, TypeError> {
-        let ast::Telescope(params) = self;
+        let ast::Telescope { params } = self;
 
         ctx.bind_fold(
             params.iter(),
@@ -964,7 +883,7 @@ impl InferTelescope for ast::Telescope {
                 params_out.push(param_out);
                 Ok(params_out)
             },
-            |ctx, params| f(ctx, elab::Telescope(params?)),
+            |ctx, params| f(ctx, elab::Telescope { params: params? }),
         )
     }
 }
@@ -976,7 +895,7 @@ trait SubstUnderTelescope {
 
 impl<T: Substitutable + Clone> SubstUnderTelescope for T {
     fn subst_under_telescope(&self, telescope: &ast::Telescope, args: &[Rc<ast::Exp>]) -> Self {
-        let ast::Telescope(params) = telescope;
+        let ast::Telescope { params } = telescope;
 
         let in_exp = self.clone();
 
@@ -991,7 +910,7 @@ trait SubstInTelescope {
 
 impl SubstInTelescope for ast::Telescope {
     fn subst_in_telescope(&self, args: &[Rc<ast::Exp>]) -> Self {
-        let ast::Telescope(params) = self;
+        let ast::Telescope { params } = self;
 
         Ctx::empty().bind_fold(
             params.iter(),
@@ -1000,7 +919,7 @@ impl SubstInTelescope for ast::Telescope {
                 params_out.push(param.subst(ctx, &args));
                 params_out
             },
-            |_, params_out| ast::Telescope(params_out),
+            |_, params_out| ast::Telescope { params: params_out },
         )
     }
 }
@@ -1021,19 +940,12 @@ impl Typed for elab::Exp {
     fn typ(&self) -> Rc<ast::Exp> {
         match self {
             elab::Exp::Var { info, .. } => info.typ.clone(),
-            elab::Exp::TyCtor { info, .. } => info.typ.clone(),
+            elab::Exp::TypCtor { info, .. } => info.typ.clone(),
             elab::Exp::Ctor { info, .. } => info.typ.clone(),
             elab::Exp::Dtor { info, .. } => info.typ.clone(),
             elab::Exp::Anno { info, .. } => info.typ.clone(),
             elab::Exp::Type { info } => info.typ.clone(),
         }
-    }
-}
-
-impl Typed for &syntax::ast::Eqn {
-    fn typ(&self) -> Rc<ast::Exp> {
-        // TODO: Record an appropriate type
-        Rc::new(ast::Exp::Type { info: ast::Info::empty() })
     }
 }
 
@@ -1046,7 +958,7 @@ impl Convert for Rc<ast::Exp> {
     }
 }
 
-impl Convert for ast::Eqn {
+impl Convert for Eqn {
     fn convert(&self, other: &Self) -> Result<(), TypeError> {
         self.lhs.convert(&other.lhs)?;
         self.rhs.convert(&other.rhs)

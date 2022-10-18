@@ -145,12 +145,8 @@ impl BuildMatrix for ast::Codef {
             // Swap binding order to the order imposed by the matrix representation
             let body = body.as_ref().map(|body| {
                 let mut ctx = LeveledCtx::empty();
-                ctx.bind(self.params.0.iter(), |ctx| {
-                    ctx.bind(case.args.0.iter(), |ctx| {
-                        // FIXME: eqns
-                        let eqns: [(); 0] = [];
-                        ctx.bind(eqns.iter(), |ctx| body.swap_with_ctx(ctx, 0, 1))
-                    })
+                ctx.bind(self.params.params.iter(), |ctx| {
+                    ctx.bind(case.args.params.iter(), |ctx| body.swap_with_ctx(ctx, 0, 1))
                 })
             });
             xdata.exprs.insert(key, body.clone());

@@ -1,6 +1,7 @@
 use super::ast;
 use super::common::*;
 use super::cst;
+use super::generic;
 
 pub trait Named {
     fn name(&self) -> &Ident;
@@ -52,19 +53,7 @@ impl Named for cst::Param {
     }
 }
 
-impl Named for ast::Param {
-    fn name(&self) -> &Ident {
-        &self.name
-    }
-}
-
 impl Named for cst::EqnParam {
-    fn name(&self) -> &Ident {
-        &self.name
-    }
-}
-
-impl Named for ast::EqnParam {
     fn name(&self) -> &Ident {
         &self.name
     }
@@ -82,5 +71,11 @@ where
 {
     fn name(&self) -> &Ident {
         T::name(self)
+    }
+}
+
+impl<P: generic::Phase> Named for generic::Param<P> {
+    fn name(&self) -> &Ident {
+        &self.name
     }
 }

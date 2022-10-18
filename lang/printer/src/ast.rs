@@ -260,7 +260,7 @@ impl<'a> Print<'a> for Match {
 
 impl<'a> Print<'a> for Case {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Case { info: _, name, args, eqns, body } = self;
+        let Case { info: _, name, args, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -269,21 +269,13 @@ impl<'a> Print<'a> for Case {
             }
         };
 
-        let eqns = if eqns.is_empty() { alloc.nil() } else { eqns.print(alloc).braces() };
-
-        alloc
-            .ctor(name)
-            .append(args.print(alloc))
-            .append(eqns)
-            .append(alloc.space())
-            .append(body)
-            .group()
+        alloc.ctor(name).append(args.print(alloc)).append(alloc.space()).append(body).group()
     }
 }
 
 impl<'a> Print<'a> for Cocase {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Cocase { info: _, name, args, eqns, body } = self;
+        let Cocase { info: _, name, args, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -292,21 +284,13 @@ impl<'a> Print<'a> for Cocase {
             }
         };
 
-        let eqns = if eqns.is_empty() { alloc.nil() } else { eqns.print(alloc).braces() };
-
-        alloc
-            .ctor(name)
-            .append(args.print(alloc))
-            .append(eqns)
-            .append(alloc.space())
-            .append(body)
-            .group()
+        alloc.ctor(name).append(args.print(alloc)).append(alloc.space()).append(body).group()
     }
 }
 
 impl<'a> Print<'a> for Telescope {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.0.print(alloc).parens()
+        self.params.print(alloc).parens()
     }
 }
 
@@ -317,28 +301,10 @@ impl<'a> Print<'a> for Param {
     }
 }
 
-impl<'a> Print<'a> for EqnParam {
-    fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let EqnParam { name, eqn } = self;
-        alloc.text(name).append(COLON).append(alloc.space()).append(eqn.print(alloc))
-    }
-}
-
 impl<'a> Print<'a> for TypApp {
     fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypApp { info: _, name, args: subst } = self;
         alloc.typ(name).append(subst.print(alloc).parens())
-    }
-}
-
-impl<'a> Print<'a> for Eqn {
-    fn print(&'a self, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Eqn { info: _, lhs, rhs } = self;
-        lhs.print(alloc)
-            .append(alloc.space())
-            .append(EQ)
-            .append(alloc.space())
-            .append(rhs.print(alloc))
     }
 }
 

@@ -6,18 +6,6 @@ use crate::equiv::*;
 
 use super::def::*;
 
-impl ShiftCutoff for Eqn {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
-        let Eqn { info, lhs, rhs } = self;
-
-        Eqn {
-            info: info.clone(),
-            lhs: lhs.shift_cutoff(cutoff, by),
-            rhs: rhs.shift_cutoff(cutoff, by),
-        }
-    }
-}
-
 impl ShiftCutoff for Exp {
     fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
         match self {

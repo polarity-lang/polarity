@@ -1,14 +1,15 @@
-mod ast;
+// mod ast;
 mod ctx;
+mod generic;
 
 pub use ctx::Ctx;
 
 pub trait Rename: Sized {
-    fn rename(&self) -> Self {
+    fn rename(self) -> Self {
         let mut ctx = Ctx::empty();
         self.rename_in_ctx(&mut ctx)
     }
-    fn rename_in_ctx(&self, ctx: &mut Ctx) -> Self;
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self;
 }
 
 pub trait RenameTelescope {

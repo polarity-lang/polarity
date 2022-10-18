@@ -268,17 +268,15 @@ impl Lower for cst::Case {
     type Target = ast::Case;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Case { info, name, args, body, eqns } = self;
+        let cst::Case { info, name, args, body, eqns: _ } = self;
+        // FIXME: eqns
 
         args.lower_telescope(ctx, |ctx, args| {
-            eqns.lower_params(ctx, move |ctx, eqns| {
-                Ok(ast::Case {
-                    info: info.lower_pure(),
-                    name: name.clone(),
-                    args,
-                    eqns,
-                    body: body.lower_in_ctx(ctx)?,
-                })
+            Ok(ast::Case {
+                info: info.lower_pure(),
+                name: name.clone(),
+                args,
+                body: body.lower_in_ctx(ctx)?,
             })
         })
     }
@@ -288,17 +286,15 @@ impl Lower for cst::Cocase {
     type Target = ast::Cocase;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Cocase { info, name, args, body, eqns } = self;
+        let cst::Cocase { info, name, args, body, eqns: _ } = self;
+        // FIXME: eqns
 
         args.lower_telescope(ctx, |ctx, args| {
-            eqns.lower_params(ctx, |ctx, eqns| {
-                Ok(ast::Cocase {
-                    info: info.lower_pure(),
-                    name: name.clone(),
-                    args,
-                    eqns,
-                    body: body.lower_in_ctx(ctx)?,
-                })
+            Ok(ast::Cocase {
+                info: info.lower_pure(),
+                name: name.clone(),
+                args,
+                body: body.lower_in_ctx(ctx)?,
             })
         })
     }
@@ -314,20 +310,6 @@ impl Lower for cst::TypApp {
             info: info.lower_pure(),
             name: name.clone(),
             args: subst.lower_in_ctx(ctx)?,
-        })
-    }
-}
-
-impl Lower for cst::Eqn {
-    type Target = ast::Eqn;
-
-    fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Eqn { info, lhs, rhs } = self;
-
-        Ok(ast::Eqn {
-            info: info.lower_pure(),
-            lhs: lhs.lower_in_ctx(ctx)?,
-            rhs: rhs.lower_in_ctx(ctx)?,
         })
     }
 }
@@ -399,34 +381,6 @@ impl<T: Lower> Lower for Rc<T> {
     }
 }
 
-impl LowerParams for cst::EqnParams {
-    type Target = ast::EqnParams;
-
-    /// Lower a list of parameters
-    ///
-    /// Execute a function `f` under the context where all binders
-    /// of the telescope are in scope.
-    fn lower_params<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, LoweringError>>(
-        &self,
-        ctx: &mut Ctx,
-        f: F,
-    ) -> Result<T, LoweringError> {
-        ctx.bind_fold(
-            self.iter(),
-            Ok(ast::EqnParams::new()),
-            |ctx, params_out, param| {
-                let mut params_out = params_out?;
-                let cst::EqnParam { name, eqn } = param;
-                let eqn_out = eqn.lower_in_ctx(ctx)?;
-                let param_out = ast::EqnParam { name: name.clone(), eqn: eqn_out };
-                params_out.push(param_out);
-                Ok(params_out)
-            },
-            |ctx, params| f(ctx, params?),
-        )
-    }
-}
-
 impl LowerTelescope for cst::Telescope {
     type Target = ast::Telescope;
 
@@ -449,7 +403,7 @@ impl LowerTelescope for cst::Telescope {
                 params_out.push(param_out);
                 Ok(params_out)
             },
-            |ctx, params| f(ctx, params.map(ast::Telescope)?),
+            |ctx, params| f(ctx, params.map(|params| ast::Telescope { params })?),
         )
     }
 }

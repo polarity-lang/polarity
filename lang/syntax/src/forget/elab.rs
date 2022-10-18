@@ -52,7 +52,7 @@ impl Forget for elab::Data {
         ast::Data {
             info: info.forget(),
             name: name.clone(),
-            typ: Rc::new(typ.forget()),
+            typ: typ.forget(),
             ctors: ctors.clone(),
             impl_block: impl_block.forget(),
         }
@@ -68,7 +68,7 @@ impl Forget for elab::Codata {
         ast::Codata {
             info: info.forget(),
             name: name.clone(),
-            typ: Rc::new(typ.forget()),
+            typ: typ.forget(),
             dtors: dtors.clone(),
             impl_block: impl_block.forget(),
         }
@@ -183,13 +183,12 @@ impl Forget for elab::Case {
     type Target = ast::Case;
 
     fn forget(&self) -> Self::Target {
-        let elab::Case { info, name, args, eqns, body } = self;
+        let elab::Case { info, name, args, body } = self;
 
         ast::Case {
             info: info.forget(),
             name: name.clone(),
             args: args.forget(),
-            eqns: eqns.forget(),
             body: body.forget(),
         }
     }
@@ -199,25 +198,14 @@ impl Forget for elab::Cocase {
     type Target = ast::Cocase;
 
     fn forget(&self) -> Self::Target {
-        let elab::Cocase { info, name, args, eqns, body } = self;
+        let elab::Cocase { info, name, args, body } = self;
 
         ast::Cocase {
             info: info.forget(),
             name: name.clone(),
             args: args.forget(),
-            eqns: eqns.forget(),
             body: body.forget(),
         }
-    }
-}
-
-impl Forget for elab::Eqn {
-    type Target = ast::Eqn;
-
-    fn forget(&self) -> Self::Target {
-        let elab::Eqn { info, lhs, rhs } = self;
-
-        ast::Eqn { info: info.forget(), lhs: lhs.forget(), rhs: rhs.forget() }
     }
 }
 
@@ -239,7 +227,7 @@ impl Forget for elab::Exp {
             elab::Exp::Var { info, name, idx } => {
                 ast::Exp::Var { info: info.forget(), name: name.clone(), idx: *idx }
             }
-            elab::Exp::TyCtor { info, name, args } => {
+            elab::Exp::TypCtor { info, name, args } => {
                 ast::Exp::TypCtor { info: info.forget(), name: name.clone(), args: args.forget() }
             }
             elab::Exp::Ctor { info, name, args } => {
@@ -263,9 +251,9 @@ impl Forget for elab::Telescope {
     type Target = ast::Telescope;
 
     fn forget(&self) -> Self::Target {
-        let elab::Telescope(params) = self;
+        let elab::Telescope { params } = self;
 
-        ast::Telescope(params.forget())
+        ast::Telescope { params: params.forget() }
     }
 }
 
@@ -276,26 +264,6 @@ impl Forget for elab::Param {
         let elab::Param { name, typ } = self;
 
         ast::Param { name: name.clone(), typ: typ.forget() }
-    }
-}
-
-impl Forget for elab::Eqns {
-    type Target = Vec<ast::EqnParam>;
-
-    fn forget(&self) -> Self::Target {
-        let elab::Eqns { params, .. } = self;
-
-        params.forget()
-    }
-}
-
-impl Forget for elab::EqnParam {
-    type Target = ast::EqnParam;
-
-    fn forget(&self) -> Self::Target {
-        let elab::EqnParam { name, eqn } = self;
-
-        ast::EqnParam { name: name.clone(), eqn: eqn.forget() }
     }
 }
 

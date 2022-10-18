@@ -15,6 +15,25 @@ pub struct Unificator {
     map: HashMap<Lvl, Rc<ast::Exp>>,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct Eqn {
+    pub lhs: Rc<ast::Exp>,
+    pub rhs: Rc<ast::Exp>,
+}
+
+impl From<(Rc<ast::Exp>, Rc<ast::Exp>)> for Eqn {
+    fn from((lhs, rhs): (Rc<ast::Exp>, Rc<ast::Exp>)) -> Self {
+        Eqn { lhs, rhs }
+    }
+}
+
+impl ShiftCutoff for Eqn {
+    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+        let Eqn { lhs, rhs } = self;
+        Eqn { lhs: lhs.shift_cutoff(cutoff, by), rhs: rhs.shift_cutoff(cutoff, by) }
+    }
+}
+
 impl Substitutable for Unificator {
     fn subst<L: Leveled, S: Substitution>(&self, lvl: &L, by: &S) -> Self {
         let map = self
@@ -38,8 +57,8 @@ impl Unificator {
     }
 }
 
-#[trace("unify({:P} ) ~> {return:?}", eqns, data::id)]
-pub fn unify<L: Leveled>(lvl: &L, eqns: Vec<ast::Eqn>) -> Result<Dec<Unificator>, UnifyError> {
+#[trace("unify({:?} ) ~> {return:?}", eqns, data::id)]
+pub fn unify<L: Leveled>(lvl: &L, eqns: Vec<Eqn>) -> Result<Dec<Unificator>, UnifyError> {
     let mut ctx = Ctx::new(eqns.clone(), lvl);
     let res = match ctx.unify()? {
         Yes(_) => Yes(ctx.unif),
@@ -49,14 +68,14 @@ pub fn unify<L: Leveled>(lvl: &L, eqns: Vec<ast::Eqn>) -> Result<Dec<Unificator>
 }
 
 struct Ctx<'l, L: Leveled> {
-    eqns: Vec<ast::Eqn>,
-    done: HashSet<ast::Eqn>,
+    eqns: Vec<Eqn>,
+    done: HashSet<Eqn>,
     lvl: &'l L,
     unif: Unificator,
 }
 
 impl<'l, L: Leveled> Ctx<'l, L> {
-    fn new(eqns: Vec<ast::Eqn>, lvl: &'l L) -> Self {
+    fn new(eqns: Vec<Eqn>, lvl: &'l L) -> Self {
         Self { eqns, done: HashSet::default(), lvl, unif: Unificator::empty() }
     }
 
@@ -73,10 +92,10 @@ impl<'l, L: Leveled> Ctx<'l, L> {
         Ok(Yes(()))
     }
 
-    fn unify_eqn(&mut self, eqn: &ast::Eqn) -> Result<Dec, UnifyError> {
-        use ast::Exp::*;
+    fn unify_eqn(&mut self, eqn: &Eqn) -> Result<Dec, UnifyError> {
+        use syntax::generic::Exp::*;
 
-        let ast::Eqn { lhs, rhs, .. } = eqn;
+        let Eqn { lhs, rhs, .. } = eqn;
         // FIXME: This is only temporary (not compatible with xfunc in general)
         if lhs.alpha_eq(rhs) {
             return Ok(Yes(()));
@@ -99,11 +118,7 @@ impl<'l, L: Leveled> Ctx<'l, L> {
                 Dtor { exp, name, args: subst, .. },
                 Dtor { exp: exp2, name: name2, args: subst2, .. },
             ) if name == name2 => {
-                self.add_equation(ast::Eqn {
-                    info: ast::Info::empty(),
-                    lhs: exp.clone(),
-                    rhs: exp2.clone(),
-                })?;
+                self.add_equation(Eqn { lhs: exp.clone(), rhs: exp2.clone() })?;
                 self.unify_args(subst, subst2)
             }
             (Type { .. }, Type { .. }) => Ok(Yes(())),
@@ -118,7 +133,7 @@ impl<'l, L: Leveled> Ctx<'l, L> {
         lhs: &[Rc<ast::Exp>],
         rhs: &[Rc<ast::Exp>],
     ) -> Result<Dec, UnifyError> {
-        let new_eqns = lhs.iter().cloned().zip(rhs.iter().cloned()).map(ast::Eqn::from);
+        let new_eqns = lhs.iter().cloned().zip(rhs.iter().cloned()).map(Eqn::from);
         self.add_equations(new_eqns)?;
         Ok(Yes(()))
     }
@@ -132,7 +147,7 @@ impl<'l, L: Leveled> Ctx<'l, L> {
         self.unif.subst(self.lvl, &Assign(insert_lvl, &exp));
         match self.unif.map.get(&insert_lvl) {
             Some(other_exp) => {
-                let eqn = ast::Eqn { info: ast::Info::empty(), lhs: exp, rhs: other_exp.clone() };
+                let eqn = Eqn { lhs: exp, rhs: other_exp.clone() };
                 self.add_equation(eqn)
             }
             None => {
@@ -142,14 +157,11 @@ impl<'l, L: Leveled> Ctx<'l, L> {
         }
     }
 
-    fn add_equation(&mut self, eqn: ast::Eqn) -> Result<Dec, UnifyError> {
+    fn add_equation(&mut self, eqn: Eqn) -> Result<Dec, UnifyError> {
         self.add_equations([eqn])
     }
 
-    fn add_equations<I: IntoIterator<Item = ast::Eqn>>(
-        &mut self,
-        iter: I,
-    ) -> Result<Dec, UnifyError> {
+    fn add_equations<I: IntoIterator<Item = Eqn>>(&mut self, iter: I) -> Result<Dec, UnifyError> {
         self.eqns.extend(iter.into_iter().filter(|eqn| !self.done.contains(eqn)));
         Ok(Yes(()))
     }

@@ -1,7 +1,7 @@
 use codespan::{ByteIndex, FileId, Files, Location, Span};
-use printer::{PrintToString, PrintToStringInCtx};
+use printer::PrintToStringInCtx;
 use renaming::Rename;
-use rust_lapper::{Interval, Lapper};
+use rust_lapper::Lapper;
 
 use data::HashMap;
 use syntax::ast;
@@ -11,7 +11,7 @@ use syntax::forget::Forget;
 mod info;
 mod result;
 
-use info::{Collect, Collector, Item};
+use info::{collect_info, Info, Item};
 use result::Error;
 
 pub struct Index {
@@ -20,12 +20,6 @@ pub struct Index {
     info_index_by_id: HashMap<FileId, Lapper<u32, usize>>,
     item_index_by_id: HashMap<FileId, Lapper<u32, Item>>,
     infos_by_id: HashMap<FileId, Vec<Info>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Info {
-    pub typ: String,
-    pub span: Option<Span>,
 }
 
 pub struct Xfunc {
@@ -216,51 +210,4 @@ fn load(source: &str) -> Result<elab::Prg, Error> {
     let cst = parser::cst::parse_program(source).map_err(Error::Parser)?;
     let ast = lowering::lower(&cst).map_err(Error::Lowering)?;
     core::check(&ast).map_err(Error::Type)
-}
-
-#[derive(Default)]
-struct InfoCollector {
-    info_spans: Vec<Interval<u32, usize>>,
-    infos: Vec<elab::TypedInfo>,
-    item_spans: Vec<Interval<u32, Item>>,
-}
-
-impl Collector for InfoCollector {
-    fn add_info(&mut self, _info: &elab::Info) {}
-
-    fn add_typed_info(&mut self, info: &elab::TypedInfo) {
-        if let Some(span) = info.span {
-            let idx = self.infos.len();
-            self.info_spans.push(Interval {
-                start: span.start().into(),
-                stop: span.end().into(),
-                val: idx,
-            });
-            self.infos.push(info.clone());
-        }
-    }
-
-    fn add_item_span(&mut self, item: info::Item, span: Span) {
-        self.item_spans.push(Interval {
-            start: span.start().into(),
-            stop: span.end().into(),
-            val: item,
-        })
-    }
-}
-
-fn collect_info(prg: &elab::Prg) -> (Lapper<u32, usize>, Lapper<u32, Item>, Vec<Info>) {
-    let mut c = InfoCollector::default();
-
-    prg.collect(&mut c);
-
-    let info_lapper = Lapper::new(c.info_spans);
-    let item_lapper = Lapper::new(c.item_spans);
-    (info_lapper, item_lapper, c.infos.into_iter().map(Into::into).collect())
-}
-
-impl From<elab::TypedInfo> for Info {
-    fn from(info: elab::TypedInfo) -> Self {
-        Info { typ: info.typ.print_to_string(), span: info.span }
-    }
 }

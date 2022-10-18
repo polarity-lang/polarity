@@ -15,7 +15,7 @@ pub trait Phase {
 
     fn new(name: &'static str) -> Self;
     fn name(&self) -> &'static str;
-    fn run(input: &Self::In) -> Result<Self::Out, Self::Err>;
+    fn run(input: Self::In) -> Result<Self::Out, Self::Err>;
 }
 
 pub struct Phases<O> {
@@ -51,7 +51,7 @@ where
         E: Error + 'static,
         P: Phase<In = O, Out = O2, Err = E>,
     {
-        let result = self.result.and_then(|out| match P::run(&out) {
+        let result = self.result.and_then(|out| match P::run(out) {
             Ok(out2) => {
                 self.report_phases
                     .push(PhaseReport { name: expect.phase.name(), output: out2.test_output() });
@@ -186,8 +186,8 @@ impl Phase for Parse {
         self.name
     }
 
-    fn run(input: &Self::In) -> Result<Self::Out, Self::Err> {
-        parser::cst::parse_program(input)
+    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
+        parser::cst::parse_program(&input)
     }
 }
 
@@ -204,8 +204,8 @@ impl Phase for Lower {
         self.name
     }
 
-    fn run(input: &Self::In) -> Result<Self::Out, Self::Err> {
-        lowering::lower(input)
+    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
+        lowering::lower(&input)
     }
 }
 
@@ -222,8 +222,8 @@ impl Phase for Check {
         self.name
     }
 
-    fn run(input: &Self::In) -> Result<Self::Out, Self::Err> {
-        core::check(input)
+    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
+        core::check(&input)
     }
 }
 
@@ -240,7 +240,7 @@ impl Phase for Forget {
         self.name
     }
 
-    fn run(input: &Self::In) -> Result<Self::Out, Self::Err> {
+    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
         Ok(input.forget())
     }
 }
@@ -258,7 +258,7 @@ impl Phase for Print {
         self.name
     }
 
-    fn run(input: &Self::In) -> Result<Self::Out, Self::Err> {
+    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
         Ok(input.rename().print_to_string())
     }
 }

@@ -31,7 +31,6 @@ impl Represent for matrix::XData {
                             info: ast::Info::empty(),
                             name: ctor.name.clone(),
                             args: ctor.params.clone(),
-                            eqns: vec![],
                             body: exprs[&key].clone(),
                         }
                     })
@@ -75,11 +74,9 @@ impl Represent for matrix::XData {
                         // Swap binding order (which is different in the matrix representation)
                         let body = body.as_ref().map(|body| {
                             let mut ctx = LeveledCtx::empty();
-                            ctx.bind(dtor.params.0.iter(), |ctx| {
-                                ctx.bind(ctor.params.0.iter(), |ctx| {
-                                    // FIXME: eqns
-                                    let eqns: [(); 0] = [];
-                                    ctx.bind(eqns.iter(), |ctx| body.swap_with_ctx(ctx, 0, 1))
+                            ctx.bind(dtor.params.params.iter(), |ctx| {
+                                ctx.bind(ctor.params.params.iter(), |ctx| {
+                                    body.swap_with_ctx(ctx, 0, 1)
                                 })
                             })
                         });
@@ -87,7 +84,6 @@ impl Represent for matrix::XData {
                             info: ast::Info::empty(),
                             name: dtor.name.clone(),
                             args: dtor.params.clone(),
-                            eqns: vec![],
                             body,
                         }
                     })
