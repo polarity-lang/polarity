@@ -34,16 +34,22 @@ cargo run -- --help
 
 ```text
 ├── app                     CLI application
-├── data                    Collection of convenient data structures
 ├── examples                Example code in the object language
 ├── ext/vscode              VSCode extension
 ├── lang                    Language implementation
 │   ├── core                Core (typechecker, evaluator)
-│   ├── lowering            Lowering concrete to abstract syntax tree
+│   ├── lowering            Lowering concrete to (untyped) abstract syntax tree
 │   ├── parser              Parse text to concrete syntax tree
 │   ├── printer             Print abstract syntax tree to text
-│   └── syntax              Syntax tree definitions
+│   ├── renaming            Rename abstract syntax tree s.t. it can be reparsed
+│   ├── source              Index data structures for annotated source code files and spans
+│   ├── syntax              Syntax tree definitions
+│   └── xfunc               De-/Refunctionalization implementation
+├── test                    Integration tests
+│   ├── suites              Test cases
+│   └── test-runner         Test runner
 ├── util                    Utility libraries
+│   ├── console             Print function that works native and on WASM
 │   ├── data                Collection of convenient data structures
 │   ├── lsp                 LSP language server implementation
 │   ├── tracer              Debugging library for generating trace output
