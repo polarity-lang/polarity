@@ -1,8 +1,10 @@
 use codespan::Span;
 
+use crate::common::HasSpan;
 use crate::common::Ident;
 use crate::de_bruijn::*;
-use crate::generic;
+
+use super::generic;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct AST;
@@ -40,7 +42,7 @@ pub type Params = generic::Params<AST>;
 pub type Args = generic::Args<AST>;
 pub type Param = generic::Param<AST>;
 
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct Info {
     pub span: Option<Span>,
 }
@@ -48,5 +50,11 @@ pub struct Info {
 impl Info {
     pub fn empty() -> Self {
         Self { span: None }
+    }
+}
+
+impl HasSpan for Info {
+    fn span(&self) -> Option<&Span> {
+        self.span.as_ref()
     }
 }

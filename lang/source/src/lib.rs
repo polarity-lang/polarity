@@ -4,8 +4,8 @@ use renaming::Rename;
 use rust_lapper::Lapper;
 
 use data::HashMap;
-use syntax::ast;
-use syntax::elab;
+use syntax::tst;
+use syntax::ust;
 
 mod info;
 mod result;
@@ -68,8 +68,8 @@ impl Index {
                 title = format!("Refunctionalize {}", type_name);
                 let (codata, dtors, codefs) = xfunc::as_codata(&mat, type_name);
 
-                let impl_block = ast::Impl {
-                    info: ast::Info::empty(),
+                let impl_block = ust::Impl {
+                    info: ust::Info::empty(),
                     name: type_name.to_owned(),
                     defs: codefs.iter().map(|def| def.name.clone()).collect(),
                 };
@@ -78,13 +78,13 @@ impl Index {
                 order.extend(codefs.iter().map(|def| def.name.clone()));
 
                 let mut map = HashMap::default();
-                map.insert(codata.name.clone(), ast::Decl::Codata(codata.clone()));
-                map.extend(codefs.into_iter().map(|def| (def.name.clone(), ast::Decl::Codef(def))));
+                map.insert(codata.name.clone(), ust::Decl::Codata(codata.clone()));
+                map.extend(codefs.into_iter().map(|def| (def.name.clone(), ust::Decl::Codef(def))));
                 map.extend(
-                    dtors.into_iter().map(|dtor| (dtor.name.clone(), ast::Decl::Dtor(dtor))),
+                    dtors.into_iter().map(|dtor| (dtor.name.clone(), ust::Decl::Dtor(dtor))),
                 );
 
-                let decls = ast::Decls { map, order };
+                let decls = ust::Decls { map, order };
 
                 let codata = codata.rename();
                 let decls = decls.rename();
@@ -99,8 +99,8 @@ impl Index {
                 title = format!("Defunctionalize {}", type_name);
                 let (data, ctors, defs) = xfunc::as_data(&mat, type_name);
 
-                let impl_block = ast::Impl {
-                    info: ast::Info::empty(),
+                let impl_block = ust::Impl {
+                    info: ust::Info::empty(),
                     name: type_name.to_owned(),
                     defs: defs.iter().map(|def| def.name.clone()).collect(),
                 };
@@ -109,13 +109,13 @@ impl Index {
                 order.extend(defs.iter().map(|def| def.name.clone()));
 
                 let mut map = HashMap::default();
-                map.insert(data.name.clone(), ast::Decl::Data(data.clone()));
-                map.extend(defs.into_iter().map(|def| (def.name.clone(), ast::Decl::Def(def))));
+                map.insert(data.name.clone(), ust::Decl::Data(data.clone()));
+                map.extend(defs.into_iter().map(|def| (def.name.clone(), ust::Decl::Def(def))));
                 map.extend(
-                    ctors.into_iter().map(|ctor| (ctor.name.clone(), ast::Decl::Ctor(ctor))),
+                    ctors.into_iter().map(|ctor| (ctor.name.clone(), ust::Decl::Ctor(ctor))),
                 );
 
-                let decls = ast::Decls { map, order };
+                let decls = ust::Decls { map, order };
 
                 let data = data.rename();
                 let decls = decls.rename();
@@ -203,12 +203,12 @@ impl Index {
     }
 }
 
-fn load_elab(source: &str) -> Result<elab::Prg, Error> {
+fn load_elab(source: &str) -> Result<tst::Prg, Error> {
     let ast = load_ast(source)?;
     core::check(&ast).map_err(Error::Type)
 }
 
-fn load_ast(source: &str) -> Result<ast::Prg, Error> {
+fn load_ast(source: &str) -> Result<ust::Prg, Error> {
     let cst = parser::cst::parse_program(source).map_err(Error::Parser)?;
     lowering::lower(&cst).map_err(Error::Lowering)
 }

@@ -1,6 +1,6 @@
+use super::ast::*;
 use super::common::*;
 use super::cst;
-use super::generic;
 
 pub trait Named {
     fn name(&self) -> &Ident;

@@ -4,11 +4,11 @@ use codespan::Span;
 use printer::PrintToString;
 use rust_lapper::{Interval, Lapper};
 
+use syntax::ast::{Visit, Visitor};
 use syntax::common::*;
-use syntax::elab;
-use syntax::generic::{Visit, Visitor};
+use syntax::tst;
 
-pub fn collect_info(prg: &elab::Prg) -> (Lapper<u32, usize>, Lapper<u32, Item>, Vec<Info>) {
+pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, usize>, Lapper<u32, Item>, Vec<Info>) {
     let mut c = InfoCollector::default();
 
     prg.visit(&mut c);
@@ -34,12 +34,12 @@ pub enum Item {
 #[derive(Default)]
 struct InfoCollector {
     info_spans: Vec<Interval<u32, usize>>,
-    infos: Vec<elab::TypedInfo>,
+    infos: Vec<tst::TypeInfo>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
-impl From<elab::TypedInfo> for Info {
-    fn from(info: elab::TypedInfo) -> Self {
+impl From<tst::TypeInfo> for Info {
+    fn from(info: tst::TypeInfo) -> Self {
         Info { typ: info.typ.print_to_string(), span: info.span }
     }
 }
@@ -54,46 +54,46 @@ impl Item {
     }
 }
 
-impl Visitor<elab::Elab> for InfoCollector {
-    fn visit_info(&mut self, info: &elab::Info) {
+impl Visitor<tst::Elab> for InfoCollector {
+    fn visit_info(&mut self, info: &tst::Info) {
         self.add_info(info);
     }
 
-    fn visit_type_info(&mut self, info: &elab::TypedInfo) {
+    fn visit_type_info(&mut self, info: &tst::TypeInfo) {
         self.add_typed_info(info);
     }
 
     fn visit_data(
         &mut self,
-        info: &elab::Info,
+        info: &tst::Info,
         name: &Ident,
-        _typ: &Rc<elab::TypAbs>,
+        _typ: &Rc<tst::TypAbs>,
         _ctors: &[Ident],
-        _impl_block: &Option<elab::Impl>,
+        _impl_block: &Option<tst::Impl>,
     ) {
         self.add_item_span(Item::Data(name.clone()), info.span.unwrap());
     }
 
     fn visit_codata(
         &mut self,
-        info: &elab::Info,
+        info: &tst::Info,
         name: &Ident,
-        _typ: &Rc<elab::TypAbs>,
+        _typ: &Rc<tst::TypAbs>,
         _dtors: &[Ident],
-        _impl_block: &Option<elab::Impl>,
+        _impl_block: &Option<tst::Impl>,
     ) {
         self.add_item_span(Item::Data(name.clone()), info.span.unwrap());
     }
 
-    fn visit_impl(&mut self, info: &elab::Info, name: &Ident, _defs: &[Ident]) {
+    fn visit_impl(&mut self, info: &tst::Info, name: &Ident, _defs: &[Ident]) {
         self.add_item_span(Item::Impl(name.clone()), info.span.unwrap());
     }
 }
 
 impl InfoCollector {
-    fn add_info(&mut self, _info: &elab::Info) {}
+    fn add_info(&mut self, _info: &tst::Info) {}
 
-    fn add_typed_info(&mut self, info: &elab::TypedInfo) {
+    fn add_typed_info(&mut self, info: &tst::TypeInfo) {
         if let Some(span) = info.span {
             let idx = self.infos.len();
             self.info_spans.push(Interval {

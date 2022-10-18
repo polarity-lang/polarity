@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use printer::PrintToString;
 use renaming::Rename;
 use syntax::common::Ident;
-use syntax::{ast, cst, elab, generic};
+use syntax::{ast, cst, tst, ust};
 
 use super::infallible::NoError;
 
@@ -168,7 +168,7 @@ pub struct Check {
     name: &'static str,
 }
 
-pub struct Print<P: generic::Phase> {
+pub struct Print<P: ast::Phase> {
     name: &'static str,
     phantom: PhantomData<P>,
 }
@@ -193,7 +193,7 @@ impl Phase for Parse {
 
 impl Phase for Lower {
     type In = cst::Prg;
-    type Out = ast::Prg;
+    type Out = ust::Prg;
     type Err = lowering::LoweringError;
 
     fn new(name: &'static str) -> Self {
@@ -210,8 +210,8 @@ impl Phase for Lower {
 }
 
 impl Phase for Check {
-    type In = ast::Prg;
-    type Out = elab::Prg;
+    type In = ust::Prg;
+    type Out = tst::Prg;
     type Err = core::TypeError;
 
     fn new(name: &'static str) -> Self {
@@ -227,8 +227,8 @@ impl Phase for Check {
     }
 }
 
-impl<P: generic::Phase<VarName = Ident>> Phase for Print<P> {
-    type In = generic::Prg<P>;
+impl<P: ast::Phase<VarName = Ident>> Phase for Print<P> {
+    type In = ast::Prg<P>;
     type Out = String;
     type Err = NoError;
 
@@ -252,13 +252,13 @@ impl TestOutput for cst::Prg {
     }
 }
 
-impl TestOutput for ast::Prg {
+impl TestOutput for ust::Prg {
     fn test_output(&self) -> String {
         self.print_to_string()
     }
 }
 
-impl TestOutput for elab::Prg {
+impl TestOutput for tst::Prg {
     fn test_output(&self) -> String {
         // TODO: Improve test output
         format!("{:?}", self)

@@ -8,16 +8,17 @@ use syntax::ast;
 use syntax::ast::Substitutable;
 use syntax::common::*;
 use syntax::de_bruijn::*;
+use syntax::ust;
 use tracer::trace;
 
 #[derive(Debug, Clone)]
 pub struct Ctx {
-    types: HashMap<Ident, Rc<ast::TypAbs>>,
-    ctors: HashMap<Ident, Rc<ast::Ctor>>,
-    dtors: HashMap<Ident, Rc<ast::Dtor>>,
+    types: HashMap<Ident, Rc<ust::TypAbs>>,
+    ctors: HashMap<Ident, Rc<ust::Ctor>>,
+    dtors: HashMap<Ident, Rc<ust::Dtor>>,
     type_for_xtor: HashMap<Ident, Ident>,
     xtors_in_type: HashMap<Ident, HashSet<Ident>>,
-    bound: Vec<Vec<Rc<ast::Exp>>>,
+    bound: Vec<Vec<Rc<ust::Exp>>>,
 }
 
 impl Ctx {
@@ -32,7 +33,7 @@ impl Ctx {
         }
     }
 
-    pub fn build(prg: &ast::Prg) -> Self {
+    pub fn build(prg: &ust::Prg) -> Self {
         let mut types = HashMap::default();
         let mut ctors = HashMap::default();
         let mut dtors = HashMap::default();
@@ -43,7 +44,7 @@ impl Ctx {
 
         for (decl_name, decl) in prg.decls.map.iter() {
             match decl {
-                ast::Decl::Data(data) => {
+                ust::Decl::Data(data) => {
                     types.insert(decl_name.clone(), data.typ.clone());
                     let mut xtors_set = HashSet::default();
                     for ctor in &data.ctors {
@@ -52,7 +53,7 @@ impl Ctx {
                     }
                     xtors_in_type.insert(decl_name.clone(), xtors_set);
                 }
-                ast::Decl::Codata(codata) => {
+                ust::Decl::Codata(codata) => {
                     types.insert(decl_name.clone(), codata.typ.clone());
                     let mut xtors_set = HashSet::default();
                     for dtor in &codata.dtors {
@@ -61,13 +62,13 @@ impl Ctx {
                     }
                     xtors_in_type.insert(decl_name.clone(), xtors_set);
                 }
-                ast::Decl::Ctor(ctor) => {
+                ust::Decl::Ctor(ctor) => {
                     ctors.insert(ctor.name.clone(), Rc::new(ctor.clone()));
                 }
-                ast::Decl::Dtor(dtor) => {
+                ust::Decl::Dtor(dtor) => {
                     dtors.insert(dtor.name.clone(), Rc::new(dtor.clone()));
                 }
-                ast::Decl::Def(def) => {
+                ust::Decl::Def(def) => {
                     dtors.insert(def.name.clone(), Rc::new(def.to_dtor()));
                     type_for_xtor.insert(def.name.clone(), def.on_typ.name.clone());
                     xdefs_in_type
@@ -75,7 +76,7 @@ impl Ctx {
                         .or_default()
                         .insert(def.name.clone());
                 }
-                ast::Decl::Codef(codef) => {
+                ust::Decl::Codef(codef) => {
                     ctors.insert(codef.name.clone(), Rc::new(codef.to_ctor()));
                     type_for_xtor.insert(codef.name.clone(), codef.typ.name.clone());
                     xdefs_in_type
@@ -90,7 +91,7 @@ impl Ctx {
     }
 
     #[trace("{} [ {} ] ~> {return:P}", self, idx, data::id)]
-    pub fn bound(&self, idx: Idx) -> Rc<ast::Exp> {
+    pub fn bound(&self, idx: Idx) -> Rc<ust::Exp> {
         self.bound
             .get(self.bound.len() - 1 - idx.fst)
             .and_then(|ctx| ctx.get(ctx.len() - 1 - idx.snd))
@@ -106,20 +107,20 @@ impl Ctx {
         &self.xtors_in_type[name]
     }
 
-    pub fn typ(&self, name: &Ident) -> Rc<ast::TypAbs> {
+    pub fn typ(&self, name: &Ident) -> Rc<ust::TypAbs> {
         self.types[name].clone()
     }
 
-    pub fn ctor(&self, name: &Ident) -> Rc<ast::Ctor> {
+    pub fn ctor(&self, name: &Ident) -> Rc<ust::Ctor> {
         self.ctors[name].clone()
     }
 
-    pub fn dtor(&self, name: &Ident) -> Rc<ast::Dtor> {
+    pub fn dtor(&self, name: &Ident) -> Rc<ust::Dtor> {
         self.dtors[name].clone()
     }
 
     /// Bind a single type
-    pub fn bind<T, F>(&mut self, typ: Rc<ast::Exp>, f: F) -> T
+    pub fn bind<T, F>(&mut self, typ: Rc<ust::Exp>, f: F) -> T
     where
         F: Fn(&mut Ctx) -> T,
     {
@@ -182,7 +183,7 @@ impl Ctx {
 
     fn map<F>(&self, f: F) -> Self
     where
-        F: Fn(&Rc<ast::Exp>) -> Rc<ast::Exp>,
+        F: Fn(&Rc<ust::Exp>) -> Rc<ust::Exp>,
     {
         let bound = self.bound.iter().map(|inner| inner.iter().map(&f).collect()).collect();
         // FIXME: inefficient clones
@@ -221,7 +222,7 @@ impl Ctx {
     }
 
     /// Push a binder contained in a binder list, incrementing the second dimension of the current De Bruijn level
-    fn push(&mut self, typ: Rc<ast::Exp>) {
+    fn push(&mut self, typ: Rc<ust::Exp>) {
         self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(typ);
         self.shift_at_lvl(self.bound.len() - 1, (0, 1));
     }
@@ -255,11 +256,11 @@ impl Substitutable for Ctx {
 }
 
 pub trait Typed {
-    fn typ(&self) -> Rc<ast::Exp>;
+    fn typ(&self) -> Rc<ust::Exp>;
 }
 
-impl Typed for Rc<ast::Exp> {
-    fn typ(&self) -> Rc<ast::Exp> {
+impl Typed for Rc<ust::Exp> {
+    fn typ(&self) -> Rc<ust::Exp> {
         self.clone()
     }
 }
@@ -267,7 +268,7 @@ impl Typed for Rc<ast::Exp> {
 impl fmt::Display for Ctx {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
         use printer::PrintToString;
-        let fmt_inner = |inner: &Vec<Rc<ast::Exp>>| {
+        let fmt_inner = |inner: &Vec<Rc<ust::Exp>>| {
             format!(
                 "[{}]",
                 inner.iter().map(|x| x.print_to_string()).collect::<Vec<_>>().join(", ")

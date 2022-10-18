@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use pretty::DocAllocator;
 
-use syntax::generic::*;
+use syntax::ast::*;
 
 use super::theme::ThemeExt;
 use super::tokens::*;

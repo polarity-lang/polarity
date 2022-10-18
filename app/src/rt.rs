@@ -1,28 +1,28 @@
 use std::fs;
 use std::path::Path;
 
-use syntax::ast;
 use syntax::cst;
-use syntax::elab;
+use syntax::tst;
+use syntax::ust;
 
 use crate::result::Error;
 
-pub fn run_filepath(filepath: &Path) -> Result<elab::Prg, Error> {
+pub fn run_filepath(filepath: &Path) -> Result<tst::Prg, Error> {
     let prg = load_filepath(filepath)?;
     run_program(prg)
 }
 
-pub fn run_string(text: &str) -> Result<elab::Prg, Error> {
+pub fn run_string(text: &str) -> Result<tst::Prg, Error> {
     let prg = load_string(text)?;
     run_program(prg)
 }
 
-pub fn lower_filepath(filepath: &Path) -> Result<ast::Prg, Error> {
+pub fn lower_filepath(filepath: &Path) -> Result<ust::Prg, Error> {
     let prg = load_filepath(filepath)?;
     lowering::lower(&prg).map_err(Error::Lowering)
 }
 
-fn run_program(prg: cst::Prg) -> Result<elab::Prg, Error> {
+fn run_program(prg: cst::Prg) -> Result<tst::Prg, Error> {
     let ast = lowering::lower(&prg).map_err(Error::Lowering)?;
     core::check(&ast).map_err(Error::Type)
 }

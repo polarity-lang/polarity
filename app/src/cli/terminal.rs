@@ -1,7 +1,7 @@
 use printer::{ColorChoice, PrintExt, StandardStream};
-use syntax::ast;
+use syntax::ust;
 
-pub fn print_prg(prg: ast::Prg) {
+pub fn print_prg(prg: ust::Prg) {
     printer::Alloc::new()
         .print_colored(&prg, width(), StandardStream::stdout(ColorChoice::Auto))
         .expect("Failed to print to stdout");

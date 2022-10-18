@@ -4,7 +4,8 @@ use data::HashMap;
 
 use crate::common::*;
 use crate::de_bruijn::*;
-use crate::generic::*;
+
+use super::def::*;
 
 #[rustfmt::skip]
 #[allow(unused_variables)]

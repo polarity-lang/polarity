@@ -1,19 +1,19 @@
-use syntax::ast;
 use syntax::ast::SwapWithCtx;
 use syntax::leveled_ctx::LeveledCtx;
 use syntax::matrix;
+use syntax::ust;
 
 pub trait Represent {
-    fn as_data(&self) -> (ast::Data, Vec<ast::Ctor>, Vec<ast::Def>);
-    fn as_codata(&self) -> (ast::Codata, Vec<ast::Dtor>, Vec<ast::Codef>);
+    fn as_data(&self) -> (ust::Data, Vec<ust::Ctor>, Vec<ust::Def>);
+    fn as_codata(&self) -> (ust::Codata, Vec<ust::Dtor>, Vec<ust::Codef>);
 }
 
 impl Represent for matrix::XData {
-    fn as_data(&self) -> (ast::Data, Vec<ast::Ctor>, Vec<ast::Def>) {
+    fn as_data(&self) -> (ust::Data, Vec<ust::Ctor>, Vec<ust::Def>) {
         let matrix::XData { name, typ, ctors, dtors, exprs, impl_block, .. } = self;
 
-        let data = ast::Data {
-            info: ast::Info::empty(),
+        let data = ust::Data {
+            info: ust::Info::empty(),
             name: name.clone(),
             typ: typ.clone(),
             ctors: ctors.keys().cloned().collect(),
@@ -27,8 +27,8 @@ impl Represent for matrix::XData {
                     .values()
                     .map(|ctor| {
                         let key = matrix::Key { dtor: dtor.name.clone(), ctor: ctor.name.clone() };
-                        ast::Case {
-                            info: ast::Info::empty(),
+                        ust::Case {
+                            info: ust::Info::empty(),
                             name: ctor.name.clone(),
                             args: ctor.params.clone(),
                             body: exprs[&key].clone(),
@@ -36,13 +36,13 @@ impl Represent for matrix::XData {
                     })
                     .collect();
 
-                ast::Def {
-                    info: ast::Info::empty(),
+                ust::Def {
+                    info: ust::Info::empty(),
                     name: dtor.name.clone(),
                     params: dtor.params.clone(),
                     on_typ: dtor.on_typ.clone(),
                     in_typ: dtor.in_typ.clone(),
-                    body: ast::Match { cases, info: ast::Info::empty() },
+                    body: ust::Match { cases, info: ust::Info::empty() },
                 }
             })
             .collect();
@@ -52,11 +52,11 @@ impl Represent for matrix::XData {
         (data, ctors, defs)
     }
 
-    fn as_codata(&self) -> (ast::Codata, Vec<ast::Dtor>, Vec<ast::Codef>) {
+    fn as_codata(&self) -> (ust::Codata, Vec<ust::Dtor>, Vec<ust::Codef>) {
         let matrix::XData { name, typ, ctors, dtors, exprs, impl_block, .. } = self;
 
-        let codata = ast::Codata {
-            info: ast::Info::empty(),
+        let codata = ust::Codata {
+            info: ust::Info::empty(),
             name: name.clone(),
             typ: typ.clone(),
             dtors: dtors.keys().cloned().collect(),
@@ -80,8 +80,8 @@ impl Represent for matrix::XData {
                                 })
                             })
                         });
-                        ast::Cocase {
-                            info: ast::Info::empty(),
+                        ust::Cocase {
+                            info: ust::Info::empty(),
                             name: dtor.name.clone(),
                             args: dtor.params.clone(),
                             body,
@@ -89,12 +89,12 @@ impl Represent for matrix::XData {
                     })
                     .collect();
 
-                ast::Codef {
-                    info: ast::Info::empty(),
+                ust::Codef {
+                    info: ust::Info::empty(),
                     name: ctor.name.clone(),
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
-                    body: ast::Comatch { cases, info: ast::Info::empty() },
+                    body: ust::Comatch { cases, info: ust::Info::empty() },
                 }
             })
             .collect();

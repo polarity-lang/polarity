@@ -5,7 +5,8 @@ use data::HashMap;
 
 use crate::common::*;
 use crate::de_bruijn::*;
-use crate::generic::*;
+
+use super::def::*;
 
 use super::fold::*;
 

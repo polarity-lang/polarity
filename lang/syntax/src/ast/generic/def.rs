@@ -9,12 +9,12 @@ use crate::de_bruijn::*;
 
 pub trait Phase
 where
-    Self: Clone + fmt::Debug,
+    Self: Clone + fmt::Debug + Eq,
 {
     /// Type of the `info` field, containing span information
-    type Info: Clone + fmt::Debug;
+    type Info: HasSpan + Clone + fmt::Debug;
     /// Type of the `info` field, containing span and (depending on the phase) type information
-    type TypeInfo: Clone + fmt::Debug;
+    type TypeInfo: HasSpan + Clone + fmt::Debug;
     /// Type of the `name` field of `Exp::Var`
     type VarName: Clone + fmt::Debug;
 

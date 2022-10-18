@@ -4,12 +4,12 @@ use crate::de_bruijn::*;
 
 use super::def::*;
 
-pub fn occurs_in<L: Leveled>(base_lvl: &L, the_idx: Idx, in_exp: &Rc<Exp>) -> bool {
+pub fn occurs_in<P: Phase, L: Leveled>(base_lvl: &L, the_idx: Idx, in_exp: &Rc<Exp<P>>) -> bool {
     let target_lvl = base_lvl.idx_to_lvl(the_idx);
     occurs(base_lvl, target_lvl, in_exp)
 }
 
-fn occurs<L: Leveled>(curr_lvl: &L, target_lvl: Lvl, in_exp: &Rc<Exp>) -> bool {
+fn occurs<P: Phase, L: Leveled>(curr_lvl: &L, target_lvl: Lvl, in_exp: &Rc<Exp<P>>) -> bool {
     match &**in_exp {
         Exp::Var { idx, .. } => curr_lvl.idx_to_lvl(*idx) == target_lvl,
         Exp::TypCtor { args, .. } => args.iter().any(|arg| occurs(curr_lvl, target_lvl, arg)),

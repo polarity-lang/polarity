@@ -2,25 +2,25 @@ use std::rc::Rc;
 
 use data::HashMap;
 
-use super::ast;
 use super::common::*;
+use super::ust;
 
 #[derive(Debug, Clone)]
 pub struct Prg {
     pub map: HashMap<Ident, XData>,
-    pub exp: Option<Rc<ast::Exp>>,
+    pub exp: Option<Rc<ust::Exp>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct XData {
     pub repr: Repr,
-    pub info: ast::Info,
+    pub info: ust::Info,
     pub name: Ident,
-    pub typ: Rc<ast::TypAbs>,
-    pub ctors: HashMap<Ident, ast::Ctor>,
-    pub dtors: HashMap<Ident, ast::Dtor>,
-    pub exprs: HashMap<Key, Option<Rc<ast::Exp>>>,
-    pub impl_block: Option<ast::Impl>,
+    pub typ: Rc<ust::TypAbs>,
+    pub ctors: HashMap<Ident, ust::Ctor>,
+    pub dtors: HashMap<Ident, ust::Dtor>,
+    pub exprs: HashMap<Key, Option<Rc<ust::Exp>>>,
+    pub impl_block: Option<ust::Impl>,
 }
 
 /// A key points to a matrix cell

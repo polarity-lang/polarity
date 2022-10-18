@@ -1,11 +1,11 @@
-use syntax::ast;
+use syntax::ust;
 
 mod matrix;
 mod repr;
 
 use repr::Represent;
 
-pub fn as_matrix(prg: &ast::Prg) -> syntax::matrix::Prg {
+pub fn as_matrix(prg: &ust::Prg) -> syntax::matrix::Prg {
     matrix::build(prg)
 }
 
@@ -16,13 +16,13 @@ pub fn repr(prg: &syntax::matrix::Prg, name: &str) -> syntax::matrix::Repr {
 pub fn as_data(
     prg: &syntax::matrix::Prg,
     name: &str,
-) -> (ast::Data, Vec<ast::Ctor>, Vec<ast::Def>) {
+) -> (ust::Data, Vec<ust::Ctor>, Vec<ust::Def>) {
     prg.map[name].as_data()
 }
 
 pub fn as_codata(
     prg: &syntax::matrix::Prg,
     name: &str,
-) -> (ast::Codata, Vec<ast::Dtor>, Vec<ast::Codef>) {
+) -> (ust::Codata, Vec<ust::Dtor>, Vec<ust::Codef>) {
     prg.map[name].as_codata()
 }

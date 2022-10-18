@@ -3,8 +3,8 @@ use std::fmt;
 use std::rc::Rc;
 
 use data::HashSet;
-use syntax::ast;
 use syntax::common::*;
+use syntax::ust;
 
 use printer::PrintToString;
 
@@ -13,7 +13,7 @@ use super::unify::UnifyError;
 #[derive(Debug)]
 pub enum TypeError {
     ArgLenMismatch { expected: usize, actual: usize },
-    NotEq { lhs: Rc<ast::Exp>, rhs: Rc<ast::Exp> },
+    NotEq { lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp> },
     InvalidMatch { missing: HashSet<Ident>, undeclared: HashSet<Ident>, duplicate: HashSet<Ident> },
     NotInType { expected: Ident, actual: Ident },
     PatternIsNotAbsurd { name: Ident },

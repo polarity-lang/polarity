@@ -1,14 +1,14 @@
 use std::rc::Rc;
 
-use syntax::ast;
 use syntax::cst;
 use syntax::named::Named;
+use syntax::ust;
 
 use super::ctx::*;
 use super::result::*;
 use super::types::*;
 
-pub fn lower(prg: &cst::Prg) -> Result<ast::Prg, LoweringError> {
+pub fn lower(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
     let cst::Prg { items, exp } = prg;
     let mut ctx = Ctx::empty();
 
@@ -25,7 +25,7 @@ pub fn lower(prg: &cst::Prg) -> Result<ast::Prg, LoweringError> {
 
     let exp = exp.lower_in_ctx(&mut ctx)?;
 
-    Ok(ast::Prg { decls: ctx.into_decls(), exp })
+    Ok(ust::Prg { decls: ctx.into_decls(), exp })
 }
 
 /// Register names for all top-level declarations
@@ -89,8 +89,8 @@ impl Lower for cst::TypDecl {
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let decl = match self {
-            cst::TypDecl::Data(data) => ast::Decl::Data(data.lower_in_ctx(ctx)?),
-            cst::TypDecl::Codata(codata) => ast::Decl::Codata(codata.lower_in_ctx(ctx)?),
+            cst::TypDecl::Data(data) => ust::Decl::Data(data.lower_in_ctx(ctx)?),
+            cst::TypDecl::Codata(codata) => ust::Decl::Codata(codata.lower_in_ctx(ctx)?),
         };
         ctx.add_decl(decl)?;
         Ok(())
@@ -103,7 +103,7 @@ impl Lower for cst::Impl {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Impl { info, name, decls } = self;
 
-        let impl_block = ast::Impl {
+        let impl_block = ust::Impl {
             info: info.lower_pure(),
             name: name.clone(),
             defs: decls.iter().map(Named::name).cloned().collect(),
@@ -120,8 +120,8 @@ impl Lower for cst::DefDecl {
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let decl = match self {
-            cst::DefDecl::Def(def) => ast::Decl::Def(def.lower_in_ctx(ctx)?),
-            cst::DefDecl::Codef(codef) => ast::Decl::Codef(codef.lower_in_ctx(ctx)?),
+            cst::DefDecl::Def(def) => ust::Decl::Def(def.lower_in_ctx(ctx)?),
+            cst::DefDecl::Codef(codef) => ust::Decl::Codef(codef.lower_in_ctx(ctx)?),
         };
         ctx.add_decl(decl)?;
         Ok(())
@@ -129,21 +129,21 @@ impl Lower for cst::DefDecl {
 }
 
 impl Lower for cst::Data {
-    type Target = ast::Data;
+    type Target = ust::Data;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Data { info, name, params, ctors } = self;
 
-        let ctor_decls = ctors.lower_in_ctx(ctx)?.into_iter().map(ast::Decl::Ctor);
+        let ctor_decls = ctors.lower_in_ctx(ctx)?.into_iter().map(ust::Decl::Ctor);
 
         let ctor_names = ctors.iter().map(|ctor| ctor.name.clone()).collect();
 
         ctx.add_decls(ctor_decls)?;
 
-        Ok(ast::Data {
+        Ok(ust::Data {
             info: info.lower_pure(),
             name: name.clone(),
-            typ: Rc::new(ast::TypAbs { params: params.lower_in_ctx(ctx)? }),
+            typ: Rc::new(ust::TypAbs { params: params.lower_in_ctx(ctx)? }),
             ctors: ctor_names,
             impl_block: ctx.impl_block(name).cloned(),
         })
@@ -151,21 +151,21 @@ impl Lower for cst::Data {
 }
 
 impl Lower for cst::Codata {
-    type Target = ast::Codata;
+    type Target = ust::Codata;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Codata { info, name, params, dtors } = self;
 
-        let dtor_decls = dtors.lower_in_ctx(ctx)?.into_iter().map(ast::Decl::Dtor);
+        let dtor_decls = dtors.lower_in_ctx(ctx)?.into_iter().map(ust::Decl::Dtor);
 
         let dtor_names = dtors.iter().map(|dtor| dtor.name.clone()).collect();
 
         ctx.add_decls(dtor_decls)?;
 
-        Ok(ast::Codata {
+        Ok(ust::Codata {
             info: info.lower_pure(),
             name: name.clone(),
-            typ: Rc::new(ast::TypAbs { params: params.lower_in_ctx(ctx)? }),
+            typ: Rc::new(ust::TypAbs { params: params.lower_in_ctx(ctx)? }),
             dtors: dtor_names,
             impl_block: ctx.impl_block(name).cloned(),
         })
@@ -173,13 +173,13 @@ impl Lower for cst::Codata {
 }
 
 impl Lower for cst::Ctor {
-    type Target = ast::Ctor;
+    type Target = ust::Ctor;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Ctor { info, name, params, typ } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
-            Ok(ast::Ctor {
+            Ok(ust::Ctor {
                 info: info.lower_pure(),
                 name: name.clone(),
                 params,
@@ -190,13 +190,13 @@ impl Lower for cst::Ctor {
 }
 
 impl Lower for cst::Dtor {
-    type Target = ast::Dtor;
+    type Target = ust::Dtor;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Dtor { info, name, params, on_typ, in_typ } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
-            Ok(ast::Dtor {
+            Ok(ust::Dtor {
                 info: info.lower_pure(),
                 name: name.clone(),
                 params,
@@ -208,13 +208,13 @@ impl Lower for cst::Dtor {
 }
 
 impl Lower for cst::Def {
-    type Target = ast::Def;
+    type Target = ust::Def;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Def { info, name, params, on_typ, in_typ, body } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
-            Ok(ast::Def {
+            Ok(ust::Def {
                 info: info.lower_pure(),
                 name: name.clone(),
                 params,
@@ -227,13 +227,13 @@ impl Lower for cst::Def {
 }
 
 impl Lower for cst::Codef {
-    type Target = ast::Codef;
+    type Target = ust::Codef;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Codef { info, name, params, typ, body } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
-            Ok(ast::Codef {
+            Ok(ust::Codef {
                 info: info.lower_pure(),
                 name: name.clone(),
                 params,
@@ -245,34 +245,34 @@ impl Lower for cst::Codef {
 }
 
 impl Lower for cst::Match {
-    type Target = ast::Match;
+    type Target = ust::Match;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Match { info, cases } = self;
 
-        Ok(ast::Match { info: info.lower_pure(), cases: cases.lower_in_ctx(ctx)? })
+        Ok(ust::Match { info: info.lower_pure(), cases: cases.lower_in_ctx(ctx)? })
     }
 }
 
 impl Lower for cst::Comatch {
-    type Target = ast::Comatch;
+    type Target = ust::Comatch;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Comatch { info, cases } = self;
 
-        Ok(ast::Comatch { info: info.lower_pure(), cases: cases.lower_in_ctx(ctx)? })
+        Ok(ust::Comatch { info: info.lower_pure(), cases: cases.lower_in_ctx(ctx)? })
     }
 }
 
 impl Lower for cst::Case {
-    type Target = ast::Case;
+    type Target = ust::Case;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Case { info, name, args, body, eqns: _ } = self;
         // FIXME: eqns
 
         args.lower_telescope(ctx, |ctx, args| {
-            Ok(ast::Case {
+            Ok(ust::Case {
                 info: info.lower_pure(),
                 name: name.clone(),
                 args,
@@ -283,14 +283,14 @@ impl Lower for cst::Case {
 }
 
 impl Lower for cst::Cocase {
-    type Target = ast::Cocase;
+    type Target = ust::Cocase;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Cocase { info, name, args, body, eqns: _ } = self;
         // FIXME: eqns
 
         args.lower_telescope(ctx, |ctx, args| {
-            Ok(ast::Cocase {
+            Ok(ust::Cocase {
                 info: info.lower_pure(),
                 name: name.clone(),
                 args,
@@ -301,12 +301,12 @@ impl Lower for cst::Cocase {
 }
 
 impl Lower for cst::TypApp {
-    type Target = ast::TypApp;
+    type Target = ust::TypApp;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::TypApp { info, name, args: subst } = self;
 
-        Ok(ast::TypApp {
+        Ok(ust::TypApp {
             info: info.lower_pure(),
             name: name.clone(),
             args: subst.lower_in_ctx(ctx)?,
@@ -315,18 +315,18 @@ impl Lower for cst::TypApp {
 }
 
 impl Lower for cst::Exp {
-    type Target = ast::Exp;
+    type Target = ust::Exp;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         match self {
             cst::Exp::Call { info, name, args: subst } => match ctx.lookup(name)? {
-                Elem::Bound(lvl) => Ok(ast::Exp::Var {
+                Elem::Bound(lvl) => Ok(ust::Exp::Var {
                     info: info.lower_pure(),
                     name: name.clone(),
                     idx: ctx.lower_bound(*lvl),
                 }),
                 Elem::Decl(decl_kind) => match decl_kind {
-                    DeclKind::Codata | DeclKind::Data => Ok(ast::Exp::TypCtor {
+                    DeclKind::Codata | DeclKind::Data => Ok(ust::Exp::TypCtor {
                         info: info.lower_pure(),
                         name: name.to_owned(),
                         args: subst.lower_in_ctx(ctx)?,
@@ -334,25 +334,25 @@ impl Lower for cst::Exp {
                     DeclKind::Def | DeclKind::Dtor => {
                         Err(LoweringError::MustUseAsDtor(name.to_owned()))
                     }
-                    DeclKind::Codef | DeclKind::Ctor => Ok(ast::Exp::Ctor {
+                    DeclKind::Codef | DeclKind::Ctor => Ok(ust::Exp::Ctor {
                         info: info.lower_pure(),
                         name: name.to_owned(),
                         args: subst.lower_in_ctx(ctx)?,
                     }),
                 },
             },
-            cst::Exp::DotCall { info, exp, name, args: subst } => Ok(ast::Exp::Dtor {
+            cst::Exp::DotCall { info, exp, name, args: subst } => Ok(ust::Exp::Dtor {
                 info: info.lower_pure(),
                 exp: exp.lower_in_ctx(ctx)?,
                 name: name.clone(),
                 args: subst.lower_in_ctx(ctx)?,
             }),
-            cst::Exp::Anno { info, exp, typ } => Ok(ast::Exp::Anno {
+            cst::Exp::Anno { info, exp, typ } => Ok(ust::Exp::Anno {
                 info: info.lower_pure(),
                 exp: exp.lower_in_ctx(ctx)?,
                 typ: typ.lower_in_ctx(ctx)?,
             }),
-            cst::Exp::Type { info } => Ok(ast::Exp::Type { info: info.lower_pure() }),
+            cst::Exp::Type { info } => Ok(ust::Exp::Type { info: info.lower_pure() }),
         }
     }
 }
@@ -382,7 +382,7 @@ impl<T: Lower> Lower for Rc<T> {
 }
 
 impl LowerTelescope for cst::Telescope {
-    type Target = ast::Telescope;
+    type Target = ust::Telescope;
 
     /// Lower a telescope
     ///
@@ -394,24 +394,24 @@ impl LowerTelescope for cst::Telescope {
     {
         ctx.bind_fold(
             self.0.iter(),
-            Ok(ast::Params::new()),
+            Ok(ust::Params::new()),
             |ctx, params_out, param| {
                 let mut params_out = params_out?;
                 let cst::Param { name, typ } = param;
                 let typ_out = typ.lower_in_ctx(ctx)?;
-                let param_out = ast::Param { name: name.clone(), typ: typ_out };
+                let param_out = ust::Param { name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
                 Ok(params_out)
             },
-            |ctx, params| f(ctx, params.map(|params| ast::Telescope { params })?),
+            |ctx, params| f(ctx, params.map(|params| ust::Telescope { params })?),
         )
     }
 }
 
 impl LowerPure for cst::Info {
-    type Target = ast::Info;
+    type Target = ust::Info;
 
     fn lower_pure(&self) -> Self::Target {
-        ast::Info { span: Some(self.span) }
+        ust::Info { span: Some(self.span) }
     }
 }

@@ -2,17 +2,18 @@ use std::rc::Rc;
 
 use codespan::Span;
 
-use crate::ast;
-use crate::common::{HasInfo, Ident};
+use crate::common::{HasInfo, HasSpan, Ident};
 use crate::de_bruijn::Idx;
-use crate::generic;
+
+use super::generic;
+use super::untyped;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Elab;
 
 impl generic::Phase for Elab {
     type Info = Info;
-    type TypeInfo = TypedInfo;
+    type TypeInfo = TypeInfo;
 
     type VarName = Ident;
 
@@ -43,15 +44,13 @@ pub type Params = generic::Params<Elab>;
 pub type Args = generic::Args<Elab>;
 pub type Param = generic::Param<Elab>;
 
-impl From<ast::Impl> for Impl {
-    fn from(ast: ast::Impl) -> Self {
-        let ast::Impl { info, name, defs } = ast;
-
+impl From<untyped::Impl> for Impl {
+    fn from(untyped::Impl { info, name, defs }: untyped::Impl) -> Self {
         Self { info: info.into(), name, defs }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct Info {
     pub span: Option<Span>,
 }
@@ -62,59 +61,52 @@ impl Info {
     }
 }
 
+impl HasSpan for Info {
+    fn span(&self) -> Option<&Span> {
+        self.span.as_ref()
+    }
+}
+
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct TypedInfo {
-    pub typ: Rc<ast::Exp>,
+pub struct TypeInfo {
+    pub typ: Rc<untyped::Exp>,
     pub span: Option<Span>,
 }
 
-impl From<Rc<ast::Exp>> for TypedInfo {
-    fn from(typ: Rc<ast::Exp>) -> Self {
-        TypedInfo { span: typ.span().cloned(), typ }
+impl From<Rc<untyped::Exp>> for TypeInfo {
+    fn from(typ: Rc<untyped::Exp>) -> Self {
+        TypeInfo { span: typ.span().cloned(), typ }
     }
 }
 
-impl HasInfo for Exp {
-    type Info = TypedInfo;
-
-    fn info(&self) -> &Self::Info {
-        match self {
-            Exp::Var { info, .. } => info,
-            Exp::TypCtor { info, .. } => info,
-            Exp::Ctor { info, .. } => info,
-            Exp::Dtor { info, .. } => info,
-            Exp::Anno { info, .. } => info,
-            Exp::Type { info } => info,
-        }
-    }
-
+impl HasSpan for TypeInfo {
     fn span(&self) -> Option<&Span> {
-        self.info().span.as_ref()
+        self.span.as_ref()
     }
 }
 
 pub trait HasType {
-    fn typ(&self) -> &Rc<ast::Exp>;
+    fn typ(&self) -> &Rc<untyped::Exp>;
 }
 
-impl<T: HasInfo<Info = TypedInfo>> HasType for T {
-    fn typ(&self) -> &Rc<ast::Exp> {
+impl<T: HasInfo<Info = TypeInfo>> HasType for T {
+    fn typ(&self) -> &Rc<untyped::Exp> {
         &self.info().typ
     }
 }
 
-impl From<ast::Info> for Info {
-    fn from(info: ast::Info) -> Self {
+impl From<untyped::Info> for Info {
+    fn from(info: untyped::Info) -> Self {
         Self { span: info.span }
     }
 }
 
 pub trait ElabInfoExt {
-    fn with_type(&self, typ: Rc<ast::Exp>) -> TypedInfo;
+    fn with_type(&self, typ: Rc<untyped::Exp>) -> TypeInfo;
 }
 
-impl ElabInfoExt for ast::Info {
-    fn with_type(&self, typ: Rc<ast::Exp>) -> TypedInfo {
-        TypedInfo { typ, span: self.span }
+impl ElabInfoExt for untyped::Info {
+    fn with_type(&self, typ: Rc<untyped::Exp>) -> TypeInfo {
+        TypeInfo { typ, span: self.span }
     }
 }

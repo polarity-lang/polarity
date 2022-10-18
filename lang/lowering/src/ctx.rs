@@ -1,9 +1,9 @@
 use data::HashMap;
-use syntax::ast;
 use syntax::common::*;
 use syntax::cst;
 use syntax::de_bruijn::*;
 use syntax::named::Named;
+use syntax::ust;
 
 use super::result::LoweringError;
 
@@ -15,9 +15,9 @@ pub struct Ctx {
     /// Bound variables in this map are De-Bruijn levels rather than indices:
     map: HashMap<Ident, Vec<Elem>>,
     /// Accumulates top-level declarations
-    decls: ast::Decls,
+    decls: ust::Decls,
     /// Mapping each type name to its impl block (if any)
-    impls: HashMap<Ident, ast::Impl>,
+    impls: HashMap<Ident, ust::Impl>,
     /// Counts the number of entries for each De-Bruijn level
     levels: Vec<usize>,
 }
@@ -26,7 +26,7 @@ impl Ctx {
     pub fn empty() -> Self {
         Self {
             map: HashMap::default(),
-            decls: ast::Decls::empty(),
+            decls: ust::Decls::empty(),
             impls: HashMap::default(),
             levels: Vec::new(),
         }
@@ -39,11 +39,11 @@ impl Ctx {
             .ok_or_else(|| LoweringError::UndefinedIdent(name.clone()))
     }
 
-    pub fn impl_block(&self, name: &Ident) -> Option<&ast::Impl> {
+    pub fn impl_block(&self, name: &Ident) -> Option<&ust::Impl> {
         self.impls.get(name)
     }
 
-    pub fn add_impl_block(&mut self, block: ast::Impl) {
+    pub fn add_impl_block(&mut self, block: ust::Impl) {
         self.impls.insert(block.name.clone(), block);
     }
 
@@ -60,12 +60,12 @@ impl Ctx {
 
     pub fn add_decls<I>(&mut self, decls: I) -> Result<(), LoweringError>
     where
-        I: IntoIterator<Item = ast::Decl>,
+        I: IntoIterator<Item = ust::Decl>,
     {
         decls.into_iter().try_for_each(|decl| self.add_decl(decl))
     }
 
-    pub fn add_decl(&mut self, decl: ast::Decl) -> Result<(), LoweringError> {
+    pub fn add_decl(&mut self, decl: ust::Decl) -> Result<(), LoweringError> {
         match self.decls.map.get(decl.name()) {
             Some(_) => Err(LoweringError::AlreadyDefined(decl.name().clone())),
             None => {
@@ -76,7 +76,7 @@ impl Ctx {
         }
     }
 
-    pub fn into_decls(self) -> ast::Decls {
+    pub fn into_decls(self) -> ust::Decls {
         self.decls
     }
 

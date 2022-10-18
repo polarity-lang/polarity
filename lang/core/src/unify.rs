@@ -4,25 +4,25 @@ use std::rc::Rc;
 
 use data::{Dec, HashMap, HashSet, No, Yes};
 use printer::PrintToString;
-use syntax::ast::{self, Assign};
-use syntax::ast::{Substitutable, Substitution};
+use syntax::ast::{self, Assign, Substitutable, Substitution};
 use syntax::de_bruijn::*;
 use syntax::equiv::AlphaEq;
+use syntax::ust;
 use tracer::trace;
 
 #[derive(Debug, Clone)]
 pub struct Unificator {
-    map: HashMap<Lvl, Rc<ast::Exp>>,
+    map: HashMap<Lvl, Rc<ust::Exp>>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Eqn {
-    pub lhs: Rc<ast::Exp>,
-    pub rhs: Rc<ast::Exp>,
+    pub lhs: Rc<ust::Exp>,
+    pub rhs: Rc<ust::Exp>,
 }
 
-impl From<(Rc<ast::Exp>, Rc<ast::Exp>)> for Eqn {
-    fn from((lhs, rhs): (Rc<ast::Exp>, Rc<ast::Exp>)) -> Self {
+impl From<(Rc<ust::Exp>, Rc<ust::Exp>)> for Eqn {
+    fn from((lhs, rhs): (Rc<ust::Exp>, Rc<ust::Exp>)) -> Self {
         Eqn { lhs, rhs }
     }
 }
@@ -46,7 +46,7 @@ impl Substitutable for Unificator {
 }
 
 impl Substitution for Unificator {
-    fn get(&self, lvl: Lvl) -> Option<Rc<ast::Exp>> {
+    fn get(&self, lvl: Lvl) -> Option<Rc<ust::Exp>> {
         self.map.get(&lvl).cloned()
     }
 }
@@ -93,7 +93,7 @@ impl<'l, L: Leveled> Ctx<'l, L> {
     }
 
     fn unify_eqn(&mut self, eqn: &Eqn) -> Result<Dec, UnifyError> {
-        use syntax::generic::Exp::*;
+        use ast::Exp::*;
 
         let Eqn { lhs, rhs, .. } = eqn;
         // FIXME: This is only temporary (not compatible with xfunc in general)
@@ -130,15 +130,15 @@ impl<'l, L: Leveled> Ctx<'l, L> {
 
     fn unify_args(
         &mut self,
-        lhs: &[Rc<ast::Exp>],
-        rhs: &[Rc<ast::Exp>],
+        lhs: &[Rc<ust::Exp>],
+        rhs: &[Rc<ust::Exp>],
     ) -> Result<Dec, UnifyError> {
         let new_eqns = lhs.iter().cloned().zip(rhs.iter().cloned()).map(Eqn::from);
         self.add_equations(new_eqns)?;
         Ok(Yes(()))
     }
 
-    fn add_assignment(&mut self, idx: Idx, exp: Rc<ast::Exp>) -> Result<Dec, UnifyError> {
+    fn add_assignment(&mut self, idx: Idx, exp: Rc<ust::Exp>) -> Result<Dec, UnifyError> {
         if ast::occurs_in(self.lvl, idx, &exp) {
             return Err(UnifyError::OccursCheckFailed { idx, exp });
         }
@@ -169,9 +169,9 @@ impl<'l, L: Leveled> Ctx<'l, L> {
 
 #[derive(Debug)]
 pub enum UnifyError {
-    OccursCheckFailed { idx: Idx, exp: Rc<ast::Exp> },
-    UnsupportedAnnotation { exp: Rc<ast::Exp> },
-    StructurallyDifferent { lhs: Rc<ast::Exp>, rhs: Rc<ast::Exp> },
+    OccursCheckFailed { idx: Idx, exp: Rc<ust::Exp> },
+    UnsupportedAnnotation { exp: Rc<ust::Exp> },
+    StructurallyDifferent { lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp> },
 }
 
 impl Error for UnifyError {}

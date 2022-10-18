@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::de_bruijn::*;
 
-use super::def::*;
+use super::untyped::*;
 
 pub struct Assign<K, V>(pub K, pub V);
 

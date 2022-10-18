@@ -6,7 +6,7 @@ use crate::equiv::*;
 
 use super::def::*;
 
-impl ShiftCutoff for Exp {
+impl<P: Phase> ShiftCutoff for Exp<P> {
     fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
         match self {
             Exp::Var { info, name, idx } => Exp::Var {
@@ -40,45 +40,14 @@ impl ShiftCutoff for Exp {
     }
 }
 
-impl AlphaEq for Exp {
+impl<P: Phase> AlphaEq for Exp<P> {
     fn alpha_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Exp::Var { info: _, name: _, idx }, Exp::Var { info: _, name: _, idx: idx2 }) => {
-                idx.alpha_eq(idx2)
-            }
-            (
-                Exp::TypCtor { info: _, name, args: subst },
-                Exp::TypCtor { info: _, name: name2, args: subst2 },
-            ) => name == name2 && subst.alpha_eq(subst2),
-            (
-                Exp::Ctor { info: _, name, args: subst },
-                Exp::Ctor { info: _, name: name2, args: subst2 },
-            ) => name == name2 && subst.alpha_eq(subst2),
-            (
-                Exp::Dtor { info: _, exp, name, args: subst },
-                Exp::Dtor { info: _, exp: exp2, name: name2, args: subst2 },
-            ) => exp.alpha_eq(exp2) && name == name2 && subst.alpha_eq(subst2),
-            (Exp::Anno { info: _, exp, typ }, Exp::Anno { info: _, exp: exp2, typ: typ2 }) => {
-                exp.alpha_eq(exp2) && typ.alpha_eq(typ2)
-            }
-            (Exp::Type { info: _ }, Exp::Type { info: _ }) => true,
-            (_, _) => false,
-        }
+        self == other
     }
 }
 
-impl AlphaEq for Args {
-    fn alpha_eq(&self, other: &Self) -> bool {
-        if self.len() != other.len() {
-            return false;
-        }
-
-        self.iter().zip(other.iter()).all(|(lhs, rhs)| lhs.alpha_eq(rhs))
-    }
-}
-
-impl HasInfo for Exp {
-    type Info = Info;
+impl<P: Phase> HasInfo for Exp<P> {
+    type Info = P::TypeInfo;
 
     fn info(&self) -> &Self::Info {
         match self {
@@ -90,8 +59,10 @@ impl HasInfo for Exp {
             Exp::Type { info } => info,
         }
     }
+}
 
+impl<P: Phase> HasSpan for Exp<P> {
     fn span(&self) -> Option<&Span> {
-        self.info().span.as_ref()
+        self.info().span()
     }
 }
