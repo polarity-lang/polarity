@@ -504,7 +504,7 @@ impl<'a> Check for WithEqns<'a, ust::Cocase> {
 
                     let body_out = body.infer(ctx)?;
 
-                    body_out.typ().convert(&t.shift((0, 0)).subst(ctx, &unif))?;
+                    body_out.typ().convert(&t.subst(ctx, &unif))?;
 
                     Some(body_out)
                 }
