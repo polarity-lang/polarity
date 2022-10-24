@@ -1,9 +1,4 @@
 //! Bidirectional type checker
-//!
-//! Notation:
-//!
-//! * `Δ` is the context of top-level declarations
-//! * `Γ` is the context of local variables
 
 use std::rc::Rc;
 
@@ -139,12 +134,6 @@ impl Infer for ust::Prg {
 }
 
 /// Infer all declarations in a program
-///
-/// ```text
-/// ∀D ∊ Δ, D ⇒ ok
-/// ―――――――――――――――
-/// Δ ⇒ ok
-/// ```
 impl Infer for ust::Decls {
     type Target = tst::Decls;
 
@@ -181,12 +170,6 @@ impl Infer for ust::Decl {
 }
 
 /// Infer a data declaration
-///
-/// ```text
-/// (τ₀,…,τₙ): Type ⇒ ok
-/// ――――――――――――――――――――――――――――――――
-/// data D(τ₀,…,τₙ): Type := … ⇒ ok
-/// ```
 impl Infer for ust::Data {
     type Target = tst::Data;
 
@@ -206,12 +189,6 @@ impl Infer for ust::Data {
 }
 
 /// Infer a codata declaration
-///
-/// ```text
-/// (τ₀,…,τₙ): Type ⇒ ok
-/// ―――――――――――――――――――――――――――――――――――
-/// codata D(τ₀,…,τₙ): Type := … ⇒ ok
-/// ```
 impl Infer for ust::Codata {
     type Target = tst::Codata;
 
@@ -231,12 +208,6 @@ impl Infer for ust::Codata {
 }
 
 /// Infer a codata declaration
-///
-/// ```text
-/// (τ₀,…,τₙ) ⇒ ok
-/// ――――――――――――――――――――――
-/// (τ₀,…,τₙ): Type ⇒ ok
-/// ```
 impl Infer for ust::TypAbs {
     type Target = tst::TypAbs;
 
@@ -248,14 +219,6 @@ impl Infer for ust::TypAbs {
 }
 
 /// Infer a constructor declaration
-///
-/// ```text
-/// Δ(C) = D
-/// (α₀,…,αₙ) ⇒ ok
-/// α₀,…,αₙ ⊢ D(β₀,…,βₘ) ⇒ ok
-/// ――――――――――――――――――――――――――――
-/// C(α₀,…,αₙ): D(β₀,…,βₘ) ⇒ ok
-/// ```
 impl Infer for ust::Ctor {
     type Target = tst::Ctor;
 
@@ -285,15 +248,6 @@ impl Infer for ust::Ctor {
 }
 
 /// Infer a destructor declaration
-///
-/// ```text
-/// Δ(d) = D
-/// (α₀,…,αₙ) ⇒ ok
-/// α₀,…,αₙ ⊢ D(β₀,…,βₘ) ⇒ ok
-/// α₀,…,αₙ ⊢ τ ⇒ ok
-/// ――――――――――――――――――――――――――――――
-/// D(β₀,…,βₘ).d(α₀,…,αₙ): τ ⇒ ok
-/// ```
 impl Infer for ust::Dtor {
     type Target = tst::Dtor;
 
@@ -325,15 +279,6 @@ impl Infer for ust::Dtor {
 }
 
 /// Infer a definition
-///
-/// ```text
-/// (α₀,…,αₙ) ⇒ ok
-/// α₀,…,αₙ ⊢ D(β₀,…,βₘ) ⇒ ok
-/// α₀,…,αₙ ⊢ τ ⇒ ok
-/// α₀,…,αₙ ⊢ M ⇐ τ
-/// ―――――――――――――――――――――――――――――――――――――――
-/// def D(β₀,…,βₘ).d(α₀,…,αₙ): τ := M ⇒ ok
-/// ```
 impl Infer for ust::Def {
     type Target = tst::Def;
 
@@ -357,14 +302,6 @@ impl Infer for ust::Def {
 }
 
 /// Infer a co-definition
-///
-/// ```text
-/// (α₀,…,αₙ) ⇒ ok
-/// α₀,…,αₙ ⊢ D(β₀,…,βₘ) ⇒ ok
-/// α₀,…,αₙ ⊢ M ⇒ ok
-/// ―――――――――――――――――――――――――――――――――――――――
-/// codef C(α₀,…,αₙ): D(β₀,…,βₘ) := M ⇒ ok
-/// ```
 impl Infer for ust::Codef {
     type Target = tst::Codef;
 
@@ -386,17 +323,6 @@ impl Infer for ust::Codef {
 }
 
 /// Check a pattern match
-///
-/// ```text
-/// Δ ⊢ c₀,…,cₙ valid for D
-/// ∀i,
-///     cᵢ = C(α₀,…,αₙ) => e
-///     Δ ⊢ C(β₀,…,βₘ): D(γ₀,…,γᵤ)
-///     E = { δⱼ = γⱼ | ∀j }
-///     E ⊢ cᵢ ⇐ τ
-/// ―――――――――――――――――――――――――――――――――――
-/// D(δ₀,…,δᵥ).d ⊢ match c₀,…,cₙ ⇐ τ
-/// ```
 impl<'a> Check for WithDef<'a, ust::Match> {
     type Target = tst::Match;
 
@@ -451,17 +377,6 @@ impl<'a> Check for WithDef<'a, ust::Match> {
 }
 
 /// Infer a copattern match
-///
-/// ```text
-/// Δ ⊢ d₀,…,dₙ valid for D
-/// ∀i,
-///     dᵢ = d(α₀,…,αₙ) => e
-///     Δ ⊢ D(γ₀,…,γᵤ).d(β₀,…,βₘ): τ
-///     E = { δⱼ = γⱼ | ∀j }
-///     E ⊢ dᵢ ⇐ τ
-/// ―――――――――――――――――――――――――――――――――――
-/// C(δ₀,…,δᵥ): D(ε₀,…,εₛ) ⊢ comatch c₀,…,cₙ ⇒ ok
-/// ```
 impl<'a> Infer for WithCodef<'a, ust::Comatch> {
     type Target = tst::Comatch;
 
@@ -518,18 +433,6 @@ impl<'a> Infer for WithCodef<'a, ust::Comatch> {
 }
 
 /// Infer a case in a pattern match
-///
-/// ```text
-/// Δ ⊢ C(β₀,…,βₘ): D(γ₀,…,γᵤ)
-/// Γ ⊢ (α₀,…,αₙ) = (β₀,…,βₘ)
-/// Γ,[α₀,…,αₙ] ⊢ h₀,…,hᵥ ⇐ E
-/// Γ' = Γ,[α₀,…,αₙ],[h₀,…,hᵥ]
-/// Γ' ⊢ e ⇒ τ₁
-/// Γ' ⊢ unify E ⤳ σ
-/// Γ' ⊢ τ₀[σ] = τ₁[σ]
-/// ―――――――――――――――――――――――――――――――――――
-/// E | Γ ⊢ C(α₀,…,αₙ){h₀,…,hᵥ} => e ⇐ τ₀
-/// ```
 impl<'a> Check for WithEqns<'a, ust::Case> {
     type Target = tst::Case;
 
@@ -578,18 +481,6 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
 }
 
 /// Infer a cocase in a co-pattern match
-///
-/// ```text
-/// Δ ⊢ D(γ₀,…,γᵤ).d(β₀,…,βₘ): τ₀
-/// Γ ⊢ (α₀,…,αₙ) = (β₀,…,βₘ)
-/// Γ,[α₀,…,αₙ] ⊢ h₀,…,hᵥ ⇐ E
-/// Γ' = Γ,[α₀,…,αₙ],[h₀,…,hᵥ]
-/// Γ' ⊢ e ⇒ τ₁
-/// Γ' ⊢ unify E ⤳ σ
-/// Γ' ⊢ τ₀[σ] = τ₁[σ]
-/// ―――――――――――――――――――――――――――――――――――
-/// E | Γ ⊢ d(α₀,…,αₙ){h₀,…,hᵥ} => e ⇐ τ₀
-/// ```
 impl<'a> Check for WithEqns<'a, ust::Cocase> {
     type Target = tst::Cocase;
 
@@ -638,13 +529,6 @@ impl<'a> Check for WithEqns<'a, ust::Cocase> {
 }
 
 /// Check an expression
-///
-/// ```text
-/// Γ ⊢ e ⇒ τ₁
-/// Γ ⊢ τ₀ = τ₁
-/// ―――――――――――――――――――――――――――――――――――
-/// Γ ⊢ e ⇐ τ₀
-/// ```
 impl Check for ust::Exp {
     type Target = tst::Exp;
 
@@ -657,46 +541,6 @@ impl Check for ust::Exp {
 }
 
 /// Infer an expression
-///
-/// ```text
-/// Γ(x) = τ
-/// ―――――――――― (Var)
-/// Γ ⊢ x ⇒ τ
-/// ```
-///
-/// ```text
-/// Δ ⊢ D(β₀,…,βₙ) : Type
-/// Γ ⊢ (α₀,…,αₙ) ⇐ β₀,…,βₙ
-/// ―――――――――――――――――――――――― (TypCtor)
-/// Γ ⊢ D(α₀,…,αₙ) ⇒ Type
-/// ```
-///
-/// ```text
-/// Δ ⊢ C(γ₀,…,γₙ) : D(β₀,…,βₘ)
-/// Γ ⊢ (α₀,…,αₙ) ⇐ γ₀,…,γₙ
-/// ――――――――――――――――――――――――――――――――――――――― (Ctor)
-/// Γ ⊢ C(α₀,…,αₙ) ⇒ D((β₀,…,βₘ)[α₀,…,αₙ])
-/// ```
-///
-/// ```text
-/// Δ ⊢ D(β₀,…,βₘ).d(γ₀,…,γₙ) : τ
-/// Γ ⊢ (α₀,…,αₙ) ⇐ (γ₀,…,γₙ)
-/// Γ ⊢ e ⇐ D((β₀,…,βₘ)[α₀,…,αₙ])
-/// ―――――――――――――――――――――――――――――― (Dtor)
-/// Γ ⊢ e.d(α₀,…,αₙ) ⇒ τ[α₀,…,αₙ]
-/// ```
-///
-/// ```text
-/// Γ ⊢ τ : Type
-/// Γ ⊢ e ⇐ τ
-/// ―――――――――――――― (Anno)
-/// Γ ⊢ e : τ ⇒ τ
-/// ```
-///
-/// ```text
-/// ―――――――――――――― (Type)
-/// Γ ⊢ Type : Type
-/// ```
 impl Infer for ust::Exp {
     type Target = tst::Exp;
 
@@ -764,12 +608,6 @@ impl Infer for ust::Exp {
     }
 }
 
-/// ```text
-/// Δ ⊢ D(β₀,…,βₙ) : Type
-/// Γ ⊢ (α₀,…,αₙ) ⇐ (β₀,…,βₙ)
-/// ――――――――――――――――――――――――――
-/// Γ ⊢ D(α₀,…,αₙ) ⇒ ok
-/// ```
 impl Infer for ust::TypApp {
     type Target = tst::TypApp;
 
@@ -786,12 +624,6 @@ impl Infer for ust::TypApp {
     }
 }
 
-/// ```text
-/// ∀i,
-///     Γ ⊢ αᵢ ⇐ βᵢ[α₀,…,αₙ]
-/// ――――――――――――――――――――――――――
-/// Γ ⊢ (α₀,…,αₙ) ⇐ (β₀,…,βₙ)
-/// ```
 impl CheckArgs for ust::Args {
     type Target = tst::Args;
 
@@ -810,13 +642,6 @@ impl CheckArgs for ust::Args {
     }
 }
 
-/// ```text
-/// ∀i,
-///     Γ,[a₀,…,aᵢ₋₁] ⊢ aᵢ ⇐ Type
-///     Γ,[a₀,…,aᵢ₋₁] ⊢ aᵢ = βᵢ
-/// ――――――――――――――――――――――――――――
-/// Γ ⊢ (α₀,…,αₙ) = (β₀,…,βₘ)
-/// ```
 impl CheckTelescope for ust::Telescope {
     type Target = tst::Telescope;
 
@@ -857,12 +682,6 @@ impl CheckTelescope for ust::Telescope {
     }
 }
 
-/// ```text
-/// ∀i,
-///     Γ,[a₀,…,aᵢ₋₁] ⊢ aᵢ ⇒ ok
-/// ――――――――――――――――――――――――――――
-/// Γ ⊢ (α₀,…,αₙ) ⇒ ok
-/// ```
 impl InferTelescope for ust::Telescope {
     type Target = tst::Telescope;
 
