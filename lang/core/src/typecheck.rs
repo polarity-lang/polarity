@@ -454,9 +454,7 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                     let body = body.subst(&ctx, &unif);
                     let ctx = &mut ctx;
 
-                    let body_out = body.infer(ctx)?;
-
-                    body_out.typ().convert(&t.shift((1, 0)).subst(ctx, &unif))?;
+                    let body_out = body.check(ctx, t.shift((1, 0)).subst(ctx, &unif))?;
 
                     Some(body_out)
                 }
@@ -502,9 +500,7 @@ impl<'a> Check for WithEqns<'a, ust::Cocase> {
                     let body = body.subst(&ctx, &unif);
                     let ctx = &mut ctx;
 
-                    let body_out = body.infer(ctx)?;
-
-                    body_out.typ().convert(&t.subst(ctx, &unif))?;
+                    let body_out = body.check(ctx, t.subst(ctx, &unif))?;
 
                     Some(body_out)
                 }
