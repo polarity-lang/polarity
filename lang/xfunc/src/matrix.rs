@@ -145,6 +145,7 @@ impl BuildMatrix for ust::Codef {
             // Swap binding order to the order imposed by the matrix representation
             let body = body.as_ref().map(|body| {
                 let mut ctx = LeveledCtx::empty();
+                // TODO: Reconsider where to swap this
                 ctx.bind(self.params.params.iter(), |ctx| {
                     ctx.bind(case.args.params.iter(), |ctx| body.swap_with_ctx(ctx, 0, 1))
                 })
