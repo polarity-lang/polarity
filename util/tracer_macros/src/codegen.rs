@@ -117,8 +117,8 @@ fn print_pretty_interpolation(expr: &proc_macro2::TokenStream) -> proc_macro2::T
     quote! {
         __tracer_stdout.set_color(&printer::ColorSpec::default())
             .expect(#FAILED_TO_SET_COLOR);
-        printer::Alloc::new()
-            .print_colored(&#expr, printer::DEFAULT_WIDTH, &mut __tracer_stdout)
+        #expr
+            .print_colored(&printer::PrintCfg::default(), &mut __tracer_stdout)
             .expect("Failed to print to stdout");
     }
 }

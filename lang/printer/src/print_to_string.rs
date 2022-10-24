@@ -1,6 +1,8 @@
+use crate::PrintCfg;
 use crate::PrintInCtx;
 
 use super::Print;
+use super::PrintExt;
 
 pub trait PrintToString {
     fn print_to_string(&self) -> String;
@@ -8,16 +10,9 @@ pub trait PrintToString {
 
 impl<T: for<'a> Print<'a>> PrintToString for T {
     fn print_to_string(&self) -> String {
-        let alloc = super::Alloc::new();
         let mut buf = Vec::new();
-        {
-            let doc_builder = self.print(&alloc);
-            doc_builder
-                .1
-                .render(super::DEFAULT_WIDTH, &mut buf)
-                .expect("Failed to print to string");
-            drop(doc_builder)
-        }
+        let cfg = PrintCfg::default();
+        <T as PrintExt>::print(self, &cfg, &mut buf).expect("Failed to print to string");
         unsafe { String::from_utf8_unchecked(buf) }
     }
 }
@@ -31,7 +26,8 @@ impl<C, T: for<'a> PrintInCtx<'a, Ctx = C>> PrintToStringInCtx<C> for T {
         let alloc = super::Alloc::new();
         let mut buf = Vec::new();
         {
-            let doc_builder = self.print_in_ctx(ctx, &alloc);
+            let cfg = PrintCfg::default();
+            let doc_builder = self.print_in_ctx(&cfg, ctx, &alloc);
             doc_builder
                 .1
                 .render(super::DEFAULT_WIDTH, &mut buf)
