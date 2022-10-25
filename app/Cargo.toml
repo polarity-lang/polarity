@@ -3,6 +3,10 @@ name = "app"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "xfunc"
+path = "src/main.rs"
+
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # cli
 clap = { version = "3", features = ["derive"] }

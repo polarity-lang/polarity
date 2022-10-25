@@ -30,6 +30,16 @@ For more information about the CLI, run:
 cargo run -- --help
 ```
 
+## Installation
+
+To locally install the executable, run:
+
+```sh
+cargo install --path app
+```
+
+By default, it gets installed to `~/.cargo/bin/xfunc`.
+
 ## Project overview
 
 ```text
