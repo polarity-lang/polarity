@@ -148,21 +148,27 @@ impl<P: Phase> Codef<P> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
 pub struct Match<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::Info,
     pub cases: Vec<Case<P>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
 pub struct Comatch<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::Info,
     // TODO: Consider renaming this field to "cocases"
     pub cases: Vec<Cocase<P>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
 pub struct Case<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::Info,
     pub name: Ident,
     pub args: Telescope<P>,
@@ -170,8 +176,10 @@ pub struct Case<P: Phase> {
     pub body: Option<Rc<Exp<P>>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
 pub struct Cocase<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::Info,
     pub name: Ident,
     pub args: Telescope<P>,
@@ -231,12 +239,24 @@ pub enum Exp<P: Phase> {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
     },
+    Match {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: P::TypeInfo,
+        on_exp: Rc<Exp<P>>,
+        body: Match<P>,
+    },
+    Comatch {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: P::TypeInfo,
+        body: Comatch<P>,
+    },
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope
 /// semantics. I.e. each parameter binding in the parameter list is in scope
 /// for the following parameters.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
 pub struct Telescope<P: Phase> {
     pub params: Params<P>,
 }
@@ -254,8 +274,10 @@ impl<P: Phase> Telescope<P> {
 pub type Params<P> = Vec<Param<P>>;
 pub type Args<P> = Vec<Rc<Exp<P>>>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
 pub struct Param<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     pub typ: Rc<Exp<P>>,
 }

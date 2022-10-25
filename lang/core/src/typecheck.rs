@@ -600,6 +600,8 @@ impl Infer for ust::Exp {
             ust::Exp::Type { info } => Ok(tst::Exp::Type {
                 info: info.with_type(Rc::new(ust::Exp::Type { info: ust::Info::empty() })),
             }),
+            ust::Exp::Match { .. } => unimplemented!(), // TODO: Implement
+            ust::Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
         }
     }
 }
@@ -761,6 +763,8 @@ impl Typed for tst::Exp {
             tst::Exp::Dtor { info, .. } => info.typ.clone(),
             tst::Exp::Anno { info, .. } => info.typ.clone(),
             tst::Exp::Type { info } => info.typ.clone(),
+            tst::Exp::Match { .. } => unimplemented!(), // TODO: Implement
+            tst::Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
         }
     }
 }

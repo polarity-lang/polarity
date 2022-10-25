@@ -1,0 +1,32 @@
+data Nat : Type {
+    Z : Nat,
+    S(n: Nat) : Nat
+}
+
+data Bool : Type {
+    True : Bool,
+    False : Bool
+}
+
+codata Fun(a: Type, b: Type) : Type {
+    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+}
+
+data Top : Type {
+    Unit : Top
+}
+
+impl Top {
+    def Top.is_zero(n: Nat): Bool {
+        Unit => match n {
+            Z => True,
+            S(n: Nat) => False,
+        }
+    }
+
+    def Top.id(a: Type): Fun(a, a) {
+        Unit => comatch {
+            apply(a: Type, b: Type, x: a) => x
+        }
+    }
+}

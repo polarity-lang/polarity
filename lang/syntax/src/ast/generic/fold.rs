@@ -480,6 +480,8 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
                 let info = f.fold_type_info(info);
                 f.fold_exp_type(info)
             }
+            Exp::Match { .. } => unimplemented!(), // TODO: Implement
+            Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
         }
     }
 }

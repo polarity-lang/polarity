@@ -368,6 +368,8 @@ impl<P: Phase> Visit<P> for Exp<P> {
                 v.visit_type_info(info);
                 v.visit_exp_type(info)
             }
+            Exp::Match { .. } => unimplemented!(), // TODO: Implement
+            Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
         }
     }
 }

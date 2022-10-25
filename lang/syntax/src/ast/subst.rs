@@ -75,6 +75,8 @@ impl Substitutable for Rc<Exp> {
                 typ: typ.subst(ctx, by),
             }),
             Exp::Type { info } => Rc::new(Exp::Type { info: info.clone() }),
+            Exp::Match { .. } => unimplemented!(), // TODO: Implement
+            Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
         }
     }
 }

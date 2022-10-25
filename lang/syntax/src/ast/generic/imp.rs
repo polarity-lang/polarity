@@ -36,6 +36,8 @@ impl<P: Phase> ShiftCutoff for Exp<P> {
                 typ: typ.shift_cutoff(cutoff, by),
             },
             Exp::Type { info } => Exp::Type { info: info.clone() },
+            Exp::Match { .. } => unimplemented!(), // TODO: Implement
+            Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
         }
     }
 }
@@ -57,6 +59,8 @@ impl<P: Phase> HasInfo for Exp<P> {
             Exp::Dtor { info, .. } => info,
             Exp::Anno { info, .. } => info,
             Exp::Type { info } => info,
+            Exp::Match { .. } => unimplemented!(), // TODO: Implement
+            Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
         }
     }
 }

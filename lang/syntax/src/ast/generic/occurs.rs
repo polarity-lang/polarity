@@ -22,5 +22,7 @@ fn occurs<P: Phase, L: Leveled>(curr_lvl: &L, target_lvl: Lvl, in_exp: &Rc<Exp<P
             occurs(curr_lvl, target_lvl, exp) || occurs(curr_lvl, target_lvl, typ)
         }
         Exp::Type { .. } => false,
+        Exp::Match { .. } => unimplemented!(), // TODO: Implement
+        Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
     }
 }
