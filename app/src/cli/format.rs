@@ -1,3 +1,4 @@
+use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -5,6 +6,7 @@ use printer::latex::LatexWriter;
 use printer::{ColorChoice, PrintCfg, PrintExt, StandardStream, WriteColor};
 use syntax::ust;
 
+use super::ignore_colors::IgnoreColors;
 use crate::result::HandleErrorExt;
 
 const LATEX_START: &str = r#"\begin{alltt}
@@ -29,8 +31,15 @@ pub struct Args {
 pub fn exec(cmd: Args) {
     crate::rt::lower_filepath(&cmd.filepath).handle_with(|prg| {
         let width = cmd.width.unwrap_or_else(terminal_width);
-        // TODO: Open file instead if output is given
-        let mut stream = StandardStream::stdout(ColorChoice::Auto);
+
+        // Write to file or to stdout
+        let mut stream: Box<dyn WriteColor> = match cmd.output {
+            Some(path) => {
+                Box::new(IgnoreColors::new(File::create(path).expect("Failed to create file")))
+            }
+            None => Box::new(StandardStream::stdout(ColorChoice::Auto)),
+        };
+
         let cfg = PrintCfg { width, braces: if cmd.latex { ("\\{", "\\}") } else { ("{", "}") } };
         if cmd.latex {
             stream.write_all(LATEX_START.as_bytes()).unwrap();
