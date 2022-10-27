@@ -87,7 +87,7 @@ pub DefDecl: DefDecl = {
 }
 
 Ctor: Ctor = {
-    <l: @L> <name: Ident> <params: OptTelescope> ":" <typ: TypApp> <r: @R> => Ctor { info: span(l, r), name, params, typ },
+    <l: @L> <name: Ident> <params: OptTelescope> <typ: (":" TypApp)?> <r: @R> => Ctor { info: span(l, r), name, params, typ: typ.map(|(_, x)| x) },
 }
 
 Dtor: Dtor = {

@@ -61,12 +61,12 @@ fn register_type_name(ctx: &mut Ctx, type_decl: &cst::TypDecl) -> Result<(), Low
     match type_decl {
         cst::TypDecl::Data(data) => {
             for ctor in &data.ctors {
-                ctx.add_name(&ctor.name, DeclKind::Ctor)?;
+                ctx.add_name(&ctor.name, DeclKind::Ctor { in_typ: data.name.clone() })?;
             }
         }
         cst::TypDecl::Codata(codata) => {
             for dtor in &codata.dtors {
-                ctx.add_name(&dtor.name, DeclKind::Ctor)?;
+                ctx.add_name(&dtor.name, DeclKind::Dtor { on_typ: codata.name.clone() })?;
             }
         }
     }
@@ -179,12 +179,27 @@ impl Lower for cst::Ctor {
         let cst::Ctor { info, name, params, typ } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
-            Ok(ust::Ctor {
-                info: info.lower_pure(),
-                name: name.clone(),
-                params,
-                typ: typ.lower_in_ctx(ctx)?,
-            })
+            // If the type constructor does not take any arguments, it can be left out
+            let typ = match typ {
+                Some(typ) => typ.lower_in_ctx(ctx)?,
+                None => {
+                    let typ_name = ctx.typ_name_for_xtor(name);
+                    if ctx.typ_ctor_arity(typ_name) == 0 {
+                        ust::TypApp {
+                            info: ust::Info::empty(),
+                            name: typ_name.clone(),
+                            args: vec![],
+                        }
+                    } else {
+                        return Err(LoweringError::MustProvideArgs {
+                            xtor: name.clone(),
+                            typ: typ_name.clone(),
+                        });
+                    }
+                }
+            };
+
+            Ok(ust::Ctor { info: info.lower_pure(), name: name.clone(), params, typ })
         })
     }
 }
@@ -325,16 +340,16 @@ impl Lower for cst::Exp {
                     name: name.clone(),
                     idx: ctx.lower_bound(*lvl),
                 }),
-                Elem::Decl(decl_kind) => match decl_kind {
-                    DeclKind::Codata | DeclKind::Data => Ok(ust::Exp::TypCtor {
+                Elem::Decl => match ctx.decl_kind(name) {
+                    DeclKind::Codata { .. } | DeclKind::Data { .. } => Ok(ust::Exp::TypCtor {
                         info: info.lower_pure(),
                         name: name.to_owned(),
                         args: subst.lower_in_ctx(ctx)?,
                     }),
-                    DeclKind::Def | DeclKind::Dtor => {
+                    DeclKind::Def | DeclKind::Dtor { .. } => {
                         Err(LoweringError::MustUseAsDtor(name.to_owned()))
                     }
-                    DeclKind::Codef | DeclKind::Ctor => Ok(ust::Exp::Ctor {
+                    DeclKind::Codef | DeclKind::Ctor { .. } => Ok(ust::Exp::Ctor {
                         info: info.lower_pure(),
                         name: name.to_owned(),
                         args: subst.lower_in_ctx(ctx)?,

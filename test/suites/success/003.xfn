@@ -1,1 +1,1 @@
-data Bool { True: Bool, False: Bool }
+data Bool { True, False }

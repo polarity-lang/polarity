@@ -14,6 +14,8 @@ pub struct Ctx {
     ///
     /// Bound variables in this map are De-Bruijn levels rather than indices:
     map: HashMap<Ident, Vec<Elem>>,
+    /// Declaration metadata
+    decl_kinds: HashMap<Ident, DeclKind>,
     /// Accumulates top-level declarations
     decls: ust::Decls,
     /// Mapping each type name to its impl block (if any)
@@ -26,6 +28,7 @@ impl Ctx {
     pub fn empty() -> Self {
         Self {
             map: HashMap::default(),
+            decl_kinds: HashMap::default(),
             decls: ust::Decls::empty(),
             impls: HashMap::default(),
             levels: Vec::new(),
@@ -37,6 +40,26 @@ impl Ctx {
             .get(name)
             .and_then(|stack| stack.last())
             .ok_or_else(|| LoweringError::UndefinedIdent(name.clone()))
+    }
+
+    pub fn decl_kind(&self, name: &Ident) -> &DeclKind {
+        &self.decl_kinds[name]
+    }
+
+    pub fn typ_name_for_xtor(&self, name: &Ident) -> &Ident {
+        match &self.decl_kinds[name] {
+            DeclKind::Ctor { in_typ } => in_typ,
+            DeclKind::Dtor { on_typ } => on_typ,
+            _ => panic!("Can only query type name for declared xtors"),
+        }
+    }
+
+    pub fn typ_ctor_arity(&self, name: &Ident) -> usize {
+        match self.decl_kind(name) {
+            DeclKind::Data { arity } => *arity,
+            DeclKind::Codata { arity } => *arity,
+            _ => panic!("Can only query type constructor arity for declared (co)data types"),
+        }
     }
 
     pub fn impl_block(&self, name: &Ident) -> Option<&ust::Impl> {
@@ -52,9 +75,9 @@ impl Ctx {
     }
 
     pub fn add_name(&mut self, name: &Ident, decl_kind: DeclKind) -> Result<(), LoweringError> {
-        let var = Elem::Decl(decl_kind);
+        self.decl_kinds.insert(name.clone(), decl_kind);
         let stack = self.map.entry(name.clone()).or_insert_with(Default::default);
-        stack.push(var);
+        stack.push(Elem::Decl);
         Ok(())
     }
 
@@ -192,24 +215,25 @@ impl Ctx {
 #[derive(Clone, Debug)]
 pub enum Elem {
     Bound(Lvl),
-    Decl(DeclKind),
+    Decl,
 }
 
+// FIXME: Rename to DeclMeta or something similar
 #[derive(Clone, Debug)]
 pub enum DeclKind {
-    Data,
-    Codata,
+    Data { arity: usize },
+    Codata { arity: usize },
     Def,
     Codef,
-    Ctor,
-    Dtor,
+    Ctor { in_typ: Ident },
+    Dtor { on_typ: Ident },
 }
 
 impl From<&cst::TypDecl> for DeclKind {
     fn from(decl: &cst::TypDecl) -> Self {
         match decl {
-            cst::TypDecl::Data(_) => Self::Data,
-            cst::TypDecl::Codata(_) => Self::Codata,
+            cst::TypDecl::Data(data) => Self::Data { arity: data.params.len() },
+            cst::TypDecl::Codata(codata) => Self::Codata { arity: codata.params.len() },
         }
     }
 }

@@ -44,7 +44,7 @@ pub struct Ctor {
     pub info: Info,
     pub name: Ident,
     pub params: Telescope,
-    pub typ: TypApp,
+    pub typ: Option<TypApp>,
 }
 
 #[derive(Debug, Clone)]
@@ -151,6 +151,16 @@ pub enum Exp {
 /// for the following parameters. This influences the lowering semantic.
 #[derive(Debug, Clone)]
 pub struct Telescope(pub Params);
+
+impl Telescope {
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
 
 pub type Params = Vec<Param>;
 pub type EqnParams = Vec<EqnParam>;
