@@ -66,10 +66,10 @@ pub trait Mapper<P: Phase> {
     fn map_comatch(&mut self, info: P::Info, cases: Vec<Cocase<P>>) -> Comatch<P> {
         Comatch { info, cases }
     }
-    fn map_case(&mut self, info: P::Info, name: Ident, args: Telescope<P>, body: Option<Rc<Exp<P>>>) -> Case<P> {
+    fn map_case(&mut self, info: P::Info, name: Ident, args: TelescopeInst<P>, body: Option<Rc<Exp<P>>>) -> Case<P> {
         Case { info, name, args, body }
     }
-    fn map_cocase(&mut self, info: P::Info, name: Ident, args: Telescope<P>, body: Option<Rc<Exp<P>>>) -> Cocase<P> {
+    fn map_cocase(&mut self, info: P::Info, name: Ident, args: TelescopeInst<P>, body: Option<Rc<Exp<P>>>) -> Cocase<P> {
         Cocase { info, name, args, body }
     }
     fn map_typ_app(&mut self, info: P::TypeInfo, name: Ident, args: Vec<Rc<Exp<P>>>) -> TypApp<P> {
@@ -103,8 +103,21 @@ pub trait Mapper<P: Phase> {
         let params = Telescope { params };
         f_inner(self, params)
     }
+    fn map_telescope_inst<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
+    where
+        I: IntoIterator<Item=ParamInst<P>>,
+        F1: Fn(&mut Self, ParamInst<P>) -> ParamInst<P>,
+        F2: FnOnce(&mut Self, TelescopeInst<P>) -> X
+    {
+        let params = params.into_iter().map(|param| f_acc(self, param)).collect();
+        let params = TelescopeInst { params };
+        f_inner(self, params)
+    }
     fn map_param(&mut self, name: Ident, typ: Rc<Exp<P>>) -> Param<P> {
         Param { name, typ }
+    }
+    fn map_param_inst(&mut self, info: P::TypeInfo, name: Ident) -> ParamInst<P> {
+        ParamInst { info, name }
     }
     fn map_info(&mut self, info: P::Info) -> P::Info {
         info
@@ -123,6 +136,7 @@ pub trait Map<P: Phase> {
         M: Mapper<P>;
 }
 
+// FIXME: Remove this (is already defined in fold.rs)
 pub struct Id<P: Phase> {
     phantom: PhantomData<P>,
 }
@@ -146,7 +160,9 @@ impl<P: Phase> Out for Id<P> {
     type TypApp = TypApp<P>;
     type Exp = Exp<P>;
     type Telescope = Telescope<P>;
+    type TelescopeInst = TelescopeInst<P>;
     type Param = Param<P>;
+    type ParamInst = ParamInst<P>;
     type Info = P::Info;
     type TypeInfo = P::TypeInfo;
     type Idx = Idx;
@@ -235,11 +251,11 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_comatch(info, cases)
     }
 
-    fn fold_case(&mut self, info: <Id<P> as Out>::Info, name: Ident, args: <Id<P> as Out>::Telescope, body: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Case {
+    fn fold_case(&mut self, info: <Id<P> as Out>::Info, name: Ident, args: <Id<P> as Out>::TelescopeInst, body: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Case {
         self.map_case(info, name, args, body.map(Rc::new))
     }
 
-    fn fold_cocase(&mut self, info: <Id<P> as Out>::Info, name: Ident, args: <Id<P> as Out>::Telescope, body: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Cocase {
+    fn fold_cocase(&mut self, info: <Id<P> as Out>::Info, name: Ident, args: <Id<P> as Out>::TelescopeInst, body: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Cocase {
         self.map_cocase(info, name, args, body.map(Rc::new))
     }
 
@@ -283,8 +299,24 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         )
     }
 
+    fn fold_telescope_inst<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
+        where
+            I: IntoIterator<Item=ParamInst<P>>,
+            F1: Fn(&mut Self, ParamInst<P>) -> <Id<P> as Out>::ParamInst,
+            F2: FnOnce(&mut Self, <Id<P> as Out>::TelescopeInst) -> X
+    {
+        self.map_telescope_inst(params,
+            |mapper, param| f_acc(mapper, param),
+            |mapper, params| f_inner(mapper, params)
+        )
+    }
+
     fn fold_param(&mut self, name: Ident, typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Param {
         self.map_param(name, Rc::new(typ))
+    }
+
+    fn fold_param_inst(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident) -> <Id<P> as Out>::ParamInst {
+        self.map_param_inst(info, name)
     }
 
     fn fold_info(&mut self, info: <P as Phase>::Info) -> <Id<P> as Out>::Info {

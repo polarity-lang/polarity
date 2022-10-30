@@ -15,8 +15,8 @@ data List(a: Type) : Type {
 
 impl List {
     def List(a).head(a: Type) : Option(a) {
-        Nil(a: Type) => None(a),
-        Cons(a: Type, x: a, xs: List(a)) => Some(a, x)
+        Nil(a) => None(a),
+        Cons(a, x, xs) => Some(a, x)
     }
 }
 

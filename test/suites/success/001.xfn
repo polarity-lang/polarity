@@ -4,6 +4,6 @@ codata Fun(a: Type, b: Type) : Type {
 
 impl Fun {
     codef Id(a: Type): Fun(a, a) {
-        apply(a: Type, b: Type, x: a) => x
+        apply(a, b, x) => x
     }
 }

@@ -51,6 +51,8 @@ OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_
 Param: Param = <name: Ident> ":" <typ: Exp> => Param { name, typ } ;
 EqnParam : EqnParam = <name: Ident> ":" <eqn: Eqn> => EqnParam { name, eqn } ;
 
+ParamInst: ParamInst = <l: @L> <name: Ident> <r: @R> => ParamInst { info: span(l, r), name };
+
 Params: Vec<Param> = ParenthesizedArgs<Param>;
 OptParams: Vec<Param> = OptParenthesizedArgs<Param>;
 
@@ -59,6 +61,9 @@ OptEqnParams: Vec<EqnParam> = OptBracedArgs<EqnParam>;
 
 Telescope: Telescope = <params: Params> => Telescope(params);
 OptTelescope: Telescope = <params: OptParams> => Telescope(params);
+
+TelescopeInst: TelescopeInst = <params: Parens<Comma<ParamInst>>> => TelescopeInst(params);
+OptTelescopeInst: TelescopeInst = <params: Parens<Comma<ParamInst>>?> => TelescopeInst(params.unwrap_or_default());
 
 Args: Vec<Rc<Exp>> = ParenthesizedArgs<Exp>;
 OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
@@ -105,11 +110,11 @@ pub Match : Match = {
 }
 
 pub Case : Case = {
-    <l: @L> <name: Ident> <args: OptTelescope> <eqns: OptEqnParams> <body: AbsurdOrBody> <r: @R> => Case { info: span(l, r), name, args, eqns, body },
+    <l: @L> <name: Ident> <args: OptTelescopeInst> <eqns: OptEqnParams> <body: AbsurdOrBody> <r: @R> => Case { info: span(l, r), name, args, eqns, body },
 }
 
 pub Cocase : Cocase = {
-    <l: @L> <name: Ident> <args: OptTelescope> <eqns: OptEqnParams> <body: AbsurdOrBody> <r: @R> => Cocase { info: span(l, r), name, args, eqns, body },
+    <l: @L> <name: Ident> <args: OptTelescopeInst> <eqns: OptEqnParams> <body: AbsurdOrBody> <r: @R> => Cocase { info: span(l, r), name, args, eqns, body },
 }
 
 pub AbsurdOrBody: Option<Rc<Exp>> = {

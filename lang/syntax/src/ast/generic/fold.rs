@@ -28,8 +28,8 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_codef(&mut self, info: O::Info, name: Ident, params: O::Telescope, typ: O::TypApp, body: O::Comatch) -> O::Codef;
     fn fold_match(&mut self, info: O::Info, cases: Vec<O::Case>) -> O::Match;
     fn fold_comatch(&mut self, info: O::Info, cases: Vec<O::Cocase>) -> O::Comatch;
-    fn fold_case(&mut self, info: O::Info, name: Ident, args: O::Telescope, body: Option<O::Exp>) -> O::Case;
-    fn fold_cocase(&mut self, info: O::Info, name: Ident, args: O::Telescope, body: Option<O::Exp>) -> O::Cocase;
+    fn fold_case(&mut self, info: O::Info, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Case;
+    fn fold_cocase(&mut self, info: O::Info, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Cocase;
     fn fold_typ_app(&mut self, info: O::TypeInfo, name: Ident, args: Vec<O::Exp>) -> O::TypApp;
     fn fold_exp_var(&mut self, info: O::TypeInfo, name: P::VarName, idx: O::Idx) -> O::Exp;
     fn fold_exp_typ_ctor(&mut self, info: O::TypeInfo, name: Ident, args: Vec<O::Exp>) -> O::Exp;
@@ -43,7 +43,14 @@ pub trait Folder<P: Phase, O: Out> {
         F1: Fn(&mut Self, Param<P>) -> O::Param,
         F2: FnOnce(&mut Self, O::Telescope) -> X
     ;
+    fn fold_telescope_inst<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
+    where
+        I: IntoIterator<Item=ParamInst<P>>,
+        F1: Fn(&mut Self, ParamInst<P>) -> O::ParamInst,
+        F2: FnOnce(&mut Self, O::TelescopeInst) -> X
+    ;
     fn fold_param(&mut self, name: Ident, typ: O::Exp) -> O::Param;
+    fn fold_param_inst(&mut self, info: O::TypeInfo, name: Ident) -> O::ParamInst;
     fn fold_info(&mut self, info: P::Info) -> O::Info;
     fn fold_type_info(&mut self, info: P::TypeInfo) -> O::TypeInfo;
     fn fold_idx(&mut self, idx: Idx) -> O::Idx;
@@ -76,7 +83,9 @@ pub trait Out {
     type TypApp;
     type Exp;
     type Telescope;
+    type TelescopeInst;
     type Param;
+    type ParamInst;
     type Info;
     type TypeInfo;
     type Idx;
@@ -105,7 +114,9 @@ impl<P: Phase> Out for Id<P> {
     type TypApp = Rc<TypApp<P>>;
     type Exp = Rc<Exp<P>>;
     type Telescope = Telescope<P>;
+    type TelescopeInst = TelescopeInst<P>;
     type Param = Param<P>;
+    type ParamInst = ParamInst<P>;
     type Info = P::Info;
     type TypeInfo = P::TypeInfo;
     type Idx = Idx;
@@ -134,7 +145,9 @@ impl<T> Out for Const<T> {
     type TypApp = T;
     type Exp = T;
     type Telescope = T;
+    type TelescopeInst = T;
     type Param = T;
+    type ParamInst = T;
     type Info = T;
     type TypeInfo = T;
     type Idx = T;
@@ -403,9 +416,9 @@ impl<P: Phase, O: Out> Fold<P, O> for Case<P> {
         F: Folder<P, O>,
     {
         let Case { info, name, args, body } = self;
-        let Telescope { params } = args;
+        let TelescopeInst { params } = args;
         let (args, body) =
-            f.fold_telescope(params, |f, arg| arg.fold(f), |f, args| (args, body.fold(f)));
+            f.fold_telescope_inst(params, |f, arg| arg.fold(f), |f, args| (args, body.fold(f)));
         let info = f.fold_info(info);
         f.fold_case(info, name, args, body)
     }
@@ -419,9 +432,9 @@ impl<P: Phase, O: Out> Fold<P, O> for Cocase<P> {
         F: Folder<P, O>,
     {
         let Cocase { info, name, args, body } = self;
-        let Telescope { params } = args;
+        let TelescopeInst { params } = args;
         let (args, body) =
-            f.fold_telescope(params, |f, arg| arg.fold(f), |f, args| (args, body.fold(f)));
+            f.fold_telescope_inst(params, |f, arg| arg.fold(f), |f, args| (args, body.fold(f)));
         let info = f.fold_info(info);
         f.fold_cocase(info, name, args, body)
     }
@@ -496,5 +509,18 @@ impl<P: Phase, O: Out> Fold<P, O> for Param<P> {
         let Param { name, typ } = self;
         let typ = typ.fold(f);
         f.fold_param(name, typ)
+    }
+}
+
+impl<P: Phase, O: Out> Fold<P, O> for ParamInst<P> {
+    type Out = O::ParamInst;
+
+    fn fold<F>(self, f: &mut F) -> Self::Out
+    where
+        F: Folder<P, O>,
+    {
+        let ParamInst { info, name } = self;
+        let info = f.fold_type_info(info);
+        f.fold_param_inst(info, name)
     }
 }

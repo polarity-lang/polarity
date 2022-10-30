@@ -17,7 +17,7 @@ data NotZero(n: ExtNat) : Type {
 impl ExtNat {
     def ExtNat.pred() : ExtNat {
         Z => Z,
-        S(n: ExtNat) => n,
+        S(n) => n,
         Omega => Omega,
     }
 }

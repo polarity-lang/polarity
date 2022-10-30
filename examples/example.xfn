@@ -6,7 +6,7 @@ data Nat : Type {
 impl Nat {
     def Nat.add(y: Nat) : Nat {
         Z => y,
-        S(x' : Nat) => S(x'.add(y)),
+        S(x') => S(x'.add(y)),
     }
 }
 

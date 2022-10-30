@@ -40,9 +40,11 @@ pub type Cocase = generic::Cocase<TST>;
 pub type TypApp = generic::TypApp<TST>;
 pub type Exp = generic::Exp<TST>;
 pub type Telescope = generic::Telescope<TST>;
+pub type TelescopeInst = generic::TelescopeInst<TST>;
 pub type Params = generic::Params<TST>;
 pub type Args = generic::Args<TST>;
 pub type Param = generic::Param<TST>;
+pub type ParamInst = generic::ParamInst<TST>;
 
 impl From<untyped::Impl> for Impl {
     fn from(untyped::Impl { info, name, defs }: untyped::Impl) -> Self {

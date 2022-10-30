@@ -451,6 +451,29 @@ impl LowerTelescope for cst::Telescope {
     }
 }
 
+impl LowerTelescope for cst::TelescopeInst {
+    type Target = ust::TelescopeInst;
+
+    fn lower_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, LoweringError>>(
+        &self,
+        ctx: &mut Ctx,
+        f: F,
+    ) -> Result<T, LoweringError> {
+        ctx.bind_fold(
+            self.0.iter(),
+            Ok(vec![]),
+            |_ctx, params_out, param| {
+                let mut params_out = params_out?;
+                let cst::ParamInst { info, name } = param;
+                let param_out = ust::ParamInst { info: info.lower_pure(), name: name.clone() };
+                params_out.push(param_out);
+                Ok(params_out)
+            },
+            |ctx, params| f(ctx, params.map(|params| ust::TelescopeInst { params })?),
+        )
+    }
+}
+
 impl LowerPure for cst::Info {
     type Target = ust::Info;
 

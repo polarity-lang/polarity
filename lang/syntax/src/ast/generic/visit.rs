@@ -28,8 +28,8 @@ pub trait Visitor<P: Phase> {
     fn visit_codef(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, typ: &TypApp<P>, body: &Comatch<P>) {}
     fn visit_match(&mut self, info: &P::Info, cases: &[Case<P>]) {}
     fn visit_comatch(&mut self, info: &P::Info, cases: &[Cocase<P>]) {}
-    fn visit_case(&mut self, info: &P::Info, name: &Ident, args: &Telescope<P>, body: &Option<Rc<Exp<P>>>) {}
-    fn visit_cocase(&mut self, info: &P::Info, name: &Ident, args: &Telescope<P>, body: &Option<Rc<Exp<P>>>) {}
+    fn visit_case(&mut self, info: &P::Info, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
+    fn visit_cocase(&mut self, info: &P::Info, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
     fn visit_typ_app(&mut self, info: &P::TypeInfo, name: &Ident, args: &[Rc<Exp<P>>]) {}
     fn visit_exp_var(&mut self, info: &P::TypeInfo, name: &P::VarName, idx: &Idx) {}
     fn visit_exp_typ_ctor(&mut self, info: &P::TypeInfo, name: &Ident, args: &[Rc<Exp<P>>]) {}
@@ -49,7 +49,20 @@ pub trait Visitor<P: Phase> {
         }
         f_inner(self)
     }
+    fn visit_telescope_inst<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
+    where
+        P: 'a,
+        I: IntoIterator<Item=&'a ParamInst<P>>,
+        F1: Fn(&mut Self, &'a ParamInst<P>),
+        F2: FnOnce(&mut Self)
+    {
+        for param in params.into_iter() {
+            f_acc(self, param);
+        }
+        f_inner(self)
+    }
     fn visit_param(&mut self, name: &Ident, typ: &Rc<Exp<P>>) {}
+    fn visit_param_inst(&mut self, info: &P::TypeInfo, name: &Ident) {}
     fn visit_info(&mut self, info: &P::Info) {}
     fn visit_type_info(&mut self, info: &P::TypeInfo) {}
     fn visit_idx(&mut self, idx: &Idx) {}
@@ -299,8 +312,8 @@ impl<P: Phase> Visit<P> for Case<P> {
         V: Visitor<P>,
     {
         let Case { info, name, args, body } = self;
-        let Telescope { params } = args;
-        v.visit_telescope(params, |v, arg| arg.visit(v), |v| body.visit(v));
+        let TelescopeInst { params } = args;
+        v.visit_telescope_inst(params, |v, arg| arg.visit(v), |v| body.visit(v));
         v.visit_info(info);
         v.visit_case(info, name, args, body)
     }
@@ -312,8 +325,8 @@ impl<P: Phase> Visit<P> for Cocase<P> {
         V: Visitor<P>,
     {
         let Cocase { info, name, args, body } = self;
-        let Telescope { params } = args;
-        v.visit_telescope(params, |v, arg| arg.visit(v), |v| body.visit(v));
+        let TelescopeInst { params } = args;
+        v.visit_telescope_inst(params, |v, arg| arg.visit(v), |v| body.visit(v));
         v.visit_info(info);
         v.visit_cocase(info, name, args, body)
     }
@@ -382,5 +395,16 @@ impl<P: Phase> Visit<P> for Param<P> {
         let Param { name, typ } = self;
         typ.visit(v);
         v.visit_param(name, typ)
+    }
+}
+
+impl<P: Phase> Visit<P> for ParamInst<P> {
+    fn visit<V>(&self, v: &mut V)
+    where
+        V: Visitor<P>,
+    {
+        let ParamInst { info, name } = self;
+        v.visit_type_info(info);
+        v.visit_param_inst(info, name)
     }
 }

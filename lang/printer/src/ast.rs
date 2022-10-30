@@ -324,10 +324,23 @@ impl<'a, P: Phase> Print<'a> for Telescope<P> {
     }
 }
 
+impl<'a, P: Phase> Print<'a> for TelescopeInst<P> {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        self.params.print(cfg, alloc).parens()
+    }
+}
+
 impl<'a, P: Phase> Print<'a> for Param<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Param { name, typ } = self;
         alloc.text(name).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for ParamInst<P> {
+    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let ParamInst { info: _, name } = self;
+        alloc.text(name)
     }
 }
 

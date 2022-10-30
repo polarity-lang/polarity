@@ -52,6 +52,12 @@ impl Named for cst::Param {
     }
 }
 
+impl Named for cst::ParamInst {
+    fn name(&self) -> &Ident {
+        &self.name
+    }
+}
+
 impl Named for cst::EqnParam {
     fn name(&self) -> &Ident {
         &self.name
@@ -74,6 +80,12 @@ where
 }
 
 impl<P: generic::Phase> Named for generic::Param<P> {
+    fn name(&self) -> &Ident {
+        &self.name
+    }
+}
+
+impl<P: generic::Phase> Named for generic::ParamInst<P> {
     fn name(&self) -> &Ident {
         &self.name
     }

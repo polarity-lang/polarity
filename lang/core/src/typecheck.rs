@@ -640,8 +640,8 @@ impl CheckArgs for ust::Args {
     }
 }
 
-impl CheckTelescope for ust::Telescope {
-    type Target = tst::Telescope;
+impl CheckTelescope for ust::TelescopeInst {
+    type Target = tst::TelescopeInst;
 
     fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
@@ -650,7 +650,7 @@ impl CheckTelescope for ust::Telescope {
         f: F,
     ) -> Result<T, TypeError> {
         let ust::Telescope { params: param_types } = param_types;
-        let ust::Telescope { params } = self;
+        let ust::TelescopeInst { params } = self;
 
         if params.len() != param_types.len() {
             return Err(TypeError::ArgLenMismatch {
@@ -663,19 +663,17 @@ impl CheckTelescope for ust::Telescope {
 
         ctx.bind_fold(
             iter,
-            Ok(tst::Params::new()),
-            |ctx, params_out, (param_actual, param_expected)| {
-                let ust::Param { typ: typ_actual, name } = param_actual;
-                let ust::Param { typ: typ_expected, .. } = param_expected;
+            Ok(vec![]),
+            |_ctx, params_out, (param_actual, param_expected)| {
+                let ust::ParamInst { info, name } = param_actual;
+                let ust::Param { typ, .. } = param_expected;
                 let mut params_out = params_out?;
-                typ_actual.convert(typ_expected)?;
-                let typ_out =
-                    typ_actual.check(ctx, Rc::new(ust::Exp::Type { info: ust::Info::empty() }))?;
-                let param_out = tst::Param { name: name.clone(), typ: typ_out };
+                let param_out =
+                    tst::ParamInst { info: info.with_type(typ.clone()), name: name.clone() };
                 params_out.push(param_out);
                 Ok(params_out)
             },
-            |ctx, params| f(ctx, tst::Telescope { params: params? }),
+            |ctx, params| f(ctx, tst::TelescopeInst { params: params? }),
         )
     }
 }

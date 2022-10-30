@@ -38,9 +38,11 @@ pub type Cocase = generic::Cocase<UST>;
 pub type TypApp = generic::TypApp<UST>;
 pub type Exp = generic::Exp<UST>;
 pub type Telescope = generic::Telescope<UST>;
+pub type TelescopeInst = generic::TelescopeInst<UST>;
 pub type Params = generic::Params<UST>;
 pub type Args = generic::Args<UST>;
 pub type Param = generic::Param<UST>;
+pub type ParamInst = generic::ParamInst<UST>;
 
 #[derive(Default, Debug, Clone)]
 pub struct Info {

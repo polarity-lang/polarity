@@ -13,7 +13,7 @@ data GADT(a: Type) : Type {
 
 impl GADT {
     def GADT(a).unwrap(a: Type) : a {
-        WrapFoo(x: Foo){h: a = Foo} => x,
-        WrapBar(x: Bar){h: a = Bar} => x,
+        WrapFoo(x) => x,
+        WrapBar(x) => x,
     }
 }

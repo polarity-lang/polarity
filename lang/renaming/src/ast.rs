@@ -7,6 +7,26 @@ use crate::Rename;
 use super::ctx::*;
 
 impl<P: Phase<VarName = Ident>> Mapper<P> for Ctx {
+    fn map_telescope_inst<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
+    where
+        I: IntoIterator<Item = ParamInst<P>>,
+        F1: Fn(&mut Self, ParamInst<P>) -> ParamInst<P>,
+        F2: FnOnce(&mut Self, TelescopeInst<P>) -> X,
+    {
+        self.bind_fold(
+            params.into_iter(),
+            Vec::new(),
+            |ctx, mut params_out, param| {
+                params_out.push(f_acc(ctx, param));
+                params_out
+            },
+            |ctx, params| {
+                let params = TelescopeInst { params };
+                f_inner(ctx, params)
+            },
+        )
+    }
+
     fn map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
         I: IntoIterator<Item = Param<P>>,

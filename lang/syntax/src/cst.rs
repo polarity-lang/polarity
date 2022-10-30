@@ -106,7 +106,7 @@ pub struct Comatch {
 pub struct Case {
     pub info: Info,
     pub name: Ident,
-    pub args: Telescope,
+    pub args: TelescopeInst,
     pub eqns: EqnParams,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp>>,
@@ -116,7 +116,7 @@ pub struct Case {
 pub struct Cocase {
     pub info: Info,
     pub name: Ident,
-    pub args: Telescope,
+    pub args: TelescopeInst,
     pub eqns: EqnParams,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp>>,
@@ -152,6 +152,10 @@ pub enum Exp {
 #[derive(Debug, Clone)]
 pub struct Telescope(pub Params);
 
+/// Instantiation of a previously declared telescope
+#[derive(Debug, Clone)]
+pub struct TelescopeInst(pub Vec<ParamInst>);
+
 impl Telescope {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
@@ -170,6 +174,13 @@ pub type Args = Vec<Rc<Exp>>;
 pub struct Param {
     pub name: Ident,
     pub typ: Rc<Exp>,
+}
+
+/// Instantiation of a previously declared parameter
+#[derive(Debug, Clone)]
+pub struct ParamInst {
+    pub info: Info,
+    pub name: Ident,
 }
 
 #[derive(Debug, Clone)]

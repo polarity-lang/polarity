@@ -171,7 +171,8 @@ pub struct Case<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::Info,
     pub name: Ident,
-    pub args: Telescope<P>,
+    // TODO: Rename to params
+    pub args: TelescopeInst<P>,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp<P>>>,
 }
@@ -182,7 +183,8 @@ pub struct Cocase<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::Info,
     pub name: Ident,
-    pub args: Telescope<P>,
+    // TODO: Rename to params
+    pub args: TelescopeInst<P>,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp<P>>>,
 }
@@ -271,6 +273,13 @@ impl<P: Phase> Telescope<P> {
     }
 }
 
+/// Instantiation of a previously declared telescope
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct TelescopeInst<P: Phase> {
+    pub params: Vec<ParamInst<P>>,
+}
+
 pub type Params<P> = Vec<Param<P>>;
 pub type Args<P> = Vec<Rc<Exp<P>>>;
 
@@ -280,6 +289,16 @@ pub struct Param<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     pub typ: Rc<Exp<P>>,
+}
+
+/// Instantiation of a previously declared parameter
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct ParamInst<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: P::TypeInfo,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub name: Ident,
 }
 
 impl<P: Phase> HasPhase for Prg<P> {

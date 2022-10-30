@@ -30,7 +30,7 @@ impl Represent for matrix::XData {
                         ust::Case {
                             info: ust::Info::empty(),
                             name: ctor.name.clone(),
-                            args: ctor.params.clone(),
+                            args: ctor.params.instantiate(),
                             body: exprs[&key].clone(),
                         }
                     })
@@ -83,7 +83,7 @@ impl Represent for matrix::XData {
                         ust::Cocase {
                             info: ust::Info::empty(),
                             name: dtor.name.clone(),
-                            args: dtor.params.clone(),
+                            args: dtor.params.instantiate(),
                             body,
                         }
                     })
@@ -102,5 +102,23 @@ impl Represent for matrix::XData {
         let dtors = dtors.values().cloned().collect();
 
         (codata, dtors, codefs)
+    }
+}
+
+trait InstantiateExt {
+    fn instantiate(&self) -> ust::TelescopeInst;
+}
+
+impl InstantiateExt for ust::Telescope {
+    fn instantiate(&self) -> ust::TelescopeInst {
+        let params = self
+            .params
+            .iter()
+            .map(|ust::Param { name, .. }| ust::ParamInst {
+                name: name.clone(),
+                info: ust::Info::empty(),
+            })
+            .collect();
+        ust::TelescopeInst { params }
     }
 }

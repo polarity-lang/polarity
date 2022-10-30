@@ -10,11 +10,11 @@ codata Vec(n: Nat) : Type {
 
 impl Vec {
     codef Nil() : Vec(Z) {
---        append(n: Nat, m: Nat, ys: Vec(m)) => ys
-        tail(n: Nat) absurd
+--        append(n, m, ys) => ys
+        tail(n) absurd
     }
     codef Cons(n: Nat, xs: Vec(n)): Vec(S(n)) {
-        tail(n: Nat) => xs
---        append(n': Nat, m: Nat, xs: Vec(n')) => Cons(S(n'.add(m)), x, xs.append(n', m, ys))
+        tail(n) => xs
+--        append(n', m, xs) => Cons(S(n'.add(m)), x, xs.append(n', m, ys))
     }
 }
