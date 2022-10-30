@@ -1,9 +1,9 @@
-data Nat : Type {
+data Nat {
     Z : Nat,
     S(n: Nat) : Nat,
 }
 
-data Vec(n: Nat) : Type {
+data Vec(n: Nat) {
     Nil : Vec(Z),
     Cons(n: Nat, x: Nat, xs: Vec(n)) : Vec(S(n)),
 }
@@ -20,7 +20,7 @@ impl Vec {
 --    }
 }
 
-data Foo : Type {
+data Foo {
     MkFoo(xs: Vec(S(S(Z))), ys: Vec(S(Z))): Foo,
 }
 

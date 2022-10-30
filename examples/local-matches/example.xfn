@@ -1,18 +1,18 @@
-data Nat : Type {
+data Nat {
     Z : Nat,
     S(n: Nat) : Nat
 }
 
-data Bool : Type {
+data Bool {
     True : Bool,
     False : Bool
 }
 
-codata Fun(a: Type, b: Type) : Type {
+codata Fun(a: Type, b: Type) {
     Fun(a, b).apply(a: Type, b: Type, x: a) : b
 }
 
-data Top : Type {
+data Top {
     Unit : Top
 }
 

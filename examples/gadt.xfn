@@ -1,12 +1,12 @@
-data Foo : Type {
+data Foo {
     MkFoo : Foo
 }
 
-data Bar : Type {
+data Bar {
     MkBar : Bar
 }
 
-data GADT(a: Type) : Type {
+data GADT(a: Type) {
     WrapFoo(x: Foo) : GADT(Foo),
     WrapBar(x: Bar) : GADT(Bar),
 }

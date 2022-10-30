@@ -1,14 +1,14 @@
-data Nat : Type {
+data Nat {
     Z : Nat,
     S(n: Nat) : Nat
 }
 
-data Option(a: Type) : Type {
+data Option(a: Type) {
     None(a: Type) : Option(a),
     Some(a: Type, x: a) : Option(a)
 }
 
-data List(a: Type) : Type {
+data List(a: Type) {
     Nil(a: Type) : List(a),
     Cons(a: Type, x: a, xs: List(a)) : List(a)
 }

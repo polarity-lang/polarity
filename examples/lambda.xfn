@@ -1,4 +1,4 @@
-data Nat : Type {
+data Nat {
     Z : Nat,
     S(n: Nat) : Nat
 }
@@ -10,7 +10,7 @@ impl Nat {
     }
 }
 
-data Exp : Type {
+data Exp {
     Var(n: Nat) : Exp,
     Lam(body: Exp) : Exp,
     App(lhs: Exp, rhs: Exp) : Exp

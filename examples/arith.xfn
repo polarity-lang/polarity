@@ -1,4 +1,4 @@
-data Nat : Type {
+data Nat {
     Z : Nat,
     S(n: Nat) : Nat
 }
@@ -10,7 +10,7 @@ impl Nat {
     }
 }
 
-data Bool : Type {
+data Bool {
     True : Bool,
     False : Bool
 }
@@ -22,7 +22,7 @@ impl Bool {
     }
 }
 
-data Top : Type {
+data Top {
     Unit : Top
 }
 
@@ -44,7 +44,7 @@ impl Top {
     }
 }
 
-data Exp : Type {
+data Exp {
     Num(n: Nat) : Exp,
     Boo(b: Bool) : Exp,
     Add(lhs: Exp, rhs: Exp) : Exp,
@@ -52,12 +52,12 @@ data Exp : Type {
     And(lhs: Exp, rhs: Exp) : Exp,
 }
 
-data Typ : Type {
+data Typ {
     NumT : Typ,
     BooT : Typ,
 }
 
-data HasType(e: Exp, t: Typ) : Type {
+data HasType(e: Exp, t: Typ) {
     TNum(n: Nat) : HasType(Num(n), NumT),
     TBoo(b: Bool) : HasType(Boo(b), BooT),
     TAdd(lhs: Exp, rhs: Exp, h_lhs: HasType(lhs, NumT), h_rhs: HasType(rhs, NumT)) : HasType(Add(lhs, rhs), NumT),
@@ -65,12 +65,12 @@ data HasType(e: Exp, t: Typ) : Type {
     TAnd(lhs: Exp, rhs: Exp, h_lhs: HasType(lhs, BooT), h_rhs: HasType(rhs, BooT)) : HasType(And(lhs, rhs), BooT),
 }
 
-data IsVal(e: Exp) : Type {
+data IsVal(e: Exp) {
     VNum(n: Nat) : IsVal(Num(n)),
     VBoo(b: Bool) : IsVal(Boo(b)),
 }
 
-data Eval(e1: Exp, e2: Exp) : Type {
+data Eval(e1: Exp, e2: Exp) {
     EAddCongL(lhs: Exp, lhs': Exp, rhs: Exp, h_lhs: Eval(lhs, lhs')): Eval(Add(lhs, rhs), Add(lhs', rhs)),
     EAddCongR(lhs: Exp, rhs: Exp, rhs': Exp, h_rhs: Eval(rhs, rhs')): Eval(Add(lhs, rhs), Add(lhs, rhs')),
     EAddRed(n1: Nat, n2: Nat): Eval(Add(Num(n1), Num(n2)), Num(n1.add(n2))),

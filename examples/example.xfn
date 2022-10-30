@@ -1,4 +1,4 @@
-data Nat : Type {
+data Nat {
     Z : Nat,
     S(n: Nat) : Nat,
 }
@@ -10,16 +10,16 @@ impl Nat {
     }
 }
 
-data Vec(n: Nat) : Type {
+data Vec(n: Nat) {
     Nil : Vec(Z),
     Cons(n: Nat, x: Nat, xs: Vec(n)) : Vec(S(n)),
 }
 
-codata Stream : Type {
+codata Stream {
     Stream.head : Nat,
     Stream.tail : Stream
 }
 
-codata NatToNat : Type {
+codata NatToNat {
     NatToNat.apply(x: Nat) : Nat
 }

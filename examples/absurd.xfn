@@ -1,9 +1,9 @@
-data Nat : Type {
+data Nat {
     Z : Nat,
     S(n: Nat) : Nat
 }
 
-data NotZero(n: Nat) : Type {
+data NotZero(n: Nat) {
     SNotZero(n: Nat) : NotZero(S(n))
 }
 
@@ -13,9 +13,9 @@ impl NotZero {
     }
 }
 
-data Bot : Type { }
+data Bot { }
 
-data Foo(a: Type) : Type {
+data Foo(a: Type) {
     Ok(a: Type, x: a) : Foo(a),
     Absurd(x: NotZero(Z)) : Foo(Bot)
 }

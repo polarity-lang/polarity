@@ -1,9 +1,9 @@
-data Nat : Type {
+data Nat {
     Z : Nat,
     S(n: Nat) : Nat,
 }
 
-codata Vec(n: Nat) : Type {
+codata Vec(n: Nat) {
     Vec(S(n)).tail(n: Nat) : Vec(n)
 --    Vec(n).append(n: Nat, m: Nat, ys: Vec(m)) : Vec(n.add(m))
 }
