@@ -1,6 +1,6 @@
 data Nat {
-    Z : Nat,
-    S(n: Nat) : Nat,
+    Z,
+    S(n: Nat),
 }
 
 codata Vec(n: Nat) {

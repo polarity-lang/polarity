@@ -1,11 +1,11 @@
 data Nat {
-    Z : Nat,
-    S(n: Nat) : Nat
+    Z,
+    S(n: Nat)
 }
 
 data Bool {
-    True : Bool,
-    False : Bool
+    True,
+    False
 }
 
 codata Fun(a: Type, b: Type) {
@@ -13,7 +13,7 @@ codata Fun(a: Type, b: Type) {
 }
 
 data Top {
-    Unit : Top
+    Unit
 }
 
 impl Top {

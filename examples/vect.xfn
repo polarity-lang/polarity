@@ -1,6 +1,6 @@
 data Nat {
-    Z : Nat,
-    S(n: Nat) : Nat,
+    Z,
+    S(n: Nat),
 }
 
 data Vec(n: Nat) {
@@ -21,7 +21,7 @@ impl Vec {
 }
 
 data Foo {
-    MkFoo(xs: Vec(S(S(Z))), ys: Vec(S(Z))): Foo,
+    MkFoo(xs: Vec(S(S(Z))), ys: Vec(S(Z))),
 }
 
 MkFoo(Cons(S(Z), Z, Cons(Z, Z, Nil)), Cons(Z, Z, Nil))

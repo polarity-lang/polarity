@@ -1,6 +1,6 @@
 data Nat {
-    Z : Nat,
-    S(n: Nat) : Nat
+    Z,
+    S(n: Nat)
 }
 
 impl Nat {
@@ -11,7 +11,7 @@ impl Nat {
 }
 
 data Exp {
-    Var(n: Nat) : Exp,
-    Lam(body: Exp) : Exp,
-    App(lhs: Exp, rhs: Exp) : Exp
+    Var(n: Nat),
+    Lam(body: Exp),
+    App(lhs: Exp, rhs: Exp)
 }

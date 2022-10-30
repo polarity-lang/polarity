@@ -1,12 +1,12 @@
 data Bool {
-    True : Bool,
-    False : Bool
+    True,
+    False
 }
 
 data ExtNat {
-    Z: ExtNat,
-    S(n: ExtNat): ExtNat,
-    Omega : ExtNat,
+    Z,
+    S(n: ExtNat),
+    Omega,
 }
 
 data NotZero(n: ExtNat) {

@@ -1,9 +1,9 @@
 data Foo {
-    MkFoo : Foo
+    MkFoo
 }
 
 data Bar {
-    MkBar : Bar
+    MkBar
 }
 
 data GADT(a: Type) {

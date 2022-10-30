@@ -1,6 +1,6 @@
 data Nat {
-    Z : Nat,
-    S(n: Nat) : Nat
+    Z,
+    S(n: Nat)
 }
 
 data Option(a: Type) {

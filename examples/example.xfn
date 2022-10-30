@@ -1,6 +1,6 @@
 data Nat {
-    Z : Nat,
-    S(n: Nat) : Nat,
+    Z,
+    S(n: Nat),
 }
 
 impl Nat {
@@ -16,10 +16,10 @@ data Vec(n: Nat) {
 }
 
 codata Stream {
-    Stream.head : Nat,
-    Stream.tail : Stream
+    head : Nat,
+    tail : Stream
 }
 
 codata NatToNat {
-    NatToNat.apply(x: Nat) : Nat
+    apply(x: Nat) : Nat
 }

@@ -1,6 +1,6 @@
 data Nat {
-    Z : Nat,
-    S(n: Nat) : Nat
+    Z,
+    S(n: Nat)
 }
 
 impl Nat {
@@ -11,8 +11,8 @@ impl Nat {
 }
 
 data Bool {
-    True : Bool,
-    False : Bool
+    True,
+    False
 }
 
 impl Bool {
@@ -23,7 +23,7 @@ impl Bool {
 }
 
 data Top {
-    Unit : Top
+    Unit
 }
 
 impl Top {
@@ -45,16 +45,16 @@ impl Top {
 }
 
 data Exp {
-    Num(n: Nat) : Exp,
-    Boo(b: Bool) : Exp,
-    Add(lhs: Exp, rhs: Exp) : Exp,
-    IsZero(e: Exp) : Exp,
-    And(lhs: Exp, rhs: Exp) : Exp,
+    Num(n: Nat),
+    Boo(b: Bool),
+    Add(lhs: Exp, rhs: Exp),
+    IsZero(e: Exp),
+    And(lhs: Exp, rhs: Exp),
 }
 
 data Typ {
-    NumT : Typ,
-    BooT : Typ,
+    NumT,
+    BooT,
 }
 
 data HasType(e: Exp, t: Typ) {
