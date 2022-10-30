@@ -53,7 +53,7 @@ pub struct Dtor {
     pub name: Ident,
     pub params: Telescope,
     // QUESTION: Implement Self?
-    pub on_typ: TypApp,
+    pub on_typ: Option<TypApp>,
     // TODO: Rename to ret_typ
     pub in_typ: Rc<Exp>,
 }

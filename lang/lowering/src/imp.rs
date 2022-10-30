@@ -211,11 +211,31 @@ impl Lower for cst::Dtor {
         let cst::Dtor { info, name, params, on_typ, in_typ } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
+            // If the type constructor does not take any arguments, it can be left out
+            let on_typ = match on_typ {
+                Some(on_typ) => on_typ.lower_in_ctx(ctx)?,
+                None => {
+                    let typ_name = ctx.typ_name_for_xtor(name);
+                    if ctx.typ_ctor_arity(typ_name) == 0 {
+                        ust::TypApp {
+                            info: ust::Info::empty(),
+                            name: typ_name.clone(),
+                            args: vec![],
+                        }
+                    } else {
+                        return Err(LoweringError::MustProvideArgs {
+                            xtor: name.clone(),
+                            typ: typ_name.clone(),
+                        });
+                    }
+                }
+            };
+
             Ok(ust::Dtor {
                 info: info.lower_pure(),
                 name: name.clone(),
                 params,
-                on_typ: on_typ.lower_in_ctx(ctx)?,
+                on_typ,
                 in_typ: in_typ.lower_in_ctx(ctx)?,
             })
         })
