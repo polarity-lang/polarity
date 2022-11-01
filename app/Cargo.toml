@@ -12,7 +12,11 @@ path = "src/main.rs"
 clap = { version = "3", features = ["derive"] }
 reedline = "0.10"
 termsize = "0.1"
+# fancy error messages
+miette = { version = "5", features = ["fancy"] }
+thiserror = "1"
 # workspace members
+source = { path = "../lang/source" }
 core = { path = "../lang/core" }
 syntax = { path = "../lang/syntax" }
 parser = { path = "../lang/parser" }

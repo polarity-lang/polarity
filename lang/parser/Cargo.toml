@@ -4,10 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# parser generator
 lalrpop = "0.19"
 lalrpop-util = "0.19"
+# fancy error messages
+miette = "5"
+thiserror = "1"
 # workspace members
 syntax = { path = "../syntax" }
+data = { path = "../../util/data" }
 
 [build-dependencies.lalrpop]
 version = "0.19"

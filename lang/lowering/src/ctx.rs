@@ -39,7 +39,7 @@ impl Ctx {
         self.map
             .get(name)
             .and_then(|stack| stack.last())
-            .ok_or_else(|| LoweringError::UndefinedIdent(name.clone()))
+            .ok_or_else(|| LoweringError::UndefinedIdent { name: name.clone() })
     }
 
     pub fn decl_kind(&self, name: &Ident) -> &DeclKind {
@@ -90,7 +90,7 @@ impl Ctx {
 
     pub fn add_decl(&mut self, decl: ust::Decl) -> Result<(), LoweringError> {
         match self.decls.map.get(decl.name()) {
-            Some(_) => Err(LoweringError::AlreadyDefined(decl.name().clone())),
+            Some(_) => Err(LoweringError::AlreadyDefined { name: decl.name().clone() }),
             None => {
                 self.decls.order.push(decl.name().clone());
                 self.decls.map.insert(decl.name().clone(), decl);

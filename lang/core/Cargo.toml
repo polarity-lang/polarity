@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# fancy error messages
+miette = "5"
+thiserror = "1"
 # workspace members
 data = { path = "../../util/data" }
 tracer = { path = "../../util/tracer" }

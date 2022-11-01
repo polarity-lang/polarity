@@ -4,7 +4,7 @@ use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
 use async_lock::RwLock;
 
-use source::{Index, Xfunc};
+use source::{Database, File, Xfunc};
 
 pub fn capabilities() -> lsp::ServerCapabilities {
     let document_symbol_provider = Some(lsp::OneOf::Left(true));
@@ -33,12 +33,12 @@ pub fn capabilities() -> lsp::ServerCapabilities {
 
 pub struct Server {
     pub client: tower_lsp::Client,
-    pub index: RwLock<Index>,
+    pub database: RwLock<Database>,
 }
 
 impl Server {
     pub fn new(client: tower_lsp::Client) -> Self {
-        Server { client, index: RwLock::new(Index::empty()) }
+        Server { client, database: RwLock::new(Database::default()) }
     }
 }
 
@@ -59,12 +59,15 @@ impl LanguageServer for Server {
 
     async fn did_open(&self, params: lsp::DidOpenTextDocumentParams) {
         let text_document = params.text_document;
-        let mut index = self.index.write().await;
-        let (msg_t, msg) = index
-            .add(text_document.uri.as_str(), text_document.text)
-            .map(|()| format!("Loaded successfully: {}", text_document.uri.as_str()))
+        let mut db = self.database.write().await;
+        let file =
+            File { name: text_document.uri.to_string(), source: text_document.text, index: true };
+        let (msg_t, msg) = db
+            .add(file)
+            .load()
+            .map(|_| format!("Loaded successfully: {}", text_document.uri.as_str()))
             .map(|msg| (MessageType::INFO, msg))
-            .map_err(|msg| (MessageType::ERROR, msg))
+            .map_err(|msg| (MessageType::ERROR, msg.to_string()))
             .extract();
         self.client.log_message(msg_t, msg).await;
     }
@@ -72,13 +75,15 @@ impl LanguageServer for Server {
     async fn did_change(&self, params: lsp::DidChangeTextDocumentParams) {
         let text_document = params.text_document;
         let mut content_changes = params.content_changes;
-        let mut index = self.index.write().await;
+        let mut db = self.database.write().await;
         let text = content_changes.drain(0..).next().unwrap().text;
-        let (msg_t, msg) = index
-            .update(text_document.uri.as_str(), text)
-            .map(|()| format!("Loaded successfully: {}", text_document.uri.as_str()))
+        let (msg_t, msg) = db
+            .get_mut(text_document.uri.as_str())
+            .unwrap()
+            .update(text)
+            .map(|_| format!("Loaded successfully: {}", text_document.uri.as_str()))
             .map(|msg| (MessageType::INFO, msg))
-            .map_err(|msg| (MessageType::ERROR, msg))
+            .map_err(|msg| (MessageType::ERROR, msg.to_string()))
             .extract();
         self.client.log_message(msg_t, msg).await;
     }
@@ -87,17 +92,17 @@ impl LanguageServer for Server {
         let pos_params = params.text_document_position_params;
         let text_document = pos_params.text_document;
         let pos = pos_params.position;
-        let index = self.index.read().await;
-        let name = text_document.uri.as_str();
+        let db = self.database.read().await;
+        let index = db.get(text_document.uri.as_str()).unwrap();
         let info =
-            index.index(name, pos.into_location()).and_then(|idx| index.info_at_index(name, idx));
+            index.location_to_index(pos.into_location()).and_then(|idx| index.info_at_index(idx));
         let res = info.map(|info| {
             let range =
-                info.span.and_then(|span| index.range(name, span)).map(IntoRange::into_range);
+                info.span.and_then(|span| index.span_to_locations(span)).map(IntoRange::into_range);
             Hover {
                 contents: HoverContents::Scalar(MarkedString::LanguageString(LanguageString {
                     language: "xfn".to_owned(),
-                    value: info.typ.clone(),
+                    value: info.typ,
                 })),
                 range,
             }
@@ -112,19 +117,19 @@ impl LanguageServer for Server {
         let text_document = params.text_document;
         let range = params.range;
 
-        let index = self.index.read().await;
-        let file_name = text_document.uri.as_str();
-        let span_start = index.index(file_name, range.start.into_location());
-        let span_end = index.index(file_name, range.end.into_location());
+        let db = self.database.read().await;
+        let index = db.get(text_document.uri.as_str()).unwrap();
+        let span_start = index.location_to_index(range.start.into_location());
+        let span_end = index.location_to_index(range.end.into_location());
         let span = span_start.and_then(|start| span_end.map(|end| codespan::Span::new(start, end)));
-        let item = span.and_then(|span| index.item_at_span(file_name, span));
+        let item = span.and_then(|span| index.item_at_span(span));
 
         if let Some(item) = item {
-            let Xfunc { title, edits } = index.xfunc(file_name, item.name()).unwrap();
+            let Xfunc { title, edits } = index.xfunc(item.name()).unwrap();
             let edits = edits
                 .into_iter()
                 .map(|edit| TextEdit {
-                    range: index.range(file_name, edit.span).unwrap().into_range(),
+                    range: index.span_to_locations(edit.span).unwrap().into_range(),
                     new_text: edit.text,
                 })
                 .collect();

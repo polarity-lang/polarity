@@ -10,6 +10,9 @@ edition = "2021"
 codespan = "0.11"
 # index of source code intervals
 rust-lapper = "1"
+# fancy error messages
+miette = "5"
+thiserror = "1"
 # workspace members
 data = { path = "../../util/data" }
 syntax = { path = "../syntax" }

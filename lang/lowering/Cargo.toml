@@ -6,6 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# fancy error messages
+miette = "5"
+thiserror = "1"
 # workspace members
 data = { path = "../../util/data" }
 syntax = { path = "../syntax" }

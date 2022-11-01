@@ -145,7 +145,7 @@ impl Infer for ust::Decls {
         let map_out = map
             .iter()
             .map(|(name, decl)| Ok((name.clone(), decl.infer(ctx)?)))
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<_, TypeError>>()?;
 
         Ok(tst::Decls { map: map_out, order: order.clone() })
     }
@@ -347,11 +347,11 @@ impl<'a> Check for WithDef<'a, ust::Match> {
             || ctors_undeclared.peek().is_some()
             || !ctors_duplicate.is_empty()
         {
-            return Err(TypeError::InvalidMatch {
-                missing: ctors_missing.cloned().collect(),
-                undeclared: ctors_undeclared.cloned().collect(),
-                duplicate: ctors_duplicate,
-            });
+            return Err(TypeError::invalid_match(
+                ctors_missing.cloned().collect(),
+                ctors_undeclared.cloned().collect(),
+                ctors_duplicate,
+            ));
         }
 
         // Consider all cases
@@ -402,11 +402,11 @@ impl<'a> Infer for WithCodef<'a, ust::Comatch> {
             || dtors_exessive.peek().is_some()
             || !dtors_duplicate.is_empty()
         {
-            return Err(TypeError::InvalidMatch {
-                missing: dtors_missing.cloned().collect(),
-                undeclared: dtors_exessive.cloned().collect(),
-                duplicate: dtors_duplicate,
-            });
+            return Err(TypeError::invalid_match(
+                dtors_missing.cloned().collect(),
+                dtors_exessive.cloned().collect(),
+                dtors_duplicate,
+            ));
         }
 
         // Consider all cases
@@ -663,7 +663,7 @@ impl CheckTelescope for ust::TelescopeInst {
 
         ctx.bind_fold(
             iter,
-            Ok(vec![]),
+            Result::<_, TypeError>::Ok(vec![]),
             |_ctx, params_out, (param_actual, param_expected)| {
                 let ust::ParamInst { info, name } = param_actual;
                 let ust::Param { typ, .. } = param_expected;
@@ -690,7 +690,7 @@ impl InferTelescope for ust::Telescope {
 
         ctx.bind_fold(
             params.iter(),
-            Ok(tst::Params::new()),
+            Result::<_, TypeError>::Ok(tst::Params::new()),
             |ctx, params_out, param| {
                 let ust::Param { typ, name } = param;
                 let mut params_out = params_out?;
@@ -772,7 +772,7 @@ impl Convert for Rc<ust::Exp> {
     fn convert(&self, other: &Self) -> Result<(), TypeError> {
         self.alpha_eq(other)
             .then_some(())
-            .ok_or_else(|| TypeError::NotEq { lhs: self.clone(), rhs: other.clone() })
+            .ok_or_else(|| TypeError::not_eq(self.clone(), other.clone()))
     }
 }
 

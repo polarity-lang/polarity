@@ -1,20 +1,11 @@
-use std::fmt;
+use miette::Diagnostic;
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Error, Diagnostic, Debug)]
+#[diagnostic(transparent)]
+#[error(transparent)]
 pub enum Error {
-    Parser(parser::ParseError<usize, parser::common::OwnedToken, &'static str>),
-    Lowering(lowering::LoweringError),
-    Type(core::TypeError),
-}
-
-impl std::error::Error for Error {}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Error::Parser(err) => write!(f, "Parse error: {}", err),
-            Error::Lowering(err) => write!(f, "Lowering error: {}", err),
-            Error::Type(err) => write!(f, "Type error: {}", err),
-        }
-    }
+    Parser(#[from] parser::ParseError),
+    Lowering(#[from] lowering::LoweringError),
+    Type(#[from] core::TypeError),
 }

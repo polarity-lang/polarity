@@ -176,7 +176,7 @@ pub struct Print<P: ast::Phase> {
 impl Phase for Parse {
     type In = String;
     type Out = cst::Prg;
-    type Err = parser::ParseError<usize, parser::common::OwnedToken, &'static str>;
+    type Err = parser::ParseError;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -187,7 +187,7 @@ impl Phase for Parse {
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        parser::cst::parse_program(&input)
+        parser::parse_program(&input)
     }
 }
 

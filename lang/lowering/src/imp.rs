@@ -367,7 +367,7 @@ impl Lower for cst::Exp {
                         args: subst.lower_in_ctx(ctx)?,
                     }),
                     DeclKind::Def | DeclKind::Dtor { .. } => {
-                        Err(LoweringError::MustUseAsDtor(name.to_owned()))
+                        Err(LoweringError::MustUseAsDtor { name: name.to_owned() })
                     }
                     DeclKind::Codef | DeclKind::Ctor { .. } => Ok(ust::Exp::Ctor {
                         info: info.lower_pure(),

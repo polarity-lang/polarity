@@ -1,7 +1,9 @@
-use std::error::Error;
-use std::fmt;
 use std::rc::Rc;
 
+use miette::Diagnostic;
+use thiserror::Error;
+
+use data::string::{comma_separated, separated};
 use data::HashSet;
 use syntax::common::*;
 use syntax::ust;
@@ -10,71 +12,46 @@ use printer::PrintToString;
 
 use super::unify::UnifyError;
 
-#[derive(Debug)]
+#[derive(Error, Diagnostic, Debug)]
 pub enum TypeError {
+    #[error("Wrong number of arguments provided: got {actual}, expected {expected}")]
     ArgLenMismatch { expected: usize, actual: usize },
-    NotEq { lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp> },
-    InvalidMatch { missing: HashSet<Ident>, undeclared: HashSet<Ident>, duplicate: HashSet<Ident> },
+    #[error("{lhs} is not equal to {rhs}")]
+    NotEq { lhs: String, rhs: String },
+    #[error("Invalid pattern match: {msg}")]
+    InvalidMatch { msg: String },
+    #[error("Got {actual}, which is not in type {expected}")]
     NotInType { expected: Ident, actual: Ident },
+    #[error("Pattern for {name} is marked as absurd but that could not be proven")]
     PatternIsNotAbsurd { name: Ident },
+    #[error("Pattern for {name} is absurd and must be marked accordingly")]
     PatternIsAbsurd { name: Ident },
-    Unify(UnifyError),
+    #[error(transparent)]
+    Unify(#[from] UnifyError),
 }
 
-impl Error for TypeError {}
-
-impl fmt::Display for TypeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            TypeError::ArgLenMismatch { expected, actual } => write!(
-                f,
-                "Wrong number of arguments provided: got {}, expected {}",
-                actual, expected
-            ),
-            TypeError::NotEq { lhs, rhs } => {
-                write!(f, "{} is not equal to {}", lhs.print_to_string(), rhs.print_to_string())
-            }
-            TypeError::InvalidMatch { missing, undeclared, duplicate } => {
-                write!(f, "Invalid pattern match: ")?;
-
-                let mut msgs = Vec::new();
-
-                if !missing.is_empty() {
-                    msgs.push(format!("missing {}", comma_separated(missing.iter().cloned())));
-                }
-                if !undeclared.is_empty() {
-                    msgs.push(format!(
-                        "undeclared {}",
-                        comma_separated(undeclared.iter().cloned())
-                    ));
-                }
-                if !duplicate.is_empty() {
-                    msgs.push(format!("duplicate {}", comma_separated(duplicate.iter().cloned())));
-                }
-
-                write!(f, "{}", separated("; ", msgs))?;
-
-                Ok(())
-            }
-            TypeError::NotInType { expected, actual } => {
-                write!(f, "Got {}, which is not in type {}", actual, expected)
-            }
-            TypeError::PatternIsNotAbsurd { name } => {
-                write!(f, "Pattern for {} is marked as absurd but that could not be proven", name)
-            }
-            TypeError::PatternIsAbsurd { name } => {
-                write!(f, "Pattern for {} is absurd and must be marked accordingly", name)
-            }
-            TypeError::Unify(err) => err.fmt(f),
-        }
+impl TypeError {
+    pub fn not_eq(lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp>) -> Self {
+        Self::NotEq { lhs: lhs.print_to_string(), rhs: rhs.print_to_string() }
     }
-}
 
-fn comma_separated<I: IntoIterator<Item = String>>(iter: I) -> String {
-    separated(", ", iter)
-}
+    pub fn invalid_match(
+        missing: HashSet<String>,
+        undeclared: HashSet<String>,
+        duplicate: HashSet<String>,
+    ) -> Self {
+        let mut msgs = Vec::new();
 
-fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
-    let vec: Vec<_> = iter.into_iter().collect();
-    vec.join(s)
+        if !missing.is_empty() {
+            msgs.push(format!("missing {}", comma_separated(missing.iter().cloned())));
+        }
+        if !undeclared.is_empty() {
+            msgs.push(format!("undeclared {}", comma_separated(undeclared.iter().cloned())));
+        }
+        if !duplicate.is_empty() {
+            msgs.push(format!("duplicate {}", comma_separated(duplicate.iter().cloned())));
+        }
+
+        Self::InvalidMatch { msg: separated("; ", msgs) }
+    }
 }

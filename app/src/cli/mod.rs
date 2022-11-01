@@ -3,20 +3,15 @@ use clap::{Parser, Subcommand};
 mod format;
 mod ignore_colors;
 mod prompt;
-mod repl;
 mod run;
 
-pub fn exec() {
+pub fn exec() -> miette::Result<()> {
     use Command::*;
     let cli = Cli::parse();
     core::tracer::set_enabled(cli.trace);
     match cli.command {
-        Some(cmd) => match cmd {
-            Run(args) => run::exec(args),
-            Repl(args) => repl::exec(args),
-            Fmt(args) => format::exec(args),
-        },
-        None => repl::exec(repl::Args::default()),
+        Run(args) => run::exec(args),
+        Fmt(args) => format::exec(args),
     }
 }
 
@@ -24,7 +19,7 @@ pub fn exec() {
 #[clap(author, about, version=crate::VERSION, long_about = None)]
 struct Cli {
     #[clap(subcommand)]
-    command: Option<Command>,
+    command: Command,
     /// Enable internal debug output
     #[clap(long, takes_value = false)]
     trace: bool,
@@ -34,8 +29,6 @@ struct Cli {
 enum Command {
     /// Run a source code file
     Run(run::Args),
-    /// Start an interactive console
-    Repl(repl::Args),
     /// Format/pretty-print a code file
     Fmt(format::Args),
 }

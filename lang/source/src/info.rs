@@ -8,17 +8,17 @@ use syntax::ast::{Visit, Visitor};
 use syntax::common::*;
 use syntax::tst;
 
-pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, usize>, Lapper<u32, Item>, Vec<Info>) {
+pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
     let mut c = InfoCollector::default();
 
     prg.visit(&mut c);
 
     let info_lapper = Lapper::new(c.info_spans);
     let item_lapper = Lapper::new(c.item_spans);
-    (info_lapper, item_lapper, c.infos.into_iter().map(Into::into).collect())
+    (info_lapper, item_lapper)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Info {
     pub typ: String,
     pub span: Option<Span>,
@@ -33,8 +33,7 @@ pub enum Item {
 
 #[derive(Default)]
 struct InfoCollector {
-    info_spans: Vec<Interval<u32, usize>>,
-    infos: Vec<tst::TypeInfo>,
+    info_spans: Vec<Interval<u32, Info>>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
@@ -95,13 +94,11 @@ impl InfoCollector {
 
     fn add_typed_info(&mut self, info: &tst::TypeInfo) {
         if let Some(span) = info.span {
-            let idx = self.infos.len();
             self.info_spans.push(Interval {
                 start: span.start().into(),
                 stop: span.end().into(),
-                val: idx,
+                val: info.clone().into(),
             });
-            self.infos.push(info.clone());
         }
     }
 

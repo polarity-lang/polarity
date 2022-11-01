@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
-use crate::result::HandleErrorExt;
+use source::{Database, File};
+
+use crate::result::IOError;
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -8,6 +10,10 @@ pub struct Args {
     filepath: PathBuf,
 }
 
-pub fn exec(cmd: Args) {
-    crate::rt::run_filepath(&cmd.filepath).handle()
+pub fn exec(cmd: Args) -> miette::Result<()> {
+    let mut db = Database::default();
+    let file = File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
+    let view = db.add(file).query();
+    view.tst().map_err(|err| view.pretty_error(err))?;
+    Ok(())
 }

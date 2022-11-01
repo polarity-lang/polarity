@@ -1,6 +1,7 @@
-use std::error::Error;
-use std::fmt;
 use std::rc::Rc;
+
+use miette::Diagnostic;
+use thiserror::Error;
 
 use data::{Dec, HashMap, HashSet, No, Yes};
 use printer::PrintToString;
@@ -122,9 +123,9 @@ impl<'l, L: Leveled> Ctx<'l, L> {
                 self.unify_args(subst, subst2)
             }
             (Type { .. }, Type { .. }) => Ok(Yes(())),
-            (Anno { .. }, _) => Err(UnifyError::UnsupportedAnnotation { exp: lhs.clone() }),
-            (_, Anno { .. }) => Err(UnifyError::UnsupportedAnnotation { exp: lhs.clone() }),
-            (_, _) => Err(UnifyError::StructurallyDifferent { lhs: lhs.clone(), rhs: rhs.clone() }),
+            (Anno { .. }, _) => Err(UnifyError::unsupported_annotation(lhs.clone())),
+            (_, Anno { .. }) => Err(UnifyError::unsupported_annotation(rhs.clone())),
+            (_, _) => Err(UnifyError::cannot_decide(lhs.clone(), rhs.clone())),
         }
     }
 
@@ -140,7 +141,7 @@ impl<'l, L: Leveled> Ctx<'l, L> {
 
     fn add_assignment(&mut self, idx: Idx, exp: Rc<ust::Exp>) -> Result<Dec, UnifyError> {
         if ast::occurs_in(self.lvl, idx, &exp) {
-            return Err(UnifyError::OccursCheckFailed { idx, exp });
+            return Err(UnifyError::occurs_check_failed(idx, exp));
         }
         let insert_lvl = self.lvl.idx_to_lvl(idx);
         let exp = exp.subst(self.lvl, &self.unif);
@@ -167,30 +168,26 @@ impl<'l, L: Leveled> Ctx<'l, L> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Error, Diagnostic, Debug)]
 pub enum UnifyError {
-    OccursCheckFailed { idx: Idx, exp: Rc<ust::Exp> },
-    UnsupportedAnnotation { exp: Rc<ust::Exp> },
-    StructurallyDifferent { lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp> },
+    #[error("{idx} occurs in {exp}")]
+    OccursCheckFailed { idx: Idx, exp: String },
+    #[error("Cannot unify annotated expression {exp}")]
+    UnsupportedAnnotation { exp: String },
+    #[error("Cannot automatically decide whether {lhs} and {rhs} unify")]
+    CannotDecide { lhs: String, rhs: String },
 }
 
-impl Error for UnifyError {}
+impl UnifyError {
+    fn occurs_check_failed(idx: Idx, exp: Rc<ust::Exp>) -> Self {
+        Self::OccursCheckFailed { idx, exp: exp.print_to_string() }
+    }
 
-impl fmt::Display for UnifyError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            UnifyError::OccursCheckFailed { idx, exp } => {
-                write!(f, "{} occurs in {}", idx, exp.print_to_string())
-            }
-            UnifyError::UnsupportedAnnotation { exp } => {
-                write!(f, "Cannot unify annotated expression {}", exp.print_to_string())
-            }
-            UnifyError::StructurallyDifferent { lhs, rhs } => write!(
-                f,
-                "Cannot unify {} and {} because they are structurally different",
-                lhs.print_to_string(),
-                rhs.print_to_string()
-            ),
-        }
+    fn unsupported_annotation(exp: Rc<ust::Exp>) -> Self {
+        Self::UnsupportedAnnotation { exp: exp.print_to_string() }
+    }
+
+    fn cannot_decide(lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp>) -> Self {
+        Self::CannotDecide { lhs: lhs.print_to_string(), rhs: rhs.print_to_string() }
     }
 }
