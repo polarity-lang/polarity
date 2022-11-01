@@ -17,7 +17,7 @@ struct Cli {
     #[clap(subcommand)]
     command: Command,
     /// Enable internal debug output
-    #[clap(long, takes_value = false)]
+    #[clap(long, num_args = 0)]
     trace: bool,
 }
 

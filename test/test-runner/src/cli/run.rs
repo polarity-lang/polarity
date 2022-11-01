@@ -4,9 +4,9 @@ use crate::runner;
 pub struct Args {
     #[clap(long)]
     filter: Option<String>,
-    #[clap(long, takes_value = false)]
+    #[clap(long, num_args = 0)]
     debug: bool,
-    #[clap(long, takes_value = false)]
+    #[clap(long, num_args = 0)]
     update_expected: bool,
 }
 

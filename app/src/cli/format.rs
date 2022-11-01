@@ -22,7 +22,7 @@ const LATEX_END: &str = r#"\end{alltt}
 pub struct Args {
     #[clap(value_parser, value_name = "FILE")]
     filepath: PathBuf,
-    #[clap(long, takes_value = false)]
+    #[clap(long, num_args = 0)]
     latex: bool,
     #[clap(long)]
     width: Option<usize>,
