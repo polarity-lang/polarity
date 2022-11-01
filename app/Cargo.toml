@@ -19,6 +19,4 @@ thiserror = "1"
 source = { path = "../lang/source" }
 core = { path = "../lang/core" }
 syntax = { path = "../lang/syntax" }
-parser = { path = "../lang/parser" }
-lowering = { path = "../lang/lowering" }
 printer = { path = "../lang/printer" }

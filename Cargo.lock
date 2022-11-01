@@ -58,9 +58,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "core",
- "lowering",
  "miette",
- "parser",
  "printer",
  "reedline",
  "source",
