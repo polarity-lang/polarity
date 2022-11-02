@@ -317,21 +317,13 @@ impl<'a, P: Phase> Print<'a> for Cocase<P> {
 
 impl<'a, P: Phase> Print<'a> for Telescope<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        if self.is_empty() {
-            alloc.nil()
-        } else {
-            self.params.print(cfg, alloc).parens()
-        }
+        self.params.print(cfg, alloc).opt_parens()
     }
 }
 
 impl<'a, P: Phase> Print<'a> for TelescopeInst<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        if self.params.is_empty() {
-            alloc.nil()
-        } else {
-            self.params.print(cfg, alloc).parens()
-        }
+        self.params.print(cfg, alloc).opt_parens()
     }
 }
 
@@ -352,9 +344,7 @@ impl<'a, P: Phase> Print<'a> for ParamInst<P> {
 impl<'a, P: Phase> Print<'a> for TypApp<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypApp { info: _, name, args: subst } = self;
-        let typ_app_args =
-            if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
-        alloc.typ(name).append(typ_app_args)
+        alloc.typ(name).append(subst.print(cfg, alloc).opt_parens())
     }
 }
 
@@ -363,20 +353,16 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
         match self {
             Exp::Var { info: _, name, idx } => alloc.text(P::print_var(name, *idx)),
             Exp::TypCtor { info: _, name, args: subst } => {
-                let typ_ctor_args =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
-                alloc.typ(name).append(typ_ctor_args)
+                alloc.typ(name).append(subst.print(cfg, alloc).opt_parens())
             }
             Exp::Ctor { info: _, name, args: subst } => {
-                let ctor_args =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
-                alloc.ctor(name).append(ctor_args)
+                alloc.ctor(name).append(subst.print(cfg, alloc).opt_parens())
             }
-            Exp::Dtor { info: _, exp, name, args: subst } => {
-                let dtor_args =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
-                exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(dtor_args)
-            }
+            Exp::Dtor { info: _, exp, name, args: subst } => exp
+                .print(cfg, alloc)
+                .append(DOT)
+                .append(alloc.dtor(name))
+                .append(subst.print(cfg, alloc).opt_parens()),
             Exp::Anno { info: _, exp, typ } => {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
@@ -424,5 +410,25 @@ where
 {
     fn braces_from(self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, D, A> {
         self.enclose(cfg.braces.0, cfg.braces.1)
+    }
+}
+
+trait ParensExt<'a, D, A: 'a>
+where
+    D: ?Sized + DocAllocator<'a, A>,
+{
+    fn opt_parens(self) -> pretty::DocBuilder<'a, D, A>;
+}
+
+impl<'a, D, A> ParensExt<'a, D, A> for pretty::DocBuilder<'a, D, A>
+where
+    D: ?Sized + DocAllocator<'a, A>,
+{
+    fn opt_parens(self) -> pretty::DocBuilder<'a, D, A> {
+        if matches!(self.1, pretty::BuildDoc::Doc(pretty::Doc::Nil)) {
+            self
+        } else {
+            self.parens()
+        }
     }
 }
