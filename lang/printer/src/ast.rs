@@ -102,10 +102,6 @@ impl<'a, P: Phase> PrintInCtx<'a> for Data<P> {
             .append(alloc.space())
             .append(alloc.typ(name))
             .append(typ.params.print(cfg, alloc))
-            .append(alloc.space())
-            .append(COLON)
-            .append(alloc.space())
-            .append(alloc.typ(TYPE))
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.hardline());
@@ -140,10 +136,6 @@ impl<'a, P: Phase> PrintInCtx<'a> for Codata<P> {
             .append(alloc.space())
             .append(alloc.typ(name))
             .append(typ.params.print(cfg, alloc))
-            .append(alloc.space())
-            .append(COLON)
-            .append(alloc.space())
-            .append(alloc.typ(TYPE))
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.hardline());
