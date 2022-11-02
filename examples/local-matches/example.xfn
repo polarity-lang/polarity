@@ -18,15 +18,15 @@ data Top {
 
 impl Top {
     def Top.is_zero(n: Nat): Bool {
-        Unit => match n {
+        Unit => n.match {
             Z => True,
-            S(n: Nat) => False,
+            S(n) => False,
         }
     }
 
     def Top.id(a: Type): Fun(a, a) {
         Unit => comatch {
-            apply(a: Type, b: Type, x: a) => x
+            apply(a, b, x) => x
         }
     }
 }

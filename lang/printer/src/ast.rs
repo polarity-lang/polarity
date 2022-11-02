@@ -389,10 +389,10 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
             Exp::Type { info: _ } => alloc.typ(TYPE),
-            Exp::Match { info: _, on_exp, body } => alloc
-                .keyword(MATCH)
-                .append(alloc.space())
-                .append(on_exp.print(cfg, alloc))
+            Exp::Match { info: _, on_exp, body } => on_exp
+                .print(cfg, alloc)
+                .append(DOT)
+                .append(alloc.keyword(MATCH))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Exp::Comatch { info: _, body } => {
