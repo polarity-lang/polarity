@@ -5,9 +5,10 @@ use std::rc::Rc;
 
 use data::{HashMap, HashSet};
 use syntax::ast;
-use syntax::ast::Substitutable;
+use syntax::ast::{subst, Substitutable};
 use syntax::common::*;
 use syntax::de_bruijn::*;
+use syntax::leveled_ctx::LeveledCtx;
 use syntax::ust;
 use tracer::trace;
 
@@ -181,6 +182,11 @@ impl Ctx {
         res
     }
 
+    pub fn levels(&self) -> LeveledCtx {
+        let bound: Vec<_> = self.bound.iter().map(|inner| inner.len()).collect();
+        LeveledCtx::from(bound)
+    }
+
     fn map<F>(&self, f: F) -> Self
     where
         F: Fn(&Rc<ust::Exp>) -> Rc<ust::Exp>,
@@ -250,8 +256,8 @@ impl Leveled for Ctx {
 }
 
 impl Substitutable for Ctx {
-    fn subst<L: Leveled, S: ast::Substitution>(&self, _lvl: &L, by: &S) -> Self {
-        self.map(|exp| exp.subst(self, by))
+    fn subst<S: ast::Substitution>(&self, _ctx: &mut subst::Ctx, by: &S) -> Self {
+        self.map(|exp| exp.subst(&mut self.levels(), by))
     }
 }
 

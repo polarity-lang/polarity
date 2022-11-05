@@ -244,12 +244,16 @@ pub enum Exp<P: Phase> {
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
+        name: Ident,
         on_exp: Rc<Exp<P>>,
+        // TODO: Ignore this field for PartialEq, Hash?
         body: Match<P>,
     },
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
+        name: Ident,
+        // TODO: Ignore this field for PartialEq, Hash?
         body: Comatch<P>,
     },
 }

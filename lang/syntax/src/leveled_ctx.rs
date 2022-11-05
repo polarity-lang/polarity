@@ -93,6 +93,12 @@ impl LeveledCtx {
     }
 }
 
+impl From<Vec<usize>> for LeveledCtx {
+    fn from(bound: Vec<usize>) -> Self {
+        Self { bound }
+    }
+}
+
 impl Leveled for LeveledCtx {
     fn idx_to_lvl(&self, idx: Idx) -> Lvl {
         let fst = self.bound.len() - 1 - idx.fst;

@@ -13,4 +13,6 @@ pub enum LoweringError {
     MustUseAsDtor { name: Ident },
     #[error("Arguments to type constructor {typ} must be provided for {xtor}")]
     MustProvideArgs { xtor: Ident, typ: Ident },
+    #[error("Local (co)match must be named")]
+    UnnamedMatch,
 }

@@ -388,14 +388,19 @@ impl Lower for cst::Exp {
                 typ: typ.lower_in_ctx(ctx)?,
             }),
             cst::Exp::Type { info } => Ok(ust::Exp::Type { info: info.lower_pure() }),
-            cst::Exp::Match { info, on_exp, body } => Ok(ust::Exp::Match {
+            cst::Exp::Match { info, name, on_exp, body } => Ok(ust::Exp::Match {
                 info: info.lower_pure(),
+                // TODO: Relax this (auto-generate names)
+                name: name.clone().ok_or(LoweringError::UnnamedMatch)?,
                 on_exp: on_exp.lower_in_ctx(ctx)?,
                 body: body.lower_in_ctx(ctx)?,
             }),
-            cst::Exp::Comatch { info, body } => {
-                Ok(ust::Exp::Comatch { info: info.lower_pure(), body: body.lower_in_ctx(ctx)? })
-            }
+            cst::Exp::Comatch { info, name, body } => Ok(ust::Exp::Comatch {
+                info: info.lower_pure(),
+                // TODO: Relax this (auto-generate names)
+                name: name.clone().ok_or(LoweringError::UnnamedMatch)?,
+                body: body.lower_in_ctx(ctx)?,
+            }),
         }
     }
 }

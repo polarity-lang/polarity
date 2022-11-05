@@ -77,6 +77,12 @@ impl<T: ShiftCutoff> ShiftCutoff for Rc<T> {
     }
 }
 
+impl<T: ShiftCutoff> ShiftCutoff for Option<T> {
+    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+        self.as_ref().map(|inner| inner.shift_cutoff(cutoff, by))
+    }
+}
+
 impl<T: ShiftCutoff> ShiftCutoff for Vec<T> {
     fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
         self.iter().map(|x| x.shift_cutoff(cutoff, by)).collect()

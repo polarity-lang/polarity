@@ -36,8 +36,55 @@ impl<P: Phase> ShiftCutoff for Exp<P> {
                 typ: typ.shift_cutoff(cutoff, by),
             },
             Exp::Type { info } => Exp::Type { info: info.clone() },
-            Exp::Match { .. } => unimplemented!(), // TODO: Implement
-            Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
+            Exp::Match { info, name, on_exp, body } => Exp::Match {
+                info: info.clone(),
+                name: name.clone(),
+                on_exp: on_exp.shift_cutoff(cutoff, by),
+                body: body.shift_cutoff(cutoff, by),
+            },
+            Exp::Comatch { info, name, body } => Exp::Comatch {
+                info: info.clone(),
+                name: name.clone(),
+                body: body.shift_cutoff(cutoff, by),
+            },
+        }
+    }
+}
+
+impl<P: Phase> ShiftCutoff for Match<P> {
+    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+        let Match { info, cases } = self;
+        Match { info: info.clone(), cases: cases.shift_cutoff(cutoff, by) }
+    }
+}
+
+impl<P: Phase> ShiftCutoff for Comatch<P> {
+    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+        let Comatch { info, cases } = self;
+        Comatch { info: info.clone(), cases: cases.shift_cutoff(cutoff, by) }
+    }
+}
+
+impl<P: Phase> ShiftCutoff for Case<P> {
+    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+        let Case { info, name, args, body } = self;
+        Case {
+            info: info.clone(),
+            name: name.clone(),
+            args: args.clone(),
+            body: body.shift_cutoff(cutoff + 1, by),
+        }
+    }
+}
+
+impl<P: Phase> ShiftCutoff for Cocase<P> {
+    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+        let Cocase { info, name, args, body } = self;
+        Cocase {
+            info: info.clone(),
+            name: name.clone(),
+            args: args.clone(),
+            body: body.shift_cutoff(cutoff + 1, by),
         }
     }
 }
@@ -59,8 +106,8 @@ impl<P: Phase> HasInfo for Exp<P> {
             Exp::Dtor { info, .. } => info,
             Exp::Anno { info, .. } => info,
             Exp::Type { info } => info,
-            Exp::Match { .. } => unimplemented!(), // TODO: Implement
-            Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
+            Exp::Match { info, .. } => info,
+            Exp::Comatch { info, .. } => info,
         }
     }
 }

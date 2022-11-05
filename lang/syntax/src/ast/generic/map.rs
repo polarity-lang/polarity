@@ -93,6 +93,12 @@ pub trait Mapper<P: Phase> {
     fn map_exp_type(&mut self, info: P::TypeInfo) -> Exp<P> {
         Exp::Type { info }
     }
+    fn map_exp_match(&mut self, info: P::TypeInfo, name: Ident, on_exp: Rc<Exp<P>>, body: Match<P>) -> Exp<P> {
+        Exp::Match { info, name, on_exp, body }
+    }
+    fn map_exp_comatch(&mut self, info: P::TypeInfo, name: Ident, body: Comatch<P>) -> Exp<P> {
+        Exp::Comatch { info, name, body }
+    }
     fn map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
         I: IntoIterator<Item=Param<P>>,
@@ -285,6 +291,14 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
 
     fn fold_exp_type(&mut self, info: <Id<P> as Out>::TypeInfo) -> <Id<P> as Out>::Exp {
         self.map_exp_type(info)
+    }
+
+    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, on_exp: <Id<P> as Out>::Exp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
+        self.map_exp_match(info, name, Rc::new(on_exp), body)
+    }
+
+    fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
+        self.map_exp_comatch(info, name, body)
     }
 
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X

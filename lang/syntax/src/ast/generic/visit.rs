@@ -37,6 +37,8 @@ pub trait Visitor<P: Phase> {
     fn visit_exp_dtor(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, name: &Ident, args: &[Rc<Exp<P>>]) {}
     fn visit_exp_anno(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, typ: &Rc<Exp<P>>) {}
     fn visit_exp_type(&mut self, info: &P::TypeInfo) {}
+    fn visit_exp_match(&mut self, info: &P::TypeInfo, name: &Ident, on_exp: &Rc<Exp<P>>, body: &Match<P>) {}
+    fn visit_exp_comatch(&mut self, info: &P::TypeInfo, name: &Ident, body: &Comatch<P>) {}
     fn visit_telescope<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
     where
         P: 'a,
@@ -381,8 +383,17 @@ impl<P: Phase> Visit<P> for Exp<P> {
                 v.visit_type_info(info);
                 v.visit_exp_type(info)
             }
-            Exp::Match { .. } => unimplemented!(), // TODO: Implement
-            Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
+            Exp::Match { info, name, on_exp, body } => {
+                v.visit_type_info(info);
+                on_exp.visit(v);
+                body.visit(v);
+                v.visit_exp_match(info, name, on_exp, body)
+            }
+            Exp::Comatch { info, name, body } => {
+                v.visit_type_info(info);
+                body.visit(v);
+                v.visit_exp_comatch(info, name, body)
+            }
         }
     }
 }

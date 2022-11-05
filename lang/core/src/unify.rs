@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use data::{Dec, HashMap, HashSet, No, Yes};
 use printer::PrintToString;
-use syntax::ast::{self, Assign, Substitutable, Substitution};
+use syntax::ast::{self, subst, Assign, Substitutable, Substitution};
 use syntax::de_bruijn::*;
 use syntax::equiv::AlphaEq;
 use syntax::ust;
@@ -36,18 +36,18 @@ impl ShiftCutoff for Eqn {
 }
 
 impl Substitutable for Unificator {
-    fn subst<L: Leveled, S: Substitution>(&self, lvl: &L, by: &S) -> Self {
+    fn subst<S: Substitution>(&self, ctx: &mut subst::Ctx, by: &S) -> Self {
         let map = self
             .map
             .iter()
-            .map(|(entry_lvl, entry_val)| (*entry_lvl, entry_val.subst(lvl, by)))
+            .map(|(entry_lvl, entry_val)| (*entry_lvl, entry_val.subst(ctx, by)))
             .collect();
         Self { map }
     }
 }
 
 impl Substitution for Unificator {
-    fn get(&self, lvl: Lvl) -> Option<Rc<ust::Exp>> {
+    fn get(&self, _ctx: &subst::Ctx, lvl: Lvl) -> Option<Rc<ust::Exp>> {
         self.map.get(&lvl).cloned()
     }
 }
@@ -59,8 +59,8 @@ impl Unificator {
 }
 
 #[trace("unify({:?} ) ~> {return:?}", eqns, data::id)]
-pub fn unify<L: Leveled>(lvl: &L, eqns: Vec<Eqn>) -> Result<Dec<Unificator>, UnifyError> {
-    let mut ctx = Ctx::new(eqns.clone(), lvl);
+pub fn unify(ctx: subst::Ctx, eqns: Vec<Eqn>) -> Result<Dec<Unificator>, UnifyError> {
+    let mut ctx = Ctx::new(eqns.clone(), ctx);
     let res = match ctx.unify()? {
         Yes(_) => Yes(ctx.unif),
         No(()) => No(()),
@@ -68,16 +68,16 @@ pub fn unify<L: Leveled>(lvl: &L, eqns: Vec<Eqn>) -> Result<Dec<Unificator>, Uni
     Ok(res)
 }
 
-struct Ctx<'l, L: Leveled> {
+struct Ctx {
     eqns: Vec<Eqn>,
     done: HashSet<Eqn>,
-    lvl: &'l L,
+    ctx: subst::Ctx,
     unif: Unificator,
 }
 
-impl<'l, L: Leveled> Ctx<'l, L> {
-    fn new(eqns: Vec<Eqn>, lvl: &'l L) -> Self {
-        Self { eqns, done: HashSet::default(), lvl, unif: Unificator::empty() }
+impl Ctx {
+    fn new(eqns: Vec<Eqn>, ctx: subst::Ctx) -> Self {
+        Self { eqns, done: HashSet::default(), ctx, unif: Unificator::empty() }
     }
 
     fn unify(&mut self) -> Result<Dec, UnifyError> {
@@ -140,12 +140,12 @@ impl<'l, L: Leveled> Ctx<'l, L> {
     }
 
     fn add_assignment(&mut self, idx: Idx, exp: Rc<ust::Exp>) -> Result<Dec, UnifyError> {
-        if ast::occurs_in(self.lvl, idx, &exp) {
+        if ast::occurs_in(&mut self.ctx, idx, &exp) {
             return Err(UnifyError::occurs_check_failed(idx, exp));
         }
-        let insert_lvl = self.lvl.idx_to_lvl(idx);
-        let exp = exp.subst(self.lvl, &self.unif);
-        self.unif.subst(self.lvl, &Assign(insert_lvl, &exp));
+        let insert_lvl = self.ctx.idx_to_lvl(idx);
+        let exp = exp.subst(&mut self.ctx, &self.unif);
+        self.unif.subst(&mut self.ctx, &Assign(insert_lvl, &exp));
         match self.unif.map.get(&insert_lvl) {
             Some(other_exp) => {
                 let eqn = Eqn { lhs: exp, rhs: other_exp.clone() };

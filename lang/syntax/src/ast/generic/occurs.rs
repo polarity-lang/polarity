@@ -3,26 +3,76 @@ use std::rc::Rc;
 use crate::de_bruijn::*;
 
 use super::def::*;
+use crate::ast::subst;
 
-pub fn occurs_in<P: Phase, L: Leveled>(base_lvl: &L, the_idx: Idx, in_exp: &Rc<Exp<P>>) -> bool {
-    let target_lvl = base_lvl.idx_to_lvl(the_idx);
-    occurs(base_lvl, target_lvl, in_exp)
+pub fn occurs_in<P: Phase>(ctx: &mut subst::Ctx, the_idx: Idx, in_exp: &Rc<Exp<P>>) -> bool {
+    let lvl = ctx.idx_to_lvl(the_idx);
+    in_exp.occurs(ctx, lvl)
 }
 
-fn occurs<P: Phase, L: Leveled>(curr_lvl: &L, target_lvl: Lvl, in_exp: &Rc<Exp<P>>) -> bool {
-    match &**in_exp {
-        Exp::Var { idx, .. } => curr_lvl.idx_to_lvl(*idx) == target_lvl,
-        Exp::TypCtor { args, .. } => args.iter().any(|arg| occurs(curr_lvl, target_lvl, arg)),
-        Exp::Ctor { args, .. } => args.iter().any(|arg| occurs(curr_lvl, target_lvl, arg)),
-        Exp::Dtor { exp, args, .. } => {
-            occurs(curr_lvl, target_lvl, exp)
-                || args.iter().any(|arg| occurs(curr_lvl, target_lvl, arg))
+trait Occurs {
+    fn occurs(&self, ctx: &mut subst::Ctx, lvl: Lvl) -> bool;
+}
+
+impl<P: Phase> Occurs for Exp<P> {
+    fn occurs(&self, ctx: &mut subst::Ctx, lvl: Lvl) -> bool {
+        match self {
+            Exp::Var { idx, .. } => ctx.idx_to_lvl(*idx) == lvl,
+            Exp::TypCtor { args, .. } => args.iter().any(|arg| arg.occurs(ctx, lvl)),
+            Exp::Ctor { args, .. } => args.iter().any(|arg| arg.occurs(ctx, lvl)),
+            Exp::Dtor { exp, args, .. } => {
+                exp.occurs(ctx, lvl) || args.iter().any(|arg| arg.occurs(ctx, lvl))
+            }
+            Exp::Anno { exp, typ, .. } => exp.occurs(ctx, lvl) || typ.occurs(ctx, lvl),
+            Exp::Type { .. } => false,
+            Exp::Match { on_exp, body, .. } => on_exp.occurs(ctx, lvl) || body.occurs(ctx, lvl),
+            Exp::Comatch { body, .. } => body.occurs(ctx, lvl),
         }
-        Exp::Anno { exp, typ, .. } => {
-            occurs(curr_lvl, target_lvl, exp) || occurs(curr_lvl, target_lvl, typ)
-        }
-        Exp::Type { .. } => false,
-        Exp::Match { .. } => unimplemented!(), // TODO: Implement
-        Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
+    }
+}
+
+impl<P: Phase> Occurs for Match<P> {
+    fn occurs(&self, ctx: &mut subst::Ctx, lvl: Lvl) -> bool {
+        let Match { cases, .. } = self;
+        cases.occurs(ctx, lvl)
+    }
+}
+
+impl<P: Phase> Occurs for Comatch<P> {
+    fn occurs(&self, ctx: &mut subst::Ctx, lvl: Lvl) -> bool {
+        let Comatch { cases, .. } = self;
+        cases.occurs(ctx, lvl)
+    }
+}
+
+impl<P: Phase> Occurs for Case<P> {
+    fn occurs(&self, ctx: &mut subst::Ctx, lvl: Lvl) -> bool {
+        let Case { args, body, .. } = self;
+        ctx.bind(args.params.iter(), |ctx| body.occurs(ctx, lvl))
+    }
+}
+
+impl<P: Phase> Occurs for Cocase<P> {
+    fn occurs(&self, ctx: &mut subst::Ctx, lvl: Lvl) -> bool {
+        let Cocase { args, body, .. } = self;
+        ctx.bind(args.params.iter(), |ctx| body.occurs(ctx, lvl))
+    }
+}
+
+impl<T: Occurs> Occurs for Rc<T> {
+    fn occurs(&self, ctx: &mut subst::Ctx, lvl: Lvl) -> bool {
+        T::occurs(self, ctx, lvl)
+    }
+}
+
+impl<T: Occurs> Occurs for Vec<T> {
+    fn occurs(&self, ctx: &mut subst::Ctx, lvl: Lvl) -> bool {
+        self.iter().any(|x| x.occurs(ctx, lvl))
+    }
+}
+
+impl<T: Occurs> Occurs for Option<T> {
+    fn occurs(&self, ctx: &mut subst::Ctx, lvl: Lvl) -> bool {
+        self.as_ref().map(|inner| inner.occurs(ctx, lvl)).unwrap_or_default()
     }
 }

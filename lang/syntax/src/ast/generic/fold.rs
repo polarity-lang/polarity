@@ -37,6 +37,8 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_exp_dtor(&mut self, info: O::TypeInfo, exp: O::Exp, name: Ident, args: Vec<O::Exp>) -> O::Exp;
     fn fold_exp_anno(&mut self, info: O::TypeInfo, exp: O::Exp, typ: O::Exp) -> O::Exp;
     fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
+    fn fold_exp_match(&mut self, info: O::TypeInfo, name: Ident, on_exp: O::Exp, body: O::Match) -> O::Exp;
+    fn fold_exp_comatch(&mut self, info: O::TypeInfo, name: Ident, body: O::Comatch) -> O::Exp;
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
         I: IntoIterator<Item=Param<P>>,
@@ -493,8 +495,17 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
                 let info = f.fold_type_info(info);
                 f.fold_exp_type(info)
             }
-            Exp::Match { .. } => unimplemented!(), // TODO: Implement
-            Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
+            Exp::Match { info, name, on_exp, body } => {
+                let info = f.fold_type_info(info);
+                let on_exp = on_exp.fold(f);
+                let body = body.fold(f);
+                f.fold_exp_match(info, name, on_exp, body)
+            }
+            Exp::Comatch { info, name, body } => {
+                let info = f.fold_type_info(info);
+                let body = body.fold(f);
+                f.fold_exp_comatch(info, name, body)
+            }
         }
     }
 }

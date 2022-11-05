@@ -1,8 +1,7 @@
 pub mod generic;
+pub mod subst;
 pub mod typed;
 pub mod untyped;
 
-mod subst;
-
 pub use generic::*;
-pub use subst::*;
+pub use subst::{Assign, Substitutable, Substitution, Swap, SwapWithCtx};

@@ -444,22 +444,23 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
         args.check_telescope(ctx, params, |ctx, args_out| {
             let body_out = match body {
                 Some(body) => {
-                    let unif = unify(ctx, self.eqns.clone())
+                    let unif = unify(ctx.levels(), self.eqns.clone())
                         .map_err(TypeError::Unify)?
                         .map_no(|()| TypeError::PatternIsAbsurd { name: name.clone() })
                         .ok_yes()?;
 
                     // FIXME: Track substitution in context instead
-                    let mut ctx = ctx.subst(ctx, &unif);
-                    let body = body.subst(&ctx, &unif);
+                    let mut ctx = ctx.subst(&mut ctx.levels(), &unif);
+                    let body = body.subst(&mut ctx.levels(), &unif);
                     let ctx = &mut ctx;
 
-                    let body_out = body.check(ctx, t.shift((1, 0)).subst(ctx, &unif))?;
+                    let body_out =
+                        body.check(ctx, t.shift((1, 0)).subst(&mut ctx.levels(), &unif))?;
 
                     Some(body_out)
                 }
                 None => {
-                    unify(ctx, self.eqns.clone())
+                    unify(ctx.levels(), self.eqns.clone())
                         .map_err(TypeError::Unify)?
                         .map_yes(|_| TypeError::PatternIsNotAbsurd { name: name.clone() })
                         .ok_no()?;
@@ -490,22 +491,22 @@ impl<'a> Check for WithEqns<'a, ust::Cocase> {
         args.check_telescope(ctx, params, |ctx, args_out| {
             let body_out = match body {
                 Some(body) => {
-                    let unif = unify(ctx, self.eqns.clone())
+                    let unif = unify(ctx.levels(), self.eqns.clone())
                         .map_err(TypeError::Unify)?
                         .map_no(|()| TypeError::PatternIsAbsurd { name: name.clone() })
                         .ok_yes()?;
 
                     // FIXME: Track substitution in context instead
-                    let mut ctx = ctx.subst(ctx, &unif);
-                    let body = body.subst(&ctx, &unif);
+                    let mut ctx = ctx.subst(&mut ctx.levels(), &unif);
+                    let body = body.subst(&mut ctx.levels(), &unif);
                     let ctx = &mut ctx;
 
-                    let body_out = body.check(ctx, t.subst(ctx, &unif))?;
+                    let body_out = body.check(ctx, t.subst(&mut ctx.levels(), &unif))?;
 
                     Some(body_out)
                 }
                 None => {
-                    unify(ctx, self.eqns.clone())
+                    unify(ctx.levels(), self.eqns.clone())
                         .map_err(TypeError::Unify)?
                         .map_yes(|_| TypeError::PatternIsNotAbsurd { name: name.clone() })
                         .ok_no()?;
@@ -715,7 +716,12 @@ impl<T: Substitutable + Clone> SubstUnderTelescope for T {
 
         let in_exp = self.clone();
 
-        Ctx::empty().bind_fold(params.iter(), (), |_, _, _| (), |ctx, _| in_exp.subst(ctx, &args))
+        Ctx::empty().bind_fold(
+            params.iter(),
+            (),
+            |_, _, _| (),
+            |ctx, _| in_exp.subst(&mut ctx.levels(), &args),
+        )
     }
 }
 
@@ -732,7 +738,7 @@ impl SubstInTelescope for ust::Telescope {
             params.iter(),
             Vec::new(),
             |ctx, mut params_out, param| {
-                params_out.push(param.subst(ctx, &args));
+                params_out.push(param.subst(&mut ctx.levels(), &args));
                 params_out
             },
             |_, params_out| ust::Telescope { params: params_out },
@@ -761,8 +767,8 @@ impl Typed for tst::Exp {
             tst::Exp::Dtor { info, .. } => info.typ.clone(),
             tst::Exp::Anno { info, .. } => info.typ.clone(),
             tst::Exp::Type { info } => info.typ.clone(),
-            tst::Exp::Match { .. } => unimplemented!(), // TODO: Implement
-            tst::Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
+            tst::Exp::Match { info, .. } => info.typ.clone(),
+            tst::Exp::Comatch { info, .. } => info.typ.clone(),
         }
     }
 }

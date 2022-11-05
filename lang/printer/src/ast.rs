@@ -367,15 +367,20 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
             Exp::Type { info: _ } => alloc.typ(TYPE),
-            Exp::Match { info: _, on_exp, body } => on_exp
+            Exp::Match { info: _, name, on_exp, body } => on_exp
                 .print(cfg, alloc)
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
                 .append(alloc.space())
+                .append(alloc.text(name))
+                .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Exp::Comatch { info: _, body } => {
-                alloc.keyword(COMATCH).append(alloc.space()).append(body.print(cfg, alloc))
-            }
+            Exp::Comatch { info: _, name, body } => alloc
+                .keyword(COMATCH)
+                .append(alloc.space())
+                .append(alloc.text(name))
+                .append(alloc.space())
+                .append(body.print(cfg, alloc)),
         }
     }
 }

@@ -142,8 +142,8 @@ pub enum Exp {
     DotCall { info: Info, exp: Rc<Exp>, name: Ident, args: Args },
     Anno { info: Info, exp: Rc<Exp>, typ: Rc<Exp> },
     Type { info: Info },
-    Match { info: Info, on_exp: Rc<Exp>, body: Match },
-    Comatch { info: Info, body: Comatch },
+    Match { info: Info, name: Option<Ident>, on_exp: Rc<Exp>, body: Match },
+    Comatch { info: Info, name: Option<Ident>, body: Comatch },
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope
