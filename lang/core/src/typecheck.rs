@@ -75,33 +75,18 @@ pub trait Convert {
     fn convert(&self, other: &Self) -> Result<(), TypeError>;
 }
 
-struct WithDef<'a, T> {
+struct WithScrutinee<'a, T> {
     inner: &'a T,
-    def: &'a ust::Def,
+    scrutinee: ust::TypApp,
 }
 
-trait WithDefExt: Sized {
-    fn with_def<'a>(&'a self, def: &'a ust::Def) -> WithDef<'a, Self>;
+trait WithScrutineeExt: Sized {
+    fn with_scrutinee(&self, scrutinee: ust::TypApp) -> WithScrutinee<'_, Self>;
 }
 
-impl<T> WithDefExt for T {
-    fn with_def<'a>(&'a self, def: &'a ust::Def) -> WithDef<'a, Self> {
-        WithDef { inner: self, def }
-    }
-}
-
-struct WithCodef<'a, T> {
-    inner: &'a T,
-    codef: &'a ust::Codef,
-}
-
-trait WithCodefExt: Sized {
-    fn with_codef<'a>(&'a self, codef: &'a ust::Codef) -> WithCodef<'a, Self>;
-}
-
-impl<T> WithCodefExt for T {
-    fn with_codef<'a>(&'a self, codef: &'a ust::Codef) -> WithCodef<'a, Self> {
-        WithCodef { inner: self, codef }
+impl<T> WithScrutineeExt for T {
+    fn with_scrutinee(&self, scrutinee: ust::TypApp) -> WithScrutinee<'_, Self> {
+        WithScrutinee { inner: self, scrutinee }
     }
 }
 
@@ -288,7 +273,7 @@ impl Infer for ust::Def {
         params.infer_telescope(ctx, |ctx, params_out| {
             let on_typ_out = on_typ.infer(ctx)?;
             let in_typ_out = in_typ.infer(ctx)?;
-            let body_out = body.with_def(self).check(ctx, in_typ.clone())?;
+            let body_out = body.with_scrutinee(on_typ.clone()).check(ctx, in_typ.clone())?;
             Ok(tst::Def {
                 info: info.clone().into(),
                 name: name.clone(),
@@ -310,7 +295,7 @@ impl Infer for ust::Codef {
 
         params.infer_telescope(ctx, |ctx, params_out| {
             let typ_out = typ.infer(ctx)?;
-            let body_out = body.with_codef(self).infer(ctx)?;
+            let body_out = body.with_scrutinee(typ.clone()).infer(ctx)?;
             Ok(tst::Codef {
                 info: info.clone().into(),
                 name: name.clone(),
@@ -323,14 +308,14 @@ impl Infer for ust::Codef {
 }
 
 /// Check a pattern match
-impl<'a> Check for WithDef<'a, ust::Match> {
+impl<'a> Check for WithScrutinee<'a, ust::Match> {
     type Target = tst::Match;
 
     fn check(&self, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
         let ust::Match { info, cases } = &self.inner;
 
         // Check exhaustiveness
-        let ctors_expected = ctx.xtors_for_typ(ctx.typ_for_xtor(&self.def.name));
+        let ctors_expected = ctx.xtors_for_typ(&self.scrutinee.name);
         let mut ctors_actual = HashSet::default();
         let mut ctors_duplicate = HashSet::default();
 
@@ -361,7 +346,7 @@ impl<'a> Check for WithDef<'a, ust::Match> {
                 // Build equations for this case
                 let ust::Ctor { typ: ust::TypApp { args: def_args, .. }, .. } =
                     &*ctx.ctor(&case.name);
-                let ust::TypApp { args: on_args, .. } = &self.def.on_typ;
+                let ust::TypApp { args: on_args, .. } = &self.scrutinee;
                 let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
                 let eqns: Vec<_> =
@@ -377,14 +362,14 @@ impl<'a> Check for WithDef<'a, ust::Match> {
 }
 
 /// Infer a copattern match
-impl<'a> Infer for WithCodef<'a, ust::Comatch> {
+impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
     type Target = tst::Comatch;
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::Comatch { info, cases } = &self.inner;
 
         // Check exhaustiveness
-        let dtors_expected = ctx.xtors_for_typ(ctx.typ_for_xtor(&self.codef.name));
+        let dtors_expected = ctx.xtors_for_typ(&self.scrutinee.name);
         let mut dtors_actual = HashSet::default();
         let mut dtors_duplicate = HashSet::default();
 
@@ -417,7 +402,7 @@ impl<'a> Infer for WithCodef<'a, ust::Comatch> {
                 let ust::Dtor { on_typ: ust::TypApp { args: def_args, .. }, in_typ, .. } =
                     &*ctx.dtor(&case.name);
 
-                let ust::TypApp { args: on_args, .. } = &self.codef.typ;
+                let ust::TypApp { args: on_args, .. } = &self.scrutinee;
                 let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
                 let eqns: Vec<_> =
@@ -531,9 +516,37 @@ impl Check for ust::Exp {
 
     #[trace("{} |- {:P} <= {:P}", ctx, self, t)]
     fn check(&self, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
-        let actual = self.infer(ctx)?;
-        actual.typ().convert(&t)?;
-        Ok(actual)
+        let out = match self {
+            ust::Exp::Match { info, name, on_exp, body } => {
+                let on_exp_out = on_exp.infer(ctx)?;
+                let typ_app = on_exp_out.typ().expect_typ_app()?;
+                let body_out = body.with_scrutinee(typ_app).check(ctx, t.clone())?;
+
+                tst::Exp::Match {
+                    info: info.with_type(t.clone()),
+                    name: name.clone(),
+                    on_exp: on_exp_out,
+                    body: body_out,
+                }
+            }
+            ust::Exp::Comatch { info, name, body } => {
+                let typ_app = t.expect_typ_app()?;
+                let body_out = body.with_scrutinee(typ_app).infer(ctx)?;
+
+                tst::Exp::Comatch {
+                    info: info.with_type(t.clone()),
+                    name: name.clone(),
+                    body: body_out,
+                }
+            }
+            _ => {
+                let actual = self.infer(ctx)?;
+                actual.typ().convert(&t)?;
+                actual
+            }
+        };
+
+        Ok(out)
     }
 }
 
@@ -601,8 +614,7 @@ impl Infer for ust::Exp {
             ust::Exp::Type { info } => Ok(tst::Exp::Type {
                 info: info.with_type(Rc::new(ust::Exp::Type { info: ust::Info::empty() })),
             }),
-            ust::Exp::Match { .. } => unimplemented!(), // TODO: Implement
-            ust::Exp::Comatch { .. } => unimplemented!(), // TODO: Implement
+            _ => Err(TypeError::AnnotationRequired),
         }
     }
 }
@@ -743,6 +755,21 @@ impl SubstInTelescope for ust::Telescope {
             },
             |_, params_out| ust::Telescope { params: params_out },
         )
+    }
+}
+
+trait ExpectTypApp {
+    fn expect_typ_app(&self) -> Result<ust::TypApp, TypeError>;
+}
+
+impl ExpectTypApp for Rc<ust::Exp> {
+    fn expect_typ_app(&self) -> Result<ust::TypApp, TypeError> {
+        match &**self {
+            ust::Exp::TypCtor { info, name, args } => {
+                Ok(ust::TypApp { info: info.clone(), name: name.clone(), args: args.clone() })
+            }
+            _ => Err(TypeError::expected_typ_app(self.clone())),
+        }
     }
 }
 

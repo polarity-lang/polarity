@@ -26,6 +26,10 @@ pub enum TypeError {
     PatternIsNotAbsurd { name: Ident },
     #[error("Pattern for {name} is absurd and must be marked accordingly")]
     PatternIsAbsurd { name: Ident },
+    #[error("Type annotation required")]
+    AnnotationRequired,
+    #[error("Expected type constructor application, got {got}")]
+    ExpectedTypApp { got: String },
     #[error(transparent)]
     Unify(#[from] UnifyError),
 }
@@ -53,5 +57,9 @@ impl TypeError {
         }
 
         Self::InvalidMatch { msg: separated("; ", msgs) }
+    }
+
+    pub fn expected_typ_app(got: Rc<ust::Exp>) -> Self {
+        Self::ExpectedTypApp { got: got.print_to_string() }
     }
 }
