@@ -2,7 +2,6 @@ use clap::{Parser, Subcommand};
 
 mod format;
 mod ignore_colors;
-mod prompt;
 mod run;
 
 pub fn exec() -> miette::Result<()> {

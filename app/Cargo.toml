@@ -10,7 +10,6 @@ path = "src/main.rs"
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # cli
 clap = { version = "4", features = ["derive"] }
-reedline = "0.10"
 termsize = "0.1"
 # fancy error messages
 miette = { version = "5", features = ["fancy"] }
