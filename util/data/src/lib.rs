@@ -3,6 +3,7 @@
 mod dec;
 mod hash_map;
 mod hash_set;
+pub mod result;
 pub mod string;
 
 pub use dec::*;

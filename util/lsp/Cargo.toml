@@ -13,3 +13,4 @@ async-lock = "2"
 codespan = "0.11"
 # workspace members
 source = { path = "../../lang/source" }
+data = { path = "../data" }

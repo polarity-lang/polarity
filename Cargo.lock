@@ -901,6 +901,7 @@ version = "0.1.0"
 dependencies = [
  "async-lock",
  "codespan",
+ "data",
  "lsp-types",
  "source",
  "tower-lsp",
