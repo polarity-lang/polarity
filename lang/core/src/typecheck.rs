@@ -3,7 +3,9 @@
 use std::rc::Rc;
 
 use data::HashSet;
+use miette_util::ToMiette;
 use syntax::ast::Substitutable;
+use syntax::common::HasInfo;
 use syntax::de_bruijn::*;
 use syntax::equiv::AlphaEq;
 use syntax::named::Named;
@@ -216,6 +218,7 @@ impl Infer for ust::Ctor {
             return Err(TypeError::NotInType {
                 expected: expected.clone(),
                 actual: typ.name.clone(),
+                span: typ.info.span.to_miette(),
             });
         }
 
@@ -245,6 +248,7 @@ impl Infer for ust::Dtor {
             return Err(TypeError::NotInType {
                 expected: expected.clone(),
                 actual: on_typ.name.clone(),
+                span: on_typ.info.span.to_miette(),
             });
         }
 
@@ -336,6 +340,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
                 ctors_missing.cloned().collect(),
                 ctors_undeclared.cloned().collect(),
                 ctors_duplicate,
+                info,
             ));
         }
 
@@ -391,6 +396,7 @@ impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
                 dtors_missing.cloned().collect(),
                 dtors_exessive.cloned().collect(),
                 dtors_duplicate,
+                info,
             ));
         }
 
@@ -431,7 +437,10 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                 Some(body) => {
                     let unif = unify(ctx.levels(), self.eqns.clone())
                         .map_err(TypeError::Unify)?
-                        .map_no(|()| TypeError::PatternIsAbsurd { name: name.clone() })
+                        .map_no(|()| TypeError::PatternIsAbsurd {
+                            name: name.clone(),
+                            span: info.span.to_miette(),
+                        })
                         .ok_yes()?;
 
                     // FIXME: Track substitution in context instead
@@ -447,7 +456,10 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                 None => {
                     unify(ctx.levels(), self.eqns.clone())
                         .map_err(TypeError::Unify)?
-                        .map_yes(|_| TypeError::PatternIsNotAbsurd { name: name.clone() })
+                        .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                            name: name.clone(),
+                            span: info.span.to_miette(),
+                        })
                         .ok_no()?;
 
                     None
@@ -478,7 +490,10 @@ impl<'a> Check for WithEqns<'a, ust::Cocase> {
                 Some(body) => {
                     let unif = unify(ctx.levels(), self.eqns.clone())
                         .map_err(TypeError::Unify)?
-                        .map_no(|()| TypeError::PatternIsAbsurd { name: name.clone() })
+                        .map_no(|()| TypeError::PatternIsAbsurd {
+                            name: name.clone(),
+                            span: info.span.to_miette(),
+                        })
                         .ok_yes()?;
 
                     // FIXME: Track substitution in context instead
@@ -493,7 +508,10 @@ impl<'a> Check for WithEqns<'a, ust::Cocase> {
                 None => {
                     unify(ctx.levels(), self.eqns.clone())
                         .map_err(TypeError::Unify)?
-                        .map_yes(|_| TypeError::PatternIsNotAbsurd { name: name.clone() })
+                        .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                            name: name.clone(),
+                            span: info.span.to_miette(),
+                        })
                         .ok_no()?;
 
                     None
@@ -614,7 +632,7 @@ impl Infer for ust::Exp {
             ust::Exp::Type { info } => Ok(tst::Exp::Type {
                 info: info.with_type(Rc::new(ust::Exp::Type { info: ust::Info::empty() })),
             }),
-            _ => Err(TypeError::AnnotationRequired),
+            _ => Err(TypeError::AnnotationRequired { span: self.info().span.to_miette() }),
         }
     }
 }

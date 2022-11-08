@@ -313,6 +313,7 @@ version = "0.1.0"
 dependencies = [
  "data",
  "miette",
+ "miette_util",
  "printer",
  "syntax",
  "thiserror",
