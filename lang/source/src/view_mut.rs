@@ -9,20 +9,20 @@ pub struct DatabaseViewMut<'a> {
 }
 
 impl<'a> DatabaseViewMut<'a> {
-    pub fn load(self) -> Result<Self, Error> {
+    pub fn load(&mut self) -> Result<(), Error> {
         self.database.index.modify(self.file_id, |mut index| index.reset());
         let prg = self.query_ref().tst()?;
         self.database.index.modify(self.file_id, |mut index| {
             let (info_lapper, item_lapper) = collect_info(&prg);
             index.set(info_lapper, item_lapper);
         });
-        Ok(self)
+        Ok(())
     }
 
-    pub fn update(self, source: String) -> Result<Self, Error> {
+    pub fn update(&mut self, source: String) -> Result<(), Error> {
         let DatabaseViewMut { file_id, database } = self;
-        database.files.update(file_id, source);
-        DatabaseViewMut { file_id, database }.load()
+        database.files.update(*file_id, source);
+        self.load()
     }
 
     pub fn query(self) -> DatabaseView<'a> {

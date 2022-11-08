@@ -11,6 +11,9 @@ tower-lsp = { version = "0.17", default-features = false }
 async-lock = "2"
 # source code spans
 codespan = "0.11"
+# fancy error messages
+miette = "5"
 # workspace members
 source = { path = "../../lang/source" }
 data = { path = "../data" }
+miette_util = { path = "../miette_util" }

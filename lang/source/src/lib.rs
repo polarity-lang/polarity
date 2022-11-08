@@ -7,7 +7,7 @@ use codespan::{FileId, Files};
 use data::HashMap;
 
 use info::collect_info;
-use result::Error;
+pub use result::Error;
 
 mod asserts;
 mod index;

@@ -1,21 +1,11 @@
 use tower_lsp::lsp_types;
 
-pub trait ToCodespan {
-    type Target;
+use super::{FromLsp, ToLsp};
 
-    fn to_codespan(self) -> Self::Target;
-}
-
-pub trait ToLsp {
-    type Target;
-
-    fn to_lsp(self) -> Self::Target;
-}
-
-impl ToCodespan for lsp_types::Position {
+impl FromLsp for lsp_types::Position {
     type Target = codespan::Location;
 
-    fn to_codespan(self) -> Self::Target {
+    fn from_lsp(self) -> Self::Target {
         codespan::Location { line: self.line.into(), column: self.character.into() }
     }
 }

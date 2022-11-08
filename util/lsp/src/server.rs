@@ -4,11 +4,11 @@ use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
 use async_lock::RwLock;
 
-use data::result::Extract;
 use source::{Database, File, Xfunc};
 
 use super::capabilities::*;
 use super::conversion::*;
+use super::diagnostics::*;
 
 pub struct Server {
     pub client: tower_lsp::Client,
@@ -41,14 +41,11 @@ impl LanguageServer for Server {
         let mut db = self.database.write().await;
         let file =
             File { name: text_document.uri.to_string(), source: text_document.text, index: true };
-        let (msg_t, msg) = db
-            .add(file)
-            .load()
-            .map(|_| format!("Loaded successfully: {}", text_document.uri.as_str()))
-            .map(|msg| (MessageType::INFO, msg))
-            .map_err(|msg| (MessageType::ERROR, msg.to_string()))
-            .extract();
-        self.client.log_message(msg_t, msg).await;
+        let mut view = db.add(file);
+
+        let res = view.load();
+        let diags = view.query().diagnostics(res);
+        self.send_diagnostics(text_document.uri, diags).await;
     }
 
     async fn did_change(&self, params: lsp::DidChangeTextDocumentParams) {
@@ -56,15 +53,12 @@ impl LanguageServer for Server {
         let mut content_changes = params.content_changes;
         let mut db = self.database.write().await;
         let text = content_changes.drain(0..).next().unwrap().text;
-        let (msg_t, msg) = db
-            .get_mut(text_document.uri.as_str())
-            .unwrap()
-            .update(text)
-            .map(|_| format!("Loaded successfully: {}", text_document.uri.as_str()))
-            .map(|msg| (MessageType::INFO, msg))
-            .map_err(|msg| (MessageType::ERROR, msg.to_string()))
-            .extract();
-        self.client.log_message(msg_t, msg).await;
+
+        let mut view = db.get_mut(text_document.uri.as_str()).unwrap();
+
+        let res = view.update(text);
+        let diags = view.query().diagnostics(res);
+        self.send_diagnostics(text_document.uri, diags).await;
     }
 
     async fn hover(&self, params: HoverParams) -> jsonrpc::Result<Option<Hover>> {
@@ -73,8 +67,7 @@ impl LanguageServer for Server {
         let pos = pos_params.position;
         let db = self.database.read().await;
         let index = db.get(text_document.uri.as_str()).unwrap();
-        let info =
-            index.location_to_index(pos.to_codespan()).and_then(|idx| index.info_at_index(idx));
+        let info = index.location_to_index(pos.from_lsp()).and_then(|idx| index.info_at_index(idx));
         let res = info.map(|info| {
             let range = info.span.and_then(|span| index.span_to_locations(span)).map(ToLsp::to_lsp);
             Hover {
@@ -97,8 +90,8 @@ impl LanguageServer for Server {
 
         let db = self.database.read().await;
         let index = db.get(text_document.uri.as_str()).unwrap();
-        let span_start = index.location_to_index(range.start.to_codespan());
-        let span_end = index.location_to_index(range.end.to_codespan());
+        let span_start = index.location_to_index(range.start.from_lsp());
+        let span_end = index.location_to_index(range.end.from_lsp());
         let span = span_start.and_then(|start| span_end.map(|end| codespan::Span::new(start, end)));
         let item = span.and_then(|span| index.item_at_span(span));
 
@@ -126,5 +119,11 @@ impl LanguageServer for Server {
         } else {
             Ok(Some(vec![]))
         }
+    }
+}
+
+impl Server {
+    async fn send_diagnostics(&self, url: Url, diags: Vec<Diagnostic>) {
+        self.client.publish_diagnostics(url, diags, None).await;
     }
 }

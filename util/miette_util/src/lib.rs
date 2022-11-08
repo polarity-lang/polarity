@@ -4,6 +4,13 @@ pub trait ToMiette {
     fn to_miette(self) -> Self::Target;
 }
 
+pub trait FromMiette {
+    type Target;
+
+    #[allow(clippy::wrong_self_convention)]
+    fn from_miette(self) -> Self::Target;
+}
+
 impl ToMiette for codespan::ByteOffset {
     type Target = miette::SourceOffset;
 
@@ -34,5 +41,23 @@ impl<T: ToMiette> ToMiette for Option<T> {
 
     fn to_miette(self) -> Self::Target {
         self.map(ToMiette::to_miette)
+    }
+}
+
+impl FromMiette for miette::SourceOffset {
+    type Target = codespan::ByteIndex;
+
+    fn from_miette(self) -> Self::Target {
+        codespan::ByteIndex(self.offset() as u32)
+    }
+}
+
+impl FromMiette for miette::SourceSpan {
+    type Target = codespan::Span;
+
+    fn from_miette(self) -> Self::Target {
+        let start = codespan::ByteIndex(self.offset() as u32);
+        let end = codespan::ByteIndex((self.offset() + self.len()) as u32);
+        codespan::Span::new(start, end)
     }
 }

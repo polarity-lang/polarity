@@ -903,6 +903,8 @@ dependencies = [
  "codespan",
  "data",
  "lsp-types",
+ "miette",
+ "miette_util",
  "source",
  "tower-lsp",
 ]

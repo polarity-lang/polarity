@@ -1,11 +1,11 @@
 import debounce from "debounce";
 import * as monaco from "monaco-editor-core";
-import { MonacoToProtocolConverter } from "monaco-languageclient";
+import { MonacoToProtocolConverter, PublishDiagnosticsParams } from "monaco-languageclient";
 import * as proto from "vscode-languageserver-protocol";
 
 import Client from "./client";
 import { FromServer, IntoServer } from "./codec";
-import Language from "./language";
+import Language, { protocolToMonaco } from "./language";
 import Server from "./server";
 
 class Environment implements monaco.Environment {
@@ -65,6 +65,15 @@ export default class App {
           text: model.getValue(),
         },
       } as proto.DidOpenTextDocumentParams);
+    });
+
+    client.addMethod(proto.PublishDiagnosticsNotification.type.method, (params) => {
+      const { diagnostics } = params as PublishDiagnosticsParams;
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const markers: monaco.editor.IMarkerData[] = protocolToMonaco.asDiagnostics(diagnostics);
+
+      monaco.editor.setModelMarkers(model, language.id, markers);
     });
 
     async function handleHashChange() {
