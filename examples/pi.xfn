@@ -1,0 +1,11 @@
+codata Fun(a: Type, b: Type) {
+    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+}
+
+codata Pi(a: Type, p: Fun(a, Type)) {
+    Pi(a, p).pi_elim(a: Type, p: Fun(a, Type), x: a) : Type
+}
+
+data Sigma(a: Type, p: Fun(a, Type)) {
+    Exists(a: Type, p: Fun(a, Type), x: a, prf: p.apply(a, Type, x)): Sigma(a, p)
+}
