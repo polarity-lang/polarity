@@ -54,15 +54,29 @@ impl From<lalrpop_util::ParseError<usize, Token<'_>, &'static str>> for ParseErr
                 expected: comma_separated(expected),
             },
             UnrecognizedToken { token, expected } => ParseError::UnrecognizedToken {
-                token: token.1.to_string(),
-                span: (token.0, token.2).into(),
+                token: token.string(),
+                span: token.span(),
                 expected: comma_separated(expected),
             },
-            ExtraToken { token } => ParseError::ExtraToken {
-                token: token.1.to_string(),
-                span: (token.0, token.2).into(),
-            },
+            ExtraToken { token } => {
+                ParseError::ExtraToken { token: token.string(), span: token.span() }
+            }
             User { error } => ParseError::User { error: error.to_owned() },
         }
+    }
+}
+
+trait ToMietteExt {
+    fn string(&self) -> String;
+    fn span(&self) -> SourceSpan;
+}
+
+impl ToMietteExt for (usize, Token<'_>, usize) {
+    fn span(&self) -> SourceSpan {
+        (self.0, self.2 - self.0).into()
+    }
+
+    fn string(&self) -> String {
+        self.1.to_string()
     }
 }
