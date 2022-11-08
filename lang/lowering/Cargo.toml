@@ -12,3 +12,4 @@ thiserror = "1"
 # workspace members
 data = { path = "../../util/data" }
 syntax = { path = "../syntax" }
+miette_util = { path = "../../util/miette_util" }

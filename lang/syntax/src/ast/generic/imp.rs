@@ -95,6 +95,21 @@ impl<P: Phase> AlphaEq for Exp<P> {
     }
 }
 
+impl<P: Phase> HasInfo for Decl<P> {
+    type Info = P::Info;
+
+    fn info(&self) -> &Self::Info {
+        match self {
+            Decl::Data(data) => &data.info,
+            Decl::Codata(codata) => &codata.info,
+            Decl::Ctor(ctor) => &ctor.info,
+            Decl::Dtor(dtor) => &dtor.info,
+            Decl::Def(def) => &def.info,
+            Decl::Codef(codef) => &codef.info,
+        }
+    }
+}
+
 impl<P: Phase> HasInfo for Exp<P> {
     type Info = P::TypeInfo;
 

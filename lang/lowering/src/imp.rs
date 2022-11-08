@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use miette_util::ToMiette;
 use syntax::cst;
 use syntax::named::Named;
 use syntax::ust;
@@ -194,6 +195,7 @@ impl Lower for cst::Ctor {
                         return Err(LoweringError::MustProvideArgs {
                             xtor: name.clone(),
                             typ: typ_name.clone(),
+                            span: info.span.to_miette(),
                         });
                     }
                 }
@@ -226,6 +228,7 @@ impl Lower for cst::Dtor {
                         return Err(LoweringError::MustProvideArgs {
                             xtor: name.clone(),
                             typ: typ_name.clone(),
+                            span: info.span.to_miette(),
                         });
                     }
                 }
@@ -354,7 +357,7 @@ impl Lower for cst::Exp {
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         match self {
-            cst::Exp::Call { info, name, args: subst } => match ctx.lookup(name)? {
+            cst::Exp::Call { info, name, args: subst } => match ctx.lookup(name, info)? {
                 Elem::Bound(lvl) => Ok(ust::Exp::Var {
                     info: info.lower_pure(),
                     name: name.clone(),
@@ -366,9 +369,10 @@ impl Lower for cst::Exp {
                         name: name.to_owned(),
                         args: subst.lower_in_ctx(ctx)?,
                     }),
-                    DeclKind::Def | DeclKind::Dtor { .. } => {
-                        Err(LoweringError::MustUseAsDtor { name: name.to_owned() })
-                    }
+                    DeclKind::Def | DeclKind::Dtor { .. } => Err(LoweringError::MustUseAsDtor {
+                        name: name.to_owned(),
+                        span: info.span.to_miette(),
+                    }),
                     DeclKind::Codef | DeclKind::Ctor { .. } => Ok(ust::Exp::Ctor {
                         info: info.lower_pure(),
                         name: name.to_owned(),
@@ -391,14 +395,18 @@ impl Lower for cst::Exp {
             cst::Exp::Match { info, name, on_exp, body } => Ok(ust::Exp::Match {
                 info: info.lower_pure(),
                 // TODO: Relax this (auto-generate names)
-                name: name.clone().ok_or(LoweringError::UnnamedMatch)?,
+                name: name
+                    .clone()
+                    .ok_or(LoweringError::UnnamedMatch { span: info.span.to_miette() })?,
                 on_exp: on_exp.lower_in_ctx(ctx)?,
                 body: body.lower_in_ctx(ctx)?,
             }),
             cst::Exp::Comatch { info, name, body } => Ok(ust::Exp::Comatch {
                 info: info.lower_pure(),
                 // TODO: Relax this (auto-generate names)
-                name: name.clone().ok_or(LoweringError::UnnamedMatch)?,
+                name: name
+                    .clone()
+                    .ok_or(LoweringError::UnnamedMatch { span: info.span.to_miette() })?,
                 body: body.lower_in_ctx(ctx)?,
             }),
         }

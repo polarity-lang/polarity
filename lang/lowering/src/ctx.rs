@@ -1,4 +1,5 @@
 use data::HashMap;
+use miette_util::ToMiette;
 use syntax::common::*;
 use syntax::cst;
 use syntax::de_bruijn::*;
@@ -35,11 +36,10 @@ impl Ctx {
         }
     }
 
-    pub fn lookup(&self, name: &Ident) -> Result<&Elem, LoweringError> {
-        self.map
-            .get(name)
-            .and_then(|stack| stack.last())
-            .ok_or_else(|| LoweringError::UndefinedIdent { name: name.clone() })
+    pub fn lookup(&self, name: &Ident, info: &cst::Info) -> Result<&Elem, LoweringError> {
+        self.map.get(name).and_then(|stack| stack.last()).ok_or_else(|| {
+            LoweringError::UndefinedIdent { name: name.clone(), span: info.span.to_miette() }
+        })
     }
 
     pub fn decl_kind(&self, name: &Ident) -> &DeclKind {
@@ -90,7 +90,10 @@ impl Ctx {
 
     pub fn add_decl(&mut self, decl: ust::Decl) -> Result<(), LoweringError> {
         match self.decls.map.get(decl.name()) {
-            Some(_) => Err(LoweringError::AlreadyDefined { name: decl.name().clone() }),
+            Some(_) => Err(LoweringError::AlreadyDefined {
+                name: decl.name().clone(),
+                span: decl.info().span.to_miette(),
+            }),
             None => {
                 self.decls.order.push(decl.name().clone());
                 self.decls.map.insert(decl.name().clone(), decl);

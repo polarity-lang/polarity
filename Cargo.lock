@@ -865,6 +865,7 @@ version = "0.1.0"
 dependencies = [
  "data",
  "miette",
+ "miette_util",
  "syntax",
  "thiserror",
 ]
@@ -1001,6 +1002,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "miette_util"
+version = "0.1.0"
+dependencies = [
+ "codespan",
+ "miette",
 ]
 
 [[package]]

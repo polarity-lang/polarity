@@ -5,6 +5,7 @@ members = [
     "util/tracer_macros",
     "util/lsp",
     "util/console",
+    "util/miette_util",
     "lang/syntax",
     "lang/parser",
     "lang/lowering",
