@@ -10,8 +10,81 @@ impl Nat {
     }
 }
 
+data Top { Unit }
+
+impl Top {
+    def Top.todo(a: Type): a {
+        Unit => Unit.todo(a)
+    }
+}
+
+data Typ {
+    FunT(t1: Typ, t2: Typ),
+    VarT(x: Nat),
+}
+
+data Ctx {
+    Nil,
+    Cons(t: Typ, ts: Ctx),
+}
+
+data Elem(x: Nat, t: Typ, ctx: Ctx) {
+    Here(t: Typ, ts: Ctx): Elem(Z, t, Cons(t, ts)),
+    There(x: Nat, t: Typ, t2: Typ, ts: Ctx, prf: Elem(x, t, ts)): Elem(S(x), t, Cons(t2, ts)),
+}
+
+data HasType(ctx: Ctx, e: Exp, t: Typ) {
+    TVar(ctx: Ctx, x: Nat, t: Typ, elem: Elem(x, t, ctx)) : HasType(ctx, Var(x), t),
+    TLam(ctx: Ctx, t1: Typ, t2: Typ, e: Exp, body: HasType(Cons(t1, ctx), e, t2)) : HasType(ctx, Lam(e), FunT(t1, t2)),
+    TApp(ctx: Ctx, t1: Typ, t2: Typ, e1: Exp, e2: Exp,
+         e1_t: HasType(ctx, e1, FunT(t1, t2)),
+         e2_t: HasType(ctx, e2, t1)): HasType(ctx, App(e1, e2), t2),
+}
+
+data IsValue(e: Exp) {
+    -- TODO
+}
+
+data Progress(e: Exp) {
+    -- TODO
+}
+
+data Eval(e1: Exp, e2: Exp) {
+    -- TODO
+}
+
 data Exp {
-    Var(n: Nat),
+    Var(x: Nat),
     Lam(body: Exp),
     App(lhs: Exp, rhs: Exp)
+}
+
+impl Exp {
+    def Exp.subst(x: Nat, e: Exp): Exp {
+        Var(x) => Unit.todo(Exp),
+        Lam(e) => Unit.todo(Exp),
+        App(e1, e2) => Unit.todo(Exp),
+    }
+
+    def Exp.progress(
+        self: Exp,
+        ctx: Ctx, t: Typ,
+        h_t: HasType(ctx, self, t)
+    ): Progress(self)
+    {
+        Var(_) => Unit.todo(Progress(self)),
+        Lam(_) => Unit.todo(Progress(self)),
+        App(_, _) => Unit.todo(Progress(self)),
+    }
+
+    def Exp.preservation(
+        self: Exp,
+        ctx: Ctx, e2: Exp, t: Typ,
+        h_t: HasType(ctx, self, t),
+        h_e: Eval(self, e2)): HasType(ctx, e2, t)
+    {
+        Var(_) => Unit.todo(HasType(ctx, e2, t)),
+        Lam(_) => Unit.todo(HasType(ctx, e2, t)),
+        App(_, _) => Unit.todo(HasType(ctx, e2, t)),
+    }
 }
