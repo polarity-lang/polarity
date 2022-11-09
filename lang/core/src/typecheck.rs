@@ -538,10 +538,10 @@ impl Check for ust::Exp {
             ust::Exp::Match { info, name, on_exp, body } => {
                 let on_exp_out = on_exp.infer(ctx)?;
                 let typ_app = on_exp_out.typ().expect_typ_app()?;
-                let body_out = body.with_scrutinee(typ_app).check(ctx, t.clone())?;
+                let body_out = body.with_scrutinee(typ_app.clone()).check(ctx, t.clone())?;
 
                 tst::Exp::Match {
-                    info: info.with_type(t.clone()),
+                    info: info.with_type_app(typ_app),
                     name: name.clone(),
                     on_exp: on_exp_out,
                     body: body_out,
@@ -549,10 +549,10 @@ impl Check for ust::Exp {
             }
             ust::Exp::Comatch { info, name, body } => {
                 let typ_app = t.expect_typ_app()?;
-                let body_out = body.with_scrutinee(typ_app).infer(ctx)?;
+                let body_out = body.with_scrutinee(typ_app.clone()).infer(ctx)?;
 
                 tst::Exp::Comatch {
-                    info: info.with_type(t.clone()),
+                    info: info.with_type_app(typ_app),
                     name: name.clone(),
                     body: body_out,
                 }
@@ -812,8 +812,8 @@ impl Typed for tst::Exp {
             tst::Exp::Dtor { info, .. } => info.typ.clone(),
             tst::Exp::Anno { info, .. } => info.typ.clone(),
             tst::Exp::Type { info } => info.typ.clone(),
-            tst::Exp::Match { info, .. } => info.typ.clone(),
-            tst::Exp::Comatch { info, .. } => info.typ.clone(),
+            tst::Exp::Match { info, .. } => Rc::new(info.typ.to_exp()),
+            tst::Exp::Comatch { info, .. } => Rc::new(info.typ.to_exp()),
         }
     }
 }

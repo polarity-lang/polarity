@@ -14,6 +14,7 @@ pub struct TST;
 impl generic::Phase for TST {
     type Info = Info;
     type TypeInfo = TypeInfo;
+    type TypeAppInfo = TypeAppInfo;
 
     type VarName = Ident;
 
@@ -64,12 +65,12 @@ impl Info {
 }
 
 impl HasSpan for Info {
-    fn span(&self) -> Option<&Span> {
-        self.span.as_ref()
+    fn span(&self) -> Option<Span> {
+        self.span
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct TypeInfo {
     pub typ: Rc<untyped::Exp>,
     pub span: Option<Span>,
@@ -77,23 +78,42 @@ pub struct TypeInfo {
 
 impl From<Rc<untyped::Exp>> for TypeInfo {
     fn from(typ: Rc<untyped::Exp>) -> Self {
-        TypeInfo { span: typ.span().cloned(), typ }
+        TypeInfo { span: typ.span(), typ }
     }
 }
 
 impl HasSpan for TypeInfo {
-    fn span(&self) -> Option<&Span> {
-        self.span.as_ref()
+    fn span(&self) -> Option<Span> {
+        self.span
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TypeAppInfo {
+    pub typ: untyped::TypApp,
+    pub span: Option<Span>,
+}
+
+impl From<TypeAppInfo> for TypeInfo {
+    fn from(info: TypeAppInfo) -> Self {
+        let TypeAppInfo { typ, span } = info;
+        Self { typ: Rc::new(typ.to_exp()), span }
+    }
+}
+
+impl HasSpan for TypeAppInfo {
+    fn span(&self) -> Option<Span> {
+        self.span
     }
 }
 
 pub trait HasType {
-    fn typ(&self) -> &Rc<untyped::Exp>;
+    fn typ(&self) -> Rc<untyped::Exp>;
 }
 
 impl<T: HasInfo<Info = TypeInfo>> HasType for T {
-    fn typ(&self) -> &Rc<untyped::Exp> {
-        &self.info().typ
+    fn typ(&self) -> Rc<untyped::Exp> {
+        self.info().typ
     }
 }
 
@@ -105,10 +125,15 @@ impl From<untyped::Info> for Info {
 
 pub trait ElabInfoExt {
     fn with_type(&self, typ: Rc<untyped::Exp>) -> TypeInfo;
+    fn with_type_app(&self, typ: untyped::TypApp) -> TypeAppInfo;
 }
 
 impl ElabInfoExt for untyped::Info {
     fn with_type(&self, typ: Rc<untyped::Exp>) -> TypeInfo {
         TypeInfo { typ, span: self.span }
+    }
+
+    fn with_type_app(&self, typ: untyped::TypApp) -> TypeAppInfo {
+        TypeAppInfo { typ, span: self.span }
     }
 }

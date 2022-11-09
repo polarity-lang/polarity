@@ -12,6 +12,7 @@ pub struct UST;
 impl generic::Phase for UST {
     type Info = Info;
     type TypeInfo = Info;
+    type TypeAppInfo = Info;
 
     type VarName = Ident;
 
@@ -56,7 +57,7 @@ impl Info {
 }
 
 impl HasSpan for Info {
-    fn span(&self) -> Option<&Span> {
-        self.span.as_ref()
+    fn span(&self) -> Option<Span> {
+        self.span
     }
 }

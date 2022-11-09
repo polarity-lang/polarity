@@ -98,14 +98,14 @@ impl<P: Phase> AlphaEq for Exp<P> {
 impl<P: Phase> HasInfo for Decl<P> {
     type Info = P::Info;
 
-    fn info(&self) -> &Self::Info {
+    fn info(&self) -> Self::Info {
         match self {
-            Decl::Data(data) => &data.info,
-            Decl::Codata(codata) => &codata.info,
-            Decl::Ctor(ctor) => &ctor.info,
-            Decl::Dtor(dtor) => &dtor.info,
-            Decl::Def(def) => &def.info,
-            Decl::Codef(codef) => &codef.info,
+            Decl::Data(data) => data.info.clone(),
+            Decl::Codata(codata) => codata.info.clone(),
+            Decl::Ctor(ctor) => ctor.info.clone(),
+            Decl::Dtor(dtor) => dtor.info.clone(),
+            Decl::Def(def) => def.info.clone(),
+            Decl::Codef(codef) => codef.info.clone(),
         }
     }
 }
@@ -113,22 +113,22 @@ impl<P: Phase> HasInfo for Decl<P> {
 impl<P: Phase> HasInfo for Exp<P> {
     type Info = P::TypeInfo;
 
-    fn info(&self) -> &Self::Info {
+    fn info(&self) -> Self::Info {
         match self {
-            Exp::Var { info, .. } => info,
-            Exp::TypCtor { info, .. } => info,
-            Exp::Ctor { info, .. } => info,
-            Exp::Dtor { info, .. } => info,
-            Exp::Anno { info, .. } => info,
-            Exp::Type { info } => info,
-            Exp::Match { info, .. } => info,
-            Exp::Comatch { info, .. } => info,
+            Exp::Var { info, .. } => info.clone(),
+            Exp::TypCtor { info, .. } => info.clone(),
+            Exp::Ctor { info, .. } => info.clone(),
+            Exp::Dtor { info, .. } => info.clone(),
+            Exp::Anno { info, .. } => info.clone(),
+            Exp::Type { info } => info.clone(),
+            Exp::Match { info, .. } => info.clone().into(),
+            Exp::Comatch { info, .. } => info.clone().into(),
         }
     }
 }
 
 impl<P: Phase> HasSpan for Exp<P> {
-    fn span(&self) -> Option<&Span> {
+    fn span(&self) -> Option<Span> {
         self.info().span()
     }
 }

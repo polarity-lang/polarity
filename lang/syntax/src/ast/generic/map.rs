@@ -93,10 +93,10 @@ pub trait Mapper<P: Phase> {
     fn map_exp_type(&mut self, info: P::TypeInfo) -> Exp<P> {
         Exp::Type { info }
     }
-    fn map_exp_match(&mut self, info: P::TypeInfo, name: Ident, on_exp: Rc<Exp<P>>, body: Match<P>) -> Exp<P> {
+    fn map_exp_match(&mut self, info: P::TypeAppInfo, name: Ident, on_exp: Rc<Exp<P>>, body: Match<P>) -> Exp<P> {
         Exp::Match { info, name, on_exp, body }
     }
-    fn map_exp_comatch(&mut self, info: P::TypeInfo, name: Ident, body: Comatch<P>) -> Exp<P> {
+    fn map_exp_comatch(&mut self, info: P::TypeAppInfo, name: Ident, body: Comatch<P>) -> Exp<P> {
         Exp::Comatch { info, name, body }
     }
     fn map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
@@ -129,6 +129,9 @@ pub trait Mapper<P: Phase> {
         info
     }
     fn map_type_info(&mut self, info: P::TypeInfo) -> P::TypeInfo {
+        info
+    }
+    fn map_type_app_info(&mut self, info: P::TypeAppInfo) -> P::TypeAppInfo {
         info
     }
     fn map_idx(&mut self, idx: Idx) -> Idx {
@@ -171,6 +174,7 @@ impl<P: Phase> Out for Id<P> {
     type ParamInst = ParamInst<P>;
     type Info = P::Info;
     type TypeInfo = P::TypeInfo;
+    type TypeAppInfo = P::TypeAppInfo;
     type Idx = Idx;
 }
 
@@ -293,11 +297,11 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_exp_type(info)
     }
 
-    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, on_exp: <Id<P> as Out>::Exp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
+    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, on_exp: <Id<P> as Out>::Exp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
         self.map_exp_match(info, name, Rc::new(on_exp), body)
     }
 
-    fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
+    fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
         self.map_exp_comatch(info, name, body)
     }
 
@@ -339,6 +343,10 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
 
     fn fold_type_info(&mut self, info: <P as Phase>::TypeInfo) -> <Id<P> as Out>::TypeInfo {
         self.map_type_info(info)
+    }
+
+    fn fold_type_app_info(&mut self, info: <P as Phase>::TypeAppInfo) -> <Id<P> as Out>::TypeAppInfo {
+        self.map_type_app_info(info)
     }
 
     fn fold_idx(&mut self, idx: Idx) -> <Id<P> as Out>::Idx {

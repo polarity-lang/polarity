@@ -15,6 +15,9 @@ where
     type Info: HasSpan + Clone + fmt::Debug;
     /// Type of the `info` field, containing span and (depending on the phase) type information
     type TypeInfo: HasSpan + Clone + fmt::Debug;
+    /// Type of the `info` field, containing span and (depending on the phase) type information
+    /// where the type is required to be the full application of a type constructor
+    type TypeAppInfo: HasSpan + Clone + Into<Self::TypeInfo> + fmt::Debug;
     /// Type of the `name` field of `Exp::Var`
     type VarName: Clone + fmt::Debug;
 
@@ -243,7 +246,7 @@ pub enum Exp<P: Phase> {
     },
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: P::TypeInfo,
+        info: P::TypeAppInfo,
         name: Ident,
         on_exp: Rc<Exp<P>>,
         // TODO: Ignore this field for PartialEq, Hash?
@@ -251,7 +254,7 @@ pub enum Exp<P: Phase> {
     },
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: P::TypeInfo,
+        info: P::TypeAppInfo,
         name: Ident,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Comatch<P>,
