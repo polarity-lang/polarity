@@ -89,8 +89,8 @@ pub TypDecl: TypDecl = {
 }
 
 pub DefDecl: DefDecl = {
-    <l: @L> "def" <on_typ: TypApp> "." <name: LowerIdent> <params: Telescope> ":" <in_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), name, params, on_typ, in_typ, body }),
-    <l: @L> "codef" <name: UpperIdent> <params: Telescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => DefDecl::Codef(Codef { info: span(l, r), name, params, typ, body }),
+    <l: @L> "def" <on_typ: TypApp> "." <name: LowerIdent> <params: OptTelescope> ":" <in_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), name, params, on_typ, in_typ, body }),
+    <l: @L> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => DefDecl::Codef(Codef { info: span(l, r), name, params, typ, body }),
 }
 
 Ctor: Ctor = {
@@ -136,7 +136,7 @@ pub Exp: Rc<Exp> = {
 }
 
 pub Ops = {
-    <l: @L> <exp: Ops> "." <name: Ident> <args: Args> <r: @R> => Rc::new(Exp::DotCall { info: span(l, r), exp, name, args }),
+    <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> => Rc::new(Exp::DotCall { info: span(l, r), exp, name, args }),
     App,
 }
 
