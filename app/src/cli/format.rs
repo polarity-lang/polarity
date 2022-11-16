@@ -74,7 +74,11 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         None => Box::new(StandardStream::stdout(ColorChoice::Auto)),
     };
 
-    let cfg = PrintCfg { width, braces: if cmd.latex { ("\\{", "\\}") } else { ("{", "}") } };
+    let cfg = PrintCfg {
+        width,
+        braces: if cmd.latex { ("\\{", "\\}") } else { ("{", "}") },
+        omit_decl_sep: if cmd.latex { true } else { false },
+    };
     if cmd.latex {
         stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
         {

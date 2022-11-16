@@ -17,7 +17,12 @@ impl<'a, P: Phase> Print<'a> for Prg<P> {
                 let top = if decls.is_empty() {
                     alloc.nil()
                 } else {
-                    decls.print(cfg, alloc).append(alloc.hardline()).append(alloc.hardline())
+                    let sep = if cfg.omit_decl_sep {
+                        alloc.hardline()
+                    } else {
+                        alloc.hardline().append(alloc.hardline())
+                    };
+                    decls.print(cfg, alloc).append(sep)
                 };
                 top.append(exp.print(cfg, alloc))
             }
@@ -34,7 +39,7 @@ impl<'a, P: Phase> Print<'a> for Decls<P> {
             .map(|name| &map[name])
             .filter(|x| matches!(x, Decl::Data(_) | Decl::Codata(_)))
             .map(|x| x.print_in_ctx(cfg, self, alloc));
-        let sep = alloc.line().append(alloc.line());
+        let sep = if cfg.omit_decl_sep { alloc.line() } else { alloc.line().append(alloc.line()) };
         alloc.intersperse(decls_in_order, sep)
     }
 }
