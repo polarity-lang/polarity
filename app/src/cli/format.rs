@@ -77,7 +77,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let cfg = PrintCfg {
         width,
         braces: if cmd.latex { ("\\{", "\\}") } else { ("{", "}") },
-        omit_decl_sep: if cmd.latex { true } else { false },
+        omit_decl_sep: cmd.latex,
     };
     if cmd.latex {
         stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();

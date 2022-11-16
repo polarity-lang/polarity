@@ -3,7 +3,7 @@ use std::process::{Command, Stdio};
 fn get_version_string() -> String {
     let child = Command::new("git")
         .stdout(Stdio::piped())
-        .args(&["describe", "--tags", "--always"])
+        .args(["describe", "--tags", "--always"])
         .spawn()
         .unwrap();
 
