@@ -41,10 +41,12 @@ impl<'a, T: Print<'a>, E: Error> Print<'a> for Result<T, E> {
 pub struct PrintCfg {
     pub width: usize,
     pub braces: (&'static str, &'static str),
+    /// Whether to omit the empty line between toplevel declarations.
+    pub omit_decl_sep: bool,
 }
 
 impl Default for PrintCfg {
     fn default() -> Self {
-        Self { width: crate::DEFAULT_WIDTH, braces: ("{", "}") }
+        Self { width: crate::DEFAULT_WIDTH, braces: ("{", "}"), omit_decl_sep: false }
     }
 }

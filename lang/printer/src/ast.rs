@@ -17,7 +17,12 @@ impl<'a, P: Phase> Print<'a> for Prg<P> {
                 let top = if decls.is_empty() {
                     alloc.nil()
                 } else {
-                    decls.print(cfg, alloc).append(alloc.hardline()).append(alloc.hardline())
+                    let sep = if cfg.omit_decl_sep {
+                        alloc.hardline()
+                    } else {
+                        alloc.hardline().append(alloc.hardline())
+                    };
+                    decls.print(cfg, alloc).append(sep)
                 };
                 top.append(exp.print(cfg, alloc))
             }
@@ -34,7 +39,7 @@ impl<'a, P: Phase> Print<'a> for Decls<P> {
             .map(|name| &map[name])
             .filter(|x| matches!(x, Decl::Data(_) | Decl::Codata(_)))
             .map(|x| x.print_in_ctx(cfg, self, alloc));
-        let sep = alloc.line().append(alloc.line());
+        let sep = if cfg.omit_decl_sep { alloc.line() } else { alloc.line().append(alloc.line()) };
         alloc.intersperse(decls_in_order, sep)
     }
 }
@@ -320,13 +325,21 @@ impl<'a, P: Phase> Print<'a> for Cocase<P> {
 
 impl<'a, P: Phase> Print<'a> for Telescope<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.params.print(cfg, alloc).parens()
+        if self.is_empty() {
+            alloc.nil()
+        } else {
+            self.params.print(cfg, alloc).parens()
+        }
     }
 }
 
 impl<'a, P: Phase> Print<'a> for TelescopeInst<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.params.print(cfg, alloc).parens()
+        if self.params.is_empty() {
+            alloc.nil()
+        } else {
+            self.params.print(cfg, alloc).parens()
+        }
     }
 }
 
@@ -347,7 +360,9 @@ impl<'a, P: Phase> Print<'a> for ParamInst<P> {
 impl<'a, P: Phase> Print<'a> for TypApp<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypApp { info: _, name, args: subst } = self;
-        alloc.typ(name).append(subst.print(cfg, alloc).parens())
+        let typ_app_args =
+            if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+        alloc.typ(name).append(typ_app_args)
     }
 }
 
@@ -356,16 +371,20 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
         match self {
             Exp::Var { info: _, name, idx } => alloc.text(P::print_var(name, *idx)),
             Exp::TypCtor { info: _, name, args: subst } => {
-                alloc.typ(name).append(subst.print(cfg, alloc).parens())
+                let typ_ctor_args =
+                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                alloc.typ(name).append(typ_ctor_args)
             }
             Exp::Ctor { info: _, name, args: subst } => {
-                alloc.ctor(name).append(subst.print(cfg, alloc).parens())
+                let ctor_args =
+                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                alloc.ctor(name).append(ctor_args)
             }
-            Exp::Dtor { info: _, exp, name, args: subst } => exp
-                .print(cfg, alloc)
-                .append(DOT)
-                .append(alloc.dtor(name))
-                .append(subst.print(cfg, alloc).parens()),
+            Exp::Dtor { info: _, exp, name, args: subst } => {
+                let dtor_args =
+                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(dtor_args)
+            }
             Exp::Anno { info: _, exp, typ } => {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
