@@ -360,9 +360,9 @@ impl<'a, P: Phase> Print<'a> for ParamInst<P> {
 impl<'a, P: Phase> Print<'a> for TypApp<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypApp { info: _, name, args: subst } = self;
-        let tyapp_args =
+        let typ_app_args =
             if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
-        alloc.typ(name).append(tyapp_args)
+        alloc.typ(name).append(typ_app_args)
     }
 }
 
@@ -371,9 +371,9 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
         match self {
             Exp::Var { info: _, name, idx } => alloc.text(P::print_var(name, *idx)),
             Exp::TypCtor { info: _, name, args: subst } => {
-                let tyctor_args =
+                let typ_ctor_args =
                     if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
-                alloc.typ(name).append(tyctor_args)
+                alloc.typ(name).append(typ_ctor_args)
             }
             Exp::Ctor { info: _, name, args: subst } => {
                 let ctor_args =
