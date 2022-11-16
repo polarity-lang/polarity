@@ -11,12 +11,36 @@ use crate::result::IOError;
 
 use super::ignore_colors::IgnoreColors;
 
-const LATEX_START: &str = r#"\begin{alltt}
-\footnotesize
-\ttfamily
-"#;
 const LATEX_END: &str = r#"\end{alltt}
 "#;
+
+fn latex_start(fontsize: &Option<FontSize>) -> String {
+    use FontSize::*;
+    let latex_fontsize = match *fontsize {
+        None => "\\scriptsize\n",
+        Some(Tiny) => "\\tiny\n",
+        Some(Scriptsize) => "\\scriptsize\n",
+        Some(Footnotesize) => "\\footnotesize\n",
+        Some(Small) => "\\small\n",
+        Some(Normalsize) => "\\normalsize\n",
+        Some(Large) => "\\large\n",
+    };
+    let mut latex_start_string = "".to_string();
+    latex_start_string.push_str("\\begin{alltt}\n");
+    latex_start_string.push_str(latex_fontsize);
+    latex_start_string.push_str("\\ttfamily\n");
+    latex_start_string
+}
+
+#[derive(clap::ValueEnum, Clone)]
+pub enum FontSize {
+    Tiny,
+    Scriptsize,
+    Footnotesize,
+    Small,
+    Normalsize,
+    Large,
+}
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -26,6 +50,8 @@ pub struct Args {
     latex: bool,
     #[clap(long)]
     width: Option<usize>,
+    #[clap(long)]
+    fontsize: Option<FontSize>,
     #[clap(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
 }
@@ -50,7 +76,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     let cfg = PrintCfg { width, braces: if cmd.latex { ("\\{", "\\}") } else { ("{", "}") } };
     if cmd.latex {
-        stream.write_all(LATEX_START.as_bytes()).unwrap();
+        stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
         {
             let mut stream = LatexWriter::new(&mut stream);
             print_prg(prg, &cfg, &mut stream)
