@@ -1,8 +1,6 @@
 use std::fs::File;
-use std::io::Write;
 use std::path::PathBuf;
 
-use printer::latex::LatexWriter;
 use printer::{ColorChoice, PrintCfg, PrintExt, StandardStream, WriteColor};
 use source::Database;
 use syntax::ust;
@@ -11,47 +9,12 @@ use crate::result::IOError;
 
 use super::ignore_colors::IgnoreColors;
 
-const LATEX_END: &str = r#"\end{alltt}
-"#;
-
-fn latex_start(fontsize: &Option<FontSize>) -> String {
-    use FontSize::*;
-    let latex_fontsize = match *fontsize {
-        None => "\\scriptsize\n",
-        Some(Tiny) => "\\tiny\n",
-        Some(Scriptsize) => "\\scriptsize\n",
-        Some(Footnotesize) => "\\footnotesize\n",
-        Some(Small) => "\\small\n",
-        Some(Normalsize) => "\\normalsize\n",
-        Some(Large) => "\\large\n",
-    };
-    let mut latex_start_string = "".to_string();
-    latex_start_string.push_str("\\begin{alltt}\n");
-    latex_start_string.push_str(latex_fontsize);
-    latex_start_string.push_str("\\ttfamily\n");
-    latex_start_string
-}
-
-#[derive(clap::ValueEnum, Clone)]
-pub enum FontSize {
-    Tiny,
-    Scriptsize,
-    Footnotesize,
-    Small,
-    Normalsize,
-    Large,
-}
-
 #[derive(clap::Args)]
 pub struct Args {
     #[clap(value_parser, value_name = "FILE")]
     filepath: PathBuf,
-    #[clap(long, num_args = 0)]
-    latex: bool,
     #[clap(long)]
     width: Option<usize>,
-    #[clap(long)]
-    fontsize: Option<FontSize>,
     #[clap(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
 }
@@ -64,8 +27,6 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     let prg = view.ust().map_err(|err| view.pretty_error(err))?;
 
-    let width = cmd.width.unwrap_or_else(terminal_width);
-
     // Write to file or to stdout
     let mut stream: Box<dyn WriteColor> = match cmd.output {
         Some(path) => {
@@ -75,20 +36,12 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     };
 
     let cfg = PrintCfg {
-        width,
-        braces: if cmd.latex { ("\\{", "\\}") } else { ("{", "}") },
-        omit_decl_sep: cmd.latex,
+        width: cmd.width.unwrap_or_else(terminal_width),
+        braces: ("{", "}"),
+        omit_decl_sep: false,
     };
-    if cmd.latex {
-        stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
-        {
-            let mut stream = LatexWriter::new(&mut stream);
-            print_prg(prg, &cfg, &mut stream)
-        }
-        stream.write_all(LATEX_END.as_bytes()).unwrap();
-    } else {
-        print_prg(prg, &cfg, &mut stream)
-    }
+
+    print_prg(prg, &cfg, &mut stream);
 
     Ok(())
 }

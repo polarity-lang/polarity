@@ -4,6 +4,7 @@ mod format;
 mod ignore_colors;
 mod run;
 mod xfunc;
+mod texify;
 
 pub fn exec() -> miette::Result<()> {
     use Command::*;
@@ -12,6 +13,7 @@ pub fn exec() -> miette::Result<()> {
     match cli.command {
         Run(args) => run::exec(args),
         Fmt(args) => format::exec(args),
+        Texify(args) => texify::exec(args),
         Xfunc(args) => xfunc::exec(args),
     }
 }
@@ -30,8 +32,10 @@ struct Cli {
 enum Command {
     /// Run a source code file
     Run(run::Args),
-    /// Format/pretty-print a code file
+    /// Format a code file
     Fmt(format::Args),
+    /// Render a code file as a latex document
+    Texify(texify::Args),
     /// De-/Refunctionalize a type in a code file
     Xfunc(xfunc::Args),
 }
