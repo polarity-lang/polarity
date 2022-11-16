@@ -1,1 +1,1 @@
-Foo(False()) is not equal to Foo(True())
+Foo(False) is not equal to Foo(True)
