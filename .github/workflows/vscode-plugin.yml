@@ -1,0 +1,29 @@
+name: vscode-plugin
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ext/vscode/**'
+      - '.github/workflows/vscode-plugin.yml'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      working-directory: ./ext/vscode
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          npm install
+          npm install -g vsce
+          vsce package
+        working-directory: ${{env.working-directory}}
+      - name: Upload VSIX file
+        uses: marvinpinto/action-automatic-releases@v1.2.1
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: false
+          title: "VSCode Extension"
+          files: |
+            ext/vscode/xfn-0.0.1.vsix
