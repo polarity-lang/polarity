@@ -1,9 +1,9 @@
 pub mod ast;
 pub mod common;
 pub mod cst;
+pub mod ctx;
 pub mod de_bruijn;
 pub mod equiv;
-pub mod leveled_ctx;
 pub mod matrix;
 pub mod named;
 pub mod tst;

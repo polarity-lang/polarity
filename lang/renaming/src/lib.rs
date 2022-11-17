@@ -2,6 +2,8 @@
 mod ast;
 mod ctx;
 
+use syntax::ctx::Context;
+
 pub use ctx::Ctx;
 
 pub trait Rename: Sized {

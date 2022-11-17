@@ -7,11 +7,20 @@ use crate::common::*;
 use crate::de_bruijn::*;
 
 use super::def::*;
+use super::source::Source;
+
+pub fn id<P: Phase>() -> Id<P> {
+    Id::default()
+}
 
 #[rustfmt::skip]
 pub trait Folder<P: Phase, O: Out> {
+    /// Run just before a declaration is entered
+    fn enter_decl(&mut self, decl: &Decl<P>) { let _ = decl; }
+
     fn fold_prg(&mut self, decls: O::Decls, exp: Option<O::Exp>) -> O::Prg;
-    fn fold_decls(&mut self, map: HashMap<Ident, O::Decl>, order: Vec<Ident>) -> O::Decls;
+    fn fold_decls(&mut self, map: HashMap<Ident, O::Decl>, order: Source) -> O::Decls;
+    fn fold_decl(&mut self, decl: O::Decl) -> O::Decl;
     fn fold_decl_data(&mut self, data: O::Data) -> O::Decl;
     fn fold_decl_codata(&mut self, codata: O::Codata) -> O::Decl;
     fn fold_decl_ctor(&mut self, ctor: O::Ctor) -> O::Decl;
@@ -37,7 +46,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_exp_dtor(&mut self, info: O::TypeInfo, exp: O::Exp, name: Ident, args: Vec<O::Exp>) -> O::Exp;
     fn fold_exp_anno(&mut self, info: O::TypeInfo, exp: O::Exp, typ: O::Exp) -> O::Exp;
     fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
-    fn fold_exp_match(&mut self, info: O::TypeAppInfo, name: Ident, on_exp: O::Exp, body: O::Match) -> O::Exp;
+    fn fold_exp_match(&mut self, info: O::TypeAppInfo, name: Ident, on_exp: O::Exp, in_typ: O::Typ, body: O::Match) -> O::Exp;
     fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, name: Ident, body: O::Comatch) -> O::Exp;
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
@@ -52,11 +61,12 @@ pub trait Folder<P: Phase, O: Out> {
         F2: FnOnce(&mut Self, O::TelescopeInst) -> X
     ;
     fn fold_param(&mut self, name: Ident, typ: O::Exp) -> O::Param;
-    fn fold_param_inst(&mut self, info: O::TypeInfo, name: Ident) -> O::ParamInst;
+    fn fold_param_inst(&mut self, info: O::TypeInfo, name: Ident, typ: O::Typ) -> O::ParamInst;
     fn fold_info(&mut self, info: P::Info) -> O::Info;
     fn fold_type_info(&mut self, info: P::TypeInfo) -> O::TypeInfo;
     fn fold_type_app_info(&mut self, info: P::TypeAppInfo) -> O::TypeAppInfo;
     fn fold_idx(&mut self, idx: Idx) -> O::Idx;
+    fn fold_typ(&mut self, typ: P::Typ) -> O::Typ;
 }
 
 pub trait Fold<P: Phase, O: Out> {
@@ -93,8 +103,10 @@ pub trait Out {
     type TypeInfo;
     type TypeAppInfo;
     type Idx;
+    type Typ;
 }
 
+#[derive(Default)]
 pub struct Id<P: Phase> {
     phantom: PhantomData<P>,
 }
@@ -115,7 +127,7 @@ impl<P: Phase> Out for Id<P> {
     type Comatch = Comatch<P>;
     type Case = Case<P>;
     type Cocase = Cocase<P>;
-    type TypApp = Rc<TypApp<P>>;
+    type TypApp = TypApp<P>;
     type Exp = Rc<Exp<P>>;
     type Telescope = Telescope<P>;
     type TelescopeInst = TelescopeInst<P>;
@@ -125,6 +137,7 @@ impl<P: Phase> Out for Id<P> {
     type TypeInfo = P::TypeInfo;
     type TypeAppInfo = P::TypeAppInfo;
     type Idx = Idx;
+    type Typ = P::Typ;
 }
 
 pub struct Const<T> {
@@ -157,6 +170,7 @@ impl<T> Out for Const<T> {
     type TypeInfo = T;
     type TypeAppInfo = T;
     type Idx = T;
+    type Typ = T;
 }
 
 impl<P: Phase, O: Out, T: Fold<P, O> + Clone> Fold<P, O> for Rc<T> {
@@ -214,9 +228,9 @@ impl<P: Phase, O: Out> Fold<P, O> for Decls<P> {
     where
         F: Folder<P, O>,
     {
-        let Decls { map, order } = self;
+        let Decls { map, source } = self;
         let map = map.into_iter().map(|(name, decl)| (name, decl.fold(f))).collect();
-        f.fold_decls(map, order)
+        f.fold_decls(map, source)
     }
 }
 
@@ -227,7 +241,8 @@ impl<P: Phase, O: Out> Fold<P, O> for Decl<P> {
     where
         F: Folder<P, O>,
     {
-        match self {
+        f.enter_decl(&self);
+        let decl_out = match self {
             Decl::Data(inner) => {
                 let inner = inner.fold(f);
                 f.fold_decl_data(inner)
@@ -252,7 +267,8 @@ impl<P: Phase, O: Out> Fold<P, O> for Decl<P> {
                 let inner = inner.fold(f);
                 f.fold_decl_codef(inner)
             }
-        }
+        };
+        f.fold_decl(decl_out)
     }
 }
 
@@ -499,11 +515,12 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
                 let info = f.fold_type_info(info);
                 f.fold_exp_type(info)
             }
-            Exp::Match { info, name, on_exp, body } => {
+            Exp::Match { info, name, on_exp, in_typ, body } => {
                 let info = f.fold_type_app_info(info);
                 let on_exp = on_exp.fold(f);
                 let body = body.fold(f);
-                f.fold_exp_match(info, name, on_exp, body)
+                let in_typ = f.fold_typ(in_typ);
+                f.fold_exp_match(info, name, on_exp, in_typ, body)
             }
             Exp::Comatch { info, name, body } => {
                 let info = f.fold_type_app_info(info);
@@ -534,8 +551,9 @@ impl<P: Phase, O: Out> Fold<P, O> for ParamInst<P> {
     where
         F: Folder<P, O>,
     {
-        let ParamInst { info, name } = self;
+        let ParamInst { info, name, typ } = self;
         let info = f.fold_type_info(info);
-        f.fold_param_inst(info, name)
+        let typ = f.fold_typ(typ);
+        f.fold_param_inst(info, name, typ)
     }
 }

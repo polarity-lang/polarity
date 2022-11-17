@@ -8,6 +8,7 @@ pub use pretty::termcolor::StandardStream;
 pub use pretty::termcolor::WriteColor;
 
 mod ast;
+mod ctx;
 mod de_bruijn;
 pub mod latex;
 mod print_to_string;

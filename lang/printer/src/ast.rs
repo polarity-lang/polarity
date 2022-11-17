@@ -33,14 +33,14 @@ impl<'a, P: Phase> Print<'a> for Prg<P> {
 
 impl<'a, P: Phase> Print<'a> for Decls<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Decls { map, order } = self;
-        let decls_in_order = order
-            .iter()
-            .map(|name| &map[name])
-            .filter(|x| matches!(x, Decl::Data(_) | Decl::Codata(_)))
-            .map(|x| x.print_in_ctx(cfg, self, alloc));
+        let items = self.iter().map(|item| match item {
+            Item::Data(data) => data.print_in_ctx(cfg, self, alloc),
+            Item::Codata(codata) => codata.print_in_ctx(cfg, self, alloc),
+            Item::Impl(impl_block) => impl_block.print_in_ctx(cfg, self, alloc),
+        });
+
         let sep = if cfg.omit_decl_sep { alloc.line() } else { alloc.line().append(alloc.line()) };
-        alloc.intersperse(decls_in_order, sep)
+        alloc.intersperse(items, sep)
     }
 }
 
@@ -54,30 +54,8 @@ impl<'a, P: Phase> PrintInCtx<'a> for Decl<P> {
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
         match self {
-            Decl::Data(data) => {
-                let impl_block = &data.impl_block;
-                let data = data.print_in_ctx(cfg, ctx, alloc);
-
-                match impl_block {
-                    Some(block) => data
-                        .append(alloc.hardline())
-                        .append(alloc.hardline())
-                        .append(block.print_in_ctx(cfg, ctx, alloc)),
-                    None => data,
-                }
-            }
-            Decl::Codata(codata) => {
-                let impl_block = &codata.impl_block;
-                let codata = codata.print_in_ctx(cfg, ctx, alloc);
-
-                match impl_block {
-                    Some(block) => codata
-                        .append(alloc.hardline())
-                        .append(alloc.hardline())
-                        .append(block.print_in_ctx(cfg, ctx, alloc)),
-                    None => codata,
-                }
-            }
+            Decl::Data(data) => data.print_in_ctx(cfg, ctx, alloc),
+            Decl::Codata(codata) => codata.print_in_ctx(cfg, ctx, alloc),
             Decl::Def(def) => def.print(cfg, alloc),
             Decl::Codef(codef) => codef.print(cfg, alloc),
             Decl::Ctor(ctor) => ctor.print(cfg, alloc),
@@ -336,7 +314,7 @@ impl<'a, P: Phase> Print<'a> for Param<P> {
 
 impl<'a, P: Phase> Print<'a> for ParamInst<P> {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let ParamInst { info: _, name } = self;
+        let ParamInst { info: _, name, typ: _ } = self;
         alloc.text(name)
     }
 }
@@ -367,7 +345,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
             Exp::Type { info: _ } => alloc.typ(TYPE),
-            Exp::Match { info: _, name, on_exp, body } => on_exp
+            Exp::Match { info: _, name, on_exp, in_typ: _, body } => on_exp
                 .print(cfg, alloc)
                 .append(DOT)
                 .append(alloc.keyword(MATCH))

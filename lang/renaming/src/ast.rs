@@ -1,5 +1,6 @@
 use syntax::ast::*;
 use syntax::common::*;
+use syntax::ctx::*;
 use syntax::de_bruijn::*;
 
 use crate::Rename;
@@ -7,48 +8,26 @@ use crate::Rename;
 use super::ctx::*;
 
 impl<P: Phase<VarName = Ident>> Mapper<P> for Ctx {
-    fn map_telescope_inst<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
-    where
-        I: IntoIterator<Item = ParamInst<P>>,
-        F1: Fn(&mut Self, ParamInst<P>) -> ParamInst<P>,
-        F2: FnOnce(&mut Self, TelescopeInst<P>) -> X,
-    {
-        self.bind_fold(
-            params.into_iter(),
-            Vec::new(),
-            |ctx, mut params_out, param| {
-                params_out.push(f_acc(ctx, param));
-                params_out
-            },
-            |ctx, params| {
-                let params = TelescopeInst { params };
-                f_inner(ctx, params)
-            },
-        )
-    }
-
     fn map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
         I: IntoIterator<Item = Param<P>>,
         F1: Fn(&mut Self, Param<P>) -> Param<P>,
         F2: FnOnce(&mut Self, Telescope<P>) -> X,
     {
-        self.bind_fold(
-            params.into_iter(),
-            Vec::new(),
-            |ctx, mut params_out, param| {
-                params_out.push(f_acc(ctx, param));
-                params_out
-            },
-            |ctx, params| {
-                let params = Telescope { params };
-                f_inner(ctx, params)
-            },
-        )
+        self.ctx_map_telescope(params, f_acc, f_inner)
+    }
+
+    fn map_telescope_inst<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
+    where
+        I: IntoIterator<Item = ParamInst<P>>,
+        F1: Fn(&mut Self, ParamInst<P>) -> ParamInst<P>,
+        F2: FnOnce(&mut Self, TelescopeInst<P>) -> X,
+    {
+        self.ctx_map_telescope_inst(params, f_acc, f_inner)
     }
 
     fn map_exp_var(&mut self, info: P::TypeInfo, _name: P::VarName, idx: Idx) -> Exp<P> {
-        Exp::Var { info, name: self.bound(idx), idx }
+        Exp::Var { info, name: self.lookup(idx), idx }
     }
 }
 

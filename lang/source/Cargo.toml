@@ -10,6 +10,8 @@ edition = "2021"
 codespan = "0.11"
 # index of source code intervals
 rust-lapper = "1"
+# text rope
+ropey = "1"
 # fancy error messages
 miette = "5"
 thiserror = "1"
@@ -22,3 +24,4 @@ core = { path = "../core" }
 printer = { path = "../printer" }
 renaming = { path = "../renaming" }
 xfunc = { path = "../xfunc" }
+lifting = { path = "../lifting" }

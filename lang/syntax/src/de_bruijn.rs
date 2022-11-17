@@ -25,7 +25,7 @@ pub struct Idx {
 /// term and the binder list it originated from.
 /// The second component counts the number of binders in that binder list between the start
 /// of the binder list and the binder this variable originated from.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Lvl {
     pub fst: usize,
     pub snd: usize,
@@ -34,6 +34,27 @@ pub struct Lvl {
 impl Lvl {
     pub fn here() -> Self {
         Self { fst: 0, snd: 0 }
+    }
+}
+
+/// Either a De-Bruijn level or an index
+///
+/// Used to support lookup with both representations using the same interface
+#[derive(Debug, Clone, Copy)]
+pub enum Var {
+    Lvl(Lvl),
+    Idx(Idx),
+}
+
+impl From<Idx> for Var {
+    fn from(idx: Idx) -> Self {
+        Var::Idx(idx)
+    }
+}
+
+impl From<Lvl> for Var {
+    fn from(lvl: Lvl) -> Self {
+        Var::Lvl(lvl)
     }
 }
 
@@ -46,6 +67,18 @@ impl Lvl {
 pub trait Leveled {
     fn idx_to_lvl(&self, idx: Idx) -> Lvl;
     fn lvl_to_idx(&self, lvl: Lvl) -> Idx;
+    fn var_to_lvl(&self, var: Var) -> Lvl {
+        match var {
+            Var::Lvl(lvl) => lvl,
+            Var::Idx(idx) => self.idx_to_lvl(idx),
+        }
+    }
+    fn var_to_idx(&self, var: Var) -> Idx {
+        match var {
+            Var::Lvl(lvl) => self.lvl_to_idx(lvl),
+            Var::Idx(idx) => idx,
+        }
+    }
 }
 
 /// De-Bruijn shifting
@@ -110,5 +143,14 @@ impl fmt::Display for Idx {
 impl fmt::Display for Lvl {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}.{}", self.fst, self.snd)
+    }
+}
+
+impl fmt::Display for Var {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Var::Lvl(lvl) => write!(f, "lvl:{lvl}"),
+            Var::Idx(idx) => write!(f, "idx:{idx}"),
+        }
     }
 }

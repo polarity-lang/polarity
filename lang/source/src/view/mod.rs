@@ -1,10 +1,12 @@
 use codespan::FileId;
 
+mod edit;
 mod rt;
 mod spans;
 mod xfunc;
 
 pub use self::xfunc::*;
+pub use edit::*;
 pub use rt::*;
 pub use spans::*;
 

@@ -6,12 +6,14 @@ use crate::common::*;
 use crate::de_bruijn::*;
 
 use super::def::*;
+use super::source::Source;
 
 #[rustfmt::skip]
 #[allow(unused_variables)]
 pub trait Visitor<P: Phase> {
     fn visit_prg(&mut self, decls: &Decls<P>, exp: &Option<Rc<Exp<P>>>) {}
-    fn visit_decls(&mut self, map: &HashMap<Ident, Decl<P>>, order: &[Ident]) {}
+    fn visit_decls(&mut self, map: &HashMap<Ident, Decl<P>>, source: &Source) {}
+    fn visit_decl(&mut self, decl: &Decl<P>) {}
     fn visit_decl_data(&mut self, data: &Data<P>) {}
     fn visit_decl_codata(&mut self, codata: &Codata<P>) {}
     fn visit_decl_ctor(&mut self, ctor: &Ctor<P>) {}
@@ -37,7 +39,7 @@ pub trait Visitor<P: Phase> {
     fn visit_exp_dtor(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, name: &Ident, args: &[Rc<Exp<P>>]) {}
     fn visit_exp_anno(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, typ: &Rc<Exp<P>>) {}
     fn visit_exp_type(&mut self, info: &P::TypeInfo) {}
-    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &Ident, on_exp: &Rc<Exp<P>>, body: &Match<P>) {}
+    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &Ident, on_exp: &Rc<Exp<P>>, in_typ: &P::Typ, body: &Match<P>) {}
     fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, name: &Ident, body: &Comatch<P>) {}
     fn visit_telescope<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
     where
@@ -64,11 +66,12 @@ pub trait Visitor<P: Phase> {
         f_inner(self)
     }
     fn visit_param(&mut self, name: &Ident, typ: &Rc<Exp<P>>) {}
-    fn visit_param_inst(&mut self, info: &P::TypeInfo, name: &Ident) {}
+    fn visit_param_inst(&mut self, info: &P::TypeInfo, name: &Ident, typ: &P::Typ) {}
     fn visit_info(&mut self, info: &P::Info) {}
     fn visit_type_info(&mut self, info: &P::TypeInfo) {}
     fn visit_type_app_info(&mut self, info: &P::TypeAppInfo) {}
     fn visit_idx(&mut self, idx: &Idx) {}
+    fn visit_typ(&mut self, typ: &P::Typ) {}
 }
 
 pub trait Visit<P: Phase> {
@@ -125,11 +128,11 @@ impl<P: Phase> Visit<P> for Decls<P> {
     where
         V: Visitor<P>,
     {
-        let Decls { map, order } = self;
+        let Decls { map, source } = self;
         for decl in map.values() {
             decl.visit(v)
         }
-        v.visit_decls(map, order)
+        v.visit_decls(map, source)
     }
 }
 
@@ -164,6 +167,7 @@ impl<P: Phase> Visit<P> for Decl<P> {
                 v.visit_decl_codef(inner)
             }
         }
+        v.visit_decl(self)
     }
 }
 
@@ -384,11 +388,12 @@ impl<P: Phase> Visit<P> for Exp<P> {
                 v.visit_type_info(info);
                 v.visit_exp_type(info)
             }
-            Exp::Match { info, name, on_exp, body } => {
+            Exp::Match { info, name, on_exp, in_typ, body } => {
                 v.visit_type_app_info(info);
                 on_exp.visit(v);
                 body.visit(v);
-                v.visit_exp_match(info, name, on_exp, body)
+                v.visit_typ(in_typ);
+                v.visit_exp_match(info, name, on_exp, in_typ, body)
             }
             Exp::Comatch { info, name, body } => {
                 v.visit_type_app_info(info);
@@ -415,8 +420,9 @@ impl<P: Phase> Visit<P> for ParamInst<P> {
     where
         V: Visitor<P>,
     {
-        let ParamInst { info, name } = self;
+        let ParamInst { info, name, typ } = self;
         v.visit_type_info(info);
-        v.visit_param_inst(info, name)
+        v.visit_typ(typ);
+        v.visit_param_inst(info, name, typ)
     }
 }

@@ -1,7 +1,7 @@
 use data::HashMap;
 use syntax::ast::SwapWithCtx;
 use syntax::common::*;
-use syntax::leveled_ctx::LeveledCtx;
+use syntax::ctx::{Bind, Context, LevelCtx};
 use syntax::matrix;
 use syntax::named::Named;
 use syntax::ust;
@@ -144,10 +144,12 @@ impl BuildMatrix for ust::Codef {
             let key = matrix::Key { ctor: self.name.clone(), dtor: name.clone() };
             // Swap binding order to the order imposed by the matrix representation
             let body = body.as_ref().map(|body| {
-                let mut ctx = LeveledCtx::empty();
+                let mut ctx = LevelCtx::empty();
                 // TODO: Reconsider where to swap this
-                ctx.bind(self.params.params.iter(), |ctx| {
-                    ctx.bind(case.args.params.iter(), |ctx| body.swap_with_ctx(ctx, 0, 1))
+                ctx.bind_iter(self.params.params.iter().map(|_| ()), |ctx| {
+                    ctx.bind_iter(case.args.params.iter().map(|_| ()), |ctx| {
+                        body.swap_with_ctx(ctx, 0, 1)
+                    })
                 })
             });
             xdata.exprs.insert(key, body.clone());

@@ -1,7 +1,9 @@
 use std::rc::Rc;
 
 use miette_util::ToMiette;
+use syntax::ast::source;
 use syntax::cst;
+use syntax::ctx::{Bind, Context};
 use syntax::named::Named;
 use syntax::ust;
 
@@ -15,6 +17,7 @@ pub fn lower(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
 
     // Register names and metadata
     let (types, defs) = register_names(&mut ctx, &items[..])?;
+    let source = build_source(items);
 
     // Lower deferred definitions
     for typ in types {
@@ -26,7 +29,36 @@ pub fn lower(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
 
     let exp = exp.lower_in_ctx(&mut ctx)?;
 
-    Ok(ust::Prg { decls: ctx.into_decls(), exp })
+    Ok(ust::Prg { decls: ctx.into_decls(source), exp })
+}
+
+/// Build the structure tracking the declaration order in the source code
+fn build_source(items: &[cst::Item]) -> source::Source {
+    let mut source = source::Source::default();
+
+    for item in items {
+        match item {
+            cst::Item::Type(typ_decl) => match typ_decl {
+                cst::TypDecl::Data(data) => {
+                    let mut typ_decl = source.add_type_decl(data.name.clone());
+                    let xtors = data.ctors.iter().map(|ctor| ctor.name.clone());
+                    typ_decl.set_xtors(xtors);
+                }
+                cst::TypDecl::Codata(codata) => {
+                    let mut typ_decl = source.add_type_decl(codata.name.clone());
+                    let xtors = codata.dtors.iter().map(|ctor| ctor.name.clone());
+                    typ_decl.set_xtors(xtors);
+                }
+            },
+            cst::Item::Impl(impl_block) => {
+                let mut block = source.add_impl_block(impl_block.name.clone());
+                let defs = impl_block.decls.iter().map(|decl| decl.name().clone());
+                block.set_defs(defs);
+            }
+        }
+    }
+
+    source
 }
 
 /// Register names for all top-level declarations
@@ -399,6 +431,7 @@ impl Lower for cst::Exp {
                     .clone()
                     .ok_or(LoweringError::UnnamedMatch { span: info.span.to_miette() })?,
                 on_exp: on_exp.lower_in_ctx(ctx)?,
+                in_typ: (),
                 body: body.lower_in_ctx(ctx)?,
             }),
             cst::Exp::Comatch { info, name, body } => Ok(ust::Exp::Comatch {
@@ -478,7 +511,8 @@ impl LowerTelescope for cst::TelescopeInst {
             |_ctx, params_out, param| {
                 let mut params_out = params_out?;
                 let cst::ParamInst { info, name } = param;
-                let param_out = ust::ParamInst { info: info.lower_pure(), name: name.clone() };
+                let param_out =
+                    ust::ParamInst { info: info.lower_pure(), name: name.clone(), typ: () };
                 params_out.push(param_out);
                 Ok(params_out)
             },

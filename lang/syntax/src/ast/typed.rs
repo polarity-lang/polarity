@@ -2,13 +2,14 @@ use std::rc::Rc;
 
 use codespan::Span;
 
-use crate::common::{HasInfo, HasSpan, Ident};
+use crate::common::*;
 use crate::de_bruijn::Idx;
 
+use super::forget::Forget;
 use super::generic;
 use super::untyped;
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct TST;
 
 impl generic::Phase for TST {
@@ -17,6 +18,7 @@ impl generic::Phase for TST {
     type TypeAppInfo = TypeAppInfo;
 
     type VarName = Ident;
+    type Typ = Typ;
 
     fn print_var(name: &Self::VarName, _idx: Idx) -> String {
         name.clone()
@@ -46,6 +48,21 @@ pub type Params = generic::Params<TST>;
 pub type Args = generic::Args<TST>;
 pub type Param = generic::Param<TST>;
 pub type ParamInst = generic::ParamInst<TST>;
+
+#[derive(Clone, Debug)]
+pub struct Typ(Rc<Exp>);
+
+impl Typ {
+    pub fn as_exp(&self) -> &Rc<Exp> {
+        &self.0
+    }
+}
+
+impl From<Rc<Exp>> for Typ {
+    fn from(exp: Rc<Exp>) -> Self {
+        Self(exp)
+    }
+}
 
 impl From<untyped::Impl> for Impl {
     fn from(untyped::Impl { info, name, defs }: untyped::Impl) -> Self {
@@ -90,14 +107,14 @@ impl HasSpan for TypeInfo {
 
 #[derive(Debug, Clone)]
 pub struct TypeAppInfo {
-    pub typ: untyped::TypApp,
+    pub typ: TypApp,
     pub span: Option<Span>,
 }
 
 impl From<TypeAppInfo> for TypeInfo {
     fn from(info: TypeAppInfo) -> Self {
-        let TypeAppInfo { typ, span } = info;
-        Self { typ: Rc::new(typ.to_exp()), span }
+        let TypeAppInfo { typ, span, .. } = info;
+        Self { typ: Rc::new(typ.forget().to_exp()), span }
     }
 }
 
@@ -107,11 +124,11 @@ impl HasSpan for TypeAppInfo {
     }
 }
 
-pub trait HasType {
+pub trait HasTypeInfo {
     fn typ(&self) -> Rc<untyped::Exp>;
 }
 
-impl<T: HasInfo<Info = TypeInfo>> HasType for T {
+impl<T: HasInfo<Info = TypeInfo>> HasTypeInfo for T {
     fn typ(&self) -> Rc<untyped::Exp> {
         self.info().typ
     }
@@ -125,7 +142,7 @@ impl From<untyped::Info> for Info {
 
 pub trait ElabInfoExt {
     fn with_type(&self, typ: Rc<untyped::Exp>) -> TypeInfo;
-    fn with_type_app(&self, typ: untyped::TypApp) -> TypeAppInfo;
+    fn with_type_app(&self, typ: TypApp) -> TypeAppInfo;
 }
 
 impl ElabInfoExt for untyped::Info {
@@ -133,7 +150,7 @@ impl ElabInfoExt for untyped::Info {
         TypeInfo { typ, span: self.span }
     }
 
-    fn with_type_app(&self, typ: untyped::TypApp) -> TypeAppInfo {
+    fn with_type_app(&self, typ: TypApp) -> TypeAppInfo {
         TypeAppInfo { typ, span: self.span }
     }
 }

@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 mod format;
 mod ignore_colors;
 mod run;
+mod xfunc;
 
 pub fn exec() -> miette::Result<()> {
     use Command::*;
@@ -11,6 +12,7 @@ pub fn exec() -> miette::Result<()> {
     match cli.command {
         Run(args) => run::exec(args),
         Fmt(args) => format::exec(args),
+        Xfunc(args) => xfunc::exec(args),
     }
 }
 
@@ -30,4 +32,6 @@ enum Command {
     Run(run::Args),
     /// Format/pretty-print a code file
     Fmt(format::Args),
+    /// De-/Refunctionalize a type in a code file
+    Xfunc(xfunc::Args),
 }

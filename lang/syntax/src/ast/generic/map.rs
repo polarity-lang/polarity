@@ -1,4 +1,3 @@
-use std::marker::PhantomData;
 use std::rc::Rc;
 
 use data::HashMap;
@@ -7,16 +6,22 @@ use crate::common::*;
 use crate::de_bruijn::*;
 
 use super::def::*;
-
 use super::fold::*;
+use super::source::Source;
 
 #[rustfmt::skip]
 pub trait Mapper<P: Phase> {
+    /// Run just before a declaration is entered
+    fn enter_decl(&mut self, decl: &Decl<P>) { let _ = decl; }
+
     fn map_prg(&mut self, decls: Decls<P>, exp: Option<Rc<Exp<P>>>) -> Prg<P> {
         Prg { decls, exp }
     }
-    fn map_decls(&mut self, map: HashMap<Ident, Decl<P>>, order: Vec<Ident>) -> Decls<P> {
-        Decls { map, order }
+    fn map_decls(&mut self, map: HashMap<Ident, Decl<P>>, source: Source) -> Decls<P> {
+        Decls { map, source }
+    }
+    fn map_decl(&mut self, decl: Decl<P>) -> Decl<P> {
+        decl
     }
     fn map_decl_data(&mut self, data: Data<P>) -> Decl<P> {
         Decl::Data(data)
@@ -93,8 +98,8 @@ pub trait Mapper<P: Phase> {
     fn map_exp_type(&mut self, info: P::TypeInfo) -> Exp<P> {
         Exp::Type { info }
     }
-    fn map_exp_match(&mut self, info: P::TypeAppInfo, name: Ident, on_exp: Rc<Exp<P>>, body: Match<P>) -> Exp<P> {
-        Exp::Match { info, name, on_exp, body }
+    fn map_exp_match(&mut self, info: P::TypeAppInfo, name: Ident, on_exp: Rc<Exp<P>>, in_typ: P::Typ, body: Match<P>) -> Exp<P> {
+        Exp::Match { info, name, on_exp, in_typ, body }
     }
     fn map_exp_comatch(&mut self, info: P::TypeAppInfo, name: Ident, body: Comatch<P>) -> Exp<P> {
         Exp::Comatch { info, name, body }
@@ -122,8 +127,8 @@ pub trait Mapper<P: Phase> {
     fn map_param(&mut self, name: Ident, typ: Rc<Exp<P>>) -> Param<P> {
         Param { name, typ }
     }
-    fn map_param_inst(&mut self, info: P::TypeInfo, name: Ident) -> ParamInst<P> {
-        ParamInst { info, name }
+    fn map_param_inst(&mut self, info: P::TypeInfo, name: Ident, typ: P::Typ) -> ParamInst<P> {
+        ParamInst { info, name, typ }
     }
     fn map_info(&mut self, info: P::Info) -> P::Info {
         info
@@ -139,43 +144,12 @@ pub trait Mapper<P: Phase> {
     }
 }
 
+impl<P: Phase> Mapper<P> for Id<P> {}
+
 pub trait Map<P: Phase> {
     fn map<M>(self, m: &mut M) -> Self
     where
         M: Mapper<P>;
-}
-
-// FIXME: Remove this (is already defined in fold.rs)
-pub struct Id<P: Phase> {
-    phantom: PhantomData<P>,
-}
-
-impl<P: Phase> Out for Id<P> {
-    type Prg = Prg<P>;
-    type Decls = Decls<P>;
-    type Decl = Decl<P>;
-    type Data = Data<P>;
-    type Codata = Codata<P>;
-    type Impl = Impl<P>;
-    type TypAbs = TypAbs<P>;
-    type Ctor = Ctor<P>;
-    type Dtor = Dtor<P>;
-    type Def = Def<P>;
-    type Codef = Codef<P>;
-    type Match = Match<P>;
-    type Comatch = Comatch<P>;
-    type Case = Case<P>;
-    type Cocase = Cocase<P>;
-    type TypApp = TypApp<P>;
-    type Exp = Exp<P>;
-    type Telescope = Telescope<P>;
-    type TelescopeInst = TelescopeInst<P>;
-    type Param = Param<P>;
-    type ParamInst = ParamInst<P>;
-    type Info = P::Info;
-    type TypeInfo = P::TypeInfo;
-    type TypeAppInfo = P::TypeAppInfo;
-    type Idx = Idx;
 }
 
 impl<P: Phase, T: Fold<P, Id<P>, Out = Self>> Map<P> for T {
@@ -189,12 +163,20 @@ impl<P: Phase, T: Fold<P, Id<P>, Out = Self>> Map<P> for T {
 
 #[rustfmt::skip]
 impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
-    fn fold_prg(&mut self, decls: <Id<P> as Out>::Decls, exp: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Prg {
-        self.map_prg(decls, exp.map(Rc::new))
+    fn enter_decl(&mut self, decl: &Decl<P>) {
+        self.enter_decl(decl)
     }
 
-    fn fold_decls(&mut self, map: HashMap<Ident, <Id<P> as Out>::Decl>, order: Vec<Ident>) -> <Id<P> as Out>::Decls {
-        self.map_decls(map, order)
+    fn fold_prg(&mut self, decls: <Id<P> as Out>::Decls, exp: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Prg {
+        self.map_prg(decls, exp)
+    }
+
+    fn fold_decls(&mut self, map: HashMap<Ident, <Id<P> as Out>::Decl>, source: Source) -> <Id<P> as Out>::Decls {
+        self.map_decls(map, source)
+    }
+
+    fn fold_decl(&mut self, decl: <Id<P> as Out>::Decl) -> <Id<P> as Out>::Decl {
+        self.map_decl(decl)
     }
 
     fn fold_decl_data(&mut self, data: <Id<P> as Out>::Data) -> <Id<P> as Out>::Decl {
@@ -242,11 +224,11 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
     }
 
     fn fold_dtor(&mut self, info: <Id<P> as Out>::Info, name: Ident, params: <Id<P> as Out>::Telescope, on_typ: <Id<P> as Out>::TypApp, in_typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Dtor {
-        self.map_dtor(info, name, params, on_typ, Rc::new(in_typ))
+        self.map_dtor(info, name, params, on_typ, in_typ)
     }
 
     fn fold_def(&mut self, info: <Id<P> as Out>::Info, name: Ident, params: <Id<P> as Out>::Telescope, on_typ: <Id<P> as Out>::TypApp, in_typ: <Id<P> as Out>::Exp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Def {
-        self.map_def(info, name, params, on_typ, Rc::new(in_typ), body)
+        self.map_def(info, name, params, on_typ, in_typ, body)
     }
 
     fn fold_codef(&mut self, info: <Id<P> as Out>::Info, name: Ident, params: <Id<P> as Out>::Telescope, typ: <Id<P> as Out>::TypApp, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Codef {
@@ -262,47 +244,47 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
     }
 
     fn fold_case(&mut self, info: <Id<P> as Out>::Info, name: Ident, args: <Id<P> as Out>::TelescopeInst, body: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Case {
-        self.map_case(info, name, args, body.map(Rc::new))
+        self.map_case(info, name, args, body)
     }
 
     fn fold_cocase(&mut self, info: <Id<P> as Out>::Info, name: Ident, args: <Id<P> as Out>::TelescopeInst, body: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Cocase {
-        self.map_cocase(info, name, args, body.map(Rc::new))
+        self.map_cocase(info, name, args, body)
     }
 
     fn fold_typ_app(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: Vec<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::TypApp {
-        self.map_typ_app(info, name, args.into_iter().map(Rc::new).collect())
+        self.map_typ_app(info, name, args)
     }
 
     fn fold_exp_var(&mut self, info: <Id<P> as Out>::TypeInfo, name: <P as Phase>::VarName, idx: <Id<P> as Out>::Idx) -> <Id<P> as Out>::Exp {
-        self.map_exp_var(info, name, idx)
+        Rc::new(self.map_exp_var(info, name, idx))
     }
 
     fn fold_exp_typ_ctor(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: Vec<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Exp {
-        self.map_exp_typ_ctor(info, name, args.into_iter().map(Rc::new).collect())
+        Rc::new(self.map_exp_typ_ctor(info, name, args))
     }
 
     fn fold_exp_ctor(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: Vec<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Exp {
-        self.map_exp_ctor(info, name, args.into_iter().map(Rc::new).collect())
+        Rc::new(self.map_exp_ctor(info, name, args))
     }
 
     fn fold_exp_dtor(&mut self, info: <Id<P> as Out>::TypeInfo, exp: <Id<P> as Out>::Exp, name: Ident, args: Vec<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Exp {
-        self.map_exp_dtor(info, Rc::new(exp), name, args.into_iter().map(Rc::new).collect())
+        Rc::new(self.map_exp_dtor(info, exp, name, args))
     }
 
     fn fold_exp_anno(&mut self, info: <Id<P> as Out>::TypeInfo, exp: <Id<P> as Out>::Exp, typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Exp {
-        self.map_exp_anno(info, Rc::new(exp), Rc::new(typ))
+        Rc::new(self.map_exp_anno(info, exp, typ))
     }
 
     fn fold_exp_type(&mut self, info: <Id<P> as Out>::TypeInfo) -> <Id<P> as Out>::Exp {
-        self.map_exp_type(info)
+        Rc::new(self.map_exp_type(info))
     }
 
-    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, on_exp: <Id<P> as Out>::Exp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
-        self.map_exp_match(info, name, Rc::new(on_exp), body)
+    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, on_exp: <Id<P> as Out>::Exp, in_typ: <Id<P> as Out>::Typ, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_match(info, name, on_exp, in_typ, body))
     }
 
     fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
-        self.map_exp_comatch(info, name, body)
+        Rc::new(self.map_exp_comatch(info, name, body))
     }
 
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
@@ -330,11 +312,11 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
     }
 
     fn fold_param(&mut self, name: Ident, typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Param {
-        self.map_param(name, Rc::new(typ))
+        self.map_param(name, typ)
     }
 
-    fn fold_param_inst(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident) -> <Id<P> as Out>::ParamInst {
-        self.map_param_inst(info, name)
+    fn fold_param_inst(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, typ: <Id<P> as Out>::Typ) -> <Id<P> as Out>::ParamInst {
+        self.map_param_inst(info, name, typ)
     }
 
     fn fold_info(&mut self, info: <P as Phase>::Info) -> <Id<P> as Out>::Info {
@@ -351,5 +333,9 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
 
     fn fold_idx(&mut self, idx: Idx) -> <Id<P> as Out>::Idx {
         self.map_idx(idx)
+    }
+
+    fn fold_typ(&mut self, typ: <P as Phase>::Typ) -> <Id<P> as Out>::Typ {
+        typ
     }
 }

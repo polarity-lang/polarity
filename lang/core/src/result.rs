@@ -7,6 +7,7 @@ use thiserror::Error;
 use data::string::{comma_separated, separated};
 use data::HashSet;
 use syntax::common::*;
+use syntax::tst;
 use syntax::ust;
 
 use printer::PrintToString;
@@ -100,7 +101,7 @@ impl TypeError {
         Self::InvalidMatch { msg: separated("; ", msgs), span: info.span.to_miette() }
     }
 
-    pub fn expected_typ_app(got: Rc<ust::Exp>) -> Self {
+    pub fn expected_typ_app(got: Rc<tst::Exp>) -> Self {
         Self::ExpectedTypApp { got: got.print_to_string(), span: got.info().span.to_miette() }
     }
 }

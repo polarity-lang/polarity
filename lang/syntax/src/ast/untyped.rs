@@ -6,7 +6,7 @@ use crate::de_bruijn::*;
 
 use super::generic;
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct UST;
 
 impl generic::Phase for UST {
@@ -15,6 +15,7 @@ impl generic::Phase for UST {
     type TypeAppInfo = Info;
 
     type VarName = Ident;
+    type Typ = ();
 
     fn print_var(name: &Self::VarName, _idx: Idx) -> String {
         name.clone()

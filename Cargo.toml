@@ -13,6 +13,7 @@ members = [
     "lang/core",
     "lang/source",
     "lang/renaming",
+    "lang/lifting",
     "lang/xfunc",
     "web/crates/browser",
     "app",

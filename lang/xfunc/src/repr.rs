@@ -1,5 +1,5 @@
 use syntax::ast::SwapWithCtx;
-use syntax::leveled_ctx::LeveledCtx;
+use syntax::ctx::{Bind, Context, LevelCtx};
 use syntax::matrix;
 use syntax::ust;
 
@@ -73,9 +73,9 @@ impl Represent for matrix::XData {
                         let body = &exprs[&key];
                         // Swap binding order (which is different in the matrix representation)
                         let body = body.as_ref().map(|body| {
-                            let mut ctx = LeveledCtx::empty();
-                            ctx.bind(dtor.params.params.iter(), |ctx| {
-                                ctx.bind(ctor.params.params.iter(), |ctx| {
+                            let mut ctx = LevelCtx::empty();
+                            ctx.bind_iter(dtor.params.params.iter(), |ctx| {
+                                ctx.bind_iter(ctor.params.params.iter(), |ctx| {
                                     body.swap_with_ctx(ctx, 0, 1)
                                 })
                             })
@@ -117,6 +117,7 @@ impl InstantiateExt for ust::Telescope {
             .map(|ust::Param { name, .. }| ust::ParamInst {
                 name: name.clone(),
                 info: ust::Info::empty(),
+                typ: (),
             })
             .collect();
         ust::TelescopeInst { params }

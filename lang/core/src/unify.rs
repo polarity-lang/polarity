@@ -35,8 +35,8 @@ impl ShiftCutoff for Eqn {
     }
 }
 
-impl Substitutable for Unificator {
-    fn subst<S: Substitution>(&self, ctx: &mut subst::Ctx, by: &S) -> Self {
+impl Substitutable<ust::UST> for Unificator {
+    fn subst<S: Substitution<ust::UST>>(&self, ctx: &mut subst::Ctx, by: &S) -> Self {
         let map = self
             .map
             .iter()
@@ -46,8 +46,8 @@ impl Substitutable for Unificator {
     }
 }
 
-impl Substitution for Unificator {
-    fn get(&self, _ctx: &subst::Ctx, lvl: Lvl) -> Option<Rc<ust::Exp>> {
+impl Substitution<ust::UST> for Unificator {
+    fn get_subst(&self, _ctx: &subst::Ctx, lvl: Lvl) -> Option<Rc<ust::Exp>> {
         self.map.get(&lvl).cloned()
     }
 }

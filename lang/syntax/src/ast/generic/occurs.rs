@@ -1,9 +1,10 @@
 use std::rc::Rc;
 
+use crate::ast::subst;
+use crate::ctx::*;
 use crate::de_bruijn::*;
 
 use super::def::*;
-use crate::ast::subst;
 
 pub fn occurs_in<P: Phase>(ctx: &mut subst::Ctx, the_idx: Idx, in_exp: &Rc<Exp<P>>) -> bool {
     let lvl = ctx.idx_to_lvl(the_idx);
@@ -48,14 +49,14 @@ impl<P: Phase> Occurs for Comatch<P> {
 impl<P: Phase> Occurs for Case<P> {
     fn occurs(&self, ctx: &mut subst::Ctx, lvl: Lvl) -> bool {
         let Case { args, body, .. } = self;
-        ctx.bind(args.params.iter(), |ctx| body.occurs(ctx, lvl))
+        ctx.bind_iter(args.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
     }
 }
 
 impl<P: Phase> Occurs for Cocase<P> {
     fn occurs(&self, ctx: &mut subst::Ctx, lvl: Lvl) -> bool {
         let Cocase { args, body, .. } = self;
-        ctx.bind(args.params.iter(), |ctx| body.occurs(ctx, lvl))
+        ctx.bind_iter(args.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
     }
 }
 

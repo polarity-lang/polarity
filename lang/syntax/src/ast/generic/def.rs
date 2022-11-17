@@ -7,9 +7,11 @@ use derivative::Derivative;
 use crate::common::*;
 use crate::de_bruijn::*;
 
+use super::source::{self, Source};
+
 pub trait Phase
 where
-    Self: Clone + fmt::Debug + Eq,
+    Self: Default + Clone + fmt::Debug + Eq,
 {
     /// Type of the `info` field, containing span information
     type Info: HasSpan + Clone + fmt::Debug;
@@ -20,6 +22,8 @@ where
     type TypeAppInfo: HasSpan + Clone + Into<Self::TypeInfo> + fmt::Debug;
     /// Type of the `name` field of `Exp::Var`
     type VarName: Clone + fmt::Debug;
+    /// Type of the `typ` field for `ParamInst`
+    type Typ: Clone + fmt::Debug;
 
     fn print_var(name: &Self::VarName, idx: Idx) -> String;
 }
@@ -39,17 +43,37 @@ pub struct Decls<P: Phase> {
     /// Map from identifiers to declarations
     pub map: HashMap<Ident, Decl<P>>,
     /// Order in which declarations are defined in the source
-    pub order: Vec<Ident>,
+    pub source: Source,
 }
 
 impl<P: Phase> Decls<P> {
     pub fn empty() -> Self {
-        Self { map: data::HashMap::default(), order: Vec::new() }
+        Self { map: data::HashMap::default(), source: Default::default() }
     }
 
     pub fn is_empty(&self) -> bool {
         self.map.is_empty()
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = Item<'_, P>> {
+        self.source.iter().map(|item| match item {
+            source::Item::Impl(impl_block) => {
+                Item::Impl(self.map[&impl_block.name].impl_block().unwrap())
+            }
+            source::Item::Type(type_decl) => match &self.map[&type_decl.name] {
+                Decl::Data(data) => Item::Data(data),
+                Decl::Codata(codata) => Item::Codata(codata),
+                _ => unreachable!(),
+            },
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Item<'a, P: Phase> {
+    Data(&'a Data<P>),
+    Codata(&'a Codata<P>),
+    Impl(&'a Impl<P>),
 }
 
 #[derive(Debug, Clone)]
@@ -60,6 +84,16 @@ pub enum Decl<P: Phase> {
     Dtor(Dtor<P>),
     Def(Def<P>),
     Codef(Codef<P>),
+}
+
+impl<P: Phase> Decl<P> {
+    fn impl_block(&self) -> Option<&Impl<P>> {
+        match self {
+            Decl::Data(data) => data.impl_block.as_ref(),
+            Decl::Codata(codata) => codata.impl_block.as_ref(),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -249,6 +283,8 @@ pub enum Exp<P: Phase> {
         info: P::TypeAppInfo,
         name: Ident,
         on_exp: Rc<Exp<P>>,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        in_typ: P::Typ,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Match<P>,
     },
@@ -306,6 +342,8 @@ pub struct ParamInst<P: Phase> {
     pub info: P::TypeInfo,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub typ: P::Typ,
 }
 
 impl<P: Phase> HasPhase for Prg<P> {

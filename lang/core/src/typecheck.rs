@@ -4,41 +4,49 @@ use std::rc::Rc;
 
 use data::HashSet;
 use miette_util::ToMiette;
+use syntax::ast::forget::Forget;
 use syntax::ast::Substitutable;
 use syntax::common::HasInfo;
+use syntax::ctx::{Bind, Context};
 use syntax::de_bruijn::*;
 use syntax::equiv::AlphaEq;
 use syntax::named::Named;
-use syntax::tst::{self, ElabInfoExt};
+use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
 use syntax::ust;
 use tracer::trace;
 
 use super::ctx::*;
+use super::prg::*;
 use super::result::TypeError;
 use super::unify::*;
 
 pub fn check(prg: &ust::Prg) -> Result<tst::Prg, TypeError> {
-    let mut ctx = Ctx::build(prg);
-    prg.infer(&mut ctx)
+    let prg_ctx = Prg::build(prg);
+    let mut var_ctx = Ctx::empty();
+    prg.infer(&prg_ctx, &mut var_ctx)
 }
 
 pub trait Infer {
     type Target;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError>;
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError>;
 }
 
 pub trait Check {
     type Target;
 
-    fn check(&self, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError>;
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError>;
 }
 
 pub trait CheckArgs {
     type Target;
 
-    fn check_args(&self, ctx: &mut Ctx, params: &ust::Telescope)
-        -> Result<Self::Target, TypeError>;
+    fn check_args(
+        &self,
+        prg: &Prg,
+        ctx: &mut Ctx,
+        params: &ust::Telescope,
+    ) -> Result<Self::Target, TypeError>;
 }
 
 pub trait CheckTelescope {
@@ -46,6 +54,7 @@ pub trait CheckTelescope {
 
     fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
+        prg: &Prg,
         ctx: &mut Ctx,
         params: &ust::Telescope,
         f: F,
@@ -57,6 +66,7 @@ pub trait InferTelescope {
 
     fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
+        prg: &Prg,
         ctx: &mut Ctx,
         f: F,
     ) -> Result<T, TypeError>;
@@ -110,11 +120,11 @@ impl<T> WithEqnsExt for T {
 impl Infer for ust::Prg {
     type Target = tst::Prg;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::Prg { decls, exp } = self;
 
-        let decls_out = decls.infer(ctx)?;
-        let exp_out = exp.as_ref().map(|exp| exp.infer(ctx)).transpose()?;
+        let decls_out = decls.infer(prg, ctx)?;
+        let exp_out = exp.as_ref().map(|exp| exp.infer(prg, ctx)).transpose()?;
 
         Ok(tst::Prg { decls: decls_out, exp: exp_out })
     }
@@ -124,17 +134,17 @@ impl Infer for ust::Prg {
 impl Infer for ust::Decls {
     type Target = tst::Decls;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Decls { map, order } = self;
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        let ust::Decls { map, source } = self;
 
         // FIXME: Reconsider order
 
         let map_out = map
             .iter()
-            .map(|(name, decl)| Ok((name.clone(), decl.infer(ctx)?)))
+            .map(|(name, decl)| Ok((name.clone(), decl.infer(prg, ctx)?)))
             .collect::<Result<_, TypeError>>()?;
 
-        Ok(tst::Decls { map: map_out, order: order.clone() })
+        Ok(tst::Decls { map: map_out, source: source.clone() })
     }
 }
 
@@ -142,15 +152,15 @@ impl Infer for ust::Decls {
 impl Infer for ust::Decl {
     type Target = tst::Decl;
 
-    #[trace("{} |- {} =>", ctx, self.name())]
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    #[trace("{:P} |- {} =>", ctx, self.name())]
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let out = match self {
-            ust::Decl::Data(data) => tst::Decl::Data(data.infer(ctx)?),
-            ust::Decl::Codata(codata) => tst::Decl::Codata(codata.infer(ctx)?),
-            ust::Decl::Ctor(ctor) => tst::Decl::Ctor(ctor.infer(ctx)?),
-            ust::Decl::Dtor(dtor) => tst::Decl::Dtor(dtor.infer(ctx)?),
-            ust::Decl::Def(def) => tst::Decl::Def(def.infer(ctx)?),
-            ust::Decl::Codef(codef) => tst::Decl::Codef(codef.infer(ctx)?),
+            ust::Decl::Data(data) => tst::Decl::Data(data.infer(prg, ctx)?),
+            ust::Decl::Codata(codata) => tst::Decl::Codata(codata.infer(prg, ctx)?),
+            ust::Decl::Ctor(ctor) => tst::Decl::Ctor(ctor.infer(prg, ctx)?),
+            ust::Decl::Dtor(dtor) => tst::Decl::Dtor(dtor.infer(prg, ctx)?),
+            ust::Decl::Def(def) => tst::Decl::Def(def.infer(prg, ctx)?),
+            ust::Decl::Codef(codef) => tst::Decl::Codef(codef.infer(prg, ctx)?),
         };
         Ok(out)
     }
@@ -160,10 +170,10 @@ impl Infer for ust::Decl {
 impl Infer for ust::Data {
     type Target = tst::Data;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::Data { info, name, typ, ctors, impl_block } = self;
 
-        let typ_out = typ.infer(ctx)?;
+        let typ_out = typ.infer(prg, ctx)?;
 
         Ok(tst::Data {
             info: info.clone().into(),
@@ -179,10 +189,10 @@ impl Infer for ust::Data {
 impl Infer for ust::Codata {
     type Target = tst::Codata;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::Codata { info, name, typ, dtors, impl_block } = self;
 
-        let typ_out = typ.infer(ctx)?;
+        let typ_out = typ.infer(prg, ctx)?;
 
         Ok(tst::Codata {
             info: info.clone().into(),
@@ -198,10 +208,10 @@ impl Infer for ust::Codata {
 impl Infer for ust::TypAbs {
     type Target = tst::TypAbs;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::TypAbs { params } = self;
 
-        params.infer_telescope(ctx, |_, params_out| Ok(tst::TypAbs { params: params_out }))
+        params.infer_telescope(prg, ctx, |_, params_out| Ok(tst::TypAbs { params: params_out }))
     }
 }
 
@@ -209,11 +219,11 @@ impl Infer for ust::TypAbs {
 impl Infer for ust::Ctor {
     type Target = tst::Ctor;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::Ctor { info, name, params, typ } = self;
 
         // Check that the constructor lies in the data type it is defined in
-        let expected = ctx.typ_for_xtor(name);
+        let expected = prg.typ_for_xtor(name);
         if &typ.name != expected {
             return Err(TypeError::NotInType {
                 expected: expected.clone(),
@@ -222,8 +232,8 @@ impl Infer for ust::Ctor {
             });
         }
 
-        params.infer_telescope(ctx, |ctx, params_out| {
-            let typ_out = typ.infer(ctx)?;
+        params.infer_telescope(prg, ctx, |ctx, params_out| {
+            let typ_out = typ.infer(prg, ctx)?;
 
             Ok(tst::Ctor {
                 info: info.clone().into(),
@@ -239,11 +249,11 @@ impl Infer for ust::Ctor {
 impl Infer for ust::Dtor {
     type Target = tst::Dtor;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::Dtor { info, name, params, on_typ, in_typ } = self;
 
         // Check that the destructor lies in the codata type it is defined in
-        let expected = ctx.typ_for_xtor(name);
+        let expected = prg.typ_for_xtor(name);
         if &on_typ.name != expected {
             return Err(TypeError::NotInType {
                 expected: expected.clone(),
@@ -252,9 +262,9 @@ impl Infer for ust::Dtor {
             });
         }
 
-        params.infer_telescope(ctx, |ctx, params_out| {
-            let on_typ_out = on_typ.infer(ctx)?;
-            let in_typ_out = in_typ.infer(ctx)?;
+        params.infer_telescope(prg, ctx, |ctx, params_out| {
+            let on_typ_out = on_typ.infer(prg, ctx)?;
+            let in_typ_out = in_typ.infer(prg, ctx)?;
 
             Ok(tst::Dtor {
                 info: info.clone().into(),
@@ -271,13 +281,13 @@ impl Infer for ust::Dtor {
 impl Infer for ust::Def {
     type Target = tst::Def;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::Def { info, name, params, on_typ, in_typ, body } = self;
 
-        params.infer_telescope(ctx, |ctx, params_out| {
-            let on_typ_out = on_typ.infer(ctx)?;
-            let in_typ_out = in_typ.infer(ctx)?;
-            let body_out = body.with_scrutinee(on_typ.clone()).check(ctx, in_typ.clone())?;
+        params.infer_telescope(prg, ctx, |ctx, params_out| {
+            let on_typ_out = on_typ.infer(prg, ctx)?;
+            let in_typ_out = in_typ.infer(prg, ctx)?;
+            let body_out = body.with_scrutinee(on_typ.clone()).check(prg, ctx, in_typ.clone())?;
             Ok(tst::Def {
                 info: info.clone().into(),
                 name: name.clone(),
@@ -294,12 +304,12 @@ impl Infer for ust::Def {
 impl Infer for ust::Codef {
     type Target = tst::Codef;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::Codef { info, name, params, typ, body } = self;
 
-        params.infer_telescope(ctx, |ctx, params_out| {
-            let typ_out = typ.infer(ctx)?;
-            let body_out = body.with_scrutinee(typ.clone()).infer(ctx)?;
+        params.infer_telescope(prg, ctx, |ctx, params_out| {
+            let typ_out = typ.infer(prg, ctx)?;
+            let body_out = body.with_scrutinee(typ.clone()).infer(prg, ctx)?;
             Ok(tst::Codef {
                 info: info.clone().into(),
                 name: name.clone(),
@@ -315,11 +325,11 @@ impl Infer for ust::Codef {
 impl<'a> Check for WithScrutinee<'a, ust::Match> {
     type Target = tst::Match;
 
-    fn check(&self, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
         let ust::Match { info, cases } = &self.inner;
 
         // Check exhaustiveness
-        let ctors_expected = ctx.xtors_for_typ(&self.scrutinee.name);
+        let ctors_expected = prg.xtors_for_typ(&self.scrutinee.name);
         let mut ctors_actual = HashSet::default();
         let mut ctors_duplicate = HashSet::default();
 
@@ -350,7 +360,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
             .map(|case| {
                 // Build equations for this case
                 let ust::Ctor { typ: ust::TypApp { args: def_args, .. }, .. } =
-                    &*ctx.ctor(&case.name);
+                    &*prg.ctor(&case.name);
                 let ust::TypApp { args: on_args, .. } = &self.scrutinee;
                 let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
@@ -358,7 +368,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
                     on_args.iter().cloned().zip(def_args.iter().cloned()).map(Eqn::from).collect();
 
                 // Check the case given the equations
-                case.with_eqns(eqns).check(ctx, t.clone())
+                case.with_eqns(eqns).check(prg, ctx, t.clone())
             })
             .collect::<Result<_, _>>()?;
 
@@ -370,11 +380,11 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
 impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
     type Target = tst::Comatch;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::Comatch { info, cases } = &self.inner;
 
         // Check exhaustiveness
-        let dtors_expected = ctx.xtors_for_typ(&self.scrutinee.name);
+        let dtors_expected = prg.xtors_for_typ(&self.scrutinee.name);
         let mut dtors_actual = HashSet::default();
         let mut dtors_duplicate = HashSet::default();
 
@@ -406,7 +416,7 @@ impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
             .map(|case| {
                 // Build equations for this case
                 let ust::Dtor { on_typ: ust::TypApp { args: def_args, .. }, in_typ, .. } =
-                    &*ctx.dtor(&case.name);
+                    &*prg.dtor(&case.name);
 
                 let ust::TypApp { args: on_args, .. } = &self.scrutinee;
                 let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
@@ -415,7 +425,7 @@ impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
                     on_args.iter().cloned().zip(def_args.iter().cloned()).map(Eqn::from).collect();
 
                 // Check the case given the equations
-                case.with_eqns(eqns).check(ctx, in_typ.clone())
+                case.with_eqns(eqns).check(prg, ctx, in_typ.clone())
             })
             .collect::<Result<_, _>>()?;
 
@@ -427,12 +437,12 @@ impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
 impl<'a> Check for WithEqns<'a, ust::Case> {
     type Target = tst::Case;
 
-    #[trace("{} |- {:P} <= {:P}", ctx, self.inner, t)]
-    fn check(&self, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
+    #[trace("{:P} |- {:P} <= {:P}", ctx, self.inner, t)]
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
         let ust::Case { info, name, args, body } = self.inner;
-        let ust::Ctor { name, params, .. } = &*ctx.ctor(name);
+        let ust::Ctor { name, params, .. } = &*prg.ctor(name);
 
-        args.check_telescope(ctx, params, |ctx, args_out| {
+        args.check_telescope(prg, ctx, params, |ctx, args_out| {
             let body_out = match body {
                 Some(body) => {
                     let unif = unify(ctx.levels(), self.eqns.clone())
@@ -449,7 +459,7 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                     let ctx = &mut ctx;
 
                     let body_out =
-                        body.check(ctx, t.shift((1, 0)).subst(&mut ctx.levels(), &unif))?;
+                        body.check(prg, ctx, t.shift((1, 0)).subst(&mut ctx.levels(), &unif))?;
 
                     Some(body_out)
                 }
@@ -480,12 +490,12 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
 impl<'a> Check for WithEqns<'a, ust::Cocase> {
     type Target = tst::Cocase;
 
-    #[trace("{} |- {:P} <= {:P}", ctx, self.inner, t)]
-    fn check(&self, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
+    #[trace("{:P} |- {:P} <= {:P}", ctx, self.inner, t)]
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
         let ust::Cocase { info, name, args, body } = self.inner;
-        let ust::Dtor { name, params, .. } = &*ctx.dtor(name);
+        let ust::Dtor { name, params, .. } = &*prg.dtor(name);
 
-        args.check_telescope(ctx, params, |ctx, args_out| {
+        args.check_telescope(prg, ctx, params, |ctx, args_out| {
             let body_out = match body {
                 Some(body) => {
                     let unif = unify(ctx.levels(), self.eqns.clone())
@@ -501,7 +511,7 @@ impl<'a> Check for WithEqns<'a, ust::Cocase> {
                     let body = body.subst(&mut ctx.levels(), &unif);
                     let ctx = &mut ctx;
 
-                    let body_out = body.check(ctx, t.subst(&mut ctx.levels(), &unif))?;
+                    let body_out = body.check(prg, ctx, t.subst(&mut ctx.levels(), &unif))?;
 
                     Some(body_out)
                 }
@@ -532,24 +542,34 @@ impl<'a> Check for WithEqns<'a, ust::Cocase> {
 impl Check for ust::Exp {
     type Target = tst::Exp;
 
-    #[trace("{} |- {:P} <= {:P}", ctx, self, t)]
-    fn check(&self, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
+    #[trace("{:P} |- {:P} <= {:P}", ctx, self, t)]
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
         let out = match self {
-            ust::Exp::Match { info, name, on_exp, body } => {
-                let on_exp_out = on_exp.infer(ctx)?;
-                let typ_app = on_exp_out.typ().expect_typ_app()?;
-                let body_out = body.with_scrutinee(typ_app.clone()).check(ctx, t.clone())?;
+            ust::Exp::Match { info, name, on_exp, in_typ: (), body } => {
+                let on_exp_out = on_exp.infer(prg, ctx)?;
+                let on_typ_out = on_exp_out.typ().check(
+                    prg,
+                    ctx,
+                    Rc::new(ust::Exp::Type { info: ust::Info::empty() }),
+                )?;
+                let typ_app = on_typ_out.expect_typ_app()?;
+                let body_out = body.with_scrutinee(typ_app.forget()).check(prg, ctx, t.clone())?;
+                let in_typ_out =
+                    t.check(prg, ctx, Rc::new(ust::Exp::Type { info: ust::Info::empty() }))?;
 
                 tst::Exp::Match {
                     info: info.with_type_app(typ_app),
                     name: name.clone(),
                     on_exp: on_exp_out,
+                    in_typ: in_typ_out.into(),
                     body: body_out,
                 }
             }
             ust::Exp::Comatch { info, name, body } => {
-                let typ_app = t.expect_typ_app()?;
-                let body_out = body.with_scrutinee(typ_app.clone()).infer(ctx)?;
+                let t_out =
+                    t.check(prg, ctx, Rc::new(ust::Exp::Type { info: ust::Info::empty() }))?;
+                let typ_app = t_out.expect_typ_app()?;
+                let body_out = body.with_scrutinee(typ_app.forget()).infer(prg, ctx)?;
 
                 tst::Exp::Comatch {
                     info: info.with_type_app(typ_app),
@@ -558,7 +578,7 @@ impl Check for ust::Exp {
                 }
             }
             _ => {
-                let actual = self.infer(ctx)?;
+                let actual = self.infer(prg, ctx)?;
                 actual.typ().convert(&t)?;
                 actual
             }
@@ -572,17 +592,17 @@ impl Check for ust::Exp {
 impl Infer for ust::Exp {
     type Target = tst::Exp;
 
-    #[trace("{} |- {:P} => {return:P}", ctx, self, |ret| ret.as_ref().map(|e| e.typ()))]
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    #[trace("{:P} |- {:P} => {return:P}", ctx, self, |ret| ret.as_ref().map(|e| e.typ()))]
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         match self {
             ust::Exp::Var { info, name, idx } => {
-                let typ = ctx.bound(*idx);
+                let typ = ctx.lookup(*idx);
                 Ok(tst::Exp::Var { info: info.with_type(typ), name: name.clone(), idx: *idx })
             }
             ust::Exp::TypCtor { info, name, args } => {
-                let ust::TypAbs { params } = &*ctx.typ(name);
+                let ust::TypAbs { params } = &*prg.typ(name);
 
-                let args_out = args.check_args(ctx, params)?;
+                let args_out = args.check_args(prg, ctx, params)?;
 
                 Ok(tst::Exp::TypCtor {
                     info: info.with_type(Rc::new(ust::Exp::Type { info: ust::Info::empty() })),
@@ -591,9 +611,9 @@ impl Infer for ust::Exp {
                 })
             }
             ust::Exp::Ctor { info, name, args } => {
-                let ust::Ctor { name, params, typ, .. } = &*ctx.ctor(name);
+                let ust::Ctor { name, params, typ, .. } = &*prg.ctor(name);
 
-                let args_out = args.check_args(ctx, params)?;
+                let args_out = args.check_args(prg, ctx, params)?;
                 let typ_out = typ.subst_under_telescope(params, args).to_exp();
 
                 Ok(tst::Exp::Ctor {
@@ -603,14 +623,14 @@ impl Infer for ust::Exp {
                 })
             }
             ust::Exp::Dtor { info, exp, name, args } => {
-                let ust::Dtor { name, params, on_typ, in_typ, .. } = &*ctx.dtor(name);
+                let ust::Dtor { name, params, on_typ, in_typ, .. } = &*prg.dtor(name);
 
-                let args_out = args.check_args(ctx, params)?;
+                let args_out = args.check_args(prg, ctx, params)?;
 
                 let on_typ_out = on_typ.subst_under_telescope(params, args);
                 let typ_out = in_typ.subst_under_telescope(params, args);
 
-                let exp_out = exp.check(ctx, Rc::new(on_typ_out.to_exp()))?;
+                let exp_out = exp.check(prg, ctx, Rc::new(on_typ_out.to_exp()))?;
 
                 Ok(tst::Exp::Dtor {
                     info: info.with_type(typ_out),
@@ -621,8 +641,8 @@ impl Infer for ust::Exp {
             }
             ust::Exp::Anno { info, exp, typ } => {
                 let typ_out =
-                    typ.check(ctx, Rc::new(ust::Exp::Type { info: ust::Info::empty() }))?;
-                let exp_out = (**exp).check(ctx, typ.clone())?;
+                    typ.check(prg, ctx, Rc::new(ust::Exp::Type { info: ust::Info::empty() }))?;
+                let exp_out = (**exp).check(prg, ctx, typ.clone())?;
                 Ok(tst::Exp::Anno {
                     info: info.with_type(typ.clone()),
                     exp: Rc::new(exp_out),
@@ -640,11 +660,11 @@ impl Infer for ust::Exp {
 impl Infer for ust::TypApp {
     type Target = tst::TypApp;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::TypApp { info, name, args } = self;
-        let ust::TypAbs { params } = &*ctx.typ(name);
+        let ust::TypAbs { params } = &*prg.typ(name);
 
-        let args_out = args.check_args(ctx, params)?;
+        let args_out = args.check_args(prg, ctx, params)?;
         Ok(tst::TypApp {
             info: info.with_type(Rc::new(ust::Exp::Type { info: ust::Info::empty() })),
             name: name.clone(),
@@ -658,6 +678,7 @@ impl CheckArgs for ust::Args {
 
     fn check_args(
         &self,
+        prg: &Prg,
         ctx: &mut Ctx,
         params: &ust::Telescope,
     ) -> Result<Self::Target, TypeError> {
@@ -667,7 +688,10 @@ impl CheckArgs for ust::Args {
 
         let ust::Telescope { params } = params.subst_in_telescope(self);
 
-        self.iter().zip(params).map(|(exp, ust::Param { typ, .. })| exp.check(ctx, typ)).collect()
+        self.iter()
+            .zip(params)
+            .map(|(exp, ust::Param { typ, .. })| exp.check(prg, ctx, typ))
+            .collect()
     }
 }
 
@@ -676,6 +700,7 @@ impl CheckTelescope for ust::TelescopeInst {
 
     fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
+        prg: &Prg,
         ctx: &mut Ctx,
         param_types: &ust::Telescope,
         f: F,
@@ -695,12 +720,17 @@ impl CheckTelescope for ust::TelescopeInst {
         ctx.bind_fold(
             iter,
             Result::<_, TypeError>::Ok(vec![]),
-            |_ctx, params_out, (param_actual, param_expected)| {
-                let ust::ParamInst { info, name } = param_actual;
+            |ctx, params_out, (param_actual, param_expected)| {
+                let ust::ParamInst { info, name, typ: () } = param_actual;
                 let ust::Param { typ, .. } = param_expected;
+                let typ_out =
+                    typ.check(prg, ctx, Rc::new(ust::Exp::Type { info: ust::Info::empty() }))?;
                 let mut params_out = params_out?;
-                let param_out =
-                    tst::ParamInst { info: info.with_type(typ.clone()), name: name.clone() };
+                let param_out = tst::ParamInst {
+                    info: info.with_type(typ.clone()),
+                    name: name.clone(),
+                    typ: typ_out.into(),
+                };
                 params_out.push(param_out);
                 Ok(params_out)
             },
@@ -714,6 +744,7 @@ impl InferTelescope for ust::Telescope {
 
     fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
+        prg: &Prg,
         ctx: &mut Ctx,
         f: F,
     ) -> Result<T, TypeError> {
@@ -725,7 +756,7 @@ impl InferTelescope for ust::Telescope {
             |ctx, params_out, param| {
                 let ust::Param { typ, name } = param;
                 let mut params_out = params_out?;
-                let typ_out = typ.infer(ctx)?;
+                let typ_out = typ.infer(prg, ctx)?;
                 let param_out = tst::Param { name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
                 Ok(params_out)
@@ -740,7 +771,7 @@ trait SubstUnderTelescope {
     fn subst_under_telescope(&self, telescope: &ust::Telescope, args: &[Rc<ust::Exp>]) -> Self;
 }
 
-impl<T: Substitutable + Clone> SubstUnderTelescope for T {
+impl<T: Substitutable<ust::UST> + Clone> SubstUnderTelescope for T {
     fn subst_under_telescope(&self, telescope: &ust::Telescope, args: &[Rc<ust::Exp>]) -> Self {
         let ust::Telescope { params } = telescope;
 
@@ -777,43 +808,16 @@ impl SubstInTelescope for ust::Telescope {
 }
 
 trait ExpectTypApp {
-    fn expect_typ_app(&self) -> Result<ust::TypApp, TypeError>;
+    fn expect_typ_app(&self) -> Result<tst::TypApp, TypeError>;
 }
 
-impl ExpectTypApp for Rc<ust::Exp> {
-    fn expect_typ_app(&self) -> Result<ust::TypApp, TypeError> {
+impl ExpectTypApp for Rc<tst::Exp> {
+    fn expect_typ_app(&self) -> Result<tst::TypApp, TypeError> {
         match &**self {
-            ust::Exp::TypCtor { info, name, args } => {
-                Ok(ust::TypApp { info: info.clone(), name: name.clone(), args: args.clone() })
+            tst::Exp::TypCtor { info, name, args } => {
+                Ok(tst::TypApp { info: info.clone(), name: name.clone(), args: args.clone() })
             }
             _ => Err(TypeError::expected_typ_app(self.clone())),
-        }
-    }
-}
-
-impl<T1, T2: Typed> Typed for (T1, T2) {
-    fn typ(&self) -> Rc<ust::Exp> {
-        self.1.typ()
-    }
-}
-
-impl Typed for &syntax::ust::Param {
-    fn typ(&self) -> Rc<ust::Exp> {
-        self.typ.clone()
-    }
-}
-
-impl Typed for tst::Exp {
-    fn typ(&self) -> Rc<ust::Exp> {
-        match self {
-            tst::Exp::Var { info, .. } => info.typ.clone(),
-            tst::Exp::TypCtor { info, .. } => info.typ.clone(),
-            tst::Exp::Ctor { info, .. } => info.typ.clone(),
-            tst::Exp::Dtor { info, .. } => info.typ.clone(),
-            tst::Exp::Anno { info, .. } => info.typ.clone(),
-            tst::Exp::Type { info } => info.typ.clone(),
-            tst::Exp::Match { info, .. } => Rc::new(info.typ.to_exp()),
-            tst::Exp::Comatch { info, .. } => Rc::new(info.typ.to_exp()),
         }
     }
 }
@@ -837,15 +841,15 @@ impl Convert for Eqn {
 impl<T: Check> Check for Rc<T> {
     type Target = Rc<T::Target>;
 
-    fn check(&self, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
-        Ok(Rc::new((**self).check(ctx, t)?))
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<ust::Exp>) -> Result<Self::Target, TypeError> {
+        Ok(Rc::new((**self).check(prg, ctx, t)?))
     }
 }
 
 impl<T: Infer> Infer for Rc<T> {
     type Target = Rc<T::Target>;
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        Ok(Rc::new((**self).infer(ctx)?))
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        Ok(Rc::new((**self).infer(prg, ctx)?))
     }
 }
