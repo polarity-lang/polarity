@@ -1,15 +1,14 @@
-use std::fs::File;
+use std::fs;
+use std::io;
 use std::io::Write;
 use std::path::PathBuf;
 
 use printer::latex::LatexWriter;
-use printer::{ColorChoice, PrintCfg, PrintExt, StandardStream, WriteColor};
+use printer::{PrintCfg, PrintExt};
 use source::Database;
 use syntax::ust;
 
 use crate::result::IOError;
-
-use super::ignore_colors::IgnoreColors;
 
 const LATEX_END: &str = r#"\end{alltt}
 "#;
@@ -63,26 +62,22 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let prg = view.ust().map_err(|err| view.pretty_error(err))?;
 
     // Write to file or to stdout
-    let mut stream: Box<dyn WriteColor> = match cmd.output {
-        Some(path) => {
-            Box::new(IgnoreColors::new(File::create(path).expect("Failed to create file")))
-        }
-        None => Box::new(StandardStream::stdout(ColorChoice::Auto)),
+    let mut stream: Box<dyn io::Write> = match cmd.output {
+        Some(path) => Box::new(fs::File::create(path).expect("Failed to create file")),
+        None => Box::new(io::stdout()),
     };
 
     let cfg =
         PrintCfg { width: cmd.width.unwrap_or(80), braces: ("\\{", "\\}"), omit_decl_sep: true };
 
     stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
-    {
-        let mut stream = LatexWriter::new(&mut stream);
-        print_prg(prg, &cfg, &mut stream)
-    }
+    let mut stream = LatexWriter::new(&mut stream);
+    print_prg(prg, &cfg, &mut stream);
     stream.write_all(LATEX_END.as_bytes()).unwrap();
     Ok(())
 }
 
-fn print_prg<W: WriteColor>(prg: ust::Prg, cfg: &PrintCfg, stream: &mut W) {
-    prg.print_colored(cfg, stream).expect("Failed to print to stdout");
+fn print_prg<W: io::Write>(prg: ust::Prg, cfg: &PrintCfg, stream: &mut W) {
+    prg.print(cfg, stream).expect("Failed to print to stdout");
     println!();
 }

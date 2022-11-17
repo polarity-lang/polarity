@@ -3,8 +3,8 @@ use clap::{Parser, Subcommand};
 mod format;
 mod ignore_colors;
 mod run;
-mod xfunc;
 mod texify;
+mod xfunc;
 
 pub fn exec() -> miette::Result<()> {
     use Command::*;
