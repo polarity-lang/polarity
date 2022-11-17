@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 
 mod format;
 mod ignore_colors;
+mod lsp;
 mod run;
 mod texify;
 mod xfunc;
@@ -15,6 +16,7 @@ pub fn exec() -> miette::Result<()> {
         Fmt(args) => format::exec(args),
         Texify(args) => texify::exec(args),
         Xfunc(args) => xfunc::exec(args),
+        Lsp(args) => lsp::exec(args),
     }
 }
 
@@ -38,4 +40,6 @@ enum Command {
     Texify(texify::Args),
     /// De-/Refunctionalize a type in a code file
     Xfunc(xfunc::Args),
+    /// Start a LSP server
+    Lsp(lsp::Args),
 }

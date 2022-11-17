@@ -14,8 +14,13 @@ termsize = "0.1"
 # fancy error messages
 miette = { version = "5", features = ["fancy"] }
 thiserror = "1"
+# lsp
+futures = "0.3"
+tokio = { version = "1", features = ["full"] }
+tower-lsp = { version = "0.17" }
 # workspace members
 source = { path = "../lang/source" }
 core = { path = "../lang/core" }
 syntax = { path = "../lang/syntax" }
 printer = { path = "../lang/printer" }
+lsp-server = { path = "../util/lsp" }
