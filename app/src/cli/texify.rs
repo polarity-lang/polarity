@@ -4,10 +4,12 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use printer::latex::LatexWriter;
+use printer::WriteColor;
 use printer::{PrintCfg, PrintExt};
 use source::Database;
 use syntax::ust;
 
+use super::ignore_colors::IgnoreColors;
 use crate::result::IOError;
 
 const LATEX_END: &str = r#"\end{alltt}
@@ -71,13 +73,14 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         PrintCfg { width: cmd.width.unwrap_or(80), braces: ("\\{", "\\}"), omit_decl_sep: true };
 
     stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
+    let mut stream = IgnoreColors::new(stream);
     let mut stream = LatexWriter::new(&mut stream);
     print_prg(prg, &cfg, &mut stream);
     stream.write_all(LATEX_END.as_bytes()).unwrap();
     Ok(())
 }
 
-fn print_prg<W: io::Write>(prg: ust::Prg, cfg: &PrintCfg, stream: &mut W) {
-    prg.print(cfg, stream).expect("Failed to print to stdout");
+fn print_prg<W: WriteColor>(prg: ust::Prg, cfg: &PrintCfg, stream: &mut W) {
+    prg.print_colored(cfg, stream).expect("Failed to print to stdout");
     println!();
 }
