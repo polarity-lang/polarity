@@ -15,9 +15,10 @@ termsize = "0.1"
 miette = { version = "5", features = ["fancy"] }
 thiserror = "1"
 # lsp
+tokio = { version = "1", features = ["rt-multi-thread"] }
 futures = "0.3"
-tokio = { version = "1", features = ["full"] }
-tower-lsp = { version = "0.17" }
+async-std = "1"
+tower-lsp = { version = "0.17", default-features = false, features = ["runtime-agnostic"] }
 # workspace members
 source = { path = "../lang/source" }
 core = { path = "../lang/core" }
