@@ -40,6 +40,6 @@ enum Command {
     Texify(texify::Args),
     /// De-/Refunctionalize a type in a code file
     Xfunc(xfunc::Args),
-    /// Start a LSP server
+    /// Start an LSP server
     Lsp(lsp::Args),
 }
