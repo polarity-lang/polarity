@@ -687,7 +687,7 @@ impl CheckArgs for ust::Args {
     ) -> Result<Self::Target, TypeError> {
         if self.len() != params.len() {
             return Err(TypeError::ArgLenMismatch {
-                name: name.to_string(),
+                name: name.to_owned(),
                 expected: params.len(),
                 actual: self.len(),
             });
@@ -718,7 +718,7 @@ impl CheckTelescope for ust::TelescopeInst {
 
         if params.len() != param_types.len() {
             return Err(TypeError::ArgLenMismatch {
-                name: name.to_string(),
+                name: name.to_owned(),
                 expected: param_types.len(),
                 actual: params.len(),
             });
