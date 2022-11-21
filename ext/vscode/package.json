@@ -4,9 +4,9 @@
   "description": "LSP Client for the XFN language",
   "version": "0.0.1",
   "repository": {
-		"type": "git",
-		"url": "https://github.com/timsueberkrueb/msc-impl"
-	},
+    "type": "git",
+    "url": "https://github.com/timsueberkrueb/msc-impl"
+  },
   "engines": {
     "vscode": "^1.69.0"
   },
@@ -54,7 +54,8 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint src --ext ts",
+    "format": "prettier --write '**/*.{js,json,ts,tsx,yml,yaml}'"
   },
   "dependencies": {
     "vsce": "^2.14.0",
@@ -71,6 +72,7 @@
     "eslint": "^7.32.0",
     "glob": "^7.1.7",
     "mocha": "^9.1.1",
-    "typescript": "^4.4.3"
+    "typescript": "^4.4.3",
+    "prettier": "^2.6.2"
   }
 }
