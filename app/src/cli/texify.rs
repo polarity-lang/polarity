@@ -55,7 +55,7 @@ pub struct Args {
     output: Option<PathBuf>,
 }
 
-/// Compute the output stream for the "texify" command.
+/// Compute the output stream for the "texify" subcommand.
 /// If an output filepath is specified, then that filepath is used.
 /// Otherwise, the file extension is replaced by the `.tex` file extension.
 fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
@@ -77,7 +77,6 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     let prg = view.ust().map_err(|err| view.pretty_error(err))?;
 
-    // Write to file or to stdout
     let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
 
     let cfg =
