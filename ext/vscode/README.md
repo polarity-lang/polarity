@@ -1,4 +1,5 @@
 # VSCode extension
+
 [![vscode-plugin](https://github.com/timsueberkrueb/msc-impl/actions/workflows/vscode-plugin.yml/badge.svg)](https://github.com/timsueberkrueb/msc-impl/actions/workflows/vscode-plugin.yml)
 
 ## Install via the prebuilt plugin
