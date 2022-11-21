@@ -18,8 +18,8 @@ use super::unify::UnifyError;
 #[diagnostic()]
 pub enum TypeError {
     // TODO: Add span
-    #[error("Wrong number of arguments provided: got {actual}, expected {expected}")]
-    ArgLenMismatch { expected: usize, actual: usize },
+    #[error("Wrong number of arguments to {name} provided: got {actual}, expected {expected}")]
+    ArgLenMismatch { name: String, expected: usize, actual: usize },
     #[error("{lhs} is not equal to {rhs}")]
     NotEq {
         lhs: String,
