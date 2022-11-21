@@ -55,6 +55,20 @@ pub struct Args {
     output: Option<PathBuf>,
 }
 
+/// Compute the output stream for the "texify" command.
+/// If an output filepath is specified, then that filepath is used.
+/// Otherwise, the file extension is replaced by the `.tex` file extension.
+fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
+    match &cmd.output {
+        Some(path) => Box::new(fs::File::create(path).expect("Failed to create file")),
+        None => {
+            let mut fp = cmd.filepath.clone();
+            fp.set_extension("tex");
+            Box::new(fs::File::create(fp).expect("Failed to create file"))
+        }
+    }
+}
+
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::default();
     let file =
@@ -64,10 +78,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let prg = view.ust().map_err(|err| view.pretty_error(err))?;
 
     // Write to file or to stdout
-    let mut stream: Box<dyn io::Write> = match cmd.output {
-        Some(path) => Box::new(fs::File::create(path).expect("Failed to create file")),
-        None => Box::new(io::stdout()),
-    };
+    let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
 
     let cfg =
         PrintCfg { width: cmd.width.unwrap_or(80), braces: ("\\{", "\\}"), omit_decl_sep: true };
