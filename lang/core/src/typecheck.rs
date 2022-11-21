@@ -44,7 +44,7 @@ pub trait CheckArgs {
     fn check_args(
         &self,
         prg: &Prg,
-        name: &String,
+        name: &str,
         ctx: &mut Ctx,
         params: &ust::Telescope,
     ) -> Result<Self::Target, TypeError>;
@@ -56,7 +56,7 @@ pub trait CheckTelescope {
     fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
         prg: &Prg,
-        name: &String,
+        name: &str,
         ctx: &mut Ctx,
         params: &ust::Telescope,
         f: F,
@@ -681,7 +681,7 @@ impl CheckArgs for ust::Args {
     fn check_args(
         &self,
         prg: &Prg,
-        name: &String,
+        name: &str,
         ctx: &mut Ctx,
         params: &ust::Telescope,
     ) -> Result<Self::Target, TypeError> {
@@ -708,7 +708,7 @@ impl CheckTelescope for ust::TelescopeInst {
     fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
         prg: &Prg,
-        name: &String,
+        name: &str,
         ctx: &mut Ctx,
         param_types: &ust::Telescope,
         f: F,
