@@ -44,6 +44,7 @@ pub trait CheckArgs {
     fn check_args(
         &self,
         prg: &Prg,
+        name: &str,
         ctx: &mut Ctx,
         params: &ust::Telescope,
     ) -> Result<Self::Target, TypeError>;
@@ -55,6 +56,7 @@ pub trait CheckTelescope {
     fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
         prg: &Prg,
+        name: &str,
         ctx: &mut Ctx,
         params: &ust::Telescope,
         f: F,
@@ -442,7 +444,7 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
         let ust::Case { info, name, args, body } = self.inner;
         let ust::Ctor { name, params, .. } = &*prg.ctor(name);
 
-        args.check_telescope(prg, ctx, params, |ctx, args_out| {
+        args.check_telescope(prg, name, ctx, params, |ctx, args_out| {
             let body_out = match body {
                 Some(body) => {
                     let unif = unify(ctx.levels(), self.eqns.clone())
@@ -495,7 +497,7 @@ impl<'a> Check for WithEqns<'a, ust::Cocase> {
         let ust::Cocase { info, name, args, body } = self.inner;
         let ust::Dtor { name, params, .. } = &*prg.dtor(name);
 
-        args.check_telescope(prg, ctx, params, |ctx, args_out| {
+        args.check_telescope(prg, name, ctx, params, |ctx, args_out| {
             let body_out = match body {
                 Some(body) => {
                     let unif = unify(ctx.levels(), self.eqns.clone())
@@ -602,7 +604,7 @@ impl Infer for ust::Exp {
             ust::Exp::TypCtor { info, name, args } => {
                 let ust::TypAbs { params } = &*prg.typ(name);
 
-                let args_out = args.check_args(prg, ctx, params)?;
+                let args_out = args.check_args(prg, name, ctx, params)?;
 
                 Ok(tst::Exp::TypCtor {
                     info: info.with_type(Rc::new(ust::Exp::Type { info: ust::Info::empty() })),
@@ -613,7 +615,7 @@ impl Infer for ust::Exp {
             ust::Exp::Ctor { info, name, args } => {
                 let ust::Ctor { name, params, typ, .. } = &*prg.ctor(name);
 
-                let args_out = args.check_args(prg, ctx, params)?;
+                let args_out = args.check_args(prg, name, ctx, params)?;
                 let typ_out = typ.subst_under_telescope(params, args).to_exp();
 
                 Ok(tst::Exp::Ctor {
@@ -625,7 +627,7 @@ impl Infer for ust::Exp {
             ust::Exp::Dtor { info, exp, name, args } => {
                 let ust::Dtor { name, params, on_typ, in_typ, .. } = &*prg.dtor(name);
 
-                let args_out = args.check_args(prg, ctx, params)?;
+                let args_out = args.check_args(prg, name, ctx, params)?;
 
                 let on_typ_out = on_typ.subst_under_telescope(params, args);
                 let typ_out = in_typ.subst_under_telescope(params, args);
@@ -664,7 +666,7 @@ impl Infer for ust::TypApp {
         let ust::TypApp { info, name, args } = self;
         let ust::TypAbs { params } = &*prg.typ(name);
 
-        let args_out = args.check_args(prg, ctx, params)?;
+        let args_out = args.check_args(prg, name, ctx, params)?;
         Ok(tst::TypApp {
             info: info.with_type(Rc::new(ust::Exp::Type { info: ust::Info::empty() })),
             name: name.clone(),
@@ -679,11 +681,16 @@ impl CheckArgs for ust::Args {
     fn check_args(
         &self,
         prg: &Prg,
+        name: &str,
         ctx: &mut Ctx,
         params: &ust::Telescope,
     ) -> Result<Self::Target, TypeError> {
         if self.len() != params.len() {
-            return Err(TypeError::ArgLenMismatch { expected: params.len(), actual: self.len() });
+            return Err(TypeError::ArgLenMismatch {
+                name: name.to_owned(),
+                expected: params.len(),
+                actual: self.len(),
+            });
         }
 
         let ust::Telescope { params } = params.subst_in_telescope(self);
@@ -701,6 +708,7 @@ impl CheckTelescope for ust::TelescopeInst {
     fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
         prg: &Prg,
+        name: &str,
         ctx: &mut Ctx,
         param_types: &ust::Telescope,
         f: F,
@@ -710,6 +718,7 @@ impl CheckTelescope for ust::TelescopeInst {
 
         if params.len() != param_types.len() {
             return Err(TypeError::ArgLenMismatch {
+                name: name.to_owned(),
                 expected: param_types.len(),
                 actual: params.len(),
             });
