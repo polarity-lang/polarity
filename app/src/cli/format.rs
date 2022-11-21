@@ -15,8 +15,28 @@ pub struct Args {
     filepath: PathBuf,
     #[clap(long)]
     width: Option<usize>,
+    #[clap(long, num_args = 0)]
+    inplace: bool,
     #[clap(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
+}
+
+/// Compute the output stream for the "fmt" subcommand.
+/// If an output filepath is specified, then that filepath is used.
+/// Otherwise, the formatted output is printed on the terminal.
+/// If the --inplace flag is specified, then the input file is overwritten.
+fn compute_output_stream(cmd: &Args) -> Box<dyn WriteColor> {
+    if cmd.inplace {
+        return Box::new(IgnoreColors::new(
+            File::create(cmd.filepath.clone()).expect("Failed to create file"),
+        ));
+    }
+    match &cmd.output {
+        Some(path) => {
+            Box::new(IgnoreColors::new(File::create(path).expect("Failed to create file")))
+        }
+        None => Box::new(StandardStream::stdout(ColorChoice::Auto)),
+    }
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
@@ -28,12 +48,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let prg = view.ust().map_err(|err| view.pretty_error(err))?;
 
     // Write to file or to stdout
-    let mut stream: Box<dyn WriteColor> = match cmd.output {
-        Some(path) => {
-            Box::new(IgnoreColors::new(File::create(path).expect("Failed to create file")))
-        }
-        None => Box::new(StandardStream::stdout(ColorChoice::Auto)),
-    };
+    let mut stream: Box<dyn WriteColor> = compute_output_stream(&cmd);
 
     let cfg = PrintCfg {
         width: cmd.width.unwrap_or_else(terminal_width),
