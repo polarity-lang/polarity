@@ -44,7 +44,7 @@
         "xfn.executable": {
           "type": "string",
           "default": "xfunc",
-          "description": "Path to the xfn executable"
+          "description": "Path to the xfunc executable"
         }
       }
     }

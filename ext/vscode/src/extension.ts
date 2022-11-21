@@ -8,13 +8,13 @@ let client: vscodelang.LanguageClient;
 
 // This method is called when the "xfn" extension is activated.
 export function activate(context: vscode.ExtensionContext) {
-	
+
 	console.log('Congratulations, your extension "xfn" is now active!');
-    
+
 	let config = vscode.workspace.getConfiguration("xfn");
 
 	let defaultCmd = "xfunc";
-	let duoLangCmd = config.get<string>("executable") || defaultCmd;
+	let langCmd = config.get<string>("executable") || defaultCmd;
 
     // Assemble arguments
     let args: string[] = [];
@@ -22,12 +22,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let serverOptions: vscodelang.ServerOptions = {
         run: {
-            command: duoLangCmd,
+            command: langCmd,
             args: args,
             options: {}
         },
         debug: {
-            command: duoLangCmd,
+            command: langCmd,
             args: args,
             options: {}
         }
