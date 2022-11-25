@@ -259,6 +259,7 @@ impl Forget for tst::Exp {
             tst::Exp::Comatch { info, name, body } => {
                 ust::Exp::Comatch { info: info.forget(), name: name.clone(), body: body.forget() }
             }
+            tst::Exp::Hole {} => todo!(),
         }
     }
 }

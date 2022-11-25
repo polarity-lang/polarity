@@ -52,6 +52,7 @@ where
                 name: name.clone(),
                 body: body.shift_cutoff(cutoff, by),
             },
+            Exp::Hole {} => todo!(),
         }
     }
 }
@@ -150,6 +151,7 @@ impl<P: Phase> HasInfo for Exp<P> {
             Exp::Type { info } => info.clone(),
             Exp::Match { info, .. } => info.clone().into(),
             Exp::Comatch { info, .. } => info.clone().into(),
+            Exp::Hole {} => todo!(),
         }
     }
 }
