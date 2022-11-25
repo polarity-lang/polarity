@@ -442,6 +442,7 @@ impl Lower for cst::Exp {
                     .ok_or(LoweringError::UnnamedMatch { span: info.span.to_miette() })?,
                 body: body.lower_in_ctx(ctx)?,
             }),
+            cst::Exp::Hole { info: _ } => todo!("Lowering of holes not implemented"),
         }
     }
 }
