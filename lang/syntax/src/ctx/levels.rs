@@ -1,6 +1,6 @@
 use crate::ast::Swap;
+use crate::common::*;
 use crate::ctx::Context;
-use crate::de_bruijn::*;
 
 #[derive(Clone, Debug, Default)]
 pub struct LevelCtx {

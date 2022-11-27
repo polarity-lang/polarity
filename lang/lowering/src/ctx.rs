@@ -4,8 +4,6 @@ use syntax::ast::source;
 use syntax::common::*;
 use syntax::cst;
 use syntax::ctx::Context;
-use syntax::de_bruijn::*;
-use syntax::named::Named;
 use syntax::ust;
 
 use super::result::LoweringError;

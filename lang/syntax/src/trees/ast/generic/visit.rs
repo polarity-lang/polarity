@@ -3,7 +3,6 @@ use std::rc::Rc;
 use data::HashMap;
 
 use crate::common::*;
-use crate::de_bruijn::*;
 
 use super::def::*;
 use super::source::Source;

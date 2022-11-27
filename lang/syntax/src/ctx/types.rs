@@ -6,8 +6,8 @@ use std::rc::Rc;
 
 use crate::ast::*;
 use crate::ast::{subst, Substitutable};
+use crate::common::*;
 use crate::ctx::{Context, LevelCtx};
-use crate::de_bruijn::*;
 
 #[derive(Debug, Clone)]
 pub struct TypeCtx<P: Phase> {

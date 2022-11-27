@@ -1,8 +1,6 @@
 use codespan::Span;
 
 use crate::common::*;
-use crate::de_bruijn::*;
-use crate::equiv::*;
 use crate::tst;
 
 use super::def::*;

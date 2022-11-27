@@ -1,8 +1,6 @@
 use codespan::Span;
 
-use crate::common::HasSpan;
-use crate::common::Ident;
-use crate::de_bruijn::*;
+use crate::common::*;
 
 use super::generic;
 

@@ -5,7 +5,6 @@ use data::HashMap;
 use derivative::Derivative;
 
 use crate::common::*;
-use crate::de_bruijn::*;
 
 use super::source::{self, Source};
 

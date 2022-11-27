@@ -2,9 +2,9 @@ use std::rc::Rc;
 
 use miette_util::ToMiette;
 use syntax::ast::source;
+use syntax::common::*;
 use syntax::cst;
 use syntax::ctx::{Bind, Context};
-use syntax::named::Named;
 use syntax::ust;
 
 use super::ctx::*;

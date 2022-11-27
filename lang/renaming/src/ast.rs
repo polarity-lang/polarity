@@ -1,7 +1,6 @@
 use syntax::ast::*;
 use syntax::common::*;
 use syntax::ctx::*;
-use syntax::de_bruijn::*;
 
 use crate::Rename;
 

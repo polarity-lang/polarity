@@ -5,7 +5,6 @@ use std::rc::Rc;
 use crate::ast::Annotated;
 use crate::ast::*;
 use crate::common::*;
-use crate::named::Named;
 
 /// Defines the interface of a variable context
 pub trait Context: Sized {

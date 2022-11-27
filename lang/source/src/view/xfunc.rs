@@ -8,7 +8,6 @@ use syntax::ast;
 use syntax::ast::forget::Forget;
 use syntax::common::*;
 use syntax::matrix;
-use syntax::named::Named;
 use syntax::ust;
 
 use super::{DatabaseView, Edit};

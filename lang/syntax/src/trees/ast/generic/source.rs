@@ -1,6 +1,6 @@
 use data::HashMap;
 
-use crate::{common::*, named::Named};
+use crate::common::*;
 
 /// Order in which declarations are defined in the source
 #[derive(Debug, Clone, Default)]

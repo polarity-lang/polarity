@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use data::HashMap;
 
-use super::common::*;
 use super::ust;
+use crate::common::*;
 
 #[derive(Debug, Clone)]
 pub struct Prg {

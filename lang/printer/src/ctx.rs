@@ -1,8 +1,8 @@
 use pretty::DocAllocator;
 
 use syntax::ast::Phase;
+use syntax::common::*;
 use syntax::ctx::TypeCtx;
-use syntax::de_bruijn::ShiftCutoff;
 
 use super::tokens::COMMA;
 use super::Print;

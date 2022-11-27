@@ -8,7 +8,6 @@ use syntax::ast::fv::FreeVarsResult;
 use syntax::ast::*;
 use syntax::common::*;
 use syntax::ctx::*;
-use syntax::named::Named;
 use syntax::tst;
 use syntax::tst::TST;
 

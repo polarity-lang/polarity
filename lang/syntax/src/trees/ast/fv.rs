@@ -8,7 +8,6 @@ use crate::ast::generic::*;
 use crate::ast::subst::{self, Substitutable};
 use crate::common::*;
 use crate::ctx::*;
-use crate::de_bruijn::*;
 use crate::tst;
 
 use super::forget::Forget;

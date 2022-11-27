@@ -3,7 +3,6 @@ use std::rc::Rc;
 use codespan::Span;
 
 use crate::common::*;
-use crate::de_bruijn::Idx;
 
 use super::forget::Forget;
 use super::generic;

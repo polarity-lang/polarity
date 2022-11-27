@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use crate::ast::subst;
+use crate::common::*;
 use crate::ctx::*;
-use crate::de_bruijn::*;
 
 use super::def::*;
 

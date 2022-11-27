@@ -3,7 +3,7 @@ use std::rc::Rc;
 use codespan::ByteIndex;
 use codespan::Span;
 
-use super::common::*;
+use crate::common::*;
 
 #[derive(Debug, Clone)]
 pub struct Prg {

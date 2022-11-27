@@ -3,7 +3,6 @@ use std::rc::Rc;
 use derivative::Derivative;
 
 use crate::common::*;
-use crate::de_bruijn::*;
 use crate::env::*;
 use crate::ust;
 

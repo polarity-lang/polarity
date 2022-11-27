@@ -6,8 +6,7 @@ use thiserror::Error;
 use data::{Dec, HashMap, HashSet, No, Yes};
 use printer::PrintToString;
 use syntax::ast::{self, subst, Assign, Substitutable, Substitution};
-use syntax::de_bruijn::*;
-use syntax::equiv::AlphaEq;
+use syntax::common::*;
 use syntax::ust;
 use tracer::trace;
 

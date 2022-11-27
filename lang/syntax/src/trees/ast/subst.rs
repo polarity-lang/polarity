@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::*;
-use crate::de_bruijn::*;
 use crate::tst;
 
 use super::generic::*;

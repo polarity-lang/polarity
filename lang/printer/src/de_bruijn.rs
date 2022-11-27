@@ -1,6 +1,6 @@
 use pretty::DocAllocator;
 
-use syntax::de_bruijn::*;
+use syntax::common::*;
 
 use super::tokens::*;
 use super::types::*;
