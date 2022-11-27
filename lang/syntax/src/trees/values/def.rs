@@ -6,6 +6,7 @@ use crate::common::*;
 use crate::env::*;
 use crate::ust;
 
+/// The result of evaluation
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Val {
@@ -38,6 +39,7 @@ pub enum Val {
     },
 }
 
+/// A term whose evaluation is blocked
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Neu {
