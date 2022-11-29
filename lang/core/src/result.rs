@@ -29,6 +29,10 @@ pub enum TypeError {
         #[label]
         rhs_span: Option<SourceSpan>,
     },
+    #[error("Cannot match on codata type {name}")]
+    MatchOnCodata { name: Ident, span: Option<SourceSpan> },
+    #[error("Cannot comatch on data type {name}")]
+    ComatchOnData { name: Ident, span: Option<SourceSpan> },
     #[error("Invalid pattern match: {msg}")]
     InvalidMatch {
         msg: String,

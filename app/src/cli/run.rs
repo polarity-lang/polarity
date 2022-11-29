@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
+use core::eval::Eval;
 use source::{Database, File};
+use syntax::ctx::Context;
+use syntax::{ast::forget::Forget, env::Env};
 
 use crate::result::IOError;
 
@@ -14,6 +17,12 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::default();
     let file = File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
     let view = db.add(file).query();
-    view.tst().map_err(|err| view.pretty_error(err))?;
+    let tst = view.tst().map_err(|err| view.pretty_error(err))?;
+    let prg = tst.forget();
+    if let Some(exp) = &prg.exp {
+        let mut env = Env::empty();
+        let val = exp.eval(&prg, &mut env).unwrap();
+        println!("{:?}", val);
+    }
     Ok(())
 }

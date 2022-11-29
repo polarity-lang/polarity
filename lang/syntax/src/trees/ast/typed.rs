@@ -27,6 +27,7 @@ impl generic::Phase for TST {
 pub type Prg = generic::Prg<TST>;
 pub type Decls = generic::Decls<TST>;
 pub type Decl = generic::Decl<TST>;
+pub type Type<'a> = generic::Type<'a, TST>;
 pub type Data = generic::Data<TST>;
 pub type Codata = generic::Codata<TST>;
 pub type Impl = generic::Impl<TST>;

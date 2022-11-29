@@ -21,9 +21,7 @@ impl ShiftCutoff for Val {
                 name: name.clone(),
                 body: body.shift_cutoff(cutoff, by),
             },
-            Val::Neu { exp, typ } => {
-                Val::Neu { exp: exp.shift_cutoff(cutoff, by), typ: typ.shift_cutoff(cutoff, by) }
-            }
+            Val::Neu { exp } => Val::Neu { exp: exp.shift_cutoff(cutoff, by) },
         }
     }
 }

@@ -68,6 +68,16 @@ impl Source {
         Some(type_decl)
     }
 
+    pub fn type_decl_for_xtor(&self, name: &str) -> Option<&Type> {
+        let type_name = self.type_for_xtor.get(name)?;
+        self.type_decl(type_name)
+    }
+
+    pub fn type_decl_for_xdef(&self, name: &str) -> Option<&Type> {
+        let type_name = self.type_for_xdef.get(name)?;
+        self.type_decl(type_name)
+    }
+
     fn type_raw_mut(&mut self, name: &str) -> Option<&mut Type> {
         let item = self.decl_for_type.get(name).and_then(|idx| self.items.get_mut(*idx))?;
         let Item::Type(type_decl) = item else {

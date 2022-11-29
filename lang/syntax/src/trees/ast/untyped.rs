@@ -23,6 +23,7 @@ impl generic::Phase for UST {
 pub type Prg = generic::Prg<UST>;
 pub type Decls = generic::Decls<UST>;
 pub type Decl = generic::Decl<UST>;
+pub type Type<'a> = generic::Type<'a, UST>;
 pub type Data = generic::Data<UST>;
 pub type Codata = generic::Codata<UST>;
 pub type Impl = generic::Impl<UST>;

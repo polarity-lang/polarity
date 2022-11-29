@@ -1,6 +1,5 @@
 pub mod ctx;
 pub mod eval;
-pub mod prg;
 pub mod read_back;
 pub mod result;
 pub mod typecheck;

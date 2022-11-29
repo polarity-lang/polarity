@@ -66,6 +66,66 @@ impl<P: Phase> Decls<P> {
             },
         })
     }
+
+    pub fn typ(&self, name: &str) -> Type<'_, P> {
+        match &self.map[name] {
+            Decl::Data(data) => Type::Data(data),
+            Decl::Codata(codata) => Type::Codata(codata),
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn type_decl_for_member(&self, name: &Ident) -> Type<'_, P> {
+        let type_decl = self
+            .source
+            .type_decl_for_xtor(name)
+            .unwrap_or_else(|| self.source.type_decl_for_xdef(name).unwrap());
+        self.typ(&type_decl.name)
+    }
+
+    pub fn def(&self, name: &str) -> &Def<P> {
+        match &self.map[name] {
+            Decl::Def(def) => def,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn codef(&self, name: &str) -> &Codef<P> {
+        match &self.map[name] {
+            Decl::Codef(codef) => codef,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn ctor_or_codef(&self, name: &str) -> Ctor<P> {
+        match &self.map[name] {
+            Decl::Ctor(ctor) => ctor.clone(),
+            Decl::Codef(codef) => codef.to_ctor(),
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn dtor_or_def(&self, name: &str) -> Dtor<P> {
+        match &self.map[name] {
+            Decl::Dtor(dtor) => dtor.clone(),
+            Decl::Def(def) => def.to_dtor(),
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn ctor(&self, name: &str) -> &Ctor<P> {
+        match &self.map[name] {
+            Decl::Ctor(ctor) => ctor,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn dtor(&self, name: &str) -> &Dtor<P> {
+        match &self.map[name] {
+            Decl::Dtor(dtor) => dtor,
+            _ => unreachable!(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -73,6 +133,28 @@ pub enum Item<'a, P: Phase> {
     Data(&'a Data<P>),
     Codata(&'a Codata<P>),
     Impl(&'a Impl<P>),
+}
+
+#[derive(Debug, Clone)]
+pub enum Type<'a, P: Phase> {
+    Data(&'a Data<P>),
+    Codata(&'a Codata<P>),
+}
+
+impl<'a, P: Phase> Type<'a, P> {
+    pub fn name(&self) -> &Ident {
+        match self {
+            Type::Data(data) => &data.name,
+            Type::Codata(codata) => &codata.name,
+        }
+    }
+
+    pub fn typ(&self) -> Rc<TypAbs<P>> {
+        match self {
+            Type::Data(data) => data.typ.clone(),
+            Type::Codata(codata) => codata.typ.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

@@ -35,7 +35,6 @@ pub enum Val {
     },
     Neu {
         exp: Neu,
-        typ: Rc<Val>,
     },
 }
 
@@ -91,7 +90,7 @@ pub struct Case {
     pub info: Info,
     pub name: Ident,
     // TODO: Rename to params
-    pub args: TelescopeInst,
+    pub args: ust::TelescopeInst,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Closure>,
 }
@@ -103,26 +102,9 @@ pub struct Cocase {
     pub info: Info,
     pub name: Ident,
     // TODO: Rename to params
-    pub args: TelescopeInst,
+    pub args: ust::TelescopeInst,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Closure>,
-}
-
-/// Instantiation of a previously declared telescope
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
-pub struct TelescopeInst {
-    pub params: Vec<ParamInst>,
-}
-
-/// Instantiation of a previously declared parameter
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
-pub struct ParamInst {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Info,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub name: Ident,
 }
 
 pub type Info = ust::Info;

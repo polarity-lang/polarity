@@ -7,7 +7,7 @@ use std::rc::Rc;
 use crate::common::*;
 use crate::ctx::{Context, LevelCtx};
 use crate::env::Env;
-use crate::values::*;
+use crate::val::*;
 
 use super::map_idx::*;
 
@@ -109,7 +109,7 @@ impl TypeCtx {
     pub fn env(&self) -> Env {
         let bound = self
             .bound
-            .map_idx(|idx, typ| {
+            .map_idx(|idx, _typ| {
                 Rc::new(Val::Neu {
                     exp: Neu::Var {
                         // FIXME: handle info/name
@@ -117,7 +117,6 @@ impl TypeCtx {
                         name: String::new(),
                         idx,
                     },
-                    typ: typ.clone(),
                 })
             })
             .collect();
