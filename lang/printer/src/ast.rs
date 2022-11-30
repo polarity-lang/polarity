@@ -7,6 +7,7 @@ use syntax::ast::*;
 use super::theme::ThemeExt;
 use super::tokens::*;
 use super::types::*;
+use super::util::*;
 
 impl<'a, P: Phase> Print<'a> for Prg<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
@@ -376,42 +377,6 @@ impl<'a, T: Print<'a>> Print<'a> for Vec<T> {
         } else {
             let sep = alloc.text(COMMA).append(alloc.space());
             alloc.intersperse(self.iter().map(|x| x.print(cfg, alloc)), sep)
-        }
-    }
-}
-
-trait BracesExt<'a, D, A: 'a>
-where
-    D: ?Sized + DocAllocator<'a, A>,
-{
-    fn braces_from(self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, D, A>;
-}
-
-impl<'a, D, A> BracesExt<'a, D, A> for pretty::DocBuilder<'a, D, A>
-where
-    D: ?Sized + DocAllocator<'a, A>,
-{
-    fn braces_from(self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, D, A> {
-        self.enclose(cfg.braces.0, cfg.braces.1)
-    }
-}
-
-trait ParensExt<'a, D, A: 'a>
-where
-    D: ?Sized + DocAllocator<'a, A>,
-{
-    fn opt_parens(self) -> pretty::DocBuilder<'a, D, A>;
-}
-
-impl<'a, D, A> ParensExt<'a, D, A> for pretty::DocBuilder<'a, D, A>
-where
-    D: ?Sized + DocAllocator<'a, A>,
-{
-    fn opt_parens(self) -> pretty::DocBuilder<'a, D, A> {
-        if matches!(self.1, pretty::BuildDoc::Doc(pretty::Doc::Nil)) {
-            self
-        } else {
-            self.parens()
         }
     }
 }

@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use core::eval::Eval;
+use printer::PrintToString;
 use source::{Database, File};
 use syntax::ctx::Context;
 use syntax::{ast::forget::Forget, env::Env};
@@ -22,7 +23,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     if let Some(exp) = &prg.exp {
         let mut env = Env::empty();
         let val = exp.eval(&prg, &mut env).unwrap();
-        println!("{:?}", val);
+        println!("{}", val.print_to_string());
     }
     Ok(())
 }
