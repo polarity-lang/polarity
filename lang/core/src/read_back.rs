@@ -12,6 +12,7 @@ pub trait ReadBack {
     fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError>;
 }
 
+#[derive(Debug)]
 pub enum ReadBackError {}
 
 impl ReadBack for val::Val {
