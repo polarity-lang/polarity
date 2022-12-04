@@ -5,7 +5,6 @@
 use std::rc::Rc;
 
 use crate::ast::*;
-use crate::ast::{subst, Substitutable};
 use crate::common::*;
 use crate::ctx::{Context, LevelCtx};
 
@@ -16,7 +15,7 @@ pub struct TypeCtx<P: Phase> {
 
 impl<P: Phase> TypeCtx<P>
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
 {
     pub fn levels(&self) -> LevelCtx {
         let bound: Vec<_> = self.bound.iter().map(|inner| inner.len()).collect();
@@ -50,7 +49,7 @@ where
 
 impl<P: Phase> Context for TypeCtx<P>
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
 {
     type ElemIn = Rc<Exp<P>>;
 
@@ -107,11 +106,11 @@ impl<P: Phase> Leveled for TypeCtx<P> {
     }
 }
 
-impl<P: Phase> Substitutable<P> for TypeCtx<P>
+impl<P: Phase> Substitutable<Rc<Exp<P>>> for TypeCtx<P>
 where
-    P::Typ: Substitutable<P> + ShiftCutoff,
+    P::Typ: Substitutable<Rc<Exp<P>>> + ShiftInRange,
 {
-    fn subst<S: Substitution<P>>(&self, _ctx: &mut subst::Ctx, by: &S) -> Self {
+    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, _ctx: &mut LevelCtx, by: &S) -> Self {
         self.map(|exp| exp.subst(&mut self.levels(), by))
     }
 }

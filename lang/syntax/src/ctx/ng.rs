@@ -26,15 +26,15 @@ impl TypeCtx {
         self.bound.iter().map(|inner| &inner[..])
     }
 
-    fn shift(&mut self, by: (isize, isize)) {
+    fn shift<R: ShiftRange>(&mut self, range: R, by: (isize, isize)) {
         for lvl in 0..self.bound.len() {
-            self.shift_at_lvl(lvl, by)
+            self.shift_at_lvl(range.clone(), lvl, by)
         }
     }
 
-    fn shift_at_lvl(&mut self, lvl: usize, by: (isize, isize)) {
+    fn shift_at_lvl<R: ShiftRange>(&mut self, range: R, lvl: usize, by: (isize, isize)) {
         for i in 0..self.bound[lvl].len() {
-            self.bound[lvl][i] = self.bound[lvl][i].shift(by);
+            self.bound[lvl][i] = self.bound[lvl][i].shift_in_range(range.clone(), by);
         }
     }
 }
@@ -60,24 +60,24 @@ impl Context for TypeCtx {
     }
 
     fn push_telescope(&mut self) {
-        self.shift((1, 0));
+        self.shift(.., (1, 0));
         self.bound.push(vec![]);
     }
 
     fn pop_telescope(&mut self) {
         self.bound.pop().unwrap();
-        self.shift((-1, 0));
+        self.shift(.., (-1, 0));
     }
 
     fn push_binder(&mut self, elem: Self::ElemIn) {
         self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
-        self.shift_at_lvl(self.bound.len() - 1, (0, 1));
+        self.shift_at_lvl(0..1, self.bound.len() - 1, (0, 1));
     }
 
     fn pop_binder(&mut self, _elem: Self::ElemIn) {
         let err = "Cannot pop from empty context";
         self.bound.last_mut().expect(err).pop().expect(err);
-        self.shift_at_lvl(self.bound.len() - 1, (0, -1));
+        self.shift_at_lvl(0..1, self.bound.len() - 1, (0, -1));
     }
 }
 
@@ -103,9 +103,7 @@ impl TypeCtx {
     pub fn is_empty(&self) -> bool {
         self.bound.is_empty()
     }
-}
 
-impl TypeCtx {
     pub fn env(&self) -> Env {
         let bound = self
             .bound
@@ -122,5 +120,15 @@ impl TypeCtx {
             .collect();
 
         Env::from(bound)
+    }
+
+    pub fn map_failable<E, F>(&self, f: F) -> Result<Self, E>
+    where
+        F: Fn(&Rc<Val>) -> Result<Rc<Val>, E>,
+    {
+        let bound: Result<_, _> =
+            self.bound.iter().map(|stack| stack.iter().map(&f).collect()).collect();
+
+        Ok(Self { bound: bound? })
     }
 }

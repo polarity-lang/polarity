@@ -3,14 +3,13 @@ use syntax::ust;
 
 use super::eval::*;
 use super::read_back::*;
+use super::result::*;
 
 pub trait Normalize {
     type Nf;
 
     fn normalize(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Nf, NormalizeError>;
 }
-
-pub enum NormalizeError {}
 
 impl<T> Normalize for T
 where

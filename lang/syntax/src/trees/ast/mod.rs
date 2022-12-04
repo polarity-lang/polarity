@@ -6,4 +6,3 @@ pub mod typed;
 pub mod untyped;
 
 pub use generic::*;
-pub use subst::{Assign, Substitutable, Substitution, Swap, SwapWithCtx};

@@ -15,8 +15,12 @@ impl generic::Phase for UST {
     type VarName = Ident;
     type Typ = ();
 
-    fn print_var(name: &Self::VarName, _idx: Idx) -> String {
-        name.clone()
+    fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String {
+        if let Some(idx) = idx {
+            format!("{}@{}", name, idx)
+        } else {
+            name.clone()
+        }
     }
 }
 

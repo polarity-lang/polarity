@@ -330,7 +330,9 @@ impl<'a, P: Phase> Print<'a> for TypApp<P> {
 impl<'a, P: Phase> Print<'a> for Exp<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Exp::Var { info: _, name, idx } => alloc.text(P::print_var(name, *idx)),
+            Exp::Var { info: _, name, idx } => {
+                alloc.text(P::print_var(name, cfg.de_bruijn.then_some(*idx)))
+            }
             Exp::TypCtor { info: _, name, args: subst } => {
                 alloc.typ(name).append(subst.print(cfg, alloc).opt_parens())
             }

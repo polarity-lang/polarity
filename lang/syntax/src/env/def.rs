@@ -68,6 +68,10 @@ impl Leveled for Env {
 }
 
 impl Env {
+    pub fn iter(&self) -> impl Iterator<Item = &[Rc<Val>]> {
+        self.bound.iter().map(|inner| &inner[..])
+    }
+
     pub(super) fn map<F>(&self, f: F) -> Self
     where
         F: Fn(&Rc<Val>) -> Rc<Val>,

@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use data::HashSet;
 use renaming::Rename;
-use syntax::ast::forget::Forget;
 use syntax::ast::fv::FreeVarsExt;
 use syntax::ast::fv::FreeVarsResult;
 use syntax::ast::*;

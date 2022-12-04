@@ -107,6 +107,13 @@ pub struct Cocase {
     pub body: Option<Closure>,
 }
 
+#[derive(Debug, Clone)]
+pub struct TypApp {
+    pub info: Info,
+    pub name: Ident,
+    pub args: Args,
+}
+
 pub type Info = ust::Info;
 pub type Args = Vec<Rc<Val>>;
 

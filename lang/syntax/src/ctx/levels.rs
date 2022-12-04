@@ -1,6 +1,13 @@
-use crate::ast::Swap;
+use std::fmt;
+use std::rc::Rc;
+
+use data::string::comma_separated;
+
 use crate::common::*;
-use crate::ctx::Context;
+use crate::env::Env;
+use crate::val::{Info, Neu, Val};
+
+use super::def::*;
 
 #[derive(Clone, Debug, Default)]
 pub struct LevelCtx {
@@ -25,6 +32,27 @@ impl LevelCtx {
 
     pub fn tail(&self, skip: usize) -> Self {
         Self { bound: self.bound.iter().skip(skip).cloned().collect() }
+    }
+
+    pub fn env(&self) -> Env {
+        // FIXME: Refactor this
+        let bound: Vec<_> = self
+            .bound
+            .iter()
+            .enumerate()
+            .map(|(fst, len)| {
+                (0..*len)
+                    .map(|snd| {
+                        let idx = Idx { fst: self.bound.len() - 1 - fst, snd: len - 1 - snd };
+                        Rc::new(Val::Neu {
+                            exp: Neu::Var { info: Info::empty(), name: String::new(), idx },
+                        })
+                    })
+                    .collect()
+            })
+            .collect();
+
+        Env::from(bound)
     }
 }
 
@@ -85,5 +113,11 @@ impl Swap for LevelCtx {
         let mut new_ctx = self.clone();
         new_ctx.bound.swap(fst1, fst2);
         new_ctx
+    }
+}
+
+impl fmt::Display for LevelCtx {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[{}]", comma_separated(self.bound.iter().map(ToString::to_string)))
     }
 }

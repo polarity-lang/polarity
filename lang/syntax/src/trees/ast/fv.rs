@@ -5,13 +5,9 @@ use derivative::Derivative;
 use data::{HashMap, HashSet};
 
 use crate::ast::generic::*;
-use crate::ast::subst::{self, Substitutable};
 use crate::common::*;
 use crate::ctx::*;
-use crate::tst;
-
-use super::forget::Forget;
-use super::Substitution;
+use crate::ust;
 
 /// Find all free variables
 pub trait FreeVarsExt<P: Phase> {
@@ -29,22 +25,22 @@ pub struct FreeVars<P: Phase> {
 /// The result of closing under the set of free variables
 pub struct FreeVarsResult {
     /// Telescope of the types of the free variables
-    pub telescope: tst::Telescope,
+    pub telescope: ust::Telescope,
     /// A substitution close the free variables under `telescope`
-    pub subst: FVSubst<tst::TST>,
+    pub subst: FVSubst<ust::UST>,
     /// An instantiation of `telescope` with the free variables
-    pub args: tst::Args,
+    pub args: ust::Args,
 }
 
-impl FreeVars<tst::TST> {
+impl FreeVars<ust::UST> {
     pub fn telescope(self) -> FreeVarsResult {
         let cutoff = self.cutoff;
         // Sort the list of free variables by the De-Bruijn level such the dependency relation is satisfied.
         // Types may be interdependent but can only depend on types which occur earlier in the context.
         let fvs = self.sorted();
 
-        let mut params: tst::Params = vec![];
-        let mut args: tst::Args = vec![];
+        let mut params: ust::Params = vec![];
+        let mut args: ust::Args = vec![];
         let mut subst = FVSubst::new(cutoff);
 
         // FIXME: The manual context management here should be abstracted out
@@ -53,9 +49,10 @@ impl FreeVars<tst::TST> {
 
             let typ = typ.subst(&mut ctx.levels(), &subst);
 
-            let param = tst::Param { name: name.clone(), typ: typ.clone() };
-            let info = tst::TypeInfo { typ: typ.forget(), span: Default::default() };
-            let arg = Rc::new(tst::Exp::Var {
+            let param = ust::Param { name: name.clone(), typ: typ.clone() };
+
+            let info = ust::Info::empty();
+            let arg = Rc::new(ust::Exp::Var {
                 info: info.clone(),
                 name: name.clone(),
                 idx: ctx.lvl_to_idx(fv.lvl),
@@ -72,7 +69,7 @@ impl FreeVars<tst::TST> {
     }
 
     /// Compute the union of two free variable sets
-    pub fn union(self, other: FreeVars<tst::TST>) -> FreeVars<tst::TST> {
+    pub fn union(self, other: FreeVars<ust::UST>) -> FreeVars<ust::UST> {
         assert_eq!(self.cutoff, other.cutoff);
         let mut fvs = self.fvs;
         fvs.extend(other.fvs.into_iter());
@@ -80,7 +77,7 @@ impl FreeVars<tst::TST> {
     }
 
     /// Sort the free variables according to their De-Bruijn level
-    fn sorted(self) -> Vec<FreeVar<tst::TST>> {
+    fn sorted(self) -> Vec<FreeVar<ust::UST>> {
         let mut fvs: Vec<_> = self.fvs.into_iter().collect();
         fvs.sort();
         fvs
@@ -105,7 +102,7 @@ pub struct FreeVar<P: Phase> {
 
 impl<P: Phase<VarName = Ident>, T: Visit<P>> FreeVarsExt<P> for T
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
     for<'b> &'b Param<P>: AsElement<Rc<Exp<P>>>,
     for<'b> &'b ParamInst<P>: AsElement<Rc<Exp<P>>>,
 {
@@ -130,7 +127,7 @@ struct FvVistor<'a, P: Phase> {
 
 impl<'a, P: Phase<VarName = Ident>> FvVistor<'a, P>
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
     for<'b> &'b Param<P>: AsElement<Rc<Exp<P>>>,
     for<'b> &'b ParamInst<P>: AsElement<Rc<Exp<P>>>,
 {
@@ -148,7 +145,7 @@ where
 
 impl<'a, P: Phase> HasContext for FvVistor<'a, P>
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
 {
     type Ctx = TypeCtx<P>;
 
@@ -159,7 +156,7 @@ where
 
 impl<'b, P: Phase<VarName = Ident>> Visitor<P> for FvVistor<'b, P>
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
     for<'c> &'c Param<P>: AsElement<Rc<Exp<P>>>,
     for<'c> &'c ParamInst<P>: AsElement<Rc<Exp<P>>>,
 {
@@ -225,8 +222,8 @@ impl<P: Phase> FVSubst<P> {
     }
 }
 
-impl<P: Phase<VarName = Ident>> Substitution<P> for FVSubst<P> {
-    fn get_subst(&self, ctx: &subst::Ctx, lvl: Lvl) -> Option<Rc<Exp<P>>> {
+impl<P: Phase<VarName = Ident>> Substitution<Rc<Exp<P>>> for FVSubst<P> {
+    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp<P>>> {
         // Let Γ be the original context, let Δ be the context according to which the new De-Bruijn index should be calculated
         //
         // Γ = [[x], [y], [z]]

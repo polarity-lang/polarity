@@ -10,7 +10,7 @@ use crate::val::Val;
 /// Defines the interface of a variable context
 pub trait Context: Sized {
     /// The type of elements that can be bound to the context
-    type ElemIn;
+    type ElemIn: Clone;
     /// Result type of a lookup into the context
     type ElemOut;
     /// Variable type that can be looked up in the context
@@ -87,6 +87,33 @@ pub trait Bind {
         T: AsElement<Self::Elem>,
         F1: Fn(&mut Self, O1, T) -> O1,
         F2: FnOnce(&mut Self, O1) -> O2;
+
+    fn bind_fold2<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
+        &mut self,
+        iter: I,
+        acc: O1,
+        f_acc: F1,
+        f_inner: F2,
+    ) -> O2
+    where
+        F1: Fn(&mut Self, O1, T) -> BindElem<Self::Elem, O1>,
+        F2: FnOnce(&mut Self, O1) -> O2;
+
+    fn bind_fold_failable<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
+        &mut self,
+        iter: I,
+        acc: O1,
+        f_acc: F1,
+        f_inner: F2,
+    ) -> Result<O2, E>
+    where
+        F1: Fn(&mut Self, O1, T) -> Result<BindElem<Self::Elem, O1>, E>,
+        F2: FnOnce(&mut Self, O1) -> O2;
+}
+
+pub struct BindElem<E, O> {
+    pub elem: E,
+    pub ret: O,
 }
 
 impl<C: Context> HasContext for C {
@@ -112,29 +139,70 @@ impl<C: HasContext> Bind for C {
         F1: Fn(&mut Self, O1, T) -> O1,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
-        fn bind_inner<This: HasContext, T, I: Iterator<Item = T>, O1, O2, F1, F2>(
+        self.bind_fold2(
+            iter,
+            acc,
+            |this, acc, x| BindElem { elem: x.as_element(), ret: f_acc(this, acc, x) },
+            f_inner,
+        )
+    }
+
+    fn bind_fold2<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
+        &mut self,
+        iter: I,
+        acc: O1,
+        f_acc: F1,
+        f_inner: F2,
+    ) -> O2
+    where
+        F1: Fn(&mut Self, O1, T) -> BindElem<Self::Elem, O1>,
+        F2: FnOnce(&mut Self, O1) -> O2,
+    {
+        self.bind_fold_failable(
+            iter,
+            acc,
+            |this, acc, x| Result::<_, ()>::Ok(f_acc(this, acc, x)),
+            f_inner,
+        )
+        .unwrap()
+    }
+
+    fn bind_fold_failable<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
+        &mut self,
+        iter: I,
+        acc: O1,
+        f_acc: F1,
+        f_inner: F2,
+    ) -> Result<O2, E>
+    where
+        F1: Fn(&mut Self, O1, T) -> Result<BindElem<Self::Elem, O1>, E>,
+        F2: FnOnce(&mut Self, O1) -> O2,
+    {
+        fn bind_inner<This: HasContext, T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
             this: &mut This,
             mut iter: I,
             acc: O1,
             f_acc: F1,
             f_inner: F2,
-        ) -> O2
+        ) -> Result<O2, E>
         where
-            T: AsElement<<<This as HasContext>::Ctx as Context>::ElemIn>,
-            F1: Fn(&mut This, O1, T) -> O1,
+            F1: Fn(
+                &mut This,
+                O1,
+                T,
+            )
+                -> Result<BindElem<<<This as HasContext>::Ctx as Context>::ElemIn, O1>, E>,
             F2: FnOnce(&mut This, O1) -> O2,
         {
             match iter.next() {
                 Some(x) => {
-                    let elem1 = x.as_element();
-                    let elem2 = x.as_element();
-                    let acc = f_acc(this, acc, x);
-                    this.ctx_mut().push_binder(elem1);
+                    let BindElem { elem, ret: acc } = f_acc(this, acc, x)?;
+                    this.ctx_mut().push_binder(elem.clone());
                     let res = bind_inner(this, iter, acc, f_acc, f_inner);
-                    this.ctx_mut().pop_binder(elem2);
+                    this.ctx_mut().pop_binder(elem);
                     res
                 }
-                None => f_inner(this, acc),
+                None => Ok(f_inner(this, acc)),
             }
         }
 

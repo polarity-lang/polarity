@@ -54,6 +54,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         width: cmd.width.unwrap_or_else(terminal_width),
         braces: ("{", "}"),
         omit_decl_sep: false,
+        de_bruijn: false,
     };
 
     print_prg(prg, &cfg, &mut stream);

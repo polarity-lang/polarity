@@ -5,112 +5,112 @@ use crate::tst;
 
 use super::def::*;
 
-impl<P: Phase> ShiftCutoff for Exp<P>
+impl<P: Phase> ShiftInRange for Exp<P>
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
 {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
             Exp::Var { info, name, idx } => Exp::Var {
                 info: info.clone(),
                 name: name.clone(),
-                idx: idx.shift_cutoff(cutoff, by),
+                idx: idx.shift_in_range(range, by),
             },
             Exp::TypCtor { info, name, args: subst } => Exp::TypCtor {
                 info: info.clone(),
                 name: name.clone(),
-                args: subst.shift_cutoff(cutoff, by),
+                args: subst.shift_in_range(range, by),
             },
             Exp::Ctor { info, name, args: subst } => Exp::Ctor {
                 info: info.clone(),
                 name: name.clone(),
-                args: subst.shift_cutoff(cutoff, by),
+                args: subst.shift_in_range(range, by),
             },
             Exp::Dtor { info, exp, name, args: subst } => Exp::Dtor {
                 info: info.clone(),
-                exp: exp.shift_cutoff(cutoff, by),
+                exp: exp.shift_in_range(range.clone(), by),
                 name: name.clone(),
-                args: subst.shift_cutoff(cutoff, by),
+                args: subst.shift_in_range(range, by),
             },
             Exp::Anno { info, exp, typ } => Exp::Anno {
                 info: info.clone(),
-                exp: exp.shift_cutoff(cutoff, by),
-                typ: typ.shift_cutoff(cutoff, by),
+                exp: exp.shift_in_range(range.clone(), by),
+                typ: typ.shift_in_range(range, by),
             },
             Exp::Type { info } => Exp::Type { info: info.clone() },
             Exp::Match { info, name, on_exp, in_typ, body } => Exp::Match {
                 info: info.clone(),
                 name: name.clone(),
-                on_exp: on_exp.shift_cutoff(cutoff, by),
-                in_typ: in_typ.shift_cutoff(cutoff, by),
-                body: body.shift_cutoff(cutoff, by),
+                on_exp: on_exp.shift_in_range(range.clone(), by),
+                in_typ: in_typ.shift_in_range(range.clone(), by),
+                body: body.shift_in_range(range, by),
             },
             Exp::Comatch { info, name, body } => Exp::Comatch {
                 info: info.clone(),
                 name: name.clone(),
-                body: body.shift_cutoff(cutoff, by),
+                body: body.shift_in_range(range, by),
             },
         }
     }
 }
 
-impl<P: Phase> ShiftCutoff for Match<P>
+impl<P: Phase> ShiftInRange for Match<P>
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
 {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Match { info, cases } = self;
-        Match { info: info.clone(), cases: cases.shift_cutoff(cutoff, by) }
+        Match { info: info.clone(), cases: cases.shift_in_range(range, by) }
     }
 }
 
-impl<P: Phase> ShiftCutoff for Comatch<P>
+impl<P: Phase> ShiftInRange for Comatch<P>
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
 {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Comatch { info, cases } = self;
-        Comatch { info: info.clone(), cases: cases.shift_cutoff(cutoff, by) }
+        Comatch { info: info.clone(), cases: cases.shift_in_range(range, by) }
     }
 }
 
-impl<P: Phase> ShiftCutoff for Case<P>
+impl<P: Phase> ShiftInRange for Case<P>
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
 {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Case { info, name, args, body } = self;
         Case {
             info: info.clone(),
             name: name.clone(),
             args: args.clone(),
-            body: body.shift_cutoff(cutoff + 1, by),
+            body: body.shift_in_range(range.shift(1), by),
         }
     }
 }
 
-impl<P: Phase> ShiftCutoff for Cocase<P>
+impl<P: Phase> ShiftInRange for Cocase<P>
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
 {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Cocase { info, name, args, body } = self;
         Cocase {
             info: info.clone(),
             name: name.clone(),
             args: args.clone(),
-            body: body.shift_cutoff(cutoff + 1, by),
+            body: body.shift_in_range(range.shift(1), by),
         }
     }
 }
 
-impl<P: Phase> ShiftCutoff for TypApp<P>
+impl<P: Phase> ShiftInRange for TypApp<P>
 where
-    P::Typ: ShiftCutoff,
+    P::Typ: ShiftInRange,
 {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let TypApp { info, name, args } = self;
-        TypApp { info: info.clone(), name: name.clone(), args: args.shift_cutoff(cutoff, by) }
+        TypApp { info: info.clone(), name: name.clone(), args: args.shift_in_range(range, by) }
     }
 }
 
@@ -158,12 +158,12 @@ impl<P: Phase> HasSpan for Exp<P> {
     }
 }
 
-impl ShiftCutoff for () {
-    fn shift_cutoff(&self, _cutoff: usize, _by: (isize, isize)) -> Self {}
+impl ShiftInRange for () {
+    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {}
 }
 
-impl ShiftCutoff for tst::Typ {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
-        Self::from(self.as_exp().shift_cutoff(cutoff, by))
+impl ShiftInRange for tst::Typ {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        Self::from(self.as_exp().shift_in_range(range, by))
     }
 }

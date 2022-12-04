@@ -7,7 +7,7 @@ use thiserror::Error;
 use data::string::{comma_separated, separated};
 use data::HashSet;
 use syntax::common::*;
-use syntax::tst;
+use syntax::nf;
 use syntax::ust;
 
 use printer::PrintToString;
@@ -72,10 +72,12 @@ pub enum TypeError {
     // TODO: Add span
     #[error(transparent)]
     Unify(#[from] UnifyError),
+    #[error(transparent)]
+    Normalize(#[from] NormalizeError),
 }
 
 impl TypeError {
-    pub fn not_eq(lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp>) -> Self {
+    pub fn not_eq(lhs: Rc<nf::Nf>, rhs: Rc<nf::Nf>) -> Self {
         Self::NotEq {
             lhs: lhs.print_to_string(),
             rhs: rhs.print_to_string(),
@@ -105,7 +107,36 @@ impl TypeError {
         Self::InvalidMatch { msg: separated("; ", msgs), span: info.span.to_miette() }
     }
 
-    pub fn expected_typ_app(got: Rc<tst::Exp>) -> Self {
+    pub fn expected_typ_app(got: Rc<nf::Nf>) -> Self {
         Self::ExpectedTypApp { got: got.print_to_string(), span: got.info().span.to_miette() }
     }
 }
+
+impl From<EvalError> for TypeError {
+    fn from(err: EvalError) -> Self {
+        Self::Normalize(err.into())
+    }
+}
+
+impl From<ReadBackError> for TypeError {
+    fn from(err: ReadBackError) -> Self {
+        Self::Normalize(err.into())
+    }
+}
+
+#[derive(Error, Diagnostic, Debug)]
+#[diagnostic()]
+pub enum NormalizeError {
+    #[error(transparent)]
+    Eval(#[from] EvalError),
+    #[error(transparent)]
+    ReadBack(#[from] ReadBackError),
+}
+
+#[derive(Error, Diagnostic, Debug)]
+#[diagnostic()]
+pub enum EvalError {}
+
+#[derive(Error, Diagnostic, Debug)]
+#[diagnostic()]
+pub enum ReadBackError {}

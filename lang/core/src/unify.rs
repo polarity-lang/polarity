@@ -1,12 +1,14 @@
 use std::rc::Rc;
 
 use miette::Diagnostic;
+use syntax::ctx::LevelCtx;
 use thiserror::Error;
 
 use data::{Dec, HashMap, HashSet, No, Yes};
-use printer::PrintToString;
-use syntax::ast::{self, subst, Assign, Substitutable, Substitution};
+use printer::{DocAllocator, Print, PrintToString};
+use syntax::ast;
 use syntax::common::*;
+use syntax::nf;
 use syntax::ust;
 use tracer::trace;
 
@@ -21,21 +23,27 @@ pub struct Eqn {
     pub rhs: Rc<ust::Exp>,
 }
 
+impl From<(Rc<nf::Nf>, Rc<nf::Nf>)> for Eqn {
+    fn from((lhs, rhs): (Rc<nf::Nf>, Rc<nf::Nf>)) -> Self {
+        Eqn { lhs: lhs.forget(), rhs: rhs.forget() }
+    }
+}
+
 impl From<(Rc<ust::Exp>, Rc<ust::Exp>)> for Eqn {
     fn from((lhs, rhs): (Rc<ust::Exp>, Rc<ust::Exp>)) -> Self {
         Eqn { lhs, rhs }
     }
 }
 
-impl ShiftCutoff for Eqn {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
+impl ShiftInRange for Eqn {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Eqn { lhs, rhs } = self;
-        Eqn { lhs: lhs.shift_cutoff(cutoff, by), rhs: rhs.shift_cutoff(cutoff, by) }
+        Eqn { lhs: lhs.shift_in_range(range.clone(), by), rhs: rhs.shift_in_range(range, by) }
     }
 }
 
-impl Substitutable<ust::UST> for Unificator {
-    fn subst<S: Substitution<ust::UST>>(&self, ctx: &mut subst::Ctx, by: &S) -> Self {
+impl Substitutable<Rc<ust::Exp>> for Unificator {
+    fn subst<S: Substitution<Rc<ust::Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let map = self
             .map
             .iter()
@@ -45,8 +53,8 @@ impl Substitutable<ust::UST> for Unificator {
     }
 }
 
-impl Substitution<ust::UST> for Unificator {
-    fn get_subst(&self, _ctx: &subst::Ctx, lvl: Lvl) -> Option<Rc<ust::Exp>> {
+impl Substitution<Rc<ust::Exp>> for Unificator {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<ust::Exp>> {
         self.map.get(&lvl).cloned()
     }
 }
@@ -57,9 +65,9 @@ impl Unificator {
     }
 }
 
-#[trace("unify({:?} ) ~> {return:?}", eqns, data::id)]
-pub fn unify(ctx: subst::Ctx, eqns: Vec<Eqn>) -> Result<Dec<Unificator>, UnifyError> {
-    let mut ctx = Ctx::new(eqns.clone(), ctx);
+#[trace("{} |- unify({:P}) ~> {return:P}", ctx, eqns, data::id)]
+pub fn unify(ctx: LevelCtx, eqns: Vec<Eqn>) -> Result<Dec<Unificator>, UnifyError> {
+    let mut ctx = Ctx::new(eqns.clone(), ctx.clone());
     let res = match ctx.unify()? {
         Yes(_) => Yes(ctx.unif),
         No(()) => No(()),
@@ -70,12 +78,12 @@ pub fn unify(ctx: subst::Ctx, eqns: Vec<Eqn>) -> Result<Dec<Unificator>, UnifyEr
 struct Ctx {
     eqns: Vec<Eqn>,
     done: HashSet<Eqn>,
-    ctx: subst::Ctx,
+    ctx: LevelCtx,
     unif: Unificator,
 }
 
 impl Ctx {
-    fn new(eqns: Vec<Eqn>, ctx: subst::Ctx) -> Self {
+    fn new(eqns: Vec<Eqn>, ctx: LevelCtx) -> Self {
         Self { eqns, done: HashSet::default(), ctx, unif: Unificator::empty() }
     }
 
@@ -188,5 +196,30 @@ impl UnifyError {
 
     fn cannot_decide(lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp>) -> Self {
         Self::CannotDecide { lhs: lhs.print_to_string(), rhs: rhs.print_to_string() }
+    }
+}
+
+impl<'a> Print<'a> for Eqn {
+    fn print(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        self.lhs.print(cfg, alloc).append(" = ").append(self.rhs.print(cfg, alloc))
+    }
+}
+
+impl<'a> Print<'a> for Unificator {
+    fn print(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let mut keys: Vec<_> = self.map.keys().collect();
+        keys.sort();
+        let exps = keys.into_iter().map(|key| {
+            alloc.text(format!("{}", key)).append(" := ").append(self.map[key].print(cfg, alloc))
+        });
+        alloc.intersperse(exps, ",").enclose("{", "}")
     }
 }

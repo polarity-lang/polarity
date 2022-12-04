@@ -2,26 +2,26 @@ use crate::common::*;
 
 use super::def::*;
 
-impl ShiftInRange for Val {
+impl ShiftInRange for Nf {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
-            Val::TypCtor { info, name, args } => Val::TypCtor {
+            Nf::TypCtor { info, name, args } => Nf::TypCtor {
                 info: info.clone(),
                 name: name.clone(),
                 args: args.shift_in_range(range, by),
             },
-            Val::Ctor { info, name, args } => Val::Ctor {
+            Nf::Ctor { info, name, args } => Nf::Ctor {
                 info: info.clone(),
                 name: name.clone(),
                 args: args.shift_in_range(range, by),
             },
-            Val::Type { info } => Val::Type { info: info.clone() },
-            Val::Comatch { info, name, body } => Val::Comatch {
+            Nf::Type { info } => Nf::Type { info: info.clone() },
+            Nf::Comatch { info, name, body } => Nf::Comatch {
                 info: info.clone(),
                 name: name.clone(),
                 body: body.shift_in_range(range, by),
             },
-            Val::Neu { exp } => Val::Neu { exp: exp.shift_in_range(range, by) },
+            Nf::Neu { exp } => Nf::Neu { exp: exp.shift_in_range(range, by) },
         }
     }
 }
@@ -87,13 +87,5 @@ impl ShiftInRange for Cocase {
             args: args.clone(),
             body: body.shift_in_range(range.shift(1), by),
         }
-    }
-}
-
-impl ShiftInRange for Closure {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Closure { env, body } = self;
-
-        Closure { env: env.shift_in_range(range, by), body: body.clone() }
     }
 }

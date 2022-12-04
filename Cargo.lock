@@ -1475,6 +1475,7 @@ dependencies = [
 name = "printer"
 version = "0.1.0"
 dependencies = [
+ "data",
  "pretty",
  "syntax",
 ]

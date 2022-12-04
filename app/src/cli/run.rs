@@ -3,8 +3,9 @@ use std::path::PathBuf;
 use core::eval::Eval;
 use printer::PrintToString;
 use source::{Database, File};
+use syntax::common::*;
 use syntax::ctx::Context;
-use syntax::{ast::forget::Forget, env::Env};
+use syntax::env::Env;
 
 use crate::result::IOError;
 

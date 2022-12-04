@@ -1,15 +1,8 @@
 //! Convert a typed syntax tree to an untyped tree
 
-use std::rc::Rc;
-
+use crate::common::*;
 use crate::tst;
 use crate::ust;
-
-pub trait Forget {
-    type Target;
-
-    fn forget(&self) -> Self::Target;
-}
 
 impl Forget for tst::Prg {
     type Target = ust::Prg;
@@ -330,29 +323,5 @@ impl Forget for tst::TypeAppInfo {
         let tst::TypeAppInfo { span, .. } = self;
 
         ust::Info { span: *span }
-    }
-}
-
-impl<T: Forget> Forget for Rc<T> {
-    type Target = Rc<T::Target>;
-
-    fn forget(&self) -> Self::Target {
-        Rc::new(T::forget(self))
-    }
-}
-
-impl<T: Forget> Forget for Option<T> {
-    type Target = Option<T::Target>;
-
-    fn forget(&self) -> Self::Target {
-        self.as_ref().map(Forget::forget)
-    }
-}
-
-impl<T: Forget> Forget for Vec<T> {
-    type Target = Vec<T::Target>;
-
-    fn forget(&self) -> Self::Target {
-        self.iter().map(Forget::forget).collect()
     }
 }

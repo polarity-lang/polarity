@@ -1,4 +1,4 @@
-use syntax::ast::SwapWithCtx;
+use syntax::common::*;
 use syntax::ctx::{Bind, Context, LevelCtx};
 use syntax::matrix;
 use syntax::ust;

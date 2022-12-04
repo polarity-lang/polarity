@@ -1,29 +1,29 @@
 use pretty::DocAllocator;
 
-use syntax::val::*;
+use syntax::nf::*;
 
 use super::theme::ThemeExt;
 use super::tokens::*;
 use super::types::*;
 use super::util::*;
 
-impl<'a> Print<'a> for Val {
+impl<'a> Print<'a> for Nf {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Val::TypCtor { info: _, name, args: subst } => {
+            Nf::TypCtor { info: _, name, args: subst } => {
                 alloc.typ(name).append(subst.print(cfg, alloc).opt_parens())
             }
-            Val::Ctor { info: _, name, args: subst } => {
+            Nf::Ctor { info: _, name, args: subst } => {
                 alloc.ctor(name).append(subst.print(cfg, alloc).opt_parens())
             }
-            Val::Type { info: _ } => alloc.typ(TYPE),
-            Val::Comatch { info: _, name, body } => alloc
+            Nf::Type { info: _ } => alloc.typ(TYPE),
+            Nf::Comatch { info: _, name, body } => alloc
                 .keyword(COMATCH)
                 .append(alloc.space())
                 .append(alloc.text(name))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Val::Neu { exp } => exp.print(cfg, alloc),
+            Nf::Neu { exp } => exp.print(cfg, alloc),
         }
     }
 }
@@ -106,11 +106,5 @@ impl<'a> Print<'a> for Cocase {
         };
 
         alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
-    }
-}
-
-impl<'a> Print<'a> for Closure {
-    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        alloc.text("...")
     }
 }

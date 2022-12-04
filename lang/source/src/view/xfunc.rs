@@ -5,7 +5,6 @@ use renaming::Rename;
 
 use data::{HashMap, HashSet};
 use syntax::ast;
-use syntax::ast::forget::Forget;
 use syntax::common::*;
 use syntax::matrix;
 use syntax::ust;

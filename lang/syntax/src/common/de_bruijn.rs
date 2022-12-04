@@ -1,4 +1,5 @@
 use std::fmt;
+use std::ops::{Bound, RangeBounds};
 use std::rc::Rc;
 
 #[cfg(feature = "use-serde")]
@@ -87,13 +88,17 @@ pub trait Shift {
     fn shift(&self, by: (isize, isize)) -> Self;
 }
 
-pub trait ShiftCutoff {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self;
+pub trait ShiftRange: RangeBounds<usize> + Clone {}
+
+impl<T: RangeBounds<usize> + Clone> ShiftRange for T {}
+
+pub trait ShiftInRange {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self;
 }
 
-impl ShiftCutoff for Idx {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
-        if self.fst >= cutoff {
+impl ShiftInRange for Idx {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        if range.contains(&self.fst) {
             Self {
                 fst: (self.fst as isize + by.0) as usize,
                 snd: (self.snd as isize + by.1) as usize,
@@ -104,27 +109,49 @@ impl ShiftCutoff for Idx {
     }
 }
 
-impl<T: ShiftCutoff> ShiftCutoff for Rc<T> {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
-        Rc::new((**self).shift_cutoff(cutoff, by))
+impl<T: ShiftInRange> ShiftInRange for Rc<T> {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        Rc::new((**self).shift_in_range(range, by))
     }
 }
 
-impl<T: ShiftCutoff> ShiftCutoff for Option<T> {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
-        self.as_ref().map(|inner| inner.shift_cutoff(cutoff, by))
+impl<T: ShiftInRange> ShiftInRange for Option<T> {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        self.as_ref().map(|inner| inner.shift_in_range(range, by))
     }
 }
 
-impl<T: ShiftCutoff> ShiftCutoff for Vec<T> {
-    fn shift_cutoff(&self, cutoff: usize, by: (isize, isize)) -> Self {
-        self.iter().map(|x| x.shift_cutoff(cutoff, by)).collect()
+impl<T: ShiftInRange> ShiftInRange for Vec<T> {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        self.iter().map(|x| x.shift_in_range(range.clone(), by)).collect()
     }
 }
 
-impl<T: ShiftCutoff> Shift for T {
+impl<T: ShiftInRange> Shift for T {
     fn shift(&self, by: (isize, isize)) -> Self {
-        self.shift_cutoff(0, by)
+        self.shift_in_range(0.., by)
+    }
+}
+
+pub trait ShiftRangeExt {
+    type Target;
+
+    fn shift(self, by: isize) -> Self::Target;
+}
+
+impl<R: ShiftRange> ShiftRangeExt for R {
+    type Target = (Bound<usize>, Bound<usize>);
+
+    fn shift(self, by: isize) -> Self::Target {
+        fn shift_bound(bound: Bound<&usize>, by: isize) -> Bound<usize> {
+            match bound {
+                Bound::Included(x) => Bound::Included((*x as isize + by) as usize),
+                Bound::Excluded(x) => Bound::Excluded((*x as isize + by) as usize),
+                Bound::Unbounded => Bound::Unbounded,
+            }
+        }
+
+        (shift_bound(self.start_bound(), by), shift_bound(self.end_bound(), by))
     }
 }
 

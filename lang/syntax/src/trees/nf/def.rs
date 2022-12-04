@@ -104,5 +104,20 @@ pub struct Cocase {
     pub body: Option<Rc<Nf>>,
 }
 
+#[derive(Debug, Clone)]
+pub struct TypApp {
+    pub info: Info,
+    pub name: Ident,
+    pub args: Args,
+}
+
+impl From<TypApp> for Nf {
+    fn from(typ_app: TypApp) -> Self {
+        let TypApp { info, name, args } = typ_app;
+
+        Nf::TypCtor { info, name, args }
+    }
+}
+
 pub type Info = ust::Info;
 pub type Args = Vec<Rc<Nf>>;

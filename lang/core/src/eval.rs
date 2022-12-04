@@ -4,6 +4,9 @@ use syntax::ctx::{Bind, Context};
 use syntax::env::*;
 use syntax::ust::{self, Exp, Prg, Type};
 use syntax::val::{self, Closure, Neu, Val};
+use tracer::trace;
+
+use super::result::*;
 
 pub trait Eval {
     type Val;
@@ -15,12 +18,10 @@ pub trait Apply {
     fn apply(self, prg: &Prg, args: &[Rc<Val>]) -> Result<Rc<Val>, EvalError>;
 }
 
-#[derive(Debug)]
-pub enum EvalError {}
-
 impl Eval for Exp {
     type Val = Rc<Val>;
 
+    #[trace("{:P} |- {:P} ▷ {return:P}", env, self, data::id)]
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
         let res = match self {
             Exp::Var { idx, .. } => env.lookup(*idx),
@@ -177,6 +178,16 @@ impl Eval for ust::Cocase {
         let body = body.as_ref().map(|body| Closure { body: body.clone(), env: env.clone() });
 
         Ok(val::Cocase { info: info.clone(), name: name.clone(), args: args.clone(), body })
+    }
+}
+
+impl Eval for ust::TypApp {
+    type Val = val::TypApp;
+
+    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
+        let ust::TypApp { info, name, args } = self;
+
+        Ok(val::TypApp { info: info.clone(), name: name.clone(), args: args.eval(prg, env)? })
     }
 }
 

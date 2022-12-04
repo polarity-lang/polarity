@@ -24,7 +24,7 @@ where
     /// Type of the `typ` field for `ParamInst`
     type Typ: Clone + fmt::Debug;
 
-    fn print_var(name: &Self::VarName, idx: Idx) -> String;
+    fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String;
 }
 
 pub trait HasPhase {

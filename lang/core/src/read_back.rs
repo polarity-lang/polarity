@@ -3,8 +3,10 @@ use std::rc::Rc;
 use syntax::nf;
 use syntax::ust::Prg;
 use syntax::val;
+use tracer::trace;
 
-use crate::eval::Eval;
+use super::eval::Eval;
+use super::result::*;
 
 pub trait ReadBack {
     type Nf;
@@ -12,12 +14,10 @@ pub trait ReadBack {
     fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError>;
 }
 
-#[derive(Debug)]
-pub enum ReadBackError {}
-
 impl ReadBack for val::Val {
     type Nf = nf::Nf;
 
+    #[trace("↓{:P} ~> {return:P}", self, data::id)]
     fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
         let res = match self {
             val::Val::TypCtor { info, name, args } => nf::Nf::TypCtor {
@@ -110,6 +110,16 @@ impl ReadBack for val::Cocase {
             args: args.clone(),
             body: body.read_back(prg)?,
         })
+    }
+}
+
+impl ReadBack for val::TypApp {
+    type Nf = nf::TypApp;
+
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+        let val::TypApp { info, name, args } = self;
+
+        Ok(nf::TypApp { info: info.clone(), name: name.clone(), args: args.read_back(prg)? })
     }
 }
 
