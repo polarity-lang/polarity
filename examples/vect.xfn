@@ -3,6 +3,13 @@ data Nat {
     S(n: Nat),
 }
 
+impl Nat {
+    def Nat.add(y: Nat) : Nat {
+        Z => y,
+        S(x') => S(x'.add(y)),
+    }
+}
+
 data Vec(n: Nat) {
     Nil : Vec(Z),
     Cons(n: Nat, x: Nat, xs: Vec(n)) : Vec(S(n)),
@@ -14,14 +21,22 @@ impl Vec {
         Nil absurd,
     }
 
---    def Vec(n).append(n: Nat, m: Nat, ys: Vec(m)) : Vec(n.add(m)) {
---        Nil => ys,
---        Cons(n', x, xs) => Cons(S(n'.add(m)), x, xs.append(n', m, ys))
---    }
+   def Vec(n).append(n: Nat, m: Nat, ys: Vec(m)) : Vec(n.add(m)) {
+       Nil => ys,
+       Cons(n', x, xs) => Cons(n'.add(m), x, xs.append(n', m, ys))
+   }
 }
 
-data Foo {
-    MkFoo(xs: Vec(S(S(Z))), ys: Vec(S(Z))),
+data Top { Unit }
+
+impl Top {
+    def Top.example1: Vec(S(S(Z))) {
+        Unit => Cons(S(Z), Z, Cons(Z, Z, Nil))
+    }
+
+    def Top.example2: Vec(S(S(S(S(Z))))) {
+        Unit => Unit.example1.append(S(S(Z)), S(S(Z)), Unit.example1)
+    }
 }
 
-MkFoo(Cons(S(Z), Z, Cons(Z, Z, Nil)), Cons(Z, Z, Nil))
+Unit.example2
