@@ -464,7 +464,7 @@ impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
                 })?;
 
                 let in_typ_nf = LevelCtx::empty()
-                    .bind_iter(def_args.iter(), |ctx| in_typ.normalize(prg, &mut ctx.env()))?;
+                    .bind_iter(params.params.iter(), |ctx| in_typ.normalize(prg, &mut ctx.env()))?;
 
                 let nf::TypApp { args: on_args, .. } = &self.scrutinee;
                 let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
