@@ -32,24 +32,20 @@ impl Context for Env {
     }
 
     fn push_telescope(&mut self) {
-        self.shift((1, 0));
         self.bound.push(vec![]);
     }
 
     fn pop_telescope(&mut self) {
         self.bound.pop().unwrap();
-        self.shift((-1, 0));
     }
 
     fn push_binder(&mut self, elem: Self::ElemIn) {
         self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
-        self.shift_at_lvl(self.bound.len() - 1, (0, 1));
     }
 
     fn pop_binder(&mut self, _elem: Self::ElemIn) {
         let err = "Cannot pop from empty context";
         self.bound.last_mut().expect(err).pop().expect(err);
-        self.shift_at_lvl(self.bound.len() - 1, (0, -1));
     }
 }
 
@@ -78,18 +74,6 @@ impl Env {
     {
         let bound = self.bound.iter().map(|inner| inner.iter().map(&f).collect()).collect();
         Self { bound }
-    }
-
-    fn shift(&mut self, by: (isize, isize)) {
-        for lvl in 0..self.bound.len() {
-            self.shift_at_lvl(lvl, by)
-        }
-    }
-
-    fn shift_at_lvl(&mut self, lvl: usize, by: (isize, isize)) {
-        for i in 0..self.bound[lvl].len() {
-            self.bound[lvl][i] = self.bound[lvl][i].shift(by);
-        }
     }
 }
 

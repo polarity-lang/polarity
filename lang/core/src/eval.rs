@@ -38,7 +38,7 @@ impl Eval for Exp {
             Exp::Dtor { info, exp, name, args } => {
                 let exp = exp.eval(prg, env)?;
                 let args = args.eval(prg, env)?;
-                eval_dtor(prg, env, info, exp, name, args)?
+                eval_dtor(prg, info, exp, name, args)?
             }
             Exp::Anno { exp, .. } => exp.eval(prg, env)?,
             Exp::Type { info } => Rc::new(Val::Type { info: info.clone() }),
@@ -57,7 +57,6 @@ impl Eval for Exp {
 
 fn eval_dtor(
     prg: &Prg,
-    env: &mut Env,
     info: &ust::Info,
     exp: Rc<Val>,
     dtor_name: &str,
@@ -69,12 +68,14 @@ fn eval_dtor(
             match type_decl {
                 Type::Data(_) => {
                     let ust::Def { body, .. } = prg.decls.def(dtor_name);
-                    let body = env.bind_iter(dtor_args.iter(), |env| body.eval(prg, env))?;
+                    let body =
+                        Env::empty().bind_iter(dtor_args.iter(), |env| body.eval(prg, env))?;
                     beta_match(prg, body, &ctor_name, &ctor_args)
                 }
                 Type::Codata(_) => {
                     let ust::Codef { body, .. } = prg.decls.codef(&ctor_name);
-                    let body = env.bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
+                    let body =
+                        Env::empty().bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
                     beta_comatch(prg, body, dtor_name, &dtor_args)
                 }
             }
@@ -112,26 +113,37 @@ fn eval_match(
     }
 }
 
+#[trace("{}(...).match {:P} ▷β {return:P}", ctor_name, body, data::id)]
 fn beta_match(
     prg: &Prg,
     body: val::Match,
     ctor_name: &str,
     args: &[Rc<Val>],
 ) -> Result<Rc<Val>, EvalError> {
-    let case = body.cases.into_iter().find(|case| case.name == ctor_name).ok_or_else(|| todo!())?;
+    let case = body
+        .clone()
+        .cases
+        .into_iter()
+        .find(|case| case.name == ctor_name)
+        .ok_or_else(|| todo!())?;
     let val::Case { body, .. } = case;
     let body = body.ok_or_else(|| todo!())?;
     body.apply(prg, args)
 }
 
+#[trace("comatch {:P}.{}(...) ▷β {return:P}", body, dtor_name, data::id)]
 fn beta_comatch(
     prg: &Prg,
     body: val::Comatch,
     dtor_name: &str,
     args: &[Rc<Val>],
 ) -> Result<Rc<Val>, EvalError> {
-    let cocase =
-        body.cases.into_iter().find(|cocase| cocase.name == dtor_name).ok_or_else(|| todo!())?;
+    let cocase = body
+        .clone()
+        .cases
+        .into_iter()
+        .find(|cocase| cocase.name == dtor_name)
+        .ok_or_else(|| todo!())?;
     let val::Cocase { body, .. } = cocase;
     let body = body.ok_or_else(|| todo!())?;
     body.apply(prg, args)
