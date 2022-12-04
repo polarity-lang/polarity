@@ -3,18 +3,40 @@ data Nat {
     S(n: Nat),
 }
 
+impl Nat {
+    def Nat.add(y: Nat) : Nat {
+        Z => y,
+        S(x') => S(x'.add(y)),
+    }
+}
+
 codata Vec(n: Nat) {
-    Vec(S(n)).tail(n: Nat) : Vec(n)
---    Vec(n).append(n: Nat, m: Nat, ys: Vec(m)) : Vec(n.add(m))
+    Vec(S(n)).tail(n: Nat) : Vec(n),
+    Vec(n).append(n: Nat, m: Nat, ys: Vec(m)) : Vec(n.add(m))
 }
 
 impl Vec {
     codef Nil() : Vec(Z) {
---        append(n, m, ys) => ys
+        append(n, m, ys) => ys,
         tail(n) absurd
     }
-    codef Cons(n: Nat, xs: Vec(n)): Vec(S(n)) {
-        tail(n) => xs
---        append(n', m, xs) => Cons(S(n'.add(m)), x, xs.append(n', m, ys))
+
+    codef Cons(n': Nat, x: Nat, xs: Vec(n')): Vec(S(n')) {
+        tail(n) => xs,
+        append(n, m, ys) => Cons(n'.add(m), x, xs.append(n', m, ys))
     }
 }
+
+data Top { Unit }
+
+impl Top {
+    def Top.example1: Vec(S(S(Z))) {
+        Unit => Cons(S(Z), Z, Cons(Z, Z, Nil))
+    }
+
+    def Top.example2: Vec(S(S(S(S(Z))))) {
+        Unit => Unit.example1.append(S(S(Z)), S(S(Z)), Unit.example1)
+    }
+}
+
+Unit.example2
