@@ -131,7 +131,7 @@ impl ReadBack for val::Closure {
 
         let mut env = env.clone();
 
-        body.eval(prg, &mut env).map_err(|_err| todo!())?.read_back(prg)
+        body.eval(prg, &mut env)?.read_back(prg)
     }
 }
 

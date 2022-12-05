@@ -139,4 +139,7 @@ pub enum EvalError {}
 
 #[derive(Error, Diagnostic, Debug)]
 #[diagnostic()]
-pub enum ReadBackError {}
+pub enum ReadBackError {
+    #[error(transparent)]
+    Eval(#[from] EvalError),
+}

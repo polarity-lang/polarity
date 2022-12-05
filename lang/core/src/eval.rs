@@ -89,7 +89,7 @@ fn eval_dtor(
                 args: dtor_args,
             },
         })),
-        _ => todo!(),
+        _ => unreachable!(),
     }
 }
 
@@ -109,7 +109,7 @@ fn eval_match(
                 body,
             },
         })),
-        _ => todo!(),
+        _ => unreachable!(),
     }
 }
 
@@ -120,14 +120,9 @@ fn beta_match(
     ctor_name: &str,
     args: &[Rc<Val>],
 ) -> Result<Rc<Val>, EvalError> {
-    let case = body
-        .clone()
-        .cases
-        .into_iter()
-        .find(|case| case.name == ctor_name)
-        .ok_or_else(|| todo!())?;
+    let case = body.clone().cases.into_iter().find(|case| case.name == ctor_name).unwrap();
     let val::Case { body, .. } = case;
-    let body = body.ok_or_else(|| todo!())?;
+    let body = body.unwrap();
     body.apply(prg, args)
 }
 
@@ -138,14 +133,9 @@ fn beta_comatch(
     dtor_name: &str,
     args: &[Rc<Val>],
 ) -> Result<Rc<Val>, EvalError> {
-    let cocase = body
-        .clone()
-        .cases
-        .into_iter()
-        .find(|cocase| cocase.name == dtor_name)
-        .ok_or_else(|| todo!())?;
+    let cocase = body.clone().cases.into_iter().find(|cocase| cocase.name == dtor_name).unwrap();
     let val::Cocase { body, .. } = cocase;
-    let body = body.ok_or_else(|| todo!())?;
+    let body = body.unwrap();
     body.apply(prg, args)
 }
 
