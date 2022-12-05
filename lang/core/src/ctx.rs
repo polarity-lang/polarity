@@ -5,7 +5,7 @@
 use std::rc::Rc;
 
 use syntax::common::*;
-use syntax::ctx::ng::TypeCtx;
+use syntax::ctx::values::TypeCtx;
 use syntax::ust;
 
 use crate::eval::Eval;

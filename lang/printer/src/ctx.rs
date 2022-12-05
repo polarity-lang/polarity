@@ -2,7 +2,7 @@ use pretty::DocAllocator;
 
 use syntax::ast::Phase;
 use syntax::common::*;
-use syntax::ctx::ng;
+use syntax::ctx::values;
 use syntax::ctx::TypeCtx;
 
 use super::tokens::COMMA;
@@ -22,7 +22,7 @@ where
     }
 }
 
-impl<'a> Print<'a> for ng::TypeCtx {
+impl<'a> Print<'a> for values::TypeCtx {
     fn print(&'a self, cfg: &crate::PrintCfg, alloc: &'a crate::Alloc<'a>) -> crate::Builder<'a> {
         let iter = self.iter().map(|ctx| {
             alloc
