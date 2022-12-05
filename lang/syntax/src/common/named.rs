@@ -58,12 +58,6 @@ impl Named for cst::ParamInst {
     }
 }
 
-impl Named for cst::EqnParam {
-    fn name(&self) -> &Ident {
-        &self.name
-    }
-}
-
 impl Named for Ident {
     fn name(&self) -> &Ident {
         self

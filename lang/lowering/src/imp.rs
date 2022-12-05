@@ -338,8 +338,7 @@ impl Lower for cst::Case {
     type Target = ust::Case;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Case { info, name, args, body, eqns: _ } = self;
-        // FIXME: eqns
+        let cst::Case { info, name, args, body } = self;
 
         args.lower_telescope(ctx, |ctx, args| {
             Ok(ust::Case {
@@ -356,8 +355,7 @@ impl Lower for cst::Cocase {
     type Target = ust::Cocase;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Cocase { info, name, args, body, eqns: _ } = self;
-        // FIXME: eqns
+        let cst::Cocase { info, name, args, body } = self;
 
         args.lower_telescope(ctx, |ctx, args| {
             Ok(ust::Cocase {

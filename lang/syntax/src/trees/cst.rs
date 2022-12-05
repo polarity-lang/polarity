@@ -107,7 +107,6 @@ pub struct Case {
     pub info: Info,
     pub name: Ident,
     pub args: TelescopeInst,
-    pub eqns: EqnParams,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp>>,
 }
@@ -117,16 +116,8 @@ pub struct Cocase {
     pub info: Info,
     pub name: Ident,
     pub args: TelescopeInst,
-    pub eqns: EqnParams,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Eqn {
-    pub info: Info,
-    pub lhs: Rc<Exp>,
-    pub rhs: Rc<Exp>,
 }
 
 #[derive(Debug, Clone)]
@@ -167,7 +158,6 @@ impl Telescope {
 }
 
 pub type Params = Vec<Param>;
-pub type EqnParams = Vec<EqnParam>;
 pub type Args = Vec<Rc<Exp>>;
 
 #[derive(Debug, Clone)]
@@ -181,12 +171,6 @@ pub struct Param {
 pub struct ParamInst {
     pub info: Info,
     pub name: Ident,
-}
-
-#[derive(Debug, Clone)]
-pub struct EqnParam {
-    pub name: Ident,
-    pub eqn: Eqn,
 }
 
 #[derive(Debug, Clone)]
