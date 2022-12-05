@@ -88,6 +88,7 @@ impl Runner {
             .then(expect(config, case, Parse::new("parse")))
             .then(expect(config, case, Lower::new("lower")))
             .then(expect(config, case, Check::new("check")))
+            .then(expect(config, case, Forget::new("forget")))
             .then(expect(config, case, Print::new("print")))
             .then(expect(config, case, Parse::new("reparse")))
             .then(expect(config, case, Lower::new("relower")))

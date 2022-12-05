@@ -1,6 +1,8 @@
 // mod ast;
 mod ast;
 mod ctx;
+mod ust;
+mod wst;
 
 use syntax::ctx::Context;
 
@@ -11,6 +13,10 @@ pub trait Rename: Sized {
         let mut ctx = Ctx::empty();
         self.rename_in_ctx(&mut ctx)
     }
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self;
+}
+
+pub trait RenameInfo {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self;
 }
 

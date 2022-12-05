@@ -510,3 +510,7 @@ impl<P: Phase> HasPhase for Args<P> {
 impl<P: Phase> HasPhase for Param<P> {
     type Phase = P;
 }
+
+impl<T: HasPhase> HasPhase for Rc<T> {
+    type Phase = T::Phase;
+}

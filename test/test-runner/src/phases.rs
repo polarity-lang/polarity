@@ -3,9 +3,10 @@ use std::fmt;
 use std::marker::PhantomData;
 
 use printer::PrintToString;
-use renaming::Rename;
-use syntax::common::Ident;
-use syntax::{ast, cst, tst, ust};
+use renaming::{Rename, RenameInfo};
+use syntax::common::Forget as _;
+use syntax::common::*;
+use syntax::{ast, cst, tst, ust, wst};
 
 use super::infallible::NoError;
 
@@ -168,6 +169,10 @@ pub struct Check {
     name: &'static str,
 }
 
+pub struct Forget {
+    name: &'static str,
+}
+
 pub struct Print<P: ast::Phase> {
     name: &'static str,
     phantom: PhantomData<P>,
@@ -227,7 +232,11 @@ impl Phase for Check {
     }
 }
 
-impl<P: ast::Phase<VarName = Ident>> Phase for Print<P> {
+impl<P: ast::Phase<VarName = Ident>> Phase for Print<P>
+where
+    P::TypeInfo: RenameInfo,
+    P::TypeAppInfo: RenameInfo,
+{
     type In = ast::Prg<P>;
     type Out = String;
     type Err = NoError;
@@ -242,6 +251,24 @@ impl<P: ast::Phase<VarName = Ident>> Phase for Print<P> {
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
         Ok(input.rename().print_to_string())
+    }
+}
+
+impl Phase for Forget {
+    type In = tst::Prg;
+    type Out = wst::Prg;
+    type Err = NoError;
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
+        Ok(input.forget())
     }
 }
 
@@ -260,7 +287,12 @@ impl TestOutput for ust::Prg {
 
 impl TestOutput for tst::Prg {
     fn test_output(&self) -> String {
-        // TODO: Improve test output
-        format!("{:?}", self)
+        self.print_to_string()
+    }
+}
+
+impl TestOutput for wst::Prg {
+    fn test_output(&self) -> String {
+        self.print_to_string()
     }
 }
