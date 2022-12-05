@@ -6,7 +6,7 @@ impl RenameInfo for wst::TypeInfo {
     fn rename_in_ctx(self, ctx: &mut crate::Ctx) -> Self {
         let wst::TypeInfo { typ, span } = self;
 
-        let typ = Rename::rename_in_ctx(typ, ctx);
+        let typ = typ.rename_in_ctx(ctx);
 
         wst::TypeInfo { typ, span }
     }
