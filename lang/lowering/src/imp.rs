@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use num_bigint::BigUint;
+
 use miette_util::ToMiette;
 use syntax::ast::source;
 use syntax::common::*;
@@ -440,6 +442,23 @@ impl Lower for cst::Exp {
                     .ok_or(LoweringError::UnnamedMatch { span: info.span.to_miette() })?,
                 body: body.lower_in_ctx(ctx)?,
             }),
+            cst::Exp::NatLit { info, val } => {
+                let mut out =
+                    ust::Exp::Ctor { info: info.lower_pure(), name: "Z".to_owned(), args: vec![] };
+
+                let mut i = BigUint::from(0usize);
+
+                while &i != val {
+                    i += 1usize;
+                    out = ust::Exp::Ctor {
+                        info: info.lower_pure(),
+                        name: "S".to_owned(),
+                        args: vec![Rc::new(out)],
+                    };
+                }
+
+                Ok(out)
+            }
         }
     }
 }

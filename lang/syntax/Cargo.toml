@@ -11,6 +11,8 @@ serde_derive = { version = "1", optional = true }
 codespan = "0.11"
 # ignoring fields when deriving traits (e.g. Eq, Hash)
 derivative = "2"
+# big integers
+num-bigint = "0.4"
 # workspace members
 data = { path = "../../util/data" }
 console = { path = "../../util/console" }

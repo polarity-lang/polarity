@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use num_bigint::BigUint;
+
 use syntax::cst::*;
 
 use super::util::span;
@@ -15,6 +17,8 @@ match {
     "_",
     r"[a-z][a-zA-Z0-9_]*[']*",
     r"[A-Z][a-zA-Z0-9_]*[']*",
+    // Literals
+    r"0|[1-9][0-9]*",
     // Keywords
     "data", "codata", "impl",
     "def", "codef",
@@ -145,6 +149,7 @@ pub Builtins: Rc<Exp> = {
 }
 
 pub Atom: Rc<Exp> = {
+    <l: @L> <s: r"0|[1-9][0-9]*"> <r: @R> => Rc::new(Exp::NatLit { info: span(l, r), val: BigUint::parse_bytes(s.as_ref(), 10).unwrap() }),
     "(" <exp: Exp> ")" => exp,
     <l: @L> <name: Ident> <r: @R> => Rc::new(Exp::Call { info: span(l, r), name, args: Args::new() }),
 }

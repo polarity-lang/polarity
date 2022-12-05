@@ -3,6 +3,8 @@ use std::rc::Rc;
 use codespan::ByteIndex;
 use codespan::Span;
 
+use num_bigint::BigUint;
+
 use crate::common::*;
 
 #[derive(Debug, Clone)]
@@ -135,6 +137,7 @@ pub enum Exp {
     Type { info: Info },
     Match { info: Info, name: Option<Ident>, on_exp: Rc<Exp>, body: Match },
     Comatch { info: Info, name: Option<Ident>, body: Comatch },
+    NatLit { info: Info, val: BigUint },
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope
