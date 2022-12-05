@@ -7,6 +7,7 @@ use syntax::ast::fv::FreeVarsResult;
 use syntax::ast::*;
 use syntax::common::*;
 use syntax::ctx::*;
+use syntax::ust;
 use syntax::wst;
 use syntax::wst::WST;
 
@@ -27,7 +28,7 @@ pub struct Lift {
 /// Result of lifting
 pub struct LiftResult {
     /// The resulting program
-    pub prg: wst::Prg,
+    pub prg: ust::Prg,
     /// List of top-level declarations that have been modified in the lifting process
     pub modified_decls: HashSet<Ident>,
 }
@@ -75,7 +76,9 @@ impl Lift {
         prg_out.decls.map.extend(decls_iter);
 
         // Rename program to ensure proper variable naming for lifted definitions
-        let prg_out = prg_out.rename();
+        // FIXME: While renaming takes care to rename in info annotations, substitution does not.
+        // Hence, we first forget the type annotations before renaming
+        let prg_out = prg_out.forget().rename();
 
         LiftResult { prg: prg_out, modified_decls: self.modified_decls }
     }

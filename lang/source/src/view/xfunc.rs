@@ -36,7 +36,6 @@ impl<'a> DatabaseView<'a> {
             lifting::lift(prg.forget(), type_name);
         dirty_decls.retain(|name| !filter_out.contains(name));
 
-        let prg = prg.forget();
         let mat = xfunc::as_matrix(&prg);
 
         let type_span = mat.map[type_name].info.span.unwrap();
