@@ -2,6 +2,7 @@ use codespan::Span;
 
 use crate::common::*;
 use crate::tst;
+use crate::wst;
 
 use super::def::*;
 
@@ -163,6 +164,12 @@ impl ShiftInRange for () {
 }
 
 impl ShiftInRange for tst::Typ {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        Self::from(self.as_exp().shift_in_range(range, by))
+    }
+}
+
+impl ShiftInRange for wst::Typ {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         Self::from(self.as_exp().shift_in_range(range, by))
     }

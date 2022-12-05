@@ -7,17 +7,17 @@ use syntax::ast::fv::FreeVarsResult;
 use syntax::ast::*;
 use syntax::common::*;
 use syntax::ctx::*;
-use syntax::tst;
-use syntax::tst::TST;
+use syntax::wst;
+use syntax::wst::WST;
 
 #[derive(Debug)]
 pub struct Lift {
     /// The type name that should be lifted
     name: String,
     /// List of new top-level declarations that got created in the lifting process
-    new_decls: Vec<tst::Decl>,
+    new_decls: Vec<wst::Decl>,
     /// Typing context
-    ctx: TypeCtx<TST>,
+    ctx: TypeCtx<WST>,
     /// Current declaration being visited for lifting
     curr_decl: Ident,
     /// List of declarations that got modified in the lifting process
@@ -27,7 +27,7 @@ pub struct Lift {
 /// Result of lifting
 pub struct LiftResult {
     /// The resulting program
-    pub prg: tst::Prg,
+    pub prg: wst::Prg,
     /// List of top-level declarations that have been modified in the lifting process
     pub modified_decls: HashSet<Ident>,
 }
@@ -43,7 +43,7 @@ impl Lift {
         }
     }
 
-    pub fn run(mut self, prg: tst::Prg) -> LiftResult {
+    pub fn run(mut self, prg: wst::Prg) -> LiftResult {
         // Perform the lifting process
         let mut prg_out = prg.map(&mut self);
 
@@ -91,19 +91,19 @@ impl Lift {
     }
 }
 
-impl Mapper<TST> for Lift {
-    fn enter_decl(&mut self, decl: &Decl<TST>) {
+impl Mapper<WST> for Lift {
+    fn enter_decl(&mut self, decl: &wst::Decl) {
         self.set_curr_decl(decl.name().clone());
     }
 
     fn map_exp_match(
         &mut self,
-        info: tst::TypeAppInfo,
+        info: wst::TypeAppInfo,
         name: Ident,
-        on_exp: Rc<tst::Exp>,
-        in_typ: tst::Typ,
-        body: tst::Match,
-    ) -> tst::Exp {
+        on_exp: Rc<wst::Exp>,
+        in_typ: wst::Typ,
+        body: wst::Match,
+    ) -> wst::Exp {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
             return id().map_exp_match(info, name, on_exp, in_typ, body);
@@ -126,8 +126,8 @@ impl Mapper<TST> for Lift {
         let def_in_typ = in_typ.as_exp().subst(&mut self.ctx.levels(), &subst);
 
         // Build the new top-level definition
-        let def = tst::Def {
-            info: tst::Info::empty(),
+        let def = wst::Def {
+            info: wst::Info::empty(),
             name: name.clone(),
             params: telescope,
             on_typ,
@@ -138,8 +138,8 @@ impl Mapper<TST> for Lift {
         self.new_decls.push(Decl::Def(def));
 
         // Replace the match by a destructor call of the new top-level definition
-        tst::Exp::Dtor {
-            info: tst::TypeInfo { typ: in_typ.as_exp().forget(), span: Default::default() },
+        wst::Exp::Dtor {
+            info: wst::TypeInfo { typ: in_typ.as_exp().forget(), span: Default::default() },
             exp: on_exp,
             name,
             args,
@@ -148,10 +148,10 @@ impl Mapper<TST> for Lift {
 
     fn map_exp_comatch(
         &mut self,
-        info: tst::TypeAppInfo,
+        info: wst::TypeAppInfo,
         name: Ident,
-        body: tst::Comatch,
-    ) -> tst::Exp {
+        body: wst::Comatch,
+    ) -> wst::Exp {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
             return id().map_exp_comatch(info, name, body);
@@ -169,8 +169,8 @@ impl Mapper<TST> for Lift {
         let typ = info.typ.subst(&mut self.ctx.levels(), &subst);
 
         // Build the new top-level definition
-        let codef = tst::Codef {
-            info: tst::Info::empty(),
+        let codef = wst::Codef {
+            info: wst::Info::empty(),
             name: name.clone(),
             params: telescope,
             typ,
@@ -180,8 +180,8 @@ impl Mapper<TST> for Lift {
         self.new_decls.push(Decl::Codef(codef));
 
         // Replace the comatch by a call of the new top-level definition
-        tst::Exp::Ctor {
-            info: tst::TypeInfo {
+        wst::Exp::Ctor {
+            info: wst::TypeInfo {
                 typ: Rc::new(info.typ.to_exp().forget()),
                 span: Default::default(),
             },
@@ -192,25 +192,25 @@ impl Mapper<TST> for Lift {
 
     fn map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
-        I: IntoIterator<Item = Param<TST>>,
-        F1: Fn(&mut Self, Param<TST>) -> Param<TST>,
-        F2: FnOnce(&mut Self, Telescope<TST>) -> X,
+        I: IntoIterator<Item = wst::Param>,
+        F1: Fn(&mut Self, wst::Param) -> wst::Param,
+        F2: FnOnce(&mut Self, wst::Telescope) -> X,
     {
         self.ctx_map_telescope(params, f_acc, f_inner)
     }
 
     fn map_telescope_inst<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
-        I: IntoIterator<Item = ParamInst<TST>>,
-        F1: Fn(&mut Self, ParamInst<TST>) -> ParamInst<TST>,
-        F2: FnOnce(&mut Self, TelescopeInst<TST>) -> X,
+        I: IntoIterator<Item = wst::ParamInst>,
+        F1: Fn(&mut Self, wst::ParamInst) -> wst::ParamInst,
+        F2: FnOnce(&mut Self, wst::TelescopeInst) -> X,
     {
         self.ctx_map_telescope_inst(params, f_acc, f_inner)
     }
 }
 
 impl HasContext for Lift {
-    type Ctx = TypeCtx<TST>;
+    type Ctx = TypeCtx<WST>;
 
     fn ctx_mut(&mut self) -> &mut Self::Ctx {
         &mut self.ctx

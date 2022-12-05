@@ -7,7 +7,7 @@ use data::{HashMap, HashSet};
 use crate::ast::generic::*;
 use crate::common::*;
 use crate::ctx::*;
-use crate::ust;
+use crate::wst;
 
 /// Find all free variables
 pub trait FreeVarsExt<P: Phase> {
@@ -25,22 +25,22 @@ pub struct FreeVars<P: Phase> {
 /// The result of closing under the set of free variables
 pub struct FreeVarsResult {
     /// Telescope of the types of the free variables
-    pub telescope: ust::Telescope,
+    pub telescope: wst::Telescope,
     /// A substitution close the free variables under `telescope`
-    pub subst: FVSubst<ust::UST>,
+    pub subst: FVSubst<wst::WST>,
     /// An instantiation of `telescope` with the free variables
-    pub args: ust::Args,
+    pub args: wst::Args,
 }
 
-impl FreeVars<ust::UST> {
+impl FreeVars<wst::WST> {
     pub fn telescope(self) -> FreeVarsResult {
         let cutoff = self.cutoff;
         // Sort the list of free variables by the De-Bruijn level such the dependency relation is satisfied.
         // Types may be interdependent but can only depend on types which occur earlier in the context.
         let fvs = self.sorted();
 
-        let mut params: ust::Params = vec![];
-        let mut args: ust::Args = vec![];
+        let mut params: wst::Params = vec![];
+        let mut args: wst::Args = vec![];
         let mut subst = FVSubst::new(cutoff);
 
         // FIXME: The manual context management here should be abstracted out
@@ -49,10 +49,9 @@ impl FreeVars<ust::UST> {
 
             let typ = typ.subst(&mut ctx.levels(), &subst);
 
-            let param = ust::Param { name: name.clone(), typ: typ.clone() };
-
-            let info = ust::Info::empty();
-            let arg = Rc::new(ust::Exp::Var {
+            let param = wst::Param { name: name.clone(), typ: typ.clone() };
+            let info = wst::TypeInfo { typ: typ.forget(), span: Default::default() };
+            let arg = Rc::new(wst::Exp::Var {
                 info: info.clone(),
                 name: name.clone(),
                 idx: ctx.lvl_to_idx(fv.lvl),
@@ -69,7 +68,7 @@ impl FreeVars<ust::UST> {
     }
 
     /// Compute the union of two free variable sets
-    pub fn union(self, other: FreeVars<ust::UST>) -> FreeVars<ust::UST> {
+    pub fn union(self, other: FreeVars<wst::WST>) -> FreeVars<wst::WST> {
         assert_eq!(self.cutoff, other.cutoff);
         let mut fvs = self.fvs;
         fvs.extend(other.fvs.into_iter());
@@ -77,7 +76,7 @@ impl FreeVars<ust::UST> {
     }
 
     /// Sort the free variables according to their De-Bruijn level
-    fn sorted(self) -> Vec<FreeVar<ust::UST>> {
+    fn sorted(self) -> Vec<FreeVar<wst::WST>> {
         let mut fvs: Vec<_> = self.fvs.into_iter().collect();
         fvs.sort();
         fvs

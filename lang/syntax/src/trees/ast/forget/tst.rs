@@ -328,7 +328,7 @@ impl Forget for tst::TypeAppInfo {
     type Target = wst::TypeAppInfo;
 
     fn forget(&self) -> Self::Target {
-        let tst::TypeAppInfo { typ, span } = self;
+        let tst::TypeAppInfo { typ, span, .. } = self;
 
         wst::TypeAppInfo { typ: typ.forget(), span: *span }
     }

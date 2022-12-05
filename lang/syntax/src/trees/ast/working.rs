@@ -104,13 +104,13 @@ impl HasSpan for TypeInfo {
 
 #[derive(Debug, Clone)]
 pub struct TypeAppInfo {
-    pub typ: ust::TypApp,
+    pub typ: TypApp,
     pub span: Option<Span>,
 }
 
 impl From<TypeAppInfo> for TypeInfo {
     fn from(type_app_info: TypeAppInfo) -> Self {
-        Self { span: type_app_info.span, typ: Rc::new(type_app_info.typ.to_exp()) }
+        Self { span: type_app_info.span, typ: Rc::new(type_app_info.typ.forget().to_exp()) }
     }
 }
 

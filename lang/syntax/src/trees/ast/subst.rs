@@ -3,6 +3,7 @@ use std::rc::Rc;
 use crate::common::*;
 use crate::ctx::*;
 use crate::tst;
+use crate::wst;
 
 use super::generic::*;
 
@@ -168,6 +169,12 @@ where
 
 impl Substitutable<Rc<tst::Exp>> for tst::Typ {
     fn subst<S: Substitution<Rc<tst::Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        Self::from(self.as_exp().subst(ctx, by))
+    }
+}
+
+impl Substitutable<Rc<wst::Exp>> for wst::Typ {
+    fn subst<S: Substitution<Rc<wst::Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         Self::from(self.as_exp().subst(ctx, by))
     }
 }

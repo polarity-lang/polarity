@@ -32,10 +32,11 @@ impl<'a> DatabaseView<'a> {
         filter_out.extend(prg.decls.map[type_name].xtors().iter().cloned());
         filter_out.extend(prg.decls.map[type_name].xdefs().iter().cloned());
 
-        let LiftResult { prg, modified_decls: mut dirty_decls } = lifting::lift(prg, type_name);
+        let LiftResult { prg, modified_decls: mut dirty_decls } =
+            lifting::lift(prg.forget(), type_name);
         dirty_decls.retain(|name| !filter_out.contains(name));
 
-        let prg = prg.forget().forget();
+        let prg = prg.forget();
         let mat = xfunc::as_matrix(&prg);
 
         let type_span = mat.map[type_name].info.span.unwrap();

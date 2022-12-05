@@ -619,12 +619,14 @@ impl Check for ust::Exp {
         let out = match self {
             ust::Exp::Match { info, name, on_exp, in_typ: (), body } => {
                 let on_exp_out = on_exp.infer(prg, ctx)?;
-                let typ_app = on_exp_out.typ().expect_typ_app()?;
-                let body_out = body.with_scrutinee(typ_app.clone()).check(prg, ctx, t.clone())?;
+                let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
+                let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
+                let body_out =
+                    body.with_scrutinee(typ_app_nf.clone()).check(prg, ctx, t.clone())?;
                 let in_typ_out = t.forget().check(prg, ctx, type_univ())?;
 
                 tst::Exp::Match {
-                    info: info.with_type_app(typ_app),
+                    info: info.with_type_app(typ_app, typ_app_nf),
                     name: name.clone(),
                     on_exp: on_exp_out,
                     in_typ: in_typ_out.into(),
@@ -632,11 +634,12 @@ impl Check for ust::Exp {
                 }
             }
             ust::Exp::Comatch { info, name, body } => {
-                let typ_app = t.expect_typ_app()?;
-                let body_out = body.with_scrutinee(typ_app.clone()).infer(prg, ctx)?;
+                let typ_app_nf = t.expect_typ_app()?;
+                let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
+                let body_out = body.with_scrutinee(typ_app_nf.clone()).infer(prg, ctx)?;
 
                 tst::Exp::Comatch {
-                    info: info.with_type_app(typ_app),
+                    info: info.with_type_app(typ_app, typ_app_nf),
                     name: name.clone(),
                     body: body_out,
                 }
