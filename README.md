@@ -2,43 +2,47 @@
 
 Extending De-/Refunctionalization to the Lambda Cube
 
-## Quickstart
+## Requirements
 
 Install Rust (e.g. via [rustup.rs](https://rustup.rs/)).
-
-From the root of this repository, run:
-
-```sh
-cargo run -- run examples/example.xfn
-```
-
-Enable verbose output by supplying the `--trace` option like so:
-
-```sh
-cargo run -- --trace run examples/example.xfn
-```
-
-To pretty-print a file, run:
-
-```sh
-cargo run -- fmt examples/example.xfn
-```
-
-For more information about the CLI, run:
-
-```sh
-cargo run -- --help
-```
 
 ## Installation
 
 To locally install the executable, run:
 
 ```sh
-cargo install --path app
+make install
 ```
 
 By default, it gets installed to `~/.cargo/bin/xfunc`.
+
+Optionally, if you have `npm` and VSCode installed, this will also build and install the VSCode extension.
+
+## Quickstart
+
+From the root of this repository, run:
+
+```sh
+xfunc run examples/example.xfn
+```
+
+Enable verbose output by supplying the `--trace` option like so:
+
+```sh
+xfunc --trace run examples/example.xfn
+```
+
+To pretty-print a file, run:
+
+```sh
+xfunc fmt examples/example.xfn
+```
+
+For more information about the CLI, run:
+
+```sh
+xfunc --help
+```
 
 ## Project overview
 
