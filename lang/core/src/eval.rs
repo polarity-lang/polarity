@@ -8,6 +8,10 @@ use tracer::trace;
 
 use super::result::*;
 
+pub fn eval(prg: &ust::Prg) -> Result<Option<Rc<val::Val>>, TypeError> {
+    prg.exp.as_ref().map(|exp| exp.eval(prg, &mut Env::empty())).transpose().map_err(Into::into)
+}
+
 pub trait Eval {
     type Val;
 
