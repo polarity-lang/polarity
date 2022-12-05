@@ -35,7 +35,7 @@ impl<'a> DatabaseView<'a> {
         let LiftResult { prg, modified_decls: mut dirty_decls } = lifting::lift(prg, type_name);
         dirty_decls.retain(|name| !filter_out.contains(name));
 
-        let prg = prg.forget();
+        let prg = prg.forget().forget();
         let mat = xfunc::as_matrix(&prg);
 
         let type_span = mat.map[type_name].info.span.unwrap();
