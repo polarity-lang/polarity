@@ -123,6 +123,12 @@ pub trait Mapper<P: Phase> {
         let params = TelescopeInst { params };
         f_inner(self, params)
     }
+    fn map_self<X, F>(&mut self, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self) -> X
+    {
+        f_inner(self)
+    }
     fn map_param(&mut self, name: Ident, typ: Rc<Exp<P>>) -> Param<P> {
         Param { name, typ }
     }
@@ -308,6 +314,13 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
             |mapper, param| f_acc(mapper, param),
             |mapper, params| f_inner(mapper, params)
         )
+    }
+
+    fn fold_self<X, F>(&mut self, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self) -> X
+     {
+        self.map_self(f_inner)
     }
 
     fn fold_param(&mut self, name: Ident, typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Param {

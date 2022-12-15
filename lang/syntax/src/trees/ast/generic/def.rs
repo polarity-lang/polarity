@@ -224,6 +224,20 @@ pub struct Dtor<P: Phase> {
     pub in_typ: Rc<Exp<P>>,
 }
 
+impl<P: Phase> Dtor<P>
+where
+    P::Typ: ShiftInRange,
+{
+    pub fn self_param(&self) -> Telescope<P> {
+        Telescope {
+            params: vec![Param {
+                name: THIS_KEYWORD.to_owned(),
+                typ: Rc::new(self.on_typ.to_exp().shift((1, 0))),
+            }],
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Def<P: Phase> {
     pub info: P::Info,
@@ -246,6 +260,20 @@ impl<P: Phase> Def<P> {
     }
 }
 
+impl<P: Phase> Def<P>
+where
+    P::Typ: ShiftInRange,
+{
+    pub fn self_param(&self) -> Telescope<P> {
+        Telescope {
+            params: vec![Param {
+                name: THIS_KEYWORD.to_owned(),
+                typ: Rc::new(self.on_typ.to_exp().shift((1, 0))),
+            }],
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Codef<P: Phase> {
     pub info: P::Info,
@@ -262,6 +290,20 @@ impl<P: Phase> Codef<P> {
             name: self.name.clone(),
             params: self.params.clone(),
             typ: self.typ.clone(),
+        }
+    }
+}
+
+impl<P: Phase> Codef<P>
+where
+    P::Typ: ShiftInRange,
+{
+    pub fn self_param(&self) -> Telescope<P> {
+        Telescope {
+            params: vec![Param {
+                name: THIS_KEYWORD.to_owned(),
+                typ: Rc::new(self.typ.to_exp().shift((1, 0))),
+            }],
         }
     }
 }

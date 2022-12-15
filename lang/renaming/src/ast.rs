@@ -29,6 +29,13 @@ where
         self.ctx_map_telescope_inst(params, f_acc, f_inner)
     }
 
+    fn map_self<X, F>(&mut self, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self) -> X,
+    {
+        self.bind_single(THIS_KEYWORD.to_owned(), f_inner)
+    }
+
     fn map_exp_var(&mut self, info: P::TypeInfo, _name: P::VarName, idx: Idx) -> Exp<P> {
         Exp::Var { info, name: self.lookup(idx), idx }
     }

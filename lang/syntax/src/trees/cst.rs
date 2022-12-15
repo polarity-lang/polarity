@@ -60,6 +60,12 @@ pub struct Dtor {
     pub in_typ: Rc<Exp>,
 }
 
+impl Dtor {
+    pub fn self_param(&self, on_typ: &TypApp) -> Telescope {
+        Telescope(vec![Param { name: THIS_KEYWORD.to_owned(), typ: Rc::new(on_typ.to_exp()) }])
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Impl {
     pub info: Info,
@@ -83,6 +89,12 @@ pub struct Def {
     pub body: Match,
 }
 
+impl Def {
+    pub fn self_param(&self) -> Telescope {
+        Telescope(vec![Param { name: THIS_KEYWORD.to_owned(), typ: Rc::new(self.on_typ.to_exp()) }])
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Codef {
     pub info: Info,
@@ -90,6 +102,12 @@ pub struct Codef {
     pub params: Telescope,
     pub typ: TypApp,
     pub body: Comatch,
+}
+
+impl Codef {
+    pub fn self_param(&self) -> Telescope {
+        Telescope(vec![Param { name: THIS_KEYWORD.to_owned(), typ: Rc::new(self.typ.to_exp()) }])
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -129,8 +147,15 @@ pub struct TypApp {
     pub args: Args,
 }
 
+impl TypApp {
+    pub fn to_exp(&self) -> Exp {
+        Exp::Call { info: self.info.clone(), name: self.name.clone(), args: self.args.clone() }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Exp {
+    This { info: Info },
     Call { info: Info, name: Ident, args: Args },
     DotCall { info: Info, exp: Rc<Exp>, name: Ident, args: Args },
     Anno { info: Info, exp: Rc<Exp>, typ: Rc<Exp> },

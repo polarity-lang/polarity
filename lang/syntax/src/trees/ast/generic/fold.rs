@@ -59,6 +59,10 @@ pub trait Folder<P: Phase, O: Out> {
         F1: Fn(&mut Self, ParamInst<P>) -> O::ParamInst,
         F2: FnOnce(&mut Self, O::TelescopeInst) -> X
     ;
+    fn fold_self<X, F>(&mut self, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self) -> X
+    ;
     fn fold_param(&mut self, name: Ident, typ: O::Exp) -> O::Param;
     fn fold_param_inst(&mut self, info: O::TypeInfo, name: Ident, typ: O::Typ) -> O::ParamInst;
     fn fold_info(&mut self, info: P::Info) -> O::Info;
@@ -206,7 +210,10 @@ impl<P: Phase, O: Out, T: Fold<P, O>> Fold<P, O> for Vec<T> {
     }
 }
 
-impl<P: Phase, O: Out> Fold<P, O> for Prg<P> {
+impl<P: Phase, O: Out> Fold<P, O> for Prg<P>
+where
+    P::Typ: ShiftInRange,
+{
     type Out = O::Prg;
 
     fn fold<F>(self, f: &mut F) -> Self::Out
@@ -220,7 +227,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Prg<P> {
     }
 }
 
-impl<P: Phase, O: Out> Fold<P, O> for Decls<P> {
+impl<P: Phase, O: Out> Fold<P, O> for Decls<P>
+where
+    P::Typ: ShiftInRange,
+{
     type Out = O::Decls;
 
     fn fold<F>(self, f: &mut F) -> Self::Out
@@ -233,7 +243,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Decls<P> {
     }
 }
 
-impl<P: Phase, O: Out> Fold<P, O> for Decl<P> {
+impl<P: Phase, O: Out> Fold<P, O> for Decl<P>
+where
+    P::Typ: ShiftInRange,
+{
     type Out = O::Decl;
 
     fn fold<F>(self, f: &mut F) -> Self::Out
@@ -356,14 +369,20 @@ impl<P: Phase, O: Out> Fold<P, O> for Dtor<P> {
         let (params, on_typ, in_typ) = f.fold_telescope(
             params,
             |f, param| param.fold(f),
-            |f, params| (params, on_typ.fold(f), in_typ.fold(f)),
+            |f, params| {
+                let on_typ = on_typ.fold(f);
+                f.fold_self(|f| (params, on_typ, in_typ.fold(f)))
+            },
         );
         let info = f.fold_info(info);
         f.fold_dtor(info, name, params, on_typ, in_typ)
     }
 }
 
-impl<P: Phase, O: Out> Fold<P, O> for Def<P> {
+impl<P: Phase, O: Out> Fold<P, O> for Def<P>
+where
+    P::Typ: ShiftInRange,
+{
     type Out = O::Def;
 
     fn fold<F>(self, f: &mut F) -> Self::Out
@@ -375,7 +394,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Def<P> {
         let (params, on_typ, in_typ, body) = f.fold_telescope(
             params,
             |f, param| param.fold(f),
-            |f, params| (params, on_typ.fold(f), in_typ.fold(f), body.fold(f)),
+            |f, params| {
+                let on_typ = on_typ.fold(f);
+                f.fold_self(|f| (params, on_typ, in_typ.fold(f), body.fold(f)))
+            },
         );
         let info = f.fold_info(info);
         f.fold_def(info, name, params, on_typ, in_typ, body)
@@ -454,8 +476,11 @@ impl<P: Phase, O: Out> Fold<P, O> for Cocase<P> {
     {
         let Cocase { info, name, args, body } = self;
         let TelescopeInst { params } = args;
-        let (args, body) =
-            f.fold_telescope_inst(params, |f, arg| arg.fold(f), |f, args| (args, body.fold(f)));
+        let (args, body) = f.fold_telescope_inst(
+            params,
+            |f, arg| arg.fold(f),
+            |f, args| f.fold_self(|f| (args, body.fold(f))),
+        );
         let info = f.fold_info(info);
         f.fold_cocase(info, name, args, body)
     }

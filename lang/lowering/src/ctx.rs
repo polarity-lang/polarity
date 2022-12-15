@@ -26,9 +26,9 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    pub fn lookup(&self, name: &Ident, info: &cst::Info) -> Result<&Elem, LoweringError> {
+    pub fn lookup(&self, name: &str, info: &cst::Info) -> Result<&Elem, LoweringError> {
         self.map.get(name).and_then(|stack| stack.last()).ok_or_else(|| {
-            LoweringError::UndefinedIdent { name: name.clone(), span: info.span.to_miette() }
+            LoweringError::UndefinedIdent { name: name.to_owned(), span: info.span.to_miette() }
         })
     }
 
@@ -60,6 +60,7 @@ impl Ctx {
         self.impls.insert(block.name.clone(), block);
     }
 
+    // FIXME: confusing name, rename or inline
     pub fn lower_bound(&self, lvl: Lvl) -> Idx {
         self.level_to_index(lvl)
     }

@@ -24,7 +24,7 @@ match {
     "def", "codef",
     "match", "comatch",
     "absurd",
-    "Type", "Self",
+    "Type", "self", "Self",
     // Comments and whitespace
     r"\s*" => { }, // Skip whitespace
     r"--[^\n\r]*[\n\r]*" => { }, // Skip `--` comments
@@ -149,6 +149,7 @@ pub Builtins: Rc<Exp> = {
 }
 
 pub Atom: Rc<Exp> = {
+    <l: @L> "self" <r: @R> => Rc::new(Exp::This { info: span(l, r) }),
     <l: @L> <s: r"0|[1-9][0-9]*"> <r: @R> => Rc::new(Exp::NatLit { info: span(l, r), val: BigUint::parse_bytes(s.as_ref(), 10).unwrap() }),
     "(" <exp: Exp> ")" => exp,
     <l: @L> <name: Ident> <r: @R> => Rc::new(Exp::Call { info: span(l, r), name, args: Args::new() }),

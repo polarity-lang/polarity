@@ -36,4 +36,11 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
+    #[error(
+        "The use of self is reserved for referencing the scrutinee in top-level (co)definitions"
+    )]
+    SelfIsReserved {
+        #[label]
+        span: SourceSpan,
+    },
 }

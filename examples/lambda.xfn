@@ -9,6 +9,10 @@ impl Eq {
     }
 }
 
+codata Fun(a: Type, b: Type) {
+    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+}
+
 data Bool { True, False }
 
 impl Bool {
@@ -132,34 +136,22 @@ impl Exp {
         Lam(e) => Lam(e.subst(S(v), by.shift(0))),
         App(e1, e2) => App(e1.subst(v, by), e2.subst(v, by)),
     }
-}
 
-data Thms { Thm }
-
-impl Thms {
-    def Thms.progress(
-        self: Exp,
+    def Exp.progress(
         ctx: Ctx, t: Typ,
-        h_t: HasType(ctx, self, t)
-    ): Progress(self)
+    ): Fun(HasType(ctx, self, t), Progress(self))
     {
-        Thm => self.match _ {
-            Var(x) => Unit.todo(Progress(self)),
-            Lam(_) => Unit.todo(Progress(self)),
-            App(_, _) => Unit.todo(Progress(self)),
-        }
+        Var(x) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
+        Lam(_) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
+        App(_, _) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
     }
 
-    def Thms.preservation(
-        self: Exp,
+    def Exp.preservation(
         ctx: Ctx, e2: Exp, t: Typ,
-        h_t: HasType(ctx, self, t),
-        h_e: Eval(self, e2)): HasType(ctx, e2, t)
+    ): Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))
     {
-        Thm => self.match _ {
-            Var(_) => Unit.todo(HasType(ctx, e2, t)),
-            Lam(_) => Unit.todo(HasType(ctx, e2, t)),
-            App(_, _) => Unit.todo(HasType(ctx, e2, t)),
-        }
+        Var(_) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
+        Lam(_) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
+        App(_, _) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
     }
 }

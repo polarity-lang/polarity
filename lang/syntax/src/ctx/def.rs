@@ -50,7 +50,7 @@ pub trait Bind {
     fn bind_single<T, O, F>(&mut self, elem: T, f: F) -> O
     where
         T: AsElement<Self::Elem>,
-        F: Fn(&mut Self) -> O,
+        F: FnOnce(&mut Self) -> O,
     {
         self.bind_iter([elem].into_iter(), f)
     }

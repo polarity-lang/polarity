@@ -7,12 +7,12 @@ pub trait Substitution<E> {
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<E>;
 }
 
-impl<E: Clone, T: AsRef<[E]>> Substitution<E> for T {
+impl<E: Clone, T: AsRef<[E]>> Substitution<E> for &[T] {
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<E> {
-        if lvl.fst != 0 {
+        if lvl.fst > self.len() {
             return None;
         }
-        Some(self.as_ref()[lvl.snd].clone())
+        Some(self[lvl.fst].as_ref()[lvl.snd].clone())
     }
 }
 

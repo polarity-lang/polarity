@@ -249,12 +249,12 @@ impl Lower for cst::Dtor {
         params.lower_telescope(ctx, |ctx, params| {
             // If the type constructor does not take any arguments, it can be left out
             let on_typ = match on_typ {
-                Some(on_typ) => on_typ.lower_in_ctx(ctx)?,
+                Some(on_typ) => on_typ.clone(),
                 None => {
                     let typ_name = ctx.typ_name_for_xtor(name);
                     if ctx.typ_ctor_arity(typ_name) == 0 {
-                        ust::TypApp {
-                            info: ust::Info::empty(),
+                        cst::TypApp {
+                            info: cst::Info { span: Default::default() },
                             name: typ_name.clone(),
                             args: vec![],
                         }
@@ -268,12 +268,16 @@ impl Lower for cst::Dtor {
                 }
             };
 
-            Ok(ust::Dtor {
-                info: info.lower_pure(),
-                name: name.clone(),
-                params,
-                on_typ,
-                in_typ: in_typ.lower_in_ctx(ctx)?,
+            let on_typ_out = on_typ.lower_in_ctx(ctx)?;
+
+            self.self_param(&on_typ).lower_telescope(ctx, |ctx, _| {
+                Ok(ust::Dtor {
+                    info: info.lower_pure(),
+                    name: name.clone(),
+                    params,
+                    on_typ: on_typ_out,
+                    in_typ: in_typ.lower_in_ctx(ctx)?,
+                })
             })
         })
     }
@@ -286,13 +290,17 @@ impl Lower for cst::Def {
         let cst::Def { info, name, params, on_typ, in_typ, body } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
-            Ok(ust::Def {
-                info: info.lower_pure(),
-                name: name.clone(),
-                params,
-                on_typ: on_typ.lower_in_ctx(ctx)?,
-                in_typ: in_typ.lower_in_ctx(ctx)?,
-                body: body.lower_in_ctx(ctx)?,
+            let on_typ = on_typ.lower_in_ctx(ctx)?;
+
+            self.self_param().lower_telescope(ctx, |ctx, _| {
+                Ok(ust::Def {
+                    info: info.lower_pure(),
+                    name: name.clone(),
+                    params,
+                    on_typ,
+                    in_typ: in_typ.lower_in_ctx(ctx)?,
+                    body: body.lower_in_ctx(ctx)?,
+                })
             })
         })
     }
@@ -359,12 +367,18 @@ impl Lower for cst::Cocase {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Cocase { info, name, args, body } = self;
 
+        let self_param = cst::TelescopeInst(vec![cst::ParamInst {
+            info: cst::Info { span: Default::default() },
+            name: THIS_KEYWORD.to_owned(),
+        }]);
         args.lower_telescope(ctx, |ctx, args| {
-            Ok(ust::Cocase {
-                info: info.lower_pure(),
-                name: name.clone(),
-                args,
-                body: body.lower_in_ctx(ctx)?,
+            self_param.lower_telescope(ctx, |ctx, _| {
+                Ok(ust::Cocase {
+                    info: info.lower_pure(),
+                    name: name.clone(),
+                    args,
+                    body: body.lower_in_ctx(ctx)?,
+                })
             })
         })
     }
@@ -389,6 +403,14 @@ impl Lower for cst::Exp {
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         match self {
+            cst::Exp::This { info } => match ctx.lookup(THIS_KEYWORD, info)? {
+                Elem::Bound(lvl) => Ok(ust::Exp::Var {
+                    info: info.lower_pure(),
+                    name: THIS_KEYWORD.to_owned(),
+                    idx: ctx.lower_bound(*lvl),
+                }),
+                Elem::Decl => Err(LoweringError::SelfIsReserved { span: info.span.to_miette() }),
+            },
             cst::Exp::Call { info, name, args: subst } => match ctx.lookup(name, info)? {
                 Elem::Bound(lvl) => Ok(ust::Exp::Var {
                     info: info.lower_pure(),

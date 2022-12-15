@@ -89,3 +89,11 @@ impl ShiftInRange for Cocase {
         }
     }
 }
+
+impl ShiftInRange for TypApp {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let TypApp { info, name, args } = self;
+
+        TypApp { info: info.clone(), name: name.clone(), args: args.shift_in_range(range, by) }
+    }
+}
