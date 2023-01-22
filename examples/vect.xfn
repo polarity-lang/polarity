@@ -16,6 +16,11 @@ data Vec(n: Nat) {
 }
 
 impl Vec {
+    def Vec(S(n)).head(n: Nat) : Nat {
+        Cons(n', x, xs) => x,
+        Nil absurd,
+    }
+
     def Vec(S(n)).tail(n: Nat) : Vec(n) {
         Cons(n', x, xs) => xs,
         Nil absurd,
