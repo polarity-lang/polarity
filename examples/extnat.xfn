@@ -3,6 +3,13 @@ data Bool {
     False
 }
 
+impl Bool {
+    def Bool.not: Bool {
+        True => False,
+        False => True,
+    }
+}
+
 data ExtNat {
     Z,
     S(n: ExtNat),
@@ -23,13 +30,20 @@ impl ExtNat {
 }
 
 codata Stream(n: ExtNat) {
-    Stream(n).head(n: ExtNat, p: NotZero(n)) : Bool,
+    Stream(n).head(n: ExtNat, p: NotZero(n)) : ExtNat,
     Stream(n).tail(n: ExtNat) : Stream(n.pred()),
 }
 
--- impl Stream {
---     codef Zeroes() : Stream(Omega) {
---         head(n: ExtNat, p: NotZero(n)) => True,
---         tail(n: ExtNat) => Zeroes()
---     }
--- }
+impl Stream {
+    codef CountUp(from: ExtNat) : Stream(Omega) {
+        head(n, p) => from,
+        tail(n) => CountUp(S(from))
+    }
+
+    codef TakeN(n: ExtNat, s: Stream(Omega)) : Stream(n) {
+        head(n', p) => s.head(Omega, OmegaNotZero),
+        tail(n') => TakeN(n.pred, s.tail(Omega))
+    }
+}
+
+TakeN(3, CountUp(0))
