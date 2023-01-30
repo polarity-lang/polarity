@@ -296,7 +296,17 @@ impl<'a, P: Phase> Print<'a> for Cocase<P> {
 
 impl<'a, P: Phase> Print<'a> for Telescope<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        print_comma_separated(&self.params, cfg, alloc).opt_parens()
+        let Telescope { params } = self;
+        let mut output = alloc.nil();
+        for param in params {
+            let Param { name, typ } = param;
+            output = output
+                .append(alloc.text(name))
+                .append(COLON)
+                .append(typ.print(cfg, alloc))
+                .append(COMMA);
+        }
+        output.opt_parens()
     }
 }
 
