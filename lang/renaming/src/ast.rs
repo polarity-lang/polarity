@@ -29,11 +29,18 @@ where
         self.ctx_map_telescope_inst(params, f_acc, f_inner)
     }
 
-    fn map_self<X, F>(&mut self, f_inner: F) -> X
+    fn map_self_param<X, F>(
+        &mut self,
+        info: <P as Phase>::Info,
+        name: Option<Ident>,
+        typ: TypApp<P>,
+        f_inner: F,
+    ) -> X
     where
-        F: FnOnce(&mut Self) -> X,
+        F: FnOnce(&mut Self, SelfParam<P>) -> X,
     {
-        self.bind_single(THIS_KEYWORD.to_owned(), f_inner)
+        let self_param = SelfParam { info, name: name.clone(), typ };
+        self.bind_single(name.unwrap_or_default(), |ctx| f_inner(ctx, self_param))
     }
 
     fn map_exp_var(&mut self, info: P::TypeInfo, _name: P::VarName, idx: Idx) -> Exp<P> {

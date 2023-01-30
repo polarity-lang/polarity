@@ -40,6 +40,7 @@ pub type Match = generic::Match<UST>;
 pub type Comatch = generic::Comatch<UST>;
 pub type Case = generic::Case<UST>;
 pub type Cocase = generic::Cocase<UST>;
+pub type SelfParam = generic::SelfParam<UST>;
 pub type TypApp = generic::TypApp<UST>;
 pub type Exp = generic::Exp<UST>;
 pub type Telescope = generic::Telescope<UST>;

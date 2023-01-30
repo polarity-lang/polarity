@@ -24,8 +24,8 @@ pub trait Visitor<P: Phase> {
     fn visit_impl(&mut self, info: &P::Info, name: &Ident, defs: &[Ident]) {}
     fn visit_typ_abs(&mut self, params: &Telescope<P>) {}
     fn visit_ctor(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, typ: &TypApp<P>) {}
-    fn visit_dtor(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, on_typ: &TypApp<P>, in_typ: &Rc<Exp<P>>) {}
-    fn visit_def(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, on_typ: &TypApp<P>, in_typ: &Rc<Exp<P>>, body: &Match<P>) {}
+    fn visit_dtor(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>) {}
+    fn visit_def(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, self_param: &SelfParam<P>, in_typ: &Rc<Exp<P>>, body: &Match<P>) {}
     fn visit_codef(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, typ: &TypApp<P>, body: &Comatch<P>) {}
     fn visit_match(&mut self, info: &P::Info, cases: &[Case<P>]) {}
     fn visit_comatch(&mut self, info: &P::Info, cases: &[Cocase<P>]) {}
@@ -62,6 +62,12 @@ pub trait Visitor<P: Phase> {
         for param in params.into_iter() {
             f_acc(self, param);
         }
+        f_inner(self)
+    }
+    fn visit_self_param<X, F>(&mut self, info: &P::Info, name: &Option<Ident>, typ: &TypApp<P>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self) -> X
+    {
         f_inner(self)
     }
     fn visit_param(&mut self, name: &Ident, typ: &Rc<Exp<P>>) {}
@@ -235,17 +241,20 @@ impl<P: Phase> Visit<P> for Dtor<P> {
     where
         V: Visitor<P>,
     {
-        let Dtor { info, name, params, on_typ, in_typ } = self;
+        let Dtor { info, name, params, self_param, ret_typ } = self;
         v.visit_telescope(
             &params.params,
             |v, param| param.visit(v),
             |v| {
-                on_typ.visit(v);
-                in_typ.visit(v);
+                v.visit_info(&self_param.info);
+                self_param.typ.visit(v);
+                v.visit_self_param(&self_param.info, &self_param.name, &self_param.typ, |v| {
+                    ret_typ.visit(v);
+                });
             },
         );
         v.visit_info(info);
-        v.visit_dtor(info, name, params, on_typ, in_typ)
+        v.visit_dtor(info, name, params, self_param, ret_typ)
     }
 }
 
@@ -254,18 +263,21 @@ impl<P: Phase> Visit<P> for Def<P> {
     where
         V: Visitor<P>,
     {
-        let Def { info, name, params, on_typ, in_typ, body } = self;
+        let Def { info, name, params, self_param, ret_typ, body } = self;
         v.visit_telescope(
             &params.params,
             |v, param| param.visit(v),
             |v| {
-                on_typ.visit(v);
-                in_typ.visit(v);
+                v.visit_info(&self_param.info);
+                self_param.typ.visit(v);
+                v.visit_self_param(&self_param.info, &self_param.name, &self_param.typ, |v| {
+                    ret_typ.visit(v);
+                });
                 body.visit(v);
             },
         );
         v.visit_info(info);
-        v.visit_def(info, name, params, on_typ, in_typ, body)
+        v.visit_def(info, name, params, self_param, ret_typ, body)
     }
 }
 
@@ -330,7 +342,7 @@ impl<P: Phase> Visit<P> for Cocase<P> {
     where
         V: Visitor<P>,
     {
-        let Cocase { info, name, args, body } = self;
+        let Cocase { info, name, params: args, body } = self;
         let TelescopeInst { params } = args;
         v.visit_telescope_inst(params, |v, arg| arg.visit(v), |v| body.visit(v));
         v.visit_info(info);

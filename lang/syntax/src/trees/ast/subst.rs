@@ -98,12 +98,12 @@ where
     P::Typ: Substitutable<Rc<Exp<P>>>,
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Cocase { info, name, args, body } = self;
+        let Cocase { info, name, params: args, body } = self;
         ctx.bind_iter(args.params.iter(), |ctx| {
             ctx.bind_single((), |ctx| Cocase {
                 info: info.clone(),
                 name: name.clone(),
-                args: args.clone(),
+                params: args.clone(),
                 body: body.as_ref().map(|body| body.subst(ctx, by)),
             })
         })

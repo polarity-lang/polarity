@@ -220,22 +220,8 @@ pub struct Dtor<P: Phase> {
     pub info: P::Info,
     pub name: Ident,
     pub params: Telescope<P>,
-    pub on_typ: TypApp<P>,
-    pub in_typ: Rc<Exp<P>>,
-}
-
-impl<P: Phase> Dtor<P>
-where
-    P::Typ: ShiftInRange,
-{
-    pub fn self_param(&self) -> Telescope<P> {
-        Telescope {
-            params: vec![Param {
-                name: THIS_KEYWORD.to_owned(),
-                typ: Rc::new(self.on_typ.to_exp().shift((1, 0))),
-            }],
-        }
-    }
+    pub self_param: SelfParam<P>,
+    pub ret_typ: Rc<Exp<P>>,
 }
 
 #[derive(Debug, Clone)]
@@ -243,8 +229,8 @@ pub struct Def<P: Phase> {
     pub info: P::Info,
     pub name: Ident,
     pub params: Telescope<P>,
-    pub on_typ: TypApp<P>,
-    pub in_typ: Rc<Exp<P>>,
+    pub self_param: SelfParam<P>,
+    pub ret_typ: Rc<Exp<P>>,
     pub body: Match<P>,
 }
 
@@ -254,22 +240,8 @@ impl<P: Phase> Def<P> {
             info: self.info.clone(),
             name: self.name.clone(),
             params: self.params.clone(),
-            on_typ: self.on_typ.clone(),
-            in_typ: self.in_typ.clone(),
-        }
-    }
-}
-
-impl<P: Phase> Def<P>
-where
-    P::Typ: ShiftInRange,
-{
-    pub fn self_param(&self) -> Telescope<P> {
-        Telescope {
-            params: vec![Param {
-                name: THIS_KEYWORD.to_owned(),
-                typ: Rc::new(self.on_typ.to_exp().shift((1, 0))),
-            }],
+            self_param: self.self_param.clone(),
+            ret_typ: self.ret_typ.clone(),
         }
     }
 }
@@ -290,20 +262,6 @@ impl<P: Phase> Codef<P> {
             name: self.name.clone(),
             params: self.params.clone(),
             typ: self.typ.clone(),
-        }
-    }
-}
-
-impl<P: Phase> Codef<P>
-where
-    P::Typ: ShiftInRange,
-{
-    pub fn self_param(&self) -> Telescope<P> {
-        Telescope {
-            params: vec![Param {
-                name: THIS_KEYWORD.to_owned(),
-                typ: Rc::new(self.typ.to_exp().shift((1, 0))),
-            }],
         }
     }
 }
@@ -343,10 +301,27 @@ pub struct Cocase<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::Info,
     pub name: Ident,
-    // TODO: Rename to params
-    pub args: TelescopeInst<P>,
+    pub params: TelescopeInst<P>,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp<P>>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SelfParam<P: Phase> {
+    pub info: P::Info,
+    pub name: Option<Ident>,
+    pub typ: TypApp<P>,
+}
+
+impl<P: Phase> SelfParam<P> {
+    pub fn telescope(&self) -> Telescope<P> {
+        Telescope {
+            params: vec![Param {
+                name: self.name.clone().unwrap_or_default(),
+                typ: Rc::new(self.typ.to_exp()),
+            }],
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

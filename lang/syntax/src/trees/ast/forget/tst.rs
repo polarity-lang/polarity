@@ -113,14 +113,14 @@ impl Forget for tst::Dtor {
     type Target = wst::Dtor;
 
     fn forget(&self) -> Self::Target {
-        let tst::Dtor { info, name, params, on_typ, in_typ } = self;
+        let tst::Dtor { info, name, params, self_param, ret_typ } = self;
 
         wst::Dtor {
             info: info.forget(),
             name: name.clone(),
             params: params.forget(),
-            on_typ: on_typ.forget(),
-            in_typ: in_typ.forget(),
+            self_param: self_param.forget(),
+            ret_typ: ret_typ.forget(),
         }
     }
 }
@@ -129,14 +129,14 @@ impl Forget for tst::Def {
     type Target = wst::Def;
 
     fn forget(&self) -> Self::Target {
-        let tst::Def { info, name, params, on_typ, in_typ, body } = self;
+        let tst::Def { info, name, params, self_param, ret_typ, body } = self;
 
         wst::Def {
             info: info.forget(),
             name: name.clone(),
             params: params.forget(),
-            on_typ: on_typ.forget(),
-            in_typ: in_typ.forget(),
+            self_param: self_param.forget(),
+            ret_typ: ret_typ.forget(),
             body: body.forget(),
         }
     }
@@ -197,14 +197,24 @@ impl Forget for tst::Cocase {
     type Target = wst::Cocase;
 
     fn forget(&self) -> Self::Target {
-        let tst::Cocase { info, name, args, body } = self;
+        let tst::Cocase { info, name, params: args, body } = self;
 
         wst::Cocase {
             info: info.forget(),
             name: name.clone(),
-            args: args.forget(),
+            params: args.forget(),
             body: body.forget(),
         }
+    }
+}
+
+impl Forget for tst::SelfParam {
+    type Target = wst::SelfParam;
+
+    fn forget(&self) -> Self::Target {
+        let tst::SelfParam { info, name, typ } = self;
+
+        wst::SelfParam { info: info.forget(), name: name.clone(), typ: typ.forget() }
     }
 }
 

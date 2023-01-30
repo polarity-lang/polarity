@@ -125,7 +125,7 @@ impl Mapper<WST> for Lift {
 
         // Substitute the new parameters for the free variables
         let body = body.subst(&mut self.ctx.levels(), &subst);
-        let on_typ = info.typ.subst(&mut self.ctx.levels(), &subst);
+        let self_typ = info.typ.subst(&mut self.ctx.levels(), &subst);
         let def_in_typ = in_typ.as_exp().subst(&mut self.ctx.levels(), &subst);
 
         // Build the new top-level definition
@@ -133,8 +133,12 @@ impl Mapper<WST> for Lift {
             info: wst::Info::empty(),
             name: name.clone(),
             params: telescope,
-            on_typ,
-            in_typ: def_in_typ,
+            self_param: wst::SelfParam {
+                info: wst::Info::empty(),
+                name: Some("self".to_owned()),
+                typ: self_typ,
+            },
+            ret_typ: def_in_typ,
             body,
         };
 

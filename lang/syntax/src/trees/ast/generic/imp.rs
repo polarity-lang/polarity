@@ -95,11 +95,11 @@ where
     P::Typ: ShiftInRange,
 {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Cocase { info, name, args, body } = self;
+        let Cocase { info, name, params: args, body } = self;
         Cocase {
             info: info.clone(),
             name: name.clone(),
-            args: args.clone(),
+            params: args.clone(),
             body: body.shift_in_range(range.shift(1), by),
         }
     }

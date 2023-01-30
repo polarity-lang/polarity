@@ -40,8 +40,8 @@ impl Represent for matrix::XData {
                     info: ust::Info::empty(),
                     name: dtor.name.clone(),
                     params: dtor.params.clone(),
-                    on_typ: dtor.on_typ.clone(),
-                    in_typ: dtor.in_typ.clone(),
+                    self_param: dtor.self_param.clone(),
+                    ret_typ: dtor.ret_typ.clone(),
                     body: ust::Match { cases, info: ust::Info::empty() },
                 }
             })
@@ -83,7 +83,7 @@ impl Represent for matrix::XData {
                         ust::Cocase {
                             info: ust::Info::empty(),
                             name: dtor.name.clone(),
-                            args: dtor.params.instantiate(),
+                            params: dtor.params.instantiate(),
                             body,
                         }
                     })

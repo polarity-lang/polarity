@@ -13,7 +13,6 @@ pub use named::*;
 pub use subst::*;
 
 pub type Ident = String;
-pub const THIS_KEYWORD: &str = "self";
 
 pub trait HasSpan {
     fn span(&self) -> Option<Span>;

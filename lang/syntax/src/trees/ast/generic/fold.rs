@@ -31,8 +31,8 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_impl(&mut self, info: O::Info, name: Ident, defs: Vec<Ident>) -> O::Impl;
     fn fold_typ_abs(&mut self, params: O::Telescope) -> O::TypAbs;
     fn fold_ctor(&mut self, info: O::Info, name: Ident, params: O::Telescope, typ: O::TypApp) -> O::Ctor;
-    fn fold_dtor(&mut self, info: O::Info, name: Ident, params: O::Telescope, on_typ: O::TypApp, in_typ: O::Exp) -> O::Dtor;
-    fn fold_def(&mut self, info: O::Info, name: Ident, params: O::Telescope, on_typ: O::TypApp, in_typ: O::Exp, body: O::Match) -> O::Def;
+    fn fold_dtor(&mut self, info: O::Info, name: Ident, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp) -> O::Dtor;
+    fn fold_def(&mut self, info: O::Info, name: Ident, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp, body: O::Match) -> O::Def;
     fn fold_codef(&mut self, info: O::Info, name: Ident, params: O::Telescope, typ: O::TypApp, body: O::Comatch) -> O::Codef;
     fn fold_match(&mut self, info: O::Info, cases: Vec<O::Case>) -> O::Match;
     fn fold_comatch(&mut self, info: O::Info, cases: Vec<O::Cocase>) -> O::Comatch;
@@ -45,7 +45,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_exp_dtor(&mut self, info: O::TypeInfo, exp: O::Exp, name: Ident, args: Vec<O::Exp>) -> O::Exp;
     fn fold_exp_anno(&mut self, info: O::TypeInfo, exp: O::Exp, typ: O::Exp) -> O::Exp;
     fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
-    fn fold_exp_match(&mut self, info: O::TypeAppInfo, name: Ident, on_exp: O::Exp, in_typ: O::Typ, body: O::Match) -> O::Exp;
+    fn fold_exp_match(&mut self, info: O::TypeAppInfo, name: Ident, on_exp: O::Exp, ret_typ: O::Typ, body: O::Match) -> O::Exp;
     fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, name: Ident, body: O::Comatch) -> O::Exp;
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
@@ -59,9 +59,9 @@ pub trait Folder<P: Phase, O: Out> {
         F1: Fn(&mut Self, ParamInst<P>) -> O::ParamInst,
         F2: FnOnce(&mut Self, O::TelescopeInst) -> X
     ;
-    fn fold_self<X, F>(&mut self, f_inner: F) -> X
+    fn fold_self_param<X, F>(&mut self, info: O::Info, name: Option<Ident>, typ: O::TypApp, f_inner: F) -> X
     where
-        F: FnOnce(&mut Self) -> X
+        F: FnOnce(&mut Self, O::SelfParam) -> X
     ;
     fn fold_param(&mut self, name: Ident, typ: O::Exp) -> O::Param;
     fn fold_param_inst(&mut self, info: O::TypeInfo, name: Ident, typ: O::Typ) -> O::ParamInst;
@@ -96,6 +96,7 @@ pub trait Out {
     type Comatch;
     type Case;
     type Cocase;
+    type SelfParam;
     type TypApp;
     type Exp;
     type Telescope;
@@ -130,6 +131,7 @@ impl<P: Phase> Out for Id<P> {
     type Comatch = Comatch<P>;
     type Case = Case<P>;
     type Cocase = Cocase<P>;
+    type SelfParam = SelfParam<P>;
     type TypApp = TypApp<P>;
     type Exp = Rc<Exp<P>>;
     type Telescope = Telescope<P>;
@@ -163,6 +165,7 @@ impl<T> Out for Const<T> {
     type Comatch = T;
     type Case = T;
     type Cocase = T;
+    type SelfParam = T;
     type TypApp = T;
     type Exp = T;
     type Telescope = T;
@@ -364,18 +367,22 @@ impl<P: Phase, O: Out> Fold<P, O> for Dtor<P> {
     where
         F: Folder<P, O>,
     {
-        let Dtor { info, name, params, on_typ, in_typ } = self;
+        let Dtor { info, name, params, self_param, ret_typ } = self;
         let Telescope { params } = params;
-        let (params, on_typ, in_typ) = f.fold_telescope(
+        let (params, self_param, ret_typ) = f.fold_telescope(
             params,
             |f, param| param.fold(f),
             |f, params| {
-                let on_typ = on_typ.fold(f);
-                f.fold_self(|f| (params, on_typ, in_typ.fold(f)))
+                let self_info = f.fold_info(self_param.info);
+                let self_name = self_param.name;
+                let self_typ = self_param.typ.fold(f);
+                f.fold_self_param(self_info, self_name, self_typ, |f, self_param| {
+                    (params, self_param, ret_typ.fold(f))
+                })
             },
         );
         let info = f.fold_info(info);
-        f.fold_dtor(info, name, params, on_typ, in_typ)
+        f.fold_dtor(info, name, params, self_param, ret_typ)
     }
 }
 
@@ -389,18 +396,23 @@ where
     where
         F: Folder<P, O>,
     {
-        let Def { info, name, params, on_typ, in_typ, body } = self;
+        let Def { info, name, params, self_param, ret_typ, body } = self;
         let Telescope { params } = params;
-        let (params, on_typ, in_typ, body) = f.fold_telescope(
+        let (params, self_param, ret_typ, body) = f.fold_telescope(
             params,
             |f, param| param.fold(f),
             |f, params| {
-                let on_typ = on_typ.fold(f);
-                f.fold_self(|f| (params, on_typ, in_typ.fold(f), body.fold(f)))
+                let self_info = f.fold_info(self_param.info);
+                let self_name = self_param.name;
+                let self_typ = self_param.typ.fold(f);
+                let body = body.fold(f);
+                f.fold_self_param(self_info, self_name, self_typ, |f, self_param| {
+                    (params, self_param, ret_typ.fold(f), body)
+                })
             },
         );
         let info = f.fold_info(info);
-        f.fold_def(info, name, params, on_typ, in_typ, body)
+        f.fold_def(info, name, params, self_param, ret_typ, body)
     }
 }
 
@@ -474,13 +486,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Cocase<P> {
     where
         F: Folder<P, O>,
     {
-        let Cocase { info, name, args, body } = self;
+        let Cocase { info, name, params: args, body } = self;
         let TelescopeInst { params } = args;
-        let (args, body) = f.fold_telescope_inst(
-            params,
-            |f, arg| arg.fold(f),
-            |f, args| f.fold_self(|f| (args, body.fold(f))),
-        );
+        let (args, body) =
+            f.fold_telescope_inst(params, |f, arg| arg.fold(f), |f, args| (args, body.fold(f)));
         let info = f.fold_info(info);
         f.fold_cocase(info, name, args, body)
     }

@@ -167,18 +167,18 @@ impl<'a, P: Phase> PrintInCtx<'a> for Impl<P> {
 
 impl<'a, P: Phase> Print<'a> for Def<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { info: _, name, params, on_typ, in_typ, body } = self;
+        let Def { info: _, name, params, self_param, ret_typ, body } = self;
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
-            .append(on_typ.print(cfg, alloc))
+            .append(self_param.print(cfg, alloc))
             .append(DOT)
             .append(alloc.dtor(name))
             .append(params.print(cfg, alloc))
             .append(alloc.space())
             .append(COLON)
             .append(alloc.space())
-            .append(in_typ.print(cfg, alloc));
+            .append(ret_typ.print(cfg, alloc));
 
         let body = body.print(cfg, alloc);
 
@@ -220,8 +220,8 @@ impl<'a, P: Phase> Print<'a> for Ctor<P> {
 
 impl<'a, P: Phase> Print<'a> for Dtor<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Dtor { info: _, name, params, on_typ, in_typ } = self;
-        on_typ
+        let Dtor { info: _, name, params, self_param, ret_typ } = self;
+        self_param
             .print(cfg, alloc)
             .append(DOT)
             .append(alloc.dtor(name))
@@ -229,7 +229,7 @@ impl<'a, P: Phase> Print<'a> for Dtor<P> {
             .append(alloc.space())
             .append(COLON)
             .append(alloc.space())
-            .append(in_typ.print(cfg, alloc))
+            .append(ret_typ.print(cfg, alloc))
     }
 }
 
@@ -279,7 +279,7 @@ impl<'a, P: Phase> Print<'a> for Case<P> {
 
 impl<'a, P: Phase> Print<'a> for Cocase<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Cocase { info: _, name, args, body } = self;
+        let Cocase { info: _, name, params: args, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -317,6 +317,22 @@ impl<'a, P: Phase> Print<'a> for ParamInst<P> {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let ParamInst { info: _, name, typ: _ } = self;
         alloc.text(name)
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for SelfParam<P> {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let SelfParam { info: _, name, typ } = self;
+
+        match name {
+            Some(name) => alloc
+                .text(name)
+                .append(COLON)
+                .append(alloc.space())
+                .append(typ.print(cfg, alloc))
+                .parens(),
+            None => typ.print(cfg, alloc),
+        }
     }
 }
 

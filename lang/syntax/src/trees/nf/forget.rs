@@ -92,7 +92,7 @@ impl Forget for Cocase {
         ust::Cocase {
             info: info.clone(),
             name: name.clone(),
-            args: args.clone(),
+            params: args.clone(),
             body: body.forget(),
         }
     }

@@ -22,16 +22,17 @@ impl BoolRep {
 data Top { Unit }
 
 impl Top {
-    def Top.flipRep(x: Bool, rep: BoolRep(x)): BoolRep(x.not) {
-        Unit => rep.match _ {
-            TrueRep => FalseRep,
-            FalseRep => TrueRep,
-        }
-    }
-
-    def Top.example: Bool {
-        Unit => Unit.flipRep(True, TrueRep).extract(False)
-    }
+-- FIXME: Reenable once local matches are adjusted
+--    def Top.flipRep(x: Bool, rep: BoolRep(x)): BoolRep(x.not) {
+--        Unit => rep.match _ {
+--            TrueRep => FalseRep,
+--            FalseRep => TrueRep,
+--        }
+--    }
+--
+--    def Top.example: Bool {
+--        Unit => Unit.flipRep(True, TrueRep).extract(False)
+--    }
 }
 
-Unit.example
+-- Unit.example

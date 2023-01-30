@@ -137,21 +137,22 @@ impl Exp {
         App(e1, e2) => App(e1.subst(v, by), e2.subst(v, by)),
     }
 
-    def Exp.progress(
-        ctx: Ctx, t: Typ,
-    ): Fun(HasType(ctx, self, t), Progress(self))
-    {
-        Var(x) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
-        Lam(_) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
-        App(_, _) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
-    }
-
-    def Exp.preservation(
-        ctx: Ctx, e2: Exp, t: Typ,
-    ): Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))
-    {
-        Var(_) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
-        Lam(_) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
-        App(_, _) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
-    }
+-- FIXME: Reenable once substitution for self is implemented
+--    def Exp.progress(
+--        ctx: Ctx, t: Typ,
+--    ): Fun(HasType(ctx, self, t), Progress(self))
+--    {
+--        Var(x) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
+--        Lam(_) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
+--        App(_, _) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
+--    }
+--
+--    def Exp.preservation(
+--        ctx: Ctx, e2: Exp, t: Typ,
+--    ): Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))
+--    {
+--        Var(_) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
+--        Lam(_) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
+--        App(_, _) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
+--    }
 }

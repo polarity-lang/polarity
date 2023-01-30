@@ -54,7 +54,7 @@ impl<P: Phase> Occurs for Case<P> {
 
 impl<P: Phase> Occurs for Cocase<P> {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
-        let Cocase { args, body, .. } = self;
+        let Cocase { params: args, body, .. } = self;
         ctx.bind_iter(args.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
     }
 }

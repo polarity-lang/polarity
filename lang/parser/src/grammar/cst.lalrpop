@@ -12,7 +12,7 @@ grammar;
 // Tokens
 match {
     // Symbols
-    "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".", "=",
+    "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".",
     // Names
     "_",
     r"[a-z][a-zA-Z0-9_]*[']*",
@@ -24,7 +24,7 @@ match {
     "def", "codef",
     "match", "comatch",
     "absurd",
-    "Type", "self", "Self",
+    "Type",
     // Comments and whitespace
     r"\s*" => { }, // Skip whitespace
     r"--[^\n\r]*[\n\r]*" => { }, // Skip `--` comments
@@ -89,7 +89,7 @@ pub TypDecl: TypDecl = {
 }
 
 pub DefDecl: DefDecl = {
-    <l: @L> "def" <on_typ: TypApp> "." <name: LowerIdent> <params: OptTelescope> ":" <in_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), name, params, on_typ, in_typ, body }),
+    <l: @L> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), name, params, scrutinee, ret_typ, body }),
     <l: @L> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => DefDecl::Codef(Codef { info: span(l, r), name, params, typ, body }),
 }
 
@@ -98,7 +98,7 @@ Ctor: Ctor = {
 }
 
 Dtor: Dtor = {
-    <l: @L> <on_typ: (<TypApp> ".")?> <name: LowerIdent> <params: OptTelescope> ":" <in_typ: Exp> <r: @R> => Dtor { info: span(l, r), name, params, on_typ, in_typ },
+    <l: @L> <destructee: Destructee> <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> <r: @R> => Dtor { info: span(l, r), name, params, destructee, ret_typ },
 }
 
 pub Comatch : Comatch = {
@@ -120,6 +120,18 @@ pub Cocase : Cocase = {
 pub AbsurdOrBody: Option<Rc<Exp>> = {
     "absurd" => None,
     "=>" <body: Exp> => Some(body),
+}
+
+pub Destructee: Destructee = {
+    <l: @L> <scrutinee: (<Scrutinee> ".")?> <r: @R> => match scrutinee {
+        Some(Scrutinee { info, name, typ }) => Destructee { info, name, typ: Some(typ) },
+        None => Destructee { info: span(l, r), name: None, typ: None },
+    }
+}
+
+pub Scrutinee: Scrutinee = {
+    <l: @L> "(" <name: Ident> ":" <typ: TypApp> ")" <r: @R> => Scrutinee { info: span(l, r), name: Some(name), typ },
+    <l: @L> <typ: TypApp> <r: @R> => Scrutinee { info: span(l, r), name: None, typ },
 }
 
 pub TypApp: TypApp = {
@@ -149,7 +161,6 @@ pub Builtins: Rc<Exp> = {
 }
 
 pub Atom: Rc<Exp> = {
-    <l: @L> "self" <r: @R> => Rc::new(Exp::This { info: span(l, r) }),
     <l: @L> <s: r"0|[1-9][0-9]*"> <r: @R> => Rc::new(Exp::NatLit { info: span(l, r), val: BigUint::parse_bytes(s.as_ref(), 10).unwrap() }),
     "(" <exp: Exp> ")" => exp,
     <l: @L> <name: Ident> <r: @R> => Rc::new(Exp::Call { info: span(l, r), name, args: Args::new() }),

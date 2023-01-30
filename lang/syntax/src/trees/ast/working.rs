@@ -43,6 +43,7 @@ pub type Match = generic::Match<WST>;
 pub type Comatch = generic::Comatch<WST>;
 pub type Case = generic::Case<WST>;
 pub type Cocase = generic::Cocase<WST>;
+pub type SelfParam = generic::SelfParam<WST>;
 pub type TypApp = generic::TypApp<WST>;
 pub type Exp = generic::Exp<WST>;
 pub type Telescope = generic::Telescope<WST>;

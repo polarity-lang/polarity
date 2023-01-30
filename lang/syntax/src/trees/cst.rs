@@ -54,16 +54,8 @@ pub struct Dtor {
     pub info: Info,
     pub name: Ident,
     pub params: Telescope,
-    // QUESTION: Implement Self?
-    pub on_typ: Option<TypApp>,
-    // TODO: Rename to ret_typ
-    pub in_typ: Rc<Exp>,
-}
-
-impl Dtor {
-    pub fn self_param(&self, on_typ: &TypApp) -> Telescope {
-        Telescope(vec![Param { name: THIS_KEYWORD.to_owned(), typ: Rc::new(on_typ.to_exp()) }])
-    }
+    pub destructee: Destructee,
+    pub ret_typ: Rc<Exp>,
 }
 
 #[derive(Debug, Clone)]
@@ -84,15 +76,9 @@ pub struct Def {
     pub info: Info,
     pub name: Ident,
     pub params: Telescope,
-    pub on_typ: TypApp,
-    pub in_typ: Rc<Exp>,
+    pub scrutinee: Scrutinee,
+    pub ret_typ: Rc<Exp>,
     pub body: Match,
-}
-
-impl Def {
-    pub fn self_param(&self) -> Telescope {
-        Telescope(vec![Param { name: THIS_KEYWORD.to_owned(), typ: Rc::new(self.on_typ.to_exp()) }])
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -102,12 +88,6 @@ pub struct Codef {
     pub params: Telescope,
     pub typ: TypApp,
     pub body: Comatch,
-}
-
-impl Codef {
-    pub fn self_param(&self) -> Telescope {
-        Telescope(vec![Param { name: THIS_KEYWORD.to_owned(), typ: Rc::new(self.typ.to_exp()) }])
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -141,6 +121,35 @@ pub struct Cocase {
 }
 
 #[derive(Debug, Clone)]
+pub struct Scrutinee {
+    pub info: Info,
+    pub name: Option<Ident>,
+    pub typ: TypApp,
+}
+
+#[derive(Debug, Clone)]
+pub struct Destructee {
+    pub info: Info,
+    pub name: Option<Ident>,
+    pub typ: Option<TypApp>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SelfParam {
+    pub info: Info,
+    pub name: Option<Ident>,
+    pub typ: TypApp,
+}
+
+impl From<Scrutinee> for SelfParam {
+    fn from(scrutinee: Scrutinee) -> Self {
+        let Scrutinee { info, name, typ } = scrutinee;
+
+        SelfParam { info, name, typ }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct TypApp {
     pub info: Info,
     pub name: Ident,
@@ -155,7 +164,6 @@ impl TypApp {
 
 #[derive(Debug, Clone)]
 pub enum Exp {
-    This { info: Info },
     Call { info: Info, name: Ident, args: Args },
     DotCall { info: Info, exp: Rc<Exp>, name: Ident, args: Args },
     Anno { info: Info, exp: Rc<Exp>, typ: Rc<Exp> },

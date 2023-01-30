@@ -55,11 +55,11 @@ pub trait Mapper<P: Phase> {
     fn map_ctor(&mut self, info: P::Info, name: Ident, params: Telescope<P>, typ: TypApp<P>) -> Ctor<P> {
         Ctor { info, name, params, typ }
     }
-    fn map_dtor(&mut self, info: P::Info, name: Ident, params: Telescope<P>, on_typ: TypApp<P>, in_typ: Rc<Exp<P>>) -> Dtor<P> {
-        Dtor { info, name, params, on_typ, in_typ }
+    fn map_dtor(&mut self, info: P::Info, name: Ident, params: Telescope<P>, self_param: SelfParam<P>, ret_typ: Rc<Exp<P>>) -> Dtor<P> {
+        Dtor { info, name, params, self_param, ret_typ }
     }
-    fn map_def(&mut self, info: P::Info, name: Ident, params: Telescope<P>, on_typ: TypApp<P>, in_typ: Rc<Exp<P>>, body: Match<P>) -> Def<P> {
-        Def { info, name, params, on_typ, in_typ, body }
+    fn map_def(&mut self, info: P::Info, name: Ident, params: Telescope<P>, self_param: SelfParam<P>, ret_typ: Rc<Exp<P>>, body: Match<P>) -> Def<P> {
+        Def { info, name, params, self_param, ret_typ, body }
     }
     fn map_codef(&mut self, info: P::Info, name: Ident, params: Telescope<P>, typ: TypApp<P>, body: Comatch<P>) -> Codef<P> {
         Codef { info, name, params, typ, body }
@@ -74,7 +74,7 @@ pub trait Mapper<P: Phase> {
         Case { info, name, args, body }
     }
     fn map_cocase(&mut self, info: P::Info, name: Ident, args: TelescopeInst<P>, body: Option<Rc<Exp<P>>>) -> Cocase<P> {
-        Cocase { info, name, args, body }
+        Cocase { info, name, params: args, body }
     }
     fn map_typ_app(&mut self, info: P::TypeInfo, name: Ident, args: Vec<Rc<Exp<P>>>) -> TypApp<P> {
         TypApp { info, name, args }
@@ -123,11 +123,11 @@ pub trait Mapper<P: Phase> {
         let params = TelescopeInst { params };
         f_inner(self, params)
     }
-    fn map_self<X, F>(&mut self, f_inner: F) -> X
+    fn map_self_param<X, F>(&mut self, info: P::Info, name: Option<Ident>, typ: TypApp<P>, f_inner: F) -> X
     where
-        F: FnOnce(&mut Self) -> X
+        F: FnOnce(&mut Self, SelfParam<P>) -> X
     {
-        f_inner(self)
+        f_inner(self, SelfParam { info, name, typ })
     }
     fn map_param(&mut self, name: Ident, typ: Rc<Exp<P>>) -> Param<P> {
         Param { name, typ }
@@ -228,12 +228,12 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_ctor(info, name, params, typ)
     }
 
-    fn fold_dtor(&mut self, info: <Id<P> as Out>::Info, name: Ident, params: <Id<P> as Out>::Telescope, on_typ: <Id<P> as Out>::TypApp, in_typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Dtor {
-        self.map_dtor(info, name, params, on_typ, in_typ)
+    fn fold_dtor(&mut self, info: <Id<P> as Out>::Info, name: Ident, params: <Id<P> as Out>::Telescope, self_param: <Id<P> as Out>::SelfParam, ret_typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Dtor {
+        self.map_dtor(info, name, params, self_param, ret_typ)
     }
 
-    fn fold_def(&mut self, info: <Id<P> as Out>::Info, name: Ident, params: <Id<P> as Out>::Telescope, on_typ: <Id<P> as Out>::TypApp, in_typ: <Id<P> as Out>::Exp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Def {
-        self.map_def(info, name, params, on_typ, in_typ, body)
+    fn fold_def(&mut self, info: <Id<P> as Out>::Info, name: Ident, params: <Id<P> as Out>::Telescope, self_param: <Id<P> as Out>::SelfParam, ret_typ: <Id<P> as Out>::Exp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Def {
+        self.map_def(info, name, params, self_param, ret_typ, body)
     }
 
     fn fold_codef(&mut self, info: <Id<P> as Out>::Info, name: Ident, params: <Id<P> as Out>::Telescope, typ: <Id<P> as Out>::TypApp, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Codef {
@@ -315,12 +315,11 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
             |mapper, params| f_inner(mapper, params)
         )
     }
-
-    fn fold_self<X, F>(&mut self, f_inner: F) -> X
+    fn fold_self_param<X, F>(&mut self, info: <Id<P> as Out>::Info, name: Option<Ident>, typ: <Id<P> as Out>::TypApp, f_inner: F) -> X
     where
-        F: FnOnce(&mut Self) -> X
-     {
-        self.map_self(f_inner)
+        F: FnOnce(&mut Self, <Id<P> as Out>::SelfParam) -> X
+    {
+        self.map_self_param(info, name, typ, f_inner)
     }
 
     fn fold_param(&mut self, name: Ident, typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Param {

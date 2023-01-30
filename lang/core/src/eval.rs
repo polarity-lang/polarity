@@ -19,7 +19,6 @@ pub trait Eval {
 }
 
 pub trait Apply {
-    fn apply_this(self, prg: &Prg, args: &[Rc<Val>], this: &Rc<Val>) -> Result<Rc<Val>, EvalError>;
     fn apply(self, prg: &Prg, args: &[Rc<Val>]) -> Result<Rc<Val>, EvalError>;
 }
 
@@ -73,20 +72,19 @@ fn eval_dtor(
             match type_decl {
                 Type::Data(_) => {
                     let ust::Def { body, .. } = prg.decls.def(dtor_name);
-                    let body = Env::empty().bind_iter(dtor_args.iter(), |env| {
-                        env.bind_iter([&exp].into_iter(), |env| body.eval(prg, env))
-                    })?;
+                    let body =
+                        Env::empty().bind_iter(dtor_args.iter(), |env| body.eval(prg, env))?;
                     beta_match(prg, body, &ctor_name, &ctor_args)
                 }
                 Type::Codata(_) => {
                     let ust::Codef { body, .. } = prg.decls.codef(&ctor_name);
                     let body =
                         Env::empty().bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
-                    beta_comatch(prg, &exp, body, dtor_name, &dtor_args)
+                    beta_comatch(prg, body, dtor_name, &dtor_args)
                 }
             }
         }
-        Val::Comatch { body, .. } => beta_comatch(prg, &exp, body, dtor_name, &dtor_args),
+        Val::Comatch { body, .. } => beta_comatch(prg, body, dtor_name, &dtor_args),
         Val::Neu { exp } => Ok(Rc::new(Val::Neu {
             exp: Neu::Dtor {
                 info: info.clone(),
@@ -135,7 +133,6 @@ fn beta_match(
 #[trace("comatch {:P}.{}(...) ▷β {return:P}", body, dtor_name, data::id)]
 fn beta_comatch(
     prg: &Prg,
-    this: &Rc<Val>,
     body: val::Comatch,
     dtor_name: &str,
     args: &[Rc<Val>],
@@ -143,7 +140,7 @@ fn beta_comatch(
     let cocase = body.clone().cases.into_iter().find(|cocase| cocase.name == dtor_name).unwrap();
     let val::Cocase { body, .. } = cocase;
     let body = body.unwrap();
-    body.apply_this(prg, args, this)
+    body.apply(prg, args)
 }
 
 impl Eval for ust::Match {
@@ -182,7 +179,7 @@ impl Eval for ust::Cocase {
     type Val = val::Cocase;
 
     fn eval(&self, _prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
-        let ust::Cocase { info, name, args, body } = self;
+        let ust::Cocase { info, name, params: args, body } = self;
 
         let body = body.as_ref().map(|body| Closure { body: body.clone(), env: env.clone() });
 
@@ -203,15 +200,6 @@ impl Eval for ust::TypApp {
 impl Apply for Closure {
     fn apply(mut self, prg: &Prg, args: &[Rc<Val>]) -> Result<Rc<Val>, EvalError> {
         self.env.bind_iter(args.iter(), |env| self.body.eval(prg, env))
-    }
-
-    fn apply_this(
-        mut self,
-        prg: &Prg,
-        args: &[Rc<Val>],
-        this: &Rc<Val>,
-    ) -> Result<Rc<Val>, EvalError> {
-        self.env.bind_iter(args.iter(), |env| env.bind_single(this, |env| self.body.eval(prg, env)))
     }
 }
 
