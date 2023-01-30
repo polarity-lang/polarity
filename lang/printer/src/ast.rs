@@ -345,8 +345,7 @@ where
         let Telescope { params } = self;
         let mut output = alloc.nil();
         let mut running_type: Option<&Rc<Exp<P>>> = None;
-        for param in params {
-            let Param { name, typ } = param;
+        for Param { name, typ } in params {
             match running_type {
                 // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
                 Some(rtype) if &rtype.shift((0, 1)) == typ => {
@@ -362,16 +361,16 @@ where
                         .append(rtype.print(cfg, alloc))
                         .append(COMMA)
                         .append(alloc.space());
-                    running_type = Some(typ);
                     output = output.append(alloc.text(name));
                 }
                 None => {
                     // We are adding the very first parameter.
-                    running_type = Some(typ);
                     output = output.append(alloc.text(name));
                 }
             }
+            running_type = Some(typ);
         }
+        // Close the last parameter
         match running_type {
             None => {}
             Some(rtype) => {
