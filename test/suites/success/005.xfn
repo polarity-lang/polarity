@@ -1,16 +1,12 @@
 data Bool { True, False }
 
-impl Bool {
-    def Bool.not: Bool {
-        True => False,
-        False => True,
-    }
+def Bool.not: Bool {
+    True => False,
+    False => True,
 }
 
 data Top { Unit }
 
-impl Top {
-    def Top.false : Bool {
-        Unit => True.not
-    }
+def Top.false : Bool {
+    Unit => True.not
 }

@@ -19,10 +19,9 @@ data Top {
     Unit,
 }
 
-impl Top {
-    def Top.contra(a: Type, prf: a, ref: Not(a)) : False {
-        Unit => ref.ret(a, prf)
-    }
+def Top.contra(a: Type, prf: a, ref: Not(a)) : False {
+    Unit => ref.ret(a, prf)
+}
 
 -- FIXME: Reenable once local matches are adjusted
 --    def Top.lem(a: Type): DN(Or(a, Not(a))) {
@@ -42,4 +41,3 @@ impl Top {
 --                )
 --        }
 --    }
-}

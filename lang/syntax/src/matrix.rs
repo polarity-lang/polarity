@@ -20,7 +20,6 @@ pub struct XData {
     pub ctors: HashMap<Ident, ust::Ctor>,
     pub dtors: HashMap<Ident, ust::Dtor>,
     pub exprs: HashMap<Key, Option<Rc<ust::Exp>>>,
-    pub impl_block: Option<ust::Impl>,
 }
 
 /// A key points to a matrix cell

@@ -3,11 +3,9 @@ data Bool {
     False
 }
 
-impl Bool {
-    def Bool.not: Bool {
-        True => False,
-        False => True,
-    }
+def Bool.not: Bool {
+    True => False,
+    False => True,
 }
 
 data ExtNat {
@@ -21,29 +19,26 @@ data NotZero(n: ExtNat) {
     OmegaNotZero: NotZero(Omega),
 }
 
-impl ExtNat {
-    def ExtNat.pred() : ExtNat {
-        Z => Z,
-        S(n) => n,
-        Omega => Omega,
-    }
+def ExtNat.pred() : ExtNat {
+    Z => Z,
+    S(n) => n,
+    Omega => Omega,
 }
+
 
 codata Stream(n: ExtNat) {
     Stream(n).head(n: ExtNat, p: NotZero(n)) : ExtNat,
     Stream(n).tail(n: ExtNat) : Stream(n.pred()),
 }
 
-impl Stream {
-    codef CountUp(from: ExtNat) : Stream(Omega) {
-        head(n, p) => from,
-        tail(n) => CountUp(S(from))
-    }
+codef CountUp(from: ExtNat) : Stream(Omega) {
+    head(n, p) => from,
+    tail(n) => CountUp(S(from))
+}
 
-    codef TakeN(n: ExtNat, s: Stream(Omega)) : Stream(n) {
-        head(n', p) => s.head(Omega, OmegaNotZero),
-        tail(n') => TakeN(n.pred, s.tail(Omega))
-    }
+codef TakeN(n: ExtNat, s: Stream(Omega)) : Stream(n) {
+    head(n', p) => s.head(Omega, OmegaNotZero),
+    tail(n') => TakeN(n.pred, s.tail(Omega))
 }
 
 TakeN(3, CountUp(0))

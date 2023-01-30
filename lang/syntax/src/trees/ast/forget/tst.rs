@@ -46,14 +46,13 @@ impl Forget for tst::Data {
     type Target = wst::Data;
 
     fn forget(&self) -> Self::Target {
-        let tst::Data { info, name, typ, ctors, impl_block } = self;
+        let tst::Data { info, name, typ, ctors } = self;
 
         wst::Data {
             info: info.forget(),
             name: name.clone(),
             typ: typ.forget(),
             ctors: ctors.clone(),
-            impl_block: impl_block.forget(),
         }
     }
 }
@@ -62,25 +61,14 @@ impl Forget for tst::Codata {
     type Target = wst::Codata;
 
     fn forget(&self) -> Self::Target {
-        let tst::Codata { info, name, typ, dtors, impl_block } = self;
+        let tst::Codata { info, name, typ, dtors } = self;
 
         wst::Codata {
             info: info.forget(),
             name: name.clone(),
             typ: typ.forget(),
             dtors: dtors.clone(),
-            impl_block: impl_block.forget(),
         }
-    }
-}
-
-impl Forget for tst::Impl {
-    type Target = wst::Impl;
-
-    fn forget(&self) -> Self::Target {
-        let tst::Impl { info, name, defs } = self;
-
-        wst::Impl { info: info.forget(), name: name.clone(), defs: defs.clone() }
     }
 }
 

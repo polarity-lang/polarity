@@ -44,7 +44,8 @@ where
         let items = self.iter().map(|item| match item {
             Item::Data(data) => data.print_in_ctx(cfg, self, alloc),
             Item::Codata(codata) => codata.print_in_ctx(cfg, self, alloc),
-            Item::Impl(impl_block) => impl_block.print_in_ctx(cfg, self, alloc),
+            Item::Def(def) => def.print(cfg, alloc),
+            Item::Codef(codef) => codef.print(cfg, alloc),
         });
 
         let sep = if cfg.omit_decl_sep { alloc.line() } else { alloc.line().append(alloc.line()) };
@@ -75,6 +76,27 @@ where
     }
 }
 
+impl<'a, P: Phase> PrintInCtx<'a> for Item<'a, P>
+where
+    P::Typ: ShiftInRange,
+{
+    type Ctx = Decls<P>;
+
+    fn print_in_ctx(
+        &'a self,
+        cfg: &PrintCfg,
+        ctx: &'a Self::Ctx,
+        alloc: &'a Alloc<'a>,
+    ) -> Builder<'a> {
+        match self {
+            Item::Data(data) => data.print_in_ctx(cfg, ctx, alloc),
+            Item::Codata(codata) => codata.print_in_ctx(cfg, ctx, alloc),
+            Item::Def(def) => def.print(cfg, alloc),
+            Item::Codef(codef) => codef.print(cfg, alloc),
+        }
+    }
+}
+
 impl<'a, P: Phase> PrintInCtx<'a> for Data<P>
 where
     P::Typ: ShiftInRange,
@@ -87,7 +109,7 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Data { info: _, name, typ, ctors, impl_block: _ } = self;
+        let Data { info: _, name, typ, ctors } = self;
 
         let head = alloc
             .keyword(DATA)
@@ -125,7 +147,7 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Codata { info: _, name, typ, dtors, impl_block: _ } = self;
+        let Codata { info: _, name, typ, dtors } = self;
         let head = alloc
             .keyword(CODATA)
             .append(alloc.space())
@@ -140,40 +162,6 @@ where
                 .hardline()
                 .append(alloc.intersperse(
                     dtors.iter().map(|x| ctx.map[x].print_in_ctx(cfg, ctx, alloc)),
-                    sep,
-                ))
-                .nest(INDENT)
-                .append(alloc.hardline())
-                .braces_from(cfg);
-
-        head.append(body)
-    }
-}
-
-impl<'a, P: Phase> PrintInCtx<'a> for Impl<P>
-where
-    P::Typ: ShiftInRange,
-{
-    type Ctx = Decls<P>;
-
-    fn print_in_ctx(
-        &'a self,
-        cfg: &PrintCfg,
-        ctx: &'a Self::Ctx,
-        alloc: &'a Alloc<'a>,
-    ) -> Builder<'a> {
-        let Impl { info: _, name, defs } = self;
-
-        let head =
-            alloc.keyword(IMPL).append(alloc.space()).append(alloc.typ(name)).append(alloc.space());
-
-        let sep = alloc.hardline().append(alloc.hardline());
-
-        let body =
-            alloc
-                .hardline()
-                .append(alloc.intersperse(
-                    defs.iter().map(|x| ctx.map[x].print_in_ctx(cfg, ctx, alloc)),
                     sep,
                 ))
                 .nest(INDENT)

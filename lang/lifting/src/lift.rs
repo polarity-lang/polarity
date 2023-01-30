@@ -29,6 +29,8 @@ pub struct Lift {
 pub struct LiftResult {
     /// The resulting program
     pub prg: ust::Prg,
+    /// List of new top-level definitions
+    pub new_decls: HashSet<Ident>,
     /// List of top-level declarations that have been modified in the lifting process
     pub modified_decls: HashSet<Ident>,
 }
@@ -48,28 +50,11 @@ impl Lift {
         // Perform the lifting process
         let mut prg_out = prg.map(&mut self);
 
-        // Update program accordingly
-        let mut impl_block = prg_out.decls.source.get_or_add_impl_block(self.name.clone());
-        impl_block.set_defs(self.new_decls.iter().map(|decl| decl.name().clone()));
+        let new_decls = self.new_decls.iter().map(|decl| decl.name().clone()).collect();
 
-        match prg_out.decls.map.get_mut(&self.name).unwrap() {
-            Decl::Codata(codata) => {
-                codata.impl_block = Some(Impl {
-                    // FIXME: might not exist
-                    info: codata.impl_block.as_ref().unwrap().info.clone(),
-                    name: codata.name.clone(),
-                    defs: self.new_decls.iter().map(|def| def.name().clone()).collect(),
-                })
-            }
-            Decl::Data(data) => {
-                data.impl_block = Some(Impl {
-                    // FIXME: might not exist
-                    info: data.impl_block.as_ref().unwrap().info.clone(),
-                    name: data.name.clone(),
-                    defs: self.new_decls.iter().map(|def| def.name().clone()).collect(),
-                })
-            }
-            _ => unreachable!(),
+        // Update program accordingly
+        for decl in &self.new_decls {
+            prg_out.decls.source.insert_def(self.name.clone(), decl.name().clone());
         }
 
         let decls_iter = self.new_decls.into_iter().map(|decl| (decl.name().clone(), decl));
@@ -80,7 +65,7 @@ impl Lift {
         // Hence, we first forget the type annotations before renaming
         let prg_out = prg_out.forget().rename();
 
-        LiftResult { prg: prg_out, modified_decls: self.modified_decls }
+        LiftResult { prg: prg_out, new_decls, modified_decls: self.modified_decls }
     }
 
     /// Set the current declaration

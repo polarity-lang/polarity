@@ -68,7 +68,6 @@ impl Visitor<tst::TST> for InfoCollector {
         name: &Ident,
         _typ: &Rc<tst::TypAbs>,
         _ctors: &[Ident],
-        _impl_block: &Option<tst::Impl>,
     ) {
         self.add_item_span(Item::Data(name.clone()), info.span.unwrap());
     }
@@ -79,7 +78,6 @@ impl Visitor<tst::TST> for InfoCollector {
         name: &Ident,
         _typ: &Rc<tst::TypAbs>,
         _dtors: &[Ident],
-        _impl_block: &Option<tst::Impl>,
     ) {
         self.add_item_span(Item::Data(name.clone()), info.span.unwrap());
     }

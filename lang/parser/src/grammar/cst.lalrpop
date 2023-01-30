@@ -20,7 +20,7 @@ match {
     // Literals
     r"0|[1-9][0-9]*",
     // Keywords
-    "data", "codata", "impl",
+    "data", "codata",
     "def", "codef",
     "match", "comatch",
     "absurd",
@@ -76,11 +76,7 @@ pub Prg: Prg = {
 
 pub Item: Item = {
     <decl: TypDecl> => Item::Type(decl),
-    <decl: Impl> => Item::Impl(decl),
-}
-
-pub Impl: Impl = {
-    <l: @L> "impl" <name: Ident> "{" <decls: DefDecl*> "}" <r: @R> => Impl { info: span(l, r), name, decls },
+    <decl: DefDecl> => Item::Def(decl),
 }
 
 pub TypDecl: TypDecl = {

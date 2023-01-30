@@ -3,11 +3,9 @@ data Nat {
     S(n: Nat),
 }
 
-impl Nat {
-    def Nat.add(y: Nat) : Nat {
-        Z => y,
-        S(x') => S(x'.add(y)),
-    }
+def Nat.add(y: Nat) : Nat {
+    Z => y,
+    S(x') => S(x'.add(y)),
 }
 
 data Vec(n: Nat) {

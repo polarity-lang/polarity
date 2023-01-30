@@ -3,11 +3,9 @@ data Nat {
     S(n: Nat),
 }
 
-impl Nat {
-    def Nat.add(y: Nat) : Nat {
-        Z => y,
-        S(x') => S(x'.add(y)),
-    }
+def Nat.add(y: Nat) : Nat {
+    Z => y,
+    S(x') => S(x'.add(y)),
 }
 
 data Vec(n: Nat) {
@@ -15,33 +13,29 @@ data Vec(n: Nat) {
     Cons(n: Nat, x: Nat, xs: Vec(n)) : Vec(S(n)),
 }
 
-impl Vec {
-    def Vec(S(n)).head(n: Nat) : Nat {
-        Cons(n', x, xs) => x,
-        Nil absurd,
-    }
+def Vec(S(n)).head(n: Nat) : Nat {
+    Cons(n', x, xs) => x,
+    Nil absurd,
+}
 
-    def Vec(S(n)).tail(n: Nat) : Vec(n) {
-        Cons(n', x, xs) => xs,
-        Nil absurd,
-    }
+def Vec(S(n)).tail(n: Nat) : Vec(n) {
+    Cons(n', x, xs) => xs,
+    Nil absurd,
+}
 
-   def Vec(n).append(n m: Nat, ys: Vec(m)) : Vec(n.add(m)) {
-       Nil => ys,
-       Cons(n', x, xs) => Cons(n'.add(m), x, xs.append(n', m, ys))
-   }
+def Vec(n).append(n m: Nat, ys: Vec(m)) : Vec(n.add(m)) {
+    Nil => ys,
+    Cons(n', x, xs) => Cons(n'.add(m), x, xs.append(n', m, ys))
 }
 
 data Top { Unit }
 
-impl Top {
-    def Top.example1: Vec(2) {
-        Unit => Cons(1, 0, Cons(0, 0, Nil))
-    }
+def Top.example1: Vec(2) {
+    Unit => Cons(1, 0, Cons(0, 0, Nil))
+}
 
-    def Top.example2: Vec(4) {
-        Unit => Unit.example1.append(2, 2, Unit.example1)
-    }
+def Top.example2: Vec(4) {
+    Unit => Unit.example1.append(2, 2, Unit.example1)
 }
 
 Unit.example2

@@ -3,11 +3,9 @@ data Nat {
     S(n: Nat)
 }
 
-impl Nat {
-    def Nat.add(y: Nat) : Nat {
-        Z => y,
-        S(x') => S(x'.add(y))
-    }
+def Nat.add(y: Nat) : Nat {
+    Z => y,
+    S(x') => S(x'.add(y))
 }
 
 data Bool {
@@ -15,28 +13,24 @@ data Bool {
     False
 }
 
-impl Bool {
-    def Bool.and(y: Bool) : Bool {
-        True => y,
-        False => False
-    }
+def Bool.and(y: Bool) : Bool {
+    True => y,
+    False => False
 }
 
 data Top {
     Unit
 }
 
-impl Top {
-    def Top.example(): Exp {
-        Unit => And(IsZero(Add(Num(Z), Num(Z))), Boo(True))
-    }
+def Top.example(): Exp {
+    Unit => And(IsZero(Add(Num(Z), Num(Z))), Boo(True))
+}
 
-    def Top.example_has_type(): HasType(And(IsZero(Add(Num(Z()), Num(Z()))), Boo(True())), BooT) {
-        Unit => TAnd(IsZero(Add(Num(Z), Num(Z))), Boo(True),
-            TIsZero(Add(Num(Z), Num(Z)), TAdd(Num(Z), Num(Z), TNum(Z), TNum(Z))),
-            TBoo(True)
-        )
-    }
+def Top.example_has_type(): HasType(And(IsZero(Add(Num(Z()), Num(Z()))), Boo(True())), BooT) {
+    Unit => TAnd(IsZero(Add(Num(Z), Num(Z))), Boo(True),
+        TIsZero(Add(Num(Z), Num(Z)), TAdd(Num(Z), Num(Z), TNum(Z), TNum(Z))),
+        TBoo(True)
+    )
 }
 
 data Exp {
@@ -75,14 +69,12 @@ data Eval(e1: Exp, e2: Exp) {
     EAndRed(b1 b2: Bool): Eval(And(Boo(b1), Boo(b2)), Boo(b1.and(b2))),
 }
 
-impl Eval {
-    def Eval(e1, e2).preserves(e1: Exp, e2: Exp, t: Typ, h1: HasType(e1, t)) : HasType(e2, t) {
-        EAddCongL(lhs, lhs', rhs, h_lhs) => ?,
-        EAddCongR(lhs, rhs, rhs', h_rhs) => ?,
-        EAddRed(n1, n2) => ?,
-        EIsZeroCong(e, e', h_e) => ?,
-        EAndCongL(lhs, lhs', rhs, h_lhs) => ?,
-        EAndCongR(lhs, rhs, rhs', h_rhs) => ?,
-        EAndRed(b1, b2) => ?
-    }
+def Eval(e1, e2).preserves(e1: Exp, e2: Exp, t: Typ, h1: HasType(e1, t)) : HasType(e2, t) {
+    EAddCongL(lhs, lhs', rhs, h_lhs) => ?,
+    EAddCongR(lhs, rhs, rhs', h_rhs) => ?,
+    EAddRed(n1, n2) => ?,
+    EIsZeroCong(e, e', h_e) => ?,
+    EAndCongL(lhs, lhs', rhs, h_lhs) => ?,
+    EAndCongR(lhs, rhs, rhs', h_rhs) => ?,
+    EAndRed(b1, b2) => ?
 }

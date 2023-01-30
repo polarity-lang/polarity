@@ -19,8 +19,8 @@ pub trait Visitor<P: Phase> {
     fn visit_decl_dtor(&mut self, dtor: &Dtor<P>) {}
     fn visit_decl_def(&mut self, def: &Def<P>) {}
     fn visit_decl_codef(&mut self, codef: &Codef<P>) {}
-    fn visit_data(&mut self, info: &P::Info, name: &Ident, typ: &Rc<TypAbs<P>>, ctors: &[Ident], impl_block: &Option<Impl<P>>) {}
-    fn visit_codata(&mut self, info: &P::Info, name: &Ident, typ: &Rc<TypAbs<P>>, dtors: &[Ident], impl_block: &Option<Impl<P>>) {}
+    fn visit_data(&mut self, info: &P::Info, name: &Ident, typ: &Rc<TypAbs<P>>, ctors: &[Ident]) {}
+    fn visit_codata(&mut self, info: &P::Info, name: &Ident, typ: &Rc<TypAbs<P>>, dtors: &[Ident]) {}
     fn visit_impl(&mut self, info: &P::Info, name: &Ident, defs: &[Ident]) {}
     fn visit_typ_abs(&mut self, params: &Telescope<P>) {}
     fn visit_ctor(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, typ: &TypApp<P>) {}
@@ -182,11 +182,10 @@ impl<P: Phase> Visit<P> for Data<P> {
     where
         V: Visitor<P>,
     {
-        let Data { info, name, typ, ctors, impl_block } = self;
+        let Data { info, name, typ, ctors } = self;
         typ.visit(v);
-        impl_block.visit(v);
         v.visit_info(info);
-        v.visit_data(info, name, typ, ctors, impl_block)
+        v.visit_data(info, name, typ, ctors)
     }
 }
 
@@ -195,22 +194,10 @@ impl<P: Phase> Visit<P> for Codata<P> {
     where
         V: Visitor<P>,
     {
-        let Codata { info, name, typ, dtors, impl_block } = self;
+        let Codata { info, name, typ, dtors } = self;
         typ.visit(v);
-        impl_block.visit(v);
         v.visit_info(info);
-        v.visit_codata(info, name, typ, dtors, impl_block)
-    }
-}
-
-impl<P: Phase> Visit<P> for Impl<P> {
-    fn visit<V>(&self, v: &mut V)
-    where
-        V: Visitor<P>,
-    {
-        let Impl { info, name, defs } = self;
-        v.visit_info(info);
-        v.visit_impl(info, name, defs)
+        v.visit_codata(info, name, typ, dtors)
     }
 }
 
