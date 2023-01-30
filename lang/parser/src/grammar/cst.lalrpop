@@ -52,7 +52,7 @@ OptParenthesizedArgs<Rule>: Vec<Rule> = <args: Parens<Comma<Rule>>?> => args.unw
 BracedArgs<Rule>: Vec<Rule> = Braces<Comma<Rule>>;
 OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_default();
 
-Param: Param = <name: Ident> ":" <typ: Exp> => Param { name, typ } ;
+Param: Param = <name: Ident> <names: Ident*> ":" <typ: Exp> => Param { name, names, typ } ;
 
 ParamInst: ParamInst = <l: @L> <name: Ident> <r: @R> => ParamInst { info: span(l, r), name };
 

@@ -47,9 +47,9 @@ impl Top {
 data Exp {
     Num(n: Nat),
     Boo(b: Bool),
-    Add(lhs: Exp, rhs: Exp),
+    Add(lhs rhs : Exp),
     IsZero(e: Exp),
-    And(lhs: Exp, rhs: Exp),
+    And(lhs rhs: Exp),
 }
 
 data Typ {
@@ -60,9 +60,9 @@ data Typ {
 data HasType(e: Exp, t: Typ) {
     TNum(n: Nat) : HasType(Num(n), NumT),
     TBoo(b: Bool) : HasType(Boo(b), BooT),
-    TAdd(lhs: Exp, rhs: Exp, h_lhs: HasType(lhs, NumT), h_rhs: HasType(rhs, NumT)) : HasType(Add(lhs, rhs), NumT),
+    TAdd(lhs rhs: Exp, h_lhs: HasType(lhs, NumT), h_rhs: HasType(rhs, NumT)) : HasType(Add(lhs, rhs), NumT),
     TIsZero(e: Exp, h: HasType(e, NumT)) : HasType(IsZero(e), BooT),
-    TAnd(lhs: Exp, rhs: Exp, h_lhs: HasType(lhs, BooT), h_rhs: HasType(rhs, BooT)) : HasType(And(lhs, rhs), BooT),
+    TAnd(lhs rhs: Exp, h_lhs: HasType(lhs, BooT), h_rhs: HasType(rhs, BooT)) : HasType(And(lhs, rhs), BooT),
 }
 
 data IsVal(e: Exp) {
@@ -71,13 +71,13 @@ data IsVal(e: Exp) {
 }
 
 data Eval(e1: Exp, e2: Exp) {
-    EAddCongL(lhs: Exp, lhs': Exp, rhs: Exp, h_lhs: Eval(lhs, lhs')): Eval(Add(lhs, rhs), Add(lhs', rhs)),
-    EAddCongR(lhs: Exp, rhs: Exp, rhs': Exp, h_rhs: Eval(rhs, rhs')): Eval(Add(lhs, rhs), Add(lhs, rhs')),
-    EAddRed(n1: Nat, n2: Nat): Eval(Add(Num(n1), Num(n2)), Num(n1.add(n2))),
-    EIsZeroCong(e: Exp, e': Exp, h_e: Eval(e, e')) : Eval(IsZero(e), IsZero(e')),
-    EAndCongL(lhs: Exp, lhs': Exp, rhs: Exp, h_lhs: Eval(lhs, lhs')): Eval(And(lhs, rhs), And(lhs', rhs)),
-    EAndCongR(lhs: Exp, rhs: Exp, rhs': Exp, h_rhs: Eval(rhs, rhs')): Eval(And(lhs, rhs), And(lhs, rhs')),
-    EAndRed(b1: Bool, b2: Bool): Eval(And(Boo(b1), Boo(b2)), Boo(b1.and(b2))),
+    EAddCongL(lhs lhs' rhs: Exp, h_lhs: Eval(lhs, lhs')): Eval(Add(lhs, rhs), Add(lhs', rhs)),
+    EAddCongR(lhs rhs rhs': Exp, h_rhs: Eval(rhs, rhs')): Eval(Add(lhs, rhs), Add(lhs, rhs')),
+    EAddRed(n1 n2 : Nat): Eval(Add(Num(n1), Num(n2)), Num(n1.add(n2))),
+    EIsZeroCong(e e': Exp, h_e: Eval(e, e')) : Eval(IsZero(e), IsZero(e')),
+    EAndCongL(lhs lhs' rhs: Exp, h_lhs: Eval(lhs, lhs')): Eval(And(lhs, rhs), And(lhs', rhs)),
+    EAndCongR(lhs rhs rhs': Exp, h_rhs: Eval(rhs, rhs')): Eval(And(lhs, rhs), And(lhs, rhs')),
+    EAndRed(b1 b2: Bool): Eval(And(Boo(b1), Boo(b2)), Boo(b1.and(b2))),
 }
 
 impl Eval {

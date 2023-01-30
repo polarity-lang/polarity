@@ -517,6 +517,21 @@ impl LowerTelescope for cst::SelfParam {
     }
 }
 
+fn desugar_telescope(tel: &cst::Telescope) -> cst::Telescope {
+    let cst::Telescope(params) = tel;
+    let params: Vec<cst::Param> = params.iter().flat_map(desugar_param).collect();
+    cst::Telescope(params)
+}
+fn desugar_param(param: &cst::Param) -> Vec<cst::Param> {
+    let cst::Param { name, names, typ } = param;
+    let mut params: Vec<cst::Param> =
+        vec![cst::Param { name: name.clone(), names: vec![], typ: typ.clone() }];
+    for extra_name in names {
+        params.push(cst::Param { name: extra_name.clone(), names: vec![], typ: typ.clone() });
+    }
+    params
+}
+
 impl LowerTelescope for cst::Telescope {
     type Target = ust::Telescope;
 
@@ -528,12 +543,13 @@ impl LowerTelescope for cst::Telescope {
     where
         F: FnOnce(&mut Ctx, Self::Target) -> Result<T, LoweringError>,
     {
+        let tel = desugar_telescope(self);
         ctx.bind_fold(
-            self.0.iter(),
+            tel.0.iter(),
             Ok(ust::Params::new()),
             |ctx, params_out, param| {
                 let mut params_out = params_out?;
-                let cst::Param { name, typ } = param;
+                let cst::Param { name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
                 let typ_out = typ.lower_in_ctx(ctx)?;
                 let param_out = ust::Param { name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
