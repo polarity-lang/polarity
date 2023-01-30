@@ -104,7 +104,7 @@ pub trait Mapper<P: Phase> {
         Exp::Comatch { info, name, body }
     }
     fn map_exp_hole(&mut self, info: P::TypeInfo) -> Exp<P> {
-        Exp::Type { info }
+        Exp::Hole { info }
     }
     fn map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
