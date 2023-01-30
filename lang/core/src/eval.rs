@@ -54,7 +54,7 @@ impl Eval for Exp {
                 name: name.clone(),
                 body: body.eval(prg, env)?,
             }),
-            Exp::Hole { info } => todo!(),
+            Exp::Hole { info: _ } => todo!(),
         };
         Ok(res)
     }

@@ -560,7 +560,7 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
                 let body = body.fold(f);
                 f.fold_exp_comatch(info, name, body)
             }
-            Exp::Hole { info } => todo!(),
+            Exp::Hole { info: _ } => todo!(),
         }
     }
 }

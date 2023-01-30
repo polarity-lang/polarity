@@ -411,7 +411,7 @@ impl<P: Phase> Visit<P> for Exp<P> {
                 body.visit(v);
                 v.visit_exp_comatch(info, name, body)
             }
-            Exp::Hole { info } => todo!(),
+            Exp::Hole { info: _ } => todo!(),
         }
     }
 }

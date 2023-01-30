@@ -51,7 +51,7 @@ where
                 name: name.clone(),
                 body: body.subst(ctx, by),
             }),
-            Exp::Hole { info } => todo!(),
+            Exp::Hole { info: _ } => todo!(),
         }
     }
 }
