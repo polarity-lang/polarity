@@ -296,7 +296,7 @@ impl<'a, P: Phase> Print<'a> for Cocase<P> {
 
 impl<'a, P: Phase> Print<'a> for Telescope<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.params.print(cfg, alloc).opt_parens()
+        print_comma_separated(&self.params, cfg, alloc).opt_parens()
     }
 }
 
@@ -388,13 +388,21 @@ impl<'a, T: Print<'a>> Print<'a> for Rc<T> {
     }
 }
 
+fn print_comma_separated<'a, T: Print<'a>>(
+    vec: &'a Vec<T>,
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a> {
+    if vec.is_empty() {
+        alloc.nil()
+    } else {
+        let sep = alloc.text(COMMA).append(alloc.space());
+        alloc.intersperse(vec.iter().map(|x| x.print(cfg, alloc)), sep)
+    }
+}
+
 impl<'a, T: Print<'a>> Print<'a> for Vec<T> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        if self.is_empty() {
-            alloc.nil()
-        } else {
-            let sep = alloc.text(COMMA).append(alloc.space());
-            alloc.intersperse(self.iter().map(|x| x.print(cfg, alloc)), sep)
-        }
+        print_comma_separated(self, cfg, alloc)
     }
 }
