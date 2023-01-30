@@ -262,6 +262,7 @@ impl Forget for wst::Exp {
             wst::Exp::Comatch { info, name, body } => {
                 ust::Exp::Comatch { info: info.forget(), name: name.clone(), body: body.forget() }
             }
+            wst::Exp::Hole { info } => ust::Exp::Hole { info: info.forget() },
         }
     }
 }

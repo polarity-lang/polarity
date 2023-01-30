@@ -378,6 +378,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 .append(alloc.text(name))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
+            Exp::Hole { info: _ } => alloc.text(HOLE),
         }
     }
 }

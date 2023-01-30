@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use miette_util::ToMiette;
+
 use syntax::ctx::{Bind, Context};
 use syntax::env::*;
 use syntax::ust::{self, Exp, Prg, Type};
@@ -54,6 +56,12 @@ impl Eval for Exp {
                 name: name.clone(),
                 body: body.eval(prg, env)?,
             }),
+            Exp::Hole { info } => {
+                return Err(EvalError::EvalHole {
+                    typ: "not known".to_owned(),
+                    span: info.span.to_miette(),
+                })
+            }
         };
         Ok(res)
     }

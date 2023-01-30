@@ -1,4 +1,4 @@
-codata Fun(a: Type, b: Type) {
+codata Fun(a b: Type) {
     Fun(a, b).apply(a: Type, b: Type, x: a) : b
 }
 

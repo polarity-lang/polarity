@@ -47,6 +47,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
     fn fold_exp_match(&mut self, info: O::TypeAppInfo, name: Ident, on_exp: O::Exp, ret_typ: O::Typ, body: O::Match) -> O::Exp;
     fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, name: Ident, body: O::Comatch) -> O::Exp;
+    fn fold_exp_hole(&mut self, info: O::TypeInfo) -> O::Exp;
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
         I: IntoIterator<Item=Param<P>>,
@@ -559,6 +560,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
                 let info = f.fold_type_app_info(info);
                 let body = body.fold(f);
                 f.fold_exp_comatch(info, name, body)
+            }
+            Exp::Hole { info } => {
+                let info = f.fold_type_info(info);
+                f.fold_exp_hole(info)
             }
         }
     }

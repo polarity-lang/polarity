@@ -12,7 +12,7 @@ impl Nat {
 
 data Vec(n: Nat) {
     Nil : Vec(Z),
-    Cons(n: Nat, x: Nat, xs: Vec(n)) : Vec(S(n)),
+    Cons(n x: Nat, xs: Vec(n)) : Vec(S(n)),
 }
 
 codata Stream {

@@ -26,7 +26,7 @@ impl Vec {
         Nil absurd,
     }
 
-   def Vec(n).append(n: Nat, m: Nat, ys: Vec(m)) : Vec(n.add(m)) {
+   def Vec(n).append(n m: Nat, ys: Vec(m)) : Vec(n.add(m)) {
        Nil => ys,
        Cons(n', x, xs) => Cons(n'.add(m), x, xs.append(n', m, ys))
    }

@@ -456,6 +456,7 @@ impl Lower for cst::Exp {
                     .ok_or(LoweringError::UnnamedMatch { span: info.span.to_miette() })?,
                 body: body.lower_in_ctx(ctx)?,
             }),
+            cst::Exp::Hole { info } => Ok(ust::Exp::Hole { info: info.lower_pure() }),
             cst::Exp::NatLit { info, val } => {
                 let mut out =
                     ust::Exp::Ctor { info: info.lower_pure(), name: "Z".to_owned(), args: vec![] };

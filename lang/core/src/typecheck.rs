@@ -662,6 +662,7 @@ impl Check for ust::Exp {
                     body: body_out,
                 }
             }
+            ust::Exp::Hole { info } => tst::Exp::Hole { info: info.with_type(t.clone()) },
             _ => {
                 let actual = self.infer(prg, ctx)?;
                 actual.typ().convert(&t)?;
