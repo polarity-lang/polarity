@@ -21,13 +21,19 @@ use super::unify::*;
 
 pub fn check(prg: &ust::Prg) -> Result<tst::Prg, TypeError> {
     let mut var_ctx = Ctx::empty();
-    prg.infer(prg, &mut var_ctx)
+    let mut ng = empty_name_gen();
+    prg.infer(prg, &mut var_ctx, &mut ng)
 }
 
 pub trait Infer {
     type Target;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError>;
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        name_gen: &mut NameGen,
+    ) -> Result<Self::Target, TypeError>;
 }
 
 pub trait Check {
@@ -37,6 +43,7 @@ pub trait Check {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
+        name_gen: &mut NameGen,
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError>;
 }
@@ -49,6 +56,7 @@ pub trait CheckArgs {
         prg: &ust::Prg,
         name: &str,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         params: &ust::Telescope,
     ) -> Result<Self::Target, TypeError>;
 }
@@ -61,6 +69,7 @@ pub trait CheckTelescope {
         prg: &ust::Prg,
         name: &str,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         params: &ust::Telescope,
         f: F,
     ) -> Result<T, TypeError>;
@@ -73,6 +82,7 @@ pub trait InferTelescope {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         f: F,
     ) -> Result<T, TypeError>;
 }
@@ -83,6 +93,7 @@ pub trait CheckEqns {
     fn check_eqns<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         eqns: &[Eqn],
         f: F,
     ) -> Result<T, TypeError>;
@@ -125,11 +136,16 @@ impl<T> WithEqnsExt for T {
 impl Infer for ust::Prg {
     type Target = tst::Prg;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let ust::Prg { decls, exp } = self;
 
-        let decls_out = decls.infer(prg, ctx)?;
-        let exp_out = exp.as_ref().map(|exp| exp.infer(prg, ctx)).transpose()?;
+        let decls_out = decls.infer(prg, ctx, ng)?;
+        let exp_out = exp.as_ref().map(|exp| exp.infer(prg, ctx, ng)).transpose()?;
 
         Ok(tst::Prg { decls: decls_out, exp: exp_out })
     }
@@ -139,14 +155,19 @@ impl Infer for ust::Prg {
 impl Infer for ust::Decls {
     type Target = tst::Decls;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let ust::Decls { map, source } = self;
 
         // FIXME: Reconsider order
 
         let map_out = map
             .iter()
-            .map(|(name, decl)| Ok((name.clone(), decl.infer(prg, ctx)?)))
+            .map(|(name, decl)| Ok((name.clone(), decl.infer(prg, ctx, ng)?)))
             .collect::<Result<_, TypeError>>()?;
 
         Ok(tst::Decls { map: map_out, source: source.clone() })
@@ -158,14 +179,19 @@ impl Infer for ust::Decl {
     type Target = tst::Decl;
 
     #[trace("{:P} |- {} =>", ctx, self.name())]
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let out = match self {
-            ust::Decl::Data(data) => tst::Decl::Data(data.infer(prg, ctx)?),
-            ust::Decl::Codata(codata) => tst::Decl::Codata(codata.infer(prg, ctx)?),
-            ust::Decl::Ctor(ctor) => tst::Decl::Ctor(ctor.infer(prg, ctx)?),
-            ust::Decl::Dtor(dtor) => tst::Decl::Dtor(dtor.infer(prg, ctx)?),
-            ust::Decl::Def(def) => tst::Decl::Def(def.infer(prg, ctx)?),
-            ust::Decl::Codef(codef) => tst::Decl::Codef(codef.infer(prg, ctx)?),
+            ust::Decl::Data(data) => tst::Decl::Data(data.infer(prg, ctx, ng)?),
+            ust::Decl::Codata(codata) => tst::Decl::Codata(codata.infer(prg, ctx, ng)?),
+            ust::Decl::Ctor(ctor) => tst::Decl::Ctor(ctor.infer(prg, ctx, ng)?),
+            ust::Decl::Dtor(dtor) => tst::Decl::Dtor(dtor.infer(prg, ctx, ng)?),
+            ust::Decl::Def(def) => tst::Decl::Def(def.infer(prg, ctx, ng)?),
+            ust::Decl::Codef(codef) => tst::Decl::Codef(codef.infer(prg, ctx, ng)?),
         };
         Ok(out)
     }
@@ -175,10 +201,15 @@ impl Infer for ust::Decl {
 impl Infer for ust::Data {
     type Target = tst::Data;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let ust::Data { info, name, typ, ctors, impl_block } = self;
 
-        let typ_out = typ.infer(prg, ctx)?;
+        let typ_out = typ.infer(prg, ctx, ng)?;
 
         Ok(tst::Data {
             info: info.clone().into(),
@@ -194,10 +225,15 @@ impl Infer for ust::Data {
 impl Infer for ust::Codata {
     type Target = tst::Codata;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let ust::Codata { info, name, typ, dtors, impl_block } = self;
 
-        let typ_out = typ.infer(prg, ctx)?;
+        let typ_out = typ.infer(prg, ctx, ng)?;
 
         Ok(tst::Codata {
             info: info.clone().into(),
@@ -213,10 +249,15 @@ impl Infer for ust::Codata {
 impl Infer for ust::TypAbs {
     type Target = tst::TypAbs;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let ust::TypAbs { params } = self;
 
-        params.infer_telescope(prg, ctx, |_, params_out| Ok(tst::TypAbs { params: params_out }))
+        params.infer_telescope(prg, ctx, ng, |_, params_out| Ok(tst::TypAbs { params: params_out }))
     }
 }
 
@@ -224,7 +265,12 @@ impl Infer for ust::TypAbs {
 impl Infer for ust::Ctor {
     type Target = tst::Ctor;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let ust::Ctor { info, name, params, typ } = self;
 
         // Check that the constructor lies in the data type it is defined in
@@ -238,8 +284,8 @@ impl Infer for ust::Ctor {
             });
         }
 
-        params.infer_telescope(prg, ctx, |ctx, params_out| {
-            let typ_out = typ.infer(prg, ctx)?;
+        params.infer_telescope(prg, ctx, ng, |ctx, params_out| {
+            let typ_out = typ.infer(prg, ctx, ng)?;
 
             Ok(tst::Ctor {
                 info: info.clone().into(),
@@ -255,7 +301,12 @@ impl Infer for ust::Ctor {
 impl Infer for ust::Dtor {
     type Target = tst::Dtor;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let ust::Dtor { info, name, params, self_param, ret_typ } = self;
 
         // Check that the destructor lies in the codata type it is defined in
@@ -269,9 +320,9 @@ impl Infer for ust::Dtor {
             });
         }
 
-        params.infer_telescope(prg, ctx, |ctx, params_out| {
-            self_param.infer_telescope(prg, ctx, |ctx, self_param_out| {
-                let ret_typ_out = ret_typ.infer(prg, ctx)?;
+        params.infer_telescope(prg, ctx, ng, |ctx, params_out| {
+            self_param.infer_telescope(prg, ctx, ng, |ctx, self_param_out| {
+                let ret_typ_out = ret_typ.infer(prg, ctx, ng)?;
 
                 Ok(tst::Dtor {
                     info: info.clone().into(),
@@ -289,20 +340,25 @@ impl Infer for ust::Dtor {
 impl Infer for ust::Def {
     type Target = tst::Def;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let ust::Def { info, name, params, self_param, ret_typ, body } = self;
 
-        params.infer_telescope(prg, ctx, |ctx, params_out| {
+        params.infer_telescope(prg, ctx, ng, |ctx, params_out| {
             let self_param_nf = self_param.typ.normalize(prg, &mut ctx.env())?;
 
             let (ret_typ_out, ret_typ_nf, self_param_out) =
-                self_param.infer_telescope(prg, ctx, |ctx, self_param_out| {
-                    let ret_typ_out = ret_typ.infer(prg, ctx)?;
+                self_param.infer_telescope(prg, ctx, ng, |ctx, self_param_out| {
+                    let ret_typ_out = ret_typ.infer(prg, ctx, ng)?;
                     let ret_typ_nf = ret_typ.normalize(prg, &mut ctx.env())?;
                     Ok((ret_typ_out, ret_typ_nf, self_param_out))
                 })?;
 
-            let body_out = body.with_scrutinee(self_param_nf).check(prg, ctx, ret_typ_nf)?;
+            let body_out = body.with_scrutinee(self_param_nf).check(prg, ctx, ng, ret_typ_nf)?;
             Ok(tst::Def {
                 info: info.clone().into(),
                 name: name.clone(),
@@ -319,13 +375,18 @@ impl Infer for ust::Def {
 impl Infer for ust::Codef {
     type Target = tst::Codef;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let ust::Codef { info, name, params, typ, body } = self;
 
-        params.infer_telescope(prg, ctx, |ctx, params_out| {
-            let typ_out = typ.infer(prg, ctx)?;
+        params.infer_telescope(prg, ctx, ng, |ctx, params_out| {
+            let typ_out = typ.infer(prg, ctx, ng)?;
             let typ_nf = typ.normalize(prg, &mut ctx.env())?;
-            let body_out = body.with_scrutinee(typ_nf).infer(prg, ctx)?;
+            let body_out = body.with_scrutinee(typ_nf).infer(prg, ctx, ng)?;
             Ok(tst::Codef {
                 info: info.clone().into(),
                 name: name.clone(),
@@ -345,6 +406,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
         let ust::Match { info, cases } = &self.inner;
@@ -410,7 +472,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
                 let t = t.shift((-1, 0));
 
                 // Check the case given the equations
-                case.with_eqns(eqns).check(prg, ctx, t)
+                case.with_eqns(eqns).check(prg, ctx, ng, t)
             })
             .collect::<Result<_, _>>()?;
 
@@ -422,7 +484,12 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
 impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
     type Target = tst::Comatch;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let ust::Comatch { info, cases } = &self.inner;
 
         // Check that this comatch is on a codata type
@@ -495,7 +562,7 @@ impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
                 // Check the case given the equations
                 case.with_eqns(eqns)
                     .with_scrutinee(self.scrutinee.shift((1, 0)))
-                    .check(prg, ctx, ret_typ_nf)
+                    .check(prg, ctx, ng, ret_typ_nf)
             })
             .collect::<Result<_, _>>()?;
 
@@ -512,12 +579,13 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
         let ust::Case { info, name, args, body } = self.inner;
         let ust::Ctor { name, params, .. } = prg.decls.ctor(name);
 
-        args.check_telescope(prg, name, ctx, params, |ctx, args_out| {
+        args.check_telescope(prg, name, ctx, ng, params, |ctx, args_out| {
             let body_out = match body {
                 Some(body) => {
                     let unif = unify(ctx.levels(), self.eqns.clone())
@@ -536,7 +604,7 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                     let t_subst = t.forget().shift((1, 0)).subst(&mut ctx.levels(), &unif);
                     let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
 
-                    let body_out = body.check(prg, ctx, t_nf)?;
+                    let body_out = body.check(prg, ctx, ng, t_nf)?;
 
                     Some(body_out)
                 }
@@ -572,12 +640,13 @@ impl<'a> Check for WithScrutinee<'a, WithEqns<'a, ust::Cocase>> {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
         let ust::Cocase { info, name, params: params_inst, body } = self.inner.inner;
         let ust::Dtor { name, params, .. } = prg.decls.dtor(name);
 
-        params_inst.check_telescope(prg, name, ctx, params, |ctx, args_out| {
+        params_inst.check_telescope(prg, name, ctx, ng, params, |ctx, args_out| {
             let body_out = match body {
                 Some(body) => {
                     let unif = unify(ctx.levels(), self.inner.eqns.clone())
@@ -596,7 +665,7 @@ impl<'a> Check for WithScrutinee<'a, WithEqns<'a, ust::Cocase>> {
                     let t_subst = t.forget().subst(&mut ctx.levels(), &unif);
                     let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
 
-                    let body_out = body.check(prg, ctx, t_nf)?;
+                    let body_out = body.check(prg, ctx, ng, t_nf)?;
 
                     Some(body_out)
                 }
@@ -632,16 +701,23 @@ impl Check for ust::Exp {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
         let out = match self {
             ust::Exp::Match { info, name, on_exp, ret_typ: (), body } => {
-                let on_exp_out = on_exp.infer(prg, ctx)?;
+                let on_exp_out = on_exp.infer(prg, ctx, ng)?;
                 let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
-                let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
+                let typ_app = typ_app_nf.forget().infer(prg, ctx, ng)?;
                 let body_out =
-                    body.with_scrutinee(typ_app_nf.clone()).check(prg, ctx, t.clone())?;
-                let ret_typ_out = t.forget().check(prg, ctx, type_univ())?;
+                    body.with_scrutinee(typ_app_nf.clone()).check(prg, ctx, ng, t.clone())?;
+                let ret_typ_out = t.forget().check(prg, ctx, ng, type_univ())?;
+                let typ_name = typ_app.name;
+                let name = name.unwrap_or({
+                    let name_id = ng.names.get(&typ_name).cloned().unwrap_or(0);
+                    ng.names.insert(typ_name, name_id + 1);
+                    format!("{typ_name}{}", (name_id.to_string()))
+                });
 
                 tst::Exp::Match {
                     info: info.with_type_app(typ_app, typ_app_nf),
@@ -653,8 +729,15 @@ impl Check for ust::Exp {
             }
             ust::Exp::Comatch { info, name, body } => {
                 let typ_app_nf = t.expect_typ_app()?;
-                let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
-                let body_out = body.with_scrutinee(typ_app_nf.clone()).infer(prg, ctx)?;
+                let typ_app = typ_app_nf.forget().infer(prg, ctx, ng)?;
+                let body_out = body.with_scrutinee(typ_app_nf.clone()).infer(prg, ctx, ng)?;
+                let ty_name = typ_app.name;
+                let typ_name = typ_app.name;
+                let name = name.unwrap_or({
+                    let name_id = ng.names.get(&typ_name).cloned().unwrap_or(0);
+                    ng.names.insert(typ_name, name_id + 1);
+                    format!("{typ_name}{}", (name_id.to_string()))
+                });
 
                 tst::Exp::Comatch {
                     info: info.with_type_app(typ_app, typ_app_nf),
@@ -663,7 +746,7 @@ impl Check for ust::Exp {
                 }
             }
             _ => {
-                let actual = self.infer(prg, ctx)?;
+                let actual = self.infer(prg, ctx, ng)?;
                 actual.typ().convert(&t)?;
                 actual
             }
@@ -678,7 +761,12 @@ impl Infer for ust::Exp {
     type Target = tst::Exp;
 
     #[trace("{:P} |- {:P} => {return:P}", ctx, self, |ret| ret.as_ref().map(|e| e.typ()))]
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         match self {
             ust::Exp::Var { info, name, idx } => {
                 let typ = ctx.lookup(*idx);
@@ -688,7 +776,7 @@ impl Infer for ust::Exp {
             ust::Exp::TypCtor { info, name, args } => {
                 let ust::TypAbs { params } = &*prg.decls.typ(name).typ();
 
-                let args_out = args.check_args(prg, name, ctx, params)?;
+                let args_out = args.check_args(prg, name, ctx, ng, params)?;
 
                 Ok(tst::Exp::TypCtor {
                     info: info.with_type(type_univ()),
@@ -699,7 +787,7 @@ impl Infer for ust::Exp {
             ust::Exp::Ctor { info, name, args } => {
                 let ust::Ctor { name, params, typ, .. } = &prg.decls.ctor_or_codef(name);
 
-                let args_out = args.check_args(prg, name, ctx, params)?;
+                let args_out = args.check_args(prg, name, ctx, ng, params)?;
                 let typ_out = typ.subst_under_ctx(vec![params.len()].into(), &&[args][..]).to_exp();
                 let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
 
@@ -713,7 +801,7 @@ impl Infer for ust::Exp {
                 let ust::Dtor { name, params, self_param, ret_typ, .. } =
                     &prg.decls.dtor_or_def(name);
 
-                let args_out = args.check_args(prg, name, ctx, params)?;
+                let args_out = args.check_args(prg, name, ctx, ng, params)?;
 
                 let self_param_out = self_param
                     .typ
@@ -724,7 +812,7 @@ impl Infer for ust::Exp {
                 let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &&subst[..]);
                 let typ_out_nf = typ_out.normalize(prg, &mut ctx.env())?;
 
-                let exp_out = exp.check(prg, ctx, self_param_nf)?;
+                let exp_out = exp.check(prg, ctx, ng, self_param_nf)?;
 
                 Ok(tst::Exp::Dtor {
                     info: info.with_type(typ_out_nf),
@@ -734,9 +822,9 @@ impl Infer for ust::Exp {
                 })
             }
             ust::Exp::Anno { info, exp, typ } => {
-                let typ_out = typ.check(prg, ctx, type_univ())?;
+                let typ_out = typ.check(prg, ctx, ng, type_univ())?;
                 let typ_nf = typ.normalize(prg, &mut ctx.env())?;
-                let exp_out = (**exp).check(prg, ctx, typ_nf.clone())?;
+                let exp_out = (**exp).check(prg, ctx, ng, typ_nf.clone())?;
                 Ok(tst::Exp::Anno {
                     info: info.with_type(typ_nf),
                     exp: Rc::new(exp_out),
@@ -752,11 +840,16 @@ impl Infer for ust::Exp {
 impl Infer for ust::TypApp {
     type Target = tst::TypApp;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
         let ust::TypApp { info, name, args } = self;
         let ust::TypAbs { params } = &*prg.decls.typ(name).typ();
 
-        let args_out = args.check_args(prg, name, ctx, params)?;
+        let args_out = args.check_args(prg, name, ctx, ng, params)?;
         Ok(tst::TypApp { info: info.with_type(type_univ()), name: name.clone(), args: args_out })
     }
 }
@@ -769,6 +862,7 @@ impl CheckArgs for ust::Args {
         prg: &ust::Prg,
         name: &str,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         params: &ust::Telescope,
     ) -> Result<Self::Target, TypeError> {
         if self.len() != params.len() {
@@ -785,7 +879,7 @@ impl CheckArgs for ust::Args {
             .zip(params)
             .map(|(exp, ust::Param { typ, .. })| {
                 let typ = typ.normalize(prg, &mut ctx.env())?;
-                exp.check(prg, ctx, typ)
+                exp.check(prg, ctx, ng, typ)
             })
             .collect()
     }
@@ -799,6 +893,7 @@ impl CheckTelescope for ust::TelescopeInst {
         prg: &ust::Prg,
         name: &str,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         param_types: &ust::Telescope,
         f: F,
     ) -> Result<T, TypeError> {
@@ -821,7 +916,7 @@ impl CheckTelescope for ust::TelescopeInst {
             |ctx, params_out, (param_actual, param_expected)| {
                 let ust::ParamInst { info, name, typ: () } = param_actual;
                 let ust::Param { typ, .. } = param_expected;
-                let typ_out = typ.check(prg, ctx, type_univ())?;
+                let typ_out = typ.check(prg, ctx, ng, type_univ())?;
                 let typ_val = typ.eval(prg, &mut ctx.env())?;
                 let typ_nf = typ_val.read_back(prg)?;
                 let mut params_out = params_out;
@@ -845,6 +940,7 @@ impl InferTelescope for ust::Telescope {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         f: F,
     ) -> Result<T, TypeError> {
         let ust::Telescope { params } = self;
@@ -854,7 +950,7 @@ impl InferTelescope for ust::Telescope {
             tst::Params::new(),
             |ctx, mut params_out, param| {
                 let ust::Param { typ, name } = param;
-                let typ_out = typ.check(prg, ctx, type_univ())?;
+                let typ_out = typ.check(prg, ctx, ng, type_univ())?;
                 let elem = typ.eval(prg, &mut ctx.env())?;
                 let param_out = tst::Param { name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
@@ -872,12 +968,13 @@ impl InferTelescope for ust::SelfParam {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         f: F,
     ) -> Result<T, TypeError> {
         let ust::SelfParam { info, name, typ } = self;
 
         let elem = typ.to_exp().eval(prg, &mut ctx.env())?;
-        let typ_out = typ.infer(prg, ctx)?;
+        let typ_out = typ.infer(prg, ctx, ng)?;
         let param_out = tst::SelfParam {
             info: tst::Info { span: info.span },
             name: name.clone(),
@@ -968,17 +1065,23 @@ impl<T: Check> Check for Rc<T> {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
+        ng: &mut NameGen,
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
-        Ok(Rc::new((**self).check(prg, ctx, t)?))
+        Ok(Rc::new((**self).check(prg, ctx, ng, t)?))
     }
 }
 
 impl<T: Infer> Infer for Rc<T> {
     type Target = Rc<T::Target>;
 
-    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        Ok(Rc::new((**self).infer(prg, ctx)?))
+    fn infer(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        ng: &mut NameGen,
+    ) -> Result<Self::Target, TypeError> {
+        Ok(Rc::new((**self).infer(prg, ctx, ng)?))
     }
 }
 

@@ -85,7 +85,7 @@ pub trait Bind {
     ) -> O2
     where
         T: AsElement<Self::Elem>,
-        F1: Fn(&mut Self, O1, T) -> O1,
+        F1: FnMut(&mut Self, O1, T) -> O1,
         F2: FnOnce(&mut Self, O1) -> O2;
 
     fn bind_fold2<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
@@ -96,7 +96,7 @@ pub trait Bind {
         f_inner: F2,
     ) -> O2
     where
-        F1: Fn(&mut Self, O1, T) -> BindElem<Self::Elem, O1>,
+        F1: FnMut(&mut Self, O1, T) -> BindElem<Self::Elem, O1>,
         F2: FnOnce(&mut Self, O1) -> O2;
 
     fn bind_fold_failable<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
@@ -107,7 +107,7 @@ pub trait Bind {
         f_inner: F2,
     ) -> Result<O2, E>
     where
-        F1: Fn(&mut Self, O1, T) -> Result<BindElem<Self::Elem, O1>, E>,
+        F1: FnMut(&mut Self, O1, T) -> Result<BindElem<Self::Elem, O1>, E>,
         F2: FnOnce(&mut Self, O1) -> O2;
 }
 
@@ -131,12 +131,12 @@ impl<C: HasContext> Bind for C {
         &mut self,
         iter: I,
         acc: O1,
-        f_acc: F1,
+        mut f_acc: F1,
         f_inner: F2,
     ) -> O2
     where
         T: AsElement<Self::Elem>,
-        F1: Fn(&mut Self, O1, T) -> O1,
+        F1: FnMut(&mut Self, O1, T) -> O1,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         self.bind_fold2(
@@ -151,11 +151,11 @@ impl<C: HasContext> Bind for C {
         &mut self,
         iter: I,
         acc: O1,
-        f_acc: F1,
+        mut f_acc: F1,
         f_inner: F2,
     ) -> O2
     where
-        F1: Fn(&mut Self, O1, T) -> BindElem<Self::Elem, O1>,
+        F1: FnMut(&mut Self, O1, T) -> BindElem<Self::Elem, O1>,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         self.bind_fold_failable(
@@ -175,18 +175,18 @@ impl<C: HasContext> Bind for C {
         f_inner: F2,
     ) -> Result<O2, E>
     where
-        F1: Fn(&mut Self, O1, T) -> Result<BindElem<Self::Elem, O1>, E>,
+        F1: FnMut(&mut Self, O1, T) -> Result<BindElem<Self::Elem, O1>, E>,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         fn bind_inner<This: HasContext, T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
             this: &mut This,
             mut iter: I,
             acc: O1,
-            f_acc: F1,
+            mut f_acc: F1,
             f_inner: F2,
         ) -> Result<O2, E>
         where
-            F1: Fn(
+            F1: FnMut(
                 &mut This,
                 O1,
                 T,

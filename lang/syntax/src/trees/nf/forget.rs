@@ -15,9 +15,11 @@ impl Forget for Nf {
                 ust::Exp::Ctor { info: info.clone(), name: name.clone(), args: args.forget() }
             }
             Nf::Type { info } => ust::Exp::Type { info: info.clone() },
-            Nf::Comatch { info, name, body } => {
-                ust::Exp::Comatch { info: info.clone(), name: name.clone(), body: body.forget() }
-            }
+            Nf::Comatch { info, name, body } => ust::Exp::Comatch {
+                info: info.clone(),
+                name: Some(name.clone()),
+                body: body.forget(),
+            },
             Nf::Neu { exp } => exp.forget(),
         }
     }
@@ -39,7 +41,7 @@ impl Forget for Neu {
             },
             Neu::Match { info, name, on_exp, body } => ust::Exp::Match {
                 info: info.clone(),
-                name: name.clone(),
+                name: Some(name.clone()),
                 on_exp: on_exp.forget(),
                 ret_typ: (),
                 body: body.forget(),

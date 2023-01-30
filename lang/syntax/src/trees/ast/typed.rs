@@ -16,6 +16,7 @@ impl generic::Phase for TST {
     type TypeInfo = TypeInfo;
     type TypeAppInfo = TypeAppInfo;
 
+    type MatchLabel = Ident;
     type VarName = Ident;
     type Typ = Typ;
 
@@ -25,6 +26,9 @@ impl generic::Phase for TST {
         } else {
             name.clone()
         }
+    }
+    fn print_matchlabel(name: &Self::MatchLabel) -> String {
+        name.to_owned()
     }
 }
 

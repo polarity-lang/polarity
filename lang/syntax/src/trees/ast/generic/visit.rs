@@ -38,8 +38,8 @@ pub trait Visitor<P: Phase> {
     fn visit_exp_dtor(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, name: &Ident, args: &[Rc<Exp<P>>]) {}
     fn visit_exp_anno(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, typ: &Rc<Exp<P>>) {}
     fn visit_exp_type(&mut self, info: &P::TypeInfo) {}
-    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &Ident, on_exp: &Rc<Exp<P>>, ret_typ: &P::Typ, body: &Match<P>) {}
-    fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, name: &Ident, body: &Comatch<P>) {}
+    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &P::MatchLabel, on_exp: &Rc<Exp<P>>, ret_typ: &P::Typ, body: &Match<P>) {}
+    fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, name: &P::MatchLabel, body: &Comatch<P>) {}
     fn visit_telescope<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
     where
         P: 'a,

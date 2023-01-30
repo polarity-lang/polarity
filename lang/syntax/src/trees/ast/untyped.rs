@@ -12,6 +12,7 @@ impl generic::Phase for UST {
     type TypeInfo = Info;
     type TypeAppInfo = Info;
 
+    type MatchLabel = Option<Ident>;
     type VarName = Ident;
     type Typ = ();
 
@@ -21,6 +22,9 @@ impl generic::Phase for UST {
         } else {
             name.clone()
         }
+    }
+    fn print_matchlabel(name: &Self::MatchLabel) -> String {
+        name.as_ref().map(|x| x.to_owned()).unwrap_or("".to_owned())
     }
 }
 

@@ -1,4 +1,5 @@
 use std::fmt;
+use std::hash::Hash;
 use std::rc::Rc;
 
 use data::HashMap;
@@ -23,8 +24,10 @@ where
     type VarName: Clone + fmt::Debug;
     /// Type of the `typ` field for `ParamInst`
     type Typ: Clone + fmt::Debug;
+    type MatchLabel: Clone + fmt::Debug + Hash + Eq;
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String;
+    fn print_matchlabel(name: &Self::MatchLabel) -> String;
 }
 
 pub trait HasPhase {
@@ -379,7 +382,7 @@ pub enum Exp<P: Phase> {
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
-        name: Ident,
+        name: P::MatchLabel,
         on_exp: Rc<Exp<P>>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         ret_typ: P::Typ,
@@ -389,7 +392,7 @@ pub enum Exp<P: Phase> {
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
-        name: Ident,
+        name: P::MatchLabel,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Comatch<P>,
     },

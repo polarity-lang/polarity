@@ -45,8 +45,8 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_exp_dtor(&mut self, info: O::TypeInfo, exp: O::Exp, name: Ident, args: Vec<O::Exp>) -> O::Exp;
     fn fold_exp_anno(&mut self, info: O::TypeInfo, exp: O::Exp, typ: O::Exp) -> O::Exp;
     fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
-    fn fold_exp_match(&mut self, info: O::TypeAppInfo, name: Ident, on_exp: O::Exp, ret_typ: O::Typ, body: O::Match) -> O::Exp;
-    fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, name: Ident, body: O::Comatch) -> O::Exp;
+    fn fold_exp_match(&mut self, info: O::TypeAppInfo, name: O::MatchLabel, on_exp: O::Exp, ret_typ: O::Typ, body: O::Match) -> O::Exp;
+    fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, name: O::MatchLabel, body: O::Comatch) -> O::Exp;
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
         I: IntoIterator<Item=Param<P>>,
@@ -70,6 +70,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_type_app_info(&mut self, info: P::TypeAppInfo) -> O::TypeAppInfo;
     fn fold_idx(&mut self, idx: Idx) -> O::Idx;
     fn fold_typ(&mut self, typ: P::Typ) -> O::Typ;
+    fn fold_name(&mut self, name: P::MatchLabel) -> O::MatchLabel;
 }
 
 pub trait Fold<P: Phase, O: Out> {
@@ -108,6 +109,7 @@ pub trait Out {
     type TypeAppInfo;
     type Idx;
     type Typ;
+    type MatchLabel;
 }
 
 #[derive(Default)]
@@ -143,6 +145,7 @@ impl<P: Phase> Out for Id<P> {
     type TypeAppInfo = P::TypeAppInfo;
     type Idx = Idx;
     type Typ = P::Typ;
+    type MatchLabel = P::MatchLabel;
 }
 
 pub struct Const<T> {
@@ -177,6 +180,7 @@ impl<T> Out for Const<T> {
     type TypeAppInfo = T;
     type Idx = T;
     type Typ = T;
+    type MatchLabel = T;
 }
 
 impl<P: Phase, O: Out, T: Fold<P, O> + Clone> Fold<P, O> for Rc<T> {
@@ -553,11 +557,13 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
                 let on_exp = on_exp.fold(f);
                 let body = body.fold(f);
                 let ret_typ = f.fold_typ(ret_typ);
+                let name = f.fold_name(name);
                 f.fold_exp_match(info, name, on_exp, ret_typ, body)
             }
             Exp::Comatch { info, name, body } => {
                 let info = f.fold_type_app_info(info);
                 let body = body.fold(f);
+                let name = f.fold_name(name);
                 f.fold_exp_comatch(info, name, body)
             }
         }

@@ -369,13 +369,13 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
                 .append(alloc.space())
-                .append(alloc.text(name))
+                .append(P::print_matchlabel(name))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Exp::Comatch { info: _, name, body } => alloc
                 .keyword(COMATCH)
                 .append(alloc.space())
-                .append(alloc.text(name))
+                .append(P::print_matchlabel(name))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
         }

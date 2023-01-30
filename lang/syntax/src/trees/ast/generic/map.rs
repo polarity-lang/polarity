@@ -97,11 +97,10 @@ pub trait Mapper<P: Phase> {
     fn map_exp_type(&mut self, info: P::TypeInfo) -> Exp<P> {
         Exp::Type { info }
     }
-    fn map_exp_match(&mut self, info: P::TypeAppInfo, name: Ident, on_exp: Rc<Exp<P>>, ret_typ: P::Typ, body: Match<P>) -> Exp<P> {
+    fn map_exp_match(&mut self, info: P::TypeAppInfo, name: P::MatchLabel, on_exp: Rc<Exp<P>>, ret_typ: P::Typ, body: Match<P>) -> Exp<P> {
         Exp::Match { info, name, on_exp, ret_typ, body }
     }
-    fn map_exp_comatch(&mut self, info: P::TypeAppInfo, name: Ident, body: Comatch<P>) -> Exp<P> {
-        Exp::Comatch { info, name, body }
+    fn map_exp_comatch(&mut self, info: P::TypeAppInfo, name: P::MatchLabel, body: Comatch<P>) -> Exp<P> { Exp::Comatch { info, name, body }
     }
     fn map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
@@ -284,12 +283,16 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         Rc::new(self.map_exp_type(info))
     }
 
-    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, on_exp: <Id<P> as Out>::Exp, ret_typ: <Id<P> as Out>::Typ, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
+    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: <Id<P> as Out>::MatchLabel, on_exp: <Id<P> as Out>::Exp, ret_typ: <Id<P> as Out>::Typ, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_match(info, name, on_exp, ret_typ, body))
     }
 
-    fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
+    fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: <Id<P> as Out>::MatchLabel, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_comatch(info, name, body))
+    }
+
+    fn fold_name(&mut self, name: <Id<P> as Out>::MatchLabel) -> <Id<P> as Out>::MatchLabel {
+        name
     }
 
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X

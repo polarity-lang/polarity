@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use miette_util::ToMiette;
 use syntax::ctx::{Bind, Context};
 use syntax::env::*;
 use syntax::ust::{self, Exp, Prg, Type};
@@ -46,14 +47,20 @@ impl Eval for Exp {
             }
             Exp::Anno { exp, .. } => exp.eval(prg, env)?,
             Exp::Type { info } => Rc::new(Val::Type { info: info.clone() }),
-            Exp::Match { name, on_exp, body, .. } => {
+            Exp::Match { name, on_exp, body, info, .. } => {
+                let name = name
+                    .as_ref()
+                    .ok_or(EvalError::EvalUnnamed { span: info.span.to_miette() })?
+                    .as_str();
                 eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?
             }
-            Exp::Comatch { info, name, body } => Rc::new(Val::Comatch {
-                info: info.clone(),
-                name: name.clone(),
-                body: body.eval(prg, env)?,
-            }),
+            Exp::Comatch { info, name, body } => {
+                let name = name
+                    .as_ref()
+                    .ok_or(EvalError::EvalUnnamed { span: info.span.to_miette() })?
+                    .to_owned();
+                Rc::new(Val::Comatch { info: info.clone(), name: name, body: body.eval(prg, env)? })
+            }
         };
         Ok(res)
     }
