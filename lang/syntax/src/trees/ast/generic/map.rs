@@ -103,6 +103,9 @@ pub trait Mapper<P: Phase> {
     fn map_exp_comatch(&mut self, info: P::TypeAppInfo, name: Ident, body: Comatch<P>) -> Exp<P> {
         Exp::Comatch { info, name, body }
     }
+    fn map_exp_hole(&mut self, info: P::TypeInfo) -> Exp<P> {
+        Exp::Type { info }
+    }
     fn map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
         I: IntoIterator<Item=Param<P>>,
@@ -290,6 +293,10 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
 
     fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_comatch(info, name, body))
+    }
+
+    fn fold_exp_hole(&mut self, info: <Id<P> as Out>::TypeInfo) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_hole(info))
     }
 
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X

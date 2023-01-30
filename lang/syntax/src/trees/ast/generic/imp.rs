@@ -51,7 +51,7 @@ where
                 name: name.clone(),
                 body: body.shift_in_range(range, by),
             },
-            Exp::Hole { info: _ } => todo!(),
+            Exp::Hole { info } => Exp::Hole { info: info.clone() },
         }
     }
 }
@@ -150,7 +150,7 @@ impl<P: Phase> HasInfo for Exp<P> {
             Exp::Type { info } => info.clone(),
             Exp::Match { info, .. } => info.clone().into(),
             Exp::Comatch { info, .. } => info.clone().into(),
-            Exp::Hole { info: _ } => todo!(),
+            Exp::Hole { info } => info.clone(),
         }
     }
 }

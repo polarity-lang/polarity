@@ -40,6 +40,7 @@ pub trait Visitor<P: Phase> {
     fn visit_exp_type(&mut self, info: &P::TypeInfo) {}
     fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &Ident, on_exp: &Rc<Exp<P>>, ret_typ: &P::Typ, body: &Match<P>) {}
     fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, name: &Ident, body: &Comatch<P>) {}
+    fn visit_exp_hole(&mut self, info: &P::TypeInfo) {}
     fn visit_telescope<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
     where
         P: 'a,
@@ -411,7 +412,10 @@ impl<P: Phase> Visit<P> for Exp<P> {
                 body.visit(v);
                 v.visit_exp_comatch(info, name, body)
             }
-            Exp::Hole { info: _ } => todo!(),
+            Exp::Hole { info } => {
+                v.visit_type_info(info);
+                v.visit_exp_hole(info)
+            }
         }
     }
 }
