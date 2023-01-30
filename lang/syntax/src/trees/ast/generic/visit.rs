@@ -21,7 +21,6 @@ pub trait Visitor<P: Phase> {
     fn visit_decl_codef(&mut self, codef: &Codef<P>) {}
     fn visit_data(&mut self, info: &P::Info, name: &Ident, typ: &Rc<TypAbs<P>>, ctors: &[Ident]) {}
     fn visit_codata(&mut self, info: &P::Info, name: &Ident, typ: &Rc<TypAbs<P>>, dtors: &[Ident]) {}
-    fn visit_impl(&mut self, info: &P::Info, name: &Ident, defs: &[Ident]) {}
     fn visit_typ_abs(&mut self, params: &Telescope<P>) {}
     fn visit_ctor(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, typ: &TypApp<P>) {}
     fn visit_dtor(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>) {}

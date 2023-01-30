@@ -28,7 +28,8 @@ pub struct Info {
 pub enum Item {
     Data(String),
     Codata(String),
-    Impl(String),
+    Def { name: String, type_name: String },
+    Codef { name: String, type_name: String },
 }
 
 #[derive(Default)]
@@ -44,11 +45,12 @@ impl From<tst::TypeInfo> for Info {
 }
 
 impl Item {
-    pub fn name(&self) -> &str {
+    pub fn type_name(&self) -> &str {
         match self {
             Item::Data(name) => name,
             Item::Codata(name) => name,
-            Item::Impl(name) => name,
+            Item::Def { type_name, .. } => type_name,
+            Item::Codef { type_name, .. } => type_name,
         }
     }
 }
@@ -82,8 +84,33 @@ impl Visitor<tst::TST> for InfoCollector {
         self.add_item_span(Item::Data(name.clone()), info.span.unwrap());
     }
 
-    fn visit_impl(&mut self, info: &tst::Info, name: &Ident, _defs: &[Ident]) {
-        self.add_item_span(Item::Impl(name.clone()), info.span.unwrap());
+    fn visit_def(
+        &mut self,
+        info: &tst::Info,
+        name: &Ident,
+        _params: &tst::Telescope,
+        self_param: &tst::SelfParam,
+        _ret_typ: &Rc<tst::Exp>,
+        _body: &tst::Match,
+    ) {
+        self.add_item_span(
+            Item::Def { name: name.clone(), type_name: self_param.typ.name.clone() },
+            info.span.unwrap(),
+        );
+    }
+
+    fn visit_codef(
+        &mut self,
+        info: &tst::Info,
+        name: &Ident,
+        _params: &tst::Telescope,
+        typ: &tst::TypApp,
+        _body: &tst::Comatch,
+    ) {
+        self.add_item_span(
+            Item::Codef { name: name.clone(), type_name: typ.name.clone() },
+            info.span.unwrap(),
+        )
     }
 }
 
