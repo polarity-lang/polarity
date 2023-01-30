@@ -60,14 +60,14 @@ impl LatexColor {
 fn termcolor_to_latex(color: &Color) -> Option<LatexColor> {
     use LatexColor::*;
     let out = match color {
-        Color::Black => Known("black"),
-        Color::Blue => Known("blue"),
-        Color::Green => Known("darkgreen"),
-        Color::Red => Known("red"),
-        Color::Cyan => Known("cyan"),
-        Color::Magenta => Known("magenta"),
-        Color::Yellow => Known("yellow"),
-        Color::White => Known("white"),
+        Color::Black => Known("xfnBlack"),
+        Color::Blue => Known("xfnBlue"),
+        Color::Green => Known("xfnGreen"),
+        Color::Red => Known("xfnRed"),
+        Color::Cyan => Known("xfnCyan"),
+        Color::Magenta => Known("xfnMagenta"),
+        Color::Yellow => Known("xfnYellow"),
+        Color::White => Known("xfnWhite"),
         _ => return None,
     };
     Some(out)
