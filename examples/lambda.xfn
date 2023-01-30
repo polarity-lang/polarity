@@ -1,5 +1,5 @@
 
-data Eq (a: Type, x: a, y: a) {
+data Eq (a: Type, x y: a) {
     Refl(a: Type, x: a) : Eq(a, x, x)
 }
 
@@ -9,14 +9,14 @@ impl Eq {
     }
 }
 
-codata Fun(a: Type, b: Type) {
+codata Fun(a b: Type) {
     Fun(a, b).apply(a: Type, b: Type, x: a) : b
 }
 
 data Bool { True, False }
 
 impl Bool {
-    def Bool.then_else(a: Type, then: a, else: a): a {
+    def Bool.then_else(a: Type, then else: a): a {
         True => then,
         False => else,
     }
@@ -65,7 +65,7 @@ impl Top {
 }
 
 data Typ {
-    FunT(t1: Typ, t2: Typ),
+    FunT(t1 t2: Typ),
     VarT(x: Nat),
 }
 
@@ -101,11 +101,11 @@ data Exp {
     App(lhs: Exp, rhs: Exp)
 }
 
-data Eval(e1: Exp, e2: Exp) {
-    EBeta(e1: Exp, e2: Exp): Eval(App(Lam(e1), e2), e1.subst(0, e2)),
-    ECongApp1(e1: Exp, e1': Exp, h: Eval(e1, e1'), e2: Exp): Eval(App(e1, e2), App(e1', e2)),
-    ECongApp2(e1: Exp, e2: Exp, e2': Exp, h: Eval(e2, e2')): Eval(App(e1, e2), App(e1, e2')),
-    ECongLam(e1: Exp, e2: Exp, h: Eval(e1, e2)): Eval(Lam(e1), Lam(e2)),
+data Eval(e1 e2: Exp) {
+    EBeta(e1 e2: Exp): Eval(App(Lam(e1), e2), e1.subst(0, e2)),
+    ECongApp1(e1 e1': Exp, h: Eval(e1, e1'), e2: Exp): Eval(App(e1, e2), App(e1', e2)),
+    ECongApp2(e1 e2 e2': Exp, h: Eval(e2, e2')): Eval(App(e1, e2), App(e1, e2')),
+    ECongLam(e1 e2: Exp, h: Eval(e1, e2)): Eval(Lam(e1), Lam(e2)),
 }
 
 impl Eval {}
@@ -119,7 +119,7 @@ impl IsValue {}
 
 data Progress(e: Exp) {
     PVal(e: Exp, h: IsValue(e)): Progress(e),
-    PStep(e1: Exp, e2: Exp, h: Eval(e1, e2)): Progress(e1),
+    PStep(e1 e2: Exp, h: Eval(e1, e2)): Progress(e1),
 }
 
 impl Progress {}

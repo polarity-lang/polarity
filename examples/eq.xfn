@@ -2,11 +2,11 @@ codata Prop(a: Type, x: a) {
     Prop(a, x).apply'(a: Type, x: a) : Type
 }
 
-codata Fun(a: Type, b: Type) {
+codata Fun(a b: Type) {
     Fun(a, b).apply(a: Type, b: Type, x: a) : b
 }
 
-data Eq (a: Type, x: a, y: a) {
+data Eq (a: Type, x y: a) {
     Refl(a: Type, x: a) : Eq(a, x, x)
 }
 
