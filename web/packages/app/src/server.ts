@@ -9,13 +9,17 @@ export default class Server {
   readonly #fromServer: FromServer;
 
   private constructor(initOutput: InitOutput, intoServer: IntoServer, fromServer: FromServer) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.initOutput = initOutput;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.#intoServer = intoServer;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.#fromServer = fromServer;
   }
 
   static async initialize(intoServer: IntoServer, fromServer: FromServer): Promise<Server> {
     if (null == server) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
       const initOutput = await init();
       server = new Server(initOutput, intoServer, fromServer);
     } else {
@@ -25,7 +29,9 @@ export default class Server {
   }
 
   async start(): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
     const config = new ServerConfig(this.#intoServer, this.#fromServer);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await serve(config);
   }
 }

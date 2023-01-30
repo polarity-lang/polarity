@@ -4,8 +4,6 @@ use syntax::ast::source;
 use syntax::common::*;
 use syntax::cst;
 use syntax::ctx::Context;
-use syntax::de_bruijn::*;
-use syntax::named::Named;
 use syntax::ust;
 
 use super::result::LoweringError;
@@ -28,9 +26,9 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    pub fn lookup(&self, name: &Ident, info: &cst::Info) -> Result<&Elem, LoweringError> {
+    pub fn lookup(&self, name: &str, info: &cst::Info) -> Result<&Elem, LoweringError> {
         self.map.get(name).and_then(|stack| stack.last()).ok_or_else(|| {
-            LoweringError::UndefinedIdent { name: name.clone(), span: info.span.to_miette() }
+            LoweringError::UndefinedIdent { name: name.to_owned(), span: info.span.to_miette() }
         })
     }
 
@@ -40,8 +38,8 @@ impl Ctx {
 
     pub fn typ_name_for_xtor(&self, name: &Ident) -> &Ident {
         match &self.decl_kinds[name] {
-            DeclKind::Ctor { in_typ } => in_typ,
-            DeclKind::Dtor { on_typ } => on_typ,
+            DeclKind::Ctor { ret_typ } => ret_typ,
+            DeclKind::Dtor { self_typ } => self_typ,
             _ => panic!("Can only query type name for declared xtors"),
         }
     }
@@ -62,6 +60,7 @@ impl Ctx {
         self.impls.insert(block.name.clone(), block);
     }
 
+    // FIXME: confusing name, rename or inline
     pub fn lower_bound(&self, lvl: Lvl) -> Idx {
         self.level_to_index(lvl)
     }
@@ -169,8 +168,8 @@ pub enum DeclKind {
     Codata { arity: usize },
     Def,
     Codef,
-    Ctor { in_typ: Ident },
-    Dtor { on_typ: Ident },
+    Ctor { ret_typ: Ident },
+    Dtor { self_typ: Ident },
 }
 
 impl From<&cst::TypDecl> for DeclKind {

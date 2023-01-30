@@ -1,10 +1,7 @@
-pub mod ast;
 pub mod common;
-pub mod cst;
 pub mod ctx;
-pub mod de_bruijn;
-pub mod equiv;
+pub mod env;
 pub mod matrix;
-pub mod named;
-pub mod tst;
-pub mod ust;
+mod trees;
+
+pub use trees::*;

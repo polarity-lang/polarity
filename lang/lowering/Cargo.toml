@@ -9,6 +9,8 @@ edition = "2021"
 # fancy error messages
 miette = "5"
 thiserror = "1"
+# big integers
+num-bigint = "0.4"
 # workspace members
 data = { path = "../../util/data" }
 syntax = { path = "../syntax" }

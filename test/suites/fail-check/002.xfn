@@ -1,11 +1,11 @@
-data Bool : Type { True: Bool, False: Bool }
+data Bool { True: Bool, False: Bool }
 
-data Nat : Type {
+data Nat {
     Z: Nat,
     S(n: Nat) : Nat,
 }
 
-data Foo(b: Bool) : Type {
+data Foo(b: Bool) {
     Bar : Foo(True),
     Baz : Foo(False),
 }

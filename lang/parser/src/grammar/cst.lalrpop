@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use num_bigint::BigUint;
+
 use syntax::cst::*;
 
 use super::util::span;
@@ -10,17 +12,19 @@ grammar;
 // Tokens
 match {
     // Symbols
-    "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".", "=", "?",
+    "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".", "?",
     // Names
     "_",
     r"[a-z][a-zA-Z0-9_]*[']*",
     r"[A-Z][a-zA-Z0-9_]*[']*",
+    // Literals
+    r"0|[1-9][0-9]*",
     // Keywords
     "data", "codata", "impl",
     "def", "codef",
     "match", "comatch",
     "absurd",
-    "Type", "Self",
+    "Type",
     // Comments and whitespace
     r"\s*" => { }, // Skip whitespace
     r"--[^\n\r]*[\n\r]*" => { }, // Skip `--` comments
@@ -49,15 +53,11 @@ BracedArgs<Rule>: Vec<Rule> = Braces<Comma<Rule>>;
 OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_default();
 
 Param: Param = <name: Ident> ":" <typ: Exp> => Param { name, typ } ;
-EqnParam : EqnParam = <name: Ident> ":" <eqn: Eqn> => EqnParam { name, eqn } ;
 
 ParamInst: ParamInst = <l: @L> <name: Ident> <r: @R> => ParamInst { info: span(l, r), name };
 
 Params: Vec<Param> = ParenthesizedArgs<Param>;
 OptParams: Vec<Param> = OptParenthesizedArgs<Param>;
-
-EqnParams: Vec<EqnParam> = BracedArgs<EqnParam>;
-OptEqnParams: Vec<EqnParam> = OptBracedArgs<EqnParam>;
 
 Telescope: Telescope = <params: Params> => Telescope(params);
 OptTelescope: Telescope = <params: OptParams> => Telescope(params);
@@ -84,12 +84,12 @@ pub Impl: Impl = {
 }
 
 pub TypDecl: TypDecl = {
-    <l: @L> "data" <name: UpperIdent> <params: OptTelescope> (":" "Type")? "{" <ctors: Comma<Ctor>> "}" <r: @R> => TypDecl::Data(Data { info: span(l, r), name, params, ctors }),
-    <l: @L> "codata" <name: UpperIdent> <params: OptTelescope> (":" "Type")? "{" <dtors: Comma<Dtor>> "}" <r: @R> => TypDecl::Codata(Codata { info: span(l, r), name, params, dtors }),
+    <l: @L> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => TypDecl::Data(Data { info: span(l, r), name, params, ctors }),
+    <l: @L> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => TypDecl::Codata(Codata { info: span(l, r), name, params, dtors }),
 }
 
 pub DefDecl: DefDecl = {
-    <l: @L> "def" <on_typ: TypApp> "." <name: LowerIdent> <params: OptTelescope> ":" <in_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), name, params, on_typ, in_typ, body }),
+    <l: @L> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), name, params, scrutinee, ret_typ, body }),
     <l: @L> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => DefDecl::Codef(Codef { info: span(l, r), name, params, typ, body }),
 }
 
@@ -98,7 +98,7 @@ Ctor: Ctor = {
 }
 
 Dtor: Dtor = {
-    <l: @L> <on_typ: (<TypApp> ".")?> <name: LowerIdent> <params: OptTelescope> ":" <in_typ: Exp> <r: @R> => Dtor { info: span(l, r), name, params, on_typ, in_typ },
+    <l: @L> <destructee: Destructee> <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> <r: @R> => Dtor { info: span(l, r), name, params, destructee, ret_typ },
 }
 
 pub Comatch : Comatch = {
@@ -110,11 +110,11 @@ pub Match : Match = {
 }
 
 pub Case : Case = {
-    <l: @L> <name: Ident> <args: OptTelescopeInst> <eqns: OptEqnParams> <body: AbsurdOrBody> <r: @R> => Case { info: span(l, r), name, args, eqns, body },
+    <l: @L> <name: Ident> <args: OptTelescopeInst> <body: AbsurdOrBody> <r: @R> => Case { info: span(l, r), name, args, body },
 }
 
 pub Cocase : Cocase = {
-    <l: @L> <name: Ident> <args: OptTelescopeInst> <eqns: OptEqnParams> <body: AbsurdOrBody> <r: @R> => Cocase { info: span(l, r), name, args, eqns, body },
+    <l: @L> <name: Ident> <args: OptTelescopeInst> <body: AbsurdOrBody> <r: @R> => Cocase { info: span(l, r), name, args, body },
 }
 
 pub AbsurdOrBody: Option<Rc<Exp>> = {
@@ -122,12 +122,20 @@ pub AbsurdOrBody: Option<Rc<Exp>> = {
     "=>" <body: Exp> => Some(body),
 }
 
-pub TypApp: TypApp = {
-    <l: @L> <name: UpperIdent> <args: OptArgs> <r: @R> => TypApp { info: span(l, r), name, args },
+pub Destructee: Destructee = {
+    <l: @L> <scrutinee: (<Scrutinee> ".")?> <r: @R> => match scrutinee {
+        Some(Scrutinee { info, name, typ }) => Destructee { info, name, typ: Some(typ) },
+        None => Destructee { info: span(l, r), name: None, typ: None },
+    }
 }
 
-pub Eqn: Eqn = {
-    <l: @L> <lhs: Exp> "=" <rhs: Exp> <r: @R> => Eqn { info: span(l, r), lhs, rhs }
+pub Scrutinee: Scrutinee = {
+    <l: @L> "(" <name: Ident> ":" <typ: TypApp> ")" <r: @R> => Scrutinee { info: span(l, r), name: Some(name), typ },
+    <l: @L> <typ: TypApp> <r: @R> => Scrutinee { info: span(l, r), name: None, typ },
+}
+
+pub TypApp: TypApp = {
+    <l: @L> <name: UpperIdent> <args: OptArgs> <r: @R> => TypApp { info: span(l, r), name, args },
 }
 
 pub Exp: Rc<Exp> = {
@@ -158,6 +166,7 @@ pub Hole: Rc<Exp> = {
 }
 
 pub Atom: Rc<Exp> = {
+    <l: @L> <s: r"0|[1-9][0-9]*"> <r: @R> => Rc::new(Exp::NatLit { info: span(l, r), val: BigUint::parse_bytes(s.as_ref(), 10).unwrap() }),
     "(" <exp: Exp> ")" => exp,
     <l: @L> <name: Ident> <r: @R> => Rc::new(Exp::Call { info: span(l, r), name, args: Args::new() }),
 }

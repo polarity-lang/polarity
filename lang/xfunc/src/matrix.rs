@@ -1,9 +1,7 @@
 use data::HashMap;
-use syntax::ast::SwapWithCtx;
 use syntax::common::*;
 use syntax::ctx::{Bind, Context, LevelCtx};
 use syntax::matrix;
-use syntax::named::Named;
 use syntax::ust;
 
 /// Take the red pill
@@ -117,7 +115,7 @@ impl BuildMatrix for ust::Dtor {
 
 impl BuildMatrix for ust::Def {
     fn build_matrix(&self, _ctx: &mut Ctx, out: &mut matrix::Prg) {
-        let type_name = &self.on_typ.name;
+        let type_name = &self.self_param.typ.name;
         let xdata = out.map.get_mut(type_name).unwrap();
         xdata.dtors.insert(self.name.clone(), self.to_dtor());
 
@@ -147,7 +145,7 @@ impl BuildMatrix for ust::Codef {
                 let mut ctx = LevelCtx::empty();
                 // TODO: Reconsider where to swap this
                 ctx.bind_iter(self.params.params.iter().map(|_| ()), |ctx| {
-                    ctx.bind_iter(case.args.params.iter().map(|_| ()), |ctx| {
+                    ctx.bind_iter(case.params.params.iter().map(|_| ()), |ctx| {
                         body.swap_with_ctx(ctx, 0, 1)
                     })
                 })

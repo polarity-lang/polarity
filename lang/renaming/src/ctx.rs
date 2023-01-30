@@ -1,6 +1,5 @@
 use syntax::common::*;
 use syntax::ctx::Context;
-use syntax::de_bruijn::*;
 
 #[derive(Debug, Clone)]
 pub struct Ctx {

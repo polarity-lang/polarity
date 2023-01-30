@@ -3,9 +3,10 @@ use std::fmt;
 use std::marker::PhantomData;
 
 use printer::PrintToString;
-use renaming::Rename;
-use syntax::common::Ident;
-use syntax::{ast, cst, tst, ust};
+use renaming::{Rename, RenameInfo};
+use syntax::common::Forget as _;
+use syntax::common::*;
+use syntax::{ast, cst, tst, ust, wst};
 
 use super::infallible::NoError;
 
@@ -89,7 +90,7 @@ where
     pub fn report(self) -> Report {
         let result = match self.result {
             Ok(out) => Ok(out.test_output()),
-            Err(PhasesError::AsExpected { err }) => Ok(format!("{:?}", err)),
+            Err(PhasesError::AsExpected { err }) => Ok(format!("{err:?}")),
             Err(PhasesError::Mismatch { expected, actual }) => {
                 Err(Failure::Mismatch { expected, actual })
             }
@@ -131,10 +132,10 @@ impl fmt::Display for Failure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Failure::Mismatch { expected, actual } => {
-                write!(f, "Expected {}, got {}", expected, actual)
+                write!(f, "Expected {expected}, got {actual}")
             }
-            Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {}", got),
-            Failure::ExpectedSuccess { got } => write!(f, "Expected success, got {}", got),
+            Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
+            Failure::ExpectedSuccess { got } => write!(f, "Expected success, got {got}"),
         }
     }
 }
@@ -165,6 +166,10 @@ pub struct Lower {
     name: &'static str,
 }
 pub struct Check {
+    name: &'static str,
+}
+
+pub struct Forget {
     name: &'static str,
 }
 
@@ -227,7 +232,12 @@ impl Phase for Check {
     }
 }
 
-impl<P: ast::Phase<VarName = Ident>> Phase for Print<P> {
+impl<P: ast::Phase<VarName = Ident>> Phase for Print<P>
+where
+    P::Typ: ShiftInRange,
+    P::TypeInfo: RenameInfo,
+    P::TypeAppInfo: RenameInfo,
+{
     type In = ast::Prg<P>;
     type Out = String;
     type Err = NoError;
@@ -245,10 +255,28 @@ impl<P: ast::Phase<VarName = Ident>> Phase for Print<P> {
     }
 }
 
+impl Phase for Forget {
+    type In = tst::Prg;
+    type Out = wst::Prg;
+    type Err = NoError;
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
+        Ok(input.forget())
+    }
+}
+
 impl TestOutput for cst::Prg {
     fn test_output(&self) -> String {
         // TODO: Improve test output
-        format!("{:?}", self)
+        format!("{self:?}")
     }
 }
 
@@ -260,7 +288,12 @@ impl TestOutput for ust::Prg {
 
 impl TestOutput for tst::Prg {
     fn test_output(&self) -> String {
-        // TODO: Improve test output
-        format!("{:?}", self)
+        self.print_to_string()
+    }
+}
+
+impl TestOutput for wst::Prg {
+    fn test_output(&self) -> String {
+        self.print_to_string()
     }
 }

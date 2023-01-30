@@ -14,5 +14,5 @@ fn get_version_string() -> String {
 
 fn main() {
     let version = get_version_string();
-    println!("cargo:rustc-env=VERSION={}", version);
+    println!("cargo:rustc-env=VERSION={version}");
 }

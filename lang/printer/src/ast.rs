@@ -7,6 +7,7 @@ use syntax::ast::*;
 use super::theme::ThemeExt;
 use super::tokens::*;
 use super::types::*;
+use super::util::*;
 
 impl<'a, P: Phase> Print<'a> for Prg<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
@@ -166,18 +167,18 @@ impl<'a, P: Phase> PrintInCtx<'a> for Impl<P> {
 
 impl<'a, P: Phase> Print<'a> for Def<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { info: _, name, params, on_typ, in_typ, body } = self;
+        let Def { info: _, name, params, self_param, ret_typ, body } = self;
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
-            .append(on_typ.print(cfg, alloc))
+            .append(self_param.print(cfg, alloc))
             .append(DOT)
             .append(alloc.dtor(name))
             .append(params.print(cfg, alloc))
             .append(alloc.space())
             .append(COLON)
             .append(alloc.space())
-            .append(in_typ.print(cfg, alloc));
+            .append(ret_typ.print(cfg, alloc));
 
         let body = body.print(cfg, alloc);
 
@@ -219,8 +220,8 @@ impl<'a, P: Phase> Print<'a> for Ctor<P> {
 
 impl<'a, P: Phase> Print<'a> for Dtor<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Dtor { info: _, name, params, on_typ, in_typ } = self;
-        on_typ
+        let Dtor { info: _, name, params, self_param, ret_typ } = self;
+        self_param
             .print(cfg, alloc)
             .append(DOT)
             .append(alloc.dtor(name))
@@ -228,7 +229,7 @@ impl<'a, P: Phase> Print<'a> for Dtor<P> {
             .append(alloc.space())
             .append(COLON)
             .append(alloc.space())
-            .append(in_typ.print(cfg, alloc))
+            .append(ret_typ.print(cfg, alloc))
     }
 }
 
@@ -278,7 +279,7 @@ impl<'a, P: Phase> Print<'a> for Case<P> {
 
 impl<'a, P: Phase> Print<'a> for Cocase<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Cocase { info: _, name, args, body } = self;
+        let Cocase { info: _, name, params: args, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -319,6 +320,22 @@ impl<'a, P: Phase> Print<'a> for ParamInst<P> {
     }
 }
 
+impl<'a, P: Phase> Print<'a> for SelfParam<P> {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let SelfParam { info: _, name, typ } = self;
+
+        match name {
+            Some(name) => alloc
+                .text(name)
+                .append(COLON)
+                .append(alloc.space())
+                .append(typ.print(cfg, alloc))
+                .parens(),
+            None => typ.print(cfg, alloc),
+        }
+    }
+}
+
 impl<'a, P: Phase> Print<'a> for TypApp<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypApp { info: _, name, args: subst } = self;
@@ -329,7 +346,9 @@ impl<'a, P: Phase> Print<'a> for TypApp<P> {
 impl<'a, P: Phase> Print<'a> for Exp<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Exp::Var { info: _, name, idx } => alloc.text(P::print_var(name, *idx)),
+            Exp::Var { info: _, name, idx } => {
+                alloc.text(P::print_var(name, cfg.de_bruijn.then_some(*idx)))
+            }
             Exp::TypCtor { info: _, name, args: subst } => {
                 alloc.typ(name).append(subst.print(cfg, alloc).opt_parens())
             }
@@ -345,7 +364,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
             Exp::Type { info: _ } => alloc.typ(TYPE),
-            Exp::Match { info: _, name, on_exp, in_typ: _, body } => on_exp
+            Exp::Match { info: _, name, on_exp, ret_typ: _, body } => on_exp
                 .print(cfg, alloc)
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
@@ -359,7 +378,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 .append(alloc.text(name))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Exp::Hole {} => todo!(),
+            Exp::Hole { info } => todo!(),
         }
     }
 }
@@ -377,42 +396,6 @@ impl<'a, T: Print<'a>> Print<'a> for Vec<T> {
         } else {
             let sep = alloc.text(COMMA).append(alloc.space());
             alloc.intersperse(self.iter().map(|x| x.print(cfg, alloc)), sep)
-        }
-    }
-}
-
-trait BracesExt<'a, D, A: 'a>
-where
-    D: ?Sized + DocAllocator<'a, A>,
-{
-    fn braces_from(self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, D, A>;
-}
-
-impl<'a, D, A> BracesExt<'a, D, A> for pretty::DocBuilder<'a, D, A>
-where
-    D: ?Sized + DocAllocator<'a, A>,
-{
-    fn braces_from(self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, D, A> {
-        self.enclose(cfg.braces.0, cfg.braces.1)
-    }
-}
-
-trait ParensExt<'a, D, A: 'a>
-where
-    D: ?Sized + DocAllocator<'a, A>,
-{
-    fn opt_parens(self) -> pretty::DocBuilder<'a, D, A>;
-}
-
-impl<'a, D, A> ParensExt<'a, D, A> for pretty::DocBuilder<'a, D, A>
-where
-    D: ?Sized + DocAllocator<'a, A>,
-{
-    fn opt_parens(self) -> pretty::DocBuilder<'a, D, A> {
-        if matches!(self.1, pretty::BuildDoc::Doc(pretty::Doc::Nil)) {
-            self
-        } else {
-            self.parens()
         }
     }
 }

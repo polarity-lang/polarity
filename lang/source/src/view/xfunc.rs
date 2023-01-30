@@ -5,10 +5,8 @@ use renaming::Rename;
 
 use data::{HashMap, HashSet};
 use syntax::ast;
-use syntax::ast::forget::Forget;
 use syntax::common::*;
 use syntax::matrix;
-use syntax::named::Named;
 use syntax::ust;
 
 use super::{DatabaseView, Edit};
@@ -20,7 +18,7 @@ pub struct Xfunc {
 
 impl<'a> DatabaseView<'a> {
     pub fn xfunc(&self, type_name: &str) -> Result<Xfunc, String> {
-        let prg = self.tst().map_err(|err| format!("{}", err))?;
+        let prg = self.tst().map_err(|err| format!("{err}"))?;
 
         let decl_spans = prg
             .decls
@@ -34,10 +32,10 @@ impl<'a> DatabaseView<'a> {
         filter_out.extend(prg.decls.map[type_name].xtors().iter().cloned());
         filter_out.extend(prg.decls.map[type_name].xdefs().iter().cloned());
 
-        let LiftResult { prg, modified_decls: mut dirty_decls } = lifting::lift(prg, type_name);
+        let LiftResult { prg, modified_decls: mut dirty_decls } =
+            lifting::lift(prg.forget(), type_name);
         dirty_decls.retain(|name| !filter_out.contains(name));
 
-        let prg = prg.forget();
         let mat = xfunc::as_matrix(&prg);
 
         let type_span = mat.map[type_name].info.span.unwrap();
@@ -122,7 +120,7 @@ fn refunctionalize(prg: ust::Prg, mat: &matrix::Prg, type_name: &str) -> XfuncRe
     let impl_block = impl_block.rename();
 
     XfuncResult {
-        title: format!("Refunctionalize {}", type_name),
+        title: format!("Refunctionalize {type_name}"),
         decls,
         new_decl: ust::Decl::Codata(codata),
         new_impl: impl_block,
@@ -150,7 +148,7 @@ fn defunctionalize(prg: ust::Prg, mat: &matrix::Prg, type_name: &str) -> XfuncRe
     let decls = decls.rename();
 
     XfuncResult {
-        title: format!("Defunctionalize {}", type_name),
+        title: format!("Defunctionalize {type_name}"),
         decls,
         new_decl: ust::Decl::Data(data),
         new_impl: impl_block,

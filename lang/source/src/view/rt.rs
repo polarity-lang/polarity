@@ -1,6 +1,9 @@
+use std::rc::Rc;
+
 use super::DatabaseView;
 
-use syntax::{cst, tst, ust};
+use syntax::common::Forget;
+use syntax::{cst, tst, ust, val};
 
 use crate::*;
 
@@ -27,6 +30,12 @@ impl<'a> DatabaseView<'a> {
     pub fn tst(&self) -> Result<tst::Prg, Error> {
         let ust = self.ust()?;
         core::check(&ust).map_err(Error::Type)
+    }
+
+    pub fn run(&self) -> Result<Option<Rc<val::Val>>, Error> {
+        let tst = self.tst()?;
+        let ust = tst.forget().forget();
+        core::eval(&ust).map_err(Error::Type)
     }
 
     pub fn pretty_error(&self, err: Error) -> miette::Report {

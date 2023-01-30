@@ -6,15 +6,21 @@ pub use pretty::termcolor::ColorChoice;
 pub use pretty::termcolor::ColorSpec;
 pub use pretty::termcolor::StandardStream;
 pub use pretty::termcolor::WriteColor;
+pub use pretty::DocAllocator;
 
 mod ast;
 mod ctx;
 mod de_bruijn;
+mod dec;
+mod env;
 pub mod latex;
+mod nf;
 mod print_to_string;
 mod theme;
 mod tokens;
 mod types;
+mod util;
+mod val;
 
 pub use print_to_string::*;
 pub use types::*;

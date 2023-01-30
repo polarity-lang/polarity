@@ -43,10 +43,17 @@ pub struct PrintCfg {
     pub braces: (&'static str, &'static str),
     /// Whether to omit the empty line between toplevel declarations.
     pub omit_decl_sep: bool,
+    /// Whether to print the De-Bruijn representation of variables
+    pub de_bruijn: bool,
 }
 
 impl Default for PrintCfg {
     fn default() -> Self {
-        Self { width: crate::DEFAULT_WIDTH, braces: ("{", "}"), omit_decl_sep: false }
+        Self {
+            width: crate::DEFAULT_WIDTH,
+            braces: ("{", "}"),
+            omit_decl_sep: false,
+            de_bruijn: false,
+        }
     }
 }

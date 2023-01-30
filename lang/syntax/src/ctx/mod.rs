@@ -1,7 +1,9 @@
 mod def;
 mod levels;
 mod map;
+mod map_idx;
 mod types;
+pub mod values;
 mod visit;
 
 pub use def::*;

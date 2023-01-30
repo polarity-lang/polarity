@@ -103,7 +103,7 @@ fn print_plain_interpolation(
     spec: &str,
     expr: &proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
-    let fmt_string = format!("{{:{}}}", spec);
+    let fmt_string = format!("{{:{spec}}}");
 
     quote! {
         __tracer_stdout.set_color(&printer::ColorSpec::default())
@@ -118,7 +118,7 @@ fn print_pretty_interpolation(expr: &proc_macro2::TokenStream) -> proc_macro2::T
         __tracer_stdout.set_color(&printer::ColorSpec::default())
             .expect(#FAILED_TO_SET_COLOR);
         #expr
-            .print_colored(&printer::PrintCfg::default(), &mut __tracer_stdout)
+            .print_colored(&printer::PrintCfg{ de_bruijn: true, ..Default::default() }, &mut __tracer_stdout)
             .expect("Failed to print to stdout");
     }
 }

@@ -1,16 +1,16 @@
-codata Bool : Type {}
+codata Bool {}
 
 impl Bool {
     codef True(): Bool {}
     codef False(): Bool {}
 }
 
-data Nat : Type {
+data Nat {
     Z: Nat,
     S(n: Nat) : Nat,
 }
 
-data Foo(b: Bool) : Type {
+data Foo(b: Bool) {
     Bar : Foo(True),
     Baz : Foo(False),
 }

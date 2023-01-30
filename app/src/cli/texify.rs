@@ -79,8 +79,12 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
 
-    let cfg =
-        PrintCfg { width: cmd.width.unwrap_or(80), braces: ("\\{", "\\}"), omit_decl_sep: true };
+    let cfg = PrintCfg {
+        width: cmd.width.unwrap_or(80),
+        braces: ("\\{", "\\}"),
+        omit_decl_sep: true,
+        de_bruijn: false,
+    };
 
     stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
     let mut stream = IgnoreColors::new(stream);

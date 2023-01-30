@@ -1,10 +1,12 @@
 use std::rc::Rc;
 
+use num_bigint::BigUint;
+
 use miette_util::ToMiette;
 use syntax::ast::source;
+use syntax::common::*;
 use syntax::cst;
 use syntax::ctx::{Bind, Context};
-use syntax::named::Named;
 use syntax::ust;
 
 use super::ctx::*;
@@ -94,12 +96,12 @@ fn register_type_name(ctx: &mut Ctx, type_decl: &cst::TypDecl) -> Result<(), Low
     match type_decl {
         cst::TypDecl::Data(data) => {
             for ctor in &data.ctors {
-                ctx.add_name(&ctor.name, DeclKind::Ctor { in_typ: data.name.clone() })?;
+                ctx.add_name(&ctor.name, DeclKind::Ctor { ret_typ: data.name.clone() })?;
             }
         }
         cst::TypDecl::Codata(codata) => {
             for dtor in &codata.dtors {
-                ctx.add_name(&dtor.name, DeclKind::Dtor { on_typ: codata.name.clone() })?;
+                ctx.add_name(&dtor.name, DeclKind::Dtor { self_typ: codata.name.clone() })?;
             }
         }
     }
@@ -242,17 +244,17 @@ impl Lower for cst::Dtor {
     type Target = ust::Dtor;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Dtor { info, name, params, on_typ, in_typ } = self;
+        let cst::Dtor { info, name, params, destructee, ret_typ } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
             // If the type constructor does not take any arguments, it can be left out
-            let on_typ = match on_typ {
-                Some(on_typ) => on_typ.lower_in_ctx(ctx)?,
+            let on_typ = match &destructee.typ {
+                Some(on_typ) => on_typ.clone(),
                 None => {
                     let typ_name = ctx.typ_name_for_xtor(name);
                     if ctx.typ_ctor_arity(typ_name) == 0 {
-                        ust::TypApp {
-                            info: ust::Info::empty(),
+                        cst::TypApp {
+                            info: cst::Info { span: Default::default() },
                             name: typ_name.clone(),
                             args: vec![],
                         }
@@ -266,12 +268,20 @@ impl Lower for cst::Dtor {
                 }
             };
 
-            Ok(ust::Dtor {
-                info: info.lower_pure(),
-                name: name.clone(),
-                params,
-                on_typ,
-                in_typ: in_typ.lower_in_ctx(ctx)?,
+            let self_param = cst::SelfParam {
+                info: destructee.info.clone(),
+                name: destructee.name.clone(),
+                typ: on_typ,
+            };
+
+            self_param.lower_telescope(ctx, |ctx, self_param| {
+                Ok(ust::Dtor {
+                    info: info.lower_pure(),
+                    name: name.clone(),
+                    params,
+                    self_param,
+                    ret_typ: ret_typ.lower_in_ctx(ctx)?,
+                })
             })
         })
     }
@@ -281,16 +291,22 @@ impl Lower for cst::Def {
     type Target = ust::Def;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Def { info, name, params, on_typ, in_typ, body } = self;
+        let cst::Def { info, name, params, scrutinee, ret_typ, body } = self;
+
+        let self_param: cst::SelfParam = scrutinee.clone().into();
 
         params.lower_telescope(ctx, |ctx, params| {
-            Ok(ust::Def {
-                info: info.lower_pure(),
-                name: name.clone(),
-                params,
-                on_typ: on_typ.lower_in_ctx(ctx)?,
-                in_typ: in_typ.lower_in_ctx(ctx)?,
-                body: body.lower_in_ctx(ctx)?,
+            let body = body.lower_in_ctx(ctx)?;
+
+            self_param.lower_telescope(ctx, |ctx, self_param| {
+                Ok(ust::Def {
+                    info: info.lower_pure(),
+                    name: name.clone(),
+                    params,
+                    self_param,
+                    ret_typ: ret_typ.lower_in_ctx(ctx)?,
+                    body,
+                })
             })
         })
     }
@@ -338,8 +354,7 @@ impl Lower for cst::Case {
     type Target = ust::Case;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Case { info, name, args, body, eqns: _ } = self;
-        // FIXME: eqns
+        let cst::Case { info, name, args, body } = self;
 
         args.lower_telescope(ctx, |ctx, args| {
             Ok(ust::Case {
@@ -356,14 +371,13 @@ impl Lower for cst::Cocase {
     type Target = ust::Cocase;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Cocase { info, name, args, body, eqns: _ } = self;
-        // FIXME: eqns
+        let cst::Cocase { info, name, args, body } = self;
 
         args.lower_telescope(ctx, |ctx, args| {
             Ok(ust::Cocase {
                 info: info.lower_pure(),
                 name: name.clone(),
-                args,
+                params: args,
                 body: body.lower_in_ctx(ctx)?,
             })
         })
@@ -431,7 +445,7 @@ impl Lower for cst::Exp {
                     .clone()
                     .ok_or(LoweringError::UnnamedMatch { span: info.span.to_miette() })?,
                 on_exp: on_exp.lower_in_ctx(ctx)?,
-                in_typ: (),
+                ret_typ: (),
                 body: body.lower_in_ctx(ctx)?,
             }),
             cst::Exp::Comatch { info, name, body } => Ok(ust::Exp::Comatch {
@@ -443,6 +457,23 @@ impl Lower for cst::Exp {
                 body: body.lower_in_ctx(ctx)?,
             }),
             cst::Exp::Hole { info: _ } => todo!("Lowering of holes not implemented"),
+            cst::Exp::NatLit { info, val } => {
+                let mut out =
+                    ust::Exp::Ctor { info: info.lower_pure(), name: "Z".to_owned(), args: vec![] };
+
+                let mut i = BigUint::from(0usize);
+
+                while &i != val {
+                    i += 1usize;
+                    out = ust::Exp::Ctor {
+                        info: info.lower_pure(),
+                        name: "S".to_owned(),
+                        args: vec![Rc::new(out)],
+                    };
+                }
+
+                Ok(out)
+            }
         }
     }
 }
@@ -468,6 +499,22 @@ impl<T: Lower> Lower for Rc<T> {
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         Ok(Rc::new((**self).lower_in_ctx(ctx)?))
+    }
+}
+
+impl LowerTelescope for cst::SelfParam {
+    type Target = ust::SelfParam;
+
+    fn lower_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, LoweringError>>(
+        &self,
+        ctx: &mut Ctx,
+        f: F,
+    ) -> Result<T, LoweringError> {
+        let cst::SelfParam { info, name, typ } = self;
+        let typ_out = typ.lower_in_ctx(ctx)?;
+        ctx.bind_single(name.clone().unwrap_or_default(), |ctx| {
+            f(ctx, ust::SelfParam { info: info.lower_pure(), name: name.clone(), typ: typ_out })
+        })
     }
 }
 
