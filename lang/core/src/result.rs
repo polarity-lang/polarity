@@ -135,7 +135,10 @@ pub enum NormalizeError {
 
 #[derive(Error, Diagnostic, Debug)]
 #[diagnostic()]
-pub enum EvalError {}
+pub enum EvalError {
+    #[error("Trying to evaluate hole of type {typ}")]
+    EvalHole { typ: String, span: Option<SourceSpan> },
+}
 
 #[derive(Error, Diagnostic, Debug)]
 #[diagnostic()]
