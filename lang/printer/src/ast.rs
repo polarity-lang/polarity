@@ -298,13 +298,38 @@ impl<'a, P: Phase> Print<'a> for Telescope<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Telescope { params } = self;
         let mut output = alloc.nil();
+        let mut running_type: Option<&Rc<Exp<P>>> = None;
         for param in params {
             let Param { name, typ } = param;
-            output = output
-                .append(alloc.text(name))
-                .append(COLON)
-                .append(typ.print(cfg, alloc))
-                .append(COMMA);
+            match running_type {
+                Some(rtype) if rtype == typ => {
+                    // We are adding another parameter of the same type.
+                    output = output.append(alloc.space()).append(alloc.text(name));
+                }
+                Some(rtype) => {
+                    // We are adding another parameter with a different type,
+                    // and have to close the previous list first.
+                    output = output
+                        .append(COLON)
+                        .append(alloc.space())
+                        .append(rtype.print(cfg, alloc))
+                        .append(COMMA)
+                        .append(alloc.space());
+                    running_type = Some(typ);
+                    output = output.append(alloc.text(name));
+                }
+                None => {
+                    // We are adding the very first parameter.
+                    running_type = Some(typ);
+                    output = output.append(alloc.text(name));
+                }
+            }
+        }
+        match running_type {
+            None => {}
+            Some(rtype) => {
+                output = output.append(COLON).append(alloc.space()).append(rtype.print(cfg, alloc));
+            }
         }
         output.opt_parens()
     }
