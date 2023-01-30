@@ -90,7 +90,7 @@ where
     pub fn report(self) -> Report {
         let result = match self.result {
             Ok(out) => Ok(out.test_output()),
-            Err(PhasesError::AsExpected { err }) => Ok(format!("{:?}", err)),
+            Err(PhasesError::AsExpected { err }) => Ok(format!("{err:?}")),
             Err(PhasesError::Mismatch { expected, actual }) => {
                 Err(Failure::Mismatch { expected, actual })
             }
@@ -132,10 +132,10 @@ impl fmt::Display for Failure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Failure::Mismatch { expected, actual } => {
-                write!(f, "Expected {}, got {}", expected, actual)
+                write!(f, "Expected {expected}, got {actual}")
             }
-            Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {}", got),
-            Failure::ExpectedSuccess { got } => write!(f, "Expected success, got {}", got),
+            Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
+            Failure::ExpectedSuccess { got } => write!(f, "Expected success, got {got}"),
         }
     }
 }
@@ -276,7 +276,7 @@ impl Phase for Forget {
 impl TestOutput for cst::Prg {
     fn test_output(&self) -> String {
         // TODO: Improve test output
-        format!("{:?}", self)
+        format!("{self:?}")
     }
 }
 

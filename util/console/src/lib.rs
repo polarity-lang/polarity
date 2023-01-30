@@ -1,6 +1,6 @@
 #[cfg(not(target_arch = "wasm32"))]
 pub fn _println(s: &str) {
-    print!("{}", s);
+    print!("{s}");
 }
 
 #[cfg(target_arch = "wasm32")]

@@ -18,7 +18,7 @@ pub struct Xfunc {
 
 impl<'a> DatabaseView<'a> {
     pub fn xfunc(&self, type_name: &str) -> Result<Xfunc, String> {
-        let prg = self.tst().map_err(|err| format!("{}", err))?;
+        let prg = self.tst().map_err(|err| format!("{err}"))?;
 
         let decl_spans = prg
             .decls
@@ -120,7 +120,7 @@ fn refunctionalize(prg: ust::Prg, mat: &matrix::Prg, type_name: &str) -> XfuncRe
     let impl_block = impl_block.rename();
 
     XfuncResult {
-        title: format!("Refunctionalize {}", type_name),
+        title: format!("Refunctionalize {type_name}"),
         decls,
         new_decl: ust::Decl::Codata(codata),
         new_impl: impl_block,
@@ -148,7 +148,7 @@ fn defunctionalize(prg: ust::Prg, mat: &matrix::Prg, type_name: &str) -> XfuncRe
     let decls = decls.rename();
 
     XfuncResult {
-        title: format!("Defunctionalize {}", type_name),
+        title: format!("Defunctionalize {type_name}"),
         decls,
         new_decl: ust::Decl::Data(data),
         new_impl: impl_block,

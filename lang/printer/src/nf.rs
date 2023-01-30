@@ -31,7 +31,7 @@ impl<'a> Print<'a> for Nf {
 impl<'a> Print<'a> for Neu {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Neu::Var { info: _, name, idx } => alloc.text(format!("{}@{}", name, idx)),
+            Neu::Var { info: _, name, idx } => alloc.text(format!("{name}@{idx}")),
             Neu::Dtor { info: _, exp, name, args: subst } => exp
                 .print(cfg, alloc)
                 .append(DOT)

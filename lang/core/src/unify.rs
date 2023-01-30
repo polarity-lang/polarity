@@ -218,7 +218,7 @@ impl<'a> Print<'a> for Unificator {
         let mut keys: Vec<_> = self.map.keys().collect();
         keys.sort();
         let exps = keys.into_iter().map(|key| {
-            alloc.text(format!("{}", key)).append(" := ").append(self.map[key].print(cfg, alloc))
+            alloc.text(format!("{key}")).append(" := ").append(self.map[key].print(cfg, alloc))
         });
         alloc.intersperse(exps, ",").enclose("{", "}")
     }

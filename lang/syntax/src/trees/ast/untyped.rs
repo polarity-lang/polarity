@@ -17,7 +17,7 @@ impl generic::Phase for UST {
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String {
         if let Some(idx) = idx {
-            format!("{}@{}", name, idx)
+            format!("{name}@{idx}")
         } else {
             name.clone()
         }

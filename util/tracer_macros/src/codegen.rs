@@ -103,7 +103,7 @@ fn print_plain_interpolation(
     spec: &str,
     expr: &proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
-    let fmt_string = format!("{{:{}}}", spec);
+    let fmt_string = format!("{{:{spec}}}");
 
     quote! {
         __tracer_stdout.set_color(&printer::ColorSpec::default())
