@@ -533,9 +533,13 @@ impl LowerTelescope for cst::Telescope {
             Ok(ust::Params::new()),
             |ctx, params_out, param| {
                 let mut params_out = params_out?;
-                let cst::Param { name, typ } = param;
+                let cst::Param { name, names, typ } = param;
                 let typ_out = typ.lower_in_ctx(ctx)?;
-                let param_out = ust::Param { name: name.clone(), typ: typ_out };
+                let param_out = ust::Param { name: name.clone(), typ: typ_out.clone() };
+                for extra_name in names {
+                    let param_out = ust::Param { name: extra_name.clone(), typ: typ_out.clone() };
+                    params_out.push(param_out);
+                }
                 params_out.push(param_out);
                 Ok(params_out)
             },

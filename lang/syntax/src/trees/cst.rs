@@ -196,9 +196,14 @@ impl Telescope {
 pub type Params = Vec<Param>;
 pub type Args = Vec<Rc<Exp>>;
 
+/// A `Param` can either be a single parameter, like `x : T`, or a list of parameters, like `x, y, z : T`.
 #[derive(Debug, Clone)]
 pub struct Param {
+    /// The obligatory parameter.
     pub name: Ident,
+    /// A possible list of additional parameters.
+    pub names: Vec<Ident>,
+    /// The type of the parameter.
     pub typ: Rc<Exp>,
 }
 
