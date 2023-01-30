@@ -27,11 +27,6 @@ data Top {
 }
 
 impl Top {
-    -- FIXME: Implement typed holes
-    def Top.unimplemented(a: Type) : a {
-        Unit => Unit.unimplemented(a)
-    }
-
     def Top.example(): Exp {
         Unit => And(IsZero(Add(Num(Z), Num(Z))), Boo(True))
     }
@@ -82,19 +77,12 @@ data Eval(e1: Exp, e2: Exp) {
 
 impl Eval {
     def Eval(e1, e2).preserves(e1: Exp, e2: Exp, t: Typ, h1: HasType(e1, t)) : HasType(e2, t) {
-        EAddCongL(lhs, lhs', rhs, h_lhs)
-            => Unit.unimplemented(HasType(e2, t)),
-        EAddCongR(lhs, rhs, rhs', h_rhs)
-            => Unit.unimplemented(HasType(e2, t)),
-        EAddRed(n1, n2)
-            => Unit.unimplemented(HasType(e2, t)),
-        EIsZeroCong(e, e', h_e)
-            => Unit.unimplemented(HasType(e2, t)),
-        EAndCongL(lhs, lhs', rhs, h_lhs)
-            => Unit.unimplemented(HasType(e2, t)),
-        EAndCongR(lhs, rhs, rhs', h_rhs)
-            => Unit.unimplemented(HasType(e2, t)),
-        EAndRed(b1, b2)
-            => Unit.unimplemented(HasType(e2, t))
+        EAddCongL(lhs, lhs', rhs, h_lhs) => ?,
+        EAddCongR(lhs, rhs, rhs', h_rhs) => ?,
+        EAddRed(n1, n2) => ?,
+        EIsZeroCong(e, e', h_e) => ?,
+        EAndCongL(lhs, lhs', rhs, h_lhs) => ?,
+        EAndCongR(lhs, rhs, rhs', h_rhs) => ?,
+        EAndRed(b1, b2) => ?
     }
 }
