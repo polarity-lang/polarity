@@ -12,7 +12,7 @@ grammar;
 // Tokens
 match {
     // Symbols
-    "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".",
+    "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".", "?",
     // Names
     "_",
     r"[a-z][a-zA-Z0-9_]*[']*",
@@ -157,6 +157,11 @@ pub App = {
 
 pub Builtins: Rc<Exp> = {
     <l: @L>"Type" <r: @R> => Rc::new(Exp::Type { info: span(l, r) }),
+    Hole,
+}
+
+pub Hole: Rc<Exp> = {
+    <l: @L>"?" <r: @R> => Rc::new(Exp::Hole { info: span(l,r) }),
     Atom,
 }
 

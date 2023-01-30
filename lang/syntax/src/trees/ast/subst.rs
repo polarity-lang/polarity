@@ -51,6 +51,7 @@ where
                 name: name.clone(),
                 body: body.subst(ctx, by),
             }),
+            Exp::Hole { info } => Rc::new(Exp::Hole { info: info.clone() }),
         }
     }
 }

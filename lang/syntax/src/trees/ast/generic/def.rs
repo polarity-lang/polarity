@@ -393,6 +393,10 @@ pub enum Exp<P: Phase> {
         // TODO: Ignore this field for PartialEq, Hash?
         body: Comatch<P>,
     },
+    Hole {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: P::TypeInfo,
+    },
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope
