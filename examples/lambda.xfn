@@ -56,14 +56,6 @@ impl Nat {
     }
 }
 
-data Top { Unit }
-
-impl Top {
-    def Top.todo(a: Type): a {
-        Unit => Unit.todo(a)
-    }
-}
-
 data Typ {
     FunT(t1 t2: Typ),
     VarT(x: Nat),
@@ -142,17 +134,17 @@ impl Exp {
 --        ctx: Ctx, t: Typ,
 --    ): Fun(HasType(ctx, self, t), Progress(self))
 --    {
---        Var(x) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
---        Lam(_) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
---        App(_, _) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
+--        Var(x) => ?,
+--        Lam(_) => ?,
+--        App(_, _) => ?,
 --    }
 --
 --    def Exp.preservation(
 --        ctx: Ctx, e2: Exp, t: Typ,
 --    ): Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))
 --    {
---        Var(_) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
---        Lam(_) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
---        App(_, _) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
+--        Var(_) => ?,
+--        Lam(_) => ?,
+--        App(_, _) => ?,
 --    }
 }
