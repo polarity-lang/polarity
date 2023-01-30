@@ -25,7 +25,7 @@ pub trait Visitor<P: Phase> {
     fn visit_typ_abs(&mut self, params: &Telescope<P>) {}
     fn visit_ctor(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, typ: &TypApp<P>) {}
     fn visit_dtor(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>) {}
-    fn visit_def(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, self_param: &SelfParam<P>, in_typ: &Rc<Exp<P>>, body: &Match<P>) {}
+    fn visit_def(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>, body: &Match<P>) {}
     fn visit_codef(&mut self, info: &P::Info, name: &Ident, params: &Telescope<P>, typ: &TypApp<P>, body: &Comatch<P>) {}
     fn visit_match(&mut self, info: &P::Info, cases: &[Case<P>]) {}
     fn visit_comatch(&mut self, info: &P::Info, cases: &[Cocase<P>]) {}
@@ -38,7 +38,7 @@ pub trait Visitor<P: Phase> {
     fn visit_exp_dtor(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, name: &Ident, args: &[Rc<Exp<P>>]) {}
     fn visit_exp_anno(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, typ: &Rc<Exp<P>>) {}
     fn visit_exp_type(&mut self, info: &P::TypeInfo) {}
-    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &Ident, on_exp: &Rc<Exp<P>>, in_typ: &P::Typ, body: &Match<P>) {}
+    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &Ident, on_exp: &Rc<Exp<P>>, ret_typ: &P::Typ, body: &Match<P>) {}
     fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, name: &Ident, body: &Comatch<P>) {}
     fn visit_telescope<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
     where
@@ -399,12 +399,12 @@ impl<P: Phase> Visit<P> for Exp<P> {
                 v.visit_type_info(info);
                 v.visit_exp_type(info)
             }
-            Exp::Match { info, name, on_exp, in_typ, body } => {
+            Exp::Match { info, name, on_exp, ret_typ, body } => {
                 v.visit_type_app_info(info);
                 on_exp.visit(v);
                 body.visit(v);
-                v.visit_typ(in_typ);
-                v.visit_exp_match(info, name, on_exp, in_typ, body)
+                v.visit_typ(ret_typ);
+                v.visit_exp_match(info, name, on_exp, ret_typ, body)
             }
             Exp::Comatch { info, name, body } => {
                 v.visit_type_app_info(info);

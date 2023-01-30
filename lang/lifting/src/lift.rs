@@ -104,12 +104,12 @@ impl Mapper<WST> for Lift {
         info: wst::TypeAppInfo,
         name: Ident,
         on_exp: Rc<wst::Exp>,
-        in_typ: wst::Typ,
+        ret_typ: wst::Typ,
         body: wst::Match,
     ) -> wst::Exp {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
-            return id().map_exp_match(info, name, on_exp, in_typ, body);
+            return id().map_exp_match(info, name, on_exp, ret_typ, body);
         }
 
         self.mark_modified();
@@ -120,13 +120,13 @@ impl Mapper<WST> for Lift {
         let FreeVarsResult { telescope, subst, args } = body
             .free_vars(&mut self.ctx)
             .union(info.typ.free_vars(&mut self.ctx))
-            .union(in_typ.as_exp().free_vars(&mut self.ctx))
+            .union(ret_typ.as_exp().free_vars(&mut self.ctx))
             .telescope();
 
         // Substitute the new parameters for the free variables
         let body = body.subst(&mut self.ctx.levels(), &subst);
         let self_typ = info.typ.subst(&mut self.ctx.levels(), &subst);
-        let def_in_typ = in_typ.as_exp().subst(&mut self.ctx.levels(), &subst);
+        let def_ret_typ = ret_typ.as_exp().subst(&mut self.ctx.levels(), &subst);
 
         // Build the new top-level definition
         let def = wst::Def {
@@ -138,7 +138,7 @@ impl Mapper<WST> for Lift {
                 name: Some("self".to_owned()),
                 typ: self_typ,
             },
-            ret_typ: def_in_typ,
+            ret_typ: def_ret_typ,
             body,
         };
 
@@ -146,7 +146,7 @@ impl Mapper<WST> for Lift {
 
         // Replace the match by a destructor call of the new top-level definition
         wst::Exp::Dtor {
-            info: wst::TypeInfo { typ: in_typ.as_exp().forget(), span: Default::default() },
+            info: wst::TypeInfo { typ: ret_typ.as_exp().forget(), span: Default::default() },
             exp: on_exp,
             name,
             args,

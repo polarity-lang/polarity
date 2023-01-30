@@ -548,12 +548,12 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
                 let info = f.fold_type_info(info);
                 f.fold_exp_type(info)
             }
-            Exp::Match { info, name, on_exp, in_typ, body } => {
+            Exp::Match { info, name, on_exp, ret_typ, body } => {
                 let info = f.fold_type_app_info(info);
                 let on_exp = on_exp.fold(f);
                 let body = body.fold(f);
-                let in_typ = f.fold_typ(in_typ);
-                f.fold_exp_match(info, name, on_exp, in_typ, body)
+                let ret_typ = f.fold_typ(ret_typ);
+                f.fold_exp_match(info, name, on_exp, ret_typ, body)
             }
             Exp::Comatch { info, name, body } => {
                 let info = f.fold_type_app_info(info);

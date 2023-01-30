@@ -382,7 +382,7 @@ pub enum Exp<P: Phase> {
         name: Ident,
         on_exp: Rc<Exp<P>>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        in_typ: P::Typ,
+        ret_typ: P::Typ,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Match<P>,
     },

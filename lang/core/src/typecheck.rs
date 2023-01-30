@@ -635,19 +635,19 @@ impl Check for ust::Exp {
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
         let out = match self {
-            ust::Exp::Match { info, name, on_exp, in_typ: (), body } => {
+            ust::Exp::Match { info, name, on_exp, ret_typ: (), body } => {
                 let on_exp_out = on_exp.infer(prg, ctx)?;
                 let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
                 let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
                 let body_out =
                     body.with_scrutinee(typ_app_nf.clone()).check(prg, ctx, t.clone())?;
-                let in_typ_out = t.forget().check(prg, ctx, type_univ())?;
+                let ret_typ_out = t.forget().check(prg, ctx, type_univ())?;
 
                 tst::Exp::Match {
                     info: info.with_type_app(typ_app, typ_app_nf),
                     name: name.clone(),
                     on_exp: on_exp_out,
-                    in_typ: in_typ_out.into(),
+                    ret_typ: ret_typ_out.into(),
                     body: body_out,
                 }
             }

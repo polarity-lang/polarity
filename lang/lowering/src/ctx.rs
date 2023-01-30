@@ -38,8 +38,8 @@ impl Ctx {
 
     pub fn typ_name_for_xtor(&self, name: &Ident) -> &Ident {
         match &self.decl_kinds[name] {
-            DeclKind::Ctor { in_typ } => in_typ,
-            DeclKind::Dtor { on_typ } => on_typ,
+            DeclKind::Ctor { ret_typ } => ret_typ,
+            DeclKind::Dtor { self_typ } => self_typ,
             _ => panic!("Can only query type name for declared xtors"),
         }
     }
@@ -168,8 +168,8 @@ pub enum DeclKind {
     Codata { arity: usize },
     Def,
     Codef,
-    Ctor { in_typ: Ident },
-    Dtor { on_typ: Ident },
+    Ctor { ret_typ: Ident },
+    Dtor { self_typ: Ident },
 }
 
 impl From<&cst::TypDecl> for DeclKind {

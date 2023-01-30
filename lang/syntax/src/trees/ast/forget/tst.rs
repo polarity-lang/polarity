@@ -252,11 +252,11 @@ impl Forget for tst::Exp {
                 wst::Exp::Anno { info: info.forget(), exp: exp.forget(), typ: typ.forget() }
             }
             tst::Exp::Type { info } => wst::Exp::Type { info: info.forget() },
-            tst::Exp::Match { info, name, on_exp, in_typ, body } => wst::Exp::Match {
+            tst::Exp::Match { info, name, on_exp, ret_typ, body } => wst::Exp::Match {
                 info: info.forget(),
                 name: name.clone(),
                 on_exp: on_exp.forget(),
-                in_typ: in_typ.forget(),
+                ret_typ: ret_typ.forget(),
                 body: body.forget(),
             },
             tst::Exp::Comatch { info, name, body } => {

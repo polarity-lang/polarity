@@ -39,11 +39,11 @@ where
                 typ: typ.subst(ctx, by),
             }),
             Exp::Type { info } => Rc::new(Exp::Type { info: info.clone() }),
-            Exp::Match { info, name, on_exp, in_typ, body } => Rc::new(Exp::Match {
+            Exp::Match { info, name, on_exp, ret_typ, body } => Rc::new(Exp::Match {
                 info: info.clone(),
                 name: name.clone(),
                 on_exp: on_exp.subst(ctx, by),
-                in_typ: in_typ.subst(ctx, by),
+                ret_typ: ret_typ.subst(ctx, by),
                 body: body.subst(ctx, by),
             }),
             Exp::Comatch { info, name, body } => Rc::new(Exp::Comatch {

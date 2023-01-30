@@ -96,12 +96,12 @@ fn register_type_name(ctx: &mut Ctx, type_decl: &cst::TypDecl) -> Result<(), Low
     match type_decl {
         cst::TypDecl::Data(data) => {
             for ctor in &data.ctors {
-                ctx.add_name(&ctor.name, DeclKind::Ctor { in_typ: data.name.clone() })?;
+                ctx.add_name(&ctor.name, DeclKind::Ctor { ret_typ: data.name.clone() })?;
             }
         }
         cst::TypDecl::Codata(codata) => {
             for dtor in &codata.dtors {
-                ctx.add_name(&dtor.name, DeclKind::Dtor { on_typ: codata.name.clone() })?;
+                ctx.add_name(&dtor.name, DeclKind::Dtor { self_typ: codata.name.clone() })?;
             }
         }
     }
@@ -244,7 +244,7 @@ impl Lower for cst::Dtor {
     type Target = ust::Dtor;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Dtor { info, name, params, destructee, ret_typ: in_typ } = self;
+        let cst::Dtor { info, name, params, destructee, ret_typ } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
             // If the type constructor does not take any arguments, it can be left out
@@ -280,7 +280,7 @@ impl Lower for cst::Dtor {
                     name: name.clone(),
                     params,
                     self_param,
-                    ret_typ: in_typ.lower_in_ctx(ctx)?,
+                    ret_typ: ret_typ.lower_in_ctx(ctx)?,
                 })
             })
         })
@@ -445,7 +445,7 @@ impl Lower for cst::Exp {
                     .clone()
                     .ok_or(LoweringError::UnnamedMatch { span: info.span.to_miette() })?,
                 on_exp: on_exp.lower_in_ctx(ctx)?,
-                in_typ: (),
+                ret_typ: (),
                 body: body.lower_in_ctx(ctx)?,
             }),
             cst::Exp::Comatch { info, name, body } => Ok(ust::Exp::Comatch {

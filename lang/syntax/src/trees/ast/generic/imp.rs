@@ -39,11 +39,11 @@ where
                 typ: typ.shift_in_range(range, by),
             },
             Exp::Type { info } => Exp::Type { info: info.clone() },
-            Exp::Match { info, name, on_exp, in_typ, body } => Exp::Match {
+            Exp::Match { info, name, on_exp, ret_typ, body } => Exp::Match {
                 info: info.clone(),
                 name: name.clone(),
                 on_exp: on_exp.shift_in_range(range.clone(), by),
-                in_typ: in_typ.shift_in_range(range.clone(), by),
+                ret_typ: ret_typ.shift_in_range(range.clone(), by),
                 body: body.shift_in_range(range, by),
             },
             Exp::Comatch { info, name, body } => Exp::Comatch {

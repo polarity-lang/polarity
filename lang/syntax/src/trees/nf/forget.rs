@@ -41,7 +41,7 @@ impl Forget for Neu {
                 info: info.clone(),
                 name: name.clone(),
                 on_exp: on_exp.forget(),
-                in_typ: (),
+                ret_typ: (),
                 body: body.forget(),
             },
         }
