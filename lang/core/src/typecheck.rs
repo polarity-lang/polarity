@@ -514,7 +514,7 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
     ) -> Result<Self::Target, TypeError> {
         let ust::Case { info, name, args, body } = self.inner;
         let ust::Ctor { name, params, .. } = prg.decls.ctor(name).ok_or(TypeError::Impossible {
-            message: format!("Lookup failed: {}", name),
+            message: format!("Lookup failed: {name}"),
             span: info.span.to_miette(),
         })?;
 
@@ -577,7 +577,7 @@ impl<'a> Check for WithScrutinee<'a, WithEqns<'a, ust::Cocase>> {
     ) -> Result<Self::Target, TypeError> {
         let ust::Cocase { info, name, params: params_inst, body } = self.inner.inner;
         let ust::Dtor { name, params, .. } = prg.decls.dtor(name).ok_or(TypeError::Impossible {
-            message: format!("Lookup failed: {}", name),
+            message: format!("Lookup failed: {name}"),
             span: info.span.to_miette(),
         })?;
 
@@ -704,7 +704,7 @@ impl Infer for ust::Exp {
             ust::Exp::Ctor { info, name, args } => {
                 let ust::Ctor { name, params, typ, .. } =
                     &prg.decls.ctor_or_codef(name).ok_or(TypeError::Impossible {
-                        message: format!("Lookup failed: {}", name),
+                        message: format!("Lookup failed: {name}"),
                         span: info.span.to_miette(),
                     })?;
 
@@ -721,7 +721,7 @@ impl Infer for ust::Exp {
             ust::Exp::Dtor { info, exp, name, args } => {
                 let ust::Dtor { name, params, self_param, ret_typ, .. } =
                     &prg.decls.dtor_or_def(name).ok_or(TypeError::Impossible {
-                        message: format!("Lookup failed: {}", name),
+                        message: format!("Lookup failed: {name}"),
                         span: info.span.to_miette(),
                     })?;
 

@@ -81,7 +81,7 @@ fn eval_dtor(
                 Type::Data(_) => {
                     let ust::Def { body, .. } =
                         prg.decls.def(dtor_name).ok_or(EvalError::Impossible {
-                            message: format!("Lookup failed: {}", ctor_name),
+                            message: format!("Lookup failed: {ctor_name}"),
                             span: info.span.to_miette(),
                         })?;
                     let body =
@@ -91,7 +91,7 @@ fn eval_dtor(
                 Type::Codata(_) => {
                     let ust::Codef { body, .. } =
                         prg.decls.codef(&ctor_name).ok_or(EvalError::Impossible {
-                            message: format!("Lookup failed: {}", ctor_name),
+                            message: format!("Lookup failed: {ctor_name}"),
                             span: info.span.to_miette(),
                         })?;
                     let body =
