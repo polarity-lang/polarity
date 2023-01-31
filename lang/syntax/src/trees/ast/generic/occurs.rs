@@ -27,6 +27,7 @@ impl<P: Phase> Occurs for Exp<P> {
             Exp::Type { .. } => false,
             Exp::Match { on_exp, body, .. } => on_exp.occurs(ctx, lvl) || body.occurs(ctx, lvl),
             Exp::Comatch { body, .. } => body.occurs(ctx, lvl),
+            Exp::Hole { .. } => false,
         }
     }
 }

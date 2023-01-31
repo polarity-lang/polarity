@@ -19,8 +19,6 @@ pub struct Ctx {
     decl_kinds: HashMap<Ident, DeclKind>,
     /// Accumulates top-level declarations
     decls_map: HashMap<Ident, ust::Decl>,
-    /// Mapping each type name to its impl block (if any)
-    impls: HashMap<Ident, ust::Impl>,
     /// Counts the number of entries for each De-Bruijn level
     levels: Vec<usize>,
 }
@@ -50,14 +48,6 @@ impl Ctx {
             DeclKind::Codata { arity } => *arity,
             _ => panic!("Can only query type constructor arity for declared (co)data types"),
         }
-    }
-
-    pub fn impl_block(&self, name: &Ident) -> Option<&ust::Impl> {
-        self.impls.get(name)
-    }
-
-    pub fn add_impl_block(&mut self, block: ust::Impl) {
-        self.impls.insert(block.name.clone(), block);
     }
 
     // FIXME: confusing name, rename or inline
@@ -123,7 +113,6 @@ impl Context for Ctx {
             map: HashMap::default(),
             decl_kinds: HashMap::default(),
             decls_map: HashMap::default(),
-            impls: HashMap::default(),
             levels: Vec::new(),
         }
     }

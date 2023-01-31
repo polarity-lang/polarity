@@ -10,7 +10,7 @@ impl Named for cst::Item {
     fn name(&self) -> &Ident {
         match self {
             cst::Item::Type(typ_decl) => typ_decl.name(),
-            cst::Item::Impl(cst::Impl { name, .. }) => name,
+            cst::Item::Def(def_decl) => def_decl.name(),
         }
     }
 }

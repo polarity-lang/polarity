@@ -13,6 +13,7 @@ mod ctx;
 mod de_bruijn;
 mod dec;
 mod env;
+pub mod fragments;
 pub mod latex;
 mod nf;
 mod print_to_string;

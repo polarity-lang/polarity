@@ -1,9 +1,7 @@
 codata Bool {}
 
-impl Bool {
-    codef True(): Bool {}
-    codef False(): Bool {}
-}
+codef True(): Bool {}
+codef False(): Bool {}
 
 data Nat {
     Z: Nat,
@@ -15,11 +13,9 @@ data Foo(b: Bool) {
     Baz : Foo(False),
 }
 
-impl Foo {
-    def Foo(True).foo() : Nat {
-        Bar() => Z,
-        Baz() absurd,
-    }
+def Foo(True).foo() : Nat {
+    Bar() => Z,
+    Baz() absurd,
 }
 
 Baz.foo()

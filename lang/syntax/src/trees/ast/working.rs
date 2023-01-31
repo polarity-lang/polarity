@@ -33,7 +33,6 @@ pub type Decl = generic::Decl<WST>;
 pub type Type<'a> = generic::Type<'a, WST>;
 pub type Data = generic::Data<WST>;
 pub type Codata = generic::Codata<WST>;
-pub type Impl = generic::Impl<WST>;
 pub type TypAbs = generic::TypAbs<WST>;
 pub type Ctor = generic::Ctor<WST>;
 pub type Dtor = generic::Dtor<WST>;

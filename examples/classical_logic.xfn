@@ -10,7 +10,7 @@ codata DN(a: Type) {
     DN(a).given(a: Type, x: Not(a)): False,
 }
 
-data Or(a: Type, b: Type) {
+data Or(a b: Type) {
     Left(a: Type, b: Type, x: a) : Or(a, b),
     Right(a: Type, b: Type, x: b) : Or(a, b),
 }
@@ -19,10 +19,9 @@ data Top {
     Unit,
 }
 
-impl Top {
-    def Top.contra(a: Type, prf: a, ref: Not(a)) : False {
-        Unit => ref.ret(a, prf)
-    }
+def Top.contra(a: Type, prf: a, ref: Not(a)) : False {
+    Unit => ref.ret(a, prf)
+}
 
 -- FIXME: Reenable once local matches are adjusted
 --    def Top.lem(a: Type): DN(Or(a, Not(a))) {
@@ -42,4 +41,3 @@ impl Top {
 --                )
 --        }
 --    }
-}

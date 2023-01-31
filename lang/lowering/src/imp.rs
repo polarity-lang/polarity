@@ -52,10 +52,12 @@ fn build_source(items: &[cst::Item]) -> source::Source {
                     typ_decl.set_xtors(xtors);
                 }
             },
-            cst::Item::Impl(impl_block) => {
-                let mut block = source.add_impl_block(impl_block.name.clone());
-                let defs = impl_block.decls.iter().map(|decl| decl.name().clone());
-                block.set_defs(defs);
+            cst::Item::Def(def_decl) => {
+                let type_name = match def_decl {
+                    cst::DefDecl::Def(def) => def.scrutinee.typ.name.clone(),
+                    cst::DefDecl::Codef(codef) => codef.typ.name.clone(),
+                };
+                source.add_def(type_name, def_decl.name().to_owned())
             }
         }
     }
@@ -78,9 +80,9 @@ fn register_names<'a>(
                 register_type_name(ctx, type_decl)?;
                 types.push(type_decl);
             }
-            cst::Item::Impl(impl_decl) => {
-                register_impl_meta(ctx, impl_decl)?;
-                defs.extend(impl_decl.decls.iter());
+            cst::Item::Def(def_decl) => {
+                register_def_meta(ctx, def_decl)?;
+                defs.push(def_decl);
             }
         }
     }
@@ -108,14 +110,10 @@ fn register_type_name(ctx: &mut Ctx, type_decl: &cst::TypDecl) -> Result<(), Low
     Ok(())
 }
 
-fn register_impl_meta(ctx: &mut Ctx, impl_decl: &cst::Impl) -> Result<(), LoweringError> {
-    // Add metadata of impl block to context
+fn register_def_meta(ctx: &mut Ctx, def_decl: &cst::DefDecl) -> Result<(), LoweringError> {
+    // Add metadata of definition to context
     // This does not lower any of the contents, yet
-    impl_decl.lower_in_ctx(ctx)?;
-    for def in &impl_decl.decls {
-        // Add names for all contained definitions
-        ctx.add_name(def.name(), DeclKind::from(def))?;
-    }
+    ctx.add_name(def_decl.name(), DeclKind::from(def_decl))?;
     Ok(())
 }
 
@@ -128,24 +126,6 @@ impl Lower for cst::TypDecl {
             cst::TypDecl::Codata(codata) => ust::Decl::Codata(codata.lower_in_ctx(ctx)?),
         };
         ctx.add_decl(decl)?;
-        Ok(())
-    }
-}
-
-impl Lower for cst::Impl {
-    type Target = ();
-
-    fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Impl { info, name, decls } = self;
-
-        let impl_block = ust::Impl {
-            info: info.lower_pure(),
-            name: name.clone(),
-            defs: decls.iter().map(Named::name).cloned().collect(),
-        };
-
-        ctx.add_impl_block(impl_block);
-
         Ok(())
     }
 }
@@ -180,7 +160,6 @@ impl Lower for cst::Data {
             name: name.clone(),
             typ: Rc::new(ust::TypAbs { params: params.lower_in_ctx(ctx)? }),
             ctors: ctor_names,
-            impl_block: ctx.impl_block(name).cloned(),
         })
     }
 }
@@ -202,7 +181,6 @@ impl Lower for cst::Codata {
             name: name.clone(),
             typ: Rc::new(ust::TypAbs { params: params.lower_in_ctx(ctx)? }),
             dtors: dtor_names,
-            impl_block: ctx.impl_block(name).cloned(),
         })
     }
 }
@@ -456,6 +434,7 @@ impl Lower for cst::Exp {
                     .ok_or(LoweringError::UnnamedMatch { span: info.span.to_miette() })?,
                 body: body.lower_in_ctx(ctx)?,
             }),
+            cst::Exp::Hole { info } => Ok(ust::Exp::Hole { info: info.lower_pure() }),
             cst::Exp::NatLit { info, val } => {
                 let mut out =
                     ust::Exp::Ctor { info: info.lower_pure(), name: "Z".to_owned(), args: vec![] };

@@ -3,13 +3,17 @@ use std::rc::Rc;
 use pretty::DocAllocator;
 
 use syntax::ast::*;
+use syntax::common::*;
 
 use super::theme::ThemeExt;
 use super::tokens::*;
 use super::types::*;
 use super::util::*;
 
-impl<'a, P: Phase> Print<'a> for Prg<P> {
+impl<'a, P: Phase> Print<'a> for Prg<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Prg { decls, exp } = self;
 
@@ -32,12 +36,16 @@ impl<'a, P: Phase> Print<'a> for Prg<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Decls<P> {
+impl<'a, P: Phase> Print<'a> for Decls<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let items = self.iter().map(|item| match item {
             Item::Data(data) => data.print_in_ctx(cfg, self, alloc),
             Item::Codata(codata) => codata.print_in_ctx(cfg, self, alloc),
-            Item::Impl(impl_block) => impl_block.print_in_ctx(cfg, self, alloc),
+            Item::Def(def) => def.print(cfg, alloc),
+            Item::Codef(codef) => codef.print(cfg, alloc),
         });
 
         let sep = if cfg.omit_decl_sep { alloc.line() } else { alloc.line().append(alloc.line()) };
@@ -45,7 +53,10 @@ impl<'a, P: Phase> Print<'a> for Decls<P> {
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Decl<P> {
+impl<'a, P: Phase> PrintInCtx<'a> for Decl<P>
+where
+    P::Typ: ShiftInRange,
+{
     type Ctx = Decls<P>;
 
     fn print_in_ctx(
@@ -65,7 +76,10 @@ impl<'a, P: Phase> PrintInCtx<'a> for Decl<P> {
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Data<P> {
+impl<'a, P: Phase> PrintInCtx<'a> for Item<'a, P>
+where
+    P::Typ: ShiftInRange,
+{
     type Ctx = Decls<P>;
 
     fn print_in_ctx(
@@ -74,7 +88,28 @@ impl<'a, P: Phase> PrintInCtx<'a> for Data<P> {
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Data { info: _, name, typ, ctors, impl_block: _ } = self;
+        match self {
+            Item::Data(data) => data.print_in_ctx(cfg, ctx, alloc),
+            Item::Codata(codata) => codata.print_in_ctx(cfg, ctx, alloc),
+            Item::Def(def) => def.print(cfg, alloc),
+            Item::Codef(codef) => codef.print(cfg, alloc),
+        }
+    }
+}
+
+impl<'a, P: Phase> PrintInCtx<'a> for Data<P>
+where
+    P::Typ: ShiftInRange,
+{
+    type Ctx = Decls<P>;
+
+    fn print_in_ctx(
+        &'a self,
+        cfg: &PrintCfg,
+        ctx: &'a Self::Ctx,
+        alloc: &'a Alloc<'a>,
+    ) -> Builder<'a> {
+        let Data { info: _, name, typ, ctors } = self;
 
         let head = alloc
             .keyword(DATA)
@@ -100,7 +135,10 @@ impl<'a, P: Phase> PrintInCtx<'a> for Data<P> {
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Codata<P> {
+impl<'a, P: Phase> PrintInCtx<'a> for Codata<P>
+where
+    P::Typ: ShiftInRange,
+{
     type Ctx = Decls<P>;
 
     fn print_in_ctx(
@@ -109,7 +147,7 @@ impl<'a, P: Phase> PrintInCtx<'a> for Codata<P> {
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Codata { info: _, name, typ, dtors, impl_block: _ } = self;
+        let Codata { info: _, name, typ, dtors } = self;
         let head = alloc
             .keyword(CODATA)
             .append(alloc.space())
@@ -134,38 +172,10 @@ impl<'a, P: Phase> PrintInCtx<'a> for Codata<P> {
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Impl<P> {
-    type Ctx = Decls<P>;
-
-    fn print_in_ctx(
-        &'a self,
-        cfg: &PrintCfg,
-        ctx: &'a Self::Ctx,
-        alloc: &'a Alloc<'a>,
-    ) -> Builder<'a> {
-        let Impl { info: _, name, defs } = self;
-
-        let head =
-            alloc.keyword(IMPL).append(alloc.space()).append(alloc.typ(name)).append(alloc.space());
-
-        let sep = alloc.hardline().append(alloc.hardline());
-
-        let body =
-            alloc
-                .hardline()
-                .append(alloc.intersperse(
-                    defs.iter().map(|x| ctx.map[x].print_in_ctx(cfg, ctx, alloc)),
-                    sep,
-                ))
-                .nest(INDENT)
-                .append(alloc.hardline())
-                .braces_from(cfg);
-
-        head.append(body)
-    }
-}
-
-impl<'a, P: Phase> Print<'a> for Def<P> {
+impl<'a, P: Phase> Print<'a> for Def<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Def { info: _, name, params, self_param, ret_typ, body } = self;
         let head = alloc
@@ -186,7 +196,10 @@ impl<'a, P: Phase> Print<'a> for Def<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Codef<P> {
+impl<'a, P: Phase> Print<'a> for Codef<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Codef { info: _, name, params, typ, body } = self;
         let head = alloc
@@ -205,7 +218,10 @@ impl<'a, P: Phase> Print<'a> for Codef<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Ctor<P> {
+impl<'a, P: Phase> Print<'a> for Ctor<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Ctor { info: _, name, params, typ } = self;
         alloc
@@ -218,7 +234,10 @@ impl<'a, P: Phase> Print<'a> for Ctor<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Dtor<P> {
+impl<'a, P: Phase> Print<'a> for Dtor<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Dtor { info: _, name, params, self_param, ret_typ } = self;
         self_param
@@ -233,7 +252,10 @@ impl<'a, P: Phase> Print<'a> for Dtor<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Comatch<P> {
+impl<'a, P: Phase> Print<'a> for Comatch<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Comatch { info: _, cases } = self;
         let sep = alloc.text(COMMA).append(alloc.hardline());
@@ -247,7 +269,10 @@ impl<'a, P: Phase> Print<'a> for Comatch<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Match<P> {
+impl<'a, P: Phase> Print<'a> for Match<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { info: _, cases } = self;
         let sep = alloc.text(COMMA).append(alloc.hardline());
@@ -260,7 +285,10 @@ impl<'a, P: Phase> Print<'a> for Match<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Case<P> {
+impl<'a, P: Phase> Print<'a> for Case<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Case { info: _, name, args, body } = self;
 
@@ -277,7 +305,10 @@ impl<'a, P: Phase> Print<'a> for Case<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Cocase<P> {
+impl<'a, P: Phase> Print<'a> for Cocase<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Cocase { info: _, name, params: args, body } = self;
 
@@ -294,33 +325,83 @@ impl<'a, P: Phase> Print<'a> for Cocase<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Telescope<P> {
+impl<'a, P: Phase> Print<'a> for Telescope<P>
+where
+    P::Typ: ShiftInRange,
+{
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Telescope { params } = self;
+        let mut output = alloc.nil();
+        let mut running_type: Option<&Rc<Exp<P>>> = None;
+        for Param { name, typ } in params {
+            match running_type {
+                // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
+                Some(rtype) if &rtype.shift((0, 1)) == typ => {
+                    // We are adding another parameter of the same type.
+                    output = output.append(alloc.space()).append(alloc.text(name));
+                }
+                Some(rtype) => {
+                    // We are adding another parameter with a different type,
+                    // and have to close the previous list first.
+                    output = output
+                        .append(COLON)
+                        .append(alloc.space())
+                        .append(rtype.print(cfg, alloc))
+                        .append(COMMA)
+                        .append(alloc.space());
+                    output = output.append(alloc.text(name));
+                }
+                None => {
+                    // We are adding the very first parameter.
+                    output = output.append(alloc.text(name));
+                }
+            }
+            running_type = Some(typ);
+        }
+        // Close the last parameter
+        match running_type {
+            None => {}
+            Some(rtype) => {
+                output = output.append(COLON).append(alloc.space()).append(rtype.print(cfg, alloc));
+            }
+        }
+        output.opt_parens()
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for TelescopeInst<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.params.print(cfg, alloc).opt_parens()
     }
 }
 
-impl<'a, P: Phase> Print<'a> for TelescopeInst<P> {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.params.print(cfg, alloc).opt_parens()
-    }
-}
-
-impl<'a, P: Phase> Print<'a> for Param<P> {
+impl<'a, P: Phase> Print<'a> for Param<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Param { name, typ } = self;
         alloc.text(name).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
     }
 }
 
-impl<'a, P: Phase> Print<'a> for ParamInst<P> {
+impl<'a, P: Phase> Print<'a> for ParamInst<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let ParamInst { info: _, name, typ: _ } = self;
         alloc.text(name)
     }
 }
 
-impl<'a, P: Phase> Print<'a> for SelfParam<P> {
+impl<'a, P: Phase> Print<'a> for SelfParam<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let SelfParam { info: _, name, typ } = self;
 
@@ -336,14 +417,20 @@ impl<'a, P: Phase> Print<'a> for SelfParam<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for TypApp<P> {
+impl<'a, P: Phase> Print<'a> for TypApp<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypApp { info: _, name, args: subst } = self;
         alloc.typ(name).append(subst.print(cfg, alloc).opt_parens())
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Exp<P> {
+impl<'a, P: Phase> Print<'a> for Exp<P>
+where
+    P::Typ: ShiftInRange,
+{
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Exp::Var { info: _, name, idx } => {
@@ -378,6 +465,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 .append(alloc.text(name))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
+            Exp::Hole { info: _ } => alloc.keyword(HOLE),
         }
     }
 }
@@ -388,13 +476,21 @@ impl<'a, T: Print<'a>> Print<'a> for Rc<T> {
     }
 }
 
+fn print_comma_separated<'a, T: Print<'a>>(
+    vec: &'a Vec<T>,
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a> {
+    if vec.is_empty() {
+        alloc.nil()
+    } else {
+        let sep = alloc.text(COMMA).append(alloc.space());
+        alloc.intersperse(vec.iter().map(|x| x.print(cfg, alloc)), sep)
+    }
+}
+
 impl<'a, T: Print<'a>> Print<'a> for Vec<T> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        if self.is_empty() {
-            alloc.nil()
-        } else {
-            let sep = alloc.text(COMMA).append(alloc.space());
-            alloc.intersperse(self.iter().map(|x| x.print(cfg, alloc)), sep)
-        }
+        print_comma_separated(self, cfg, alloc)
     }
 }

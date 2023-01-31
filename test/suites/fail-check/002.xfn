@@ -10,11 +10,9 @@ data Foo(b: Bool) {
     Baz : Foo(False),
 }
 
-impl Foo {
-    def Foo(True).foo() : Nat {
-        Bar() => Z,
-        Baz() absurd,
-    }
+def Foo(True).foo() : Nat {
+    Bar() => Z,
+    Baz() absurd,
 }
 
 Baz.foo()

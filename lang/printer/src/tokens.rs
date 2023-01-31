@@ -8,12 +8,12 @@ pub const COMMA: &str = ",";
 pub const COLON: &str = ":";
 pub const DOT: &str = ".";
 pub const AT: &str = "@";
+pub const HOLE: &str = "?";
 
 // Keywords
 
 pub const DATA: &str = "data";
 pub const CODATA: &str = "codata";
-pub const IMPL: &str = "impl";
 pub const DEF: &str = "def";
 pub const CODEF: &str = "codef";
 pub const MATCH: &str = "match";

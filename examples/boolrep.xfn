@@ -1,10 +1,8 @@
 data Bool { True, False }
 
-impl Bool {
-    def Bool.not: Bool {
-        True => False,
-        False => True,
-    }
+def Bool.not: Bool {
+    True => False,
+    False => True,
 }
 
 data BoolRep(x: Bool) {
@@ -12,16 +10,13 @@ data BoolRep(x: Bool) {
     FalseRep: BoolRep(False),
 }
 
-impl BoolRep {
-    def BoolRep(x).extract(x: Bool): Bool {
-        TrueRep => True,
-        FalseRep => False,
-    }
+def BoolRep(x).extract(x: Bool): Bool {
+    TrueRep => True,
+    FalseRep => False,
 }
 
 data Top { Unit }
 
-impl Top {
 -- FIXME: Reenable once local matches are adjusted
 --    def Top.flipRep(x: Bool, rep: BoolRep(x)): BoolRep(x.not) {
 --        Unit => rep.match _ {
@@ -33,6 +28,5 @@ impl Top {
 --    def Top.example: Bool {
 --        Unit => Unit.flipRep(True, TrueRep).extract(False)
 --    }
-}
 
 -- Unit.example

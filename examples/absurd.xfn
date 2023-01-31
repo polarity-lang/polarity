@@ -7,10 +7,8 @@ data NotZero(n: Nat) {
     SNotZero(n: Nat) : NotZero(S(n))
 }
 
-impl NotZero {
-    def NotZero(Z).elim_zero(a: Type) : a {
-        SNotZero(n) absurd
-    }
+def NotZero(Z).elim_zero(a: Type) : a {
+    SNotZero(n) absurd
 }
 
 data Bot { }
@@ -20,9 +18,7 @@ data Foo(a: Type) {
     Absurd(x: NotZero(Z)) : Foo(Bot)
 }
 
-impl Foo {
-    def Foo(a).elim(a: Type) : a {
-        Ok(a, x) => x,
-        Absurd(x) => x.elim_zero(Bot)
-    }
+def Foo(a).elim(a: Type) : a {
+    Ok(a, x) => x,
+    Absurd(x) => x.elim_zero(Bot)
 }

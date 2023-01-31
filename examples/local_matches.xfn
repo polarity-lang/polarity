@@ -3,38 +3,28 @@ data Nat {
     S(n: Nat)
 }
 
-impl Nat {
-
-}
-
 data Bool {
     True,
     False
 }
 
-codata Fun(a: Type, b: Type) {
+codata Fun(a b: Type) {
     Fun(a, b).apply(a: Type, b: Type, x: a) : b
-}
-
-impl Fun {
-
 }
 
 data Top {
     Unit
 }
 
-impl Top {
-    def Top.top_is_zero(n: Nat): Bool {
-        Unit => n.match is_zero {
-            Z => True,
-            S(n) => False,
-        }
+def Top.top_is_zero(n: Nat): Bool {
+    Unit => n.match is_zero {
+        Z => True,
+        S(n) => False,
     }
+}
 
-    def Top.top_id(a: Type): Fun(a, a) {
-        Unit => comatch Id {
-            apply(a, b, x) => x
-        }
+def Top.top_id(a: Type): Fun(a, a) {
+    Unit => comatch Id {
+        apply(a, b, x) => x
     }
 }

@@ -176,7 +176,7 @@ impl Infer for ust::Data {
     type Target = tst::Data;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Data { info, name, typ, ctors, impl_block } = self;
+        let ust::Data { info, name, typ, ctors } = self;
 
         let typ_out = typ.infer(prg, ctx)?;
 
@@ -185,7 +185,6 @@ impl Infer for ust::Data {
             name: name.clone(),
             typ: typ_out,
             ctors: ctors.clone(),
-            impl_block: impl_block.clone().map(|block| block.into()),
         })
     }
 }
@@ -195,7 +194,7 @@ impl Infer for ust::Codata {
     type Target = tst::Codata;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Codata { info, name, typ, dtors, impl_block } = self;
+        let ust::Codata { info, name, typ, dtors } = self;
 
         let typ_out = typ.infer(prg, ctx)?;
 
@@ -204,7 +203,6 @@ impl Infer for ust::Codata {
             name: name.clone(),
             typ: typ_out,
             dtors: dtors.clone(),
-            impl_block: impl_block.clone().map(|block| block.into()),
         })
     }
 }
@@ -662,6 +660,7 @@ impl Check for ust::Exp {
                     body: body_out,
                 }
             }
+            ust::Exp::Hole { info } => tst::Exp::Hole { info: info.with_type(t.clone()) },
             _ => {
                 let actual = self.infer(prg, ctx)?;
                 actual.typ().convert(&t)?;

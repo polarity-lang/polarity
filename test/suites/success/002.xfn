@@ -2,8 +2,6 @@ codata Fun(a: Type, b: Type) {
     Fun(a, b).apply(a: Type, b: Type, x: a) : b
 }
 
-impl Fun {
-    codef Compose(a: Type, b: Type, c: Type, f: Fun(a, b), g: Fun(b, c)) : Fun(a, c) {
-        apply(a', c', x) => g.apply(b, c, f.apply(a, b, x: a') : b) : c'
-    }
+codef Compose(a: Type, b: Type, c: Type, f: Fun(a, b), g: Fun(b, c)) : Fun(a, c) {
+    apply(a', c', x) => g.apply(b, c, f.apply(a, b, x: a') : b) : c'
 }

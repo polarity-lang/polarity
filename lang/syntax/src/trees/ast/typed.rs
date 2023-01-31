@@ -34,7 +34,6 @@ pub type Decl = generic::Decl<TST>;
 pub type Type<'a> = generic::Type<'a, TST>;
 pub type Data = generic::Data<TST>;
 pub type Codata = generic::Codata<TST>;
-pub type Impl = generic::Impl<TST>;
 pub type TypAbs = generic::TypAbs<TST>;
 pub type Ctor = generic::Ctor<TST>;
 pub type Dtor = generic::Dtor<TST>;
@@ -66,12 +65,6 @@ impl Typ {
 impl From<Rc<Exp>> for Typ {
     fn from(exp: Rc<Exp>) -> Self {
         Self(exp)
-    }
-}
-
-impl From<untyped::Impl> for Impl {
-    fn from(untyped::Impl { info, name, defs }: untyped::Impl) -> Self {
-        Self { info: info.into(), name, defs }
     }
 }
 

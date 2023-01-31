@@ -96,7 +96,7 @@ impl LanguageServer for Server {
         let item = span.and_then(|span| index.item_at_span(span));
 
         if let Some(item) = item {
-            let Xfunc { title, edits } = index.xfunc(item.name()).unwrap();
+            let Xfunc { title, edits } = index.xfunc(item.type_name()).unwrap();
             let edits = edits
                 .into_iter()
                 .map(|edit| TextEdit {

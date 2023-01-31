@@ -30,7 +30,6 @@ pub type Decl = generic::Decl<UST>;
 pub type Type<'a> = generic::Type<'a, UST>;
 pub type Data = generic::Data<UST>;
 pub type Codata = generic::Codata<UST>;
-pub type Impl = generic::Impl<UST>;
 pub type TypAbs = generic::TypAbs<UST>;
 pub type Ctor = generic::Ctor<UST>;
 pub type Dtor = generic::Dtor<UST>;

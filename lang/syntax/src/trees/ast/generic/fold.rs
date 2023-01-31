@@ -26,9 +26,8 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_decl_dtor(&mut self, dtor: O::Dtor) -> O::Decl;
     fn fold_decl_def(&mut self, def: O::Def) -> O::Decl;
     fn fold_decl_codef(&mut self, codef: O::Codef) -> O::Decl;
-    fn fold_data(&mut self, info: O::Info, name: Ident, typ: O::TypAbs, ctors: Vec<Ident>, impl_block: Option<O::Impl>) -> O::Data;
-    fn fold_codata(&mut self, info: O::Info, name: Ident, typ: O::TypAbs, dtors: Vec<Ident>, impl_block: Option<O::Impl>) -> O::Codata;
-    fn fold_impl(&mut self, info: O::Info, name: Ident, defs: Vec<Ident>) -> O::Impl;
+    fn fold_data(&mut self, info: O::Info, name: Ident, typ: O::TypAbs, ctors: Vec<Ident>) -> O::Data;
+    fn fold_codata(&mut self, info: O::Info, name: Ident, typ: O::TypAbs, dtors: Vec<Ident>) -> O::Codata;
     fn fold_typ_abs(&mut self, params: O::Telescope) -> O::TypAbs;
     fn fold_ctor(&mut self, info: O::Info, name: Ident, params: O::Telescope, typ: O::TypApp) -> O::Ctor;
     fn fold_dtor(&mut self, info: O::Info, name: Ident, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp) -> O::Dtor;
@@ -47,6 +46,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
     fn fold_exp_match(&mut self, info: O::TypeAppInfo, name: Ident, on_exp: O::Exp, ret_typ: O::Typ, body: O::Match) -> O::Exp;
     fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, name: Ident, body: O::Comatch) -> O::Exp;
+    fn fold_exp_hole(&mut self, info: O::TypeInfo) -> O::Exp;
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
         I: IntoIterator<Item=Param<P>>,
@@ -86,7 +86,6 @@ pub trait Out {
     type Decl;
     type Data;
     type Codata;
-    type Impl;
     type TypAbs;
     type Ctor;
     type Dtor;
@@ -121,7 +120,6 @@ impl<P: Phase> Out for Id<P> {
     type Decl = Decl<P>;
     type Data = Data<P>;
     type Codata = Codata<P>;
-    type Impl = Impl<P>;
     type TypAbs = TypAbs<P>;
     type Ctor = Ctor<P>;
     type Dtor = Dtor<P>;
@@ -155,7 +153,6 @@ impl<T> Out for Const<T> {
     type Decl = T;
     type Data = T;
     type Codata = T;
-    type Impl = T;
     type TypAbs = T;
     type Ctor = T;
     type Dtor = T;
@@ -294,11 +291,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Data<P> {
     where
         F: Folder<P, O>,
     {
-        let Data { info, name, typ, ctors, impl_block } = self;
+        let Data { info, name, typ, ctors } = self;
         let typ = typ.fold(f);
-        let impl_block = impl_block.fold(f);
         let info = f.fold_info(info);
-        f.fold_data(info, name, typ, ctors, impl_block)
+        f.fold_data(info, name, typ, ctors)
     }
 }
 
@@ -309,24 +305,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Codata<P> {
     where
         F: Folder<P, O>,
     {
-        let Codata { info, name, typ, dtors, impl_block } = self;
+        let Codata { info, name, typ, dtors } = self;
         let typ = typ.fold(f);
-        let impl_block = impl_block.fold(f);
         let info = f.fold_info(info);
-        f.fold_codata(info, name, typ, dtors, impl_block)
-    }
-}
-
-impl<P: Phase, O: Out> Fold<P, O> for Impl<P> {
-    type Out = O::Impl;
-
-    fn fold<F>(self, f: &mut F) -> Self::Out
-    where
-        F: Folder<P, O>,
-    {
-        let Impl { info, name, defs } = self;
-        let info = f.fold_info(info);
-        f.fold_impl(info, name, defs)
+        f.fold_codata(info, name, typ, dtors)
     }
 }
 
@@ -559,6 +541,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
                 let info = f.fold_type_app_info(info);
                 let body = body.fold(f);
                 f.fold_exp_comatch(info, name, body)
+            }
+            Exp::Hole { info } => {
+                let info = f.fold_type_info(info);
+                f.fold_exp_hole(info)
             }
         }
     }

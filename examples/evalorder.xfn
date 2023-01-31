@@ -3,32 +3,28 @@ data Bool {
     False
 }
 
-codata Fun(a: Type, b: Type) {
+codata Fun(a b: Type) {
     Fun(a, b).apply(a: Type, b: Type, x: a) : b
 }
 
-impl Fun {
-    codef Ignore(y: Bool): Fun(Bool, Bool) {
-        apply(a, b, x) => x
-    }
+codef Ignore(y: Bool): Fun(Bool, Bool) {
+    apply(a, b, x) => x
 }
 
 data Top { Unit }
 
-impl Top {
-    def Top.diverge : Bool {
-        Unit => Unit.diverge
-    }
+def Top.diverge : Bool {
+    Unit => Unit.diverge
+}
 
-    def Top.before : Fun(Bool, Bool) {
-        Unit => Ignore(Unit.diverge)
-    }
+def Top.before : Fun(Bool, Bool) {
+    Unit => Ignore(Unit.diverge)
+}
 
-    def Top.after : Fun(Bool, Bool) {
-        Unit =>
-            -- let y = Unit.diverge in
-            comatch Ignore2 {
-                apply(a, b, x) => x
-            }
-    }
+def Top.after : Fun(Bool, Bool) {
+    Unit =>
+        -- let y = Unit.diverge in
+        comatch Ignore2 {
+            apply(a, b, x) => x
+        }
 }

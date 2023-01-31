@@ -46,14 +46,13 @@ impl Forget for wst::Data {
     type Target = ust::Data;
 
     fn forget(&self) -> Self::Target {
-        let wst::Data { info, name, typ, ctors, impl_block } = self;
+        let wst::Data { info, name, typ, ctors } = self;
 
         ust::Data {
             info: info.forget(),
             name: name.clone(),
             typ: typ.forget(),
             ctors: ctors.clone(),
-            impl_block: impl_block.forget(),
         }
     }
 }
@@ -62,25 +61,14 @@ impl Forget for wst::Codata {
     type Target = ust::Codata;
 
     fn forget(&self) -> Self::Target {
-        let wst::Codata { info, name, typ, dtors, impl_block } = self;
+        let wst::Codata { info, name, typ, dtors } = self;
 
         ust::Codata {
             info: info.forget(),
             name: name.clone(),
             typ: typ.forget(),
             dtors: dtors.clone(),
-            impl_block: impl_block.forget(),
         }
-    }
-}
-
-impl Forget for wst::Impl {
-    type Target = ust::Impl;
-
-    fn forget(&self) -> Self::Target {
-        let wst::Impl { info, name, defs } = self;
-
-        ust::Impl { info: info.forget(), name: name.clone(), defs: defs.clone() }
     }
 }
 
@@ -262,6 +250,7 @@ impl Forget for wst::Exp {
             wst::Exp::Comatch { info, name, body } => {
                 ust::Exp::Comatch { info: info.forget(), name: name.clone(), body: body.forget() }
             }
+            wst::Exp::Hole { info } => ust::Exp::Hole { info: info.forget() },
         }
     }
 }

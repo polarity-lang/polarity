@@ -56,12 +56,14 @@ impl<P: Phase> Decls<P> {
 
     pub fn iter(&self) -> impl Iterator<Item = Item<'_, P>> {
         self.source.iter().map(|item| match item {
-            source::Item::Impl(impl_block) => {
-                Item::Impl(self.map[&impl_block.name].impl_block().unwrap())
-            }
             source::Item::Type(type_decl) => match &self.map[&type_decl.name] {
                 Decl::Data(data) => Item::Data(data),
                 Decl::Codata(codata) => Item::Codata(codata),
+                _ => unreachable!(),
+            },
+            source::Item::Def(def_decl) => match &self.map[&def_decl.name] {
+                Decl::Def(def) => Item::Def(def),
+                Decl::Codef(codef) => Item::Codef(codef),
                 _ => unreachable!(),
             },
         })
@@ -81,6 +83,14 @@ impl<P: Phase> Decls<P> {
             .type_decl_for_xtor(name)
             .unwrap_or_else(|| self.source.type_decl_for_xdef(name).unwrap());
         self.typ(&type_decl.name)
+    }
+
+    pub fn xtors_for_type(&self, name: &str) -> Vec<Ident> {
+        self.source.xtors_for_type(name)
+    }
+
+    pub fn xdefs_for_type(&self, name: &str) -> Vec<Ident> {
+        self.source.xdefs_for_type(name)
     }
 
     pub fn def(&self, name: &str) -> &Def<P> {
@@ -132,7 +142,8 @@ impl<P: Phase> Decls<P> {
 pub enum Item<'a, P: Phase> {
     Data(&'a Data<P>),
     Codata(&'a Codata<P>),
-    Impl(&'a Impl<P>),
+    Def(&'a Def<P>),
+    Codef(&'a Codef<P>),
 }
 
 #[derive(Debug, Clone)]
@@ -167,23 +178,12 @@ pub enum Decl<P: Phase> {
     Codef(Codef<P>),
 }
 
-impl<P: Phase> Decl<P> {
-    fn impl_block(&self) -> Option<&Impl<P>> {
-        match self {
-            Decl::Data(data) => data.impl_block.as_ref(),
-            Decl::Codata(codata) => codata.impl_block.as_ref(),
-            _ => None,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Data<P: Phase> {
     pub info: P::Info,
     pub name: Ident,
     pub typ: Rc<TypAbs<P>>,
     pub ctors: Vec<Ident>,
-    pub impl_block: Option<Impl<P>>,
 }
 
 #[derive(Debug, Clone)]
@@ -192,14 +192,6 @@ pub struct Codata<P: Phase> {
     pub name: Ident,
     pub typ: Rc<TypAbs<P>>,
     pub dtors: Vec<Ident>,
-    pub impl_block: Option<Impl<P>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Impl<P: Phase> {
-    pub info: P::Info,
-    pub name: Ident,
-    pub defs: Vec<Ident>,
 }
 
 #[derive(Debug, Clone)]
@@ -393,6 +385,10 @@ pub enum Exp<P: Phase> {
         // TODO: Ignore this field for PartialEq, Hash?
         body: Comatch<P>,
     },
+    Hole {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: P::TypeInfo,
+    },
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope
@@ -461,10 +457,6 @@ impl<P: Phase> HasPhase for Data<P> {
 }
 
 impl<P: Phase> HasPhase for Codata<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Impl<P> {
     type Phase = P;
 }
 

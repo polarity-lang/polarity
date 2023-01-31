@@ -40,14 +40,11 @@ pub trait Mapper<P: Phase> {
     fn map_decl_codef(&mut self, codef: Codef<P>) -> Decl<P> {
         Decl::Codef(codef)
     }
-    fn map_data(&mut self, info: P::Info, name: Ident, typ: Rc<TypAbs<P>>, ctors: Vec<Ident>, impl_block: Option<Impl<P>>) -> Data<P> {
-        Data { info, name, typ, ctors, impl_block }
+    fn map_data(&mut self, info: P::Info, name: Ident, typ: Rc<TypAbs<P>>, ctors: Vec<Ident>) -> Data<P> {
+        Data { info, name, typ, ctors }
     }
-    fn map_codata(&mut self, info: P::Info, name: Ident, typ: Rc<TypAbs<P>>, dtors: Vec<Ident>, impl_block: Option<Impl<P>>) -> Codata<P> {
-        Codata { info, name, typ, dtors, impl_block }
-    }
-    fn map_impl(&mut self, info: P::Info, name: Ident, defs: Vec<Ident>) -> Impl<P> {
-        Impl { info, name, defs }
+    fn map_codata(&mut self, info: P::Info, name: Ident, typ: Rc<TypAbs<P>>, dtors: Vec<Ident>) -> Codata<P> {
+        Codata { info, name, typ, dtors }
     }
     fn map_typ_abs(&mut self, params: Telescope<P>) -> TypAbs<P> {
         TypAbs { params }
@@ -102,6 +99,9 @@ pub trait Mapper<P: Phase> {
     }
     fn map_exp_comatch(&mut self, info: P::TypeAppInfo, name: Ident, body: Comatch<P>) -> Exp<P> {
         Exp::Comatch { info, name, body }
+    }
+    fn map_exp_hole(&mut self, info: P::TypeInfo) -> Exp<P> {
+        Exp::Hole { info }
     }
     fn map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
@@ -208,16 +208,12 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_decl_codef(codef)
     }
 
-    fn fold_data(&mut self, info: <Id<P> as Out>::Info, name: Ident, typ: <Id<P> as Out>::TypAbs, ctors: Vec<Ident>, impl_block: Option<<Id<P> as Out>::Impl>) -> <Id<P> as Out>::Data {
-        self.map_data(info, name, Rc::new(typ), ctors, impl_block)
+    fn fold_data(&mut self, info: <Id<P> as Out>::Info, name: Ident, typ: <Id<P> as Out>::TypAbs, ctors: Vec<Ident>) -> <Id<P> as Out>::Data {
+        self.map_data(info, name, Rc::new(typ), ctors)
     }
 
-    fn fold_codata(&mut self, info: <Id<P> as Out>::Info, name: Ident, typ: <Id<P> as Out>::TypAbs, dtors: Vec<Ident>, impl_block: Option<<Id<P> as Out>::Impl>) -> <Id<P> as Out>::Codata {
-        self.map_codata(info, name, Rc::new(typ), dtors, impl_block)
-    }
-
-    fn fold_impl(&mut self, info: <Id<P> as Out>::Info, name: Ident, defs: Vec<Ident>) -> <Id<P> as Out>::Impl {
-        self.map_impl(info, name, defs)
+    fn fold_codata(&mut self, info: <Id<P> as Out>::Info, name: Ident, typ: <Id<P> as Out>::TypAbs, dtors: Vec<Ident>) -> <Id<P> as Out>::Codata {
+        self.map_codata(info, name, Rc::new(typ), dtors)
     }
 
     fn fold_typ_abs(&mut self, params: <Id<P> as Out>::Telescope) -> <Id<P> as Out>::TypAbs {
@@ -290,6 +286,10 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
 
     fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_comatch(info, name, body))
+    }
+
+    fn fold_exp_hole(&mut self, info: <Id<P> as Out>::TypeInfo) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_hole(info))
     }
 
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X

@@ -1,25 +1,21 @@
 
-data Eq (a: Type, x: a, y: a) {
+data Eq (a: Type, x y: a) {
     Refl(a: Type, x: a) : Eq(a, x, x)
 }
 
-impl Eq {
-    def Eq(a, x, y).sym(a: Type, x: a, y: a) : Eq(a, y, x) {
-        Refl(a, x) => Refl(a, x)
-    }
+def Eq(a, x, y).sym(a: Type, x: a, y: a) : Eq(a, y, x) {
+    Refl(a, x) => Refl(a, x)
 }
 
-codata Fun(a: Type, b: Type) {
+codata Fun(a b: Type) {
     Fun(a, b).apply(a: Type, b: Type, x: a) : b
 }
 
 data Bool { True, False }
 
-impl Bool {
-    def Bool.then_else(a: Type, then: a, else: a): a {
-        True => then,
-        False => else,
-    }
+def Bool.then_else(a: Type, then else: a): a {
+    True => then,
+    False => else,
 }
 
 data Nat {
@@ -27,63 +23,47 @@ data Nat {
     S(n: Nat)
 }
 
-impl Nat {
-    def Nat.add(y: Nat) : Nat {
-        Z => y,
-        S(x') => S(x'.add(y)),
-    }
+def Nat.add(y: Nat) : Nat {
+    Z => y,
+    S(x') => S(x'.add(y)),
+}
 
-    def Nat.eq(y: Nat): Bool {
-        Z => y.match _ {
-            Z => True,
-            S(_) => False,
-        },
-        S(x) => y.match _ {
-            Z => False,
-            S(y') => x.eq(y')
-        }
-    }
-
-    def Nat.geq(y: Nat): Bool {
-        Z => y.match _ {
-            Z => True,
-            S(_) => False,
-        },
-        S(x) => y.match _ {
-            Z => True,
-            S(y') => x.geq(y')
-        }
+def Nat.eq(y: Nat): Bool {
+    Z => y.match _ {
+        Z => True,
+        S(_) => False,
+    },
+    S(x) => y.match _ {
+        Z => False,
+        S(y') => x.eq(y')
     }
 }
 
-data Top { Unit }
-
-impl Top {
-    def Top.todo(a: Type): a {
-        Unit => Unit.todo(a)
+def Nat.geq(y: Nat): Bool {
+    Z => y.match _ {
+        Z => True,
+        S(_) => False,
+    },
+    S(x) => y.match _ {
+        Z => True,
+        S(y') => x.geq(y')
     }
 }
 
 data Typ {
-    FunT(t1: Typ, t2: Typ),
+    FunT(t1 t2: Typ),
     VarT(x: Nat),
 }
-
-impl Typ {}
 
 data Ctx {
     Nil,
     Cons(t: Typ, ts: Ctx),
 }
 
-impl Ctx {}
-
 data Elem(x: Nat, t: Typ, ctx: Ctx) {
     Here(t: Typ, ts: Ctx): Elem(Z, t, Cons(t, ts)),
     There(x: Nat, t: Typ, t2: Typ, ts: Ctx, prf: Elem(x, t, ts)): Elem(S(x), t, Cons(t2, ts)),
 }
-
-impl Elem {}
 
 data HasType(ctx: Ctx, e: Exp, t: Typ) {
     TVar(ctx: Ctx, x: Nat, t: Typ, elem: Elem(x, t, ctx)) : HasType(ctx, Var(x), t),
@@ -93,66 +73,56 @@ data HasType(ctx: Ctx, e: Exp, t: Typ) {
          e2_t: HasType(ctx, e2, t1)): HasType(ctx, App(e1, e2), t2),
 }
 
-impl HasType {}
-
 data Exp {
     Var(x: Nat),
     Lam(body: Exp),
     App(lhs: Exp, rhs: Exp)
 }
 
-data Eval(e1: Exp, e2: Exp) {
-    EBeta(e1: Exp, e2: Exp): Eval(App(Lam(e1), e2), e1.subst(0, e2)),
-    ECongApp1(e1: Exp, e1': Exp, h: Eval(e1, e1'), e2: Exp): Eval(App(e1, e2), App(e1', e2)),
-    ECongApp2(e1: Exp, e2: Exp, e2': Exp, h: Eval(e2, e2')): Eval(App(e1, e2), App(e1, e2')),
-    ECongLam(e1: Exp, e2: Exp, h: Eval(e1, e2)): Eval(Lam(e1), Lam(e2)),
+data Eval(e1 e2: Exp) {
+    EBeta(e1 e2: Exp): Eval(App(Lam(e1), e2), e1.subst(0, e2)),
+    ECongApp1(e1 e1': Exp, h: Eval(e1, e1'), e2: Exp): Eval(App(e1, e2), App(e1', e2)),
+    ECongApp2(e1 e2 e2': Exp, h: Eval(e2, e2')): Eval(App(e1, e2), App(e1, e2')),
+    ECongLam(e1 e2: Exp, h: Eval(e1, e2)): Eval(Lam(e1), Lam(e2)),
 }
-
-impl Eval {}
 
 data IsValue(e: Exp) {
     VVar(x: Nat): IsValue(Var(x)),
     VLam(e: Exp): IsValue(Lam(e)),
 }
 
-impl IsValue {}
-
 data Progress(e: Exp) {
     PVal(e: Exp, h: IsValue(e)): Progress(e),
-    PStep(e1: Exp, e2: Exp, h: Eval(e1, e2)): Progress(e1),
+    PStep(e1 e2: Exp, h: Eval(e1, e2)): Progress(e1),
 }
 
-impl Progress {}
+def Exp.shift(c: Nat): Exp {
+    Var(x) => Var(x.geq(c).then_else(Nat, S(x), x)),
+    Lam(e) => Lam(e.shift(S(c))),
+    App(e1, e2) => App(e1.shift(c), e2.shift(c)),
+}
 
-impl Exp {
-    def Exp.shift(c: Nat): Exp {
-        Var(x) => Var(x.geq(c).then_else(Nat, S(x), x)),
-        Lam(e) => Lam(e.shift(S(c))),
-        App(e1, e2) => App(e1.shift(c), e2.shift(c)),
-    }
-
-    def Exp.subst(v: Nat, by: Exp): Exp {
-        Var(x) => x.eq(v).then_else(Exp, by, Var(x)),
-        Lam(e) => Lam(e.subst(S(v), by.shift(0))),
-        App(e1, e2) => App(e1.subst(v, by), e2.subst(v, by)),
-    }
+def Exp.subst(v: Nat, by: Exp): Exp {
+    Var(x) => x.eq(v).then_else(Exp, by, Var(x)),
+    Lam(e) => Lam(e.subst(S(v), by.shift(0))),
+    App(e1, e2) => App(e1.subst(v, by), e2.subst(v, by)),
+}
 
 -- FIXME: Reenable once substitution for self is implemented
 --    def Exp.progress(
 --        ctx: Ctx, t: Typ,
 --    ): Fun(HasType(ctx, self, t), Progress(self))
 --    {
---        Var(x) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
---        Lam(_) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
---        App(_, _) => Unit.todo(Fun(HasType(ctx, self, t), Progress(self))),
+--        Var(x) => ?,
+--        Lam(_) => ?,
+--        App(_, _) => ?,
 --    }
 --
 --    def Exp.preservation(
 --        ctx: Ctx, e2: Exp, t: Typ,
 --    ): Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))
 --    {
---        Var(_) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
---        Lam(_) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
---        App(_, _) => Unit.todo(Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))),
+--        Var(_) => ?,
+--        Lam(_) => ?,
+--        App(_, _) => ?,
 --    }
-}

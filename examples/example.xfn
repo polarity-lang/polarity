@@ -3,16 +3,14 @@ data Nat {
     S(n: Nat),
 }
 
-impl Nat {
-    def Nat.add(y: Nat) : Nat {
-        Z => y,
-        S(x') => S(x'.add(y)),
-    }
+def Nat.add(y: Nat) : Nat {
+    Z => y,
+    S(x') => S(x'.add(y)),
 }
 
 data Vec(n: Nat) {
     Nil : Vec(Z),
-    Cons(n: Nat, x: Nat, xs: Vec(n)) : Vec(S(n)),
+    Cons(n x: Nat, xs: Vec(n)) : Vec(S(n)),
 }
 
 codata Stream {
