@@ -94,45 +94,45 @@ impl<P: Phase> Decls<P> {
     }
 
     pub fn def(&self, name: &str) -> Option<&Def<P>> {
-        match &self.map[name] {
-            Decl::Def(def) => Some(def),
+        match &self.map.get(name) {
+            Some(Decl::Def(def)) => Some(def),
             _ => None,
         }
     }
 
     pub fn codef(&self, name: &str) -> Option<&Codef<P>> {
-        match &self.map[name] {
-            Decl::Codef(codef) => Some(codef),
+        match &self.map.get(name) {
+            Some(Decl::Codef(codef)) => Some(codef),
             _ => None,
         }
     }
 
     pub fn ctor_or_codef(&self, name: &str) -> Option<Ctor<P>> {
-        match &self.map[name] {
-            Decl::Ctor(ctor) => Some(ctor.clone()),
-            Decl::Codef(codef) => Some(codef.to_ctor()),
+        match &self.map.get(name) {
+            Some(Decl::Ctor(ctor)) => Some(ctor.clone()),
+            Some(Decl::Codef(codef)) => Some(codef.to_ctor()),
             _ => None,
         }
     }
 
     pub fn dtor_or_def(&self, name: &str) -> Option<Dtor<P>> {
-        match &self.map[name] {
-            Decl::Dtor(dtor) => Some(dtor.clone()),
-            Decl::Def(def) => Some(def.to_dtor()),
+        match &self.map.get(name) {
+            Some(Decl::Dtor(dtor)) => Some(dtor.clone()),
+            Some(Decl::Def(def)) => Some(def.to_dtor()),
             _ => None,
         }
     }
 
     pub fn ctor(&self, name: &str) -> Option<&Ctor<P>> {
-        match &self.map[name] {
-            Decl::Ctor(ctor) => Some(ctor),
+        match &self.map.get(name) {
+            Some(Decl::Ctor(ctor)) => Some(ctor),
             _ => None,
         }
     }
 
     pub fn dtor(&self, name: &str) -> Option<&Dtor<P>> {
-        match &self.map[name] {
-            Decl::Dtor(dtor) => Some(dtor),
+        match &self.map.get(name) {
+            Some(Decl::Dtor(dtor)) => Some(dtor),
             _ => None,
         }
     }
