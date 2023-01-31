@@ -69,6 +69,14 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
+    #[error("Couldn't find Dtor or Def {dtor}")]
+    DtorOrDefLookup { dtor: String, span: Option<SourceSpan> },
+    #[error("Couldn't find Dtor {dtor}")]
+    DtorLookup { dtor: String, span: Option<SourceSpan> },
+    #[error("Couldn't find Ctor or Codef {ctor}")]
+    CtorOrCodefLookup { ctor: String, span: Option<SourceSpan> },
+    #[error("Couldn't find Ctor {ctor}")]
+    CtorLookup { ctor: String, span: Option<SourceSpan> },
     // TODO: Add span
     #[error(transparent)]
     Unify(#[from] UnifyError),
@@ -138,6 +146,10 @@ pub enum NormalizeError {
 pub enum EvalError {
     #[error("Trying to evaluate hole of type {typ}")]
     EvalHole { typ: String, span: Option<SourceSpan> },
+    #[error("Couldn't find definition {def}")]
+    DefLookup { def: String, span: Option<SourceSpan> },
+    #[error("Couldn't find codefinition {codef}")]
+    CodefLookup { codef: String, span: Option<SourceSpan> },
 }
 
 #[derive(Error, Diagnostic, Debug)]

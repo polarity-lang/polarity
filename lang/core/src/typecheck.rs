@@ -387,7 +387,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
             .map(|case| {
                 // Build equations for this case
                 let ust::Ctor { typ: ust::TypApp { args: def_args, .. }, params, .. } =
-                    prg.decls.ctor(&case.name);
+                    prg.decls.ctor(&case.name).unwrap();
 
                 let def_args_nf = LevelCtx::empty().bind_iter(params.params.iter(), |ctx| {
                     def_args.normalize(prg, &mut ctx.env())
@@ -468,7 +468,7 @@ impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
                     ret_typ,
                     params,
                     ..
-                } = prg.decls.dtor(&case.name);
+                } = prg.decls.dtor(&case.name).unwrap();
 
                 let def_args_nf = LevelCtx::empty().bind_iter(params.params.iter(), |ctx| {
                     def_args.normalize(prg, &mut ctx.env())
@@ -513,7 +513,8 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
         let ust::Case { info, name, args, body } = self.inner;
-        let ust::Ctor { name, params, .. } = prg.decls.ctor(name);
+        let ust::Ctor { name, params, .. } =
+            prg.decls.ctor(name).ok_or(TypeError::CtorLookup { ctor: name.clone(), span: None })?;
 
         args.check_telescope(prg, name, ctx, params, |ctx, args_out| {
             let body_out = match body {
@@ -573,7 +574,8 @@ impl<'a> Check for WithScrutinee<'a, WithEqns<'a, ust::Cocase>> {
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
         let ust::Cocase { info, name, params: params_inst, body } = self.inner.inner;
-        let ust::Dtor { name, params, .. } = prg.decls.dtor(name);
+        let ust::Dtor { name, params, .. } =
+            prg.decls.dtor(name).ok_or(TypeError::DtorLookup { dtor: name.clone(), span: None })?;
 
         params_inst.check_telescope(prg, name, ctx, params, |ctx, args_out| {
             let body_out = match body {
@@ -696,7 +698,10 @@ impl Infer for ust::Exp {
                 })
             }
             ust::Exp::Ctor { info, name, args } => {
-                let ust::Ctor { name, params, typ, .. } = &prg.decls.ctor_or_codef(name);
+                let ust::Ctor { name, params, typ, .. } = &prg
+                    .decls
+                    .ctor_or_codef(name)
+                    .ok_or(TypeError::CtorOrCodefLookup { ctor: name.clone(), span: None })?;
 
                 let args_out = args.check_args(prg, name, ctx, params)?;
                 let typ_out = typ.subst_under_ctx(vec![params.len()].into(), &&[args][..]).to_exp();
@@ -709,8 +714,10 @@ impl Infer for ust::Exp {
                 })
             }
             ust::Exp::Dtor { info, exp, name, args } => {
-                let ust::Dtor { name, params, self_param, ret_typ, .. } =
-                    &prg.decls.dtor_or_def(name);
+                let ust::Dtor { name, params, self_param, ret_typ, .. } = &prg
+                    .decls
+                    .dtor_or_def(name)
+                    .ok_or(TypeError::DtorOrDefLookup { dtor: name.clone(), span: None })?;
 
                 let args_out = args.check_args(prg, name, ctx, params)?;
 
