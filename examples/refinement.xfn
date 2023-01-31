@@ -33,10 +33,10 @@ def Bool.not: Bool {
     False => True,
 }
 
--- def Bool.not_inverse: Eq(Bool, self, self.not.not) {
---     True => Refl(Bool, True),
---     False => Refl(Bool, False),
--- }
+def (self: Bool).not_inverse: Eq(Bool, self, self.not.not) {
+    True => Refl(Bool, True),
+    False => Refl(Bool, False),
+}
 
 -- codata Bool {
 --     (self: Bool).not_self_inverse: Eq(Bool, self, self.not.not)
@@ -45,4 +45,3 @@ def Bool.not: Bool {
 -- codef True: Bool {
 --     (self: Bool).not_self_inverse => Refl(Bool, True),
 -- }
-

@@ -94,14 +94,23 @@ pub trait Mapper<P: Phase> {
     fn map_exp_type(&mut self, info: P::TypeInfo) -> Exp<P> {
         Exp::Type { info }
     }
-    fn map_exp_match(&mut self, info: P::TypeAppInfo, name: Ident, on_exp: Rc<Exp<P>>, ret_typ: P::Typ, body: Match<P>) -> Exp<P> {
-        Exp::Match { info, name, on_exp, ret_typ, body }
+    fn map_exp_match(&mut self, info: P::TypeAppInfo, name: Ident, on_exp: Rc<Exp<P>>, motive: Option<Motive<P>>, ret_typ: P::InfTyp, body: Match<P>) -> Exp<P> {
+        Exp::Match { info, name, on_exp, motive, ret_typ, body }
     }
     fn map_exp_comatch(&mut self, info: P::TypeAppInfo, name: Ident, body: Comatch<P>) -> Exp<P> {
         Exp::Comatch { info, name, body }
     }
     fn map_exp_hole(&mut self, info: P::TypeInfo) -> Exp<P> {
         Exp::Hole { info }
+    }
+    fn map_motive(&mut self, info: P::Info, name: Ident, ret_typ: Rc<Exp<P>>) -> Motive<P> {
+        Motive { info, name, ret_typ }
+    }
+    fn map_motive_param<X, F>(&mut self, info: P::Info, name: Ident, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, P::Info, Ident) -> X
+    {
+        f_inner(self, info, name)
     }
     fn map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
@@ -132,7 +141,7 @@ pub trait Mapper<P: Phase> {
     fn map_param(&mut self, name: Ident, typ: Rc<Exp<P>>) -> Param<P> {
         Param { name, typ }
     }
-    fn map_param_inst(&mut self, info: P::TypeInfo, name: Ident, typ: P::Typ) -> ParamInst<P> {
+    fn map_param_inst(&mut self, info: P::TypeInfo, name: Ident, typ: P::InfTyp) -> ParamInst<P> {
         ParamInst { info, name, typ }
     }
     fn map_info(&mut self, info: P::Info) -> P::Info {
@@ -280,8 +289,8 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         Rc::new(self.map_exp_type(info))
     }
 
-    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, on_exp: <Id<P> as Out>::Exp, ret_typ: <Id<P> as Out>::Typ, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_match(info, name, on_exp, ret_typ, body))
+    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, on_exp: <Id<P> as Out>::Exp, motive: Option<<Id<P> as Out>::Motive>, ret_typ: <Id<P> as Out>::Typ, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_match(info, name, on_exp, motive, ret_typ, body))
     }
 
     fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
@@ -290,6 +299,17 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
 
     fn fold_exp_hole(&mut self, info: <Id<P> as Out>::TypeInfo) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_hole(info))
+    }
+
+    fn fold_motive(&mut self, info: <Id<P> as Out>::Info, name: Ident, ret_typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Motive {
+        self.map_motive(info, name, ret_typ)
+    }
+
+    fn fold_motive_param<X, F>(&mut self, info: <Id<P> as Out>::Info, name: Ident, f_inner: F) -> X
+        where
+            F: FnOnce(&mut Self, <Id<P> as Out>::Info, Ident) -> X
+    {
+        self.map_motive_param(info, name, f_inner)
     }
 
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
@@ -346,7 +366,7 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_idx(idx)
     }
 
-    fn fold_typ(&mut self, typ: <P as Phase>::Typ) -> <Id<P> as Out>::Typ {
+    fn fold_typ(&mut self, typ: <P as Phase>::InfTyp) -> <Id<P> as Out>::Typ {
         typ
     }
 }

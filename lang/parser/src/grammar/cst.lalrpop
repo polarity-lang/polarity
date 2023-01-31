@@ -22,7 +22,7 @@ match {
     // Keywords
     "data", "codata",
     "def", "codef",
-    "match", "comatch",
+    "match", "as", "comatch",
     "absurd",
     "Type",
     // Comments and whitespace
@@ -141,7 +141,7 @@ pub Exp: Rc<Exp> = {
 
 pub Ops = {
     <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> => Rc::new(Exp::DotCall { info: span(l, r), exp, name, args }),
-    <l: @L> <on_exp: Ops> "." "match" <name: Ident?> "{" <body: Match> "}" <r: @R> => Rc::new(Exp::Match { info: span(l, r), name, on_exp, body }),
+    <l: @L> <on_exp: Ops> "." "match" <name: Ident?> <motive: Motive?> "{" <body: Match> "}" <r: @R> => Rc::new(Exp::Match { info: span(l, r), name, on_exp, motive, body }),
     App,
 }
 
@@ -165,6 +165,10 @@ pub Atom: Rc<Exp> = {
     <l: @L> <s: r"0|[1-9][0-9]*"> <r: @R> => Rc::new(Exp::NatLit { info: span(l, r), val: BigUint::parse_bytes(s.as_ref(), 10).unwrap() }),
     "(" <exp: Exp> ")" => exp,
     <l: @L> <name: Ident> <r: @R> => Rc::new(Exp::Call { info: span(l, r), name, args: Args::new() }),
+}
+
+Motive: Motive = {
+    <l: @L> "as" <name: Ident> "=>" <ret_typ: Exp> <r: @R> => Motive { info: span(l, r), name, ret_typ },
 }
 
 // Names

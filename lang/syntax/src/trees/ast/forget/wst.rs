@@ -240,10 +240,11 @@ impl Forget for wst::Exp {
                 ust::Exp::Anno { info: info.forget(), exp: exp.forget(), typ: typ.forget() }
             }
             wst::Exp::Type { info } => ust::Exp::Type { info: info.forget() },
-            wst::Exp::Match { info, name, on_exp, ret_typ: _, body } => ust::Exp::Match {
+            wst::Exp::Match { info, name, on_exp, motive, ret_typ: _, body } => ust::Exp::Match {
                 info: info.forget(),
                 name: name.clone(),
                 on_exp: on_exp.forget(),
+                motive: motive.forget(),
                 ret_typ: (),
                 body: body.forget(),
             },
@@ -252,6 +253,16 @@ impl Forget for wst::Exp {
             }
             wst::Exp::Hole { info } => ust::Exp::Hole { info: info.forget() },
         }
+    }
+}
+
+impl Forget for wst::Motive {
+    type Target = ust::Motive;
+
+    fn forget(&self) -> Self::Target {
+        let wst::Motive { info, name, ret_typ } = self;
+
+        ust::Motive { info: info.forget(), name: name.clone(), ret_typ: ret_typ.forget() }
     }
 }
 

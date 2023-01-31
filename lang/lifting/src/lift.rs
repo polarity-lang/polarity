@@ -89,12 +89,13 @@ impl Mapper<WST> for Lift {
         info: wst::TypeAppInfo,
         name: Ident,
         on_exp: Rc<wst::Exp>,
+        motive: Option<wst::Motive>,
         ret_typ: wst::Typ,
         body: wst::Match,
     ) -> wst::Exp {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
-            return id().map_exp_match(info, name, on_exp, ret_typ, body);
+            return id().map_exp_match(info, name, on_exp, motive, ret_typ, body);
         }
 
         self.mark_modified();
@@ -102,16 +103,24 @@ impl Mapper<WST> for Lift {
         // Collect the free variables in the match,
         // the type of the scrutinee as well as the return type of the match
         // Build a telescope of the types of the lifted variables
+        let ret_fvs = motive
+            .as_ref()
+            .map(|m| m.free_vars(&mut self.ctx))
+            .unwrap_or_else(|| ret_typ.as_exp().free_vars(&mut self.ctx));
+
         let FreeVarsResult { telescope, subst, args } = body
             .free_vars(&mut self.ctx)
             .union(info.typ.free_vars(&mut self.ctx))
-            .union(ret_typ.as_exp().free_vars(&mut self.ctx))
+            .union(ret_fvs)
             .telescope();
 
         // Substitute the new parameters for the free variables
         let body = body.subst(&mut self.ctx.levels(), &subst);
         let self_typ = info.typ.subst(&mut self.ctx.levels(), &subst);
-        let def_ret_typ = ret_typ.as_exp().subst(&mut self.ctx.levels(), &subst);
+        let def_ret_typ = match &motive {
+            Some(m) => m.subst(&mut self.ctx.levels(), &subst).ret_typ,
+            None => ret_typ.as_exp().subst(&mut self.ctx.levels(), &subst).shift((1, 0)),
+        };
 
         // Build the new top-level definition
         let def = wst::Def {
@@ -120,7 +129,7 @@ impl Mapper<WST> for Lift {
             params: telescope,
             self_param: wst::SelfParam {
                 info: wst::Info::empty(),
-                name: Some("self".to_owned()),
+                name: motive.map(|m| m.name),
                 typ: self_typ,
             },
             ret_typ: def_ret_typ,

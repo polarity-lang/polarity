@@ -8,7 +8,7 @@ use super::def::*;
 
 impl<P: Phase> ShiftInRange for Exp<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
@@ -39,10 +39,11 @@ where
                 typ: typ.shift_in_range(range, by),
             },
             Exp::Type { info } => Exp::Type { info: info.clone() },
-            Exp::Match { info, name, on_exp, ret_typ, body } => Exp::Match {
+            Exp::Match { info, name, on_exp, motive, ret_typ, body } => Exp::Match {
                 info: info.clone(),
                 name: name.clone(),
                 on_exp: on_exp.shift_in_range(range.clone(), by),
+                motive: motive.shift_in_range(range.clone(), by),
                 ret_typ: ret_typ.shift_in_range(range.clone(), by),
                 body: body.shift_in_range(range, by),
             },
@@ -56,9 +57,24 @@ where
     }
 }
 
+impl<P: Phase> ShiftInRange for Motive<P>
+where
+    P::InfTyp: ShiftInRange,
+{
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Motive { info, name, ret_typ } = self;
+
+        Motive {
+            info: info.clone(),
+            name: name.clone(),
+            ret_typ: ret_typ.shift_in_range(range, by),
+        }
+    }
+}
+
 impl<P: Phase> ShiftInRange for Match<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Match { info, cases } = self;
@@ -68,7 +84,7 @@ where
 
 impl<P: Phase> ShiftInRange for Comatch<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Comatch { info, cases } = self;
@@ -78,7 +94,7 @@ where
 
 impl<P: Phase> ShiftInRange for Case<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Case { info, name, args, body } = self;
@@ -93,7 +109,7 @@ where
 
 impl<P: Phase> ShiftInRange for Cocase<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Cocase { info, name, params: args, body } = self;
@@ -108,7 +124,7 @@ where
 
 impl<P: Phase> ShiftInRange for TypApp<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let TypApp { info, name, args } = self;

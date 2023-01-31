@@ -403,12 +403,8 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
                     .map(Eqn::from)
                     .collect();
 
-                // TODO: Substitute the constructor for the self parameter
-                // TODO: Adjust local matches to work again
-                let t = t.shift((-1, 0));
-
                 // Check the case given the equations
-                case.with_eqns(eqns).check(prg, ctx, t)
+                case.with_eqns(eqns).check(prg, ctx, t.clone())
             })
             .collect::<Result<_, _>>()?;
 
@@ -515,7 +511,34 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
         let ust::Case { info, name, args, body } = self.inner;
         let ust::Ctor { name, params, .. } = prg.decls.ctor(name);
 
+        // FIXME: Refactor this
+        let mut subst_ctx_1 = ctx.levels().append(&vec![1, params.len()].into());
+        let mut subst_ctx_2 = ctx.levels().append(&vec![params.len(), 1].into());
+        let curr_lvl = subst_ctx_2.len() - 1;
+
         args.check_telescope(prg, name, ctx, params, |ctx, args_out| {
+            // Substitute the constructor for the self parameter
+            let args = (0..params.len())
+                .rev()
+                .map(|snd| ust::Exp::Var {
+                    info: ust::Info::empty(),
+                    name: "".to_owned(),
+                    idx: Idx { fst: 1, snd },
+                })
+                .map(Rc::new)
+                .collect();
+            let ctor =
+                Rc::new(ust::Exp::Ctor { info: ust::Info::empty(), name: name.clone(), args });
+            let subst = Assign(Lvl { fst: curr_lvl, snd: 0 }, &ctor);
+
+            // FIXME: Refactor this
+            let t = t
+                .forget()
+                .shift((1, 0))
+                .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
+                .subst(&mut subst_ctx_2, &subst)
+                .shift((-1, 0));
+
             let body_out = match body {
                 Some(body) => {
                     let unif = unify(ctx.levels(), self.eqns.clone())
@@ -531,7 +554,7 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                     let body = body.subst(&mut ctx.levels(), &unif);
                     let ctx = &mut ctx;
 
-                    let t_subst = t.forget().shift((1, 0)).subst(&mut ctx.levels(), &unif);
+                    let t_subst = t.subst(&mut ctx.levels(), &unif);
                     let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
 
                     let body_out = body.check(prg, ctx, t_nf)?;
@@ -633,18 +656,57 @@ impl Check for ust::Exp {
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
         let out = match self {
-            ust::Exp::Match { info, name, on_exp, ret_typ: (), body } => {
+            ust::Exp::Match { info, name, on_exp, motive, ret_typ: (), body } => {
                 let on_exp_out = on_exp.infer(prg, ctx)?;
                 let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
                 let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
-                let body_out =
-                    body.with_scrutinee(typ_app_nf.clone()).check(prg, ctx, t.clone())?;
                 let ret_typ_out = t.forget().check(prg, ctx, type_univ())?;
+
+                let motive_out;
+                let body_t;
+
+                match motive {
+                    // Pattern matching with motive
+                    Some(m) => {
+                        let ust::Motive { info, name, ret_typ } = m;
+                        let self_t =
+                            typ_app.to_exp().forget().forget().eval(prg, &mut ctx.env())?;
+
+                        // Typecheck the motive
+                        let ret_typ_out =
+                            ctx.bind_single(&self_t, |ctx| ret_typ.check(prg, ctx, type_univ()))?;
+
+                        // Ensure that the motive matches the expected type
+                        let mut subst_ctx = ctx.levels().append(&vec![1].into());
+                        let on_exp_shifted = on_exp.shift((1, 0));
+                        let subst =
+                            Assign(Lvl { fst: subst_ctx.len() - 1, snd: 0 }, &on_exp_shifted);
+                        let motive_t = ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0));
+                        let motive_t_nf = motive_t.normalize(prg, &mut ctx.env())?;
+                        motive_t_nf.convert(&t)?;
+
+                        body_t =
+                            ctx.bind_single(&self_t, |ctx| ret_typ.normalize(prg, &mut ctx.env()))?;
+                        motive_out = Some(tst::Motive {
+                            info: info.clone().into(),
+                            name: name.clone(),
+                            ret_typ: ret_typ_out,
+                        });
+                    }
+                    // Pattern matching without motive
+                    None => {
+                        body_t = t.shift((1, 0));
+                        motive_out = None;
+                    }
+                };
+
+                let body_out = body.with_scrutinee(typ_app_nf.clone()).check(prg, ctx, body_t)?;
 
                 tst::Exp::Match {
                     info: info.with_type_app(typ_app, typ_app_nf),
                     name: name.clone(),
                     on_exp: on_exp_out,
+                    motive: motive_out,
                     ret_typ: ret_typ_out.into(),
                     body: body_out,
                 }

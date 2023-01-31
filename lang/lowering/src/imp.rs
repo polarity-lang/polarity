@@ -416,13 +416,14 @@ impl Lower for cst::Exp {
                 typ: typ.lower_in_ctx(ctx)?,
             }),
             cst::Exp::Type { info } => Ok(ust::Exp::Type { info: info.lower_pure() }),
-            cst::Exp::Match { info, name, on_exp, body } => Ok(ust::Exp::Match {
+            cst::Exp::Match { info, name, on_exp, motive, body } => Ok(ust::Exp::Match {
                 info: info.lower_pure(),
                 // TODO: Relax this (auto-generate names)
                 name: name
                     .clone()
                     .ok_or(LoweringError::UnnamedMatch { span: info.span.to_miette() })?,
                 on_exp: on_exp.lower_in_ctx(ctx)?,
+                motive: motive.lower_in_ctx(ctx)?,
                 ret_typ: (),
                 body: body.lower_in_ctx(ctx)?,
             }),
@@ -453,6 +454,20 @@ impl Lower for cst::Exp {
                 Ok(out)
             }
         }
+    }
+}
+
+impl Lower for cst::Motive {
+    type Target = ust::Motive;
+
+    fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        let cst::Motive { info, name, ret_typ } = self;
+
+        Ok(ust::Motive {
+            info: info.lower_pure(),
+            name: name.clone(),
+            ret_typ: ctx.bind_single(name, |ctx| ret_typ.lower_in_ctx(ctx))?,
+        })
     }
 }
 

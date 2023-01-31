@@ -34,6 +34,12 @@ pub trait SubstTelescope<E> {
     fn subst_telescope<S: Substitution<E>>(&self, lvl: Lvl, by: &S) -> Self;
 }
 
+impl<E, T: Substitutable<E>> Substitutable<E> for Option<T> {
+    fn subst<S: Substitution<E>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        self.as_ref().map(|x| x.subst(ctx, by))
+    }
+}
+
 impl<E, T: Substitutable<E>> Substitutable<E> for Vec<T> {
     fn subst<S: Substitution<E>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         self.iter().map(|x| x.subst(ctx, by)).collect()

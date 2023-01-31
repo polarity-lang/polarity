@@ -1,0 +1,23 @@
+data Bool {
+    True,
+    False,
+}
+
+data BoolRep(x: Bool) {
+    TrueRep: BoolRep(True),
+    FalseRep: BoolRep(False),
+}
+
+def (self: Bool).rep: BoolRep(self) {
+    True => TrueRep,
+    False => FalseRep,
+}
+
+data Top { Unit }
+
+def Top.example(b: Bool): BoolRep(b) {
+    Unit => b.match _ as x => BoolRep(x) {
+        True => TrueRep,
+        False => FalseRep,
+    }
+}

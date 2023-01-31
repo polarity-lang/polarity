@@ -12,7 +12,7 @@ use super::util::*;
 
 impl<'a, P: Phase> Print<'a> for Prg<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Prg { decls, exp } = self;
@@ -38,7 +38,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Decls<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let items = self.iter().map(|item| match item {
@@ -55,7 +55,7 @@ where
 
 impl<'a, P: Phase> PrintInCtx<'a> for Decl<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     type Ctx = Decls<P>;
 
@@ -78,7 +78,7 @@ where
 
 impl<'a, P: Phase> PrintInCtx<'a> for Item<'a, P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     type Ctx = Decls<P>;
 
@@ -99,7 +99,7 @@ where
 
 impl<'a, P: Phase> PrintInCtx<'a> for Data<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     type Ctx = Decls<P>;
 
@@ -137,7 +137,7 @@ where
 
 impl<'a, P: Phase> PrintInCtx<'a> for Codata<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     type Ctx = Decls<P>;
 
@@ -174,7 +174,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Def<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Def { info: _, name, params, self_param, ret_typ, body } = self;
@@ -198,7 +198,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Codef<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Codef { info: _, name, params, typ, body } = self;
@@ -220,7 +220,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Ctor<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Ctor { info: _, name, params, typ } = self;
@@ -236,7 +236,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Dtor<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Dtor { info: _, name, params, self_param, ret_typ } = self;
@@ -254,7 +254,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Comatch<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Comatch { info: _, cases } = self;
@@ -271,7 +271,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Match<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { info: _, cases } = self;
@@ -287,7 +287,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Case<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Case { info: _, name, args, body } = self;
@@ -307,7 +307,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Cocase<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Cocase { info: _, name, params: args, body } = self;
@@ -327,7 +327,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Telescope<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Telescope { params } = self;
@@ -371,7 +371,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for TelescopeInst<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.params.print(cfg, alloc).opt_parens()
@@ -380,7 +380,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Param<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Param { name, typ } = self;
@@ -390,7 +390,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for ParamInst<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let ParamInst { info: _, name, typ: _ } = self;
@@ -400,7 +400,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for SelfParam<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let SelfParam { info: _, name, typ } = self;
@@ -419,7 +419,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for TypApp<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypApp { info: _, name, args: subst } = self;
@@ -429,7 +429,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Exp<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
@@ -451,12 +451,13 @@ where
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
             Exp::Type { info: _ } => alloc.typ(TYPE),
-            Exp::Match { info: _, name, on_exp, ret_typ: _, body } => on_exp
+            Exp::Match { info: _, name, on_exp, motive, ret_typ: _, body } => on_exp
                 .print(cfg, alloc)
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
                 .append(alloc.space())
                 .append(alloc.text(name))
+                .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Exp::Comatch { info: _, name, body } => alloc
@@ -467,6 +468,23 @@ where
                 .append(body.print(cfg, alloc)),
             Exp::Hole { info: _ } => alloc.keyword(HOLE),
         }
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for Motive<P>
+where
+    P::InfTyp: ShiftInRange,
+{
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Motive { info: _, name, ret_typ } = self;
+
+        alloc
+            .space()
+            .append(alloc.keyword(AS))
+            .append(alloc.space())
+            .append(alloc.text(name))
+            .append(alloc.text(FAT_ARROW))
+            .append(ret_typ.print(cfg, alloc))
     }
 }
 
