@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Pre-commit hook
 # Place into `.git/hooks` or use `git config core.hooksPath scripts/git-hooks`
 # from the root of the repository
