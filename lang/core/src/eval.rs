@@ -75,23 +75,25 @@ fn eval_dtor(
     dtor_args: Vec<Rc<Val>>,
 ) -> Result<Rc<Val>, EvalError> {
     match (*exp).clone() {
-        Val::Ctor { name: ctor_name, args: ctor_args, .. } => {
+        Val::Ctor { name: ctor_name, args: ctor_args, info } => {
             let type_decl = prg.decls.type_decl_for_member(&ctor_name);
             match type_decl {
                 Type::Data(_) => {
-                    let ust::Def { body, .. } = prg
-                        .decls
-                        .def(dtor_name)
-                        .ok_or(EvalError::DefLookup { def: ctor_name.clone(), span: None })?; // Extract span from info field?
+                    let ust::Def { body, .. } =
+                        prg.decls.def(dtor_name).ok_or(EvalError::Impossible {
+                            message: format!("Lookup failed: {}", ctor_name),
+                            span: info.span.to_miette(),
+                        })?;
                     let body =
                         Env::empty().bind_iter(dtor_args.iter(), |env| body.eval(prg, env))?;
                     beta_match(prg, body, &ctor_name, &ctor_args)
                 }
                 Type::Codata(_) => {
-                    let ust::Codef { body, .. } = prg
-                        .decls
-                        .codef(&ctor_name)
-                        .ok_or(EvalError::CodefLookup { codef: ctor_name, span: None })?; // Extract span from info field?
+                    let ust::Codef { body, .. } =
+                        prg.decls.codef(&ctor_name).ok_or(EvalError::Impossible {
+                            message: format!("Lookup failed: {}", ctor_name),
+                            span: info.span.to_miette(),
+                        })?;
                     let body =
                         Env::empty().bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
                     beta_comatch(prg, body, dtor_name, &dtor_args)
