@@ -397,8 +397,7 @@ pub enum Exp<P: Phase> {
 pub struct Motive<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::Info,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub name: Ident,
+    pub param: ParamInst<P>,
     pub ret_typ: Rc<Exp<P>>,
 }
 

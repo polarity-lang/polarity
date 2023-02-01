@@ -62,11 +62,11 @@ where
     P::InfTyp: Substitutable<Rc<Exp<P>>>,
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Motive { info, name, ret_typ } = self;
+        let Motive { info, param, ret_typ } = self;
 
         Motive {
             info: info.clone(),
-            name: name.clone(),
+            param: param.clone(),
             ret_typ: ctx.bind_single((), |ctx| ret_typ.subst(ctx, by)),
         }
     }

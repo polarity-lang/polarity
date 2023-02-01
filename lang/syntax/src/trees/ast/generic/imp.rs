@@ -62,12 +62,12 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Motive { info, name, ret_typ } = self;
+        let Motive { info, param, ret_typ } = self;
 
         Motive {
             info: info.clone(),
-            name: name.clone(),
-            ret_typ: ret_typ.shift_in_range(range, by),
+            param: param.clone(),
+            ret_typ: ret_typ.shift_in_range(range.shift(1), by),
         }
     }
 }

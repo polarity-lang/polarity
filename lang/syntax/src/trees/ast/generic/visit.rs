@@ -40,12 +40,12 @@ pub trait Visitor<P: Phase> {
     fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &Ident, on_exp: &Rc<Exp<P>>, ret_typ: &P::InfTyp, body: &Match<P>) {}
     fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, name: &Ident, body: &Comatch<P>) {}
     fn visit_exp_hole(&mut self, info: &P::TypeInfo) {}
-    fn visit_motive(&mut self, info: &P::Info, name: &Ident, ret_typ: &Rc<Exp<P>>) {}
-    fn visit_motive_param<X, F>(&mut self, info: &P::Info, name: &Ident, f_inner: F) -> X
+    fn visit_motive(&mut self, info: &P::Info, param: &ParamInst<P>, ret_typ: &Rc<Exp<P>>) {}
+    fn visit_motive_param<X, F>(&mut self, param: &ParamInst<P>, f_inner: F) -> X
     where
-        F: FnOnce(&mut Self, &P::Info, &Ident) -> X
+        F: FnOnce(&mut Self, &ParamInst<P>) -> X
     {
-        f_inner(self, info, name)
+        f_inner(self, param)
     }
     fn visit_telescope<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
     where
@@ -421,11 +421,12 @@ impl<P: Phase> Visit<P> for Motive<P> {
     where
         V: Visitor<P>,
     {
-        let Motive { info, name, ret_typ } = self;
+        let Motive { info, param, ret_typ } = self;
         v.visit_info(info);
-        v.visit_motive_param(info, name, |v, info, name| {
+        param.visit(v);
+        v.visit_motive_param(param, |v, param| {
             ret_typ.visit(v);
-            v.visit_motive(info, name, ret_typ)
+            v.visit_motive(info, param, ret_typ)
         })
     }
 }

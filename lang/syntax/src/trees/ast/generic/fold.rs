@@ -47,11 +47,11 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_exp_match(&mut self, info: O::TypeAppInfo, name: Ident, on_exp: O::Exp, motive: Option<O::Motive>, ret_typ: O::Typ, body: O::Match) -> O::Exp;
     fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, name: Ident, body: O::Comatch) -> O::Exp;
     fn fold_exp_hole(&mut self, info: O::TypeInfo) -> O::Exp;
-    fn fold_motive(&mut self, info: O::Info, name: Ident, ret_typ: O::Exp) -> O::Motive;
+    fn fold_motive(&mut self, info: O::Info, param: O::ParamInst, ret_typ: O::Exp) -> O::Motive;
     // FIXME: Unifier binder handling into one method
-    fn fold_motive_param<X, F>(&mut self, info: O::Info, name: Ident, f_inner: F) -> X
+    fn fold_motive_param<X, F>(&mut self, param: O::ParamInst, f_inner: F) -> X
     where
-        F: FnOnce(&mut Self, O::Info, Ident) -> X
+        F: FnOnce(&mut Self, O::ParamInst) -> X
     ;
     fn fold_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
@@ -567,13 +567,14 @@ impl<P: Phase, O: Out> Fold<P, O> for Motive<P> {
     where
         F: Folder<P, O>,
     {
-        let Motive { info, name, ret_typ } = self;
+        let Motive { info, param, ret_typ } = self;
 
         let info = f.fold_info(info);
+        let param = param.fold(f);
 
-        f.fold_motive_param(info, name, |f, info, name| {
+        f.fold_motive_param(param, |f, param| {
             let ret_typ = ret_typ.fold(f);
-            f.fold_motive(info, name, ret_typ)
+            f.fold_motive(info, param, ret_typ)
         })
     }
 }

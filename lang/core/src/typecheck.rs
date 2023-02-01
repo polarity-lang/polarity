@@ -668,9 +668,10 @@ impl Check for ust::Exp {
                 match motive {
                     // Pattern matching with motive
                     Some(m) => {
-                        let ust::Motive { info, name, ret_typ } = m;
+                        let ust::Motive { info, param, ret_typ } = m;
                         let self_t =
                             typ_app.to_exp().forget().forget().eval(prg, &mut ctx.env())?;
+                        let self_t_nf = self_t.read_back(prg)?;
 
                         // Typecheck the motive
                         let ret_typ_out =
@@ -689,7 +690,11 @@ impl Check for ust::Exp {
                             ctx.bind_single(&self_t, |ctx| ret_typ.normalize(prg, &mut ctx.env()))?;
                         motive_out = Some(tst::Motive {
                             info: info.clone().into(),
-                            name: name.clone(),
+                            param: tst::ParamInst {
+                                info: param.info.with_type(self_t_nf),
+                                name: param.name.clone(),
+                                typ: Rc::new(typ_app.to_exp()).into(),
+                            },
                             ret_typ: ret_typ_out,
                         });
                     }

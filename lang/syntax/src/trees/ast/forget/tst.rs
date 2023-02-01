@@ -260,9 +260,9 @@ impl Forget for tst::Motive {
     type Target = wst::Motive;
 
     fn forget(&self) -> Self::Target {
-        let tst::Motive { info, name, ret_typ } = self;
+        let tst::Motive { info, param, ret_typ } = self;
 
-        wst::Motive { info: info.forget(), name: name.clone(), ret_typ: ret_typ.forget() }
+        wst::Motive { info: info.forget(), param: param.forget(), ret_typ: ret_typ.forget() }
     }
 }
 

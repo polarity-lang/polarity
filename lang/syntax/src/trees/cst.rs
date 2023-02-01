@@ -170,7 +170,7 @@ pub enum Exp {
 #[derive(Debug, Clone)]
 pub struct Motive {
     pub info: Info,
-    pub name: Ident,
+    pub param: ParamInst,
     pub ret_typ: Rc<Exp>,
 }
 

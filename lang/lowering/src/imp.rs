@@ -461,12 +461,16 @@ impl Lower for cst::Motive {
     type Target = ust::Motive;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Motive { info, name, ret_typ } = self;
+        let cst::Motive { info, param, ret_typ } = self;
 
         Ok(ust::Motive {
             info: info.lower_pure(),
-            name: name.clone(),
-            ret_typ: ctx.bind_single(name, |ctx| ret_typ.lower_in_ctx(ctx))?,
+            param: ust::ParamInst {
+                info: param.info.lower_pure(),
+                name: param.name.clone(),
+                typ: (),
+            },
+            ret_typ: ctx.bind_single(param, |ctx| ret_typ.lower_in_ctx(ctx))?,
         })
     }
 }

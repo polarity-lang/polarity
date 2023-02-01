@@ -168,7 +168,7 @@ pub Atom: Rc<Exp> = {
 }
 
 Motive: Motive = {
-    <l: @L> "as" <name: Ident> "=>" <ret_typ: Exp> <r: @R> => Motive { info: span(l, r), name, ret_typ },
+    <l: @L> "as" <param: ParamInst> "=>" <ret_typ: Exp> <r: @R> => Motive { info: span(l, r), param, ret_typ },
 }
 
 // Names

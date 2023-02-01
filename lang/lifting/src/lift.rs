@@ -129,7 +129,7 @@ impl Mapper<WST> for Lift {
             params: telescope,
             self_param: wst::SelfParam {
                 info: wst::Info::empty(),
-                name: motive.map(|m| m.name),
+                name: motive.map(|m| m.param.name),
                 typ: self_typ,
             },
             ret_typ: def_ret_typ,

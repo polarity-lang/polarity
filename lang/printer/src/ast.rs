@@ -476,13 +476,13 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Motive { info: _, name, ret_typ } = self;
+        let Motive { info: _, param, ret_typ } = self;
 
         alloc
             .space()
             .append(alloc.keyword(AS))
             .append(alloc.space())
-            .append(alloc.text(name))
+            .append(param.print(cfg, alloc))
             .append(alloc.text(FAT_ARROW))
             .append(ret_typ.print(cfg, alloc))
     }

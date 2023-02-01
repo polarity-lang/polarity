@@ -43,11 +43,11 @@ where
         self.bind_single(name.unwrap_or_default(), |ctx| f_inner(ctx, self_param))
     }
 
-    fn map_motive_param<X, F>(&mut self, info: <P as Phase>::Info, name: Ident, f_inner: F) -> X
+    fn map_motive_param<X, F>(&mut self, param: ParamInst<P>, f_inner: F) -> X
     where
-        F: FnOnce(&mut Self, <P as Phase>::Info, Ident) -> X,
+        F: FnOnce(&mut Self, ParamInst<P>) -> X,
     {
-        self.bind_single(name.clone(), |ctx| f_inner(ctx, info, name))
+        self.bind_single(param.clone(), |ctx| f_inner(ctx, param))
     }
 
     fn map_exp_var(&mut self, info: P::TypeInfo, _name: P::VarName, idx: Idx) -> Exp<P> {
