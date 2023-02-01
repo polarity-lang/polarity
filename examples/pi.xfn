@@ -9,3 +9,9 @@ codata Π(a: Type, p: Fun(a, Type)) {
 data Σ(a: Type, p: Fun(a, Type)) {
     Exists(a: Type, p: Fun(a, Type), x: a, prf: p.apply(a, Type, x)): Σ(a, p)
 }
+
+
+codata Pair(a: Type, b: Type) {
+    Pair(a,b).π₁(a : Type, b : Type) : a,
+    Pair(a,b).π₂(a : Type, b : Type) : b
+}
