@@ -179,6 +179,13 @@ where
         self.ctx_visit_telescope_inst(params, f_acc, f_inner)
     }
 
+    fn visit_motive_param<X, F>(&mut self, param: &ParamInst<P>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, &ParamInst<P>) -> X,
+    {
+        self.bind_single(param, |ctx| f_inner(ctx, param))
+    }
+
     fn visit_exp_var(&mut self, _info: &P::TypeInfo, name: &P::VarName, idx: &Idx) {
         let lvl = self.ctx.idx_to_lvl(*idx);
         // If the variable is considered free (based on the cutoff)
