@@ -15,8 +15,8 @@ match {
     "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".", "?",
     // Names
     "_",
-    r"[a-z][a-zA-Z0-9_]*[']*",
-    r"[A-Z][a-zA-Z0-9_]*[']*",
+    r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*[']*",
+    r"[A-ZΑ-Ω][a-zα-ωA-ZΑ-Ω0-9_]*[']*",
     // Literals
     r"0|[1-9][0-9]*",
     // Keywords
@@ -177,5 +177,5 @@ Ident: String = {
     <s: LowerIdent> => s.to_owned(),
     <s: UpperIdent> => s.to_owned(),
 }
-LowerIdent: String = <s:r"[a-z][a-zA-Z0-9_]*[']*"> => s.to_owned();
-UpperIdent: String = <s:r"[A-Z][a-zA-Z0-9_]*[']*"> => s.to_owned();
+LowerIdent: String = <s:r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*[']*"> => s.to_owned();
+UpperIdent: String = <s:r"[A-ZΑ-Ω][a-zα-ωA-ZΑ-Ω0-9_]*[']*"> => s.to_owned();
