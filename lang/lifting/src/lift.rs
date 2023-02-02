@@ -215,6 +215,19 @@ impl Mapper<WST> for Lift {
     {
         self.ctx_map_motive_param(param, f_inner)
     }
+
+    fn map_self_param<X, F>(
+        &mut self,
+        info: <WST as Phase>::Info,
+        name: Option<Ident>,
+        typ: TypApp<WST>,
+        f_inner: F,
+    ) -> X
+    where
+        F: FnOnce(&mut Self, SelfParam<WST>) -> X,
+    {
+        self.ctx_map_self_param(info, name, typ, f_inner)
+    }
 }
 
 impl HasContext for Lift {

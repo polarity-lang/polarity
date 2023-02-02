@@ -186,6 +186,19 @@ where
         self.ctx_visit_motive_param(param, f_inner)
     }
 
+    fn visit_self_param<X, F>(
+        &mut self,
+        info: &<P as Phase>::Info,
+        name: &Option<Ident>,
+        typ: &TypApp<P>,
+        f_inner: F,
+    ) -> X
+    where
+        F: FnOnce(&mut Self) -> X,
+    {
+        self.ctx_visit_self_param(info, name, typ, f_inner)
+    }
+
     fn visit_exp_var(&mut self, _info: &P::TypeInfo, name: &P::VarName, idx: &Idx) {
         let lvl = self.ctx.idx_to_lvl(*idx);
         // If the variable is considered free (based on the cutoff)

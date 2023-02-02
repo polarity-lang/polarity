@@ -39,8 +39,7 @@ where
     where
         F: FnOnce(&mut Self, SelfParam<P>) -> X,
     {
-        let self_param = SelfParam { info, name: name.clone(), typ };
-        self.bind_single(name.unwrap_or_default(), |ctx| f_inner(ctx, self_param))
+        self.ctx_map_self_param(info, name, typ, f_inner)
     }
 
     fn map_motive_param<X, F>(&mut self, param: ParamInst<P>, f_inner: F) -> X
