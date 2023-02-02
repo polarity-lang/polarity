@@ -404,12 +404,24 @@ impl Lower for cst::Exp {
                     }),
                 },
             },
-            cst::Exp::DotCall { info, exp, name, args: subst } => Ok(ust::Exp::Dtor {
-                info: info.lower_pure(),
-                exp: exp.lower_in_ctx(ctx)?,
-                name: name.clone(),
-                args: subst.lower_in_ctx(ctx)?,
-            }),
+            cst::Exp::DotCall { info, exp, name, args: subst } => match ctx.lookup(name, info)? {
+                Elem::Bound(_) => Err(LoweringError::CannotUseAsDtor {
+                    name: name.clone(),
+                    span: info.span.to_miette(),
+                }),
+                Elem::Decl => match ctx.decl_kind(name) {
+                    DeclKind::Def | DeclKind::Dtor { .. } => Ok(ust::Exp::Dtor {
+                        info: info.lower_pure(),
+                        exp: exp.lower_in_ctx(ctx)?,
+                        name: name.clone(),
+                        args: subst.lower_in_ctx(ctx)?,
+                    }),
+                    _ => Err(LoweringError::CannotUseAsDtor {
+                        name: name.clone(),
+                        span: info.span.to_miette(),
+                    }),
+                },
+            },
             cst::Exp::Anno { info, exp, typ } => Ok(ust::Exp::Anno {
                 info: info.lower_pure(),
                 exp: exp.lower_in_ctx(ctx)?,
