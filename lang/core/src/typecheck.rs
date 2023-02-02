@@ -805,11 +805,12 @@ impl Infer for ust::Exp {
                     .subst_under_ctx(vec![params.len()].into(), &&[args][..])
                     .to_exp();
                 let self_param_nf = self_param_out.normalize(prg, &mut ctx.env())?;
-                let subst = [&args[..], &[Rc::new(self_param.typ.to_exp())][..]];
-                let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &&subst[..]);
-                let typ_out_nf = typ_out.normalize(prg, &mut ctx.env())?;
 
                 let exp_out = exp.check(prg, ctx, self_param_nf)?;
+
+                let subst = [&args[..], &[exp.clone()][..]];
+                let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &&subst[..]);
+                let typ_out_nf = typ_out.normalize(prg, &mut ctx.env())?;
 
                 Ok(tst::Exp::Dtor {
                     info: info.with_type(typ_out_nf),
