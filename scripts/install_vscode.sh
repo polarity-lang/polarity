@@ -12,5 +12,5 @@ if ! [ -x "$(command -v npm)" ]; then
   exit 0
 fi
 
-(cd ext/vscode; npm install)
+(cd ext/vscode; npm install; npx vsce package)
 code --install-extension ext/vscode/xfn-0.0.1.vsix
