@@ -1,0 +1,12 @@
+data A { MkA }
+data D(a: A) { MkD(a: A): D(a) }
+
+data Top { Unit }
+
+def Top.foo(a:A, d: D(a)): D(a) {
+    Unit => d.match _ {
+        MkD(a) => MkD(a).match _ {
+            MkD(_) => MkD(a)
+        }
+    }
+}

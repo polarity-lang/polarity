@@ -210,7 +210,7 @@ where
 }
 
 /// Substitution of free variables
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct FVSubst<P: Phase> {
     /// Mapping of the original De-Bruijn levels of a free variable to the new reference
     subst: HashMap<Lvl, NewVar<P>>,
@@ -225,7 +225,7 @@ impl<P: Phase> FVSubst<P> {
 }
 
 /// A free variable as part of `FVSubst`
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct NewVar<P: Phase> {
     /// Name of the free variable
     name: Ident,
@@ -238,6 +238,13 @@ struct NewVar<P: Phase> {
 impl<P: Phase> FVSubst<P> {
     fn add(&mut self, name: Ident, lvl: Lvl, info: P::TypeInfo) {
         self.subst.insert(lvl, NewVar { name, lvl: Lvl { fst: 0, snd: self.subst.len() }, info });
+    }
+}
+
+impl<P: Phase> ShiftInRange for FVSubst<P> {
+    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
+        // Since FVSubst works with levels, it is shift-invariant
+        self.clone()
     }
 }
 

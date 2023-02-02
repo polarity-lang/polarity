@@ -3,20 +3,26 @@ use crate::ctx::*;
 
 pub struct Assign<K, V>(pub K, pub V);
 
-pub trait Substitution<E> {
+pub trait Substitution<E>: ShiftInRange {
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<E>;
 }
 
-impl<E: Clone, T: AsRef<[E]>> Substitution<E> for &[T] {
+impl<E: Clone + ShiftInRange> Substitution<E> for Vec<Vec<E>> {
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<E> {
         if lvl.fst > self.len() {
             return None;
         }
-        Some(self[lvl.fst].as_ref()[lvl.snd].clone())
+        Some(self[lvl.fst][lvl.snd].clone())
     }
 }
 
-impl<E: Clone> Substitution<E> for Assign<Lvl, &E> {
+impl<K: Clone, V: ShiftInRange> ShiftInRange for Assign<K, V> {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        Assign(self.0.clone(), self.1.shift_in_range(range, by))
+    }
+}
+
+impl<E: Clone + ShiftInRange> Substitution<E> for Assign<Lvl, E> {
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<E> {
         if self.0 == lvl {
             Some(self.1.clone())

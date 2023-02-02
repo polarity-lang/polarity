@@ -67,7 +67,7 @@ where
         Motive {
             info: info.clone(),
             param: param.clone(),
-            ret_typ: ctx.bind_single((), |ctx| ret_typ.subst(ctx, by)),
+            ret_typ: ctx.bind_single((), |ctx| ret_typ.subst(ctx, &by.shift((1, 0)))),
         }
     }
 }
@@ -105,7 +105,7 @@ where
             info: info.clone(),
             name: name.clone(),
             args: args.clone(),
-            body: body.as_ref().map(|body| body.subst(ctx, by)),
+            body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
         })
     }
 }
@@ -121,7 +121,7 @@ where
                 info: info.clone(),
                 name: name.clone(),
                 params: args.clone(),
-                body: body.as_ref().map(|body| body.subst(ctx, by)),
+                body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
             })
         })
     }
@@ -156,9 +156,17 @@ where
     }
 }
 
+#[derive(Clone)]
 struct SwapSubst {
     fst1: usize,
     fst2: usize,
+}
+
+impl ShiftInRange for SwapSubst {
+    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
+        // Since SwapSubst works with levels, it is shift-invariant
+        self.clone()
+    }
 }
 
 impl<P: Phase<VarName = Ident>> Substitution<Rc<Exp<P>>> for SwapSubst

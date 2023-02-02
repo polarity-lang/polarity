@@ -53,6 +53,18 @@ impl Substitutable<Rc<ust::Exp>> for Unificator {
     }
 }
 
+impl ShiftInRange for Unificator {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        Self {
+            map: self
+                .map
+                .iter()
+                .map(|(lvl, exp)| (*lvl, exp.shift_in_range(range.clone(), by)))
+                .collect(),
+        }
+    }
+}
+
 impl Substitution<Rc<ust::Exp>> for Unificator {
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<ust::Exp>> {
         self.map.get(&lvl).cloned()
@@ -152,7 +164,7 @@ impl Ctx {
         }
         let insert_lvl = self.ctx.idx_to_lvl(idx);
         let exp = exp.subst(&mut self.ctx, &self.unif);
-        self.unif.subst(&mut self.ctx, &Assign(insert_lvl, &exp));
+        self.unif.subst(&mut self.ctx, &Assign(insert_lvl, exp.clone()));
         match self.unif.map.get(&insert_lvl) {
             Some(other_exp) => {
                 let eqn = Eqn { lhs: exp, rhs: other_exp.clone() };

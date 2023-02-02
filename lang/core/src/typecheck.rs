@@ -538,7 +538,7 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                 .collect();
             let ctor =
                 Rc::new(ust::Exp::Ctor { info: ust::Info::empty(), name: name.clone(), args });
-            let subst = Assign(Lvl { fst: curr_lvl, snd: 0 }, &ctor);
+            let subst = Assign(Lvl { fst: curr_lvl, snd: 0 }, ctor);
 
             // FIXME: Refactor this
             let t = t
@@ -693,7 +693,7 @@ impl Check for ust::Exp {
                         let mut subst_ctx = ctx.levels().append(&vec![1].into());
                         let on_exp_shifted = on_exp.shift((1, 0));
                         let subst =
-                            Assign(Lvl { fst: subst_ctx.len() - 1, snd: 0 }, &on_exp_shifted);
+                            Assign(Lvl { fst: subst_ctx.len() - 1, snd: 0 }, on_exp_shifted);
                         let motive_t = ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0));
                         let motive_t_nf = motive_t.normalize(prg, &mut ctx.env())?;
                         motive_t_nf.convert(&t)?;
@@ -782,7 +782,8 @@ impl Infer for ust::Exp {
                     })?;
 
                 let args_out = args.check_args(prg, name, ctx, params)?;
-                let typ_out = typ.subst_under_ctx(vec![params.len()].into(), &&[args][..]).to_exp();
+                let typ_out =
+                    typ.subst_under_ctx(vec![params.len()].into(), &vec![args.clone()]).to_exp();
                 let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
 
                 Ok(tst::Exp::Ctor {
@@ -802,14 +803,14 @@ impl Infer for ust::Exp {
 
                 let self_param_out = self_param
                     .typ
-                    .subst_under_ctx(vec![params.len()].into(), &&[args][..])
+                    .subst_under_ctx(vec![params.len()].into(), &vec![args.clone()])
                     .to_exp();
                 let self_param_nf = self_param_out.normalize(prg, &mut ctx.env())?;
 
                 let exp_out = exp.check(prg, ctx, self_param_nf)?;
 
-                let subst = [&args[..], &[exp.clone()][..]];
-                let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &&subst[..]);
+                let subst = vec![args.clone(), vec![exp.clone()]];
+                let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &subst);
                 let typ_out_nf = typ_out.normalize(prg, &mut ctx.env())?;
 
                 Ok(tst::Exp::Dtor {
@@ -865,7 +866,8 @@ impl CheckArgs for ust::Args {
             });
         }
 
-        let ust::Telescope { params } = params.subst_in_telescope(LevelCtx::empty(), &&[self][..]);
+        let ust::Telescope { params } =
+            params.subst_in_telescope(LevelCtx::empty(), &vec![self.clone()]);
 
         self.iter()
             .zip(params)
