@@ -101,7 +101,7 @@ pub struct FreeVar<P: Phase> {
 
 impl<P: Phase<VarName = Ident>, T: Visit<P>> FreeVarsExt<P> for T
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
     for<'b> &'b Param<P>: AsElement<Rc<Exp<P>>>,
     for<'b> &'b ParamInst<P>: AsElement<Rc<Exp<P>>>,
 {
@@ -126,7 +126,7 @@ struct FvVistor<'a, P: Phase> {
 
 impl<'a, P: Phase<VarName = Ident>> FvVistor<'a, P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
     for<'b> &'b Param<P>: AsElement<Rc<Exp<P>>>,
     for<'b> &'b ParamInst<P>: AsElement<Rc<Exp<P>>>,
 {
@@ -144,7 +144,7 @@ where
 
 impl<'a, P: Phase> HasContext for FvVistor<'a, P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     type Ctx = TypeCtx<P>;
 
@@ -155,7 +155,7 @@ where
 
 impl<'b, P: Phase<VarName = Ident>> Visitor<P> for FvVistor<'b, P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
     for<'c> &'c Param<P>: AsElement<Rc<Exp<P>>>,
     for<'c> &'c ParamInst<P>: AsElement<Rc<Exp<P>>>,
 {
@@ -177,6 +177,26 @@ where
         F2: FnOnce(&mut Self),
     {
         self.ctx_visit_telescope_inst(params, f_acc, f_inner)
+    }
+
+    fn visit_motive_param<X, F>(&mut self, param: &ParamInst<P>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, &ParamInst<P>) -> X,
+    {
+        self.ctx_visit_motive_param(param, f_inner)
+    }
+
+    fn visit_self_param<X, F>(
+        &mut self,
+        info: &<P as Phase>::Info,
+        name: &Option<Ident>,
+        typ: &TypApp<P>,
+        f_inner: F,
+    ) -> X
+    where
+        F: FnOnce(&mut Self) -> X,
+    {
+        self.ctx_visit_self_param(info, name, typ, f_inner)
     }
 
     fn visit_exp_var(&mut self, _info: &P::TypeInfo, name: &P::VarName, idx: &Idx) {

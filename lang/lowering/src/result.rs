@@ -24,6 +24,12 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
+    #[error("{name} cannot be used as a destructor")]
+    CannotUseAsDtor {
+        name: Ident,
+        #[label]
+        span: SourceSpan,
+    },
     #[error("Arguments to type constructor {typ} must be provided for {xtor}")]
     MustProvideArgs {
         xtor: Ident,

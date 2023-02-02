@@ -161,10 +161,17 @@ pub enum Exp {
     DotCall { info: Info, exp: Rc<Exp>, name: Ident, args: Args },
     Anno { info: Info, exp: Rc<Exp>, typ: Rc<Exp> },
     Type { info: Info },
-    Match { info: Info, name: Option<Ident>, on_exp: Rc<Exp>, body: Match },
+    Match { info: Info, name: Option<Ident>, on_exp: Rc<Exp>, motive: Option<Motive>, body: Match },
     Comatch { info: Info, name: Option<Ident>, body: Comatch },
     Hole { info: Info },
     NatLit { info: Info, val: BigUint },
+}
+
+#[derive(Debug, Clone)]
+pub struct Motive {
+    pub info: Info,
+    pub param: ParamInst,
+    pub ret_typ: Rc<Exp>,
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope

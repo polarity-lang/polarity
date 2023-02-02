@@ -15,14 +15,14 @@ match {
     "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".", "?",
     // Names
     "_",
-    r"[a-z][a-zA-Z0-9_]*[']*",
-    r"[A-Z][a-zA-Z0-9_]*[']*",
+    r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['₀₁₂₃₄₅₆₇₈₉]*",
+    r"[A-ZΑ-Ω][a-zα-ωA-ZΑ-Ω0-9_]*['₀₁₂₃₄₅₆₇₈₉]*",
     // Literals
     r"0|[1-9][0-9]*",
     // Keywords
     "data", "codata",
     "def", "codef",
-    "match", "comatch",
+    "match", "as", "comatch",
     "absurd",
     "Type",
     // Comments and whitespace
@@ -141,7 +141,7 @@ pub Exp: Rc<Exp> = {
 
 pub Ops = {
     <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> => Rc::new(Exp::DotCall { info: span(l, r), exp, name, args }),
-    <l: @L> <on_exp: Ops> "." "match" <name: Ident?> "{" <body: Match> "}" <r: @R> => Rc::new(Exp::Match { info: span(l, r), name, on_exp, body }),
+    <l: @L> <on_exp: Ops> "." "match" <name: Ident?> <motive: Motive?> "{" <body: Match> "}" <r: @R> => Rc::new(Exp::Match { info: span(l, r), name, on_exp, motive, body }),
     App,
 }
 
@@ -167,11 +167,15 @@ pub Atom: Rc<Exp> = {
     <l: @L> <name: Ident> <r: @R> => Rc::new(Exp::Call { info: span(l, r), name, args: Args::new() }),
 }
 
+Motive: Motive = {
+    <l: @L> "as" <param: ParamInst> "=>" <ret_typ: Exp> <r: @R> => Motive { info: span(l, r), param, ret_typ },
+}
+
 // Names
 Ident: String = {
     "_" => "_".to_owned(),
     <s: LowerIdent> => s.to_owned(),
     <s: UpperIdent> => s.to_owned(),
 }
-LowerIdent: String = <s:r"[a-z][a-zA-Z0-9_]*[']*"> => s.to_owned();
-UpperIdent: String = <s:r"[A-Z][a-zA-Z0-9_]*[']*"> => s.to_owned();
+LowerIdent: String = <s:r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['₀₁₂₃₄₅₆₇₈₉]*"> => s.to_owned();
+UpperIdent: String = <s:r"[A-ZΑ-Ω][a-zα-ωA-ZΑ-Ω0-9_]*['₀₁₂₃₄₅₆₇₈₉]*"> => s.to_owned();

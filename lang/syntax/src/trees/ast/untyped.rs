@@ -13,7 +13,7 @@ impl generic::Phase for UST {
     type TypeAppInfo = Info;
 
     type VarName = Ident;
-    type Typ = ();
+    type InfTyp = ();
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String {
         if let Some(idx) = idx {
@@ -42,6 +42,7 @@ pub type Cocase = generic::Cocase<UST>;
 pub type SelfParam = generic::SelfParam<UST>;
 pub type TypApp = generic::TypApp<UST>;
 pub type Exp = generic::Exp<UST>;
+pub type Motive = generic::Motive<UST>;
 pub type Telescope = generic::Telescope<UST>;
 pub type TelescopeInst = generic::TelescopeInst<UST>;
 pub type Params = generic::Params<UST>;

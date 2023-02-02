@@ -15,7 +15,7 @@ pub struct TypeCtx<P: Phase> {
 
 impl<P: Phase> TypeCtx<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     pub fn levels(&self) -> LevelCtx {
         let bound: Vec<_> = self.bound.iter().map(|inner| inner.len()).collect();
@@ -49,7 +49,7 @@ where
 
 impl<P: Phase> Context for TypeCtx<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     type ElemIn = Rc<Exp<P>>;
 
@@ -108,7 +108,7 @@ impl<P: Phase> Leveled for TypeCtx<P> {
 
 impl<P: Phase> Substitutable<Rc<Exp<P>>> for TypeCtx<P>
 where
-    P::Typ: Substitutable<Rc<Exp<P>>> + ShiftInRange,
+    P::InfTyp: Substitutable<Rc<Exp<P>>> + ShiftInRange,
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, _ctx: &mut LevelCtx, by: &S) -> Self {
         self.map(|exp| exp.subst(&mut self.levels(), by))

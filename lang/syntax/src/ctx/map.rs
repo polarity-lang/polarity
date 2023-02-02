@@ -1,5 +1,8 @@
 use crate::ast::*;
+use crate::common::*;
 use crate::ctx::*;
+
+use std::rc::Rc;
 
 pub trait MapCtxExt<P: Phase> {
     fn ctx_map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
@@ -7,11 +10,26 @@ pub trait MapCtxExt<P: Phase> {
         I: IntoIterator<Item = Param<P>>,
         F1: Fn(&mut Self, Param<P>) -> Param<P>,
         F2: FnOnce(&mut Self, Telescope<P>) -> X;
+
     fn ctx_map_telescope_inst<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
         I: IntoIterator<Item = ParamInst<P>>,
         F1: Fn(&mut Self, ParamInst<P>) -> ParamInst<P>,
         F2: FnOnce(&mut Self, TelescopeInst<P>) -> X;
+
+    fn ctx_map_motive_param<X, F>(&mut self, param: ParamInst<P>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, ParamInst<P>) -> X;
+
+    fn ctx_map_self_param<X, F>(
+        &mut self,
+        info: P::Info,
+        name: Option<Ident>,
+        typ: TypApp<P>,
+        f_inner: F,
+    ) -> X
+    where
+        F: FnOnce(&mut Self, SelfParam<P>) -> X;
 }
 
 impl<P: Phase, C: HasContext> MapCtxExt<P> for C
@@ -57,5 +75,26 @@ where
                 f_inner(this, telescope_inst)
             },
         )
+    }
+
+    fn ctx_map_motive_param<X, F>(&mut self, param: ParamInst<P>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, ParamInst<P>) -> X,
+    {
+        self.bind_single(param.clone(), |ctx| f_inner(ctx, param))
+    }
+
+    fn ctx_map_self_param<X, F>(
+        &mut self,
+        info: P::Info,
+        name: Option<Ident>,
+        typ: TypApp<P>,
+        f_inner: F,
+    ) -> X
+    where
+        F: FnOnce(&mut Self, SelfParam<P>) -> X,
+    {
+        let param = Param { name: name.clone().unwrap_or_default(), typ: Rc::new(typ.to_exp()) };
+        self.bind_single(param, |ctx| f_inner(ctx, SelfParam { info, name, typ }))
     }
 }

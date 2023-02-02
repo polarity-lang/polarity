@@ -16,7 +16,7 @@ impl generic::Phase for WST {
     type TypeAppInfo = TypeAppInfo;
 
     type VarName = Ident;
-    type Typ = Typ;
+    type InfTyp = Typ;
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String {
         if let Some(idx) = idx {
@@ -45,6 +45,7 @@ pub type Cocase = generic::Cocase<WST>;
 pub type SelfParam = generic::SelfParam<WST>;
 pub type TypApp = generic::TypApp<WST>;
 pub type Exp = generic::Exp<WST>;
+pub type Motive = generic::Motive<WST>;
 pub type Telescope = generic::Telescope<WST>;
 pub type TelescopeInst = generic::TelescopeInst<WST>;
 pub type Params = generic::Params<WST>;

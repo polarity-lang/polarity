@@ -39,8 +39,14 @@ where
     where
         F: FnOnce(&mut Self, SelfParam<P>) -> X,
     {
-        let self_param = SelfParam { info, name: name.clone(), typ };
-        self.bind_single(name.unwrap_or_default(), |ctx| f_inner(ctx, self_param))
+        self.ctx_map_self_param(info, name, typ, f_inner)
+    }
+
+    fn map_motive_param<X, F>(&mut self, param: ParamInst<P>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, ParamInst<P>) -> X,
+    {
+        self.ctx_map_motive_param(param, f_inner)
     }
 
     fn map_exp_var(&mut self, info: P::TypeInfo, _name: P::VarName, idx: Idx) -> Exp<P> {

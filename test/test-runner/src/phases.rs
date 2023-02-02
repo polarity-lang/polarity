@@ -234,7 +234,7 @@ impl Phase for Check {
 
 impl<P: ast::Phase<VarName = Ident>> Phase for Print<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
     P::TypeInfo: RenameInfo,
     P::TypeAppInfo: RenameInfo,
 {

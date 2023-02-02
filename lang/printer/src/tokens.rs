@@ -17,6 +17,7 @@ pub const CODATA: &str = "codata";
 pub const DEF: &str = "def";
 pub const CODEF: &str = "codef";
 pub const MATCH: &str = "match";
+pub const AS: &str = "as";
 pub const COMATCH: &str = "comatch";
 pub const ABSURD: &str = "absurd";
 pub const TYPE: &str = "Type";

@@ -21,8 +21,8 @@ where
     type TypeAppInfo: HasSpan + Clone + Into<Self::TypeInfo> + fmt::Debug;
     /// Type of the `name` field of `Exp::Var`
     type VarName: Clone + fmt::Debug;
-    /// Type of the `typ` field for `ParamInst`
-    type Typ: Clone + fmt::Debug;
+    /// A type which is not annotated in the source, but will be filled in later during typechecking
+    type InfTyp: Clone + fmt::Debug;
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String;
 }
@@ -373,8 +373,9 @@ pub enum Exp<P: Phase> {
         info: P::TypeAppInfo,
         name: Ident,
         on_exp: Rc<Exp<P>>,
+        motive: Option<Motive<P>>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        ret_typ: P::Typ,
+        ret_typ: P::InfTyp,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Match<P>,
     },
@@ -389,6 +390,15 @@ pub enum Exp<P: Phase> {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
     },
+}
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Motive<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: P::Info,
+    pub param: ParamInst<P>,
+    pub ret_typ: Rc<Exp<P>>,
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope
@@ -437,7 +447,7 @@ pub struct ParamInst<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub typ: P::Typ,
+    pub typ: P::InfTyp,
 }
 
 impl<P: Phase> HasPhase for Prg<P> {

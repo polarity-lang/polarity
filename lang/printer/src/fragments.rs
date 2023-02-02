@@ -11,7 +11,7 @@ pub struct Items<P: Phase> {
 
 impl<'a, P: Phase> PrintInCtx<'a> for Items<P>
 where
-    P::Typ: ShiftInRange,
+    P::InfTyp: ShiftInRange,
 {
     type Ctx = Decls<P>;
 

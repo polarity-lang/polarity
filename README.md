@@ -1,6 +1,6 @@
 # Xfunc Implementation
 
-Extending De-/Refunctionalization to the Lambda Cube
+Extending De-/Refunctionalization to Dependent Types
 
 ## Requirements
 

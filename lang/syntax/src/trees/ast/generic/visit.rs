@@ -37,9 +37,16 @@ pub trait Visitor<P: Phase> {
     fn visit_exp_dtor(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, name: &Ident, args: &[Rc<Exp<P>>]) {}
     fn visit_exp_anno(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, typ: &Rc<Exp<P>>) {}
     fn visit_exp_type(&mut self, info: &P::TypeInfo) {}
-    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &Ident, on_exp: &Rc<Exp<P>>, ret_typ: &P::Typ, body: &Match<P>) {}
+    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &Ident, on_exp: &Rc<Exp<P>>, ret_typ: &P::InfTyp, body: &Match<P>) {}
     fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, name: &Ident, body: &Comatch<P>) {}
     fn visit_exp_hole(&mut self, info: &P::TypeInfo) {}
+    fn visit_motive(&mut self, info: &P::Info, param: &ParamInst<P>, ret_typ: &Rc<Exp<P>>) {}
+    fn visit_motive_param<X, F>(&mut self, param: &ParamInst<P>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, &ParamInst<P>) -> X
+    {
+        f_inner(self, param)
+    }
     fn visit_telescope<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
     where
         P: 'a,
@@ -71,12 +78,12 @@ pub trait Visitor<P: Phase> {
         f_inner(self)
     }
     fn visit_param(&mut self, name: &Ident, typ: &Rc<Exp<P>>) {}
-    fn visit_param_inst(&mut self, info: &P::TypeInfo, name: &Ident, typ: &P::Typ) {}
+    fn visit_param_inst(&mut self, info: &P::TypeInfo, name: &Ident, typ: &P::InfTyp) {}
     fn visit_info(&mut self, info: &P::Info) {}
     fn visit_type_info(&mut self, info: &P::TypeInfo) {}
     fn visit_type_app_info(&mut self, info: &P::TypeAppInfo) {}
     fn visit_idx(&mut self, idx: &Idx) {}
-    fn visit_typ(&mut self, typ: &P::Typ) {}
+    fn visit_typ(&mut self, typ: &P::InfTyp) {}
 }
 
 pub trait Visit<P: Phase> {
@@ -386,10 +393,13 @@ impl<P: Phase> Visit<P> for Exp<P> {
                 v.visit_type_info(info);
                 v.visit_exp_type(info)
             }
-            Exp::Match { info, name, on_exp, ret_typ, body } => {
+            Exp::Match { info, name, on_exp, motive, ret_typ, body } => {
                 v.visit_type_app_info(info);
                 on_exp.visit(v);
                 body.visit(v);
+                if let Some(m) = motive {
+                    m.visit(v);
+                }
                 v.visit_typ(ret_typ);
                 v.visit_exp_match(info, name, on_exp, ret_typ, body)
             }
@@ -403,6 +413,21 @@ impl<P: Phase> Visit<P> for Exp<P> {
                 v.visit_exp_hole(info)
             }
         }
+    }
+}
+
+impl<P: Phase> Visit<P> for Motive<P> {
+    fn visit<V>(&self, v: &mut V)
+    where
+        V: Visitor<P>,
+    {
+        let Motive { info, param, ret_typ } = self;
+        v.visit_info(info);
+        param.visit(v);
+        v.visit_motive_param(param, |v, param| {
+            ret_typ.visit(v);
+            v.visit_motive(info, param, ret_typ)
+        })
     }
 }
 

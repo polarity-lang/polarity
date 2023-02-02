@@ -17,7 +17,7 @@ impl generic::Phase for TST {
     type TypeAppInfo = TypeAppInfo;
 
     type VarName = Ident;
-    type Typ = Typ;
+    type InfTyp = Typ;
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String {
         if let Some(idx) = idx {
@@ -46,6 +46,7 @@ pub type Cocase = generic::Cocase<TST>;
 pub type SelfParam = generic::SelfParam<TST>;
 pub type TypApp = generic::TypApp<TST>;
 pub type Exp = generic::Exp<TST>;
+pub type Motive = generic::Motive<TST>;
 pub type Telescope = generic::Telescope<TST>;
 pub type TelescopeInst = generic::TelescopeInst<TST>;
 pub type Params = generic::Params<TST>;

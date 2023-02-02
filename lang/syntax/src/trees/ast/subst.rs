@@ -9,7 +9,7 @@ use super::generic::*;
 
 impl<P: Phase> Substitutable<Rc<Exp<P>>> for Rc<Exp<P>>
 where
-    P::Typ: Substitutable<Rc<Exp<P>>>,
+    P::InfTyp: Substitutable<Rc<Exp<P>>>,
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         match &**self {
@@ -39,10 +39,11 @@ where
                 typ: typ.subst(ctx, by),
             }),
             Exp::Type { info } => Rc::new(Exp::Type { info: info.clone() }),
-            Exp::Match { info, name, on_exp, ret_typ, body } => Rc::new(Exp::Match {
+            Exp::Match { info, name, on_exp, motive, ret_typ, body } => Rc::new(Exp::Match {
                 info: info.clone(),
                 name: name.clone(),
                 on_exp: on_exp.subst(ctx, by),
+                motive: motive.subst(ctx, by),
                 ret_typ: ret_typ.subst(ctx, by),
                 body: body.subst(ctx, by),
             }),
@@ -56,9 +57,24 @@ where
     }
 }
 
+impl<P: Phase> Substitutable<Rc<Exp<P>>> for Motive<P>
+where
+    P::InfTyp: Substitutable<Rc<Exp<P>>>,
+{
+    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        let Motive { info, param, ret_typ } = self;
+
+        Motive {
+            info: info.clone(),
+            param: param.clone(),
+            ret_typ: ctx.bind_single((), |ctx| ret_typ.subst(ctx, by)),
+        }
+    }
+}
+
 impl<P: Phase> Substitutable<Rc<Exp<P>>> for Match<P>
 where
-    P::Typ: Substitutable<Rc<Exp<P>>>,
+    P::InfTyp: Substitutable<Rc<Exp<P>>>,
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Match { info, cases } = self;
@@ -68,7 +84,7 @@ where
 
 impl<P: Phase> Substitutable<Rc<Exp<P>>> for Comatch<P>
 where
-    P::Typ: Substitutable<Rc<Exp<P>>>,
+    P::InfTyp: Substitutable<Rc<Exp<P>>>,
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Comatch { info, cases } = self;
@@ -81,7 +97,7 @@ where
 
 impl<P: Phase> Substitutable<Rc<Exp<P>>> for Case<P>
 where
-    P::Typ: Substitutable<Rc<Exp<P>>>,
+    P::InfTyp: Substitutable<Rc<Exp<P>>>,
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Case { info, name, args, body } = self;
@@ -96,7 +112,7 @@ where
 
 impl<P: Phase> Substitutable<Rc<Exp<P>>> for Cocase<P>
 where
-    P::Typ: Substitutable<Rc<Exp<P>>>,
+    P::InfTyp: Substitutable<Rc<Exp<P>>>,
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Cocase { info, name, params: args, body } = self;
@@ -113,7 +129,7 @@ where
 
 impl<P: Phase> Substitutable<Rc<Exp<P>>> for TypApp<P>
 where
-    P::Typ: Substitutable<Rc<Exp<P>>>,
+    P::InfTyp: Substitutable<Rc<Exp<P>>>,
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let TypApp { info, name, args: subst } = self;
@@ -123,7 +139,7 @@ where
 
 impl<P: Phase> Substitutable<Rc<Exp<P>>> for Param<P>
 where
-    P::Typ: Substitutable<Rc<Exp<P>>>,
+    P::InfTyp: Substitutable<Rc<Exp<P>>>,
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Param { name, typ } = self;
