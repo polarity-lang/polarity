@@ -141,7 +141,9 @@ def (self: Exp).progress(t: Typ): Fun(HasType(Nil, self, t), Progress(self))
             TApp(_, t1, t2, _, _, e1_t, e2_t) =>
             e1.progress(FunT(t1, t2)).apply(HasType(Nil, e1, FunT(t1, t2)), Progress(e1), e1_t).match _ {
                 PStep(_, e1', e1_eval_e1') => PStep(App(e1, e2), App(e1', e2), ECongApp1(e1, e1', e1_eval_e1', e2)),
-                PVal(_, is_val) => ?,
+                PVal(_, is_val) => is_val.match _ {
+                    VLam(e) => PStep(App(Lam(e), e2), e.subst(0, e2.shift_up(0)).shift_down(0), EBeta(e, e2))
+                },
             },
         }
     },
