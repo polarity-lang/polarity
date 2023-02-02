@@ -93,47 +93,47 @@ impl<P: Phase> Decls<P> {
         self.source.xdefs_for_type(name)
     }
 
-    pub fn def(&self, name: &str) -> &Def<P> {
-        match &self.map[name] {
-            Decl::Def(def) => def,
-            _ => unreachable!(),
+    pub fn def(&self, name: &str) -> Option<&Def<P>> {
+        match &self.map.get(name)? {
+            Decl::Def(def) => Some(def),
+            _ => None,
         }
     }
 
-    pub fn codef(&self, name: &str) -> &Codef<P> {
-        match &self.map[name] {
-            Decl::Codef(codef) => codef,
-            _ => unreachable!(),
+    pub fn codef(&self, name: &str) -> Option<&Codef<P>> {
+        match &self.map.get(name)? {
+            Decl::Codef(codef) => Some(codef),
+            _ => None,
         }
     }
 
-    pub fn ctor_or_codef(&self, name: &str) -> Ctor<P> {
-        match &self.map[name] {
-            Decl::Ctor(ctor) => ctor.clone(),
-            Decl::Codef(codef) => codef.to_ctor(),
-            _ => unreachable!(),
+    pub fn ctor_or_codef(&self, name: &str) -> Option<Ctor<P>> {
+        match &self.map.get(name)? {
+            Decl::Ctor(ctor) => Some(ctor.clone()),
+            Decl::Codef(codef) => Some(codef.to_ctor()),
+            _ => None,
         }
     }
 
-    pub fn dtor_or_def(&self, name: &str) -> Dtor<P> {
-        match &self.map[name] {
-            Decl::Dtor(dtor) => dtor.clone(),
-            Decl::Def(def) => def.to_dtor(),
-            _ => unreachable!(),
+    pub fn dtor_or_def(&self, name: &str) -> Option<Dtor<P>> {
+        match &self.map.get(name)? {
+            Decl::Dtor(dtor) => Some(dtor.clone()),
+            Decl::Def(def) => Some(def.to_dtor()),
+            _ => None,
         }
     }
 
-    pub fn ctor(&self, name: &str) -> &Ctor<P> {
-        match &self.map[name] {
-            Decl::Ctor(ctor) => ctor,
-            _ => unreachable!(),
+    pub fn ctor(&self, name: &str) -> Option<&Ctor<P>> {
+        match &self.map.get(name)? {
+            Decl::Ctor(ctor) => Some(ctor),
+            _ => None,
         }
     }
 
-    pub fn dtor(&self, name: &str) -> &Dtor<P> {
-        match &self.map[name] {
-            Decl::Dtor(dtor) => dtor,
-            _ => unreachable!(),
+    pub fn dtor(&self, name: &str) -> Option<&Dtor<P>> {
+        match &self.map.get(name)? {
+            Decl::Dtor(dtor) => Some(dtor),
+            _ => None,
         }
     }
 }

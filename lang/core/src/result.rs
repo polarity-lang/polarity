@@ -69,6 +69,10 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
+    #[error("The impossible happened: {message}")]
+    /// This error should not occur.
+    /// Some internal invariant has been violated.
+    Impossible { message: String, span: Option<SourceSpan> },
     // TODO: Add span
     #[error(transparent)]
     Unify(#[from] UnifyError),
@@ -138,6 +142,10 @@ pub enum NormalizeError {
 pub enum EvalError {
     #[error("Trying to evaluate hole of type {typ}")]
     EvalHole { typ: String, span: Option<SourceSpan> },
+    #[error("The impossible happened: {message}")]
+    /// This error should not occur.
+    /// Some internal invariant has been violated.
+    Impossible { message: String, span: Option<SourceSpan> },
 }
 
 #[derive(Error, Diagnostic, Debug)]
