@@ -15,6 +15,9 @@ pub trait VisitCtxExt<P: Phase> {
         I: IntoIterator<Item = &'a ParamInst<P>>,
         F1: Fn(&mut Self, &'a ParamInst<P>),
         F2: FnOnce(&mut Self);
+    fn ctx_visit_motive_param<X, F>(&mut self, param: &ParamInst<P>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, &ParamInst<P>) -> X;
 }
 
 impl<P: Phase, C: HasContext> VisitCtxExt<P> for C
@@ -58,5 +61,12 @@ where
             },
             |this, _params| f_inner(this),
         )
+    }
+
+    fn ctx_visit_motive_param<X, F>(&mut self, param: &ParamInst<P>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, &ParamInst<P>) -> X,
+    {
+        self.bind_single(param, |ctx| f_inner(ctx, param))
     }
 }

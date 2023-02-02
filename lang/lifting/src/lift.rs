@@ -208,6 +208,13 @@ impl Mapper<WST> for Lift {
     {
         self.ctx_map_telescope_inst(params, f_acc, f_inner)
     }
+
+    fn map_motive_param<X, F>(&mut self, param: ParamInst<WST>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, ParamInst<WST>) -> X,
+    {
+        self.ctx_map_motive_param(param, f_inner)
+    }
 }
 
 impl HasContext for Lift {

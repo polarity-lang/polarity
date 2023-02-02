@@ -12,6 +12,9 @@ pub trait MapCtxExt<P: Phase> {
         I: IntoIterator<Item = ParamInst<P>>,
         F1: Fn(&mut Self, ParamInst<P>) -> ParamInst<P>,
         F2: FnOnce(&mut Self, TelescopeInst<P>) -> X;
+    fn ctx_map_motive_param<X, F>(&mut self, param: ParamInst<P>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, ParamInst<P>) -> X;
 }
 
 impl<P: Phase, C: HasContext> MapCtxExt<P> for C
@@ -57,5 +60,12 @@ where
                 f_inner(this, telescope_inst)
             },
         )
+    }
+
+    fn ctx_map_motive_param<X, F>(&mut self, param: ParamInst<P>, f_inner: F) -> X
+    where
+        F: FnOnce(&mut Self, ParamInst<P>) -> X,
+    {
+        self.bind_single(param.clone(), |ctx| f_inner(ctx, param))
     }
 }

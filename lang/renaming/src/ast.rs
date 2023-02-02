@@ -47,7 +47,7 @@ where
     where
         F: FnOnce(&mut Self, ParamInst<P>) -> X,
     {
-        self.bind_single(param.clone(), |ctx| f_inner(ctx, param))
+        self.ctx_map_motive_param(param, f_inner)
     }
 
     fn map_exp_var(&mut self, info: P::TypeInfo, _name: P::VarName, idx: Idx) -> Exp<P> {

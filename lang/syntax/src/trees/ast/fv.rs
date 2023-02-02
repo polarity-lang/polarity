@@ -183,7 +183,7 @@ where
     where
         F: FnOnce(&mut Self, &ParamInst<P>) -> X,
     {
-        self.bind_single(param, |ctx| f_inner(ctx, param))
+        self.ctx_visit_motive_param(param, f_inner)
     }
 
     fn visit_exp_var(&mut self, _info: &P::TypeInfo, name: &P::VarName, idx: &Idx) {

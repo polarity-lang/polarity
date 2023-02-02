@@ -335,6 +335,7 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
             |mapper, params| f_inner(mapper, params)
         )
     }
+
     fn fold_self_param<X, F>(&mut self, info: <Id<P> as Out>::Info, name: Option<Ident>, typ: <Id<P> as Out>::TypApp, f_inner: F) -> X
     where
         F: FnOnce(&mut Self, <Id<P> as Out>::SelfParam) -> X
