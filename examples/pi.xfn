@@ -2,10 +2,15 @@ codata Fun(a b: Type) {
     Fun(a, b).apply(a: Type, b: Type, x: a) : b
 }
 
-codata Pi(a: Type, p: Fun(a, Type)) {
-    Pi(a, p).pi_elim(a: Type, p: Fun(a, Type), x: a) : p.apply(a, Type, x)
+codata Π(a: Type, p: Fun(a, Type)) {
+    Π(a, p).pi_elim(a: Type, p: Fun(a, Type), x: a) : p.apply(a, Type, x)
 }
 
-data Sigma(a: Type, p: Fun(a, Type)) {
-    Exists(a: Type, p: Fun(a, Type), x: a, prf: p.apply(a, Type, x)): Sigma(a, p)
+data Σ(a: Type, p: Fun(a, Type)) {
+    Exists(a: Type, p: Fun(a, Type), x: a, prf: p.apply(a, Type, x)): Σ(a, p)
+}
+
+codata Pair(a: Type, b: Type) {
+    Pair(a,b).π₁(a : Type, b : Type) : a,
+    Pair(a,b).π₂(a : Type, b : Type) : b
 }
