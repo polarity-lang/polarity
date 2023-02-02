@@ -1,3 +1,6 @@
+data Bot {}
+
+def Bot.elim_bot(a: Type): a {}
 
 data Eq (a: Type, x y: a) {
     Refl(a: Type, x: a) : Eq(a, x, x)
@@ -25,7 +28,12 @@ data Nat {
 
 def Nat.add(y: Nat) : Nat {
     Z => y,
-    S(x') => S(x'.add(y)),
+    S(x) => S(x.add(y)),
+}
+
+def Nat.pred : Nat {
+    Z => Z,
+    S(x) => x,
 }
 
 def Nat.eq(y: Nat): Bool {
@@ -65,6 +73,11 @@ data Elem(x: Nat, t: Typ, ctx: Ctx) {
     There(x: Nat, t: Typ, t2: Typ, ts: Ctx, prf: Elem(x, t, ts)): Elem(S(x), t, Cons(t2, ts)),
 }
 
+def Elem(x, t, Nil).empty_absurd(x: Nat, t: Typ) : Bot {
+    Here(_, _) absurd,
+    There(_, _, _, _, _) absurd,
+}
+
 data HasType(ctx: Ctx, e: Exp, t: Typ) {
     TVar(ctx: Ctx, x: Nat, t: Typ, elem: Elem(x, t, ctx)) : HasType(ctx, Var(x), t),
     TLam(ctx: Ctx, t1: Typ, t2: Typ, e: Exp, body: HasType(Cons(t1, ctx), e, t2)) : HasType(ctx, Lam(e), FunT(t1, t2)),
@@ -80,14 +93,13 @@ data Exp {
 }
 
 data Eval(e1 e2: Exp) {
-    EBeta(e1 e2: Exp): Eval(App(Lam(e1), e2), e1.subst(0, e2)),
+    EBeta(e1 e2: Exp): Eval(App(Lam(e1), e2), e1.subst(0, e2.shift_up(0)).shift_down(0)),
     ECongApp1(e1 e1': Exp, h: Eval(e1, e1'), e2: Exp): Eval(App(e1, e2), App(e1', e2)),
     ECongApp2(e1 e2 e2': Exp, h: Eval(e2, e2')): Eval(App(e1, e2), App(e1, e2')),
     ECongLam(e1 e2: Exp, h: Eval(e1, e2)): Eval(Lam(e1), Lam(e2)),
 }
 
 data IsValue(e: Exp) {
-    VVar(x: Nat): IsValue(Var(x)),
     VLam(e: Exp): IsValue(Lam(e)),
 }
 
@@ -96,24 +108,45 @@ data Progress(e: Exp) {
     PStep(e1 e2: Exp, h: Eval(e1, e2)): Progress(e1),
 }
 
-def Exp.shift(c: Nat): Exp {
+def Exp.shift_up(c: Nat): Exp {
     Var(x) => Var(x.geq(c).then_else(Nat, S(x), x)),
-    Lam(e) => Lam(e.shift(S(c))),
-    App(e1, e2) => App(e1.shift(c), e2.shift(c)),
+    Lam(e) => Lam(e.shift_up(S(c))),
+    App(e1, e2) => App(e1.shift_up(c), e2.shift_up(c)),
+}
+
+def Exp.shift_down(c: Nat): Exp {
+    Var(x) => Var(x.geq(c).then_else(Nat, x.pred, x)),
+    Lam(e) => Lam(e.shift_down(S(c))),
+    App(e1, e2) => App(e1.shift_down(c), e2.shift_down(c)),
 }
 
 def Exp.subst(v: Nat, by: Exp): Exp {
     Var(x) => x.eq(v).then_else(Exp, by, Var(x)),
-    Lam(e) => Lam(e.subst(S(v), by.shift(0))),
+    Lam(e) => Lam(e.subst(S(v), by.shift_up(0))),
     App(e1, e2) => App(e1.subst(v, by), e2.subst(v, by)),
 }
 
-def (self: Exp).progress(ctx: Ctx, t: Typ): Fun(HasType(ctx, self, t), Progress(self))
+def (self: Exp).progress(t: Typ): Fun(HasType(Nil, self, t), Progress(self))
 {
-    Var(x) => ?,
-    Lam(_) => ?,
-    App(_, _) => ?,
+    Var(x) => comatch _ { apply(_, _, h) => h.match _ {
+        TVar(_, _, _, elem) => elem.empty_absurd(x, t).elim_bot(Progress(Var(x))),
+        TLam(_, _, _, _, _) absurd,
+        TApp(_, _, _, _, _, _, _) absurd,
+    }},
+    Lam(e) => comatch _ { apply(_, _, h) => PVal(Lam(e), VLam(e)) },
+    App(e1, e2) => comatch _ { apply(_, _, h) =>
+        h.match _ {
+            TVar(_, _, _, _) absurd,
+            TLam(_, _, _, _, _) absurd,
+            TApp(_, t1, t2, _, _, e1_t, e2_t) =>
+            e1.progress(FunT(t1, t2)).apply(HasType(Nil, e1, FunT(t1, t2)), Progress(e1), e1_t).match _ {
+                PStep(_, e1', e1_eval_e1') => PStep(App(e1, e2), App(e1', e2), ECongApp1(e1, e1', e1_eval_e1', e2)),
+                PVal(_, is_val) => ?,
+            },
+        }
+    },
 }
+
 def (self: Exp).preservation(
     ctx: Ctx, e2: Exp, t: Typ,
 ): Fun(HasType(ctx, self, t), Fun(Eval(self, e2), HasType(ctx, e2, t)))
