@@ -387,7 +387,10 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
             .map(|case| {
                 // Build equations for this case
                 let ust::Ctor { typ: ust::TypApp { args: def_args, .. }, params, .. } =
-                    prg.decls.ctor(&case.name).unwrap();
+                    prg.decls.ctor(&case.name).ok_or(TypeError::Impossible {
+                        message: format!("Lookup failed: {}", case.name),
+                        span: None,
+                    })?;
 
                 let def_args_nf = LevelCtx::empty().bind_iter(params.params.iter(), |ctx| {
                     def_args.normalize(prg, &mut ctx.env())
@@ -464,7 +467,10 @@ impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
                     ret_typ,
                     params,
                     ..
-                } = prg.decls.dtor(&case.name).unwrap();
+                } = prg.decls.dtor(&case.name).ok_or(TypeError::Impossible {
+                    message: format!("Lookup failed: {}", case.name),
+                    span: None,
+                })?;
 
                 let def_args_nf = LevelCtx::empty().bind_iter(params.params.iter(), |ctx| {
                     def_args.normalize(prg, &mut ctx.env())
