@@ -1,7 +1,3 @@
-codata Prop(a: Type, x: a) {
-    Prop(a, x).apply'(a: Type, x: a) : Type
-}
-
 codata Fun(a b: Type) {
     Fun(a, b).apply(a: Type, b: Type, x: a) : b
 }
@@ -14,8 +10,8 @@ def Eq(a, x, y).sym(a: Type, x: a, y: a) : Eq(a, y, x) {
     Refl(a, x) => Refl(a, x)
 }
 
-def Eq(a, x, y).subst(a: Type, x: a, y: a, p: Prop(a, x)) : Prop(a, y) {
-    Refl(a, x) => p
+def Eq(a, x, y).subst(a: Type, x: a, y: a, p: Fun(a, Type), prf: p.apply(a, Type, x)) : p.apply(a, Type, y) {
+    Refl(a, x) => prf
 }
 
 def Eq(a, x, y).trans(a: Type, x: a, y: a, z: a, h: Eq(a, y, z)) : Eq(a, x, z) {
