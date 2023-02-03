@@ -6,12 +6,25 @@ data Eq (a: Type, x y: a) {
     Refl(a: Type, x: a) : Eq(a, x, x)
 }
 
+codata Fun(a b: Type) {
+    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+}
+
 def Eq(a, x, y).sym(a: Type, x: a, y: a) : Eq(a, y, x) {
     Refl(a, x) => Refl(a, x)
 }
 
-codata Fun(a b: Type) {
-    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+def Eq(a, x, y).transport(a: Type, x: a, y: a, p: Fun(a, Type), prf: p.apply(a, Type, x)) : p.apply(a, Type, y) {
+    Refl(a, x) => prf
+}
+
+data Exists(a: Type, p: Fun(a, Type)) {
+    MkExists(a: Type, p: Fun(a, Type), x: a, prf: p.apply(a, Type, x)): Exists(a, p)
+}
+
+data Or(a: Type, b: Type) {
+    Inl(a: Type, b: Type, x: a) : Or(a, b),
+    Inr(a: Type, b: Type, x: b) : Or(a, b),
 }
 
 data Bool { True, False }
@@ -68,6 +81,11 @@ data Ctx {
     Cons(t: Typ, ts: Ctx),
 }
 
+-- FIXME: This leads to a panic
+-- def (self: Ctx).inversion: Or(Eq(Ctx, self, Nil), Exists(Typ, comatch _ { apply(_, _, t) => Exists(Ctx, comatch _ { apply(_, _, ctx') => Eq(Ctx, self, Cons(t, ctx'))}) })) {
+
+-- }
+
 data Elem(x: Nat, t: Typ, ctx: Ctx) {
     Here(t: Typ, ts: Ctx): Elem(Z, t, Cons(t, ts)),
     There(x: Nat, t: Typ, t2: Typ, ts: Ctx, prf: Elem(x, t, ts)): Elem(S(x), t, Cons(t2, ts)),
@@ -78,12 +96,64 @@ def Elem(x, t, Nil).empty_absurd(x: Nat, t: Typ) : Bot {
     There(_, _, _, _, _) absurd,
 }
 
+def Elem(x, t, ctx).unique(ctx: Ctx, x: Nat, s t: Typ, h: Elem(x, s, ctx)): Eq(Typ, s, t) {
+    Here(t, ts) => h.match _ {
+        Here(s, ss) => ?,
+        -- Elem(Z, @1.2, Cons(@0.1, @0.0))
+        -- h: Elem(x, s, ctx)
+        There(_, _, _, _, _) absurd,
+    },
+    There(_, _, _, _, _) => ?,
+}
+
+data Top { Unit }
+
+def Top.hole(a: Type, x: a, b: Type) : b {
+    Unit => Unit.hole(a, x, b)
+}
+
+def Top.lemma3(rs: Ctx, r s: Typ, h1: Elem(Z, s, Cons(r, rs))) : Eq(Typ, r, s) {
+    Unit => h1.match _ {
+        Here(_, _) => Refl(Typ, s),
+        There(_, _, _, _, _) absurd,
+    }
+}
+
+def Top.lemma2(ctx ctx': Ctx, s t: Typ, h1: Elem(Z, s, ctx), h2: Elem(Z, t, ctx)) : Eq(Typ, s, t) {
+    Unit => ctx.match _ {
+        Cons(r, rs) => ?,
+        Nil => ?,
+    }
+}
+
+def Top.lemma1(ctx: Ctx, x: Nat, s t: Typ, h1: Elem(x, s, ctx), h2: Elem(x, t, ctx)) : Eq(Typ, s, t) {
+    Unit => ctx.match _ {
+        Nil => h1.match _ {
+            Here(_, _) => ?,
+            There(_, _, _, _, _) => ?,
+        },
+        Cons(r, rs) => h1.match _ {
+            Here(s, _) => h2.match _ {
+                Here(t, _) => ?,
+                There(_, _, _, _, _) absurd,
+            },
+            There(_, _, _, _, _) => ?,
+        },
+    }
+}
+
 data HasType(ctx: Ctx, e: Exp, t: Typ) {
     TVar(ctx: Ctx, x: Nat, t: Typ, elem: Elem(x, t, ctx)) : HasType(ctx, Var(x), t),
     TLam(ctx: Ctx, t1: Typ, t2: Typ, e: Exp, body: HasType(Cons(t1, ctx), e, t2)) : HasType(ctx, Lam(e), FunT(t1, t2)),
     TApp(ctx: Ctx, t1: Typ, t2: Typ, e1: Exp, e2: Exp,
          e1_t: HasType(ctx, e1, FunT(t1, t2)),
          e2_t: HasType(ctx, e2, t1)): HasType(ctx, App(e1, e2), t2),
+}
+
+def HasType(ctx, Var(x), s).lemma(ctx:Ctx, x: Nat, s t: Typ, h_elem: Elem(x, t, ctx)) : Eq(Typ, s, t) {
+    TVar(_, _, _, h_elem2) => ?,
+    TLam(_, _, _, _, _) absurd,
+    TApp(_, _, _, _, _, _, _) absurd,
 }
 
 data Exp {
@@ -147,6 +217,16 @@ def (self: Exp).progress(t: Typ): Fun(HasType(Nil, self, t), Progress(self))
             },
         }
     },
+}
+
+def (self: Exp).subst_lemma(ctx: Ctx, s t: Typ, x: Nat, by: Exp, h_elem: Elem(x, s, ctx), h_by: HasType(ctx, by, s)): Fun(HasType(ctx, self, t), HasType(ctx, self.subst(x, by), t)) {
+    Var(y) => comatch _ { apply(_, _, h_self) => y.eq(x).match _ as z => HasType(ctx, z.then_else(Exp, by, Var(y)), t) {
+            False => h_self,
+            True => (?).transport(Typ, s, t, comatch _ { apply(_, _, r) => HasType(ctx, by, r) }, h_by),
+        }
+    },
+    App(e1, e2) => ?,
+    Lam(e) => ?,
 }
 
 def (self: Exp).preservation(
