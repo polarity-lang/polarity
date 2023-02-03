@@ -116,13 +116,11 @@ where
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Cocase { info, name, params: args, body } = self;
-        ctx.bind_iter(args.params.iter(), |ctx| {
-            ctx.bind_single((), |ctx| Cocase {
-                info: info.clone(),
-                name: name.clone(),
-                params: args.clone(),
-                body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
-            })
+        ctx.bind_iter(args.params.iter(), |ctx| Cocase {
+            info: info.clone(),
+            name: name.clone(),
+            params: args.clone(),
+            body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
         })
     }
 }
