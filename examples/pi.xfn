@@ -10,6 +10,11 @@ data Σ(a: Type, p: Fun(a, Type)) {
     Exists(a: Type, p: Fun(a, Type), x: a, prf: p.apply(a, Type, x)): Σ(a, p)
 }
 
+data Sum(a: Type, b: Type) {
+    Left(a: Type, b: Type, x: a) : Sum(a, b),
+    Right(a: Type, b: Type, x: b) : Sum(a, b),
+}
+
 codata Pair(a: Type, b: Type) {
     Pair(a,b).π₁(a : Type, b : Type) : a,
     Pair(a,b).π₂(a : Type, b : Type) : b
