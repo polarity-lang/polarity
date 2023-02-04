@@ -81,10 +81,14 @@ data Ctx {
     Cons(t: Typ, ts: Ctx),
 }
 
--- FIXME: This leads to a panic
--- def (self: Ctx).inversion: Or(Eq(Ctx, self, Nil), Exists(Typ, comatch _ { apply(_, _, t) => Exists(Ctx, comatch _ { apply(_, _, ctx') => Eq(Ctx, self, Cons(t, ctx'))}) })) {
-
--- }
+def (self: Ctx).inversion: Or(Eq(Ctx, self, Nil), Exists(Typ, comatch _ { apply(_, _, t) => Exists(Ctx, comatch _ { apply(_, _, ts) => Eq(Ctx, self, Cons(t, ts))}) })) {
+    Nil => Inl(Eq(Ctx, Nil, Nil), Exists(Typ, comatch _ { apply(_, _, t) => Exists(Ctx, comatch _ { apply(_, _, ts) => Eq(Ctx, Nil, Cons(t, ts))}) }), Refl(Ctx, Nil)),
+    Cons(x, xs) => Inr(Eq(Ctx, Cons(x, xs), Nil), Exists(Typ, comatch _ { apply(_, _, t) => Exists(Ctx, comatch _ { apply(_, _, ts) => Eq(Ctx, Cons(x, xs), Cons(t, ts))}) }),
+        MkExists(Typ, comatch _ { apply(_, _, t) => Exists(Ctx, comatch _ { apply(_, _, ts) => Eq(Ctx, Cons(x, xs), Cons(t, ts))}) },
+            x, MkExists(Ctx, comatch _ { apply(_, _, ts) => Eq(Ctx, Cons(x, xs), Cons(x, ts) )}, xs, Refl(Ctx, Cons(x, xs)))
+        )
+    ),
+}
 
 data Elem(x: Nat, t: Typ, ctx: Ctx) {
     Here(t: Typ, ts: Ctx): Elem(Z, t, Cons(t, ts)),
