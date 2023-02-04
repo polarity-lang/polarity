@@ -1,12 +1,13 @@
 use std::rc::Rc;
 
 use syntax::common::*;
+use syntax::ctx::Bind;
 use syntax::nf;
 use syntax::ust::Prg;
 use syntax::val;
 use tracer::trace;
 
-use crate::eval::Apply;
+use crate::eval::Eval;
 
 use super::result::*;
 
@@ -140,7 +141,10 @@ impl ReadBack for val::Closure {
             })
             .map(Rc::new)
             .collect();
-        self.clone().apply(prg, &args)?.read_back(prg)
+        self.env
+            .shift((1, 0))
+            .bind_iter(args.iter(), |env| self.body.eval(prg, env))?
+            .read_back(prg)
     }
 }
 
