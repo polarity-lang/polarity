@@ -19,6 +19,8 @@ pub struct Args {
     inplace: bool,
     #[clap(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
+    #[clap(long, num_args = 0)]
+    de_bruijn: bool,
 }
 
 /// Compute the output stream for the "fmt" subcommand.
@@ -54,7 +56,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         width: cmd.width.unwrap_or_else(terminal_width),
         braces: ("{", "}"),
         omit_decl_sep: false,
-        de_bruijn: false,
+        de_bruijn: cmd.de_bruijn,
     };
 
     print_prg(prg, &cfg, &mut stream);
