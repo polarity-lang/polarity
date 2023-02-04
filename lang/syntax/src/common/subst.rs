@@ -9,7 +9,7 @@ pub trait Substitution<E>: ShiftInRange {
 
 impl<E: Clone + ShiftInRange> Substitution<E> for Vec<Vec<E>> {
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<E> {
-        if lvl.fst > self.len() {
+        if lvl.fst >= self.len() {
             return None;
         }
         Some(self[lvl.fst][lvl.snd].clone())
