@@ -18,6 +18,10 @@ def Eq(a, x, y).transport(a: Type, x: a, y: a, p: Fun(a, Type), prf: p.apply(a, 
     Refl(a, x) => prf
 }
 
+def Eq(a, x, y).cong(a: Type, b: Type, x: a, y: a, f: Fun(a, b)) : Eq(b, f.apply(a, b, x), f.apply(a, b, y)) {
+    Refl(a, x) => Refl(b, f.apply(a, b, x))
+}
+
 data Exists(a: Type, p: Fun(a, Type)) {
     MkExists(a: Type, p: Fun(a, Type), x: a, prf: p.apply(a, Type, x)): Exists(a, p)
 }
@@ -25,6 +29,11 @@ data Exists(a: Type, p: Fun(a, Type)) {
 data Or(a: Type, b: Type) {
     Inl(a: Type, b: Type, x: a) : Or(a, b),
     Inr(a: Type, b: Type, x: b) : Or(a, b),
+}
+
+codata And(a: Type, b: Type) {
+    And(a, b).proj1(a : Type, b : Type) : a,
+    And(a, b).proj2(a : Type, b : Type) : b,
 }
 
 data Bool { True, False }
@@ -57,6 +66,46 @@ def Nat.eq(y: Nat): Bool {
     S(x) => y.match _ {
         Z => False,
         S(y') => x.eq(y')
+    }
+}
+
+def Top.nat_eq_reflection(x: Nat, y: Nat)
+    : Or(
+        Eq(Bool, x.eq(y), False),
+        And(Eq(Bool, x.eq(y), True), Eq(Nat, x, y))
+    ) {
+    Unit => x.match _ as x => Or(
+        Eq(Bool, x.eq(y), False),
+        And(Eq(Bool, x.eq(y), True), Eq(Nat, x, y))
+    ) {
+        Z => y.match _ as y => Or(
+        Eq(Bool, Z.eq(y), False),
+        And(Eq(Bool, Z.eq(y), True), Eq(Nat, Z, y))
+     ) {
+            Z => Inr(Eq(Bool, True, False), And(Eq(Bool, True, True), Eq(Nat, Z, Z)),
+                comatch _ {
+                    proj1(_, _) => Refl(Bool, True),
+                    proj2(_, _) => Refl(Nat, Z),
+                }
+            ),
+            S(y') => Inl(Eq(Bool, False, False), And(Eq(Bool, False, True), Eq(Nat, Z, S(y'))),
+                Refl(Bool, False)),
+        },
+        S(x') => y.match _ as y => Or(
+            Eq(Bool, S(x').eq(y), False),
+            And(Eq(Bool, S(x').eq(y), True), Eq(Nat, S(x'), y))
+        ) {
+            Z => Inl(Eq(Bool, False, False), And(Eq(Bool, False, True), Eq(Nat, S(x'), Z)), Refl(Bool, False)),
+            S(y') => Unit.nat_eq_reflection(x', y').match _ {
+                Inl(_, _, prf) => Inl(Eq(Bool, x'.eq(y'), False), And(Eq(Bool, x'.eq(y'), True), Eq(Nat, S(x'), S(y'))), prf),
+                Inr(_, _, prf) => Inr(Eq(Bool, x'.eq(y'), False), And(Eq(Bool, x'.eq(y'), True), Eq(Nat, S(x'), S(y'))),
+                    comatch _ {
+                        proj1(_, _) => prf.proj1(Eq(Bool, x'.eq(y'), True), Eq(Nat, x', y')),
+                        proj2(_, _) => prf.proj2(Eq(Bool, x'.eq(y'), True), Eq(Nat, x', y'))
+                            .cong(Nat, Nat, x', y', comatch _ { apply(_, _, z) => S(z) }),
+                }),
+            },
+        },
     }
 }
 
@@ -140,8 +189,8 @@ data HasType(ctx: Ctx, e: Exp, t: Typ) {
          e2_t: HasType(ctx, e2, t1)): HasType(ctx, App(e1, e2), t2),
 }
 
-def HasType(ctx, Var(x), s).lemma(ctx:Ctx, x: Nat, s t: Typ, h_elem: Elem(x, t, ctx)) : Eq(Typ, s, t) {
-    TVar(_, _, _, h_elem2) => ?,
+def HasType(ctx, Var(x), t).var_elem(ctx: Ctx, x: Nat, t: Typ): Elem(x, t, ctx) {
+    TVar(_, _, _, h_elem) => h_elem,
     TLam(_, _, _, _, _) absurd,
     TApp(_, _, _, _, _, _, _) absurd,
 }
@@ -210,9 +259,22 @@ def (self: Exp).progress(t: Typ): Fun(HasType(Nil, self, t), Progress(self))
 }
 
 def (self: Exp).subst_lemma(ctx: Ctx, s t: Typ, x: Nat, by: Exp, h_elem: Elem(x, s, ctx), h_by: HasType(ctx, by, s)): Fun(HasType(ctx, self, t), HasType(ctx, self.subst(x, by), t)) {
-    Var(y) => comatch _ { apply(_, _, h_self) => y.eq(x).match _ as z => HasType(ctx, z.then_else(Exp, by, Var(y)), t) {
-            False => h_self,
-            True => (?).transport(Typ, s, t, comatch _ { apply(_, _, r) => HasType(ctx, by, r) }, h_by),
+    Var(y) => comatch _ { apply(_, _, h_self) => Unit.nat_eq_reflection(y, x).match _ {
+        Inl(_, _, prf) => prf
+            .sym(Bool, y.eq(x), False)
+            .transport(Bool, False, y.eq(x), comatch _ {
+            apply(_, _, z) => HasType(ctx, z.then_else(Exp, by, Var(y)), t)
+        }, h_self),
+        Inr(_, _, prf) => prf.proj1(Eq(Bool, y.eq(x), True), Eq(Nat, y, x))
+            .sym(Bool, y.eq(x), True)
+            .transport(Bool, True, y.eq(x), comatch _ { apply(_, _, z) => HasType(ctx, z.then_else(Exp, by, Var(y)), t) },
+                Unit.elem_type_unique(ctx, x, s, t, h_elem,
+                    prf.proj2(Eq(Bool, y.eq(x), True), Eq(Nat, y, x))
+                        .transport(Nat, y, x, comatch _ { apply(_, _, r) => HasType(ctx, Var(r), t) }, h_self)
+                        .var_elem(ctx, x, t)
+                )
+                .transport(Typ, s, t, comatch _ { apply(_, _, r) => HasType(ctx, by, r) }, h_by)
+            ),
         }
     },
     App(e1, e2) => ?,
