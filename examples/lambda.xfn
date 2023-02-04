@@ -100,49 +100,35 @@ def Elem(x, t, Nil).empty_absurd(x: Nat, t: Typ) : Bot {
     There(_, _, _, _, _) absurd,
 }
 
-def Elem(x, t, ctx).unique(ctx: Ctx, x: Nat, s t: Typ, h: Elem(x, s, ctx)): Eq(Typ, s, t) {
-    Here(t, ts) => h.match _ {
-        Here(s, ss) => ?,
-        -- Elem(Z, @1.2, Cons(@0.1, @0.0))
-        -- h: Elem(x, s, ctx)
-        There(_, _, _, _, _) absurd,
-    },
-    There(_, _, _, _, _) => ?,
-}
-
 data Top { Unit }
 
 def Top.hole(a: Type, x: a, b: Type) : b {
     Unit => Unit.hole(a, x, b)
 }
 
-def Top.lemma3(rs: Ctx, r s: Typ, h1: Elem(Z, s, Cons(r, rs))) : Eq(Typ, r, s) {
-    Unit => h1.match _ {
-        Here(_, _) => Refl(Typ, s),
-        There(_, _, _, _, _) absurd,
-    }
-}
-
-def Top.lemma2(ctx ctx': Ctx, s t: Typ, h1: Elem(Z, s, ctx), h2: Elem(Z, t, ctx)) : Eq(Typ, s, t) {
-    Unit => ctx.match _ {
-        Cons(r, rs) => ?,
-        Nil => ?,
-    }
-}
-
-def Top.lemma1(ctx: Ctx, x: Nat, s t: Typ, h1: Elem(x, s, ctx), h2: Elem(x, t, ctx)) : Eq(Typ, s, t) {
-    Unit => ctx.match _ {
-        Nil => h1.match _ {
-            Here(_, _) => ?,
-            There(_, _, _, _, _) => ?,
+def Top.elem_type_unique(ctx: Ctx, x: Nat, s t: Typ, h1: Elem(x, s, ctx), h2: Elem(x, t, ctx)) : Eq(Typ, s, t) {
+    Unit => ctx.inversion.match _ {
+        Inl(_, _, eq_nil) => eq_nil.transport(Ctx, ctx, Nil, comatch _ { apply(_, _, c) => Elem(x, s, c) }, h1).match _ {
+            Here(_, _) absurd,
+            There(_, _, _, _, _) absurd,
         },
-        Cons(r, rs) => h1.match _ {
-            Here(s, _) => h2.match _ {
-                Here(t, _) => ?,
-                There(_, _, _, _, _) absurd,
-            },
-            There(_, _, _, _, _) => ?,
-        },
+        Inr(_, _, exists_r) => exists_r.match _ {
+            MkExists(_, _, r, exists_rs) => exists_rs.match _ {
+                MkExists(_, _, rs, eq_cons) => eq_cons.transport(Ctx, ctx, Cons(r, rs), comatch _ { apply(_, _, c) => Elem(x, s, c) }, h1)
+                    .match _ {
+                        Here(_, _) => eq_cons.transport(Ctx, ctx, Cons(r, rs), comatch _ { apply(_, _, c) => Elem(x, t, c) }, h2)
+                            .match _ {
+                            Here(_, _) => Refl(Typ, r),
+                            There(_, _, _, _, _) absurd,
+                        },
+                        There(x', _, _, _, h1') => eq_cons.transport(Ctx, ctx, Cons(r, rs), comatch _ { apply(_, _, c) => Elem(x, t, c) }, h2)
+                            .match _ {
+                                Here(_, _) absurd,
+                                There(_, _, _, _, h2') => Unit.elem_type_unique(rs, x', s, t, h1', h2'),
+                            },
+                    },
+            }
+        }
     }
 }
 
