@@ -427,6 +427,16 @@ pub struct TelescopeInst<P: Phase> {
     pub params: Vec<ParamInst<P>>,
 }
 
+impl<P: Phase> TelescopeInst<P> {
+    pub fn len(&self) -> usize {
+        self.params.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.params.is_empty()
+    }
+}
+
 pub type Params<P> = Vec<Param<P>>;
 pub type Args<P> = Vec<Rc<Exp<P>>>;
 

@@ -185,7 +185,11 @@ impl Eval for ust::Case {
     fn eval(&self, _prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
         let ust::Case { info, name, args, body } = self;
 
-        let body = body.as_ref().map(|body| Closure { body: body.clone(), env: env.clone() });
+        let body = body.as_ref().map(|body| Closure {
+            body: body.clone(),
+            n_args: args.len(),
+            env: env.clone(),
+        });
 
         Ok(val::Case { info: info.clone(), name: name.clone(), args: args.clone(), body })
     }
@@ -197,7 +201,11 @@ impl Eval for ust::Cocase {
     fn eval(&self, _prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
         let ust::Cocase { info, name, params: args, body } = self;
 
-        let body = body.as_ref().map(|body| Closure { body: body.clone(), env: env.clone() });
+        let body = body.as_ref().map(|body| Closure {
+            body: body.clone(),
+            n_args: args.len(),
+            env: env.clone(),
+        });
 
         Ok(val::Cocase { info: info.clone(), name: name.clone(), args: args.clone(), body })
     }

@@ -1,11 +1,13 @@
 use std::rc::Rc;
 
+use syntax::common::*;
 use syntax::nf;
 use syntax::ust::Prg;
 use syntax::val;
 use tracer::trace;
 
-use super::eval::Eval;
+use crate::eval::Apply;
+
 use super::result::*;
 
 pub trait ReadBack {
@@ -127,11 +129,18 @@ impl ReadBack for val::Closure {
     type Nf = Rc<nf::Nf>;
 
     fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
-        let val::Closure { env, body } = self;
-
-        let mut env = env.clone();
-
-        body.eval(prg, &mut env)?.read_back(prg)
+        let args: Vec<Rc<val::Val>> = (0..self.n_args)
+            .rev()
+            .map(|snd| val::Val::Neu {
+                exp: val::Neu::Var {
+                    info: val::Info::empty(),
+                    name: "".to_owned(),
+                    idx: Idx { fst: 0, snd },
+                },
+            })
+            .map(Rc::new)
+            .collect();
+        self.clone().apply(prg, &args)?.read_back(prg)
     }
 }
 

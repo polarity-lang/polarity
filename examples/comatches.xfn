@@ -1,0 +1,19 @@
+codata Fun(a b: Type) {
+    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+}
+
+codata Pi(a: Type, p: Fun(a, Type)) {
+    Pi(a, p).pi_elim(a: Type, p: Fun(a, Type), x: a) : p.apply(a, Type, x)
+}
+
+data Top { Unit }
+
+-- The identity function
+def Top.id: Pi(Type, comatch _ { apply(_, _, a) => Fun(a, a) }) {
+    Unit => comatch _ { pi_elim(_, _, a) => comatch _ { apply(_, _, x) => x } } : Pi(Type, comatch _ { apply(_, _, a) => Fun(a, a) })
+}
+
+-- The constant function
+def Top.const: Pi(Type, comatch _ { apply(_, _, a) => Pi(Type, comatch _ { apply(_, _, b) => Fun(a, Fun(b, a)) }) }) {
+    Unit => comatch _ { pi_elim(_, _, a) => comatch _ { pi_elim(_, _, b) => comatch _ { apply(_, _, x) => comatch _ { apply(_, _, y) => x } } }}
+}

@@ -121,5 +121,6 @@ pub type Args = Vec<Rc<Val>>;
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Closure {
     pub env: Env,
+    pub n_args: usize,
     pub body: Rc<ust::Exp>,
 }

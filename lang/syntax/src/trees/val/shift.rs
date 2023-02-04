@@ -92,8 +92,8 @@ impl ShiftInRange for Cocase {
 
 impl ShiftInRange for Closure {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Closure { env, body } = self;
+        let Closure { env, n_args, body } = self;
 
-        Closure { env: env.shift_in_range(range, by), body: body.clone() }
+        Closure { env: env.shift_in_range(range, by), n_args: *n_args, body: body.clone() }
     }
 }
