@@ -277,7 +277,17 @@ def (self: Exp).subst_lemma(ctx: Ctx, s t: Typ, x: Nat, by: Exp, h_elem: Elem(x,
             ),
         }
     },
-    App(e1, e2) => ?,
+    App(e1, e2) => comatch _ { apply(_, _, h_self) => h_self.match _ {
+        TVar(_, _, _, _) absurd,
+        TLam(_, _, _, _, _) absurd,
+        TApp(_, t1, t2, e1, e2, e1_t, e2_t) => TApp(ctx, t1, t2, e1.subst(x, by), e2.subst(x, by),
+            e1.subst_lemma(ctx, s, FunT(t1, t2), x, by, h_elem, h_by)
+                .apply(HasType(ctx, e1, FunT(t1, t2)), HasType(ctx, e1.subst(x, by), FunT(t1, t2)), e1_t),
+            e2.subst_lemma(ctx, s, t1, x, by, h_elem, h_by)
+                .apply(HasType(ctx, e2, t1), HasType(ctx, e2.subst(x, by), t1), e2_t),
+        ),
+
+    }},
     Lam(e) => ?,
 }
 
