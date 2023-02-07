@@ -20,6 +20,7 @@ match {
     // Literals
     r"0|[1-9][0-9]*",
     // Keywords
+    "@ignored",
     "data", "codata",
     "def", "codef",
     "match", "as", "comatch",
@@ -68,6 +69,8 @@ OptTelescopeInst: TelescopeInst = <params: Parens<Comma<ParamInst>>?> => Telesco
 Args: Vec<Rc<Exp>> = ParenthesizedArgs<Exp>;
 OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
 
+Ignored: bool = <ignored: "@ignored"?> => ignored.is_some();
+
 // Program
 
 pub Prg: Prg = {
@@ -80,13 +83,13 @@ pub Item: Item = {
 }
 
 pub TypDecl: TypDecl = {
-    <l: @L> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => TypDecl::Data(Data { info: span(l, r), name, ignored: false, params, ctors }),
-    <l: @L> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => TypDecl::Codata(Codata { info: span(l, r), name, ignored: false, params, dtors }),
+    <l: @L> <ignored: Ignored> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => TypDecl::Data(Data { info: span(l, r), name, ignored, params, ctors }),
+    <l: @L> <ignored: Ignored> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => TypDecl::Codata(Codata { info: span(l, r), name, ignored, params, dtors }),
 }
 
 pub DefDecl: DefDecl = {
-    <l: @L> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), name, ignored: false, params, scrutinee, ret_typ, body }),
-    <l: @L> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => DefDecl::Codef(Codef { info: span(l, r), name, ignored: false, params, typ, body }),
+    <l: @L> <ignored: Ignored> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), name, ignored, params, scrutinee, ret_typ, body }),
+    <l: @L> <ignored: Ignored> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => DefDecl::Codef(Codef { info: span(l, r), name, ignored, params, typ, body }),
 }
 
 Ctor: Ctor = {
