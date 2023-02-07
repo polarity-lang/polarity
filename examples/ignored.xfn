@@ -1,0 +1,28 @@
+@ignored
+data Nat {
+    Z,
+    S(n: Nat),
+}
+
+@ignored
+def Nat.add(y: Nat) : Nat {
+    Z => y,
+    S(x') => S(x'.add(y)),
+}
+
+data Vec(n: Nat) {
+    Nil : Vec(Z),
+    Cons(n x: Nat, xs: Vec(n)) : Vec(S(n)),
+}
+
+@ignored
+codata Stream {
+    head : Nat,
+    tail : Stream
+}
+
+codata NatToNat {
+    apply(x: Nat) : Nat
+}
+
+S(S(Z)).add(S(S(Z)))
