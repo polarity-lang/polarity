@@ -53,7 +53,7 @@ impl BuildMatrix for ust::Prg {
 
 impl BuildMatrix for ust::Data {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut matrix::Prg) {
-        let ust::Data { info, name, typ, ctors } = self;
+        let ust::Data { info, name, ignored: _, typ, ctors } = self;
 
         let xdata = matrix::XData {
             repr: matrix::Repr::Data,
@@ -75,7 +75,7 @@ impl BuildMatrix for ust::Data {
 
 impl BuildMatrix for ust::Codata {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut matrix::Prg) {
-        let ust::Codata { info, name, typ, dtors } = self;
+        let ust::Codata { info, name, ignored: _, typ, dtors } = self;
 
         let xdata = matrix::XData {
             repr: matrix::Repr::Codata,

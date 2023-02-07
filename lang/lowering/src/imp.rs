@@ -147,7 +147,7 @@ impl Lower for cst::Data {
     type Target = ust::Data;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Data { info, name, params, ctors } = self;
+        let cst::Data { info, name, ignored, params, ctors } = self;
 
         let ctor_decls = ctors.lower_in_ctx(ctx)?.into_iter().map(ust::Decl::Ctor);
 
@@ -158,6 +158,7 @@ impl Lower for cst::Data {
         Ok(ust::Data {
             info: info.lower_pure(),
             name: name.clone(),
+            ignored: *ignored,
             typ: Rc::new(ust::TypAbs { params: params.lower_in_ctx(ctx)? }),
             ctors: ctor_names,
         })
@@ -168,7 +169,7 @@ impl Lower for cst::Codata {
     type Target = ust::Codata;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Codata { info, name, params, dtors } = self;
+        let cst::Codata { info, name, ignored, params, dtors } = self;
 
         let dtor_decls = dtors.lower_in_ctx(ctx)?.into_iter().map(ust::Decl::Dtor);
 
@@ -179,6 +180,7 @@ impl Lower for cst::Codata {
         Ok(ust::Codata {
             info: info.lower_pure(),
             name: name.clone(),
+            ignored: *ignored,
             typ: Rc::new(ust::TypAbs { params: params.lower_in_ctx(ctx)? }),
             dtors: dtor_names,
         })
@@ -269,7 +271,7 @@ impl Lower for cst::Def {
     type Target = ust::Def;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Def { info, name, params, scrutinee, ret_typ, body } = self;
+        let cst::Def { info, name, ignored, params, scrutinee, ret_typ, body } = self;
 
         let self_param: cst::SelfParam = scrutinee.clone().into();
 
@@ -280,6 +282,7 @@ impl Lower for cst::Def {
                 Ok(ust::Def {
                     info: info.lower_pure(),
                     name: name.clone(),
+                    ignored: *ignored,
                     params,
                     self_param,
                     ret_typ: ret_typ.lower_in_ctx(ctx)?,
@@ -294,12 +297,13 @@ impl Lower for cst::Codef {
     type Target = ust::Codef;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Codef { info, name, params, typ, body } = self;
+        let cst::Codef { info, name, ignored, params, typ, body } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
             Ok(ust::Codef {
                 info: info.lower_pure(),
                 name: name.clone(),
+                ignored: *ignored,
                 params,
                 typ: typ.lower_in_ctx(ctx)?,
                 body: body.lower_in_ctx(ctx)?,

@@ -182,6 +182,9 @@ pub enum Decl<P: Phase> {
 pub struct Data<P: Phase> {
     pub info: P::Info,
     pub name: Ident,
+    /// Whether the declarations should be omitted
+    /// during pretty printing.
+    pub ignored: bool,
     pub typ: Rc<TypAbs<P>>,
     pub ctors: Vec<Ident>,
 }
@@ -190,6 +193,9 @@ pub struct Data<P: Phase> {
 pub struct Codata<P: Phase> {
     pub info: P::Info,
     pub name: Ident,
+    /// Whether the declarations should be omitted
+    /// during pretty printing.
+    pub ignored: bool,
     pub typ: Rc<TypAbs<P>>,
     pub dtors: Vec<Ident>,
 }
@@ -220,6 +226,9 @@ pub struct Dtor<P: Phase> {
 pub struct Def<P: Phase> {
     pub info: P::Info,
     pub name: Ident,
+    /// Whether the declarations should be omitted
+    /// during pretty printing.
+    pub ignored: bool,
     pub params: Telescope<P>,
     pub self_param: SelfParam<P>,
     pub ret_typ: Rc<Exp<P>>,
@@ -242,6 +251,9 @@ impl<P: Phase> Def<P> {
 pub struct Codef<P: Phase> {
     pub info: P::Info,
     pub name: Ident,
+    /// Whether the declarations should be omitted
+    /// during pretty printing.
+    pub ignored: bool,
     pub params: Telescope<P>,
     pub typ: TypApp<P>,
     pub body: Comatch<P>,
