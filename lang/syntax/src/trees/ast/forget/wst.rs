@@ -46,12 +46,12 @@ impl Forget for wst::Data {
     type Target = ust::Data;
 
     fn forget(&self) -> Self::Target {
-        let wst::Data { info, name, ignored, typ, ctors } = self;
+        let wst::Data { info, name, hidden, typ, ctors } = self;
 
         ust::Data {
             info: info.forget(),
             name: name.clone(),
-            ignored: *ignored,
+            hidden: *hidden,
             typ: typ.forget(),
             ctors: ctors.clone(),
         }
@@ -62,12 +62,12 @@ impl Forget for wst::Codata {
     type Target = ust::Codata;
 
     fn forget(&self) -> Self::Target {
-        let wst::Codata { info, name, ignored, typ, dtors } = self;
+        let wst::Codata { info, name, hidden, typ, dtors } = self;
 
         ust::Codata {
             info: info.forget(),
             name: name.clone(),
-            ignored: *ignored,
+            hidden: *hidden,
             typ: typ.forget(),
             dtors: dtors.clone(),
         }
@@ -119,12 +119,12 @@ impl Forget for wst::Def {
     type Target = ust::Def;
 
     fn forget(&self) -> Self::Target {
-        let wst::Def { info, name, ignored, params, self_param, ret_typ, body } = self;
+        let wst::Def { info, name, hidden, params, self_param, ret_typ, body } = self;
 
         ust::Def {
             info: info.forget(),
             name: name.clone(),
-            ignored: *ignored,
+            hidden: *hidden,
             params: params.forget(),
             self_param: self_param.forget(),
             ret_typ: ret_typ.forget(),
@@ -137,12 +137,12 @@ impl Forget for wst::Codef {
     type Target = ust::Codef;
 
     fn forget(&self) -> Self::Target {
-        let wst::Codef { info, name, ignored, params, typ, body } = self;
+        let wst::Codef { info, name, hidden, params, typ, body } = self;
 
         ust::Codef {
             info: info.forget(),
             name: name.clone(),
-            ignored: *ignored,
+            hidden: *hidden,
             params: params.forget(),
             typ: typ.forget(),
             body: body.forget(),

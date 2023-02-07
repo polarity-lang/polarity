@@ -28,9 +28,9 @@ pub enum TypDecl {
 #[derive(Debug, Clone)]
 pub struct Data {
     pub info: Info,
-    /// Whether the declarations should be omitted
+    /// Whether the declaration should be omitted
     /// during pretty printing.
-    pub ignored: bool,
+    pub hidden: bool,
     pub name: Ident,
     pub params: Telescope,
     pub ctors: Vec<Ctor>,
@@ -39,9 +39,9 @@ pub struct Data {
 #[derive(Debug, Clone)]
 pub struct Codata {
     pub info: Info,
-    /// Whether the declarations should be omitted
+    /// Whether the declaration should be omitted
     /// during pretty printing.
-    pub ignored: bool,
+    pub hidden: bool,
     pub name: Ident,
     pub params: Telescope,
     pub dtors: Vec<Dtor>,
@@ -74,9 +74,9 @@ pub enum DefDecl {
 pub struct Def {
     pub info: Info,
     pub name: Ident,
-    /// Whether the declarations should be omitted
+    /// Whether the declaration should be omitted
     /// during pretty printing.
-    pub ignored: bool,
+    pub hidden: bool,
     pub params: Telescope,
     pub scrutinee: Scrutinee,
     pub ret_typ: Rc<Exp>,
@@ -87,9 +87,9 @@ pub struct Def {
 pub struct Codef {
     pub info: Info,
     pub name: Ident,
-    /// Whether the declarations should be omitted
+    /// Whether the declaration should be omitted
     /// during pretty printing.
-    pub ignored: bool,
+    pub hidden: bool,
     pub params: Telescope,
     pub typ: TypApp,
     pub body: Comatch,

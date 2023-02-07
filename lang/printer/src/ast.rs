@@ -109,8 +109,8 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Data { info: _, name, ignored, typ, ctors } = self;
-        if *ignored {
+        let Data { info: _, name, hidden, typ, ctors } = self;
+        if *hidden {
             return alloc.nil();
         }
 
@@ -150,8 +150,8 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Codata { info: _, name, ignored, typ, dtors } = self;
-        if *ignored {
+        let Codata { info: _, name, hidden, typ, dtors } = self;
+        if *hidden {
             return alloc.nil();
         }
 
@@ -184,8 +184,8 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { info: _, name, ignored, params, self_param, ret_typ, body } = self;
-        if *ignored {
+        let Def { info: _, name, hidden, params, self_param, ret_typ, body } = self;
+        if *hidden {
             return alloc.nil();
         }
 
@@ -212,8 +212,8 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codef { info: _, name, ignored, params, typ, body } = self;
-        if *ignored {
+        let Codef { info: _, name, hidden, params, typ, body } = self;
+        if *hidden {
             return alloc.nil();
         }
 

@@ -1,10 +1,10 @@
-@ignored
+@hidden
 data Nat {
     Z,
     S(n: Nat),
 }
 
-@ignored
+@hidden
 def Nat.add(y: Nat) : Nat {
     Z => y,
     S(x') => S(x'.add(y)),
@@ -15,7 +15,7 @@ data Vec(n: Nat) {
     Cons(n x: Nat, xs: Vec(n)) : Vec(S(n)),
 }
 
-@ignored
+@hidden
 codata Stream {
     head : Nat,
     tail : Stream

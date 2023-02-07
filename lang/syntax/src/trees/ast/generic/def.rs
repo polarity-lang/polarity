@@ -184,7 +184,7 @@ pub struct Data<P: Phase> {
     pub name: Ident,
     /// Whether the declarations should be omitted
     /// during pretty printing.
-    pub ignored: bool,
+    pub hidden: bool,
     pub typ: Rc<TypAbs<P>>,
     pub ctors: Vec<Ident>,
 }
@@ -195,7 +195,7 @@ pub struct Codata<P: Phase> {
     pub name: Ident,
     /// Whether the declarations should be omitted
     /// during pretty printing.
-    pub ignored: bool,
+    pub hidden: bool,
     pub typ: Rc<TypAbs<P>>,
     pub dtors: Vec<Ident>,
 }
@@ -228,7 +228,7 @@ pub struct Def<P: Phase> {
     pub name: Ident,
     /// Whether the declarations should be omitted
     /// during pretty printing.
-    pub ignored: bool,
+    pub hidden: bool,
     pub params: Telescope<P>,
     pub self_param: SelfParam<P>,
     pub ret_typ: Rc<Exp<P>>,
@@ -253,7 +253,7 @@ pub struct Codef<P: Phase> {
     pub name: Ident,
     /// Whether the declarations should be omitted
     /// during pretty printing.
-    pub ignored: bool,
+    pub hidden: bool,
     pub params: Telescope<P>,
     pub typ: TypApp<P>,
     pub body: Comatch<P>,

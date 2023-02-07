@@ -15,7 +15,7 @@ impl Represent for matrix::XData {
         let data = ust::Data {
             info: ust::Info::empty(),
             name: name.clone(),
-            ignored: false,
+            hidden: false,
             typ: typ.clone(),
             ctors: ctors.keys().cloned().collect(),
         };
@@ -39,7 +39,7 @@ impl Represent for matrix::XData {
                 ust::Def {
                     info: ust::Info::empty(),
                     name: dtor.name.clone(),
-                    ignored: false,
+                    hidden: false,
                     params: dtor.params.clone(),
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
@@ -59,7 +59,7 @@ impl Represent for matrix::XData {
         let codata = ust::Codata {
             info: ust::Info::empty(),
             name: name.clone(),
-            ignored: false,
+            hidden: false,
             typ: typ.clone(),
             dtors: dtors.keys().cloned().collect(),
         };
@@ -93,7 +93,7 @@ impl Represent for matrix::XData {
                 ust::Codef {
                     info: ust::Info::empty(),
                     name: ctor.name.clone(),
-                    ignored: false,
+                    hidden: false,
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
                     body: ust::Comatch { cases, info: ust::Info::empty() },
