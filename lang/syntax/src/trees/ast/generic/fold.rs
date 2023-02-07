@@ -12,6 +12,7 @@ pub fn id<P: Phase>() -> Id<P> {
     Id::default()
 }
 
+#[allow(clippy::too_many_arguments)]
 #[rustfmt::skip]
 pub trait Folder<P: Phase, O: Out> {
     /// Run just before a declaration is entered

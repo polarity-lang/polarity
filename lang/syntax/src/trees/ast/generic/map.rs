@@ -8,6 +8,7 @@ use super::def::*;
 use super::fold::*;
 use super::source::Source;
 
+#[allow(clippy::too_many_arguments)]
 #[rustfmt::skip]
 pub trait Mapper<P: Phase> {
     /// Run just before a declaration is entered

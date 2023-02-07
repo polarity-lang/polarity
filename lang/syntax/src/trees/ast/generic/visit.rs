@@ -9,6 +9,7 @@ use super::source::Source;
 
 #[rustfmt::skip]
 #[allow(unused_variables)]
+#[allow(clippy::too_many_arguments)]
 pub trait Visitor<P: Phase> {
     fn visit_prg(&mut self, decls: &Decls<P>, exp: &Option<Rc<Exp<P>>>) {}
     fn visit_decls(&mut self, map: &HashMap<Ident, Decl<P>>, source: &Source) {}
