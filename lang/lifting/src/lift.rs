@@ -126,6 +126,7 @@ impl Mapper<WST> for Lift {
         let def = wst::Def {
             info: wst::Info::empty(),
             name: name.clone(),
+            hidden: false,
             params: telescope,
             self_param: wst::SelfParam {
                 info: wst::Info::empty(),
@@ -173,6 +174,7 @@ impl Mapper<WST> for Lift {
         let codef = wst::Codef {
             info: wst::Info::empty(),
             name: name.clone(),
+            hidden: false,
             params: telescope,
             typ,
             body,

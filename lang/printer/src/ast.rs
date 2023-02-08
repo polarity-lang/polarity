@@ -109,7 +109,10 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Data { info: _, name, typ, ctors } = self;
+        let Data { info: _, name, hidden, typ, ctors } = self;
+        if *hidden {
+            return alloc.nil();
+        }
 
         let head = alloc
             .keyword(DATA)
@@ -147,7 +150,11 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Codata { info: _, name, typ, dtors } = self;
+        let Codata { info: _, name, hidden, typ, dtors } = self;
+        if *hidden {
+            return alloc.nil();
+        }
+
         let head = alloc
             .keyword(CODATA)
             .append(alloc.space())
@@ -177,7 +184,11 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { info: _, name, params, self_param, ret_typ, body } = self;
+        let Def { info: _, name, hidden, params, self_param, ret_typ, body } = self;
+        if *hidden {
+            return alloc.nil();
+        }
+
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
@@ -201,7 +212,11 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codef { info: _, name, params, typ, body } = self;
+        let Codef { info: _, name, hidden, params, typ, body } = self;
+        if *hidden {
+            return alloc.nil();
+        }
+
         let head = alloc
             .keyword(CODEF)
             .append(alloc.space())

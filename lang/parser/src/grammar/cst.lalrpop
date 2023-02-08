@@ -20,6 +20,7 @@ match {
     // Literals
     r"0|[1-9][0-9]*",
     // Keywords
+    "@hidden",
     "data", "codata",
     "def", "codef",
     "match", "as", "comatch",
@@ -68,6 +69,8 @@ OptTelescopeInst: TelescopeInst = <params: Parens<Comma<ParamInst>>?> => Telesco
 Args: Vec<Rc<Exp>> = ParenthesizedArgs<Exp>;
 OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
 
+Hidden: bool = <hidden: "@hidden"?> => hidden.is_some();
+
 // Program
 
 pub Prg: Prg = {
@@ -80,13 +83,13 @@ pub Item: Item = {
 }
 
 pub TypDecl: TypDecl = {
-    <l: @L> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => TypDecl::Data(Data { info: span(l, r), name, params, ctors }),
-    <l: @L> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => TypDecl::Codata(Codata { info: span(l, r), name, params, dtors }),
+    <l: @L> <hidden: Hidden> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => TypDecl::Data(Data { info: span(l, r), name, hidden, params, ctors }),
+    <l: @L> <hidden: Hidden> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => TypDecl::Codata(Codata { info: span(l, r), name, hidden, params, dtors }),
 }
 
 pub DefDecl: DefDecl = {
-    <l: @L> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), name, params, scrutinee, ret_typ, body }),
-    <l: @L> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => DefDecl::Codef(Codef { info: span(l, r), name, params, typ, body }),
+    <l: @L> <hidden: Hidden> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), name, hidden, params, scrutinee, ret_typ, body }),
+    <l: @L> <hidden: Hidden> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => DefDecl::Codef(Codef { info: span(l, r), name, hidden, params, typ, body }),
 }
 
 Ctor: Ctor = {

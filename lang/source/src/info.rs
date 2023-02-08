@@ -68,6 +68,7 @@ impl Visitor<tst::TST> for InfoCollector {
         &mut self,
         info: &tst::Info,
         name: &Ident,
+        _hidden: bool,
         _typ: &Rc<tst::TypAbs>,
         _ctors: &[Ident],
     ) {
@@ -78,6 +79,7 @@ impl Visitor<tst::TST> for InfoCollector {
         &mut self,
         info: &tst::Info,
         name: &Ident,
+        _hidden: bool,
         _typ: &Rc<tst::TypAbs>,
         _dtors: &[Ident],
     ) {
@@ -88,6 +90,7 @@ impl Visitor<tst::TST> for InfoCollector {
         &mut self,
         info: &tst::Info,
         name: &Ident,
+        _hidden: bool,
         _params: &tst::Telescope,
         self_param: &tst::SelfParam,
         _ret_typ: &Rc<tst::Exp>,
@@ -103,6 +106,7 @@ impl Visitor<tst::TST> for InfoCollector {
         &mut self,
         info: &tst::Info,
         name: &Ident,
+        _hidden: bool,
         _params: &tst::Telescope,
         typ: &tst::TypApp,
         _body: &tst::Comatch,
