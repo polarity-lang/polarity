@@ -18,18 +18,18 @@ const LATEX_END: &str = r#"\end{alltt}
 fn latex_start(fontsize: &Option<FontSize>) -> String {
     use FontSize::*;
     let latex_fontsize = match *fontsize {
-        None => "\\scriptsize\n",
-        Some(Tiny) => "\\tiny\n",
-        Some(Scriptsize) => "\\scriptsize\n",
-        Some(Footnotesize) => "\\footnotesize\n",
-        Some(Small) => "\\small\n",
-        Some(Normalsize) => "\\normalsize\n",
-        Some(Large) => "\\large\n",
+        None => "\\scriptsize",
+        Some(Tiny) => "\\tiny",
+        Some(Scriptsize) => "\\scriptsize",
+        Some(Footnotesize) => "\\footnotesize",
+        Some(Small) => "\\small",
+        Some(Normalsize) => "\\normalsize",
+        Some(Large) => "\\large",
     };
     let mut latex_start_string = "".to_string();
     latex_start_string.push_str("\\begin{alltt}\n");
     latex_start_string.push_str(latex_fontsize);
-    latex_start_string.push_str("\\ttfamily\n");
+    latex_start_string.push_str("\\ttfamily");
     latex_start_string
 }
 
