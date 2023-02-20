@@ -1,0 +1,36 @@
+data CoNat {
+    Z,
+    S(n: CoNat),
+    Omega,
+}
+
+data NotZero(n: CoNat) {
+    SNotZero(n: CoNat): NotZero(S(n)),
+    OmegaNotZero: NotZero(Omega),
+}
+
+def CoNat.pred : CoNat {
+    Z => Z,
+    S(n) => n,
+    Omega => Omega,
+}
+
+codata CoList(n: CoNat) {
+    CoList(n).head(n: CoNat) : CoNat,
+    CoList(Omega).tail_omega: CoList(Omega),
+    CoList(S(n)).tail_s(n: CoNat): CoList(n),
+}
+
+codef CountUp(from: CoNat) : CoList(Omega) {
+    head(n) => from,
+    tail_omega => CountUp(S(from)),
+    tail_s(_) absurd,
+}
+
+codef TakeN(n: CoNat, s: CoList(Omega)) : CoList(n) {
+    head(n') => s.head(Omega),
+    tail_omega => TakeN(Omega, s.tail_omega),
+    tail_s(n') => TakeN(n', s.tail_omega),
+}
+
+TakeN(3, CountUp(0)).tail_s(2).tail_s(1).tail_s(0).head(0)
