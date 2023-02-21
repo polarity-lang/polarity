@@ -17,6 +17,8 @@ pub struct Args {
     width: Option<usize>,
     #[clap(long, num_args = 0)]
     inplace: bool,
+    #[clap(long, default_value_t = 4)]
+    indent: isize,
     #[clap(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
     #[clap(long, num_args = 0)]
@@ -57,7 +59,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         braces: ("{", "}"),
         omit_decl_sep: false,
         de_bruijn: cmd.de_bruijn,
-        indent: 4,
+        indent: cmd.indent,
     };
 
     print_prg(prg, &cfg, &mut stream);

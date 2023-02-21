@@ -61,10 +61,12 @@ impl fmt::Display for FontSize {
 pub struct Args {
     #[clap(value_parser, value_name = "FILE")]
     filepath: PathBuf,
-    #[clap(long)]
-    width: Option<usize>,
+    #[clap(long, default_value_t = 80)]
+    width: usize,
     #[clap(long, default_value_t=FontSize::Scriptsize)]
     fontsize: FontSize,
+    #[clap(long, default_value_t = 4)]
+    indent: isize,
     #[clap(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
 }
@@ -94,11 +96,11 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
 
     let cfg = PrintCfg {
-        width: cmd.width.unwrap_or(80),
+        width: cmd.width,
         braces: ("\\{", "\\}"),
         omit_decl_sep: true,
         de_bruijn: false,
-        indent: 4,
+        indent: cmd.indent,
     };
 
     stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
