@@ -1,6 +1,3 @@
-// Default indentation size
-pub const INDENT: isize = 4;
-
 // Symbols
 
 pub const FAT_ARROW: &str = "=>";

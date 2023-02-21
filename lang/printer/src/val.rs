@@ -56,7 +56,7 @@ impl<'a> Print<'a> for Comatch {
         alloc
             .hardline()
             .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
-            .nest(INDENT)
+            .nest(cfg.indent)
             .append(alloc.hardline())
             .braces_from(cfg)
     }
@@ -69,7 +69,7 @@ impl<'a> Print<'a> for Match {
         alloc
             .hardline()
             .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
-            .nest(INDENT)
+            .nest(cfg.indent)
             .append(alloc.hardline())
             .braces_from(cfg)
     }
@@ -85,7 +85,7 @@ impl<'a> Print<'a> for Case {
                 .text(FAT_ARROW)
                 .append(alloc.line())
                 .append(body.print(cfg, alloc))
-                .nest(INDENT),
+                .nest(cfg.indent),
         };
 
         alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
@@ -102,7 +102,7 @@ impl<'a> Print<'a> for Cocase {
                 .text(FAT_ARROW)
                 .append(alloc.line())
                 .append(body.print(cfg, alloc))
-                .nest(INDENT),
+                .nest(cfg.indent),
         };
 
         alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()

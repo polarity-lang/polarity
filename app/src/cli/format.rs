@@ -57,6 +57,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         braces: ("{", "}"),
         omit_decl_sep: false,
         de_bruijn: cmd.de_bruijn,
+        indent: 4,
     };
 
     print_prg(prg, &cfg, &mut stream);

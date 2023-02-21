@@ -84,6 +84,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         braces: ("\\{", "\\}"),
         omit_decl_sep: true,
         de_bruijn: false,
+        indent: 4,
     };
 
     stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
