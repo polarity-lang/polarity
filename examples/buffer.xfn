@@ -3,13 +3,32 @@ data Nat {
     S(n: Nat),
 }
 
-data Chunk {}
+data Bool { True, False }
 
 codata Pair(a: Type, b: Type) {
     Pair(a,b).proj1(a : Type, b : Type) : a,
     Pair(a,b).proj2(a : Type, b : Type) : b
 }
 
+data Vec(n: Nat) {
+    Nil : Vec(Z),
+    Cons(n: Nat, x: Bool, xs: Vec(n)) : Vec(S(n)),
+}
+
 codata Buffer(n: Nat) {
-    Buffer(S(n)).read(n: Nat): Pair(Chunk, Buffer(n))
+    Buffer(S(n)).read(n: Nat): Pair(Bool, Buffer(n))
+}
+
+codef Empty: Buffer(Z) {
+    read(n) absurd,
+}
+
+codef FromVec(n: Nat, xs: Vec(n)): Buffer(n) {
+    read(n') => xs.match _ {
+        Nil absurd,
+        Cons(_, x, xs) => comatch _ {
+            proj1(_, _) => x,
+            proj2(_, _) => FromVec(n', xs)
+        }
+    }
 }
