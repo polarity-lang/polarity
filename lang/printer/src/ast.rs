@@ -123,7 +123,9 @@ where
 
         let sep = alloc.text(COMMA).append(alloc.hardline());
 
-        let body =
+        let body = if ctors.is_empty() {
+            alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+        } else {
             alloc
                 .hardline()
                 .append(alloc.intersperse(
@@ -132,8 +134,8 @@ where
                 ))
                 .nest(cfg.indent)
                 .append(alloc.hardline())
-                .braces_from(cfg);
-
+                .braces_from(cfg)
+        };
         head.append(body)
     }
 }
@@ -164,7 +166,9 @@ where
 
         let sep = alloc.text(COMMA).append(alloc.hardline());
 
-        let body =
+        let body = if dtors.is_empty() {
+            alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+        } else {
             alloc
                 .hardline()
                 .append(alloc.intersperse(
@@ -173,7 +177,8 @@ where
                 ))
                 .nest(cfg.indent)
                 .append(alloc.hardline())
-                .braces_from(cfg);
+                .braces_from(cfg)
+        };
 
         head.append(body)
     }
@@ -273,14 +278,18 @@ where
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Comatch { info: _, cases } = self;
-        let sep = alloc.text(COMMA).append(alloc.hardline());
+        if cases.is_empty() {
+            alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+        } else {
+            let sep = alloc.text(COMMA).append(alloc.hardline());
 
-        alloc
-            .hardline()
-            .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
-            .nest(cfg.indent)
-            .append(alloc.hardline())
-            .braces_from(cfg)
+            alloc
+                .hardline()
+                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
+                .nest(cfg.indent)
+                .append(alloc.hardline())
+                .braces_from(cfg)
+        }
     }
 }
 
@@ -290,13 +299,17 @@ where
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { info: _, cases } = self;
-        let sep = alloc.text(COMMA).append(alloc.hardline());
-        alloc
-            .hardline()
-            .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
-            .nest(cfg.indent)
-            .append(alloc.hardline())
-            .braces_from(cfg)
+        if cases.is_empty() {
+            alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+        } else {
+            let sep = alloc.text(COMMA).append(alloc.hardline());
+            alloc
+                .hardline()
+                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
+                .nest(cfg.indent)
+                .append(alloc.hardline())
+                .braces_from(cfg)
+        }
     }
 }
 
