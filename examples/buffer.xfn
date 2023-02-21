@@ -1,0 +1,15 @@
+data Nat {
+    Z,
+    S(n: Nat),
+}
+
+data Chunk {}
+
+codata Pair(a: Type, b: Type) {
+    Pair(a,b).proj1(a : Type, b : Type) : a,
+    Pair(a,b).proj2(a : Type, b : Type) : b
+}
+
+codata Buffer(n: Nat) {
+    Buffer(S(n)).read(n: Nat): Pair(Chunk, Buffer(n))
+}
