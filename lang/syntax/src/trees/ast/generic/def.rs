@@ -339,6 +339,11 @@ impl<P: Phase> TypApp<P> {
     pub fn to_exp(&self) -> Exp<P> {
         Exp::TypCtor { info: self.info.clone(), name: self.name.clone(), args: self.args.clone() }
     }
+
+    /// A type application is simple if the list of arguments is empty.
+    pub fn is_simple(&self) -> bool {
+        self.args.is_empty()
+    }
 }
 
 #[derive(Debug, Clone, Derivative)]
