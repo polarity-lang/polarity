@@ -244,13 +244,16 @@ where
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Ctor { info: _, name, params, typ } = self;
-        alloc
-            .ctor(name)
-            .append(params.print(cfg, alloc))
-            .append(alloc.space())
-            .append(COLON)
-            .append(alloc.space())
-            .append(typ.print(cfg, alloc))
+
+        let doc = alloc.ctor(name).append(params.print(cfg, alloc));
+        if typ.is_simple() {
+            doc
+        } else {
+            doc.append(alloc.space())
+                .append(COLON)
+                .append(alloc.space())
+                .append(typ.print(cfg, alloc))
+        }
     }
 }
 
@@ -260,10 +263,12 @@ where
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Dtor { info: _, name, params, self_param, ret_typ } = self;
-        self_param
-            .print(cfg, alloc)
-            .append(DOT)
-            .append(alloc.dtor(name))
+        let head = if self_param.is_simple() {
+            alloc.nil()
+        } else {
+            self_param.print(cfg, alloc).append(DOT)
+        };
+        head.append(alloc.dtor(name))
             .append(params.print(cfg, alloc))
             .append(alloc.space())
             .append(COLON)

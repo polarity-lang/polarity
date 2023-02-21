@@ -326,6 +326,12 @@ impl<P: Phase> SelfParam<P> {
             }],
         }
     }
+
+    /// A self parameter is simple if the list of arguments to the type is empty, and the name is None.
+    /// If the self parameter is simple, we can omit it during prettyprinting.
+    pub fn is_simple(&self) -> bool {
+        self.typ.is_simple() && self.name.is_none()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -338,6 +344,11 @@ pub struct TypApp<P: Phase> {
 impl<P: Phase> TypApp<P> {
     pub fn to_exp(&self) -> Exp<P> {
         Exp::TypCtor { info: self.info.clone(), name: self.name.clone(), args: self.args.clone() }
+    }
+
+    /// A type application is simple if the list of arguments is empty.
+    pub fn is_simple(&self) -> bool {
+        self.args.is_empty()
     }
 }
 
