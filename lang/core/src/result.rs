@@ -15,11 +15,12 @@ use printer::PrintToString;
 use super::unify::UnifyError;
 
 #[derive(Error, Diagnostic, Debug)]
-#[diagnostic()]
 pub enum TypeError {
     // TODO: Add span
+    #[diagnostic()]
     #[error("Wrong number of arguments to {name} provided: got {actual}, expected {expected}")]
     ArgLenMismatch { name: String, expected: usize, actual: usize },
+    #[diagnostic()]
     #[error("{lhs} is not equal to {rhs}")]
     NotEq {
         lhs: String,
@@ -29,16 +30,20 @@ pub enum TypeError {
         #[label]
         rhs_span: Option<SourceSpan>,
     },
+    #[diagnostic()]
     #[error("Cannot match on codata type {name}")]
     MatchOnCodata { name: Ident, span: Option<SourceSpan> },
+    #[diagnostic()]
     #[error("Cannot comatch on data type {name}")]
     ComatchOnData { name: Ident, span: Option<SourceSpan> },
+    #[diagnostic()]
     #[error("Invalid pattern match: {msg}")]
     InvalidMatch {
         msg: String,
         #[label]
         span: Option<SourceSpan>,
     },
+    #[diagnostic()]
     #[error("Got {actual}, which is not in type {expected}")]
     NotInType {
         expected: Ident,
@@ -46,36 +51,43 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
+    #[diagnostic()]
     #[error("Pattern for {name} is marked as absurd but that could not be proven")]
     PatternIsNotAbsurd {
         name: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
+    #[diagnostic()]
     #[error("Pattern for {name} is absurd and must be marked accordingly")]
     PatternIsAbsurd {
         name: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
+    #[diagnostic()]
     #[error("Type annotation required")]
     AnnotationRequired {
         #[label]
         span: Option<SourceSpan>,
     },
+    #[diagnostic()]
     #[error("Expected type constructor application, got {got}")]
     ExpectedTypApp {
         got: String,
         #[label]
         span: Option<SourceSpan>,
     },
+    #[diagnostic()]
     #[error("The impossible happened: {message}")]
     /// This error should not occur.
     /// Some internal invariant has been violated.
     Impossible { message: String, span: Option<SourceSpan> },
     // TODO: Add span
+    #[diagnostic(transparent)]
     #[error(transparent)]
     Unify(#[from] UnifyError),
+    #[diagnostic(transparent)]
     #[error(transparent)]
     Normalize(#[from] NormalizeError),
 }
@@ -129,28 +141,35 @@ impl From<ReadBackError> for TypeError {
 }
 
 #[derive(Error, Diagnostic, Debug)]
-#[diagnostic()]
+#[diagnostic(transparent)]
+#[error(transparent)]
 pub enum NormalizeError {
-    #[error(transparent)]
     Eval(#[from] EvalError),
-    #[error(transparent)]
     ReadBack(#[from] ReadBackError),
 }
 
 #[derive(Error, Diagnostic, Debug)]
 #[diagnostic()]
 pub enum EvalError {
-    #[error("Trying to evaluate hole of type {typ}")]
-    EvalHole { typ: String, span: Option<SourceSpan> },
+    #[error("Trying to evaluate hole of type {typ} {span:?}")]
+    EvalHole {
+        typ: String,
+        #[label]
+        span: Option<SourceSpan>,
+    },
     #[error("The impossible happened: {message}")]
     /// This error should not occur.
     /// Some internal invariant has been violated.
-    Impossible { message: String, span: Option<SourceSpan> },
+    Impossible {
+        message: String,
+        #[label]
+        span: Option<SourceSpan>,
+    },
 }
 
 #[derive(Error, Diagnostic, Debug)]
-#[diagnostic()]
+#[diagnostic(transparent)]
+#[error(transparent)]
 pub enum ReadBackError {
-    #[error(transparent)]
     Eval(#[from] EvalError),
 }

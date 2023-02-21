@@ -19,9 +19,7 @@ where
     type Nf = <<T as Eval>::Val as ReadBack>::Nf;
 
     fn normalize(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Nf, NormalizeError> {
-        // FIXME: Implement error handling
-        let val = self.eval(prg, env).unwrap();
-        let nf = val.read_back(prg).unwrap();
-        Ok(nf)
+        let val = self.eval(prg, env).map_err(NormalizeError::Eval)?;
+        val.read_back(prg).map_err(NormalizeError::ReadBack)
     }
 }
