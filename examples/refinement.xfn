@@ -1,9 +1,9 @@
 codata Prop(a: Type, x: a) {
-    Prop(a, x).apply'(a: Type, x: a) : Type
+    Prop(a, x).ap'(a: Type, x: a) : Type
 }
 
 codata Fun(a b: Type) {
-    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+    Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }
 
 data Eq (a: Type, x y: a) {
@@ -22,8 +22,8 @@ def Eq(a, x, y).trans(a: Type, x y z: a, h: Eq(a, y, z)) : Eq(a, x, z) {
     Refl(a, x) => h
 }
 
-def Eq(a, x, y).cong(a b: Type, x y: a, f: Fun(a, b)) : Eq(b, f.apply(a, b, x), f.apply(a, b, y)) {
-    Refl(a, x) => Refl(b, f.apply(a, b, x))
+def Eq(a, x, y).cong(a b: Type, x y: a, f: Fun(a, b)) : Eq(b, f.ap(a, b, x), f.ap(a, b, y)) {
+    Refl(a, x) => Refl(b, f.ap(a, b, x))
 }
 
 data Bool { True, False }

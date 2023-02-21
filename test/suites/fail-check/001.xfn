@@ -1,7 +1,7 @@
 codata Fun(a: Type, b: Type) {
-    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+    Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }
 
 codef ConvertAny(a: Type, b: Type): Fun(a, b) {
-    apply(a, b, x) => x
+    ap(a, b, x) => x
 }

@@ -7,23 +7,23 @@ data Eq (a: Type, x y: a) {
 }
 
 codata Fun(a b: Type) {
-    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+    Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }
 
 def Eq(a, x, y).sym(a: Type, x: a, y: a) : Eq(a, y, x) {
     Refl(a, x) => Refl(a, x)
 }
 
-def Eq(a, x, y).transport(a: Type, x: a, y: a, p: Fun(a, Type), prf: p.apply(a, Type, x)) : p.apply(a, Type, y) {
+def Eq(a, x, y).transport(a: Type, x: a, y: a, p: Fun(a, Type), prf: p.ap(a, Type, x)) : p.ap(a, Type, y) {
     Refl(a, x) => prf
 }
 
-def Eq(a, x, y).cong(a: Type, b: Type, x: a, y: a, f: Fun(a, b)) : Eq(b, f.apply(a, b, x), f.apply(a, b, y)) {
-    Refl(a, x) => Refl(b, f.apply(a, b, x))
+def Eq(a, x, y).cong(a: Type, b: Type, x: a, y: a, f: Fun(a, b)) : Eq(b, f.ap(a, b, x), f.ap(a, b, y)) {
+    Refl(a, x) => Refl(b, f.ap(a, b, x))
 }
 
 data Exists(a: Type, p: Fun(a, Type)) {
-    MkExists(a: Type, p: Fun(a, Type), x: a, prf: p.apply(a, Type, x)): Exists(a, p)
+    MkExists(a: Type, p: Fun(a, Type), x: a, prf: p.ap(a, Type, x)): Exists(a, p)
 }
 
 data Or(a: Type, b: Type) {
@@ -102,7 +102,7 @@ def Top.nat_eq_reflection(x: Nat, y: Nat)
                     comatch _ {
                         proj1(_, _) => prf.proj1(Eq(Bool, x'.eq(y'), True), Eq(Nat, x', y')),
                         proj2(_, _) => prf.proj2(Eq(Bool, x'.eq(y'), True), Eq(Nat, x', y'))
-                            .cong(Nat, Nat, x', y', comatch _ { apply(_, _, z) => S(z) }),
+                            .cong(Nat, Nat, x', y', comatch _ { ap(_, _, z) => S(z) }),
                 }),
             },
         },
@@ -130,11 +130,11 @@ data Ctx {
     Cons(t: Typ, ts: Ctx),
 }
 
-def (self: Ctx).inversion: Or(Eq(Ctx, self, Nil), Exists(Typ, comatch _ { apply(_, _, t) => Exists(Ctx, comatch _ { apply(_, _, ts) => Eq(Ctx, self, Cons(t, ts))}) })) {
-    Nil => Inl(Eq(Ctx, Nil, Nil), Exists(Typ, comatch _ { apply(_, _, t) => Exists(Ctx, comatch _ { apply(_, _, ts) => Eq(Ctx, Nil, Cons(t, ts))}) }), Refl(Ctx, Nil)),
-    Cons(x, xs) => Inr(Eq(Ctx, Cons(x, xs), Nil), Exists(Typ, comatch _ { apply(_, _, t) => Exists(Ctx, comatch _ { apply(_, _, ts) => Eq(Ctx, Cons(x, xs), Cons(t, ts))}) }),
-        MkExists(Typ, comatch _ { apply(_, _, t) => Exists(Ctx, comatch _ { apply(_, _, ts) => Eq(Ctx, Cons(x, xs), Cons(t, ts))}) },
-            x, MkExists(Ctx, comatch _ { apply(_, _, ts) => Eq(Ctx, Cons(x, xs), Cons(x, ts) )}, xs, Refl(Ctx, Cons(x, xs)))
+def (self: Ctx).inversion: Or(Eq(Ctx, self, Nil), Exists(Typ, comatch _ { ap(_, _, t) => Exists(Ctx, comatch _ { ap(_, _, ts) => Eq(Ctx, self, Cons(t, ts))}) })) {
+    Nil => Inl(Eq(Ctx, Nil, Nil), Exists(Typ, comatch _ { ap(_, _, t) => Exists(Ctx, comatch _ { ap(_, _, ts) => Eq(Ctx, Nil, Cons(t, ts))}) }), Refl(Ctx, Nil)),
+    Cons(x, xs) => Inr(Eq(Ctx, Cons(x, xs), Nil), Exists(Typ, comatch _ { ap(_, _, t) => Exists(Ctx, comatch _ { ap(_, _, ts) => Eq(Ctx, Cons(x, xs), Cons(t, ts))}) }),
+        MkExists(Typ, comatch _ { ap(_, _, t) => Exists(Ctx, comatch _ { ap(_, _, ts) => Eq(Ctx, Cons(x, xs), Cons(t, ts))}) },
+            x, MkExists(Ctx, comatch _ { ap(_, _, ts) => Eq(Ctx, Cons(x, xs), Cons(x, ts) )}, xs, Refl(Ctx, Cons(x, xs)))
         )
     ),
 }
@@ -157,20 +157,20 @@ def Top.hole(a: Type, x: a, b: Type) : b {
 
 def Top.elem_type_unique(ctx: Ctx, x: Nat, s t: Typ, h1: Elem(x, s, ctx), h2: Elem(x, t, ctx)) : Eq(Typ, s, t) {
     Unit => ctx.inversion.match _ {
-        Inl(_, _, eq_nil) => eq_nil.transport(Ctx, ctx, Nil, comatch _ { apply(_, _, c) => Elem(x, s, c) }, h1).match _ {
+        Inl(_, _, eq_nil) => eq_nil.transport(Ctx, ctx, Nil, comatch _ { ap(_, _, c) => Elem(x, s, c) }, h1).match _ {
             Here(_, _) absurd,
             There(_, _, _, _, _) absurd,
         },
         Inr(_, _, exists_r) => exists_r.match _ {
             MkExists(_, _, r, exists_rs) => exists_rs.match _ {
-                MkExists(_, _, rs, eq_cons) => eq_cons.transport(Ctx, ctx, Cons(r, rs), comatch _ { apply(_, _, c) => Elem(x, s, c) }, h1)
+                MkExists(_, _, rs, eq_cons) => eq_cons.transport(Ctx, ctx, Cons(r, rs), comatch _ { ap(_, _, c) => Elem(x, s, c) }, h1)
                     .match _ {
-                        Here(_, _) => eq_cons.transport(Ctx, ctx, Cons(r, rs), comatch _ { apply(_, _, c) => Elem(x, t, c) }, h2)
+                        Here(_, _) => eq_cons.transport(Ctx, ctx, Cons(r, rs), comatch _ { ap(_, _, c) => Elem(x, t, c) }, h2)
                             .match _ {
                             Here(_, _) => Refl(Typ, r),
                             There(_, _, _, _, _) absurd,
                         },
-                        There(x', _, _, _, h1') => eq_cons.transport(Ctx, ctx, Cons(r, rs), comatch _ { apply(_, _, c) => Elem(x, t, c) }, h2)
+                        There(x', _, _, _, h1') => eq_cons.transport(Ctx, ctx, Cons(r, rs), comatch _ { ap(_, _, c) => Elem(x, t, c) }, h2)
                             .match _ {
                                 Here(_, _) absurd,
                                 There(_, _, _, _, h2') => Unit.elem_type_unique(rs, x', s, t, h1', h2'),
@@ -237,18 +237,18 @@ def Exp.subst(v: Nat, by: Exp): Exp {
 
 def (self: Exp).progress(t: Typ): Fun(HasType(Nil, self, t), Progress(self))
 {
-    Var(x) => comatch _ { apply(_, _, h) => h.match _ {
+    Var(x) => comatch _ { ap(_, _, h) => h.match _ {
         TVar(_, _, _, elem) => elem.empty_absurd(x, t).elim_bot(Progress(Var(x))),
         TLam(_, _, _, _, _) absurd,
         TApp(_, _, _, _, _, _, _) absurd,
     }},
-    Lam(e) => comatch _ { apply(_, _, h) => PVal(Lam(e), VLam(e)) },
-    App(e1, e2) => comatch _ { apply(_, _, h) =>
+    Lam(e) => comatch _ { ap(_, _, h) => PVal(Lam(e), VLam(e)) },
+    App(e1, e2) => comatch _ { ap(_, _, h) =>
         h.match _ {
             TVar(_, _, _, _) absurd,
             TLam(_, _, _, _, _) absurd,
             TApp(_, t1, t2, _, _, e1_t, e2_t) =>
-            e1.progress(FunT(t1, t2)).apply(HasType(Nil, e1, FunT(t1, t2)), Progress(e1), e1_t).match _ {
+            e1.progress(FunT(t1, t2)).ap(HasType(Nil, e1, FunT(t1, t2)), Progress(e1), e1_t).match _ {
                 PStep(_, e1', e1_eval_e1') => PStep(App(e1, e2), App(e1', e2), ECongApp1(e1, e1', e1_eval_e1', e2)),
                 PVal(_, is_val) => is_val.match _ {
                     VLam(e) => PStep(App(Lam(e), e2), e.subst(0, e2.shift_up(0)).shift_down(0), EBeta(e, e2))
@@ -259,32 +259,32 @@ def (self: Exp).progress(t: Typ): Fun(HasType(Nil, self, t), Progress(self))
 }
 
 def (self: Exp).subst_lemma(ctx: Ctx, s t: Typ, x: Nat, by: Exp, h_elem: Elem(x, s, ctx), h_by: HasType(ctx, by, s)): Fun(HasType(ctx, self, t), HasType(ctx, self.subst(x, by), t)) {
-    Var(y) => comatch _ { apply(_, _, h_self) => Unit.nat_eq_reflection(y, x).match _ {
+    Var(y) => comatch _ { ap(_, _, h_self) => Unit.nat_eq_reflection(y, x).match _ {
         Inl(_, _, prf) => prf
             .sym(Bool, y.eq(x), False)
             .transport(Bool, False, y.eq(x), comatch _ {
-            apply(_, _, z) => HasType(ctx, z.then_else(Exp, by, Var(y)), t)
+            ap(_, _, z) => HasType(ctx, z.then_else(Exp, by, Var(y)), t)
         }, h_self),
         Inr(_, _, prf) => prf.proj1(Eq(Bool, y.eq(x), True), Eq(Nat, y, x))
             .sym(Bool, y.eq(x), True)
-            .transport(Bool, True, y.eq(x), comatch _ { apply(_, _, z) => HasType(ctx, z.then_else(Exp, by, Var(y)), t) },
+            .transport(Bool, True, y.eq(x), comatch _ { ap(_, _, z) => HasType(ctx, z.then_else(Exp, by, Var(y)), t) },
                 Unit.elem_type_unique(ctx, x, s, t, h_elem,
                     prf.proj2(Eq(Bool, y.eq(x), True), Eq(Nat, y, x))
-                        .transport(Nat, y, x, comatch _ { apply(_, _, r) => HasType(ctx, Var(r), t) }, h_self)
+                        .transport(Nat, y, x, comatch _ { ap(_, _, r) => HasType(ctx, Var(r), t) }, h_self)
                         .var_elem(ctx, x, t)
                 )
-                .transport(Typ, s, t, comatch _ { apply(_, _, r) => HasType(ctx, by, r) }, h_by)
+                .transport(Typ, s, t, comatch _ { ap(_, _, r) => HasType(ctx, by, r) }, h_by)
             ),
         }
     },
-    App(e1, e2) => comatch _ { apply(_, _, h_self) => h_self.match _ {
+    App(e1, e2) => comatch _ { ap(_, _, h_self) => h_self.match _ {
         TVar(_, _, _, _) absurd,
         TLam(_, _, _, _, _) absurd,
         TApp(_, t1, t2, e1, e2, e1_t, e2_t) => TApp(ctx, t1, t2, e1.subst(x, by), e2.subst(x, by),
             e1.subst_lemma(ctx, s, FunT(t1, t2), x, by, h_elem, h_by)
-                .apply(HasType(ctx, e1, FunT(t1, t2)), HasType(ctx, e1.subst(x, by), FunT(t1, t2)), e1_t),
+                .ap(HasType(ctx, e1, FunT(t1, t2)), HasType(ctx, e1.subst(x, by), FunT(t1, t2)), e1_t),
             e2.subst_lemma(ctx, s, t1, x, by, h_elem, h_by)
-                .apply(HasType(ctx, e2, t1), HasType(ctx, e2.subst(x, by), t1), e2_t),
+                .ap(HasType(ctx, e2, t1), HasType(ctx, e2.subst(x, by), t1), e2_t),
         ),
 
     }},

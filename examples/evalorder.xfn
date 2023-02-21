@@ -4,11 +4,11 @@ data Bool {
 }
 
 codata Fun(a b: Type) {
-    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+    Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }
 
 codef Ignore(y: Bool): Fun(Bool, Bool) {
-    apply(a, b, x) => x
+    ap(a, b, x) => x
 }
 
 data Top { Unit }
@@ -25,6 +25,6 @@ def Top.after : Fun(Bool, Bool) {
     Unit =>
         -- let y = Unit.diverge in
         comatch Ignore2 {
-            apply(a, b, x) => x
+            ap(a, b, x) => x
         }
 }

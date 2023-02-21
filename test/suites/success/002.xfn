@@ -1,7 +1,7 @@
 codata Fun(a: Type, b: Type) {
-    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+    Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }
 
 codef Compose(a: Type, b: Type, c: Type, f: Fun(a, b), g: Fun(b, c)) : Fun(a, c) {
-    apply(a', c', x) => g.apply(b, c, f.apply(a, b, x: a') : b) : c'
+    ap(a', c', x) => g.ap(b, c, f.ap(a, b, x: a') : b) : c'
 }

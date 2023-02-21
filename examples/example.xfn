@@ -19,7 +19,7 @@ codata Stream {
 }
 
 codata NatToNat {
-    apply(x: Nat) : Nat
+    ap(x: Nat) : Nat
 }
 
 S(S(Z)).add(S(S(Z)))
