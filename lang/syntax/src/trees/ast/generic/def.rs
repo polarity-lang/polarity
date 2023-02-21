@@ -326,6 +326,12 @@ impl<P: Phase> SelfParam<P> {
             }],
         }
     }
+
+    /// A self parameter is simple if the list of arguments to the type is empty, and the name is None.
+    /// If the self parameter is simple, we can omit it during prettyprinting.
+    pub fn is_simple(&self) -> bool {
+        self.typ.is_simple() && self.name.is_none()
+    }
 }
 
 #[derive(Debug, Clone)]
