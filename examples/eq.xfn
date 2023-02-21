@@ -1,5 +1,5 @@
 codata Fun(a b: Type) {
-    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+    Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }
 
 data Eq (a: Type, x y: a) {
@@ -10,7 +10,7 @@ def Eq(a, x, y).sym(a: Type, x: a, y: a) : Eq(a, y, x) {
     Refl(a, x) => Refl(a, x)
 }
 
-def Eq(a, x, y).subst(a: Type, x: a, y: a, p: Fun(a, Type), prf: p.apply(a, Type, x)) : p.apply(a, Type, y) {
+def Eq(a, x, y).subst(a: Type, x: a, y: a, p: Fun(a, Type), prf: p.ap(a, Type, x)) : p.ap(a, Type, y) {
     Refl(a, x) => prf
 }
 
@@ -18,6 +18,6 @@ def Eq(a, x, y).trans(a: Type, x: a, y: a, z: a, h: Eq(a, y, z)) : Eq(a, x, z) {
     Refl(a, x) => h
 }
 
-def Eq(a, x, y).cong(a: Type, b: Type, x: a, y: a, f: Fun(a, b)) : Eq(b, f.apply(a, b, x), f.apply(a, b, y)) {
-    Refl(a, x) => Refl(b, f.apply(a, b, x))
+def Eq(a, x, y).cong(a: Type, b: Type, x: a, y: a, f: Fun(a, b)) : Eq(b, f.ap(a, b, x), f.ap(a, b, y)) {
+    Refl(a, x) => Refl(b, f.ap(a, b, x))
 }

@@ -9,7 +9,7 @@ data Bool {
 }
 
 codata Fun(a b: Type) {
-    Fun(a, b).apply(a: Type, b: Type, x: a) : b
+    Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }
 
 data Top {
@@ -25,6 +25,6 @@ def Top.top_is_zero(n: Nat): Bool {
 
 def Top.top_id(a: Type): Fun(a, a) {
     Unit => comatch Id {
-        apply(a, b, x) => x
+        ap(a, b, x) => x
     }
 }
