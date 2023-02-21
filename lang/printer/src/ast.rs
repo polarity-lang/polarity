@@ -130,7 +130,7 @@ where
                     ctors.iter().map(|x| ctx.map[x].print_in_ctx(cfg, ctx, alloc)),
                     sep,
                 ))
-                .nest(INDENT)
+                .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_from(cfg);
 
@@ -171,7 +171,7 @@ where
                     dtors.iter().map(|x| ctx.map[x].print_in_ctx(cfg, ctx, alloc)),
                     sep,
                 ))
-                .nest(INDENT)
+                .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_from(cfg);
 
@@ -278,7 +278,7 @@ where
         alloc
             .hardline()
             .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
-            .nest(INDENT)
+            .nest(cfg.indent)
             .append(alloc.hardline())
             .braces_from(cfg)
     }
@@ -294,7 +294,7 @@ where
         alloc
             .hardline()
             .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
-            .nest(INDENT)
+            .nest(cfg.indent)
             .append(alloc.hardline())
             .braces_from(cfg)
     }
@@ -313,7 +313,7 @@ where
                 .text(FAT_ARROW)
                 .append(alloc.line())
                 .append(body.print(cfg, alloc))
-                .nest(INDENT),
+                .nest(cfg.indent),
         };
 
         alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
@@ -333,7 +333,7 @@ where
                 .text(FAT_ARROW)
                 .append(alloc.line())
                 .append(body.print(cfg, alloc))
-                .nest(INDENT),
+                .nest(cfg.indent),
         };
 
         alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()

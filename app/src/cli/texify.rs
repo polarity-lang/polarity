@@ -1,3 +1,4 @@
+use std::fmt;
 use std::fs;
 use std::io;
 use std::io::Write;
@@ -15,16 +16,15 @@ use crate::result::IOError;
 const LATEX_END: &str = r#"\end{alltt}
 "#;
 
-fn latex_start(fontsize: &Option<FontSize>) -> String {
+fn latex_start(fontsize: &FontSize) -> String {
     use FontSize::*;
     let latex_fontsize = match *fontsize {
-        None => "\\scriptsize",
-        Some(Tiny) => "\\tiny",
-        Some(Scriptsize) => "\\scriptsize",
-        Some(Footnotesize) => "\\footnotesize",
-        Some(Small) => "\\small",
-        Some(Normalsize) => "\\normalsize",
-        Some(Large) => "\\large",
+        Tiny => "\\tiny",
+        Scriptsize => "\\scriptsize",
+        Footnotesize => "\\footnotesize",
+        Small => "\\small",
+        Normalsize => "\\normalsize",
+        Large => "\\large",
     };
     let mut latex_start_string = "".to_string();
     latex_start_string.push_str("\\begin{alltt}\n");
@@ -43,14 +43,30 @@ pub enum FontSize {
     Large,
 }
 
+impl fmt::Display for FontSize {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use FontSize::*;
+        match self {
+            Tiny => write!(f, "tiny"),
+            Scriptsize => write!(f, "scriptsize"),
+            Footnotesize => write!(f, "footnotesize"),
+            Small => write!(f, "small"),
+            Normalsize => write!(f, "normalsize"),
+            Large => write!(f, "large"),
+        }
+    }
+}
+
 #[derive(clap::Args)]
 pub struct Args {
     #[clap(value_parser, value_name = "FILE")]
     filepath: PathBuf,
-    #[clap(long)]
-    width: Option<usize>,
-    #[clap(long)]
-    fontsize: Option<FontSize>,
+    #[clap(long, default_value_t = 80)]
+    width: usize,
+    #[clap(long, default_value_t=FontSize::Scriptsize)]
+    fontsize: FontSize,
+    #[clap(long, default_value_t = 4)]
+    indent: isize,
     #[clap(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
 }
@@ -80,10 +96,11 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
 
     let cfg = PrintCfg {
-        width: cmd.width.unwrap_or(80),
+        width: cmd.width,
         braces: ("\\{", "\\}"),
         omit_decl_sep: true,
         de_bruijn: false,
+        indent: cmd.indent,
     };
 
     stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
