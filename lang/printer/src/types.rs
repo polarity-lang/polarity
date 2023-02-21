@@ -56,7 +56,7 @@ impl Default for PrintCfg {
             braces: ("{", "}"),
             omit_decl_sep: false,
             de_bruijn: false,
-            indent: 4
+            indent: 4,
         }
     }
 }
