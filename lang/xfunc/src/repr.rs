@@ -10,11 +10,11 @@ pub trait Represent {
 
 impl Represent for matrix::XData {
     fn as_data(&self) -> (ust::Data, Vec<ust::Ctor>, Vec<ust::Def>) {
-        let matrix::XData { name, typ, ctors, dtors, exprs, .. } = self;
+        let matrix::XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let data = ust::Data {
             info: ust::Info::empty(),
-            doc: None,
+            doc: doc.clone(),
             name: name.clone(),
             hidden: false,
             typ: typ.clone(),
@@ -56,11 +56,11 @@ impl Represent for matrix::XData {
     }
 
     fn as_codata(&self) -> (ust::Codata, Vec<ust::Dtor>, Vec<ust::Codef>) {
-        let matrix::XData { name, typ, ctors, dtors, exprs, .. } = self;
+        let matrix::XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let codata = ust::Codata {
             info: ust::Info::empty(),
-            doc: None,
+            doc: doc.clone(),
             name: name.clone(),
             hidden: false,
             typ: typ.clone(),

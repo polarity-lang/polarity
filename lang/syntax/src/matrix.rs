@@ -15,6 +15,7 @@ pub struct Prg {
 pub struct XData {
     pub repr: Repr,
     pub info: ust::Info,
+    pub doc: Option<DocComment>,
     pub name: Ident,
     pub typ: Rc<ust::TypAbs>,
     pub ctors: HashMap<Ident, ust::Ctor>,
