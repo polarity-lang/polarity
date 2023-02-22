@@ -1,6 +1,9 @@
 .PHONY: install
 install:
 	@cargo install --path app
+
+.PHONY: install-editor-plugin
+install-editor-plugin:
 	@./scripts/install_vscode.sh
 
 .PHONY: check

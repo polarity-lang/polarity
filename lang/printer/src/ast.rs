@@ -97,6 +97,11 @@ where
     }
 }
 
+// Prints "{ }"
+fn empty_braces<'a>(alloc: &'a Alloc<'a>, cfg: &PrintCfg) -> Builder<'a> {
+    alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+}
+
 impl<'a, P: Phase> PrintInCtx<'a> for Data<P>
 where
     P::InfTyp: ShiftInRange,
@@ -121,20 +126,21 @@ where
             .append(typ.params.print(cfg, alloc))
             .append(alloc.space());
 
-        let sep = alloc.text(COMMA).append(alloc.hardline());
+        let sep = alloc.text(COMMA).append(alloc.line());
 
         let body = if ctors.is_empty() {
-            alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+            empty_braces(alloc, cfg)
         } else {
             alloc
-                .hardline()
+                .line()
                 .append(alloc.intersperse(
                     ctors.iter().map(|x| ctx.map[x].print_in_ctx(cfg, ctx, alloc)),
                     sep,
                 ))
                 .nest(cfg.indent)
-                .append(alloc.hardline())
+                .append(alloc.line())
                 .braces_from(cfg)
+                .group()
         };
         head.append(body)
     }
@@ -164,20 +170,21 @@ where
             .append(typ.params.print(cfg, alloc))
             .append(alloc.space());
 
-        let sep = alloc.text(COMMA).append(alloc.hardline());
+        let sep = alloc.text(COMMA).append(alloc.line());
 
         let body = if dtors.is_empty() {
-            alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+            empty_braces(alloc, cfg)
         } else {
             alloc
-                .hardline()
+                .line()
                 .append(alloc.intersperse(
                     dtors.iter().map(|x| ctx.map[x].print_in_ctx(cfg, ctx, alloc)),
                     sep,
                 ))
                 .nest(cfg.indent)
-                .append(alloc.hardline())
+                .append(alloc.line())
                 .braces_from(cfg)
+                .group()
         };
 
         head.append(body)
