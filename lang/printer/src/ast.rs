@@ -18,8 +18,7 @@ impl<'a> Print<'a> for DocComment {
             alloc.nil()
         } else {
             alloc.nil().append(alloc.comment(prefix)).append(
-                alloc
-                    .intersperse(docs.into_iter().map(|x| alloc.comment(x)), alloc.comment(prefix)),
+                alloc.intersperse(docs.iter().map(|x| alloc.comment(x)), alloc.comment(prefix)),
             )
         }
     }
