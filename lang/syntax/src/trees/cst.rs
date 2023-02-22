@@ -8,6 +8,11 @@ use num_bigint::BigUint;
 use crate::common::*;
 
 #[derive(Debug, Clone)]
+pub struct DocComment {
+    pub docs: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct Prg {
     pub items: Vec<Item>,
     pub exp: Option<Rc<Exp>>,
@@ -28,6 +33,7 @@ pub enum TypDecl {
 #[derive(Debug, Clone)]
 pub struct Data {
     pub info: Info,
+    pub doc: Option<DocComment>,
     /// Whether the declaration should be omitted
     /// during pretty printing.
     pub hidden: bool,
@@ -39,6 +45,7 @@ pub struct Data {
 #[derive(Debug, Clone)]
 pub struct Codata {
     pub info: Info,
+    pub doc: Option<DocComment>,
     /// Whether the declaration should be omitted
     /// during pretty printing.
     pub hidden: bool,
@@ -50,6 +57,7 @@ pub struct Codata {
 #[derive(Debug, Clone)]
 pub struct Ctor {
     pub info: Info,
+    pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope,
     pub typ: Option<TypApp>,
@@ -58,6 +66,7 @@ pub struct Ctor {
 #[derive(Debug, Clone)]
 pub struct Dtor {
     pub info: Info,
+    pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope,
     pub destructee: Destructee,
@@ -73,6 +82,7 @@ pub enum DefDecl {
 #[derive(Debug, Clone)]
 pub struct Def {
     pub info: Info,
+    pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declaration should be omitted
     /// during pretty printing.
@@ -86,6 +96,7 @@ pub struct Def {
 #[derive(Debug, Clone)]
 pub struct Codef {
     pub info: Info,
+    pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declaration should be omitted
     /// during pretty printing.
