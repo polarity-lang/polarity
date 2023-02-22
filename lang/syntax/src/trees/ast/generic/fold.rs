@@ -27,13 +27,13 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_decl_dtor(&mut self, dtor: O::Dtor) -> O::Decl;
     fn fold_decl_def(&mut self, def: O::Def) -> O::Decl;
     fn fold_decl_codef(&mut self, codef: O::Codef) -> O::Decl;
-    fn fold_data(&mut self, info: O::Info, name: Ident, hidden: bool, typ: O::TypAbs, ctors: Vec<Ident>) -> O::Data;
-    fn fold_codata(&mut self, info: O::Info, name: Ident, hidden: bool, typ: O::TypAbs, dtors: Vec<Ident>) -> O::Codata;
+    fn fold_data(&mut self, info: O::Info, doc: Option<DocComment>, name: Ident, hidden: bool, typ: O::TypAbs, ctors: Vec<Ident>) -> O::Data;
+    fn fold_codata(&mut self, info: O::Info, doc: Option<DocComment>, name: Ident, hidden: bool, typ: O::TypAbs, dtors: Vec<Ident>) -> O::Codata;
     fn fold_typ_abs(&mut self, params: O::Telescope) -> O::TypAbs;
-    fn fold_ctor(&mut self, info: O::Info, name: Ident, params: O::Telescope, typ: O::TypApp) -> O::Ctor;
-    fn fold_dtor(&mut self, info: O::Info, name: Ident, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp) -> O::Dtor;
-    fn fold_def(&mut self, info: O::Info, name: Ident, hidden: bool, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp, body: O::Match) -> O::Def;
-    fn fold_codef(&mut self, info: O::Info, name: Ident, hidden: bool, params: O::Telescope, typ: O::TypApp, body: O::Comatch) -> O::Codef;
+    fn fold_ctor(&mut self, info: O::Info, doc: Option<DocComment>, name: Ident, params: O::Telescope, typ: O::TypApp) -> O::Ctor;
+    fn fold_dtor(&mut self, info: O::Info, doc: Option<DocComment>, name: Ident, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp) -> O::Dtor;
+    fn fold_def(&mut self, info: O::Info, doc: Option<DocComment>, name: Ident, hidden: bool, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp, body: O::Match) -> O::Def;
+    fn fold_codef(&mut self, info: O::Info, doc: Option<DocComment>, name: Ident, hidden: bool, params: O::Telescope, typ: O::TypApp, body: O::Comatch) -> O::Codef;
     fn fold_match(&mut self, info: O::Info, cases: Vec<O::Case>) -> O::Match;
     fn fold_comatch(&mut self, info: O::Info, cases: Vec<O::Cocase>) -> O::Comatch;
     fn fold_case(&mut self, info: O::Info, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Case;
@@ -301,10 +301,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Data<P> {
     where
         F: Folder<P, O>,
     {
-        let Data { info, name, hidden, typ, ctors } = self;
+        let Data { info, doc, name, hidden, typ, ctors } = self;
         let typ = typ.fold(f);
         let info = f.fold_info(info);
-        f.fold_data(info, name, hidden, typ, ctors)
+        f.fold_data(info, doc, name, hidden, typ, ctors)
     }
 }
 
@@ -315,10 +315,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Codata<P> {
     where
         F: Folder<P, O>,
     {
-        let Codata { info, name, hidden, typ, dtors } = self;
+        let Codata { info, doc, name, hidden, typ, dtors } = self;
         let typ = typ.fold(f);
         let info = f.fold_info(info);
-        f.fold_codata(info, name, hidden, typ, dtors)
+        f.fold_codata(info, doc, name, hidden, typ, dtors)
     }
 }
 
@@ -343,12 +343,12 @@ impl<P: Phase, O: Out> Fold<P, O> for Ctor<P> {
     where
         F: Folder<P, O>,
     {
-        let Ctor { info, name, params, typ } = self;
+        let Ctor { info, doc, name, params, typ } = self;
         let Telescope { params } = params;
         let (params, typ) =
             f.fold_telescope(params, |f, param| param.fold(f), |f, params| (params, typ.fold(f)));
         let info = f.fold_info(info);
-        f.fold_ctor(info, name, params, typ)
+        f.fold_ctor(info, doc, name, params, typ)
     }
 }
 
@@ -359,7 +359,7 @@ impl<P: Phase, O: Out> Fold<P, O> for Dtor<P> {
     where
         F: Folder<P, O>,
     {
-        let Dtor { info, name, params, self_param, ret_typ } = self;
+        let Dtor { info, doc, name, params, self_param, ret_typ } = self;
         let Telescope { params } = params;
         let (params, self_param, ret_typ) = f.fold_telescope(
             params,
@@ -374,7 +374,7 @@ impl<P: Phase, O: Out> Fold<P, O> for Dtor<P> {
             },
         );
         let info = f.fold_info(info);
-        f.fold_dtor(info, name, params, self_param, ret_typ)
+        f.fold_dtor(info, doc, name, params, self_param, ret_typ)
     }
 }
 
@@ -388,7 +388,7 @@ where
     where
         F: Folder<P, O>,
     {
-        let Def { info, name, hidden, params, self_param, ret_typ, body } = self;
+        let Def { info, doc, name, hidden, params, self_param, ret_typ, body } = self;
         let Telescope { params } = params;
         let (params, self_param, ret_typ, body) = f.fold_telescope(
             params,
@@ -404,7 +404,7 @@ where
             },
         );
         let info = f.fold_info(info);
-        f.fold_def(info, name, hidden, params, self_param, ret_typ, body)
+        f.fold_def(info, doc, name, hidden, params, self_param, ret_typ, body)
     }
 }
 
@@ -415,7 +415,7 @@ impl<P: Phase, O: Out> Fold<P, O> for Codef<P> {
     where
         F: Folder<P, O>,
     {
-        let Codef { info, name, hidden, params, typ, body } = self;
+        let Codef { info, doc, name, hidden, params, typ, body } = self;
         let Telescope { params } = params;
         let (params, typ, body) = f.fold_telescope(
             params,
@@ -423,7 +423,7 @@ impl<P: Phase, O: Out> Fold<P, O> for Codef<P> {
             |f, params| (params, typ.fold(f), body.fold(f)),
         );
         let info = f.fold_info(info);
-        f.fold_codef(info, name, hidden, params, typ, body)
+        f.fold_codef(info, doc, name, hidden, params, typ, body)
     }
 }
 

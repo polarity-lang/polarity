@@ -181,6 +181,7 @@ pub enum Decl<P: Phase> {
 #[derive(Debug, Clone)]
 pub struct Data<P: Phase> {
     pub info: P::Info,
+    pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declarations should be omitted
     /// during pretty printing.
@@ -192,6 +193,7 @@ pub struct Data<P: Phase> {
 #[derive(Debug, Clone)]
 pub struct Codata<P: Phase> {
     pub info: P::Info,
+    pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declarations should be omitted
     /// during pretty printing.
@@ -208,6 +210,7 @@ pub struct TypAbs<P: Phase> {
 #[derive(Debug, Clone)]
 pub struct Ctor<P: Phase> {
     pub info: P::Info,
+    pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope<P>,
     pub typ: TypApp<P>,
@@ -216,6 +219,7 @@ pub struct Ctor<P: Phase> {
 #[derive(Debug, Clone)]
 pub struct Dtor<P: Phase> {
     pub info: P::Info,
+    pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope<P>,
     pub self_param: SelfParam<P>,
@@ -225,6 +229,7 @@ pub struct Dtor<P: Phase> {
 #[derive(Debug, Clone)]
 pub struct Def<P: Phase> {
     pub info: P::Info,
+    pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declarations should be omitted
     /// during pretty printing.
@@ -239,6 +244,7 @@ impl<P: Phase> Def<P> {
     pub fn to_dtor(&self) -> Dtor<P> {
         Dtor {
             info: self.info.clone(),
+            doc: self.doc.clone(),
             name: self.name.clone(),
             params: self.params.clone(),
             self_param: self.self_param.clone(),
@@ -250,6 +256,7 @@ impl<P: Phase> Def<P> {
 #[derive(Debug, Clone)]
 pub struct Codef<P: Phase> {
     pub info: P::Info,
+    pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declarations should be omitted
     /// during pretty printing.
@@ -263,6 +270,7 @@ impl<P: Phase> Codef<P> {
     pub fn to_ctor(&self) -> Ctor<P> {
         Ctor {
             info: self.info.clone(),
+            doc: self.doc.clone(),
             name: self.name.clone(),
             params: self.params.clone(),
             typ: self.typ.clone(),

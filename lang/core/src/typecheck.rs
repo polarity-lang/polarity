@@ -176,12 +176,13 @@ impl Infer for ust::Data {
     type Target = tst::Data;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Data { info, name, hidden, typ, ctors } = self;
+        let ust::Data { info, doc, name, hidden, typ, ctors } = self;
 
         let typ_out = typ.infer(prg, ctx)?;
 
         Ok(tst::Data {
             info: info.clone().into(),
+            doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
             typ: typ_out,
@@ -195,12 +196,13 @@ impl Infer for ust::Codata {
     type Target = tst::Codata;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Codata { info, name, hidden, typ, dtors } = self;
+        let ust::Codata { info, doc, name, hidden, typ, dtors } = self;
 
         let typ_out = typ.infer(prg, ctx)?;
 
         Ok(tst::Codata {
             info: info.clone().into(),
+            doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
             typ: typ_out,
@@ -225,7 +227,7 @@ impl Infer for ust::Ctor {
     type Target = tst::Ctor;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Ctor { info, name, params, typ } = self;
+        let ust::Ctor { info, doc, name, params, typ } = self;
 
         // Check that the constructor lies in the data type it is defined in
         let type_decl = prg.decls.type_decl_for_member(name);
@@ -243,6 +245,7 @@ impl Infer for ust::Ctor {
 
             Ok(tst::Ctor {
                 info: info.clone().into(),
+                doc: doc.clone(),
                 name: name.clone(),
                 params: params_out,
                 typ: typ_out,
@@ -256,7 +259,7 @@ impl Infer for ust::Dtor {
     type Target = tst::Dtor;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Dtor { info, name, params, self_param, ret_typ } = self;
+        let ust::Dtor { info, doc, name, params, self_param, ret_typ } = self;
 
         // Check that the destructor lies in the codata type it is defined in
         let type_decl = prg.decls.type_decl_for_member(name);
@@ -275,6 +278,7 @@ impl Infer for ust::Dtor {
 
                 Ok(tst::Dtor {
                     info: info.clone().into(),
+                    doc: doc.clone(),
                     name: name.clone(),
                     params: params_out,
                     self_param: self_param_out,
@@ -290,7 +294,7 @@ impl Infer for ust::Def {
     type Target = tst::Def;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Def { info, name, hidden, params, self_param, ret_typ, body } = self;
+        let ust::Def { info, doc, name, hidden, params, self_param, ret_typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let self_param_nf = self_param.typ.normalize(prg, &mut ctx.env())?;
@@ -305,6 +309,7 @@ impl Infer for ust::Def {
             let body_out = body.with_scrutinee(self_param_nf).check(prg, ctx, ret_typ_nf)?;
             Ok(tst::Def {
                 info: info.clone().into(),
+                doc: doc.clone(),
                 name: name.clone(),
                 hidden: *hidden,
                 params: params_out,
@@ -321,7 +326,7 @@ impl Infer for ust::Codef {
     type Target = tst::Codef;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Codef { info, name, hidden, params, typ, body } = self;
+        let ust::Codef { info, doc, name, hidden, params, typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.infer(prg, ctx)?;
@@ -329,6 +334,7 @@ impl Infer for ust::Codef {
             let body_out = body.with_scrutinee(typ_nf).infer(prg, ctx)?;
             Ok(tst::Codef {
                 info: info.clone().into(),
+                doc: doc.clone(),
                 name: name.clone(),
                 hidden: *hidden,
                 params: params_out,

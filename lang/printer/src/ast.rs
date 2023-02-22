@@ -114,13 +114,14 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Data { info: _, name, hidden, typ, ctors } = self;
+        let Data { info: _, doc, name, hidden, typ, ctors } = self;
         if *hidden {
             return alloc.nil();
         }
 
-        let head = alloc
-            .keyword(DATA)
+        let head = doc
+            .print(cfg, alloc)
+            .append(alloc.keyword(DATA))
             .append(alloc.space())
             .append(alloc.typ(name))
             .append(typ.params.print(cfg, alloc))
@@ -158,13 +159,14 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Codata { info: _, name, hidden, typ, dtors } = self;
+        let Codata { info: _, doc, name, hidden, typ, dtors } = self;
         if *hidden {
             return alloc.nil();
         }
 
-        let head = alloc
-            .keyword(CODATA)
+        let head = doc
+            .print(cfg, alloc)
+            .append(alloc.keyword(CODATA))
             .append(alloc.space())
             .append(alloc.typ(name))
             .append(typ.params.print(cfg, alloc))
@@ -196,13 +198,14 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { info: _, name, hidden, params, self_param, ret_typ, body } = self;
+        let Def { info: _, doc, name, hidden, params, self_param, ret_typ, body } = self;
         if *hidden {
             return alloc.nil();
         }
 
-        let head = alloc
-            .keyword(DEF)
+        let head = doc
+            .print(cfg, alloc)
+            .append(alloc.keyword(DEF))
             .append(alloc.space())
             .append(self_param.print(cfg, alloc))
             .append(DOT)
@@ -224,13 +227,14 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codef { info: _, name, hidden, params, typ, body } = self;
+        let Codef { info: _, doc, name, hidden, params, typ, body } = self;
         if *hidden {
             return alloc.nil();
         }
 
-        let head = alloc
-            .keyword(CODEF)
+        let head = doc
+            .print(cfg, alloc)
+            .append(alloc.keyword(CODEF))
             .append(alloc.space())
             .append(alloc.ctor(name))
             .append(params.print(cfg, alloc))
@@ -250,13 +254,14 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Ctor { info: _, name, params, typ } = self;
+        let Ctor { info: _, doc, name, params, typ } = self;
 
-        let doc = alloc.ctor(name).append(params.print(cfg, alloc));
+        let head = doc.print(cfg, alloc).append(alloc.ctor(name)).append(params.print(cfg, alloc));
+
         if typ.is_simple() {
-            doc
+            head
         } else {
-            doc.append(alloc.space())
+            head.append(alloc.space())
                 .append(COLON)
                 .append(alloc.space())
                 .append(typ.print(cfg, alloc))
@@ -269,11 +274,12 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Dtor { info: _, name, params, self_param, ret_typ } = self;
+        let Dtor { info: _, doc, name, params, self_param, ret_typ } = self;
+
         let head = if self_param.is_simple() {
-            alloc.nil()
+            doc.print(cfg, alloc)
         } else {
-            self_param.print(cfg, alloc).append(DOT)
+            doc.print(cfg, alloc).append(self_param.print(cfg, alloc)).append(DOT)
         };
         head.append(alloc.dtor(name))
             .append(params.print(cfg, alloc))
@@ -528,9 +534,30 @@ where
     }
 }
 
+impl<'a> Print<'a> for DocComment {
+    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let DocComment { docs } = self;
+        let prefix = "-- | ";
+        alloc.concat(
+            docs.iter().map(|doc| {
+                alloc.comment(prefix).append(alloc.comment(doc)).append(alloc.hardline())
+            }),
+        )
+    }
+}
+
 impl<'a, T: Print<'a>> Print<'a> for Rc<T> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         T::print(self, cfg, alloc)
+    }
+}
+
+impl<'a, T: Print<'a>> Print<'a> for Option<T> {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Some(inner) => inner.print(cfg, alloc),
+            None => alloc.nil(),
+        }
     }
 }
 

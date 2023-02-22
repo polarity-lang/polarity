@@ -53,11 +53,12 @@ impl BuildMatrix for ust::Prg {
 
 impl BuildMatrix for ust::Data {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut matrix::Prg) {
-        let ust::Data { info, name, hidden: _, typ, ctors } = self;
+        let ust::Data { info, doc, name, hidden: _, typ, ctors } = self;
 
         let xdata = matrix::XData {
             repr: matrix::Repr::Data,
             info: info.clone(),
+            doc: doc.clone(),
             name: name.clone(),
             typ: typ.clone(),
             ctors: HashMap::default(),
@@ -75,11 +76,12 @@ impl BuildMatrix for ust::Data {
 
 impl BuildMatrix for ust::Codata {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut matrix::Prg) {
-        let ust::Codata { info, name, hidden: _, typ, dtors } = self;
+        let ust::Codata { info, doc, name, hidden: _, typ, dtors } = self;
 
         let xdata = matrix::XData {
             repr: matrix::Repr::Codata,
             info: info.clone(),
+            doc: doc.clone(),
             name: name.clone(),
             typ: typ.clone(),
             ctors: HashMap::default(),

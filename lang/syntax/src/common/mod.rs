@@ -23,3 +23,8 @@ pub trait HasInfo {
 
     fn info(&self) -> Self::Info;
 }
+
+#[derive(Debug, Clone)]
+pub struct DocComment {
+    pub docs: Vec<String>,
+}

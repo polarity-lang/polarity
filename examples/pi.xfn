@@ -1,21 +1,27 @@
+-- | The non-dependent function type.
 codata Fun(a b: Type) {
     Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }
 
+-- | The dependent function type.
 codata Π(a: Type, p: Fun(a, Type)) {
     Π(a, p).pi_elim(a: Type, p: Fun(a, Type), x: a) : p.ap(a, Type, x)
 }
 
+-- | The dependent sum type.
 data Σ(a: Type, p: Fun(a, Type)) {
     Exists(a: Type, p: Fun(a, Type), x: a, prf: p.ap(a, Type, x)): Σ(a, p)
 }
 
 data Sum(a: Type, b: Type) {
-    Left(a: Type, b: Type, x: a) : Sum(a, b),
-    Right(a: Type, b: Type, x: b) : Sum(a, b),
+    -- | The left injection into a sum.
+    Inl(a b: Type, x: a) : Sum(a, b),
+    -- | The right injection into a sum.
+    Inr(a b: Type, x: b) : Sum(a, b),
 }
 
 codata Pair(a: Type, b: Type) {
     Pair(a,b).π₁(a : Type, b : Type) : a,
     Pair(a,b).π₂(a : Type, b : Type) : b
 }
+

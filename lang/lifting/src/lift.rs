@@ -125,6 +125,7 @@ impl Mapper<WST> for Lift {
         // Build the new top-level definition
         let def = wst::Def {
             info: wst::Info::empty(),
+            doc: None,
             name: name.clone(),
             hidden: false,
             params: telescope,
@@ -173,6 +174,7 @@ impl Mapper<WST> for Lift {
         // Build the new top-level definition
         let codef = wst::Codef {
             info: wst::Info::empty(),
+            doc: None,
             name: name.clone(),
             hidden: false,
             params: telescope,
