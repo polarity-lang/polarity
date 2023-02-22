@@ -17,9 +17,10 @@ impl<'a> Print<'a> for DocComment {
         if docs.is_empty() {
             alloc.nil()
         } else {
-            alloc.nil().append(alloc.comment(prefix)).append(
-                alloc.intersperse(docs.iter().map(|x| alloc.comment(x)), alloc.comment(prefix)),
-            )
+            alloc.nil().append(alloc.comment(prefix)).append(alloc.intersperse(
+                docs.iter().map(|x| alloc.comment(x).append(alloc.hardline())),
+                alloc.comment(prefix),
+            ))
         }
     }
 }
