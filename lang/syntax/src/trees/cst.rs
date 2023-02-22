@@ -8,11 +8,6 @@ use num_bigint::BigUint;
 use crate::common::*;
 
 #[derive(Debug, Clone)]
-pub struct DocComment {
-    pub docs: Vec<String>,
-}
-
-#[derive(Debug, Clone)]
 pub struct Prg {
     pub items: Vec<Item>,
     pub exp: Option<Rc<Exp>>,
