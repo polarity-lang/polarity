@@ -976,7 +976,8 @@ impl InferTelescope for ust::SelfParam {
             typ: typ_out,
         };
 
-        ctx.bind_single(&elem, |ctx| f(ctx, param_out))
+        // We need to shift the self parameter type here because we treat it as a 1-element telescope
+        ctx.bind_single(&elem.shift((1, 0)), |ctx| f(ctx, param_out))
     }
 }
 
