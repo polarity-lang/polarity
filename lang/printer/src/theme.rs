@@ -9,12 +9,14 @@ const KEYWORD: Color = Color::Magenta;
 const CTOR: Color = Color::Blue;
 const DTOR: Color = Color::Green;
 const TYPE: Color = Color::Red;
+const COMMENT: Color = Color::Cyan;
 
 pub trait ThemeExt<'a> {
     fn keyword(&'a self, text: &'a str) -> Builder<'a>;
     fn ctor(&'a self, text: &'a str) -> Builder<'a>;
     fn dtor(&'a self, text: &'a str) -> Builder<'a>;
     fn typ(&'a self, text: &'a str) -> Builder<'a>;
+    fn comment(&'a self, text: &'a str) -> Builder<'a>;
 }
 
 impl<'a> ThemeExt<'a> for Alloc<'a> {
@@ -32,6 +34,10 @@ impl<'a> ThemeExt<'a> for Alloc<'a> {
 
     fn typ(&'a self, text: &'a str) -> Builder<'a> {
         self.text(text).annotate(TYPE.spec())
+    }
+
+    fn comment(&'a self, text: &'a str) -> Builder<'a> {
+        self.text(text).annotate(COMMENT.spec())
     }
 }
 
