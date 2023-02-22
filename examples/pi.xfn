@@ -14,8 +14,10 @@ data Σ(a: Type, p: Fun(a, Type)) {
 }
 
 data Sum(a: Type, b: Type) {
-    Left(a: Type, b: Type, x: a) : Sum(a, b),
-    Right(a: Type, b: Type, x: b) : Sum(a, b),
+    -- | The left injection into a sum.
+    Inl(a b: Type, x: a) : Sum(a, b),
+    -- | The right injection into a sum.
+    Inr(a b: Type, x: b) : Sum(a, b),
 }
 
 codata Pair(a: Type, b: Type) {
