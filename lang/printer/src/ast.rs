@@ -97,6 +97,11 @@ where
     }
 }
 
+// Prints "{ }"
+fn empty_braces<'a>(alloc: &'a Alloc<'a>, cfg: &PrintCfg) -> Builder<'a> {
+    alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+}
+
 impl<'a, P: Phase> PrintInCtx<'a> for Data<P>
 where
     P::InfTyp: ShiftInRange,
@@ -124,7 +129,7 @@ where
         let sep = alloc.text(COMMA).append(alloc.hardline());
 
         let body = if ctors.is_empty() {
-            alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+            empty_braces(alloc, cfg)
         } else {
             alloc
                 .hardline()
@@ -167,7 +172,7 @@ where
         let sep = alloc.text(COMMA).append(alloc.hardline());
 
         let body = if dtors.is_empty() {
-            alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+            empty_braces(alloc, cfg)
         } else {
             alloc
                 .hardline()
