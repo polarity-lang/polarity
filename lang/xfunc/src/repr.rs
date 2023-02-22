@@ -39,7 +39,7 @@ impl Represent for matrix::XData {
 
                 ust::Def {
                     info: ust::Info::empty(),
-                    doc: None,
+                    doc: dtor.doc.clone(),
                     name: dtor.name.clone(),
                     hidden: false,
                     params: dtor.params.clone(),
@@ -95,7 +95,7 @@ impl Represent for matrix::XData {
 
                 ust::Codef {
                     info: ust::Info::empty(),
-                    doc: None,
+                    doc: ctor.doc.clone(),
                     name: ctor.name.clone(),
                     hidden: false,
                     params: ctor.params.clone(),
