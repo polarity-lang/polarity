@@ -7,8 +7,6 @@ codata Setoid {
    (self: Setoid).equality : Fun(self.type, Fun(self.type, Type))
 }
 
-data Top { Unit }
-
 codata SetoidFun(a b : Setoid) {
   (self : SetoidFun(a,b)).s_ap(a b : Setoid, x : a.type) : b.type,
   (self : SetoidFun(a,b)).s_ap_eq(a b : Setoid, x y : a.type,
