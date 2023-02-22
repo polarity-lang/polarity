@@ -10,21 +10,6 @@ use super::tokens::*;
 use super::types::*;
 use super::util::*;
 
-impl<'a> Print<'a> for DocComment {
-    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let DocComment { docs } = self;
-        let prefix = "-- | ";
-        if docs.is_empty() {
-            alloc.nil()
-        } else {
-            alloc.nil().append(alloc.comment(prefix)).append(alloc.intersperse(
-                docs.iter().map(|x| alloc.comment(x).append(alloc.hardline())),
-                alloc.comment(prefix),
-            ))
-        }
-    }
-}
-
 impl<'a, P: Phase> Print<'a> for Prg<P>
 where
     P::InfTyp: ShiftInRange,
@@ -134,12 +119,8 @@ where
             return alloc.nil();
         }
 
-        let doc_comment = match doc {
-            None => alloc.nil(),
-            Some(dc) => dc.print(cfg, alloc),
-        };
-
-        let head = doc_comment
+        let head = doc
+            .print(cfg, alloc)
             .append(alloc.keyword(DATA))
             .append(alloc.space())
             .append(alloc.typ(name))
@@ -183,12 +164,8 @@ where
             return alloc.nil();
         }
 
-        let doc_comment = match doc {
-            None => alloc.nil(),
-            Some(dc) => dc.print(cfg, alloc),
-        };
-
-        let head = doc_comment
+        let head = doc
+            .print(cfg, alloc)
             .append(alloc.keyword(CODATA))
             .append(alloc.space())
             .append(alloc.typ(name))
@@ -226,12 +203,8 @@ where
             return alloc.nil();
         }
 
-        let doc_comment = match doc {
-            None => alloc.nil(),
-            Some(dc) => dc.print(cfg, alloc),
-        };
-
-        let head = doc_comment
+        let head = doc
+            .print(cfg, alloc)
             .append(alloc.keyword(DEF))
             .append(alloc.space())
             .append(self_param.print(cfg, alloc))
@@ -259,12 +232,8 @@ where
             return alloc.nil();
         }
 
-        let doc_comment = match doc {
-            None => alloc.nil(),
-            Some(dc) => dc.print(cfg, alloc),
-        };
-
-        let head = doc_comment
+        let head = doc
+            .print(cfg, alloc)
             .append(alloc.keyword(CODEF))
             .append(alloc.space())
             .append(alloc.ctor(name))
@@ -287,12 +256,7 @@ where
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Ctor { info: _, doc, name, params, typ } = self;
 
-        let doc_comment = match doc {
-            None => alloc.nil(),
-            Some(dc) => dc.print(cfg, alloc),
-        };
-
-        let head = doc_comment.append(alloc.ctor(name)).append(params.print(cfg, alloc));
+        let head = doc.print(cfg, alloc).append(alloc.ctor(name)).append(params.print(cfg, alloc));
 
         if typ.is_simple() {
             head
@@ -312,15 +276,10 @@ where
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Dtor { info: _, doc, name, params, self_param, ret_typ } = self;
 
-        let doc_comment = match doc {
-            None => alloc.nil(),
-            Some(dc) => dc.print(cfg, alloc),
-        };
-
         let head = if self_param.is_simple() {
-            doc_comment
+            doc.print(cfg, alloc)
         } else {
-            doc_comment.append(self_param.print(cfg, alloc)).append(DOT)
+            doc.print(cfg, alloc).append(self_param.print(cfg, alloc)).append(DOT)
         };
         head.append(alloc.dtor(name))
             .append(params.print(cfg, alloc))
@@ -575,9 +534,30 @@ where
     }
 }
 
+impl<'a> Print<'a> for DocComment {
+    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let DocComment { docs } = self;
+        let prefix = "-- | ";
+        alloc.concat(
+            docs.iter().map(|doc| {
+                alloc.comment(prefix).append(alloc.comment(doc)).append(alloc.hardline())
+            }),
+        )
+    }
+}
+
 impl<'a, T: Print<'a>> Print<'a> for Rc<T> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         T::print(self, cfg, alloc)
+    }
+}
+
+impl<'a, T: Print<'a>> Print<'a> for Option<T> {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Some(inner) => inner.print(cfg, alloc),
+            None => alloc.nil(),
+        }
     }
 }
 

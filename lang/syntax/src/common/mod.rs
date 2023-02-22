@@ -28,13 +28,3 @@ pub trait HasInfo {
 pub struct DocComment {
     pub docs: Vec<String>,
 }
-
-pub fn trim_newline(s: &mut String) -> String {
-    if s.ends_with('\n') || s.ends_with('\r') {
-        s.pop();
-        if s.ends_with('\r') {
-            s.pop();
-        }
-    };
-    s.to_string()
-}
