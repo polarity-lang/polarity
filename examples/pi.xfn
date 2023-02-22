@@ -1,11 +1,14 @@
+-- | The non-dependent function type.
 codata Fun(a b: Type) {
     Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }
 
+-- | The dependent function type.
 codata Π(a: Type, p: Fun(a, Type)) {
     Π(a, p).pi_elim(a: Type, p: Fun(a, Type), x: a) : p.ap(a, Type, x)
 }
 
+-- | The dependent sum type.
 data Σ(a: Type, p: Fun(a, Type)) {
     Exists(a: Type, p: Fun(a, Type), x: a, prf: p.ap(a, Type, x)): Σ(a, p)
 }
@@ -19,3 +22,4 @@ codata Pair(a: Type, b: Type) {
     Pair(a,b).π₁(a : Type, b : Type) : a,
     Pair(a,b).π₂(a : Type, b : Type) : b
 }
+

@@ -147,7 +147,7 @@ impl Lower for cst::Data {
     type Target = ust::Data;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Data { info, name, hidden, params, ctors, .. } = self;
+        let cst::Data { info, doc, name, hidden, params, ctors } = self;
 
         let ctor_decls = ctors.lower_in_ctx(ctx)?.into_iter().map(ust::Decl::Ctor);
 
@@ -157,6 +157,7 @@ impl Lower for cst::Data {
 
         Ok(ust::Data {
             info: info.lower_pure(),
+            doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
             typ: Rc::new(ust::TypAbs { params: params.lower_in_ctx(ctx)? }),
@@ -169,7 +170,7 @@ impl Lower for cst::Codata {
     type Target = ust::Codata;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Codata { info, name, hidden, params, dtors, .. } = self;
+        let cst::Codata { info, doc, name, hidden, params, dtors } = self;
 
         let dtor_decls = dtors.lower_in_ctx(ctx)?.into_iter().map(ust::Decl::Dtor);
 
@@ -179,6 +180,7 @@ impl Lower for cst::Codata {
 
         Ok(ust::Codata {
             info: info.lower_pure(),
+            doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
             typ: Rc::new(ust::TypAbs { params: params.lower_in_ctx(ctx)? }),
@@ -191,7 +193,7 @@ impl Lower for cst::Ctor {
     type Target = ust::Ctor;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Ctor { info, name, params, typ, .. } = self;
+        let cst::Ctor { info, doc, name, params, typ } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
             // If the type constructor does not take any arguments, it can be left out
@@ -215,7 +217,13 @@ impl Lower for cst::Ctor {
                 }
             };
 
-            Ok(ust::Ctor { info: info.lower_pure(), name: name.clone(), params, typ })
+            Ok(ust::Ctor {
+                info: info.lower_pure(),
+                doc: doc.clone(),
+                name: name.clone(),
+                params,
+                typ,
+            })
         })
     }
 }
@@ -224,7 +232,7 @@ impl Lower for cst::Dtor {
     type Target = ust::Dtor;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Dtor { info, name, params, destructee, ret_typ, .. } = self;
+        let cst::Dtor { info, doc, name, params, destructee, ret_typ } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
             // If the type constructor does not take any arguments, it can be left out
@@ -257,6 +265,7 @@ impl Lower for cst::Dtor {
             self_param.lower_telescope(ctx, |ctx, self_param| {
                 Ok(ust::Dtor {
                     info: info.lower_pure(),
+                    doc: doc.clone(),
                     name: name.clone(),
                     params,
                     self_param,
@@ -271,7 +280,7 @@ impl Lower for cst::Def {
     type Target = ust::Def;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Def { info, name, hidden, params, scrutinee, ret_typ, body, .. } = self;
+        let cst::Def { info, doc, name, hidden, params, scrutinee, ret_typ, body } = self;
 
         let self_param: cst::SelfParam = scrutinee.clone().into();
 
@@ -281,6 +290,7 @@ impl Lower for cst::Def {
             self_param.lower_telescope(ctx, |ctx, self_param| {
                 Ok(ust::Def {
                     info: info.lower_pure(),
+                    doc: doc.clone(),
                     name: name.clone(),
                     hidden: *hidden,
                     params,
@@ -297,11 +307,12 @@ impl Lower for cst::Codef {
     type Target = ust::Codef;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Codef { info, name, hidden, params, typ, body, .. } = self;
+        let cst::Codef { info, doc, name, hidden, params, typ, body, .. } = self;
 
         params.lower_telescope(ctx, |ctx, params| {
             Ok(ust::Codef {
                 info: info.lower_pure(),
+                doc: doc.clone(),
                 name: name.clone(),
                 hidden: *hidden,
                 params,

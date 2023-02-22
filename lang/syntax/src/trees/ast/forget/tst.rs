@@ -46,11 +46,12 @@ impl Forget for tst::Data {
     type Target = wst::Data;
 
     fn forget(&self) -> Self::Target {
-        let tst::Data { info, name, hidden, typ, ctors } = self;
+        let tst::Data { info, doc, name, hidden, typ, ctors } = self;
 
         wst::Data {
             info: info.forget(),
             name: name.clone(),
+            doc: doc.clone(),
             hidden: *hidden,
             typ: typ.forget(),
             ctors: ctors.clone(),
@@ -62,10 +63,11 @@ impl Forget for tst::Codata {
     type Target = wst::Codata;
 
     fn forget(&self) -> Self::Target {
-        let tst::Codata { info, name, hidden, typ, dtors } = self;
+        let tst::Codata { info, doc, name, hidden, typ, dtors } = self;
 
         wst::Codata {
             info: info.forget(),
+            doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
             typ: typ.forget(),
@@ -88,10 +90,11 @@ impl Forget for tst::Ctor {
     type Target = wst::Ctor;
 
     fn forget(&self) -> Self::Target {
-        let tst::Ctor { info, name, params, typ } = self;
+        let tst::Ctor { info, doc, name, params, typ } = self;
 
         wst::Ctor {
             info: info.forget(),
+            doc: doc.clone(),
             name: name.clone(),
             params: params.forget(),
             typ: typ.forget(),
@@ -103,10 +106,11 @@ impl Forget for tst::Dtor {
     type Target = wst::Dtor;
 
     fn forget(&self) -> Self::Target {
-        let tst::Dtor { info, name, params, self_param, ret_typ } = self;
+        let tst::Dtor { info, doc, name, params, self_param, ret_typ } = self;
 
         wst::Dtor {
             info: info.forget(),
+            doc: doc.clone(),
             name: name.clone(),
             params: params.forget(),
             self_param: self_param.forget(),
@@ -119,10 +123,11 @@ impl Forget for tst::Def {
     type Target = wst::Def;
 
     fn forget(&self) -> Self::Target {
-        let tst::Def { info, name, hidden, params, self_param, ret_typ, body } = self;
+        let tst::Def { info, doc, name, hidden, params, self_param, ret_typ, body } = self;
 
         wst::Def {
             info: info.forget(),
+            doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
             params: params.forget(),
@@ -137,10 +142,11 @@ impl Forget for tst::Codef {
     type Target = wst::Codef;
 
     fn forget(&self) -> Self::Target {
-        let tst::Codef { info, name, hidden, params, typ, body } = self;
+        let tst::Codef { info, doc, name, hidden, params, typ, body } = self;
 
         wst::Codef {
             info: info.forget(),
+            doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
             params: params.forget(),

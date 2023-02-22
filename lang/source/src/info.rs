@@ -67,6 +67,7 @@ impl Visitor<tst::TST> for InfoCollector {
     fn visit_data(
         &mut self,
         info: &tst::Info,
+        _doc: &Option<DocComment>,
         name: &Ident,
         _hidden: bool,
         _typ: &Rc<tst::TypAbs>,
@@ -78,6 +79,7 @@ impl Visitor<tst::TST> for InfoCollector {
     fn visit_codata(
         &mut self,
         info: &tst::Info,
+        _doc: &Option<DocComment>,
         name: &Ident,
         _hidden: bool,
         _typ: &Rc<tst::TypAbs>,
@@ -89,6 +91,7 @@ impl Visitor<tst::TST> for InfoCollector {
     fn visit_def(
         &mut self,
         info: &tst::Info,
+        _doc: &Option<DocComment>,
         name: &Ident,
         _hidden: bool,
         _params: &tst::Telescope,
@@ -105,6 +108,7 @@ impl Visitor<tst::TST> for InfoCollector {
     fn visit_codef(
         &mut self,
         info: &tst::Info,
+        _doc: &Option<DocComment>,
         name: &Ident,
         _hidden: bool,
         _params: &tst::Telescope,
