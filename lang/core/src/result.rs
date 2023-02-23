@@ -100,7 +100,6 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
-    // TODO: Add span
     #[diagnostic(transparent)]
     #[error(transparent)]
     Unify(#[from] UnifyError),
