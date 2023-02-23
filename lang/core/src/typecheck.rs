@@ -2,8 +2,8 @@
 
 use std::rc::Rc;
 
+use codespan::Span;
 use data::HashSet;
-use miette::SourceSpan;
 use miette_util::ToMiette;
 use syntax::common::*;
 use syntax::ctx::{Bind, BindElem, Context, LevelCtx};
@@ -51,7 +51,7 @@ pub trait CheckArgs {
         name: &str,
         ctx: &mut Ctx,
         params: &ust::Telescope,
-        span: Option<SourceSpan>,
+        span: Option<Span>,
     ) -> Result<Self::Target, TypeError>;
 }
 
@@ -65,7 +65,7 @@ pub trait CheckTelescope {
         ctx: &mut Ctx,
         params: &ust::Telescope,
         f: F,
-        span: Option<SourceSpan>,
+        span: Option<Span>,
     ) -> Result<T, TypeError>;
 }
 
@@ -608,7 +608,7 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                     body: body_out,
                 })
             },
-            info.span.to_miette(),
+            info.span,
         )
     }
 }
@@ -678,7 +678,7 @@ impl<'a> Check for WithScrutinee<'a, WithEqns<'a, ust::Cocase>> {
                     body: body_out,
                 })
             },
-            info.span.to_miette(),
+            info.span,
         )
     }
 }
@@ -793,7 +793,7 @@ impl Infer for ust::Exp {
             ust::Exp::TypCtor { info, name, args } => {
                 let ust::TypAbs { params } = &*prg.decls.typ(name).typ();
 
-                let args_out = args.check_args(prg, name, ctx, params, info.span.to_miette())?;
+                let args_out = args.check_args(prg, name, ctx, params, info.span)?;
 
                 Ok(tst::Exp::TypCtor {
                     info: info.with_type(type_univ()),
@@ -808,7 +808,7 @@ impl Infer for ust::Exp {
                         span: info.span.to_miette(),
                     })?;
 
-                let args_out = args.check_args(prg, name, ctx, params, info.span.to_miette())?;
+                let args_out = args.check_args(prg, name, ctx, params, info.span)?;
                 let typ_out =
                     typ.subst_under_ctx(vec![params.len()].into(), &vec![args.clone()]).to_exp();
                 let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
@@ -826,7 +826,7 @@ impl Infer for ust::Exp {
                         span: info.span.to_miette(),
                     })?;
 
-                let args_out = args.check_args(prg, name, ctx, params, info.span.to_miette())?;
+                let args_out = args.check_args(prg, name, ctx, params, info.span)?;
 
                 let self_param_out = self_param
                     .typ
@@ -870,7 +870,7 @@ impl Infer for ust::TypApp {
         let ust::TypApp { info, name, args } = self;
         let ust::TypAbs { params } = &*prg.decls.typ(name).typ();
 
-        let args_out = args.check_args(prg, name, ctx, params, info.span.to_miette())?;
+        let args_out = args.check_args(prg, name, ctx, params, info.span)?;
         Ok(tst::TypApp { info: info.with_type(type_univ()), name: name.clone(), args: args_out })
     }
 }
@@ -884,14 +884,14 @@ impl CheckArgs for ust::Args {
         name: &str,
         ctx: &mut Ctx,
         params: &ust::Telescope,
-        span: Option<SourceSpan>,
+        span: Option<Span>,
     ) -> Result<Self::Target, TypeError> {
         if self.len() != params.len() {
             return Err(TypeError::ArgLenMismatch {
                 name: name.to_owned(),
                 expected: params.len(),
                 actual: self.len(),
-                span,
+                span: span.to_miette(),
             });
         }
 
@@ -918,7 +918,7 @@ impl CheckTelescope for ust::TelescopeInst {
         ctx: &mut Ctx,
         param_types: &ust::Telescope,
         f: F,
-        span: Option<SourceSpan>,
+        span: Option<Span>,
     ) -> Result<T, TypeError> {
         let ust::Telescope { params: param_types } = param_types;
         let ust::TelescopeInst { params } = self;
@@ -928,7 +928,7 @@ impl CheckTelescope for ust::TelescopeInst {
                 name: name.to_owned(),
                 expected: param_types.len(),
                 actual: params.len(),
-                span,
+                span: span.to_miette(),
             });
         }
 
