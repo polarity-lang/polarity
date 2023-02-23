@@ -490,7 +490,7 @@ where
             Exp::Anno { info: _, exp, typ } => {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
-            Exp::Type { info: _ } => alloc.typ(TYPE),
+            Exp::Type { info: _ } => alloc.keyword(TYPE),
             Exp::Match { info: _, name, on_exp, motive, ret_typ: _, body } => on_exp
                 .print(cfg, alloc)
                 .append(DOT)
