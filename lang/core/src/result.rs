@@ -16,7 +16,6 @@ use super::unify::UnifyError;
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum TypeError {
-    // TODO: Add span
     #[diagnostic()]
     #[error("Wrong number of arguments to {name} provided: got {actual}, expected {expected}")]
     ArgLenMismatch {
@@ -38,10 +37,18 @@ pub enum TypeError {
     },
     #[diagnostic()]
     #[error("Cannot match on codata type {name}")]
-    MatchOnCodata { name: Ident, span: Option<SourceSpan> },
+    MatchOnCodata {
+        name: Ident,
+        #[label]
+        span: Option<SourceSpan>,
+    },
     #[diagnostic()]
     #[error("Cannot comatch on data type {name}")]
-    ComatchOnData { name: Ident, span: Option<SourceSpan> },
+    ComatchOnData {
+        name: Ident,
+        #[label]
+        span: Option<SourceSpan>,
+    },
     #[diagnostic()]
     #[error("Invalid pattern match: {msg}")]
     InvalidMatch {
@@ -88,7 +95,11 @@ pub enum TypeError {
     #[error("The impossible happened: {message}")]
     /// This error should not occur.
     /// Some internal invariant has been violated.
-    Impossible { message: String, span: Option<SourceSpan> },
+    Impossible {
+        message: String,
+        #[label]
+        span: Option<SourceSpan>,
+    },
     // TODO: Add span
     #[diagnostic(transparent)]
     #[error(transparent)]
