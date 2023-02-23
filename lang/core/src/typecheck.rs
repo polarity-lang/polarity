@@ -3,6 +3,7 @@
 use std::rc::Rc;
 
 use data::HashSet;
+use miette::SourceSpan;
 use miette_util::ToMiette;
 use syntax::common::*;
 use syntax::ctx::{Bind, BindElem, Context, LevelCtx};
@@ -50,6 +51,7 @@ pub trait CheckArgs {
         name: &str,
         ctx: &mut Ctx,
         params: &ust::Telescope,
+        span: Option<SourceSpan>,
     ) -> Result<Self::Target, TypeError>;
 }
 
@@ -63,6 +65,7 @@ pub trait CheckTelescope {
         ctx: &mut Ctx,
         params: &ust::Telescope,
         f: F,
+        span: Option<SourceSpan>,
     ) -> Result<T, TypeError>;
 }
 
@@ -535,71 +538,78 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
         let mut subst_ctx_2 = ctx.levels().append(&vec![params.len(), 1].into());
         let curr_lvl = subst_ctx_2.len() - 1;
 
-        args.check_telescope(prg, name, ctx, params, |ctx, args_out| {
-            // Substitute the constructor for the self parameter
-            let args = (0..params.len())
-                .rev()
-                .map(|snd| ust::Exp::Var {
-                    info: ust::Info::empty(),
-                    name: "".to_owned(),
-                    idx: Idx { fst: 1, snd },
+        args.check_telescope(
+            prg,
+            name,
+            ctx,
+            params,
+            |ctx, args_out| {
+                // Substitute the constructor for the self parameter
+                let args = (0..params.len())
+                    .rev()
+                    .map(|snd| ust::Exp::Var {
+                        info: ust::Info::empty(),
+                        name: "".to_owned(),
+                        idx: Idx { fst: 1, snd },
+                    })
+                    .map(Rc::new)
+                    .collect();
+                let ctor =
+                    Rc::new(ust::Exp::Ctor { info: ust::Info::empty(), name: name.clone(), args });
+                let subst = Assign(Lvl { fst: curr_lvl, snd: 0 }, ctor);
+
+                // FIXME: Refactor this
+                let t = t
+                    .forget()
+                    .shift((1, 0))
+                    .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
+                    .subst(&mut subst_ctx_2, &subst)
+                    .shift((-1, 0));
+
+                let body_out = match body {
+                    Some(body) => {
+                        let unif = unify(ctx.levels(), self.eqns.clone())
+                            .map_err(TypeError::Unify)?
+                            .map_no(|()| TypeError::PatternIsAbsurd {
+                                name: name.clone(),
+                                span: info.span.to_miette(),
+                            })
+                            .ok_yes()?;
+
+                        // FIXME: Track substitution in context instead
+                        let mut ctx = ctx.subst(prg, &unif)?;
+                        let body = body.subst(&mut ctx.levels(), &unif);
+                        let ctx = &mut ctx;
+
+                        let t_subst = t.subst(&mut ctx.levels(), &unif);
+                        let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+
+                        let body_out = body.check(prg, ctx, t_nf)?;
+
+                        Some(body_out)
+                    }
+                    None => {
+                        unify(ctx.levels(), self.eqns.clone())
+                            .map_err(TypeError::Unify)?
+                            .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                                name: name.clone(),
+                                span: info.span.to_miette(),
+                            })
+                            .ok_no()?;
+
+                        None
+                    }
+                };
+
+                Ok(tst::Case {
+                    info: info.clone().into(),
+                    name: name.clone(),
+                    args: args_out,
+                    body: body_out,
                 })
-                .map(Rc::new)
-                .collect();
-            let ctor =
-                Rc::new(ust::Exp::Ctor { info: ust::Info::empty(), name: name.clone(), args });
-            let subst = Assign(Lvl { fst: curr_lvl, snd: 0 }, ctor);
-
-            // FIXME: Refactor this
-            let t = t
-                .forget()
-                .shift((1, 0))
-                .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
-                .subst(&mut subst_ctx_2, &subst)
-                .shift((-1, 0));
-
-            let body_out = match body {
-                Some(body) => {
-                    let unif = unify(ctx.levels(), self.eqns.clone())
-                        .map_err(TypeError::Unify)?
-                        .map_no(|()| TypeError::PatternIsAbsurd {
-                            name: name.clone(),
-                            span: info.span.to_miette(),
-                        })
-                        .ok_yes()?;
-
-                    // FIXME: Track substitution in context instead
-                    let mut ctx = ctx.subst(prg, &unif)?;
-                    let body = body.subst(&mut ctx.levels(), &unif);
-                    let ctx = &mut ctx;
-
-                    let t_subst = t.subst(&mut ctx.levels(), &unif);
-                    let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
-
-                    let body_out = body.check(prg, ctx, t_nf)?;
-
-                    Some(body_out)
-                }
-                None => {
-                    unify(ctx.levels(), self.eqns.clone())
-                        .map_err(TypeError::Unify)?
-                        .map_yes(|_| TypeError::PatternIsNotAbsurd {
-                            name: name.clone(),
-                            span: info.span.to_miette(),
-                        })
-                        .ok_no()?;
-
-                    None
-                }
-            };
-
-            Ok(tst::Case {
-                info: info.clone().into(),
-                name: name.clone(),
-                args: args_out,
-                body: body_out,
-            })
-        })
+            },
+            info.span.to_miette(),
+        )
     }
 }
 
@@ -620,49 +630,56 @@ impl<'a> Check for WithScrutinee<'a, WithEqns<'a, ust::Cocase>> {
             span: info.span.to_miette(),
         })?;
 
-        params_inst.check_telescope(prg, name, ctx, params, |ctx, args_out| {
-            let body_out = match body {
-                Some(body) => {
-                    let unif = unify(ctx.levels(), self.inner.eqns.clone())
-                        .map_err(TypeError::Unify)?
-                        .map_no(|()| TypeError::PatternIsAbsurd {
-                            name: name.clone(),
-                            span: info.span.to_miette(),
-                        })
-                        .ok_yes()?;
+        params_inst.check_telescope(
+            prg,
+            name,
+            ctx,
+            params,
+            |ctx, args_out| {
+                let body_out = match body {
+                    Some(body) => {
+                        let unif = unify(ctx.levels(), self.inner.eqns.clone())
+                            .map_err(TypeError::Unify)?
+                            .map_no(|()| TypeError::PatternIsAbsurd {
+                                name: name.clone(),
+                                span: info.span.to_miette(),
+                            })
+                            .ok_yes()?;
 
-                    // FIXME: Track substitution in context instead
-                    let mut ctx = ctx.subst(prg, &unif)?;
-                    let body = body.subst(&mut ctx.levels(), &unif);
-                    let ctx = &mut ctx;
+                        // FIXME: Track substitution in context instead
+                        let mut ctx = ctx.subst(prg, &unif)?;
+                        let body = body.subst(&mut ctx.levels(), &unif);
+                        let ctx = &mut ctx;
 
-                    let t_subst = t.forget().subst(&mut ctx.levels(), &unif);
-                    let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+                        let t_subst = t.forget().subst(&mut ctx.levels(), &unif);
+                        let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
 
-                    let body_out = body.check(prg, ctx, t_nf)?;
+                        let body_out = body.check(prg, ctx, t_nf)?;
 
-                    Some(body_out)
-                }
-                None => {
-                    unify(ctx.levels(), self.inner.eqns.clone())
-                        .map_err(TypeError::Unify)?
-                        .map_yes(|_| TypeError::PatternIsNotAbsurd {
-                            name: name.clone(),
-                            span: info.span.to_miette(),
-                        })
-                        .ok_no()?;
+                        Some(body_out)
+                    }
+                    None => {
+                        unify(ctx.levels(), self.inner.eqns.clone())
+                            .map_err(TypeError::Unify)?
+                            .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                                name: name.clone(),
+                                span: info.span.to_miette(),
+                            })
+                            .ok_no()?;
 
-                    None
-                }
-            };
+                        None
+                    }
+                };
 
-            Ok(tst::Cocase {
-                info: info.clone().into(),
-                name: name.clone(),
-                params: args_out,
-                body: body_out,
-            })
-        })
+                Ok(tst::Cocase {
+                    info: info.clone().into(),
+                    name: name.clone(),
+                    params: args_out,
+                    body: body_out,
+                })
+            },
+            info.span.to_miette(),
+        )
     }
 }
 
@@ -776,7 +793,7 @@ impl Infer for ust::Exp {
             ust::Exp::TypCtor { info, name, args } => {
                 let ust::TypAbs { params } = &*prg.decls.typ(name).typ();
 
-                let args_out = args.check_args(prg, name, ctx, params)?;
+                let args_out = args.check_args(prg, name, ctx, params, info.span.to_miette())?;
 
                 Ok(tst::Exp::TypCtor {
                     info: info.with_type(type_univ()),
@@ -791,7 +808,7 @@ impl Infer for ust::Exp {
                         span: info.span.to_miette(),
                     })?;
 
-                let args_out = args.check_args(prg, name, ctx, params)?;
+                let args_out = args.check_args(prg, name, ctx, params, info.span.to_miette())?;
                 let typ_out =
                     typ.subst_under_ctx(vec![params.len()].into(), &vec![args.clone()]).to_exp();
                 let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
@@ -809,7 +826,7 @@ impl Infer for ust::Exp {
                         span: info.span.to_miette(),
                     })?;
 
-                let args_out = args.check_args(prg, name, ctx, params)?;
+                let args_out = args.check_args(prg, name, ctx, params, info.span.to_miette())?;
 
                 let self_param_out = self_param
                     .typ
@@ -853,7 +870,7 @@ impl Infer for ust::TypApp {
         let ust::TypApp { info, name, args } = self;
         let ust::TypAbs { params } = &*prg.decls.typ(name).typ();
 
-        let args_out = args.check_args(prg, name, ctx, params)?;
+        let args_out = args.check_args(prg, name, ctx, params, info.span.to_miette())?;
         Ok(tst::TypApp { info: info.with_type(type_univ()), name: name.clone(), args: args_out })
     }
 }
@@ -867,12 +884,14 @@ impl CheckArgs for ust::Args {
         name: &str,
         ctx: &mut Ctx,
         params: &ust::Telescope,
+        span: Option<SourceSpan>,
     ) -> Result<Self::Target, TypeError> {
         if self.len() != params.len() {
             return Err(TypeError::ArgLenMismatch {
                 name: name.to_owned(),
                 expected: params.len(),
                 actual: self.len(),
+                span,
             });
         }
 
@@ -899,6 +918,7 @@ impl CheckTelescope for ust::TelescopeInst {
         ctx: &mut Ctx,
         param_types: &ust::Telescope,
         f: F,
+        span: Option<SourceSpan>,
     ) -> Result<T, TypeError> {
         let ust::Telescope { params: param_types } = param_types;
         let ust::TelescopeInst { params } = self;
@@ -908,6 +928,7 @@ impl CheckTelescope for ust::TelescopeInst {
                 name: name.to_owned(),
                 expected: param_types.len(),
                 actual: params.len(),
+                span,
             });
         }
 

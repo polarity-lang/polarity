@@ -19,7 +19,13 @@ pub enum TypeError {
     // TODO: Add span
     #[diagnostic()]
     #[error("Wrong number of arguments to {name} provided: got {actual}, expected {expected}")]
-    ArgLenMismatch { name: String, expected: usize, actual: usize },
+    ArgLenMismatch {
+        name: String,
+        expected: usize,
+        actual: usize,
+        #[label]
+        span: Option<SourceSpan>,
+    },
     #[diagnostic()]
     #[error("{lhs} is not equal to {rhs}")]
     NotEq {
