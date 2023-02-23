@@ -211,7 +211,6 @@ where
             .append(DOT)
             .append(alloc.dtor(name))
             .append(params.print(cfg, alloc))
-            .append(alloc.space())
             .append(COLON)
             .append(alloc.space())
             .append(ret_typ.print(cfg, alloc));
@@ -238,7 +237,6 @@ where
             .append(alloc.space())
             .append(alloc.ctor(name))
             .append(params.print(cfg, alloc))
-            .append(alloc.space())
             .append(COLON)
             .append(alloc.space())
             .append(typ.print(cfg, alloc));
@@ -261,10 +259,7 @@ where
         if typ.is_simple() {
             head
         } else {
-            head.append(alloc.space())
-                .append(COLON)
-                .append(alloc.space())
-                .append(typ.print(cfg, alloc))
+            head.append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
         }
     }
 }
@@ -283,7 +278,6 @@ where
         };
         head.append(alloc.dtor(name))
             .append(params.print(cfg, alloc))
-            .append(alloc.space())
             .append(COLON)
             .append(alloc.space())
             .append(ret_typ.print(cfg, alloc))
