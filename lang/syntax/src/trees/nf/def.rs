@@ -61,6 +61,10 @@ pub enum Neu {
         on_exp: Rc<Neu>,
         body: Match,
     },
+    Hole {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: Info,
+    },
 }
 
 #[derive(Debug, Clone, Derivative)]

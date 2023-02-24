@@ -79,8 +79,14 @@ pub enum TypeError {
         span: Option<SourceSpan>,
     },
     #[diagnostic()]
-    #[error("Type annotation required")]
-    AnnotationRequired {
+    #[error("Type annotation required for match expression")]
+    CannotInferMatch {
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[diagnostic()]
+    #[error("Type annotation required for comatch expression")]
+    CannotInferComatch {
         #[label]
         span: Option<SourceSpan>,
     },
