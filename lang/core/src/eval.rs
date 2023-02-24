@@ -56,12 +56,7 @@ impl Eval for Exp {
                 name: name.clone(),
                 body: body.eval(prg, env)?,
             }),
-            Exp::Hole { info } => {
-                return Err(EvalError::EvalHole {
-                    typ: "not known".to_owned(),
-                    span: info.span.to_miette(),
-                })
-            }
+            Exp::Hole { info } => Rc::new(Val::Neu { exp: Neu::Hole { info: info.clone() } }),
         };
         Ok(res)
     }

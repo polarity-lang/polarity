@@ -173,12 +173,6 @@ pub enum NormalizeError {
 #[derive(Error, Diagnostic, Debug)]
 #[diagnostic()]
 pub enum EvalError {
-    #[error("Trying to evaluate hole of type {typ} {span:?}")]
-    EvalHole {
-        typ: String,
-        #[label]
-        span: Option<SourceSpan>,
-    },
     #[error("The impossible happened: {message}")]
     /// This error should not occur.
     /// Some internal invariant has been violated.
