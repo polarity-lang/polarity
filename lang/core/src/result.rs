@@ -26,13 +26,13 @@ pub enum TypeError {
         span: Option<SourceSpan>,
     },
     #[diagnostic()]
-    #[error("{lhs} is not equal to {rhs}")]
+    #[error("The following terms are not equal:\n  1: {lhs}\n  2: {rhs}\n")]
     NotEq {
         lhs: String,
         rhs: String,
-        #[label]
+        #[label("Source of (1)")]
         lhs_span: Option<SourceSpan>,
-        #[label]
+        #[label("Source of (2)")]
         rhs_span: Option<SourceSpan>,
     },
     #[diagnostic()]

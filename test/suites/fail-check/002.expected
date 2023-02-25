@@ -1,1 +1,3 @@
-Foo(False) is not equal to Foo(True)
+The following terms are not equal:
+  1: Foo(False)
+  2: Foo(True)
