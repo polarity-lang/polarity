@@ -63,6 +63,7 @@ impl ReadBack for val::Neu {
                 on_exp: on_exp.read_back(prg)?,
                 body: body.read_back(prg)?,
             },
+            val::Neu::Hole { info } => nf::Neu::Hole { info: info.clone() },
         };
         Ok(res)
     }

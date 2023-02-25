@@ -45,6 +45,7 @@ impl<'a> Print<'a> for Neu {
                 .append(alloc.text(name))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
+            Neu::Hole { info: _ } => alloc.keyword(HOLE),
         }
     }
 }

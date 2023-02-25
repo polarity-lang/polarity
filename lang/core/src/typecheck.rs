@@ -858,7 +858,13 @@ impl Infer for ust::Exp {
                 })
             }
             ust::Exp::Type { info } => Ok(tst::Exp::Type { info: info.with_type(type_univ()) }),
-            _ => Err(TypeError::AnnotationRequired { span: self.info().span.to_miette() }),
+            ust::Exp::Hole { info } => Ok(tst::Exp::Hole { info: info.with_type(type_hole()) }),
+            ust::Exp::Match { .. } => {
+                Err(TypeError::CannotInferMatch { span: self.info().span.to_miette() })
+            }
+            ust::Exp::Comatch { .. } => {
+                Err(TypeError::CannotInferComatch { span: self.info().span.to_miette() })
+            }
         }
     }
 }
@@ -1104,4 +1110,8 @@ impl<T: Infer> Infer for Rc<T> {
 
 fn type_univ() -> Rc<nf::Nf> {
     Rc::new(nf::Nf::Type { info: ust::Info::empty() })
+}
+
+fn type_hole() -> Rc<nf::Nf> {
+    Rc::new(nf::Nf::Neu { exp: nf::Neu::Hole { info: ust::Info::empty() } })
 }

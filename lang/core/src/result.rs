@@ -79,8 +79,14 @@ pub enum TypeError {
         span: Option<SourceSpan>,
     },
     #[diagnostic()]
-    #[error("Type annotation required")]
-    AnnotationRequired {
+    #[error("Type annotation required for match expression")]
+    CannotInferMatch {
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[diagnostic()]
+    #[error("Type annotation required for comatch expression")]
+    CannotInferComatch {
         #[label]
         span: Option<SourceSpan>,
     },
@@ -167,12 +173,6 @@ pub enum NormalizeError {
 #[derive(Error, Diagnostic, Debug)]
 #[diagnostic()]
 pub enum EvalError {
-    #[error("Trying to evaluate hole of type {typ} {span:?}")]
-    EvalHole {
-        typ: String,
-        #[label]
-        span: Option<SourceSpan>,
-    },
     #[error("The impossible happened: {message}")]
     /// This error should not occur.
     /// Some internal invariant has been violated.

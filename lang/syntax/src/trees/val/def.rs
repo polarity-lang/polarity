@@ -64,6 +64,10 @@ pub enum Neu {
         // TODO: Ignore this field for PartialEq, Hash?
         body: Match,
     },
+    Hole {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        info: Info,
+    },
 }
 
 #[derive(Debug, Clone, Derivative)]
