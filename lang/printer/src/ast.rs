@@ -141,8 +141,10 @@ where
                 .nest(cfg.indent)
                 .append(alloc.line())
                 .braces_from(cfg)
-                .group()
         };
+
+        let body = if typ.params.is_empty() { body.group() } else { body };
+
         head.append(body)
     }
 }
@@ -186,8 +188,9 @@ where
                 .nest(cfg.indent)
                 .append(alloc.line())
                 .braces_from(cfg)
-                .group()
         };
+
+        let body = if typ.params.is_empty() { body.group() } else { body };
 
         head.append(body)
     }
