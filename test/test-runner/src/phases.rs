@@ -132,7 +132,7 @@ impl fmt::Display for Failure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Failure::Mismatch { expected, actual } => {
-                write!(f, "Expected {expected}, got {actual}")
+                write!(f, "\n  Expected : {expected}\n  Got      : {actual}")
             }
             Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
             Failure::ExpectedSuccess { got } => write!(f, "Expected success, got {got}"),
