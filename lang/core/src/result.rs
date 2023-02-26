@@ -14,8 +14,8 @@ use printer::PrintToString;
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum TypeError {
-    #[diagnostic()]
     #[error("Wrong number of arguments to {name} provided: got {actual}, expected {expected}")]
+    #[diagnostic(code("T-001"))]
     ArgLenMismatch {
         name: String,
         expected: usize,
@@ -23,8 +23,8 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("The following terms are not equal:\n  1: {lhs}\n  2: {rhs}\n")]
+    #[diagnostic(code("T-002"))]
     NotEq {
         lhs: String,
         rhs: String,
@@ -33,70 +33,70 @@ pub enum TypeError {
         #[label("Source of (2)")]
         rhs_span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("Cannot match on codata type {name}")]
+    #[diagnostic(code("T-003"))]
     MatchOnCodata {
         name: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("Cannot comatch on data type {name}")]
+    #[diagnostic(code("T-004"))]
     ComatchOnData {
         name: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("Invalid pattern match: {msg}")]
+    #[diagnostic(code("T-005"))]
     InvalidMatch {
         msg: String,
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("Got {actual}, which is not in type {expected}")]
+    #[diagnostic(code("T-006"))]
     NotInType {
         expected: Ident,
         actual: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("Pattern for {name} is marked as absurd but that could not be proven")]
+    #[diagnostic(code("T-007"))]
     PatternIsNotAbsurd {
         name: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("Pattern for {name} is absurd and must be marked accordingly")]
+    #[diagnostic(code("T-008"))]
     PatternIsAbsurd {
         name: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("Type annotation required for match expression")]
+    #[diagnostic(code("T-009"))]
     CannotInferMatch {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("Type annotation required for comatch expression")]
+    #[diagnostic(code("T-010"))]
     CannotInferComatch {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("Expected type constructor application, got {got}")]
+    #[diagnostic(code("T-011"))]
     ExpectedTypApp {
         got: String,
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("The impossible happened: {message}")]
+    #[diagnostic(code("T-XXX"))]
     /// This error should not occur.
     /// Some internal invariant has been violated.
     Impossible {
@@ -104,11 +104,11 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic(transparent)]
     #[error(transparent)]
+    #[diagnostic(transparent)]
     Unify(#[from] UnifyError),
-    #[diagnostic(transparent)]
     #[error(transparent)]
+    #[diagnostic(transparent)]
     Normalize(#[from] NormalizeError),
 }
 
@@ -161,17 +161,17 @@ impl From<ReadBackError> for TypeError {
 }
 
 #[derive(Error, Diagnostic, Debug)]
-#[diagnostic(transparent)]
 #[error(transparent)]
+#[diagnostic(transparent)]
 pub enum NormalizeError {
     Eval(#[from] EvalError),
     ReadBack(#[from] ReadBackError),
 }
 
 #[derive(Error, Diagnostic, Debug)]
-#[diagnostic()]
 pub enum EvalError {
     #[error("The impossible happened: {message}")]
+    #[diagnostic(code("E-XXX"))]
     /// This error should not occur.
     /// Some internal invariant has been violated.
     Impossible {
@@ -190,23 +190,23 @@ pub enum ReadBackError {
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum UnifyError {
-    #[diagnostic()]
     #[error("{idx} occurs in {exp}")]
+    #[diagnostic(code("U-001"))]
     OccursCheckFailed {
         idx: Idx,
         exp: String,
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("Cannot unify annotated expression {exp}")]
+    #[diagnostic(code("U-002"))]
     UnsupportedAnnotation {
         exp: String,
         #[label]
         span: Option<SourceSpan>,
     },
-    #[diagnostic()]
     #[error("Cannot automatically decide whether {lhs} and {rhs} unify")]
+    #[diagnostic(code("U-003"))]
     CannotDecide {
         lhs: String,
         rhs: String,
