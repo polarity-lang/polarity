@@ -127,6 +127,7 @@ impl Ctx {
             {
                 self.unify_args(subst, subst2)
             }
+            (TypCtor { name, .. }, TypCtor { name: name2, .. }) if name != name2 => Ok(No(())),
             (Ctor { name, args: subst, .. }, Ctor { name: name2, args: subst2, .. })
                 if name == name2 =>
             {
