@@ -12,8 +12,6 @@ use syntax::ust;
 
 use printer::PrintToString;
 
-use super::unify::UnifyError;
-
 #[derive(Error, Diagnostic, Debug)]
 pub enum TypeError {
     #[diagnostic()]
@@ -188,4 +186,52 @@ pub enum EvalError {
 #[error(transparent)]
 pub enum ReadBackError {
     Eval(#[from] EvalError),
+}
+
+#[derive(Error, Diagnostic, Debug)]
+pub enum UnifyError {
+    #[diagnostic()]
+    #[error("{idx} occurs in {exp}")]
+    OccursCheckFailed {
+        idx: Idx,
+        exp: String,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[diagnostic()]
+    #[error("Cannot unify annotated expression {exp}")]
+    UnsupportedAnnotation {
+        exp: String,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[diagnostic()]
+    #[error("Cannot automatically decide whether {lhs} and {rhs} unify")]
+    CannotDecide {
+        lhs: String,
+        rhs: String,
+        #[label]
+        lhs_span: Option<SourceSpan>,
+        #[label]
+        rhs_span: Option<SourceSpan>,
+    },
+}
+
+impl UnifyError {
+    pub fn occurs_check_failed(idx: Idx, exp: Rc<ust::Exp>) -> Self {
+        Self::OccursCheckFailed { idx, exp: exp.print_to_string(), span: exp.span().to_miette() }
+    }
+
+    pub fn unsupported_annotation(exp: Rc<ust::Exp>) -> Self {
+        Self::UnsupportedAnnotation { exp: exp.print_to_string(), span: exp.span().to_miette() }
+    }
+
+    pub fn cannot_decide(lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp>) -> Self {
+        Self::CannotDecide {
+            lhs: lhs.print_to_string(),
+            rhs: rhs.print_to_string(),
+            lhs_span: lhs.span().to_miette(),
+            rhs_span: rhs.span().to_miette(),
+        }
+    }
 }

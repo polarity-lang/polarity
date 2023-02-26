@@ -1,13 +1,10 @@
 use std::rc::Rc;
 
-use miette::Diagnostic;
-use miette::SourceSpan;
-use miette_util::ToMiette;
 use syntax::ctx::LevelCtx;
-use thiserror::Error;
 
+use crate::result::UnifyError;
 use data::{Dec, HashMap, HashSet, No, Yes};
-use printer::{DocAllocator, Print, PrintToString};
+use printer::{DocAllocator, Print};
 use syntax::ast;
 use syntax::common::*;
 use syntax::nf;
@@ -186,54 +183,6 @@ impl Ctx {
     fn add_equations<I: IntoIterator<Item = Eqn>>(&mut self, iter: I) -> Result<Dec, UnifyError> {
         self.eqns.extend(iter.into_iter().filter(|eqn| !self.done.contains(eqn)));
         Ok(Yes(()))
-    }
-}
-
-#[derive(Error, Diagnostic, Debug)]
-pub enum UnifyError {
-    #[diagnostic()]
-    #[error("{idx} occurs in {exp}")]
-    OccursCheckFailed {
-        idx: Idx,
-        exp: String,
-        #[label]
-        span: Option<SourceSpan>,
-    },
-    #[diagnostic()]
-    #[error("Cannot unify annotated expression {exp}")]
-    UnsupportedAnnotation {
-        exp: String,
-        #[label]
-        span: Option<SourceSpan>,
-    },
-    #[diagnostic()]
-    #[error("Cannot automatically decide whether {lhs} and {rhs} unify")]
-    CannotDecide {
-        lhs: String,
-        rhs: String,
-        #[label]
-        lhs_span: Option<SourceSpan>,
-        #[label]
-        rhs_span: Option<SourceSpan>,
-    },
-}
-
-impl UnifyError {
-    fn occurs_check_failed(idx: Idx, exp: Rc<ust::Exp>) -> Self {
-        Self::OccursCheckFailed { idx, exp: exp.print_to_string(), span: exp.span().to_miette() }
-    }
-
-    fn unsupported_annotation(exp: Rc<ust::Exp>) -> Self {
-        Self::UnsupportedAnnotation { exp: exp.print_to_string(), span: exp.span().to_miette() }
-    }
-
-    fn cannot_decide(lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp>) -> Self {
-        Self::CannotDecide {
-            lhs: lhs.print_to_string(),
-            rhs: rhs.print_to_string(),
-            lhs_span: lhs.span().to_miette(),
-            rhs_span: rhs.span().to_miette(),
-        }
     }
 }
 
