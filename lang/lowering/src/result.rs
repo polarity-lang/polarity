@@ -47,12 +47,4 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
-    #[error(
-        "The use of self is reserved for referencing the scrutinee in top-level (co)definitions"
-    )]
-    #[diagnostic(code("L-007"))]
-    SelfIsReserved {
-        #[label]
-        span: SourceSpan,
-    },
 }
