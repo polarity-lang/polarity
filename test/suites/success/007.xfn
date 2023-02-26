@@ -1,0 +1,13 @@
+data Nat { Z, S(n : Nat )}
+data True {}
+data False {}
+
+data GADT(a : Type) {
+    CTrue : GADT(True),
+    CFalse : GADT(False),
+}
+
+def GADT(True).foo : Nat {
+    CTrue => Z,
+    CFalse absurd
+}
