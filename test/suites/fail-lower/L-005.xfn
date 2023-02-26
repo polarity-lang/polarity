@@ -1,0 +1,6 @@
+data List(a : Type) {
+    Nil(a : Type) : List(a), 
+    Cons(a : Type, x : a, xs : List(a)) 
+}
+
+

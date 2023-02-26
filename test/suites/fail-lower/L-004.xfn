@@ -1,0 +1,11 @@
+data Bool { True, False }
+
+codata Foo { d(x : Bool) : Bool }
+
+data Unit { MkUnit }
+
+codef Bar : Foo {
+    d(d) => Bar.d
+}
+
+
