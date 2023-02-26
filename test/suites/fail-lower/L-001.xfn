@@ -1,0 +1,4 @@
+def Unit.bar() : Unit {
+    MkUnit => Foo
+}
+ 

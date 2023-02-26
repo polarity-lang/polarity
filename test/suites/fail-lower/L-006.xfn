@@ -1,0 +1,12 @@
+data Bool { True, False }
+
+codata Pair(a b: Type) {
+    Pair(a,b).fst(a b: Type) : a,
+    Pair(a,b).snd(a b: Type) : b
+}
+
+data Unit { MkUnit }
+
+def Unit.foo : Pair(Bool,Bool) {
+    MkUnit => comatch { fst(a,b) => True, snd(a,b) => True}
+}

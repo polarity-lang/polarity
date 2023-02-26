@@ -1,0 +1,9 @@
+data Bool { True, False }
+codata Foo { d : Bool }
+
+data Unit { MkUnit }
+
+def Unit.foo : ? {
+    MkUnit => d
+}
+
