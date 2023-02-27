@@ -109,7 +109,7 @@ pub enum TypeError {
     Unify(#[from] UnifyError),
     #[error(transparent)]
     #[diagnostic(transparent)]
-    Normalize(#[from] NormalizeError),
+    Eval(#[from] EvalError),
 }
 
 impl TypeError {
@@ -148,26 +148,6 @@ impl TypeError {
     }
 }
 
-impl From<EvalError> for TypeError {
-    fn from(err: EvalError) -> Self {
-        Self::Normalize(err.into())
-    }
-}
-
-impl From<ReadBackError> for TypeError {
-    fn from(err: ReadBackError) -> Self {
-        Self::Normalize(err.into())
-    }
-}
-
-#[derive(Error, Diagnostic, Debug)]
-#[error(transparent)]
-#[diagnostic(transparent)]
-pub enum NormalizeError {
-    Eval(#[from] EvalError),
-    ReadBack(#[from] ReadBackError),
-}
-
 #[derive(Error, Diagnostic, Debug)]
 pub enum EvalError {
     #[error("The impossible happened: {message}")]
@@ -179,13 +159,6 @@ pub enum EvalError {
         #[label]
         span: Option<SourceSpan>,
     },
-}
-
-#[derive(Error, Diagnostic, Debug)]
-#[diagnostic(transparent)]
-#[error(transparent)]
-pub enum ReadBackError {
-    Eval(#[from] EvalError),
 }
 
 #[derive(Error, Diagnostic, Debug)]

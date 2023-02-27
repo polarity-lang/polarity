@@ -14,14 +14,14 @@ use super::result::*;
 pub trait ReadBack {
     type Nf;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError>;
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError>;
 }
 
 impl ReadBack for val::Val {
     type Nf = nf::Nf;
 
     #[trace("↓{:P} ~> {return:P}", self, data::id)]
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         let res = match self {
             val::Val::TypCtor { info, name, args } => nf::Nf::TypCtor {
                 info: info.clone(),
@@ -46,7 +46,7 @@ impl ReadBack for val::Val {
 impl ReadBack for val::Neu {
     type Nf = nf::Neu;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         let res = match self {
             val::Neu::Var { info, name, idx } => {
                 nf::Neu::Var { info: info.clone(), name: name.clone(), idx: *idx }
@@ -72,7 +72,7 @@ impl ReadBack for val::Neu {
 impl ReadBack for val::Match {
     type Nf = nf::Match;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         let val::Match { info, cases } = self;
         Ok(nf::Match { info: info.clone(), cases: cases.read_back(prg)? })
     }
@@ -81,7 +81,7 @@ impl ReadBack for val::Match {
 impl ReadBack for val::Comatch {
     type Nf = nf::Comatch;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         let val::Comatch { info, cases } = self;
         Ok(nf::Comatch { info: info.clone(), cases: cases.read_back(prg)? })
     }
@@ -90,7 +90,7 @@ impl ReadBack for val::Comatch {
 impl ReadBack for val::Case {
     type Nf = nf::Case;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         let val::Case { info, name, args, body } = self;
 
         Ok(nf::Case {
@@ -105,7 +105,7 @@ impl ReadBack for val::Case {
 impl ReadBack for val::Cocase {
     type Nf = nf::Cocase;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         let val::Cocase { info, name, args, body } = self;
 
         Ok(nf::Cocase {
@@ -120,7 +120,7 @@ impl ReadBack for val::Cocase {
 impl ReadBack for val::TypApp {
     type Nf = nf::TypApp;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         let val::TypApp { info, name, args } = self;
 
         Ok(nf::TypApp { info: info.clone(), name: name.clone(), args: args.read_back(prg)? })
@@ -130,7 +130,7 @@ impl ReadBack for val::TypApp {
 impl ReadBack for val::Closure {
     type Nf = Rc<nf::Nf>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         let args: Vec<Rc<val::Val>> = (0..self.n_args)
             .rev()
             .map(|snd| val::Val::Neu {
@@ -152,7 +152,7 @@ impl ReadBack for val::Closure {
 impl<T: ReadBack> ReadBack for Vec<T> {
     type Nf = Vec<T::Nf>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         self.iter().map(|x| x.read_back(prg)).collect()
     }
 }
@@ -160,7 +160,7 @@ impl<T: ReadBack> ReadBack for Vec<T> {
 impl<T: ReadBack> ReadBack for Rc<T> {
     type Nf = Rc<T::Nf>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         (**self).read_back(prg).map(Rc::new)
     }
 }
@@ -168,7 +168,7 @@ impl<T: ReadBack> ReadBack for Rc<T> {
 impl<T: ReadBack> ReadBack for Option<T> {
     type Nf = Option<T::Nf>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, ReadBackError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         self.as_ref().map(|x| x.read_back(prg)).transpose()
     }
 }

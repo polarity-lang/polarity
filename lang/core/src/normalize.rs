@@ -8,7 +8,7 @@ use super::result::*;
 pub trait Normalize {
     type Nf;
 
-    fn normalize(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Nf, NormalizeError>;
+    fn normalize(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Nf, EvalError>;
 }
 
 impl<T> Normalize for T
@@ -18,8 +18,8 @@ where
 {
     type Nf = <<T as Eval>::Val as ReadBack>::Nf;
 
-    fn normalize(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Nf, NormalizeError> {
-        let val = self.eval(prg, env).map_err(NormalizeError::Eval)?;
-        val.read_back(prg).map_err(NormalizeError::ReadBack)
+    fn normalize(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Nf, EvalError> {
+        let val = self.eval(prg, env)?;
+        val.read_back(prg)
     }
 }
