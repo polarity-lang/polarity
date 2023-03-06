@@ -21,7 +21,7 @@ use super::result::TypeError;
 use super::unify::*;
 
 pub fn check(prg: &ust::Prg) -> Result<tst::Prg, TypeError> {
-    let mut var_ctx = Ctx::empty();
+    let mut var_ctx = Ctx::default();
     prg.infer(prg, &mut var_ctx)
 }
 
@@ -576,17 +576,17 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                             })
                             .ok_yes()?;
 
-                        // FIXME: Track substitution in context instead
-                        let mut ctx = ctx.subst(prg, &unif)?;
-                        let body = body.subst(&mut ctx.levels(), &unif);
-                        let ctx = &mut ctx;
+                        ctx.fork::<Result<_, TypeError>, _>(|ctx| {
+                            ctx.subst(prg, &unif)?;
+                            let body = body.subst(&mut ctx.levels(), &unif);
 
-                        let t_subst = t.subst(&mut ctx.levels(), &unif);
-                        let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+                            let t_subst = t.subst(&mut ctx.levels(), &unif);
+                            let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
 
-                        let body_out = body.check(prg, ctx, t_nf)?;
+                            let body_out = body.check(prg, ctx, t_nf)?;
 
-                        Some(body_out)
+                            Ok(Some(body_out))
+                        })?
                     }
                     None => {
                         unify(ctx.levels(), self.eqns.clone())
@@ -646,17 +646,17 @@ impl<'a> Check for WithScrutinee<'a, WithEqns<'a, ust::Cocase>> {
                             })
                             .ok_yes()?;
 
-                        // FIXME: Track substitution in context instead
-                        let mut ctx = ctx.subst(prg, &unif)?;
-                        let body = body.subst(&mut ctx.levels(), &unif);
-                        let ctx = &mut ctx;
+                        ctx.fork::<Result<_, TypeError>, _>(|ctx| {
+                            ctx.subst(prg, &unif)?;
+                            let body = body.subst(&mut ctx.levels(), &unif);
 
-                        let t_subst = t.forget().subst(&mut ctx.levels(), &unif);
-                        let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+                            let t_subst = t.forget().subst(&mut ctx.levels(), &unif);
+                            let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
 
-                        let body_out = body.check(prg, ctx, t_nf)?;
+                            let body_out = body.check(prg, ctx, t_nf)?;
 
-                        Some(body_out)
+                            Ok(Some(body_out))
+                        })?
                     }
                     None => {
                         unify(ctx.levels(), self.inner.eqns.clone())
