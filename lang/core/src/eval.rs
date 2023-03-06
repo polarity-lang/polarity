@@ -48,14 +48,20 @@ impl Eval for Exp {
             }
             Exp::Anno { exp, .. } => exp.eval(prg, env)?,
             Exp::Type { info } => Rc::new(Val::Type { info: info.clone() }),
-            Exp::Match { name, on_exp, body, .. } => {
+            Exp::Match { info, name, on_exp, body, .. } => {
+                let name = name.as_ref().ok_or_else(|| EvalError::Impossible {
+                    message: "Missing label on match".to_owned(),
+                    span: info.span.to_miette(),
+                })?;
                 eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?
             }
-            Exp::Comatch { info, name, body } => Rc::new(Val::Comatch {
-                info: info.clone(),
-                name: name.clone(),
-                body: body.eval(prg, env)?,
-            }),
+            Exp::Comatch { info, name, body } => {
+                let name = name.to_owned().ok_or_else(|| EvalError::Impossible {
+                    message: "Missing label on comatch".to_owned(),
+                    span: info.span.to_miette(),
+                })?;
+                Rc::new(Val::Comatch { info: info.clone(), name, body: body.eval(prg, env)? })
+            }
             Exp::Hole { info } => Rc::new(Val::Neu { exp: Neu::Hole { info: info.clone() } }),
         };
         Ok(res)

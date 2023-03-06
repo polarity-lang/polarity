@@ -498,15 +498,19 @@ where
                 .print(cfg, alloc)
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
-                .append(alloc.space())
-                .append(alloc.text(name))
+                .append(match P::print_label(name) {
+                    Some(name) => alloc.space().append(alloc.text(name)),
+                    None => alloc.nil(),
+                })
                 .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Exp::Comatch { info: _, name, body } => alloc
                 .keyword(COMATCH)
-                .append(alloc.space())
-                .append(alloc.text(name))
+                .append(match P::print_label(name) {
+                    Some(name) => alloc.space().append(alloc.text(name)),
+                    None => alloc.nil(),
+                })
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Exp::Hole { info: _ } => alloc.keyword(HOLE),

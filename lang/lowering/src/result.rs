@@ -41,10 +41,4 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
-    #[error("Local (co)match must be named")]
-    #[diagnostic(code("L-006"))]
-    UnnamedMatch {
-        #[label]
-        span: SourceSpan,
-    },
 }

@@ -252,15 +252,17 @@ impl Forget for wst::Exp {
             wst::Exp::Type { info } => ust::Exp::Type { info: info.forget() },
             wst::Exp::Match { info, name, on_exp, motive, ret_typ: _, body } => ust::Exp::Match {
                 info: info.forget(),
-                name: name.clone(),
+                name: Some(name.clone()),
                 on_exp: on_exp.forget(),
                 motive: motive.forget(),
                 ret_typ: (),
                 body: body.forget(),
             },
-            wst::Exp::Comatch { info, name, body } => {
-                ust::Exp::Comatch { info: info.forget(), name: name.clone(), body: body.forget() }
-            }
+            wst::Exp::Comatch { info, name, body } => ust::Exp::Comatch {
+                info: info.forget(),
+                name: Some(name.clone()),
+                body: body.forget(),
+            },
             wst::Exp::Hole { info } => ust::Exp::Hole { info: info.forget() },
         }
     }

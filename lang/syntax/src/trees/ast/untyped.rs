@@ -13,6 +13,7 @@ impl generic::Phase for UST {
     type TypeAppInfo = Info;
 
     type VarName = Ident;
+    type Label = Option<Ident>;
     type InfTyp = ();
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String {
@@ -21,6 +22,10 @@ impl generic::Phase for UST {
         } else {
             name.clone()
         }
+    }
+
+    fn print_label(name: &Self::Label) -> Option<String> {
+        name.to_owned()
     }
 }
 

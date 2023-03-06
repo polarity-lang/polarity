@@ -95,10 +95,10 @@ pub trait Mapper<P: Phase> {
     fn map_exp_type(&mut self, info: P::TypeInfo) -> Exp<P> {
         Exp::Type { info }
     }
-    fn map_exp_match(&mut self, info: P::TypeAppInfo, name: Ident, on_exp: Rc<Exp<P>>, motive: Option<Motive<P>>, ret_typ: P::InfTyp, body: Match<P>) -> Exp<P> {
+    fn map_exp_match(&mut self, info: P::TypeAppInfo, name: P::Label, on_exp: Rc<Exp<P>>, motive: Option<Motive<P>>, ret_typ: P::InfTyp, body: Match<P>) -> Exp<P> {
         Exp::Match { info, name, on_exp, motive, ret_typ, body }
     }
-    fn map_exp_comatch(&mut self, info: P::TypeAppInfo, name: Ident, body: Comatch<P>) -> Exp<P> {
+    fn map_exp_comatch(&mut self, info: P::TypeAppInfo, name: P::Label, body: Comatch<P>) -> Exp<P> {
         Exp::Comatch { info, name, body }
     }
     fn map_exp_hole(&mut self, info: P::TypeInfo) -> Exp<P> {
@@ -290,11 +290,11 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         Rc::new(self.map_exp_type(info))
     }
 
-    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, on_exp: <Id<P> as Out>::Exp, motive: Option<<Id<P> as Out>::Motive>, ret_typ: <Id<P> as Out>::Typ, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
+    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: P::Label, on_exp: <Id<P> as Out>::Exp, motive: Option<<Id<P> as Out>::Motive>, ret_typ: <Id<P> as Out>::Typ, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_match(info, name, on_exp, motive, ret_typ, body))
     }
 
-    fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: Ident, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
+    fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, name: P::Label, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_comatch(info, name, body))
     }
 

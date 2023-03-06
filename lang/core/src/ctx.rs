@@ -97,6 +97,10 @@ impl Ctx {
         self.ng = inner_ctx.ng;
         out
     }
+
+    pub fn fresh_label(&mut self, type_name: &str, prg: &ust::Prg) -> Ident {
+        self.ng.fresh_label(type_name, prg)
+    }
 }
 
 impl<'a> Print<'a> for Ctx {

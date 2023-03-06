@@ -1,4 +1,5 @@
 use std::fmt;
+use std::hash::Hash;
 use std::rc::Rc;
 
 use data::HashMap;
@@ -21,10 +22,13 @@ where
     type TypeAppInfo: HasSpan + Clone + Into<Self::TypeInfo> + fmt::Debug;
     /// Type of the `name` field of `Exp::Var`
     type VarName: Clone + fmt::Debug;
+    /// Type of the `name` fiels on `Exp::Match` and `Exp::Comatch`
+    type Label: Clone + Eq + Hash + fmt::Debug;
     /// A type which is not annotated in the source, but will be filled in later during typechecking
     type InfTyp: Clone + fmt::Debug;
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String;
+    fn print_label(name: &Self::Label) -> Option<String>;
 }
 
 pub trait HasPhase {
@@ -402,19 +406,17 @@ pub enum Exp<P: Phase> {
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
-        name: Ident,
+        name: P::Label,
         on_exp: Rc<Exp<P>>,
         motive: Option<Motive<P>>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         ret_typ: P::InfTyp,
-        // TODO: Ignore this field for PartialEq, Hash?
         body: Match<P>,
     },
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
-        name: Ident,
-        // TODO: Ignore this field for PartialEq, Hash?
+        name: P::Label,
         body: Comatch<P>,
     },
     Hole {
