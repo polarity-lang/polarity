@@ -14,6 +14,7 @@ grammar;
 match {
     // Symbols
     "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".", "?",
+    "->",
     // Names
     "_",
     r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['₀₁₂₃₄₅₆₇₈₉]*",
@@ -144,6 +145,7 @@ pub TypApp: TypApp = {
 
 pub Exp: Rc<Exp> = {
     <l: @L> <exp: Ops> ":" <typ: Exp> <r: @R> => Rc::new(Exp::Anno { info: span(l, r), exp, typ }),
+    <l: @L> <from: Ops> "->" <to: Exp> <r: @R> => Rc::new(Exp::Fun { info: span(l, r), from, to }),
     Ops,
 }
 

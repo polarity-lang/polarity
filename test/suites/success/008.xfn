@@ -1,0 +1,9 @@
+codata Fun(a: Type, b: Type) {
+    Fun(a, b).ap(a: Type, b: Type, x: a) : b
+}
+
+data Top { Unit }
+
+def Top.id(a: Type): a -> a {
+    Unit => comatch { ap(_, _, x) => x }
+}

@@ -474,6 +474,11 @@ impl Lower for cst::Exp {
 
                 Ok(out)
             }
+            cst::Exp::Fun { info, from, to } => Ok(ust::Exp::TypCtor {
+                info: info.lower_pure(),
+                name: "Fun".to_owned(),
+                args: vec![from.lower_in_ctx(ctx)?, to.lower_in_ctx(ctx)?],
+            }),
         }
     }
 }

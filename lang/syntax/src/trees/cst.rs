@@ -183,6 +183,7 @@ pub enum Exp {
     Comatch { info: Info, name: Option<Ident>, body: Comatch },
     Hole { info: Info },
     NatLit { info: Info, val: BigUint },
+    Fun { info: Info, from: Rc<Exp>, to: Rc<Exp> },
 }
 
 #[derive(Debug, Clone)]
