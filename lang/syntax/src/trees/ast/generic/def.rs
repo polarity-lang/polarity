@@ -150,6 +150,17 @@ pub enum Item<'a, P: Phase> {
     Codef(&'a Codef<P>),
 }
 
+impl<'a, P: Phase> Item<'a, P> {
+    pub fn hidden(&self) -> bool {
+        match self {
+            Item::Data(data) => data.hidden,
+            Item::Codata(codata) => codata.hidden,
+            Item::Def(def) => def.hidden,
+            Item::Codef(codef) => codef.hidden,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Type<'a, P: Phase> {
     Data(&'a Data<P>),

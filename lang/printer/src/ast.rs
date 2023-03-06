@@ -41,7 +41,7 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let items = self.iter().map(|item| match item {
+        let items = self.iter().filter(|item| !item.hidden()).map(|item| match item {
             Item::Data(data) => data.print_in_ctx(cfg, self, alloc),
             Item::Codata(codata) => codata.print_in_ctx(cfg, self, alloc),
             Item::Def(def) => def.print(cfg, alloc),
