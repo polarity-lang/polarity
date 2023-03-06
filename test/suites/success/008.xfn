@@ -5,5 +5,5 @@ codata Fun(a: Type, b: Type) {
 data Top { Unit }
 
 def Top.id(a: Type): a -> a {
-    Unit => comatch { ap(_, _, x) => x }
+    Unit => \x.x
 }

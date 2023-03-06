@@ -184,6 +184,7 @@ pub enum Exp {
     Hole { info: Info },
     NatLit { info: Info, val: BigUint },
     Fun { info: Info, from: Rc<Exp>, to: Rc<Exp> },
+    Lam { info: Info, var: ParamInst, body: Rc<Exp> },
 }
 
 #[derive(Debug, Clone)]

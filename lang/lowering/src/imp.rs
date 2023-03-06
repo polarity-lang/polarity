@@ -479,6 +479,32 @@ impl Lower for cst::Exp {
                 name: "Fun".to_owned(),
                 args: vec![from.lower_in_ctx(ctx)?, to.lower_in_ctx(ctx)?],
             }),
+            cst::Exp::Lam { info, var, body } => {
+                let comatch = cst::Exp::Comatch {
+                    info: info.clone(),
+                    name: None,
+                    body: cst::Comatch {
+                        info: info.clone(),
+                        cases: vec![cst::Cocase {
+                            info: info.clone(),
+                            name: "ap".to_owned(),
+                            args: cst::TelescopeInst(vec![
+                                cst::ParamInst {
+                                    info: cst::Info { span: Default::default() },
+                                    name: "_".to_owned(),
+                                },
+                                cst::ParamInst {
+                                    info: cst::Info { span: Default::default() },
+                                    name: "_".to_owned(),
+                                },
+                                var.clone(),
+                            ]),
+                            body: Some(body.clone()),
+                        }],
+                    },
+                };
+                comatch.lower_in_ctx(ctx)
+            }
         }
     }
 }
