@@ -84,18 +84,10 @@ pub Prg: Prg = {
 }
 
 pub Item: Item = {
-    <decl: TypDecl> => Item::Type(decl),
-    <decl: DefDecl> => Item::Def(decl),
-}
-
-pub TypDecl: TypDecl = {
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => TypDecl::Data(Data { info: span(l, r), doc, name, hidden, params, ctors }),
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => TypDecl::Codata(Codata { info: span(l, r), doc, name, hidden, params, dtors }),
-}
-
-pub DefDecl: DefDecl = {
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => DefDecl::Def(Def { info: span(l, r), doc, name, hidden, params, scrutinee, ret_typ, body }),
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => DefDecl::Codef(Codef { info: span(l, r), doc, name, hidden, params, typ, body }),
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => Item::Data(Data { info: span(l, r), doc, name, hidden, params, ctors }),
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => Item::Codata(Codata { info: span(l, r), doc, name, hidden, params, dtors }),
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => Item::Def(Def { info: span(l, r), doc, name, hidden, params, scrutinee, ret_typ, body }),
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => Item::Codef(Codef { info: span(l, r), doc, name, hidden, params, typ, body }),
 }
 
 Ctor: Ctor = {
