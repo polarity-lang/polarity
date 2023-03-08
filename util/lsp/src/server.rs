@@ -1,8 +1,7 @@
-use std::collections::HashMap;
-
-use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
-
 use async_lock::RwLock;
+use std::collections::HashMap;
+use tower_lsp::jsonrpc::Result;
+use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
 use source::{Database, File, Xfunc};
 
@@ -119,6 +118,12 @@ impl LanguageServer for Server {
         } else {
             Ok(Some(vec![]))
         }
+    }
+    async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
+        let text_document = params.text_document;
+        let db = self.database.read().await;
+        let index = db.get(text_document.uri.as_str()).unwrap();
+        todo!("Got a textDocument/formatting request, but it is not implemented");
     }
 }
 
