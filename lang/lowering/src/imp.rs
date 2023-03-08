@@ -4,7 +4,6 @@ use num_bigint::BigUint;
 
 use miette_util::ToMiette;
 use syntax::ast::source;
-use syntax::common::*;
 use syntax::cst;
 use syntax::ctx::{Bind, Context};
 use syntax::ust;
@@ -18,15 +17,12 @@ pub fn lower(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
     let mut ctx = Ctx::empty();
 
     // Register names and metadata
-    let (types, defs) = register_names(&mut ctx, &items[..])?;
+    let deferred = register_names(&mut ctx, &items[..])?;
     let source = build_source(items);
 
     // Lower deferred definitions
-    for typ in types {
-        typ.lower_in_ctx(&mut ctx)?;
-    }
-    for def in defs {
-        def.lower_in_ctx(&mut ctx)?;
+    for item in deferred {
+        item.lower_in_ctx(&mut ctx)?;
     }
 
     let exp = exp.lower_in_ctx(&mut ctx)?;
@@ -40,24 +36,23 @@ fn build_source(items: &[cst::Item]) -> source::Source {
 
     for item in items {
         match item {
-            cst::Item::Type(typ_decl) => match typ_decl {
-                cst::TypDecl::Data(data) => {
-                    let mut typ_decl = source.add_type_decl(data.name.clone());
-                    let xtors = data.ctors.iter().map(|ctor| ctor.name.clone());
-                    typ_decl.set_xtors(xtors);
-                }
-                cst::TypDecl::Codata(codata) => {
-                    let mut typ_decl = source.add_type_decl(codata.name.clone());
-                    let xtors = codata.dtors.iter().map(|ctor| ctor.name.clone());
-                    typ_decl.set_xtors(xtors);
-                }
-            },
-            cst::Item::Def(def_decl) => {
-                let type_name = match def_decl {
-                    cst::DefDecl::Def(def) => def.scrutinee.typ.name.clone(),
-                    cst::DefDecl::Codef(codef) => codef.typ.name.clone(),
-                };
-                source.add_def(type_name, def_decl.name().to_owned())
+            cst::Item::Data(data) => {
+                let mut typ_decl = source.add_type_decl(data.name.clone());
+                let xtors = data.ctors.iter().map(|ctor| ctor.name.clone());
+                typ_decl.set_xtors(xtors);
+            }
+            cst::Item::Codata(codata) => {
+                let mut typ_decl = source.add_type_decl(codata.name.clone());
+                let xtors = codata.dtors.iter().map(|ctor| ctor.name.clone());
+                typ_decl.set_xtors(xtors);
+            }
+            cst::Item::Def(def) => {
+                let type_name = def.scrutinee.typ.name.clone();
+                source.add_def(type_name, def.name.to_owned());
+            }
+            cst::Item::Codef(codef) => {
+                let type_name = codef.typ.name.clone();
+                source.add_def(type_name, codef.name.to_owned())
             }
         }
     }
@@ -70,73 +65,48 @@ fn build_source(items: &[cst::Item]) -> source::Source {
 fn register_names<'a>(
     ctx: &mut Ctx,
     items: &'a [cst::Item],
-) -> Result<(Vec<&'a cst::TypDecl>, Vec<&'a cst::DefDecl>), LoweringError> {
-    let mut types = Vec::new();
-    let mut defs = Vec::new();
+) -> Result<Vec<&'a cst::Item>, LoweringError> {
+    let mut deferred = Vec::new();
 
     for item in items {
         match item {
-            cst::Item::Type(type_decl) => {
-                register_type_name(ctx, type_decl)?;
-                types.push(type_decl);
+            cst::Item::Data(data) => {
+                ctx.add_name(&data.name, DeclKind::from(data))?;
+                for ctor in &data.ctors {
+                    ctx.add_name(&ctor.name, DeclKind::Ctor { ret_typ: data.name.clone() })?;
+                }
+                deferred.push(item);
             }
-            cst::Item::Def(def_decl) => {
-                register_def_meta(ctx, def_decl)?;
-                defs.push(def_decl);
+            cst::Item::Codata(codata) => {
+                ctx.add_name(&codata.name, DeclKind::from(codata))?;
+                for dtor in &codata.dtors {
+                    ctx.add_name(&dtor.name, DeclKind::Dtor { self_typ: codata.name.clone() })?;
+                }
+                deferred.push(item)
             }
-        }
-    }
-
-    Ok((types, defs))
-}
-
-fn register_type_name(ctx: &mut Ctx, type_decl: &cst::TypDecl) -> Result<(), LoweringError> {
-    // Register type name in the context
-    // Don't lower any of the contents, yet
-    ctx.add_name(type_decl.name(), DeclKind::from(type_decl))?;
-    // Register names for all xtors
-    match type_decl {
-        cst::TypDecl::Data(data) => {
-            for ctor in &data.ctors {
-                ctx.add_name(&ctor.name, DeclKind::Ctor { ret_typ: data.name.clone() })?;
+            cst::Item::Def(def) => {
+                ctx.add_name(&def.name, DeclKind::from(def))?;
+                deferred.push(item);
             }
-        }
-        cst::TypDecl::Codata(codata) => {
-            for dtor in &codata.dtors {
-                ctx.add_name(&dtor.name, DeclKind::Dtor { self_typ: codata.name.clone() })?;
+            cst::Item::Codef(codef) => {
+                ctx.add_name(&codef.name, DeclKind::from(codef))?;
+                deferred.push(item);
             }
         }
     }
-    Ok(())
+
+    Ok(deferred)
 }
 
-fn register_def_meta(ctx: &mut Ctx, def_decl: &cst::DefDecl) -> Result<(), LoweringError> {
-    // Add metadata of definition to context
-    // This does not lower any of the contents, yet
-    ctx.add_name(def_decl.name(), DeclKind::from(def_decl))?;
-    Ok(())
-}
-
-impl Lower for cst::TypDecl {
+impl Lower for cst::Item {
     type Target = ();
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let decl = match self {
-            cst::TypDecl::Data(data) => ust::Decl::Data(data.lower_in_ctx(ctx)?),
-            cst::TypDecl::Codata(codata) => ust::Decl::Codata(codata.lower_in_ctx(ctx)?),
-        };
-        ctx.add_decl(decl)?;
-        Ok(())
-    }
-}
-
-impl Lower for cst::DefDecl {
-    type Target = ();
-
-    fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let decl = match self {
-            cst::DefDecl::Def(def) => ust::Decl::Def(def.lower_in_ctx(ctx)?),
-            cst::DefDecl::Codef(codef) => ust::Decl::Codef(codef.lower_in_ctx(ctx)?),
+            cst::Item::Data(data) => ust::Decl::Data(data.lower_in_ctx(ctx)?),
+            cst::Item::Codata(codata) => ust::Decl::Codata(codata.lower_in_ctx(ctx)?),
+            cst::Item::Def(def) => ust::Decl::Def(def.lower_in_ctx(ctx)?),
+            cst::Item::Codef(codef) => ust::Decl::Codef(codef.lower_in_ctx(ctx)?),
         };
         ctx.add_decl(decl)?;
         Ok(())

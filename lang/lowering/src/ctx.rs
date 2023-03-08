@@ -161,20 +161,37 @@ pub enum DeclKind {
     Dtor { self_typ: Ident },
 }
 
-impl From<&cst::TypDecl> for DeclKind {
-    fn from(decl: &cst::TypDecl) -> Self {
-        match decl {
-            cst::TypDecl::Data(data) => Self::Data { arity: data.params.len() },
-            cst::TypDecl::Codata(codata) => Self::Codata { arity: codata.params.len() },
-        }
+impl From<&cst::Data> for DeclKind {
+    fn from(data: &cst::Data) -> Self {
+        Self::Data { arity: data.params.len() }
     }
 }
 
-impl From<&cst::DefDecl> for DeclKind {
-    fn from(decl: &cst::DefDecl) -> Self {
+impl From<&cst::Codata> for DeclKind {
+    fn from(codata: &cst::Codata) -> Self {
+        Self::Codata { arity: codata.params.len() }
+    }
+}
+
+impl From<&cst::Def> for DeclKind {
+    fn from(_def: &cst::Def) -> Self {
+        Self::Def
+    }
+}
+
+impl From<&cst::Codef> for DeclKind {
+    fn from(_codef: &cst::Codef) -> Self {
+        Self::Codef
+    }
+}
+
+impl From<&cst::Item> for DeclKind {
+    fn from(decl: &cst::Item) -> Self {
         match decl {
-            cst::DefDecl::Def(_) => Self::Def,
-            cst::DefDecl::Codef(_) => Self::Codef,
+            cst::Item::Data(data) => DeclKind::from(data),
+            cst::Item::Codata(codata) => DeclKind::from(codata),
+            cst::Item::Def(_def) => Self::Def,
+            cst::Item::Codef(_codef) => Self::Codef,
         }
     }
 }

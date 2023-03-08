@@ -15,14 +15,10 @@ pub struct Prg {
 
 #[derive(Debug, Clone)]
 pub enum Item {
-    Type(TypDecl),
-    Def(DefDecl),
-}
-
-#[derive(Debug, Clone)]
-pub enum TypDecl {
     Data(Data),
     Codata(Codata),
+    Def(Def),
+    Codef(Codef),
 }
 
 #[derive(Debug, Clone)]
@@ -66,12 +62,6 @@ pub struct Dtor {
     pub params: Telescope,
     pub destructee: Destructee,
     pub ret_typ: Rc<Exp>,
-}
-
-#[derive(Debug, Clone)]
-pub enum DefDecl {
-    Def(Def),
-    Codef(Codef),
 }
 
 #[derive(Debug, Clone)]
