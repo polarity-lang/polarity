@@ -15,5 +15,6 @@ codespan = "0.11"
 miette = "5"
 # workspace members
 source = { path = "../../lang/source" }
+printer = { path = "../../lang/printer" }
 data = { path = "../data" }
 miette_util = { path = "../miette_util" }

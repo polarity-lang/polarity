@@ -4,6 +4,7 @@ use tower_lsp::jsonrpc::Result;
 use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
 use source::{Database, File, Xfunc};
+use printer::{PrintCfg, PrintExt};
 
 use super::capabilities::*;
 use super::conversion::*;
@@ -126,6 +127,14 @@ impl LanguageServer for Server {
         let prg = index.ust().unwrap();
         
         let rng: Range = Range { start: Position { line: 0, character: 0}, end: Position{ line: 0, character: 0} };
+        
+        let cfg = PrintCfg {
+            width: 80,
+            braces: ("{", "}"),
+            omit_decl_sep: false,
+            de_bruijn: false,
+            indent: 4,
+        };
 
         let formatted_prog: String = "FORMATTED PROGRAM".to_owned();
 
