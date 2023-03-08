@@ -30,8 +30,8 @@ match {
     "Type",
     // Comments and whitespace
     r"\s*" => { }, // Skip whitespace
-    r"-- \| [^\n\r]*[\n\r]*", // Don't skip doc-comments
-    r"--([^ ]| [^\|]| \|[^ ])[^\n\r]*[\n\r]*" => { }, // Skip `--` comments
+    r"-- \|[^\n\r]*[\n\r]*", // Don't skip doc-comments
+    r"--(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*" => { }, // Skip `--` comments
 }
 
 // Utils
@@ -74,7 +74,7 @@ OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
 
 Hidden: bool = <hidden: "@hidden"?> => hidden.is_some();
 
-DocCommentHelper: String = <doc: r"-- \| [^\n\r]*[\n\r]*"> => doc.strip_prefix("-- | ").unwrap().trim().to_owned();
+DocCommentHelper: String = <doc: r"-- \|[^\n\r]*[\n\r]*"> => doc.strip_prefix("-- | ").unwrap().trim().to_owned();
 DocComment: DocComment = <docs: DocCommentHelper+> => DocComment { docs };
 
 // Program
