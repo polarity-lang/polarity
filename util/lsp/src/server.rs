@@ -123,7 +123,15 @@ impl LanguageServer for Server {
         let text_document = params.text_document;
         let db = self.database.read().await;
         let index = db.get(text_document.uri.as_str()).unwrap();
-        todo!("Got a textDocument/formatting request, but it is not implemented");
+        let prg = index.ust().unwrap();
+        
+        let rng: Range = Range { start: Position { line: 0, character: 0}, end: Position{ line: 0, character: 0} };
+
+        let formatted_prog: String = "FORMATTED PROGRAM".to_owned();
+
+        let text_edit: TextEdit = TextEdit { range: rng, new_text: formatted_prog };
+
+        Ok(Some(vec![text_edit]))
     }
 }
 

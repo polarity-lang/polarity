@@ -15,7 +15,7 @@ pub fn capabilities() -> lsp::ServerCapabilities {
     let hover_provider = Some(HoverProviderCapability::Simple(true));
 
     let code_action_provider = Some(lsp::CodeActionProviderCapability::Simple(true));
-    
+
     let document_formatting_provider = Some(lsp::OneOf::Left(true));
 
     lsp::ServerCapabilities {
