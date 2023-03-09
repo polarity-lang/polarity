@@ -40,7 +40,7 @@ struct InfoCollector {
 
 impl From<tst::TypeInfo> for Info {
     fn from(info: tst::TypeInfo) -> Self {
-        Info { typ: info.typ.print_to_string(), span: info.span }
+        Info { typ: info.typ.print_to_string(None), span: info.span }
     }
 }
 

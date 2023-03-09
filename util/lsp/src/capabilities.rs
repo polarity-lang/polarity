@@ -16,11 +16,14 @@ pub fn capabilities() -> lsp::ServerCapabilities {
 
     let code_action_provider = Some(lsp::CodeActionProviderCapability::Simple(true));
 
+    let document_formatting_provider = Some(lsp::OneOf::Left(true));
+
     lsp::ServerCapabilities {
         text_document_sync,
         document_symbol_provider,
         hover_provider,
         code_action_provider,
+        document_formatting_provider,
         ..Default::default()
     }
 }

@@ -251,7 +251,7 @@ where
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        Ok(input.rename().print_to_string())
+        Ok(input.rename().print_to_string(None))
     }
 }
 
@@ -282,18 +282,18 @@ impl TestOutput for cst::Prg {
 
 impl TestOutput for ust::Prg {
     fn test_output(&self) -> String {
-        self.print_to_string()
+        self.print_to_string(None)
     }
 }
 
 impl TestOutput for tst::Prg {
     fn test_output(&self) -> String {
-        self.print_to_string()
+        self.print_to_string(None)
     }
 }
 
 impl TestOutput for wst::Prg {
     fn test_output(&self) -> String {
-        self.print_to_string()
+        self.print_to_string(None)
     }
 }

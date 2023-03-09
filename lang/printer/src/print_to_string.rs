@@ -5,14 +5,15 @@ use super::Print;
 use super::PrintExt;
 
 pub trait PrintToString {
-    fn print_to_string(&self) -> String;
+    fn print_to_string(&self, cfg: Option<&PrintCfg>) -> String;
 }
 
 impl<T: for<'a> Print<'a>> PrintToString for T {
-    fn print_to_string(&self) -> String {
+    fn print_to_string(&self, cfg: Option<&PrintCfg>) -> String {
         let mut buf = Vec::new();
-        let cfg = PrintCfg::default();
-        <T as PrintExt>::print(self, &cfg, &mut buf).expect("Failed to print to string");
+        let def = PrintCfg::default();
+        let cfg = cfg.unwrap_or(&def);
+        <T as PrintExt>::print(self, cfg, &mut buf).expect("Failed to print to string");
         unsafe { String::from_utf8_unchecked(buf) }
     }
 }
