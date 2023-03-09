@@ -1094,6 +1094,7 @@ dependencies = [
  "lsp-types",
  "miette",
  "miette_util",
+ "printer",
  "source",
  "tower-lsp",
 ]

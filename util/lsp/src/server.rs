@@ -4,7 +4,7 @@ use tower_lsp::jsonrpc::Result;
 use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
 use source::{Database, File, Xfunc};
-use printer::{PrintCfg, PrintExt};
+use printer::{PrintCfg, PrintToString};
 
 use super::capabilities::*;
 use super::conversion::*;
@@ -124,19 +124,22 @@ impl LanguageServer for Server {
         let text_document = params.text_document;
         let db = self.database.read().await;
         let index = db.get(text_document.uri.as_str()).unwrap();
-        let prg = index.ust().unwrap();
+        let prg = match index.ust() {
+            Ok(prg) => prg,
+            Err(_) => return Ok(None)
+        };
         
         let rng: Range = Range { start: Position { line: 0, character: 0}, end: Position{ line: 0, character: 0} };
         
         let cfg = PrintCfg {
-            width: 80,
+            width: 100,
             braces: ("{", "}"),
             omit_decl_sep: false,
             de_bruijn: false,
             indent: 4,
         };
-
-        let formatted_prog: String = "FORMATTED PROGRAM".to_owned();
+        
+        let formatted_prog: String = prg.print_to_string(Some(&cfg));
 
         let text_edit: TextEdit = TextEdit { range: rng, new_text: formatted_prog };
 
