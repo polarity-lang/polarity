@@ -12,8 +12,8 @@ impl<T: for<'a> Print<'a>> PrintToString for T {
     fn print_to_string(&self, cfg: Option<&PrintCfg>) -> String {
         let mut buf = Vec::new();
         let def = PrintCfg::default();
-        let cfg = cfg.unwrap_or_else(|| &def);
-        <T as PrintExt>::print(self, &cfg, &mut buf).expect("Failed to print to string");
+        let cfg = cfg.unwrap_or(&def);
+        <T as PrintExt>::print(self, cfg, &mut buf).expect("Failed to print to string");
         unsafe { String::from_utf8_unchecked(buf) }
     }
 }

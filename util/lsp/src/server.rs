@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
-use source::{Database, File, Xfunc};
 use printer::{PrintCfg, PrintToString};
+use source::{Database, File, Xfunc};
 
 use super::capabilities::*;
 use super::conversion::*;
@@ -126,11 +126,14 @@ impl LanguageServer for Server {
         let index = db.get(text_document.uri.as_str()).unwrap();
         let prg = match index.ust() {
             Ok(prg) => prg,
-            Err(_) => return Ok(None)
+            Err(_) => return Ok(None),
         };
-        
-        let rng: Range = Range { start: Position { line: 0, character: 0}, end: Position{ line: 0, character: 0} };
-        
+
+        let rng: Range = Range {
+            start: Position { line: 0, character: 0 },
+            end: Position { line: u32::MAX, character: u32::MAX },
+        };
+
         let cfg = PrintCfg {
             width: 100,
             braces: ("{", "}"),
@@ -138,7 +141,7 @@ impl LanguageServer for Server {
             de_bruijn: false,
             indent: 4,
         };
-        
+
         let formatted_prog: String = prg.print_to_string(Some(&cfg));
 
         let text_edit: TextEdit = TextEdit { range: rng, new_text: formatted_prog };

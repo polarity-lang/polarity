@@ -192,7 +192,11 @@ pub enum UnifyError {
 
 impl UnifyError {
     pub fn occurs_check_failed(idx: Idx, exp: Rc<ust::Exp>) -> Self {
-        Self::OccursCheckFailed { idx, exp: exp.print_to_string(None), span: exp.span().to_miette() }
+        Self::OccursCheckFailed {
+            idx,
+            exp: exp.print_to_string(None),
+            span: exp.span().to_miette(),
+        }
     }
 
     pub fn unsupported_annotation(exp: Rc<ust::Exp>) -> Self {
