@@ -170,8 +170,9 @@ impl Lower for cst::Ctor {
             let typ = match typ {
                 Some(typ) => typ.lower_in_ctx(ctx)?,
                 None => {
-                    let typ_name = ctx.typ_name_for_xtor(name);
-                    if ctx.typ_ctor_arity(typ_name) == 0 {
+                    let typ_name = ctx.typ_name_for_xtor(name)?;
+                    let arity = ctx.typ_ctor_arity(typ_name)?;
+                    if arity == 0 {
                         ust::TypApp {
                             info: ust::Info::empty(),
                             name: typ_name.clone(),
@@ -209,8 +210,9 @@ impl Lower for cst::Dtor {
             let on_typ = match &destructee.typ {
                 Some(on_typ) => on_typ.clone(),
                 None => {
-                    let typ_name = ctx.typ_name_for_xtor(name);
-                    if ctx.typ_ctor_arity(typ_name) == 0 {
+                    let typ_name = ctx.typ_name_for_xtor(name)?;
+                    let arity = ctx.typ_ctor_arity(typ_name)?;
+                    if arity == 0 {
                         cst::TypApp {
                             info: cst::Info { span: Default::default() },
                             name: typ_name.clone(),

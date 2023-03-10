@@ -41,4 +41,7 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
+    #[error("The impossible happened: {msg}")]
+    #[diagnostic(code("L-XXX"))]
+    Impossible { msg: String },
 }

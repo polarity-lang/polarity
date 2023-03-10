@@ -1,0 +1,5 @@
+-- Regression test for https://github.com/timsueberkrueb/msc-impl/issues/80
+
+data A {
+  A
+}

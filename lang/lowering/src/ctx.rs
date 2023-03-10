@@ -34,19 +34,23 @@ impl Ctx {
         &self.decl_kinds[name]
     }
 
-    pub fn typ_name_for_xtor(&self, name: &Ident) -> &Ident {
+    pub fn typ_name_for_xtor(&self, name: &Ident) -> Result<&Ident, LoweringError> {
         match &self.decl_kinds[name] {
-            DeclKind::Ctor { ret_typ } => ret_typ,
-            DeclKind::Dtor { self_typ } => self_typ,
-            _ => panic!("Can only query type name for declared xtors"),
+            DeclKind::Ctor { ret_typ } => Ok(ret_typ),
+            DeclKind::Dtor { self_typ } => Ok(self_typ),
+            _ => Err(LoweringError::Impossible {
+                msg: "Can only query type name for declared xtors".to_owned(),
+            }),
         }
     }
 
-    pub fn typ_ctor_arity(&self, name: &Ident) -> usize {
+    pub fn typ_ctor_arity(&self, name: &Ident) -> Result<usize, LoweringError> {
         match self.decl_kind(name) {
-            DeclKind::Data { arity } => *arity,
-            DeclKind::Codata { arity } => *arity,
-            _ => panic!("Can only query type constructor arity for declared (co)data types"),
+            DeclKind::Data { arity } => Ok(*arity),
+            DeclKind::Codata { arity } => Ok(*arity),
+            _ => Err(LoweringError::Impossible {
+                msg: "Can only query type constructor arity for declared (co)data types".to_owned(),
+            }),
         }
     }
 
