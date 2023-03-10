@@ -1,0 +1,29 @@
+codata Fun(a b: Type) {
+    Fun(a, b).ap(a: Type, b: Type, x: a) : b
+}
+
+data HasType(e: Exp) {
+    TApp(e: Exp): HasType(App(e)),
+}
+
+data Exp {
+    App(e: Exp)
+}
+
+data Eval(e1 e2: Exp) {
+    EBeta(e: Exp): Eval(App(e), e),
+}
+
+def Exp.id: Exp {
+    App(e) => App(e),
+}
+
+data Top { Unit }
+
+def (self: Exp).preservation(e2: Exp): Fun(Eval(self, e2), HasType(e2))
+{
+    App(e) => \h_eval.
+        h_eval.match {
+            EBeta(f) => ? : HasType(e)
+        }
+}

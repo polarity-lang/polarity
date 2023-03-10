@@ -164,7 +164,7 @@ impl Ctx {
         }
         let insert_lvl = self.ctx.idx_to_lvl(idx);
         let exp = exp.subst(&mut self.ctx, &self.unif);
-        self.unif.subst(&mut self.ctx, &Assign(insert_lvl, exp.clone()));
+        self.unif = self.unif.subst(&mut self.ctx, &Assign(insert_lvl, exp.clone()));
         match self.unif.map.get(&insert_lvl) {
             Some(other_exp) => {
                 let eqn = Eqn { lhs: exp, rhs: other_exp.clone() };
