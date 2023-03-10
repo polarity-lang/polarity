@@ -375,6 +375,9 @@ where
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Telescope { params } = self;
         let mut output = alloc.nil();
+        if params.is_empty() {
+            return output;
+        };
         let mut running_type: Option<&Rc<Exp<P>>> = None;
         for Param { name, typ } in params {
             match running_type {
@@ -391,7 +394,7 @@ where
                         .append(alloc.space())
                         .append(rtype.print(cfg, alloc))
                         .append(COMMA)
-                        .append(alloc.space());
+                        .append(alloc.line());
                     output = output.append(alloc.text(name));
                 }
                 None => {
@@ -408,7 +411,7 @@ where
                 output = output.append(COLON).append(alloc.space()).append(rtype.print(cfg, alloc));
             }
         }
-        output.opt_parens()
+        output.align().parens().group()
     }
 }
 
@@ -417,7 +420,11 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.params.print(cfg, alloc).opt_parens()
+        if self.params.is_empty() {
+            alloc.nil()
+        } else {
+            self.params.print(cfg, alloc).parens()
+        }
     }
 }
 
@@ -466,7 +473,8 @@ where
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypApp { info: _, name, args: subst } = self;
-        alloc.typ(name).append(subst.print(cfg, alloc).opt_parens())
+        let psubst = if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+        alloc.typ(name).append(psubst)
     }
 }
 
@@ -480,16 +488,20 @@ where
                 alloc.text(P::print_var(name, cfg.de_bruijn.then_some(*idx)))
             }
             Exp::TypCtor { info: _, name, args: subst } => {
-                alloc.typ(name).append(subst.print(cfg, alloc).opt_parens())
+                let psubst =
+                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                alloc.typ(name).append(psubst)
             }
             Exp::Ctor { info: _, name, args: subst } => {
-                alloc.ctor(name).append(subst.print(cfg, alloc).opt_parens())
+                let psubst =
+                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                alloc.ctor(name).append(psubst)
             }
-            Exp::Dtor { info: _, exp, name, args: subst } => exp
-                .print(cfg, alloc)
-                .append(DOT)
-                .append(alloc.dtor(name))
-                .append(subst.print(cfg, alloc).opt_parens()),
+            Exp::Dtor { info: _, exp, name, args: subst } => {
+                let psubst =
+                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
+            }
             Exp::Anno { info: _, exp, typ } => {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
