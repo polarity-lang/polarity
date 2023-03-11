@@ -34,13 +34,14 @@ impl Context for Ctx {
         self.bound.last_mut().expect(err).pop().expect(err);
     }
 
-    fn lookup<V: Into<Self::Var>>(&self, var: V) -> Self::ElemOut {
+    fn lookup<V: Into<Self::Var> + std::fmt::Debug>(&self, var: V) -> Self::ElemOut {
         // FIXME: Handle shadowing
+        let dbg: String = format!("{var:?}");
         let idx = var.into();
         self.bound
             .get(self.bound.len() - 1 - idx.fst)
             .and_then(|ctx| ctx.get(ctx.len() - 1 - idx.snd))
-            .expect("Unbound variable")
+            .unwrap_or_else(|| panic!("Unbound variable: {dbg}, idx: {idx}"))
             .clone()
     }
 }

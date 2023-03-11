@@ -71,7 +71,7 @@ impl Ctx {
         self.vars.is_empty()
     }
 
-    pub fn lookup<V: Into<Var>>(&self, idx: V) -> Rc<Val> {
+    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<Val> {
         self.vars.lookup(idx)
     }
 
