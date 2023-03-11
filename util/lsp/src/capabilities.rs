@@ -1,8 +1,6 @@
 use tower_lsp::lsp_types::*;
 
 pub fn capabilities() -> lsp::ServerCapabilities {
-    let document_symbol_provider = Some(lsp::OneOf::Left(true));
-
     let text_document_sync = {
         let options = lsp::TextDocumentSyncOptions {
             open_close: Some(true),
@@ -20,7 +18,6 @@ pub fn capabilities() -> lsp::ServerCapabilities {
 
     lsp::ServerCapabilities {
         text_document_sync,
-        document_symbol_provider,
         hover_provider,
         code_action_provider,
         document_formatting_provider,
