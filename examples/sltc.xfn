@@ -107,10 +107,10 @@ def (e1: Exp).preservation(e2: Exp, t: Typ)
         ECongApp1(_, _, _, _) absurd,
         ECongApp2(_, _, _, _) absurd,
     },
-    App(_, _) => \h_t. h_t.match {
+    App(e1, e2) => \h_t. h_t.match {
         TVar(_, _, _, _) absurd,
         TLam(_, _, _, _, _) absurd,
-        TApp(_, t1, t2, e1, e2, h_lam, h_e2) => \h_eval. h_eval.match {
+        TApp(_, t1, t2, _, _, h_lam, h_e2) => \h_eval. h_eval.match {
             ECongApp1(_, _, _, _) => ?,
             ECongApp2(_, _, _, _) => ?,
             EBeta(e1, _) => h_lam.match {
@@ -203,10 +203,10 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                 )
         }
     },
-    Lam(_) => \h_e. \h_by. h_e.match {
+    Lam(body) => \h_e. \h_by. h_e.match {
         TVar(_, _, _, _) absurd,
         TApp(_, _, _, _, _, _, _) absurd,
-        TLam(_, a, b, body, h_body) => TLam(ctx1.append(ctx2), a, b, body.subst(S(ctx1.len), by_e),
+        TLam(_, a, b, _, h_body) => TLam(ctx1.append(ctx2), a, b, body.subst(S(ctx1.len), by_e),
             body.subst_lemma(Cons(a, ctx1), ctx2, t1, b, by_e)
                 .ap(
                     HasType(Cons(a, ctx1).append(Cons(t1, ctx2)), body, b),
@@ -220,10 +220,10 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                 )
         ),
     },
-    App(_, _) => \h_e. \h_by. h_e.match {
+    App(e1, e2) => \h_e. \h_by. h_e.match {
         TVar(_, _, _, _) absurd,
         TLam(_, _, _, _, _) absurd,
-        TApp(_, a, b, e1, e2, h_e1, h_e2) => TApp(
+        TApp(_, a, b, _, _, h_e1, h_e2) => TApp(
             ctx1.append(ctx2), a, b,
             e1.subst(ctx1.len, by_e),
             e2.subst(ctx1.len, by_e),
@@ -281,18 +281,18 @@ def (ctx2: Ctx).weaken_append(ctx1: Ctx, e: Exp, t: Typ): HasType(ctx1, e, t) ->
 }
 
 def (e: Exp).weaken_cons(ctx: Ctx, t1 t2: Typ): HasType(ctx, e, t2) -> HasType(ctx.append(Cons(t1, Nil)), e, t2) {
-    Var(_) => \h_e. h_e.match {
+    Var(x) => \h_e. h_e.match {
         TLam(_, _, _, _, _) absurd,
         TApp(_, _, _, _, _, _, _) absurd,
-        TVar(_, x, _, h_elem) => TVar(
+        TVar(_, _, _, h_elem) => TVar(
             ctx.append(Cons(t1, Nil)), x, t2,
             h_elem.elem_append(x, t1, t2, ctx)
         ),
     },
-    Lam(_) => \h_e. h_e.match {
+    Lam(e) => \h_e. h_e.match {
         TVar(_, _, _, _) absurd,
         TApp(_, _, _, _, _, _, _) absurd,
-        TLam(_, a, b, e, h_e) => TLam(
+        TLam(_, a, b, _, h_e) => TLam(
             ctx.append(Cons(t1, Nil)), a, b, e,
             e.weaken_cons(Cons(a, ctx), t1, b)
                 .ap(
@@ -302,10 +302,10 @@ def (e: Exp).weaken_cons(ctx: Ctx, t1 t2: Typ): HasType(ctx, e, t2) -> HasType(c
                 )
         ),
     },
-    App(_, _) => \h_e. h_e.match {
+    App(e1, e2) => \h_e. h_e.match {
         TVar(_, _, _, _) absurd,
         TLam(_, _, _, _, _) absurd,
-        TApp(_, a, b, e1, e2, h_e1, h_e2) => TApp(
+        TApp(_, a, b, _, _, h_e1, h_e2) => TApp(
             ctx.append(Cons(t1, Nil)), a, b, e1, e2,
             e1.weaken_cons(ctx, t1, FunT(a, b))
                 .ap(
@@ -547,5 +547,5 @@ def LE(S(x), y).s_le(x y: Nat): LE(x, y) {
 
 def LE(S(x), y).s_pred(x y: Nat): Eq(Nat, S(y.pred), y) {
     LERefl(_) => Refl(Nat, y),
-    LESucc(_, _, _) => Refl(Nat, y),
+    LESucc(_, y', _) => Refl(Nat, y),
 }
