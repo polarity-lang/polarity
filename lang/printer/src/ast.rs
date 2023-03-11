@@ -411,7 +411,7 @@ where
                 output = output.append(COLON).append(alloc.space()).append(rtype.print(cfg, alloc));
             }
         }
-        output.align().parens().group()
+        output.append(alloc.line()).align().parens().group()
     }
 }
 
