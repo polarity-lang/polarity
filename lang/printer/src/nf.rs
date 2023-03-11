@@ -11,10 +11,14 @@ impl<'a> Print<'a> for Nf {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Nf::TypCtor { info: _, name, args: subst } => {
-                alloc.typ(name).append(subst.print(cfg, alloc).opt_parens())
+                let psubst =
+                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                alloc.typ(name).append(psubst)
             }
             Nf::Ctor { info: _, name, args: subst } => {
-                alloc.ctor(name).append(subst.print(cfg, alloc).opt_parens())
+                let psubst =
+                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                alloc.ctor(name).append(psubst)
             }
             Nf::Type { info: _ } => alloc.typ(TYPE),
             Nf::Comatch { info: _, name, body } => alloc
@@ -32,11 +36,11 @@ impl<'a> Print<'a> for Neu {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Neu::Var { info: _, name, idx } => alloc.text(format!("{name}@{idx}")),
-            Neu::Dtor { info: _, exp, name, args: subst } => exp
-                .print(cfg, alloc)
-                .append(DOT)
-                .append(alloc.dtor(name))
-                .append(subst.print(cfg, alloc).opt_parens()),
+            Neu::Dtor { info: _, exp, name, args: subst } => {
+                let psubst =
+                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
+            }
             Neu::Match { info: _, name, on_exp, body } => on_exp
                 .print(cfg, alloc)
                 .append(DOT)
