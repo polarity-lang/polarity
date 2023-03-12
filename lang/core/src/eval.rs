@@ -77,7 +77,11 @@ fn eval_dtor(
 ) -> Result<Rc<Val>, EvalError> {
     match (*exp).clone() {
         Val::Ctor { name: ctor_name, args: ctor_args, info } => {
-            let type_decl = prg.decls.type_decl_for_member(&ctor_name);
+            let type_decl =
+                prg.decls.type_decl_for_member(&ctor_name).ok_or(EvalError::Impossible {
+                    message: format!("Could not look up: {ctor_name}"),
+                    span: None,
+                })?;
             match type_decl {
                 Type::Data(_) => {
                     let ust::Def { body, .. } =

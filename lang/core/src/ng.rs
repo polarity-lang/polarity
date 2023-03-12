@@ -14,7 +14,7 @@ impl NameGen {
     pub fn fresh_label(&mut self, type_name: &str, prg: &Prg) -> Ident {
         let i = self.map.entry(type_name.to_owned()).or_default();
         loop {
-            let name = match prg.decls.typ(type_name) {
+            let name = match prg.decls.typ(type_name).unwrap() {
                 Type::Data(_) => {
                     let lowered = type_name.to_lowercase();
                     format!("d_{lowered}{i}")

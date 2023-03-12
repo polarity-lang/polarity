@@ -73,22 +73,19 @@ impl<P: Phase> Decls<P> {
         })
     }
 
-    pub fn typ(&self, name: &str) -> Type<'_, P> {
+    pub fn typ(&self, name: &str) -> Option<Type<'_, P>> {
         match &self.map[name] {
-            Decl::Data(data) => Type::Data(data),
-            Decl::Codata(codata) => Type::Codata(codata),
-            Decl::Ctor(ctor) => panic!("Ctor {} unreachable", ctor.name),
-            Decl::Dtor(dtor) => panic!("Dtor {} unreachable", dtor.name),
-            Decl::Def(def) => panic!("Def {} unrechable", def.name),
-            Decl::Codef(codef) => panic!("Codef {} unrechable", codef.name),
+            Decl::Data(data) => Some(Type::Data(data)),
+            Decl::Codata(codata) => Some(Type::Codata(codata)),
+            _ => None,
         }
     }
-
-    pub fn type_decl_for_member(&self, name: &Ident) -> Type<'_, P> {
-        let type_decl = self
-            .source
-            .type_decl_for_xtor(name)
-            .unwrap_or_else(|| self.source.type_decl_for_xdef(name).unwrap());
+    pub fn type_decl_for_member(&self, name: &Ident) -> Option<Type<'_, P>> {
+        let type_decl = self.source.type_decl_for_xtor(name);
+        let type_decl = match type_decl {
+            Some(t) => Some(t),
+            None => self.source.type_decl_for_xdef(name),
+        }?;
         self.typ(&type_decl.name)
     }
 

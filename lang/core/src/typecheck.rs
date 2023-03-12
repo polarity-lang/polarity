@@ -233,7 +233,10 @@ impl Infer for ust::Ctor {
         let ust::Ctor { info, doc, name, params, typ } = self;
 
         // Check that the constructor lies in the data type it is defined in
-        let type_decl = prg.decls.type_decl_for_member(name);
+        let type_decl = prg.decls.type_decl_for_member(name).ok_or(TypeError::Impossible {
+            message: format!("Could not look up {name}"),
+            span: None,
+        })?;
         let expected = type_decl.name();
         if &typ.name != expected {
             return Err(TypeError::NotInType {
@@ -265,7 +268,10 @@ impl Infer for ust::Dtor {
         let ust::Dtor { info, doc, name, params, self_param, ret_typ } = self;
 
         // Check that the destructor lies in the codata type it is defined in
-        let type_decl = prg.decls.type_decl_for_member(name);
+        let type_decl = prg.decls.type_decl_for_member(name).ok_or(TypeError::Impossible {
+            message: format!("Could not look up {name}"),
+            span: None,
+        })?;
         let expected = type_decl.name();
         if &self_param.typ.name != expected {
             return Err(TypeError::NotInType {
@@ -360,8 +366,13 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
     ) -> Result<Self::Target, TypeError> {
         let ust::Match { info, cases } = &self.inner;
 
+        let typ = prg.decls.typ(&self.scrutinee.name).ok_or(TypeError::Impossible {
+            message: format!("Could not look up {}", &self.scrutinee.name),
+            span: None,
+        })?;
+
         // Check that this match is on a data type
-        let ust::Type::Data(data) = prg.decls.typ(&self.scrutinee.name) else {
+        let ust::Type::Data(data) = typ else {
             return Err(TypeError::ComatchOnData {
                 name: self.scrutinee.name.clone(),
                 span: info.span.to_miette()
@@ -435,8 +446,13 @@ impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::Comatch { info, cases } = &self.inner;
 
+        let typ = prg.decls.typ(&self.scrutinee.name).ok_or(TypeError::Impossible {
+            message: format!("Could not look up {}", &self.scrutinee.name),
+            span: None,
+        })?;
+
         // Check that this comatch is on a codata type
-        let ust::Type::Codata(codata) = prg.decls.typ(&self.scrutinee.name) else {
+        let ust::Type::Codata(codata) = typ else {
             return Err(TypeError::ComatchOnData {
                 name: self.scrutinee.name.clone(),
                 span: info.span.to_miette()
@@ -793,7 +809,14 @@ impl Infer for ust::Exp {
                 Ok(tst::Exp::Var { info: info.with_type(typ_nf), name: name.clone(), idx: *idx })
             }
             ust::Exp::TypCtor { info, name, args } => {
-                let ust::TypAbs { params } = &*prg.decls.typ(name).typ();
+                let ust::TypAbs { params } = &*prg
+                    .decls
+                    .typ(name)
+                    .ok_or(TypeError::Impossible {
+                        message: format!("Could not look up {name}"),
+                        span: None,
+                    })?
+                    .typ();
 
                 let args_out = args.check_args(prg, name, ctx, params, info.span)?;
 
@@ -876,7 +899,14 @@ impl Infer for ust::TypApp {
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::TypApp { info, name, args } = self;
-        let ust::TypAbs { params } = &*prg.decls.typ(name).typ();
+        let ust::TypAbs { params } = &*prg
+            .decls
+            .typ(name)
+            .ok_or(TypeError::Impossible {
+                message: format!("Could not look up {name}"),
+                span: None,
+            })?
+            .typ();
 
         let args_out = args.check_args(prg, name, ctx, params, info.span)?;
         Ok(tst::TypApp { info: info.with_type(type_univ()), name: name.clone(), args: args_out })
