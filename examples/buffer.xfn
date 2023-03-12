@@ -34,7 +34,7 @@ codef Empty: Buffer(Z) {
 }
 
 codef FromVec(n: Nat, xs: Vec(n)): Buffer(n) {
-    read(n') => comatch _ {
+    read(n') => comatch {
         proj1(_, _) => xs.head(n'),
         proj2(_, _) => FromVec(n', xs.tail(n'))
     }

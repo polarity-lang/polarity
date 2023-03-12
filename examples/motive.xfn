@@ -16,7 +16,7 @@ def (self: Bool).rep: BoolRep(self) {
 data Top { Unit }
 
 def Top.example(b: Bool): BoolRep(b) {
-    Unit => b.match _ as x => BoolRep(x) {
+    Unit => b.match as x => BoolRep(x) {
         True => TrueRep,
         False => FalseRep,
     }

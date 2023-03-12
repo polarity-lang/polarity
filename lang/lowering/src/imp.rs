@@ -4,6 +4,7 @@ use num_bigint::BigUint;
 
 use miette_util::ToMiette;
 use syntax::ast::source;
+use syntax::common::*;
 use syntax::cst;
 use syntax::ctx::{Bind, Context};
 use syntax::ust;
@@ -461,11 +462,11 @@ impl Lower for cst::Exp {
                             args: cst::TelescopeInst(vec![
                                 cst::ParamInst {
                                     info: cst::Info { span: Default::default() },
-                                    name: "_".to_owned(),
+                                    name: BindingSite::Wildcard,
                                 },
                                 cst::ParamInst {
                                     info: cst::Info { span: Default::default() },
-                                    name: "_".to_owned(),
+                                    name: BindingSite::Wildcard,
                                 },
                                 var.clone(),
                             ]),
@@ -489,7 +490,7 @@ impl Lower for cst::Motive {
             info: info.lower_pure(),
             param: ust::ParamInst {
                 info: param.info.lower_pure(),
-                name: param.name.clone(),
+                name: param.name().clone(),
                 typ: (),
             },
             ret_typ: ctx.bind_single(param, |ctx| ret_typ.lower_in_ctx(ctx))?,
@@ -571,7 +572,11 @@ impl LowerTelescope for cst::Telescope {
                 let mut params_out = params_out?;
                 let cst::Param { name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
                 let typ_out = typ.lower_in_ctx(ctx)?;
-                let param_out = ust::Param { name: name.clone(), typ: typ_out };
+                let name = match name {
+                    BindingSite::Var { name } => name.clone(),
+                    BindingSite::Wildcard => "_".to_owned(),
+                };
+                let param_out = ust::Param { name, typ: typ_out };
                 params_out.push(param_out);
                 Ok(params_out)
             },
@@ -595,7 +600,7 @@ impl LowerTelescope for cst::TelescopeInst {
                 let mut params_out = params_out?;
                 let cst::ParamInst { info, name } = param;
                 let param_out =
-                    ust::ParamInst { info: info.lower_pure(), name: name.clone(), typ: () };
+                    ust::ParamInst { info: info.lower_pure(), name: name.name().clone(), typ: () };
                 params_out.push(param_out);
                 Ok(params_out)
             },

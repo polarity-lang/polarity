@@ -29,7 +29,7 @@ def Ctx.len: Nat {
 }
 
 def Exp.subst(v: Nat, by: Exp): Exp {
-    Var(x) => x.cmp(v).match _ {
+    Var(x) => x.cmp(v).match {
         LT => Var(x),
         EQ => by,
         GT => Var(x.pred)
@@ -79,11 +79,11 @@ def (e: Exp).progress(t: Typ): HasType(Nil, e, t) -> Progress(e)
     },
     Lam(e) => \_. PVal(Lam(e), VLam(e)),
     App(e1, e2) => \h_t.
-        h_t.match _ {
+        h_t.match {
             TVar(_, _, _, _) absurd,
             TLam(_, _, _, _, _) absurd,
             TApp(_, t1, t2, _, _, e1_t, e2_t) =>
-                e1.progress(FunT(t1, t2)).ap(HasType(Nil, e1, FunT(t1, t2)), Progress(e1), e1_t).match _ {
+                e1.progress(FunT(t1, t2)).ap(HasType(Nil, e1, FunT(t1, t2)), Progress(e1), e1_t).match {
                     PStep(_, e1', e1_eval_e1') => PStep(App(e1, e2), App(e1', e2), ECongApp1(e1, e1', e1_eval_e1', e2)),
                     PVal(_, is_val) => is_val.match {
                         VLam(e) => PStep(App(Lam(e), e2), e.subst(0, e2), EBeta(e, e2))
@@ -147,7 +147,7 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
             TApp(_, _, _, _, _, _, _) absurd,
             TVar(_, _, _, h_elem) =>
                 x.cmp_reflect(ctx1.len).match {
-                IsLT(_, _, h_eq_lt, h_lt) => h_eq_lt.transport(Cmp, LT, x.cmp(ctx1.len), comatch _ { ap(_, _, cmp) => HasType(ctx1.append(ctx2), cmp.match _ { LT => Var(x), EQ => by_e, GT => Var(x.pred) }, t2) },
+                IsLT(_, _, h_eq_lt, h_lt) => h_eq_lt.transport(Cmp, LT, x.cmp(ctx1.len), comatch { ap(_, _, cmp) => HasType(ctx1.append(ctx2), cmp.match { LT => Var(x), EQ => by_e, GT => Var(x.pred) }, t2) },
                     ctx2.weaken_append(ctx1, Var(x), t2)
                         .ap(
                             HasType(ctx1, Var(x), t2),
@@ -168,7 +168,7 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                             ),
                         )
                 ),
-                IsEQ(_, _, h_eq_eq, h_eq) => h_eq_eq.transport(Cmp, EQ, x.cmp(ctx1.len), comatch _ { ap(_, _, cmp) => HasType(ctx1.append(ctx2), cmp.match _ { LT => Var(x), EQ => by_e, GT => Var(x.pred) }, t2) },
+                IsEQ(_, _, h_eq_eq, h_eq) => h_eq_eq.transport(Cmp, EQ, x.cmp(ctx1.len), comatch { ap(_, _, cmp) => HasType(ctx1.append(ctx2), cmp.match { LT => Var(x), EQ => by_e, GT => Var(x.pred) }, t2) },
                     ctx1.append(ctx2).weaken_append(Nil, by_e, t2)
                         .ap(
                             HasType(Nil, by_e, t2),
@@ -177,16 +177,16 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                                 Elem(ctx1.len, t2, ctx1.append(Cons(t1, ctx2))),
                                 Eq(Typ, t1, t2),
                                 h_eq.transport(
-                                    Nat, x, ctx1.len, comatch _ { ap(_, _, x) => Elem(x, t2, ctx1.append(Cons(t1, ctx2))) },
+                                    Nat, x, ctx1.len, comatch { ap(_, _, x) => Elem(x, t2, ctx1.append(Cons(t1, ctx2))) },
                                     h_elem
                                 ),
                             ).transport(
-                                Typ, t1, t2, comatch _ { ap(_, _, t) => HasType(Nil, by_e, t) },
+                                Typ, t1, t2, comatch { ap(_, _, t) => HasType(Nil, by_e, t) },
                                 h_by
                             )
                         )
                 ),
-                IsGT(_, _, h_eq_gt, h_gt) => h_eq_gt.transport(Cmp, GT, x.cmp(ctx1.len), comatch _ { ap(_, _, cmp) => HasType(ctx1.append(ctx2), cmp.match _ { LT => Var(x), EQ => by_e, GT => Var(x.pred) }, t2) },
+                IsGT(_, _, h_eq_gt, h_gt) => h_eq_gt.transport(Cmp, GT, x.cmp(ctx1.len), comatch { ap(_, _, cmp) => HasType(ctx1.append(ctx2), cmp.match { LT => Var(x), EQ => by_e, GT => Var(x.pred) }, t2) },
                     TVar(
                         ctx1.append(ctx2), x.pred, t2,
                         ctx1.elem_append_pred(ctx2, t2, t1, x)
@@ -257,7 +257,7 @@ def (ctx2: Ctx).weaken_append(ctx1: Ctx, e: Exp, t: Typ): HasType(ctx1, e, t) ->
     Nil => \h_e. ctx1.append_nil
         .transport(
             Ctx, ctx1, ctx1.append(Nil),
-            comatch _ { ap(_, _, ctx) => HasType(ctx, e, t) },
+            comatch { ap(_, _, ctx) => HasType(ctx, e, t) },
             h_e
         ),
     Cons(t', ts) => \h_e.
@@ -266,7 +266,7 @@ def (ctx2: Ctx).weaken_append(ctx1: Ctx, e: Exp, t: Typ): HasType(ctx1, e, t) ->
                 Ctx,
                 ctx1.append(Cons(t', Nil)).append(ts),
                 ctx1.append(Cons(t', ts)),
-                comatch _ { ap(_, _, ctx) => HasType(ctx, e, t) },
+                comatch { ap(_, _, ctx) => HasType(ctx, e, t) },
                 ts.weaken_append(ctx1.append(Cons(t', Nil)), e, t)
                     .ap(
                         HasType(ctx1.append(Cons(t', Nil)), e, t),
@@ -337,7 +337,7 @@ def (ctx1: Ctx).append_assoc(ctx2 ctx3: Ctx): Eq(Ctx, ctx1.append(ctx2).append(c
         .cong(Ctx, Ctx,
             xs.append(ctx2).append(ctx3),
             xs.append(ctx2.append(ctx3)),
-            comatch _ { ap(_, _, xs) => Cons(x, xs) }),
+            comatch { ap(_, _, xs) => Cons(x, xs) }),
 }
 
 def (ctx: Ctx).append_nil: Eq(Ctx, ctx, ctx.append(Nil)) {
@@ -413,7 +413,7 @@ def (ctx1: Ctx).elem_append_pred(ctx2: Ctx, t1 t2: Typ, x: Nat)
             .le_unsucc(S(ts.len), x')
             .s_pred(ts.len, x')
             .transport(
-                Nat, S(x'.pred), x', comatch _ { ap(_, _, x) => Elem(x, t1, Cons(t, ts).append(ctx2)) },
+                Nat, S(x'.pred), x', comatch { ap(_, _, x) => Elem(x, t1, Cons(t, ts).append(ctx2)) },
                 There(x'.pred, t1, t, ts.append(ctx2),
                     ts.elem_append_pred(ctx2, t1, t2, x')
                         .ap(
@@ -494,11 +494,11 @@ data Cmp {
 }
 
 def Nat.cmp(y: Nat): Cmp {
-    Z => y.match _ {
+    Z => y.match {
         Z => EQ,
         S(_) => LT,
     },
-    S(x) => y.match _ {
+    S(x) => y.match {
         Z => GT,
         S(y) => x.cmp(y)
     }

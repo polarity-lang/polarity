@@ -56,9 +56,9 @@ OptParenthesizedArgs<Rule>: Vec<Rule> = <args: Parens<Comma<Rule>>?> => args.unw
 BracedArgs<Rule>: Vec<Rule> = Braces<Comma<Rule>>;
 OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_default();
 
-Param: Param = <name: Ident> <names: Ident*> ":" <typ: Exp> => Param { name, names, typ } ;
+Param: Param = <name: BindingSite> <names: BindingSite*> ":" <typ: Exp> => Param { name, names, typ } ;
 
-ParamInst: ParamInst = <l: @L> <name: Ident> <r: @R> => ParamInst { info: span(l, r), name };
+ParamInst: ParamInst = <l: @L> <name: BindingSite> <r: @R> => ParamInst { info: span(l, r), name };
 
 Params: Vec<Param> = ParenthesizedArgs<Param>;
 OptParams: Vec<Param> = OptParenthesizedArgs<Param>;
@@ -127,7 +127,7 @@ pub Destructee: Destructee = {
 }
 
 pub Scrutinee: Scrutinee = {
-    <l: @L> "(" <name: Ident> ":" <typ: TypApp> ")" <r: @R> => Scrutinee { info: span(l, r), name: Some(name), typ },
+    <l: @L> "(" <name: BindingSite> ":" <typ: TypApp> ")" <r: @R> => Scrutinee { info: span(l, r), name: match name { BindingSite::Wildcard => None, BindingSite::Var { name } => Some(name) }, typ },
     <l: @L> <typ: TypApp> <r: @R> => Scrutinee { info: span(l, r), name: None, typ },
 }
 
@@ -175,8 +175,13 @@ Motive: Motive = {
 }
 
 // Names
+
+BindingSite: BindingSite = {
+    <i: Ident> => BindingSite::Var { name: i },
+    "_" => BindingSite::Wildcard,
+}
+
 Ident: String = {
-    "_" => "_".to_owned(),
     <s: LowerIdent> => s.to_owned(),
     <s: UpperIdent> => s.to_owned(),
 }
