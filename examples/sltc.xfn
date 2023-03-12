@@ -111,8 +111,35 @@ def (e1: Exp).preservation(e2: Exp, t: Typ)
         TVar(_, _, _, _) absurd,
         TLam(_, _, _, _, _) absurd,
         TApp(_, t1, t2, _, _, h_lam, h_e2) => \h_eval. h_eval.match {
-            ECongApp1(_, _, _, _) => ?,
-            ECongApp2(_, _, _, _) => ?,
+            ECongApp1(_, e1', h, _) => TApp(
+                Nil, t1, t2, e1', e2,
+                e1.preservation(e1', FunT(t1, t2))
+                    .ap(
+                        HasType(Nil, e1, FunT(t1, t2)),
+                        Eval(e1, e1') -> HasType(Nil, e1', FunT(t1, t2)),
+                        h_lam
+                    )
+                    .ap(
+                        Eval(e1, e1'),
+                        HasType(Nil, e1', FunT(t1, t2)),
+                        h
+                    ),
+                h_e2
+            ),
+            ECongApp2(_, _, e2', h) => TApp(
+                Nil, t1, t2, e1, e2', h_lam,
+                e2.preservation(e2', t1)
+                    .ap(
+                        HasType(Nil, e2, t1),
+                        Eval(e2, e2') -> HasType(Nil, e2', t1),
+                        h_e2
+                    )
+                    .ap(
+                        Eval(e2, e2'),
+                        HasType(Nil, e2', t1),
+                        h
+                    ),
+            ),
             EBeta(e1, _) => h_lam.match {
                 TVar(_, _, _, _) absurd,
                 TApp(_, _, _, _, _, _, _) absurd,
@@ -470,11 +497,6 @@ def Eq(Ctx, xs, ys).eq_cons(xs ys: Ctx, t: Typ): Eq(Ctx, Cons(t, xs), Cons(t, ys
 data Nat {
     Z,
     S(n: Nat)
-}
-
-def Nat.add(y: Nat) : Nat {
-    Z => y,
-    S(x) => S(x.add(y)),
 }
 
 def Nat.pred : Nat {
