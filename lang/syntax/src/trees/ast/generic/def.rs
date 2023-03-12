@@ -77,7 +77,10 @@ impl<P: Phase> Decls<P> {
         match &self.map[name] {
             Decl::Data(data) => Type::Data(data),
             Decl::Codata(codata) => Type::Codata(codata),
-            _ => unreachable!(),
+            Decl::Ctor(ctor) => panic!("Ctor {} unreachable", ctor.name),
+            Decl::Dtor(dtor) => panic!("Dtor {} unreachable", dtor.name),
+            Decl::Def(def) => panic!("Def {} unrechable", def.name),
+            Decl::Codef(codef) => panic!("Codef {} unrechable", codef.name),
         }
     }
 
