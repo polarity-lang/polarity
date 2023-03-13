@@ -7,5 +7,5 @@ use thiserror::Error;
 pub enum Error {
     Parser(#[from] parser::ParseError),
     Lowering(#[from] lowering::LoweringError),
-    Type(#[from] core::TypeError),
+    Type(#[from] typechecker::TypeError),
 }

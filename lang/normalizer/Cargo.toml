@@ -1,0 +1,17 @@
+[package]
+name = "normalizer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# fancy error messages
+miette = "5"
+thiserror = "1"
+# source code locations
+codespan = "0.11"
+# workspace members
+data = { path = "../../util/data" }
+tracer = { path = "../../util/tracer" }
+syntax = { path = "../syntax" }
+printer = { path = "../printer" }
+miette_util = { path = "../../util/miette_util" }

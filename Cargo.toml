@@ -10,7 +10,7 @@ members = [
     "lang/parser",
     "lang/lowering",
     "lang/printer",
-    "lang/core",
+    "lang/typechecker",
     "lang/source",
     "lang/renaming",
     "lang/lifting",

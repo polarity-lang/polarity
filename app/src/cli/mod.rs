@@ -10,7 +10,7 @@ mod xfunc;
 pub fn exec() -> miette::Result<()> {
     use Command::*;
     let cli = Cli::parse();
-    core::tracer::set_enabled(cli.trace);
+    typechecker::tracer::set_enabled(cli.trace);
     match cli.command {
         Run(args) => run::exec(args),
         Fmt(args) => format::exec(args),

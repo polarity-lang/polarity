@@ -4,6 +4,8 @@
 
 use std::rc::Rc;
 
+use normalizer::eval::Eval;
+use normalizer::read_back::ReadBack;
 use printer::Print;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
@@ -12,9 +14,7 @@ use syntax::env::Env;
 use syntax::ust;
 use syntax::val::Val;
 
-use crate::eval::Eval;
 use crate::ng::NameGen;
-use crate::read_back::ReadBack;
 use crate::TypeError;
 
 pub struct Ctx {

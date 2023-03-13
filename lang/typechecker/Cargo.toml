@@ -1,5 +1,5 @@
 [package]
-name = "core"
+name = "typechecker"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,4 +14,5 @@ data = { path = "../../util/data" }
 tracer = { path = "../../util/tracer" }
 syntax = { path = "../syntax" }
 printer = { path = "../printer" }
+normalizer = { path = "../normalizer" }
 miette_util = { path = "../../util/miette_util" }

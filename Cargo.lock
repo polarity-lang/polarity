@@ -49,7 +49,6 @@ version = "0.1.0"
 dependencies = [
  "async-std",
  "clap",
- "core",
  "futures",
  "lsp-server",
  "miette",
@@ -60,6 +59,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tower-lsp",
+ "typechecker",
 ]
 
 [[package]]
@@ -447,20 +447,6 @@ checksum = "a06aeb73f470f66dcdbf7223caeebb85984942f22f1adb2a088cf9668146bbbc"
 dependencies = [
  "cfg-if",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "core"
-version = "0.1.0"
-dependencies = [
- "codespan",
- "data",
- "miette",
- "miette_util",
- "printer",
- "syntax",
- "thiserror",
- "tracer",
 ]
 
 [[package]]
@@ -1225,6 +1211,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4a24736216ec316047a1fc4252e27dabb04218aa4a3f37c6e7ddbf1f9782b54"
 
 [[package]]
+name = "normalizer"
+version = "0.1.0"
+dependencies = [
+ "codespan",
+ "data",
+ "miette",
+ "miette_util",
+ "printer",
+ "syntax",
+ "thiserror",
+ "tracer",
+]
+
+[[package]]
 name = "nu-ansi-term"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1830,11 +1830,11 @@ name = "source"
 version = "0.1.0"
 dependencies = [
  "codespan",
- "core",
  "data",
  "lifting",
  "lowering",
  "miette",
+ "normalizer",
  "parser",
  "printer",
  "renaming",
@@ -1842,6 +1842,7 @@ dependencies = [
  "rust-lapper",
  "syntax",
  "thiserror",
+ "typechecker",
  "xfunc",
 ]
 
@@ -2091,7 +2092,6 @@ name = "test-runner"
 version = "0.1.0"
 dependencies = [
  "clap",
- "core",
  "data",
  "lowering",
  "parser",
@@ -2102,6 +2102,7 @@ dependencies = [
  "syntax",
  "tantivy",
  "toml",
+ "typechecker",
 ]
 
 [[package]]
@@ -2351,6 +2352,21 @@ dependencies = [
  "tracing",
  "tracing-core",
  "tracing-log",
+]
+
+[[package]]
+name = "typechecker"
+version = "0.1.0"
+dependencies = [
+ "codespan",
+ "data",
+ "miette",
+ "miette_util",
+ "normalizer",
+ "printer",
+ "syntax",
+ "thiserror",
+ "tracer",
 ]
 
 [[package]]
