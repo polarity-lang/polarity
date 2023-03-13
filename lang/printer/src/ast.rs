@@ -478,6 +478,33 @@ where
     }
 }
 
+/// Print the Comatch as a lambda abstraction.
+/// Only invoke this function if the comatch contains exactly
+/// one cocase "ap" with three arguments; the function will
+/// panic otherwise.
+fn print_lambda_sugar<'a, P: Phase>(
+    e: &'a Comatch<P>,
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a>
+where
+    P::InfTyp: ShiftInRange,
+{
+    let Comatch { cases, .. } = e;
+    let Cocase { params, body, .. } = cases.get(0).expect("Empty comatch marked as lambda sugar");
+    let var_name = params
+        .params
+        .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
+        .expect("No parameter bound in comatch marked as lambda sugar")
+        .name();
+    alloc
+        .text(BACKSLASH)
+        .append(var_name)
+        .append(DOT)
+        .append(alloc.space())
+        .append(body.print(cfg, alloc))
+}
+
 impl<'a, P: Phase> Print<'a> for Exp<P>
 where
     P::InfTyp: ShiftInRange,
@@ -519,23 +546,7 @@ where
                 .append(body.print(cfg, alloc)),
             Exp::Comatch { info: _, name, is_lambda_sugar, body } => {
                 if *is_lambda_sugar && cfg.print_lambda_sugar {
-                    let Comatch { cases, .. } = body;
-                    let Cocase { params, body, .. } = cases
-                        .get(0)
-                        .unwrap_or_else(|| panic!("Empty comatch marked as lambda sugar"));
-                    let var_name = params
-                        .params
-                        .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
-                        .unwrap_or_else(|| {
-                            panic!("No parameter bound in comatch marked as lambda sugar")
-                        })
-                        .name();
-                    alloc
-                        .text(BACKSLASH)
-                        .append(var_name)
-                        .append(DOT)
-                        .append(alloc.space())
-                        .append(body.print(cfg, alloc))
+                    print_lambda_sugar(body, cfg, alloc)
                 } else {
                     alloc
                         .keyword(COMATCH)
