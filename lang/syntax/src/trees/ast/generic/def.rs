@@ -428,6 +428,7 @@ pub enum Exp<P: Phase> {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
         name: P::Label,
+        is_lambda_sugar: bool,
         body: Comatch<P>,
     },
     Hole {

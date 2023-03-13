@@ -140,6 +140,7 @@ impl LanguageServer for Server {
             omit_decl_sep: false,
             de_bruijn: false,
             indent: 4,
+            print_lambda_sugar: true,
         };
 
         let formatted_prog: String = prg.print_to_string(Some(&cfg));
