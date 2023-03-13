@@ -150,7 +150,7 @@ pub Ops = {
 
 pub App = {
     <l: @L> <name: Ident> <args: Args> <r: @R> => Rc::new(Exp::Call { info: span(l, r), name, args }),
-    <l: @L> "comatch" <name: Ident?> "{" <body: Comatch> "}" <r: @R> => Rc::new(Exp::Comatch { info: span(l, r), name, body }),
+    <l: @L> "comatch" <name: Ident?> "{" <body: Comatch> "}" <r: @R> => Rc::new(Exp::Comatch { info: span(l, r), name, is_lambda_sugar: false, body }),
     Builtins,
 }
 

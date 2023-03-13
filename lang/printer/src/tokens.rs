@@ -7,6 +7,7 @@ pub const DOT: &str = ".";
 pub const AT: &str = "@";
 pub const HOLE_TODO: &str = "?";
 pub const HOLE_OMITTED: &str = "...";
+pub const BACKSLASH: &str = "\\";
 
 // Keywords
 

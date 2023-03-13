@@ -756,7 +756,7 @@ impl Check for ust::Exp {
                     body: body_out,
                 }
             }
-            ust::Exp::Comatch { info, name, body } => {
+            ust::Exp::Comatch { info, name, is_lambda_sugar, body } => {
                 let typ_app_nf = t.expect_typ_app()?;
                 let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
                 let type_name = typ_app.name.clone();
@@ -765,6 +765,7 @@ impl Check for ust::Exp {
                 tst::Exp::Comatch {
                     info: info.with_type_app(typ_app, typ_app_nf),
                     name: name.to_owned().unwrap_or_else(|| ctx.fresh_label(&type_name, prg)),
+                    is_lambda_sugar: *is_lambda_sugar,
                     body: body_out,
                 }
             }

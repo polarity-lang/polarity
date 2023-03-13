@@ -153,11 +153,12 @@ impl Mapper<WST> for Lift {
         &mut self,
         info: wst::TypeAppInfo,
         name: Ident,
+        is_lambda_sugar: bool,
         body: wst::Comatch,
     ) -> wst::Exp {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
-            return id().map_exp_comatch(info, name, body);
+            return id().map_exp_comatch(info, name, is_lambda_sugar, body);
         }
 
         self.mark_modified();

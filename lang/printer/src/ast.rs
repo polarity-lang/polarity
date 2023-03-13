@@ -478,6 +478,33 @@ where
     }
 }
 
+/// Print the Comatch as a lambda abstraction.
+/// Only invoke this function if the comatch contains exactly
+/// one cocase "ap" with three arguments; the function will
+/// panic otherwise.
+fn print_lambda_sugar<'a, P: Phase>(
+    e: &'a Comatch<P>,
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a>
+where
+    P::InfTyp: ShiftInRange,
+{
+    let Comatch { cases, .. } = e;
+    let Cocase { params, body, .. } = cases.get(0).expect("Empty comatch marked as lambda sugar");
+    let var_name = params
+        .params
+        .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
+        .expect("No parameter bound in comatch marked as lambda sugar")
+        .name();
+    alloc
+        .text(BACKSLASH)
+        .append(var_name)
+        .append(DOT)
+        .append(alloc.space())
+        .append(body.print(cfg, alloc))
+}
+
 impl<'a, P: Phase> Print<'a> for Exp<P>
 where
     P::InfTyp: ShiftInRange,
@@ -517,14 +544,20 @@ where
                 .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Exp::Comatch { info: _, name, body } => alloc
-                .keyword(COMATCH)
-                .append(match P::print_label(name) {
-                    Some(name) => alloc.space().append(alloc.text(name)),
-                    None => alloc.nil(),
-                })
-                .append(alloc.space())
-                .append(body.print(cfg, alloc)),
+            Exp::Comatch { info: _, name, is_lambda_sugar, body } => {
+                if *is_lambda_sugar && cfg.print_lambda_sugar {
+                    print_lambda_sugar(body, cfg, alloc)
+                } else {
+                    alloc
+                        .keyword(COMATCH)
+                        .append(match P::print_label(name) {
+                            Some(name) => alloc.space().append(alloc.text(name)),
+                            None => alloc.nil(),
+                        })
+                        .append(alloc.space())
+                        .append(body.print(cfg, alloc))
+                }
+            }
             Exp::Hole { info: _, kind } => match kind {
                 HoleKind::Todo => alloc.keyword(HOLE_TODO),
                 HoleKind::Omitted => alloc.keyword(HOLE_OMITTED),
