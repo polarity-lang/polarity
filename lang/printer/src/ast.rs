@@ -517,14 +517,36 @@ where
                 .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Exp::Comatch { info: _, name, is_lambda_sugar, body } => alloc
-                .keyword(COMATCH)
-                .append(match P::print_label(name) {
-                    Some(name) => alloc.space().append(alloc.text(name)),
-                    None => alloc.nil(),
-                })
-                .append(alloc.space())
-                .append(body.print(cfg, alloc)),
+            Exp::Comatch { info: _, name, is_lambda_sugar, body } => {
+                if *is_lambda_sugar {
+                    let Comatch { cases, .. } = body;
+                    let Cocase { params, body, .. } = cases
+                        .get(0)
+                        .unwrap_or_else(|| panic!("Empty comatch marked as lambda sugar"));
+                    let var_name = params
+                        .params
+                        .get(0)
+                        .unwrap_or_else(|| {
+                            panic!("No parameter bound in comatch marked as lambda sugar")
+                        })
+                        .name();
+                    alloc
+                        .text(BACKSLASH)
+                        .append(var_name)
+                        .append(DOT)
+                        .append(alloc.space())
+                        .append(body.print(cfg, alloc))
+                } else {
+                    alloc
+                        .keyword(COMATCH)
+                        .append(match P::print_label(name) {
+                            Some(name) => alloc.space().append(alloc.text(name)),
+                            None => alloc.nil(),
+                        })
+                        .append(alloc.space())
+                        .append(body.print(cfg, alloc))
+                }
+            }
             Exp::Hole { info: _, kind } => match kind {
                 HoleKind::Todo => alloc.keyword(HOLE_TODO),
                 HoleKind::Omitted => alloc.keyword(HOLE_OMITTED),
