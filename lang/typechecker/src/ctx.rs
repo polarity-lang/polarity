@@ -4,6 +4,8 @@
 
 use std::rc::Rc;
 
+use normalizer::eval::Eval;
+use normalizer::read_back::ReadBack;
 use printer::Print;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
@@ -14,8 +16,6 @@ use syntax::val::Val;
 
 use crate::ng::NameGen;
 use crate::TypeError;
-use normalizer::eval::Eval;
-use normalizer::read_back::ReadBack;
 
 pub struct Ctx {
     /// Typing of bound variables
