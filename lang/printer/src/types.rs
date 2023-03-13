@@ -47,6 +47,8 @@ pub struct PrintCfg {
     pub de_bruijn: bool,
     /// How many spaces of indentation are used
     pub indent: isize,
+    /// Whether to print the syntactic sugar "\x. body".
+    pub print_lambda_sugar: bool,
 }
 
 impl Default for PrintCfg {
@@ -57,6 +59,7 @@ impl Default for PrintCfg {
             omit_decl_sep: false,
             de_bruijn: false,
             indent: 4,
+            print_lambda_sugar: true,
         }
     }
 }

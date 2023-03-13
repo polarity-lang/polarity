@@ -518,7 +518,7 @@ where
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Exp::Comatch { info: _, name, is_lambda_sugar, body } => {
-                if *is_lambda_sugar {
+                if *is_lambda_sugar && cfg.print_lambda_sugar {
                     let Comatch { cases, .. } = body;
                     let Cocase { params, body, .. } = cases
                         .get(0)
