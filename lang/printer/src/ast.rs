@@ -525,7 +525,7 @@ where
                         .unwrap_or_else(|| panic!("Empty comatch marked as lambda sugar"));
                     let var_name = params
                         .params
-                        .get(0)
+                        .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
                         .unwrap_or_else(|| {
                             panic!("No parameter bound in comatch marked as lambda sugar")
                         })
