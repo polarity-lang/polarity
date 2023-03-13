@@ -525,7 +525,10 @@ where
                 })
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Exp::Hole { info: _ } => alloc.keyword(HOLE),
+            Exp::Hole { info: _, kind } => match kind {
+                HoleKind::Todo => alloc.keyword(HOLE_TODO),
+                HoleKind::Omitted => alloc.keyword(HOLE_OMITTED),
+            },
         }
     }
 }

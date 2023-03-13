@@ -28,3 +28,9 @@ pub trait HasInfo {
 pub struct DocComment {
     pub docs: Vec<String>,
 }
+
+#[derive(Debug, Copy, Clone)]
+pub enum HoleKind {
+    Todo,
+    Omitted,
+}

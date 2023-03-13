@@ -171,7 +171,7 @@ pub enum Exp {
     Type { info: Info },
     Match { info: Info, name: Option<Ident>, on_exp: Rc<Exp>, motive: Option<Motive>, body: Match },
     Comatch { info: Info, name: Option<Ident>, body: Comatch },
-    Hole { info: Info },
+    Hole { info: Info, kind: HoleKind },
     NatLit { info: Info, val: BigUint },
     Fun { info: Info, from: Rc<Exp>, to: Rc<Exp> },
     Lam { info: Info, var: ParamInst, body: Rc<Exp> },

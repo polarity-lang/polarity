@@ -433,6 +433,8 @@ pub enum Exp<P: Phase> {
     Hole {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        kind: HoleKind,
     },
 }
 

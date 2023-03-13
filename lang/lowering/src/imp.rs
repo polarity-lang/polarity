@@ -426,7 +426,9 @@ impl Lower for cst::Exp {
                 name: name.clone(),
                 body: body.lower_in_ctx(ctx)?,
             }),
-            cst::Exp::Hole { info } => Ok(ust::Exp::Hole { info: info.lower_pure() }),
+            cst::Exp::Hole { info, kind } => {
+                Ok(ust::Exp::Hole { info: info.lower_pure(), kind: *kind })
+            }
             cst::Exp::NatLit { info, val } => {
                 let mut out =
                     ust::Exp::Ctor { info: info.lower_pure(), name: "Z".to_owned(), args: vec![] };

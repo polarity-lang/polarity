@@ -101,8 +101,8 @@ pub trait Mapper<P: Phase> {
     fn map_exp_comatch(&mut self, info: P::TypeAppInfo, name: P::Label, body: Comatch<P>) -> Exp<P> {
         Exp::Comatch { info, name, body }
     }
-    fn map_exp_hole(&mut self, info: P::TypeInfo) -> Exp<P> {
-        Exp::Hole { info }
+    fn map_exp_hole(&mut self, info: P::TypeInfo, kind: HoleKind) -> Exp<P> {
+        Exp::Hole { info, kind }
     }
     fn map_motive(&mut self, info: P::Info, param: ParamInst<P>, ret_typ: Rc<Exp<P>>) -> Motive<P> {
         Motive { info, param, ret_typ }
@@ -298,8 +298,8 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         Rc::new(self.map_exp_comatch(info, name, body))
     }
 
-    fn fold_exp_hole(&mut self, info: <Id<P> as Out>::TypeInfo) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_hole(info))
+    fn fold_exp_hole(&mut self, info: <Id<P> as Out>::TypeInfo, kind: HoleKind) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_hole(info, kind))
     }
 
     fn fold_motive(&mut self, info: <Id<P> as Out>::Info, param: <Id<P> as Out>::ParamInst, ret_typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Motive {

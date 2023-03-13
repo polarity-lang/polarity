@@ -47,7 +47,7 @@ impl Forget for Neu {
                 ret_typ: (),
                 body: body.forget(),
             },
-            Neu::Hole { info } => ust::Exp::Hole { info: info.clone() },
+            Neu::Hole { info, kind } => ust::Exp::Hole { info: info.clone(), kind: *kind },
         }
     }
 }

@@ -64,6 +64,8 @@ pub enum Neu {
     Hole {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Info,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        kind: HoleKind,
     },
 }
 

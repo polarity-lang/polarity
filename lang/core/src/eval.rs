@@ -62,7 +62,9 @@ impl Eval for Exp {
                 })?;
                 Rc::new(Val::Comatch { info: info.clone(), name, body: body.eval(prg, env)? })
             }
-            Exp::Hole { info } => Rc::new(Val::Neu { exp: Neu::Hole { info: info.clone() } }),
+            Exp::Hole { info, kind } => {
+                Rc::new(Val::Neu { exp: Neu::Hole { info: info.clone(), kind: *kind } })
+            }
         };
         Ok(res)
     }

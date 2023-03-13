@@ -768,7 +768,9 @@ impl Check for ust::Exp {
                     body: body_out,
                 }
             }
-            ust::Exp::Hole { info } => tst::Exp::Hole { info: info.with_type(t.clone()) },
+            ust::Exp::Hole { info, kind } => {
+                tst::Exp::Hole { info: info.with_type(t.clone()), kind: *kind }
+            }
             _ => {
                 let actual = self.infer(prg, ctx)?;
                 actual.typ().convert(&t)?;
@@ -860,7 +862,9 @@ impl Infer for ust::Exp {
                 })
             }
             ust::Exp::Type { info } => Ok(tst::Exp::Type { info: info.with_type(type_univ()) }),
-            ust::Exp::Hole { info } => Ok(tst::Exp::Hole { info: info.with_type(type_hole()) }),
+            ust::Exp::Hole { info, kind } => {
+                Ok(tst::Exp::Hole { info: info.with_type(type_hole()), kind: *kind })
+            }
             ust::Exp::Match { .. } => {
                 Err(TypeError::CannotInferMatch { span: self.info().span.to_miette() })
             }
@@ -1115,5 +1119,5 @@ fn type_univ() -> Rc<nf::Nf> {
 }
 
 fn type_hole() -> Rc<nf::Nf> {
-    Rc::new(nf::Nf::Neu { exp: nf::Neu::Hole { info: ust::Info::empty() } })
+    Rc::new(nf::Nf::Neu { exp: nf::Neu::Hole { info: ust::Info::empty(), kind: HoleKind::Todo } })
 }

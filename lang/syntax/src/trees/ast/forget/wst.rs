@@ -263,7 +263,7 @@ impl Forget for wst::Exp {
                 name: Some(name.clone()),
                 body: body.forget(),
             },
-            wst::Exp::Hole { info } => ust::Exp::Hole { info: info.forget() },
+            wst::Exp::Hole { info, kind } => ust::Exp::Hole { info: info.forget(), kind: *kind },
         }
     }
 }
