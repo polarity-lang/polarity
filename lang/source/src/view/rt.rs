@@ -35,7 +35,7 @@ impl<'a> DatabaseView<'a> {
     pub fn run(&self) -> Result<Option<Rc<val::Val>>, Error> {
         let tst = self.tst()?;
         let ust = tst.forget().forget();
-        normalize::eval::eval(&ust).map_err(|err| Error::Type(typechecker::TypeError::Eval(err)))
+        normalizer::eval::eval(&ust).map_err(|err| Error::Type(typechecker::TypeError::Eval(err)))
     }
 
     pub fn pretty_error(&self, err: Error) -> miette::Report {

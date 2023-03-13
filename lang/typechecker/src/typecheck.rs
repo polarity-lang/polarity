@@ -12,9 +12,9 @@ use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
 use syntax::ust;
 use tracer::trace;
 
-use normalize::eval::Eval;
-use normalize::normalize::Normalize;
-use normalize::read_back::ReadBack;
+use normalizer::eval::Eval;
+use normalizer::normalize::Normalize;
+use normalizer::read_back::ReadBack;
 
 use super::ctx::*;
 use super::result::TypeError;

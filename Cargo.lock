@@ -1211,7 +1211,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4a24736216ec316047a1fc4252e27dabb04218aa4a3f37c6e7ddbf1f9782b54"
 
 [[package]]
-name = "normalize"
+name = "normalizer"
 version = "0.1.0"
 dependencies = [
  "codespan",
@@ -1834,7 +1834,7 @@ dependencies = [
  "lifting",
  "lowering",
  "miette",
- "normalize",
+ "normalizer",
  "parser",
  "printer",
  "renaming",
@@ -2362,7 +2362,7 @@ dependencies = [
  "data",
  "miette",
  "miette_util",
- "normalize",
+ "normalizer",
  "printer",
  "syntax",
  "thiserror",

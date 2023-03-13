@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use data::string::{comma_separated, separated};
 use data::HashSet;
-use normalize::result::EvalError;
+use normalizer::result::EvalError;
 use syntax::common::*;
 use syntax::nf;
 use syntax::ust;

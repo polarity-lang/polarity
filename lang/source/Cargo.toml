@@ -25,4 +25,4 @@ printer = { path = "../printer" }
 renaming = { path = "../renaming" }
 xfunc = { path = "../xfunc" }
 lifting = { path = "../lifting" }
-normalize = { path = "../normalize" }
+normalizer = { path = "../normalizer" }

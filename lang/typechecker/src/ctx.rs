@@ -14,8 +14,8 @@ use syntax::val::Val;
 
 use crate::ng::NameGen;
 use crate::TypeError;
-use normalize::eval::Eval;
-use normalize::read_back::ReadBack;
+use normalizer::eval::Eval;
+use normalizer::read_back::ReadBack;
 
 pub struct Ctx {
     /// Typing of bound variables

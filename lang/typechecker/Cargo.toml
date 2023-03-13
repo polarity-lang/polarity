@@ -14,5 +14,5 @@ data = { path = "../../util/data" }
 tracer = { path = "../../util/tracer" }
 syntax = { path = "../syntax" }
 printer = { path = "../printer" }
-normalize = { path = "../normalize" }
+normalizer = { path = "../normalizer" }
 miette_util = { path = "../../util/miette_util" }
