@@ -6,6 +6,7 @@ use thiserror::Error;
 
 use data::string::{comma_separated, separated};
 use data::HashSet;
+use normalize::result::EvalError;
 use syntax::common::*;
 use syntax::nf;
 use syntax::ust;
@@ -146,19 +147,6 @@ impl TypeError {
     pub fn expected_typ_app(got: Rc<nf::Nf>) -> Self {
         Self::ExpectedTypApp { got: got.print_to_string(None), span: got.info().span.to_miette() }
     }
-}
-
-#[derive(Error, Diagnostic, Debug)]
-pub enum EvalError {
-    #[error("The impossible happened: {message}")]
-    #[diagnostic(code("E-XXX"))]
-    /// This error should not occur.
-    /// Some internal invariant has been violated.
-    Impossible {
-        message: String,
-        #[label]
-        span: Option<SourceSpan>,
-    },
 }
 
 #[derive(Error, Diagnostic, Debug)]

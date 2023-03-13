@@ -54,6 +54,7 @@ xfunc --help
 │   ├── core                Core (typechecker, evaluator)
 │   ├── lifting             Lift local (co)matches to top-level definitions
 │   ├── lowering            Lowering concrete to (untyped) abstract syntax tree
+│   ├── normalize           Implementation of normalization-by-evaluation algorithm
 │   ├── parser              Parse text to concrete syntax tree
 │   ├── printer             Print abstract syntax tree to text
 │   ├── renaming            Rename abstract syntax tree s.t. it can be reparsed

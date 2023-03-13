@@ -12,10 +12,10 @@ use syntax::env::Env;
 use syntax::ust;
 use syntax::val::Val;
 
-use crate::eval::Eval;
 use crate::ng::NameGen;
-use crate::read_back::ReadBack;
 use crate::TypeError;
+use normalize::eval::Eval;
+use normalize::read_back::ReadBack;
 
 pub struct Ctx {
     /// Typing of bound variables

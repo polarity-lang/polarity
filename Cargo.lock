@@ -457,6 +457,7 @@ dependencies = [
  "data",
  "miette",
  "miette_util",
+ "normalize",
  "printer",
  "syntax",
  "thiserror",
@@ -1225,6 +1226,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4a24736216ec316047a1fc4252e27dabb04218aa4a3f37c6e7ddbf1f9782b54"
 
 [[package]]
+name = "normalize"
+version = "0.1.0"
+dependencies = [
+ "codespan",
+ "data",
+ "miette",
+ "miette_util",
+ "printer",
+ "syntax",
+ "thiserror",
+ "tracer",
+]
+
+[[package]]
 name = "nu-ansi-term"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1835,6 +1850,7 @@ dependencies = [
  "lifting",
  "lowering",
  "miette",
+ "normalize",
  "parser",
  "printer",
  "renaming",

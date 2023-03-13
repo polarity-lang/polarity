@@ -7,7 +7,7 @@ use syntax::ust::Prg;
 use syntax::val;
 use tracer::trace;
 
-use crate::eval::Eval;
+use super::eval::Eval;
 
 use super::result::*;
 
