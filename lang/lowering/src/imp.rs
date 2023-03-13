@@ -421,9 +421,10 @@ impl Lower for cst::Exp {
                 ret_typ: (),
                 body: body.lower_in_ctx(ctx)?,
             }),
-            cst::Exp::Comatch { info, name, body } => Ok(ust::Exp::Comatch {
+            cst::Exp::Comatch { info, name, is_lambda_sugar, body } => Ok(ust::Exp::Comatch {
                 info: info.lower_pure(),
                 name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
                 body: body.lower_in_ctx(ctx)?,
             }),
             cst::Exp::Hole { info, kind } => {
@@ -455,6 +456,7 @@ impl Lower for cst::Exp {
                 let comatch = cst::Exp::Comatch {
                     info: info.clone(),
                     name: None,
+                    is_lambda_sugar: true,
                     body: cst::Comatch {
                         info: info.clone(),
                         cases: vec![cst::Cocase {

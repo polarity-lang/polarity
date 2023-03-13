@@ -517,7 +517,7 @@ where
                 .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Exp::Comatch { info: _, name, body } => alloc
+            Exp::Comatch { info: _, name, is_lambda_sugar, body } => alloc
                 .keyword(COMATCH)
                 .append(match P::print_label(name) {
                     Some(name) => alloc.space().append(alloc.text(name)),

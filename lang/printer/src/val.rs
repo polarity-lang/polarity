@@ -21,7 +21,7 @@ impl<'a> Print<'a> for Val {
                 alloc.ctor(name).append(psubst)
             }
             Val::Type { info: _ } => alloc.typ(TYPE),
-            Val::Comatch { info: _, name, body } => alloc
+            Val::Comatch { info: _, name, is_lambda_sugar, body } => alloc
                 .keyword(COMATCH)
                 .append(alloc.space())
                 .append(alloc.text(name))

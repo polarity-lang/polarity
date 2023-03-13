@@ -16,9 +16,10 @@ impl ShiftInRange for Nf {
                 args: args.shift_in_range(range, by),
             },
             Nf::Type { info } => Nf::Type { info: info.clone() },
-            Nf::Comatch { info, name, body } => Nf::Comatch {
+            Nf::Comatch { info, name, is_lambda_sugar, body } => Nf::Comatch {
                 info: info.clone(),
                 name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
                 body: body.shift_in_range(range, by),
             },
             Nf::Neu { exp } => Nf::Neu { exp: exp.shift_in_range(range, by) },

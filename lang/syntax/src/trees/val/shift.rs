@@ -16,9 +16,10 @@ impl ShiftInRange for Val {
                 args: args.shift_in_range(range, by),
             },
             Val::Type { info } => Val::Type { info: info.clone() },
-            Val::Comatch { info, name, body } => Val::Comatch {
+            Val::Comatch { info, name, is_lambda_sugar, body } => Val::Comatch {
                 info: info.clone(),
                 name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
                 body: body.shift_in_range(range, by),
             },
             Val::Neu { exp } => Val::Neu { exp: exp.shift_in_range(range, by) },

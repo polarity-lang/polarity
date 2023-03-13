@@ -258,9 +258,10 @@ impl Forget for wst::Exp {
                 ret_typ: (),
                 body: body.forget(),
             },
-            wst::Exp::Comatch { info, name, body } => ust::Exp::Comatch {
+            wst::Exp::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::Comatch {
                 info: info.forget(),
                 name: Some(name.clone()),
+                is_lambda_sugar: *is_lambda_sugar,
                 body: body.forget(),
             },
             wst::Exp::Hole { info, kind } => ust::Exp::Hole { info: info.forget(), kind: *kind },
