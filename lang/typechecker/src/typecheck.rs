@@ -3,18 +3,18 @@
 use std::rc::Rc;
 
 use codespan::Span;
+
 use data::HashSet;
 use miette_util::ToMiette;
+use normalizer::eval::Eval;
+use normalizer::normalize::Normalize;
+use normalizer::read_back::ReadBack;
 use syntax::common::*;
 use syntax::ctx::{Bind, BindElem, Context, LevelCtx};
 use syntax::nf;
 use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
 use syntax::ust;
 use tracer::trace;
-
-use normalizer::eval::Eval;
-use normalizer::normalize::Normalize;
-use normalizer::read_back::ReadBack;
 
 use super::ctx::*;
 use super::result::TypeError;
