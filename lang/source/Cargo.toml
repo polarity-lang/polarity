@@ -20,7 +20,7 @@ data = { path = "../../util/data" }
 syntax = { path = "../syntax" }
 parser = { path = "../parser" }
 lowering = { path = "../lowering" }
-core = { path = "../core" }
+typechecker = { path = "../typechecker" }
 printer = { path = "../printer" }
 renaming = { path = "../renaming" }
 xfunc = { path = "../xfunc" }
