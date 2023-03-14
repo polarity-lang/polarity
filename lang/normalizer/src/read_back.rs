@@ -7,7 +7,7 @@ use syntax::ust::Prg;
 use syntax::val;
 use tracer::trace;
 
-use crate::eval::Eval;
+use super::eval::Eval;
 
 use super::result::*;
 
@@ -32,9 +32,10 @@ impl ReadBack for val::Val {
                 nf::Nf::Ctor { info: info.clone(), name: name.clone(), args: args.read_back(prg)? }
             }
             val::Val::Type { info } => nf::Nf::Type { info: info.clone() },
-            val::Val::Comatch { info, name, body } => nf::Nf::Comatch {
+            val::Val::Comatch { info, name, is_lambda_sugar, body } => nf::Nf::Comatch {
                 info: info.clone(),
                 name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
                 body: body.read_back(prg)?,
             },
             val::Val::Neu { exp } => nf::Nf::Neu { exp: exp.read_back(prg)? },
@@ -63,7 +64,7 @@ impl ReadBack for val::Neu {
                 on_exp: on_exp.read_back(prg)?,
                 body: body.read_back(prg)?,
             },
-            val::Neu::Hole { info } => nf::Neu::Hole { info: info.clone() },
+            val::Neu::Hole { info, kind } => nf::Neu::Hole { info: info.clone(), kind: *kind },
         };
         Ok(res)
     }

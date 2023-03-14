@@ -15,9 +15,10 @@ impl Forget for Nf {
                 ust::Exp::Ctor { info: info.clone(), name: name.clone(), args: args.forget() }
             }
             Nf::Type { info } => ust::Exp::Type { info: info.clone() },
-            Nf::Comatch { info, name, body } => ust::Exp::Comatch {
+            Nf::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::Comatch {
                 info: info.clone(),
                 name: Some(name.clone()),
+                is_lambda_sugar: *is_lambda_sugar,
                 body: body.forget(),
             },
             Nf::Neu { exp } => exp.forget(),
@@ -47,7 +48,7 @@ impl Forget for Neu {
                 ret_typ: (),
                 body: body.forget(),
             },
-            Neu::Hole { info } => ust::Exp::Hole { info: info.clone() },
+            Neu::Hole { info, kind } => ust::Exp::Hole { info: info.clone(), kind: *kind },
         }
     }
 }

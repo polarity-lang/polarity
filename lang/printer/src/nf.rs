@@ -21,7 +21,7 @@ impl<'a> Print<'a> for Nf {
                 alloc.ctor(name).append(psubst)
             }
             Nf::Type { info: _ } => alloc.typ(TYPE),
-            Nf::Comatch { info: _, name, body } => alloc
+            Nf::Comatch { info: _, name, is_lambda_sugar: _, body } => alloc
                 .keyword(COMATCH)
                 .append(alloc.space())
                 .append(alloc.text(name))
@@ -49,7 +49,7 @@ impl<'a> Print<'a> for Neu {
                 .append(alloc.text(name))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Neu::Hole { .. } => alloc.keyword(HOLE),
+            Neu::Hole { .. } => alloc.keyword(HOLE_TODO),
         }
     }
 }

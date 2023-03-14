@@ -21,7 +21,7 @@ async-std = "1"
 tower-lsp = { version = "0.17", default-features = false, features = ["runtime-agnostic"] }
 # workspace members
 source = { path = "../lang/source" }
-core = { path = "../lang/core" }
+typechecker = { path = "../lang/typechecker" }
 syntax = { path = "../lang/syntax" }
 printer = { path = "../lang/printer" }
 lsp-server = { path = "../util/lsp" }

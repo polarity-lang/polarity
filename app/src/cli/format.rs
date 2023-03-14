@@ -16,6 +16,8 @@ pub struct Args {
     #[clap(long)]
     width: Option<usize>,
     #[clap(long, num_args = 0)]
+    omit_lambda_sugar: bool,
+    #[clap(long, num_args = 0)]
     inplace: bool,
     #[clap(long, default_value_t = 4)]
     indent: isize,
@@ -56,10 +58,11 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     let cfg = PrintCfg {
         width: cmd.width.unwrap_or_else(terminal_width),
-        braces: ("{", "}"),
+        latex: false,
         omit_decl_sep: false,
         de_bruijn: cmd.de_bruijn,
         indent: cmd.indent,
+        print_lambda_sugar: !cmd.omit_lambda_sugar,
     };
 
     print_prg(prg, &cfg, &mut stream);

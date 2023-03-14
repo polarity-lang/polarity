@@ -23,7 +23,7 @@ impl HasInfo for Neu {
             Neu::Var { info, .. } => info.clone(),
             Neu::Dtor { info, .. } => info.clone(),
             Neu::Match { info, .. } => info.clone(),
-            Neu::Hole { info } => info.clone(),
+            Neu::Hole { info, .. } => info.clone(),
         }
     }
 }

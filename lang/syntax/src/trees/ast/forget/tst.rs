@@ -258,10 +258,13 @@ impl Forget for tst::Exp {
                 ret_typ: ret_typ.forget(),
                 body: body.forget(),
             },
-            tst::Exp::Comatch { info, name, body } => {
-                wst::Exp::Comatch { info: info.forget(), name: name.clone(), body: body.forget() }
-            }
-            tst::Exp::Hole { info } => wst::Exp::Hole { info: info.forget() },
+            tst::Exp::Comatch { info, name, is_lambda_sugar, body } => wst::Exp::Comatch {
+                info: info.forget(),
+                name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
+                body: body.forget(),
+            },
+            tst::Exp::Hole { info, kind } => wst::Exp::Hole { info: info.forget(), kind: *kind },
         }
     }
 }

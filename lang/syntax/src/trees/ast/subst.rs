@@ -47,12 +47,13 @@ where
                 ret_typ: ret_typ.subst(ctx, by),
                 body: body.subst(ctx, by),
             }),
-            Exp::Comatch { info, name, body } => Rc::new(Exp::Comatch {
+            Exp::Comatch { info, name, is_lambda_sugar, body } => Rc::new(Exp::Comatch {
                 info: info.clone(),
                 name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
                 body: body.subst(ctx, by),
             }),
-            Exp::Hole { info } => Rc::new(Exp::Hole { info: info.clone() }),
+            Exp::Hole { info, kind } => Rc::new(Exp::Hole { info: info.clone(), kind: *kind }),
         }
     }
 }

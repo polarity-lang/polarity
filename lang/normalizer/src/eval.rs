@@ -10,8 +10,8 @@ use tracer::trace;
 
 use super::result::*;
 
-pub fn eval(prg: &ust::Prg) -> Result<Option<Rc<val::Val>>, TypeError> {
-    prg.exp.as_ref().map(|exp| exp.eval(prg, &mut Env::empty())).transpose().map_err(Into::into)
+pub fn eval(prg: &ust::Prg) -> Result<Option<Rc<val::Val>>, EvalError> {
+    prg.exp.as_ref().map(|exp| exp.eval(prg, &mut Env::empty())).transpose()
 }
 
 pub trait Eval {
@@ -55,14 +55,21 @@ impl Eval for Exp {
                 })?;
                 eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?
             }
-            Exp::Comatch { info, name, body } => {
+            Exp::Comatch { info, name, is_lambda_sugar, body } => {
                 let name = name.to_owned().ok_or_else(|| EvalError::Impossible {
                     message: "Missing label on comatch".to_owned(),
                     span: info.span.to_miette(),
                 })?;
-                Rc::new(Val::Comatch { info: info.clone(), name, body: body.eval(prg, env)? })
+                Rc::new(Val::Comatch {
+                    info: info.clone(),
+                    name,
+                    is_lambda_sugar: *is_lambda_sugar,
+                    body: body.eval(prg, env)?,
+                })
             }
-            Exp::Hole { info } => Rc::new(Val::Neu { exp: Neu::Hole { info: info.clone() } }),
+            Exp::Hole { info, kind } => {
+                Rc::new(Val::Neu { exp: Neu::Hole { info: info.clone(), kind: *kind } })
+            }
         };
         Ok(res)
     }

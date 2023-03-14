@@ -422,12 +422,15 @@ impl Lower for cst::Exp {
                 ret_typ: (),
                 body: body.lower_in_ctx(ctx)?,
             }),
-            cst::Exp::Comatch { info, name, body } => Ok(ust::Exp::Comatch {
+            cst::Exp::Comatch { info, name, is_lambda_sugar, body } => Ok(ust::Exp::Comatch {
                 info: info.lower_pure(),
                 name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
                 body: body.lower_in_ctx(ctx)?,
             }),
-            cst::Exp::Hole { info } => Ok(ust::Exp::Hole { info: info.lower_pure() }),
+            cst::Exp::Hole { info, kind } => {
+                Ok(ust::Exp::Hole { info: info.lower_pure(), kind: *kind })
+            }
             cst::Exp::NatLit { info, val } => {
                 let mut out =
                     ust::Exp::Ctor { info: info.lower_pure(), name: "Z".to_owned(), args: vec![] };
@@ -454,6 +457,7 @@ impl Lower for cst::Exp {
                 let comatch = cst::Exp::Comatch {
                     info: info.clone(),
                     name: None,
+                    is_lambda_sugar: true,
                     body: cst::Comatch {
                         info: info.clone(),
                         cases: vec![cst::Cocase {

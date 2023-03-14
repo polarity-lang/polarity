@@ -21,7 +21,7 @@ impl<'a> Print<'a> for Val {
                 alloc.ctor(name).append(psubst)
             }
             Val::Type { info: _ } => alloc.typ(TYPE),
-            Val::Comatch { info: _, name, body } => alloc
+            Val::Comatch { info: _, name, is_lambda_sugar: _, body } => alloc
                 .keyword(COMATCH)
                 .append(alloc.space())
                 .append(alloc.text(name))
@@ -49,7 +49,10 @@ impl<'a> Print<'a> for Neu {
                 .append(alloc.text(name))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Neu::Hole { info: _ } => alloc.keyword(HOLE),
+            Neu::Hole { info: _, kind } => match kind {
+                syntax::common::HoleKind::Todo => alloc.keyword(HOLE_TODO),
+                syntax::common::HoleKind::Omitted => alloc.keyword(HOLE_OMITTED),
+            },
         }
     }
 }

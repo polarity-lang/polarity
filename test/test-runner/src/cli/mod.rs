@@ -5,7 +5,7 @@ mod run;
 pub fn exec() {
     use Command::*;
     let cli = Cli::parse();
-    core::tracer::set_enabled(cli.trace);
+    typechecker::tracer::set_enabled(cli.trace);
     match cli.command {
         Run(args) => run::exec(args),
     }

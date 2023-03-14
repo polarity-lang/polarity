@@ -30,6 +30,7 @@ pub enum Val {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Info,
         name: Ident,
+        is_lambda_sugar: bool,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Comatch,
     },
@@ -67,6 +68,8 @@ pub enum Neu {
     Hole {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Info,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        kind: HoleKind,
     },
 }
 

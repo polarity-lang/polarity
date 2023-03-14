@@ -47,12 +47,13 @@ where
                 ret_typ: ret_typ.shift_in_range(range.clone(), by),
                 body: body.shift_in_range(range, by),
             },
-            Exp::Comatch { info, name, body } => Exp::Comatch {
+            Exp::Comatch { info, name, is_lambda_sugar, body } => Exp::Comatch {
                 info: info.clone(),
                 name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
                 body: body.shift_in_range(range, by),
             },
-            Exp::Hole { info } => Exp::Hole { info: info.clone() },
+            Exp::Hole { info, kind } => Exp::Hole { info: info.clone(), kind: *kind },
         }
     }
 }
@@ -166,7 +167,7 @@ impl<P: Phase> HasInfo for Exp<P> {
             Exp::Type { info } => info.clone(),
             Exp::Match { info, .. } => info.clone().into(),
             Exp::Comatch { info, .. } => info.clone().into(),
-            Exp::Hole { info } => info.clone(),
+            Exp::Hole { info, .. } => info.clone(),
         }
     }
 }

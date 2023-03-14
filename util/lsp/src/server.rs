@@ -136,10 +136,11 @@ impl LanguageServer for Server {
 
         let cfg = PrintCfg {
             width: 100,
-            braces: ("{", "}"),
+            latex: false,
             omit_decl_sep: false,
             de_bruijn: false,
             indent: 4,
+            print_lambda_sugar: true,
         };
 
         let formatted_prog: String = prg.print_to_string(Some(&cfg));
