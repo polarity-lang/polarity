@@ -6,11 +6,11 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::{Context, LevelCtx};
-use crate::val::*;
+use crate::nf::*;
 
 #[derive(Debug, Clone)]
 pub struct TypeCtx {
-    pub bound: Vec<Vec<Rc<Val>>>,
+    pub bound: Vec<Vec<Rc<Nf>>>,
 }
 
 impl TypeCtx {
@@ -19,7 +19,7 @@ impl TypeCtx {
         LevelCtx::from(bound)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &[Rc<Val>]> {
+    pub fn iter(&self) -> impl Iterator<Item = &[Rc<Nf>]> {
         self.bound.iter().map(|inner| &inner[..])
     }
 
@@ -37,9 +37,9 @@ impl TypeCtx {
 }
 
 impl Context for TypeCtx {
-    type ElemIn = Rc<Val>;
+    type ElemIn = Rc<Nf>;
 
-    type ElemOut = Rc<Val>;
+    type ElemOut = Rc<Nf>;
 
     type Var = Var;
 
@@ -103,7 +103,7 @@ impl TypeCtx {
 
     pub fn map_failable<E, F>(&self, f: F) -> Result<Self, E>
     where
-        F: Fn(&Rc<Val>) -> Result<Rc<Val>, E>,
+        F: Fn(&Rc<Nf>) -> Result<Rc<Nf>, E>,
     {
         let bound: Result<_, _> =
             self.bound.iter().map(|stack| stack.iter().map(&f).collect()).collect();
