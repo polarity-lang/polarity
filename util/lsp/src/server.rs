@@ -136,7 +136,7 @@ impl LanguageServer for Server {
 
         let cfg = PrintCfg {
             width: 100,
-            braces: ("{", "}"),
+            latex: false,
             omit_decl_sep: false,
             de_bruijn: false,
             indent: 4,

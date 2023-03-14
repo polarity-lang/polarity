@@ -58,7 +58,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     let cfg = PrintCfg {
         width: cmd.width.unwrap_or_else(terminal_width),
-        braces: ("{", "}"),
+        latex: false,
         omit_decl_sep: false,
         de_bruijn: cmd.de_bruijn,
         indent: cmd.indent,

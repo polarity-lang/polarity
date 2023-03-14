@@ -99,7 +99,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     let cfg = PrintCfg {
         width: cmd.width,
-        braces: ("\\{", "\\}"),
+        latex: true,
         omit_decl_sep: true,
         de_bruijn: false,
         indent: cmd.indent,

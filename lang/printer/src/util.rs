@@ -9,11 +9,26 @@ where
     fn braces_from(self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, D, A>;
 }
 
+pub trait BackslashExt<'a, A: 'a>: DocAllocator<'a, A> {
+    fn backslash_from(&'a self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, Self, A>;
+}
+
 impl<'a, D, A> BracesExt<'a, D, A> for pretty::DocBuilder<'a, D, A>
 where
     D: ?Sized + DocAllocator<'a, A>,
 {
     fn braces_from(self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, D, A> {
-        self.enclose(cfg.braces.0, cfg.braces.1)
+        let braces = if cfg.latex { ("\\{", "\\}") } else { ("{", "}") };
+        self.enclose(braces.0, braces.1)
+    }
+}
+
+impl<'a, A: 'a, T> BackslashExt<'a, A> for T
+where
+    T: DocAllocator<'a, A>,
+{
+    fn backslash_from(&'a self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, Self, A> {
+        let backlash = if cfg.latex { "\\textbackslash{}" } else { "\\" };
+        self.text(backlash)
     }
 }

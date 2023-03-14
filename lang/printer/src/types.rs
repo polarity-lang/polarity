@@ -40,7 +40,8 @@ impl<'a, T: Print<'a>, E: Error> Print<'a> for Result<T, E> {
 
 pub struct PrintCfg {
     pub width: usize,
-    pub braces: (&'static str, &'static str),
+    // Whether to escape braces and backslashes
+    pub latex: bool,
     /// Whether to omit the empty line between toplevel declarations.
     pub omit_decl_sep: bool,
     /// Whether to print the De-Bruijn representation of variables
@@ -55,7 +56,7 @@ impl Default for PrintCfg {
     fn default() -> Self {
         Self {
             width: crate::DEFAULT_WIDTH,
-            braces: ("{", "}"),
+            latex: false,
             omit_decl_sep: false,
             de_bruijn: false,
             indent: 4,

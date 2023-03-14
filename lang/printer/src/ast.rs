@@ -97,11 +97,6 @@ where
     }
 }
 
-// Prints "{ }"
-fn empty_braces<'a>(alloc: &'a Alloc<'a>, cfg: &PrintCfg) -> Builder<'a> {
-    alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
-}
-
 impl<'a, P: Phase> PrintInCtx<'a> for Data<P>
 where
     P::InfTyp: ShiftInRange,
@@ -294,7 +289,7 @@ where
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Comatch { info: _, cases } = self;
         if cases.is_empty() {
-            alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+            empty_braces(alloc, cfg)
         } else {
             let sep = alloc.text(COMMA).append(alloc.hardline());
 
@@ -315,7 +310,7 @@ where
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { info: _, cases } = self;
         if cases.is_empty() {
-            alloc.text(cfg.braces.0).append(alloc.space()).append(cfg.braces.1)
+            empty_braces(alloc, cfg)
         } else {
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
@@ -478,33 +473,6 @@ where
     }
 }
 
-/// Print the Comatch as a lambda abstraction.
-/// Only invoke this function if the comatch contains exactly
-/// one cocase "ap" with three arguments; the function will
-/// panic otherwise.
-fn print_lambda_sugar<'a, P: Phase>(
-    e: &'a Comatch<P>,
-    cfg: &PrintCfg,
-    alloc: &'a Alloc<'a>,
-) -> Builder<'a>
-where
-    P::InfTyp: ShiftInRange,
-{
-    let Comatch { cases, .. } = e;
-    let Cocase { params, body, .. } = cases.get(0).expect("Empty comatch marked as lambda sugar");
-    let var_name = params
-        .params
-        .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
-        .expect("No parameter bound in comatch marked as lambda sugar")
-        .name();
-    alloc
-        .text(BACKSLASH)
-        .append(var_name)
-        .append(DOT)
-        .append(alloc.space())
-        .append(body.print(cfg, alloc))
-}
-
 impl<'a, P: Phase> Print<'a> for Exp<P>
 where
     P::InfTyp: ShiftInRange,
@@ -610,6 +578,33 @@ impl<'a, T: Print<'a>> Print<'a> for Option<T> {
     }
 }
 
+/// Print the Comatch as a lambda abstraction.
+/// Only invoke this function if the comatch contains exactly
+/// one cocase "ap" with three arguments; the function will
+/// panic otherwise.
+fn print_lambda_sugar<'a, P: Phase>(
+    e: &'a Comatch<P>,
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a>
+where
+    P::InfTyp: ShiftInRange,
+{
+    let Comatch { cases, .. } = e;
+    let Cocase { params, body, .. } = cases.get(0).expect("Empty comatch marked as lambda sugar");
+    let var_name = params
+        .params
+        .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
+        .expect("No parameter bound in comatch marked as lambda sugar")
+        .name();
+    alloc
+        .backslash_from(cfg)
+        .append(var_name)
+        .append(DOT)
+        .append(alloc.space())
+        .append(body.print(cfg, alloc))
+}
+
 fn print_comma_separated<'a, T: Print<'a>>(
     vec: &'a Vec<T>,
     cfg: &PrintCfg,
@@ -627,4 +622,9 @@ impl<'a, T: Print<'a>> Print<'a> for Vec<T> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         print_comma_separated(self, cfg, alloc)
     }
+}
+
+// Prints "{ }"
+fn empty_braces<'a>(alloc: &'a Alloc<'a>, cfg: &PrintCfg) -> Builder<'a> {
+    alloc.space().braces_from(cfg)
 }
