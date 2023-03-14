@@ -370,7 +370,7 @@ impl Lower for cst::Exp {
                 Elem::Bound(lvl) => Ok(ust::Exp::Var {
                     info: info.lower_pure(),
                     name: name.clone(),
-                    idx: ctx.lower_bound(*lvl),
+                    idx: ctx.level_to_index(*lvl),
                 }),
                 Elem::Decl => match ctx.decl_kind(name) {
                     DeclKind::Codata { .. } | DeclKind::Data { .. } => Ok(ust::Exp::TypCtor {

@@ -50,11 +50,6 @@ impl Ctx {
         }
     }
 
-    // FIXME: confusing name, rename or inline
-    pub fn lower_bound(&self, lvl: Lvl) -> Idx {
-        self.level_to_index(lvl)
-    }
-
     pub fn add_name(&mut self, name: &Ident, decl_kind: DeclKind) -> Result<(), LoweringError> {
         self.decl_kinds.insert(name.clone(), decl_kind);
         let stack = self.map.entry(name.clone()).or_insert_with(Default::default);
@@ -94,7 +89,7 @@ impl Ctx {
     }
 
     /// Convert the given De-Bruijn level to a De-Bruijn index
-    fn level_to_index(&self, lvl: Lvl) -> Idx {
+    pub fn level_to_index(&self, lvl: Lvl) -> Idx {
         let fst = self.levels.len() - 1 - lvl.fst;
         let snd = self.levels[lvl.fst] - 1 - lvl.snd;
         Idx { fst, snd }
