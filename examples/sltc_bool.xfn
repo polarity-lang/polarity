@@ -525,7 +525,25 @@ def (e: Exp).weaken_cons(ctx: Ctx, t1 t2: Typ): HasType(ctx, e, t2) -> HasType(c
         TLam(_, _, _, _, _) absurd,
         TApp(_, _, _, _, _, _, _) absurd,
         TLit(_, _) absurd,
-        TIf(_, _, _, _, t, h_cond, h_then, h_else) => ?,
+        TIf(_, _, _, _, t, h_cond, h_then, h_else) => TIf(
+            ctx.append(Cons(t1, Nil)),
+            cond, then, else, t,
+            cond.weaken_cons(ctx, t1, BooT).ap(
+                HasType(ctx, cond, BooT),
+                HasType(ctx.append(Cons(t1, Nil)), cond, BooT),
+                h_cond
+            ),
+            then.weaken_cons(ctx, t1, t).ap(
+                HasType(ctx, then, t),
+                HasType(ctx.append(Cons(t1, Nil)), then, t),
+                h_then
+            ),
+            else.weaken_cons(ctx, t1, t).ap(
+                HasType(ctx, else, t),
+                HasType(ctx.append(Cons(t1, Nil)), else, t),
+                h_else
+            ),
+        ),
     },
 }
 
