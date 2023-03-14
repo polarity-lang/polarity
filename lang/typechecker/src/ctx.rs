@@ -11,6 +11,7 @@ use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::{Context, HasContext, LevelCtx};
 use syntax::env::Env;
+use syntax::env::ToEnv;
 use syntax::ust;
 use syntax::val::Val;
 

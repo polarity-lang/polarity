@@ -6,14 +6,11 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::{Context, LevelCtx};
-use crate::env::Env;
 use crate::val::*;
-
-use super::map_idx::*;
 
 #[derive(Debug, Clone)]
 pub struct TypeCtx {
-    bound: Vec<Vec<Rc<Val>>>,
+    pub bound: Vec<Vec<Rc<Val>>>,
 }
 
 impl TypeCtx {
@@ -102,24 +99,6 @@ impl TypeCtx {
 
     pub fn is_empty(&self) -> bool {
         self.bound.is_empty()
-    }
-
-    pub fn env(&self) -> Env {
-        let bound = self
-            .bound
-            .map_idx(|idx, _typ| {
-                Rc::new(Val::Neu {
-                    exp: Neu::Var {
-                        // FIXME: handle info/name
-                        info: Info::empty(),
-                        name: String::new(),
-                        idx,
-                    },
-                })
-            })
-            .collect();
-
-        Env::from(bound)
     }
 
     pub fn map_failable<E, F>(&self, f: F) -> Result<Self, E>
