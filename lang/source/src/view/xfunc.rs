@@ -6,8 +6,8 @@ use renaming::Rename;
 
 use data::{HashMap, HashSet};
 use syntax::common::*;
-use syntax::matrix;
 use syntax::ust;
+use xfunc::matrix;
 
 use super::{DatabaseView, Edit};
 
@@ -47,8 +47,8 @@ impl<'a> DatabaseView<'a> {
         let original = Original { type_span, decl_spans, xdefs };
 
         let result = match xfunc::repr(&mat, type_name) {
-            syntax::matrix::Repr::Data => refunctionalize(prg, &mat, type_name),
-            syntax::matrix::Repr::Codata => defunctionalize(prg, &mat, type_name),
+            xfunc::matrix::Repr::Data => refunctionalize(prg, &mat, type_name),
+            xfunc::matrix::Repr::Codata => defunctionalize(prg, &mat, type_name),
         };
 
         Ok(generate_edits(original, dirty_decls, result))
