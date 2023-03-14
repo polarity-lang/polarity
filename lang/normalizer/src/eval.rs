@@ -2,10 +2,10 @@ use std::rc::Rc;
 
 use miette_util::ToMiette;
 
+use crate::env::*;
+use crate::val::{self, Closure, Neu, Val};
 use syntax::ctx::{Bind, Context};
-use syntax::env::*;
 use syntax::ust::{self, Exp, Prg, Type};
-use syntax::val::{self, Closure, Neu, Val};
 use tracer::trace;
 
 use super::result::*;

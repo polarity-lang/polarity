@@ -1,4 +1,4 @@
-use syntax::env::Env;
+use crate::env::Env;
 use syntax::ust;
 
 use super::eval::*;

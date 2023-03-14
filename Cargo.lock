@@ -1216,8 +1216,10 @@ version = "0.1.0"
 dependencies = [
  "codespan",
  "data",
+ "derivative",
  "miette",
  "miette_util",
+ "pretty",
  "printer",
  "syntax",
  "thiserror",

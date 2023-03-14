@@ -2,11 +2,15 @@ use std::rc::Rc;
 
 use derivative::Derivative;
 
-use crate::common::*;
-use crate::ctx::map_idx::*;
-use crate::ctx::values::TypeCtx;
-use crate::ctx::{Context, LevelCtx};
+use pretty::DocAllocator;
+
 use crate::val::*;
+use printer::tokens::COMMA;
+use printer::Print;
+use syntax::common::*;
+use syntax::ctx::map_idx::*;
+use syntax::ctx::values::TypeCtx;
+use syntax::ctx::{Context, LevelCtx};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -135,5 +139,20 @@ impl ToEnv for TypeCtx {
             .collect();
 
         Env::from(bound)
+    }
+}
+
+impl<'a> Print<'a> for Env {
+    fn print(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let iter = self.iter().map(|ctx| {
+            alloc
+                .intersperse(ctx.iter().map(|typ| typ.print(cfg, alloc)), alloc.text(COMMA))
+                .brackets()
+        });
+        alloc.intersperse(iter, alloc.text(COMMA)).brackets()
     }
 }
