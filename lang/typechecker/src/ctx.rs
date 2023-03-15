@@ -11,8 +11,9 @@ use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::{Context, HasContext, LevelCtx};
 use syntax::env::Env;
+use syntax::env::ToEnv;
+use syntax::nf::Nf;
 use syntax::ust;
-use syntax::val::Val;
 
 use crate::ng::NameGen;
 use crate::TypeError;
@@ -46,10 +47,10 @@ impl ContextSubstExt for Ctx {
     ) -> Result<(), TypeError> {
         let env = self.vars.env();
         let levels = self.vars.levels();
-        self.map_failable(|val| {
-            let nf = val.read_back(prg)?;
+        self.map_failable(|nf| {
             let exp = nf.forget().subst(&mut levels.clone(), s);
-            exp.eval(prg, &mut env.clone()).map_err(Into::into)
+            let val = exp.eval(prg, &mut env.clone())?;
+            Ok(val.read_back(prg)?)
         })
     }
 }
@@ -71,7 +72,7 @@ impl Ctx {
         self.vars.is_empty()
     }
 
-    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<Val> {
+    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<Nf> {
         self.vars.lookup(idx)
     }
 
@@ -85,7 +86,7 @@ impl Ctx {
 
     pub fn map_failable<E, F>(&mut self, f: F) -> Result<(), E>
     where
-        F: Fn(&Rc<Val>) -> Result<Rc<Val>, E>,
+        F: Fn(&Rc<Nf>) -> Result<Rc<Nf>, E>,
     {
         self.vars = self.vars.map_failable(f)?;
         Ok(())

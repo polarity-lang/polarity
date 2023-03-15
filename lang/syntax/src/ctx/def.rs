@@ -5,6 +5,7 @@ use std::rc::Rc;
 use crate::ast::Annotated;
 use crate::ast::*;
 use crate::common::*;
+use crate::nf::Nf;
 use crate::val::Val;
 
 /// Defines the interface of a variable context
@@ -235,6 +236,12 @@ impl<T: Named> AsElement<Ident> for T {
 
 impl AsElement<Rc<Val>> for &Rc<Val> {
     fn as_element(&self) -> Rc<Val> {
+        (*self).clone()
+    }
+}
+
+impl AsElement<Rc<Nf>> for &Rc<Nf> {
+    fn as_element(&self) -> Rc<Nf> {
         (*self).clone()
     }
 }

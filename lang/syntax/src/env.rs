@@ -3,7 +3,9 @@ use std::rc::Rc;
 use derivative::Derivative;
 
 use crate::common::*;
-use crate::ctx::Context;
+use crate::ctx::map_idx::*;
+use crate::ctx::values::TypeCtx;
+use crate::ctx::{Context, LevelCtx};
 use crate::val::*;
 
 #[derive(Debug, Clone, Derivative)]
@@ -80,5 +82,58 @@ impl Env {
 impl From<Vec<Vec<Rc<Val>>>> for Env {
     fn from(bound: Vec<Vec<Rc<Val>>>) -> Self {
         Self { bound }
+    }
+}
+
+impl ShiftInRange for Env {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        self.map(|val| val.shift_in_range(range.clone(), by))
+    }
+}
+
+pub trait ToEnv {
+    fn env(&self) -> Env;
+}
+
+impl ToEnv for LevelCtx {
+    fn env(&self) -> Env {
+        // FIXME: Refactor this
+        let bound: Vec<_> = self
+            .bound
+            .iter()
+            .enumerate()
+            .map(|(fst, len)| {
+                (0..*len)
+                    .map(|snd| {
+                        let idx = Idx { fst: self.bound.len() - 1 - fst, snd: len - 1 - snd };
+                        Rc::new(Val::Neu {
+                            exp: Neu::Var { info: Info::empty(), name: String::new(), idx },
+                        })
+                    })
+                    .collect()
+            })
+            .collect();
+
+        Env::from(bound)
+    }
+}
+
+impl ToEnv for TypeCtx {
+    fn env(&self) -> Env {
+        let bound = self
+            .bound
+            .map_idx(|idx, _typ| {
+                Rc::new(Val::Neu {
+                    exp: Neu::Var {
+                        // FIXME: handle info/name
+                        info: Info::empty(),
+                        name: String::new(),
+                        idx,
+                    },
+                })
+            })
+            .collect();
+
+        Env::from(bound)
     }
 }

@@ -11,6 +11,7 @@ use normalizer::normalize::Normalize;
 use normalizer::read_back::ReadBack;
 use syntax::common::*;
 use syntax::ctx::{Bind, BindElem, Context, LevelCtx};
+use syntax::env::ToEnv;
 use syntax::nf;
 use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
 use syntax::ust;
@@ -714,8 +715,8 @@ impl Check for ust::Exp {
                         let self_t_nf = self_t.read_back(prg)?;
 
                         // Typecheck the motive
-                        let ret_typ_out =
-                            ctx.bind_single(&self_t, |ctx| ret_typ.check(prg, ctx, type_univ()))?;
+                        let ret_typ_out = ctx
+                            .bind_single(&self_t_nf, |ctx| ret_typ.check(prg, ctx, type_univ()))?;
 
                         // Ensure that the motive matches the expected type
                         let mut subst_ctx = ctx.levels().append(&vec![1].into());
@@ -726,8 +727,9 @@ impl Check for ust::Exp {
                         let motive_t_nf = motive_t.normalize(prg, &mut ctx.env())?;
                         motive_t_nf.convert(&t)?;
 
-                        body_t =
-                            ctx.bind_single(&self_t, |ctx| ret_typ.normalize(prg, &mut ctx.env()))?;
+                        body_t = ctx.bind_single(&self_t_nf, |ctx| {
+                            ret_typ.normalize(prg, &mut ctx.env())
+                        })?;
                         motive_out = Some(tst::Motive {
                             info: info.clone().into(),
                             param: tst::ParamInst {
@@ -791,8 +793,7 @@ impl Infer for ust::Exp {
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         match self {
             ust::Exp::Var { info, name, idx } => {
-                let typ = ctx.lookup(*idx);
-                let typ_nf = typ.read_back(prg)?;
+                let typ_nf = ctx.lookup(*idx);
                 Ok(tst::Exp::Var { info: info.with_type(typ_nf), name: name.clone(), idx: *idx })
             }
             ust::Exp::TypCtor { info, name, args } => {
@@ -958,12 +959,12 @@ impl CheckTelescope for ust::TelescopeInst {
                 let typ_nf = typ_val.read_back(prg)?;
                 let mut params_out = params_out;
                 let param_out = tst::ParamInst {
-                    info: info.with_type(typ_nf),
+                    info: info.with_type(typ_nf.clone()),
                     name: name.clone(),
                     typ: typ_out.into(),
                 };
                 params_out.push(param_out);
-                Result::<_, TypeError>::Ok(BindElem { elem: typ_val, ret: params_out })
+                Result::<_, TypeError>::Ok(BindElem { elem: typ_nf, ret: params_out })
             },
             |ctx, params| f(ctx, tst::TelescopeInst { params }),
         )?
@@ -988,6 +989,7 @@ impl InferTelescope for ust::Telescope {
                 let ust::Param { typ, name } = param;
                 let typ_out = typ.check(prg, ctx, type_univ())?;
                 let elem = typ.eval(prg, &mut ctx.env())?;
+                let elem = elem.read_back(prg)?;
                 let param_out = tst::Param { name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
                 Result::<_, TypeError>::Ok(BindElem { elem, ret: params_out })
@@ -1009,6 +1011,7 @@ impl InferTelescope for ust::SelfParam {
         let ust::SelfParam { info, name, typ } = self;
 
         let elem = typ.to_exp().eval(prg, &mut ctx.env())?;
+        let elem = elem.read_back(prg)?;
         let typ_out = typ.infer(prg, ctx)?;
         let param_out = tst::SelfParam {
             info: tst::Info { span: info.span },
