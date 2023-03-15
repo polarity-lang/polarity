@@ -1,5 +1,5 @@
 use syntax::common::*;
-use syntax::ctx::{Bind, Context, LevelCtx};
+use syntax::ctx::{BindContext, Context, LevelCtx};
 use syntax::ust;
 
 use crate::matrix;

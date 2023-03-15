@@ -9,7 +9,6 @@ use printer::tokens::*;
 use printer::types::*;
 use printer::util::*;
 use syntax::common::*;
-use syntax::ctx::AsElement;
 use syntax::ust;
 
 /// The result of evaluation
@@ -348,18 +347,5 @@ impl<'a> Print<'a> for Cocase {
 impl<'a> Print<'a> for Closure {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.text("...")
-    }
-}
-
-// FIXME: Remove newtype wrapper
-// AES = AsElementStruct
-pub struct AES<'a> {
-    pub aes: &'a Rc<Val>,
-}
-
-impl<'a> AsElement<Rc<Val>> for AES<'a> {
-    fn as_element(&self) -> Rc<Val> {
-        let AES { aes } = self;
-        (*aes).clone()
     }
 }

@@ -64,6 +64,10 @@ impl Context for LevelCtx {
     }
 }
 
+impl<T> ContextElem<LevelCtx> for T {
+    fn as_element(&self) -> <LevelCtx as Context>::ElemIn {}
+}
+
 impl From<Vec<usize>> for LevelCtx {
     fn from(bound: Vec<usize>) -> Self {
         Self { bound }

@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use data::HashMap;
 use syntax::common::*;
-use syntax::ctx::{Bind, Context, LevelCtx};
+use syntax::ctx::{BindContext, Context, LevelCtx};
 use syntax::ust;
 
 #[derive(Debug, Clone)]

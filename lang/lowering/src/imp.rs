@@ -6,7 +6,7 @@ use miette_util::ToMiette;
 use syntax::ast::lookup_table;
 use syntax::common::*;
 use syntax::cst;
-use syntax::ctx::{Bind, Context};
+use syntax::ctx::{BindContext, Context};
 use syntax::ust;
 
 use super::ctx::*;

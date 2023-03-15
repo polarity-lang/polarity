@@ -32,10 +32,10 @@ pub trait MapCtxExt<P: Phase> {
         F: FnOnce(&mut Self, SelfParam<P>) -> X;
 }
 
-impl<P: Phase, C: HasContext> MapCtxExt<P> for C
+impl<P: Phase, C: BindContext> MapCtxExt<P> for C
 where
-    Param<P>: AsElement<<<C as HasContext>::Ctx as Context>::ElemIn>,
-    ParamInst<P>: AsElement<<<C as HasContext>::Ctx as Context>::ElemIn>,
+    Param<P>: ContextElem<C::Ctx>,
+    ParamInst<P>: ContextElem<C::Ctx>,
 {
     fn ctx_map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where

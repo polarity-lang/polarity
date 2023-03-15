@@ -235,7 +235,7 @@ impl Mapper<WST> for Lift {
     }
 }
 
-impl HasContext for Lift {
+impl BindContext for Lift {
     type Ctx = TypeCtx<WST>;
 
     fn ctx_mut(&mut self) -> &mut Self::Ctx {
