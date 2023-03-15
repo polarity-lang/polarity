@@ -3,7 +3,7 @@ use miette_util::ToMiette;
 use syntax::ast::lookup_table;
 use syntax::common::*;
 use syntax::cst;
-use syntax::ctx::Context;
+use syntax::ctx::{Context, ContextElem};
 use syntax::ust;
 
 use super::result::LoweringError;
@@ -136,6 +136,24 @@ impl Context for Ctx {
             .get(&name)
             .and_then(|stack| stack.last().cloned().map(Elem::Bound))
             .or_else(|| self.top_level_map.get(&name).cloned().map(Elem::Decl))
+    }
+}
+
+impl ContextElem<Ctx> for Ident {
+    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+        self.to_owned()
+    }
+}
+
+impl ContextElem<Ctx> for &cst::Param {
+    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+        self.name.to_owned()
+    }
+}
+
+impl ContextElem<Ctx> for &cst::ParamInst {
+    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+        self.name.to_owned()
     }
 }
 

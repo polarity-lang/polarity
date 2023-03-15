@@ -10,7 +10,7 @@ use printer::Print;
 use syntax::common::*;
 use syntax::ctx::map_idx::*;
 use syntax::ctx::values::TypeCtx;
-use syntax::ctx::{Context, LevelCtx};
+use syntax::ctx::{Context, ContextElem, LevelCtx};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -52,6 +52,12 @@ impl Context for Env {
     fn pop_binder(&mut self, _elem: Self::ElemIn) {
         let err = "Cannot pop from empty context";
         self.bound.last_mut().expect(err).pop().expect(err);
+    }
+}
+
+impl ContextElem<Env> for &Rc<Val> {
+    fn as_element(&self) -> <Env as Context>::ElemIn {
+        (*self).clone()
     }
 }
 

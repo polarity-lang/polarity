@@ -10,7 +10,7 @@ use printer::Print;
 use syntax::ast::LookupError;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
-use syntax::ctx::{Context, HasContext, LevelCtx};
+use syntax::ctx::{BindContext, Context, LevelCtx};
 use syntax::nf::Nf;
 use syntax::ust;
 
@@ -54,7 +54,7 @@ impl ContextSubstExt for Ctx {
     }
 }
 
-impl HasContext for Ctx {
+impl BindContext for Ctx {
     type Ctx = TypeCtx;
 
     fn ctx_mut(&mut self) -> &mut Self::Ctx {

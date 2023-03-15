@@ -1,4 +1,3 @@
-mod annotated;
 mod def;
 mod fold;
 mod imp;
@@ -8,7 +7,6 @@ mod map;
 mod occurs;
 mod visit;
 
-pub use annotated::*;
 pub use def::*;
 pub use fold::*;
 pub use imp::*;

@@ -9,7 +9,7 @@ use miette_util::ToMiette;
 use normalizer::env::ToEnv;
 use normalizer::normalize::Normalize;
 use syntax::common::*;
-use syntax::ctx::{Bind, BindElem, Context, LevelCtx};
+use syntax::ctx::{BindContext, BindElem, Context, LevelCtx};
 use syntax::nf;
 use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
 use syntax::ust;

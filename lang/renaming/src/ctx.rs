@@ -1,5 +1,6 @@
+use syntax::ast::*;
 use syntax::common::*;
-use syntax::ctx::Context;
+use syntax::ctx::{Context, ContextElem};
 
 #[derive(Debug, Clone)]
 pub struct Ctx {
@@ -43,5 +44,17 @@ impl Context for Ctx {
             .and_then(|ctx| ctx.get(ctx.len() - 1 - idx.snd))
             .unwrap_or_else(|| panic!("Unbound variable: {dbg}, idx: {idx}"))
             .clone()
+    }
+}
+
+impl<P: Phase> ContextElem<Ctx> for Param<P> {
+    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+        self.name.to_owned()
+    }
+}
+
+impl<P: Phase> ContextElem<Ctx> for ParamInst<P> {
+    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+        self.name.to_owned()
     }
 }

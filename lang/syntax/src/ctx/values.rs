@@ -8,6 +8,8 @@ use crate::common::*;
 use crate::ctx::{Context, LevelCtx};
 use crate::nf::*;
 
+use super::ContextElem;
+
 #[derive(Debug, Clone)]
 pub struct TypeCtx {
     pub bound: Vec<Vec<Rc<Nf>>>,
@@ -75,6 +77,12 @@ impl Context for TypeCtx {
         let err = "Cannot pop from empty context";
         self.bound.last_mut().expect(err).pop().expect(err);
         self.shift_at_lvl(0..1, self.bound.len() - 1, (0, -1));
+    }
+}
+
+impl ContextElem<TypeCtx> for &Rc<Nf> {
+    fn as_element(&self) -> <TypeCtx as Context>::ElemIn {
+        (*self).clone()
     }
 }
 
