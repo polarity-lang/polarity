@@ -18,11 +18,11 @@ impl Forget for wst::Decls {
     type Target = ust::Decls;
 
     fn forget(&self) -> Self::Target {
-        let wst::Decls { map, source } = self;
+        let wst::Decls { map, lookup_table } = self;
 
         ust::Decls {
             map: map.iter().map(|(name, decl)| (name.clone(), decl.forget())).collect(),
-            source: source.clone(),
+            lookup_table: lookup_table.clone(),
         }
     }
 }

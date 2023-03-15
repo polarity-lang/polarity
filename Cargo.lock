@@ -1927,9 +1927,10 @@ dependencies = [
  "console",
  "data",
  "derivative",
+ "miette",
+ "miette_util",
  "num-bigint",
- "serde",
- "serde_derive",
+ "thiserror",
 ]
 
 [[package]]

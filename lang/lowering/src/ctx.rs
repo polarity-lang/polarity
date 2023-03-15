@@ -1,6 +1,6 @@
 use data::HashMap;
 use miette_util::ToMiette;
-use syntax::ast::source;
+use syntax::ast::lookup_table;
 use syntax::common::*;
 use syntax::cst;
 use syntax::ctx::Context;
@@ -74,8 +74,8 @@ impl Ctx {
         Ok(())
     }
 
-    pub fn into_decls(self, source: source::Source) -> ust::Decls {
-        ust::Decls { map: self.decls_map, source }
+    pub fn into_decls(self, lookup_table: lookup_table::LookupTable) -> ust::Decls {
+        ust::Decls { map: self.decls_map, lookup_table }
     }
 
     /// Next De Bruijn level to be assigned
@@ -153,29 +153,6 @@ pub enum DeclMeta {
     Codef,
     Ctor { ret_typ: Ident },
     Dtor { self_typ: Ident },
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum DeclKind {
-    Data,
-    Codata,
-    Def,
-    Codef,
-    Ctor,
-    Dtor,
-}
-
-impl DeclKind {
-    pub fn pretty_name(&self) -> &str {
-        match self {
-            DeclKind::Data => "data type",
-            DeclKind::Codata => "codata type",
-            DeclKind::Def => "definition",
-            DeclKind::Codef => "codefinition",
-            DeclKind::Ctor => "constructor",
-            DeclKind::Dtor => "destructor",
-        }
-    }
 }
 
 impl DeclMeta {

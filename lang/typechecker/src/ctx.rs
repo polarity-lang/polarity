@@ -7,6 +7,7 @@ use std::rc::Rc;
 use normalizer::env::{Env, ToEnv};
 use normalizer::normalize::Normalize;
 use printer::Print;
+use syntax::ast::LookupError;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::{Context, HasContext, LevelCtx};
@@ -99,7 +100,7 @@ impl Ctx {
         out
     }
 
-    pub fn fresh_label(&mut self, type_name: &str, prg: &ust::Prg) -> Ident {
+    pub fn fresh_label(&mut self, type_name: &str, prg: &ust::Prg) -> Result<Ident, LookupError> {
         self.ng.fresh_label(type_name, prg)
     }
 }

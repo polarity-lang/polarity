@@ -6,7 +6,7 @@ use crate::common::*;
 
 use super::def::*;
 use super::fold::*;
-use super::source::Source;
+use super::lookup_table::LookupTable;
 
 #[allow(clippy::too_many_arguments)]
 #[rustfmt::skip]
@@ -17,8 +17,8 @@ pub trait Mapper<P: Phase> {
     fn map_prg(&mut self, decls: Decls<P>, exp: Option<Rc<Exp<P>>>) -> Prg<P> {
         Prg { decls, exp }
     }
-    fn map_decls(&mut self, map: HashMap<Ident, Decl<P>>, source: Source) -> Decls<P> {
-        Decls { map, source }
+    fn map_decls(&mut self, map: HashMap<Ident, Decl<P>>, lookup_table: LookupTable) -> Decls<P> {
+        Decls { map, lookup_table }
     }
     fn map_decl(&mut self, decl: Decl<P>) -> Decl<P> {
         decl
@@ -186,7 +186,7 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_prg(decls, exp)
     }
 
-    fn fold_decls(&mut self, map: HashMap<Ident, <Id<P> as Out>::Decl>, source: Source) -> <Id<P> as Out>::Decls {
+    fn fold_decls(&mut self, map: HashMap<Ident, <Id<P> as Out>::Decl>, source: LookupTable) -> <Id<P> as Out>::Decls {
         self.map_decls(map, source)
     }
 

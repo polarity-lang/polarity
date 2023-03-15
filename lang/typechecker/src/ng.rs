@@ -1,7 +1,7 @@
 //! Name generator for (co)match labels
 
 use data::HashMap;
-use syntax::ast::Type;
+use syntax::ast::{LookupError, Type};
 use syntax::common::*;
 use syntax::ust::Prg;
 
@@ -11,10 +11,10 @@ pub struct NameGen {
 }
 
 impl NameGen {
-    pub fn fresh_label(&mut self, type_name: &str, prg: &Prg) -> Ident {
+    pub fn fresh_label(&mut self, type_name: &str, prg: &Prg) -> Result<Ident, LookupError> {
         let i = self.map.entry(type_name.to_owned()).or_default();
         loop {
-            let name = match prg.decls.typ(type_name) {
+            let name = match prg.decls.typ(type_name, None)? {
                 Type::Data(_) => {
                     let lowered = type_name.to_lowercase();
                     format!("d_{lowered}{i}")
@@ -23,7 +23,7 @@ impl NameGen {
             };
             *i += 1;
             if !prg.decls.map.contains_key(&name) {
-                return name;
+                return Ok(name);
             }
         }
     }

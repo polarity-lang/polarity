@@ -7,7 +7,7 @@ use derivative::Derivative;
 
 use crate::common::*;
 
-use super::source::{self, Source};
+use super::lookup_table::LookupTable;
 
 pub trait Phase
 where
@@ -45,142 +45,8 @@ pub struct Prg<P: Phase> {
 pub struct Decls<P: Phase> {
     /// Map from identifiers to declarations
     pub map: HashMap<Ident, Decl<P>>,
-    /// Order in which declarations are defined in the source
-    pub source: Source,
-}
-
-impl<P: Phase> Decls<P> {
-    pub fn empty() -> Self {
-        Self { map: data::HashMap::default(), source: Default::default() }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = Item<'_, P>> {
-        self.source.iter().map(|item| match item {
-            source::Item::Type(type_decl) => match &self.map[&type_decl.name] {
-                Decl::Data(data) => Item::Data(data),
-                Decl::Codata(codata) => Item::Codata(codata),
-                _ => unreachable!(),
-            },
-            source::Item::Def(def_decl) => match &self.map[&def_decl.name] {
-                Decl::Def(def) => Item::Def(def),
-                Decl::Codef(codef) => Item::Codef(codef),
-                _ => unreachable!(),
-            },
-        })
-    }
-
-    pub fn typ(&self, name: &str) -> Type<'_, P> {
-        match &self.map[name] {
-            Decl::Data(data) => Type::Data(data),
-            Decl::Codata(codata) => Type::Codata(codata),
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn type_decl_for_member(&self, name: &Ident) -> Type<'_, P> {
-        let type_decl = self
-            .source
-            .type_decl_for_xtor(name)
-            .unwrap_or_else(|| self.source.type_decl_for_xdef(name).unwrap());
-        self.typ(&type_decl.name)
-    }
-
-    pub fn xtors_for_type(&self, name: &str) -> Vec<Ident> {
-        self.source.xtors_for_type(name)
-    }
-
-    pub fn xdefs_for_type(&self, name: &str) -> Vec<Ident> {
-        self.source.xdefs_for_type(name)
-    }
-
-    pub fn def(&self, name: &str) -> Option<&Def<P>> {
-        match &self.map.get(name)? {
-            Decl::Def(def) => Some(def),
-            _ => None,
-        }
-    }
-
-    pub fn codef(&self, name: &str) -> Option<&Codef<P>> {
-        match &self.map.get(name)? {
-            Decl::Codef(codef) => Some(codef),
-            _ => None,
-        }
-    }
-
-    pub fn ctor_or_codef(&self, name: &str) -> Option<Ctor<P>> {
-        match &self.map.get(name)? {
-            Decl::Ctor(ctor) => Some(ctor.clone()),
-            Decl::Codef(codef) => Some(codef.to_ctor()),
-            _ => None,
-        }
-    }
-
-    pub fn dtor_or_def(&self, name: &str) -> Option<Dtor<P>> {
-        match &self.map.get(name)? {
-            Decl::Dtor(dtor) => Some(dtor.clone()),
-            Decl::Def(def) => Some(def.to_dtor()),
-            _ => None,
-        }
-    }
-
-    pub fn ctor(&self, name: &str) -> Option<&Ctor<P>> {
-        match &self.map.get(name)? {
-            Decl::Ctor(ctor) => Some(ctor),
-            _ => None,
-        }
-    }
-
-    pub fn dtor(&self, name: &str) -> Option<&Dtor<P>> {
-        match &self.map.get(name)? {
-            Decl::Dtor(dtor) => Some(dtor),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Item<'a, P: Phase> {
-    Data(&'a Data<P>),
-    Codata(&'a Codata<P>),
-    Def(&'a Def<P>),
-    Codef(&'a Codef<P>),
-}
-
-impl<'a, P: Phase> Item<'a, P> {
-    pub fn hidden(&self) -> bool {
-        match self {
-            Item::Data(data) => data.hidden,
-            Item::Codata(codata) => codata.hidden,
-            Item::Def(def) => def.hidden,
-            Item::Codef(codef) => codef.hidden,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Type<'a, P: Phase> {
-    Data(&'a Data<P>),
-    Codata(&'a Codata<P>),
-}
-
-impl<'a, P: Phase> Type<'a, P> {
-    pub fn name(&self) -> &Ident {
-        match self {
-            Type::Data(data) => &data.name,
-            Type::Codata(codata) => &codata.name,
-        }
-    }
-
-    pub fn typ(&self) -> Rc<TypAbs<P>> {
-        match self {
-            Type::Data(data) => data.typ.clone(),
-            Type::Codata(codata) => codata.typ.clone(),
-        }
-    }
+    /// Metadata on declarations
+    pub lookup_table: LookupTable,
 }
 
 #[derive(Debug, Clone)]
@@ -191,6 +57,19 @@ pub enum Decl<P: Phase> {
     Dtor(Dtor<P>),
     Def(Def<P>),
     Codef(Codef<P>),
+}
+
+impl<P: Phase> Decl<P> {
+    pub fn kind(&self) -> DeclKind {
+        match self {
+            Decl::Data(_) => DeclKind::Data,
+            Decl::Codata(_) => DeclKind::Codata,
+            Decl::Ctor(_) => DeclKind::Ctor,
+            Decl::Dtor(_) => DeclKind::Dtor,
+            Decl::Def(_) => DeclKind::Def,
+            Decl::Codef(_) => DeclKind::Codef,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
