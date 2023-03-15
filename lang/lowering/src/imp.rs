@@ -17,17 +17,52 @@ pub fn lower(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
     let mut ctx = Ctx::empty();
 
     // Register names and metadata
-    let deferred = register_names(&mut ctx, &items[..])?;
+    register_names(&mut ctx, &items[..])?;
     let source = build_source(items);
 
-    // Lower deferred definitions
-    for item in deferred {
+    // Lower definitions
+    for item in items {
         item.lower_in_ctx(&mut ctx)?;
     }
 
     let exp = exp.lower_in_ctx(&mut ctx)?;
 
     Ok(ust::Prg { decls: ctx.into_decls(source), exp })
+}
+
+/// Register names for all top-level declarations
+/// Returns definitions whose lowering has been deferred
+fn register_names(ctx: &mut Ctx, items: &[cst::Item]) -> Result<(), LoweringError> {
+    for item in items {
+        match item {
+            cst::Item::Data(data) => {
+                ctx.add_top_level_decl(&data.name, DeclMeta::from(data))?;
+                for ctor in &data.ctors {
+                    ctx.add_top_level_decl(
+                        &ctor.name,
+                        DeclMeta::Ctor { ret_typ: data.name.clone() },
+                    )?;
+                }
+            }
+            cst::Item::Codata(codata) => {
+                ctx.add_top_level_decl(&codata.name, DeclMeta::from(codata))?;
+                for dtor in &codata.dtors {
+                    ctx.add_top_level_decl(
+                        &dtor.name,
+                        DeclMeta::Dtor { self_typ: codata.name.clone() },
+                    )?;
+                }
+            }
+            cst::Item::Def(def) => {
+                ctx.add_top_level_decl(&def.name, DeclMeta::from(def))?;
+            }
+            cst::Item::Codef(codef) => {
+                ctx.add_top_level_decl(&codef.name, DeclMeta::from(codef))?;
+            }
+        }
+    }
+
+    Ok(())
 }
 
 /// Build the structure tracking the declaration order in the source code
@@ -58,44 +93,6 @@ fn build_source(items: &[cst::Item]) -> source::Source {
     }
 
     source
-}
-
-/// Register names for all top-level declarations
-/// Returns definitions whose lowering has been deferred
-fn register_names<'a>(
-    ctx: &mut Ctx,
-    items: &'a [cst::Item],
-) -> Result<Vec<&'a cst::Item>, LoweringError> {
-    let mut deferred = Vec::new();
-
-    for item in items {
-        match item {
-            cst::Item::Data(data) => {
-                ctx.add_name(&data.name, DeclKind::from(data))?;
-                for ctor in &data.ctors {
-                    ctx.add_name(&ctor.name, DeclKind::Ctor { ret_typ: data.name.clone() })?;
-                }
-                deferred.push(item);
-            }
-            cst::Item::Codata(codata) => {
-                ctx.add_name(&codata.name, DeclKind::from(codata))?;
-                for dtor in &codata.dtors {
-                    ctx.add_name(&dtor.name, DeclKind::Dtor { self_typ: codata.name.clone() })?;
-                }
-                deferred.push(item)
-            }
-            cst::Item::Def(def) => {
-                ctx.add_name(&def.name, DeclKind::from(def))?;
-                deferred.push(item);
-            }
-            cst::Item::Codef(codef) => {
-                ctx.add_name(&codef.name, DeclKind::from(codef))?;
-                deferred.push(item);
-            }
-        }
-    }
-
-    Ok(deferred)
 }
 
 impl Lower for cst::Item {
@@ -165,13 +162,34 @@ impl Lower for cst::Ctor {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Ctor { info, doc, name, params, typ } = self;
 
+        let typ_name = match ctx.lookup_top_level_decl(name, info)? {
+            DeclMeta::Ctor { ret_typ } => ret_typ,
+            other => {
+                return Err(LoweringError::InvalidDeclarationKind {
+                    name: name.clone(),
+                    expected: DeclKind::Ctor.pretty_name().to_owned(),
+                    actual: other.kind().pretty_name().to_owned(),
+                })
+            }
+        };
+
+        let type_arity = match ctx.lookup_top_level_decl(&typ_name, info)? {
+            DeclMeta::Data { arity } => arity,
+            other => {
+                return Err(LoweringError::InvalidDeclarationKind {
+                    name: name.clone(),
+                    expected: DeclKind::Data.pretty_name().to_owned(),
+                    actual: other.kind().pretty_name().to_owned(),
+                })
+            }
+        };
+
         params.lower_telescope(ctx, |ctx, params| {
             // If the type constructor does not take any arguments, it can be left out
             let typ = match typ {
                 Some(typ) => typ.lower_in_ctx(ctx)?,
                 None => {
-                    let typ_name = ctx.typ_name_for_xtor(name);
-                    if ctx.typ_ctor_arity(typ_name) == 0 {
+                    if type_arity == 0 {
                         ust::TypApp {
                             info: ust::Info::empty(),
                             name: typ_name.clone(),
@@ -204,13 +222,34 @@ impl Lower for cst::Dtor {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Dtor { info, doc, name, params, destructee, ret_typ } = self;
 
+        let typ_name = match ctx.lookup_top_level_decl(name, info)? {
+            DeclMeta::Dtor { self_typ } => self_typ,
+            other => {
+                return Err(LoweringError::InvalidDeclarationKind {
+                    name: name.clone(),
+                    expected: DeclKind::Dtor.pretty_name().to_owned(),
+                    actual: other.kind().pretty_name().to_owned(),
+                })
+            }
+        };
+
+        let type_arity = match ctx.lookup_top_level_decl(&typ_name, info)? {
+            DeclMeta::Codata { arity } => arity,
+            other => {
+                return Err(LoweringError::InvalidDeclarationKind {
+                    name: name.clone(),
+                    expected: DeclKind::Codata.pretty_name().to_owned(),
+                    actual: other.kind().pretty_name().to_owned(),
+                })
+            }
+        };
+
         params.lower_telescope(ctx, |ctx, params| {
             // If the type constructor does not take any arguments, it can be left out
             let on_typ = match &destructee.typ {
                 Some(on_typ) => on_typ.clone(),
                 None => {
-                    let typ_name = ctx.typ_name_for_xtor(name);
-                    if ctx.typ_ctor_arity(typ_name) == 0 {
+                    if type_arity == 0 {
                         cst::TypApp {
                             info: cst::Info { span: Default::default() },
                             name: typ_name.clone(),
@@ -370,19 +409,19 @@ impl Lower for cst::Exp {
                 Elem::Bound(lvl) => Ok(ust::Exp::Var {
                     info: info.lower_pure(),
                     name: name.clone(),
-                    idx: ctx.lower_bound(*lvl),
+                    idx: ctx.level_to_index(lvl),
                 }),
-                Elem::Decl => match ctx.decl_kind(name) {
-                    DeclKind::Codata { .. } | DeclKind::Data { .. } => Ok(ust::Exp::TypCtor {
+                Elem::Decl(meta) => match meta.kind() {
+                    DeclKind::Data | DeclKind::Codata => Ok(ust::Exp::TypCtor {
                         info: info.lower_pure(),
                         name: name.to_owned(),
                         args: subst.lower_in_ctx(ctx)?,
                     }),
-                    DeclKind::Def | DeclKind::Dtor { .. } => Err(LoweringError::MustUseAsDtor {
+                    DeclKind::Def | DeclKind::Dtor => Err(LoweringError::MustUseAsDtor {
                         name: name.to_owned(),
                         span: info.span.to_miette(),
                     }),
-                    DeclKind::Codef | DeclKind::Ctor { .. } => Ok(ust::Exp::Ctor {
+                    DeclKind::Codef | DeclKind::Ctor => Ok(ust::Exp::Ctor {
                         info: info.lower_pure(),
                         name: name.to_owned(),
                         args: subst.lower_in_ctx(ctx)?,
@@ -394,8 +433,8 @@ impl Lower for cst::Exp {
                     name: name.clone(),
                     span: info.span.to_miette(),
                 }),
-                Elem::Decl => match ctx.decl_kind(name) {
-                    DeclKind::Def | DeclKind::Dtor { .. } => Ok(ust::Exp::Dtor {
+                Elem::Decl(meta) => match meta.kind() {
+                    DeclKind::Def | DeclKind::Dtor => Ok(ust::Exp::Dtor {
                         info: info.lower_pure(),
                         exp: exp.lower_in_ctx(ctx)?,
                         name: name.clone(),

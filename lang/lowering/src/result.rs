@@ -41,4 +41,7 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
+    #[error("Expected {name} to be a {expected}, but it is a {actual}")]
+    #[diagnostic(code("L-006"))]
+    InvalidDeclarationKind { name: String, expected: String, actual: String },
 }

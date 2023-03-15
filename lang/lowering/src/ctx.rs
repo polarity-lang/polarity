@@ -9,14 +9,16 @@ use syntax::ust;
 use super::result::LoweringError;
 
 pub struct Ctx {
+    /// Map that resolves local binder names to De-Bruijn levels
+    ///
     /// For each name, store a vector representing the different binders
     /// represented by this name. The last entry represents the binder currently in scope,
     /// the remaining entries represent the binders which are currently shadowed.
     ///
     /// Bound variables in this map are De-Bruijn levels rather than indices:
-    map: HashMap<Ident, Vec<Elem>>,
-    /// Declaration metadata
-    decl_kinds: HashMap<Ident, DeclKind>,
+    local_map: HashMap<Ident, Vec<Lvl>>,
+    /// Metadata for top-level names
+    top_level_map: HashMap<Ident, DeclMeta>,
     /// Accumulates top-level declarations
     decls_map: HashMap<Ident, ust::Decl>,
     /// Counts the number of entries for each De-Bruijn level
@@ -24,41 +26,33 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    pub fn lookup(&self, name: &str, info: &cst::Info) -> Result<&Elem, LoweringError> {
-        self.map.get(name).and_then(|stack| stack.last()).ok_or_else(|| {
-            LoweringError::UndefinedIdent { name: name.to_owned(), span: info.span.to_miette() }
+    pub fn lookup(&self, name: &str, info: &cst::Info) -> Result<Elem, LoweringError> {
+        Context::lookup(self, name.to_owned()).ok_or_else(|| LoweringError::UndefinedIdent {
+            name: name.to_owned(),
+            span: info.span.to_miette(),
         })
     }
 
-    pub fn decl_kind(&self, name: &Ident) -> &DeclKind {
-        &self.decl_kinds[name]
+    pub fn lookup_top_level_decl(
+        &self,
+        name: &str,
+        info: &cst::Info,
+    ) -> Result<DeclMeta, LoweringError> {
+        self.top_level_map.get(name).cloned().ok_or_else(|| LoweringError::UndefinedIdent {
+            name: name.to_owned(),
+            span: info.span.to_miette(),
+        })
     }
 
-    pub fn typ_name_for_xtor(&self, name: &Ident) -> &Ident {
-        match &self.decl_kinds[name] {
-            DeclKind::Ctor { ret_typ } => ret_typ,
-            DeclKind::Dtor { self_typ } => self_typ,
-            _ => panic!("Can only query type name for declared xtors"),
+    pub fn add_top_level_decl(
+        &mut self,
+        name: &Ident,
+        decl_kind: DeclMeta,
+    ) -> Result<(), LoweringError> {
+        if self.top_level_map.contains_key(name) {
+            return Err(LoweringError::AlreadyDefined { name: name.to_owned(), span: None });
         }
-    }
-
-    pub fn typ_ctor_arity(&self, name: &Ident) -> usize {
-        match self.decl_kind(name) {
-            DeclKind::Data { arity } => *arity,
-            DeclKind::Codata { arity } => *arity,
-            _ => panic!("Can only query type constructor arity for declared (co)data types"),
-        }
-    }
-
-    // FIXME: confusing name, rename or inline
-    pub fn lower_bound(&self, lvl: Lvl) -> Idx {
-        self.level_to_index(lvl)
-    }
-
-    pub fn add_name(&mut self, name: &Ident, decl_kind: DeclKind) -> Result<(), LoweringError> {
-        self.decl_kinds.insert(name.clone(), decl_kind);
-        let stack = self.map.entry(name.clone()).or_insert_with(Default::default);
-        stack.push(Elem::Decl);
+        self.top_level_map.insert(name.clone(), decl_kind);
         Ok(())
     }
 
@@ -70,16 +64,14 @@ impl Ctx {
     }
 
     pub fn add_decl(&mut self, decl: ust::Decl) -> Result<(), LoweringError> {
-        match self.decls_map.get(decl.name()) {
-            Some(_) => Err(LoweringError::AlreadyDefined {
+        if self.decls_map.contains_key(decl.name()) {
+            return Err(LoweringError::AlreadyDefined {
                 name: decl.name().clone(),
                 span: decl.info().span.to_miette(),
-            }),
-            None => {
-                self.decls_map.insert(decl.name().clone(), decl);
-                Ok(())
-            }
+            });
         }
+        self.decls_map.insert(decl.name().clone(), decl);
+        Ok(())
     }
 
     pub fn into_decls(self, source: source::Source) -> ust::Decls {
@@ -94,7 +86,7 @@ impl Ctx {
     }
 
     /// Convert the given De-Bruijn level to a De-Bruijn index
-    fn level_to_index(&self, lvl: Lvl) -> Idx {
+    pub fn level_to_index(&self, lvl: Lvl) -> Idx {
         let fst = self.levels.len() - 1 - lvl.fst;
         let snd = self.levels[lvl.fst] - 1 - lvl.snd;
         Idx { fst, snd }
@@ -104,14 +96,14 @@ impl Ctx {
 impl Context for Ctx {
     type ElemIn = Ident;
 
-    type ElemOut = Elem;
+    type ElemOut = Option<Elem>;
 
     type Var = Ident;
 
     fn empty() -> Self {
         Self {
-            map: HashMap::default(),
-            decl_kinds: HashMap::default(),
+            local_map: HashMap::default(),
+            top_level_map: HashMap::default(),
             decls_map: HashMap::default(),
             levels: Vec::new(),
         }
@@ -126,33 +118,35 @@ impl Context for Ctx {
     }
 
     fn push_binder(&mut self, elem: Self::ElemIn) {
-        let var = Elem::Bound(self.curr_lvl());
+        let var = self.curr_lvl();
         *self.levels.last_mut().unwrap() += 1;
-        let stack = self.map.entry(elem).or_insert_with(Default::default);
+        let stack = self.local_map.entry(elem).or_insert_with(Default::default);
         stack.push(var);
     }
 
     fn pop_binder(&mut self, elem: Self::ElemIn) {
-        let stack = self.map.get_mut(&elem).expect("Tried to read unknown variable");
+        let stack = self.local_map.get_mut(&elem).expect("Tried to read unknown variable");
         stack.pop().unwrap();
         *self.levels.last_mut().unwrap() -= 1;
     }
 
     fn lookup<V: Into<Self::Var>>(&self, var: V) -> Self::ElemOut {
-        let idx = var.into();
-        self.map.get(&idx).and_then(|stack| stack.last()).cloned().unwrap()
+        let name = var.into();
+        self.local_map
+            .get(&name)
+            .and_then(|stack| stack.last().cloned().map(Elem::Bound))
+            .or_else(|| self.top_level_map.get(&name).cloned().map(Elem::Decl))
     }
 }
 
 #[derive(Clone, Debug)]
 pub enum Elem {
     Bound(Lvl),
-    Decl,
+    Decl(DeclMeta),
 }
 
-// FIXME: Rename to DeclMeta or something similar
 #[derive(Clone, Debug)]
-pub enum DeclKind {
+pub enum DeclMeta {
     Data { arity: usize },
     Codata { arity: usize },
     Def,
@@ -161,35 +155,71 @@ pub enum DeclKind {
     Dtor { self_typ: Ident },
 }
 
-impl From<&cst::Data> for DeclKind {
+#[derive(Clone, Copy, Debug)]
+pub enum DeclKind {
+    Data,
+    Codata,
+    Def,
+    Codef,
+    Ctor,
+    Dtor,
+}
+
+impl DeclKind {
+    pub fn pretty_name(&self) -> &str {
+        match self {
+            DeclKind::Data => "data type",
+            DeclKind::Codata => "codata type",
+            DeclKind::Def => "definition",
+            DeclKind::Codef => "codefinition",
+            DeclKind::Ctor => "constructor",
+            DeclKind::Dtor => "destructor",
+        }
+    }
+}
+
+impl DeclMeta {
+    pub fn kind(&self) -> DeclKind {
+        match self {
+            DeclMeta::Data { .. } => DeclKind::Data,
+            DeclMeta::Codata { .. } => DeclKind::Codata,
+            DeclMeta::Def => DeclKind::Def,
+            DeclMeta::Codef => DeclKind::Codef,
+            DeclMeta::Ctor { .. } => DeclKind::Ctor,
+            DeclMeta::Dtor { .. } => DeclKind::Dtor,
+        }
+    }
+}
+
+impl From<&cst::Data> for DeclMeta {
     fn from(data: &cst::Data) -> Self {
         Self::Data { arity: data.params.len() }
     }
 }
 
-impl From<&cst::Codata> for DeclKind {
+impl From<&cst::Codata> for DeclMeta {
     fn from(codata: &cst::Codata) -> Self {
         Self::Codata { arity: codata.params.len() }
     }
 }
 
-impl From<&cst::Def> for DeclKind {
+impl From<&cst::Def> for DeclMeta {
     fn from(_def: &cst::Def) -> Self {
         Self::Def
     }
 }
 
-impl From<&cst::Codef> for DeclKind {
+impl From<&cst::Codef> for DeclMeta {
     fn from(_codef: &cst::Codef) -> Self {
         Self::Codef
     }
 }
 
-impl From<&cst::Item> for DeclKind {
+impl From<&cst::Item> for DeclMeta {
     fn from(decl: &cst::Item) -> Self {
         match decl {
-            cst::Item::Data(data) => DeclKind::from(data),
-            cst::Item::Codata(codata) => DeclKind::from(codata),
+            cst::Item::Data(data) => DeclMeta::from(data),
+            cst::Item::Codata(codata) => DeclMeta::from(codata),
             cst::Item::Def(_def) => Self::Def,
             cst::Item::Codef(_codef) => Self::Codef,
         }
