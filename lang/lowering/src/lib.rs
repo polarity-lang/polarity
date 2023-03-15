@@ -1,5 +1,3 @@
-pub mod ext;
-
 mod ctx;
 mod imp;
 mod result;
