@@ -351,7 +351,8 @@ impl<'a> Print<'a> for Closure {
     }
 }
 
-// AsElementStruct
+// FIXME: Remove newtype wrapper
+// AES = AsElementStruct
 pub struct AES<'a> {
     pub aes: &'a Rc<Val>,
 }

@@ -1,9 +1,10 @@
+use syntax::ctx::Context;
+use syntax::ust;
+
+use super::env::Env;
 use super::eval::*;
 use super::read_back::*;
 use super::result::*;
-use crate::env::Env;
-use syntax::ctx::Context;
-use syntax::ust;
 
 pub trait Normalize {
     type Nf;
