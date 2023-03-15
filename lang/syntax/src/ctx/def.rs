@@ -6,7 +6,6 @@ use crate::ast::Annotated;
 use crate::ast::*;
 use crate::common::*;
 use crate::nf::Nf;
-use crate::val::Val;
 
 /// Defines the interface of a variable context
 pub trait Context: Sized {
@@ -231,12 +230,6 @@ impl<P: Phase, T: Annotated<P>> AsElement<Rc<Exp<P>>> for T {
 impl<T: Named> AsElement<Ident> for T {
     fn as_element(&self) -> Ident {
         self.name().to_owned()
-    }
-}
-
-impl AsElement<Rc<Val>> for &Rc<Val> {
-    fn as_element(&self) -> Rc<Val> {
-        (*self).clone()
     }
 }
 

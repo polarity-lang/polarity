@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use printer::{ColorChoice, PrintExt, StandardStream};
 use source::{Database, File};
-use syntax::val;
+use syntax::nf;
 
 use crate::result::IOError;
 
@@ -16,16 +16,16 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::default();
     let file = File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
     let view = db.add(file).query();
-    let val = view.run().map_err(|err| view.pretty_error(err))?;
+    let nf = view.run().map_err(|err| view.pretty_error(err))?;
     println!("{} typechecked successfully!", cmd.filepath.display());
-    if let Some(val) = val {
-        print_val(&val)
+    if let Some(nf) = nf {
+        print_nf(&nf)
     }
     Ok(())
 }
 
-fn print_val(val: &val::Val) {
+fn print_nf(nf: &nf::Nf) {
     let mut stream = StandardStream::stdout(ColorChoice::Auto);
-    val.print_colored(&Default::default(), &mut stream).expect("Failed to print to stdout");
+    nf.print_colored(&Default::default(), &mut stream).expect("Failed to print to stdout");
     println!();
 }

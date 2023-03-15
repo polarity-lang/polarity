@@ -1,10 +1,10 @@
 use std::rc::Rc;
 
+use super::val;
 use syntax::common::*;
 use syntax::ctx::Bind;
 use syntax::nf;
 use syntax::ust::Prg;
-use syntax::val;
 use tracer::trace;
 
 use super::eval::Eval;
@@ -145,7 +145,7 @@ impl ReadBack for val::Closure {
             .collect();
         self.env
             .shift((1, 0))
-            .bind_iter(args.iter(), |env| self.body.eval(prg, env))?
+            .bind_iter(args.iter().map(|x| val::AES { aes: x }), |env| self.body.eval(prg, env))?
             .read_back(prg)
     }
 }
