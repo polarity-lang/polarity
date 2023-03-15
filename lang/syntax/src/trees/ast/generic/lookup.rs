@@ -12,30 +12,6 @@ use crate::common::*;
 use super::def::*;
 use super::lookup_table;
 
-#[derive(Error, Diagnostic, Debug)]
-pub enum LookupError {
-    #[error("Undefined top-level declaration {name}")]
-    UndefinedDeclaration {
-        name: String,
-        #[label]
-        span: Option<SourceSpan>,
-    },
-    #[error("Expected {name} to be a {expected}, but it is a {actual}")]
-    InvalidDeclarationKind {
-        name: String,
-        expected: AnyOf<DeclKind>,
-        actual: DeclKind,
-        #[label]
-        span: Option<SourceSpan>,
-    },
-    #[error("Missing type declaration for {name}")]
-    MissingTypeDeclaration {
-        name: String,
-        #[label]
-        span: Option<SourceSpan>,
-    },
-}
-
 impl<P: Phase> Decls<P> {
     pub fn empty() -> Self {
         Self { map: data::HashMap::default(), lookup_table: Default::default() }
@@ -286,6 +262,30 @@ impl<'a, P: Phase> Type<'a, P> {
             Type::Codata(codata) => codata.typ.clone(),
         }
     }
+}
+
+#[derive(Error, Diagnostic, Debug)]
+pub enum LookupError {
+    #[error("Undefined top-level declaration {name}")]
+    UndefinedDeclaration {
+        name: String,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Expected {name} to be a {expected}, but it is a {actual}")]
+    InvalidDeclarationKind {
+        name: String,
+        expected: AnyOf<DeclKind>,
+        actual: DeclKind,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Missing type declaration for {name}")]
+    MissingTypeDeclaration {
+        name: String,
+        #[label]
+        span: Option<SourceSpan>,
+    },
 }
 
 #[derive(Debug)]
