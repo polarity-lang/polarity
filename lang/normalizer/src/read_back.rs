@@ -145,7 +145,7 @@ impl ReadBack for val::Closure {
             .collect();
         self.env
             .shift((1, 0))
-            .bind_iter(args.iter(), |env| self.body.eval(prg, env))?
+            .bind_iter(args.iter().map(|x| val::AES { aes: x }), |env| self.body.eval(prg, env))?
             .read_back(prg)
     }
 }

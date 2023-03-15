@@ -22,6 +22,7 @@ tower-lsp = { version = "0.17", default-features = false, features = ["runtime-a
 # workspace members
 source = { path = "../lang/source" }
 typechecker = { path = "../lang/typechecker" }
+normalizer = { path = "../lang/normalizer" }
 syntax = { path = "../lang/syntax" }
 printer = { path = "../lang/printer" }
 lsp-server = { path = "../util/lsp" }

@@ -4,14 +4,14 @@
 
 use std::rc::Rc;
 
+use normalizer::env::Env;
+use normalizer::env::ToEnv;
 use normalizer::eval::Eval;
 use normalizer::read_back::ReadBack;
 use printer::Print;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::{Context, HasContext, LevelCtx};
-use syntax::env::Env;
-use syntax::env::ToEnv;
 use syntax::nf::Nf;
 use syntax::ust;
 

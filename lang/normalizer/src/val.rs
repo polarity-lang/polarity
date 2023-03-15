@@ -350,3 +350,15 @@ impl<'a> Print<'a> for Closure {
         alloc.text("...")
     }
 }
+
+// AsElementStruct
+pub struct AES<'a> {
+    pub aes: &'a Rc<Val>,
+}
+
+impl<'a> AsElement<Rc<Val>> for AES<'a> {
+    fn as_element(&self) -> Rc<Val> {
+        let AES { aes } = self;
+        (*aes).clone()
+    }
+}

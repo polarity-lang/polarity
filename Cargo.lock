@@ -52,6 +52,7 @@ dependencies = [
  "futures",
  "lsp-server",
  "miette",
+ "normalizer",
  "printer",
  "source",
  "syntax",

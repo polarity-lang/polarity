@@ -2,8 +2,9 @@ use std::rc::Rc;
 
 use super::DatabaseView;
 
+use normalizer::val;
 use syntax::common::Forget;
-use syntax::{cst, tst, ust, val};
+use syntax::{cst, tst, ust};
 
 use crate::*;
 

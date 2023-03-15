@@ -92,8 +92,10 @@ fn eval_dtor(
                             message: format!("Lookup failed: {ctor_name}"),
                             span: info.span.to_miette(),
                         })?;
-                    let body =
-                        Env::empty().bind_iter(dtor_args.iter(), |env| body.eval(prg, env))?;
+                    let body = Env::empty()
+                        .bind_iter(dtor_args.iter().map(|x| val::AES { aes: x }), |env| {
+                            body.eval(prg, env)
+                        })?;
                     beta_match(prg, body, &ctor_name, &ctor_args)
                 }
                 Type::Codata(_) => {
@@ -102,8 +104,10 @@ fn eval_dtor(
                             message: format!("Lookup failed: {ctor_name}"),
                             span: info.span.to_miette(),
                         })?;
-                    let body =
-                        Env::empty().bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
+                    let body = Env::empty()
+                        .bind_iter(ctor_args.iter().map(|x| val::AES { aes: x }), |env| {
+                            body.eval(prg, env)
+                        })?;
                     beta_comatch(prg, body, dtor_name, &dtor_args)
                 }
             }
@@ -231,7 +235,7 @@ impl Eval for ust::TypApp {
 
 impl Apply for Closure {
     fn apply(mut self, prg: &Prg, args: &[Rc<Val>]) -> Result<Rc<Val>, EvalError> {
-        self.env.bind_iter(args.iter(), |env| self.body.eval(prg, env))
+        self.env.bind_iter(args.iter().map(|x| val::AES { aes: x }), |env| self.body.eval(prg, env))
     }
 }
 

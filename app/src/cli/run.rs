@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
+use normalizer::val;
 use printer::{ColorChoice, PrintExt, StandardStream};
 use source::{Database, File};
-use syntax::val;
 
 use crate::result::IOError;
 
