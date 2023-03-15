@@ -1,8 +1,13 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
+use syntax::ast::LookupError;
+
 #[derive(Error, Diagnostic, Debug)]
 pub enum EvalError {
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    Lookup(#[from] LookupError),
     #[error("The impossible happened: {message}")]
     #[diagnostic(code("E-XXX"))]
     /// This error should not occur.

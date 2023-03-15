@@ -2,9 +2,6 @@ use std::fmt;
 use std::ops::{Bound, RangeBounds};
 use std::rc::Rc;
 
-#[cfg(feature = "use-serde")]
-use serde_derive::{Deserialize, Serialize};
-
 use super::equiv::*;
 
 /// Two-dimensional De-Bruijn index
@@ -14,7 +11,6 @@ use super::equiv::*;
 /// The second component counts the number of binders in that binder list between the end
 /// of the binder list and the binder this variable originated from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
 pub struct Idx {
     pub fst: usize,
     pub snd: usize,

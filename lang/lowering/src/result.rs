@@ -43,5 +43,5 @@ pub enum LoweringError {
     },
     #[error("Expected {name} to be a {expected}, but it is a {actual}")]
     #[diagnostic(code("L-006"))]
-    InvalidDeclarationKind { name: String, expected: String, actual: String },
+    InvalidDeclarationKind { name: String, expected: DeclKind, actual: DeclKind },
 }

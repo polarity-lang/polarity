@@ -5,14 +5,14 @@ use data::HashMap;
 use crate::common::*;
 
 use super::def::*;
-use super::source::Source;
+use super::lookup_table::LookupTable;
 
 #[rustfmt::skip]
 #[allow(unused_variables)]
 #[allow(clippy::too_many_arguments)]
 pub trait Visitor<P: Phase> {
     fn visit_prg(&mut self, decls: &Decls<P>, exp: &Option<Rc<Exp<P>>>) {}
-    fn visit_decls(&mut self, map: &HashMap<Ident, Decl<P>>, source: &Source) {}
+    fn visit_decls(&mut self, map: &HashMap<Ident, Decl<P>>, source: &LookupTable) {}
     fn visit_decl(&mut self, decl: &Decl<P>) {}
     fn visit_decl_data(&mut self, data: &Data<P>) {}
     fn visit_decl_codata(&mut self, codata: &Codata<P>) {}
@@ -141,11 +141,11 @@ impl<P: Phase> Visit<P> for Decls<P> {
     where
         V: Visitor<P>,
     {
-        let Decls { map, source } = self;
+        let Decls { map, lookup_table } = self;
         for decl in map.values() {
             decl.visit(v)
         }
-        v.visit_decls(map, source)
+        v.visit_decls(map, lookup_table)
     }
 }
 

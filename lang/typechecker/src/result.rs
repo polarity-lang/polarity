@@ -7,6 +7,7 @@ use thiserror::Error;
 use data::string::{comma_separated, separated};
 use data::HashSet;
 use normalizer::result::EvalError;
+use syntax::ast::LookupError;
 use syntax::common::*;
 use syntax::nf;
 use syntax::ust;
@@ -111,6 +112,9 @@ pub enum TypeError {
     #[error(transparent)]
     #[diagnostic(transparent)]
     Eval(#[from] EvalError),
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    Lookup(#[from] LookupError),
 }
 
 impl TypeError {
