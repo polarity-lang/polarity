@@ -30,6 +30,18 @@ pub trait Context: Sized {
     fn pop_binder(&mut self, elem: Self::ElemIn);
 }
 
+/// Interface to bind variables to anything that has a `Context`
+///
+/// There are two use cases for this trait.
+///
+/// Case 1: You have a type that implements `Context`.
+/// Then, a blanket impl ensures that this type also implements `BindContext`.
+///
+/// Case 2: You have a type that has a field which implements `Context`.
+/// Then, only implement the `ctx_mut` method for `BindContext` and return the field that implements `Context`.
+/// Do not override the default implementations for the `bind_*` methods.
+///
+/// In both cases, `BindContext` will provide a safe interface to bind variables and telescopes.
 pub trait BindContext: Sized {
     type Ctx: Context;
 
