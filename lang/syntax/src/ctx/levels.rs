@@ -2,8 +2,9 @@ use std::fmt;
 
 use data::string::comma_separated;
 
-use super::def::*;
 use crate::common::*;
+
+use super::def::*;
 
 #[derive(Clone, Debug, Default)]
 pub struct LevelCtx {
