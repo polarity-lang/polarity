@@ -7,9 +7,7 @@ use codespan::Span;
 use data::HashSet;
 use miette_util::ToMiette;
 use normalizer::env::ToEnv;
-use normalizer::eval::Eval;
 use normalizer::normalize::Normalize;
-use normalizer::read_back::ReadBack;
 use syntax::common::*;
 use syntax::ctx::{Bind, BindElem, Context, LevelCtx};
 use syntax::nf;
@@ -710,9 +708,8 @@ impl Check for ust::Exp {
                     // Pattern matching with motive
                     Some(m) => {
                         let ust::Motive { info, param, ret_typ } = m;
-                        let self_t =
-                            typ_app.to_exp().forget().forget().eval(prg, &mut ctx.env())?;
-                        let self_t_nf = self_t.read_back(prg)?;
+                        let self_t_nf =
+                            typ_app.to_exp().forget().forget().normalize(prg, &mut ctx.env())?;
 
                         // Typecheck the motive
                         let ret_typ_out = ctx
@@ -955,8 +952,7 @@ impl CheckTelescope for ust::TelescopeInst {
                 let ust::ParamInst { info, name, typ: () } = param_actual;
                 let ust::Param { typ, .. } = param_expected;
                 let typ_out = typ.check(prg, ctx, type_univ())?;
-                let typ_val = typ.eval(prg, &mut ctx.env())?;
-                let typ_nf = typ_val.read_back(prg)?;
+                let typ_nf = typ.normalize(prg, &mut ctx.env())?;
                 let mut params_out = params_out;
                 let param_out = tst::ParamInst {
                     info: info.with_type(typ_nf.clone()),
@@ -988,8 +984,7 @@ impl InferTelescope for ust::Telescope {
             |ctx, mut params_out, param| {
                 let ust::Param { typ, name } = param;
                 let typ_out = typ.check(prg, ctx, type_univ())?;
-                let elem = typ.eval(prg, &mut ctx.env())?;
-                let elem = elem.read_back(prg)?;
+                let elem = typ.normalize(prg, &mut ctx.env())?;
                 let param_out = tst::Param { name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
                 Result::<_, TypeError>::Ok(BindElem { elem, ret: params_out })
@@ -1010,8 +1005,7 @@ impl InferTelescope for ust::SelfParam {
     ) -> Result<T, TypeError> {
         let ust::SelfParam { info, name, typ } = self;
 
-        let elem = typ.to_exp().eval(prg, &mut ctx.env())?;
-        let elem = elem.read_back(prg)?;
+        let elem = typ.to_exp().normalize(prg, &mut ctx.env())?;
         let typ_out = typ.infer(prg, ctx)?;
         let param_out = tst::SelfParam {
             info: tst::Info { span: info.span },

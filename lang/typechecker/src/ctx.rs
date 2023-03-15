@@ -4,10 +4,8 @@
 
 use std::rc::Rc;
 
-use normalizer::env::Env;
-use normalizer::env::ToEnv;
-use normalizer::eval::Eval;
-use normalizer::read_back::ReadBack;
+use normalizer::env::{Env, ToEnv};
+use normalizer::normalize::Normalize;
 use printer::Print;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
@@ -49,8 +47,8 @@ impl ContextSubstExt for Ctx {
         let levels = self.vars.levels();
         self.map_failable(|nf| {
             let exp = nf.forget().subst(&mut levels.clone(), s);
-            let val = exp.eval(prg, &mut env.clone())?;
-            Ok(val.read_back(prg)?)
+            let nf = exp.normalize(prg, &mut env.clone())?;
+            Ok(nf)
         })
     }
 }
@@ -60,6 +58,12 @@ impl HasContext for Ctx {
 
     fn ctx_mut(&mut self) -> &mut Self::Ctx {
         &mut self.vars
+    }
+}
+
+impl ToEnv for Ctx {
+    fn env(&self) -> Env {
+        self.vars.env()
     }
 }
 
@@ -74,10 +78,6 @@ impl Ctx {
 
     pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<Nf> {
         self.vars.lookup(idx)
-    }
-
-    pub fn env(&self) -> Env {
-        self.vars.env()
     }
 
     pub fn levels(&self) -> LevelCtx {

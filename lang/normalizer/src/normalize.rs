@@ -1,14 +1,18 @@
-use crate::env::Env;
-use syntax::ust;
-
 use super::eval::*;
 use super::read_back::*;
 use super::result::*;
+use crate::env::Env;
+use syntax::ctx::Context;
+use syntax::ust;
 
 pub trait Normalize {
     type Nf;
 
     fn normalize(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Nf, EvalError>;
+
+    fn normalize_in_empty_env(&self, prg: &ust::Prg) -> Result<Self::Nf, EvalError> {
+        self.normalize(prg, &mut Env::empty())
+    }
 }
 
 impl<T> Normalize for T
