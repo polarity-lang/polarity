@@ -54,7 +54,7 @@ impl Lift {
 
         // Update program accordingly
         for decl in &self.new_decls {
-            prg_out.decls.source.insert_def(self.name.clone(), decl.name().clone());
+            prg_out.decls.lookup_table.insert_def(self.name.clone(), decl.name().clone());
         }
 
         let decls_iter = self.new_decls.into_iter().map(|decl| (decl.name().clone(), decl));

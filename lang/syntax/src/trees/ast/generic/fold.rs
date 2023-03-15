@@ -6,7 +6,7 @@ use data::HashMap;
 use crate::common::*;
 
 use super::def::*;
-use super::source::Source;
+use super::lookup_table::LookupTable;
 
 pub fn id<P: Phase>() -> Id<P> {
     Id::default()
@@ -19,7 +19,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn enter_decl(&mut self, decl: &Decl<P>) { let _ = decl; }
 
     fn fold_prg(&mut self, decls: O::Decls, exp: Option<O::Exp>) -> O::Prg;
-    fn fold_decls(&mut self, map: HashMap<Ident, O::Decl>, order: Source) -> O::Decls;
+    fn fold_decls(&mut self, map: HashMap<Ident, O::Decl>, order: LookupTable) -> O::Decls;
     fn fold_decl(&mut self, decl: O::Decl) -> O::Decl;
     fn fold_decl_data(&mut self, data: O::Data) -> O::Decl;
     fn fold_decl_codata(&mut self, codata: O::Codata) -> O::Decl;
@@ -247,9 +247,9 @@ where
     where
         F: Folder<P, O>,
     {
-        let Decls { map, source } = self;
+        let Decls { map, lookup_table } = self;
         let map = map.into_iter().map(|(name, decl)| (name, decl.fold(f))).collect();
-        f.fold_decls(map, source)
+        f.fold_decls(map, lookup_table)
     }
 }
 

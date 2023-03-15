@@ -3,7 +3,8 @@ use std::rc::Rc;
 use num_bigint::BigUint;
 
 use miette_util::ToMiette;
-use syntax::ast::source;
+use syntax::ast::lookup_table;
+use syntax::common::*;
 use syntax::cst;
 use syntax::ctx::{Bind, Context};
 use syntax::ust;
@@ -18,7 +19,7 @@ pub fn lower(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
 
     // Register names and metadata
     register_names(&mut ctx, &items[..])?;
-    let source = build_source(items);
+    let lookup_table = build_lookup_table(items);
 
     // Lower definitions
     for item in items {
@@ -27,7 +28,7 @@ pub fn lower(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
 
     let exp = exp.lower_in_ctx(&mut ctx)?;
 
-    Ok(ust::Prg { decls: ctx.into_decls(source), exp })
+    Ok(ust::Prg { decls: ctx.into_decls(lookup_table), exp })
 }
 
 /// Register names for all top-level declarations
@@ -66,33 +67,33 @@ fn register_names(ctx: &mut Ctx, items: &[cst::Item]) -> Result<(), LoweringErro
 }
 
 /// Build the structure tracking the declaration order in the source code
-fn build_source(items: &[cst::Item]) -> source::Source {
-    let mut source = source::Source::default();
+fn build_lookup_table(items: &[cst::Item]) -> lookup_table::LookupTable {
+    let mut lookup_table = lookup_table::LookupTable::default();
 
     for item in items {
         match item {
             cst::Item::Data(data) => {
-                let mut typ_decl = source.add_type_decl(data.name.clone());
+                let mut typ_decl = lookup_table.add_type_decl(data.name.clone());
                 let xtors = data.ctors.iter().map(|ctor| ctor.name.clone());
                 typ_decl.set_xtors(xtors);
             }
             cst::Item::Codata(codata) => {
-                let mut typ_decl = source.add_type_decl(codata.name.clone());
+                let mut typ_decl = lookup_table.add_type_decl(codata.name.clone());
                 let xtors = codata.dtors.iter().map(|ctor| ctor.name.clone());
                 typ_decl.set_xtors(xtors);
             }
             cst::Item::Def(def) => {
                 let type_name = def.scrutinee.typ.name.clone();
-                source.add_def(type_name, def.name.to_owned());
+                lookup_table.add_def(type_name, def.name.to_owned());
             }
             cst::Item::Codef(codef) => {
                 let type_name = codef.typ.name.clone();
-                source.add_def(type_name, codef.name.to_owned())
+                lookup_table.add_def(type_name, codef.name.to_owned())
             }
         }
     }
 
-    source
+    lookup_table
 }
 
 impl Lower for cst::Item {
@@ -167,8 +168,8 @@ impl Lower for cst::Ctor {
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
                     name: name.clone(),
-                    expected: DeclKind::Ctor.pretty_name().to_owned(),
-                    actual: other.kind().pretty_name().to_owned(),
+                    expected: DeclKind::Ctor,
+                    actual: other.kind(),
                 })
             }
         };
@@ -178,8 +179,8 @@ impl Lower for cst::Ctor {
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
                     name: name.clone(),
-                    expected: DeclKind::Data.pretty_name().to_owned(),
-                    actual: other.kind().pretty_name().to_owned(),
+                    expected: DeclKind::Data,
+                    actual: other.kind(),
                 })
             }
         };
@@ -227,8 +228,8 @@ impl Lower for cst::Dtor {
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
                     name: name.clone(),
-                    expected: DeclKind::Dtor.pretty_name().to_owned(),
-                    actual: other.kind().pretty_name().to_owned(),
+                    expected: DeclKind::Dtor,
+                    actual: other.kind(),
                 })
             }
         };
@@ -238,8 +239,8 @@ impl Lower for cst::Dtor {
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
                     name: name.clone(),
-                    expected: DeclKind::Codata.pretty_name().to_owned(),
-                    actual: other.kind().pretty_name().to_owned(),
+                    expected: DeclKind::Codata,
+                    actual: other.kind(),
                 })
             }
         };
