@@ -509,12 +509,11 @@ where
                 let mut dtors_group = alloc.nil();
                 while let Exp::Dtor { info: _, exp, name, args } = dtor {
                     let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-                    dtors_group = alloc
-                        .text(DOT)
-                        .append(alloc.dtor(name))
-                        .append(psubst)
-                        .append(alloc.line_())
-                        .append(dtors_group);
+                    if !dtors_group.is_nil() {
+                        dtors_group = alloc.line_().append(dtors_group);
+                    }
+                    dtors_group =
+                        alloc.text(DOT).append(alloc.dtor(name)).append(psubst).append(dtors_group);
                     dtor = exp;
                 }
                 dtor.print(cfg, alloc).append(dtors_group.align().group())

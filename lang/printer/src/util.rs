@@ -13,6 +13,13 @@ pub trait BackslashExt<'a, A: 'a>: DocAllocator<'a, A> {
     fn backslash_from(&'a self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, Self, A>;
 }
 
+pub trait IsNilExt<'a, D, A: 'a>
+where
+    D: ?Sized + DocAllocator<'a, A>,
+{
+    fn is_nil(&self) -> bool;
+}
+
 impl<'a, D, A> BracesExt<'a, D, A> for pretty::DocBuilder<'a, D, A>
 where
     D: ?Sized + DocAllocator<'a, A>,
@@ -30,5 +37,14 @@ where
     fn backslash_from(&'a self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, Self, A> {
         let backlash = if cfg.latex { "\\textbackslash{}" } else { "\\" };
         self.text(backlash)
+    }
+}
+
+impl<'a, D, A> IsNilExt<'a, D, A> for pretty::DocBuilder<'a, D, A>
+where
+    D: ?Sized + DocAllocator<'a, A>,
+{
+    fn is_nil(&self) -> bool {
+        matches!(self.1, pretty::BuildDoc::Doc(pretty::Doc::Nil))
     }
 }
