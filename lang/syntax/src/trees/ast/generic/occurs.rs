@@ -18,10 +18,10 @@ impl<P: Phase> Occurs for Exp<P> {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         match self {
             Exp::Var { idx, .. } => ctx.idx_to_lvl(*idx) == lvl,
-            Exp::TypCtor { args, .. } => args.iter().any(|arg| arg.occurs(ctx, lvl)),
-            Exp::Ctor { args, .. } => args.iter().any(|arg| arg.occurs(ctx, lvl)),
+            Exp::TypCtor { args, .. } => args.args.iter().any(|arg| arg.occurs(ctx, lvl)),
+            Exp::Ctor { args, .. } => args.args.iter().any(|arg| arg.occurs(ctx, lvl)),
             Exp::Dtor { exp, args, .. } => {
-                exp.occurs(ctx, lvl) || args.iter().any(|arg| arg.occurs(ctx, lvl))
+                exp.occurs(ctx, lvl) || args.args.iter().any(|arg| arg.occurs(ctx, lvl))
             }
             Exp::Anno { exp, typ, .. } => exp.occurs(ctx, lvl) || typ.occurs(ctx, lvl),
             Exp::Type { .. } => false,

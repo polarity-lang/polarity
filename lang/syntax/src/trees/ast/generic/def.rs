@@ -333,7 +333,7 @@ pub struct Motive<P: Phase> {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Telescope<P: Phase> {
-    pub params: Params<P>,
+    pub params: Vec<Param<P>>,
 }
 
 impl<P: Phase> Telescope<P> {
@@ -363,8 +363,27 @@ impl<P: Phase> TelescopeInst<P> {
     }
 }
 
-pub type Params<P> = Vec<Param<P>>;
-pub type Args<P> = Vec<Rc<Exp<P>>>;
+/// A list of arguments
+/// In dependent type theory, this concept is usually called a "substitution" but that name would be confusing in this implementation
+/// because it conflicts with the operation of substitution (i.e. substituting a terms for a variable in another term).
+/// In particular, while we often substitute argument lists for telescopes, this is not always the case.
+/// Substitutions in the sense of argument lists are a special case of a more general concept of context morphisms.
+/// Unifiers are another example of context morphisms and applying a unifier to an expression mean substituting various terms,
+/// which are not necessarily part of a single argument list.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct Args<P: Phase> {
+    pub args: Vec<Rc<Exp<P>>>,
+}
+
+impl<P: Phase> Args<P> {
+    pub fn len(&self) -> usize {
+        self.args.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.args.is_empty()
+    }
+}
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -451,10 +470,6 @@ impl<P: Phase> HasPhase for Exp<P> {
 }
 
 impl<P: Phase> HasPhase for Telescope<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Params<P> {
     type Phase = P;
 }
 

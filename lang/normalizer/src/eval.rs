@@ -218,6 +218,14 @@ impl Eval for ust::TypApp {
     }
 }
 
+impl Eval for ust::Args {
+    type Val = Vec<Rc<Val>>;
+
+    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
+        self.args.eval(prg, env)
+    }
+}
+
 impl Apply for Closure {
     fn apply(mut self, prg: &Prg, args: &[Rc<Val>]) -> Result<Rc<Val>, EvalError> {
         self.env.bind_iter(args.iter(), |env| self.body.eval(prg, env))

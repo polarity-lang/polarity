@@ -131,8 +131,8 @@ where
     P::InfTyp: Substitutable<Rc<Exp<P>>>,
 {
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let TypApp { info, name, args: subst } = self;
-        TypApp { info: info.clone(), name: name.clone(), args: subst.subst(ctx, by) }
+        let TypApp { info, name, args } = self;
+        TypApp { info: info.clone(), name: name.clone(), args: args.subst(ctx, by) }
     }
 }
 
@@ -143,6 +143,15 @@ where
     fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Param { name, typ } = self;
         Param { name: name.clone(), typ: typ.subst(ctx, by) }
+    }
+}
+
+impl<P: Phase> Substitutable<Rc<Exp<P>>> for Args<P>
+where
+    P::InfTyp: Substitutable<Rc<Exp<P>>>,
+{
+    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        Args { args: self.args.subst(ctx, by) }
     }
 }
 

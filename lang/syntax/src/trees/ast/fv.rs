@@ -39,8 +39,8 @@ impl FreeVars<wst::WST> {
         // Types may be interdependent but can only depend on types which occur earlier in the context.
         let fvs = self.sorted();
 
-        let mut params: wst::Params = vec![];
-        let mut args: wst::Args = vec![];
+        let mut params: Vec<wst::Param> = vec![];
+        let mut args = vec![];
         let mut subst = FVSubst::new(cutoff);
 
         // FIXME: The manual context management here should be abstracted out
@@ -64,7 +64,7 @@ impl FreeVars<wst::WST> {
             subst.add(name, lvl, info);
         }
 
-        FreeVarsResult { telescope: Telescope { params }, subst, args }
+        FreeVarsResult { telescope: Telescope { params }, subst, args: Args { args } }
     }
 
     /// Compute the union of two free variable sets

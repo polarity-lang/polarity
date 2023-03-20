@@ -194,7 +194,7 @@ impl Lower for cst::Ctor {
                         ust::TypApp {
                             info: ust::Info::empty(),
                             name: typ_name.clone(),
-                            args: vec![],
+                            args: ust::Args { args: vec![] },
                         }
                     } else {
                         return Err(LoweringError::MustProvideArgs {
@@ -391,12 +391,12 @@ impl Lower for cst::TypApp {
     type Target = ust::TypApp;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::TypApp { info, name, args: subst } = self;
+        let cst::TypApp { info, name, args } = self;
 
         Ok(ust::TypApp {
             info: info.lower_pure(),
             name: name.clone(),
-            args: subst.lower_in_ctx(ctx)?,
+            args: ust::Args { args: args.lower_in_ctx(ctx)? },
         })
     }
 }
@@ -406,7 +406,7 @@ impl Lower for cst::Exp {
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         match self {
-            cst::Exp::Call { info, name, args: subst } => match ctx.lookup(name, info)? {
+            cst::Exp::Call { info, name, args } => match ctx.lookup(name, info)? {
                 Elem::Bound(lvl) => Ok(ust::Exp::Var {
                     info: info.lower_pure(),
                     name: name.clone(),
@@ -416,7 +416,7 @@ impl Lower for cst::Exp {
                     DeclKind::Data | DeclKind::Codata => Ok(ust::Exp::TypCtor {
                         info: info.lower_pure(),
                         name: name.to_owned(),
-                        args: subst.lower_in_ctx(ctx)?,
+                        args: ust::Args { args: args.lower_in_ctx(ctx)? },
                     }),
                     DeclKind::Def | DeclKind::Dtor => Err(LoweringError::MustUseAsDtor {
                         name: name.to_owned(),
@@ -425,11 +425,11 @@ impl Lower for cst::Exp {
                     DeclKind::Codef | DeclKind::Ctor => Ok(ust::Exp::Ctor {
                         info: info.lower_pure(),
                         name: name.to_owned(),
-                        args: subst.lower_in_ctx(ctx)?,
+                        args: ust::Args { args: args.lower_in_ctx(ctx)? },
                     }),
                 },
             },
-            cst::Exp::DotCall { info, exp, name, args: subst } => match ctx.lookup(name, info)? {
+            cst::Exp::DotCall { info, exp, name, args } => match ctx.lookup(name, info)? {
                 Elem::Bound(_) => Err(LoweringError::CannotUseAsDtor {
                     name: name.clone(),
                     span: info.span.to_miette(),
@@ -439,7 +439,7 @@ impl Lower for cst::Exp {
                         info: info.lower_pure(),
                         exp: exp.lower_in_ctx(ctx)?,
                         name: name.clone(),
-                        args: subst.lower_in_ctx(ctx)?,
+                        args: ust::Args { args: args.lower_in_ctx(ctx)? },
                     }),
                     _ => Err(LoweringError::CannotUseAsDtor {
                         name: name.clone(),
@@ -471,8 +471,11 @@ impl Lower for cst::Exp {
                 Ok(ust::Exp::Hole { info: info.lower_pure(), kind: *kind })
             }
             cst::Exp::NatLit { info, val } => {
-                let mut out =
-                    ust::Exp::Ctor { info: info.lower_pure(), name: "Z".to_owned(), args: vec![] };
+                let mut out = ust::Exp::Ctor {
+                    info: info.lower_pure(),
+                    name: "Z".to_owned(),
+                    args: ust::Args { args: vec![] },
+                };
 
                 let mut i = BigUint::from(0usize);
 
@@ -481,7 +484,7 @@ impl Lower for cst::Exp {
                     out = ust::Exp::Ctor {
                         info: info.lower_pure(),
                         name: "S".to_owned(),
-                        args: vec![Rc::new(out)],
+                        args: ust::Args { args: vec![Rc::new(out)] },
                     };
                 }
 
@@ -490,7 +493,7 @@ impl Lower for cst::Exp {
             cst::Exp::Fun { info, from, to } => Ok(ust::Exp::TypCtor {
                 info: info.lower_pure(),
                 name: "Fun".to_owned(),
-                args: vec![from.lower_in_ctx(ctx)?, to.lower_in_ctx(ctx)?],
+                args: ust::Args { args: vec![from.lower_in_ctx(ctx)?, to.lower_in_ctx(ctx)?] },
             }),
             cst::Exp::Lam { info, var, body } => {
                 let comatch = cst::Exp::Comatch {
@@ -610,7 +613,7 @@ impl LowerTelescope for cst::Telescope {
         let tel = desugar_telescope(self);
         ctx.bind_fold(
             tel.0.iter(),
-            Ok(ust::Params::new()),
+            Ok(vec![]),
             |ctx, params_out, param| {
                 let mut params_out = params_out?;
                 let cst::Param { name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.

@@ -74,19 +74,19 @@ pub trait Mapper<P: Phase> {
     fn map_cocase(&mut self, info: P::Info, name: Ident, args: TelescopeInst<P>, body: Option<Rc<Exp<P>>>) -> Cocase<P> {
         Cocase { info, name, params: args, body }
     }
-    fn map_typ_app(&mut self, info: P::TypeInfo, name: Ident, args: Vec<Rc<Exp<P>>>) -> TypApp<P> {
+    fn map_typ_app(&mut self, info: P::TypeInfo, name: Ident, args: Args<P>) -> TypApp<P> {
         TypApp { info, name, args }
     }
     fn map_exp_var(&mut self, info: P::TypeInfo, name: P::VarName, idx: Idx) -> Exp<P> {
         Exp::Var { info, name, idx }
     }
-    fn map_exp_typ_ctor(&mut self, info: P::TypeInfo, name: Ident, args: Vec<Rc<Exp<P>>>) -> Exp<P> {
+    fn map_exp_typ_ctor(&mut self, info: P::TypeInfo, name: Ident, args: Args<P>) -> Exp<P> {
         Exp::TypCtor { info, name, args }
     }
-    fn map_exp_ctor(&mut self, info: P::TypeInfo, name: Ident, args: Vec<Rc<Exp<P>>>) -> Exp<P> {
+    fn map_exp_ctor(&mut self, info: P::TypeInfo, name: Ident, args: Args<P>) -> Exp<P> {
         Exp::Ctor { info, name, args }
     }
-    fn map_exp_dtor(&mut self, info: P::TypeInfo, exp: Rc<Exp<P>>, name: Ident, args: Vec<Rc<Exp<P>>>) -> Exp<P> {
+    fn map_exp_dtor(&mut self, info: P::TypeInfo, exp: Rc<Exp<P>>, name: Ident, args: Args<P>) -> Exp<P> {
         Exp::Dtor { info, exp, name, args }
     }
     fn map_exp_anno(&mut self, info: P::TypeInfo, exp: Rc<Exp<P>>, typ: Rc<Exp<P>>) -> Exp<P> {
@@ -138,6 +138,9 @@ pub trait Mapper<P: Phase> {
         F: FnOnce(&mut Self, SelfParam<P>) -> X
     {
         f_inner(self, SelfParam { info, name, typ })
+    }
+    fn map_args(&mut self, args: Vec<Rc<Exp<P>>>) -> Args<P> {
+        Args { args }
     }
     fn map_param(&mut self, name: Ident, typ: Rc<Exp<P>>) -> Param<P> {
         Param { name, typ }
@@ -262,7 +265,7 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_cocase(info, name, args, body)
     }
 
-    fn fold_typ_app(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: Vec<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::TypApp {
+    fn fold_typ_app(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::TypApp {
         self.map_typ_app(info, name, args)
     }
 
@@ -270,15 +273,15 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         Rc::new(self.map_exp_var(info, name, idx))
     }
 
-    fn fold_exp_typ_ctor(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: Vec<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Exp {
+    fn fold_exp_typ_ctor(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_typ_ctor(info, name, args))
     }
 
-    fn fold_exp_ctor(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: Vec<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Exp {
+    fn fold_exp_ctor(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_ctor(info, name, args))
     }
 
-    fn fold_exp_dtor(&mut self, info: <Id<P> as Out>::TypeInfo, exp: <Id<P> as Out>::Exp, name: Ident, args: Vec<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Exp {
+    fn fold_exp_dtor(&mut self, info: <Id<P> as Out>::TypeInfo, exp: <Id<P> as Out>::Exp, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_dtor(info, exp, name, args))
     }
 
@@ -350,6 +353,10 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
 
     fn fold_param_inst(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, typ: <Id<P> as Out>::Typ) -> <Id<P> as Out>::ParamInst {
         self.map_param_inst(info, name, typ)
+    }
+
+    fn fold_args(&mut self, args: Vec<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Args {
+        self.map_args(args)
     }
 
     fn fold_info(&mut self, info: <P as Phase>::Info) -> <Id<P> as Out>::Info {

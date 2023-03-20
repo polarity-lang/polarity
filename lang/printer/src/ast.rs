@@ -410,6 +410,15 @@ where
     }
 }
 
+impl<'a, P: Phase> Print<'a> for Args<P>
+where
+    P::InfTyp: ShiftInRange,
+{
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        self.args.print(cfg, alloc)
+    }
+}
+
 impl<'a, P: Phase> Print<'a> for TelescopeInst<P>
 where
     P::InfTyp: ShiftInRange,
@@ -467,8 +476,8 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let TypApp { info: _, name, args: subst } = self;
-        let psubst = if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+        let TypApp { info: _, name, args } = self;
+        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
         alloc.typ(name).append(psubst)
     }
 }
@@ -482,14 +491,14 @@ where
             Exp::Var { info: _, name, idx } => {
                 alloc.text(P::print_var(name, cfg.de_bruijn.then_some(*idx)))
             }
-            Exp::TypCtor { info: _, name, args: subst } => {
+            Exp::TypCtor { info: _, name, args } => {
                 let psubst =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                    if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 alloc.typ(name).append(psubst)
             }
-            Exp::Ctor { info: _, name, args: subst } => {
+            Exp::Ctor { info: _, name, args } => {
                 let psubst =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                    if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 alloc.ctor(name).append(psubst)
             }
             mut dtor @ Exp::Dtor { .. } => {

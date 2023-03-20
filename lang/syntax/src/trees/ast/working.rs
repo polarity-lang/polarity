@@ -53,7 +53,6 @@ pub type Exp = generic::Exp<WST>;
 pub type Motive = generic::Motive<WST>;
 pub type Telescope = generic::Telescope<WST>;
 pub type TelescopeInst = generic::TelescopeInst<WST>;
-pub type Params = generic::Params<WST>;
 pub type Args = generic::Args<WST>;
 pub type Param = generic::Param<WST>;
 pub type ParamInst = generic::ParamInst<WST>;

@@ -319,6 +319,14 @@ impl Forget for wst::ParamInst {
     }
 }
 
+impl Forget for wst::Args {
+    type Target = ust::Args;
+
+    fn forget(&self) -> Self::Target {
+        ust::Args { args: self.args.forget() }
+    }
+}
+
 impl Forget for wst::Info {
     type Target = ust::Info;
 

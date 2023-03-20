@@ -534,8 +534,11 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                     })
                     .map(Rc::new)
                     .collect();
-                let ctor =
-                    Rc::new(ust::Exp::Ctor { info: ust::Info::empty(), name: name.clone(), args });
+                let ctor = Rc::new(ust::Exp::Ctor {
+                    info: ust::Info::empty(),
+                    name: name.clone(),
+                    args: ust::Args { args },
+                });
                 let subst = Assign(Lvl { fst: curr_lvl, snd: 0 }, ctor);
 
                 // FIXME: Refactor this
@@ -791,8 +794,9 @@ impl Infer for ust::Exp {
                     &prg.decls.ctor_or_codef(name, info.span)?;
 
                 let args_out = args.check_args(prg, name, ctx, params, info.span)?;
-                let typ_out =
-                    typ.subst_under_ctx(vec![params.len()].into(), &vec![args.clone()]).to_exp();
+                let typ_out = typ
+                    .subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()])
+                    .to_exp();
                 let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
 
                 Ok(tst::Exp::Ctor {
@@ -809,13 +813,13 @@ impl Infer for ust::Exp {
 
                 let self_param_out = self_param
                     .typ
-                    .subst_under_ctx(vec![params.len()].into(), &vec![args.clone()])
+                    .subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()])
                     .to_exp();
                 let self_param_nf = self_param_out.normalize(prg, &mut ctx.env())?;
 
                 let exp_out = exp.check(prg, ctx, self_param_nf)?;
 
-                let subst = vec![args.clone(), vec![exp.clone()]];
+                let subst = vec![args.args.clone(), vec![exp.clone()]];
                 let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &subst);
                 let typ_out_nf = typ_out.normalize(prg, &mut ctx.env())?;
 
@@ -883,15 +887,19 @@ impl CheckArgs for ust::Args {
         }
 
         let ust::Telescope { params } =
-            params.subst_in_telescope(LevelCtx::empty(), &vec![self.clone()]);
+            params.subst_in_telescope(LevelCtx::empty(), &vec![self.args.clone()]);
 
-        self.iter()
+        let args = self
+            .args
+            .iter()
             .zip(params)
             .map(|(exp, ust::Param { typ, .. })| {
                 let typ = typ.normalize(prg, &mut ctx.env())?;
                 exp.check(prg, ctx, typ)
             })
-            .collect()
+            .collect::<Result<_, _>>()?;
+
+        Ok(tst::Args { args })
     }
 }
 
@@ -956,7 +964,7 @@ impl InferTelescope for ust::Telescope {
 
         ctx.bind_fold_failable(
             params.iter(),
-            tst::Params::new(),
+            vec![],
             |ctx, mut params_out, param| {
                 let ust::Param { typ, name } = param;
                 let typ_out = typ.check(prg, ctx, type_univ())?;
