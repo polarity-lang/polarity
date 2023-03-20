@@ -209,9 +209,8 @@ where
             .append(DOT)
             .append(alloc.dtor(name))
             .append(params.print(cfg, alloc))
-            .append(COLON)
-            .append(alloc.space())
-            .append(ret_typ.print(cfg, alloc));
+            .append(print_return_type(cfg, alloc, ret_typ))
+            .group();
 
         let body = body.print(cfg, alloc);
 
@@ -235,9 +234,8 @@ where
             .append(alloc.space())
             .append(alloc.ctor(name))
             .append(params.print(cfg, alloc))
-            .append(COLON)
-            .append(alloc.space())
-            .append(typ.print(cfg, alloc));
+            .append(print_return_type(cfg, alloc, typ))
+            .group();
 
         let body = body.print(cfg, alloc);
 
@@ -257,7 +255,7 @@ where
         if typ.is_simple() {
             head
         } else {
-            head.append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
+            head.append(print_return_type(cfg, alloc, typ)).group()
         }
     }
 }
@@ -276,9 +274,8 @@ where
         };
         head.append(alloc.dtor(name))
             .append(params.print(cfg, alloc))
-            .append(COLON)
-            .append(alloc.space())
-            .append(ret_typ.print(cfg, alloc))
+            .append(print_return_type(cfg, alloc, ret_typ))
+            .group()
     }
 }
 
@@ -406,7 +403,7 @@ where
                 output = output.append(COLON).append(alloc.space()).append(rtype.print(cfg, alloc));
             }
         }
-        output.append(alloc.line()).align().parens().group()
+        output.append(alloc.line_()).align().parens().group()
     }
 }
 
@@ -415,7 +412,15 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.args.print(cfg, alloc)
+        let mut doc = alloc.nil();
+        let mut iter = self.args.iter().peekable();
+        while let Some(arg) = iter.next() {
+            doc = doc.append(arg.print(cfg, alloc));
+            if iter.peek().is_some() {
+                doc = doc.append(COMMA).append(alloc.line())
+            }
+        }
+        doc.align().parens().group()
     }
 }
 
@@ -477,7 +482,7 @@ where
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypApp { info: _, name, args } = self;
-        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
+        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
         alloc.typ(name).append(psubst)
     }
 }
@@ -492,26 +497,23 @@ where
                 alloc.text(P::print_var(name, cfg.de_bruijn.then_some(*idx)))
             }
             Exp::TypCtor { info: _, name, args } => {
-                let psubst =
-                    if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
+                let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                 alloc.typ(name).append(psubst)
             }
             Exp::Ctor { info: _, name, args } => {
-                let psubst =
-                    if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
+                let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                 alloc.ctor(name).append(psubst)
             }
             mut dtor @ Exp::Dtor { .. } => {
                 // A series of destructors forms an aligned group
                 let mut dtors_group = alloc.nil();
                 while let Exp::Dtor { info: _, exp, name, args } = dtor {
-                    let psubst =
-                        if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
+                    let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                     dtors_group = alloc
                         .text(DOT)
                         .append(alloc.dtor(name))
                         .append(psubst)
-                        .append(alloc.line())
+                        .append(alloc.line_())
                         .append(dtors_group);
                     dtor = exp;
                 }
@@ -596,6 +598,19 @@ impl<'a, T: Print<'a>> Print<'a> for Option<T> {
             None => alloc.nil(),
         }
     }
+}
+
+fn print_return_type<'a, T: Print<'a>>(
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+    ret_typ: &'a T,
+) -> Builder<'a> {
+    alloc
+        .line_()
+        .append(COLON)
+        .append(alloc.space())
+        .append(ret_typ.print(cfg, alloc).group())
+        .nest(cfg.indent)
 }
 
 /// Print the Comatch as a lambda abstraction.
