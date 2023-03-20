@@ -356,7 +356,7 @@ where
                 .nest(cfg.indent),
         };
 
-        alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
+        alloc.dtor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
     }
 }
 
@@ -527,7 +527,7 @@ where
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
                 .append(match P::print_label(name) {
-                    Some(name) => alloc.space().append(alloc.text(name)),
+                    Some(name) => alloc.space().append(alloc.dtor(&name)),
                     None => alloc.nil(),
                 })
                 .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
@@ -540,7 +540,7 @@ where
                     alloc
                         .keyword(COMATCH)
                         .append(match P::print_label(name) {
-                            Some(name) => alloc.space().append(alloc.text(name)),
+                            Some(name) => alloc.space().append(alloc.ctor(&name)),
                             None => alloc.nil(),
                         })
                         .append(alloc.space())
