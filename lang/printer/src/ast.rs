@@ -125,7 +125,7 @@ where
         let sep = alloc.text(COMMA).append(alloc.line());
 
         let body = if ctors.is_empty() {
-            empty_braces(alloc, cfg)
+            empty_braces(alloc)
         } else {
             alloc
                 .line()
@@ -135,7 +135,7 @@ where
                 ))
                 .nest(cfg.indent)
                 .append(alloc.line())
-                .braces_from(cfg)
+                .braces_anno()
         };
 
         let body = if typ.params.is_empty() { body.group() } else { body };
@@ -172,7 +172,7 @@ where
         let sep = alloc.text(COMMA).append(alloc.line());
 
         let body = if dtors.is_empty() {
-            empty_braces(alloc, cfg)
+            empty_braces(alloc)
         } else {
             alloc
                 .line()
@@ -182,7 +182,7 @@ where
                 ))
                 .nest(cfg.indent)
                 .append(alloc.line())
-                .braces_from(cfg)
+                .braces_anno()
         };
 
         let body = if typ.params.is_empty() { body.group() } else { body };
@@ -286,7 +286,7 @@ where
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Comatch { info: _, cases } = self;
         if cases.is_empty() {
-            empty_braces(alloc, cfg)
+            empty_braces(alloc)
         } else {
             let sep = alloc.text(COMMA).append(alloc.hardline());
 
@@ -295,7 +295,7 @@ where
                 .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
                 .nest(cfg.indent)
                 .append(alloc.hardline())
-                .braces_from(cfg)
+                .braces_anno()
         }
     }
 }
@@ -307,7 +307,7 @@ where
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { info: _, cases } = self;
         if cases.is_empty() {
-            empty_braces(alloc, cfg)
+            empty_braces(alloc)
         } else {
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
@@ -315,7 +315,7 @@ where
                 .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
                 .nest(cfg.indent)
                 .append(alloc.hardline())
-                .braces_from(cfg)
+                .braces_anno()
         }
     }
 }
@@ -632,7 +632,7 @@ where
         .expect("No parameter bound in comatch marked as lambda sugar")
         .name();
     alloc
-        .backslash_from(cfg)
+        .backslash_anno(cfg)
         .append(var_name)
         .append(DOT)
         .append(alloc.space())
@@ -659,6 +659,6 @@ impl<'a, T: Print<'a>> Print<'a> for Vec<T> {
 }
 
 // Prints "{ }"
-fn empty_braces<'a>(alloc: &'a Alloc<'a>, cfg: &PrintCfg) -> Builder<'a> {
-    alloc.space().braces_from(cfg)
+fn empty_braces<'a>(alloc: &'a Alloc<'a>) -> Builder<'a> {
+    alloc.space().braces_anno()
 }

@@ -293,7 +293,7 @@ impl<'a> Print<'a> for Comatch {
             .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
             .nest(cfg.indent)
             .append(alloc.hardline())
-            .braces_from(cfg)
+            .braces_anno()
     }
 }
 
@@ -306,7 +306,7 @@ impl<'a> Print<'a> for Match {
             .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
             .nest(cfg.indent)
             .append(alloc.hardline())
-            .braces_from(cfg)
+            .braces_anno()
     }
 }
 

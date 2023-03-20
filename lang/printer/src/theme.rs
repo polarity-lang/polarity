@@ -1,15 +1,6 @@
-use pretty::{
-    termcolor::{Color, ColorSpec},
-    DocAllocator,
-};
+use pretty::DocAllocator;
 
 use super::types::*;
-
-const KEYWORD: Color = Color::Magenta;
-const CTOR: Color = Color::Blue;
-const DTOR: Color = Color::Green;
-const TYPE: Color = Color::Red;
-const COMMENT: Color = Color::Cyan;
 
 pub trait ThemeExt<'a> {
     fn keyword(&'a self, text: &str) -> Builder<'a>;
@@ -21,32 +12,22 @@ pub trait ThemeExt<'a> {
 
 impl<'a> ThemeExt<'a> for Alloc<'a> {
     fn keyword(&'a self, text: &str) -> Builder<'a> {
-        self.text(text.to_owned()).annotate(KEYWORD.spec())
+        self.text(text.to_owned()).annotate(Anno::Keyword)
     }
 
     fn ctor(&'a self, text: &str) -> Builder<'a> {
-        self.text(text.to_owned()).annotate(CTOR.spec())
+        self.text(text.to_owned()).annotate(Anno::Ctor)
     }
 
     fn dtor(&'a self, text: &str) -> Builder<'a> {
-        self.text(text.to_owned()).annotate(DTOR.spec())
+        self.text(text.to_owned()).annotate(Anno::Dtor)
     }
 
     fn typ(&'a self, text: &str) -> Builder<'a> {
-        self.text(text.to_owned()).annotate(TYPE.spec())
+        self.text(text.to_owned()).annotate(Anno::Type)
     }
 
     fn comment(&'a self, text: &str) -> Builder<'a> {
-        self.text(text.to_owned()).annotate(COMMENT.spec())
-    }
-}
-
-pub trait ColorExt {
-    fn spec(self) -> ColorSpec;
-}
-
-impl ColorExt for Color {
-    fn spec(self) -> ColorSpec {
-        ColorSpec::new().set_fg(Some(self)).clone()
+        self.text(text.to_owned()).annotate(Anno::Comment)
     }
 }
