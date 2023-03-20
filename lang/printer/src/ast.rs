@@ -492,10 +492,21 @@ where
                     if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
                 alloc.ctor(name).append(psubst)
             }
-            Exp::Dtor { info: _, exp, name, args: subst } => {
-                let psubst =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
-                exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
+            mut dtor @ Exp::Dtor { .. } => {
+                // A series of destructors forms an aligned group
+                let mut dtors_group = alloc.nil();
+                while let Exp::Dtor { info: _, exp, name, args } = dtor {
+                    let psubst =
+                        if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
+                    dtors_group = alloc
+                        .text(DOT)
+                        .append(alloc.dtor(name))
+                        .append(psubst)
+                        .append(alloc.line())
+                        .append(dtors_group);
+                    dtor = exp;
+                }
+                dtor.print(cfg, alloc).append(dtors_group.align().group())
             }
             Exp::Anno { info: _, exp, typ } => {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
