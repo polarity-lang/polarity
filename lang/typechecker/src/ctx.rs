@@ -7,26 +7,22 @@ use std::rc::Rc;
 use normalizer::env::{Env, ToEnv};
 use normalizer::normalize::Normalize;
 use printer::Print;
-use syntax::ast::LookupError;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::{BindContext, Context, LevelCtx};
 use syntax::nf::Nf;
 use syntax::ust;
 
-use crate::ng::NameGen;
 use crate::TypeError;
 
 pub struct Ctx {
     /// Typing of bound variables
     vars: TypeCtx,
-    /// Name generator for (co)match labels
-    ng: NameGen,
 }
 
 impl Default for Ctx {
     fn default() -> Self {
-        Self { vars: TypeCtx::empty(), ng: Default::default() }
+        Self { vars: TypeCtx::empty() }
     }
 }
 
@@ -94,14 +90,8 @@ impl Ctx {
     }
 
     pub fn fork<T, F: FnOnce(&mut Ctx) -> T>(&mut self, f: F) -> T {
-        let mut inner_ctx = Ctx { vars: self.vars.clone(), ng: std::mem::take(&mut self.ng) };
-        let out = f(&mut inner_ctx);
-        self.ng = inner_ctx.ng;
-        out
-    }
-
-    pub fn fresh_label(&mut self, type_name: &str, prg: &ust::Prg) -> Result<Ident, LookupError> {
-        self.ng.fresh_label(type_name, prg)
+        let mut inner_ctx = Ctx { vars: self.vars.clone() };
+        f(&mut inner_ctx)
     }
 }
 

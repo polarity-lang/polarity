@@ -1,5 +1,4 @@
 pub mod ctx;
-pub mod ng;
 pub mod result;
 pub mod typecheck;
 pub mod unify;
