@@ -252,7 +252,7 @@ impl Forget for wst::Exp {
             wst::Exp::Type { info } => ust::Exp::Type { info: info.forget() },
             wst::Exp::Match { info, name, on_exp, motive, ret_typ: _, body } => ust::Exp::Match {
                 info: info.forget(),
-                name: Some(name.clone()),
+                name: name.clone(),
                 on_exp: on_exp.forget(),
                 motive: motive.forget(),
                 ret_typ: (),
@@ -260,7 +260,7 @@ impl Forget for wst::Exp {
             },
             wst::Exp::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::Comatch {
                 info: info.forget(),
-                name: Some(name.clone()),
+                name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.forget(),
             },

@@ -18,7 +18,7 @@ def BoolRep(x).extract(x: Bool): Bool {
 data Top { Unit }
 
 def Top.flipRep(x: Bool, rep: BoolRep(x)): BoolRep(x.not) {
-    Unit => rep.match _ {
+    Unit => rep.match {
         TrueRep => FalseRep,
         FalseRep => TrueRep,
     }

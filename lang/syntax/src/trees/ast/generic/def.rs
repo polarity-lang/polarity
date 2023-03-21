@@ -22,13 +22,10 @@ where
     type TypeAppInfo: HasSpan + Clone + Into<Self::TypeInfo> + fmt::Debug;
     /// Type of the `name` field of `Exp::Var`
     type VarName: Clone + fmt::Debug;
-    /// Type of the `name` fiels on `Exp::Match` and `Exp::Comatch`
-    type Label: Clone + Eq + Hash + fmt::Debug;
     /// A type which is not annotated in the source, but will be filled in later during typechecking
     type InfTyp: Clone + fmt::Debug;
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String;
-    fn print_label(name: &Self::Label) -> Option<String>;
 }
 
 pub trait HasPhase {
@@ -296,7 +293,7 @@ pub enum Exp<P: Phase> {
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
-        name: P::Label,
+        name: Label,
         on_exp: Rc<Exp<P>>,
         motive: Option<Motive<P>>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
@@ -306,7 +303,7 @@ pub enum Exp<P: Phase> {
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
-        name: P::Label,
+        name: Label,
         is_lambda_sugar: bool,
         body: Comatch<P>,
     },

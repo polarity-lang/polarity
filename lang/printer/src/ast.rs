@@ -526,8 +526,8 @@ where
                 .print(cfg, alloc)
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
-                .append(match P::print_label(name) {
-                    Some(name) => alloc.space().append(alloc.dtor(&name)),
+                .append(match &name.user_name {
+                    Some(name) => alloc.space().append(alloc.dtor(name)),
                     None => alloc.nil(),
                 })
                 .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
@@ -539,8 +539,8 @@ where
                 } else {
                     alloc
                         .keyword(COMATCH)
-                        .append(match P::print_label(name) {
-                            Some(name) => alloc.space().append(alloc.ctor(&name)),
+                        .append(match &name.user_name {
+                            Some(name) => alloc.space().append(alloc.ctor(name)),
                             None => alloc.nil(),
                         })
                         .append(alloc.space())

@@ -24,7 +24,7 @@ impl<'a> Print<'a> for Nf {
             Nf::Comatch { info: _, name, is_lambda_sugar: _, body } => alloc
                 .keyword(COMATCH)
                 .append(alloc.space())
-                .append(alloc.text(name))
+                .append(alloc.text(name.to_string()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Nf::Neu { exp } => exp.print(cfg, alloc),
@@ -46,7 +46,7 @@ impl<'a> Print<'a> for Neu {
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
                 .append(alloc.space())
-                .append(alloc.text(name))
+                .append(alloc.text(name.to_string()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Neu::Hole { .. } => alloc.keyword(HOLE_TODO),

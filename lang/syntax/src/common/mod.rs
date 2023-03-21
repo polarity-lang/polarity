@@ -9,6 +9,7 @@ mod named;
 mod subst;
 
 pub use de_bruijn::*;
+use derivative::Derivative;
 pub use equiv::*;
 pub use forget::*;
 pub use named::*;
@@ -24,6 +25,25 @@ pub trait HasInfo {
     type Info;
 
     fn info(&self) -> Self::Info;
+}
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Label {
+    /// A machine-generated, unique id
+    pub id: usize,
+    /// A user-annotated name
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub user_name: Option<Ident>,
+}
+
+impl fmt::Display for Label {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self.user_name {
+            None => Ok(()),
+            Some(user_name) => user_name.fmt(f),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]

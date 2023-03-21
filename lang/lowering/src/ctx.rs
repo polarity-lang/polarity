@@ -1,4 +1,4 @@
-use data::HashMap;
+use data::{HashMap, HashSet};
 use miette_util::ToMiette;
 use syntax::ast::lookup_table;
 use syntax::common::*;
@@ -23,6 +23,10 @@ pub struct Ctx {
     decls_map: HashMap<Ident, ust::Decl>,
     /// Counts the number of entries for each De-Bruijn level
     levels: Vec<usize>,
+    /// Counter for unique label ids
+    next_label_id: usize,
+    /// Set of user-annotated label names
+    user_labels: HashSet<Ident>,
 }
 
 impl Ctx {
@@ -78,6 +82,40 @@ impl Ctx {
         ust::Decls { map: self.decls_map, lookup_table }
     }
 
+    pub fn unique_label(
+        &mut self,
+        user_name: Option<Ident>,
+        info: &cst::Info,
+    ) -> Result<Label, LoweringError> {
+        if let Some(user_name) = &user_name {
+            match Context::lookup(self, user_name) {
+                Some(Elem::Decl(_)) => {
+                    return Err(LoweringError::LabelNotUnique {
+                        name: user_name.to_owned(),
+                        span: info.span.to_miette(),
+                    })
+                }
+                Some(Elem::Bound(_)) => {
+                    return Err(LoweringError::LabelShadowed {
+                        name: user_name.to_owned(),
+                        span: info.span.to_miette(),
+                    })
+                }
+                None => (),
+            }
+            if self.user_labels.contains(user_name) {
+                return Err(LoweringError::LabelNotUnique {
+                    name: user_name.to_owned(),
+                    span: info.span.to_miette(),
+                });
+            }
+            self.user_labels.insert(user_name.to_owned());
+        }
+        let id = self.next_label_id;
+        self.next_label_id += 1;
+        Ok(Label { id, user_name })
+    }
+
     /// Next De Bruijn level to be assigned
     fn curr_lvl(&self) -> Lvl {
         let fst = self.levels.len() - 1;
@@ -106,6 +144,8 @@ impl Context for Ctx {
             top_level_map: HashMap::default(),
             decls_map: HashMap::default(),
             levels: Vec::new(),
+            next_label_id: 0,
+            user_labels: HashSet::default(),
         }
     }
 

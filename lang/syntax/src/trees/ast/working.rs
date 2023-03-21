@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use codespan::Span;
+use derivative::Derivative;
 
 use crate::common::*;
 use crate::ust;
@@ -16,7 +17,6 @@ impl generic::Phase for WST {
     type TypeAppInfo = TypeAppInfo;
 
     type VarName = Ident;
-    type Label = Ident;
     type InfTyp = Typ;
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String {
@@ -25,10 +25,6 @@ impl generic::Phase for WST {
         } else {
             name.clone()
         }
-    }
-
-    fn print_label(name: &Self::Label) -> Option<String> {
-        Some(name.to_owned())
     }
 }
 
@@ -56,6 +52,19 @@ pub type TelescopeInst = generic::TelescopeInst<WST>;
 pub type Args = generic::Args<WST>;
 pub type Param = generic::Param<WST>;
 pub type ParamInst = generic::ParamInst<WST>;
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Label {
+    /// A machine-generated, unique id
+    id: usize,
+    /// A user-annotated name
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    user_name: Option<Ident>,
+    /// Whether the name was user-annotated
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    user_annotated: bool,
+}
 
 #[derive(Clone, Debug)]
 pub struct Typ(Rc<Exp>);

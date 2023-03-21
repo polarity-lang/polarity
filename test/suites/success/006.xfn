@@ -4,8 +4,8 @@ data D(a: A) { MkD(a: A): D(a) }
 data Top { Unit }
 
 def Top.foo(a:A, d: D(a)): D(a) {
-    Unit => d.match _ {
-        MkD(a) => MkD(a).match _ {
+    Unit => d.match {
+        MkD(a) => MkD(a).match {
             MkD(_) => MkD(a)
         }
     }

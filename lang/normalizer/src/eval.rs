@@ -1,7 +1,6 @@
 use std::rc::Rc;
 
-use miette_util::ToMiette;
-
+use syntax::common::*;
 use syntax::ctx::{BindContext, Context};
 use syntax::ust::{self, Exp, Prg, Type};
 use tracer::trace;
@@ -45,25 +44,15 @@ impl Eval for Exp {
             }
             Exp::Anno { exp, .. } => exp.eval(prg, env)?,
             Exp::Type { info } => Rc::new(Val::Type { info: info.clone() }),
-            Exp::Match { info, name, on_exp, body, .. } => {
-                let name = name.as_ref().ok_or_else(|| EvalError::Impossible {
-                    message: "Missing label on match".to_owned(),
-                    span: info.span.to_miette(),
-                })?;
+            Exp::Match { name, on_exp, body, .. } => {
                 eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?
             }
-            Exp::Comatch { info, name, is_lambda_sugar, body } => {
-                let name = name.to_owned().ok_or_else(|| EvalError::Impossible {
-                    message: "Missing label on comatch".to_owned(),
-                    span: info.span.to_miette(),
-                })?;
-                Rc::new(Val::Comatch {
-                    info: info.clone(),
-                    name,
-                    is_lambda_sugar: *is_lambda_sugar,
-                    body: body.eval(prg, env)?,
-                })
-            }
+            Exp::Comatch { info, name, is_lambda_sugar, body } => Rc::new(Val::Comatch {
+                info: info.clone(),
+                name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
+                body: body.eval(prg, env)?,
+            }),
             Exp::Hole { info, kind } => {
                 Rc::new(Val::Neu { exp: Neu::Hole { info: info.clone(), kind: *kind } })
             }
@@ -112,7 +101,7 @@ fn eval_dtor(
 
 fn eval_match(
     prg: &Prg,
-    match_name: &str,
+    match_name: &Label,
     on_exp: Rc<Val>,
     body: val::Match,
 ) -> Result<Rc<Val>, EvalError> {

@@ -77,6 +77,23 @@ impl Lift {
     fn mark_modified(&mut self) {
         self.modified_decls.insert(self.curr_decl.clone());
     }
+
+    /// Generate a definition name based on the label and type information
+    fn unique_def_name(&self, label: Label, type_name: &str) -> Ident {
+        label.user_name.unwrap_or_else(|| {
+            let lowered = type_name.to_lowercase();
+            let id = label.id;
+            format!("d_{lowered}{id}")
+        })
+    }
+
+    /// Generate a codefinition name based on the label and type information
+    fn unique_codef_name(&self, label: Label, type_name: &str) -> Ident {
+        label.user_name.unwrap_or_else(|| {
+            let id = label.id;
+            format!("Mk{type_name}{id}")
+        })
+    }
 }
 
 impl Mapper<WST> for Lift {
@@ -87,7 +104,7 @@ impl Mapper<WST> for Lift {
     fn map_exp_match(
         &mut self,
         info: wst::TypeAppInfo,
-        name: Ident,
+        name: Label,
         on_exp: Rc<wst::Exp>,
         motive: Option<wst::Motive>,
         ret_typ: wst::Typ,
@@ -123,6 +140,8 @@ impl Mapper<WST> for Lift {
         };
 
         // Build the new top-level definition
+        let name = self.unique_def_name(name, &info.typ.name);
+
         let def = wst::Def {
             info: wst::Info::empty(),
             doc: None,
@@ -152,7 +171,7 @@ impl Mapper<WST> for Lift {
     fn map_exp_comatch(
         &mut self,
         info: wst::TypeAppInfo,
-        name: Ident,
+        name: Label,
         is_lambda_sugar: bool,
         body: wst::Comatch,
     ) -> wst::Exp {
@@ -173,6 +192,8 @@ impl Mapper<WST> for Lift {
         let typ = info.typ.subst(&mut self.ctx.levels(), &subst);
 
         // Build the new top-level definition
+        let name = self.unique_codef_name(name, &info.typ.name);
+
         let codef = wst::Codef {
             info: wst::Info::empty(),
             doc: None,

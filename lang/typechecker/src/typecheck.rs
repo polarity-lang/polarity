@@ -679,7 +679,6 @@ impl Check for ust::Exp {
                 let on_exp_out = on_exp.infer(prg, ctx)?;
                 let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
                 let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
-                let type_name = typ_app.name.clone();
                 let ret_typ_out = t.forget().check(prg, ctx, type_univ())?;
 
                 let motive_out;
@@ -729,10 +728,7 @@ impl Check for ust::Exp {
 
                 Ok(tst::Exp::Match {
                     info: info.with_type_app(typ_app, typ_app_nf),
-                    name: match name.to_owned() {
-                        Some(name) => name,
-                        None => ctx.fresh_label(&type_name, prg)?,
-                    },
+                    name: name.clone(),
                     on_exp: on_exp_out,
                     motive: motive_out,
                     ret_typ: ret_typ_out.into(),
@@ -742,15 +738,11 @@ impl Check for ust::Exp {
             ust::Exp::Comatch { info, name, is_lambda_sugar, body } => {
                 let typ_app_nf = t.expect_typ_app()?;
                 let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
-                let type_name = typ_app.name.clone();
                 let body_out = body.with_scrutinee(typ_app_nf.clone()).infer(prg, ctx)?;
 
                 Ok(tst::Exp::Comatch {
                     info: info.with_type_app(typ_app, typ_app_nf),
-                    name: match name.to_owned() {
-                        Some(name) => name,
-                        None => ctx.fresh_label(&type_name, prg)?,
-                    },
+                    name: name.clone(),
                     is_lambda_sugar: *is_lambda_sugar,
                     body: body_out,
                 })

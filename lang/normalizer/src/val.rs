@@ -34,7 +34,7 @@ pub enum Val {
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Info,
-        name: Ident,
+        name: Label,
         is_lambda_sugar: bool,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Comatch,
@@ -65,7 +65,7 @@ pub enum Neu {
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Info,
-        name: Ident,
+        name: Label,
         on_exp: Rc<Neu>,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Match,
@@ -251,7 +251,7 @@ impl<'a> Print<'a> for Val {
             Val::Comatch { info: _, name, is_lambda_sugar: _, body } => alloc
                 .keyword(COMATCH)
                 .append(alloc.space())
-                .append(alloc.text(name))
+                .append(alloc.text(name.to_string()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Val::Neu { exp } => exp.print(cfg, alloc),
@@ -273,7 +273,7 @@ impl<'a> Print<'a> for Neu {
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
                 .append(alloc.space())
-                .append(alloc.text(name))
+                .append(alloc.text(name.to_string()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Neu::Hole { info: _, kind } => match kind {

@@ -28,7 +28,7 @@ pub enum Nf {
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Info,
-        name: Ident,
+        name: Label,
         is_lambda_sugar: bool,
         body: Comatch,
     },
@@ -58,7 +58,7 @@ pub enum Neu {
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Info,
-        name: Ident,
+        name: Label,
         on_exp: Rc<Neu>,
         body: Match,
     },

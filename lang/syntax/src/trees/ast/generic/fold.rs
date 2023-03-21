@@ -45,8 +45,8 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_exp_dtor(&mut self, info: O::TypeInfo, exp: O::Exp, name: Ident, args: O::Args) -> O::Exp;
     fn fold_exp_anno(&mut self, info: O::TypeInfo, exp: O::Exp, typ: O::Exp) -> O::Exp;
     fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
-    fn fold_exp_match(&mut self, info: O::TypeAppInfo, name:P::Label, on_exp: O::Exp, motive: Option<O::Motive>, ret_typ: O::Typ, body: O::Match) -> O::Exp;
-    fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, name: P::Label, is_lambda_sugar: bool, body: O::Comatch) -> O::Exp;
+    fn fold_exp_match(&mut self, info: O::TypeAppInfo, name: Label, on_exp: O::Exp, motive: Option<O::Motive>, ret_typ: O::Typ, body: O::Match) -> O::Exp;
+    fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, name: Label, is_lambda_sugar: bool, body: O::Comatch) -> O::Exp;
     fn fold_exp_hole(&mut self, info: O::TypeInfo, kind: HoleKind) -> O::Exp;
     fn fold_motive(&mut self, info: O::Info, param: O::ParamInst, ret_typ: O::Exp) -> O::Motive;
     // FIXME: Unifier binder handling into one method
