@@ -201,9 +201,10 @@ where
             return alloc.nil();
         }
 
-        let head = doc
-            .print(cfg, alloc)
-            .append(alloc.keyword(DEF))
+        let doc = doc.print(cfg, alloc);
+
+        let head = alloc
+            .keyword(DEF)
             .append(alloc.space())
             .append(self_param.print(cfg, alloc))
             .append(DOT)
@@ -214,7 +215,7 @@ where
 
         let body = body.print(cfg, alloc);
 
-        head.append(alloc.space()).append(body)
+        doc.append(head).append(alloc.space()).append(body)
     }
 }
 
@@ -228,9 +229,10 @@ where
             return alloc.nil();
         }
 
-        let head = doc
-            .print(cfg, alloc)
-            .append(alloc.keyword(CODEF))
+        let doc = doc.print(cfg, alloc);
+
+        let head = alloc
+            .keyword(CODEF)
             .append(alloc.space())
             .append(alloc.ctor(name))
             .append(params.print(cfg, alloc))
@@ -239,7 +241,7 @@ where
 
         let body = body.print(cfg, alloc);
 
-        head.append(alloc.space()).append(body)
+        doc.append(head).append(alloc.space()).append(body)
     }
 }
 
