@@ -39,18 +39,18 @@ where
     fn push_annotation(&mut self, anno: &Anno) -> Result<(), Self::Error> {
         self.anno_stack.push(*anno);
         let out = match anno {
-            Anno::Keyword => "\\textcolor{xfnMagenta}{",
-            Anno::Ctor => "\\textcolor{xfnBlue}{",
-            Anno::Dtor => "\\textcolor{xfnGreen}{",
-            Anno::Type => "\\textcolor{xfnRed}{",
-            Anno::Comment => "\\textcolor{xfnCyan}{",
+            Anno::Keyword => "\\xfnKw{",
+            Anno::Ctor => "\\xfnCtor{",
+            Anno::Dtor => "\\xfnDtor{",
+            Anno::Type => "\\xfnType{",
+            Anno::Comment => "\\xfnComment{",
             // Produce a backslash
             Anno::Backslash => "\\xfnBackslash{",
             // Escape an opening brace that follows immediately
             Anno::BraceOpen => "\\",
             // Escape a closing brace that follows immediately
             Anno::BraceClose => "\\",
-            Anno::Error => "xfnRed",
+            Anno::Error => "\\textcolor{xfnRed}{",
         };
         self.upstream.write_all(out.as_bytes())
     }
