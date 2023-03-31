@@ -1,18 +1,14 @@
 use std::rc::Rc;
 
-use miette_util::ToMiette;
-
-use syntax::ctx::{Bind, Context};
-use syntax::env::*;
+use syntax::common::*;
+use syntax::ctx::{BindContext, Context};
 use syntax::ust::{self, Exp, Prg, Type};
-use syntax::val::{self, Closure, Neu, Val};
 use tracer::trace;
 
-use super::result::*;
+use crate::env::*;
+use crate::val::{self, Closure, Neu, Val};
 
-pub fn eval(prg: &ust::Prg) -> Result<Option<Rc<val::Val>>, EvalError> {
-    prg.exp.as_ref().map(|exp| exp.eval(prg, &mut Env::empty())).transpose()
-}
+use super::result::*;
 
 pub trait Eval {
     type Val;
@@ -48,25 +44,15 @@ impl Eval for Exp {
             }
             Exp::Anno { exp, .. } => exp.eval(prg, env)?,
             Exp::Type { info } => Rc::new(Val::Type { info: info.clone() }),
-            Exp::Match { info, name, on_exp, body, .. } => {
-                let name = name.as_ref().ok_or_else(|| EvalError::Impossible {
-                    message: "Missing label on match".to_owned(),
-                    span: info.span.to_miette(),
-                })?;
+            Exp::Match { name, on_exp, body, .. } => {
                 eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?
             }
-            Exp::Comatch { info, name, is_lambda_sugar, body } => {
-                let name = name.to_owned().ok_or_else(|| EvalError::Impossible {
-                    message: "Missing label on comatch".to_owned(),
-                    span: info.span.to_miette(),
-                })?;
-                Rc::new(Val::Comatch {
-                    info: info.clone(),
-                    name,
-                    is_lambda_sugar: *is_lambda_sugar,
-                    body: body.eval(prg, env)?,
-                })
-            }
+            Exp::Comatch { info, name, is_lambda_sugar, body } => Rc::new(Val::Comatch {
+                info: info.clone(),
+                name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
+                body: body.eval(prg, env)?,
+            }),
             Exp::Hole { info, kind } => {
                 Rc::new(Val::Neu { exp: Neu::Hole { info: info.clone(), kind: *kind } })
             }
@@ -84,24 +70,16 @@ fn eval_dtor(
 ) -> Result<Rc<Val>, EvalError> {
     match (*exp).clone() {
         Val::Ctor { name: ctor_name, args: ctor_args, info } => {
-            let type_decl = prg.decls.type_decl_for_member(&ctor_name);
+            let type_decl = prg.decls.type_decl_for_member(&ctor_name, info.span)?;
             match type_decl {
                 Type::Data(_) => {
-                    let ust::Def { body, .. } =
-                        prg.decls.def(dtor_name).ok_or(EvalError::Impossible {
-                            message: format!("Lookup failed: {ctor_name}"),
-                            span: info.span.to_miette(),
-                        })?;
+                    let ust::Def { body, .. } = prg.decls.def(dtor_name, None)?;
                     let body =
                         Env::empty().bind_iter(dtor_args.iter(), |env| body.eval(prg, env))?;
                     beta_match(prg, body, &ctor_name, &ctor_args)
                 }
                 Type::Codata(_) => {
-                    let ust::Codef { body, .. } =
-                        prg.decls.codef(&ctor_name).ok_or(EvalError::Impossible {
-                            message: format!("Lookup failed: {ctor_name}"),
-                            span: info.span.to_miette(),
-                        })?;
+                    let ust::Codef { body, .. } = prg.decls.codef(&ctor_name, None)?;
                     let body =
                         Env::empty().bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
                     beta_comatch(prg, body, dtor_name, &dtor_args)
@@ -123,7 +101,7 @@ fn eval_dtor(
 
 fn eval_match(
     prg: &Prg,
-    match_name: &str,
+    match_name: &Label,
     on_exp: Rc<Val>,
     body: val::Match,
 ) -> Result<Rc<Val>, EvalError> {
@@ -226,6 +204,14 @@ impl Eval for ust::TypApp {
         let ust::TypApp { info, name, args } = self;
 
         Ok(val::TypApp { info: info.clone(), name: name.clone(), args: args.eval(prg, env)? })
+    }
+}
+
+impl Eval for ust::Args {
+    type Val = Vec<Rc<Val>>;
+
+    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
+        self.args.eval(prg, env)
     }
 }
 

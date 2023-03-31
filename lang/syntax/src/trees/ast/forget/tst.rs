@@ -18,11 +18,11 @@ impl Forget for tst::Decls {
     type Target = wst::Decls;
 
     fn forget(&self) -> Self::Target {
-        let tst::Decls { map, source } = self;
+        let tst::Decls { map, lookup_table } = self;
 
         wst::Decls {
             map: map.iter().map(|(name, decl)| (name.clone(), decl.forget())).collect(),
-            source: source.clone(),
+            lookup_table: lookup_table.clone(),
         }
     }
 }
@@ -316,6 +316,14 @@ impl Forget for tst::ParamInst {
         let tst::ParamInst { info, name, typ } = self;
 
         wst::ParamInst { info: info.forget(), name: name.clone(), typ: typ.forget() }
+    }
+}
+
+impl Forget for tst::Args {
+    type Target = wst::Args;
+
+    fn forget(&self) -> Self::Target {
+        wst::Args { args: self.args.forget() }
     }
 }
 

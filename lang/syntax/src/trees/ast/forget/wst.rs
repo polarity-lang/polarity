@@ -18,11 +18,11 @@ impl Forget for wst::Decls {
     type Target = ust::Decls;
 
     fn forget(&self) -> Self::Target {
-        let wst::Decls { map, source } = self;
+        let wst::Decls { map, lookup_table } = self;
 
         ust::Decls {
             map: map.iter().map(|(name, decl)| (name.clone(), decl.forget())).collect(),
-            source: source.clone(),
+            lookup_table: lookup_table.clone(),
         }
     }
 }
@@ -252,7 +252,7 @@ impl Forget for wst::Exp {
             wst::Exp::Type { info } => ust::Exp::Type { info: info.forget() },
             wst::Exp::Match { info, name, on_exp, motive, ret_typ: _, body } => ust::Exp::Match {
                 info: info.forget(),
-                name: Some(name.clone()),
+                name: name.clone(),
                 on_exp: on_exp.forget(),
                 motive: motive.forget(),
                 ret_typ: (),
@@ -260,7 +260,7 @@ impl Forget for wst::Exp {
             },
             wst::Exp::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::Comatch {
                 info: info.forget(),
-                name: Some(name.clone()),
+                name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.forget(),
             },
@@ -316,6 +316,14 @@ impl Forget for wst::ParamInst {
         let wst::ParamInst { info, name, typ: _ } = self;
 
         ust::ParamInst { info: info.forget(), name: name.clone(), typ: () }
+    }
+}
+
+impl Forget for wst::Args {
+    type Target = ust::Args;
+
+    fn forget(&self) -> Self::Target {
+        ust::Args { args: self.args.forget() }
     }
 }
 

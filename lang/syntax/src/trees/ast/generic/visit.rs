@@ -5,14 +5,14 @@ use data::HashMap;
 use crate::common::*;
 
 use super::def::*;
-use super::source::Source;
+use super::lookup_table::LookupTable;
 
 #[rustfmt::skip]
 #[allow(unused_variables)]
 #[allow(clippy::too_many_arguments)]
 pub trait Visitor<P: Phase> {
     fn visit_prg(&mut self, decls: &Decls<P>, exp: &Option<Rc<Exp<P>>>) {}
-    fn visit_decls(&mut self, map: &HashMap<Ident, Decl<P>>, source: &Source) {}
+    fn visit_decls(&mut self, map: &HashMap<Ident, Decl<P>>, source: &LookupTable) {}
     fn visit_decl(&mut self, decl: &Decl<P>) {}
     fn visit_decl_data(&mut self, data: &Data<P>) {}
     fn visit_decl_codata(&mut self, codata: &Codata<P>) {}
@@ -31,15 +31,15 @@ pub trait Visitor<P: Phase> {
     fn visit_comatch(&mut self, info: &P::Info, cases: &[Cocase<P>]) {}
     fn visit_case(&mut self, info: &P::Info, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
     fn visit_cocase(&mut self, info: &P::Info, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
-    fn visit_typ_app(&mut self, info: &P::TypeInfo, name: &Ident, args: &[Rc<Exp<P>>]) {}
+    fn visit_typ_app(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
     fn visit_exp_var(&mut self, info: &P::TypeInfo, name: &P::VarName, idx: &Idx) {}
-    fn visit_exp_typ_ctor(&mut self, info: &P::TypeInfo, name: &Ident, args: &[Rc<Exp<P>>]) {}
-    fn visit_exp_ctor(&mut self, info: &P::TypeInfo, name: &Ident, args: &[Rc<Exp<P>>]) {}
-    fn visit_exp_dtor(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, name: &Ident, args: &[Rc<Exp<P>>]) {}
+    fn visit_exp_typ_ctor(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
+    fn visit_exp_ctor(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
+    fn visit_exp_dtor(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, name: &Ident, args: &Args<P>) {}
     fn visit_exp_anno(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, typ: &Rc<Exp<P>>) {}
     fn visit_exp_type(&mut self, info: &P::TypeInfo) {}
-    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &P::Label, on_exp: &Rc<Exp<P>>, ret_typ: &P::InfTyp, body: &Match<P>) {}
-    fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, name: &P::Label, is_lambda_sugar: &bool, body: &Comatch<P>) {}
+    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &Label, on_exp: &Rc<Exp<P>>, ret_typ: &P::InfTyp, body: &Match<P>) {}
+    fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, name: &Label, is_lambda_sugar: &bool, body: &Comatch<P>) {}
     fn visit_exp_hole(&mut self, info: &P::TypeInfo, kind: HoleKind) {}
     fn visit_motive(&mut self, info: &P::Info, param: &ParamInst<P>, ret_typ: &Rc<Exp<P>>) {}
     fn visit_motive_param<X, F>(&mut self, param: &ParamInst<P>, f_inner: F) -> X
@@ -141,11 +141,11 @@ impl<P: Phase> Visit<P> for Decls<P> {
     where
         V: Visitor<P>,
     {
-        let Decls { map, source } = self;
+        let Decls { map, lookup_table } = self;
         for decl in map.values() {
             decl.visit(v)
         }
-        v.visit_decls(map, source)
+        v.visit_decls(map, lookup_table)
     }
 }
 
@@ -452,5 +452,15 @@ impl<P: Phase> Visit<P> for ParamInst<P> {
         v.visit_type_info(info);
         v.visit_typ(typ);
         v.visit_param_inst(info, name, typ)
+    }
+}
+
+impl<P: Phase> Visit<P> for Args<P> {
+    fn visit<V>(&self, v: &mut V)
+    where
+        V: Visitor<P>,
+    {
+        let Args { args } = self;
+        args.visit(v)
     }
 }

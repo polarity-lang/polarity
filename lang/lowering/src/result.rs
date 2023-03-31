@@ -41,4 +41,21 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
+    #[error("Expected {name} to be a {expected}, but it is a {actual}")]
+    #[diagnostic(code("L-006"))]
+    InvalidDeclarationKind { name: String, expected: DeclKind, actual: DeclKind },
+    #[error("The annotated label {name} is shadowed by a local variable")]
+    #[diagnostic(code("L-007"))]
+    LabelShadowed {
+        name: String,
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("The annotated label {name} is not unique")]
+    #[diagnostic(code("L-008"))]
+    LabelNotUnique {
+        name: String,
+        #[label]
+        span: SourceSpan,
+    },
 }

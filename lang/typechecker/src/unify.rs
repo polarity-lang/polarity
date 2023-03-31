@@ -122,24 +122,21 @@ impl Ctx {
         match (&**lhs, &**rhs) {
             (Var { idx, .. }, _) => self.add_assignment(*idx, rhs.clone()),
             (_, Var { idx, .. }) => self.add_assignment(*idx, lhs.clone()),
-            (TypCtor { name, args: subst, .. }, TypCtor { name: name2, args: subst2, .. })
+            (TypCtor { name, args, .. }, TypCtor { name: name2, args: args2, .. })
                 if name == name2 =>
             {
-                self.unify_args(subst, subst2)
+                self.unify_args(args, args2)
             }
             (TypCtor { name, .. }, TypCtor { name: name2, .. }) if name != name2 => Ok(No(())),
-            (Ctor { name, args: subst, .. }, Ctor { name: name2, args: subst2, .. })
-                if name == name2 =>
-            {
-                self.unify_args(subst, subst2)
+            (Ctor { name, args, .. }, Ctor { name: name2, args: args2, .. }) if name == name2 => {
+                self.unify_args(args, args2)
             }
             (Ctor { name, .. }, Ctor { name: name2, .. }) if name != name2 => Ok(No(())),
-            (
-                Dtor { exp, name, args: subst, .. },
-                Dtor { exp: exp2, name: name2, args: subst2, .. },
-            ) if name == name2 => {
+            (Dtor { exp, name, args, .. }, Dtor { exp: exp2, name: name2, args: args2, .. })
+                if name == name2 =>
+            {
                 self.add_equation(Eqn { lhs: exp.clone(), rhs: exp2.clone() })?;
-                self.unify_args(subst, subst2)
+                self.unify_args(args, args2)
             }
             (Type { .. }, Type { .. }) => Ok(Yes(())),
             (Anno { .. }, _) => Err(UnifyError::unsupported_annotation(lhs.clone())),
@@ -148,12 +145,8 @@ impl Ctx {
         }
     }
 
-    fn unify_args(
-        &mut self,
-        lhs: &[Rc<ust::Exp>],
-        rhs: &[Rc<ust::Exp>],
-    ) -> Result<Dec, UnifyError> {
-        let new_eqns = lhs.iter().cloned().zip(rhs.iter().cloned()).map(Eqn::from);
+    fn unify_args(&mut self, lhs: &ust::Args, rhs: &ust::Args) -> Result<Dec, UnifyError> {
+        let new_eqns = lhs.args.iter().cloned().zip(rhs.args.iter().cloned()).map(Eqn::from);
         self.add_equations(new_eqns)?;
         Ok(Yes(()))
     }

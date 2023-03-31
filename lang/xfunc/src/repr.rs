@@ -1,7 +1,8 @@
 use syntax::common::*;
-use syntax::ctx::{Bind, Context, LevelCtx};
-use syntax::matrix;
+use syntax::ctx::{BindContext, Context, LevelCtx};
 use syntax::ust;
+
+use crate::matrix;
 
 pub trait Represent {
     fn as_data(&self) -> (ust::Data, Vec<ust::Ctor>, Vec<ust::Def>);

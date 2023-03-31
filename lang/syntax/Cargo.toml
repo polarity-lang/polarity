@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# serde
-serde = { version = "1", features = ["rc"], optional = true }
-serde_derive = { version = "1", optional = true }
+# fancy error messages
+miette = "5"
+thiserror = "1"
 # source code locations
 codespan = "0.11"
 # ignoring fields when deriving traits (e.g. Eq, Hash)
@@ -18,7 +18,4 @@ lazy_static = "1.4.0"
 # workspace members
 data = { path = "../../util/data" }
 console = { path = "../../util/console" }
-
-[features]
-default = ["use-serde"]
-use-serde = ["serde", "serde_derive"]
+miette_util = { path = "../../util/miette_util" }

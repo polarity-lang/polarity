@@ -1,10 +1,10 @@
 use std::rc::Rc;
 
+use super::val;
 use syntax::common::*;
-use syntax::ctx::Bind;
+use syntax::ctx::BindContext;
 use syntax::nf;
 use syntax::ust::Prg;
-use syntax::val;
 use tracer::trace;
 
 use super::eval::Eval;

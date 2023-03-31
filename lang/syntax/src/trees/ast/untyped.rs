@@ -13,7 +13,6 @@ impl generic::Phase for UST {
     type TypeAppInfo = Info;
 
     type VarName = Ident;
-    type Label = Option<Ident>;
     type InfTyp = ();
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String {
@@ -22,10 +21,6 @@ impl generic::Phase for UST {
         } else {
             name.clone()
         }
-    }
-
-    fn print_label(name: &Self::Label) -> Option<String> {
-        name.to_owned()
     }
 }
 
@@ -50,7 +45,6 @@ pub type Exp = generic::Exp<UST>;
 pub type Motive = generic::Motive<UST>;
 pub type Telescope = generic::Telescope<UST>;
 pub type TelescopeInst = generic::TelescopeInst<UST>;
-pub type Params = generic::Params<UST>;
 pub type Args = generic::Args<UST>;
 pub type Param = generic::Param<UST>;
 pub type ParamInst = generic::ParamInst<UST>;

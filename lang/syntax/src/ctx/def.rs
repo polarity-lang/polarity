@@ -1,12 +1,5 @@
 //! Generic definition of variable contexts
 
-use std::rc::Rc;
-
-use crate::ast::Annotated;
-use crate::ast::*;
-use crate::common::*;
-use crate::val::Val;
-
 /// Defines the interface of a variable context
 pub trait Context: Sized {
     /// The type of elements that can be bound to the context
@@ -37,19 +30,27 @@ pub trait Context: Sized {
     fn pop_binder(&mut self, elem: Self::ElemIn);
 }
 
-pub trait HasContext {
+/// Interface to bind variables to anything that has a `Context`
+///
+/// There are two use cases for this trait.
+///
+/// Case 1: You have a type that implements `Context`.
+/// Then, a blanket impl ensures that this type also implements `BindContext`.
+///
+/// Case 2: You have a type that has a field which implements `Context`.
+/// Then, only implement the `ctx_mut` method for `BindContext` and return the field that implements `Context`.
+/// Do not override the default implementations for the `bind_*` methods.
+///
+/// In both cases, `BindContext` will provide a safe interface to bind variables and telescopes.
+pub trait BindContext: Sized {
     type Ctx: Context;
 
     fn ctx_mut(&mut self) -> &mut Self::Ctx;
-}
-
-pub trait Bind {
-    type Elem;
 
     /// Bind a single element
     fn bind_single<T, O, F>(&mut self, elem: T, f: F) -> O
     where
-        T: AsElement<Self::Elem>,
+        T: ContextElem<Self::Ctx>,
         F: FnOnce(&mut Self) -> O,
     {
         self.bind_iter([elem].into_iter(), f)
@@ -58,7 +59,7 @@ pub trait Bind {
     /// Bind an iterator `iter` of binders
     fn bind_iter<T, I, O, F>(&mut self, iter: I, f: F) -> O
     where
-        T: AsElement<Self::Elem>,
+        T: ContextElem<Self::Ctx>,
         I: Iterator<Item = T>,
         F: FnOnce(&mut Self) -> O,
     {
@@ -84,58 +85,7 @@ pub trait Bind {
         f_inner: F2,
     ) -> O2
     where
-        T: AsElement<Self::Elem>,
-        F1: Fn(&mut Self, O1, T) -> O1,
-        F2: FnOnce(&mut Self, O1) -> O2;
-
-    fn bind_fold2<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
-        &mut self,
-        iter: I,
-        acc: O1,
-        f_acc: F1,
-        f_inner: F2,
-    ) -> O2
-    where
-        F1: Fn(&mut Self, O1, T) -> BindElem<Self::Elem, O1>,
-        F2: FnOnce(&mut Self, O1) -> O2;
-
-    fn bind_fold_failable<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
-        &mut self,
-        iter: I,
-        acc: O1,
-        f_acc: F1,
-        f_inner: F2,
-    ) -> Result<O2, E>
-    where
-        F1: Fn(&mut Self, O1, T) -> Result<BindElem<Self::Elem, O1>, E>,
-        F2: FnOnce(&mut Self, O1) -> O2;
-}
-
-pub struct BindElem<E, O> {
-    pub elem: E,
-    pub ret: O,
-}
-
-impl<C: Context> HasContext for C {
-    type Ctx = Self;
-
-    fn ctx_mut(&mut self) -> &mut Self {
-        self
-    }
-}
-
-impl<C: HasContext> Bind for C {
-    type Elem = <<Self as HasContext>::Ctx as Context>::ElemIn;
-
-    fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
-        &mut self,
-        iter: I,
-        acc: O1,
-        f_acc: F1,
-        f_inner: F2,
-    ) -> O2
-    where
-        T: AsElement<Self::Elem>,
+        T: ContextElem<Self::Ctx>,
         F1: Fn(&mut Self, O1, T) -> O1,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
@@ -155,7 +105,7 @@ impl<C: HasContext> Bind for C {
         f_inner: F2,
     ) -> O2
     where
-        F1: Fn(&mut Self, O1, T) -> BindElem<Self::Elem, O1>,
+        F1: Fn(&mut Self, O1, T) -> BindElem<<Self::Ctx as Context>::ElemIn, O1>,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         self.bind_fold_failable(
@@ -175,10 +125,10 @@ impl<C: HasContext> Bind for C {
         f_inner: F2,
     ) -> Result<O2, E>
     where
-        F1: Fn(&mut Self, O1, T) -> Result<BindElem<Self::Elem, O1>, E>,
+        F1: Fn(&mut Self, O1, T) -> Result<BindElem<<Self::Ctx as Context>::ElemIn, O1>, E>,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
-        fn bind_inner<This: HasContext, T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
+        fn bind_inner<This: BindContext, T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
             this: &mut This,
             mut iter: I,
             acc: O1,
@@ -191,7 +141,7 @@ impl<C: HasContext> Bind for C {
                 O1,
                 T,
             )
-                -> Result<BindElem<<<This as HasContext>::Ctx as Context>::ElemIn, O1>, E>,
+                -> Result<BindElem<<<This as BindContext>::Ctx as Context>::ElemIn, O1>, E>,
             F2: FnOnce(&mut This, O1) -> O2,
         {
             match iter.next() {
@@ -213,28 +163,19 @@ impl<C: HasContext> Bind for C {
     }
 }
 
-pub trait AsElement<E> {
-    fn as_element(&self) -> E;
+pub struct BindElem<E, O> {
+    pub elem: E,
+    pub ret: O,
 }
 
-impl<T> AsElement<()> for T {
-    fn as_element(&self) {}
+pub trait ContextElem<C: Context> {
+    fn as_element(&self) -> C::ElemIn;
 }
 
-impl<P: Phase, T: Annotated<P>> AsElement<Rc<Exp<P>>> for T {
-    fn as_element(&self) -> Rc<Exp<P>> {
-        self.typ()
-    }
-}
+impl<C: Context> BindContext for C {
+    type Ctx = Self;
 
-impl<T: Named> AsElement<Ident> for T {
-    fn as_element(&self) -> Ident {
-        self.name().to_owned()
-    }
-}
-
-impl AsElement<Rc<Val>> for &Rc<Val> {
-    fn as_element(&self) -> Rc<Val> {
-        (*self).clone()
+    fn ctx_mut(&mut self) -> &mut Self::Ctx {
+        self
     }
 }

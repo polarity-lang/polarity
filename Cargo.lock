@@ -52,6 +52,7 @@ dependencies = [
  "futures",
  "lsp-server",
  "miette",
+ "normalizer",
  "printer",
  "source",
  "syntax",
@@ -1216,8 +1217,10 @@ version = "0.1.0"
 dependencies = [
  "codespan",
  "data",
+ "derivative",
  "miette",
  "miette_util",
+ "pretty",
  "printer",
  "syntax",
  "thiserror",
@@ -1925,9 +1928,10 @@ dependencies = [
  "data",
  "derivative",
  "lazy_static",
+ "miette",
+ "miette_util",
  "num-bigint",
- "serde",
- "serde_derive",
+ "thiserror",
 ]
 
 [[package]]

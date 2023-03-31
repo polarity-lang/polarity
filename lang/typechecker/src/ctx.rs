@@ -4,29 +4,25 @@
 
 use std::rc::Rc;
 
-use normalizer::eval::Eval;
-use normalizer::read_back::ReadBack;
+use normalizer::env::{Env, ToEnv};
+use normalizer::normalize::Normalize;
 use printer::Print;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
-use syntax::ctx::{Context, HasContext, LevelCtx};
-use syntax::env::Env;
+use syntax::ctx::{BindContext, Context, LevelCtx};
+use syntax::nf::Nf;
 use syntax::ust;
-use syntax::val::Val;
 
-use crate::ng::NameGen;
 use crate::TypeError;
 
 pub struct Ctx {
     /// Typing of bound variables
     vars: TypeCtx,
-    /// Name generator for (co)match labels
-    ng: NameGen,
 }
 
 impl Default for Ctx {
     fn default() -> Self {
-        Self { vars: TypeCtx::empty(), ng: Default::default() }
+        Self { vars: TypeCtx::empty() }
     }
 }
 
@@ -46,19 +42,25 @@ impl ContextSubstExt for Ctx {
     ) -> Result<(), TypeError> {
         let env = self.vars.env();
         let levels = self.vars.levels();
-        self.map_failable(|val| {
-            let nf = val.read_back(prg)?;
+        self.map_failable(|nf| {
             let exp = nf.forget().subst(&mut levels.clone(), s);
-            exp.eval(prg, &mut env.clone()).map_err(Into::into)
+            let nf = exp.normalize(prg, &mut env.clone())?;
+            Ok(nf)
         })
     }
 }
 
-impl HasContext for Ctx {
+impl BindContext for Ctx {
     type Ctx = TypeCtx;
 
     fn ctx_mut(&mut self) -> &mut Self::Ctx {
         &mut self.vars
+    }
+}
+
+impl ToEnv for Ctx {
+    fn env(&self) -> Env {
+        self.vars.env()
     }
 }
 
@@ -71,12 +73,8 @@ impl Ctx {
         self.vars.is_empty()
     }
 
-    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<Val> {
+    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<Nf> {
         self.vars.lookup(idx)
-    }
-
-    pub fn env(&self) -> Env {
-        self.vars.env()
     }
 
     pub fn levels(&self) -> LevelCtx {
@@ -85,21 +83,15 @@ impl Ctx {
 
     pub fn map_failable<E, F>(&mut self, f: F) -> Result<(), E>
     where
-        F: Fn(&Rc<Val>) -> Result<Rc<Val>, E>,
+        F: Fn(&Rc<Nf>) -> Result<Rc<Nf>, E>,
     {
         self.vars = self.vars.map_failable(f)?;
         Ok(())
     }
 
     pub fn fork<T, F: FnOnce(&mut Ctx) -> T>(&mut self, f: F) -> T {
-        let mut inner_ctx = Ctx { vars: self.vars.clone(), ng: std::mem::take(&mut self.ng) };
-        let out = f(&mut inner_ctx);
-        self.ng = inner_ctx.ng;
-        out
-    }
-
-    pub fn fresh_label(&mut self, type_name: &str, prg: &ust::Prg) -> Ident {
-        self.ng.fresh_label(type_name, prg)
+        let mut inner_ctx = Ctx { vars: self.vars.clone() };
+        f(&mut inner_ctx)
     }
 }
 

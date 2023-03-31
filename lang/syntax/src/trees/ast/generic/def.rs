@@ -7,7 +7,7 @@ use derivative::Derivative;
 
 use crate::common::*;
 
-use super::source::{self, Source};
+use super::lookup_table::LookupTable;
 
 pub trait Phase
 where
@@ -22,13 +22,10 @@ where
     type TypeAppInfo: HasSpan + Clone + Into<Self::TypeInfo> + fmt::Debug;
     /// Type of the `name` field of `Exp::Var`
     type VarName: Clone + fmt::Debug;
-    /// Type of the `name` fiels on `Exp::Match` and `Exp::Comatch`
-    type Label: Clone + Eq + Hash + fmt::Debug;
     /// A type which is not annotated in the source, but will be filled in later during typechecking
     type InfTyp: Clone + fmt::Debug;
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String;
-    fn print_label(name: &Self::Label) -> Option<String>;
 }
 
 pub trait HasPhase {
@@ -45,142 +42,8 @@ pub struct Prg<P: Phase> {
 pub struct Decls<P: Phase> {
     /// Map from identifiers to declarations
     pub map: HashMap<Ident, Decl<P>>,
-    /// Order in which declarations are defined in the source
-    pub source: Source,
-}
-
-impl<P: Phase> Decls<P> {
-    pub fn empty() -> Self {
-        Self { map: data::HashMap::default(), source: Default::default() }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = Item<'_, P>> {
-        self.source.iter().map(|item| match item {
-            source::Item::Type(type_decl) => match &self.map[&type_decl.name] {
-                Decl::Data(data) => Item::Data(data),
-                Decl::Codata(codata) => Item::Codata(codata),
-                _ => unreachable!(),
-            },
-            source::Item::Def(def_decl) => match &self.map[&def_decl.name] {
-                Decl::Def(def) => Item::Def(def),
-                Decl::Codef(codef) => Item::Codef(codef),
-                _ => unreachable!(),
-            },
-        })
-    }
-
-    pub fn typ(&self, name: &str) -> Type<'_, P> {
-        match &self.map[name] {
-            Decl::Data(data) => Type::Data(data),
-            Decl::Codata(codata) => Type::Codata(codata),
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn type_decl_for_member(&self, name: &Ident) -> Type<'_, P> {
-        let type_decl = self
-            .source
-            .type_decl_for_xtor(name)
-            .unwrap_or_else(|| self.source.type_decl_for_xdef(name).unwrap());
-        self.typ(&type_decl.name)
-    }
-
-    pub fn xtors_for_type(&self, name: &str) -> Vec<Ident> {
-        self.source.xtors_for_type(name)
-    }
-
-    pub fn xdefs_for_type(&self, name: &str) -> Vec<Ident> {
-        self.source.xdefs_for_type(name)
-    }
-
-    pub fn def(&self, name: &str) -> Option<&Def<P>> {
-        match &self.map.get(name)? {
-            Decl::Def(def) => Some(def),
-            _ => None,
-        }
-    }
-
-    pub fn codef(&self, name: &str) -> Option<&Codef<P>> {
-        match &self.map.get(name)? {
-            Decl::Codef(codef) => Some(codef),
-            _ => None,
-        }
-    }
-
-    pub fn ctor_or_codef(&self, name: &str) -> Option<Ctor<P>> {
-        match &self.map.get(name)? {
-            Decl::Ctor(ctor) => Some(ctor.clone()),
-            Decl::Codef(codef) => Some(codef.to_ctor()),
-            _ => None,
-        }
-    }
-
-    pub fn dtor_or_def(&self, name: &str) -> Option<Dtor<P>> {
-        match &self.map.get(name)? {
-            Decl::Dtor(dtor) => Some(dtor.clone()),
-            Decl::Def(def) => Some(def.to_dtor()),
-            _ => None,
-        }
-    }
-
-    pub fn ctor(&self, name: &str) -> Option<&Ctor<P>> {
-        match &self.map.get(name)? {
-            Decl::Ctor(ctor) => Some(ctor),
-            _ => None,
-        }
-    }
-
-    pub fn dtor(&self, name: &str) -> Option<&Dtor<P>> {
-        match &self.map.get(name)? {
-            Decl::Dtor(dtor) => Some(dtor),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Item<'a, P: Phase> {
-    Data(&'a Data<P>),
-    Codata(&'a Codata<P>),
-    Def(&'a Def<P>),
-    Codef(&'a Codef<P>),
-}
-
-impl<'a, P: Phase> Item<'a, P> {
-    pub fn hidden(&self) -> bool {
-        match self {
-            Item::Data(data) => data.hidden,
-            Item::Codata(codata) => codata.hidden,
-            Item::Def(def) => def.hidden,
-            Item::Codef(codef) => codef.hidden,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Type<'a, P: Phase> {
-    Data(&'a Data<P>),
-    Codata(&'a Codata<P>),
-}
-
-impl<'a, P: Phase> Type<'a, P> {
-    pub fn name(&self) -> &Ident {
-        match self {
-            Type::Data(data) => &data.name,
-            Type::Codata(codata) => &codata.name,
-        }
-    }
-
-    pub fn typ(&self) -> Rc<TypAbs<P>> {
-        match self {
-            Type::Data(data) => data.typ.clone(),
-            Type::Codata(codata) => codata.typ.clone(),
-        }
-    }
+    /// Metadata on declarations
+    pub lookup_table: LookupTable,
 }
 
 #[derive(Debug, Clone)]
@@ -191,6 +54,19 @@ pub enum Decl<P: Phase> {
     Dtor(Dtor<P>),
     Def(Def<P>),
     Codef(Codef<P>),
+}
+
+impl<P: Phase> Decl<P> {
+    pub fn kind(&self) -> DeclKind {
+        match self {
+            Decl::Data(_) => DeclKind::Data,
+            Decl::Codata(_) => DeclKind::Codata,
+            Decl::Ctor(_) => DeclKind::Ctor,
+            Decl::Dtor(_) => DeclKind::Dtor,
+            Decl::Def(_) => DeclKind::Def,
+            Decl::Codef(_) => DeclKind::Codef,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -417,7 +293,7 @@ pub enum Exp<P: Phase> {
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
-        name: P::Label,
+        name: Label,
         on_exp: Rc<Exp<P>>,
         motive: Option<Motive<P>>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
@@ -427,7 +303,7 @@ pub enum Exp<P: Phase> {
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
-        name: P::Label,
+        name: Label,
         is_lambda_sugar: bool,
         body: Comatch<P>,
     },
@@ -454,7 +330,7 @@ pub struct Motive<P: Phase> {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Telescope<P: Phase> {
-    pub params: Params<P>,
+    pub params: Vec<Param<P>>,
 }
 
 impl<P: Phase> Telescope<P> {
@@ -484,8 +360,27 @@ impl<P: Phase> TelescopeInst<P> {
     }
 }
 
-pub type Params<P> = Vec<Param<P>>;
-pub type Args<P> = Vec<Rc<Exp<P>>>;
+/// A list of arguments
+/// In dependent type theory, this concept is usually called a "substitution" but that name would be confusing in this implementation
+/// because it conflicts with the operation of substitution (i.e. substituting a terms for a variable in another term).
+/// In particular, while we often substitute argument lists for telescopes, this is not always the case.
+/// Substitutions in the sense of argument lists are a special case of a more general concept of context morphisms.
+/// Unifiers are another example of context morphisms and applying a unifier to an expression mean substituting various terms,
+/// which are not necessarily part of a single argument list.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct Args<P: Phase> {
+    pub args: Vec<Rc<Exp<P>>>,
+}
+
+impl<P: Phase> Args<P> {
+    pub fn len(&self) -> usize {
+        self.args.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.args.is_empty()
+    }
+}
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -572,10 +467,6 @@ impl<P: Phase> HasPhase for Exp<P> {
 }
 
 impl<P: Phase> HasPhase for Telescope<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Params<P> {
     type Phase = P;
 }
 

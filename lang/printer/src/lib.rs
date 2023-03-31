@@ -12,16 +12,14 @@ mod ast;
 mod ctx;
 mod de_bruijn;
 mod dec;
-mod env;
 pub mod fragments;
-pub mod latex;
 mod nf;
 mod print_to_string;
-mod theme;
-mod tokens;
-mod types;
-mod util;
-mod val;
+mod render;
+pub mod theme;
+pub mod tokens;
+pub mod types;
+pub mod util;
 
 pub use print_to_string::*;
 pub use types::*;
@@ -31,6 +29,7 @@ pub const DEFAULT_WIDTH: usize = 100;
 pub trait PrintExt {
     fn print<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()>;
     fn print_colored<W: WriteColor>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()>;
+    fn print_latex<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()>;
 }
 
 impl<T: for<'a> Print<'a>> PrintExt for T {
@@ -43,6 +42,12 @@ impl<T: for<'a> Print<'a>> PrintExt for T {
     fn print_colored<W: WriteColor>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
         let alloc = Alloc::new();
         let doc_builder = T::print(self, cfg, &alloc);
-        doc_builder.1.render_colored(cfg.width, out)
+        doc_builder.render_raw(cfg.width, &mut render::RenderTermcolor::new(out))
+    }
+
+    fn print_latex<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
+        let alloc = Alloc::new();
+        let doc_builder = T::print(self, cfg, &alloc);
+        doc_builder.render_raw(cfg.width, &mut render::RenderLatex::new(out))
     }
 }

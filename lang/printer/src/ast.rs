@@ -125,7 +125,7 @@ where
         let sep = alloc.text(COMMA).append(alloc.line());
 
         let body = if ctors.is_empty() {
-            empty_braces(alloc, cfg)
+            empty_braces(alloc)
         } else {
             alloc
                 .line()
@@ -135,7 +135,7 @@ where
                 ))
                 .nest(cfg.indent)
                 .append(alloc.line())
-                .braces_from(cfg)
+                .braces_anno()
         };
 
         let body = if typ.params.is_empty() { body.group() } else { body };
@@ -172,7 +172,7 @@ where
         let sep = alloc.text(COMMA).append(alloc.line());
 
         let body = if dtors.is_empty() {
-            empty_braces(alloc, cfg)
+            empty_braces(alloc)
         } else {
             alloc
                 .line()
@@ -182,7 +182,7 @@ where
                 ))
                 .nest(cfg.indent)
                 .append(alloc.line())
-                .braces_from(cfg)
+                .braces_anno()
         };
 
         let body = if typ.params.is_empty() { body.group() } else { body };
@@ -201,21 +201,21 @@ where
             return alloc.nil();
         }
 
-        let head = doc
-            .print(cfg, alloc)
-            .append(alloc.keyword(DEF))
+        let doc = doc.print(cfg, alloc);
+
+        let head = alloc
+            .keyword(DEF)
             .append(alloc.space())
             .append(self_param.print(cfg, alloc))
             .append(DOT)
             .append(alloc.dtor(name))
             .append(params.print(cfg, alloc))
-            .append(COLON)
-            .append(alloc.space())
-            .append(ret_typ.print(cfg, alloc));
+            .append(print_return_type(cfg, alloc, ret_typ))
+            .group();
 
         let body = body.print(cfg, alloc);
 
-        head.append(alloc.space()).append(body)
+        doc.append(head).append(alloc.space()).append(body)
     }
 }
 
@@ -229,19 +229,19 @@ where
             return alloc.nil();
         }
 
-        let head = doc
-            .print(cfg, alloc)
-            .append(alloc.keyword(CODEF))
+        let doc = doc.print(cfg, alloc);
+
+        let head = alloc
+            .keyword(CODEF)
             .append(alloc.space())
             .append(alloc.ctor(name))
             .append(params.print(cfg, alloc))
-            .append(COLON)
-            .append(alloc.space())
-            .append(typ.print(cfg, alloc));
+            .append(print_return_type(cfg, alloc, typ))
+            .group();
 
         let body = body.print(cfg, alloc);
 
-        head.append(alloc.space()).append(body)
+        doc.append(head).append(alloc.space()).append(body)
     }
 }
 
@@ -252,13 +252,15 @@ where
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Ctor { info: _, doc, name, params, typ } = self;
 
-        let head = doc.print(cfg, alloc).append(alloc.ctor(name)).append(params.print(cfg, alloc));
+        let doc = doc.print(cfg, alloc);
+        let head = alloc.ctor(name).append(params.print(cfg, alloc));
 
-        if typ.is_simple() {
+        let head = if typ.is_simple() {
             head
         } else {
-            head.append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
-        }
+            head.append(print_return_type(cfg, alloc, typ)).group()
+        };
+        doc.append(head)
     }
 }
 
@@ -269,16 +271,18 @@ where
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Dtor { info: _, doc, name, params, self_param, ret_typ } = self;
 
+        let doc = doc.print(cfg, alloc);
         let head = if self_param.is_simple() {
-            doc.print(cfg, alloc)
+            alloc.nil()
         } else {
-            doc.print(cfg, alloc).append(self_param.print(cfg, alloc)).append(DOT)
+            self_param.print(cfg, alloc).append(DOT)
         };
-        head.append(alloc.dtor(name))
+        let head = head
+            .append(alloc.dtor(name))
             .append(params.print(cfg, alloc))
-            .append(COLON)
-            .append(alloc.space())
-            .append(ret_typ.print(cfg, alloc))
+            .append(print_return_type(cfg, alloc, ret_typ))
+            .group();
+        doc.append(head)
     }
 }
 
@@ -289,7 +293,7 @@ where
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Comatch { info: _, cases } = self;
         if cases.is_empty() {
-            empty_braces(alloc, cfg)
+            empty_braces(alloc)
         } else {
             let sep = alloc.text(COMMA).append(alloc.hardline());
 
@@ -298,7 +302,7 @@ where
                 .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
                 .nest(cfg.indent)
                 .append(alloc.hardline())
-                .braces_from(cfg)
+                .braces_anno()
         }
     }
 }
@@ -310,7 +314,7 @@ where
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { info: _, cases } = self;
         if cases.is_empty() {
-            empty_braces(alloc, cfg)
+            empty_braces(alloc)
         } else {
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
@@ -318,7 +322,7 @@ where
                 .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
                 .nest(cfg.indent)
                 .append(alloc.hardline())
-                .braces_from(cfg)
+                .braces_anno()
         }
     }
 }
@@ -359,7 +363,7 @@ where
                 .nest(cfg.indent),
         };
 
-        alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
+        alloc.dtor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
     }
 }
 
@@ -406,7 +410,24 @@ where
                 output = output.append(COLON).append(alloc.space()).append(rtype.print(cfg, alloc));
             }
         }
-        output.append(alloc.line()).align().parens().group()
+        output.append(alloc.line_()).align().parens().group()
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for Args<P>
+where
+    P::InfTyp: ShiftInRange,
+{
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let mut doc = alloc.nil();
+        let mut iter = self.args.iter().peekable();
+        while let Some(arg) = iter.next() {
+            doc = doc.append(arg.print(cfg, alloc));
+            if iter.peek().is_some() {
+                doc = doc.append(COMMA).append(alloc.line())
+            }
+        }
+        doc.align().parens().group()
     }
 }
 
@@ -467,8 +488,8 @@ where
     P::InfTyp: ShiftInRange,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let TypApp { info: _, name, args: subst } = self;
-        let psubst = if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+        let TypApp { info: _, name, args } = self;
+        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
         alloc.typ(name).append(psubst)
     }
 }
@@ -482,20 +503,27 @@ where
             Exp::Var { info: _, name, idx } => {
                 alloc.text(P::print_var(name, cfg.de_bruijn.then_some(*idx)))
             }
-            Exp::TypCtor { info: _, name, args: subst } => {
-                let psubst =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+            Exp::TypCtor { info: _, name, args } => {
+                let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                 alloc.typ(name).append(psubst)
             }
-            Exp::Ctor { info: _, name, args: subst } => {
-                let psubst =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+            Exp::Ctor { info: _, name, args } => {
+                let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                 alloc.ctor(name).append(psubst)
             }
-            Exp::Dtor { info: _, exp, name, args: subst } => {
-                let psubst =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
-                exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
+            mut dtor @ Exp::Dtor { .. } => {
+                // A series of destructors forms an aligned group
+                let mut dtors_group = alloc.nil();
+                while let Exp::Dtor { info: _, exp, name, args } = dtor {
+                    let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
+                    if !dtors_group.is_nil() {
+                        dtors_group = alloc.line_().append(dtors_group);
+                    }
+                    dtors_group =
+                        alloc.text(DOT).append(alloc.dtor(name)).append(psubst).append(dtors_group);
+                    dtor = exp;
+                }
+                dtor.print(cfg, alloc).append(dtors_group.align().group())
             }
             Exp::Anno { info: _, exp, typ } => {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
@@ -505,8 +533,8 @@ where
                 .print(cfg, alloc)
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
-                .append(match P::print_label(name) {
-                    Some(name) => alloc.space().append(alloc.text(name)),
+                .append(match &name.user_name {
+                    Some(name) => alloc.space().append(alloc.dtor(name)),
                     None => alloc.nil(),
                 })
                 .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
@@ -518,8 +546,8 @@ where
                 } else {
                     alloc
                         .keyword(COMATCH)
-                        .append(match P::print_label(name) {
-                            Some(name) => alloc.space().append(alloc.text(name)),
+                        .append(match &name.user_name {
+                            Some(name) => alloc.space().append(alloc.ctor(name)),
                             None => alloc.nil(),
                         })
                         .append(alloc.space())
@@ -578,6 +606,19 @@ impl<'a, T: Print<'a>> Print<'a> for Option<T> {
     }
 }
 
+fn print_return_type<'a, T: Print<'a>>(
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+    ret_typ: &'a T,
+) -> Builder<'a> {
+    alloc
+        .line_()
+        .append(COLON)
+        .append(alloc.space())
+        .append(ret_typ.print(cfg, alloc).group())
+        .nest(cfg.indent)
+}
+
 /// Print the Comatch as a lambda abstraction.
 /// Only invoke this function if the comatch contains exactly
 /// one cocase "ap" with three arguments; the function will
@@ -598,7 +639,7 @@ where
         .expect("No parameter bound in comatch marked as lambda sugar")
         .name();
     alloc
-        .backslash_from(cfg)
+        .backslash_anno(cfg)
         .append(var_name)
         .append(DOT)
         .append(alloc.space())
@@ -625,6 +666,6 @@ impl<'a, T: Print<'a>> Print<'a> for Vec<T> {
 }
 
 // Prints "{ }"
-fn empty_braces<'a>(alloc: &'a Alloc<'a>, cfg: &PrintCfg) -> Builder<'a> {
-    alloc.space().braces_from(cfg)
+fn empty_braces<'a>(alloc: &'a Alloc<'a>) -> Builder<'a> {
+    alloc.space().braces_anno()
 }

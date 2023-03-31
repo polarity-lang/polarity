@@ -17,7 +17,6 @@ impl generic::Phase for TST {
     type TypeAppInfo = TypeAppInfo;
 
     type VarName = Ident;
-    type Label = Ident;
     type InfTyp = Typ;
 
     fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String {
@@ -26,10 +25,6 @@ impl generic::Phase for TST {
         } else {
             name.clone()
         }
-    }
-
-    fn print_label(name: &Self::Label) -> Option<String> {
-        Some(name.to_owned())
     }
 }
 
@@ -54,7 +49,6 @@ pub type Exp = generic::Exp<TST>;
 pub type Motive = generic::Motive<TST>;
 pub type Telescope = generic::Telescope<TST>;
 pub type TelescopeInst = generic::TelescopeInst<TST>;
-pub type Params = generic::Params<TST>;
 pub type Args = generic::Args<TST>;
 pub type Param = generic::Param<TST>;
 pub type ParamInst = generic::ParamInst<TST>;

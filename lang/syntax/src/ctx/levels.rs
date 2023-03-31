@@ -1,18 +1,15 @@
 use std::fmt;
-use std::rc::Rc;
 
 use data::string::comma_separated;
 
 use crate::common::*;
-use crate::env::Env;
-use crate::val::{Info, Neu, Val};
 
 use super::def::*;
 
 #[derive(Clone, Debug, Default)]
 pub struct LevelCtx {
     /// Number of binders in the second dimension for each first dimension
-    bound: Vec<usize>,
+    pub bound: Vec<usize>,
 }
 
 impl LevelCtx {
@@ -32,27 +29,6 @@ impl LevelCtx {
 
     pub fn tail(&self, skip: usize) -> Self {
         Self { bound: self.bound.iter().skip(skip).cloned().collect() }
-    }
-
-    pub fn env(&self) -> Env {
-        // FIXME: Refactor this
-        let bound: Vec<_> = self
-            .bound
-            .iter()
-            .enumerate()
-            .map(|(fst, len)| {
-                (0..*len)
-                    .map(|snd| {
-                        let idx = Idx { fst: self.bound.len() - 1 - fst, snd: len - 1 - snd };
-                        Rc::new(Val::Neu {
-                            exp: Neu::Var { info: Info::empty(), name: String::new(), idx },
-                        })
-                    })
-                    .collect()
-            })
-            .collect();
-
-        Env::from(bound)
     }
 }
 
@@ -86,6 +62,10 @@ impl Context for LevelCtx {
     fn lookup<V: Into<Self::Var>>(&self, idx: V) -> Self::ElemOut {
         self.bound[idx.into()]
     }
+}
+
+impl<T> ContextElem<LevelCtx> for T {
+    fn as_element(&self) -> <LevelCtx as Context>::ElemIn {}
 }
 
 impl From<Vec<usize>> for LevelCtx {

@@ -8,9 +8,14 @@ codata Pi(a: Type, p: Fun(a, Type)) {
 
 data Top { Unit }
 
+-- The type of the identity function
+codef IdType: Fun(Type, Type) {
+    ap(_, _, a) => Fun(a, a),
+}
+
 -- The identity function
-def Top.id: Pi(Type, comatch { ap(_, _, a) => Fun(a, a) }) {
-    Unit => comatch { pi_elim(_, _, a) => comatch { ap(_, _, x) => x } } : Pi(Type, comatch { ap(_, _, a) => Fun(a, a) })
+def Top.id: Pi(Type, IdType) {
+    Unit => comatch { pi_elim(_, _, a) => comatch { ap(_, _, x) => x } } : Pi(Type, IdType)
 }
 
 -- The constant function

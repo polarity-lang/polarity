@@ -34,10 +34,10 @@ pub trait VisitCtxExt<P: Phase> {
         F: FnOnce(&mut Self) -> X;
 }
 
-impl<P: Phase, C: HasContext> VisitCtxExt<P> for C
+impl<P: Phase, C: BindContext> VisitCtxExt<P> for C
 where
-    for<'a> &'a Param<P>: AsElement<<<C as HasContext>::Ctx as Context>::ElemIn>,
-    for<'a> &'a ParamInst<P>: AsElement<<<C as HasContext>::Ctx as Context>::ElemIn>,
+    for<'a> &'a Param<P>: ContextElem<C::Ctx>,
+    for<'a> &'a ParamInst<P>: ContextElem<C::Ctx>,
 {
     fn ctx_visit_telescope<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
     where

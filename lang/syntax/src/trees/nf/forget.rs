@@ -8,16 +8,20 @@ impl Forget for Nf {
 
     fn forget(&self) -> Self::Target {
         match self {
-            Nf::TypCtor { info, name, args } => {
-                ust::Exp::TypCtor { info: info.clone(), name: name.clone(), args: args.forget() }
-            }
-            Nf::Ctor { info, name, args } => {
-                ust::Exp::Ctor { info: info.clone(), name: name.clone(), args: args.forget() }
-            }
+            Nf::TypCtor { info, name, args } => ust::Exp::TypCtor {
+                info: info.clone(),
+                name: name.clone(),
+                args: ust::Args { args: args.forget() },
+            },
+            Nf::Ctor { info, name, args } => ust::Exp::Ctor {
+                info: info.clone(),
+                name: name.clone(),
+                args: ust::Args { args: args.forget() },
+            },
             Nf::Type { info } => ust::Exp::Type { info: info.clone() },
             Nf::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::Comatch {
                 info: info.clone(),
-                name: Some(name.clone()),
+                name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.forget(),
             },
@@ -38,11 +42,11 @@ impl Forget for Neu {
                 info: info.clone(),
                 exp: exp.forget(),
                 name: name.clone(),
-                args: args.forget(),
+                args: ust::Args { args: args.forget() },
             },
             Neu::Match { info, name, on_exp, body } => ust::Exp::Match {
                 info: info.clone(),
-                name: Some(name.clone()),
+                name: name.clone(),
                 on_exp: on_exp.forget(),
                 motive: None,
                 ret_typ: (),
@@ -109,6 +113,10 @@ impl Forget for TypApp {
     fn forget(&self) -> Self::Target {
         let TypApp { info, name, args } = self;
 
-        ust::TypApp { info: info.clone(), name: name.clone(), args: args.forget() }
+        ust::TypApp {
+            info: info.clone(),
+            name: name.clone(),
+            args: ust::Args { args: args.forget() },
+        }
     }
 }

@@ -6,14 +6,13 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::{Context, LevelCtx};
-use crate::env::Env;
-use crate::val::*;
+use crate::nf::*;
 
-use super::map_idx::*;
+use super::ContextElem;
 
 #[derive(Debug, Clone)]
 pub struct TypeCtx {
-    bound: Vec<Vec<Rc<Val>>>,
+    pub bound: Vec<Vec<Rc<Nf>>>,
 }
 
 impl TypeCtx {
@@ -22,7 +21,7 @@ impl TypeCtx {
         LevelCtx::from(bound)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &[Rc<Val>]> {
+    pub fn iter(&self) -> impl Iterator<Item = &[Rc<Nf>]> {
         self.bound.iter().map(|inner| &inner[..])
     }
 
@@ -40,9 +39,9 @@ impl TypeCtx {
 }
 
 impl Context for TypeCtx {
-    type ElemIn = Rc<Val>;
+    type ElemIn = Rc<Nf>;
 
-    type ElemOut = Rc<Val>;
+    type ElemOut = Rc<Nf>;
 
     type Var = Var;
 
@@ -81,6 +80,12 @@ impl Context for TypeCtx {
     }
 }
 
+impl ContextElem<TypeCtx> for &Rc<Nf> {
+    fn as_element(&self) -> <TypeCtx as Context>::ElemIn {
+        (*self).clone()
+    }
+}
+
 impl Leveled for TypeCtx {
     fn idx_to_lvl(&self, idx: Idx) -> Lvl {
         let fst = self.bound.len() - 1 - idx.fst;
@@ -104,27 +109,9 @@ impl TypeCtx {
         self.bound.is_empty()
     }
 
-    pub fn env(&self) -> Env {
-        let bound = self
-            .bound
-            .map_idx(|idx, _typ| {
-                Rc::new(Val::Neu {
-                    exp: Neu::Var {
-                        // FIXME: handle info/name
-                        info: Info::empty(),
-                        name: String::new(),
-                        idx,
-                    },
-                })
-            })
-            .collect();
-
-        Env::from(bound)
-    }
-
     pub fn map_failable<E, F>(&self, f: F) -> Result<Self, E>
     where
-        F: Fn(&Rc<Val>) -> Result<Rc<Val>, E>,
+        F: Fn(&Rc<Nf>) -> Result<Rc<Nf>, E>,
     {
         let bound: Result<_, _> =
             self.bound.iter().map(|stack| stack.iter().map(&f).collect()).collect();

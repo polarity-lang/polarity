@@ -10,21 +10,21 @@ use super::util::*;
 impl<'a> Print<'a> for Nf {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Nf::TypCtor { info: _, name, args: subst } => {
+            Nf::TypCtor { info: _, name, args } => {
                 let psubst =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                    if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 alloc.typ(name).append(psubst)
             }
-            Nf::Ctor { info: _, name, args: subst } => {
+            Nf::Ctor { info: _, name, args } => {
                 let psubst =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                    if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 alloc.ctor(name).append(psubst)
             }
             Nf::Type { info: _ } => alloc.typ(TYPE),
             Nf::Comatch { info: _, name, is_lambda_sugar: _, body } => alloc
                 .keyword(COMATCH)
                 .append(alloc.space())
-                .append(alloc.text(name))
+                .append(alloc.text(name.to_string()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Nf::Neu { exp } => exp.print(cfg, alloc),
@@ -36,9 +36,9 @@ impl<'a> Print<'a> for Neu {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Neu::Var { info: _, name, idx } => alloc.text(format!("{name}@{idx}")),
-            Neu::Dtor { info: _, exp, name, args: subst } => {
+            Neu::Dtor { info: _, exp, name, args } => {
                 let psubst =
-                    if subst.is_empty() { alloc.nil() } else { subst.print(cfg, alloc).parens() };
+                    if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
             }
             Neu::Match { info: _, name, on_exp, body } => on_exp
@@ -46,7 +46,7 @@ impl<'a> Print<'a> for Neu {
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
                 .append(alloc.space())
-                .append(alloc.text(name))
+                .append(alloc.text(name.to_string()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Neu::Hole { .. } => alloc.keyword(HOLE_TODO),
@@ -63,7 +63,7 @@ impl<'a> Print<'a> for Comatch {
             .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
             .nest(cfg.indent)
             .append(alloc.hardline())
-            .braces_from(cfg)
+            .braces_anno()
     }
 }
 
@@ -76,7 +76,7 @@ impl<'a> Print<'a> for Match {
             .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
             .nest(cfg.indent)
             .append(alloc.hardline())
-            .braces_from(cfg)
+            .braces_anno()
     }
 }
 

@@ -3,9 +3,9 @@ use data::HashSet;
 
 use crate::common::*;
 
-/// Order in which declarations are defined in the source
+/// Metadata on declarations
 #[derive(Debug, Clone, Default)]
-pub struct Source {
+pub struct LookupTable {
     /// List of items in the order they were defined in the source code
     items: Vec<Item>,
     /// Map of item names to the index in `items`
@@ -18,7 +18,7 @@ pub struct Source {
     xdefs_for_type: HashMap<Ident, HashSet<Ident>>,
 }
 
-impl Source {
+impl LookupTable {
     pub fn get_or_add_type_decl(&mut self, name: Ident) -> TypeView<'_> {
         if self.item_idx.contains_key(&name) {
             self.type_decl_mut(&name).unwrap()
@@ -48,7 +48,7 @@ impl Source {
 
     pub fn type_decl_mut(&mut self, name: &str) -> Option<TypeView<'_>> {
         self.type_decl(name)?;
-        Some(TypeView { name: name.to_owned(), source: self })
+        Some(TypeView { name: name.to_owned(), lookup_table: self })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Item> {
@@ -94,7 +94,7 @@ impl Source {
 }
 pub struct TypeView<'a> {
     name: Ident,
-    source: &'a mut Source,
+    lookup_table: &'a mut LookupTable,
 }
 
 impl<'a> TypeView<'a> {
@@ -103,7 +103,7 @@ impl<'a> TypeView<'a> {
     }
 
     pub fn xtors(&self) -> &[Ident] {
-        let type_decl = self.source.type_decl(&self.name).unwrap();
+        let type_decl = self.lookup_table.type_decl(&self.name).unwrap();
         &type_decl.xtors
     }
 
@@ -118,16 +118,16 @@ impl<'a> TypeView<'a> {
     }
 
     pub fn add_xtor(&mut self, xtor: Ident) {
-        let type_decl = self.source.type_raw_mut(&self.name).unwrap();
+        let type_decl = self.lookup_table.type_raw_mut(&self.name).unwrap();
         type_decl.xtors.push(xtor.clone());
-        self.source.type_for_xtor.insert(xtor, self.name.clone());
+        self.lookup_table.type_for_xtor.insert(xtor, self.name.clone());
     }
 
     pub fn clear_xtors(&mut self) {
-        let type_decl = self.source.type_raw_mut(&self.name).unwrap();
+        let type_decl = self.lookup_table.type_raw_mut(&self.name).unwrap();
         let xtors = std::mem::take(&mut type_decl.xtors);
         for xtor in &xtors {
-            self.source.type_for_xtor.remove(xtor);
+            self.lookup_table.type_for_xtor.remove(xtor);
         }
     }
 }

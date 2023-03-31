@@ -17,21 +17,21 @@ where
                 name: name.clone(),
                 idx: idx.shift_in_range(range, by),
             },
-            Exp::TypCtor { info, name, args: subst } => Exp::TypCtor {
+            Exp::TypCtor { info, name, args } => Exp::TypCtor {
                 info: info.clone(),
                 name: name.clone(),
-                args: subst.shift_in_range(range, by),
+                args: args.shift_in_range(range, by),
             },
-            Exp::Ctor { info, name, args: subst } => Exp::Ctor {
+            Exp::Ctor { info, name, args } => Exp::Ctor {
                 info: info.clone(),
                 name: name.clone(),
-                args: subst.shift_in_range(range, by),
+                args: args.shift_in_range(range, by),
             },
-            Exp::Dtor { info, exp, name, args: subst } => Exp::Dtor {
+            Exp::Dtor { info, exp, name, args } => Exp::Dtor {
                 info: info.clone(),
                 exp: exp.shift_in_range(range.clone(), by),
                 name: name.clone(),
-                args: subst.shift_in_range(range, by),
+                args: args.shift_in_range(range, by),
             },
             Exp::Anno { info, exp, typ } => Exp::Anno {
                 info: info.clone(),
@@ -130,6 +130,15 @@ where
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let TypApp { info, name, args } = self;
         TypApp { info: info.clone(), name: name.clone(), args: args.shift_in_range(range, by) }
+    }
+}
+
+impl<P: Phase> ShiftInRange for Args<P>
+where
+    P::InfTyp: ShiftInRange,
+{
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        Self { args: self.args.shift_in_range(range, by) }
     }
 }
 

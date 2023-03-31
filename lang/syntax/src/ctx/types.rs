@@ -7,6 +7,9 @@ use std::rc::Rc;
 use crate::ast::*;
 use crate::common::*;
 use crate::ctx::{Context, LevelCtx};
+use crate::{wst, wst::WST};
+
+use super::ContextElem;
 
 #[derive(Debug, Clone)]
 pub struct TypeCtx<P: Phase> {
@@ -89,6 +92,36 @@ where
         let err = "Cannot pop from empty context";
         self.bound.last_mut().expect(err).pop().expect(err);
         self.shift_at_lvl(self.bound.len() - 1, (0, -1));
+    }
+}
+
+impl<P: Phase> ContextElem<TypeCtx<P>> for &Param<P>
+where
+    P::InfTyp: ShiftInRange,
+{
+    fn as_element(&self) -> <TypeCtx<P> as Context>::ElemIn {
+        self.typ.clone()
+    }
+}
+
+impl<P: Phase> ContextElem<TypeCtx<P>> for Param<P>
+where
+    P::InfTyp: ShiftInRange,
+{
+    fn as_element(&self) -> <TypeCtx<P> as Context>::ElemIn {
+        self.typ.clone()
+    }
+}
+
+impl ContextElem<TypeCtx<WST>> for &wst::ParamInst {
+    fn as_element(&self) -> <TypeCtx<WST> as Context>::ElemIn {
+        self.typ.as_exp().clone()
+    }
+}
+
+impl ContextElem<TypeCtx<WST>> for wst::ParamInst {
+    fn as_element(&self) -> <TypeCtx<WST> as Context>::ElemIn {
+        self.typ.as_exp().clone()
     }
 }
 

@@ -39,8 +39,8 @@ impl FreeVars<wst::WST> {
         // Types may be interdependent but can only depend on types which occur earlier in the context.
         let fvs = self.sorted();
 
-        let mut params: wst::Params = vec![];
-        let mut args: wst::Args = vec![];
+        let mut params: Vec<wst::Param> = vec![];
+        let mut args = vec![];
         let mut subst = FVSubst::new(cutoff);
 
         // FIXME: The manual context management here should be abstracted out
@@ -64,7 +64,7 @@ impl FreeVars<wst::WST> {
             subst.add(name, lvl, info);
         }
 
-        FreeVarsResult { telescope: Telescope { params }, subst, args }
+        FreeVarsResult { telescope: Telescope { params }, subst, args: Args { args } }
     }
 
     /// Compute the union of two free variable sets
@@ -102,8 +102,8 @@ pub struct FreeVar<P: Phase> {
 impl<P: Phase<VarName = Ident>, T: Visit<P>> FreeVarsExt<P> for T
 where
     P::InfTyp: ShiftInRange,
-    for<'b> &'b Param<P>: AsElement<Rc<Exp<P>>>,
-    for<'b> &'b ParamInst<P>: AsElement<Rc<Exp<P>>>,
+    for<'b> &'b Param<P>: ContextElem<TypeCtx<P>>,
+    for<'b> &'b ParamInst<P>: ContextElem<TypeCtx<P>>,
 {
     fn free_vars(&self, ctx: &mut TypeCtx<P>) -> FreeVars<P> {
         let mut v = FvVistor { fvs: Default::default(), cutoff: ctx.len(), ctx };
@@ -127,8 +127,8 @@ struct FvVistor<'a, P: Phase> {
 impl<'a, P: Phase<VarName = Ident>> FvVistor<'a, P>
 where
     P::InfTyp: ShiftInRange,
-    for<'b> &'b Param<P>: AsElement<Rc<Exp<P>>>,
-    for<'b> &'b ParamInst<P>: AsElement<Rc<Exp<P>>>,
+    for<'b> &'b Param<P>: ContextElem<TypeCtx<P>>,
+    for<'b> &'b ParamInst<P>: ContextElem<TypeCtx<P>>,
 {
     /// Add a free variable as well as all free variables its type
     fn add_fv(&mut self, fv: FreeVar<P>) {
@@ -142,7 +142,7 @@ where
     }
 }
 
-impl<'a, P: Phase> HasContext for FvVistor<'a, P>
+impl<'a, P: Phase> BindContext for FvVistor<'a, P>
 where
     P::InfTyp: ShiftInRange,
 {
@@ -156,8 +156,8 @@ where
 impl<'b, P: Phase<VarName = Ident>> Visitor<P> for FvVistor<'b, P>
 where
     P::InfTyp: ShiftInRange,
-    for<'c> &'c Param<P>: AsElement<Rc<Exp<P>>>,
-    for<'c> &'c ParamInst<P>: AsElement<Rc<Exp<P>>>,
+    for<'c> &'c Param<P>: ContextElem<TypeCtx<P>>,
+    for<'c> &'c ParamInst<P>: ContextElem<TypeCtx<P>>,
 {
     fn visit_telescope<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
     where

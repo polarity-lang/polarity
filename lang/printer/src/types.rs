@@ -1,12 +1,22 @@
 use std::error::Error;
 
-use pretty::termcolor::{Color, ColorSpec};
 use pretty::DocAllocator;
 
-use crate::theme::ColorExt;
+#[derive(Debug, Clone, Copy)]
+pub enum Anno {
+    Keyword,
+    Ctor,
+    Dtor,
+    Type,
+    Comment,
+    Backslash,
+    BraceOpen,
+    BraceClose,
+    Error,
+}
 
-pub type Alloc<'a> = pretty::Arena<'a, ColorSpec>;
-pub type Builder<'a> = pretty::DocBuilder<'a, Alloc<'a>, ColorSpec>;
+pub type Alloc<'a> = pretty::Arena<'a, Anno>;
+pub type Builder<'a> = pretty::DocBuilder<'a, Alloc<'a>, Anno>;
 
 /// Operator precedences
 pub type Precedence = u32;
@@ -65,14 +75,14 @@ impl<'a, T: Print<'a>, E: Error> Print<'a> for Result<T, E> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Ok(x) => x.print(cfg, alloc),
-            Err(err) => alloc.text(err.to_string()).annotate(Color::Red.spec()),
+            Err(err) => alloc.text(err.to_string()).annotate(Anno::Error),
         }
     }
 
     fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
         match self {
             Ok(x) => x.print_prec(cfg, alloc, prec),
-            Err(err) => alloc.text(err.to_string()).annotate(Color::Red.spec()),
+            Err(err) => alloc.text(err.to_string()).annotate(Anno::Error),
         }
     }
 }
