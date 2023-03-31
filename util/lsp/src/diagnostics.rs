@@ -2,7 +2,6 @@ use lsp_types::NumberOrString;
 use miette::Diagnostic;
 use tower_lsp::lsp_types;
 
-use data::result::Extract;
 use miette_util::FromMiette;
 use source::DatabaseView;
 use source::Error;
@@ -11,8 +10,12 @@ use crate::conversion::ToLsp;
 
 pub trait Diagnostics {
     fn diagnostics(&self, result: Result<(), Error>) -> Vec<lsp_types::Diagnostic> {
-        result.map(|_| vec![]).map_err(|err| self.error_diagnostics(err)).extract()
+        match result {
+            Ok(()) => vec![],
+            Err(err) => self.error_diagnostics(err),
+        }
     }
+
     fn error_diagnostics(&self, error: Error) -> Vec<lsp_types::Diagnostic>;
 }
 
