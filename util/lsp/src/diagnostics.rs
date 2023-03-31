@@ -53,7 +53,7 @@ impl Diagnostics for DatabaseView<'_> {
 fn get_span<T: Diagnostic>(err: &T) -> Option<SourceSpan> {
     match err.labels() {
         Some(spans) => {
-            let x = spans.into_iter().next();
+            let x = spans.into_iter().last();
             x.map(|y| *y.inner())
         }
         None => None,
