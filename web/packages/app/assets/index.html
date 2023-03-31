@@ -4,31 +4,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
   <title>Editor</title>
 </head>
 
-<body style="background-color: #1e1e1e; color: white;">
-  <section class="content">
-    <div class="editor-container">
-      <div id="editor"></div>
-    </div>
-    <div class="console-container">
-      <div class="col">
-        <label for="channel-console">console</label>
-        <textarea id="channel-console" autocomplete="off" spellcheck="off" wrap="off" readonly rows="3"></textarea>
+<body>
+  <header class="container">
+    <h1>De/Refunctionalization of Dependent Types</h1>
+  </header>
+  <main class="container">
+    <section class="content">
+      <div class="editor-container">
+        <div id="editor" style="height: 1000px"></div>
       </div>
+    </section>
+    <section id="tutorial">
+      <h5>Tutorial</h5>
 
-      <div class="col">
-        <label for="channel-client">message trace (client ⇒ server)</label>
-        <textarea id="channel-client" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
-      </div>
+      TODO
 
-      <div class="col">
-        <label for="channel-server">message trace (client ⇐ server)</label>
-        <textarea id="channel-server" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
-      </div>
-    </div>
-  </section>
+    </section>
+
+    <section id="accordions">
+      <h5>Debug Output</h5>
+      <details>
+        <summary>Console</summary>
+          <textarea id="channel-console" autocomplete="off" spellcheck="off" wrap="off" readonly rows="3"></textarea>
+      </details>
+      <details>
+        <summary>Client To Server</summary>
+          <textarea id="channel-client" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
+      </details>
+      <details>
+        <summary>Server To Client</summary>
+          <textarea id="channel-server" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
+      </details>
+    </section>
+  </main>
+  <footer class="container">
+    Copyright(2023)
+  </footer>
 </body>
 
 </html>
