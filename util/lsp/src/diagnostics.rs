@@ -1,3 +1,4 @@
+use lsp_types::NumberOrString;
 use miette::Diagnostic;
 use tower_lsp::lsp_types;
 
@@ -29,7 +30,7 @@ impl Diagnostics for DatabaseView<'_> {
                     range,
                     message,
                     severity: error.severity().map(ToLsp::to_lsp),
-                    code: None,
+                    code: error.code().map(|x| NumberOrString::String(format!("{}", x))),
                     code_description: None,
                     source: None,
                     related_information: None,
