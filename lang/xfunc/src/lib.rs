@@ -1,9 +1,6 @@
 use syntax::ust;
 
 pub mod matrix;
-mod repr;
-
-use repr::Represent;
 
 pub fn as_matrix(prg: &ust::Prg) -> matrix::Prg {
     matrix::build(prg)
