@@ -5,6 +5,8 @@ use syntax::common::*;
 use syntax::ctx::{BindContext, Context, LevelCtx};
 use syntax::ust;
 
+use crate::result::XfuncError;
+
 #[derive(Debug, Clone)]
 pub struct Prg {
     pub map: HashMap<Ident, XData>,
@@ -43,15 +45,15 @@ pub enum Repr {
 }
 
 /// Take the red pill
-pub fn build(prg: &ust::Prg) -> Prg {
+pub fn build(prg: &ust::Prg) -> Result<Prg, XfuncError> {
     let mut out = Prg { map: HashMap::default(), exp: None };
     let mut ctx = Ctx::empty();
-    prg.build_matrix(&mut ctx, &mut out);
-    out
+    prg.build_matrix(&mut ctx, &mut out)?;
+    Ok(out)
 }
 
 pub trait BuildMatrix {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg);
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError>;
 }
 
 pub struct Ctx {
@@ -65,7 +67,7 @@ impl Ctx {
 }
 
 impl BuildMatrix for ust::Prg {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let ust::Prg { decls, exp } = self;
         out.exp = exp.clone();
 
@@ -73,8 +75,8 @@ impl BuildMatrix for ust::Prg {
             match decl {
                 ust::Decl::Data(data) => data.build_matrix(ctx, out),
                 ust::Decl::Codata(codata) => codata.build_matrix(ctx, out),
-                _ => (),
-            }
+                _ => Ok(()),
+            }?
         }
 
         for decl in decls.map.values() {
@@ -83,14 +85,15 @@ impl BuildMatrix for ust::Prg {
                 ust::Decl::Dtor(dtor) => dtor.build_matrix(ctx, out),
                 ust::Decl::Def(def) => def.build_matrix(ctx, out),
                 ust::Decl::Codef(codef) => codef.build_matrix(ctx, out),
-                _ => (),
-            }
+                _ => Ok(()),
+            }?
         }
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Data {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let ust::Data { info, doc, name, hidden: _, typ, ctors } = self;
 
         let xdata = XData {
@@ -109,11 +112,12 @@ impl BuildMatrix for ust::Data {
         }
 
         out.map.insert(name.clone(), xdata);
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Codata {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let ust::Codata { info, doc, name, hidden: _, typ, dtors } = self;
 
         let xdata = XData {
@@ -132,27 +136,31 @@ impl BuildMatrix for ust::Codata {
         }
 
         out.map.insert(name.clone(), xdata);
+
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Ctor {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &ctx.type_for_xtor[&self.name];
         let xdata = out.map.get_mut(type_name).unwrap();
         xdata.ctors.insert(self.name.clone(), self.clone());
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Dtor {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &ctx.type_for_xtor[&self.name];
         let xdata = out.map.get_mut(type_name).unwrap();
         xdata.dtors.insert(self.name.clone(), self.clone());
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Def {
-    fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.self_param.typ.name;
         let xdata = out.map.get_mut(type_name).unwrap();
         xdata.dtors.insert(self.name.clone(), self.to_dtor());
@@ -164,11 +172,12 @@ impl BuildMatrix for ust::Def {
             let key = Key { dtor: self.name.clone(), ctor: name.clone() };
             xdata.exprs.insert(key, body.clone());
         }
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Codef {
-    fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.typ.name;
         let xdata = out.map.get_mut(type_name).unwrap();
         xdata.ctors.insert(self.name.clone(), self.to_ctor());
@@ -190,6 +199,7 @@ impl BuildMatrix for ust::Codef {
             });
             xdata.exprs.insert(key, body.clone());
         }
+        Ok(())
     }
 }
 

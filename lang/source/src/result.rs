@@ -8,4 +8,5 @@ pub enum Error {
     Parser(#[from] parser::ParseError),
     Lowering(#[from] lowering::LoweringError),
     Type(#[from] typechecker::TypeError),
+    Xfunc(#[from] xfunc::result::XfuncError),
 }
