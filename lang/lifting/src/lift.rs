@@ -129,7 +129,7 @@ impl Mapper<WST> for Lift {
             .free_vars(&mut self.ctx)
             .union(info.typ.free_vars(&mut self.ctx))
             .union(ret_fvs)
-            .telescope();
+            .telescope(&self.ctx.levels());
 
         // Substitute the new parameters for the free variables
         let body = body.subst(&mut self.ctx.levels(), &subst);
@@ -184,8 +184,10 @@ impl Mapper<WST> for Lift {
 
         // Collect the free variables in the comatch and the return type
         // Build a telescope of the types of the lifted variables
-        let FreeVarsResult { telescope, subst, args } =
-            body.free_vars(&mut self.ctx).union(info.typ.free_vars(&mut self.ctx)).telescope();
+        let FreeVarsResult { telescope, subst, args } = body
+            .free_vars(&mut self.ctx)
+            .union(info.typ.free_vars(&mut self.ctx))
+            .telescope(&self.ctx.levels());
 
         // Substitute the new parameters for the free variables
         let body = body.subst(&mut self.ctx.levels(), &subst);
