@@ -39,7 +39,7 @@ impl Diagnostics for DatabaseView<'_> {
             range,
             message,
             severity: error.severity().map(ToLsp::to_lsp),
-            code: error.code().map(|x| NumberOrString::String(format!("{}", x))),
+            code: error.code().map(|x| NumberOrString::String(format!("{x}"))),
             code_description: None,
             source: None,
             related_information: None,
