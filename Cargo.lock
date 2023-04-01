@@ -1927,6 +1927,7 @@ dependencies = [
  "console",
  "data",
  "derivative",
+ "lazy_static",
  "miette",
  "miette_util",
  "num-bigint",
