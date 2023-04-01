@@ -1,0 +1,15 @@
+data Eq (a: Type, x y: a) {
+    Refl(a: Type, x: a) : Eq(a, x, x)
+}
+
+codata Bool {
+    (x: Bool).neg_inverse: Eq(Bool, x, x.not.not),
+    and(other: Bool): Bool,
+    not: Bool
+}
+
+comatch {
+    neg_inverse => ?,
+    and(other) => ?,
+    not => ?
+}: Bool

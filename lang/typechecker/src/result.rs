@@ -97,6 +97,13 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
+    #[error("Local comatch not supported for type {type_name} because {type_name} contains destructors with self parameters")]
+    #[diagnostic(code("T-012"), help("Use a top-level codefinition instead"))]
+    LocalComatchWithSelf {
+        type_name: String,
+        #[label]
+        span: Option<SourceSpan>,
+    },
     #[error("The impossible happened: {message}")]
     #[diagnostic(code("T-XXX"))]
     /// This error should not occur.
