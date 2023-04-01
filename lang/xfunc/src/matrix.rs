@@ -143,8 +143,14 @@ impl BuildMatrix for ust::Codata {
 
 impl BuildMatrix for ust::Ctor {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let type_name = &ctx.type_for_xtor[&self.name];
-        let xdata = out.map.get_mut(type_name).unwrap();
+        let type_name = &ctx.type_for_xtor.get(&self.name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {}", self.name),
+            span: None,
+        })?;
+        let xdata = out.map.get_mut(*type_name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {}", self.name),
+            span: None,
+        })?;
         xdata.ctors.insert(self.name.clone(), self.clone());
         Ok(())
     }
@@ -152,8 +158,14 @@ impl BuildMatrix for ust::Ctor {
 
 impl BuildMatrix for ust::Dtor {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let type_name = &ctx.type_for_xtor[&self.name];
-        let xdata = out.map.get_mut(type_name).unwrap();
+        let type_name = &ctx.type_for_xtor.get(&self.name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {}", self.name),
+            span: None,
+        })?;
+        let xdata = out.map.get_mut(*type_name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {}", type_name),
+            span: None,
+        })?;
         xdata.dtors.insert(self.name.clone(), self.clone());
         Ok(())
     }
@@ -162,7 +174,10 @@ impl BuildMatrix for ust::Dtor {
 impl BuildMatrix for ust::Def {
     fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.self_param.typ.name;
-        let xdata = out.map.get_mut(type_name).unwrap();
+        let xdata = out.map.get_mut(type_name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {type_name}"),
+            span: None,
+        })?;
         xdata.dtors.insert(self.name.clone(), self.to_dtor());
 
         let ust::Match { cases, .. } = &self.body;
@@ -179,7 +194,10 @@ impl BuildMatrix for ust::Def {
 impl BuildMatrix for ust::Codef {
     fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.typ.name;
-        let xdata = out.map.get_mut(type_name).unwrap();
+        let xdata = out.map.get_mut(type_name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {type_name}"),
+            span: None,
+        })?;
         xdata.ctors.insert(self.name.clone(), self.to_ctor());
 
         let ust::Comatch { cases, .. } = &self.body;
@@ -223,11 +241,12 @@ impl XData {
                     .values()
                     .map(|ctor| {
                         let key = Key { dtor: dtor.name.clone(), ctor: ctor.name.clone() };
+                        let body = exprs.get(&key).expect("Could not resolve {key}");
                         ust::Case {
                             info: ust::Info::empty(),
                             name: ctor.name.clone(),
                             args: ctor.params.instantiate(),
-                            body: exprs[&key].clone(),
+                            body: body.clone(),
                         }
                     })
                     .collect();
