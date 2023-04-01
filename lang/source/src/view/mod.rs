@@ -1,6 +1,7 @@
 use codespan::FileId;
 
 mod edit;
+mod lift;
 mod rt;
 mod spans;
 mod xfunc;

@@ -2,7 +2,9 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-use source::{Database, Xfunc};
+use printer::{PrintCfg, PrintExt};
+use source::Database;
+use syntax::ust;
 
 use crate::result::IOError;
 
@@ -22,17 +24,20 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         source::File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
     let view = db.add(file).query();
 
-    let Xfunc { edits, .. } = view.xfunc(&cmd.r#type).map_err(miette::Report::msg)?;
-
-    let output = view.edited(edits);
+    let prg = view.lift(&cmd.r#type).map_err(miette::Report::msg)?;
 
     // Write to file or to stdout
-    let stream: Box<dyn io::Write> = match cmd.output {
+    let mut stream: Box<dyn io::Write> = match cmd.output {
         Some(path) => Box::new(fs::File::create(path).expect("Failed to create file")),
         None => Box::new(io::stdout()),
     };
 
-    output.write_to(stream).expect("Failed to write file");
+    print_prg(prg, &PrintCfg::default(), &mut stream);
 
     Ok(())
+}
+
+fn print_prg<W: io::Write>(prg: ust::Prg, cfg: &PrintCfg, stream: &mut W) {
+    prg.print(cfg, stream).expect("Failed to print to stdout");
+    println!();
 }
