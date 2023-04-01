@@ -56,9 +56,6 @@ impl FreeVars<wst::WST> {
                 name: name.clone(),
                 idx: base_ctx.lvl_to_idx(fv.lvl),
             });
-            for param in params.iter_mut() {
-                param.typ = param.typ.shift((0, 1));
-            }
             args.push(arg);
             params.push(param);
             subst.add(name, lvl, info);
