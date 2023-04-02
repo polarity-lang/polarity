@@ -13,18 +13,64 @@
     <h1>De/Refunctionalization of Dependent Types</h1>
   </header>
   <main class="container">
+    <!-- Editor -->
     <section class="content">
       <div class="editor-container">
         <div id="editor" style="height: 1000px"></div>
       </div>
     </section>
+    <!-- Tutorial -->
     <section id="tutorial">
       <h5>Tutorial</h5>
+      
+      <h6>Data Types</h6>
 
-      TODO
+      The simplest form of datatypes are non-parameterized.
+      The constructors of a non-parameterized data-type can be given as a comma-separated list.
+
+      <pre>
+        <code>
+          data Bool { True, False }
+        </code>
+      </pre>
+
+      This is just a shorthand notation for
+      
+      <pre>
+        <code>
+          data Bool { True: Bool, False: Bool }
+        </code>
+      </pre>
+      
+      The shorthand notation which omits the type instantiation is only allowed for non-parameterized types.
+      If the type has parameters, then the full form must be written out:
+
+      <pre>
+        <code>
+          data Ty { True: Bool, False: Bool }
+
+        </code>
+      </pre>
+
+      If we want to form the type of lists of some element type, we need to parameterize the type over elements of the type universe <code>Type</code>.
+      <pre>
+        <code>
+          data List(a: Type) { Nil(a: Type): List(a), Cons(a: Type, x: a, xs: List(a)): List(a) }
+        </code>
+      </pre>
+
+      <h6>Codata Types</h6>
+
+      <h6>Definitions</h6>
+
+      <h6>Codefinitions</h6>
+
+      <h6>Typed Holes</h6>
+
+      <h6>The Main Expression</h6>
 
     </section>
-
+    <!-- Debug Output -->
     <section id="accordions">
       <h5>Debug Output</h5>
       <details>
