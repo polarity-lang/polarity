@@ -304,7 +304,7 @@ impl<'a, P: Phase<VarName = Ident>> Substitution<Rc<Exp<P>>> for FVParamSubst<'a
             Rc::new(Exp::Var {
                 info: fv.info.clone(),
                 name: fv.name.clone(),
-                idx: Idx { fst: 0, snd: self.inner.subst.len() - fv.lvl.snd },
+                idx: Idx { fst: 0, snd: self.inner.subst.len() - 1 - fv.lvl.snd },
             })
         })
     }
