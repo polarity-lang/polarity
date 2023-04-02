@@ -132,11 +132,11 @@ impl Mapper<WST> for Lift {
             .telescope(&self.ctx.levels());
 
         // Substitute the new parameters for the free variables
-        let body = body.subst(&mut self.ctx.levels(), &subst);
-        let self_typ = info.typ.subst(&mut self.ctx.levels(), &subst);
+        let body = body.subst(&mut self.ctx.levels(), &subst.in_body());
+        let self_typ = info.typ.subst(&mut self.ctx.levels(), &subst.in_body());
         let def_ret_typ = match &motive {
-            Some(m) => m.subst(&mut self.ctx.levels(), &subst).ret_typ,
-            None => ret_typ.as_exp().subst(&mut self.ctx.levels(), &subst).shift((1, 0)),
+            Some(m) => m.subst(&mut self.ctx.levels(), &subst.in_body()).ret_typ,
+            None => ret_typ.as_exp().subst(&mut self.ctx.levels(), &subst.in_body()).shift((1, 0)),
         };
 
         // Build the new top-level definition
@@ -190,8 +190,8 @@ impl Mapper<WST> for Lift {
             .telescope(&self.ctx.levels());
 
         // Substitute the new parameters for the free variables
-        let body = body.subst(&mut self.ctx.levels(), &subst);
-        let typ = info.typ.subst(&mut self.ctx.levels(), &subst);
+        let body = body.subst(&mut self.ctx.levels(), &subst.in_body());
+        let typ = info.typ.subst(&mut self.ctx.levels(), &subst.in_body());
 
         // Build the new top-level definition
         let name = self.unique_codef_name(name, &info.typ.name);

@@ -27,6 +27,8 @@ impl Context for Ctx {
     }
 
     fn push_binder(&mut self, elem: Self::ElemIn) {
+        assert!(!self.contains_name(&elem));
+        assert!(!elem.is_empty());
         self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
     }
 
@@ -44,6 +46,27 @@ impl Context for Ctx {
             .and_then(|ctx| ctx.get(ctx.len() - 1 - idx.snd))
             .unwrap_or_else(|| panic!("Unbound variable: {dbg}, idx: {idx}"))
             .clone()
+    }
+}
+
+impl Ctx {
+    pub(super) fn disambiguate_name(&self, mut name: Ident) -> Ident {
+        if name == "_" || name.is_empty() {
+            name = "x".to_owned();
+        }
+        while self.contains_name(&name) {
+            name.push('\'');
+        }
+        name
+    }
+
+    fn contains_name(&self, name: &Ident) -> bool {
+        for telescope in &self.bound {
+            if telescope.contains(name) {
+                return true;
+            }
+        }
+        false
     }
 }
 
