@@ -211,9 +211,9 @@ pub type Args = Vec<Rc<Exp>>;
 #[derive(Debug, Clone)]
 pub struct Param {
     /// The obligatory parameter.
-    pub name: Ident,
+    pub name: BindingSite,
     /// A possible list of additional parameters.
-    pub names: Vec<Ident>,
+    pub names: Vec<BindingSite>,
     /// The type of the parameter.
     pub typ: Rc<Exp>,
 }
@@ -222,7 +222,7 @@ pub struct Param {
 #[derive(Debug, Clone)]
 pub struct ParamInst {
     pub info: Info,
-    pub name: Ident,
+    pub name: BindingSite,
 }
 
 #[derive(Debug, Clone)]

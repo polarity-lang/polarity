@@ -5,6 +5,8 @@ use syntax::common::*;
 use syntax::ctx::{BindContext, Context, LevelCtx};
 use syntax::ust;
 
+use crate::result::XfuncError;
+
 #[derive(Debug, Clone)]
 pub struct Prg {
     pub map: HashMap<Ident, XData>,
@@ -43,15 +45,15 @@ pub enum Repr {
 }
 
 /// Take the red pill
-pub fn build(prg: &ust::Prg) -> Prg {
+pub fn build(prg: &ust::Prg) -> Result<Prg, XfuncError> {
     let mut out = Prg { map: HashMap::default(), exp: None };
     let mut ctx = Ctx::empty();
-    prg.build_matrix(&mut ctx, &mut out);
-    out
+    prg.build_matrix(&mut ctx, &mut out)?;
+    Ok(out)
 }
 
 pub trait BuildMatrix {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg);
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError>;
 }
 
 pub struct Ctx {
@@ -65,7 +67,7 @@ impl Ctx {
 }
 
 impl BuildMatrix for ust::Prg {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let ust::Prg { decls, exp } = self;
         out.exp = exp.clone();
 
@@ -73,8 +75,8 @@ impl BuildMatrix for ust::Prg {
             match decl {
                 ust::Decl::Data(data) => data.build_matrix(ctx, out),
                 ust::Decl::Codata(codata) => codata.build_matrix(ctx, out),
-                _ => (),
-            }
+                _ => Ok(()),
+            }?
         }
 
         for decl in decls.map.values() {
@@ -83,14 +85,15 @@ impl BuildMatrix for ust::Prg {
                 ust::Decl::Dtor(dtor) => dtor.build_matrix(ctx, out),
                 ust::Decl::Def(def) => def.build_matrix(ctx, out),
                 ust::Decl::Codef(codef) => codef.build_matrix(ctx, out),
-                _ => (),
-            }
+                _ => Ok(()),
+            }?
         }
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Data {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let ust::Data { info, doc, name, hidden: _, typ, ctors } = self;
 
         let xdata = XData {
@@ -109,11 +112,12 @@ impl BuildMatrix for ust::Data {
         }
 
         out.map.insert(name.clone(), xdata);
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Codata {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let ust::Codata { info, doc, name, hidden: _, typ, dtors } = self;
 
         let xdata = XData {
@@ -132,29 +136,48 @@ impl BuildMatrix for ust::Codata {
         }
 
         out.map.insert(name.clone(), xdata);
+
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Ctor {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) {
-        let type_name = &ctx.type_for_xtor[&self.name];
-        let xdata = out.map.get_mut(type_name).unwrap();
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
+        let type_name = &ctx.type_for_xtor.get(&self.name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {}", self.name),
+            span: None,
+        })?;
+        let xdata = out.map.get_mut(*type_name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {}", self.name),
+            span: None,
+        })?;
         xdata.ctors.insert(self.name.clone(), self.clone());
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Dtor {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) {
-        let type_name = &ctx.type_for_xtor[&self.name];
-        let xdata = out.map.get_mut(type_name).unwrap();
+    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
+        let type_name = &ctx.type_for_xtor.get(&self.name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {}", self.name),
+            span: None,
+        })?;
+        let xdata = out.map.get_mut(*type_name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {}", type_name),
+            span: None,
+        })?;
         xdata.dtors.insert(self.name.clone(), self.clone());
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Def {
-    fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.self_param.typ.name;
-        let xdata = out.map.get_mut(type_name).unwrap();
+        let xdata = out.map.get_mut(type_name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {type_name}"),
+            span: None,
+        })?;
         xdata.dtors.insert(self.name.clone(), self.to_dtor());
 
         let ust::Match { cases, .. } = &self.body;
@@ -164,13 +187,17 @@ impl BuildMatrix for ust::Def {
             let key = Key { dtor: self.name.clone(), ctor: name.clone() };
             xdata.exprs.insert(key, body.clone());
         }
+        Ok(())
     }
 }
 
 impl BuildMatrix for ust::Codef {
-    fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) {
+    fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.typ.name;
-        let xdata = out.map.get_mut(type_name).unwrap();
+        let xdata = out.map.get_mut(type_name).ok_or(XfuncError::Impossible {
+            message: format!("Could not resolve {type_name}"),
+            span: None,
+        })?;
         xdata.ctors.insert(self.name.clone(), self.to_ctor());
 
         let ust::Comatch { cases, .. } = &self.body;
@@ -190,5 +217,129 @@ impl BuildMatrix for ust::Codef {
             });
             xdata.exprs.insert(key, body.clone());
         }
+        Ok(())
+    }
+}
+
+impl XData {
+    pub fn as_data(&self) -> (ust::Data, Vec<ust::Ctor>, Vec<ust::Def>) {
+        let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
+
+        let data = ust::Data {
+            info: ust::Info::empty(),
+            doc: doc.clone(),
+            name: name.clone(),
+            hidden: false,
+            typ: typ.clone(),
+            ctors: ctors.keys().cloned().collect(),
+        };
+
+        let defs = dtors
+            .values()
+            .map(|dtor| {
+                let cases = ctors
+                    .values()
+                    .map(|ctor| {
+                        let key = Key { dtor: dtor.name.clone(), ctor: ctor.name.clone() };
+                        let body = exprs.get(&key).expect("Could not resolve {key}");
+                        ust::Case {
+                            info: ust::Info::empty(),
+                            name: ctor.name.clone(),
+                            args: ctor.params.instantiate(),
+                            body: body.clone(),
+                        }
+                    })
+                    .collect();
+
+                ust::Def {
+                    info: ust::Info::empty(),
+                    doc: dtor.doc.clone(),
+                    name: dtor.name.clone(),
+                    hidden: false,
+                    params: dtor.params.clone(),
+                    self_param: dtor.self_param.clone(),
+                    ret_typ: dtor.ret_typ.clone(),
+                    body: ust::Match { cases, info: ust::Info::empty() },
+                }
+            })
+            .collect();
+
+        let ctors = ctors.values().cloned().collect();
+
+        (data, ctors, defs)
+    }
+
+    pub fn as_codata(&self) -> (ust::Codata, Vec<ust::Dtor>, Vec<ust::Codef>) {
+        let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
+
+        let codata = ust::Codata {
+            info: ust::Info::empty(),
+            doc: doc.clone(),
+            name: name.clone(),
+            hidden: false,
+            typ: typ.clone(),
+            dtors: dtors.keys().cloned().collect(),
+        };
+
+        let codefs = ctors
+            .values()
+            .map(|ctor| {
+                let cases = dtors
+                    .values()
+                    .map(|dtor| {
+                        let key = Key { dtor: dtor.name.clone(), ctor: ctor.name.clone() };
+                        let body = &exprs[&key];
+                        // Swap binding order (which is different in the matrix representation)
+                        let body = body.as_ref().map(|body| {
+                            let mut ctx = LevelCtx::empty();
+                            ctx.bind_iter(dtor.params.params.iter(), |ctx| {
+                                ctx.bind_iter(ctor.params.params.iter(), |ctx| {
+                                    body.swap_with_ctx(ctx, 0, 1)
+                                })
+                            })
+                        });
+                        ust::Cocase {
+                            info: ust::Info::empty(),
+                            name: dtor.name.clone(),
+                            params: dtor.params.instantiate(),
+                            body,
+                        }
+                    })
+                    .collect();
+
+                ust::Codef {
+                    info: ust::Info::empty(),
+                    doc: ctor.doc.clone(),
+                    name: ctor.name.clone(),
+                    hidden: false,
+                    params: ctor.params.clone(),
+                    typ: ctor.typ.clone(),
+                    body: ust::Comatch { cases, info: ust::Info::empty() },
+                }
+            })
+            .collect();
+
+        let dtors = dtors.values().cloned().collect();
+
+        (codata, dtors, codefs)
+    }
+}
+
+trait InstantiateExt {
+    fn instantiate(&self) -> ust::TelescopeInst;
+}
+
+impl InstantiateExt for ust::Telescope {
+    fn instantiate(&self) -> ust::TelescopeInst {
+        let params = self
+            .params
+            .iter()
+            .map(|ust::Param { name, .. }| ust::ParamInst {
+                name: name.clone(),
+                info: ust::Info::empty(),
+                typ: (),
+            })
+            .collect();
+        ust::TelescopeInst { params }
     }
 }

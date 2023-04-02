@@ -1,6 +1,7 @@
 use super::*;
 use crate::ast::generic;
 use crate::cst;
+use lazy_static::lazy_static;
 
 pub trait Named {
     fn name(&self) -> &Ident;
@@ -30,15 +31,28 @@ impl<P: generic::Phase> Named for generic::Decl<P> {
     }
 }
 
+lazy_static! {
+    static ref WILDCARD: String = "_".to_owned();
+}
+
 impl Named for cst::Param {
     fn name(&self) -> &Ident {
-        &self.name
+        self.name.name()
     }
 }
 
 impl Named for cst::ParamInst {
     fn name(&self) -> &Ident {
-        &self.name
+        self.name.name()
+    }
+}
+
+impl Named for BindingSite {
+    fn name(&self) -> &Ident {
+        match &self {
+            BindingSite::Var { name } => name.name(),
+            BindingSite::Wildcard => &WILDCARD,
+        }
     }
 }
 

@@ -8,6 +8,7 @@ use data::{HashMap, HashSet};
 use syntax::common::*;
 use syntax::ust;
 use xfunc::matrix;
+use xfunc::result::XfuncError;
 
 use super::{DatabaseView, Edit};
 
@@ -17,8 +18,8 @@ pub struct Xfunc {
 }
 
 impl<'a> DatabaseView<'a> {
-    pub fn xfunc(&self, type_name: &str) -> Result<Xfunc, String> {
-        let prg = self.tst().map_err(|err| format!("{err}"))?;
+    pub fn xfunc(&self, type_name: &str) -> Result<Xfunc, crate::Error> {
+        let prg = self.tst()?;
 
         let decl_spans = prg
             .decls
@@ -40,16 +41,22 @@ impl<'a> DatabaseView<'a> {
             lifting::lift(prg.forget(), type_name);
         dirty_decls.retain(|name| !filter_out.contains(name));
 
-        let mat = xfunc::as_matrix(&prg);
+        let mat = xfunc::as_matrix(&prg)?;
 
-        let type_span = mat.map[type_name].info.span.unwrap();
+        let type_span =
+            mat.map.get(type_name).and_then(|x| x.info.span).ok_or(XfuncError::Impossible {
+                message: format!("Could not resolve {type_name}"),
+                span: None,
+            })?;
 
         let original = Original { type_span, decl_spans, xdefs };
 
-        let result = match xfunc::repr(&mat, type_name) {
+        let repr = xfunc::repr(&mat, type_name)?;
+
+        let result = match repr {
             xfunc::matrix::Repr::Data => refunctionalize(prg, &mat, type_name),
             xfunc::matrix::Repr::Codata => defunctionalize(prg, &mat, type_name),
-        };
+        }?;
 
         Ok(generate_edits(original, dirty_decls, result))
     }
@@ -97,8 +104,12 @@ fn generate_edits(original: Original, dirty_decls: HashSet<Ident>, result: Xfunc
     Xfunc { title, edits }
 }
 
-fn refunctionalize(prg: ust::Prg, mat: &matrix::Prg, type_name: &str) -> XfuncResult {
-    let (codata, dtors, codefs) = xfunc::as_codata(mat, type_name);
+fn refunctionalize(
+    prg: ust::Prg,
+    mat: &matrix::Prg,
+    type_name: &str,
+) -> Result<XfuncResult, crate::Error> {
+    let (codata, dtors, codefs) = xfunc::as_codata(mat, type_name)?;
 
     let mut decls = prg.decls;
     let map = &mut decls.map;
@@ -114,11 +125,15 @@ fn refunctionalize(prg: ust::Prg, mat: &matrix::Prg, type_name: &str) -> XfuncRe
     let mut new_decls = vec![ust::Decl::Codata(codata)];
     new_decls.extend(codefs.map(ust::Decl::Codef));
 
-    XfuncResult { title: format!("Refunctionalize {type_name}"), decls, new_decls }
+    Ok(XfuncResult { title: format!("Refunctionalize {type_name}"), decls, new_decls })
 }
 
-fn defunctionalize(prg: ust::Prg, mat: &matrix::Prg, type_name: &str) -> XfuncResult {
-    let (data, ctors, defs) = xfunc::as_data(mat, type_name);
+fn defunctionalize(
+    prg: ust::Prg,
+    mat: &matrix::Prg,
+    type_name: &str,
+) -> Result<XfuncResult, crate::Error> {
+    let (data, ctors, defs) = xfunc::as_data(mat, type_name)?;
 
     let mut decls = prg.decls;
     let map = &mut decls.map;
@@ -135,5 +150,5 @@ fn defunctionalize(prg: ust::Prg, mat: &matrix::Prg, type_name: &str) -> XfuncRe
     let mut new_decls = vec![ust::Decl::Data(data)];
     new_decls.extend(defs.into_iter().map(ust::Decl::Def));
 
-    XfuncResult { title: format!("Defunctionalize {type_name}"), decls, new_decls }
+    Ok(XfuncResult { title: format!("Defunctionalize {type_name}"), decls, new_decls })
 }

@@ -33,7 +33,7 @@ pub struct FreeVarsResult {
 }
 
 impl FreeVars<wst::WST> {
-    pub fn telescope(self) -> FreeVarsResult {
+    pub fn telescope(self, base_ctx: &LevelCtx) -> FreeVarsResult {
         let cutoff = self.cutoff;
         // Sort the list of free variables by the De-Bruijn level such the dependency relation is satisfied.
         // Types may be interdependent but can only depend on types which occur earlier in the context.
@@ -47,14 +47,14 @@ impl FreeVars<wst::WST> {
         for fv in fvs.into_iter() {
             let FreeVar { name, lvl, typ, ctx } = fv;
 
-            let typ = typ.subst(&mut ctx.levels(), &subst);
+            let typ = typ.subst(&mut ctx.levels(), &subst).shift((-1, 0));
 
             let param = wst::Param { name: name.clone(), typ: typ.clone() };
             let info = wst::TypeInfo { typ: typ.forget(), span: Default::default() };
             let arg = Rc::new(wst::Exp::Var {
                 info: info.clone(),
                 name: name.clone(),
-                idx: ctx.lvl_to_idx(fv.lvl),
+                idx: base_ctx.lvl_to_idx(fv.lvl),
             });
             for param in params.iter_mut() {
                 param.typ = param.typ.shift((0, 1));

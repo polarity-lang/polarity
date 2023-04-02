@@ -1,0 +1,9 @@
+codata Fun(a b: Type) {
+    Fun(a, b).ap(a b: Type, x: a): b
+}
+
+data Unit { MkUnit }
+
+def Unit.test : Unit -> Unit {
+    MkUnit => \_. _
+}

@@ -22,7 +22,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         source::File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
     let view = db.add(file).query();
     // FIXME: Proper error handling
-    let Xfunc { edits, .. } = view.xfunc(&cmd.r#type).unwrap();
+    let Xfunc { edits, .. } = view.xfunc(&cmd.r#type).map_err(miette::Report::msg)?;
 
     let output = view.edited(edits);
 

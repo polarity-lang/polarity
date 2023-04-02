@@ -1,0 +1,1 @@
+Local comatch not supported for type Bool because Bool contains destructors with self parameters

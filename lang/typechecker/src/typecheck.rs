@@ -8,6 +8,7 @@ use data::HashSet;
 use miette_util::ToMiette;
 use normalizer::env::ToEnv;
 use normalizer::normalize::Normalize;
+use syntax::ast::Occurs;
 use syntax::common::*;
 use syntax::ctx::{BindContext, BindElem, Context, LevelCtx};
 use syntax::nf;
@@ -106,6 +107,31 @@ trait WithScrutineeExt: Sized {
 impl<T> WithScrutineeExt for T {
     fn with_scrutinee(&self, scrutinee: nf::TypApp) -> WithScrutinee<'_, Self> {
         WithScrutinee { inner: self, scrutinee }
+    }
+}
+
+struct WithDestructee<'a, T> {
+    inner: &'a T,
+    /// Name of the global codefinition that gets substituted for the destructor's self parameters
+    label: Option<Ident>,
+    destructee: nf::TypApp,
+}
+
+trait WithDestructeeExt: Sized {
+    fn with_destructee(
+        &self,
+        label: Option<Ident>,
+        destructee: nf::TypApp,
+    ) -> WithDestructee<'_, Self>;
+}
+
+impl<T> WithDestructeeExt for T {
+    fn with_destructee(
+        &self,
+        label: Option<Ident>,
+        destructee: nf::TypApp,
+    ) -> WithDestructee<'_, Self> {
+        WithDestructee { inner: self, label, destructee }
     }
 }
 
@@ -333,7 +359,7 @@ impl Infer for ust::Codef {
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.infer(prg, ctx)?;
             let typ_nf = typ.normalize(prg, &mut ctx.env())?;
-            let body_out = body.with_scrutinee(typ_nf).infer(prg, ctx)?;
+            let body_out = body.with_destructee(Some(name.to_owned()), typ_nf).infer(prg, ctx)?;
             Ok(tst::Codef {
                 info: info.clone().into(),
                 doc: doc.clone(),
@@ -420,14 +446,14 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
 }
 
 /// Infer a copattern match
-impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
+impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
     type Target = tst::Comatch;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let ust::Comatch { info, cases } = &self.inner;
 
         // Check that this comatch is on a codata type
-        let codata = prg.decls.codata(&self.scrutinee.name, info.span)?;
+        let codata = prg.decls.codata(&self.destructee.name, info.span)?;
 
         // Check exhaustiveness
         let dtors_expected: HashSet<_> = codata.dtors.iter().cloned().collect();
@@ -468,14 +494,13 @@ impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
                     ..
                 } = prg.decls.dtor(&case.name, case.info.span)?;
 
-                let def_args_nf = LevelCtx::empty().bind_iter(params.params.iter(), |ctx| {
-                    def_args.normalize(prg, &mut ctx.env())
-                })?;
+                let def_args_nf =
+                    def_args.normalize(prg, &mut LevelCtx::from(vec![params.len()]).env())?;
 
                 let ret_typ_nf =
                     ret_typ.normalize(prg, &mut LevelCtx::from(vec![params.len(), 1]).env())?;
 
-                let nf::TypApp { args: on_args, .. } = &self.scrutinee;
+                let nf::TypApp { args: on_args, .. } = &self.destructee;
                 let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
                 let eqns: Vec<_> = def_args_nf
@@ -485,13 +510,37 @@ impl<'a> Infer for WithScrutinee<'a, ust::Comatch> {
                     .map(Eqn::from)
                     .collect();
 
-                // TODO: Substitute the comatch label for the self parameter
-                let ret_typ_nf = ret_typ_nf.shift((-1, 0));
+                let ret_typ_nf = match &self.label {
+                    // Substitute the codef label for the self parameter
+                    Some(label) => {
+                        let args = (0..params.len())
+                            .rev()
+                            .map(|snd| ust::Exp::Var {
+                                info: ust::Info::empty(),
+                                name: "".to_owned(),
+                                idx: Idx { fst: 0, snd },
+                            })
+                            .map(Rc::new)
+                            .collect();
+                        let ctor = Rc::new(ust::Exp::Ctor {
+                            info: ust::Info::empty(),
+                            name: label.clone(),
+                            args: ust::Args { args },
+                        });
+                        let subst = Assign(Lvl { fst: 1, snd: 0 }, ctor);
+                        let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
+                        ret_typ_nf
+                            .forget()
+                            .subst(&mut subst_ctx, &subst)
+                            .shift((-1, 0))
+                            .normalize(prg, &mut LevelCtx::from(vec![params.len()]).env())?
+                    }
+                    // TODO: Self parameter for local comatches
+                    None => ret_typ_nf.shift((-1, 0)),
+                };
 
                 // Check the case given the equations
-                case.with_eqns(eqns)
-                    .with_scrutinee(self.scrutinee.shift((1, 0)))
-                    .check(prg, ctx, ret_typ_nf)
+                case.with_eqns(eqns).check(prg, ctx, ret_typ_nf)
             })
             .collect::<Result<_, _>>()?;
 
@@ -597,17 +646,17 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
 }
 
 /// Infer a cocase in a co-pattern match
-impl<'a> Check for WithScrutinee<'a, WithEqns<'a, ust::Cocase>> {
+impl<'a> Check for WithEqns<'a, ust::Cocase> {
     type Target = tst::Cocase;
 
-    #[trace("{:P} |- {:P} <= {:P}", ctx, self.inner.inner, t)]
+    #[trace("{:P} |- {:P} <= {:P}", ctx, self.inner, t)]
     fn check(
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
-        let ust::Cocase { info, name, params: params_inst, body } = self.inner.inner;
+        let ust::Cocase { info, name, params: params_inst, body } = self.inner;
         let ust::Dtor { name, params, .. } = prg.decls.dtor(name, info.span)?;
 
         params_inst.check_telescope(
@@ -618,7 +667,7 @@ impl<'a> Check for WithScrutinee<'a, WithEqns<'a, ust::Cocase>> {
             |ctx, args_out| {
                 let body_out = match body {
                     Some(body) => {
-                        let unif = unify(ctx.levels(), self.inner.eqns.clone())
+                        let unif = unify(ctx.levels(), self.eqns.clone())
                             .map_err(TypeError::Unify)?
                             .map_no(|()| TypeError::PatternIsAbsurd {
                                 name: name.clone(),
@@ -639,7 +688,7 @@ impl<'a> Check for WithScrutinee<'a, WithEqns<'a, ust::Cocase>> {
                         })?
                     }
                     None => {
-                        unify(ctx.levels(), self.inner.eqns.clone())
+                        unify(ctx.levels(), self.eqns.clone())
                             .map_err(TypeError::Unify)?
                             .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                 name: name.clone(),
@@ -738,7 +787,17 @@ impl Check for ust::Exp {
             ust::Exp::Comatch { info, name, is_lambda_sugar, body } => {
                 let typ_app_nf = t.expect_typ_app()?;
                 let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
-                let body_out = body.with_scrutinee(typ_app_nf.clone()).infer(prg, ctx)?;
+
+                // Local comatches don't support self parameters, yet.
+                let codata = prg.decls.codata(&typ_app.name, info.span())?;
+                if uses_self(prg, codata)? {
+                    return Err(TypeError::LocalComatchWithSelf {
+                        type_name: codata.name.to_owned(),
+                        span: info.span().to_miette(),
+                    });
+                }
+
+                let body_out = body.with_destructee(None, typ_app_nf.clone()).infer(prg, ctx)?;
 
                 Ok(tst::Exp::Comatch {
                     info: info.with_type_app(typ_app, typ_app_nf),
@@ -1094,4 +1153,16 @@ fn type_univ() -> Rc<nf::Nf> {
 
 fn type_hole() -> Rc<nf::Nf> {
     Rc::new(nf::Nf::Neu { exp: nf::Neu::Hole { info: ust::Info::empty(), kind: HoleKind::Todo } })
+}
+
+// Checks whether the codata type contains destructors with a self parameter
+fn uses_self(prg: &ust::Prg, codata: &ust::Codata) -> Result<bool, TypeError> {
+    for dtor_name in &codata.dtors {
+        let dtor = prg.decls.dtor(dtor_name, None)?;
+        let mut ctx = LevelCtx::from(vec![dtor.params.len(), 1]);
+        if dtor.ret_typ.occurs(&mut ctx, Lvl { fst: 1, snd: 0 }) {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }

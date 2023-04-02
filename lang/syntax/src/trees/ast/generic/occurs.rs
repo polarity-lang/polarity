@@ -10,7 +10,7 @@ pub fn occurs_in<P: Phase>(ctx: &mut LevelCtx, the_idx: Idx, in_exp: &Rc<Exp<P>>
     in_exp.occurs(ctx, lvl)
 }
 
-trait Occurs {
+pub trait Occurs {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool;
 }
 

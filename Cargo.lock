@@ -1927,6 +1927,7 @@ dependencies = [
  "console",
  "data",
  "derivative",
+ "lazy_static",
  "miette",
  "miette_util",
  "num-bigint",
@@ -2737,7 +2738,9 @@ name = "xfunc"
 version = "0.1.0"
 dependencies = [
  "data",
+ "miette",
  "syntax",
+ "thiserror",
 ]
 
 [[package]]
