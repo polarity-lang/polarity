@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 
 mod format;
 mod ignore_colors;
+mod lift;
 mod lsp;
 mod run;
 mod texify;
@@ -17,6 +18,7 @@ pub fn exec() -> miette::Result<()> {
         Texify(args) => texify::exec(args),
         Xfunc(args) => xfunc::exec(args),
         Lsp(args) => lsp::exec(args),
+        Lift(args) => lift::exec(args),
     }
 }
 
@@ -42,4 +44,6 @@ enum Command {
     Xfunc(xfunc::Args),
     /// Start an LSP server
     Lsp(lsp::Args),
+    /// Lift local (co)matches of a type to the top-level
+    Lift(lift::Args),
 }

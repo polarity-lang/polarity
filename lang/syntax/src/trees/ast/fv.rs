@@ -47,7 +47,7 @@ impl FreeVars<wst::WST> {
         for fv in fvs.into_iter() {
             let FreeVar { name, lvl, typ, ctx } = fv;
 
-            let typ = typ.subst(&mut ctx.levels(), &subst).shift((-1, 0));
+            let typ = typ.subst(&mut ctx.levels(), &subst.in_param());
 
             let param = wst::Param { name: name.clone(), typ: typ.clone() };
             let info = wst::TypeInfo { typ: typ.forget(), span: Default::default() };
@@ -56,9 +56,6 @@ impl FreeVars<wst::WST> {
                 name: name.clone(),
                 idx: base_ctx.lvl_to_idx(fv.lvl),
             });
-            for param in params.iter_mut() {
-                param.typ = param.typ.shift((0, 1));
-            }
             args.push(arg);
             params.push(param);
             subst.add(name, lvl, info);
@@ -218,12 +215,6 @@ pub struct FVSubst<P: Phase> {
     cutoff: usize,
 }
 
-impl<P: Phase> FVSubst<P> {
-    fn new(cutoff: usize) -> Self {
-        Self { subst: Default::default(), cutoff }
-    }
-}
-
 /// A free variable as part of `FVSubst`
 #[derive(Clone, Debug)]
 struct NewVar<P: Phase> {
@@ -235,9 +226,31 @@ struct NewVar<P: Phase> {
     info: P::TypeInfo,
 }
 
+/// Substitution in the body of the new definition
+pub struct FVBodySubst<'a, P: Phase> {
+    inner: &'a FVSubst<P>,
+}
+
+/// Substitution in the type parameters of the new definition
+pub struct FVParamSubst<'a, P: Phase> {
+    inner: &'a FVSubst<P>,
+}
+
 impl<P: Phase> FVSubst<P> {
+    fn new(cutoff: usize) -> Self {
+        Self { subst: Default::default(), cutoff }
+    }
+
     fn add(&mut self, name: Ident, lvl: Lvl, info: P::TypeInfo) {
         self.subst.insert(lvl, NewVar { name, lvl: Lvl { fst: 0, snd: self.subst.len() }, info });
+    }
+
+    pub fn in_body(&self) -> FVBodySubst<'_, P> {
+        FVBodySubst { inner: self }
+    }
+
+    pub fn in_param(&self) -> FVParamSubst<'_, P> {
+        FVParamSubst { inner: self }
     }
 }
 
@@ -248,7 +261,21 @@ impl<P: Phase> ShiftInRange for FVSubst<P> {
     }
 }
 
-impl<P: Phase<VarName = Ident>> Substitution<Rc<Exp<P>>> for FVSubst<P> {
+impl<'a, P: Phase> ShiftInRange for FVBodySubst<'a, P> {
+    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> FVBodySubst<'a, P> {
+        // Since FVSubst works with levels, it is shift-invariant
+        FVBodySubst { inner: self.inner }
+    }
+}
+
+impl<'a, P: Phase> ShiftInRange for FVParamSubst<'a, P> {
+    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> FVParamSubst<'a, P> {
+        // Since FVSubst works with levels, it is shift-invariant
+        FVParamSubst { inner: self.inner }
+    }
+}
+
+impl<'a, P: Phase<VarName = Ident>> Substitution<Rc<Exp<P>>> for FVBodySubst<'a, P> {
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp<P>>> {
         // Let Γ be the original context, let Δ be the context according to which the new De-Bruijn index should be calculated
         //
@@ -259,12 +286,25 @@ impl<P: Phase<VarName = Ident>> Substitution<Rc<Exp<P>>> for FVSubst<P> {
         // Δ = [[x, y], [z]]
         //      ^^^^^^  ^^^ bound vars
         // new telescope
-        let new_ctx = LevelCtx::from(vec![self.subst.len()]).append(&ctx.tail(self.cutoff));
-        self.subst.get(&lvl).map(|fv| {
+        let new_ctx =
+            LevelCtx::from(vec![self.inner.subst.len()]).append(&ctx.tail(self.inner.cutoff));
+        self.inner.subst.get(&lvl).map(|fv| {
             Rc::new(Exp::Var {
                 info: fv.info.clone(),
                 name: fv.name.clone(),
                 idx: new_ctx.lvl_to_idx(fv.lvl),
+            })
+        })
+    }
+}
+
+impl<'a, P: Phase<VarName = Ident>> Substitution<Rc<Exp<P>>> for FVParamSubst<'a, P> {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp<P>>> {
+        self.inner.subst.get(&lvl).map(|fv| {
+            Rc::new(Exp::Var {
+                info: fv.info.clone(),
+                name: fv.name.clone(),
+                idx: Idx { fst: 0, snd: self.inner.subst.len() - 1 - fv.lvl.snd },
             })
         })
     }
