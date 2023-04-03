@@ -20,7 +20,7 @@ jobs:
           mkdir -p gh-pages
       - run: |
           (cd web && make deps && make build)
-          cp -r web/packages/app/dist gh-pages
+          cp -r web/packages/app/dist/. gh-pages
       - uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: gh-pages
