@@ -5,17 +5,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
-  <script type="text/javascript">
-    function jumpToHash(x) {
-      location.hash=x;
-    }
-    function switchToDark() {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-    function switchToLight() {
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
-  </script>
   <title>Proof Expression Problem</title>
 </head>
 
@@ -32,6 +21,8 @@
               <li><a onclick="jumpToHash('stlc.xfn')" >stlc.xfn</a></li>
               <li><a onclick="jumpToHash('arith.xfn')">arith.xfn</a></li>
               <li><a onclick="jumpToHash('boolrep.xfn')">boolrep.xfn</a></li>
+              <li><a onclick="jumpToHash('eq.xfn')">eq.xfn</a></li>
+              <li><a onclick="jumpToHash('neg_inverse.xfn')">neg_inverse.xfn</a></li>
             </ul>
           </details>
         </li>
@@ -154,8 +145,8 @@ data Bool {
       For example, an incomplete implementation of boolean negation can be written as follows:
 <pre><code>
 def Bool.neg : Bool {
-  True => ?,
-  False => ?,
+  True =&gt; ?,
+  False =&gt; ?,
 }          
 </code></pre>
 
@@ -166,8 +157,8 @@ def Bool.neg : Bool {
 <pre><code>
 data Bool { True, False }
 def Bool.neg {
-  True => False,
-  False => True,
+  True =&gt; False,
+  False =&gt; True,
 }
 True.neg
 </code></pre>
@@ -192,6 +183,17 @@ True.neg
   <footer class="container">
     Copyright(2023)
   </footer>
+  <script type="text/javascript">
+    function jumpToHash(x) {
+      location.hash=x;
+    }
+    function switchToDark() {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+    function switchToLight() {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  </script>
 </body>
 
 </html>
