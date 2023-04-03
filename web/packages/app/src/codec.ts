@@ -12,7 +12,13 @@ export const decoder = new TextDecoder();
 
 export class Codec {
   static encode(json: jsrpc.JSONRPCRequest | jsrpc.JSONRPCResponse): Uint8Array {
-    const message = JSON.stringify(json);
+    let message = JSON.stringify(json);
+    // HACK: Escape unicode characters because otherwise we get a parse error from the LSP server
+    // https://stackoverflow.com/a/31652607
+    message = message.replace(/[\u007F-\uFFFF]/g, function (chr) {
+      return "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4);
+    });
+
     const delimited = Headers.add(message);
     return Bytes.encode(delimited);
   }
