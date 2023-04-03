@@ -3,10 +3,6 @@
   "displayName": "xfn",
   "description": "LSP Client for the XFN language",
   "version": "0.0.1",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/timsueberkrueb/msc-impl"
-  },
   "engines": {
     "vscode": "^1.69.0"
   },

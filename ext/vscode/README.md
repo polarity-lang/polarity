@@ -1,7 +1,5 @@
 # VSCode extension
 
-[![vscode-plugin](https://github.com/timsueberkrueb/msc-impl/actions/workflows/vscode-plugin.yml/badge.svg)](https://github.com/timsueberkrueb/msc-impl/actions/workflows/vscode-plugin.yml)
-
 ## Install via the prebuilt plugin
 
 To install the prebuilt `.vsix` extension in your local VSCode environment, download the most recent version of the `xfn-x.x.x.x.vsix` from the `Releases` tab on the homepage of this repository.
