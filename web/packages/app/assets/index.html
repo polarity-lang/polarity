@@ -47,12 +47,13 @@
     </section>
     <!-- Tutorial -->
     <section id="tutorial">
-      <h5>Tutorial</h5>
+      <h4>Tutorial</h4>
+      <p>
+        This is a short overview of the syntax of our language.
+      </p>
 
-      This is a short overview of the syntax of our language.
-      
-      <h6>Data Types</h6>
-
+      <details>
+        <summary><b>Data Types</b></summary>
       The simplest form of datatypes do not have parameters or indizes.
       In that case, the constructors of the data-type can be given as a comma-separated list.
       As with all syntactic constructs, we always allow trailing commas.
@@ -87,7 +88,10 @@ data Vec(a: Type, n: Nat) {
   VCons(a: Type, n: N, x: a, xs: Vec(a,n)): Vec(a,S(n))
 }
 </code></pre>
-      <h6>Codata Types</h6>
+
+</details>
+<details>
+  <summary><b>Codata Types</b></summary>
       Codata types are specified by a list of methods or destructors.
       A very simple example is the type of pairs of a boolean and a natural number:
 <pre><code>
@@ -116,13 +120,17 @@ codata Bool {
   (x: Bool).neg_is_inverse : Eq(Bool, x, x.neg.neg)
 }
 </code></pre>
+</details>
+<details>
+  <summary><b>Definitions</b></summary>
+</details>
 
+<details>
+  <summary><b>Codefinitions</b></summary>
+</details>
+<details>
+  <summary><b>Comments</b></summary>
 
-      <h6>Definitions</h6>
-
-      <h6>Codefinitions</h6>
-
-      <h6>Comments</h6>
 
       Line comments are written using two dashes: <code>-- This is a comment</code>.
       Certain items of the program can also be annotated with a documentation comment.
@@ -137,8 +145,10 @@ data Bool {
 }
 </code></pre>
       These documentation comments are preserved during defunctionalization and refunctionalization.
+</details>
+<details>
+  <summary><b>Typed Holes</b></summary>
 
-      <h6>Typed Holes</h6>
 
       An incomplete program can be written using typed holes.
       Typed holes are written using either <code>?</code> or <code>...</code>; they have type <code>?</code> which unifies with any other type.
@@ -149,9 +159,9 @@ def Bool.neg : Bool {
   False =&gt; ?,
 }          
 </code></pre>
-
-      <h6>The Main Expression</h6>
-
+</details>
+<details>
+  <summary><b>The Main Expression</b></summary>
       After all other data types, codata types, definitions and codefinitions an additional expression can be written.
       This is called the "main" expression of the program.
 <pre><code>
@@ -162,20 +172,21 @@ def Bool.neg {
 }
 True.neg
 </code></pre>
+</details>
     </section>
     <!-- Debug Output -->
     <section id="accordions">
-      <h5>Debug Output</h5>
+      <h4>Debug Output</h4>
       <details>
-        <summary>Console</summary>
+        <summary><b>Console</b></summary>
           <textarea id="channel-console" autocomplete="off" spellcheck="off" wrap="off" readonly rows="3"></textarea>
       </details>
       <details>
-        <summary>Client To Server</summary>
+        <summary><b>Client To Server</b></summary>
           <textarea id="channel-client" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
       </details>
       <details>
-        <summary>Server To Client</summary>
+        <summary><b>Server To Client</b></summary>
           <textarea id="channel-server" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
       </details>
     </section>
