@@ -89,16 +89,15 @@ export default class App {
       void event;
       void handleHashChange();
     });
-    
+
     addEventListener("transitionstart", (event) => {
       let thm = document.documentElement.getAttribute("data-theme");
       if (thm == "dark") {
-        monaco.editor.setTheme('vs-dark')
-
+        monaco.editor.setTheme("vs-dark");
       } else if (thm == "light") {
-        monaco.editor.setTheme('vs-light')
+        monaco.editor.setTheme("vs-light");
       }
-    })
+    });
 
     return model;
   }
