@@ -100,7 +100,7 @@ export default class App {
     monaco.editor.create(container, {
       model,
       automaticLayout: true,
-      theme: "vs-dark",
+      theme: "vs-light",
     });
   }
 

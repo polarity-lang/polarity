@@ -5,12 +5,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
-  <title>Editor</title>
+  <script type="text/javascript">
+    function jumpToHash(x) {
+      location.hash=x;
+    }
+  </script>
+  <title>Proof Expression Problem</title>
 </head>
 
 <body>
   <header class="container">
-    <h1>De/Refunctionalization of Dependent Types</h1>
+    <h1>The Proof Expression Problem</h1>
+
+    <details role="list">
+      <summary aria-haspopup="listbox">Examples</summary>
+      <ul role="listbox">
+        <li><a onclick="jumpToHash('stlc.xfn')" >stlc.xfn</a></li>
+        <li><a onclick="jumpToHash('arith.xfn')">arith.xfn</a></li>
+        <li><a onclick="jumpToHash('boolrep.xfn')">boolrep.xfn</a></li>
+      </ul>
+    </details>
   </header>
   <main class="container">
     <!-- Editor -->
@@ -22,42 +36,35 @@
     <!-- Tutorial -->
     <section id="tutorial">
       <h5>Tutorial</h5>
+
+      This is a short overview of the syntax of our language.
       
       <h6>Data Types</h6>
 
-      The simplest form of datatypes are non-parameterized.
-      The constructors of a non-parameterized data-type can be given as a comma-separated list.
+      The simplest form of datatypes do not have parameters or indizes.
+      In that case, the constructors of the data-type can be given as a comma-separated list.
+      As with all syntactic constructs, we always allow trailing commas.
 
-      <pre>
-        <code>
-          data Bool { True, False }
-        </code>
-      </pre>
+<pre><code>
+data Bool { True, False, }
+</code></pre>
 
-      This is just a shorthand notation for
+      In the more general case we have to specify the precise type that a constructor constructs.
+      Therefore, the above data type declaration can be written more explicitly as:
       
-      <pre>
-        <code>
-          data Bool { True: Bool, False: Bool }
-        </code>
-      </pre>
+<pre><code>
+data Bool { True: Bool, False: Bool }
+</code></pre>
       
-      The shorthand notation which omits the type instantiation is only allowed for non-parameterized types.
-      If the type has parameters, then the full form must be written out:
-
-      <pre>
-        <code>
-          data Ty { True: Bool, False: Bool }
-
-        </code>
-      </pre>
-
-      If we want to form the type of lists of some element type, we need to parameterize the type over elements of the type universe <code>Type</code>.
-      <pre>
-        <code>
-          data List(a: Type) { Nil(a: Type): List(a), Cons(a: Type, x: a, xs: List(a)): List(a) }
-        </code>
-      </pre>
+      A simple example of a parameterized type is the type of singly-linked lists of some type <code>a</code>.
+      In that case we have to specify both the parameters of the type constructor <code>List</code>, and the instantiations of the term constructors <code>Nil</code> and <code>Cons</code>.
+      For the parameter of the type constructor <code>List</code> we make use of the impredicative type universe, which is written <code>Type</code>.
+<pre><code>
+data List(a: Type) {
+  Nil(a: Type): List(a),
+  Cons(a: Type, x: a, xs: List(a)): List(a)
+}
+</code></pre>
 
       <h6>Codata Types</h6>
 
@@ -66,6 +73,16 @@
       <h6>Codefinitions</h6>
 
       <h6>Typed Holes</h6>
+
+      An incomplete program can be written using typed holes.
+      Typed holes are written using either <code>?</code> or <code>...</code>; they have type <code>?</code> which unifies with any other type.
+      For example, an incomplete implementation of boolean negation can be written as follows:
+<pre><code>
+def Bool.neg : Bool {
+  True => ?,
+  False => ?,
+}          
+</code></pre>
 
       <h6>The Main Expression</h6>
 
