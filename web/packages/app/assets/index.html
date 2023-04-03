@@ -23,21 +23,29 @@
   <header class="container">
     <h1>The Proof Expression Problem</h1>
 
-    <details role="list">
-      <summary aria-haspopup="listbox" role="button" class="secondary">Theme</summary>
-      <ul role="listbox">
-        <li><a onclick="switchToLight()">Light</a></li>
-        <li><a onclick="switchToDark()">Dark</a></li>
+    <nav>
+      <ul>
+        <li>
+          <details role="list">
+            <summary aria-haspopup="listbox" role="button" class="secondary">Examples</summary>
+            <ul role="listbox">
+              <li><a onclick="jumpToHash('stlc.xfn')" >stlc.xfn</a></li>
+              <li><a onclick="jumpToHash('arith.xfn')">arith.xfn</a></li>
+              <li><a onclick="jumpToHash('boolrep.xfn')">boolrep.xfn</a></li>
+            </ul>
+          </details>
+        </li>
+        <li>
+          <details role="list">
+            <summary aria-haspopup="listbox" role="button" class="secondary">Theme</summary>
+            <ul role="listbox">
+              <li><a onclick="switchToLight()">Light</a></li>
+              <li><a onclick="switchToDark()">Dark</a></li>
+            </ul>
+          </details>
+        </li>
       </ul>
-    </details>
-    <details role="list">
-      <summary aria-haspopup="listbox" role="button" class="secondary">Examples</summary>
-      <ul role="listbox">
-        <li><a onclick="jumpToHash('stlc.xfn')" >stlc.xfn</a></li>
-        <li><a onclick="jumpToHash('arith.xfn')">arith.xfn</a></li>
-        <li><a onclick="jumpToHash('boolrep.xfn')">boolrep.xfn</a></li>
-      </ul>
-    </details>
+    </nav>
   </header>
   <main class="container">
     <!-- Editor -->
