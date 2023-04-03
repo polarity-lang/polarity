@@ -90,6 +90,15 @@ export default class App {
       void handleHashChange();
     });
 
+    addEventListener("transitionstart", (event) => {
+      let thm = document.documentElement.getAttribute("data-theme");
+      if (thm == "dark") {
+        monaco.editor.setTheme("vs-dark");
+      } else if (thm == "light") {
+        monaco.editor.setTheme("vs-light");
+      }
+    });
+
     return model;
   }
 
@@ -100,7 +109,7 @@ export default class App {
     monaco.editor.create(container, {
       model,
       automaticLayout: true,
-      theme: "vs-dark",
+      theme: "vs-light",
     });
   }
 
