@@ -1,20 +1,14 @@
-use codespan::Span;
-
 use crate::common::*;
-use crate::tst;
-use crate::wst;
 
 use super::def::*;
 
-impl<P: Phase> ShiftInRange for Exp<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl ShiftInRange for Exp {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
-            Exp::Var { info, name, idx } => Exp::Var {
+            Exp::Var { info, name, ctx: (), idx } => Exp::Var {
                 info: info.clone(),
                 name: name.clone(),
+                ctx: (),
                 idx: idx.shift_in_range(range, by),
             },
             Exp::TypCtor { info, name, args } => Exp::TypCtor {
@@ -58,10 +52,7 @@ where
     }
 }
 
-impl<P: Phase> ShiftInRange for Motive<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl ShiftInRange for Motive {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Motive { info, param, ret_typ } = self;
 
@@ -73,30 +64,21 @@ where
     }
 }
 
-impl<P: Phase> ShiftInRange for Match<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl ShiftInRange for Match {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Match { info, cases } = self;
         Match { info: info.clone(), cases: cases.shift_in_range(range, by) }
     }
 }
 
-impl<P: Phase> ShiftInRange for Comatch<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl ShiftInRange for Comatch {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Comatch { info, cases } = self;
         Comatch { info: info.clone(), cases: cases.shift_in_range(range, by) }
     }
 }
 
-impl<P: Phase> ShiftInRange for Case<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl ShiftInRange for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Case { info, name, args, body } = self;
         Case {
@@ -108,10 +90,7 @@ where
     }
 }
 
-impl<P: Phase> ShiftInRange for Cocase<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl ShiftInRange for Cocase {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Cocase { info, name, params: args, body } = self;
         Cocase {
@@ -123,82 +102,15 @@ where
     }
 }
 
-impl<P: Phase> ShiftInRange for TypApp<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl ShiftInRange for TypApp {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let TypApp { info, name, args } = self;
         TypApp { info: info.clone(), name: name.clone(), args: args.shift_in_range(range, by) }
     }
 }
 
-impl<P: Phase> ShiftInRange for Args<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl ShiftInRange for Args {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         Self { args: self.args.shift_in_range(range, by) }
-    }
-}
-
-impl<P: Phase> AlphaEq for Exp<P> {
-    fn alpha_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-impl<P: Phase> HasInfo for Decl<P> {
-    type Info = P::Info;
-
-    fn info(&self) -> Self::Info {
-        match self {
-            Decl::Data(data) => data.info.clone(),
-            Decl::Codata(codata) => codata.info.clone(),
-            Decl::Ctor(ctor) => ctor.info.clone(),
-            Decl::Dtor(dtor) => dtor.info.clone(),
-            Decl::Def(def) => def.info.clone(),
-            Decl::Codef(codef) => codef.info.clone(),
-        }
-    }
-}
-
-impl<P: Phase> HasInfo for Exp<P> {
-    type Info = P::TypeInfo;
-
-    fn info(&self) -> Self::Info {
-        match self {
-            Exp::Var { info, .. } => info.clone(),
-            Exp::TypCtor { info, .. } => info.clone(),
-            Exp::Ctor { info, .. } => info.clone(),
-            Exp::Dtor { info, .. } => info.clone(),
-            Exp::Anno { info, .. } => info.clone(),
-            Exp::Type { info } => info.clone(),
-            Exp::Match { info, .. } => info.clone().into(),
-            Exp::Comatch { info, .. } => info.clone().into(),
-            Exp::Hole { info, .. } => info.clone(),
-        }
-    }
-}
-
-impl<P: Phase> HasSpan for Exp<P> {
-    fn span(&self) -> Option<Span> {
-        self.info().span()
-    }
-}
-
-impl ShiftInRange for () {
-    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {}
-}
-
-impl ShiftInRange for tst::Typ {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        Self::from(self.as_exp().shift_in_range(range, by))
-    }
-}
-
-impl ShiftInRange for wst::Typ {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        Self::from(self.as_exp().shift_in_range(range, by))
     }
 }

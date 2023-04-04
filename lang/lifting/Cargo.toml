@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# ignoring fields when deriving traits (e.g. Eq, Hash)
+derivative = "2"
 # workspace members
 data = { path = "../../util/data" }
 syntax = { path = "../syntax" }

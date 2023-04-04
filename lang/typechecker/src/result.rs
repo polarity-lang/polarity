@@ -7,8 +7,8 @@ use thiserror::Error;
 use data::string::{comma_separated, separated};
 use data::HashSet;
 use normalizer::result::EvalError;
-use syntax::ast::LookupError;
 use syntax::common::*;
+use syntax::generic::LookupError;
 use syntax::nf;
 use syntax::ust;
 

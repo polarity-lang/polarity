@@ -15,9 +15,10 @@ use syntax::ust;
 
 use crate::TypeError;
 
+#[derive(Debug, Clone)]
 pub struct Ctx {
     /// Typing of bound variables
-    vars: TypeCtx,
+    pub vars: TypeCtx,
 }
 
 impl Default for Ctx {

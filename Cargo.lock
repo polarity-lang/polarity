@@ -1109,6 +1109,7 @@ name = "lifting"
 version = "0.1.0"
 dependencies = [
  "data",
+ "derivative",
  "renaming",
  "syntax",
 ]

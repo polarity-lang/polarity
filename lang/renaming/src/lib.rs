@@ -2,7 +2,6 @@
 mod ast;
 mod ctx;
 mod ust;
-mod wst;
 
 use syntax::ctx::Context;
 

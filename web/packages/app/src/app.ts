@@ -95,7 +95,8 @@ export default class App {
     });
 
     addEventListener("transitionstart", (event) => {
-      let thm = document.documentElement.getAttribute("data-theme");
+      void event;
+      const thm = document.documentElement.getAttribute("data-theme");
       if (thm == "dark") {
         monaco.editor.setTheme("vs-dark");
       } else if (thm == "light") {

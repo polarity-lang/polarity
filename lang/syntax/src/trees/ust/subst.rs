@@ -2,21 +2,22 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::*;
-use crate::tst;
-use crate::wst;
+use crate::ust::*;
 
-use super::generic::*;
-
-impl<P: Phase> Substitutable<Rc<Exp<P>>> for Rc<Exp<P>>
-where
-    P::InfTyp: Substitutable<Rc<Exp<P>>>,
-{
-    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+impl Substitutable<Rc<Exp>> for Rc<Exp> {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         match &**self {
-            Exp::Var { info, name, idx } => match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
-                Some(exp) => exp,
-                None => Rc::new(Exp::Var { info: info.clone(), name: name.clone(), idx: *idx }),
-            },
+            Exp::Var { info, name, ctx: (), idx } => {
+                match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
+                    Some(exp) => exp,
+                    None => Rc::new(Exp::Var {
+                        info: info.clone(),
+                        name: name.clone(),
+                        ctx: (),
+                        idx: *idx,
+                    }),
+                }
+            }
             Exp::TypCtor { info, name, args } => Rc::new(Exp::TypCtor {
                 info: info.clone(),
                 name: name.clone(),
@@ -58,11 +59,8 @@ where
     }
 }
 
-impl<P: Phase> Substitutable<Rc<Exp<P>>> for Motive<P>
-where
-    P::InfTyp: Substitutable<Rc<Exp<P>>>,
-{
-    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+impl Substitutable<Rc<Exp>> for Motive {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Motive { info, param, ret_typ } = self;
 
         Motive {
@@ -73,21 +71,15 @@ where
     }
 }
 
-impl<P: Phase> Substitutable<Rc<Exp<P>>> for Match<P>
-where
-    P::InfTyp: Substitutable<Rc<Exp<P>>>,
-{
-    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+impl Substitutable<Rc<Exp>> for Match {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Match { info, cases } = self;
         Match { info: info.clone(), cases: cases.iter().map(|case| case.subst(ctx, by)).collect() }
     }
 }
 
-impl<P: Phase> Substitutable<Rc<Exp<P>>> for Comatch<P>
-where
-    P::InfTyp: Substitutable<Rc<Exp<P>>>,
-{
-    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+impl Substitutable<Rc<Exp>> for Comatch {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Comatch { info, cases } = self;
         Comatch {
             info: info.clone(),
@@ -96,11 +88,8 @@ where
     }
 }
 
-impl<P: Phase> Substitutable<Rc<Exp<P>>> for Case<P>
-where
-    P::InfTyp: Substitutable<Rc<Exp<P>>>,
-{
-    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+impl Substitutable<Rc<Exp>> for Case {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Case { info, name, args, body } = self;
         ctx.bind_iter(args.params.iter(), |ctx| Case {
             info: info.clone(),
@@ -111,11 +100,8 @@ where
     }
 }
 
-impl<P: Phase> Substitutable<Rc<Exp<P>>> for Cocase<P>
-where
-    P::InfTyp: Substitutable<Rc<Exp<P>>>,
-{
-    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+impl Substitutable<Rc<Exp>> for Cocase {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Cocase { info, name, params: args, body } = self;
         ctx.bind_iter(args.params.iter(), |ctx| Cocase {
             info: info.clone(),
@@ -126,39 +112,27 @@ where
     }
 }
 
-impl<P: Phase> Substitutable<Rc<Exp<P>>> for TypApp<P>
-where
-    P::InfTyp: Substitutable<Rc<Exp<P>>>,
-{
-    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+impl Substitutable<Rc<Exp>> for TypApp {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let TypApp { info, name, args } = self;
         TypApp { info: info.clone(), name: name.clone(), args: args.subst(ctx, by) }
     }
 }
 
-impl<P: Phase> Substitutable<Rc<Exp<P>>> for Param<P>
-where
-    P::InfTyp: Substitutable<Rc<Exp<P>>>,
-{
-    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+impl Substitutable<Rc<Exp>> for Param {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Param { name, typ } = self;
         Param { name: name.clone(), typ: typ.subst(ctx, by) }
     }
 }
 
-impl<P: Phase> Substitutable<Rc<Exp<P>>> for Args<P>
-where
-    P::InfTyp: Substitutable<Rc<Exp<P>>>,
-{
-    fn subst<S: Substitution<Rc<Exp<P>>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+impl Substitutable<Rc<Exp>> for Args {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         Args { args: self.args.subst(ctx, by) }
     }
 }
 
-impl<P: Phase<VarName = Ident>, T: Substitutable<Rc<Exp<P>>>> SwapWithCtx<P> for T
-where
-    P::TypeInfo: Default,
-{
+impl<T: Substitutable<Rc<Exp>>> SwapWithCtx<Rc<Exp>> for T {
     fn swap_with_ctx(&self, ctx: &mut LevelCtx, fst1: usize, fst2: usize) -> Self {
         self.subst(ctx, &SwapSubst { fst1, fst2 })
     }
@@ -177,11 +151,8 @@ impl ShiftInRange for SwapSubst {
     }
 }
 
-impl<P: Phase<VarName = Ident>> Substitution<Rc<Exp<P>>> for SwapSubst
-where
-    P::TypeInfo: Default,
-{
-    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp<P>>> {
+impl Substitution<Rc<Exp>> for SwapSubst {
+    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
         let new_lvl = if lvl.fst == self.fst1 {
             Some(Lvl { fst: self.fst2, snd: lvl.snd })
         } else if lvl.fst == self.fst2 {
@@ -196,20 +167,9 @@ where
             Rc::new(Exp::Var {
                 info: Default::default(),
                 name: "".to_owned(),
+                ctx: (),
                 idx: new_ctx.lvl_to_idx(new_lvl),
             })
         })
-    }
-}
-
-impl Substitutable<Rc<tst::Exp>> for tst::Typ {
-    fn subst<S: Substitution<Rc<tst::Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        Self::from(self.as_exp().subst(ctx, by))
-    }
-}
-
-impl Substitutable<Rc<wst::Exp>> for wst::Typ {
-    fn subst<S: Substitution<Rc<wst::Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        Self::from(self.as_exp().subst(ctx, by))
     }
 }

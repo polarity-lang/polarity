@@ -1,19 +1,15 @@
 use pretty::DocAllocator;
 
-use syntax::ast::*;
-use syntax::common::*;
+use syntax::ust;
 
 use super::types::*;
 
-pub struct Items<P: Phase> {
-    pub items: Vec<Decl<P>>,
+pub struct Items {
+    pub items: Vec<ust::Decl>,
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Items<P>
-where
-    P::InfTyp: ShiftInRange,
-{
-    type Ctx = Decls<P>;
+impl<'a> PrintInCtx<'a> for Items {
+    type Ctx = ust::Decls;
 
     fn print_in_ctx(
         &'a self,

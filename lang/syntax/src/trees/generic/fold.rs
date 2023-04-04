@@ -39,7 +39,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_case(&mut self, info: O::Info, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Case;
     fn fold_cocase(&mut self, info: O::Info, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Cocase;
     fn fold_typ_app(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::TypApp;
-    fn fold_exp_var(&mut self, info: O::TypeInfo, name: P::VarName, idx: O::Idx) -> O::Exp;
+    fn fold_exp_var(&mut self, info: O::TypeInfo, name: P::VarName, ctx: O::Ctx, idx: O::Idx) -> O::Exp;
     fn fold_exp_typ_ctor(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::Exp;
     fn fold_exp_ctor(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::Exp;
     fn fold_exp_dtor(&mut self, info: O::TypeInfo, exp: O::Exp, name: Ident, args: O::Args) -> O::Exp;
@@ -78,6 +78,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_type_app_info(&mut self, info: P::TypeAppInfo) -> O::TypeAppInfo;
     fn fold_idx(&mut self, idx: Idx) -> O::Idx;
     fn fold_typ(&mut self, typ: P::InfTyp) -> O::Typ;
+    fn fold_ctx(&mut self, ctx: P::Ctx) -> O::Ctx;
 }
 
 pub trait Fold<P: Phase, O: Out> {
@@ -117,6 +118,7 @@ pub trait Out {
     type TypeAppInfo;
     type Idx;
     type Typ;
+    type Ctx;
 }
 
 #[derive(Default)]
@@ -153,6 +155,7 @@ impl<P: Phase> Out for Id<P> {
     type TypeAppInfo = P::TypeAppInfo;
     type Idx = Idx;
     type Typ = P::InfTyp;
+    type Ctx = P::Ctx;
 }
 
 pub struct Const<T> {
@@ -188,6 +191,7 @@ impl<T> Out for Const<T> {
     type TypeAppInfo = T;
     type Idx = T;
     type Typ = T;
+    type Ctx = T;
 }
 
 impl<P: Phase, O: Out, T: Fold<P, O> + Clone> Fold<P, O> for Rc<T> {
@@ -513,10 +517,11 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
         F: Folder<P, O>,
     {
         match self {
-            Exp::Var { info, name, idx } => {
+            Exp::Var { info, name, ctx, idx } => {
                 let info = f.fold_type_info(info);
                 let idx = f.fold_idx(idx);
-                f.fold_exp_var(info, name, idx)
+                let ctx = f.fold_ctx(ctx);
+                f.fold_exp_var(info, name, ctx, idx)
             }
             Exp::TypCtor { info, name, args } => {
                 let args = args.fold(f);

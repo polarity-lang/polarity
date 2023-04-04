@@ -1,9 +1,9 @@
 use data::{HashMap, HashSet};
 use miette_util::ToMiette;
-use syntax::ast::lookup_table;
 use syntax::common::*;
 use syntax::cst;
 use syntax::ctx::{Context, ContextElem};
+use syntax::generic::lookup_table;
 use syntax::ust;
 
 use super::result::LoweringError;

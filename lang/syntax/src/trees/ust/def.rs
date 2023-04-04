@@ -1,8 +1,7 @@
 use codespan::Span;
 
 use crate::common::*;
-
-use super::generic;
+use crate::trees::generic;
 
 #[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct UST;
@@ -14,14 +13,7 @@ impl generic::Phase for UST {
 
     type VarName = Ident;
     type InfTyp = ();
-
-    fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String {
-        if let Some(idx) = idx {
-            format!("{name}@{idx}")
-        } else {
-            name.clone()
-        }
-    }
+    type Ctx = ();
 }
 
 pub type Prg = generic::Prg<UST>;

@@ -8,12 +8,11 @@ use data::HashSet;
 use miette_util::ToMiette;
 use normalizer::env::ToEnv;
 use normalizer::normalize::Normalize;
-use syntax::ast::Occurs;
 use syntax::common::*;
 use syntax::ctx::{BindContext, BindElem, Context, LevelCtx};
 use syntax::nf;
 use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
-use syntax::ust;
+use syntax::ust::{self, Occurs};
 use tracer::trace;
 
 use super::ctx::*;
@@ -518,6 +517,7 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
                             .map(|snd| ust::Exp::Var {
                                 info: ust::Info::empty(),
                                 name: "".to_owned(),
+                                ctx: (),
                                 idx: Idx { fst: 0, snd },
                             })
                             .map(Rc::new)
@@ -579,6 +579,7 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                     .map(|snd| ust::Exp::Var {
                         info: ust::Info::empty(),
                         name: "".to_owned(),
+                        ctx: (),
                         idx: Idx { fst: 1, snd },
                     })
                     .map(Rc::new)
@@ -737,8 +738,7 @@ impl Check for ust::Exp {
                     // Pattern matching with motive
                     Some(m) => {
                         let ust::Motive { info, param, ret_typ } = m;
-                        let self_t_nf =
-                            typ_app.to_exp().forget().forget().normalize(prg, &mut ctx.env())?;
+                        let self_t_nf = typ_app.to_exp().forget().normalize(prg, &mut ctx.env())?;
 
                         // Typecheck the motive
                         let ret_typ_out = ctx
@@ -825,9 +825,14 @@ impl Infer for ust::Exp {
     #[trace("{:P} |- {:P} => {return:P}", ctx, self, |ret| ret.as_ref().map(|e| e.typ()))]
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         match self {
-            ust::Exp::Var { info, name, idx } => {
+            ust::Exp::Var { info, name, ctx: (), idx } => {
                 let typ_nf = ctx.lookup(*idx);
-                Ok(tst::Exp::Var { info: info.with_type(typ_nf), name: name.clone(), idx: *idx })
+                Ok(tst::Exp::Var {
+                    info: info.with_type(typ_nf),
+                    name: name.clone(),
+                    ctx: ctx.vars.clone(),
+                    idx: *idx,
+                })
             }
             ust::Exp::TypCtor { info, name, args } => {
                 let ust::TypAbs { params } = &*prg.decls.typ(name, info.span)?.typ();

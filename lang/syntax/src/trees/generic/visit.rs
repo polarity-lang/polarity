@@ -32,7 +32,7 @@ pub trait Visitor<P: Phase> {
     fn visit_case(&mut self, info: &P::Info, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
     fn visit_cocase(&mut self, info: &P::Info, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
     fn visit_typ_app(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
-    fn visit_exp_var(&mut self, info: &P::TypeInfo, name: &P::VarName, idx: &Idx) {}
+    fn visit_exp_var(&mut self, info: &P::TypeInfo, name: &P::VarName, ctx: &P::Ctx, idx: &Idx) {}
     fn visit_exp_typ_ctor(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
     fn visit_exp_ctor(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
     fn visit_exp_dtor(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, name: &Ident, args: &Args<P>) {}
@@ -85,6 +85,7 @@ pub trait Visitor<P: Phase> {
     fn visit_type_app_info(&mut self, info: &P::TypeAppInfo) {}
     fn visit_idx(&mut self, idx: &Idx) {}
     fn visit_typ(&mut self, typ: &P::InfTyp) {}
+    fn visit_ctx(&mut self, ctx: &P::Ctx) {}
 }
 
 pub trait Visit<P: Phase> {
@@ -363,10 +364,11 @@ impl<P: Phase> Visit<P> for Exp<P> {
         V: Visitor<P>,
     {
         match self {
-            Exp::Var { info, name, idx } => {
+            Exp::Var { info, name, ctx, idx } => {
                 v.visit_type_info(info);
                 v.visit_idx(idx);
-                v.visit_exp_var(info, name, idx)
+                v.visit_ctx(ctx);
+                v.visit_exp_var(info, name, ctx, idx)
             }
             Exp::TypCtor { info, name, args } => {
                 args.visit(v);

@@ -1,24 +1,24 @@
-//! Convert a typed syntax tree to an untyped tree
+//! Convert a typed syntax tree to a representation suitable for program transformations
 
 use crate::common::*;
+use crate::tst;
 use crate::ust;
-use crate::wst;
 
-impl Forget for wst::Prg {
+impl Forget for tst::Prg {
     type Target = ust::Prg;
 
     fn forget(&self) -> Self::Target {
-        let wst::Prg { decls, exp } = self;
+        let tst::Prg { decls, exp } = self;
 
         ust::Prg { decls: decls.forget(), exp: exp.forget() }
     }
 }
 
-impl Forget for wst::Decls {
+impl Forget for tst::Decls {
     type Target = ust::Decls;
 
     fn forget(&self) -> Self::Target {
-        let wst::Decls { map, lookup_table } = self;
+        let tst::Decls { map, lookup_table } = self;
 
         ust::Decls {
             map: map.iter().map(|(name, decl)| (name.clone(), decl.forget())).collect(),
@@ -27,31 +27,31 @@ impl Forget for wst::Decls {
     }
 }
 
-impl Forget for wst::Decl {
+impl Forget for tst::Decl {
     type Target = ust::Decl;
 
     fn forget(&self) -> Self::Target {
         match self {
-            wst::Decl::Data(data) => ust::Decl::Data(data.forget()),
-            wst::Decl::Codata(codata) => ust::Decl::Codata(codata.forget()),
-            wst::Decl::Ctor(ctor) => ust::Decl::Ctor(ctor.forget()),
-            wst::Decl::Dtor(dtor) => ust::Decl::Dtor(dtor.forget()),
-            wst::Decl::Def(def) => ust::Decl::Def(def.forget()),
-            wst::Decl::Codef(codef) => ust::Decl::Codef(codef.forget()),
+            tst::Decl::Data(data) => ust::Decl::Data(data.forget()),
+            tst::Decl::Codata(codata) => ust::Decl::Codata(codata.forget()),
+            tst::Decl::Ctor(ctor) => ust::Decl::Ctor(ctor.forget()),
+            tst::Decl::Dtor(dtor) => ust::Decl::Dtor(dtor.forget()),
+            tst::Decl::Def(def) => ust::Decl::Def(def.forget()),
+            tst::Decl::Codef(codef) => ust::Decl::Codef(codef.forget()),
         }
     }
 }
 
-impl Forget for wst::Data {
+impl Forget for tst::Data {
     type Target = ust::Data;
 
     fn forget(&self) -> Self::Target {
-        let wst::Data { info, doc, name, hidden, typ, ctors } = self;
+        let tst::Data { info, doc, name, hidden, typ, ctors } = self;
 
         ust::Data {
             info: info.forget(),
-            doc: doc.clone(),
             name: name.clone(),
+            doc: doc.clone(),
             hidden: *hidden,
             typ: typ.forget(),
             ctors: ctors.clone(),
@@ -59,11 +59,11 @@ impl Forget for wst::Data {
     }
 }
 
-impl Forget for wst::Codata {
+impl Forget for tst::Codata {
     type Target = ust::Codata;
 
     fn forget(&self) -> Self::Target {
-        let wst::Codata { info, doc, name, hidden, typ, dtors } = self;
+        let tst::Codata { info, doc, name, hidden, typ, dtors } = self;
 
         ust::Codata {
             info: info.forget(),
@@ -76,21 +76,21 @@ impl Forget for wst::Codata {
     }
 }
 
-impl Forget for wst::TypAbs {
+impl Forget for tst::TypAbs {
     type Target = ust::TypAbs;
 
     fn forget(&self) -> Self::Target {
-        let wst::TypAbs { params } = self;
+        let tst::TypAbs { params } = self;
 
         ust::TypAbs { params: params.forget() }
     }
 }
 
-impl Forget for wst::Ctor {
+impl Forget for tst::Ctor {
     type Target = ust::Ctor;
 
     fn forget(&self) -> Self::Target {
-        let wst::Ctor { info, doc, name, params, typ } = self;
+        let tst::Ctor { info, doc, name, params, typ } = self;
 
         ust::Ctor {
             info: info.forget(),
@@ -102,11 +102,11 @@ impl Forget for wst::Ctor {
     }
 }
 
-impl Forget for wst::Dtor {
+impl Forget for tst::Dtor {
     type Target = ust::Dtor;
 
     fn forget(&self) -> Self::Target {
-        let wst::Dtor { info, doc, name, params, self_param, ret_typ } = self;
+        let tst::Dtor { info, doc, name, params, self_param, ret_typ } = self;
 
         ust::Dtor {
             info: info.forget(),
@@ -119,11 +119,11 @@ impl Forget for wst::Dtor {
     }
 }
 
-impl Forget for wst::Def {
+impl Forget for tst::Def {
     type Target = ust::Def;
 
     fn forget(&self) -> Self::Target {
-        let wst::Def { info, doc, name, hidden, params, self_param, ret_typ, body } = self;
+        let tst::Def { info, doc, name, hidden, params, self_param, ret_typ, body } = self;
 
         ust::Def {
             info: info.forget(),
@@ -138,11 +138,11 @@ impl Forget for wst::Def {
     }
 }
 
-impl Forget for wst::Codef {
+impl Forget for tst::Codef {
     type Target = ust::Codef;
 
     fn forget(&self) -> Self::Target {
-        let wst::Codef { info, doc, name, hidden, params, typ, body } = self;
+        let tst::Codef { info, doc, name, hidden, params, typ, body } = self;
 
         ust::Codef {
             info: info.forget(),
@@ -156,31 +156,31 @@ impl Forget for wst::Codef {
     }
 }
 
-impl Forget for wst::Match {
+impl Forget for tst::Match {
     type Target = ust::Match;
 
     fn forget(&self) -> Self::Target {
-        let wst::Match { info, cases } = self;
+        let tst::Match { info, cases } = self;
 
         ust::Match { info: info.forget(), cases: cases.forget() }
     }
 }
 
-impl Forget for wst::Comatch {
+impl Forget for tst::Comatch {
     type Target = ust::Comatch;
 
     fn forget(&self) -> Self::Target {
-        let wst::Comatch { info, cases } = self;
+        let tst::Comatch { info, cases } = self;
 
         ust::Comatch { info: info.forget(), cases: cases.forget() }
     }
 }
 
-impl Forget for wst::Case {
+impl Forget for tst::Case {
     type Target = ust::Case;
 
     fn forget(&self) -> Self::Target {
-        let wst::Case { info, name, args, body } = self;
+        let tst::Case { info, name, args, body } = self;
 
         ust::Case {
             info: info.forget(),
@@ -191,11 +191,11 @@ impl Forget for wst::Case {
     }
 }
 
-impl Forget for wst::Cocase {
+impl Forget for tst::Cocase {
     type Target = ust::Cocase;
 
     fn forget(&self) -> Self::Target {
-        let wst::Cocase { info, name, params: args, body } = self;
+        let tst::Cocase { info, name, params: args, body } = self;
 
         ust::Cocase {
             info: info.forget(),
@@ -206,120 +206,120 @@ impl Forget for wst::Cocase {
     }
 }
 
-impl Forget for wst::SelfParam {
+impl Forget for tst::SelfParam {
     type Target = ust::SelfParam;
 
     fn forget(&self) -> Self::Target {
-        let wst::SelfParam { info, name, typ } = self;
+        let tst::SelfParam { info, name, typ } = self;
 
         ust::SelfParam { info: info.forget(), name: name.clone(), typ: typ.forget() }
     }
 }
 
-impl Forget for wst::TypApp {
+impl Forget for tst::TypApp {
     type Target = ust::TypApp;
 
     fn forget(&self) -> Self::Target {
-        let wst::TypApp { info, name, args } = self;
+        let tst::TypApp { info, name, args } = self;
 
         ust::TypApp { info: info.forget(), name: name.clone(), args: args.forget() }
     }
 }
 
-impl Forget for wst::Exp {
+impl Forget for tst::Exp {
     type Target = ust::Exp;
 
     fn forget(&self) -> Self::Target {
         match self {
-            wst::Exp::Var { info, name, idx } => {
-                ust::Exp::Var { info: info.forget(), name: name.clone(), idx: *idx }
+            tst::Exp::Var { info, name, ctx: _, idx } => {
+                ust::Exp::Var { info: info.forget(), name: name.clone(), ctx: (), idx: *idx }
             }
-            wst::Exp::TypCtor { info, name, args } => {
+            tst::Exp::TypCtor { info, name, args } => {
                 ust::Exp::TypCtor { info: info.forget(), name: name.clone(), args: args.forget() }
             }
-            wst::Exp::Ctor { info, name, args } => {
+            tst::Exp::Ctor { info, name, args } => {
                 ust::Exp::Ctor { info: info.forget(), name: name.clone(), args: args.forget() }
             }
-            wst::Exp::Dtor { info, exp, name, args } => ust::Exp::Dtor {
+            tst::Exp::Dtor { info, exp, name, args } => ust::Exp::Dtor {
                 info: info.forget(),
                 exp: exp.forget(),
                 name: name.clone(),
                 args: args.forget(),
             },
-            wst::Exp::Anno { info, exp, typ } => {
+            tst::Exp::Anno { info, exp, typ } => {
                 ust::Exp::Anno { info: info.forget(), exp: exp.forget(), typ: typ.forget() }
             }
-            wst::Exp::Type { info } => ust::Exp::Type { info: info.forget() },
-            wst::Exp::Match { info, name, on_exp, motive, ret_typ: _, body } => ust::Exp::Match {
+            tst::Exp::Type { info } => ust::Exp::Type { info: info.forget() },
+            tst::Exp::Match { info, name, on_exp, motive, ret_typ, body } => ust::Exp::Match {
                 info: info.forget(),
                 name: name.clone(),
                 on_exp: on_exp.forget(),
                 motive: motive.forget(),
-                ret_typ: (),
+                ret_typ: ret_typ.forget(),
                 body: body.forget(),
             },
-            wst::Exp::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::Comatch {
+            tst::Exp::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::Comatch {
                 info: info.forget(),
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.forget(),
             },
-            wst::Exp::Hole { info, kind } => ust::Exp::Hole { info: info.forget(), kind: *kind },
+            tst::Exp::Hole { info, kind } => ust::Exp::Hole { info: info.forget(), kind: *kind },
         }
     }
 }
 
-impl Forget for wst::Motive {
+impl Forget for tst::Motive {
     type Target = ust::Motive;
 
     fn forget(&self) -> Self::Target {
-        let wst::Motive { info, param, ret_typ } = self;
+        let tst::Motive { info, param, ret_typ } = self;
 
         ust::Motive { info: info.forget(), param: param.forget(), ret_typ: ret_typ.forget() }
     }
 }
 
-impl Forget for wst::Telescope {
+impl Forget for tst::Telescope {
     type Target = ust::Telescope;
 
     fn forget(&self) -> Self::Target {
-        let wst::Telescope { params } = self;
+        let tst::Telescope { params } = self;
 
         ust::Telescope { params: params.forget() }
     }
 }
 
-impl Forget for wst::Param {
+impl Forget for tst::Param {
     type Target = ust::Param;
 
     fn forget(&self) -> Self::Target {
-        let wst::Param { name, typ } = self;
+        let tst::Param { name, typ } = self;
 
         ust::Param { name: name.clone(), typ: typ.forget() }
     }
 }
 
-impl Forget for wst::TelescopeInst {
+impl Forget for tst::TelescopeInst {
     type Target = ust::TelescopeInst;
 
     fn forget(&self) -> Self::Target {
-        let wst::TelescopeInst { params } = self;
+        let tst::TelescopeInst { params } = self;
 
         ust::TelescopeInst { params: params.forget() }
     }
 }
 
-impl Forget for wst::ParamInst {
+impl Forget for tst::ParamInst {
     type Target = ust::ParamInst;
 
     fn forget(&self) -> Self::Target {
-        let wst::ParamInst { info, name, typ: _ } = self;
+        let tst::ParamInst { info, name, typ } = self;
 
-        ust::ParamInst { info: info.forget(), name: name.clone(), typ: () }
+        ust::ParamInst { info: info.forget(), name: name.clone(), typ: typ.forget() }
     }
 }
 
-impl Forget for wst::Args {
+impl Forget for tst::Args {
     type Target = ust::Args;
 
     fn forget(&self) -> Self::Target {
@@ -327,31 +327,37 @@ impl Forget for wst::Args {
     }
 }
 
-impl Forget for wst::Info {
+impl Forget for tst::Typ {
+    type Target = ();
+
+    fn forget(&self) -> Self::Target {}
+}
+
+impl Forget for tst::Info {
     type Target = ust::Info;
 
     fn forget(&self) -> Self::Target {
-        let wst::Info { span } = self;
+        let tst::Info { span } = self;
 
         ust::Info { span: *span }
     }
 }
 
-impl Forget for wst::TypeInfo {
+impl Forget for tst::TypeInfo {
     type Target = ust::Info;
 
     fn forget(&self) -> Self::Target {
-        let wst::TypeInfo { span, .. } = self;
+        let tst::TypeInfo { typ: _, span } = self;
 
         ust::Info { span: *span }
     }
 }
 
-impl Forget for wst::TypeAppInfo {
+impl Forget for tst::TypeAppInfo {
     type Target = ust::Info;
 
     fn forget(&self) -> Self::Target {
-        let wst::TypeAppInfo { span, .. } = self;
+        let tst::TypeAppInfo { typ: _, span, .. } = self;
 
         ust::Info { span: *span }
     }

@@ -1,6 +1,8 @@
-use super::*;
-use crate::ast::generic;
 use crate::cst;
+use crate::generic;
+
+use super::*;
+
 use lazy_static::lazy_static;
 
 pub trait Named {

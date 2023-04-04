@@ -5,7 +5,7 @@ use crate::ctx::*;
 
 use super::def::*;
 
-pub fn occurs_in<P: Phase>(ctx: &mut LevelCtx, the_idx: Idx, in_exp: &Rc<Exp<P>>) -> bool {
+pub fn occurs_in(ctx: &mut LevelCtx, the_idx: Idx, in_exp: &Rc<Exp>) -> bool {
     let lvl = ctx.idx_to_lvl(the_idx);
     in_exp.occurs(ctx, lvl)
 }
@@ -14,7 +14,7 @@ pub trait Occurs {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool;
 }
 
-impl<P: Phase> Occurs for Exp<P> {
+impl Occurs for Exp {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         match self {
             Exp::Var { idx, .. } => ctx.idx_to_lvl(*idx) == lvl,
@@ -32,28 +32,28 @@ impl<P: Phase> Occurs for Exp<P> {
     }
 }
 
-impl<P: Phase> Occurs for Match<P> {
+impl Occurs for Match {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Match { cases, .. } = self;
         cases.occurs(ctx, lvl)
     }
 }
 
-impl<P: Phase> Occurs for Comatch<P> {
+impl Occurs for Comatch {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Comatch { cases, .. } = self;
         cases.occurs(ctx, lvl)
     }
 }
 
-impl<P: Phase> Occurs for Case<P> {
+impl Occurs for Case {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Case { args, body, .. } = self;
         ctx.bind_iter(args.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
     }
 }
 
-impl<P: Phase> Occurs for Cocase<P> {
+impl Occurs for Cocase {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Cocase { params: args, body, .. } = self;
         ctx.bind_iter(args.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))

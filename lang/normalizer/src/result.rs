@@ -1,7 +1,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use syntax::ast::LookupError;
+use syntax::generic::LookupError;
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum EvalError {

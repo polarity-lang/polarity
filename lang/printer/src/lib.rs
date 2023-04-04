@@ -8,7 +8,6 @@ pub use pretty::termcolor::StandardStream;
 pub use pretty::termcolor::WriteColor;
 pub use pretty::DocAllocator;
 
-mod ast;
 mod ctx;
 mod de_bruijn;
 mod dec;
@@ -19,6 +18,7 @@ mod render;
 pub mod theme;
 pub mod tokens;
 pub mod types;
+mod ust;
 pub mod util;
 
 pub use print_to_string::*;

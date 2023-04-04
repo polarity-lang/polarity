@@ -4,8 +4,8 @@ use codespan::Span;
 use printer::PrintToString;
 use rust_lapper::{Interval, Lapper};
 
-use syntax::ast::{Visit, Visitor};
 use syntax::common::*;
+use syntax::generic::{Visit, Visitor};
 use syntax::tst;
 
 pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, Info>, Lapper<u32, Item>) {

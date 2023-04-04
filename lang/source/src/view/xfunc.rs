@@ -37,8 +37,7 @@ impl<'a> DatabaseView<'a> {
         filter_out.extend(xdefs.clone());
         filter_out.extend(xtors);
 
-        let LiftResult { prg, modified_decls: mut dirty_decls, .. } =
-            lifting::lift(prg.forget(), type_name);
+        let LiftResult { prg, modified_decls: mut dirty_decls, .. } = lifting::lift(prg, type_name);
         dirty_decls.retain(|name| !filter_out.contains(name));
 
         let mat = xfunc::as_matrix(&prg)?;

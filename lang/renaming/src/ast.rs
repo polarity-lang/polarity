@@ -1,6 +1,6 @@
-use syntax::ast::*;
 use syntax::common::*;
 use syntax::ctx::*;
+use syntax::generic::*;
 
 use crate::{Rename, RenameInfo};
 
@@ -77,8 +77,14 @@ where
         self.ctx_map_motive_param(param, f_inner)
     }
 
-    fn map_exp_var(&mut self, info: P::TypeInfo, _name: P::VarName, idx: Idx) -> Exp<P> {
-        Exp::Var { info, name: self.lookup(idx), idx }
+    fn map_exp_var(
+        &mut self,
+        info: P::TypeInfo,
+        _name: P::VarName,
+        ctx: P::Ctx,
+        idx: Idx,
+    ) -> Exp<P> {
+        Exp::Var { info, name: self.lookup(idx), ctx, idx }
     }
 
     fn map_type_info(&mut self, info: <P as Phase>::TypeInfo) -> <P as Phase>::TypeInfo {

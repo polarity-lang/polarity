@@ -36,7 +36,7 @@ impl Forget for Neu {
     fn forget(&self) -> Self::Target {
         match self {
             Neu::Var { info, name, idx } => {
-                ust::Exp::Var { info: info.clone(), name: name.clone(), idx: *idx }
+                ust::Exp::Var { info: info.clone(), name: name.clone(), ctx: (), idx: *idx }
             }
             Neu::Dtor { info, exp, name, args } => ust::Exp::Dtor {
                 info: info.clone(),

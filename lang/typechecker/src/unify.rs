@@ -5,8 +5,8 @@ use syntax::ctx::LevelCtx;
 use crate::result::UnifyError;
 use data::{Dec, HashMap, HashSet, No, Yes};
 use printer::{DocAllocator, Print};
-use syntax::ast;
 use syntax::common::*;
+use syntax::generic;
 use syntax::nf;
 use syntax::ust;
 use tracer::trace;
@@ -112,7 +112,7 @@ impl Ctx {
     }
 
     fn unify_eqn(&mut self, eqn: &Eqn) -> Result<Dec, UnifyError> {
-        use ast::Exp::*;
+        use generic::Exp::*;
 
         let Eqn { lhs, rhs, .. } = eqn;
         // FIXME: This is only temporary (not compatible with xfunc in general)
@@ -152,7 +152,7 @@ impl Ctx {
     }
 
     fn add_assignment(&mut self, idx: Idx, exp: Rc<ust::Exp>) -> Result<Dec, UnifyError> {
-        if ast::occurs_in(&mut self.ctx, idx, &exp) {
+        if ust::occurs_in(&mut self.ctx, idx, &exp) {
             return Err(UnifyError::occurs_check_failed(idx, exp));
         }
         let insert_lvl = self.ctx.idx_to_lvl(idx);

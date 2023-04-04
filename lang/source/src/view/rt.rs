@@ -35,7 +35,7 @@ impl<'a> DatabaseView<'a> {
 
     pub fn run(&self) -> Result<Option<Rc<nf::Nf>>, Error> {
         let tst = self.tst()?;
-        let ust = tst.forget().forget();
+        let ust = tst.forget();
         match ust.exp.clone() {
             None => Ok(None),
             Some(exp) => {

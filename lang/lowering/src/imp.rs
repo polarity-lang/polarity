@@ -3,10 +3,10 @@ use std::rc::Rc;
 use num_bigint::BigUint;
 
 use miette_util::ToMiette;
-use syntax::ast::lookup_table;
 use syntax::common::*;
 use syntax::cst;
 use syntax::ctx::{BindContext, Context};
+use syntax::generic::lookup_table;
 use syntax::ust;
 
 use super::ctx::*;
@@ -410,6 +410,7 @@ impl Lower for cst::Exp {
                 Elem::Bound(lvl) => Ok(ust::Exp::Var {
                     info: info.lower_pure(),
                     name: name.clone(),
+                    ctx: (),
                     idx: ctx.level_to_index(lvl),
                 }),
                 Elem::Decl(meta) => match meta.kind() {

@@ -2,18 +2,16 @@ use std::rc::Rc;
 
 use pretty::DocAllocator;
 
-use syntax::ast::*;
 use syntax::common::*;
+use syntax::generic::Item;
+use syntax::ust::*;
 
 use super::theme::ThemeExt;
 use super::tokens::*;
 use super::types::*;
 use super::util::*;
 
-impl<'a, P: Phase> Print<'a> for Prg<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Prg {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Prg { decls, exp } = self;
 
@@ -36,10 +34,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Decls<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Decls {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let items = self.iter().filter(|item| !item.hidden()).map(|item| match item {
             Item::Data(data) => data.print_in_ctx(cfg, self, alloc),
@@ -53,11 +48,8 @@ where
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Decl<P>
-where
-    P::InfTyp: ShiftInRange,
-{
-    type Ctx = Decls<P>;
+impl<'a> PrintInCtx<'a> for Decl {
+    type Ctx = Decls;
 
     fn print_in_ctx(
         &'a self,
@@ -76,11 +68,8 @@ where
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Item<'a, P>
-where
-    P::InfTyp: ShiftInRange,
-{
-    type Ctx = Decls<P>;
+impl<'a> PrintInCtx<'a> for Item<'a, UST> {
+    type Ctx = Decls;
 
     fn print_in_ctx(
         &'a self,
@@ -97,11 +86,8 @@ where
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Data<P>
-where
-    P::InfTyp: ShiftInRange,
-{
-    type Ctx = Decls<P>;
+impl<'a> PrintInCtx<'a> for Data {
+    type Ctx = Decls;
 
     fn print_in_ctx(
         &'a self,
@@ -144,11 +130,8 @@ where
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Codata<P>
-where
-    P::InfTyp: ShiftInRange,
-{
-    type Ctx = Decls<P>;
+impl<'a> PrintInCtx<'a> for Codata {
+    type Ctx = Decls;
 
     fn print_in_ctx(
         &'a self,
@@ -191,10 +174,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Def<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Def {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Def { info: _, doc, name, hidden, params, self_param, ret_typ, body } = self;
         if *hidden {
@@ -219,10 +199,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Codef<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Codef {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Codef { info: _, doc, name, hidden, params, typ, body } = self;
         if *hidden {
@@ -245,10 +222,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Ctor<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Ctor {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Ctor { info: _, doc, name, params, typ } = self;
 
@@ -264,10 +238,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Dtor<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Dtor {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Dtor { info: _, doc, name, params, self_param, ret_typ } = self;
 
@@ -286,10 +257,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Comatch<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Comatch {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Comatch { info: _, cases } = self;
         if cases.is_empty() {
@@ -307,10 +275,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Match<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Match {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { info: _, cases } = self;
         if cases.is_empty() {
@@ -327,10 +292,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Case<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Case {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Case { info: _, name, args, body } = self;
 
@@ -347,10 +309,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Cocase<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Cocase {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Cocase { info: _, name, params: args, body } = self;
 
@@ -367,17 +326,14 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Telescope<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Telescope {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Telescope { params } = self;
         let mut output = alloc.nil();
         if params.is_empty() {
             return output;
         };
-        let mut running_type: Option<&Rc<Exp<P>>> = None;
+        let mut running_type: Option<&Rc<Exp>> = None;
         for Param { name, typ } in params {
             match running_type {
                 // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
@@ -414,10 +370,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Args<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Args {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let mut doc = alloc.nil();
         let mut iter = self.args.iter().peekable();
@@ -431,10 +384,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for TelescopeInst<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for TelescopeInst {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         if self.params.is_empty() {
             alloc.nil()
@@ -444,30 +394,21 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Param<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Param {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Param { name, typ } = self;
         alloc.text(name).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
     }
 }
 
-impl<'a, P: Phase> Print<'a> for ParamInst<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for ParamInst {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let ParamInst { info: _, name, typ: _ } = self;
         alloc.text(name)
     }
 }
 
-impl<'a, P: Phase> Print<'a> for SelfParam<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for SelfParam {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let SelfParam { info: _, name, typ } = self;
 
@@ -483,10 +424,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for TypApp<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for TypApp {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypApp { info: _, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
@@ -494,14 +432,15 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Exp<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Exp {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Exp::Var { info: _, name, idx } => {
-                alloc.text(P::print_var(name, cfg.de_bruijn.then_some(*idx)))
+            Exp::Var { info: _, name, ctx: _, idx } => {
+                if cfg.de_bruijn {
+                    alloc.text(format!("{name}@{idx}"))
+                } else {
+                    alloc.text(name)
+                }
             }
             Exp::TypCtor { info: _, name, args } => {
                 let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
@@ -514,7 +453,7 @@ where
             mut dtor @ Exp::Dtor { .. } => {
                 // A series of destructors forms an aligned group
                 let mut dtors_group = alloc.nil();
-                while let Exp::Dtor { info: _, exp, name, args } = dtor {
+                while let Exp::Dtor { info: _, exp, name, args } = &dtor {
                     let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                     if !dtors_group.is_nil() {
                         dtors_group = alloc.line_().append(dtors_group);
@@ -562,10 +501,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Motive<P>
-where
-    P::InfTyp: ShiftInRange,
-{
+impl<'a> Print<'a> for Motive {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Motive { info: _, param, ret_typ } = self;
 
@@ -623,14 +559,7 @@ fn print_return_type<'a, T: Print<'a>>(
 /// Only invoke this function if the comatch contains exactly
 /// one cocase "ap" with three arguments; the function will
 /// panic otherwise.
-fn print_lambda_sugar<'a, P: Phase>(
-    e: &'a Comatch<P>,
-    cfg: &PrintCfg,
-    alloc: &'a Alloc<'a>,
-) -> Builder<'a>
-where
-    P::InfTyp: ShiftInRange,
-{
+fn print_lambda_sugar<'a>(e: &'a Comatch, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
     let Comatch { cases, .. } = e;
     let Cocase { params, body, .. } = cases.get(0).expect("Empty comatch marked as lambda sugar");
     let var_name = params

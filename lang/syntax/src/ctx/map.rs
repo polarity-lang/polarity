@@ -1,6 +1,6 @@
-use crate::ast::*;
 use crate::common::*;
 use crate::ctx::*;
+use crate::generic::*;
 
 use std::rc::Rc;
 

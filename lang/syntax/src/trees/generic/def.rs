@@ -24,8 +24,8 @@ where
     type VarName: Clone + fmt::Debug;
     /// A type which is not annotated in the source, but will be filled in later during typechecking
     type InfTyp: Clone + fmt::Debug;
-
-    fn print_var(name: &Self::VarName, idx: Option<Idx>) -> String;
+    /// Context annotated during typechecking
+    type Ctx: Clone + fmt::Debug;
 }
 
 pub trait HasPhase {
@@ -259,6 +259,8 @@ pub enum Exp<P: Phase> {
         info: P::TypeInfo,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         name: P::VarName,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        ctx: P::Ctx,
         idx: Idx,
     },
     TypCtor {
