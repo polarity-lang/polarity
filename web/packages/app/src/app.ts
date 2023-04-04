@@ -81,8 +81,12 @@ export default class App {
       const slash = location.pathname.endsWith("/") ? "" : "/";
       const url = `${location.protocol}//${location.host}${location.pathname}${slash}examples/${filepath}`;
       const response = await fetch(url);
-      const text = await response.text();
-      model.setValue(text);
+      if (!response.ok) {
+        model.setValue("");
+      } else {
+        const text = await response.text();
+        model.setValue(text);
+      }
     }
 
     addEventListener("hashchange", (event) => {
