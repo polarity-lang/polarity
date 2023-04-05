@@ -1,3 +1,4 @@
+use std::cmp;
 use std::rc::Rc;
 
 use derivative::Derivative;
@@ -9,7 +10,7 @@ use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;
 use syntax::generic::{Visit, Visitor};
 use syntax::tst;
-use syntax::ust;
+use syntax::ust::{self, Occurs};
 
 /// Find all free variables
 pub trait FreeVarsExt {
@@ -74,7 +75,41 @@ impl FreeVars {
         Self { fvs, cutoff: self.cutoff }
     }
 
-    /// Sort the free variables according to their De-Bruijn level
+    /// Sort the free variables such the dependency relation is satisfied
+    /// Due to unification, it is not sufficient to sort them according to their De-Bruijn level:
+    /// Unification can lead to a set of free variables where variables with a higher De-Bruijn level
+    /// may occur in the types of variables with a lower De-Bruijn level.
+    /// This is because unification may locally refine types.
+    /// Example:
+    ///
+    /// ```xfn
+    /// data Bar(a: Type) { }
+    ///
+    /// codata Baz { unit: Top }
+    ///
+    /// data Foo(a: Type) {
+    ///    MkFoo(a: Type): Foo(Bar(a)),
+    /// }
+    ///
+    /// data Top { Unit }
+    ///
+    /// def Top.ignore(a: Type, x: a): Top {
+    ///     Unit => Unit
+    /// }
+    ///
+    /// def Top.foo(a: Type, foo: Foo(a)): Baz {
+    ///     Unit => foo.match {
+    ///         MkFoo(a') => comatch {
+    ///            unit => Unit.ignore(Foo(Bar(a')), foo)
+    ///        }
+    ///    }
+    /// }
+    /// ```
+    ///
+    /// In this example, unification may perform the substitution `{a := a'}` such that locally
+    /// the type of foo is known to be `Foo(Bar(a'))`.
+    /// Hence, lifting of the comatch will need to consider the free variables [ foo: Foo(Bar(a')), a': Type ]
+    /// where `foo` depends on `a'` even though it has been bound earlier in the context
     fn sorted(self) -> Vec<FreeVar> {
         let mut fvs: Vec<_> = self.fvs.into_iter().collect();
         fvs.sort();
@@ -83,19 +118,40 @@ impl FreeVars {
 }
 
 #[derive(Clone, Debug, Derivative)]
-#[derivative(Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[derivative(Hash, Eq, PartialEq)]
 pub struct FreeVar {
     /// Name of the free variable
-    #[derivative(PartialEq = "ignore", Hash = "ignore", PartialOrd = "ignore", Ord = "ignore")]
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     /// The original De-Bruijn level
     pub lvl: Lvl,
     /// Type of the free variable
-    #[derivative(PartialEq = "ignore", Hash = "ignore", PartialOrd = "ignore", Ord = "ignore")]
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub typ: Rc<ust::Exp>,
     /// Context under which the type is closed
-    #[derivative(PartialEq = "ignore", Hash = "ignore", PartialOrd = "ignore", Ord = "ignore")]
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: LevelCtx,
+}
+
+impl PartialOrd for FreeVar {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for FreeVar {
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        let self_occurs_in_other = other.typ.occurs(&mut other.ctx.clone(), self.lvl);
+        let other_occurs_in_self = self.typ.occurs(&mut self.ctx.clone(), other.lvl);
+        assert!(!(self_occurs_in_other && other_occurs_in_self));
+        if self_occurs_in_other {
+            cmp::Ordering::Less
+        } else if other_occurs_in_self {
+            cmp::Ordering::Greater
+        } else {
+            self.lvl.cmp(&other.lvl)
+        }
+    }
 }
 
 impl<T: Visit<tst::TST>> FreeVarsExt for T {
