@@ -28,8 +28,16 @@ codef BoxFun: Fun(Type, Type) {
     ap(_, _, a) => Box(a),
 }
 
+def Box(a).map_box(a b: Type, g: Fun(a, b)): Box(b) {
+    MkBox(_, x) => MkBox(b, g.ap(a, b, x))
+}
+
 codef BoxFunctor: Functor(BoxFun) {
-    map(_, _, _, _, _) => ?,
-    law_id(_, _, _) => ?,
-    law_compose(_, _, _, _, _, _, _) => ?,
+    map(_, a, b, g, x) => x.map_box(a, b, g),
+    law_id(_, a, x) => x.match as x => Eq(Box(a), x.map_box(a, a, Id(a)), x) {
+        MkBox(_, x) => Refl(Box(a), MkBox(a, x))
+    },
+    law_compose(_, a, b, c, g, h, x) => x.match as x => Eq(Box(c), x.map_box(a, c, Compose(a, b, c, g, h)), x.map_box(a, b, g).map_box(b, c, h)) {
+        MkBox(_, x) => Refl(Box(c), MkBox(c, h.ap(b, c, g.ap(a, b, x))))
+    },
 }

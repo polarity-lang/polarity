@@ -743,7 +743,8 @@ impl Check for ust::Exp {
                     // Pattern matching with motive
                     Some(m) => {
                         let ust::Motive { info, param, ret_typ } = m;
-                        let self_t_nf = typ_app.to_exp().forget().normalize(prg, &mut ctx.env())?;
+                        let self_t_nf =
+                            typ_app.to_exp().forget().normalize(prg, &mut ctx.env())?.shift((1, 0));
 
                         // Typecheck the motive
                         let ret_typ_out = ctx
