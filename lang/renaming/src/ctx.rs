@@ -2,6 +2,8 @@ use syntax::common::*;
 use syntax::ctx::{Context, ContextElem};
 use syntax::generic::*;
 
+use super::util::increment_name;
+
 #[derive(Debug, Clone)]
 pub struct Ctx {
     bound: Vec<Vec<Ident>>,
@@ -57,7 +59,7 @@ impl Ctx {
             name = "x".to_owned();
         }
         while self.contains_name(&name) {
-            name.push('\'');
+            name = increment_name(name);
         }
         name
     }
