@@ -29,8 +29,7 @@ impl Context for Ctx {
     }
 
     fn push_binder(&mut self, elem: Self::ElemIn) {
-        assert!(elem == "_" || !self.contains_name(&elem));
-        assert!(!elem.is_empty());
+        assert!(elem == "_" || elem.is_empty() || !self.contains_name(&elem));
         self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
     }
 

@@ -61,12 +61,7 @@ where
     where
         F: FnOnce(&mut Self, SelfParam<P>) -> X,
     {
-        self.ctx_map_self_param(
-            info,
-            self.disambiguate_name(name.unwrap_or_else(|| "self".to_owned())).into(),
-            typ,
-            f_inner,
-        )
+        self.ctx_map_self_param(info, name.map(|name| self.disambiguate_name(name)), typ, f_inner)
     }
 
     fn map_motive_param<X, F>(&mut self, mut param: ParamInst<P>, f_inner: F) -> X
