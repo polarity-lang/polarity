@@ -14,7 +14,7 @@ codespan = "0.11"
 # fancy error messages
 miette = "5"
 # workspace members
-source = { path = "../../lang/source" }
+query = { path = "../../lang/query" }
 printer = { path = "../../lang/printer" }
 data = { path = "../data" }
 miette_util = { path = "../miette_util" }

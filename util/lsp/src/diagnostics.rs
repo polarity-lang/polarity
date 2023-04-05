@@ -4,8 +4,8 @@ use miette::SourceSpan;
 use tower_lsp::lsp_types;
 
 use miette_util::FromMiette;
-use source::DatabaseView;
-use source::Error;
+use query::DatabaseView;
+use query::Error;
 
 use crate::conversion::ToLsp;
 

@@ -11,7 +11,7 @@ members = [
     "lang/lowering",
     "lang/printer",
     "lang/typechecker",
-    "lang/source",
+    "lang/query",
     "lang/renaming",
     "lang/lifting",
     "lang/xfunc",

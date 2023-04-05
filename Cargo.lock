@@ -94,7 +94,7 @@ dependencies = [
  "miette",
  "normalizer",
  "printer",
- "source",
+ "query",
  "syntax",
  "termsize",
  "thiserror",
@@ -1201,7 +1201,7 @@ dependencies = [
  "miette",
  "miette_util",
  "printer",
- "source",
+ "query",
  "tower-lsp",
 ]
 
@@ -1658,6 +1658,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "query"
+version = "0.1.0"
+dependencies = [
+ "codespan",
+ "data",
+ "lifting",
+ "lowering",
+ "miette",
+ "normalizer",
+ "parser",
+ "printer",
+ "renaming",
+ "ropey",
+ "rust-lapper",
+ "syntax",
+ "thiserror",
+ "typechecker",
+ "xfunc",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1955,27 +1976,6 @@ checksum = "64a4a911eed85daf18834cfaa86a79b7d266ff93ff5ba14005426219480ed662"
 dependencies = [
  "libc",
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "source"
-version = "0.1.0"
-dependencies = [
- "codespan",
- "data",
- "lifting",
- "lowering",
- "miette",
- "normalizer",
- "parser",
- "printer",
- "renaming",
- "ropey",
- "rust-lapper",
- "syntax",
- "thiserror",
- "typechecker",
- "xfunc",
 ]
 
 [[package]]

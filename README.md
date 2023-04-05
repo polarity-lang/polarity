@@ -56,8 +56,8 @@ xfunc --help
 │   ├── normalizer          Implementation of normalization-by-evaluation algorithm
 │   ├── parser              Parse text to concrete syntax tree
 │   ├── printer             Print abstract syntax tree to text
+│   ├── query               Index data structures for annotated source code files and spans
 │   ├── renaming            Rename abstract syntax tree s.t. it can be reparsed
-│   ├── source              Index data structures for annotated source code files and spans
 │   ├── syntax              Syntax tree definitions
 │   ├── typechecker         Bidirectional type inference
 │   └── xfunc               De-/Refunctionalization implementation

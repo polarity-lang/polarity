@@ -4,7 +4,7 @@ use tower_lsp::jsonrpc::Result;
 use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
 use printer::{PrintCfg, PrintToString};
-use source::{Database, File, Xfunc};
+use query::{Database, File, Xfunc};
 
 use super::capabilities::*;
 use super::conversion::*;

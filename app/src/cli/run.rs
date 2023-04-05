@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use printer::{ColorChoice, PrintExt, StandardStream};
-use source::{Database, File};
+use query::{Database, File};
 use syntax::nf;
 
 use crate::result::IOError;
