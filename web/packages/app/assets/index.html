@@ -19,7 +19,7 @@
             <summary aria-haspopup="listbox" role="button" class="secondary">Examples</summary>
             <ul role="listbox">
               <li><a onclick="jumpToHash('stlc.xfn')" >stlc.xfn</a></li>
-              <li><a onclick="jumpToHash('arith.xfn')">arith.xfn</a></li>
+              <li><a onclick="jumpToHash('pi.xfn')">pi.xfn</a></li>
               <li><a onclick="jumpToHash('boolrep.xfn')">boolrep.xfn</a></li>
               <li><a onclick="jumpToHash('eq.xfn')">eq.xfn</a></li>
               <li><a onclick="jumpToHash('neg_inverse.xfn')">neg_inverse.xfn</a></li>
@@ -64,11 +64,11 @@ data Bool { True, False, }
 
       In the more general case we have to specify the precise type that a constructor constructs.
       Therefore, the above data type declaration can be written more explicitly as:
-      
+
 <pre><code>
 data Bool { True: Bool, False: Bool }
 </code></pre>
-      
+
       A simple example of a parameterized type is the type of singly-linked lists of some type <code>a</code>.
       In that case, we have to specify both the parameters of the type constructor <code>List</code>, and the instantiations of the term constructors <code>Nil</code> and <code>Cons</code>.
       For the parameter of the type constructor <code>List</code> we make use of the impredicative type universe, which is written <code>Type</code>.
@@ -103,7 +103,7 @@ codata Pair {
 }
 </code></pre>
       This type supports two observations; the first observations <code>proj1</code> yields a boolean value when invoked on a <code>Pair</code>, and the observation <code>proj2</code> yields a natural number.
-      
+
       Codata types can also model infinite types. The type of infinite streams is a classical example and written like this:
 <pre><code>
 codata Stream(a: Type) {
@@ -157,7 +157,7 @@ data Bool {
 def Bool.neg : Bool {
   True =&gt; ?,
   False =&gt; ?,
-}          
+}
 </code></pre>
 </details>
 <details>

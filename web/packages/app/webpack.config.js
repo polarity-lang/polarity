@@ -60,7 +60,7 @@ const config = {
     new webpack.ProgressPlugin(),
     new CleanWebpackPlugin(),
     new CopyWebpackPlugin({
-      patterns: [{ from: "../../../examples", to: "examples" }],
+      patterns: [{ from: "../../../oopsla_examples", to: "examples" }],
     }),
     new HtmlWebpackPlugin({
       template: "assets/index.html",
