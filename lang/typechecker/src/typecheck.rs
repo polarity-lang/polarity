@@ -113,6 +113,7 @@ struct WithDestructee<'a, T> {
     inner: &'a T,
     /// Name of the global codefinition that gets substituted for the destructor's self parameters
     label: Option<Ident>,
+    n_label_args: usize,
     destructee: nf::TypApp,
 }
 
@@ -120,6 +121,7 @@ trait WithDestructeeExt: Sized {
     fn with_destructee(
         &self,
         label: Option<Ident>,
+        n_label_args: usize,
         destructee: nf::TypApp,
     ) -> WithDestructee<'_, Self>;
 }
@@ -128,9 +130,10 @@ impl<T> WithDestructeeExt for T {
     fn with_destructee(
         &self,
         label: Option<Ident>,
+        n_label_args: usize,
         destructee: nf::TypApp,
     ) -> WithDestructee<'_, Self> {
-        WithDestructee { inner: self, label, destructee }
+        WithDestructee { inner: self, label, n_label_args, destructee }
     }
 }
 
@@ -358,7 +361,9 @@ impl Infer for ust::Codef {
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.infer(prg, ctx)?;
             let typ_nf = typ.normalize(prg, &mut ctx.env())?;
-            let body_out = body.with_destructee(Some(name.to_owned()), typ_nf).infer(prg, ctx)?;
+            let body_out = body
+                .with_destructee(Some(name.to_owned()), params.len(), typ_nf)
+                .infer(prg, ctx)?;
             Ok(tst::Codef {
                 info: info.clone().into(),
                 doc: doc.clone(),
@@ -512,7 +517,7 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
                 let ret_typ_nf = match &self.label {
                     // Substitute the codef label for the self parameter
                     Some(label) => {
-                        let args = (0..params.len())
+                        let args = (0..self.n_label_args)
                             .rev()
                             .map(|snd| ust::Exp::Var {
                                 info: ust::Info::empty(),
@@ -797,7 +802,7 @@ impl Check for ust::Exp {
                     });
                 }
 
-                let body_out = body.with_destructee(None, typ_app_nf.clone()).infer(prg, ctx)?;
+                let body_out = body.with_destructee(None, 0, typ_app_nf.clone()).infer(prg, ctx)?;
 
                 Ok(tst::Exp::Comatch {
                     info: info.with_type_app(typ_app, typ_app_nf),

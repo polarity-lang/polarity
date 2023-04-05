@@ -28,9 +28,8 @@ codef BoxFun: Fun(Type, Type) {
     ap(_, _, a) => Box(a),
 }
 
--- FIXME: This definition currently leads to a panic
--- codef BoxFunctor: Functor(BoxFun) {
---     map(_, _, _, _, _) => ?,
---     law_id(_, _, _) => ?,
---     law_compose(_, _, _, _, _, _, _) => ?,
--- }
+codef BoxFunctor: Functor(BoxFun) {
+    map(_, _, _, _, _) => ?,
+    law_id(_, _, _) => ?,
+    law_compose(_, _, _, _, _, _, _) => ?,
+}
