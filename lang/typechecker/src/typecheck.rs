@@ -523,7 +523,7 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
                                 info: ust::Info::empty(),
                                 name: "".to_owned(),
                                 ctx: (),
-                                idx: Idx { fst: 0, snd },
+                                idx: Idx { fst: 2, snd },
                             })
                             .map(Rc::new)
                             .collect();
@@ -534,11 +534,10 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
                         });
                         let subst = Assign(Lvl { fst: 1, snd: 0 }, ctor);
                         let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
-                        ret_typ_nf
-                            .forget()
-                            .subst(&mut subst_ctx, &subst)
-                            .shift((-1, 0))
-                            .normalize(prg, &mut LevelCtx::from(vec![params.len()]).env())?
+                        ret_typ_nf.forget().subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
+                            prg,
+                            &mut LevelCtx::from(vec![self.n_label_args, params.len()]).env(),
+                        )?
                     }
                     // TODO: Self parameter for local comatches
                     None => ret_typ_nf.shift((-1, 0)),
