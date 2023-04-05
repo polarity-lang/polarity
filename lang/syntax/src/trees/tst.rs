@@ -85,11 +85,12 @@ impl HasSpan for Info {
 pub struct TypeInfo {
     pub typ: Rc<nf::Nf>,
     pub span: Option<Span>,
+    pub ctx: Option<TypeCtx>,
 }
 
 impl From<Rc<nf::Nf>> for TypeInfo {
     fn from(typ: Rc<nf::Nf>) -> Self {
-        TypeInfo { span: typ.span(), typ }
+        TypeInfo { span: typ.span(), typ, ctx: None }
     }
 }
 
@@ -109,7 +110,7 @@ pub struct TypeAppInfo {
 impl From<TypeAppInfo> for TypeInfo {
     fn from(type_app_info: TypeAppInfo) -> Self {
         let nf::TypApp { info, name, args } = type_app_info.typ_nf;
-        Self { span: info.span, typ: Rc::new(nf::Nf::TypCtor { info, name, args }) }
+        Self { span: info.span, typ: Rc::new(nf::Nf::TypCtor { info, name, args }), ctx: None }
     }
 }
 
@@ -137,12 +138,17 @@ impl From<ust::Info> for Info {
 
 pub trait ElabInfoExt {
     fn with_type(&self, typ: Rc<nf::Nf>) -> TypeInfo;
+    fn with_type_and_ctx(&self, typ: Rc<nf::Nf>, ctx: TypeCtx) -> TypeInfo;
     fn with_type_app(&self, typ: TypApp, typ_nf: nf::TypApp) -> TypeAppInfo;
 }
 
 impl ElabInfoExt for ust::Info {
     fn with_type(&self, typ: Rc<nf::Nf>) -> TypeInfo {
-        TypeInfo { typ, span: self.span }
+        TypeInfo { typ, span: self.span, ctx: None }
+    }
+
+    fn with_type_and_ctx(&self, typ: Rc<nf::Nf>, ctx: TypeCtx) -> TypeInfo {
+        TypeInfo { typ, span: self.span, ctx: Some(ctx) }
     }
 
     fn with_type_app(&self, typ: TypApp, typ_nf: nf::TypApp) -> TypeAppInfo {

@@ -347,7 +347,7 @@ impl Forget for tst::TypeInfo {
     type Target = ust::Info;
 
     fn forget(&self) -> Self::Target {
-        let tst::TypeInfo { typ: _, span } = self;
+        let tst::TypeInfo { typ: _, span, ctx: _ } = self;
 
         ust::Info { span: *span }
     }

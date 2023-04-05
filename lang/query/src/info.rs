@@ -5,6 +5,7 @@ use printer::PrintToString;
 use rust_lapper::{Interval, Lapper};
 
 use syntax::common::*;
+use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
 use syntax::generic::{Visit, Visitor};
 use syntax::tst;
 
@@ -22,6 +23,18 @@ pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
 pub struct Info {
     pub typ: String,
     pub span: Option<Span>,
+    pub ctx: Option<Ctx>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Ctx {
+    pub bound: Vec<Vec<Binder>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Binder {
+    pub name: String,
+    pub typ: String,
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -40,7 +53,25 @@ struct InfoCollector {
 
 impl From<tst::TypeInfo> for Info {
     fn from(info: tst::TypeInfo) -> Self {
-        Info { typ: info.typ.forget().print_to_string(None), span: info.span }
+        Info {
+            typ: info.typ.forget().print_to_string(None),
+            ctx: info.ctx.map(Into::into),
+            span: info.span,
+        }
+    }
+}
+
+impl From<TypeCtx> for Ctx {
+    fn from(ctx: TypeCtx) -> Self {
+        let bound =
+            ctx.bound.into_iter().map(|tel| tel.into_iter().map(Into::into).collect()).collect();
+        Ctx { bound }
+    }
+}
+
+impl From<TypeCtxBinder> for Binder {
+    fn from(binder: TypeCtxBinder) -> Self {
+        Binder { name: binder.name, typ: binder.typ.forget().print_to_string(None) }
     }
 }
 

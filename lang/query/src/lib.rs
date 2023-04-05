@@ -17,6 +17,7 @@ mod view;
 mod view_mut;
 
 pub use index::*;
+pub use info::*;
 pub use view::*;
 pub use view_mut::*;
 

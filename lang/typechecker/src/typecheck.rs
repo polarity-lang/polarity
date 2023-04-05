@@ -815,9 +815,10 @@ impl Check for ust::Exp {
                     body: body_out,
                 })
             }
-            ust::Exp::Hole { info, kind } => {
-                Ok(tst::Exp::Hole { info: info.with_type(t.clone()), kind: *kind })
-            }
+            ust::Exp::Hole { info, kind } => Ok(tst::Exp::Hole {
+                info: info.with_type_and_ctx(t.clone(), ctx.vars.clone()),
+                kind: *kind,
+            }),
             _ => {
                 let actual = self.infer(prg, ctx)?;
                 actual.typ().convert(&t)?;
