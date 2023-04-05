@@ -132,12 +132,12 @@ impl ToEnv for TypeCtx {
     fn env(&self) -> Env {
         let bound = self
             .bound
-            .map_idx(|idx, _typ| {
+            .map_idx(|idx, binder| {
                 Rc::new(Val::Neu {
                     exp: Neu::Var {
-                        // FIXME: handle info/name
+                        // FIXME: handle info
                         info: Info::empty(),
-                        name: String::new(),
+                        name: binder.name.clone(),
                         idx,
                     },
                 })
