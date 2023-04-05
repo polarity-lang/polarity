@@ -17,12 +17,6 @@ pub use subst::*;
 
 pub type Ident = String;
 
-#[derive(Debug, Clone)]
-pub enum BindingSite {
-    Var { name: Ident },
-    Wildcard,
-}
-
 pub trait HasSpan {
     fn span(&self) -> Option<Span>;
 }
@@ -31,6 +25,12 @@ pub trait HasInfo {
     type Info;
 
     fn info(&self) -> Self::Info;
+}
+
+#[derive(Debug, Clone)]
+pub enum BindingSite {
+    Var { name: Ident },
+    Wildcard,
 }
 
 #[derive(Debug, Clone, Derivative)]

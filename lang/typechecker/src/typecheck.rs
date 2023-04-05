@@ -9,6 +9,7 @@ use miette_util::ToMiette;
 use normalizer::env::ToEnv;
 use normalizer::normalize::Normalize;
 use syntax::common::*;
+use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, Context, LevelCtx};
 use syntax::nf;
 use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
@@ -744,10 +745,13 @@ impl Check for ust::Exp {
                         let ust::Motive { info, param, ret_typ } = m;
                         let self_t_nf =
                             typ_app.to_exp().forget().normalize(prg, &mut ctx.env())?.shift((1, 0));
+                        let self_binder =
+                            Binder { name: param.name.clone(), typ: self_t_nf.clone() };
 
                         // Typecheck the motive
-                        let ret_typ_out = ctx
-                            .bind_single(&self_t_nf, |ctx| ret_typ.check(prg, ctx, type_univ()))?;
+                        let ret_typ_out = ctx.bind_single(&self_binder, |ctx| {
+                            ret_typ.check(prg, ctx, type_univ())
+                        })?;
 
                         // Ensure that the motive matches the expected type
                         let mut subst_ctx = ctx.levels().append(&vec![1].into());
@@ -758,7 +762,7 @@ impl Check for ust::Exp {
                         let motive_t_nf = motive_t.normalize(prg, &mut ctx.env())?;
                         motive_t_nf.convert(&t)?;
 
-                        body_t = ctx.bind_single(&self_t_nf, |ctx| {
+                        body_t = ctx.bind_single(&self_binder, |ctx| {
                             ret_typ.normalize(prg, &mut ctx.env())
                         })?;
                         motive_out = Some(tst::Motive {
@@ -1005,7 +1009,8 @@ impl CheckTelescope for ust::TelescopeInst {
                     typ: typ_out.into(),
                 };
                 params_out.push(param_out);
-                Result::<_, TypeError>::Ok(BindElem { elem: typ_nf, ret: params_out })
+                let elem = Binder { name: param_actual.name.clone(), typ: typ_nf };
+                Result::<_, TypeError>::Ok(BindElem { elem, ret: params_out })
             },
             |ctx, params| f(ctx, tst::TelescopeInst { params }),
         )?
@@ -1029,9 +1034,10 @@ impl InferTelescope for ust::Telescope {
             |ctx, mut params_out, param| {
                 let ust::Param { typ, name } = param;
                 let typ_out = typ.check(prg, ctx, type_univ())?;
-                let elem = typ.normalize(prg, &mut ctx.env())?;
+                let typ_nf = typ.normalize(prg, &mut ctx.env())?;
                 let param_out = tst::Param { name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
+                let elem = Binder { name: param.name.clone(), typ: typ_nf };
                 Result::<_, TypeError>::Ok(BindElem { elem, ret: params_out })
             },
             |ctx, params| f(ctx, tst::Telescope { params }),
@@ -1050,13 +1056,14 @@ impl InferTelescope for ust::SelfParam {
     ) -> Result<T, TypeError> {
         let ust::SelfParam { info, name, typ } = self;
 
-        let elem = typ.to_exp().normalize(prg, &mut ctx.env())?;
+        let typ_nf = typ.to_exp().normalize(prg, &mut ctx.env())?;
         let typ_out = typ.infer(prg, ctx)?;
         let param_out = tst::SelfParam {
             info: tst::Info { span: info.span },
             name: name.clone(),
             typ: typ_out,
         };
+        let elem = Binder { name: name.clone().unwrap_or_default(), typ: typ_nf };
 
         // We need to shift the self parameter type here because we treat it as a 1-element telescope
         ctx.bind_single(&elem.shift((1, 0)), |ctx| f(ctx, param_out))

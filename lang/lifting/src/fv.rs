@@ -197,7 +197,7 @@ impl Visitor<tst::TST> for TSTVisitor {
         let lvl = ctx.idx_to_lvl(*idx);
         // If the variable is considered free (based on the cutoff)
         if lvl.fst < self.cutoff {
-            let typ = ctx.lookup(lvl);
+            let typ = ctx.lookup(lvl).typ;
             self.add_fv(name.clone(), lvl, typ.forget(), ctx);
         }
     }
@@ -281,7 +281,7 @@ impl<'b> Visitor<ust::UST> for USTVisitor<'b> {
         // If the variable is considered free (based on the cutoff), we look up its type in the typing context
         // The typing context contains the types for all free variables where lvl < cutoff
         if lvl.fst < self.cutoff {
-            let typ = self.type_ctx.lookup(lvl);
+            let typ = self.type_ctx.lookup(lvl).typ;
             self.add_fv(name.clone(), lvl, typ.forget(), self.lvl_ctx.clone())
         }
     }

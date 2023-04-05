@@ -12,7 +12,7 @@ use super::ContextElem;
 
 #[derive(Debug, Clone)]
 pub struct TypeCtx {
-    pub bound: Vec<Vec<Rc<Nf>>>,
+    pub bound: Vec<Vec<Binder>>,
 }
 
 impl TypeCtx {
@@ -21,7 +21,7 @@ impl TypeCtx {
         LevelCtx::from(bound)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &[Rc<Nf>]> {
+    pub fn iter(&self) -> impl Iterator<Item = &[Binder]> {
         self.bound.iter().map(|inner| &inner[..])
     }
 
@@ -39,9 +39,9 @@ impl TypeCtx {
 }
 
 impl Context for TypeCtx {
-    type ElemIn = Rc<Nf>;
+    type ElemIn = Binder;
 
-    type ElemOut = Rc<Nf>;
+    type ElemOut = Binder;
 
     type Var = Var;
 
@@ -80,7 +80,7 @@ impl Context for TypeCtx {
     }
 }
 
-impl ContextElem<TypeCtx> for &Rc<Nf> {
+impl ContextElem<TypeCtx> for &Binder {
     fn as_element(&self) -> <TypeCtx as Context>::ElemIn {
         (*self).clone()
     }
@@ -113,9 +113,26 @@ impl TypeCtx {
     where
         F: Fn(&Rc<Nf>) -> Result<Rc<Nf>, E>,
     {
-        let bound: Result<_, _> =
-            self.bound.iter().map(|stack| stack.iter().map(&f).collect()).collect();
+        let bound: Result<_, _> = self
+            .bound
+            .iter()
+            .map(|stack| {
+                stack.iter().map(|b| Ok(Binder { name: b.name.clone(), typ: f(&b.typ)? })).collect()
+            })
+            .collect();
 
         Ok(Self { bound: bound? })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Binder {
+    pub name: Ident,
+    pub typ: Rc<Nf>,
+}
+
+impl ShiftInRange for Binder {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        Self { name: self.name.clone(), typ: self.typ.shift_in_range(range, by) }
     }
 }

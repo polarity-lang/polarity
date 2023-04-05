@@ -75,7 +75,7 @@ impl Ctx {
     }
 
     pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<Nf> {
-        self.vars.lookup(idx)
+        self.vars.lookup(idx).typ
     }
 
     pub fn levels(&self) -> LevelCtx {
