@@ -32,7 +32,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         None => Box::new(io::stdout()),
     };
 
-    print_prg(prg, &PrintCfg { print_lambda_sugar: false, ..Default::default() }, &mut stream);
+    print_prg(prg, &PrintCfg::default(), &mut stream);
 
     Ok(())
 }

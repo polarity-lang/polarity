@@ -27,7 +27,7 @@ impl Context for Ctx {
     }
 
     fn push_binder(&mut self, elem: Self::ElemIn) {
-        assert!(!self.contains_name(&elem));
+        assert!(elem == "_" || !self.contains_name(&elem));
         assert!(!elem.is_empty());
         self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
     }
@@ -38,7 +38,6 @@ impl Context for Ctx {
     }
 
     fn lookup<V: Into<Self::Var> + std::fmt::Debug>(&self, var: V) -> Self::ElemOut {
-        // FIXME: Handle shadowing
         let dbg: String = format!("{var:?}");
         let idx = var.into();
         self.bound
@@ -51,7 +50,10 @@ impl Context for Ctx {
 
 impl Ctx {
     pub(super) fn disambiguate_name(&self, mut name: Ident) -> Ident {
-        if name == "_" || name.is_empty() {
+        if name == "_" {
+            return name;
+        }
+        if name.is_empty() {
             name = "x".to_owned();
         }
         while self.contains_name(&name) {
