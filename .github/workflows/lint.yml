@@ -24,5 +24,7 @@ jobs:
           VALIDATE_JAVASCRIPT_STANDARD: false
           # We use prettier rather than ts-standard
           TYPESCRIPT_DEFAULT_STYLE: prettier
+          # We use a slightly different stylelint version/setup
+          VALIDATE_CSS: false
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
