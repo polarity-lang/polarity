@@ -200,6 +200,10 @@ True.neg
     function switchToLight() {
       document.documentElement.setAttribute('data-theme', 'light');
     }
+
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      switchToDark();
+    }
   </script>
 </body>
 
