@@ -111,10 +111,23 @@ export default class App {
     const container = document.getElementById("editor")!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
     this.initializeMonaco();
     const model = this.createModel(client);
-    monaco.editor.create(container, {
+    const editor = monaco.editor.create(container, {
       model,
-      automaticLayout: true,
+      automaticLayout: false,
       theme: "vs-light",
+    });
+
+    // https://stackoverflow.com/a/70120566
+    window.addEventListener("resize", () => {
+      // make editor as small as possible
+      editor.layout({ width: 0, height: 0 });
+
+      // wait for next frame to ensure last layout finished
+      window.requestAnimationFrame(() => {
+        // get the parent dimensions and re-layout the editor
+        const rect = container.getBoundingClientRect();
+        editor.layout({ width: rect.width, height: rect.height });
+      });
     });
   }
 

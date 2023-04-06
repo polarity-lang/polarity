@@ -1,41 +1,23 @@
 @import "@picocss/pico/css/pico.min.css";
 
-body,
-html {
-  margin: 0;
-  padding: 0;
+:root {
+  --spacing: 0.5rem;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  height: 100vh;
-}
-
-section[class="content"] {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+h1 {
+  --typography-spacing-vertical: 1rem;
 }
 
 div[class="editor-container"] {
   display: flex;
+  height: 60vh;
+  border: 1px solid var(--form-element-border-color);
+}
+
+div[class="editor"] {
   flex: 1;
 }
 
-div[id="editor"] {
-  flex: 1;
-}
-
-div[class="console-container"] {
-  display: flex;
-  flex-direction: column;
-}
-
-div[class="col"] {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+span.line {
+  display: inline-block;
 }

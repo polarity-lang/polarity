@@ -8,40 +8,40 @@
 </head>
 
 <body>
-  <header class="container">
-    <h1>The Proof Expression Problem</h1>
-
-    <nav>
-      <ul>
-        <li>
-          <details role="list">
-            <summary aria-haspopup="listbox" role="button" class="secondary">Examples</summary>
-            <ul role="listbox">
-              <li><a onclick="jumpToHash('stlc.xfn')" >stlc.xfn</a></li>
-              <li><a onclick="jumpToHash('pi.xfn')">pi.xfn</a></li>
-              <li><a onclick="jumpToHash('boolrep.xfn')">boolrep.xfn</a></li>
-              <li><a onclick="jumpToHash('eq.xfn')">eq.xfn</a></li>
-              <li><a onclick="jumpToHash('neg_inverse.xfn')">neg_inverse.xfn</a></li>
-            </ul>
-          </details>
-        </li>
-        <li>
-          <details role="list">
-            <summary aria-haspopup="listbox" role="button" class="secondary">Theme</summary>
-            <ul role="listbox">
-              <li><a onclick="switchToLight()">Light</a></li>
-              <li><a onclick="switchToDark()">Dark</a></li>
-            </ul>
-          </details>
-        </li>
-      </ul>
-    </nav>
-  </header>
   <main class="container">
+    <section>
+      <h1>The Proof Expression Problem</h1>
+
+      <nav>
+        <ul>
+          <li>
+            <details role="list">
+              <summary aria-haspopup="listbox" role="button" class="secondary">Examples</summary>
+              <ul role="listbox">
+                <li><a onclick="jumpToHash('stlc.xfn')" >stlc.xfn</a></li>
+                <li><a onclick="jumpToHash('pi.xfn')">pi.xfn</a></li>
+                <li><a onclick="jumpToHash('boolrep.xfn')">boolrep.xfn</a></li>
+                <li><a onclick="jumpToHash('eq.xfn')">eq.xfn</a></li>
+                <li><a onclick="jumpToHash('neg_inverse.xfn')">neg_inverse.xfn</a></li>
+              </ul>
+            </details>
+          </li>
+          <li>
+            <details role="list">
+              <summary aria-haspopup="listbox" role="button" class="secondary">Theme</summary>
+              <ul role="listbox">
+                <li><a onclick="switchToLight()">Light</a></li>
+                <li><a onclick="switchToDark()">Dark</a></li>
+              </ul>
+            </details>
+          </li>
+        </ul>
+      </nav>
+    </section>
     <!-- Editor -->
-    <section class="content">
+    <section>
       <div class="editor-container">
-        <div id="editor" style="height: 1000px"></div>
+        <div class="editor" id="editor"></div>
       </div>
     </section>
     <!-- Tutorial -->
