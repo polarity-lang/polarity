@@ -115,7 +115,7 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
             /[a-z_][a-zA-Z0-9_]*[']*/,
             { cases: { "@typeKeywords": "keyword", "@keywords": "keyword", "@default": "identifier" } },
           ],
-          [/[A-Z_][a-zA-Z0-9_]*[']*/, "type.identifier"],
+          [/[A-Z][a-zA-Z0-9_]*[']*/, "type.identifier"],
 
           // whitespace
           { include: "@whitespace" },
