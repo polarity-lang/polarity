@@ -1,3 +1,5 @@
+@import "@picocss/pico/css/pico.min.css";
+
 body,
 html {
   margin: 0;
