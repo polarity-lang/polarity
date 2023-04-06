@@ -35,7 +35,12 @@ export default class App {
     const id = language.id;
     const uri = monaco.Uri.parse("inmemory://demo.xfn");
 
-    const model = monaco.editor.createModel("", id, uri);
+    const greeting = `-- Welcome! This is an interactive editor.
+-- You can select an example to load from the "Examples" dropdown menu above.
+-- Scroll down for a short tutorial on the syntax of our language.
+`;
+
+    const model = monaco.editor.createModel(greeting, id, uri);
 
     model.onDidChangeContent(
       debounce(() => {
@@ -114,6 +119,7 @@ export default class App {
     const editor = monaco.editor.create(container, {
       model,
       automaticLayout: false,
+      scrollBeyondLastLine: false,
       theme: "vs-light",
     });
 
