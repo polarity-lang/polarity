@@ -6,6 +6,10 @@
   cursor: auto;
 }
 
+details[role="list"] summary + ul {
+  cursor: pointer;
+}
+
 h1 {
   --typography-spacing-vertical: 1rem;
 }
