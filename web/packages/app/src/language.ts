@@ -92,9 +92,6 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const result: monaco.languages.CodeActionList = protocolToMonaco.asCodeActionList(response);
 
-        console.log(result);
-        console.log(model.uri);
-
         return result;
       },
     });

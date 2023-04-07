@@ -35,12 +35,7 @@ export default class App {
     const id = language.id;
     const uri = monaco.Uri.parse("inmemory://demo.xfn");
 
-    const greeting = `-- Welcome! This is an interactive editor.
--- You can select an example to load from the "Examples" dropdown menu above.
--- Scroll down for a short tutorial on the syntax of our language.
-`;
-
-    const model = monaco.editor.createModel(greeting, id, uri);
+    const model = monaco.editor.createModel("", id, uri);
 
     model.onDidChangeContent(
       debounce(() => {
@@ -82,7 +77,10 @@ export default class App {
     });
 
     async function handleHashChange() {
-      const filepath = location.hash.slice(1);
+      let filepath = location.hash.slice(1);
+      if (filepath === "") {
+        filepath = "tutorial.xfn";
+      }
       const slash = location.pathname.endsWith("/") ? "" : "/";
       const url = `${location.protocol}//${location.host}${location.pathname}${slash}examples/${filepath}`;
       const response = await fetch(url);
@@ -99,16 +97,6 @@ export default class App {
       void handleHashChange();
     });
 
-    addEventListener("transitionstart", (event) => {
-      void event;
-      const thm = document.documentElement.getAttribute("data-theme");
-      if (thm == "dark") {
-        monaco.editor.setTheme("vs-dark");
-      } else if (thm == "light") {
-        monaco.editor.setTheme("vs-light");
-      }
-    });
-
     return model;
   }
 
@@ -120,7 +108,17 @@ export default class App {
       model,
       automaticLayout: false,
       scrollBeyondLastLine: false,
-      theme: "vs-light",
+      theme: window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs-light",
+    });
+
+    addEventListener("transitionstart", (event) => {
+      void event;
+      const thm = document.documentElement.getAttribute("data-theme");
+      if (thm == "dark") {
+        monaco.editor.setTheme("vs-dark");
+      } else if (thm == "light") {
+        monaco.editor.setTheme("vs-light");
+      }
     });
 
     // https://stackoverflow.com/a/70120566
@@ -141,9 +139,7 @@ export default class App {
     const client = new Client(this.#fromServer, this.#intoServer);
     const server = await Server.initialize(this.#intoServer, this.#fromServer);
     this.createEditor(client);
-    if (location.hash !== "") {
-      window.dispatchEvent(new HashChangeEvent("hashchange"));
-    }
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
     await Promise.all([server.start(), client.start()]);
   }
 }
