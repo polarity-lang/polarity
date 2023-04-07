@@ -38,7 +38,10 @@ impl Diagnostics for DatabaseView<'_> {
         let diag = lsp_types::Diagnostic {
             range,
             message,
-            severity: error.severity().map(ToLsp::to_lsp),
+            severity: match error.severity() {
+                Some(sev) => Some(sev.to_lsp()),
+                None => Some(lsp_types::DiagnosticSeverity::ERROR),
+            },
             code: error.code().map(|x| NumberOrString::String(format!("{x}"))),
             code_description: None,
             source: None,
