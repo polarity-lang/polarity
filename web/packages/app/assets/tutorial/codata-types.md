@@ -12,6 +12,15 @@ codata Pair {
 
 This type supports two observations; the first observations `proj1` yields a boolean value when invoked on a `Pair`, and the observation `proj2` yields a natural number.
 
+A common codata type that is typically built into many programming languages is the function type.
+In our language, it is not built-in, but we can define it as follows:
+
+```xfn
+codata Fun(a b: Type) {
+    Fun(a, b).ap(a: Type, b: Type, x: a) : b
+}
+```
+
 Codata types can also model infinite types. The type of infinite streams is a classical example and written like this:
 
 ```xfn
@@ -28,6 +37,6 @@ Here is a simple example which shows how this can be expressed:
 ```xfn
 codata Bool {
   Bool.neg : Bool,
-  (x: Bool).neg_is_inverse : Eq(Bool, x, x.neg.neg),
+  (x: Bool).neg_inverse : Eq(Bool, x, x.neg.neg),
 }
 ```

@@ -109,9 +109,9 @@ module.exports = (env, argv) => {
         template: "assets/index.html",
         scriptLoading: "defer",
       }),
-      // Watch all files in assets folder for changes
+      // Watch all files in tutorial folder for changes
       new WebpackWatchFilesPlugin({
-        files: ["./assets/*"],
+        files: ["./assets/tutorial/*"],
       }),
     ],
     optimization: {

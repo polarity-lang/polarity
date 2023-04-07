@@ -1,5 +1,5 @@
-The simplest form of datatypes do not have parameters or indices.
-In that case, the constructors of the data-type can be given as a comma-separated list.
+The simplest form of data types do not have parameters or indices.
+In that case, the constructors of the data type can be given as a comma-separated list.
 As with all syntactic constructs, we always allow trailing commas.
 
 ```xfn
@@ -32,5 +32,13 @@ data Nat { Z, S(n: Nat) }
 data Vec(a: Type, n: Nat) {
   VNil(a: Type): Vec(a, Z),
   VCons(a: Type, n: Nat, x: a, xs: Vec(a, n)): Vec(a, S(n))
+}
+```
+
+Finally, we can define the Martin-Löf equality type as follows:
+
+```xfn
+data Eq (a: Type, x y: a) {
+    Refl(a: Type, x: a) : Eq(a, x, x)
 }
 ```
