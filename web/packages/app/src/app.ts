@@ -109,6 +109,10 @@ export default class App {
       automaticLayout: false,
       scrollBeyondLastLine: false,
       theme: window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs-light",
+      scrollbar: {
+        // Pass scroll events to parent
+        alwaysConsumeMouseWheel: false,
+      },
     });
 
     addEventListener("transitionstart", (event) => {
