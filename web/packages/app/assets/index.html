@@ -67,115 +67,35 @@
 
       <details>
         <summary><b>Data Types</b></summary>
-      The simplest form of datatypes do not have parameters or indices.
-      In that case, the constructors of the data-type can be given as a comma-separated list.
-      As with all syntactic constructs, we always allow trailing commas.
+        {{ data-types }}
+      </details>
 
-<pre><code class="language-xfn">data Bool { True, False, }
-</code></pre>
+      <details>
+        <summary><b>Codata Types</b></summary>
+        {{ codata-types }}
+      </details>
 
-      In the more general case we have to specify the precise type that a constructor constructs.
-      Therefore, the above data type declaration can be written more explicitly as:
+      <details>
+        <summary><b>Definitions</b></summary>
+      </details>
 
-<pre><code class="language-xfn">data Bool { True: Bool, False: Bool }
-</code></pre>
+      <details>
+        <summary><b>Codefinitions</b></summary>
+      </details>
 
-      A simple example of a parameterized type is the type of singly-linked lists of some type <code>a</code>.
-      In that case, we have to specify both the parameters of the type constructor <code>List</code>, and the instantiations of the term constructors <code>Nil</code> and <code>Cons</code>.
-      For the parameter of the type constructor <code>List</code> we make use of the impredicative type universe, which is written <code>Type</code>.
-<pre><code class="language-xfn">data List(a: Type) {
-  Nil(a: Type): List(a),
-  Cons(a: Type, x: a, xs: List(a)): List(a)
-}
-</code></pre>
+      <details>
+        <summary><b>Comments</b></summary>
+        {{ comments }}
+      </details>
 
-A proper dependent type is the type of length-indexed lists: the vector type.
-The <code>VNil</code> and <code>VCons</code> constructors of vectors create vectors with different indices.
-<pre><code class="language-xfn">data Nat { Z, S(n: Nat) }
-data Vec(a: Type, n: Nat) {
-  VNil(a: Type): Vec(a, Z),
-  VCons(a: Type, n: Nat, x: a, xs: Vec(a, n)): Vec(a, S(n))
-}
-</code></pre>
-
-</details>
-<details>
-  <summary><b>Codata Types</b></summary>
-      Codata types are specified by a list of methods or destructors.
-      A very simple example is the type of pairs of a boolean and a natural number:
-<pre><code class="language-xfn">data Bool { True, False }
-data Nat { Z, S(n: Nat)}
-codata Pair {
-  proj1: Bool,
-  proj2: Nat
-}
-</code></pre>
-      This type supports two observations; the first observations <code>proj1</code> yields a boolean value when invoked on a <code>Pair</code>, and the observation <code>proj2</code> yields a natural number.
-
-      Codata types can also model infinite types. The type of infinite streams is a classical example and written like this:
-<pre><code class="language-xfn">codata Stream(a: Type) {
-  Stream(a).head(a: Type) : a,
-  Stream(a).tail(a: Type) : Stream(a),
-}
-</code></pre>
-       Sometimes we also need to reference the object on which a method is invoked in its return type.
-       This is especially the case when we want an observation to yield a proof that the object satisfies some property.
-       Here is a simple example which shows how this can be expressed:
-<pre><code class="language-xfn">codata Bool {
-  Bool.neg : Bool,
-  (x: Bool).neg_is_inverse : Eq(Bool, x, x.neg.neg),
-}
-</code></pre>
-</details>
-<details>
-  <summary><b>Definitions</b></summary>
-</details>
-
-<details>
-  <summary><b>Codefinitions</b></summary>
-</details>
-<details>
-  <summary><b>Comments</b></summary>
-
-
-      Line comments are written using two dashes: <code>-- This is a comment</code>.
-      Certain items of the program can also be annotated with a documentation comment.
-      Here is an example using doc-comments:
-<pre><code class="language-xfn">-- | The type of booleans
-data Bool {
-  -- | The boolean truth value
-  True,
-  -- | The boolean false value
-  False,
-}
-</code></pre>
-      These documentation comments are preserved during defunctionalization and refunctionalization.
-</details>
-<details>
-  <summary><b>Typed Holes</b></summary>
-
-
-      An incomplete program can be written using typed holes.
-      Typed holes are written using either <code>?</code> or <code>...</code>; they have type <code>?</code> which unifies with any other type.
-      For example, an incomplete implementation of boolean negation can be written as follows:
-<pre><code class="language-xfn">def Bool.neg : Bool {
-  True =&gt; ?,
-  False =&gt; ?,
-}
-</code></pre>
-</details>
-<details>
-  <summary><b>The Main Expression</b></summary>
-      After all other data types, codata types, definitions and codefinitions an additional expression can be written.
-      This is called the "main" expression of the program.
-<pre><code class="language-xfn">data Bool { True, False }
-def Bool.neg {
-  True =&gt; False,
-  False =&gt; True,
-}
-True.neg
-</code></pre>
-</details>
+      <details>
+        <summary><b>Typed Holes</b></summary>
+        {{ typed-holes }}
+      </details>
+      <details>
+        <summary><b>The Main Expression</b></summary>
+        {{ main-expression }}
+      </details>
     </section>
     <!-- Debug Output -->
     <section id="accordions">

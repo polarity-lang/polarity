@@ -3,8 +3,24 @@
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const WebpackWatchFilesPlugin = require("webpack-watch-files-plugin").default;
 const path = require("path");
 const webpack = require("webpack");
+const Handlebars = require("handlebars");
+const { marked } = require("marked");
+const fs = require("fs");
+
+const loadMarkdown = () => {
+  const dir = fs.readdirSync("./assets/tutorial");
+  const files = dir.filter((filename) => filename.endsWith(".md")).map((filename) => `./assets/tutorial/${filename}`);
+  let out = {};
+  for (const filename of files) {
+    const content = fs.readFileSync(filename, "utf8");
+    const html = marked.parse(content);
+    out[path.basename(filename, ".md")] = new Handlebars.SafeString(html);
+  }
+  return out;
+};
 
 module.exports = (env, argv) => {
   const prod = argv.mode === "production";
@@ -62,6 +78,25 @@ module.exports = (env, argv) => {
           test: /\.(woff|woff2|eot|ttf|otf)$/i,
           type: "asset/resource",
         },
+        {
+          test: /\.html$/,
+          loader: "html-loader",
+          options: {
+            preprocessor: (content, loaderContext) => {
+              let result;
+
+              try {
+                result = Handlebars.compile(content)(loadMarkdown());
+              } catch (error) {
+                loaderContext.emitError(error);
+
+                return content;
+              }
+
+              return result;
+            },
+          },
+        },
       ],
     },
     plugins: [
@@ -73,6 +108,10 @@ module.exports = (env, argv) => {
       new HtmlWebpackPlugin({
         template: "assets/index.html",
         scriptLoading: "defer",
+      }),
+      // Watch all files in assets folder for changes
+      new WebpackWatchFilesPlugin({
+        files: ["./assets/*"],
       }),
     ],
     optimization: {
