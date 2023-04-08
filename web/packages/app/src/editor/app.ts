@@ -11,7 +11,7 @@ import Server from "./server";
 class Environment implements monaco.Environment {
   getWorkerUrl(moduleId: string, label: string) {
     if (label === "editorWorkerService") {
-      return "./editor.worker.bundle.js";
+      return "/editor.worker.bundle.js";
     }
     throw new Error(`getWorkerUrl: unexpected ${JSON.stringify({ moduleId, label })}`);
   }
