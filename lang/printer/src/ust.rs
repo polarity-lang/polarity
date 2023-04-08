@@ -526,7 +526,9 @@ impl<'a> Print<'a> for Motive {
             .append(alloc.keyword(AS))
             .append(alloc.space())
             .append(param.print(cfg, alloc))
+            .append(alloc.space())
             .append(alloc.text(FAT_ARROW))
+            .append(alloc.space())
             .append(ret_typ.print(cfg, alloc))
     }
 }
