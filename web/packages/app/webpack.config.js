@@ -34,7 +34,8 @@ module.exports = (env, argv) => {
     mode: "production",
     target: "web",
     entry: {
-      app: "./src/index.ts",
+      tutorial: "./src/tutorial/index.ts",
+      editor: "./src/editor/index.ts",
       "editor.worker": "monaco-editor-core/esm/vs/editor/editor.worker.js",
     },
     resolve: {
@@ -105,8 +106,19 @@ module.exports = (env, argv) => {
       new CopyWebpackPlugin({
         patterns: [{ from: "../../../oopsla_examples", to: "examples" }],
       }),
+      new webpack.DefinePlugin({
+        DEBUG: !prod,
+      }),
       new HtmlWebpackPlugin({
-        template: "assets/index.html",
+        template: "assets/tutorial.html",
+        filename: "index.html",
+        chunks: ["tutorial"],
+        scriptLoading: "defer",
+      }),
+      new HtmlWebpackPlugin({
+        template: "assets/editor.html",
+        filename: "editor/index.html",
+        chunks: ["editor", "editor.worker"],
         scriptLoading: "defer",
       }),
       // Watch all files in tutorial folder for changes

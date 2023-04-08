@@ -3,8 +3,6 @@ import * as proto from "vscode-languageserver-protocol";
 
 import { Codec, FromServer, IntoServer } from "./codec";
 
-const consoleChannel = document.getElementById("channel-console") as HTMLTextAreaElement;
-
 export default class Client extends jsrpc.JSONRPCServerAndClient {
   afterInitializedHooks: (() => Promise<void>)[] = [];
   #fromServer: FromServer;
@@ -48,7 +46,7 @@ export default class Client extends jsrpc.JSONRPCServerAndClient {
           break;
         }
       }
-      consoleChannel.value = `${msgKind} ${message}\n${consoleChannel.value}`;
+      DEBUG && console.log(`${msgKind} ${message}`);
       return;
     });
 

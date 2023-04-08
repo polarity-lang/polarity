@@ -1,6 +1,6 @@
 import { Language } from "highlight.js";
 import hljs from "highlight.js";
-import "../assets/highlight.scss";
+import "../../assets/highlight.scss";
 
 const COMMENT = hljs.COMMENT("--", "$");
 const PUNCTUATION = {

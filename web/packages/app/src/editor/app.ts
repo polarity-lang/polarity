@@ -81,8 +81,7 @@ export default class App {
       if (filepath === "") {
         filepath = "tutorial.xfn";
       }
-      const slash = location.pathname.endsWith("/") ? "" : "/";
-      const url = `${location.protocol}//${location.host}${location.pathname}${slash}examples/${filepath}`;
+      const url = `${location.protocol}//${location.host}/examples/${filepath}`;
       const response = await fetch(url);
       if (!response.ok) {
         model.setValue("");
@@ -104,9 +103,9 @@ export default class App {
     const container = document.getElementById("editor")!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
     this.initializeMonaco();
     const model = this.createModel(client);
-    const editor = monaco.editor.create(container, {
+    monaco.editor.create(container, {
       model,
-      automaticLayout: false,
+      automaticLayout: true,
       scrollBeyondLastLine: false,
       theme: window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs-light",
       scrollbar: {
@@ -115,28 +114,19 @@ export default class App {
       },
     });
 
-    addEventListener("transitionstart", (event) => {
-      void event;
-      const thm = document.documentElement.getAttribute("data-theme");
-      if (thm == "dark") {
-        monaco.editor.setTheme("vs-dark");
-      } else if (thm == "light") {
-        monaco.editor.setTheme("vs-light");
-      }
-    });
-
-    // https://stackoverflow.com/a/70120566
-    window.addEventListener("resize", () => {
-      // make editor as small as possible
-      editor.layout({ width: 0, height: 0 });
-
-      // wait for next frame to ensure last layout finished
-      window.requestAnimationFrame(() => {
-        // get the parent dimensions and re-layout the editor
-        const rect = container.getBoundingClientRect();
-        editor.layout({ width: rect.width, height: rect.height });
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === "attributes") {
+          const thm = document.documentElement.getAttribute("data-theme");
+          if (thm == "dark") {
+            monaco.editor.setTheme("vs-dark");
+          } else if (thm == "light") {
+            monaco.editor.setTheme("vs-light");
+          }
+        }
       });
     });
+    observer.observe(document.documentElement, { attributes: true });
   }
 
   async run(): Promise<void> {

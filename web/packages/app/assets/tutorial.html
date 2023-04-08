@@ -55,7 +55,7 @@
     <!-- Editor -->
     <section>
       <div class="editor-container">
-        <div class="editor" id="editor"></div>
+        <iframe class="editor-frame" id="editor-frame" src="/editor"></iframe>
       </div>
     </section>
     <!-- Tutorial -->
@@ -98,22 +98,6 @@
       <details>
         <summary><b>The Main Expression</b></summary>
         {{ main-expression }}
-      </details>
-    </section>
-    <!-- Debug Output -->
-    <section id="accordions">
-      <h4>Debug Output</h4>
-      <details>
-        <summary><b>Console</b></summary>
-          <textarea id="channel-console" autocomplete="off" spellcheck="off" wrap="off" readonly rows="3"></textarea>
-      </details>
-      <details>
-        <summary><b>Client To Server</b></summary>
-          <textarea id="channel-client" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
-      </details>
-      <details>
-        <summary><b>Server To Client</b></summary>
-          <textarea id="channel-server" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
       </details>
     </section>
   </main>
