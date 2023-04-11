@@ -1,0 +1,6 @@
+@hidden data Bool { True : Bool, False : Bool}
+@hidden data Nat { Z : Nat, S(x : Nat) : Nat }
+codata NatSet {
+   NatSet.member(x : Nat) : Bool,
+   NatSet.union(x : NatSet) : NatSet
+}

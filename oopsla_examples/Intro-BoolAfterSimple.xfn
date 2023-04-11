@@ -1,0 +1,10 @@
+codata Bool { Bool.neg: Bool }
+
+codef True: Bool {
+    neg => False
+}
+
+codef False: Bool {
+    neg => True
+}
+

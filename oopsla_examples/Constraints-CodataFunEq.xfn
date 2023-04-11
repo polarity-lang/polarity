@@ -1,0 +1,16 @@
+@hidden
+data Eq (a: Type, x: a, y: a) {
+    Refl(a: Type, x: a) : Eq(a, x, x)
+}
+
+@hidden
+data Nat {
+  Z,
+  S(n: Nat),
+}
+
+codata Fun(a b: Type) {
+  Fun(a,b).ap(a b: Type, x: a) : b
+}
+
+Refl(Fun(Nat,Nat), \x. x) : Eq(Fun(Nat,Nat), \y. y , \z.z)

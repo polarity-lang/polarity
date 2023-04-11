@@ -1,0 +1,12 @@
+@hidden
+data Nat { Z, S(n: Nat)}
+
+data Vec(a: Type, n: Nat) {
+    Nil(a: Type): Vec(a, Z),
+    Cons(a: Type, n: Nat, x: a, xs: Vec(a, n)): Vec(a, S(n))
+}
+
+def Vec(a,S(n)).head(a: Type, n: Nat) : a {
+    Nil(_) absurd,
+    Cons(_,_,x,_) => x
+}

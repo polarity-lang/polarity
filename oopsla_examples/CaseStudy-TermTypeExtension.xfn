@@ -1,0 +1,12 @@
+@hidden
+codata Tm { }
+
+codef TmZ: Tm {}
+codef TmS(n: Tm): Tm {}
+codef TmIsZ(n: Tm): Tm {}
+
+
+@hidden
+codata Ty { }
+
+codef TyNat: Ty { }

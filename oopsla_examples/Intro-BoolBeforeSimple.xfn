@@ -1,0 +1,6 @@
+data Bool { True, False }
+
+def Bool.neg : Bool {
+    True => False,
+    False => True
+}

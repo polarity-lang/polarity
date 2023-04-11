@@ -1,0 +1,8 @@
+-- | The terms of the object language.
+codata Tm { }
+codef TmIte(c e1 e2: Tm): Tm { }
+codef TmFalse: Tm { }
+codef TmTrue: Tm { }
+-- | The types of the object language.
+codata Ty { }
+codef TyBool: Ty { }

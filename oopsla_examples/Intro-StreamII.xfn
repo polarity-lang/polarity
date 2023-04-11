@@ -1,0 +1,13 @@
+@hidden
+data Nat { Z, S(n : Nat)}
+
+@hidden
+codata Stream(a: Type) {
+    Stream(a).head(a: Type): a,
+    Stream(a).tail(a: Type): Stream(a)
+}
+
+codef Ones : Stream(Nat) {
+    head(_) => S(Z),
+    tail(_) => Ones
+}

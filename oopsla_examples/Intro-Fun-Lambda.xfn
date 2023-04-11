@@ -1,0 +1,7 @@
+@hidden
+data Bool { True, False }
+@hidden
+data Nat { Z, S(n: Nat)}
+codata Fun { ap(x: Nat) : Bool }
+
+codef ConstTrue : Fun { ap(_) => True }

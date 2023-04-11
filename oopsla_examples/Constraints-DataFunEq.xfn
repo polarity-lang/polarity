@@ -1,0 +1,24 @@
+@hidden
+data Eq (a: Type, x: a, y: a) {
+    Refl(a: Type, x: a) : Eq(a, x, x)
+}
+
+@hidden
+data Nat {
+  Z,
+  S(n: Nat),
+}
+
+data Fun(a b: Type) {
+  F1 : Fun(Nat,Nat),
+  F2 : Fun(Nat,Nat),
+  F3 : Fun(Nat,Nat)
+}
+
+def Fun(a,b).ap(a b: Type, x: a) : b {
+  F1 => x,
+  F2 => x,
+  F3 => x
+}
+
+Refl(Fun(Nat,Nat), F1) : Eq(Fun(Nat,Nat), F2, F3)

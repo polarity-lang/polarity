@@ -1,0 +1,11 @@
+@hidden
+data Nat { Z, S(n: Nat)}
+@hidden
+data Bool { True, False}
+@hidden
+data Pair(a b: Type) { MkPair(a b: Type, x: a, y: b) : Pair(a,b)}
+
+codata Buffer(n: Nat) {
+    Buffer(S(n)).read(n: Nat): Pair(Bool, Buffer(n))
+
+}

@@ -1,0 +1,13 @@
+data Nat {
+    S(x : Nat) : Nat,
+    Z : Nat}
+
+def Nat.plus(n : Nat) : Nat {
+    Z => n,
+    S(x') => S(x'.plus(n))
+}
+
+def Nat.mul(n : Nat) : Nat {
+  Z => Z,
+  S(m) => n.plus(m.mul(n))
+}

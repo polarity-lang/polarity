@@ -1,0 +1,13 @@
+@hidden
+data Tm { TmTrue, TmFalse, TmIte(c e1 e2: Tm) }
+
+@hidden
+data Ty { TyBool }
+
+-- | The typing relation.
+data Typing(e: Tm, ty: Ty) {
+    TTrue: Typing(TmTrue, TyBool),
+    TFalse: Typing(TmFalse, TyBool),
+    TIte(e1 e2 e3: Tm, ty: Ty, t1: Typing(e1, TyBool), t2: Typing(e2, ty), t3: Typing(e3, ty))
+        : Typing(TmIte(e1, e2, e3), ty)
+}
