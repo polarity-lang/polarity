@@ -32,11 +32,9 @@
             <details role="list">
               <summary aria-haspopup="listbox" role="button" class="secondary">Examples</summary>
               <ul role="listbox">
-                <li><a onclick="jumpToHash('stlc.xfn')" >stlc.xfn</a></li>
-                <li><a onclick="jumpToHash('pi.xfn')">pi.xfn</a></li>
-                <li><a onclick="jumpToHash('boolrep.xfn')">boolrep.xfn</a></li>
-                <li><a onclick="jumpToHash('eq.xfn')">eq.xfn</a></li>
-                <li><a onclick="jumpToHash('neg_inverse.xfn')">neg_inverse.xfn</a></li>
+                {{#each examples}}
+                  <li><a onclick="jumpToHash('{{this}}.xfn')" >{{this}}</a></li>
+                {{/each}}
               </ul>
             </details>
           </li>

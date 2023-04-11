@@ -22,6 +22,16 @@ const loadMarkdown = () => {
   return out;
 };
 
+const loadExamples = () => {
+  const dir = fs.readdirSync("../../../oopsla_examples");
+  const files = dir.filter((filename) => filename.endsWith(".xfn")).map((filename) => `../../../oopsla_examples/${filename}`);
+  let out = [];
+  for (const filename of files) {
+    out.push(path.basename(filename, ".xfn"));
+  }
+  return out;
+}
+
 module.exports = (env, argv) => {
   const prod = argv.mode === "production";
   console.log(prod ? "Production mode" : "Development mode");
@@ -86,8 +96,10 @@ module.exports = (env, argv) => {
             preprocessor: (content, loaderContext) => {
               let result;
 
+              const input = Object.assign({}, loadMarkdown(), { 'examples': loadExamples() });
+
               try {
-                result = Handlebars.compile(content)(loadMarkdown());
+                result = Handlebars.compile(content)(input);
               } catch (error) {
                 loaderContext.emitError(error);
 
