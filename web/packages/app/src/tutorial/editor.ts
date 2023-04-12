@@ -5,7 +5,13 @@ export const register = () => {
     addEventListener("hashchange", (event) => {
       void event;
       // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
-      editorIFrame.contentWindow!.location.hash = location.hash;
+      const frameWindow = editorIFrame.contentWindow!;
+      const hasChanged = frameWindow.location.hash !== location.hash;
+      if (hasChanged) {
+        frameWindow.location.hash = location.hash;
+      } else {
+        frameWindow.dispatchEvent(new HashChangeEvent("hashchange"));
+      }
     });
 
     const observer = new MutationObserver((mutations) => {

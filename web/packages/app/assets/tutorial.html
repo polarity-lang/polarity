@@ -10,7 +10,13 @@
 <body>
   <script type="text/javascript">
     function jumpToHash(x) {
-      location.hash=x;
+      const newHash = `#${x}`;
+      const hasChanged = newHash !== location.hash;
+      if (hasChanged) {
+        location.hash = newHash;
+      } else {
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+      }
     }
     function switchToDark() {
       document.documentElement.setAttribute('data-theme', 'dark');
