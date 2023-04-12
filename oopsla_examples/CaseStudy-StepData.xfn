@@ -1,4 +1,3 @@
-@hidden
 data Tm { TmTrue, TmFalse, TmIte(c e1 e2: Tm) }
 
 -- | Small step operational semantics.

@@ -12,3 +12,6 @@ git clone --depth 1 git@github.com:ps-tuebingen/dependent-xfunctionalization.git
 rm $IMPL_DIR/oopsla_examples/*.xfn
 cp paper-repo/snippets/fullwidth/* $IMPL_DIR/oopsla_examples
 cp paper-repo/snippets/halfwidth/* $IMPL_DIR/oopsla_examples
+# Strip @hidden attributes from examples
+find $IMPL_DIR/oopsla_examples -type f -name '*.xfn' -exec sed -i '/@hidden$/d' {} \;
+find $IMPL_DIR/oopsla_examples -type f -name '*.xfn' -exec sed -i 's/@hidden //g' {} \;

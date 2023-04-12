@@ -1,9 +1,7 @@
-@hidden
 data Eq (a: Type, x: a, y: a) {
     Refl(a: Type, x: a) : Eq(a, x, x)
 }
 
-@hidden
 data Nat {
   Z,
   S(n: Nat),

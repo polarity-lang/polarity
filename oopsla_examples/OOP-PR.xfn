@@ -1,15 +1,11 @@
-@hidden
 data A {}
-@hidden
 data MaybeA() {
     Just(a: A): MaybeA,
     Error: MaybeA
 }
-@hidden
 data Eq (a: Type, x: a, y: a) {
     Refl(a: Type, x: a) : Eq(a, x, x)
 }
-@hidden
 codata Fun(a b: Type) {
     Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }

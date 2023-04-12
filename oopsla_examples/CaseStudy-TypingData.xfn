@@ -1,7 +1,5 @@
-@hidden
 data Tm { TmTrue, TmFalse, TmIte(c e1 e2: Tm) }
 
-@hidden
 data Ty { TyBool }
 
 -- | The typing relation.

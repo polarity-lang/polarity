@@ -1,12 +1,9 @@
-@hidden
 data Eq (a: Type, x: a, y: a) {
     Refl(a: Type, x: a) : Eq(a, x, x)
 }
 
-@hidden
 data Bool { True, False }
 
-@hidden
 def Bool.neg: Bool {
     True => False,
     False => True,

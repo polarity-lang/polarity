@@ -1,4 +1,3 @@
-@hidden
 data Nat { Z, S(n: Nat)}
 
 data Vec(a: Type, n: Nat) {
