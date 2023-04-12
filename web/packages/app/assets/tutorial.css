@@ -23,3 +23,8 @@ div[class="editor-container"] {
 iframe[class="editor-frame"] {
   flex: 1;
 }
+
+details[role="list"] ul[role="listbox"] {
+  max-height: 50vh;
+  overflow: auto;
+}
