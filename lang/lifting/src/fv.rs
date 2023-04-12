@@ -9,7 +9,6 @@ use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;
 use syntax::generic::{Visit, Visitor};
-use syntax::tst;
 use syntax::ust::{self, Occurs};
 
 /// Find all free variables
@@ -166,45 +165,6 @@ impl<T: Visit<ust::UST>> FreeVarsExt for T {
         self.visit(&mut v);
 
         FreeVars { fvs: v.fvs, cutoff: type_ctx.len() }
-    }
-}
-
-/// Visitor that collects free variables in a type-annotated syntax tree
-struct TSTVisitor {
-    /// Set of collected free variables
-    fvs: HashSet<FreeVar>,
-    /// The De-Bruijn level (fst index) up to which a variable counts as free
-    cutoff: usize,
-}
-
-impl TSTVisitor {
-    /// Add a free variable as well as all free variables its type
-    fn add_fv(&mut self, name: Ident, lvl: Lvl, typ: Rc<ust::Exp>, ctx: &TypeCtx) {
-        // Add the free variable
-        let fv = FreeVar { name, lvl, typ: typ.clone(), ctx: ctx.levels() };
-        if self.fvs.insert(fv) {
-            // If it has not already been added:
-            // Find all free variables in the type of the free variable
-            let mut v = USTVisitor {
-                fvs: Default::default(),
-                cutoff: self.cutoff,
-                type_ctx: ctx,
-                lvl_ctx: ctx.levels(),
-            };
-            typ.visit(&mut v);
-            self.fvs.extend(v.fvs);
-        }
-    }
-}
-
-impl Visitor<tst::TST> for TSTVisitor {
-    fn visit_exp_var(&mut self, _info: &tst::TypeInfo, name: &Ident, ctx: &TypeCtx, idx: &Idx) {
-        let lvl = ctx.idx_to_lvl(*idx);
-        // If the variable is considered free (based on the cutoff)
-        if lvl.fst < self.cutoff {
-            let typ = ctx.lookup(lvl).typ;
-            self.add_fv(name.clone(), lvl, typ.forget(), ctx);
-        }
     }
 }
 
