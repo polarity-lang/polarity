@@ -730,7 +730,7 @@ impl Check for ust::Exp {
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
         match self {
-            ust::Exp::Match { info, name, on_exp, motive, ret_typ: (), body } => {
+            ust::Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ: (), body } => {
                 let on_exp_out = on_exp.infer(prg, ctx)?;
                 let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
                 let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
@@ -786,6 +786,7 @@ impl Check for ust::Exp {
 
                 Ok(tst::Exp::Match {
                     info: info.with_type_app(typ_app, typ_app_nf),
+                    ctx: ctx.vars.clone(),
                     name: name.clone(),
                     on_exp: on_exp_out,
                     motive: motive_out,
@@ -793,7 +794,7 @@ impl Check for ust::Exp {
                     body: body_out,
                 })
             }
-            ust::Exp::Comatch { info, name, is_lambda_sugar, body } => {
+            ust::Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => {
                 let typ_app_nf = t.expect_typ_app()?;
                 let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
 
@@ -810,6 +811,7 @@ impl Check for ust::Exp {
 
                 Ok(tst::Exp::Comatch {
                     info: info.with_type_app(typ_app, typ_app_nf),
+                    ctx: ctx.vars.clone(),
                     name: name.clone(),
                     is_lambda_sugar: *is_lambda_sugar,
                     body: body_out,

@@ -14,7 +14,7 @@ use syntax::ust::{self, Occurs};
 
 /// Find all free variables
 pub trait FreeVarsExt {
-    fn free_vars(&self, ctx: &LevelCtx) -> FreeVars;
+    fn free_vars(&self, ctx: &TypeCtx) -> FreeVars;
 }
 
 #[derive(Debug)]
@@ -154,13 +154,18 @@ impl Ord for FreeVar {
     }
 }
 
-impl<T: Visit<tst::TST>> FreeVarsExt for T {
-    fn free_vars(&self, ctx: &LevelCtx) -> FreeVars {
-        let mut v = TSTVisitor { fvs: Default::default(), cutoff: ctx.len() };
+impl<T: Visit<ust::UST>> FreeVarsExt for T {
+    fn free_vars(&self, type_ctx: &TypeCtx) -> FreeVars {
+        let mut v = USTVisitor {
+            fvs: Default::default(),
+            cutoff: type_ctx.len(),
+            type_ctx,
+            lvl_ctx: type_ctx.levels(),
+        };
 
         self.visit(&mut v);
 
-        FreeVars { fvs: v.fvs, cutoff: ctx.len() }
+        FreeVars { fvs: v.fvs, cutoff: type_ctx.len() }
     }
 }
 
@@ -281,8 +286,13 @@ impl<'b> Visitor<ust::UST> for USTVisitor<'b> {
         // If the variable is considered free (based on the cutoff), we look up its type in the typing context
         // The typing context contains the types for all free variables where lvl < cutoff
         if lvl.fst < self.cutoff {
-            let typ = self.type_ctx.lookup(lvl).typ;
-            self.add_fv(name.clone(), lvl, typ.forget(), self.lvl_ctx.clone())
+            let typ = self
+                .type_ctx
+                .lookup(lvl)
+                .typ
+                .forget()
+                .shift(((self.lvl_ctx.len() - self.type_ctx.len()) as isize, 0));
+            self.add_fv(name.clone(), lvl, typ, self.lvl_ctx.clone())
         }
     }
 }

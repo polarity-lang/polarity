@@ -45,8 +45,8 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_exp_dtor(&mut self, info: O::TypeInfo, exp: O::Exp, name: Ident, args: O::Args) -> O::Exp;
     fn fold_exp_anno(&mut self, info: O::TypeInfo, exp: O::Exp, typ: O::Exp) -> O::Exp;
     fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
-    fn fold_exp_match(&mut self, info: O::TypeAppInfo, name: Label, on_exp: O::Exp, motive: Option<O::Motive>, ret_typ: O::Typ, body: O::Match) -> O::Exp;
-    fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, name: Label, is_lambda_sugar: bool, body: O::Comatch) -> O::Exp;
+    fn fold_exp_match(&mut self, info: O::TypeAppInfo, ctx: O::Ctx, name: Label, on_exp: O::Exp, motive: Option<O::Motive>, ret_typ: O::Typ, body: O::Match) -> O::Exp;
+    fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, ctx: O::Ctx, name: Label, is_lambda_sugar: bool, body: O::Comatch) -> O::Exp;
     fn fold_exp_hole(&mut self, info: O::TypeInfo, kind: HoleKind) -> O::Exp;
     fn fold_motive(&mut self, info: O::Info, param: O::ParamInst, ret_typ: O::Exp) -> O::Motive;
     // FIXME: Unifier binder handling into one method
@@ -549,18 +549,20 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
                 let info = f.fold_type_info(info);
                 f.fold_exp_type(info)
             }
-            Exp::Match { info, name, on_exp, motive, ret_typ, body } => {
+            Exp::Match { info, ctx, name, on_exp, motive, ret_typ, body } => {
                 let info = f.fold_type_app_info(info);
+                let ctx = f.fold_ctx(ctx);
                 let on_exp = on_exp.fold(f);
                 let body = body.fold(f);
                 let motive = motive.map(|m| m.fold(f));
                 let ret_typ = f.fold_typ(ret_typ);
-                f.fold_exp_match(info, name, on_exp, motive, ret_typ, body)
+                f.fold_exp_match(info, ctx, name, on_exp, motive, ret_typ, body)
             }
-            Exp::Comatch { info, name, is_lambda_sugar, body } => {
+            Exp::Comatch { info, ctx, name, is_lambda_sugar, body } => {
                 let info = f.fold_type_app_info(info);
+                let ctx = f.fold_ctx(ctx);
                 let body = body.fold(f);
-                f.fold_exp_comatch(info, name, is_lambda_sugar, body)
+                f.fold_exp_comatch(info, ctx, name, is_lambda_sugar, body)
             }
             Exp::Hole { info, kind } => {
                 let info = f.fold_type_info(info);

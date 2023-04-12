@@ -33,16 +33,18 @@ impl ShiftInRange for Exp {
                 typ: typ.shift_in_range(range, by),
             },
             Exp::Type { info } => Exp::Type { info: info.clone() },
-            Exp::Match { info, name, on_exp, motive, ret_typ, body } => Exp::Match {
+            Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ: (), body } => Exp::Match {
                 info: info.clone(),
+                ctx: (),
                 name: name.clone(),
                 on_exp: on_exp.shift_in_range(range.clone(), by),
                 motive: motive.shift_in_range(range.clone(), by),
-                ret_typ: ret_typ.shift_in_range(range.clone(), by),
+                ret_typ: (),
                 body: body.shift_in_range(range, by),
             },
-            Exp::Comatch { info, name, is_lambda_sugar, body } => Exp::Comatch {
+            Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => Exp::Comatch {
                 info: info.clone(),
+                ctx: (),
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.shift_in_range(range, by),

@@ -250,16 +250,20 @@ impl Forget for tst::Exp {
                 ust::Exp::Anno { info: info.forget(), exp: exp.forget(), typ: typ.forget() }
             }
             tst::Exp::Type { info } => ust::Exp::Type { info: info.forget() },
-            tst::Exp::Match { info, name, on_exp, motive, ret_typ, body } => ust::Exp::Match {
+            tst::Exp::Match { info, ctx: _, name, on_exp, motive, ret_typ, body } => {
+                ust::Exp::Match {
+                    info: info.forget(),
+                    ctx: (),
+                    name: name.clone(),
+                    on_exp: on_exp.forget(),
+                    motive: motive.forget(),
+                    ret_typ: ret_typ.forget(),
+                    body: body.forget(),
+                }
+            }
+            tst::Exp::Comatch { info, ctx: _, name, is_lambda_sugar, body } => ust::Exp::Comatch {
                 info: info.forget(),
-                name: name.clone(),
-                on_exp: on_exp.forget(),
-                motive: motive.forget(),
-                ret_typ: ret_typ.forget(),
-                body: body.forget(),
-            },
-            tst::Exp::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::Comatch {
-                info: info.forget(),
+                ctx: (),
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.forget(),

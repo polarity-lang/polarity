@@ -484,7 +484,7 @@ impl<'a> Print<'a> for Exp {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
             Exp::Type { info: _ } => alloc.keyword(TYPE),
-            Exp::Match { info: _, name, on_exp, motive, ret_typ: _, body } => on_exp
+            Exp::Match { info: _, ctx: _, name, on_exp, motive, ret_typ: _, body } => on_exp
                 .print(cfg, alloc)
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
@@ -495,7 +495,7 @@ impl<'a> Print<'a> for Exp {
                 .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Exp::Comatch { info: _, name, is_lambda_sugar, body } => {
+            Exp::Comatch { info: _, ctx: _, name, is_lambda_sugar, body } => {
                 if *is_lambda_sugar && cfg.print_lambda_sugar {
                     print_lambda_sugar(body, cfg, alloc)
                 } else {

@@ -38,8 +38,8 @@ pub trait Visitor<P: Phase> {
     fn visit_exp_dtor(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, name: &Ident, args: &Args<P>) {}
     fn visit_exp_anno(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, typ: &Rc<Exp<P>>) {}
     fn visit_exp_type(&mut self, info: &P::TypeInfo) {}
-    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, name: &Label, on_exp: &Rc<Exp<P>>, ret_typ: &P::InfTyp, body: &Match<P>) {}
-    fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, name: &Label, is_lambda_sugar: &bool, body: &Comatch<P>) {}
+    fn visit_exp_match(&mut self, info: &P::TypeAppInfo, ctx: &P::Ctx, name: &Label, on_exp: &Rc<Exp<P>>, ret_typ: &P::InfTyp, body: &Match<P>) {}
+    fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, ctx: &P::Ctx, name: &Label, is_lambda_sugar: &bool, body: &Comatch<P>) {}
     fn visit_exp_hole(&mut self, info: &P::TypeInfo, kind: HoleKind) {}
     fn visit_motive(&mut self, info: &P::Info, param: &ParamInst<P>, ret_typ: &Rc<Exp<P>>) {}
     fn visit_motive_param<X, F>(&mut self, param: &ParamInst<P>, f_inner: F) -> X
@@ -396,20 +396,22 @@ impl<P: Phase> Visit<P> for Exp<P> {
                 v.visit_type_info(info);
                 v.visit_exp_type(info)
             }
-            Exp::Match { info, name, on_exp, motive, ret_typ, body } => {
+            Exp::Match { info, ctx, name, on_exp, motive, ret_typ, body } => {
                 v.visit_type_app_info(info);
+                v.visit_ctx(ctx);
                 on_exp.visit(v);
                 body.visit(v);
                 if let Some(m) = motive {
                     m.visit(v);
                 }
                 v.visit_typ(ret_typ);
-                v.visit_exp_match(info, name, on_exp, ret_typ, body)
+                v.visit_exp_match(info, ctx, name, on_exp, ret_typ, body)
             }
-            Exp::Comatch { info, name, is_lambda_sugar, body } => {
+            Exp::Comatch { info, ctx, name, is_lambda_sugar, body } => {
                 v.visit_type_app_info(info);
+                v.visit_ctx(ctx);
                 body.visit(v);
-                v.visit_exp_comatch(info, name, is_lambda_sugar, body)
+                v.visit_exp_comatch(info, ctx, name, is_lambda_sugar, body)
             }
             Exp::Hole { info, kind } => {
                 v.visit_type_info(info);

@@ -295,6 +295,8 @@ pub enum Exp<P: Phase> {
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        ctx: P::Ctx,
         name: Label,
         on_exp: Rc<Exp<P>>,
         motive: Option<Motive<P>>,
@@ -305,6 +307,8 @@ pub enum Exp<P: Phase> {
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        ctx: P::Ctx,
         name: Label,
         is_lambda_sugar: bool,
         body: Comatch<P>,

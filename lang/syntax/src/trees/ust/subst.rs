@@ -40,16 +40,20 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                 typ: typ.subst(ctx, by),
             }),
             Exp::Type { info } => Rc::new(Exp::Type { info: info.clone() }),
-            Exp::Match { info, name, on_exp, motive, ret_typ, body } => Rc::new(Exp::Match {
+            Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ, body } => {
+                Rc::new(Exp::Match {
+                    info: info.clone(),
+                    ctx: (),
+                    name: name.clone(),
+                    on_exp: on_exp.subst(ctx, by),
+                    motive: motive.subst(ctx, by),
+                    ret_typ: ret_typ.subst(ctx, by),
+                    body: body.subst(ctx, by),
+                })
+            }
+            Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => Rc::new(Exp::Comatch {
                 info: info.clone(),
-                name: name.clone(),
-                on_exp: on_exp.subst(ctx, by),
-                motive: motive.subst(ctx, by),
-                ret_typ: ret_typ.subst(ctx, by),
-                body: body.subst(ctx, by),
-            }),
-            Exp::Comatch { info, name, is_lambda_sugar, body } => Rc::new(Exp::Comatch {
-                info: info.clone(),
+                ctx: (),
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.subst(ctx, by),

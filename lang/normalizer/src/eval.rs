@@ -47,7 +47,7 @@ impl Eval for Exp {
             Exp::Match { name, on_exp, body, .. } => {
                 eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?
             }
-            Exp::Comatch { info, name, is_lambda_sugar, body } => Rc::new(Val::Comatch {
+            Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => Rc::new(Val::Comatch {
                 info: info.clone(),
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,

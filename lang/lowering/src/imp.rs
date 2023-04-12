@@ -456,6 +456,7 @@ impl Lower for cst::Exp {
             cst::Exp::Type { info } => Ok(ust::Exp::Type { info: info.lower_pure() }),
             cst::Exp::Match { info, name, on_exp, motive, body } => Ok(ust::Exp::Match {
                 info: info.lower_pure(),
+                ctx: (),
                 name: ctx.unique_label(name.to_owned(), info)?,
                 on_exp: on_exp.lower_in_ctx(ctx)?,
                 motive: motive.lower_in_ctx(ctx)?,
@@ -464,6 +465,7 @@ impl Lower for cst::Exp {
             }),
             cst::Exp::Comatch { info, name, is_lambda_sugar, body } => Ok(ust::Exp::Comatch {
                 info: info.lower_pure(),
+                ctx: (),
                 name: ctx.unique_label(name.to_owned(), info)?,
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.lower_in_ctx(ctx)?,

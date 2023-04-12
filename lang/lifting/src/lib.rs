@@ -4,6 +4,7 @@ use data::HashMap;
 use data::HashSet;
 use renaming::Rename;
 use syntax::common::*;
+use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;
 use syntax::tst;
@@ -348,11 +349,11 @@ impl Lift for tst::Exp {
             }
             tst::Exp::Type { info } => ust::Exp::Type { info: info.forget() },
             tst::Exp::Hole { info, kind } => ust::Exp::Hole { info: info.forget(), kind: *kind },
-            tst::Exp::Match { info, name, on_exp, motive, ret_typ, body } => {
-                ctx.lift_match(info, name, on_exp, motive, ret_typ, body)
+            tst::Exp::Match { info, ctx: type_ctx, name, on_exp, motive, ret_typ, body } => {
+                ctx.lift_match(info, type_ctx, name, on_exp, motive, ret_typ, body)
             }
-            tst::Exp::Comatch { info, name, is_lambda_sugar, body } => {
-                ctx.lift_comatch(info, name, *is_lambda_sugar, body)
+            tst::Exp::Comatch { info, ctx: type_ctx, name, is_lambda_sugar, body } => {
+                ctx.lift_comatch(info, type_ctx, name, *is_lambda_sugar, body)
             }
         }
     }
@@ -465,9 +466,11 @@ impl<T: Lift> Lift for Vec<T> {
 }
 
 impl Ctx {
+    #[allow(clippy::too_many_arguments)]
     fn lift_match(
         &mut self,
         info: &tst::TypeAppInfo,
+        type_ctx: &TypeCtx,
         name: &Label,
         on_exp: &Rc<tst::Exp>,
         motive: &Option<tst::Motive>,
@@ -478,6 +481,7 @@ impl Ctx {
         if info.typ.name != self.name {
             return ust::Exp::Match {
                 info: info.forget(),
+                ctx: (),
                 name: name.clone(),
                 on_exp: on_exp.lift(self),
                 motive: motive.lift(self),
@@ -493,18 +497,21 @@ impl Ctx {
         // Build a telescope of the types of the lifted variables
         let ret_fvs = motive
             .as_ref()
-            .map(|m| m.free_vars(&self.ctx))
-            .unwrap_or_else(|| ret_typ.as_exp().free_vars(&self.ctx));
+            .map(|m| m.forget().free_vars(type_ctx))
+            .unwrap_or_else(|| ret_typ.as_exp().forget().free_vars(type_ctx));
+
+        let body = body.lift(self);
+        let self_typ = info.typ.lift(self);
 
         let FreeVarsResult { telescope, subst, args } = body
-            .free_vars(&self.ctx)
-            .union(info.typ.free_vars(&self.ctx))
+            .free_vars(type_ctx)
+            .union(self_typ.free_vars(type_ctx))
             .union(ret_fvs)
             .telescope(&self.ctx);
 
         // Substitute the new parameters for the free variables
-        let body = body.lift(self).subst(&mut self.ctx, &subst.in_body());
-        let self_typ = info.typ.lift(self).subst(&mut self.ctx, &subst.in_body());
+        let body = body.subst(&mut self.ctx, &subst.in_body());
+        let self_typ = self_typ.subst(&mut self.ctx, &subst.in_body());
         let def_ret_typ = match &motive {
             Some(m) => m.lift(self).subst(&mut self.ctx, &subst.in_body()).ret_typ,
             None => {
@@ -539,6 +546,7 @@ impl Ctx {
     fn lift_comatch(
         &mut self,
         info: &tst::TypeAppInfo,
+        type_ctx: &TypeCtx,
         name: &Label,
         is_lambda_sugar: bool,
         body: &tst::Comatch,
@@ -547,6 +555,7 @@ impl Ctx {
         if info.typ.name != self.name {
             return ust::Exp::Comatch {
                 info: info.forget(),
+                ctx: (),
                 name: name.clone(),
                 is_lambda_sugar,
                 body: body.lift(self),
@@ -555,13 +564,13 @@ impl Ctx {
 
         self.mark_modified();
 
+        let body = body.lift(self);
+        let typ = info.typ.lift(self);
+
         // Collect the free variables in the comatch and the return type
         // Build a telescope of the types of the lifted variables
         let FreeVarsResult { telescope, subst, args } =
-            body.free_vars(&self.ctx).union(info.typ.free_vars(&self.ctx)).telescope(&self.ctx);
-
-        let body = body.lift(self);
-        let typ = info.typ.lift(self);
+            body.free_vars(type_ctx).union(typ.free_vars(type_ctx)).telescope(&self.ctx);
 
         // Substitute the new parameters for the free variables
         let body = body.subst(&mut self.ctx, &subst.in_body());
