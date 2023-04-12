@@ -51,10 +51,7 @@ impl Context for Ctx {
 
 impl Ctx {
     pub(super) fn disambiguate_name(&self, mut name: Ident) -> Ident {
-        if name == "_" {
-            return name;
-        }
-        if name.is_empty() {
+        if name == "_" || name.is_empty() {
             name = "x".to_owned();
         }
         while self.contains_name(&name) {
