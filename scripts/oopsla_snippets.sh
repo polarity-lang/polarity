@@ -9,7 +9,7 @@ trap cleanup EXIT
 
 cd "$TMP_DIR" || exit
 git clone --depth 1 git@github.com:ps-tuebingen/dependent-xfunctionalization.git paper-repo/
-rm "$IMPL_DIR/oopsla_examples/*.xfn"
+rm "$IMPL_DIR/oopsla_examples"/*.xfn
 cp paper-repo/snippets/fullwidth/* "$IMPL_DIR/oopsla_examples"
 cp paper-repo/snippets/halfwidth/* "$IMPL_DIR/oopsla_examples"
 # Strip @hidden attributes from examples

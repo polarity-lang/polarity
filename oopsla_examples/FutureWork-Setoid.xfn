@@ -1,0 +1,7 @@
+codata Fun(a b: Type) {
+    Fun(a, b).ap(a: Type, b: Type, x: a) : b
+}
+
+codata Setoid {
+  type: Type, (self: Setoid).equality: Fun(self.type, Fun(self.type, Type))
+} 

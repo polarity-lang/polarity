@@ -1,0 +1,54 @@
+data Tm { TmTrue, TmFalse, TmIte(c e1 e2: Tm) }
+
+data Ty { TyBool }
+
+data Step(e1 e2: Tm) {
+    StIteT(e1 e2: Tm): Step(TmIte(TmTrue, e1, e2), e1),
+    StIte(e1 e2 e3 e4: Tm, s: Step(e1, e2)): Step(TmIte(e1, e3, e4), TmIte(e2, e3, e4))
+}
+
+data Typing(e: Tm, ty: Ty) {
+    TTrue: Typing(TmTrue, TyBool),
+    TFalse: Typing(TmFalse, TyBool),
+    TIte(e1 e2 e3: Tm, ty: Ty, t1: Typing(e1, TyBool), t2: Typing(e2, ty), t3: Typing(e3, ty))
+        : Typing(TmIte(e1, e2, e3), ty)
+}
+
+-- | Preservation.
+codata Preservation(e: Tm, ty: Ty) {
+    Preservation(e1, ty).preservationStep(e1 e2: Tm, ty: Ty, s: Step(e1, e2)): Typing(e2, ty)
+}
+
+def Typing(e, ty).pres(e: Tm, ty: Ty): Preservation(e, ty) {
+    TTrue =>
+        comatch PreservationTrue {
+            preservationStep(e1, e2, ty, s) =>
+                s.match {
+                    StIteT(_, _) absurd,
+                    StIte(_, _, _, _, _) absurd
+                }
+        },
+    TFalse =>
+        comatch PreservationFalse {
+            preservationStep(e1, e2, ty, s) =>
+                s.match {
+                    StIteT(_, _) absurd,
+                    StIte(_, _, _, _, _) absurd
+                }
+        },
+    TIte(e1, e2, e3, ty, t1, t2, t3) =>
+        comatch PreservationIte {
+            preservationStep(_, _, ty, s) =>
+                s.match {
+                    StIteT(_, _) => t2,
+                    StIte(e1, e1', _, _, s') =>
+                        TIte(e1',
+                             e2,
+                             e3,
+                             ty,
+                             t1.pres(e1, TyBool).preservationStep(e1, e1', TyBool, s'),
+                             t2,
+                             t3)
+                }
+        }
+}
