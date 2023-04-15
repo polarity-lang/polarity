@@ -14,7 +14,7 @@ mkdir "$TMP_DIR/staging"
 cp paper-repo/snippets/fullwidth/* "$TMP_DIR/staging"
 cp paper-repo/snippets/halfwidth/* "$TMP_DIR/staging"
 
-while read example; do
+while read -r example; do
   cp "$TMP_DIR/staging/$example" "$IMPL_DIR/oopsla_examples"
 done < "$IMPL_DIR/oopsla_examples/whitelist.txt"
 
