@@ -4,7 +4,6 @@ data Ty { TyBool }
 
 data Step(e1 e2: Tm) {
     StIteT(e1 e2: Tm): Step(TmIte(TmTrue, e1, e2), e1),
-    StIteF(e1 e2: Tm): Step(TmIte(TmFalse, e1, e2), e2),
     StIte(e1 e2 e3 e4: Tm, s: Step(e1, e2)): Step(TmIte(e1, e3, e4), TmIte(e2, e3, e4))
 }
 
@@ -26,7 +25,6 @@ def Typing(e, ty).pres(e: Tm, ty: Ty): Preservation(e, ty) {
             preservationStep(e1, e2, ty, s) =>
                 s.match {
                     StIteT(_, _) absurd,
-                    StIteF(_, _) absurd,
                     StIte(_, _, _, _, _) absurd
                 }
         },
@@ -35,7 +33,6 @@ def Typing(e, ty).pres(e: Tm, ty: Ty): Preservation(e, ty) {
             preservationStep(e1, e2, ty, s) =>
                 s.match {
                     StIteT(_, _) absurd,
-                    StIteF(_, _) absurd,
                     StIte(_, _, _, _, _) absurd
                 }
         },
@@ -44,7 +41,6 @@ def Typing(e, ty).pres(e: Tm, ty: Ty): Preservation(e, ty) {
             preservationStep(_, _, ty, s) =>
                 s.match {
                     StIteT(_, _) => t2,
-                    StIteF(_, _) => t3,
                     StIte(e1, e1', _, _, s') =>
                         TIte(e1',
                              e2,

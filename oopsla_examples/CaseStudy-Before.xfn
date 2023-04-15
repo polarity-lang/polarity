@@ -7,8 +7,7 @@ data Ty { TyBool }
 -- | Small step operational semantics.
 data Step(e1 e2: Tm) {
     StIteT(e1 e2: Tm): Step(TmIte(TmTrue, e1, e2), e1),
-    StIteF(e1 e2: Tm): Step(TmIte(TmFalse, e1, e2), e2),
-    StIte(e1 e2 e3 e4: Tm, s: Step(e1, e2)): Step(TmIte(e1, e3, e4), TmIte(e2, e3, e4))
+    StIte(e1 e2 e3 e4: Tm, s: Step(e1, e2)): Step(TmIte(e1, e3, e4), TmIte(e2, e3, e4)),
 }
 
 -- | The typing relation.
@@ -30,8 +29,7 @@ def Typing(e, ty).pres(e: Tm, ty: Ty): Preservation(e, ty) {
             preservationStep(e1, e2, ty, s) =>
                 s.match {
                     StIteT(_, _) absurd,
-                    StIteF(_, _) absurd,
-                    StIte(_, _, _, _, _) absurd
+                    StIte(_, _, _, _, _) absurd,
                 }
         },
     TFalse =>
@@ -39,24 +37,16 @@ def Typing(e, ty).pres(e: Tm, ty: Ty): Preservation(e, ty) {
             preservationStep(e1, e2, ty, s) =>
                 s.match {
                     StIteT(_, _) absurd,
-                    StIteF(_, _) absurd,
-                    StIte(_, _, _, _, _) absurd
+                    StIte(_, _, _, _, _) absurd,
                 }
         },
     TIte(e1, e2, e3, ty, t1, t2, t3) =>
         comatch PreservationIte {
-            preservationStep(_, _, ty, s) =>
+            preservationStep(e4, e5, ty, s) =>
                 s.match {
-                    StIteT(_, _) => t2,
-                    StIteF(_, _) => t3,
-                    StIte(e1, e1', _, _, s') =>
-                        TIte(e1',
-                             e2,
-                             e3,
-                             ty,
-                             t1.pres(e1, TyBool).preservationStep(e1, e1', TyBool, s'),
-                             t2,
-                             t3)
+                    StIteT(_,_) => t2,
+                    StIte(e4, e6, e7, e8, s) =>
+                        TIte(e6, e7, e8, ty, t1.pres(e4, TyBool).preservationStep(e4, e6, TyBool, s), t2, t3),
                 }
         }
 }
