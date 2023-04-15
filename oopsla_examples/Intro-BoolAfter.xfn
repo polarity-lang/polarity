@@ -10,6 +10,3 @@ codef False: Bool {
     neg => True,
     neg_inverse => Refl(Bool, False)
 }
-
-
-

@@ -7,4 +7,3 @@ codef True: Bool {
 codef False: Bool {
     neg => True
 }
-
