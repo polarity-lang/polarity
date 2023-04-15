@@ -1,5 +1,0 @@
--- | The terms of the object language.
-data Tm { TmTrue, TmFalse, TmIte(c e1 e2: Tm) }
-
--- | The types of the object language.
-data Ty { TyBool }

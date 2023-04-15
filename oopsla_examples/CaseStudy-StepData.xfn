@@ -1,7 +1,0 @@
-data Tm { TmTrue, TmFalse, TmIte(c e1 e2: Tm) }
-
--- | Small step operational semantics.
-data Step(e1 e2: Tm) {
-    StIteT(e1 e2: Tm): Step(TmIte(TmTrue, e1, e2), e1),
-    StIte(e1 e2 e3 e4: Tm, s: Step(e1, e2)): Step(TmIte(e1, e3, e4), TmIte(e2, e3, e4))
-}
