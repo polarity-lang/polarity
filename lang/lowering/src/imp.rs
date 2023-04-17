@@ -337,9 +337,13 @@ impl Lower for cst::Match {
     type Target = ust::Match;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Match { info, cases } = self;
+        let cst::Match { info, cases, omit_absurd } = self;
 
-        Ok(ust::Match { info: info.lower_pure(), cases: cases.lower_in_ctx(ctx)? })
+        Ok(ust::Match {
+            info: info.lower_pure(),
+            cases: cases.lower_in_ctx(ctx)?,
+            omit_absurd: *omit_absurd,
+        })
     }
 }
 
@@ -347,9 +351,13 @@ impl Lower for cst::Comatch {
     type Target = ust::Comatch;
 
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Comatch { info, cases } = self;
+        let cst::Comatch { info, cases, omit_absurd } = self;
 
-        Ok(ust::Comatch { info: info.lower_pure(), cases: cases.lower_in_ctx(ctx)? })
+        Ok(ust::Comatch {
+            info: info.lower_pure(),
+            cases: cases.lower_in_ctx(ctx)?,
+            omit_absurd: *omit_absurd,
+        })
     }
 }
 
@@ -521,6 +529,7 @@ impl Lower for cst::Exp {
                             ]),
                             body: Some(body.clone()),
                         }],
+                        omit_absurd: false,
                     },
                 };
                 comatch.lower_in_ctx(ctx)

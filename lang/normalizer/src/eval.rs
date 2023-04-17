@@ -149,9 +149,13 @@ impl Eval for ust::Match {
     type Val = val::Match;
 
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
-        let ust::Match { info, cases } = self;
+        let ust::Match { info, cases, omit_absurd } = self;
 
-        Ok(val::Match { info: info.clone(), cases: cases.eval(prg, env)? })
+        Ok(val::Match {
+            info: info.clone(),
+            cases: cases.eval(prg, env)?,
+            omit_absurd: *omit_absurd,
+        })
     }
 }
 
@@ -159,9 +163,13 @@ impl Eval for ust::Comatch {
     type Val = val::Comatch;
 
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
-        let ust::Comatch { info, cases } = self;
+        let ust::Comatch { info, cases, omit_absurd } = self;
 
-        Ok(val::Comatch { info: info.clone(), cases: cases.eval(prg, env)? })
+        Ok(val::Comatch {
+            info: info.clone(),
+            cases: cases.eval(prg, env)?,
+            omit_absurd: *omit_absurd,
+        })
     }
 }
 

@@ -76,6 +76,7 @@ pub struct Match {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: Info,
     pub cases: Vec<Case>,
+    pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone, Derivative)]
@@ -85,6 +86,7 @@ pub struct Comatch {
     pub info: Info,
     // TODO: Consider renaming this field to "cocases"
     pub cases: Vec<Cocase>,
+    pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone, Derivative)]

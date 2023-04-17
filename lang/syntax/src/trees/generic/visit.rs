@@ -27,8 +27,8 @@ pub trait Visitor<P: Phase> {
     fn visit_dtor(&mut self, info: &P::Info, doc: &Option<DocComment>, name: &Ident, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>) {}
     fn visit_def(&mut self, info: &P::Info, doc: &Option<DocComment>, name: &Ident, hidden: bool, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>, body: &Match<P>) {}
     fn visit_codef(&mut self, info: &P::Info, doc: &Option<DocComment>, name: &Ident, hidden: bool, params: &Telescope<P>, typ: &TypApp<P>, body: &Comatch<P>) {}
-    fn visit_match(&mut self, info: &P::Info, cases: &[Case<P>]) {}
-    fn visit_comatch(&mut self, info: &P::Info, cases: &[Cocase<P>]) {}
+    fn visit_match(&mut self, info: &P::Info, cases: &[Case<P>], omit_absurd: bool) {}
+    fn visit_comatch(&mut self, info: &P::Info, cases: &[Cocase<P>], omit_absurd: bool) {}
     fn visit_case(&mut self, info: &P::Info, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
     fn visit_cocase(&mut self, info: &P::Info, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
     fn visit_typ_app(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
@@ -301,10 +301,10 @@ impl<P: Phase> Visit<P> for Match<P> {
     where
         V: Visitor<P>,
     {
-        let Match { info, cases } = self;
+        let Match { info, cases, omit_absurd } = self;
         cases.visit(v);
         v.visit_info(info);
-        v.visit_match(info, cases)
+        v.visit_match(info, cases, *omit_absurd)
     }
 }
 
@@ -313,10 +313,10 @@ impl<P: Phase> Visit<P> for Comatch<P> {
     where
         V: Visitor<P>,
     {
-        let Comatch { info, cases } = self;
+        let Comatch { info, cases, omit_absurd } = self;
         cases.visit(v);
         v.visit_info(info);
-        v.visit_comatch(info, cases)
+        v.visit_comatch(info, cases, *omit_absurd)
     }
 }
 

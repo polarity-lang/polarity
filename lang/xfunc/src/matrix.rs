@@ -4,6 +4,7 @@ use data::HashMap;
 use syntax::common::*;
 use syntax::ctx::{BindContext, Context, LevelCtx};
 use syntax::ust;
+use syntax::ust::util::Instantiate;
 
 use crate::result::XfuncError;
 
@@ -237,16 +238,20 @@ impl XData {
         let defs = dtors
             .values()
             .map(|dtor| {
+                let mut omit_absurd = false;
                 let cases = ctors
                     .values()
                     .map(|ctor| {
                         let key = Key { dtor: dtor.name.clone(), ctor: ctor.name.clone() };
-                        let body = exprs.get(&key).expect("Could not resolve {key}");
+                        let body = exprs.get(&key).cloned();
+                        if body.is_none() {
+                            omit_absurd = true;
+                        }
                         ust::Case {
                             info: ust::Info::empty(),
                             name: ctor.name.clone(),
                             args: ctor.params.instantiate(),
-                            body: body.clone(),
+                            body: body.unwrap_or_default(),
                         }
                     })
                     .collect();
@@ -259,7 +264,7 @@ impl XData {
                     params: dtor.params.clone(),
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
-                    body: ust::Match { cases, info: ust::Info::empty() },
+                    body: ust::Match { cases, info: ust::Info::empty(), omit_absurd },
                 }
             })
             .collect();
@@ -284,11 +289,12 @@ impl XData {
         let codefs = ctors
             .values()
             .map(|ctor| {
+                let mut omit_absurd = false;
                 let cases = dtors
                     .values()
                     .map(|dtor| {
                         let key = Key { dtor: dtor.name.clone(), ctor: ctor.name.clone() };
-                        let body = &exprs[&key];
+                        let body = &exprs.get(&key);
                         // Swap binding order (which is different in the matrix representation)
                         let body = body.as_ref().map(|body| {
                             let mut ctx = LevelCtx::empty();
@@ -298,11 +304,14 @@ impl XData {
                                 })
                             })
                         });
+                        if body.is_none() {
+                            omit_absurd = true;
+                        }
                         ust::Cocase {
                             info: ust::Info::empty(),
                             name: dtor.name.clone(),
                             params: dtor.params.instantiate(),
-                            body,
+                            body: body.unwrap_or_default(),
                         }
                     })
                     .collect();
@@ -314,7 +323,7 @@ impl XData {
                     hidden: false,
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
-                    body: ust::Comatch { cases, info: ust::Info::empty() },
+                    body: ust::Comatch { cases, info: ust::Info::empty(), omit_absurd },
                 }
             })
             .collect();
@@ -322,24 +331,5 @@ impl XData {
         let dtors = dtors.values().cloned().collect();
 
         (codata, dtors, codefs)
-    }
-}
-
-trait InstantiateExt {
-    fn instantiate(&self) -> ust::TelescopeInst;
-}
-
-impl InstantiateExt for ust::Telescope {
-    fn instantiate(&self) -> ust::TelescopeInst {
-        let params = self
-            .params
-            .iter()
-            .map(|ust::Param { name, .. }| ust::ParamInst {
-                name: name.clone(),
-                info: ust::Info::empty(),
-                typ: (),
-            })
-            .collect();
-        ust::TelescopeInst { params }
     }
 }

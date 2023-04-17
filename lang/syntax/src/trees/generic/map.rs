@@ -62,11 +62,11 @@ pub trait Mapper<P: Phase> {
     fn map_codef(&mut self, info: P::Info, doc: Option<DocComment>, name: Ident, hidden: bool, params: Telescope<P>, typ: TypApp<P>, body: Comatch<P>) -> Codef<P> {
         Codef { info, doc, name, hidden, params, typ, body }
     }
-    fn map_match(&mut self, info: P::Info, cases: Vec<Case<P>>) -> Match<P> {
-        Match { info, cases }
+    fn map_match(&mut self, info: P::Info, cases: Vec<Case<P>>, omit_absurd: bool) -> Match<P> {
+        Match { info, cases, omit_absurd }
     }
-    fn map_comatch(&mut self, info: P::Info, cases: Vec<Cocase<P>>) -> Comatch<P> {
-        Comatch { info, cases }
+    fn map_comatch(&mut self, info: P::Info, cases: Vec<Cocase<P>>, omit_absurd: bool) -> Comatch<P> {
+        Comatch { info, cases, omit_absurd }
     }
     fn map_case(&mut self, info: P::Info, name: Ident, args: TelescopeInst<P>, body: Option<Rc<Exp<P>>>) -> Case<P> {
         Case { info, name, args, body }
@@ -252,12 +252,12 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_codef(info, doc, name, hidden, params, typ, body)
     }
 
-    fn fold_match(&mut self, info: <Id<P> as Out>::Info, cases: Vec<<Id<P> as Out>::Case>) -> <Id<P> as Out>::Match {
-        self.map_match(info, cases)
+    fn fold_match(&mut self, info: <Id<P> as Out>::Info, cases: Vec<<Id<P> as Out>::Case>, omit_absurd: bool) -> <Id<P> as Out>::Match {
+        self.map_match(info, cases, omit_absurd)
     }
 
-    fn fold_comatch(&mut self, info: <Id<P> as Out>::Info, cases: Vec<<Id<P> as Out>::Cocase>) -> <Id<P> as Out>::Comatch {
-        self.map_comatch(info, cases)
+    fn fold_comatch(&mut self, info: <Id<P> as Out>::Info, cases: Vec<<Id<P> as Out>::Cocase>, omit_absurd: bool) -> <Id<P> as Out>::Comatch {
+        self.map_comatch(info, cases, omit_absurd)
     }
 
     fn fold_case(&mut self, info: <Id<P> as Out>::Info, name: Ident, args: <Id<P> as Out>::TelescopeInst, body: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Case {

@@ -34,8 +34,8 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_dtor(&mut self, info: O::Info, doc: Option<DocComment>, name: Ident, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp) -> O::Dtor;
     fn fold_def(&mut self, info: O::Info, doc: Option<DocComment>, name: Ident, hidden: bool, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp, body: O::Match) -> O::Def;
     fn fold_codef(&mut self, info: O::Info, doc: Option<DocComment>, name: Ident, hidden: bool, params: O::Telescope, typ: O::TypApp, body: O::Comatch) -> O::Codef;
-    fn fold_match(&mut self, info: O::Info, cases: Vec<O::Case>) -> O::Match;
-    fn fold_comatch(&mut self, info: O::Info, cases: Vec<O::Cocase>) -> O::Comatch;
+    fn fold_match(&mut self, info: O::Info, cases: Vec<O::Case>, omit_absurd: bool) -> O::Match;
+    fn fold_comatch(&mut self, info: O::Info, cases: Vec<O::Cocase>, omit_absurd: bool) -> O::Comatch;
     fn fold_case(&mut self, info: O::Info, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Case;
     fn fold_cocase(&mut self, info: O::Info, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Cocase;
     fn fold_typ_app(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::TypApp;
@@ -442,10 +442,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Match<P> {
     where
         F: Folder<P, O>,
     {
-        let Match { info, cases } = self;
+        let Match { info, cases, omit_absurd } = self;
         let cases = cases.fold(f);
         let info = f.fold_info(info);
-        f.fold_match(info, cases)
+        f.fold_match(info, cases, omit_absurd)
     }
 }
 
@@ -456,10 +456,10 @@ impl<P: Phase, O: Out> Fold<P, O> for Comatch<P> {
     where
         F: Folder<P, O>,
     {
-        let Comatch { info, cases } = self;
+        let Comatch { info, cases, omit_absurd } = self;
         let cases = cases.fold(f);
         let info = f.fold_info(info);
-        f.fold_comatch(info, cases)
+        f.fold_comatch(info, cases, omit_absurd)
     }
 }
 

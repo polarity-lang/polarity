@@ -77,17 +77,22 @@ impl Substitutable<Rc<Exp>> for Motive {
 
 impl Substitutable<Rc<Exp>> for Match {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Match { info, cases } = self;
-        Match { info: info.clone(), cases: cases.iter().map(|case| case.subst(ctx, by)).collect() }
+        let Match { info, cases, omit_absurd } = self;
+        Match {
+            info: info.clone(),
+            cases: cases.iter().map(|case| case.subst(ctx, by)).collect(),
+            omit_absurd: *omit_absurd,
+        }
     }
 }
 
 impl Substitutable<Rc<Exp>> for Comatch {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Comatch { info, cases } = self;
+        let Comatch { info, cases, omit_absurd } = self;
         Comatch {
             info: info.clone(),
             cases: cases.iter().map(|cocase| cocase.subst(ctx, by)).collect(),
+            omit_absurd: *omit_absurd,
         }
     }
 }

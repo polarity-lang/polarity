@@ -254,9 +254,9 @@ impl Lift for tst::Match {
     type Target = ust::Match;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Match { info, cases } = self;
+        let tst::Match { info, cases, omit_absurd } = self;
 
-        ust::Match { info: info.forget(), cases: cases.lift(ctx) }
+        ust::Match { info: info.forget(), cases: cases.lift(ctx), omit_absurd: *omit_absurd }
     }
 }
 
@@ -264,9 +264,9 @@ impl Lift for tst::Comatch {
     type Target = ust::Comatch;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Comatch { info, cases } = self;
+        let tst::Comatch { info, cases, omit_absurd } = self;
 
-        ust::Comatch { info: info.forget(), cases: cases.lift(ctx) }
+        ust::Comatch { info: info.forget(), cases: cases.lift(ctx), omit_absurd: *omit_absurd }
     }
 }
 

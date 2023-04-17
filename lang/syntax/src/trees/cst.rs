@@ -95,12 +95,14 @@ pub struct Codef {
 pub struct Match {
     pub info: Info,
     pub cases: Vec<Case>,
+    pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct Comatch {
     pub info: Info,
     pub cases: Vec<Cocase>,
+    pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone)]

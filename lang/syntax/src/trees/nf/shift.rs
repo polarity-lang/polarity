@@ -54,15 +54,23 @@ impl ShiftInRange for Neu {
 
 impl ShiftInRange for Match {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Match { info, cases } = self;
-        Match { info: info.clone(), cases: cases.shift_in_range(range, by) }
+        let Match { info, cases, omit_absurd } = self;
+        Match {
+            info: info.clone(),
+            cases: cases.shift_in_range(range, by),
+            omit_absurd: *omit_absurd,
+        }
     }
 }
 
 impl ShiftInRange for Comatch {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Comatch { info, cases } = self;
-        Comatch { info: info.clone(), cases: cases.shift_in_range(range, by) }
+        let Comatch { info, cases, omit_absurd } = self;
+        Comatch {
+            info: info.clone(),
+            cases: cases.shift_in_range(range, by),
+            omit_absurd: *omit_absurd,
+        }
     }
 }
 

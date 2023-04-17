@@ -259,10 +259,10 @@ impl<'a> Print<'a> for Dtor {
 
 impl<'a> Print<'a> for Comatch {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Comatch { info: _, cases } = self;
+        let Comatch { info: _, cases, omit_absurd } = self;
         match cases.len() {
             0 => empty_braces(alloc),
-            1 => alloc
+            1 if !omit_absurd => alloc
                 .line()
                 .append(cases[0].print(cfg, alloc))
                 .nest(cfg.indent)
@@ -274,7 +274,14 @@ impl<'a> Print<'a> for Comatch {
 
                 alloc
                     .hardline()
-                    .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
+                    .append(
+                        alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()),
+                    )
+                    .append(if *omit_absurd {
+                        sep.append(alloc.text("..")).append(alloc.keyword(ABSURD))
+                    } else {
+                        alloc.nil()
+                    })
                     .nest(cfg.indent)
                     .append(alloc.hardline())
                     .braces_anno()
@@ -285,10 +292,10 @@ impl<'a> Print<'a> for Comatch {
 
 impl<'a> Print<'a> for Match {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Match { info: _, cases } = self;
+        let Match { info: _, cases, omit_absurd } = self;
         match cases.len() {
             0 => empty_braces(alloc),
-            1 => alloc
+            1 if !omit_absurd => alloc
                 .line()
                 .append(cases[0].print(cfg, alloc))
                 .nest(cfg.indent)
@@ -299,7 +306,14 @@ impl<'a> Print<'a> for Match {
                 let sep = alloc.text(COMMA).append(alloc.hardline());
                 alloc
                     .hardline()
-                    .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
+                    .append(
+                        alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()),
+                    )
+                    .append(if *omit_absurd {
+                        sep.append(alloc.text("..")).append(alloc.keyword(ABSURD))
+                    } else {
+                        alloc.nil()
+                    })
                     .nest(cfg.indent)
                     .append(alloc.hardline())
                     .braces_anno()

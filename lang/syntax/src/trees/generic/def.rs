@@ -175,6 +175,7 @@ pub struct Match<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::Info,
     pub cases: Vec<Case<P>>,
+    pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone, Derivative)]
@@ -184,6 +185,7 @@ pub struct Comatch<P: Phase> {
     pub info: P::Info,
     // TODO: Consider renaming this field to "cocases"
     pub cases: Vec<Cocase<P>>,
+    pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone, Derivative)]

@@ -1,0 +1,13 @@
+data Bool { True, False }
+
+codata Foo(b: Bool) {
+    Foo(True).foo1: Bool,
+    Foo(False).foo2: Bool,
+    Foo(False).foo3: Bool,
+    Foo(False).foo4: Bool,
+}
+
+codef MyFoo: Foo(True) {
+    foo1 => True,
+    ..absurd
+}

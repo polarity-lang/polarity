@@ -63,9 +63,9 @@ impl Forget for Match {
     type Target = ust::Match;
 
     fn forget(&self) -> Self::Target {
-        let Match { info, cases } = self;
+        let Match { info, cases, omit_absurd } = self;
 
-        ust::Match { info: info.clone(), cases: cases.forget() }
+        ust::Match { info: info.clone(), cases: cases.forget(), omit_absurd: *omit_absurd }
     }
 }
 
@@ -73,9 +73,9 @@ impl Forget for Comatch {
     type Target = ust::Comatch;
 
     fn forget(&self) -> Self::Target {
-        let Comatch { info, cases } = self;
+        let Comatch { info, cases, omit_absurd } = self;
 
-        ust::Comatch { info: info.clone(), cases: cases.forget() }
+        ust::Comatch { info: info.clone(), cases: cases.forget(), omit_absurd: *omit_absurd }
     }
 }
 

@@ -13,6 +13,7 @@ use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, Context, LevelCtx};
 use syntax::nf;
 use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
+use syntax::ust::util::Instantiate;
 use syntax::ust::{self, Occurs};
 use tracer::trace;
 
@@ -388,7 +389,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
         ctx: &mut Ctx,
         t: Rc<nf::Nf>,
     ) -> Result<Self::Target, TypeError> {
-        let ust::Match { info, cases } = &self.inner;
+        let ust::Match { info, cases, omit_absurd } = &self.inner;
 
         // Check that this match is on a data type
         let data = prg.decls.data(&self.scrutinee.name, info.span)?;
@@ -407,7 +408,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
         let mut ctors_missing = ctors_expected.difference(&ctors_actual).peekable();
         let mut ctors_undeclared = ctors_actual.difference(&ctors_expected).peekable();
 
-        if ctors_missing.peek().is_some()
+        if (!omit_absurd && ctors_missing.peek().is_some())
             || ctors_undeclared.peek().is_some()
             || !ctors_duplicate.is_empty()
         {
@@ -417,6 +418,19 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
                 ctors_duplicate,
                 info,
             ));
+        }
+
+        // Add absurd cases for all omitted constructors
+        let mut cases = cases.clone();
+
+        if *omit_absurd {
+            for name in ctors_missing.cloned() {
+                let ust::Ctor { params, .. } = prg.decls.ctor(&name, info.span)?;
+
+                let case =
+                    ust::Case { info: info.clone(), name, args: params.instantiate(), body: None };
+                cases.push(case);
+            }
         }
 
         // Consider all cases
@@ -446,7 +460,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
             })
             .collect::<Result<_, _>>()?;
 
-        Ok(tst::Match { info: info.clone().into(), cases: cases_out })
+        Ok(tst::Match { info: info.clone().into(), cases: cases_out, omit_absurd: *omit_absurd })
     }
 }
 
@@ -455,7 +469,7 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
     type Target = tst::Comatch;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Comatch { info, cases } = &self.inner;
+        let ust::Comatch { info, cases, omit_absurd } = &self.inner;
 
         // Check that this comatch is on a codata type
         let codata = prg.decls.codata(&self.destructee.name, info.span)?;
@@ -475,7 +489,7 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
         let mut dtors_missing = dtors_expected.difference(&dtors_actual).peekable();
         let mut dtors_exessive = dtors_actual.difference(&dtors_expected).peekable();
 
-        if dtors_missing.peek().is_some()
+        if (!omit_absurd && dtors_missing.peek().is_some())
             || dtors_exessive.peek().is_some()
             || !dtors_duplicate.is_empty()
         {
@@ -485,6 +499,23 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
                 dtors_duplicate,
                 info,
             ));
+        }
+
+        // Add absurd cases for all omitted destructors
+        let mut cases = cases.clone();
+
+        if *omit_absurd {
+            for name in dtors_missing.cloned() {
+                let ust::Dtor { params, .. } = prg.decls.dtor(&name, info.span)?;
+
+                let case = ust::Cocase {
+                    info: info.clone(),
+                    name,
+                    params: params.instantiate(),
+                    body: None,
+                };
+                cases.push(case);
+            }
         }
 
         // Consider all cases
@@ -549,7 +580,7 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
             })
             .collect::<Result<_, _>>()?;
 
-        Ok(tst::Comatch { info: info.clone().into(), cases: cases_out })
+        Ok(tst::Comatch { info: info.clone().into(), cases: cases_out, omit_absurd: *omit_absurd })
     }
 }
 

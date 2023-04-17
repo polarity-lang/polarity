@@ -55,12 +55,17 @@ impl<'a> Print<'a> for Neu {
 }
 impl<'a> Print<'a> for Comatch {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Comatch { info: _, cases } = self;
+        let Comatch { info: _, cases, omit_absurd } = self;
         let sep = alloc.text(COMMA).append(alloc.hardline());
 
         alloc
             .hardline()
             .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
+            .append(if *omit_absurd {
+                alloc.text(COMMA).append(alloc.text("..")).append(alloc.keyword(ABSURD))
+            } else {
+                alloc.nil()
+            })
             .nest(cfg.indent)
             .append(alloc.hardline())
             .braces_anno()
@@ -69,11 +74,16 @@ impl<'a> Print<'a> for Comatch {
 
 impl<'a> Print<'a> for Match {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Match { info: _, cases } = self;
+        let Match { info: _, cases, omit_absurd } = self;
         let sep = alloc.text(COMMA).append(alloc.hardline());
         alloc
             .hardline()
             .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
+            .append(if *omit_absurd {
+                alloc.text(COMMA).append(alloc.text("..")).append(alloc.keyword(ABSURD))
+            } else {
+                alloc.nil()
+            })
             .nest(cfg.indent)
             .append(alloc.hardline())
             .braces_anno()
