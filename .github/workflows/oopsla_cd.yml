@@ -1,6 +1,6 @@
 name: Deploy for OOPSLA
 on:
-  push: { branches: [main] }
+  push: { branches: [oopsla] }
 permissions:
   contents: write
 jobs:
