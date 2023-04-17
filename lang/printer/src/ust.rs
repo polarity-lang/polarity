@@ -261,7 +261,18 @@ impl<'a> Print<'a> for Comatch {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Comatch { info: _, cases, omit_absurd } = self;
         match cases.len() {
-            0 => empty_braces(alloc),
+            0 => {
+                if *omit_absurd {
+                    alloc
+                        .space()
+                        .append(alloc.text(".."))
+                        .append(alloc.keyword(ABSURD))
+                        .append(alloc.space())
+                        .braces_anno()
+                } else {
+                    empty_braces(alloc)
+                }
+            }
             1 if !omit_absurd => alloc
                 .line()
                 .append(cases[0].print(cfg, alloc))
@@ -294,7 +305,18 @@ impl<'a> Print<'a> for Match {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { info: _, cases, omit_absurd } = self;
         match cases.len() {
-            0 => empty_braces(alloc),
+            0 => {
+                if *omit_absurd {
+                    alloc
+                        .space()
+                        .append(alloc.text(".."))
+                        .append(alloc.keyword(ABSURD))
+                        .append(alloc.space())
+                        .braces_anno()
+                } else {
+                    empty_braces(alloc)
+                }
+            }
             1 if !omit_absurd => alloc
                 .line()
                 .append(cases[0].print(cfg, alloc))

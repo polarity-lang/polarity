@@ -421,7 +421,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
         }
 
         // Add absurd cases for all omitted constructors
-        let mut cases = cases.clone();
+        let mut cases: Vec<_> = cases.iter().cloned().map(|case| (case, false)).collect();
 
         if *omit_absurd {
             for name in ctors_missing.cloned() {
@@ -429,36 +429,33 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
 
                 let case =
                     ust::Case { info: info.clone(), name, args: params.instantiate(), body: None };
-                cases.push(case);
+                cases.push((case, true));
             }
         }
 
-        // Consider all cases
-        let cases_out: Vec<_> = cases
-            .iter()
-            .map(|case| {
-                // Build equations for this case
-                let ust::Ctor { typ: ust::TypApp { args: def_args, .. }, params, .. } =
-                    prg.decls.ctor(&case.name, case.info.span)?;
+        let mut cases_out = Vec::new();
 
-                let def_args_nf = LevelCtx::empty().bind_iter(params.params.iter(), |ctx| {
-                    def_args.normalize(prg, &mut ctx.env())
-                })?;
+        for (case, omit) in cases {
+            // Build equations for this case
+            let ust::Ctor { typ: ust::TypApp { args: def_args, .. }, params, .. } =
+                prg.decls.ctor(&case.name, case.info.span)?;
 
-                let nf::TypApp { args: on_args, .. } = &self.scrutinee;
-                let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
+            let def_args_nf = LevelCtx::empty()
+                .bind_iter(params.params.iter(), |ctx| def_args.normalize(prg, &mut ctx.env()))?;
 
-                let eqns: Vec<_> = def_args_nf
-                    .iter()
-                    .cloned()
-                    .zip(on_args.iter().cloned())
-                    .map(Eqn::from)
-                    .collect();
+            let nf::TypApp { args: on_args, .. } = &self.scrutinee;
+            let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
-                // Check the case given the equations
-                case.with_eqns(eqns).check(prg, ctx, t.clone())
-            })
-            .collect::<Result<_, _>>()?;
+            let eqns: Vec<_> =
+                def_args_nf.iter().cloned().zip(on_args.iter().cloned()).map(Eqn::from).collect();
+
+            // Check the case given the equations
+            let case_out = case.with_eqns(eqns).check(prg, ctx, t.clone())?;
+
+            if !omit {
+                cases_out.push(case_out);
+            }
+        }
 
         Ok(tst::Match { info: info.clone().into(), cases: cases_out, omit_absurd: *omit_absurd })
     }
@@ -502,7 +499,7 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
         }
 
         // Add absurd cases for all omitted destructors
-        let mut cases = cases.clone();
+        let mut cases: Vec<_> = cases.iter().cloned().map(|case| (case, false)).collect();
 
         if *omit_absurd {
             for name in dtors_missing.cloned() {
@@ -514,71 +511,69 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
                     params: params.instantiate(),
                     body: None,
                 };
-                cases.push(case);
+                cases.push((case, true));
             }
         }
 
-        // Consider all cases
-        let cases_out: Vec<_> = cases
-            .iter()
-            .map(|case| {
-                // Build equations for this case
-                let ust::Dtor {
-                    self_param: ust::SelfParam { typ: ust::TypApp { args: def_args, .. }, .. },
-                    ret_typ,
-                    params,
-                    ..
-                } = prg.decls.dtor(&case.name, case.info.span)?;
+        let mut cases_out = Vec::new();
 
-                let def_args_nf =
-                    def_args.normalize(prg, &mut LevelCtx::from(vec![params.len()]).env())?;
+        for (case, omit) in cases {
+            // Build equations for this case
+            let ust::Dtor {
+                self_param: ust::SelfParam { typ: ust::TypApp { args: def_args, .. }, .. },
+                ret_typ,
+                params,
+                ..
+            } = prg.decls.dtor(&case.name, case.info.span)?;
 
-                let ret_typ_nf =
-                    ret_typ.normalize(prg, &mut LevelCtx::from(vec![params.len(), 1]).env())?;
+            let def_args_nf =
+                def_args.normalize(prg, &mut LevelCtx::from(vec![params.len()]).env())?;
 
-                let nf::TypApp { args: on_args, .. } = &self.destructee;
-                let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
+            let ret_typ_nf =
+                ret_typ.normalize(prg, &mut LevelCtx::from(vec![params.len(), 1]).env())?;
 
-                let eqns: Vec<_> = def_args_nf
-                    .iter()
-                    .cloned()
-                    .zip(on_args.iter().cloned())
-                    .map(Eqn::from)
-                    .collect();
+            let nf::TypApp { args: on_args, .. } = &self.destructee;
+            let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
-                let ret_typ_nf = match &self.label {
-                    // Substitute the codef label for the self parameter
-                    Some(label) => {
-                        let args = (0..self.n_label_args)
-                            .rev()
-                            .map(|snd| ust::Exp::Var {
-                                info: ust::Info::empty(),
-                                name: "".to_owned(),
-                                ctx: (),
-                                idx: Idx { fst: 2, snd },
-                            })
-                            .map(Rc::new)
-                            .collect();
-                        let ctor = Rc::new(ust::Exp::Ctor {
+            let eqns: Vec<_> =
+                def_args_nf.iter().cloned().zip(on_args.iter().cloned()).map(Eqn::from).collect();
+
+            let ret_typ_nf = match &self.label {
+                // Substitute the codef label for the self parameter
+                Some(label) => {
+                    let args = (0..self.n_label_args)
+                        .rev()
+                        .map(|snd| ust::Exp::Var {
                             info: ust::Info::empty(),
-                            name: label.clone(),
-                            args: ust::Args { args },
-                        });
-                        let subst = Assign(Lvl { fst: 1, snd: 0 }, ctor);
-                        let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
-                        ret_typ_nf.forget().subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
-                            prg,
-                            &mut LevelCtx::from(vec![self.n_label_args, params.len()]).env(),
-                        )?
-                    }
-                    // TODO: Self parameter for local comatches
-                    None => ret_typ_nf.shift((-1, 0)),
-                };
+                            name: "".to_owned(),
+                            ctx: (),
+                            idx: Idx { fst: 2, snd },
+                        })
+                        .map(Rc::new)
+                        .collect();
+                    let ctor = Rc::new(ust::Exp::Ctor {
+                        info: ust::Info::empty(),
+                        name: label.clone(),
+                        args: ust::Args { args },
+                    });
+                    let subst = Assign(Lvl { fst: 1, snd: 0 }, ctor);
+                    let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
+                    ret_typ_nf.forget().subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
+                        prg,
+                        &mut LevelCtx::from(vec![self.n_label_args, params.len()]).env(),
+                    )?
+                }
+                // TODO: Self parameter for local comatches
+                None => ret_typ_nf.shift((-1, 0)),
+            };
 
-                // Check the case given the equations
-                case.with_eqns(eqns).check(prg, ctx, ret_typ_nf)
-            })
-            .collect::<Result<_, _>>()?;
+            // Check the case given the equations
+            let case_out = case.with_eqns(eqns).check(prg, ctx, ret_typ_nf)?;
+
+            if !omit {
+                cases_out.push(case_out);
+            }
+        }
 
         Ok(tst::Comatch { info: info.clone().into(), cases: cases_out, omit_absurd: *omit_absurd })
     }

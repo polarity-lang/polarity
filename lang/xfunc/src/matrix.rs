@@ -241,18 +241,18 @@ impl XData {
                 let mut omit_absurd = false;
                 let cases = ctors
                     .values()
-                    .map(|ctor| {
+                    .flat_map(|ctor| {
                         let key = Key { dtor: dtor.name.clone(), ctor: ctor.name.clone() };
                         let body = exprs.get(&key).cloned();
                         if body.is_none() {
                             omit_absurd = true;
                         }
-                        ust::Case {
+                        body.map(|body| ust::Case {
                             info: ust::Info::empty(),
                             name: ctor.name.clone(),
                             args: ctor.params.instantiate(),
-                            body: body.unwrap_or_default(),
-                        }
+                            body,
+                        })
                     })
                     .collect();
 
@@ -292,7 +292,7 @@ impl XData {
                 let mut omit_absurd = false;
                 let cases = dtors
                     .values()
-                    .map(|dtor| {
+                    .flat_map(|dtor| {
                         let key = Key { dtor: dtor.name.clone(), ctor: ctor.name.clone() };
                         let body = &exprs.get(&key);
                         // Swap binding order (which is different in the matrix representation)
@@ -307,12 +307,12 @@ impl XData {
                         if body.is_none() {
                             omit_absurd = true;
                         }
-                        ust::Cocase {
+                        body.map(|body| ust::Cocase {
                             info: ust::Info::empty(),
                             name: dtor.name.clone(),
                             params: dtor.params.instantiate(),
-                            body: body.unwrap_or_default(),
-                        }
+                            body,
+                        })
                     })
                     .collect();
 
