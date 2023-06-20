@@ -16,10 +16,10 @@ use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
 use syntax::ust::util::Instantiate;
 use syntax::ust::{self, Occurs};
 use tracer::trace;
+use unifier::unify::*;
 
 use super::ctx::*;
 use super::result::TypeError;
-use super::unify::*;
 
 pub fn check(prg: &ust::Prg) -> Result<tst::Prg, TypeError> {
     let mut var_ctx = Ctx::default();

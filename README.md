@@ -60,6 +60,7 @@ xfunc --help
 │   ├── renaming            Rename abstract syntax tree s.t. it can be reparsed
 │   ├── syntax              Syntax tree definitions
 │   ├── typechecker         Bidirectional type inference
+│   ├── unifier             Unification algorithm
 │   └── xfunc               De-/Refunctionalization implementation
 ├── test                    Integration tests
 │   ├── suites              Test cases

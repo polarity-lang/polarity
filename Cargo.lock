@@ -2513,6 +2513,7 @@ dependencies = [
  "syntax",
  "thiserror",
  "tracer",
+ "unifier",
 ]
 
 [[package]]
@@ -2569,6 +2570,21 @@ name = "unicode-xid"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
+
+[[package]]
+name = "unifier"
+version = "0.1.0"
+dependencies = [
+ "codespan",
+ "data",
+ "miette",
+ "miette_util",
+ "normalizer",
+ "printer",
+ "syntax",
+ "thiserror",
+ "tracer",
+]
 
 [[package]]
 name = "url"
