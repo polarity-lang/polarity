@@ -3,6 +3,7 @@ use std::rc::Rc;
 use derivative::Derivative;
 
 use crate::common::*;
+use crate::cst::Ident;
 use crate::ust;
 
 /// The syntax of normal forms

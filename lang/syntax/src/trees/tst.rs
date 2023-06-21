@@ -5,6 +5,7 @@ use std::rc::Rc;
 use codespan::Span;
 
 use crate::common::*;
+use crate::cst::Ident;
 use crate::ctx::values::TypeCtx;
 use crate::nf;
 

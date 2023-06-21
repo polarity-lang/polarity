@@ -6,6 +6,7 @@ use derivative::Derivative;
 use data::{HashMap, HashSet};
 
 use syntax::common::*;
+use syntax::cst::Ident;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;
 use syntax::generic::{Visit, Visitor};

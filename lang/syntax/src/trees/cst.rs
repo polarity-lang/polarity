@@ -7,6 +7,8 @@ use num_bigint::BigUint;
 
 use crate::common::*;
 
+pub type Ident = String;
+
 #[derive(Debug, Clone)]
 pub struct Prg {
     pub items: Vec<Item>,

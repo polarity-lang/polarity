@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use data::HashMap;
 use syntax::common::*;
+use syntax::cst::Ident;
 use syntax::ctx::{BindContext, Context, LevelCtx};
 use syntax::ust;
 use syntax::ust::util::Instantiate;

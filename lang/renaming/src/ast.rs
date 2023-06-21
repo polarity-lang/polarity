@@ -1,4 +1,5 @@
 use syntax::common::*;
+use syntax::cst::Ident;
 use syntax::ctx::*;
 use syntax::generic::*;
 

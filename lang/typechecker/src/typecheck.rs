@@ -9,6 +9,7 @@ use miette_util::ToMiette;
 use normalizer::env::ToEnv;
 use normalizer::normalize::Normalize;
 use syntax::common::*;
+use syntax::cst::Ident;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, Context, LevelCtx};
 use syntax::nf;

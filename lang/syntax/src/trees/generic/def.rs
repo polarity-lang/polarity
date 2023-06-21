@@ -6,6 +6,7 @@ use data::HashMap;
 use derivative::Derivative;
 
 use crate::common::*;
+use crate::cst::Ident;
 
 use super::lookup_table::LookupTable;
 

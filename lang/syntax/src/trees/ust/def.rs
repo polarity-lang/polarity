@@ -1,6 +1,7 @@
 use codespan::Span;
 
 use crate::common::*;
+use crate::cst::Ident;
 use crate::trees::generic;
 
 #[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]

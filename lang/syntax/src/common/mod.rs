@@ -15,7 +15,7 @@ pub use forget::*;
 pub use named::*;
 pub use subst::*;
 
-pub type Ident = String;
+use crate::cst::Ident;
 
 pub trait HasSpan {
     fn span(&self) -> Option<Span>;

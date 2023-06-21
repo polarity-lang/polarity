@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use derivative::Derivative;
+use syntax::cst::Ident;
 
 use crate::env::*;
 use pretty::DocAllocator;

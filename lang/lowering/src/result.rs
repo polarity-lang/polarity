@@ -1,7 +1,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use syntax::common::*;
+use syntax::{common::*, cst::Ident};
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum LoweringError {

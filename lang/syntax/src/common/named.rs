@@ -1,4 +1,5 @@
 use crate::cst;
+use crate::cst::Ident;
 use crate::generic;
 
 use super::*;

@@ -4,6 +4,7 @@ use std::rc::Rc;
 use data::HashMap;
 
 use crate::common::*;
+use crate::cst::Ident;
 
 use super::def::*;
 use super::lookup_table::LookupTable;

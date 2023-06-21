@@ -4,6 +4,7 @@ use data::HashMap;
 use data::HashSet;
 use renaming::Rename;
 use syntax::common::*;
+use syntax::cst::Ident;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;
