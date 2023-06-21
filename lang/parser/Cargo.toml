@@ -14,7 +14,6 @@ thiserror = "1"
 num-bigint = "0.4"
 # workspace members
 syntax = { path = "../syntax" }
-data = { path = "../../util/data" }
 
 [build-dependencies.lalrpop]
 version = "0.19"
