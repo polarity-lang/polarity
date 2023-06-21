@@ -4,8 +4,8 @@ use codespan::Span;
 use printer::PrintToString;
 use rust_lapper::{Interval, Lapper};
 
+use parser::cst::{DocComment, Ident};
 use syntax::common::*;
-use syntax::cst::{DocComment, Ident};
 use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
 use syntax::generic::{Visit, Visitor};
 use syntax::tst;

@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use data::HashMap;
+use parser::cst::{DocComment, Ident};
 use syntax::common::*;
-use syntax::cst::{DocComment, Ident};
 use syntax::ctx::{BindContext, Context, LevelCtx};
 use syntax::ust;
 use syntax::ust::util::Instantiate;

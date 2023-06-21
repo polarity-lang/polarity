@@ -3,8 +3,9 @@ use std::rc::Rc;
 use super::DatabaseView;
 
 use normalizer::normalize::Normalize;
+use parser::cst;
 use syntax::common::Forget;
-use syntax::{cst, nf, tst, ust};
+use syntax::{nf, tst, ust};
 
 use crate::*;
 

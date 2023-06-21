@@ -3,9 +3,7 @@ use std::rc::Rc;
 use data::HashMap;
 
 use crate::common::*;
-use crate::cst::DocComment;
-use crate::cst::HoleKind;
-use crate::cst::Ident;
+use parser::cst::{DocComment, HoleKind, Ident};
 
 use super::def::*;
 use super::fold::*;

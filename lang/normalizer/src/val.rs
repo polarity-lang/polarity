@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use derivative::Derivative;
-use syntax::cst::HoleKind;
-use syntax::cst::Ident;
+use parser::cst::HoleKind;
+use parser::cst::Ident;
 
 use crate::env::*;
 use pretty::DocAllocator;

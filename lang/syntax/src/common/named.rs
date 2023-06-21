@@ -1,6 +1,6 @@
-use crate::cst::Ident;
-use crate::cst::{self, BindingSite};
 use crate::generic;
+use parser::cst::Ident;
+use parser::cst::{self, BindingSite};
 
 use lazy_static::lazy_static;
 

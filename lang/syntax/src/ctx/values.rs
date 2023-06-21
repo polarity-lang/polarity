@@ -5,9 +5,9 @@
 use std::rc::Rc;
 
 use crate::common::*;
-use crate::cst::Ident;
 use crate::ctx::{Context, LevelCtx};
 use crate::nf::*;
+use parser::cst::Ident;
 
 use super::ContextElem;
 

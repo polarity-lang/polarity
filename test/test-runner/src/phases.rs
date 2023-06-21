@@ -1,10 +1,11 @@
 use std::error::Error;
 use std::fmt;
 
+use parser::cst;
 use printer::PrintToString;
 use renaming::Rename;
 use syntax::common::Forget as _;
-use syntax::{cst, tst, ust};
+use syntax::{tst, ust};
 
 use super::infallible::NoError;
 

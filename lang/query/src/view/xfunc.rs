@@ -5,8 +5,8 @@ use printer::PrintToStringInCtx;
 use renaming::Rename;
 
 use data::{HashMap, HashSet};
+use parser::cst::Ident;
 use syntax::common::*;
-use syntax::cst::Ident;
 use syntax::ust;
 use xfunc::matrix;
 use xfunc::result::XfuncError;

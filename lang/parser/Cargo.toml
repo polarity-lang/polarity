@@ -7,13 +7,13 @@ edition = "2021"
 # parser generator
 lalrpop = "0.19"
 lalrpop-util = "0.19"
+# source code locations
+codespan = "0.11"
 # fancy error messages
 miette = "5"
 thiserror = "1"
 # big integers
 num-bigint = "0.4"
-# workspace members
-syntax = { path = "../syntax" }
 
 [build-dependencies.lalrpop]
 version = "0.19"

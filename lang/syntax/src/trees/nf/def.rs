@@ -3,8 +3,8 @@ use std::rc::Rc;
 use derivative::Derivative;
 
 use crate::common::*;
-use crate::cst::{HoleKind, Ident};
 use crate::ust;
+use parser::cst::{HoleKind, Ident};
 
 /// The syntax of normal forms
 #[derive(Debug, Clone, Derivative)]

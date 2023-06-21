@@ -1110,6 +1110,7 @@ version = "0.1.0"
 dependencies = [
  "data",
  "derivative",
+ "parser",
  "renaming",
  "syntax",
 ]
@@ -1162,6 +1163,7 @@ dependencies = [
  "miette",
  "miette_util",
  "num-bigint",
+ "parser",
  "syntax",
  "thiserror",
 ]
@@ -1340,6 +1342,7 @@ dependencies = [
  "derivative",
  "miette",
  "miette_util",
+ "parser",
  "pretty",
  "printer",
  "syntax",
@@ -1490,11 +1493,11 @@ dependencies = [
 name = "parser"
 version = "0.1.0"
 dependencies = [
+ "codespan",
  "lalrpop",
  "lalrpop-util",
  "miette",
  "num-bigint",
- "syntax",
  "thiserror",
 ]
 
@@ -1619,6 +1622,7 @@ name = "printer"
 version = "0.1.0"
 dependencies = [
  "data",
+ "parser",
  "pretty",
  "syntax",
 ]
@@ -1813,6 +1817,7 @@ name = "renaming"
 version = "0.1.0"
 dependencies = [
  "data",
+ "parser",
  "syntax",
 ]
 
@@ -2070,6 +2075,7 @@ dependencies = [
  "miette",
  "miette_util",
  "num-bigint",
+ "parser",
  "thiserror",
 ]
 
@@ -2508,6 +2514,7 @@ dependencies = [
  "miette",
  "miette_util",
  "normalizer",
+ "parser",
  "printer",
  "syntax",
  "thiserror",
@@ -2866,6 +2873,7 @@ version = "0.1.0"
 dependencies = [
  "data",
  "miette",
+ "parser",
  "syntax",
  "thiserror",
 ]
