@@ -5,7 +5,8 @@ use codespan::Span;
 
 use num_bigint::BigUint;
 
-use crate::common::*;
+use crate::common::BindingSite;
+use crate::common::DocComment;
 
 pub type Ident = String;
 
@@ -165,6 +166,12 @@ impl TypApp {
     pub fn to_exp(&self) -> Exp {
         Exp::Call { info: self.info.clone(), name: self.name.clone(), args: self.args.clone() }
     }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum HoleKind {
+    Todo,
+    Omitted,
 }
 
 #[derive(Debug, Clone)]

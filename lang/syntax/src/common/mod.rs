@@ -79,9 +79,3 @@ impl fmt::Display for DeclKind {
 pub struct DocComment {
     pub docs: Vec<String>,
 }
-
-#[derive(Debug, Copy, Clone)]
-pub enum HoleKind {
-    Todo,
-    Omitted,
-}

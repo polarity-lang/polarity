@@ -3,6 +3,7 @@ use std::rc::Rc;
 use data::HashMap;
 
 use crate::common::*;
+use crate::cst::HoleKind;
 use crate::cst::Ident;
 
 use super::def::*;
