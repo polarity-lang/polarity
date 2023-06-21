@@ -5,7 +5,7 @@ use printer::PrintToString;
 use rust_lapper::{Interval, Lapper};
 
 use syntax::common::*;
-use syntax::cst::Ident;
+use syntax::cst::{DocComment, Ident};
 use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
 use syntax::generic::{Visit, Visitor};
 use syntax::tst;

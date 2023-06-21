@@ -5,10 +5,18 @@ use codespan::Span;
 
 use num_bigint::BigUint;
 
-use crate::common::BindingSite;
-use crate::common::DocComment;
-
 pub type Ident = String;
+
+#[derive(Debug, Clone)]
+pub struct DocComment {
+    pub docs: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub enum BindingSite {
+    Var { name: Ident },
+    Wildcard,
+}
 
 #[derive(Debug, Clone)]
 pub struct Prg {

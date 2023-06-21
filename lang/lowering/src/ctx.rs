@@ -2,6 +2,7 @@ use data::{HashMap, HashSet};
 use miette_util::ToMiette;
 use syntax::common::*;
 use syntax::cst;
+use syntax::cst::BindingSite;
 use syntax::cst::Ident;
 use syntax::ctx::{Context, ContextElem};
 use syntax::generic::lookup_table;

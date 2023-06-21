@@ -6,7 +6,7 @@ use data::HashMap;
 use derivative::Derivative;
 
 use crate::common::*;
-use crate::cst::{HoleKind, Ident};
+use crate::cst::{DocComment, HoleKind, Ident};
 
 use super::lookup_table::LookupTable;
 

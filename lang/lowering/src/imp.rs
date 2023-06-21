@@ -5,6 +5,7 @@ use num_bigint::BigUint;
 use miette_util::ToMiette;
 use syntax::common::*;
 use syntax::cst;
+use syntax::cst::BindingSite;
 use syntax::ctx::{BindContext, Context};
 use syntax::generic::lookup_table;
 use syntax::ust;

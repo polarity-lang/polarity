@@ -1,8 +1,6 @@
-use crate::cst;
 use crate::cst::Ident;
+use crate::cst::{self, BindingSite};
 use crate::generic;
-
-use super::*;
 
 use lazy_static::lazy_static;
 

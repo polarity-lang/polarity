@@ -3,6 +3,7 @@ use std::rc::Rc;
 use pretty::DocAllocator;
 
 use syntax::common::*;
+use syntax::cst::DocComment;
 use syntax::cst::HoleKind;
 use syntax::generic::Item;
 use syntax::ust::*;

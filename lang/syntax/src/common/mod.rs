@@ -27,12 +27,6 @@ pub trait HasInfo {
     fn info(&self) -> Self::Info;
 }
 
-#[derive(Debug, Clone)]
-pub enum BindingSite {
-    Var { name: Ident },
-    Wildcard,
-}
-
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Label {
@@ -73,9 +67,4 @@ impl fmt::Display for DeclKind {
             DeclKind::Dtor => write!(f, "destructor"),
         }
     }
-}
-
-#[derive(Debug, Clone)]
-pub struct DocComment {
-    pub docs: Vec<String>,
 }
