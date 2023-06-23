@@ -50,6 +50,12 @@ impl HasSpan for Nf {
     }
 }
 
+impl AlphaEq for Nf {
+    fn alpha_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
 /// A term whose normalization is blocked
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
