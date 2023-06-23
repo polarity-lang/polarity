@@ -33,7 +33,7 @@ pub trait Visitor<P: Phase> {
     fn visit_case(&mut self, info: &P::Info, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
     fn visit_cocase(&mut self, info: &P::Info, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
     fn visit_typ_app(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
-    fn visit_exp_var(&mut self, info: &P::TypeInfo, name: &P::VarName, ctx: &P::Ctx, idx: &Idx) {}
+    fn visit_exp_var(&mut self, info: &P::TypeInfo, name: &Ident, ctx: &P::Ctx, idx: &Idx) {}
     fn visit_exp_typ_ctor(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
     fn visit_exp_ctor(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
     fn visit_exp_dtor(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, name: &Ident, args: &Args<P>) {}

@@ -78,7 +78,7 @@ pub trait Mapper<P: Phase> {
     fn map_typ_app(&mut self, info: P::TypeInfo, name: Ident, args: Args<P>) -> TypApp<P> {
         TypApp { info, name, args }
     }
-    fn map_exp_var(&mut self, info: P::TypeInfo, name: P::VarName, ctx: P::Ctx, idx: Idx) -> Exp<P> {
+    fn map_exp_var(&mut self, info: P::TypeInfo, name: Ident, ctx: P::Ctx, idx: Idx) -> Exp<P> {
         Exp::Var { info, name, ctx, idx }
     }
     fn map_exp_typ_ctor(&mut self, info: P::TypeInfo, name: Ident, args: Args<P>) -> Exp<P> {
@@ -273,7 +273,7 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_typ_app(info, name, args)
     }
 
-    fn fold_exp_var(&mut self, info: <Id<P> as Out>::TypeInfo, name: <P as Phase>::VarName, ctx: <P as Phase>::Ctx, idx: <Id<P> as Out>::Idx) -> <Id<P> as Out>::Exp {
+    fn fold_exp_var(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, ctx: <P as Phase>::Ctx, idx: <Id<P> as Out>::Idx) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_var(info, name, ctx, idx))
     }
 

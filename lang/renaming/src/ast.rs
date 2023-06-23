@@ -7,7 +7,7 @@ use crate::{Rename, RenameInfo};
 
 use super::ctx::*;
 
-impl<P: Phase<VarName = Ident>> Mapper<P> for Ctx
+impl<P: Phase> Mapper<P> for Ctx
 where
     P::TypeInfo: RenameInfo,
     P::TypeAppInfo: RenameInfo,
@@ -76,7 +76,7 @@ where
     fn map_exp_var(
         &mut self,
         info: P::TypeInfo,
-        _name: P::VarName,
+        _name: Ident,
         ctx: P::Ctx,
         idx: Idx,
     ) -> Exp<P> {
@@ -95,7 +95,7 @@ where
 impl<T> Rename for T
 where
     Self: HasPhase + Map<<Self as HasPhase>::Phase>,
-    <Self as HasPhase>::Phase: Phase<VarName = Ident>,
+    <Self as HasPhase>::Phase: Phase,
     <<Self as HasPhase>::Phase as Phase>::TypeInfo: RenameInfo,
     <<Self as HasPhase>::Phase as Phase>::TypeAppInfo: RenameInfo,
 {

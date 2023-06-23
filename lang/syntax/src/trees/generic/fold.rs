@@ -40,7 +40,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_case(&mut self, info: O::Info, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Case;
     fn fold_cocase(&mut self, info: O::Info, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Cocase;
     fn fold_typ_app(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::TypApp;
-    fn fold_exp_var(&mut self, info: O::TypeInfo, name: P::VarName, ctx: O::Ctx, idx: O::Idx) -> O::Exp;
+    fn fold_exp_var(&mut self, info: O::TypeInfo, name: Ident, ctx: O::Ctx, idx: O::Idx) -> O::Exp;
     fn fold_exp_typ_ctor(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::Exp;
     fn fold_exp_ctor(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::Exp;
     fn fold_exp_dtor(&mut self, info: O::TypeInfo, exp: O::Exp, name: Ident, args: O::Args) -> O::Exp;

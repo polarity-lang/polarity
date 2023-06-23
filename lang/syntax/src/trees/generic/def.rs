@@ -21,8 +21,6 @@ where
     /// Type of the `info` field, containing span and (depending on the phase) type information
     /// where the type is required to be the full application of a type constructor
     type TypeAppInfo: HasSpan + Clone + Into<Self::TypeInfo> + fmt::Debug;
-    /// Type of the `name` field of `Exp::Var`
-    type VarName: Clone + fmt::Debug;
     /// A type which is not annotated in the source, but will be filled in later during typechecking
     type InfTyp: Clone + fmt::Debug;
     /// Context annotated during typechecking
@@ -261,7 +259,7 @@ pub enum Exp<P: Phase> {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        name: P::VarName,
+        name: Ident,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         ctx: P::Ctx,
         idx: Idx,
