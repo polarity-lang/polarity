@@ -21,10 +21,10 @@ pub trait HasSpan {
     fn span(&self) -> Option<Span>;
 }
 
-pub trait HasInfo {
-    type Info;
-
-    fn info(&self) -> Self::Info;
+impl HasSpan for Option<Span> {
+    fn span(&self) -> Option<Span> {
+        *self
+    }
 }
 
 #[derive(Debug, Clone, Derivative)]

@@ -26,7 +26,7 @@ impl<'a> DatabaseView<'a> {
             .decls
             .map
             .values()
-            .map(|decl| (decl.name().clone(), decl.info().span.unwrap()))
+            .map(|decl| (decl.name().clone(), decl.span().unwrap()))
             .collect();
 
         // xdefs and xtors before xfunc
@@ -44,7 +44,7 @@ impl<'a> DatabaseView<'a> {
         let mat = xfunc::as_matrix(&prg)?;
 
         let type_span =
-            mat.map.get(type_name).and_then(|x| x.info.span).ok_or(XfuncError::Impossible {
+            mat.map.get(type_name).and_then(|x| x.info).ok_or(XfuncError::Impossible {
                 message: format!("Could not resolve {type_name}"),
                 span: None,
             })?;

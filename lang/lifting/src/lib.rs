@@ -131,7 +131,7 @@ impl Lift for tst::Data {
         let tst::Data { info, doc, name, hidden, typ, ctors } = self;
 
         ust::Data {
-            info: info.forget(),
+            info: info.clone(),
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -148,7 +148,7 @@ impl Lift for tst::Codata {
         let tst::Codata { info, doc, name, hidden, typ, dtors } = self;
 
         ust::Codata {
-            info: info.forget(),
+            info: info.clone(),
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -175,7 +175,7 @@ impl Lift for tst::Ctor {
         let tst::Ctor { info, doc, name, params, typ } = self;
 
         params.lift_telescope(ctx, |ctx, params| ust::Ctor {
-            info: info.forget(),
+            info: info.clone(),
             doc: doc.clone(),
             name: name.clone(),
             params,
@@ -196,7 +196,7 @@ impl Lift for tst::Dtor {
                 (self_param, ret_typ)
             });
             ust::Dtor {
-                info: info.forget(),
+                info: info.clone(),
                 doc: doc.clone(),
                 name: name.clone(),
                 params,
@@ -220,7 +220,7 @@ impl Lift for tst::Def {
             });
 
             ust::Def {
-                info: info.forget(),
+                info: info.clone(),
                 doc: doc.clone(),
                 name: name.clone(),
                 hidden: *hidden,
@@ -240,7 +240,7 @@ impl Lift for tst::Codef {
         let tst::Codef { info, doc, name, hidden, params, typ, body } = self;
 
         params.lift_telescope(ctx, |ctx, params| ust::Codef {
-            info: info.forget(),
+            info: info.clone(),
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -257,7 +257,7 @@ impl Lift for tst::Match {
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let tst::Match { info, cases, omit_absurd } = self;
 
-        ust::Match { info: info.forget(), cases: cases.lift(ctx), omit_absurd: *omit_absurd }
+        ust::Match { info: info.clone(), cases: cases.lift(ctx), omit_absurd: *omit_absurd }
     }
 }
 
@@ -267,7 +267,7 @@ impl Lift for tst::Comatch {
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let tst::Comatch { info, cases, omit_absurd } = self;
 
-        ust::Comatch { info: info.forget(), cases: cases.lift(ctx), omit_absurd: *omit_absurd }
+        ust::Comatch { info: info.clone(), cases: cases.lift(ctx), omit_absurd: *omit_absurd }
     }
 }
 
@@ -278,7 +278,7 @@ impl Lift for tst::Case {
         let tst::Case { info, name, args, body } = self;
 
         args.lift_telescope(ctx, |ctx, args| ust::Case {
-            info: info.forget(),
+            info: info.clone(),
             name: name.clone(),
             args,
             body: body.lift(ctx),
@@ -293,7 +293,7 @@ impl Lift for tst::Cocase {
         let tst::Cocase { info, name, params, body } = self;
 
         params.lift_telescope(ctx, |ctx, params| ust::Cocase {
-            info: info.forget(),
+            info: info.clone(),
             name: name.clone(),
             params,
             body: body.lift(ctx),
@@ -309,7 +309,7 @@ impl LiftTelescope for tst::SelfParam {
 
         ctx.bind_single((), |ctx| {
             let self_param =
-                ust::SelfParam { info: info.forget(), name: name.clone(), typ: typ.lift(ctx) };
+                ust::SelfParam { info: info.clone(), name: name.clone(), typ: typ.lift(ctx) };
             f(ctx, self_param)
         })
     }
@@ -369,7 +369,7 @@ impl Lift for tst::Motive {
         let param = param.lift(ctx);
 
         ctx.bind_single((), |ctx| ust::Motive {
-            info: info.forget(),
+            info: info.clone(),
             param,
             ret_typ: ret_typ.lift(ctx),
         })
@@ -524,13 +524,13 @@ impl Ctx {
         let name = self.unique_def_name(name, &info.typ.name);
 
         let def = ust::Def {
-            info: ust::Info::empty(),
+            info: None,
             doc: None,
             name: name.clone(),
             hidden: false,
             params: telescope,
             self_param: ust::SelfParam {
-                info: ust::Info::empty(),
+                info: None,
                 name: motive.as_ref().map(|m| m.param.name.clone()),
                 typ: self_typ,
             },
@@ -541,7 +541,7 @@ impl Ctx {
         self.new_decls.push(ust::Decl::Def(def));
 
         // Replace the match by a destructor call of the new top-level definition
-        ust::Exp::Dtor { info: ust::Info::empty(), exp: on_exp.lift(self), name, args }
+        ust::Exp::Dtor { info: None, exp: on_exp.lift(self), name, args }
     }
 
     fn lift_comatch(
@@ -581,7 +581,7 @@ impl Ctx {
         let name = self.unique_codef_name(name, &info.typ.name);
 
         let codef = ust::Codef {
-            info: ust::Info::empty(),
+            info: None,
             doc: None,
             name: name.clone(),
             hidden: false,
@@ -593,7 +593,7 @@ impl Ctx {
         self.new_decls.push(ust::Decl::Codef(codef));
 
         // Replace the comatch by a call of the new top-level definition
-        ust::Exp::Ctor { info: ust::Info::empty(), name, args }
+        ust::Exp::Ctor { info: None, name, args }
     }
 
     /// Set the current declaration

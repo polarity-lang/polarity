@@ -8,6 +8,7 @@ use syntax::ust;
 use syntax::ust::util::Instantiate;
 
 use crate::result::XfuncError;
+use codespan::Span;
 
 #[derive(Debug, Clone)]
 pub struct Prg {
@@ -18,7 +19,7 @@ pub struct Prg {
 #[derive(Debug, Clone)]
 pub struct XData {
     pub repr: Repr,
-    pub info: ust::Info,
+    pub info: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub typ: Rc<ust::TypAbs>,
@@ -228,7 +229,7 @@ impl XData {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let data = ust::Data {
-            info: ust::Info::empty(),
+            info: None,
             doc: doc.clone(),
             name: name.clone(),
             hidden: false,
@@ -249,7 +250,7 @@ impl XData {
                             omit_absurd = true;
                         }
                         body.map(|body| ust::Case {
-                            info: ust::Info::empty(),
+                            info: None,
                             name: ctor.name.clone(),
                             args: ctor.params.instantiate(),
                             body,
@@ -258,14 +259,14 @@ impl XData {
                     .collect();
 
                 ust::Def {
-                    info: ust::Info::empty(),
+                    info: None,
                     doc: dtor.doc.clone(),
                     name: dtor.name.clone(),
                     hidden: false,
                     params: dtor.params.clone(),
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
-                    body: ust::Match { cases, info: ust::Info::empty(), omit_absurd },
+                    body: ust::Match { cases, info: None, omit_absurd },
                 }
             })
             .collect();
@@ -279,7 +280,7 @@ impl XData {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let codata = ust::Codata {
-            info: ust::Info::empty(),
+            info: None,
             doc: doc.clone(),
             name: name.clone(),
             hidden: false,
@@ -309,7 +310,7 @@ impl XData {
                             omit_absurd = true;
                         }
                         body.map(|body| ust::Cocase {
-                            info: ust::Info::empty(),
+                            info: None,
                             name: dtor.name.clone(),
                             params: dtor.params.instantiate(),
                             body,
@@ -318,13 +319,13 @@ impl XData {
                     .collect();
 
                 ust::Codef {
-                    info: ust::Info::empty(),
+                    info: None,
                     doc: ctor.doc.clone(),
                     name: ctor.name.clone(),
                     hidden: false,
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
-                    body: ust::Comatch { cases, info: ust::Info::empty(), omit_absurd },
+                    body: ust::Comatch { cases, info: None, omit_absurd },
                 }
             })
             .collect();

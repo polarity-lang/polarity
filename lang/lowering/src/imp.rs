@@ -125,7 +125,7 @@ impl Lower for cst::Data {
         ctx.add_decls(ctor_decls)?;
 
         Ok(ust::Data {
-            info: info.lower_pure(),
+            info: Some(info.span),
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -148,7 +148,7 @@ impl Lower for cst::Codata {
         ctx.add_decls(dtor_decls)?;
 
         Ok(ust::Codata {
-            info: info.lower_pure(),
+            info: Some(info.span),
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -193,7 +193,7 @@ impl Lower for cst::Ctor {
                 None => {
                     if type_arity == 0 {
                         ust::TypApp {
-                            info: ust::Info::empty(),
+                            info: None,
                             name: typ_name.clone(),
                             args: ust::Args { args: vec![] },
                         }
@@ -208,7 +208,7 @@ impl Lower for cst::Ctor {
             };
 
             Ok(ust::Ctor {
-                info: info.lower_pure(),
+                info: Some(info.span),
                 doc: doc.clone(),
                 name: name.clone(),
                 params,
@@ -275,7 +275,7 @@ impl Lower for cst::Dtor {
 
             self_param.lower_telescope(ctx, |ctx, self_param| {
                 Ok(ust::Dtor {
-                    info: info.lower_pure(),
+                    info: Some(info.span),
                     doc: doc.clone(),
                     name: name.clone(),
                     params,
@@ -300,7 +300,7 @@ impl Lower for cst::Def {
 
             self_param.lower_telescope(ctx, |ctx, self_param| {
                 Ok(ust::Def {
-                    info: info.lower_pure(),
+                    info: Some(info.span),
                     doc: doc.clone(),
                     name: name.clone(),
                     hidden: *hidden,
@@ -322,7 +322,7 @@ impl Lower for cst::Codef {
 
         params.lower_telescope(ctx, |ctx, params| {
             Ok(ust::Codef {
-                info: info.lower_pure(),
+                info: Some(info.span),
                 doc: doc.clone(),
                 name: name.clone(),
                 hidden: *hidden,
@@ -341,7 +341,7 @@ impl Lower for cst::Match {
         let cst::Match { info, cases, omit_absurd } = self;
 
         Ok(ust::Match {
-            info: info.lower_pure(),
+            info: Some(info.span),
             cases: cases.lower_in_ctx(ctx)?,
             omit_absurd: *omit_absurd,
         })
@@ -355,7 +355,7 @@ impl Lower for cst::Comatch {
         let cst::Comatch { info, cases, omit_absurd } = self;
 
         Ok(ust::Comatch {
-            info: info.lower_pure(),
+            info: Some(info.span),
             cases: cases.lower_in_ctx(ctx)?,
             omit_absurd: *omit_absurd,
         })
@@ -370,7 +370,7 @@ impl Lower for cst::Case {
 
         args.lower_telescope(ctx, |ctx, args| {
             Ok(ust::Case {
-                info: info.lower_pure(),
+                info: Some(info.span),
                 name: name.clone(),
                 args,
                 body: body.lower_in_ctx(ctx)?,
@@ -387,7 +387,7 @@ impl Lower for cst::Cocase {
 
         args.lower_telescope(ctx, |ctx, args| {
             Ok(ust::Cocase {
-                info: info.lower_pure(),
+                info: Some(info.span),
                 name: name.clone(),
                 params: args,
                 body: body.lower_in_ctx(ctx)?,
@@ -403,7 +403,7 @@ impl Lower for cst::TypApp {
         let cst::TypApp { info, name, args } = self;
 
         Ok(ust::TypApp {
-            info: info.lower_pure(),
+            info: Some(info.span),
             name: name.clone(),
             args: ust::Args { args: args.lower_in_ctx(ctx)? },
         })
@@ -417,14 +417,14 @@ impl Lower for cst::Exp {
         match self {
             cst::Exp::Call { info, name, args } => match ctx.lookup(name, info)? {
                 Elem::Bound(lvl) => Ok(ust::Exp::Var {
-                    info: info.lower_pure(),
+                    info: Some(info.span),
                     name: name.clone(),
                     ctx: (),
                     idx: ctx.level_to_index(lvl),
                 }),
                 Elem::Decl(meta) => match meta.kind() {
                     DeclKind::Data | DeclKind::Codata => Ok(ust::Exp::TypCtor {
-                        info: info.lower_pure(),
+                        info: Some(info.span),
                         name: name.to_owned(),
                         args: ust::Args { args: args.lower_in_ctx(ctx)? },
                     }),
@@ -433,7 +433,7 @@ impl Lower for cst::Exp {
                         span: info.span.to_miette(),
                     }),
                     DeclKind::Codef | DeclKind::Ctor => Ok(ust::Exp::Ctor {
-                        info: info.lower_pure(),
+                        info: Some(info.span),
                         name: name.to_owned(),
                         args: ust::Args { args: args.lower_in_ctx(ctx)? },
                     }),
@@ -446,7 +446,7 @@ impl Lower for cst::Exp {
                 }),
                 Elem::Decl(meta) => match meta.kind() {
                     DeclKind::Def | DeclKind::Dtor => Ok(ust::Exp::Dtor {
-                        info: info.lower_pure(),
+                        info: Some(info.span),
                         exp: exp.lower_in_ctx(ctx)?,
                         name: name.clone(),
                         args: ust::Args { args: args.lower_in_ctx(ctx)? },
@@ -458,13 +458,13 @@ impl Lower for cst::Exp {
                 },
             },
             cst::Exp::Anno { info, exp, typ } => Ok(ust::Exp::Anno {
-                info: info.lower_pure(),
+                info: Some(info.span),
                 exp: exp.lower_in_ctx(ctx)?,
                 typ: typ.lower_in_ctx(ctx)?,
             }),
-            cst::Exp::Type { info } => Ok(ust::Exp::Type { info: info.lower_pure() }),
+            cst::Exp::Type { info } => Ok(ust::Exp::Type { info: Some(info.span) }),
             cst::Exp::Match { info, name, on_exp, motive, body } => Ok(ust::Exp::Match {
-                info: info.lower_pure(),
+                info: Some(info.span),
                 ctx: (),
                 name: ctx.unique_label(name.to_owned(), info)?,
                 on_exp: on_exp.lower_in_ctx(ctx)?,
@@ -473,18 +473,18 @@ impl Lower for cst::Exp {
                 body: body.lower_in_ctx(ctx)?,
             }),
             cst::Exp::Comatch { info, name, is_lambda_sugar, body } => Ok(ust::Exp::Comatch {
-                info: info.lower_pure(),
+                info: Some(info.span),
                 ctx: (),
                 name: ctx.unique_label(name.to_owned(), info)?,
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.lower_in_ctx(ctx)?,
             }),
             cst::Exp::Hole { info, kind } => {
-                Ok(ust::Exp::Hole { info: info.lower_pure(), kind: *kind })
+                Ok(ust::Exp::Hole { info: Some(info.span), kind: *kind })
             }
             cst::Exp::NatLit { info, val } => {
                 let mut out = ust::Exp::Ctor {
-                    info: info.lower_pure(),
+                    info: Some(info.span),
                     name: "Z".to_owned(),
                     args: ust::Args { args: vec![] },
                 };
@@ -494,7 +494,7 @@ impl Lower for cst::Exp {
                 while &i != val {
                     i += 1usize;
                     out = ust::Exp::Ctor {
-                        info: info.lower_pure(),
+                        info: Some(info.span),
                         name: "S".to_owned(),
                         args: ust::Args { args: vec![Rc::new(out)] },
                     };
@@ -503,7 +503,7 @@ impl Lower for cst::Exp {
                 Ok(out)
             }
             cst::Exp::Fun { info, from, to } => Ok(ust::Exp::TypCtor {
-                info: info.lower_pure(),
+                info: Some(info.span),
                 name: "Fun".to_owned(),
                 args: ust::Args { args: vec![from.lower_in_ctx(ctx)?, to.lower_in_ctx(ctx)?] },
             }),
@@ -546,9 +546,9 @@ impl Lower for cst::Motive {
         let cst::Motive { info, param, ret_typ } = self;
 
         Ok(ust::Motive {
-            info: info.lower_pure(),
+            info: Some(info.span),
             param: ust::ParamInst {
-                info: param.info.lower_pure(),
+                info: Some(param.info.span),
                 name: param.name().clone(),
                 typ: (),
             },
@@ -592,7 +592,7 @@ impl LowerTelescope for cst::SelfParam {
         let cst::SelfParam { info, name, typ } = self;
         let typ_out = typ.lower_in_ctx(ctx)?;
         ctx.bind_single(name.clone().unwrap_or_default(), |ctx| {
-            f(ctx, ust::SelfParam { info: info.lower_pure(), name: name.clone(), typ: typ_out })
+            f(ctx, ust::SelfParam { info: Some(info.span), name: name.clone(), typ: typ_out })
         })
     }
 }
@@ -659,19 +659,11 @@ impl LowerTelescope for cst::TelescopeInst {
                 let mut params_out = params_out?;
                 let cst::ParamInst { info, name } = param;
                 let param_out =
-                    ust::ParamInst { info: info.lower_pure(), name: name.name().clone(), typ: () };
+                    ust::ParamInst { info: Some(info.span), name: name.name().clone(), typ: () };
                 params_out.push(param_out);
                 Ok(params_out)
             },
             |ctx, params| f(ctx, params.map(|params| ust::TelescopeInst { params })?),
         )
-    }
-}
-
-impl LowerPure for cst::Info {
-    type Target = ust::Info;
-
-    fn lower_pure(&self) -> Self::Target {
-        ust::Info { span: Some(self.span) }
     }
 }

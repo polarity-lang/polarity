@@ -143,11 +143,7 @@ impl ReadBack for val::Closure {
         let args: Vec<Rc<val::Val>> = (0..self.n_args)
             .rev()
             .map(|snd| val::Val::Neu {
-                exp: val::Neu::Var {
-                    info: val::Info::empty(),
-                    name: "".to_owned(),
-                    idx: Idx { fst: 0, snd },
-                },
+                exp: val::Neu::Var { info: None, name: "".to_owned(), idx: Idx { fst: 0, snd } },
             })
             .map(Rc::new)
             .collect();

@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use codespan::Span;
 use syntax::common::*;
 use syntax::ctx::{BindContext, Context};
 use syntax::ust::{self, Exp, Prg, Type};
@@ -63,14 +64,14 @@ impl Eval for Exp {
 
 fn eval_dtor(
     prg: &Prg,
-    info: &ust::Info,
+    info: &Option<Span>,
     exp: Rc<Val>,
     dtor_name: &str,
     dtor_args: Vec<Rc<Val>>,
 ) -> Result<Rc<Val>, EvalError> {
     match (*exp).clone() {
         Val::Ctor { name: ctor_name, args: ctor_args, info } => {
-            let type_decl = prg.decls.type_decl_for_member(&ctor_name, info.span)?;
+            let type_decl = prg.decls.type_decl_for_member(&ctor_name, info)?;
             match type_decl {
                 Type::Data(_) => {
                     let ust::Def { body, .. } = prg.decls.def(dtor_name, None)?;
@@ -108,12 +109,7 @@ fn eval_match(
     match (*on_exp).clone() {
         Val::Ctor { name: ctor_name, args, .. } => beta_match(prg, body, &ctor_name, &args),
         Val::Neu { exp } => Ok(Rc::new(Val::Neu {
-            exp: Neu::Match {
-                info: val::Info::empty(),
-                name: match_name.to_owned(),
-                on_exp: Rc::new(exp),
-                body,
-            },
+            exp: Neu::Match { info: None, name: match_name.to_owned(), on_exp: Rc::new(exp), body },
         })),
         _ => unreachable!(),
     }

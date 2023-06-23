@@ -1,5 +1,6 @@
 use crate::ctx::*;
 use crate::generic::*;
+use codespan::Span;
 use parser::cst::Ident;
 
 use std::rc::Rc;
@@ -23,7 +24,7 @@ pub trait MapCtxExt<P: Phase> {
 
     fn ctx_map_self_param<X, F>(
         &mut self,
-        info: P::Info,
+        info: Option<Span>,
         name: Option<Ident>,
         typ: TypApp<P>,
         f_inner: F,
@@ -86,7 +87,7 @@ where
 
     fn ctx_map_self_param<X, F>(
         &mut self,
-        info: P::Info,
+        info: Option<Span>,
         name: Option<Ident>,
         typ: TypApp<P>,
         f_inner: F,

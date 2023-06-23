@@ -1,3 +1,4 @@
+use codespan::Span;
 use parser::cst::Ident;
 use syntax::common::*;
 use syntax::ctx::*;
@@ -54,7 +55,7 @@ where
 
     fn map_self_param<X, F>(
         &mut self,
-        info: <P as Phase>::Info,
+        info: Option<Span>,
         name: Option<Ident>,
         typ: TypApp<P>,
         f_inner: F,
@@ -73,13 +74,7 @@ where
         self.ctx_map_motive_param(param, f_inner)
     }
 
-    fn map_exp_var(
-        &mut self,
-        info: P::TypeInfo,
-        _name: Ident,
-        ctx: P::Ctx,
-        idx: Idx,
-    ) -> Exp<P> {
+    fn map_exp_var(&mut self, info: P::TypeInfo, _name: Ident, ctx: P::Ctx, idx: Idx) -> Exp<P> {
         Exp::Var { info, name: self.lookup(idx), ctx, idx }
     }
 

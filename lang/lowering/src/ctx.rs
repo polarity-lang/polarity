@@ -72,7 +72,7 @@ impl Ctx {
         if self.decls_map.contains_key(decl.name()) {
             return Err(LoweringError::AlreadyDefined {
                 name: decl.name().clone(),
-                span: decl.info().span.to_miette(),
+                span: decl.span().to_miette(),
             });
         }
         self.decls_map.insert(decl.name().clone(), decl);

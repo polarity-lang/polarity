@@ -4,10 +4,8 @@ use crate::common::*;
 
 use super::def::*;
 
-impl<P: Phase> HasInfo for Decl<P> {
-    type Info = P::Info;
-
-    fn info(&self) -> Self::Info {
+impl<P: Phase> HasSpan for Decl<P> {
+    fn span(&self) -> Option<Span> {
         match self {
             Decl::Data(data) => data.info.clone(),
             Decl::Codata(codata) => codata.info.clone(),
@@ -19,27 +17,19 @@ impl<P: Phase> HasInfo for Decl<P> {
     }
 }
 
-impl<P: Phase> HasInfo for Exp<P> {
-    type Info = P::TypeInfo;
-
-    fn info(&self) -> Self::Info {
-        match self {
-            Exp::Var { info, .. } => info.clone(),
-            Exp::TypCtor { info, .. } => info.clone(),
-            Exp::Ctor { info, .. } => info.clone(),
-            Exp::Dtor { info, .. } => info.clone(),
-            Exp::Anno { info, .. } => info.clone(),
-            Exp::Type { info } => info.clone(),
-            Exp::Match { info, .. } => info.clone().into(),
-            Exp::Comatch { info, .. } => info.clone().into(),
-            Exp::Hole { info, .. } => info.clone(),
-        }
-    }
-}
-
 impl<P: Phase> HasSpan for Exp<P> {
     fn span(&self) -> Option<Span> {
-        self.info().span()
+        match self {
+            Exp::Var { info, .. } => info.span(),
+            Exp::TypCtor { info, .. } => info.span(),
+            Exp::Ctor { info, .. } => info.span(),
+            Exp::Dtor { info, .. } => info.span(),
+            Exp::Anno { info, .. } => info.span(),
+            Exp::Type { info } => info.span(),
+            Exp::Match { info, .. } => info.span().into(),
+            Exp::Comatch { info, .. } => info.span().into(),
+            Exp::Hole { info, .. } => info.span(),
+        }
     }
 }
 

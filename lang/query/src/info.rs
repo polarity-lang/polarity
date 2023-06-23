@@ -88,7 +88,7 @@ impl Item {
 }
 
 impl Visitor<tst::TST> for InfoCollector {
-    fn visit_info(&mut self, info: &tst::Info) {
+    fn visit_info(&mut self, info: &Option<Span>) {
         self.add_info(info);
     }
 
@@ -98,31 +98,31 @@ impl Visitor<tst::TST> for InfoCollector {
 
     fn visit_data(
         &mut self,
-        info: &tst::Info,
+        info: &Option<Span>,
         _doc: &Option<DocComment>,
         name: &Ident,
         _hidden: bool,
         _typ: &Rc<tst::TypAbs>,
         _ctors: &[Ident],
     ) {
-        self.add_item_span(Item::Data(name.clone()), info.span.unwrap());
+        self.add_item_span(Item::Data(name.clone()), info.unwrap());
     }
 
     fn visit_codata(
         &mut self,
-        info: &tst::Info,
+        info: &Option<Span>,
         _doc: &Option<DocComment>,
         name: &Ident,
         _hidden: bool,
         _typ: &Rc<tst::TypAbs>,
         _dtors: &[Ident],
     ) {
-        self.add_item_span(Item::Data(name.clone()), info.span.unwrap());
+        self.add_item_span(Item::Data(name.clone()), info.unwrap());
     }
 
     fn visit_def(
         &mut self,
-        info: &tst::Info,
+        info: &Option<Span>,
         _doc: &Option<DocComment>,
         name: &Ident,
         _hidden: bool,
@@ -133,13 +133,13 @@ impl Visitor<tst::TST> for InfoCollector {
     ) {
         self.add_item_span(
             Item::Def { name: name.clone(), type_name: self_param.typ.name.clone() },
-            info.span.unwrap(),
+            info.unwrap(),
         );
     }
 
     fn visit_codef(
         &mut self,
-        info: &tst::Info,
+        info: &Option<Span>,
         _doc: &Option<DocComment>,
         name: &Ident,
         _hidden: bool,
@@ -149,13 +149,13 @@ impl Visitor<tst::TST> for InfoCollector {
     ) {
         self.add_item_span(
             Item::Codef { name: name.clone(), type_name: typ.name.clone() },
-            info.span.unwrap(),
+            info.unwrap(),
         )
     }
 }
 
 impl InfoCollector {
-    fn add_info(&mut self, _info: &tst::Info) {}
+    fn add_info(&mut self, _info: &Option<Span>) {}
 
     fn add_typed_info(&mut self, info: &tst::TypeInfo) {
         if let Some(span) = info.span {

@@ -1108,6 +1108,7 @@ checksum = "99227334921fae1a979cf0bfdfcc6b3e5ce376ef57e16fb6fb3ea2ed6095f80c"
 name = "lifting"
 version = "0.1.0"
 dependencies = [
+ "codespan",
  "data",
  "derivative",
  "parser",
@@ -1816,6 +1817,7 @@ checksum = "f162c6dd7b008981e4d40210aca20b4bd0f9b60ca9271061b07f78537722f2e1"
 name = "renaming"
 version = "0.1.0"
 dependencies = [
+ "codespan",
  "data",
  "parser",
  "syntax",
@@ -2871,6 +2873,7 @@ checksum = "9aec5da331524158c6d1a4ac0ab1541149c0b9505fde06423b02f5ef0106b9f0"
 name = "xfunc"
 version = "0.1.0"
 dependencies = [
+ "codespan",
  "data",
  "miette",
  "parser",

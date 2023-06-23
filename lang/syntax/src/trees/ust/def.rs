@@ -1,15 +1,13 @@
 use codespan::Span;
 
-use crate::common::*;
 use crate::trees::generic;
 
 #[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct UST;
 
 impl generic::Phase for UST {
-    type Info = Info;
-    type TypeInfo = Info;
-    type TypeAppInfo = Info;
+    type TypeInfo = Option<Span>;
+    type TypeAppInfo = Option<Span>;
 
     type InfTyp = ();
     type Ctx = ();
@@ -39,20 +37,3 @@ pub type TelescopeInst = generic::TelescopeInst<UST>;
 pub type Args = generic::Args<UST>;
 pub type Param = generic::Param<UST>;
 pub type ParamInst = generic::ParamInst<UST>;
-
-#[derive(Default, Debug, Clone)]
-pub struct Info {
-    pub span: Option<Span>,
-}
-
-impl Info {
-    pub fn empty() -> Self {
-        Self { span: None }
-    }
-}
-
-impl HasSpan for Info {
-    fn span(&self) -> Option<Span> {
-        self.span
-    }
-}

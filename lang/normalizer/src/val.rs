@@ -5,6 +5,7 @@ use parser::cst::HoleKind;
 use parser::cst::Ident;
 
 use crate::env::*;
+use codespan::Span;
 use pretty::DocAllocator;
 use printer::theme::ThemeExt;
 use printer::tokens::*;
@@ -19,23 +20,23 @@ use syntax::ust;
 pub enum Val {
     TypCtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         name: Ident,
         args: Args,
     },
     Ctor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         name: Ident,
         args: Args,
     },
     Type {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
     },
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         name: Label,
         is_lambda_sugar: bool,
         // TODO: Ignore this field for PartialEq, Hash?
@@ -52,21 +53,21 @@ pub enum Val {
 pub enum Neu {
     Var {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         name: Ident,
         idx: Idx,
     },
     Dtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: ust::Info,
+        info: Option<Span>,
         exp: Rc<Neu>,
         name: Ident,
         args: Args,
     },
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         name: Label,
         on_exp: Rc<Neu>,
         // TODO: Ignore this field for PartialEq, Hash?
@@ -74,7 +75,7 @@ pub enum Neu {
     },
     Hole {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         kind: HoleKind,
     },
@@ -84,7 +85,7 @@ pub enum Neu {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Match {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Info,
+    pub info: Option<Span>,
     pub cases: Vec<Case>,
     pub omit_absurd: bool,
 }
@@ -93,7 +94,7 @@ pub struct Match {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Comatch {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Info,
+    pub info: Option<Span>,
     // TODO: Consider renaming this field to "cocases"
     pub cases: Vec<Cocase>,
     pub omit_absurd: bool,
@@ -103,7 +104,7 @@ pub struct Comatch {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Info,
+    pub info: Option<Span>,
     pub name: Ident,
     // TODO: Rename to params
     pub args: ust::TelescopeInst,
@@ -115,7 +116,7 @@ pub struct Case {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Cocase {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Info,
+    pub info: Option<Span>,
     pub name: Ident,
     // TODO: Rename to params
     pub args: ust::TelescopeInst,
@@ -125,12 +126,11 @@ pub struct Cocase {
 
 #[derive(Debug, Clone)]
 pub struct TypApp {
-    pub info: Info,
+    pub info: Option<Span>,
     pub name: Ident,
     pub args: Args,
 }
 
-pub type Info = ust::Info;
 pub type Args = Vec<Rc<Val>>;
 
 #[derive(Debug, Clone, Derivative)]
