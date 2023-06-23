@@ -132,7 +132,7 @@ pub struct Def<P: Phase> {
 impl<P: Phase> Def<P> {
     pub fn to_dtor(&self) -> Dtor<P> {
         Dtor {
-            info: self.info.clone(),
+            info: self.info,
             doc: self.doc.clone(),
             name: self.name.clone(),
             params: self.params.clone(),
@@ -158,7 +158,7 @@ pub struct Codef<P: Phase> {
 impl<P: Phase> Codef<P> {
     pub fn to_ctor(&self) -> Ctor<P> {
         Ctor {
-            info: self.info.clone(),
+            info: self.info,
             doc: self.doc.clone(),
             name: self.name.clone(),
             params: self.params.clone(),

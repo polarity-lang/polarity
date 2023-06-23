@@ -101,7 +101,7 @@ impl BuildMatrix for ust::Data {
 
         let xdata = XData {
             repr: Repr::Data,
-            info: info.clone(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             typ: typ.clone(),
@@ -125,7 +125,7 @@ impl BuildMatrix for ust::Codata {
 
         let xdata = XData {
             repr: Repr::Codata,
-            info: info.clone(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             typ: typ.clone(),

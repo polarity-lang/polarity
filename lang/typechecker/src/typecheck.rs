@@ -214,7 +214,7 @@ impl Infer for ust::Data {
         let typ_out = typ.infer(prg, ctx)?;
 
         Ok(tst::Data {
-            info: info.clone().into(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -234,7 +234,7 @@ impl Infer for ust::Codata {
         let typ_out = typ.infer(prg, ctx)?;
 
         Ok(tst::Codata {
-            info: info.clone().into(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -277,7 +277,7 @@ impl Infer for ust::Ctor {
             let typ_out = typ.infer(prg, ctx)?;
 
             Ok(tst::Ctor {
-                info: info.clone().into(),
+                info: *info,
                 doc: doc.clone(),
                 name: name.clone(),
                 params: params_out,
@@ -310,7 +310,7 @@ impl Infer for ust::Dtor {
                 let ret_typ_out = ret_typ.infer(prg, ctx)?;
 
                 Ok(tst::Dtor {
-                    info: info.clone().into(),
+                    info: *info,
                     doc: doc.clone(),
                     name: name.clone(),
                     params: params_out,
@@ -341,7 +341,7 @@ impl Infer for ust::Def {
 
             let body_out = body.with_scrutinee(self_param_nf).check(prg, ctx, ret_typ_nf)?;
             Ok(tst::Def {
-                info: info.clone().into(),
+                info: *info,
                 doc: doc.clone(),
                 name: name.clone(),
                 hidden: *hidden,
@@ -368,7 +368,7 @@ impl Infer for ust::Codef {
                 .with_destructee(Some(name.to_owned()), params.len(), typ_nf)
                 .infer(prg, ctx)?;
             Ok(tst::Codef {
-                info: info.clone().into(),
+                info: *info,
                 doc: doc.clone(),
                 name: name.clone(),
                 hidden: *hidden,
@@ -428,8 +428,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
             for name in ctors_missing.cloned() {
                 let ust::Ctor { params, .. } = prg.decls.ctor(&name, *info)?;
 
-                let case =
-                    ust::Case { info: info.clone(), name, args: params.instantiate(), body: None };
+                let case = ust::Case { info: *info, name, args: params.instantiate(), body: None };
                 cases.push((case, true));
             }
         }
@@ -458,7 +457,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
             }
         }
 
-        Ok(tst::Match { info: info.clone().into(), cases: cases_out, omit_absurd: *omit_absurd })
+        Ok(tst::Match { info: *info, cases: cases_out, omit_absurd: *omit_absurd })
     }
 }
 
@@ -506,12 +505,8 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
             for name in dtors_missing.cloned() {
                 let ust::Dtor { params, .. } = prg.decls.dtor(&name, *info)?;
 
-                let case = ust::Cocase {
-                    info: info.clone(),
-                    name,
-                    params: params.instantiate(),
-                    body: None,
-                };
+                let case =
+                    ust::Cocase { info: *info, name, params: params.instantiate(), body: None };
                 cases.push((case, true));
             }
         }
@@ -576,7 +571,7 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
             }
         }
 
-        Ok(tst::Comatch { info: info.clone().into(), cases: cases_out, omit_absurd: *omit_absurd })
+        Ok(tst::Comatch { info: *info, cases: cases_out, omit_absurd: *omit_absurd })
     }
 }
 
@@ -666,12 +661,7 @@ impl<'a> Check for WithEqns<'a, ust::Case> {
                     }
                 };
 
-                Ok(tst::Case {
-                    info: info.clone().into(),
-                    name: name.clone(),
-                    args: args_out,
-                    body: body_out,
-                })
+                Ok(tst::Case { info: *info, name: name.clone(), args: args_out, body: body_out })
             },
             *info,
         )
@@ -734,7 +724,7 @@ impl<'a> Check for WithEqns<'a, ust::Cocase> {
                 };
 
                 Ok(tst::Cocase {
-                    info: info.clone().into(),
+                    info: *info,
                     name: name.clone(),
                     params: args_out,
                     body: body_out,
@@ -793,7 +783,7 @@ impl Check for ust::Exp {
                             ret_typ.normalize(prg, &mut ctx.env())
                         })?;
                         motive_out = Some(tst::Motive {
-                            info: info.clone().into(),
+                            info: *info,
                             param: tst::ParamInst {
                                 info: param.info.with_type(self_t_nf),
                                 name: param.name.clone(),
@@ -1152,7 +1142,7 @@ impl ExpectTypApp for Rc<nf::Nf> {
     fn expect_typ_app(&self) -> Result<nf::TypApp, TypeError> {
         match &**self {
             nf::Nf::TypCtor { info, name, args } => {
-                Ok(nf::TypApp { info: info.clone(), name: name.clone(), args: args.clone() })
+                Ok(nf::TypApp { info: *info, name: name.clone(), args: args.clone() })
             }
             _ => Err(TypeError::expected_typ_app(self.clone())),
         }

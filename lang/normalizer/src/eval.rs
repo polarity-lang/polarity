@@ -29,33 +29,31 @@ impl Eval for Exp {
         let res = match self {
             Exp::Var { idx, .. } => env.lookup(*idx),
             Exp::TypCtor { info, name, args } => Rc::new(Val::TypCtor {
-                info: info.clone(),
+                info: *info,
                 name: name.clone(),
                 args: args.eval(prg, env)?,
             }),
-            Exp::Ctor { info, name, args } => Rc::new(Val::Ctor {
-                info: info.clone(),
-                name: name.clone(),
-                args: args.eval(prg, env)?,
-            }),
+            Exp::Ctor { info, name, args } => {
+                Rc::new(Val::Ctor { info: *info, name: name.clone(), args: args.eval(prg, env)? })
+            }
             Exp::Dtor { info, exp, name, args } => {
                 let exp = exp.eval(prg, env)?;
                 let args = args.eval(prg, env)?;
                 eval_dtor(prg, info, exp, name, args)?
             }
             Exp::Anno { exp, .. } => exp.eval(prg, env)?,
-            Exp::Type { info } => Rc::new(Val::Type { info: info.clone() }),
+            Exp::Type { info } => Rc::new(Val::Type { info: *info }),
             Exp::Match { name, on_exp, body, .. } => {
                 eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?
             }
             Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => Rc::new(Val::Comatch {
-                info: info.clone(),
+                info: *info,
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.eval(prg, env)?,
             }),
             Exp::Hole { info, kind } => {
-                Rc::new(Val::Neu { exp: Neu::Hole { info: info.clone(), kind: *kind } })
+                Rc::new(Val::Neu { exp: Neu::Hole { info: *info, kind: *kind } })
             }
         };
         Ok(res)
@@ -90,7 +88,7 @@ fn eval_dtor(
         Val::Comatch { body, .. } => beta_comatch(prg, body, dtor_name, &dtor_args),
         Val::Neu { exp } => Ok(Rc::new(Val::Neu {
             exp: Neu::Dtor {
-                info: info.clone(),
+                info: *info,
                 exp: Rc::new(exp),
                 name: dtor_name.to_owned(),
                 args: dtor_args,
@@ -147,11 +145,7 @@ impl Eval for ust::Match {
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
         let ust::Match { info, cases, omit_absurd } = self;
 
-        Ok(val::Match {
-            info: info.clone(),
-            cases: cases.eval(prg, env)?,
-            omit_absurd: *omit_absurd,
-        })
+        Ok(val::Match { info: *info, cases: cases.eval(prg, env)?, omit_absurd: *omit_absurd })
     }
 }
 
@@ -161,11 +155,7 @@ impl Eval for ust::Comatch {
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
         let ust::Comatch { info, cases, omit_absurd } = self;
 
-        Ok(val::Comatch {
-            info: info.clone(),
-            cases: cases.eval(prg, env)?,
-            omit_absurd: *omit_absurd,
-        })
+        Ok(val::Comatch { info: *info, cases: cases.eval(prg, env)?, omit_absurd: *omit_absurd })
     }
 }
 
@@ -181,7 +171,7 @@ impl Eval for ust::Case {
             env: env.clone(),
         });
 
-        Ok(val::Case { info: info.clone(), name: name.clone(), args: args.clone(), body })
+        Ok(val::Case { info: *info, name: name.clone(), args: args.clone(), body })
     }
 }
 
@@ -197,7 +187,7 @@ impl Eval for ust::Cocase {
             env: env.clone(),
         });
 
-        Ok(val::Cocase { info: info.clone(), name: name.clone(), args: args.clone(), body })
+        Ok(val::Cocase { info: *info, name: name.clone(), args: args.clone(), body })
     }
 }
 
@@ -207,7 +197,7 @@ impl Eval for ust::TypApp {
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
         let ust::TypApp { info, name, args } = self;
 
-        Ok(val::TypApp { info: info.clone(), name: name.clone(), args: args.eval(prg, env)? })
+        Ok(val::TypApp { info: *info, name: name.clone(), args: args.eval(prg, env)? })
     }
 }
 

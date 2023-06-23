@@ -41,10 +41,10 @@ pub enum Nf {
 impl HasSpan for Nf {
     fn span(&self) -> Option<Span> {
         match self {
-            Nf::TypCtor { info, .. } => info.clone(),
-            Nf::Ctor { info, .. } => info.clone(),
-            Nf::Type { info } => info.clone(),
-            Nf::Comatch { info, .. } => info.clone(),
+            Nf::TypCtor { info, .. } => *info,
+            Nf::Ctor { info, .. } => *info,
+            Nf::Type { info } => *info,
+            Nf::Comatch { info, .. } => *info,
             Nf::Neu { exp } => exp.span(),
         }
     }
@@ -86,10 +86,10 @@ pub enum Neu {
 impl HasSpan for Neu {
     fn span(&self) -> Option<Span> {
         match self {
-            Neu::Var { info, .. } => info.clone(),
-            Neu::Dtor { info, .. } => info.clone(),
-            Neu::Match { info, .. } => info.clone(),
-            Neu::Hole { info, .. } => info.clone(),
+            Neu::Var { info, .. } => *info,
+            Neu::Dtor { info, .. } => *info,
+            Neu::Match { info, .. } => *info,
+            Neu::Hole { info, .. } => *info,
         }
     }
 }

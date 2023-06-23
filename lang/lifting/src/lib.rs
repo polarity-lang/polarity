@@ -131,7 +131,7 @@ impl Lift for tst::Data {
         let tst::Data { info, doc, name, hidden, typ, ctors } = self;
 
         ust::Data {
-            info: info.clone(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -148,7 +148,7 @@ impl Lift for tst::Codata {
         let tst::Codata { info, doc, name, hidden, typ, dtors } = self;
 
         ust::Codata {
-            info: info.clone(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -175,7 +175,7 @@ impl Lift for tst::Ctor {
         let tst::Ctor { info, doc, name, params, typ } = self;
 
         params.lift_telescope(ctx, |ctx, params| ust::Ctor {
-            info: info.clone(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             params,
@@ -196,7 +196,7 @@ impl Lift for tst::Dtor {
                 (self_param, ret_typ)
             });
             ust::Dtor {
-                info: info.clone(),
+                info: *info,
                 doc: doc.clone(),
                 name: name.clone(),
                 params,
@@ -220,7 +220,7 @@ impl Lift for tst::Def {
             });
 
             ust::Def {
-                info: info.clone(),
+                info: *info,
                 doc: doc.clone(),
                 name: name.clone(),
                 hidden: *hidden,
@@ -240,7 +240,7 @@ impl Lift for tst::Codef {
         let tst::Codef { info, doc, name, hidden, params, typ, body } = self;
 
         params.lift_telescope(ctx, |ctx, params| ust::Codef {
-            info: info.clone(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -257,7 +257,7 @@ impl Lift for tst::Match {
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let tst::Match { info, cases, omit_absurd } = self;
 
-        ust::Match { info: info.clone(), cases: cases.lift(ctx), omit_absurd: *omit_absurd }
+        ust::Match { info: *info, cases: cases.lift(ctx), omit_absurd: *omit_absurd }
     }
 }
 
@@ -267,7 +267,7 @@ impl Lift for tst::Comatch {
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let tst::Comatch { info, cases, omit_absurd } = self;
 
-        ust::Comatch { info: info.clone(), cases: cases.lift(ctx), omit_absurd: *omit_absurd }
+        ust::Comatch { info: *info, cases: cases.lift(ctx), omit_absurd: *omit_absurd }
     }
 }
 
@@ -278,7 +278,7 @@ impl Lift for tst::Case {
         let tst::Case { info, name, args, body } = self;
 
         args.lift_telescope(ctx, |ctx, args| ust::Case {
-            info: info.clone(),
+            info: *info,
             name: name.clone(),
             args,
             body: body.lift(ctx),
@@ -293,7 +293,7 @@ impl Lift for tst::Cocase {
         let tst::Cocase { info, name, params, body } = self;
 
         params.lift_telescope(ctx, |ctx, params| ust::Cocase {
-            info: info.clone(),
+            info: *info,
             name: name.clone(),
             params,
             body: body.lift(ctx),
@@ -308,8 +308,7 @@ impl LiftTelescope for tst::SelfParam {
         let tst::SelfParam { info, name, typ } = self;
 
         ctx.bind_single((), |ctx| {
-            let self_param =
-                ust::SelfParam { info: info.clone(), name: name.clone(), typ: typ.lift(ctx) };
+            let self_param = ust::SelfParam { info: *info, name: name.clone(), typ: typ.lift(ctx) };
             f(ctx, self_param)
         })
     }
@@ -368,11 +367,7 @@ impl Lift for tst::Motive {
 
         let param = param.lift(ctx);
 
-        ctx.bind_single((), |ctx| ust::Motive {
-            info: info.clone(),
-            param,
-            ret_typ: ret_typ.lift(ctx),
-        })
+        ctx.bind_single((), |ctx| ust::Motive { info: *info, param, ret_typ: ret_typ.lift(ctx) })
     }
 }
 

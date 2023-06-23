@@ -7,12 +7,12 @@ use super::def::*;
 impl<P: Phase> HasSpan for Decl<P> {
     fn span(&self) -> Option<Span> {
         match self {
-            Decl::Data(data) => data.info.clone(),
-            Decl::Codata(codata) => codata.info.clone(),
-            Decl::Ctor(ctor) => ctor.info.clone(),
-            Decl::Dtor(dtor) => dtor.info.clone(),
-            Decl::Def(def) => def.info.clone(),
-            Decl::Codef(codef) => codef.info.clone(),
+            Decl::Data(data) => data.info,
+            Decl::Codata(codata) => codata.info,
+            Decl::Ctor(ctor) => ctor.info,
+            Decl::Dtor(dtor) => dtor.info,
+            Decl::Def(def) => def.info,
+            Decl::Codef(codef) => codef.info,
         }
     }
 }
@@ -26,8 +26,8 @@ impl<P: Phase> HasSpan for Exp<P> {
             Exp::Dtor { info, .. } => info.span(),
             Exp::Anno { info, .. } => info.span(),
             Exp::Type { info } => info.span(),
-            Exp::Match { info, .. } => info.span().into(),
-            Exp::Comatch { info, .. } => info.span().into(),
+            Exp::Match { info, .. } => info.span(),
+            Exp::Comatch { info, .. } => info.span(),
             Exp::Hole { info, .. } => info.span(),
         }
     }

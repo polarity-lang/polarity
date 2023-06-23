@@ -1160,6 +1160,7 @@ dependencies = [
 name = "lowering"
 version = "0.1.0"
 dependencies = [
+ "codespan",
  "data",
  "miette",
  "miette_util",
