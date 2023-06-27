@@ -8,6 +8,7 @@ use data::HashSet;
 use miette_util::ToMiette;
 use normalizer::env::ToEnv;
 use normalizer::normalize::Normalize;
+use parser::cst::{HoleKind, Ident};
 use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, Context, LevelCtx};

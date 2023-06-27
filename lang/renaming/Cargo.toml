@@ -9,3 +9,4 @@ edition = "2021"
 # workspace members
 data = { path = "../../util/data" }
 syntax = { path = "../syntax" }
+parser = { path = "../parser" }

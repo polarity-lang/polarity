@@ -2,6 +2,7 @@ use data::HashMap;
 use data::HashSet;
 
 use crate::common::*;
+use parser::cst::Ident;
 
 /// Metadata on declarations
 #[derive(Debug, Clone, Default)]

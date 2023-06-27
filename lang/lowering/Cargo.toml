@@ -12,6 +12,7 @@ thiserror = "1"
 # big integers
 num-bigint = "0.4"
 # workspace members
+parser = { path = "../parser" }
 data = { path = "../../util/data" }
 syntax = { path = "../syntax" }
 miette_util = { path = "../../util/miette_util" }

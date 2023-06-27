@@ -4,6 +4,7 @@ use derivative::Derivative;
 
 use crate::common::*;
 use crate::ust;
+use parser::cst::{HoleKind, Ident};
 
 /// The syntax of normal forms
 #[derive(Debug, Clone, Derivative)]

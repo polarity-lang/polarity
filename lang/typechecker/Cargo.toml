@@ -10,6 +10,7 @@ thiserror = "1"
 # source code locations
 codespan = "0.11"
 # workspace members
+parser = { path = "../parser" }
 data = { path = "../../util/data" }
 tracer = { path = "../../util/tracer" }
 syntax = { path = "../syntax" }

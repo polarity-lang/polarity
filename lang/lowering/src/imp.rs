@@ -3,8 +3,9 @@ use std::rc::Rc;
 use num_bigint::BigUint;
 
 use miette_util::ToMiette;
+use parser::cst;
+use parser::cst::BindingSite;
 use syntax::common::*;
-use syntax::cst;
 use syntax::ctx::{BindContext, Context};
 use syntax::generic::lookup_table;
 use syntax::ust;

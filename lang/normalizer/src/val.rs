@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
 use derivative::Derivative;
+use parser::cst::HoleKind;
+use parser::cst::Ident;
 
 use crate::env::*;
 use pretty::DocAllocator;
@@ -287,8 +289,8 @@ impl<'a> Print<'a> for Neu {
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
             Neu::Hole { info: _, kind } => match kind {
-                syntax::common::HoleKind::Todo => alloc.keyword(HOLE_TODO),
-                syntax::common::HoleKind::Omitted => alloc.keyword(HOLE_OMITTED),
+                HoleKind::Todo => alloc.keyword(HOLE_TODO),
+                HoleKind::Omitted => alloc.keyword(HOLE_OMITTED),
             },
         }
     }

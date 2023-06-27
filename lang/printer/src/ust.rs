@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use pretty::DocAllocator;
 
+use parser::cst::{DocComment, HoleKind};
 use syntax::common::*;
 use syntax::generic::Item;
 use syntax::ust::*;

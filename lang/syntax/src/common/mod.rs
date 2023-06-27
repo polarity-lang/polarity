@@ -15,7 +15,7 @@ pub use forget::*;
 pub use named::*;
 pub use subst::*;
 
-pub type Ident = String;
+use parser::cst::Ident;
 
 pub trait HasSpan {
     fn span(&self) -> Option<Span>;
@@ -25,12 +25,6 @@ pub trait HasInfo {
     type Info;
 
     fn info(&self) -> Self::Info;
-}
-
-#[derive(Debug, Clone)]
-pub enum BindingSite {
-    Var { name: Ident },
-    Wildcard,
 }
 
 #[derive(Debug, Clone, Derivative)]
@@ -73,15 +67,4 @@ impl fmt::Display for DeclKind {
             DeclKind::Dtor => write!(f, "destructor"),
         }
     }
-}
-
-#[derive(Debug, Clone)]
-pub struct DocComment {
-    pub docs: Vec<String>,
-}
-
-#[derive(Debug, Copy, Clone)]
-pub enum HoleKind {
-    Todo,
-    Omitted,
 }

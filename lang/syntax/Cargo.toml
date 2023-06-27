@@ -16,6 +16,7 @@ num-bigint = "0.4"
 # lazy static
 lazy_static = "1.4.0"
 # workspace members
+parser = { path = "../parser" }
 data = { path = "../../util/data" }
 console = { path = "../../util/console" }
 miette_util = { path = "../../util/miette_util" }

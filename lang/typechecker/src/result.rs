@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use miette::{Diagnostic, SourceSpan};
 use miette_util::ToMiette;
+use parser::cst::Ident;
 use thiserror::Error;
 
 use data::string::{comma_separated, separated};

@@ -1,7 +1,8 @@
 use data::{HashMap, HashSet};
 use miette_util::ToMiette;
+use parser::cst;
+use parser::cst::{BindingSite, Ident};
 use syntax::common::*;
-use syntax::cst;
 use syntax::ctx::{Context, ContextElem};
 use syntax::generic::lookup_table;
 use syntax::ust;

@@ -7,6 +7,7 @@ use codespan::Span;
 use crate::common::*;
 use crate::ctx::values::TypeCtx;
 use crate::nf;
+use parser::cst::Ident;
 
 use super::generic;
 use super::ust;

@@ -8,6 +8,7 @@ use thiserror::Error;
 use data::string::comma_separated;
 
 use crate::common::*;
+use parser::cst::Ident;
 
 use super::def::*;
 use super::lookup_table;

@@ -5,6 +5,7 @@ use derivative::Derivative;
 
 use data::{HashMap, HashSet};
 
+use parser::cst::Ident;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;

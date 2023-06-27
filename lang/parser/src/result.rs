@@ -3,7 +3,13 @@ use lalrpop_util::lexer::Token;
 use miette::{Diagnostic, SourceOffset, SourceSpan};
 use thiserror::Error;
 
-use data::string::comma_separated;
+fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
+    let vec: Vec<_> = iter.into_iter().collect();
+    vec.join(s)
+}
+fn comma_separated<I: IntoIterator<Item = String>>(iter: I) -> String {
+    separated(", ", iter)
+}
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum ParseError {

@@ -2,6 +2,7 @@ use codespan::Span;
 
 use crate::common::*;
 use crate::trees::generic;
+use parser::cst::Ident;
 
 #[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct UST;

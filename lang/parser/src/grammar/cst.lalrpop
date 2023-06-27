@@ -2,8 +2,7 @@ use std::rc::Rc;
 
 use num_bigint::BigUint;
 
-use syntax::cst::*;
-use syntax::common::*;
+use crate::cst::*;
 
 use super::util::span;
 
