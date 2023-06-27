@@ -24,10 +24,7 @@ pub trait Lower {
 pub fn lower_prg(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
     let cst::Prg { items, exp } = prg;
 
-    let top_level_map = register_names(&items[..])?;
-
-    // Register names and metadata
-    let lookup_table = build_lookup_table(items);
+    let (top_level_map, lookup_table) = build_lookup_table(items)?;
 
     let mut ctx = Ctx::empty(top_level_map);
     // Lower definitions
@@ -40,9 +37,11 @@ pub fn lower_prg(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
     Ok(ust::Prg { decls: ust::Decls { map: ctx.decls_map, lookup_table }, exp })
 }
 
-/// Register names for all top-level declarations
-/// Returns definitions whose lowering has been deferred
-fn register_names(items: &[cst::Decl]) -> Result<HashMap<Ident, DeclMeta>, LoweringError> {
+/// Build the structure tracking the declaration order in the source code
+fn build_lookup_table(
+    items: &[cst::Decl],
+) -> Result<(HashMap<Ident, DeclMeta>, lookup_table::LookupTable), LoweringError> {
+    let mut lookup_table = lookup_table::LookupTable::default();
     let mut top_level_map = HashMap::default();
 
     let mut add_top_level_decl = |name: &Ident, decl_kind: DeclMeta| {
@@ -56,12 +55,19 @@ fn register_names(items: &[cst::Decl]) -> Result<HashMap<Ident, DeclMeta>, Lower
     for item in items {
         match item {
             cst::Decl::Data(data) => {
+                // top_level_map
                 add_top_level_decl(&data.name, DeclMeta::from(data))?;
                 for ctor in &data.ctors {
                     add_top_level_decl(&ctor.name, DeclMeta::Ctor { ret_typ: data.name.clone() })?;
                 }
+
+                // lookup_table
+                let mut typ_decl = lookup_table.add_type_decl(data.name.clone());
+                let xtors = data.ctors.iter().map(|ctor| ctor.name.clone());
+                typ_decl.set_xtors(xtors);
             }
             cst::Decl::Codata(codata) => {
+                // top_level_map
                 add_top_level_decl(&codata.name, DeclMeta::from(codata))?;
                 for dtor in &codata.dtors {
                     add_top_level_decl(
@@ -69,47 +75,32 @@ fn register_names(items: &[cst::Decl]) -> Result<HashMap<Ident, DeclMeta>, Lower
                         DeclMeta::Dtor { self_typ: codata.name.clone() },
                     )?;
                 }
-            }
-            cst::Decl::Def(def) => {
-                add_top_level_decl(&def.name, DeclMeta::from(def))?;
-            }
-            cst::Decl::Codef(codef) => {
-                add_top_level_decl(&codef.name, DeclMeta::from(codef))?;
-            }
-        }
-    }
 
-    Ok(top_level_map)
-}
-
-/// Build the structure tracking the declaration order in the source code
-fn build_lookup_table(items: &[cst::Decl]) -> lookup_table::LookupTable {
-    let mut lookup_table = lookup_table::LookupTable::default();
-
-    for item in items {
-        match item {
-            cst::Decl::Data(data) => {
-                let mut typ_decl = lookup_table.add_type_decl(data.name.clone());
-                let xtors = data.ctors.iter().map(|ctor| ctor.name.clone());
-                typ_decl.set_xtors(xtors);
-            }
-            cst::Decl::Codata(codata) => {
+                // lookup_table
                 let mut typ_decl = lookup_table.add_type_decl(codata.name.clone());
                 let xtors = codata.dtors.iter().map(|ctor| ctor.name.clone());
                 typ_decl.set_xtors(xtors);
             }
             cst::Decl::Def(def) => {
+                // top_level_map
+                add_top_level_decl(&def.name, DeclMeta::from(def))?;
+
+                // lookup_table
                 let type_name = def.scrutinee.typ.name.clone();
                 lookup_table.add_def(type_name, def.name.to_owned());
             }
             cst::Decl::Codef(codef) => {
+                // top_level_map
+                add_top_level_decl(&codef.name, DeclMeta::from(codef))?;
+
+                // lookup_table
                 let type_name = codef.typ.name.clone();
                 lookup_table.add_def(type_name, codef.name.to_owned())
             }
         }
     }
 
-    lookup_table
+    Ok((top_level_map, lookup_table))
 }
 
 impl Lower for cst::Decl {

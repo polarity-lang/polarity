@@ -139,7 +139,6 @@ pub enum Item {
     Def(Def),
 }
 
-
 /// A type declaration in the source
 #[derive(Debug, Clone)]
 pub struct Type {
