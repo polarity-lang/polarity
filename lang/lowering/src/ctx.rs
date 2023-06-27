@@ -32,10 +32,10 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    pub fn empty() -> Self {
+    pub fn empty(top_level_map: HashMap<Ident, DeclMeta>) -> Self {
         Self {
             local_map: HashMap::default(),
-            top_level_map: HashMap::default(),
+            top_level_map,
             decls_map: HashMap::default(),
             levels: Vec::new(),
             next_label_id: 0,
@@ -59,18 +59,6 @@ impl Ctx {
             name: name.to_owned(),
             span: info.to_miette(),
         })
-    }
-
-    pub fn add_top_level_decl(
-        &mut self,
-        name: &Ident,
-        decl_kind: DeclMeta,
-    ) -> Result<(), LoweringError> {
-        if self.top_level_map.contains_key(name) {
-            return Err(LoweringError::AlreadyDefined { name: name.to_owned(), span: None });
-        }
-        self.top_level_map.insert(name.clone(), decl_kind);
-        Ok(())
     }
 
     pub fn add_decls<I>(&mut self, decls: I) -> Result<(), LoweringError>

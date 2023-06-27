@@ -2,9 +2,11 @@ use std::rc::Rc;
 
 use num_bigint::BigUint;
 
+use data::HashMap;
 use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::BindingSite;
+use parser::cst::Ident;
 use syntax::common::*;
 use syntax::ctx::BindContext;
 use syntax::generic::lookup_table;
@@ -21,12 +23,13 @@ pub trait Lower {
 
 pub fn lower_prg(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
     let cst::Prg { items, exp } = prg;
-    let mut ctx = Ctx::empty();
+
+    let top_level_map = register_names(&items[..])?;
 
     // Register names and metadata
-    register_names(&mut ctx, &items[..])?;
     let lookup_table = build_lookup_table(items);
 
+    let mut ctx = Ctx::empty(top_level_map);
     // Lower definitions
     for item in items {
         item.lower(&mut ctx)?;
@@ -39,37 +42,44 @@ pub fn lower_prg(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
 
 /// Register names for all top-level declarations
 /// Returns definitions whose lowering has been deferred
-fn register_names(ctx: &mut Ctx, items: &[cst::Decl]) -> Result<(), LoweringError> {
+fn register_names(items: &[cst::Decl]) -> Result<HashMap<Ident, DeclMeta>, LoweringError> {
+    let mut top_level_map = HashMap::default();
+
+    let mut add_top_level_decl = |name: &Ident, decl_kind: DeclMeta| {
+        if top_level_map.contains_key(name) {
+            return Err(LoweringError::AlreadyDefined { name: name.to_owned(), span: None });
+        }
+        top_level_map.insert(name.clone(), decl_kind);
+        Ok(())
+    };
+
     for item in items {
         match item {
             cst::Decl::Data(data) => {
-                ctx.add_top_level_decl(&data.name, DeclMeta::from(data))?;
+                add_top_level_decl(&data.name, DeclMeta::from(data))?;
                 for ctor in &data.ctors {
-                    ctx.add_top_level_decl(
-                        &ctor.name,
-                        DeclMeta::Ctor { ret_typ: data.name.clone() },
-                    )?;
+                    add_top_level_decl(&ctor.name, DeclMeta::Ctor { ret_typ: data.name.clone() })?;
                 }
             }
             cst::Decl::Codata(codata) => {
-                ctx.add_top_level_decl(&codata.name, DeclMeta::from(codata))?;
+                add_top_level_decl(&codata.name, DeclMeta::from(codata))?;
                 for dtor in &codata.dtors {
-                    ctx.add_top_level_decl(
+                    add_top_level_decl(
                         &dtor.name,
                         DeclMeta::Dtor { self_typ: codata.name.clone() },
                     )?;
                 }
             }
             cst::Decl::Def(def) => {
-                ctx.add_top_level_decl(&def.name, DeclMeta::from(def))?;
+                add_top_level_decl(&def.name, DeclMeta::from(def))?;
             }
             cst::Decl::Codef(codef) => {
-                ctx.add_top_level_decl(&codef.name, DeclMeta::from(codef))?;
+                add_top_level_decl(&codef.name, DeclMeta::from(codef))?;
             }
         }
     }
 
-    Ok(())
+    Ok(top_level_map)
 }
 
 /// Build the structure tracking the declaration order in the source code
