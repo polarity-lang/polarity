@@ -8,13 +8,13 @@ pub trait Named {
     fn name(&self) -> &Ident;
 }
 
-impl Named for cst::Item {
+impl Named for cst::Decl {
     fn name(&self) -> &Ident {
         match self {
-            cst::Item::Data(cst::Data { name, .. }) => name,
-            cst::Item::Codata(cst::Codata { name, .. }) => name,
-            cst::Item::Def(cst::Def { name, .. }) => name,
-            cst::Item::Codef(cst::Codef { name, .. }) => name,
+            cst::Decl::Data(cst::Data { name, .. }) => name,
+            cst::Decl::Codata(cst::Codata { name, .. }) => name,
+            cst::Decl::Def(cst::Def { name, .. }) => name,
+            cst::Decl::Codef(cst::Codef { name, .. }) => name,
         }
     }
 }

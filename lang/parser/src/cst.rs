@@ -19,12 +19,12 @@ pub enum BindingSite {
 
 #[derive(Debug, Clone)]
 pub struct Prg {
-    pub items: Vec<Item>,
+    pub items: Vec<Decl>,
     pub exp: Option<Rc<Exp>>,
 }
 
 #[derive(Debug, Clone)]
-pub enum Item {
+pub enum Decl {
     Data(Data),
     Codata(Codata),
     Def(Def),

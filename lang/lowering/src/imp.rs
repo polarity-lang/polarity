@@ -39,10 +39,10 @@ pub fn lower_prg(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
 
 /// Register names for all top-level declarations
 /// Returns definitions whose lowering has been deferred
-fn register_names(ctx: &mut Ctx, items: &[cst::Item]) -> Result<(), LoweringError> {
+fn register_names(ctx: &mut Ctx, items: &[cst::Decl]) -> Result<(), LoweringError> {
     for item in items {
         match item {
-            cst::Item::Data(data) => {
+            cst::Decl::Data(data) => {
                 ctx.add_top_level_decl(&data.name, DeclMeta::from(data))?;
                 for ctor in &data.ctors {
                     ctx.add_top_level_decl(
@@ -51,7 +51,7 @@ fn register_names(ctx: &mut Ctx, items: &[cst::Item]) -> Result<(), LoweringErro
                     )?;
                 }
             }
-            cst::Item::Codata(codata) => {
+            cst::Decl::Codata(codata) => {
                 ctx.add_top_level_decl(&codata.name, DeclMeta::from(codata))?;
                 for dtor in &codata.dtors {
                     ctx.add_top_level_decl(
@@ -60,10 +60,10 @@ fn register_names(ctx: &mut Ctx, items: &[cst::Item]) -> Result<(), LoweringErro
                     )?;
                 }
             }
-            cst::Item::Def(def) => {
+            cst::Decl::Def(def) => {
                 ctx.add_top_level_decl(&def.name, DeclMeta::from(def))?;
             }
-            cst::Item::Codef(codef) => {
+            cst::Decl::Codef(codef) => {
                 ctx.add_top_level_decl(&codef.name, DeclMeta::from(codef))?;
             }
         }
@@ -73,26 +73,26 @@ fn register_names(ctx: &mut Ctx, items: &[cst::Item]) -> Result<(), LoweringErro
 }
 
 /// Build the structure tracking the declaration order in the source code
-fn build_lookup_table(items: &[cst::Item]) -> lookup_table::LookupTable {
+fn build_lookup_table(items: &[cst::Decl]) -> lookup_table::LookupTable {
     let mut lookup_table = lookup_table::LookupTable::default();
 
     for item in items {
         match item {
-            cst::Item::Data(data) => {
+            cst::Decl::Data(data) => {
                 let mut typ_decl = lookup_table.add_type_decl(data.name.clone());
                 let xtors = data.ctors.iter().map(|ctor| ctor.name.clone());
                 typ_decl.set_xtors(xtors);
             }
-            cst::Item::Codata(codata) => {
+            cst::Decl::Codata(codata) => {
                 let mut typ_decl = lookup_table.add_type_decl(codata.name.clone());
                 let xtors = codata.dtors.iter().map(|ctor| ctor.name.clone());
                 typ_decl.set_xtors(xtors);
             }
-            cst::Item::Def(def) => {
+            cst::Decl::Def(def) => {
                 let type_name = def.scrutinee.typ.name.clone();
                 lookup_table.add_def(type_name, def.name.to_owned());
             }
-            cst::Item::Codef(codef) => {
+            cst::Decl::Codef(codef) => {
                 let type_name = codef.typ.name.clone();
                 lookup_table.add_def(type_name, codef.name.to_owned())
             }
@@ -102,15 +102,15 @@ fn build_lookup_table(items: &[cst::Item]) -> lookup_table::LookupTable {
     lookup_table
 }
 
-impl Lower for cst::Item {
+impl Lower for cst::Decl {
     type Target = ();
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let decl = match self {
-            cst::Item::Data(data) => ust::Decl::Data(data.lower(ctx)?),
-            cst::Item::Codata(codata) => ust::Decl::Codata(codata.lower(ctx)?),
-            cst::Item::Def(def) => ust::Decl::Def(def.lower(ctx)?),
-            cst::Item::Codef(codef) => ust::Decl::Codef(codef.lower(ctx)?),
+            cst::Decl::Data(data) => ust::Decl::Data(data.lower(ctx)?),
+            cst::Decl::Codata(codata) => ust::Decl::Codata(codata.lower(ctx)?),
+            cst::Decl::Def(def) => ust::Decl::Def(def.lower(ctx)?),
+            cst::Decl::Codef(codef) => ust::Decl::Codef(codef.lower(ctx)?),
         };
         ctx.add_decl(decl)?;
         Ok(())

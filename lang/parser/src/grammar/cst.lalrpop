@@ -81,14 +81,14 @@ DocComment: DocComment = <docs: DocCommentHelper+> => DocComment { docs };
 // Program
 
 pub Prg: Prg = {
-    <items: Item*> <exp: Exp?> => Prg { items, exp },
+    <items: Decl*> <exp: Exp?> => Prg { items, exp },
 }
 
-pub Item: Item = {
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => Item::Data(Data { info: span(l, r), doc, name, hidden, params, ctors }),
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => Item::Codata(Codata { info: span(l, r), doc, name, hidden, params, dtors }),
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => Item::Def(Def { info: span(l, r), doc, name, hidden, params, scrutinee, ret_typ, body }),
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => Item::Codef(Codef { info: span(l, r), doc, name, hidden, params, typ, body }),
+pub Decl: Decl = {
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => Decl::Data(Data { info: span(l, r), doc, name, hidden, params, ctors }),
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => Decl::Codata(Codata { info: span(l, r), doc, name, hidden, params, dtors }),
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => Decl::Def(Def { info: span(l, r), doc, name, hidden, params, scrutinee, ret_typ, body }),
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => Decl::Codef(Codef { info: span(l, r), doc, name, hidden, params, typ, body }),
 }
 
 Ctor: Ctor = {

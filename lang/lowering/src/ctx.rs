@@ -258,13 +258,13 @@ impl From<&cst::Codef> for DeclMeta {
     }
 }
 
-impl From<&cst::Item> for DeclMeta {
-    fn from(decl: &cst::Item) -> Self {
+impl From<&cst::Decl> for DeclMeta {
+    fn from(decl: &cst::Decl) -> Self {
         match decl {
-            cst::Item::Data(data) => DeclMeta::from(data),
-            cst::Item::Codata(codata) => DeclMeta::from(codata),
-            cst::Item::Def(_def) => Self::Def,
-            cst::Item::Codef(_codef) => Self::Codef,
+            cst::Decl::Data(data) => DeclMeta::from(data),
+            cst::Decl::Codata(codata) => DeclMeta::from(codata),
+            cst::Decl::Def(_def) => Self::Def,
+            cst::Decl::Codef(_codef) => Self::Codef,
         }
     }
 }
