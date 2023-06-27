@@ -12,7 +12,12 @@ use syntax::ust;
 
 use super::ctx::*;
 use super::result::*;
-use super::types::*;
+
+pub trait Lower {
+    type Target;
+
+    fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError>;
+}
 
 pub fn lower(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
     let cst::Prg { items, exp } = prg;
