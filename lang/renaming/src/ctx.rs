@@ -17,10 +17,6 @@ impl Context for Ctx {
 
     type Var = Idx;
 
-    fn empty() -> Self {
-        Self { bound: vec![] }
-    }
-
     fn push_telescope(&mut self) {
         self.bound.push(vec![]);
     }
@@ -59,6 +55,10 @@ impl Ctx {
             name = increment_name(name);
         }
         name
+    }
+
+    pub fn empty() -> Self {
+        Self { bound: vec![] }
     }
 
     fn contains_name(&self, name: &Ident) -> bool {

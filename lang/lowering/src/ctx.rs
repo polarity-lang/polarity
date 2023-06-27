@@ -32,6 +32,18 @@ pub struct Ctx {
 }
 
 impl Ctx {
+
+    pub fn empty() -> Self {
+        Self {
+            local_map: HashMap::default(),
+            top_level_map: HashMap::default(),
+            decls_map: HashMap::default(),
+            levels: Vec::new(),
+            next_label_id: 0,
+            user_labels: HashSet::default(),
+        }
+    }
+
     pub fn lookup(&self, name: &str, info: &Span) -> Result<Elem, LoweringError> {
         Context::lookup(self, name.to_owned()).ok_or_else(|| LoweringError::UndefinedIdent {
             name: name.to_owned(),
@@ -139,17 +151,6 @@ impl Context for Ctx {
     type ElemOut = Option<Elem>;
 
     type Var = Ident;
-
-    fn empty() -> Self {
-        Self {
-            local_map: HashMap::default(),
-            top_level_map: HashMap::default(),
-            decls_map: HashMap::default(),
-            levels: Vec::new(),
-            next_label_id: 0,
-            user_labels: HashSet::default(),
-        }
-    }
 
     fn push_telescope(&mut self) {
         self.levels.push(0);

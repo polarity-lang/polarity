@@ -6,7 +6,7 @@ use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::BindingSite;
 use syntax::common::*;
-use syntax::ctx::{BindContext, Context};
+use syntax::ctx::{BindContext};
 use syntax::generic::lookup_table;
 use syntax::ust;
 
