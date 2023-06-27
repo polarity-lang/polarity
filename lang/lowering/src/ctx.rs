@@ -5,7 +5,6 @@ use parser::cst;
 use parser::cst::{BindingSite, Ident};
 use syntax::common::*;
 use syntax::ctx::{Context, ContextElem};
-use syntax::generic::lookup_table;
 use syntax::ust;
 
 use super::result::LoweringError;
@@ -22,7 +21,7 @@ pub struct Ctx {
     /// Metadata for top-level names
     top_level_map: HashMap<Ident, DeclMeta>,
     /// Accumulates top-level declarations
-    decls_map: HashMap<Ident, ust::Decl>,
+    pub decls_map: HashMap<Ident, ust::Decl>,
     /// Counts the number of entries for each De-Bruijn level
     levels: Vec<usize>,
     /// Counter for unique label ids
@@ -77,10 +76,6 @@ impl Ctx {
         }
         self.decls_map.insert(decl.name().clone(), decl);
         Ok(())
-    }
-
-    pub fn into_decls(self, lookup_table: lookup_table::LookupTable) -> ust::Decls {
-        ust::Decls { map: self.decls_map, lookup_table }
     }
 
     pub fn unique_label(

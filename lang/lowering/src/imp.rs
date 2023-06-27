@@ -37,7 +37,7 @@ pub fn lower_prg(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
 
     let exp = exp.lower(&mut ctx)?;
 
-    Ok(ust::Prg { decls: ctx.into_decls(lookup_table), exp })
+    Ok(ust::Prg { decls: ust::Decls { map: ctx.decls_map, lookup_table }, exp })
 }
 
 /// Register names for all top-level declarations
