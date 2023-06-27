@@ -261,7 +261,7 @@ pub enum LookupError {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[error("Expected {name} to be a data or codata type, but it is a {actual}")]
+    #[error("Expected {name} to be a data type or codata type, but it is a {actual}")]
     ExpectedDataCodata {
         name: String,
         actual: DeclKind,
