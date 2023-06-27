@@ -1,7 +1,6 @@
 use data::HashMap;
 use data::HashSet;
 
-use crate::common::*;
 use parser::cst::Ident;
 
 /// Metadata on declarations
@@ -140,14 +139,6 @@ pub enum Item {
     Def(Def),
 }
 
-impl Named for Item {
-    fn name(&self) -> &Ident {
-        match self {
-            Item::Type(Type { name, .. }) => name,
-            Item::Def(Def { name, .. }) => name,
-        }
-    }
-}
 
 /// A type declaration in the source
 #[derive(Debug, Clone)]
