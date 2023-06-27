@@ -129,7 +129,7 @@ impl Lower for cst::Data {
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
-            typ: Rc::new(ust::TypAbs { params: params.lower_in_ctx(ctx)? }),
+            typ: Rc::new(ust::TypAbs { params: params.lower_telescope(ctx, |_, out| Ok(out))? }),
             ctors: ctor_names,
         })
     }
@@ -152,7 +152,7 @@ impl Lower for cst::Codata {
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
-            typ: Rc::new(ust::TypAbs { params: params.lower_in_ctx(ctx)? }),
+            typ: Rc::new(ust::TypAbs { params: params.lower_telescope(ctx, |_, out| Ok(out))? }),
             dtors: dtor_names,
         })
     }

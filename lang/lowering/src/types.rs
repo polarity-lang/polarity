@@ -20,11 +20,3 @@ pub trait LowerTelescope {
         f: F,
     ) -> Result<T, LoweringError>;
 }
-
-impl<T: LowerTelescope> Lower for T {
-    type Target = <Self as LowerTelescope>::Target;
-
-    fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        self.lower_telescope(ctx, |_, out| Ok(out))
-    }
-}
