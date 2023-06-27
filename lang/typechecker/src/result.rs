@@ -5,13 +5,13 @@ use miette_util::ToMiette;
 use parser::cst::Ident;
 use thiserror::Error;
 
+use codespan::Span;
 use data::string::{comma_separated, separated};
 use data::HashSet;
 use normalizer::result::EvalError;
 use syntax::common::*;
 use syntax::generic::LookupError;
 use syntax::nf;
-use syntax::ust;
 use unifier::result::UnifyError;
 
 use printer::PrintToString;
@@ -131,8 +131,8 @@ impl TypeError {
         Self::NotEq {
             lhs: lhs.print_to_string(None),
             rhs: rhs.print_to_string(None),
-            lhs_span: lhs.info().span.to_miette(),
-            rhs_span: rhs.info().span.to_miette(),
+            lhs_span: lhs.span().to_miette(),
+            rhs_span: rhs.span().to_miette(),
         }
     }
 
@@ -140,7 +140,7 @@ impl TypeError {
         missing: HashSet<String>,
         undeclared: HashSet<String>,
         duplicate: HashSet<String>,
-        info: &ust::Info,
+        info: &Option<Span>,
     ) -> Self {
         let mut msgs = Vec::new();
 
@@ -154,10 +154,10 @@ impl TypeError {
             msgs.push(format!("duplicate {}", comma_separated(duplicate.iter().cloned())));
         }
 
-        Self::InvalidMatch { msg: separated("; ", msgs), span: info.span.to_miette() }
+        Self::InvalidMatch { msg: separated("; ", msgs), span: info.to_miette() }
     }
 
     pub fn expected_typ_app(got: Rc<nf::Nf>) -> Self {
-        Self::ExpectedTypApp { got: got.print_to_string(None), span: got.info().span.to_miette() }
+        Self::ExpectedTypApp { got: got.print_to_string(None), span: got.span().to_miette() }
     }
 }

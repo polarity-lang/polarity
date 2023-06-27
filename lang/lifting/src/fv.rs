@@ -1,6 +1,7 @@
 use std::cmp;
 use std::rc::Rc;
 
+use codespan::Span;
 use derivative::Derivative;
 
 use data::{HashMap, HashSet};
@@ -230,7 +231,7 @@ impl<'b> Visitor<ust::UST> for USTVisitor<'b> {
 
     fn visit_self_param<X, F>(
         &mut self,
-        info: &ust::Info,
+        info: &Option<Span>,
         name: &Option<Ident>,
         typ: &ust::TypApp,
         f_inner: F,
@@ -241,7 +242,7 @@ impl<'b> Visitor<ust::UST> for USTVisitor<'b> {
         self.ctx_visit_self_param(info, name, typ, f_inner)
     }
 
-    fn visit_exp_var(&mut self, _info: &ust::Info, name: &Ident, _ctx: &(), idx: &Idx) {
+    fn visit_exp_var(&mut self, _info: &Option<Span>, name: &Ident, _ctx: &(), idx: &Idx) {
         // We use the level context to convert the De Bruijn index to a De Bruijn level
         let lvl = self.lvl_ctx.idx_to_lvl(*idx);
         // If the variable is considered free (based on the cutoff), we look up its type in the typing context

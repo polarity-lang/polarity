@@ -10,39 +10,30 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
             Exp::Var { info, name, ctx: (), idx } => {
                 match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
                     Some(exp) => exp,
-                    None => Rc::new(Exp::Var {
-                        info: info.clone(),
-                        name: name.clone(),
-                        ctx: (),
-                        idx: *idx,
-                    }),
+                    None => {
+                        Rc::new(Exp::Var { info: *info, name: name.clone(), ctx: (), idx: *idx })
+                    }
                 }
             }
-            Exp::TypCtor { info, name, args } => Rc::new(Exp::TypCtor {
-                info: info.clone(),
-                name: name.clone(),
-                args: args.subst(ctx, by),
-            }),
-            Exp::Ctor { info, name, args } => Rc::new(Exp::Ctor {
-                info: info.clone(),
-                name: name.clone(),
-                args: args.subst(ctx, by),
-            }),
+            Exp::TypCtor { info, name, args } => {
+                Rc::new(Exp::TypCtor { info: *info, name: name.clone(), args: args.subst(ctx, by) })
+            }
+            Exp::Ctor { info, name, args } => {
+                Rc::new(Exp::Ctor { info: *info, name: name.clone(), args: args.subst(ctx, by) })
+            }
             Exp::Dtor { info, exp, name, args } => Rc::new(Exp::Dtor {
-                info: info.clone(),
+                info: *info,
                 exp: exp.subst(ctx, by),
                 name: name.clone(),
                 args: args.subst(ctx, by),
             }),
-            Exp::Anno { info, exp, typ } => Rc::new(Exp::Anno {
-                info: info.clone(),
-                exp: exp.subst(ctx, by),
-                typ: typ.subst(ctx, by),
-            }),
-            Exp::Type { info } => Rc::new(Exp::Type { info: info.clone() }),
+            Exp::Anno { info, exp, typ } => {
+                Rc::new(Exp::Anno { info: *info, exp: exp.subst(ctx, by), typ: typ.subst(ctx, by) })
+            }
+            Exp::Type { info } => Rc::new(Exp::Type { info: *info }),
             Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ, body } => {
                 Rc::new(Exp::Match {
-                    info: info.clone(),
+                    info: *info,
                     ctx: (),
                     name: name.clone(),
                     on_exp: on_exp.subst(ctx, by),
@@ -52,13 +43,13 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                 })
             }
             Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => Rc::new(Exp::Comatch {
-                info: info.clone(),
+                info: *info,
                 ctx: (),
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.subst(ctx, by),
             }),
-            Exp::Hole { info, kind } => Rc::new(Exp::Hole { info: info.clone(), kind: *kind }),
+            Exp::Hole { info, kind } => Rc::new(Exp::Hole { info: *info, kind: *kind }),
         }
     }
 }
@@ -68,7 +59,7 @@ impl Substitutable<Rc<Exp>> for Motive {
         let Motive { info, param, ret_typ } = self;
 
         Motive {
-            info: info.clone(),
+            info: *info,
             param: param.clone(),
             ret_typ: ctx.bind_single((), |ctx| ret_typ.subst(ctx, &by.shift((1, 0)))),
         }
@@ -79,7 +70,7 @@ impl Substitutable<Rc<Exp>> for Match {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Match { info, cases, omit_absurd } = self;
         Match {
-            info: info.clone(),
+            info: *info,
             cases: cases.iter().map(|case| case.subst(ctx, by)).collect(),
             omit_absurd: *omit_absurd,
         }
@@ -90,7 +81,7 @@ impl Substitutable<Rc<Exp>> for Comatch {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Comatch { info, cases, omit_absurd } = self;
         Comatch {
-            info: info.clone(),
+            info: *info,
             cases: cases.iter().map(|cocase| cocase.subst(ctx, by)).collect(),
             omit_absurd: *omit_absurd,
         }
@@ -101,7 +92,7 @@ impl Substitutable<Rc<Exp>> for Case {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Case { info, name, args, body } = self;
         ctx.bind_iter(args.params.iter(), |ctx| Case {
-            info: info.clone(),
+            info: *info,
             name: name.clone(),
             args: args.clone(),
             body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
@@ -113,7 +104,7 @@ impl Substitutable<Rc<Exp>> for Cocase {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Cocase { info, name, params: args, body } = self;
         ctx.bind_iter(args.params.iter(), |ctx| Cocase {
-            info: info.clone(),
+            info: *info,
             name: name.clone(),
             params: args.clone(),
             body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
@@ -124,7 +115,7 @@ impl Substitutable<Rc<Exp>> for Cocase {
 impl Substitutable<Rc<Exp>> for TypApp {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let TypApp { info, name, args } = self;
-        TypApp { info: info.clone(), name: name.clone(), args: args.subst(ctx, by) }
+        TypApp { info: *info, name: name.clone(), args: args.subst(ctx, by) }
     }
 }
 

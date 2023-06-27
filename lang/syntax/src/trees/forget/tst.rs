@@ -4,6 +4,8 @@ use crate::common::*;
 use crate::tst;
 use crate::ust;
 
+use codespan::Span;
+
 impl Forget for tst::Prg {
     type Target = ust::Prg;
 
@@ -49,7 +51,7 @@ impl Forget for tst::Data {
         let tst::Data { info, doc, name, hidden, typ, ctors } = self;
 
         ust::Data {
-            info: info.forget(),
+            info: *info,
             name: name.clone(),
             doc: doc.clone(),
             hidden: *hidden,
@@ -66,7 +68,7 @@ impl Forget for tst::Codata {
         let tst::Codata { info, doc, name, hidden, typ, dtors } = self;
 
         ust::Codata {
-            info: info.forget(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -93,7 +95,7 @@ impl Forget for tst::Ctor {
         let tst::Ctor { info, doc, name, params, typ } = self;
 
         ust::Ctor {
-            info: info.forget(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             params: params.forget(),
@@ -109,7 +111,7 @@ impl Forget for tst::Dtor {
         let tst::Dtor { info, doc, name, params, self_param, ret_typ } = self;
 
         ust::Dtor {
-            info: info.forget(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             params: params.forget(),
@@ -126,7 +128,7 @@ impl Forget for tst::Def {
         let tst::Def { info, doc, name, hidden, params, self_param, ret_typ, body } = self;
 
         ust::Def {
-            info: info.forget(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -145,7 +147,7 @@ impl Forget for tst::Codef {
         let tst::Codef { info, doc, name, hidden, params, typ, body } = self;
 
         ust::Codef {
-            info: info.forget(),
+            info: *info,
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -162,7 +164,7 @@ impl Forget for tst::Match {
     fn forget(&self) -> Self::Target {
         let tst::Match { info, cases, omit_absurd } = self;
 
-        ust::Match { info: info.forget(), cases: cases.forget(), omit_absurd: *omit_absurd }
+        ust::Match { info: *info, cases: cases.forget(), omit_absurd: *omit_absurd }
     }
 }
 
@@ -172,7 +174,7 @@ impl Forget for tst::Comatch {
     fn forget(&self) -> Self::Target {
         let tst::Comatch { info, cases, omit_absurd } = self;
 
-        ust::Comatch { info: info.forget(), cases: cases.forget(), omit_absurd: *omit_absurd }
+        ust::Comatch { info: *info, cases: cases.forget(), omit_absurd: *omit_absurd }
     }
 }
 
@@ -182,12 +184,7 @@ impl Forget for tst::Case {
     fn forget(&self) -> Self::Target {
         let tst::Case { info, name, args, body } = self;
 
-        ust::Case {
-            info: info.forget(),
-            name: name.clone(),
-            args: args.forget(),
-            body: body.forget(),
-        }
+        ust::Case { info: *info, name: name.clone(), args: args.forget(), body: body.forget() }
     }
 }
 
@@ -197,12 +194,7 @@ impl Forget for tst::Cocase {
     fn forget(&self) -> Self::Target {
         let tst::Cocase { info, name, params: args, body } = self;
 
-        ust::Cocase {
-            info: info.forget(),
-            name: name.clone(),
-            params: args.forget(),
-            body: body.forget(),
-        }
+        ust::Cocase { info: *info, name: name.clone(), params: args.forget(), body: body.forget() }
     }
 }
 
@@ -212,7 +204,7 @@ impl Forget for tst::SelfParam {
     fn forget(&self) -> Self::Target {
         let tst::SelfParam { info, name, typ } = self;
 
-        ust::SelfParam { info: info.forget(), name: name.clone(), typ: typ.forget() }
+        ust::SelfParam { info: *info, name: name.clone(), typ: typ.forget() }
     }
 }
 
@@ -279,7 +271,7 @@ impl Forget for tst::Motive {
     fn forget(&self) -> Self::Target {
         let tst::Motive { info, param, ret_typ } = self;
 
-        ust::Motive { info: info.forget(), param: param.forget(), ret_typ: ret_typ.forget() }
+        ust::Motive { info: *info, param: param.forget(), ret_typ: ret_typ.forget() }
     }
 }
 
@@ -337,32 +329,20 @@ impl Forget for tst::Typ {
     fn forget(&self) -> Self::Target {}
 }
 
-impl Forget for tst::Info {
-    type Target = ust::Info;
-
-    fn forget(&self) -> Self::Target {
-        let tst::Info { span } = self;
-
-        ust::Info { span: *span }
-    }
-}
-
 impl Forget for tst::TypeInfo {
-    type Target = ust::Info;
+    type Target = Option<Span>;
 
     fn forget(&self) -> Self::Target {
         let tst::TypeInfo { typ: _, span, ctx: _ } = self;
-
-        ust::Info { span: *span }
+        *span
     }
 }
 
 impl Forget for tst::TypeAppInfo {
-    type Target = ust::Info;
+    type Target = Option<Span>;
 
     fn forget(&self) -> Self::Target {
         let tst::TypeAppInfo { typ: _, span, .. } = self;
-
-        ust::Info { span: *span }
+        *span
     }
 }

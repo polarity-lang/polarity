@@ -1,3 +1,4 @@
+use codespan::Span;
 use data::{HashMap, HashSet};
 use miette_util::ToMiette;
 use parser::cst;
@@ -31,21 +32,21 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    pub fn lookup(&self, name: &str, info: &cst::Info) -> Result<Elem, LoweringError> {
+    pub fn lookup(&self, name: &str, info: &Span) -> Result<Elem, LoweringError> {
         Context::lookup(self, name.to_owned()).ok_or_else(|| LoweringError::UndefinedIdent {
             name: name.to_owned(),
-            span: info.span.to_miette(),
+            span: info.to_miette(),
         })
     }
 
     pub fn lookup_top_level_decl(
         &self,
         name: &str,
-        info: &cst::Info,
+        info: &Span,
     ) -> Result<DeclMeta, LoweringError> {
         self.top_level_map.get(name).cloned().ok_or_else(|| LoweringError::UndefinedIdent {
             name: name.to_owned(),
-            span: info.span.to_miette(),
+            span: info.to_miette(),
         })
     }
 
@@ -72,7 +73,7 @@ impl Ctx {
         if self.decls_map.contains_key(decl.name()) {
             return Err(LoweringError::AlreadyDefined {
                 name: decl.name().clone(),
-                span: decl.info().span.to_miette(),
+                span: decl.span().to_miette(),
             });
         }
         self.decls_map.insert(decl.name().clone(), decl);
@@ -86,20 +87,20 @@ impl Ctx {
     pub fn unique_label(
         &mut self,
         user_name: Option<Ident>,
-        info: &cst::Info,
+        info: &Span,
     ) -> Result<Label, LoweringError> {
         if let Some(user_name) = &user_name {
             match Context::lookup(self, user_name) {
                 Some(Elem::Decl(_)) => {
                     return Err(LoweringError::LabelNotUnique {
                         name: user_name.to_owned(),
-                        span: info.span.to_miette(),
+                        span: info.to_miette(),
                     })
                 }
                 Some(Elem::Bound(_)) => {
                     return Err(LoweringError::LabelShadowed {
                         name: user_name.to_owned(),
-                        span: info.span.to_miette(),
+                        span: info.to_miette(),
                     })
                 }
                 None => (),
@@ -107,7 +108,7 @@ impl Ctx {
             if self.user_labels.contains(user_name) {
                 return Err(LoweringError::LabelNotUnique {
                     name: user_name.to_owned(),
-                    span: info.span.to_miette(),
+                    span: info.to_miette(),
                 });
             }
             self.user_labels.insert(user_name.to_owned());

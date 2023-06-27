@@ -2,6 +2,7 @@ use std::fmt;
 use std::hash::Hash;
 use std::rc::Rc;
 
+use codespan::Span;
 use data::HashMap;
 use derivative::Derivative;
 
@@ -14,15 +15,11 @@ pub trait Phase
 where
     Self: Default + Clone + fmt::Debug + Eq,
 {
-    /// Type of the `info` field, containing span information
-    type Info: HasSpan + Clone + fmt::Debug;
     /// Type of the `info` field, containing span and (depending on the phase) type information
     type TypeInfo: HasSpan + Clone + fmt::Debug;
     /// Type of the `info` field, containing span and (depending on the phase) type information
     /// where the type is required to be the full application of a type constructor
     type TypeAppInfo: HasSpan + Clone + Into<Self::TypeInfo> + fmt::Debug;
-    /// Type of the `name` field of `Exp::Var`
-    type VarName: Clone + fmt::Debug;
     /// A type which is not annotated in the source, but will be filled in later during typechecking
     type InfTyp: Clone + fmt::Debug;
     /// Context annotated during typechecking
@@ -72,7 +69,7 @@ impl<P: Phase> Decl<P> {
 
 #[derive(Debug, Clone)]
 pub struct Data<P: Phase> {
-    pub info: P::Info,
+    pub info: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declarations should be omitted
@@ -84,7 +81,7 @@ pub struct Data<P: Phase> {
 
 #[derive(Debug, Clone)]
 pub struct Codata<P: Phase> {
-    pub info: P::Info,
+    pub info: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declarations should be omitted
@@ -101,7 +98,7 @@ pub struct TypAbs<P: Phase> {
 
 #[derive(Debug, Clone)]
 pub struct Ctor<P: Phase> {
-    pub info: P::Info,
+    pub info: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope<P>,
@@ -110,7 +107,7 @@ pub struct Ctor<P: Phase> {
 
 #[derive(Debug, Clone)]
 pub struct Dtor<P: Phase> {
-    pub info: P::Info,
+    pub info: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope<P>,
@@ -120,7 +117,7 @@ pub struct Dtor<P: Phase> {
 
 #[derive(Debug, Clone)]
 pub struct Def<P: Phase> {
-    pub info: P::Info,
+    pub info: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declarations should be omitted
@@ -135,7 +132,7 @@ pub struct Def<P: Phase> {
 impl<P: Phase> Def<P> {
     pub fn to_dtor(&self) -> Dtor<P> {
         Dtor {
-            info: self.info.clone(),
+            info: self.info,
             doc: self.doc.clone(),
             name: self.name.clone(),
             params: self.params.clone(),
@@ -147,7 +144,7 @@ impl<P: Phase> Def<P> {
 
 #[derive(Debug, Clone)]
 pub struct Codef<P: Phase> {
-    pub info: P::Info,
+    pub info: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declarations should be omitted
@@ -161,7 +158,7 @@ pub struct Codef<P: Phase> {
 impl<P: Phase> Codef<P> {
     pub fn to_ctor(&self) -> Ctor<P> {
         Ctor {
-            info: self.info.clone(),
+            info: self.info,
             doc: self.doc.clone(),
             name: self.name.clone(),
             params: self.params.clone(),
@@ -174,7 +171,7 @@ impl<P: Phase> Codef<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Match<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::Info,
+    pub info: Option<Span>,
     pub cases: Vec<Case<P>>,
     pub omit_absurd: bool,
 }
@@ -183,7 +180,7 @@ pub struct Match<P: Phase> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Comatch<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::Info,
+    pub info: Option<Span>,
     // TODO: Consider renaming this field to "cocases"
     pub cases: Vec<Cocase<P>>,
     pub omit_absurd: bool,
@@ -193,7 +190,7 @@ pub struct Comatch<P: Phase> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Case<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::Info,
+    pub info: Option<Span>,
     pub name: Ident,
     // TODO: Rename to params
     pub args: TelescopeInst<P>,
@@ -205,7 +202,7 @@ pub struct Case<P: Phase> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Cocase<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::Info,
+    pub info: Option<Span>,
     pub name: Ident,
     pub params: TelescopeInst<P>,
     /// Body being `None` represents an absurd pattern
@@ -214,7 +211,7 @@ pub struct Cocase<P: Phase> {
 
 #[derive(Debug, Clone)]
 pub struct SelfParam<P: Phase> {
-    pub info: P::Info,
+    pub info: Option<Span>,
     pub name: Option<Ident>,
     pub typ: TypApp<P>,
 }
@@ -261,7 +258,7 @@ pub enum Exp<P: Phase> {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        name: P::VarName,
+        name: Ident,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         ctx: P::Ctx,
         idx: Idx,
@@ -328,7 +325,7 @@ pub enum Exp<P: Phase> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Motive<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::Info,
+    pub info: Option<Span>,
     pub param: ParamInst<P>,
     pub ret_typ: Rc<Exp<P>>,
 }

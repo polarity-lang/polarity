@@ -5,6 +5,7 @@ use parser::cst::HoleKind;
 use parser::cst::Ident;
 
 use crate::env::*;
+use codespan::Span;
 use pretty::DocAllocator;
 use printer::theme::ThemeExt;
 use printer::tokens::*;
@@ -19,23 +20,23 @@ use syntax::ust;
 pub enum Val {
     TypCtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         name: Ident,
         args: Args,
     },
     Ctor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         name: Ident,
         args: Args,
     },
     Type {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
     },
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         name: Label,
         is_lambda_sugar: bool,
         // TODO: Ignore this field for PartialEq, Hash?
@@ -52,21 +53,21 @@ pub enum Val {
 pub enum Neu {
     Var {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         name: Ident,
         idx: Idx,
     },
     Dtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: ust::Info,
+        info: Option<Span>,
         exp: Rc<Neu>,
         name: Ident,
         args: Args,
     },
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         name: Label,
         on_exp: Rc<Neu>,
         // TODO: Ignore this field for PartialEq, Hash?
@@ -74,7 +75,7 @@ pub enum Neu {
     },
     Hole {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Info,
+        info: Option<Span>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         kind: HoleKind,
     },
@@ -84,7 +85,7 @@ pub enum Neu {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Match {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Info,
+    pub info: Option<Span>,
     pub cases: Vec<Case>,
     pub omit_absurd: bool,
 }
@@ -93,7 +94,7 @@ pub struct Match {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Comatch {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Info,
+    pub info: Option<Span>,
     // TODO: Consider renaming this field to "cocases"
     pub cases: Vec<Cocase>,
     pub omit_absurd: bool,
@@ -103,7 +104,7 @@ pub struct Comatch {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Info,
+    pub info: Option<Span>,
     pub name: Ident,
     // TODO: Rename to params
     pub args: ust::TelescopeInst,
@@ -115,7 +116,7 @@ pub struct Case {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Cocase {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Info,
+    pub info: Option<Span>,
     pub name: Ident,
     // TODO: Rename to params
     pub args: ust::TelescopeInst,
@@ -125,12 +126,11 @@ pub struct Cocase {
 
 #[derive(Debug, Clone)]
 pub struct TypApp {
-    pub info: Info,
+    pub info: Option<Span>,
     pub name: Ident,
     pub args: Args,
 }
 
-pub type Info = ust::Info;
 pub type Args = Vec<Rc<Val>>;
 
 #[derive(Debug, Clone, Derivative)]
@@ -145,18 +145,16 @@ impl ShiftInRange for Val {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
             Val::TypCtor { info, name, args } => Val::TypCtor {
-                info: info.clone(),
+                info: *info,
                 name: name.clone(),
                 args: args.shift_in_range(range, by),
             },
-            Val::Ctor { info, name, args } => Val::Ctor {
-                info: info.clone(),
-                name: name.clone(),
-                args: args.shift_in_range(range, by),
-            },
-            Val::Type { info } => Val::Type { info: info.clone() },
+            Val::Ctor { info, name, args } => {
+                Val::Ctor { info: *info, name: name.clone(), args: args.shift_in_range(range, by) }
+            }
+            Val::Type { info } => Val::Type { info: *info },
             Val::Comatch { info, name, is_lambda_sugar, body } => Val::Comatch {
-                info: info.clone(),
+                info: *info,
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.shift_in_range(range, by),
@@ -169,24 +167,22 @@ impl ShiftInRange for Val {
 impl ShiftInRange for Neu {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
-            Neu::Var { info, name, idx } => Neu::Var {
-                info: info.clone(),
-                name: name.clone(),
-                idx: idx.shift_in_range(range, by),
-            },
+            Neu::Var { info, name, idx } => {
+                Neu::Var { info: *info, name: name.clone(), idx: idx.shift_in_range(range, by) }
+            }
             Neu::Dtor { info, exp, name, args } => Neu::Dtor {
-                info: info.clone(),
+                info: *info,
                 exp: exp.shift_in_range(range.clone(), by),
                 name: name.clone(),
                 args: args.shift_in_range(range, by),
             },
             Neu::Match { info, name, on_exp, body } => Neu::Match {
-                info: info.clone(),
+                info: *info,
                 name: name.clone(),
                 on_exp: on_exp.shift_in_range(range.clone(), by),
                 body: body.shift_in_range(range, by),
             },
-            Neu::Hole { info, kind } => Neu::Hole { info: info.clone(), kind: *kind },
+            Neu::Hole { info, kind } => Neu::Hole { info: *info, kind: *kind },
         }
     }
 }
@@ -194,22 +190,14 @@ impl ShiftInRange for Neu {
 impl ShiftInRange for Match {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Match { info, cases, omit_absurd } = self;
-        Match {
-            info: info.clone(),
-            cases: cases.shift_in_range(range, by),
-            omit_absurd: *omit_absurd,
-        }
+        Match { info: *info, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
     }
 }
 
 impl ShiftInRange for Comatch {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Comatch { info, cases, omit_absurd } = self;
-        Comatch {
-            info: info.clone(),
-            cases: cases.shift_in_range(range, by),
-            omit_absurd: *omit_absurd,
-        }
+        Comatch { info: *info, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
     }
 }
 
@@ -218,7 +206,7 @@ impl ShiftInRange for Case {
         let Case { info, name, args, body } = self;
 
         Case {
-            info: info.clone(),
+            info: *info,
             name: name.clone(),
             args: args.clone(),
             body: body.shift_in_range(range.shift(1), by),
@@ -231,7 +219,7 @@ impl ShiftInRange for Cocase {
         let Cocase { info, name, args, body } = self;
 
         Cocase {
-            info: info.clone(),
+            info: *info,
             name: name.clone(),
             args: args.clone(),
             body: body.shift_in_range(range.shift(1), by),

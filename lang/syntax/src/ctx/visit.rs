@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use crate::ctx::*;
 use crate::generic::*;
+use codespan::Span;
 use parser::cst::Ident;
 
 pub trait VisitCtxExt<P: Phase> {
@@ -25,7 +26,7 @@ pub trait VisitCtxExt<P: Phase> {
 
     fn ctx_visit_self_param<X, F>(
         &mut self,
-        info: &P::Info,
+        info: &Option<Span>,
         name: &Option<Ident>,
         typ: &TypApp<P>,
         f_inner: F,
@@ -86,7 +87,7 @@ where
 
     fn ctx_visit_self_param<X, F>(
         &mut self,
-        _info: &P::Info,
+        _info: &Option<Span>,
         name: &Option<Ident>,
         typ: &TypApp<P>,
         f_inner: F,
