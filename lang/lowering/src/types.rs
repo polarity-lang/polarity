@@ -7,26 +7,6 @@ pub trait Lower {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError>;
 }
 
-pub trait LowerPure {
-    type Target;
-
-    fn lower_pure(&self) -> Self::Target;
-}
-
-pub trait LowerParams {
-    type Target;
-
-    /// Lower a list of parameters
-    ///
-    /// Execute a function `f` under the context where all binders
-    /// of the telescope are in scope.
-    fn lower_params<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, LoweringError>>(
-        &self,
-        ctx: &mut Ctx,
-        f: F,
-    ) -> Result<T, LoweringError>;
-}
-
 pub trait LowerTelescope {
     type Target;
 
