@@ -129,7 +129,7 @@ impl Lower for cst::Data {
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
-            typ: Rc::new(ust::TypAbs { params: params.lower_telescope(ctx, |_, out| Ok(out))? }),
+            typ: Rc::new(ust::TypAbs { params: lower_telescope(params, ctx, |_, out| Ok(out))? }),
             ctors: ctor_names,
         })
     }
@@ -152,7 +152,7 @@ impl Lower for cst::Codata {
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
-            typ: Rc::new(ust::TypAbs { params: params.lower_telescope(ctx, |_, out| Ok(out))? }),
+            typ: Rc::new(ust::TypAbs { params: lower_telescope(params, ctx, |_, out| Ok(out))? }),
             dtors: dtor_names,
         })
     }
@@ -186,7 +186,7 @@ impl Lower for cst::Ctor {
             }
         };
 
-        params.lower_telescope(ctx, |ctx, params| {
+        lower_telescope(params, ctx, |ctx, params| {
             // If the type constructor does not take any arguments, it can be left out
             let typ = match typ {
                 Some(typ) => typ.lower_in_ctx(ctx)?,
@@ -240,7 +240,7 @@ impl Lower for cst::Dtor {
             }
         };
 
-        params.lower_telescope(ctx, |ctx, params| {
+        lower_telescope(params, ctx, |ctx, params| {
             // If the type constructor does not take any arguments, it can be left out
             let on_typ = match &destructee.typ {
                 Some(on_typ) => on_typ.clone(),
@@ -267,7 +267,7 @@ impl Lower for cst::Dtor {
                 typ: on_typ,
             };
 
-            self_param.lower_telescope(ctx, |ctx, self_param| {
+            lower_self_param(&self_param, ctx, |ctx, self_param| {
                 Ok(ust::Dtor {
                     info: Some(*info),
                     doc: doc.clone(),
@@ -289,10 +289,10 @@ impl Lower for cst::Def {
 
         let self_param: cst::SelfParam = scrutinee.clone().into();
 
-        params.lower_telescope(ctx, |ctx, params| {
+        lower_telescope(params, ctx, |ctx, params| {
             let body = body.lower_in_ctx(ctx)?;
 
-            self_param.lower_telescope(ctx, |ctx, self_param| {
+            lower_self_param(&self_param, ctx, |ctx, self_param| {
                 Ok(ust::Def {
                     info: Some(*info),
                     doc: doc.clone(),
@@ -314,7 +314,7 @@ impl Lower for cst::Codef {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Codef { info, doc, name, hidden, params, typ, body, .. } = self;
 
-        params.lower_telescope(ctx, |ctx, params| {
+        lower_telescope(params, ctx, |ctx, params| {
             Ok(ust::Codef {
                 info: Some(*info),
                 doc: doc.clone(),
@@ -362,7 +362,7 @@ impl Lower for cst::Case {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Case { info, name, args, body } = self;
 
-        args.lower_telescope(ctx, |ctx, args| {
+        lower_telescope_inst(args, ctx, |ctx, args| {
             Ok(ust::Case {
                 info: Some(*info),
                 name: name.clone(),
@@ -379,7 +379,7 @@ impl Lower for cst::Cocase {
     fn lower_in_ctx(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::Cocase { info, name, args, body } = self;
 
-        args.lower_telescope(ctx, |ctx, args| {
+        lower_telescope_inst(args, ctx, |ctx, args| {
             Ok(ust::Cocase {
                 info: Some(*info),
                 name: name.clone(),
@@ -569,20 +569,16 @@ impl<T: Lower> Lower for Rc<T> {
     }
 }
 
-impl LowerTelescope for cst::SelfParam {
-    type Target = ust::SelfParam;
-
-    fn lower_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, LoweringError>>(
-        &self,
-        ctx: &mut Ctx,
-        f: F,
-    ) -> Result<T, LoweringError> {
-        let cst::SelfParam { info, name, typ } = self;
-        let typ_out = typ.lower_in_ctx(ctx)?;
-        ctx.bind_single(name.clone().unwrap_or_default(), |ctx| {
-            f(ctx, ust::SelfParam { info: Some(*info), name: name.clone(), typ: typ_out })
-        })
-    }
+fn lower_self_param<T, F: FnOnce(&mut Ctx, ust::SelfParam) -> Result<T, LoweringError>>(
+    self_param: &cst::SelfParam,
+    ctx: &mut Ctx,
+    f: F,
+) -> Result<T, LoweringError> {
+    let cst::SelfParam { info, name, typ } = self_param;
+    let typ_out = typ.lower_in_ctx(ctx)?;
+    ctx.bind_single(name.clone().unwrap_or_default(), |ctx| {
+        f(ctx, ust::SelfParam { info: Some(*info), name: name.clone(), typ: typ_out })
+    })
 }
 
 fn desugar_telescope(tel: &cst::Telescope) -> cst::Telescope {
@@ -600,58 +596,50 @@ fn desugar_param(param: &cst::Param) -> Vec<cst::Param> {
     params
 }
 
-impl LowerTelescope for cst::Telescope {
-    type Target = ust::Telescope;
-
-    /// Lower a telescope
-    ///
-    /// Execute a function `f` under the context where all binders
-    /// of the telescope are in scope.
-    fn lower_telescope<T, F>(&self, ctx: &mut Ctx, f: F) -> Result<T, LoweringError>
-    where
-        F: FnOnce(&mut Ctx, Self::Target) -> Result<T, LoweringError>,
-    {
-        let tel = desugar_telescope(self);
-        ctx.bind_fold(
-            tel.0.iter(),
-            Ok(vec![]),
-            |ctx, params_out, param| {
-                let mut params_out = params_out?;
-                let cst::Param { name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
-                let typ_out = typ.lower_in_ctx(ctx)?;
-                let name = match name {
-                    BindingSite::Var { name } => name.clone(),
-                    BindingSite::Wildcard => "_".to_owned(),
-                };
-                let param_out = ust::Param { name, typ: typ_out };
-                params_out.push(param_out);
-                Ok(params_out)
-            },
-            |ctx, params| f(ctx, params.map(|params| ust::Telescope { params })?),
-        )
-    }
+/// Lower a telescope
+///
+/// Execute a function `f` under the context where all binders
+/// of the telescope are in scope.
+fn lower_telescope<T, F>(tele: &cst::Telescope, ctx: &mut Ctx, f: F) -> Result<T, LoweringError>
+where
+    F: FnOnce(&mut Ctx, ust::Telescope) -> Result<T, LoweringError>,
+{
+    let tel = desugar_telescope(tele);
+    ctx.bind_fold(
+        tel.0.iter(),
+        Ok(vec![]),
+        |ctx, params_out, param| {
+            let mut params_out = params_out?;
+            let cst::Param { name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
+            let typ_out = typ.lower_in_ctx(ctx)?;
+            let name = match name {
+                BindingSite::Var { name } => name.clone(),
+                BindingSite::Wildcard => "_".to_owned(),
+            };
+            let param_out = ust::Param { name, typ: typ_out };
+            params_out.push(param_out);
+            Ok(params_out)
+        },
+        |ctx, params| f(ctx, params.map(|params| ust::Telescope { params })?),
+    )
 }
 
-impl LowerTelescope for cst::TelescopeInst {
-    type Target = ust::TelescopeInst;
-
-    fn lower_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, LoweringError>>(
-        &self,
-        ctx: &mut Ctx,
-        f: F,
-    ) -> Result<T, LoweringError> {
-        ctx.bind_fold(
-            self.0.iter(),
-            Ok(vec![]),
-            |_ctx, params_out, param| {
-                let mut params_out = params_out?;
-                let cst::ParamInst { info, name } = param;
-                let param_out =
-                    ust::ParamInst { info: Some(*info), name: name.name().clone(), typ: () };
-                params_out.push(param_out);
-                Ok(params_out)
-            },
-            |ctx, params| f(ctx, params.map(|params| ust::TelescopeInst { params })?),
-        )
-    }
+fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ust::TelescopeInst) -> Result<T, LoweringError>>(
+    tel_inst: &cst::TelescopeInst,
+    ctx: &mut Ctx,
+    f: F,
+) -> Result<T, LoweringError> {
+    ctx.bind_fold(
+        tel_inst.0.iter(),
+        Ok(vec![]),
+        |_ctx, params_out, param| {
+            let mut params_out = params_out?;
+            let cst::ParamInst { info, name } = param;
+            let param_out =
+                ust::ParamInst { info: Some(*info), name: name.name().clone(), typ: () };
+            params_out.push(param_out);
+            Ok(params_out)
+        },
+        |ctx, params| f(ctx, params.map(|params| ust::TelescopeInst { params })?),
+    )
 }
