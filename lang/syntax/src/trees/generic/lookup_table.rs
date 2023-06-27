@@ -1,7 +1,123 @@
+use std::fmt;
+
 use data::HashMap;
 use data::HashSet;
 
+use parser::cst;
 use parser::cst::Ident;
+
+#[derive(Clone, Copy, Debug)]
+pub enum DeclKind {
+    Data,
+    Codata,
+    Def,
+    Codef,
+    Ctor,
+    Dtor,
+}
+
+impl fmt::Display for DeclKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DeclKind::Data => write!(f, "data type"),
+            DeclKind::Codata => write!(f, "codata type"),
+            DeclKind::Def => write!(f, "definition"),
+            DeclKind::Codef => write!(f, "codefinition"),
+            DeclKind::Ctor => write!(f, "constructor"),
+            DeclKind::Dtor => write!(f, "destructor"),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum DeclMeta {
+    Data { arity: usize },
+    Codata { arity: usize },
+    Def,
+    Codef,
+    Ctor { ret_typ: Ident },
+    Dtor { self_typ: Ident },
+}
+
+impl DeclMeta {
+    pub fn kind(&self) -> DeclKind {
+        match self {
+            DeclMeta::Data { .. } => DeclKind::Data,
+            DeclMeta::Codata { .. } => DeclKind::Codata,
+            DeclMeta::Def => DeclKind::Def,
+            DeclMeta::Codef => DeclKind::Codef,
+            DeclMeta::Ctor { .. } => DeclKind::Ctor,
+            DeclMeta::Dtor { .. } => DeclKind::Dtor,
+        }
+    }
+}
+
+impl From<&cst::Data> for DeclMeta {
+    fn from(data: &cst::Data) -> Self {
+        Self::Data { arity: data.params.len() }
+    }
+}
+
+impl From<&cst::Codata> for DeclMeta {
+    fn from(codata: &cst::Codata) -> Self {
+        Self::Codata { arity: codata.params.len() }
+    }
+}
+
+impl From<&cst::Def> for DeclMeta {
+    fn from(_def: &cst::Def) -> Self {
+        Self::Def
+    }
+}
+
+impl From<&cst::Codef> for DeclMeta {
+    fn from(_codef: &cst::Codef) -> Self {
+        Self::Codef
+    }
+}
+
+impl From<&cst::Decl> for DeclMeta {
+    fn from(decl: &cst::Decl) -> Self {
+        match decl {
+            cst::Decl::Data(data) => DeclMeta::from(data),
+            cst::Decl::Codata(codata) => DeclMeta::from(codata),
+            cst::Decl::Def(_def) => Self::Def,
+            cst::Decl::Codef(_codef) => Self::Codef,
+        }
+    }
+}
+
+/// A top-level item in the source
+#[derive(Debug, Clone)]
+pub enum Item {
+    Type(Type),
+    Def(Def),
+}
+
+/// A type declaration in the source
+#[derive(Debug, Clone)]
+pub struct Type {
+    pub name: Ident,
+    pub xtors: Vec<Ident>,
+}
+
+impl Type {
+    fn new(name: Ident) -> Self {
+        Self { name, xtors: vec![] }
+    }
+}
+
+/// A definition in the source
+#[derive(Debug, Clone)]
+pub struct Def {
+    pub name: Ident,
+}
+
+impl Def {
+    fn new(name: Ident) -> Self {
+        Self { name }
+    }
+}
 
 /// Metadata on declarations
 #[derive(Debug, Clone, Default)]
@@ -129,37 +245,5 @@ impl<'a> TypeView<'a> {
         for xtor in &xtors {
             self.lookup_table.type_for_xtor.remove(xtor);
         }
-    }
-}
-
-/// A top-level item in the source
-#[derive(Debug, Clone)]
-pub enum Item {
-    Type(Type),
-    Def(Def),
-}
-
-/// A type declaration in the source
-#[derive(Debug, Clone)]
-pub struct Type {
-    pub name: Ident,
-    pub xtors: Vec<Ident>,
-}
-
-impl Type {
-    fn new(name: Ident) -> Self {
-        Self { name, xtors: vec![] }
-    }
-}
-
-/// A definition in the source
-#[derive(Debug, Clone)]
-pub struct Def {
-    pub name: Ident,
-}
-
-impl Def {
-    fn new(name: Ident) -> Self {
-        Self { name }
     }
 }

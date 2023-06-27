@@ -5,6 +5,7 @@ use parser::cst;
 use parser::cst::{BindingSite, Ident};
 use syntax::common::*;
 use syntax::ctx::{Context, ContextElem};
+use syntax::generic::lookup_table::DeclMeta;
 use syntax::ust;
 
 use super::result::LoweringError;
@@ -192,62 +193,4 @@ impl ContextElem<Ctx> for &cst::ParamInst {
 pub enum Elem {
     Bound(Lvl),
     Decl(DeclMeta),
-}
-
-#[derive(Clone, Debug)]
-pub enum DeclMeta {
-    Data { arity: usize },
-    Codata { arity: usize },
-    Def,
-    Codef,
-    Ctor { ret_typ: Ident },
-    Dtor { self_typ: Ident },
-}
-
-impl DeclMeta {
-    pub fn kind(&self) -> DeclKind {
-        match self {
-            DeclMeta::Data { .. } => DeclKind::Data,
-            DeclMeta::Codata { .. } => DeclKind::Codata,
-            DeclMeta::Def => DeclKind::Def,
-            DeclMeta::Codef => DeclKind::Codef,
-            DeclMeta::Ctor { .. } => DeclKind::Ctor,
-            DeclMeta::Dtor { .. } => DeclKind::Dtor,
-        }
-    }
-}
-
-impl From<&cst::Data> for DeclMeta {
-    fn from(data: &cst::Data) -> Self {
-        Self::Data { arity: data.params.len() }
-    }
-}
-
-impl From<&cst::Codata> for DeclMeta {
-    fn from(codata: &cst::Codata) -> Self {
-        Self::Codata { arity: codata.params.len() }
-    }
-}
-
-impl From<&cst::Def> for DeclMeta {
-    fn from(_def: &cst::Def) -> Self {
-        Self::Def
-    }
-}
-
-impl From<&cst::Codef> for DeclMeta {
-    fn from(_codef: &cst::Codef) -> Self {
-        Self::Codef
-    }
-}
-
-impl From<&cst::Decl> for DeclMeta {
-    fn from(decl: &cst::Decl) -> Self {
-        match decl {
-            cst::Decl::Data(data) => DeclMeta::from(data),
-            cst::Decl::Codata(codata) => DeclMeta::from(codata),
-            cst::Decl::Def(_def) => Self::Def,
-            cst::Decl::Codef(_codef) => Self::Codef,
-        }
-    }
 }

@@ -10,6 +10,8 @@ use parser::cst::Ident;
 use syntax::common::*;
 use syntax::ctx::BindContext;
 use syntax::generic::lookup_table;
+use syntax::generic::lookup_table::DeclKind;
+use syntax::generic::lookup_table::DeclMeta;
 use syntax::ust;
 
 use super::ctx::*;

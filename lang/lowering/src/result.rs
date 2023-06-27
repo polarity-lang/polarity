@@ -1,6 +1,6 @@
 use miette::{Diagnostic, SourceSpan};
 use parser::cst::Ident;
-use syntax::common::*;
+use syntax::generic::lookup_table::DeclKind;
 use thiserror::Error;
 
 #[derive(Error, Diagnostic, Debug)]

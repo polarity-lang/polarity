@@ -9,7 +9,7 @@ use derivative::Derivative;
 use crate::common::*;
 use parser::cst::{DocComment, HoleKind, Ident};
 
-use super::lookup_table::LookupTable;
+use super::lookup_table::{DeclKind, LookupTable};
 
 pub trait Phase
 where
