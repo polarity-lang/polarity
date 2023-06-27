@@ -17,7 +17,6 @@ pub struct TypeCtx {
 }
 
 impl TypeCtx {
-
     pub fn empty() -> Self {
         Self { bound: vec![] }
     }

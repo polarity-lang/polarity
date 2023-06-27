@@ -26,7 +26,7 @@ impl<'a> DatabaseView<'a> {
 
     pub fn ust(&self) -> Result<ust::Prg, Error> {
         let cst = self.cst()?;
-        lowering::lower(&cst).map_err(Error::Lowering)
+        lowering::lower_prg(&cst).map_err(Error::Lowering)
     }
 
     pub fn tst(&self) -> Result<tst::Prg, Error> {

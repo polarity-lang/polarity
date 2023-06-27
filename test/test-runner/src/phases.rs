@@ -208,7 +208,7 @@ impl Phase for Lower {
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        lowering::lower(&input)
+        lowering::lower_prg(&input)
     }
 }
 

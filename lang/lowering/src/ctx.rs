@@ -32,7 +32,6 @@ pub struct Ctx {
 }
 
 impl Ctx {
-
     pub fn empty() -> Self {
         Self {
             local_map: HashMap::default(),

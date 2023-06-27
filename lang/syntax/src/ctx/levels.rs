@@ -13,7 +13,6 @@ pub struct LevelCtx {
 }
 
 impl LevelCtx {
-
     pub fn empty() -> Self {
         Self { bound: vec![] }
     }

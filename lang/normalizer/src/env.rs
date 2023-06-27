@@ -72,7 +72,6 @@ impl Leveled for Env {
 }
 
 impl Env {
-
     pub fn empty() -> Self {
         Self { bound: vec![] }
     }
