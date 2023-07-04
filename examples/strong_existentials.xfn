@@ -80,6 +80,15 @@ data Σ₊(A: Type, T: A -> Type) {
   ΣSum(A: Type, T: A -> Type, x: A, w: T.ap(A,Type,x)): Σ₊(A,T)
 }
 
+def Σ₊(A,T).defπ₁(A: Type, T: A -> Type): A {
+  ΣSum(_,_,x,_) => x
+}
+
+def (self: Σ₊(A,T)).defπ₂(A: Type, T: A -> Type): T.ap(A,Type,self.defπ₁(A,T)) {
+  ΣSum(_,_,_,w) => w
+}
+
+
 codata Σ₋(A: Type, T: A -> Type) {
   Σ₋(A,T).sπ₁(A: Type, T: A -> Type): A,
   (self: Σ₋(A,T)).sπ₂(A: Type, T: A -> Type): T.ap(A,Type, self.sπ₁(A,T))
