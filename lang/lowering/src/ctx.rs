@@ -53,10 +53,14 @@ impl Ctx {
     pub fn add_top_level_decl(
         &mut self,
         name: &Ident,
+        span: &Span,
         decl_kind: DeclMeta,
     ) -> Result<(), LoweringError> {
         if self.top_level_map.contains_key(name) {
-            return Err(LoweringError::AlreadyDefined { name: name.to_owned(), span: None });
+            return Err(LoweringError::AlreadyDefined {
+                name: name.to_owned(),
+                span: Some(span.to_miette()),
+            });
         }
         self.top_level_map.insert(name.clone(), decl_kind);
         Ok(())
