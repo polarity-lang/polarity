@@ -1,0 +1,86 @@
+-- ------------------------------- --
+-- ------------------------------- --
+-- Strong Existentials Demystified --
+-- ------------------------------- --
+-- ------------------------------- --
+
+-- In this short development we show that the difference between weak and
+-- strong existentials (and similarly between weak and strong Sigma types)
+-- corresponds exactly to the two different ways in which products can be
+-- polarized: either positively as a data type, or negatively as a codata
+-- type. This helps to further demystify their difference, and furthermore
+-- gives more evidence that the `self` parameter introduced into our system
+-- is justified, since it is necessary for the Existential and Sigma type.
+
+-- ------------------------------- --
+-- Ordinary product types          --
+-- ------------------------------- --
+
+-- Let us start with the simples case of products, namely non-dependent
+-- products `A × B` consisting of an element of type `A` and an element
+-- of type `B`. As a datatype it can be written as follows:
+
+data ×₊(A B: Type) {
+  Sum(A B: Type, x: A, y: B): ×₊(A,B)
+}
+
+-- Using the negative polarization, the product is specified using the two
+-- projections on the first and second element:
+
+codata ×₋(A B: Type) {
+  ×₋(A,B).π₁(A B: Type): A,
+  ×₋(A,B).π₂(A B: Type): B
+}
+
+-- ------------------------------- --
+-- Weak and Strong Existentials    --
+-- ------------------------------- --
+
+-- Let us now generalize this example to existentials `∃X.T`. In our system,
+-- such existentials are represented as `∃(\X. T)`, i.e. the type constructor
+-- `∃` takes as argument a function of type `Type -> Type`. We therefore have
+-- to introduce the type of functions first:
+
+codata Fun(A B: Type) {
+  Fun(A,B).ap(A B: Type, x: A): B
+}
+
+-- The system has builtin syntactic sugar for the function type, which allows
+-- us to use the notation `A -> B` instead of `Fun(A,B)`.
+
+-- The existential type can be represented using a data type with one constructor
+-- `∃Sum`. This constructor takes as arguments the function `T` of type `Type -> Type`,
+-- a type `A` and a witness `W` of type `T.ap(Type,Type,A)` which corresponds to `T[A/X]`
+-- in more standard notation.
+
+data ∃₊(T: Type -> Type) {
+  ∃Sum(T: Type -> Type, A: Type, W: T.ap(Type,Type,A)): ∃₊(T)
+}
+
+-- As a codata type, we still have two projections `eπ₁`and `eπ₂` as in the case
+-- of non-dependent products. But the second projection now uses the self-parameter
+-- to guarantee that an element of type `T[self.eπ₁/X]` is returned.
+
+codata ∃₋(T: Type -> Type) {
+  ∃₋(T).eπ₁(T: Type -> Type): Type,
+  (self: ∃₋(T)).eπ₂(T: Type -> Type): T.ap(Type,Type, self.eπ₁(T))
+}
+
+-- ------------------------------- --
+-- Weak and Strong Sigma Types     --
+-- ------------------------------- --
+
+-- Finally, we can consider the case of weak and strong Sigma types, which can
+-- now be seen to be nothing more than the difference between a Sigma type defined
+-- as a data type vs a codata type. This example is very similar to the case of
+-- existentials, except that the type constructor `Σ` is now indexed over both a
+-- type `A` and a type family `T: A -> Type`.
+
+data Σ₊(A: Type, T: A -> Type) {
+  ΣSum(A: Type, T: A -> Type, x: A, w: T.ap(A,Type,x)): Σ₊(A,T)
+}
+
+codata Σ₋(A: Type, T: A -> Type) {
+  Σ₋(A,T).sπ₁(A: Type, T: A -> Type): A,
+  (self: Σ₋(A,T)).sπ₂(A: Type, T: A -> Type): T.ap(A,Type, self.sπ₁(A,T))
+}
