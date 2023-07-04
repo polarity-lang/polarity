@@ -93,3 +93,8 @@ codata Σ₋(A: Type, T: A -> Type) {
   Σ₋(A,T).sπ₁(A: Type, T: A -> Type): A,
   (self: Σ₋(A,T)).sπ₂(A: Type, T: A -> Type): T.ap(A,Type, self.sπ₁(A,T))
 }
+
+codef DefΣSum(A: Type, T: A -> Type, x: A, w: T.ap(A, Type, x)): Σ₋(A,T) {
+  sπ₁(_,_) => x,
+  sπ₂(_,_) => w
+}
