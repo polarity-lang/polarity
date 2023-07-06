@@ -57,7 +57,7 @@ OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_
 
 Param: Param = <name: BindingSite> <names: BindingSite*> ":" <typ: Exp> => Param { name, names, typ } ;
 
-ParamInst: ParamInst = <l: @L> <name: BindingSite> <r: @R> => ParamInst { info: span(l, r), name };
+ParamInst: ParamInst = <l: @L> <name: BindingSite> <r: @R> => ParamInst { span: span(l, r), name };
 
 Params: Vec<Param> = ParenthesizedArgs<Param>;
 OptParams: Vec<Param> = OptParenthesizedArgs<Param>;
@@ -85,34 +85,34 @@ pub Prg: Prg = {
 }
 
 pub Decl: Decl = {
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => Decl::Data(Data { info: span(l, r), doc, name, hidden, params, ctors }),
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => Decl::Codata(Codata { info: span(l, r), doc, name, hidden, params, dtors }),
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => Decl::Def(Def { info: span(l, r), doc, name, hidden, params, scrutinee, ret_typ, body }),
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => Decl::Codef(Codef { info: span(l, r), doc, name, hidden, params, typ, body }),
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => Decl::Data(Data { span: span(l, r), doc, name, hidden, params, ctors }),
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => Decl::Codata(Codata { span: span(l, r), doc, name, hidden, params, dtors }),
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => Decl::Def(Def { span: span(l, r), doc, name, hidden, params, scrutinee, ret_typ, body }),
+    <l: @L> <doc: DocComment?> <hidden: Hidden> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Comatch> "}" <r: @R> => Decl::Codef(Codef { span: span(l, r), doc, name, hidden, params, typ, body }),
 }
 
 Ctor: Ctor = {
-    <l: @L> <doc: DocComment?> <name: UpperIdent> <params: OptTelescope> <typ: (":" <TypApp>)?> <r: @R> => Ctor { info: span(l, r), doc, name, params, typ },
+    <l: @L> <doc: DocComment?> <name: UpperIdent> <params: OptTelescope> <typ: (":" <TypApp>)?> <r: @R> => Ctor { span: span(l, r), doc, name, params, typ },
 }
 
 Dtor: Dtor = {
-    <l: @L> <doc: DocComment?> <destructee: Destructee> <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> <r: @R> => Dtor { info: span(l, r), doc, name, params, destructee, ret_typ },
+    <l: @L> <doc: DocComment?> <destructee: Destructee> <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> <r: @R> => Dtor { span: span(l, r), doc, name, params, destructee, ret_typ },
 }
 
 pub Comatch : Comatch = {
-    <l: @L> <cases: Comma<Cocase>> <omit_absurd: OmitAbsurd> <r: @R> => Comatch { info: span(l, r), cases, omit_absurd },
+    <l: @L> <cases: Comma<Cocase>> <omit_absurd: OmitAbsurd> <r: @R> => Comatch { span: span(l, r), cases, omit_absurd },
 }
 
 pub Match : Match = {
-    <l: @L> <cases: Comma<Case>> <omit_absurd: OmitAbsurd> <r: @R> => Match { info: span(l, r), cases, omit_absurd },
+    <l: @L> <cases: Comma<Case>> <omit_absurd: OmitAbsurd> <r: @R> => Match { span: span(l, r), cases, omit_absurd },
 }
 
 pub Case : Case = {
-    <l: @L> <name: Ident> <args: OptTelescopeInst> <body: AbsurdOrBody> <r: @R> => Case { info: span(l, r), name, args, body },
+    <l: @L> <name: Ident> <args: OptTelescopeInst> <body: AbsurdOrBody> <r: @R> => Case { span: span(l, r), name, args, body },
 }
 
 pub Cocase : Cocase = {
-    <l: @L> <name: Ident> <args: OptTelescopeInst> <body: AbsurdOrBody> <r: @R> => Cocase { info: span(l, r), name, args, body },
+    <l: @L> <name: Ident> <args: OptTelescopeInst> <body: AbsurdOrBody> <r: @R> => Cocase { span: span(l, r), name, args, body },
 }
 
 pub AbsurdOrBody: Option<Rc<Exp>> = {
@@ -122,58 +122,58 @@ pub AbsurdOrBody: Option<Rc<Exp>> = {
 
 pub Destructee: Destructee = {
     <l: @L> <scrutinee: (<Scrutinee> ".")?> <r: @R> => match scrutinee {
-        Some(Scrutinee { info, name, typ }) => Destructee { info, name, typ: Some(typ) },
-        None => Destructee { info: span(l, r), name: None, typ: None },
+        Some(Scrutinee { span, name, typ }) => Destructee { span, name, typ: Some(typ) },
+        None => Destructee { span: span(l, r), name: None, typ: None },
     }
 }
 
 pub Scrutinee: Scrutinee = {
-    <l: @L> "(" <name: BindingSite> ":" <typ: TypApp> ")" <r: @R> => Scrutinee { info: span(l, r), name: match name { BindingSite::Wildcard => None, BindingSite::Var { name } => Some(name) }, typ },
-    <l: @L> <typ: TypApp> <r: @R> => Scrutinee { info: span(l, r), name: None, typ },
+    <l: @L> "(" <name: BindingSite> ":" <typ: TypApp> ")" <r: @R> => Scrutinee { span: span(l, r), name: match name { BindingSite::Wildcard => None, BindingSite::Var { name } => Some(name) }, typ },
+    <l: @L> <typ: TypApp> <r: @R> => Scrutinee { span: span(l, r), name: None, typ },
 }
 
 pub TypApp: TypApp = {
-    <l: @L> <name: UpperIdent> <args: OptArgs> <r: @R> => TypApp { info: span(l, r), name, args },
+    <l: @L> <name: UpperIdent> <args: OptArgs> <r: @R> => TypApp { span: span(l, r), name, args },
 }
 
 pub Exp: Rc<Exp> = {
-    <l: @L> <exp: Ops> ":" <typ: Exp> <r: @R> => Rc::new(Exp::Anno { info: span(l, r), exp, typ }),
-    <l: @L> <from: Ops> "->" <to: Exp> <r: @R> => Rc::new(Exp::Fun { info: span(l, r), from, to }),
-    <l: @L> "\\" <var: ParamInst> "." <body: Exp> <r: @R> => Rc::new(Exp::Lam { info: span(l, r), var, body }),
+    <l: @L> <exp: Ops> ":" <typ: Exp> <r: @R> => Rc::new(Exp::Anno { span: span(l, r), exp, typ }),
+    <l: @L> <from: Ops> "->" <to: Exp> <r: @R> => Rc::new(Exp::Fun { span: span(l, r), from, to }),
+    <l: @L> "\\" <var: ParamInst> "." <body: Exp> <r: @R> => Rc::new(Exp::Lam { span: span(l, r), var, body }),
     Ops,
 }
 
 pub Ops = {
-    <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> => Rc::new(Exp::DotCall { info: span(l, r), exp, name, args }),
-    <l: @L> <on_exp: Ops> "." "match" <name: Ident?> <motive: Motive?> "{" <body: Match> "}" <r: @R> => Rc::new(Exp::Match { info: span(l, r), name, on_exp, motive, body }),
+    <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> => Rc::new(Exp::DotCall { span: span(l, r), exp, name, args }),
+    <l: @L> <on_exp: Ops> "." "match" <name: Ident?> <motive: Motive?> "{" <body: Match> "}" <r: @R> => Rc::new(Exp::Match { span: span(l, r), name, on_exp, motive, body }),
     App,
 }
 
 pub App = {
-    <l: @L> <name: Ident> <args: Args> <r: @R> => Rc::new(Exp::Call { info: span(l, r), name, args }),
-    <l: @L> "comatch" <name: Ident?> "{" <body: Comatch> "}" <r: @R> => Rc::new(Exp::Comatch { info: span(l, r), name, is_lambda_sugar: false, body }),
+    <l: @L> <name: Ident> <args: Args> <r: @R> => Rc::new(Exp::Call { span: span(l, r), name, args }),
+    <l: @L> "comatch" <name: Ident?> "{" <body: Comatch> "}" <r: @R> => Rc::new(Exp::Comatch { span: span(l, r), name, is_lambda_sugar: false, body }),
     Builtins,
 }
 
 pub Builtins: Rc<Exp> = {
-    <l: @L>"Type" <r: @R> => Rc::new(Exp::Type { info: span(l, r) }),
+    <l: @L>"Type" <r: @R> => Rc::new(Exp::Type { span: span(l, r) }),
     Hole,
 }
 
 pub Hole: Rc<Exp> = {
-    <l: @L> "?" <r: @R> => Rc::new(Exp::Hole { info: span(l, r), kind: HoleKind::Todo }),
-    <l: @L> "..." <r: @R> => Rc::new(Exp::Hole { info: span(l, r), kind: HoleKind::Omitted }),
+    <l: @L> "?" <r: @R> => Rc::new(Exp::Hole { span: span(l, r), kind: HoleKind::Todo }),
+    <l: @L> "..." <r: @R> => Rc::new(Exp::Hole { span: span(l, r), kind: HoleKind::Omitted }),
     Atom,
 }
 
 pub Atom: Rc<Exp> = {
-    <l: @L> <s: r"0|[1-9][0-9]*"> <r: @R> => Rc::new(Exp::NatLit { info: span(l, r), val: BigUint::parse_bytes(s.as_ref(), 10).unwrap() }),
+    <l: @L> <s: r"0|[1-9][0-9]*"> <r: @R> => Rc::new(Exp::NatLit { span: span(l, r), val: BigUint::parse_bytes(s.as_ref(), 10).unwrap() }),
     "(" <exp: Exp> ")" => exp,
-    <l: @L> <name: Ident> <r: @R> => Rc::new(Exp::Call { info: span(l, r), name, args: Args::new() }),
+    <l: @L> <name: Ident> <r: @R> => Rc::new(Exp::Call { span: span(l, r), name, args: Args::new() }),
 }
 
 Motive: Motive = {
-    <l: @L> "as" <param: ParamInst> "=>" <ret_typ: Exp> <r: @R> => Motive { info: span(l, r), param, ret_typ },
+    <l: @L> "as" <param: ParamInst> "=>" <ret_typ: Exp> <r: @R> => Motive { span: span(l, r), param, ret_typ },
 }
 
 // Names

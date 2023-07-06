@@ -62,11 +62,11 @@ fn build_lookup_table(
         match item {
             cst::Decl::Data(data) => {
                 // top_level_map
-                add_top_level_decl(&data.name, &data.info, DeclMeta::from(data))?;
+                add_top_level_decl(&data.name, &data.span, DeclMeta::from(data))?;
                 for ctor in &data.ctors {
                     add_top_level_decl(
                         &ctor.name,
-                        &ctor.info,
+                        &ctor.span,
                         DeclMeta::Ctor { ret_typ: data.name.clone() },
                     )?;
                 }
@@ -78,11 +78,11 @@ fn build_lookup_table(
             }
             cst::Decl::Codata(codata) => {
                 // top_level_map
-                add_top_level_decl(&codata.name, &codata.info, DeclMeta::from(codata))?;
+                add_top_level_decl(&codata.name, &codata.span, DeclMeta::from(codata))?;
                 for dtor in &codata.dtors {
                     add_top_level_decl(
                         &dtor.name,
-                        &dtor.info,
+                        &dtor.span,
                         DeclMeta::Dtor { self_typ: codata.name.clone() },
                     )?;
                 }
@@ -94,7 +94,7 @@ fn build_lookup_table(
             }
             cst::Decl::Def(def) => {
                 // top_level_map
-                add_top_level_decl(&def.name, &def.info, DeclMeta::from(def))?;
+                add_top_level_decl(&def.name, &def.span, DeclMeta::from(def))?;
 
                 // lookup_table
                 let type_name = def.scrutinee.typ.name.clone();
@@ -102,7 +102,7 @@ fn build_lookup_table(
             }
             cst::Decl::Codef(codef) => {
                 // top_level_map
-                add_top_level_decl(&codef.name, &codef.info, DeclMeta::from(codef))?;
+                add_top_level_decl(&codef.name, &codef.span, DeclMeta::from(codef))?;
 
                 // lookup_table
                 let type_name = codef.typ.name.clone();
@@ -133,7 +133,7 @@ impl Lower for cst::Data {
     type Target = ust::Data;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Data { info, doc, name, hidden, params, ctors } = self;
+        let cst::Data { span, doc, name, hidden, params, ctors } = self;
 
         let ctor_decls = ctors.lower(ctx)?.into_iter().map(ust::Decl::Ctor);
 
@@ -142,7 +142,7 @@ impl Lower for cst::Data {
         ctx.add_decls(ctor_decls)?;
 
         Ok(ust::Data {
-            info: Some(*info),
+            info: Some(*span),
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -156,7 +156,7 @@ impl Lower for cst::Codata {
     type Target = ust::Codata;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Codata { info, doc, name, hidden, params, dtors } = self;
+        let cst::Codata { span, doc, name, hidden, params, dtors } = self;
 
         let dtor_decls = dtors.lower(ctx)?.into_iter().map(ust::Decl::Dtor);
 
@@ -165,7 +165,7 @@ impl Lower for cst::Codata {
         ctx.add_decls(dtor_decls)?;
 
         Ok(ust::Codata {
-            info: Some(*info),
+            info: Some(*span),
             doc: doc.clone(),
             name: name.clone(),
             hidden: *hidden,
@@ -179,9 +179,9 @@ impl Lower for cst::Ctor {
     type Target = ust::Ctor;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Ctor { info, doc, name, params, typ } = self;
+        let cst::Ctor { span, doc, name, params, typ } = self;
 
-        let typ_name = match ctx.lookup_top_level_decl(name, info)? {
+        let typ_name = match ctx.lookup_top_level_decl(name, span)? {
             DeclMeta::Ctor { ret_typ } => ret_typ,
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
@@ -192,7 +192,7 @@ impl Lower for cst::Ctor {
             }
         };
 
-        let type_arity = match ctx.lookup_top_level_decl(&typ_name, info)? {
+        let type_arity = match ctx.lookup_top_level_decl(&typ_name, span)? {
             DeclMeta::Data { arity } => arity,
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
@@ -218,13 +218,13 @@ impl Lower for cst::Ctor {
                         return Err(LoweringError::MustProvideArgs {
                             xtor: name.clone(),
                             typ: typ_name.clone(),
-                            span: info.to_miette(),
+                            span: span.to_miette(),
                         });
                     }
                 }
             };
 
-            Ok(ust::Ctor { info: Some(*info), doc: doc.clone(), name: name.clone(), params, typ })
+            Ok(ust::Ctor { info: Some(*span), doc: doc.clone(), name: name.clone(), params, typ })
         })
     }
 }
@@ -233,9 +233,9 @@ impl Lower for cst::Dtor {
     type Target = ust::Dtor;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Dtor { info, doc, name, params, destructee, ret_typ } = self;
+        let cst::Dtor { span, doc, name, params, destructee, ret_typ } = self;
 
-        let typ_name = match ctx.lookup_top_level_decl(name, info)? {
+        let typ_name = match ctx.lookup_top_level_decl(name, span)? {
             DeclMeta::Dtor { self_typ } => self_typ,
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
@@ -246,7 +246,7 @@ impl Lower for cst::Dtor {
             }
         };
 
-        let type_arity = match ctx.lookup_top_level_decl(&typ_name, info)? {
+        let type_arity = match ctx.lookup_top_level_decl(&typ_name, span)? {
             DeclMeta::Codata { arity } => arity,
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
@@ -264,7 +264,7 @@ impl Lower for cst::Dtor {
                 None => {
                     if type_arity == 0 {
                         cst::TypApp {
-                            info: Default::default(),
+                            span: Default::default(),
                             name: typ_name.clone(),
                             args: vec![],
                         }
@@ -272,21 +272,21 @@ impl Lower for cst::Dtor {
                         return Err(LoweringError::MustProvideArgs {
                             xtor: name.clone(),
                             typ: typ_name.clone(),
-                            span: info.to_miette(),
+                            span: span.to_miette(),
                         });
                     }
                 }
             };
 
             let self_param = cst::SelfParam {
-                info: destructee.info,
+                span: destructee.span,
                 name: destructee.name.clone(),
                 typ: on_typ,
             };
 
             lower_self_param(&self_param, ctx, |ctx, self_param| {
                 Ok(ust::Dtor {
-                    info: Some(*info),
+                    info: Some(*span),
                     doc: doc.clone(),
                     name: name.clone(),
                     params,
@@ -302,7 +302,7 @@ impl Lower for cst::Def {
     type Target = ust::Def;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Def { info, doc, name, hidden, params, scrutinee, ret_typ, body } = self;
+        let cst::Def { span, doc, name, hidden, params, scrutinee, ret_typ, body } = self;
 
         let self_param: cst::SelfParam = scrutinee.clone().into();
 
@@ -311,7 +311,7 @@ impl Lower for cst::Def {
 
             lower_self_param(&self_param, ctx, |ctx, self_param| {
                 Ok(ust::Def {
-                    info: Some(*info),
+                    info: Some(*span),
                     doc: doc.clone(),
                     name: name.clone(),
                     hidden: *hidden,
@@ -329,11 +329,11 @@ impl Lower for cst::Codef {
     type Target = ust::Codef;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Codef { info, doc, name, hidden, params, typ, body, .. } = self;
+        let cst::Codef { span, doc, name, hidden, params, typ, body, .. } = self;
 
         lower_telescope(params, ctx, |ctx, params| {
             Ok(ust::Codef {
-                info: Some(*info),
+                info: Some(*span),
                 doc: doc.clone(),
                 name: name.clone(),
                 hidden: *hidden,
@@ -349,9 +349,9 @@ impl Lower for cst::Match {
     type Target = ust::Match;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Match { info, cases, omit_absurd } = self;
+        let cst::Match { span, cases, omit_absurd } = self;
 
-        Ok(ust::Match { info: Some(*info), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
+        Ok(ust::Match { info: Some(*span), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
     }
 }
 
@@ -359,9 +359,9 @@ impl Lower for cst::Comatch {
     type Target = ust::Comatch;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Comatch { info, cases, omit_absurd } = self;
+        let cst::Comatch { span, cases, omit_absurd } = self;
 
-        Ok(ust::Comatch { info: Some(*info), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
+        Ok(ust::Comatch { info: Some(*span), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
     }
 }
 
@@ -369,10 +369,10 @@ impl Lower for cst::Case {
     type Target = ust::Case;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Case { info, name, args, body } = self;
+        let cst::Case { span, name, args, body } = self;
 
         lower_telescope_inst(args, ctx, |ctx, args| {
-            Ok(ust::Case { info: Some(*info), name: name.clone(), args, body: body.lower(ctx)? })
+            Ok(ust::Case { info: Some(*span), name: name.clone(), args, body: body.lower(ctx)? })
         })
     }
 }
@@ -381,11 +381,11 @@ impl Lower for cst::Cocase {
     type Target = ust::Cocase;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Cocase { info, name, args, body } = self;
+        let cst::Cocase { span, name, args, body } = self;
 
         lower_telescope_inst(args, ctx, |ctx, args| {
             Ok(ust::Cocase {
-                info: Some(*info),
+                info: Some(*span),
                 name: name.clone(),
                 params: args,
                 body: body.lower(ctx)?,
@@ -398,10 +398,10 @@ impl Lower for cst::TypApp {
     type Target = ust::TypApp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::TypApp { info, name, args } = self;
+        let cst::TypApp { span, name, args } = self;
 
         Ok(ust::TypApp {
-            info: Some(*info),
+            info: Some(*span),
             name: name.clone(),
             args: ust::Args { args: args.lower(ctx)? },
         })
@@ -413,72 +413,72 @@ impl Lower for cst::Exp {
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         match self {
-            cst::Exp::Call { info, name, args } => match ctx.lookup(name, info)? {
+            cst::Exp::Call { span, name, args } => match ctx.lookup(name, span)? {
                 Elem::Bound(lvl) => Ok(ust::Exp::Var {
-                    info: Some(*info),
+                    info: Some(*span),
                     name: name.clone(),
                     ctx: (),
                     idx: ctx.level_to_index(lvl),
                 }),
                 Elem::Decl(meta) => match meta.kind() {
                     DeclKind::Data | DeclKind::Codata => Ok(ust::Exp::TypCtor {
-                        info: Some(*info),
+                        info: Some(*span),
                         name: name.to_owned(),
                         args: ust::Args { args: args.lower(ctx)? },
                     }),
                     DeclKind::Def | DeclKind::Dtor => Err(LoweringError::MustUseAsDtor {
                         name: name.to_owned(),
-                        span: info.to_miette(),
+                        span: span.to_miette(),
                     }),
                     DeclKind::Codef | DeclKind::Ctor => Ok(ust::Exp::Ctor {
-                        info: Some(*info),
+                        info: Some(*span),
                         name: name.to_owned(),
                         args: ust::Args { args: args.lower(ctx)? },
                     }),
                 },
             },
-            cst::Exp::DotCall { info, exp, name, args } => match ctx.lookup(name, info)? {
+            cst::Exp::DotCall { span, exp, name, args } => match ctx.lookup(name, span)? {
                 Elem::Bound(_) => Err(LoweringError::CannotUseAsDtor {
                     name: name.clone(),
-                    span: info.to_miette(),
+                    span: span.to_miette(),
                 }),
                 Elem::Decl(meta) => match meta.kind() {
                     DeclKind::Def | DeclKind::Dtor => Ok(ust::Exp::Dtor {
-                        info: Some(*info),
+                        info: Some(*span),
                         exp: exp.lower(ctx)?,
                         name: name.clone(),
                         args: ust::Args { args: args.lower(ctx)? },
                     }),
                     _ => Err(LoweringError::CannotUseAsDtor {
                         name: name.clone(),
-                        span: info.to_miette(),
+                        span: span.to_miette(),
                     }),
                 },
             },
-            cst::Exp::Anno { info, exp, typ } => {
-                Ok(ust::Exp::Anno { info: Some(*info), exp: exp.lower(ctx)?, typ: typ.lower(ctx)? })
+            cst::Exp::Anno { span, exp, typ } => {
+                Ok(ust::Exp::Anno { info: Some(*span), exp: exp.lower(ctx)?, typ: typ.lower(ctx)? })
             }
-            cst::Exp::Type { info } => Ok(ust::Exp::Type { info: Some(*info) }),
-            cst::Exp::Match { info, name, on_exp, motive, body } => Ok(ust::Exp::Match {
-                info: Some(*info),
+            cst::Exp::Type { span } => Ok(ust::Exp::Type { info: Some(*span) }),
+            cst::Exp::Match { span, name, on_exp, motive, body } => Ok(ust::Exp::Match {
+                info: Some(*span),
                 ctx: (),
-                name: ctx.unique_label(name.to_owned(), info)?,
+                name: ctx.unique_label(name.to_owned(), span)?,
                 on_exp: on_exp.lower(ctx)?,
                 motive: motive.lower(ctx)?,
                 ret_typ: (),
                 body: body.lower(ctx)?,
             }),
-            cst::Exp::Comatch { info, name, is_lambda_sugar, body } => Ok(ust::Exp::Comatch {
-                info: Some(*info),
+            cst::Exp::Comatch { span, name, is_lambda_sugar, body } => Ok(ust::Exp::Comatch {
+                info: Some(*span),
                 ctx: (),
-                name: ctx.unique_label(name.to_owned(), info)?,
+                name: ctx.unique_label(name.to_owned(), span)?,
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.lower(ctx)?,
             }),
-            cst::Exp::Hole { info, kind } => Ok(ust::Exp::Hole { info: Some(*info), kind: *kind }),
-            cst::Exp::NatLit { info, val } => {
+            cst::Exp::Hole { span, kind } => Ok(ust::Exp::Hole { info: Some(*span), kind: *kind }),
+            cst::Exp::NatLit { span, val } => {
                 let mut out = ust::Exp::Ctor {
-                    info: Some(*info),
+                    info: Some(*span),
                     name: "Z".to_owned(),
                     args: ust::Args { args: vec![] },
                 };
@@ -488,7 +488,7 @@ impl Lower for cst::Exp {
                 while &i != val {
                     i += 1usize;
                     out = ust::Exp::Ctor {
-                        info: Some(*info),
+                        info: Some(*span),
                         name: "S".to_owned(),
                         args: ust::Args { args: vec![Rc::new(out)] },
                     };
@@ -496,28 +496,28 @@ impl Lower for cst::Exp {
 
                 Ok(out)
             }
-            cst::Exp::Fun { info, from, to } => Ok(ust::Exp::TypCtor {
-                info: Some(*info),
+            cst::Exp::Fun { span, from, to } => Ok(ust::Exp::TypCtor {
+                info: Some(*span),
                 name: "Fun".to_owned(),
                 args: ust::Args { args: vec![from.lower(ctx)?, to.lower(ctx)?] },
             }),
-            cst::Exp::Lam { info, var, body } => {
+            cst::Exp::Lam { span, var, body } => {
                 let comatch = cst::Exp::Comatch {
-                    info: *info,
+                    span: *span,
                     name: None,
                     is_lambda_sugar: true,
                     body: cst::Comatch {
-                        info: *info,
+                        span: *span,
                         cases: vec![cst::Cocase {
-                            info: *info,
+                            span: *span,
                             name: "ap".to_owned(),
                             args: cst::TelescopeInst(vec![
                                 cst::ParamInst {
-                                    info: Default::default(),
+                                    span: Default::default(),
                                     name: BindingSite::Wildcard,
                                 },
                                 cst::ParamInst {
-                                    info: Default::default(),
+                                    span: Default::default(),
                                     name: BindingSite::Wildcard,
                                 },
                                 var.clone(),
@@ -537,11 +537,11 @@ impl Lower for cst::Motive {
     type Target = ust::Motive;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Motive { info, param, ret_typ } = self;
+        let cst::Motive { span, param, ret_typ } = self;
 
         Ok(ust::Motive {
-            info: Some(*info),
-            param: ust::ParamInst { info: Some(param.info), name: param.name().clone(), typ: () },
+            info: Some(*span),
+            param: ust::ParamInst { info: Some(param.span), name: param.name().clone(), typ: () },
             ret_typ: ctx.bind_single(param, |ctx| ret_typ.lower(ctx))?,
         })
     }
@@ -576,10 +576,10 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ust::SelfParam) -> Result<T, Lowering
     ctx: &mut Ctx,
     f: F,
 ) -> Result<T, LoweringError> {
-    let cst::SelfParam { info, name, typ } = self_param;
+    let cst::SelfParam { span, name, typ } = self_param;
     let typ_out = typ.lower(ctx)?;
     ctx.bind_single(name.clone().unwrap_or_default(), |ctx| {
-        f(ctx, ust::SelfParam { info: Some(*info), name: name.clone(), typ: typ_out })
+        f(ctx, ust::SelfParam { info: Some(*span), name: name.clone(), typ: typ_out })
     })
 }
 
@@ -636,9 +636,9 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ust::TelescopeInst) -> Result<T, 
         Ok(vec![]),
         |_ctx, params_out, param| {
             let mut params_out = params_out?;
-            let cst::ParamInst { info, name } = param;
+            let cst::ParamInst { span, name } = param;
             let param_out =
-                ust::ParamInst { info: Some(*info), name: name.name().clone(), typ: () };
+                ust::ParamInst { info: Some(*span), name: name.name().clone(), typ: () };
             params_out.push(param_out);
             Ok(params_out)
         },

@@ -33,7 +33,7 @@ pub enum Decl {
 
 #[derive(Debug, Clone)]
 pub struct Data {
-    pub info: Span,
+    pub span: Span,
     pub doc: Option<DocComment>,
     /// Whether the declaration should be omitted
     /// during pretty printing.
@@ -45,7 +45,7 @@ pub struct Data {
 
 #[derive(Debug, Clone)]
 pub struct Codata {
-    pub info: Span,
+    pub span: Span,
     pub doc: Option<DocComment>,
     /// Whether the declaration should be omitted
     /// during pretty printing.
@@ -57,7 +57,7 @@ pub struct Codata {
 
 #[derive(Debug, Clone)]
 pub struct Ctor {
-    pub info: Span,
+    pub span: Span,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope,
@@ -66,7 +66,7 @@ pub struct Ctor {
 
 #[derive(Debug, Clone)]
 pub struct Dtor {
-    pub info: Span,
+    pub span: Span,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope,
@@ -76,7 +76,7 @@ pub struct Dtor {
 
 #[derive(Debug, Clone)]
 pub struct Def {
-    pub info: Span,
+    pub span: Span,
     pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declaration should be omitted
@@ -90,7 +90,7 @@ pub struct Def {
 
 #[derive(Debug, Clone)]
 pub struct Codef {
-    pub info: Span,
+    pub span: Span,
     pub doc: Option<DocComment>,
     pub name: Ident,
     /// Whether the declaration should be omitted
@@ -103,21 +103,21 @@ pub struct Codef {
 
 #[derive(Debug, Clone)]
 pub struct Match {
-    pub info: Span,
+    pub span: Span,
     pub cases: Vec<Case>,
     pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct Comatch {
-    pub info: Span,
+    pub span: Span,
     pub cases: Vec<Cocase>,
     pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct Case {
-    pub info: Span,
+    pub span: Span,
     pub name: Ident,
     pub args: TelescopeInst,
     /// Body being `None` represents an absurd pattern
@@ -126,7 +126,7 @@ pub struct Case {
 
 #[derive(Debug, Clone)]
 pub struct Cocase {
-    pub info: Span,
+    pub span: Span,
     pub name: Ident,
     pub args: TelescopeInst,
     /// Body being `None` represents an absurd pattern
@@ -135,43 +135,43 @@ pub struct Cocase {
 
 #[derive(Debug, Clone)]
 pub struct Scrutinee {
-    pub info: Span,
+    pub span: Span,
     pub name: Option<Ident>,
     pub typ: TypApp,
 }
 
 #[derive(Debug, Clone)]
 pub struct Destructee {
-    pub info: Span,
+    pub span: Span,
     pub name: Option<Ident>,
     pub typ: Option<TypApp>,
 }
 
 #[derive(Debug, Clone)]
 pub struct SelfParam {
-    pub info: Span,
+    pub span: Span,
     pub name: Option<Ident>,
     pub typ: TypApp,
 }
 
 impl From<Scrutinee> for SelfParam {
     fn from(scrutinee: Scrutinee) -> Self {
-        let Scrutinee { info, name, typ } = scrutinee;
+        let Scrutinee { span, name, typ } = scrutinee;
 
-        SelfParam { info, name, typ }
+        SelfParam { span, name, typ }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct TypApp {
-    pub info: Span,
+    pub span: Span,
     pub name: Ident,
     pub args: Args,
 }
 
 impl TypApp {
     pub fn to_exp(&self) -> Exp {
-        Exp::Call { info: self.info, name: self.name.clone(), args: self.args.clone() }
+        Exp::Call { span: self.span, name: self.name.clone(), args: self.args.clone() }
     }
 }
 
@@ -183,21 +183,21 @@ pub enum HoleKind {
 
 #[derive(Debug, Clone)]
 pub enum Exp {
-    Call { info: Span, name: Ident, args: Args },
-    DotCall { info: Span, exp: Rc<Exp>, name: Ident, args: Args },
-    Anno { info: Span, exp: Rc<Exp>, typ: Rc<Exp> },
-    Type { info: Span },
-    Match { info: Span, name: Option<Ident>, on_exp: Rc<Exp>, motive: Option<Motive>, body: Match },
-    Comatch { info: Span, name: Option<Ident>, is_lambda_sugar: bool, body: Comatch },
-    Hole { info: Span, kind: HoleKind },
-    NatLit { info: Span, val: BigUint },
-    Fun { info: Span, from: Rc<Exp>, to: Rc<Exp> },
-    Lam { info: Span, var: ParamInst, body: Rc<Exp> },
+    Call { span: Span, name: Ident, args: Args },
+    DotCall { span: Span, exp: Rc<Exp>, name: Ident, args: Args },
+    Anno { span: Span, exp: Rc<Exp>, typ: Rc<Exp> },
+    Type { span: Span },
+    Match { span: Span, name: Option<Ident>, on_exp: Rc<Exp>, motive: Option<Motive>, body: Match },
+    Comatch { span: Span, name: Option<Ident>, is_lambda_sugar: bool, body: Comatch },
+    Hole { span: Span, kind: HoleKind },
+    NatLit { span: Span, val: BigUint },
+    Fun { span: Span, from: Rc<Exp>, to: Rc<Exp> },
+    Lam { span: Span, var: ParamInst, body: Rc<Exp> },
 }
 
 #[derive(Debug, Clone)]
 pub struct Motive {
-    pub info: Span,
+    pub span: Span,
     pub param: ParamInst,
     pub ret_typ: Rc<Exp>,
 }
@@ -239,6 +239,6 @@ pub struct Param {
 /// Instantiation of a previously declared parameter
 #[derive(Debug, Clone)]
 pub struct ParamInst {
-    pub info: Span,
+    pub span: Span,
     pub name: BindingSite,
 }
