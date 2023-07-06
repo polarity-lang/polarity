@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use codespan::Span;
 use num_bigint::BigUint;
 
 use data::HashMap;
@@ -46,9 +47,12 @@ fn build_lookup_table(
     let mut lookup_table = lookup_table::LookupTable::default();
     let mut top_level_map = HashMap::default();
 
-    let mut add_top_level_decl = |name: &Ident, decl_kind: DeclMeta| {
+    let mut add_top_level_decl = |name: &Ident, span: &Span, decl_kind: DeclMeta| {
         if top_level_map.contains_key(name) {
-            return Err(LoweringError::AlreadyDefined { name: name.to_owned(), span: None });
+            return Err(LoweringError::AlreadyDefined {
+                name: name.to_owned(),
+                span: Some(span.to_miette()),
+            });
         }
         top_level_map.insert(name.clone(), decl_kind);
         Ok(())
@@ -58,9 +62,13 @@ fn build_lookup_table(
         match item {
             cst::Decl::Data(data) => {
                 // top_level_map
-                add_top_level_decl(&data.name, DeclMeta::from(data))?;
+                add_top_level_decl(&data.name, &data.info, DeclMeta::from(data))?;
                 for ctor in &data.ctors {
-                    add_top_level_decl(&ctor.name, DeclMeta::Ctor { ret_typ: data.name.clone() })?;
+                    add_top_level_decl(
+                        &ctor.name,
+                        &ctor.info,
+                        DeclMeta::Ctor { ret_typ: data.name.clone() },
+                    )?;
                 }
 
                 // lookup_table
@@ -70,10 +78,11 @@ fn build_lookup_table(
             }
             cst::Decl::Codata(codata) => {
                 // top_level_map
-                add_top_level_decl(&codata.name, DeclMeta::from(codata))?;
+                add_top_level_decl(&codata.name, &codata.info, DeclMeta::from(codata))?;
                 for dtor in &codata.dtors {
                     add_top_level_decl(
                         &dtor.name,
+                        &dtor.info,
                         DeclMeta::Dtor { self_typ: codata.name.clone() },
                     )?;
                 }
@@ -85,7 +94,7 @@ fn build_lookup_table(
             }
             cst::Decl::Def(def) => {
                 // top_level_map
-                add_top_level_decl(&def.name, DeclMeta::from(def))?;
+                add_top_level_decl(&def.name, &def.info, DeclMeta::from(def))?;
 
                 // lookup_table
                 let type_name = def.scrutinee.typ.name.clone();
@@ -93,7 +102,7 @@ fn build_lookup_table(
             }
             cst::Decl::Codef(codef) => {
                 // top_level_map
-                add_top_level_decl(&codef.name, DeclMeta::from(codef))?;
+                add_top_level_decl(&codef.name, &codef.info, DeclMeta::from(codef))?;
 
                 // lookup_table
                 let type_name = codef.typ.name.clone();
