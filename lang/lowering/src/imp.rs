@@ -38,28 +38,30 @@ fn register_names(ctx: &mut Ctx, items: &[cst::Item]) -> Result<(), LoweringErro
     for item in items {
         match item {
             cst::Item::Data(data) => {
-                ctx.add_top_level_decl(&data.name, DeclMeta::from(data))?;
+                ctx.add_top_level_decl(&data.name, &data.info, DeclMeta::from(data))?;
                 for ctor in &data.ctors {
                     ctx.add_top_level_decl(
                         &ctor.name,
+                        &ctor.info,
                         DeclMeta::Ctor { ret_typ: data.name.clone() },
                     )?;
                 }
             }
             cst::Item::Codata(codata) => {
-                ctx.add_top_level_decl(&codata.name, DeclMeta::from(codata))?;
+                ctx.add_top_level_decl(&codata.name, &codata.info, DeclMeta::from(codata))?;
                 for dtor in &codata.dtors {
                     ctx.add_top_level_decl(
                         &dtor.name,
+                        &dtor.info,
                         DeclMeta::Dtor { self_typ: codata.name.clone() },
                     )?;
                 }
             }
             cst::Item::Def(def) => {
-                ctx.add_top_level_decl(&def.name, DeclMeta::from(def))?;
+                ctx.add_top_level_decl(&def.name, &def.info, DeclMeta::from(def))?;
             }
             cst::Item::Codef(codef) => {
-                ctx.add_top_level_decl(&codef.name, DeclMeta::from(codef))?;
+                ctx.add_top_level_decl(&codef.name, &codef.info, DeclMeta::from(codef))?;
             }
         }
     }
