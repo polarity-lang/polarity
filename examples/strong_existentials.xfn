@@ -16,7 +16,7 @@
 -- Ordinary product types          --
 -- ------------------------------- --
 
--- Let us start with the simples case of products, namely non-dependent
+-- Let us start with the simplest case of products, namely non-dependent
 -- products `A × B` consisting of an element of type `A` and an element
 -- of type `B`. As a datatype it can be written as follows:
 
