@@ -9,8 +9,8 @@ use syntax::ust;
 
 use crate::result::IOError;
 
-const LATEX_END: &str = r#"\end{alltt}
-"#;
+const LATEX_END: &str = r"\end{alltt}
+";
 
 fn latex_start(fontsize: &FontSize) -> String {
     use FontSize::*;
