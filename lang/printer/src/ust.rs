@@ -496,8 +496,18 @@ impl<'a> Print<'a> for Exp {
                 }
             }
             Exp::TypCtor { info: _, name, args } => {
-                let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-                alloc.typ(name).append(psubst)
+                if name == "Fun" && args.len() == 2 {
+                    let arg = args.args[0].print(cfg, alloc);
+                    let res = args.args[1].print(cfg, alloc);
+                    arg.append(alloc.space())
+                        .append(ARROW)
+                        .append(alloc.space())
+                        .append(res)
+                        .parens()
+                } else {
+                    let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
+                    alloc.typ(name).append(psubst)
+                }
             }
             Exp::Ctor { info: _, name, args } => {
                 let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
