@@ -486,7 +486,7 @@ impl<'a> Print<'a> for TypApp {
 }
 
 impl<'a> Print<'a> for Exp {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
         match self {
             Exp::Var { info: _, name, ctx: _, idx } => {
                 if cfg.de_bruijn {
@@ -497,13 +497,15 @@ impl<'a> Print<'a> for Exp {
             }
             Exp::TypCtor { info: _, name, args } => {
                 if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
-                    let arg = args.args[0].print(cfg, alloc);
-                    let res = args.args[1].print(cfg, alloc);
-                    arg.append(alloc.space())
-                        .append(ARROW)
-                        .append(alloc.space())
-                        .append(res)
-                        .parens()
+                    let arg = args.args[0].print_prec(cfg, alloc, 1);
+                    let res = args.args[1].print_prec(cfg, alloc, 0);
+                    let fun =
+                        arg.append(alloc.space()).append(ARROW).append(alloc.space()).append(res);
+                    if prec == 0 {
+                        fun
+                    } else {
+                        fun.parens()
+                    }
                 } else {
                     let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                     alloc.typ(name).append(psubst)
@@ -595,6 +597,10 @@ impl<'a> Print<'a> for DocComment {
 impl<'a, T: Print<'a>> Print<'a> for Rc<T> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         T::print(self, cfg, alloc)
+    }
+
+    fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
+        T::print_prec(self, cfg, alloc, prec)
     }
 }
 
