@@ -6,7 +6,6 @@ use codespan::{FileId, Files};
 
 use data::HashMap;
 
-use info::collect_info;
 pub use result::Error;
 
 mod asserts;

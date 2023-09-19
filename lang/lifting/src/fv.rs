@@ -72,7 +72,7 @@ impl FreeVars {
     pub fn union(self, other: FreeVars) -> FreeVars {
         assert_eq!(self.cutoff, other.cutoff);
         let mut fvs = self.fvs;
-        fvs.extend(other.fvs.into_iter());
+        fvs.extend(other.fvs);
         Self { fvs, cutoff: self.cutoff }
     }
 
