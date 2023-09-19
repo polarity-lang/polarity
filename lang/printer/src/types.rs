@@ -105,6 +105,8 @@ pub struct PrintCfg {
     pub indent: isize,
     /// Whether to print the syntactic sugar "\x. body".
     pub print_lambda_sugar: bool,
+    /// Whether to print the syntactic sugar "a -> b".
+    pub print_function_sugar: bool,
 }
 
 impl Default for PrintCfg {
@@ -116,6 +118,7 @@ impl Default for PrintCfg {
             de_bruijn: false,
             indent: 4,
             print_lambda_sugar: true,
+            print_function_sugar: true,
         }
     }
 }

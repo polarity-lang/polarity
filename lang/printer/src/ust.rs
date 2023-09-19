@@ -496,7 +496,7 @@ impl<'a> Print<'a> for Exp {
                 }
             }
             Exp::TypCtor { info: _, name, args } => {
-                if name == "Fun" && args.len() == 2 {
+                if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
                     let arg = args.args[0].print(cfg, alloc);
                     let res = args.args[1].print(cfg, alloc);
                     arg.append(alloc.space())
