@@ -13,6 +13,10 @@ pub struct LevelCtx {
 }
 
 impl LevelCtx {
+    pub fn empty() -> Self {
+        Self { bound: vec![] }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.bound.is_empty()
     }
@@ -37,10 +41,6 @@ impl Context for LevelCtx {
     type ElemOut = usize;
 
     type Var = usize;
-
-    fn empty() -> Self {
-        Self { bound: vec![] }
-    }
 
     fn push_telescope(&mut self) {
         self.bound.push(0);

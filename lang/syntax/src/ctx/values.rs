@@ -17,6 +17,10 @@ pub struct TypeCtx {
 }
 
 impl TypeCtx {
+    pub fn empty() -> Self {
+        Self { bound: vec![] }
+    }
+
     pub fn levels(&self) -> LevelCtx {
         let bound: Vec<_> = self.bound.iter().map(|inner| inner.len()).collect();
         LevelCtx::from(bound)
@@ -45,10 +49,6 @@ impl Context for TypeCtx {
     type ElemOut = Binder;
 
     type Var = Var;
-
-    fn empty() -> Self {
-        Self { bound: vec![] }
-    }
 
     fn lookup<V: Into<Self::Var>>(&self, idx: V) -> Self::ElemOut {
         let lvl = self.var_to_lvl(idx.into());

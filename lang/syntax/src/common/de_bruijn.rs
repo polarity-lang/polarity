@@ -92,6 +92,10 @@ pub trait ShiftInRange {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self;
 }
 
+impl ShiftInRange for () {
+    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {}
+}
+
 impl ShiftInRange for Idx {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         if range.contains(&self.fst) {

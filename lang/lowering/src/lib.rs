@@ -1,9 +1,7 @@
 mod ctx;
 mod imp;
 mod result;
-mod types;
 
 pub use ctx::*;
-pub use imp::lower;
+pub use imp::lower_prg;
 pub use result::*;
-pub use types::*;

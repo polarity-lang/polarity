@@ -11,7 +11,7 @@ use normalizer::normalize::Normalize;
 use parser::cst::{HoleKind, Ident};
 use syntax::common::*;
 use syntax::ctx::values::Binder;
-use syntax::ctx::{BindContext, BindElem, Context, LevelCtx};
+use syntax::ctx::{BindContext, BindElem, LevelCtx};
 use syntax::nf;
 use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
 use syntax::ust::util::Instantiate;

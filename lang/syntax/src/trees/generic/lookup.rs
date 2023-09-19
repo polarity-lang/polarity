@@ -1,17 +1,14 @@
-use std::fmt;
 use std::rc::Rc;
 
 use miette::{Diagnostic, SourceSpan};
 use miette_util::ToMiette;
 use thiserror::Error;
 
-use data::string::comma_separated;
-
-use crate::common::*;
 use parser::cst::Ident;
 
 use super::def::*;
 use super::lookup_table;
+use super::lookup_table::DeclKind;
 
 impl<P: Phase> Decls<P> {
     pub fn empty() -> Self {
@@ -93,9 +90,8 @@ impl<P: Phase> Decls<P> {
         match self.decl(name, span)? {
             Decl::Data(data) => Ok(Type::Data(data)),
             Decl::Codata(codata) => Ok(Type::Codata(codata)),
-            other => Err(LookupError::InvalidDeclarationKind {
+            other => Err(LookupError::ExpectedDataCodata {
                 name: name.to_owned(),
-                expected: AnyOf(vec![DeclKind::Data, DeclKind::Codata]),
                 actual: other.kind(),
                 span: span.to_miette(),
             }),
@@ -105,9 +101,8 @@ impl<P: Phase> Decls<P> {
     pub fn data(&self, name: &str, span: Option<codespan::Span>) -> Result<&Data<P>, LookupError> {
         match self.decl(name, span)? {
             Decl::Data(data) => Ok(data),
-            other => Err(LookupError::InvalidDeclarationKind {
+            other => Err(LookupError::ExpectedData {
                 name: name.to_owned(),
-                expected: DeclKind::Data.into(),
                 actual: other.kind(),
                 span: span.to_miette(),
             }),
@@ -121,9 +116,8 @@ impl<P: Phase> Decls<P> {
     ) -> Result<&Codata<P>, LookupError> {
         match self.decl(name, span)? {
             Decl::Codata(codata) => Ok(codata),
-            other => Err(LookupError::InvalidDeclarationKind {
+            other => Err(LookupError::ExpectedCodata {
                 name: name.to_owned(),
-                expected: DeclKind::Codata.into(),
                 actual: other.kind(),
                 span: span.to_miette(),
             }),
@@ -133,9 +127,8 @@ impl<P: Phase> Decls<P> {
     pub fn def(&self, name: &str, span: Option<codespan::Span>) -> Result<&Def<P>, LookupError> {
         match self.decl(name, span)? {
             Decl::Def(def) => Ok(def),
-            other => Err(LookupError::InvalidDeclarationKind {
+            other => Err(LookupError::ExpectedDef {
                 name: name.to_owned(),
-                expected: DeclKind::Def.into(),
                 actual: other.kind(),
                 span: span.to_miette(),
             }),
@@ -149,9 +142,8 @@ impl<P: Phase> Decls<P> {
     ) -> Result<&Codef<P>, LookupError> {
         match self.decl(name, span)? {
             Decl::Codef(codef) => Ok(codef),
-            other => Err(LookupError::InvalidDeclarationKind {
+            other => Err(LookupError::ExpectedCodef {
                 name: name.to_owned(),
-                expected: DeclKind::Codef.into(),
                 actual: other.kind(),
                 span: span.to_miette(),
             }),
@@ -161,9 +153,8 @@ impl<P: Phase> Decls<P> {
     pub fn ctor(&self, name: &str, span: Option<codespan::Span>) -> Result<&Ctor<P>, LookupError> {
         match self.decl(name, span)? {
             Decl::Ctor(ctor) => Ok(ctor),
-            other => Err(LookupError::InvalidDeclarationKind {
+            other => Err(LookupError::ExpectedCtor {
                 name: name.to_owned(),
-                expected: DeclKind::Ctor.into(),
                 actual: other.kind(),
                 span: span.to_miette(),
             }),
@@ -173,9 +164,8 @@ impl<P: Phase> Decls<P> {
     pub fn dtor(&self, name: &str, span: Option<codespan::Span>) -> Result<&Dtor<P>, LookupError> {
         match self.decl(name, span)? {
             Decl::Dtor(dtor) => Ok(dtor),
-            other => Err(LookupError::InvalidDeclarationKind {
+            other => Err(LookupError::ExpectedDtor {
                 name: name.to_owned(),
-                expected: DeclKind::Dtor.into(),
                 actual: other.kind(),
                 span: span.to_miette(),
             }),
@@ -190,9 +180,8 @@ impl<P: Phase> Decls<P> {
         match self.decl(name, span)? {
             Decl::Ctor(ctor) => Ok(ctor.clone()),
             Decl::Codef(codef) => Ok(codef.to_ctor()),
-            other => Err(LookupError::InvalidDeclarationKind {
+            other => Err(LookupError::ExpectedCtorCodef {
                 name: name.to_owned(),
-                expected: AnyOf(vec![DeclKind::Ctor, DeclKind::Codef]),
                 actual: other.kind(),
                 span: span.to_miette(),
             }),
@@ -207,9 +196,8 @@ impl<P: Phase> Decls<P> {
         match self.decl(name, span)? {
             Decl::Dtor(dtor) => Ok(dtor.clone()),
             Decl::Def(def) => Ok(def.to_dtor()),
-            other => Err(LookupError::InvalidDeclarationKind {
+            other => Err(LookupError::ExpectedDtorDef {
                 name: name.to_owned(),
-                expected: AnyOf(vec![DeclKind::Dtor, DeclKind::Def]),
                 actual: other.kind(),
                 span: span.to_miette(),
             }),
@@ -273,10 +261,65 @@ pub enum LookupError {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[error("Expected {name} to be a {expected}, but it is a {actual}")]
-    InvalidDeclarationKind {
+    #[error("Expected {name} to be a data type or codata type, but it is a {actual}")]
+    ExpectedDataCodata {
         name: String,
-        expected: AnyOf<DeclKind>,
+        actual: DeclKind,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Expected {name} to be a data type, but it is a {actual}")]
+    ExpectedData {
+        name: String,
+        actual: DeclKind,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Expected {name} to be a codata type, but it is a {actual}")]
+    ExpectedCodata {
+        name: String,
+        actual: DeclKind,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Expected {name} to be a constructor or codefinition, but it is a {actual}")]
+    ExpectedCtorCodef {
+        name: String,
+        actual: DeclKind,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Expected {name} to be a constructor, but it is a {actual}")]
+    ExpectedCtor {
+        name: String,
+        actual: DeclKind,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Expected {name} to be a codefinition, but it is a {actual}")]
+    ExpectedCodef {
+        name: String,
+        actual: DeclKind,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Expected {name} to be a destructor or definition, but it is a {actual}")]
+    ExpectedDtorDef {
+        name: String,
+        actual: DeclKind,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Expected {name} to be a destructor, but it is a {actual}")]
+    ExpectedDtor {
+        name: String,
+        actual: DeclKind,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Expected {name} to be a definition, but it is a {actual}")]
+    ExpectedDef {
+        name: String,
         actual: DeclKind,
         #[label]
         span: Option<SourceSpan>,
@@ -287,30 +330,4 @@ pub enum LookupError {
         #[label]
         span: Option<SourceSpan>,
     },
-}
-
-#[derive(Debug)]
-pub struct AnyOf<T>(Vec<T>);
-
-impl<T> From<T> for AnyOf<T> {
-    fn from(x: T) -> Self {
-        AnyOf(vec![x])
-    }
-}
-
-impl<T: fmt::Display> fmt::Display for AnyOf<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.0.is_empty() {
-            Ok(())
-        } else if self.0.len() == 1 {
-            write!(f, "{}", self.0[0])
-        } else {
-            write!(
-                f,
-                "{} or {}",
-                comma_separated(self.0[..self.0.len() - 1].iter().map(|x| x.to_string())),
-                self.0[self.0.len() - 1]
-            )
-        }
-    }
 }

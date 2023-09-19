@@ -9,7 +9,7 @@ use derivative::Derivative;
 use crate::common::*;
 use parser::cst::{DocComment, HoleKind, Ident};
 
-use super::lookup_table::LookupTable;
+use super::lookup_table::{DeclKind, LookupTable};
 
 pub trait Phase
 where
@@ -63,6 +63,18 @@ impl<P: Phase> Decl<P> {
             Decl::Dtor(_) => DeclKind::Dtor,
             Decl::Def(_) => DeclKind::Def,
             Decl::Codef(_) => DeclKind::Codef,
+        }
+    }
+}
+impl<P: Phase> HasSpan for Decl<P> {
+    fn span(&self) -> Option<Span> {
+        match self {
+            Decl::Data(data) => data.info,
+            Decl::Codata(codata) => codata.info,
+            Decl::Ctor(ctor) => ctor.info,
+            Decl::Dtor(dtor) => dtor.info,
+            Decl::Def(def) => def.info,
+            Decl::Codef(codef) => codef.info,
         }
     }
 }
@@ -319,6 +331,22 @@ pub enum Exp<P: Phase> {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         kind: HoleKind,
     },
+}
+
+impl<P: Phase> HasSpan for Exp<P> {
+    fn span(&self) -> Option<Span> {
+        match self {
+            Exp::Var { info, .. } => info.span(),
+            Exp::TypCtor { info, .. } => info.span(),
+            Exp::Ctor { info, .. } => info.span(),
+            Exp::Dtor { info, .. } => info.span(),
+            Exp::Anno { info, .. } => info.span(),
+            Exp::Type { info } => info.span(),
+            Exp::Match { info, .. } => info.span(),
+            Exp::Comatch { info, .. } => info.span(),
+            Exp::Hole { info, .. } => info.span(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Derivative)]

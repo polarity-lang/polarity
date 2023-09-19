@@ -24,10 +24,6 @@ impl Context for Env {
 
     type Var = Var;
 
-    fn empty() -> Self {
-        Self { bound: vec![] }
-    }
-
     fn lookup<V: Into<Self::Var>>(&self, idx: V) -> Self::ElemOut {
         let lvl = self.var_to_lvl(idx.into());
         self.bound
@@ -76,6 +72,10 @@ impl Leveled for Env {
 }
 
 impl Env {
+    pub fn empty() -> Self {
+        Self { bound: vec![] }
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &[Rc<Val>]> {
         self.bound.iter().map(|inner| &inner[..])
     }

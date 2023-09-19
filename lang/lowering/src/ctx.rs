@@ -5,7 +5,7 @@ use parser::cst;
 use parser::cst::{BindingSite, Ident};
 use syntax::common::*;
 use syntax::ctx::{Context, ContextElem};
-use syntax::generic::lookup_table;
+use syntax::generic::lookup_table::DeclMeta;
 use syntax::ust;
 
 use super::result::LoweringError;
@@ -22,7 +22,7 @@ pub struct Ctx {
     /// Metadata for top-level names
     top_level_map: HashMap<Ident, DeclMeta>,
     /// Accumulates top-level declarations
-    decls_map: HashMap<Ident, ust::Decl>,
+    pub decls_map: HashMap<Ident, ust::Decl>,
     /// Counts the number of entries for each De-Bruijn level
     levels: Vec<usize>,
     /// Counter for unique label ids
@@ -32,6 +32,17 @@ pub struct Ctx {
 }
 
 impl Ctx {
+    pub fn empty(top_level_map: HashMap<Ident, DeclMeta>) -> Self {
+        Self {
+            local_map: HashMap::default(),
+            top_level_map,
+            decls_map: HashMap::default(),
+            levels: Vec::new(),
+            next_label_id: 0,
+            user_labels: HashSet::default(),
+        }
+    }
+
     pub fn lookup(&self, name: &str, info: &Span) -> Result<Elem, LoweringError> {
         Context::lookup(self, name.to_owned()).ok_or_else(|| LoweringError::UndefinedIdent {
             name: name.to_owned(),
@@ -50,22 +61,6 @@ impl Ctx {
         })
     }
 
-    pub fn add_top_level_decl(
-        &mut self,
-        name: &Ident,
-        span: &Span,
-        decl_kind: DeclMeta,
-    ) -> Result<(), LoweringError> {
-        if self.top_level_map.contains_key(name) {
-            return Err(LoweringError::AlreadyDefined {
-                name: name.to_owned(),
-                span: Some(span.to_miette()),
-            });
-        }
-        self.top_level_map.insert(name.clone(), decl_kind);
-        Ok(())
-    }
-
     pub fn add_decls<I>(&mut self, decls: I) -> Result<(), LoweringError>
     where
         I: IntoIterator<Item = ust::Decl>,
@@ -82,10 +77,6 @@ impl Ctx {
         }
         self.decls_map.insert(decl.name().clone(), decl);
         Ok(())
-    }
-
-    pub fn into_decls(self, lookup_table: lookup_table::LookupTable) -> ust::Decls {
-        ust::Decls { map: self.decls_map, lookup_table }
     }
 
     pub fn unique_label(
@@ -143,17 +134,6 @@ impl Context for Ctx {
     type ElemOut = Option<Elem>;
 
     type Var = Ident;
-
-    fn empty() -> Self {
-        Self {
-            local_map: HashMap::default(),
-            top_level_map: HashMap::default(),
-            decls_map: HashMap::default(),
-            levels: Vec::new(),
-            next_label_id: 0,
-            user_labels: HashSet::default(),
-        }
-    }
 
     fn push_telescope(&mut self) {
         self.levels.push(0);
@@ -213,62 +193,4 @@ impl ContextElem<Ctx> for &cst::ParamInst {
 pub enum Elem {
     Bound(Lvl),
     Decl(DeclMeta),
-}
-
-#[derive(Clone, Debug)]
-pub enum DeclMeta {
-    Data { arity: usize },
-    Codata { arity: usize },
-    Def,
-    Codef,
-    Ctor { ret_typ: Ident },
-    Dtor { self_typ: Ident },
-}
-
-impl DeclMeta {
-    pub fn kind(&self) -> DeclKind {
-        match self {
-            DeclMeta::Data { .. } => DeclKind::Data,
-            DeclMeta::Codata { .. } => DeclKind::Codata,
-            DeclMeta::Def => DeclKind::Def,
-            DeclMeta::Codef => DeclKind::Codef,
-            DeclMeta::Ctor { .. } => DeclKind::Ctor,
-            DeclMeta::Dtor { .. } => DeclKind::Dtor,
-        }
-    }
-}
-
-impl From<&cst::Data> for DeclMeta {
-    fn from(data: &cst::Data) -> Self {
-        Self::Data { arity: data.params.len() }
-    }
-}
-
-impl From<&cst::Codata> for DeclMeta {
-    fn from(codata: &cst::Codata) -> Self {
-        Self::Codata { arity: codata.params.len() }
-    }
-}
-
-impl From<&cst::Def> for DeclMeta {
-    fn from(_def: &cst::Def) -> Self {
-        Self::Def
-    }
-}
-
-impl From<&cst::Codef> for DeclMeta {
-    fn from(_codef: &cst::Codef) -> Self {
-        Self::Codef
-    }
-}
-
-impl From<&cst::Item> for DeclMeta {
-    fn from(decl: &cst::Item) -> Self {
-        match decl {
-            cst::Item::Data(data) => DeclMeta::from(data),
-            cst::Item::Codata(codata) => DeclMeta::from(codata),
-            cst::Item::Def(_def) => Self::Def,
-            cst::Item::Codef(_codef) => Self::Codef,
-        }
-    }
 }

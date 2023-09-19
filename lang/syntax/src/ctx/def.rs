@@ -9,9 +9,6 @@ pub trait Context: Sized {
     /// Variable type that can be looked up in the context
     type Var;
 
-    /// Create an empty context
-    fn empty() -> Self;
-
     /// Get the element bound at `var`
     fn lookup<V: Into<Self::Var> + std::fmt::Debug>(&self, var: V) -> Self::ElemOut;
 

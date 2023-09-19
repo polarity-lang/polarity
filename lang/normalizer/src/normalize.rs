@@ -1,4 +1,3 @@
-use syntax::ctx::Context;
 use syntax::ust;
 
 use super::env::Env;
