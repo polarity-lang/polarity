@@ -1,5 +1,6 @@
 // Symbols
 
+pub const ARROW: &str = "->";
 pub const FAT_ARROW: &str = "=>";
 pub const COMMA: &str = ",";
 pub const COLON: &str = ":";

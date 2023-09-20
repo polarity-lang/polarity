@@ -22,11 +22,13 @@ pub type Builder<'a> = pretty::DocBuilder<'a, Alloc<'a>, Anno>;
 pub type Precedence = u32;
 
 pub trait Print<'a> {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a>;
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        Print::print_prec(self, cfg, alloc, 0)
+    }
 
     /// Print with precedence information about the enclosing context.
     ///
-    /// * `_prec` - The precedence of the surrounding context.
+    /// * `_prec` The precedence of the surrounding context.
     fn print_prec(
         &'a self,
         cfg: &PrintCfg,
@@ -45,11 +47,13 @@ pub trait PrintInCtx<'a> {
         cfg: &PrintCfg,
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
-    ) -> Builder<'a>;
+    ) -> Builder<'a> {
+        PrintInCtx::print_in_ctx_prec(self, cfg, ctx, alloc, 0)
+    }
 
     /// Print with precedence information about the enclosing context.
     ///
-    /// * `_prec` - The precedence of the surrounding context.
+    /// * `_prec` The precedence of the surrounding context.
     fn print_in_ctx_prec(
         &'a self,
         cfg: &PrintCfg,
@@ -88,8 +92,10 @@ impl<'a, T: Print<'a>, E: Error> Print<'a> for Result<T, E> {
 }
 
 pub struct PrintCfg {
+    /// The width of the output terminal/device. Width is used for
+    /// the insertion of linebreaks.
     pub width: usize,
-    // Whether to escape braces and backslashes
+    /// Whether to escape braces and backslashes
     pub latex: bool,
     /// Whether to omit the empty line between toplevel declarations.
     pub omit_decl_sep: bool,
@@ -99,6 +105,8 @@ pub struct PrintCfg {
     pub indent: isize,
     /// Whether to print the syntactic sugar "\x. body".
     pub print_lambda_sugar: bool,
+    /// Whether to print the syntactic sugar "a -> b".
+    pub print_function_sugar: bool,
 }
 
 impl Default for PrintCfg {
@@ -110,6 +118,7 @@ impl Default for PrintCfg {
             de_bruijn: false,
             indent: 4,
             print_lambda_sugar: true,
+            print_function_sugar: true,
         }
     }
 }

@@ -63,6 +63,8 @@ pub struct Args {
     fontsize: FontSize,
     #[clap(long, num_args = 0)]
     omit_lambda_sugar: bool,
+    #[clap(long, num_args = 0)]
+    omit_function_sugar: bool,
     #[clap(long, default_value_t = 4)]
     indent: isize,
     #[clap(short, long, value_name = "FILE")]
@@ -100,6 +102,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         de_bruijn: false,
         indent: cmd.indent,
         print_lambda_sugar: !cmd.omit_lambda_sugar,
+        print_function_sugar: !cmd.omit_function_sugar,
     };
 
     stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();

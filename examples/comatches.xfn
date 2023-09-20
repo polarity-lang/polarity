@@ -1,24 +1,25 @@
 codata Fun(a b: Type) {
-    Fun(a, b).ap(a: Type, b: Type, x: a) : b
+    Fun(a, b).ap(a b: Type, x: a): b
 }
 
-codata Pi(a: Type, p: Fun(a, Type)) {
-    Pi(a, p).pi_elim(a: Type, p: Fun(a, Type), x: a) : p.ap(a, Type, x)
+codata Pi(a: Type, p: a->Type) {
+    Pi(a, p).pi_elim(a: Type, p: a->Type, x: a): p.ap(a, Type, x)
 }
 
 data Top { Unit }
 
--- The type of the identity function
-codef IdType: Fun(Type, Type) {
-    ap(_, _, a) => Fun(a, a),
-}
+codef IdType: Fun(Type, Type) { ap(_, _, a) => a->a }
 
--- The identity function
 def Top.id: Pi(Type, IdType) {
-    Unit => comatch { pi_elim(_, _, a) => comatch { ap(_, _, x) => x } } : Pi(Type, IdType)
+    Unit => (comatch { pi_elim(_, _, a) => comatch { ap(_, _, x) => x } }):Pi(Type, IdType)
 }
 
--- The constant function
-def Top.const: Pi(Type, comatch { ap(_, _, a) => Pi(Type, comatch { ap(_, _, b) => Fun(a, Fun(b, a)) }) }) {
-    Unit => comatch { pi_elim(_, _, a) => comatch { pi_elim(_, _, b) => comatch { ap(_, _, x) => comatch { ap(_, _, y) => x } } }}
+def Top.const: Pi(Type, comatch { ap(_, _, a) => Pi(Type, comatch { ap(_, _, b) => a->b->a }) }) {
+    Unit =>
+        comatch {
+            pi_elim(_, _, a) =>
+                comatch {
+                    pi_elim(_, _, b) => comatch { ap(_, _, x) => comatch { ap(_, _, y) => x } }
+                }
+        }
 }
