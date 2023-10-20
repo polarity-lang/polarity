@@ -146,7 +146,7 @@ impl Context for Ctx {
     fn push_binder(&mut self, elem: Self::ElemIn) {
         let var = self.curr_lvl();
         *self.levels.last_mut().unwrap() += 1;
-        let stack = self.local_map.entry(elem).or_insert_with(Default::default);
+        let stack = self.local_map.entry(elem).or_default();
         stack.push(var);
     }
 
