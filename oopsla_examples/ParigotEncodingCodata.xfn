@@ -1,0 +1,10 @@
+codata Fun(A B: Type) {
+  Fun(A,B).ap(A B: Type, x: A) : B
+}
+
+codata Nat { analyze(A: Type, z: A, s: Fun(Nat, Fun(A, A))): A }
+
+codef S(p: Nat): Nat { analyze(A, z, s) => s.ap(Nat, Fun(A, A), p).ap(A, A, p.analyze(A, z, s)) }
+
+codef Z: Nat { analyze(A, z, s) => z }
+

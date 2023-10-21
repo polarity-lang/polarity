@@ -1,0 +1,11 @@
+data ×₊(A B: Type) {
+  Pair(A B: Type, x: A, y: B): ×₊(A,B)
+}
+
+def ×₊(A, B).π₁(A B: Type): A {
+  Pair(_, _, x, y) => x,
+}
+
+def ×₊(A, B).π₂(A B: Type): B {
+  Pair(_, _, x, y) => y,
+}
