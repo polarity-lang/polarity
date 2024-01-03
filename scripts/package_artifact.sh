@@ -4,7 +4,8 @@ test -e xfunc_artifact.zip && rm xfunc_artifact.zip
 DIR=$(mktemp -d)
 cp -r ./ $DIR/
 
-rm $DIR/package_artifact.sh
+rm $DIR/scripts/package_artifact.sh
+rm $DIR/scripts/oopsla_snippets.sh
 
 # only keep whitelisted files in oopsla_examples/, then delete whitelist
 for file in oopsla_examples/*.xfn; do
