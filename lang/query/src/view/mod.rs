@@ -8,8 +8,6 @@ mod xfunc;
 
 pub use self::xfunc::*;
 pub use edit::*;
-pub use rt::*;
-pub use spans::*;
 
 use crate::*;
 
