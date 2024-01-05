@@ -49,6 +49,7 @@ xfunc --help
 ```text
 ├── app                     CLI application
 ├── examples                Example code in the object language
+├── ext/vim/syntax          vim source code highlighting
 ├── ext/vscode              VSCode extension
 ├── lang                    Language implementation
 │   ├── lifting             Lift local (co)matches to top-level definitions
@@ -62,6 +63,7 @@ xfunc --help
 │   ├── typechecker         Bidirectional type inference
 │   ├── unifier             Unification algorithm
 │   └── xfunc               De-/Refunctionalization implementation
+├── oopsla_examples         Examples from the OOPSLA paper
 ├── test                    Integration tests
 │   ├── suites              Test cases
 │   └── test-runner         Test runner
