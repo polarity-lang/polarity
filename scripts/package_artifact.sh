@@ -23,13 +23,13 @@ rm -rf .gitignore
 rm -rf .github/
 rm -rf .cargo/
 
-zip -r xfunc_artifact.zip .
+zip -r 129.zip .
 
 popd
 
-mv "$DIR/xfunc_artifact.zip" .
+mv "$DIR/129.zip" .
 rm -rf "$DIR"
 
 echo "MD5 checksum:"
 
-md5sum xfunc_artifact.zip
+md5sum 129.zip
