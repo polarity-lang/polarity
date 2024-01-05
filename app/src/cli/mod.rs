@@ -23,7 +23,7 @@ pub fn exec() -> miette::Result<()> {
 }
 
 #[derive(Parser)]
-#[clap(author, about, version=crate::VERSION, long_about = None)]
+#[clap(author, about, long_about = None)]
 struct Cli {
     #[clap(subcommand)]
     command: Command,
