@@ -2,9 +2,10 @@
 test -e xfunc_artifact.zip && rm xfunc_artifact.zip
 
 DIR=$(mktemp -d)
-git clone --depth 1 "$(git remote get-url origin)" "$DIR/"
+git clone --depth 1 "$(git remote get-url origin)" "$DIR/xfn-lang"
 
-pushd $DIR || exit 1
+pushd "$DIR" || exit 1
+pushd "$DIR/xfn-lang" || exit 1
 
 rm scripts/package_artifact.sh
 rm scripts/oopsla_snippets.sh
@@ -23,13 +24,15 @@ rm -rf .gitignore
 rm -rf .github/
 rm -rf .cargo/
 
-zip -r 129.zip .
+popd
+
+zip -r 129.zip xfn-lang
 
 popd
 
 mv "$DIR/129.zip" .
 rm -rf "$DIR"
 
-echo "MD5 checksum:"
+echo "SHA256 checksum:"
 
-md5sum 129.zip
+sha256sum 129.zip
