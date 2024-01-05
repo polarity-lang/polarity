@@ -2,7 +2,7 @@
 test -e xfunc_artifact.zip && rm xfunc_artifact.zip
 
 DIR=$(mktemp -d)
-cp -r ./ $DIR/
+git clone --depth 1 $(git remote get-url origin) $DIR/
 
 rm $DIR/scripts/package_artifact.sh
 rm $DIR/scripts/oopsla_snippets.sh
