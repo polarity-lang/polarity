@@ -29,3 +29,7 @@ popd
 
 mv "$DIR/xfunc_artifact.zip" .
 rm -rf "$DIR"
+
+echo "MD5 checksum:"
+
+md5sum xfunc_artifact.zip
