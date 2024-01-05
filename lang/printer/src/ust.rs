@@ -632,7 +632,7 @@ fn print_return_type<'a, T: Print<'a>>(
 /// panic otherwise.
 fn print_lambda_sugar<'a>(e: &'a Comatch, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
     let Comatch { cases, .. } = e;
-    let Cocase { params, body, .. } = cases.get(0).expect("Empty comatch marked as lambda sugar");
+    let Cocase { params, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
     let var_name = params
         .params
         .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}

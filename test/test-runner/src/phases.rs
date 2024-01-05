@@ -120,9 +120,17 @@ impl TestOutput for String {
 
 #[derive(Debug)]
 pub enum Failure {
-    Mismatch { expected: String, actual: String },
-    ExpectedFailure { got: String },
-    ExpectedSuccess { got: Box<dyn Error> },
+    Mismatch {
+        expected: String,
+        actual: String,
+    },
+    #[allow(clippy::enum_variant_names)]
+    ExpectedFailure {
+        got: String,
+    },
+    ExpectedSuccess {
+        got: Box<dyn Error>,
+    },
 }
 
 impl Error for Failure {}
