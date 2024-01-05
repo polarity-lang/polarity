@@ -60,13 +60,13 @@ impl Context for TypeCtx {
     }
 
     fn push_telescope(&mut self) {
-        self.shift(.., (1, 0));
+        self.shift(0.., (1, 0));
         self.bound.push(vec![]);
     }
 
     fn pop_telescope(&mut self) {
         self.bound.pop().unwrap();
-        self.shift(.., (-1, 0));
+        self.shift(0.., (-1, 0));
     }
 
     fn push_binder(&mut self, elem: Self::ElemIn) {
