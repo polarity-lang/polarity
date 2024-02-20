@@ -164,7 +164,7 @@ pub struct Codef<P: Phase> {
     pub hidden: bool,
     pub params: Telescope<P>,
     pub typ: TypApp<P>,
-    pub body: Comatch<P>,
+    pub body: Match<P>,
 }
 
 impl<P: Phase> Codef<P> {
@@ -190,33 +190,12 @@ pub struct Match<P: Phase> {
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Comatch<P: Phase> {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
-    // TODO: Consider renaming this field to "cocases"
-    pub cases: Vec<Cocase<P>>,
-    pub omit_absurd: bool,
-}
-
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
 pub struct Case<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: Option<Span>,
     pub name: Ident,
     // TODO: Rename to params
     pub args: TelescopeInst<P>,
-    /// Body being `None` represents an absurd pattern
-    pub body: Option<Rc<Exp<P>>>,
-}
-
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
-pub struct Cocase<P: Phase> {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
-    pub name: Ident,
-    pub params: TelescopeInst<P>,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp<P>>>,
 }
@@ -323,7 +302,7 @@ pub enum Exp<P: Phase> {
         ctx: P::Ctx,
         name: Label,
         is_lambda_sugar: bool,
-        body: Comatch<P>,
+        body: Match<P>,
     },
     Hole {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
@@ -480,15 +459,8 @@ impl<P: Phase> HasPhase for Match<P> {
     type Phase = P;
 }
 
-impl<P: Phase> HasPhase for Comatch<P> {
-    type Phase = P;
-}
 
 impl<P: Phase> HasPhase for Case<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Cocase<P> {
     type Phase = P;
 }
 

@@ -61,20 +61,14 @@ pub trait Mapper<P: Phase> {
     fn map_def(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: Telescope<P>, self_param: SelfParam<P>, ret_typ: Rc<Exp<P>>, body: Match<P>) -> Def<P> {
         Def { info, doc, name, hidden, params, self_param, ret_typ, body }
     }
-    fn map_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: Telescope<P>, typ: TypApp<P>, body: Comatch<P>) -> Codef<P> {
+    fn map_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: Telescope<P>, typ: TypApp<P>, body: Match<P>) -> Codef<P> {
         Codef { info, doc, name, hidden, params, typ, body }
     }
     fn map_match(&mut self, info: Option<Span>, cases: Vec<Case<P>>, omit_absurd: bool) -> Match<P> {
         Match { info, cases, omit_absurd }
     }
-    fn map_comatch(&mut self, info: Option<Span>, cases: Vec<Cocase<P>>, omit_absurd: bool) -> Comatch<P> {
-        Comatch { info, cases, omit_absurd }
-    }
     fn map_case(&mut self, info: Option<Span>, name: Ident, args: TelescopeInst<P>, body: Option<Rc<Exp<P>>>) -> Case<P> {
         Case { info, name, args, body }
-    }
-    fn map_cocase(&mut self, info: Option<Span>, name: Ident, args: TelescopeInst<P>, body: Option<Rc<Exp<P>>>) -> Cocase<P> {
-        Cocase { info, name, params: args, body }
     }
     fn map_typ_app(&mut self, info: P::TypeInfo, name: Ident, args: Args<P>) -> TypApp<P> {
         TypApp { info, name, args }
@@ -100,7 +94,7 @@ pub trait Mapper<P: Phase> {
     fn map_exp_match(&mut self, info: P::TypeAppInfo, ctx: P::Ctx, name: Label, on_exp: Rc<Exp<P>>, motive: Option<Motive<P>>, ret_typ: P::InfTyp, body: Match<P>) -> Exp<P> {
         Exp::Match { info, ctx, name, on_exp, motive, ret_typ, body }
     }
-    fn map_exp_comatch(&mut self, info: P::TypeAppInfo, ctx: P::Ctx, name: Label, is_lambda_sugar: bool, body: Comatch<P>) -> Exp<P> {
+    fn map_exp_comatch(&mut self, info: P::TypeAppInfo, ctx: P::Ctx, name: Label, is_lambda_sugar: bool, body: Match<P>) -> Exp<P> {
         Exp::Comatch { info, ctx, name, is_lambda_sugar, body }
     }
     fn map_exp_hole(&mut self, info: P::TypeInfo, kind: HoleKind) -> Exp<P> {
@@ -250,7 +244,7 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_def(info, doc, name, hidden, params, self_param, ret_typ, body)
     }
 
-    fn fold_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: <Id<P> as Out>::Telescope, typ: <Id<P> as Out>::TypApp, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Codef {
+    fn fold_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: <Id<P> as Out>::Telescope, typ: <Id<P> as Out>::TypApp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Codef {
         self.map_codef(info, doc, name, hidden, params, typ, body)
     }
 
@@ -258,16 +252,8 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_match(info, cases, omit_absurd)
     }
 
-    fn fold_comatch(&mut self, info: Option<Span>, cases: Vec<<Id<P> as Out>::Cocase>, omit_absurd: bool) -> <Id<P> as Out>::Comatch {
-        self.map_comatch(info, cases, omit_absurd)
-    }
-
     fn fold_case(&mut self, info: Option<Span>, name: Ident, args: <Id<P> as Out>::TelescopeInst, body: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Case {
         self.map_case(info, name, args, body)
-    }
-
-    fn fold_cocase(&mut self, info: Option<Span>, name: Ident, args: <Id<P> as Out>::TelescopeInst, body: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Cocase {
-        self.map_cocase(info, name, args, body)
     }
 
     fn fold_typ_app(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::TypApp {
@@ -302,7 +288,7 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         Rc::new(self.map_exp_match(info, ctx, name, on_exp, motive, ret_typ, body))
     }
 
-    fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, ctx: <Id<P> as Out>::Ctx, name: Label, is_lambda_sugar: bool, body: <Id<P> as Out>::Comatch) -> <Id<P> as Out>::Exp {
+    fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, ctx: <Id<P> as Out>::Ctx, name: Label, is_lambda_sugar: bool, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
         Rc::new(self.map_exp_comatch(info, ctx, name, is_lambda_sugar, body))
     }
 

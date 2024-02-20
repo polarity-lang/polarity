@@ -261,15 +261,6 @@ impl Lift for tst::Match {
     }
 }
 
-impl Lift for tst::Comatch {
-    type Target = ust::Comatch;
-
-    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Comatch { info, cases, omit_absurd } = self;
-
-        ust::Comatch { info: *info, cases: cases.lift(ctx), omit_absurd: *omit_absurd }
-    }
-}
 
 impl Lift for tst::Case {
     type Target = ust::Case;
@@ -281,21 +272,6 @@ impl Lift for tst::Case {
             info: *info,
             name: name.clone(),
             args,
-            body: body.lift(ctx),
-        })
-    }
-}
-
-impl Lift for tst::Cocase {
-    type Target = ust::Cocase;
-
-    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Cocase { info, name, params, body } = self;
-
-        params.lift_telescope(ctx, |ctx, params| ust::Cocase {
-            info: *info,
-            name: name.clone(),
-            params,
             body: body.lift(ctx),
         })
     }
@@ -545,7 +521,7 @@ impl Ctx {
         type_ctx: &TypeCtx,
         name: &Label,
         is_lambda_sugar: bool,
-        body: &tst::Comatch,
+        body: &tst::Match,
     ) -> ust::Exp {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {

@@ -98,7 +98,7 @@ pub struct Codef {
     pub hidden: bool,
     pub params: Telescope,
     pub typ: TypApp,
-    pub body: Comatch,
+    pub body: Match,
 }
 
 #[derive(Debug, Clone)]
@@ -108,24 +108,9 @@ pub struct Match {
     pub omit_absurd: bool,
 }
 
-#[derive(Debug, Clone)]
-pub struct Comatch {
-    pub span: Span,
-    pub cases: Vec<Cocase>,
-    pub omit_absurd: bool,
-}
 
 #[derive(Debug, Clone)]
 pub struct Case {
-    pub span: Span,
-    pub name: Ident,
-    pub args: TelescopeInst,
-    /// Body being `None` represents an absurd pattern
-    pub body: Option<Rc<Exp>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Cocase {
     pub span: Span,
     pub name: Ident,
     pub args: TelescopeInst,
@@ -188,7 +173,7 @@ pub enum Exp {
     Anno { span: Span, exp: Rc<Exp>, typ: Rc<Exp> },
     Type { span: Span },
     Match { span: Span, name: Option<Ident>, on_exp: Rc<Exp>, motive: Option<Motive>, body: Match },
-    Comatch { span: Span, name: Option<Ident>, is_lambda_sugar: bool, body: Comatch },
+    Comatch { span: Span, name: Option<Ident>, is_lambda_sugar: bool, body: Match },
     Hole { span: Span, kind: HoleKind },
     NatLit { span: Span, val: BigUint },
     Fun { span: Span, from: Rc<Exp>, to: Rc<Exp> },

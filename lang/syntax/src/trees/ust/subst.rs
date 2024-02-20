@@ -77,17 +77,6 @@ impl Substitutable<Rc<Exp>> for Match {
     }
 }
 
-impl Substitutable<Rc<Exp>> for Comatch {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Comatch { info, cases, omit_absurd } = self;
-        Comatch {
-            info: *info,
-            cases: cases.iter().map(|cocase| cocase.subst(ctx, by)).collect(),
-            omit_absurd: *omit_absurd,
-        }
-    }
-}
-
 impl Substitutable<Rc<Exp>> for Case {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Case { info, name, args, body } = self;
@@ -95,18 +84,6 @@ impl Substitutable<Rc<Exp>> for Case {
             info: *info,
             name: name.clone(),
             args: args.clone(),
-            body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
-        })
-    }
-}
-
-impl Substitutable<Rc<Exp>> for Cocase {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Cocase { info, name, params: args, body } = self;
-        ctx.bind_iter(args.params.iter(), |ctx| Cocase {
-            info: *info,
-            name: name.clone(),
-            params: args.clone(),
             body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
         })
     }

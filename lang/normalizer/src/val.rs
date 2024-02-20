@@ -40,7 +40,7 @@ pub enum Val {
         name: Label,
         is_lambda_sugar: bool,
         // TODO: Ignore this field for PartialEq, Hash?
-        body: Comatch,
+        body: Match,
     },
     Neu {
         exp: Neu,
@@ -92,29 +92,7 @@ pub struct Match {
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Comatch {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
-    // TODO: Consider renaming this field to "cocases"
-    pub cases: Vec<Cocase>,
-    pub omit_absurd: bool,
-}
-
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
 pub struct Case {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
-    pub name: Ident,
-    // TODO: Rename to params
-    pub args: ust::TelescopeInst,
-    /// Body being `None` represents an absurd pattern
-    pub body: Option<Closure>,
-}
-
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
-pub struct Cocase {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: Option<Span>,
     pub name: Ident,
@@ -194,12 +172,6 @@ impl ShiftInRange for Match {
     }
 }
 
-impl ShiftInRange for Comatch {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Comatch { info, cases, omit_absurd } = self;
-        Comatch { info: *info, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
-    }
-}
 
 impl ShiftInRange for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
@@ -214,18 +186,6 @@ impl ShiftInRange for Case {
     }
 }
 
-impl ShiftInRange for Cocase {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Cocase { info, name, args, body } = self;
-
-        Cocase {
-            info: *info,
-            name: name.clone(),
-            args: args.clone(),
-            body: body.shift_in_range(range.shift(1), by),
-        }
-    }
-}
 
 impl ShiftInRange for Closure {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
@@ -283,24 +243,6 @@ impl<'a> Print<'a> for Neu {
         }
     }
 }
-impl<'a> Print<'a> for Comatch {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Comatch { info: _, cases, omit_absurd } = self;
-        let sep = alloc.text(COMMA).append(alloc.hardline());
-
-        alloc
-            .hardline()
-            .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
-            .append(if *omit_absurd {
-                alloc.text(COMMA).append(alloc.text("..")).append(alloc.keyword(ABSURD))
-            } else {
-                alloc.nil()
-            })
-            .nest(cfg.indent)
-            .append(alloc.hardline())
-            .braces_anno()
-    }
-}
 
 impl<'a> Print<'a> for Match {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
@@ -337,22 +279,6 @@ impl<'a> Print<'a> for Case {
     }
 }
 
-impl<'a> Print<'a> for Cocase {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Cocase { info: _, name, args, body } = self;
-
-        let body = match body {
-            None => alloc.keyword(ABSURD),
-            Some(body) => alloc
-                .text(FAT_ARROW)
-                .append(alloc.line())
-                .append(body.print(cfg, alloc))
-                .nest(cfg.indent),
-        };
-
-        alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
-    }
-}
 
 impl<'a> Print<'a> for Closure {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {

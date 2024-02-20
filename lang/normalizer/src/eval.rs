@@ -129,12 +129,12 @@ fn beta_match(
 #[trace("comatch {:P}.{}(...) ▷β {return:P}", body, dtor_name, data::id)]
 fn beta_comatch(
     prg: &Prg,
-    body: val::Comatch,
+    body: val::Match,
     dtor_name: &str,
     args: &[Rc<Val>],
 ) -> Result<Rc<Val>, EvalError> {
     let cocase = body.clone().cases.into_iter().find(|cocase| cocase.name == dtor_name).unwrap();
-    let val::Cocase { body, .. } = cocase;
+    let val::Case { body, .. } = cocase;
     let body = body.unwrap();
     body.apply(prg, args)
 }
@@ -146,16 +146,6 @@ impl Eval for ust::Match {
         let ust::Match { info, cases, omit_absurd } = self;
 
         Ok(val::Match { info: *info, cases: cases.eval(prg, env)?, omit_absurd: *omit_absurd })
-    }
-}
-
-impl Eval for ust::Comatch {
-    type Val = val::Comatch;
-
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
-        let ust::Comatch { info, cases, omit_absurd } = self;
-
-        Ok(val::Comatch { info: *info, cases: cases.eval(prg, env)?, omit_absurd: *omit_absurd })
     }
 }
 
@@ -175,21 +165,6 @@ impl Eval for ust::Case {
     }
 }
 
-impl Eval for ust::Cocase {
-    type Val = val::Cocase;
-
-    fn eval(&self, _prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
-        let ust::Cocase { info, name, params: args, body } = self;
-
-        let body = body.as_ref().map(|body| Closure {
-            body: body.clone(),
-            n_args: args.len(),
-            env: env.clone(),
-        });
-
-        Ok(val::Cocase { info: *info, name: name.clone(), args: args.clone(), body })
-    }
-}
 
 impl Eval for ust::TypApp {
     type Val = val::TypApp;

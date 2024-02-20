@@ -39,23 +39,10 @@ impl Occurs for Match {
     }
 }
 
-impl Occurs for Comatch {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
-        let Comatch { cases, .. } = self;
-        cases.occurs(ctx, lvl)
-    }
-}
 
 impl Occurs for Case {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Case { args, body, .. } = self;
-        ctx.bind_iter(args.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
-    }
-}
-
-impl Occurs for Cocase {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
-        let Cocase { params: args, body, .. } = self;
         ctx.bind_iter(args.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
     }
 }

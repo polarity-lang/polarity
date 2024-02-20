@@ -71,13 +71,6 @@ impl ShiftInRange for Match {
     }
 }
 
-impl ShiftInRange for Comatch {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Comatch { info, cases, omit_absurd } = self;
-        Comatch { info: *info, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
-    }
-}
-
 impl ShiftInRange for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Case { info, name, args, body } = self;
@@ -85,18 +78,6 @@ impl ShiftInRange for Case {
             info: *info,
             name: name.clone(),
             args: args.clone(),
-            body: body.shift_in_range(range.shift(1), by),
-        }
-    }
-}
-
-impl ShiftInRange for Cocase {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Cocase { info, name, params: args, body } = self;
-        Cocase {
-            info: *info,
-            name: name.clone(),
-            params: args.clone(),
             body: body.shift_in_range(range.shift(1), by),
         }
     }
