@@ -203,17 +203,17 @@ impl BuildMatrix for ust::Codef {
         })?;
         xdata.ctors.insert(self.name.clone(), self.to_ctor());
 
-        let ust::Comatch { cases, .. } = &self.body;
+        let ust::Match { cases, .. } = &self.body;
 
         for case in cases {
-            let ust::Cocase { name, body, .. } = case;
+            let ust::Case { name, body, .. } = case;
             let key = Key { ctor: self.name.clone(), dtor: name.clone() };
             // Swap binding order to the order imposed by the matrix representation
             let body = body.as_ref().map(|body| {
                 let mut ctx = LevelCtx::empty();
                 // TODO: Reconsider where to swap this
                 ctx.bind_iter(self.params.params.iter().map(|_| ()), |ctx| {
-                    ctx.bind_iter(case.params.params.iter().map(|_| ()), |ctx| {
+                    ctx.bind_iter(case.args.params.iter().map(|_| ()), |ctx| {
                         body.swap_with_ctx(ctx, 0, 1)
                     })
                 })
@@ -309,10 +309,10 @@ impl XData {
                         if body.is_none() {
                             omit_absurd = true;
                         }
-                        body.map(|body| ust::Cocase {
+                        body.map(|body| ust::Case {
                             info: None,
                             name: dtor.name.clone(),
-                            params: dtor.params.instantiate(),
+                            args: dtor.params.instantiate(),
                             body,
                         })
                     })
@@ -325,7 +325,7 @@ impl XData {
                     hidden: false,
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
-                    body: ust::Comatch { cases, info: None, omit_absurd },
+                    body: ust::Match { cases, info: None, omit_absurd },
                 }
             })
             .collect();

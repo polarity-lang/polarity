@@ -31,7 +31,7 @@ pub enum Nf {
         info: Option<Span>,
         name: Label,
         is_lambda_sugar: bool,
-        body: Comatch,
+        body: Match,
     },
     Neu {
         exp: Neu,
@@ -117,22 +117,6 @@ impl HasSpan for Match {
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Comatch {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
-    // TODO: Consider renaming this field to "cocases"
-    pub cases: Vec<Cocase>,
-    pub omit_absurd: bool,
-}
-
-impl HasSpan for Comatch {
-    fn span(&self) -> Option<codespan::Span> {
-        self.info
-    }
-}
-
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
 pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: Option<Span>,
@@ -144,24 +128,6 @@ pub struct Case {
 }
 
 impl HasSpan for Case {
-    fn span(&self) -> Option<codespan::Span> {
-        self.info
-    }
-}
-
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
-pub struct Cocase {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
-    pub name: Ident,
-    // TODO: Rename to params
-    pub args: ust::TelescopeInst,
-    /// Body being `None` represents an absurd pattern
-    pub body: Option<Rc<Nf>>,
-}
-
-impl HasSpan for Cocase {
     fn span(&self) -> Option<codespan::Span> {
         self.info
     }

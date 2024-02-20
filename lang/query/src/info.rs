@@ -145,7 +145,7 @@ impl Visitor<tst::TST> for InfoCollector {
         _hidden: bool,
         _params: &tst::Telescope,
         typ: &tst::TypApp,
-        _body: &tst::Comatch,
+        _body: &tst::Match,
     ) {
         self.add_item_span(
             Item::Codef { name: name.clone(), type_name: typ.name.clone() },

@@ -77,15 +77,6 @@ impl ReadBack for val::Match {
     }
 }
 
-impl ReadBack for val::Comatch {
-    type Nf = nf::Comatch;
-
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
-        let val::Comatch { info, cases, omit_absurd } = self;
-        Ok(nf::Comatch { info: *info, cases: cases.read_back(prg)?, omit_absurd: *omit_absurd })
-    }
-}
-
 impl ReadBack for val::Case {
     type Nf = nf::Case;
 
@@ -93,21 +84,6 @@ impl ReadBack for val::Case {
         let val::Case { info, name, args, body } = self;
 
         Ok(nf::Case {
-            info: *info,
-            name: name.clone(),
-            args: args.clone(),
-            body: body.read_back(prg)?,
-        })
-    }
-}
-
-impl ReadBack for val::Cocase {
-    type Nf = nf::Cocase;
-
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
-        let val::Cocase { info, name, args, body } = self;
-
-        Ok(nf::Cocase {
             info: *info,
             name: name.clone(),
             args: args.clone(),

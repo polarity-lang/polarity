@@ -258,50 +258,6 @@ impl<'a> Print<'a> for Dtor {
     }
 }
 
-impl<'a> Print<'a> for Comatch {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Comatch { info: _, cases, omit_absurd } = self;
-        match cases.len() {
-            0 => {
-                if *omit_absurd {
-                    alloc
-                        .space()
-                        .append(alloc.text(".."))
-                        .append(alloc.keyword(ABSURD))
-                        .append(alloc.space())
-                        .braces_anno()
-                } else {
-                    empty_braces(alloc)
-                }
-            }
-            1 if !omit_absurd => alloc
-                .line()
-                .append(cases[0].print(cfg, alloc))
-                .nest(cfg.indent)
-                .append(alloc.line())
-                .braces_anno()
-                .group(),
-            _ => {
-                let sep = alloc.text(COMMA).append(alloc.hardline());
-
-                alloc
-                    .hardline()
-                    .append(
-                        alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()),
-                    )
-                    .append(if *omit_absurd {
-                        sep.append(alloc.text("..")).append(alloc.keyword(ABSURD))
-                    } else {
-                        alloc.nil()
-                    })
-                    .nest(cfg.indent)
-                    .append(alloc.hardline())
-                    .braces_anno()
-            }
-        }
-    }
-}
-
 impl<'a> Print<'a> for Match {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { info: _, cases, omit_absurd } = self;
@@ -359,23 +315,6 @@ impl<'a> Print<'a> for Case {
         };
 
         alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
-    }
-}
-
-impl<'a> Print<'a> for Cocase {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Cocase { info: _, name, params: args, body } = self;
-
-        let body = match body {
-            None => alloc.keyword(ABSURD),
-            Some(body) => alloc
-                .text(FAT_ARROW)
-                .append(alloc.line())
-                .append(body.print(cfg, alloc))
-                .nest(cfg.indent),
-        };
-
-        alloc.dtor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
     }
 }
 
@@ -630,10 +569,10 @@ fn print_return_type<'a, T: Print<'a>>(
 /// Only invoke this function if the comatch contains exactly
 /// one cocase "ap" with three arguments; the function will
 /// panic otherwise.
-fn print_lambda_sugar<'a>(e: &'a Comatch, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-    let Comatch { cases, .. } = e;
-    let Cocase { params, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
-    let var_name = params
+fn print_lambda_sugar<'a>(e: &'a Match, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    let Match { cases, .. } = e;
+    let Case { args, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
+    let var_name = args
         .params
         .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
         .expect("No parameter bound in comatch marked as lambda sugar")

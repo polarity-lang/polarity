@@ -35,11 +35,9 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_ctor(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, params: O::Telescope, typ: O::TypApp) -> O::Ctor;
     fn fold_dtor(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp) -> O::Dtor;
     fn fold_def(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp, body: O::Match) -> O::Def;
-    fn fold_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: O::Telescope, typ: O::TypApp, body: O::Comatch) -> O::Codef;
+    fn fold_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: O::Telescope, typ: O::TypApp, body: O::Match) -> O::Codef;
     fn fold_match(&mut self, info: Option<Span>, cases: Vec<O::Case>, omit_absurd: bool) -> O::Match;
-    fn fold_comatch(&mut self, info: Option<Span>, cases: Vec<O::Cocase>, omit_absurd: bool) -> O::Comatch;
     fn fold_case(&mut self, info: Option<Span>, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Case;
-    fn fold_cocase(&mut self, info: Option<Span>, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Cocase;
     fn fold_typ_app(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::TypApp;
     fn fold_exp_var(&mut self, info: O::TypeInfo, name: Ident, ctx: O::Ctx, idx: O::Idx) -> O::Exp;
     fn fold_exp_typ_ctor(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::Exp;
@@ -48,7 +46,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_exp_anno(&mut self, info: O::TypeInfo, exp: O::Exp, typ: O::Exp) -> O::Exp;
     fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
     fn fold_exp_match(&mut self, info: O::TypeAppInfo, ctx: O::Ctx, name: Label, on_exp: O::Exp, motive: Option<O::Motive>, ret_typ: O::Typ, body: O::Match) -> O::Exp;
-    fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, ctx: O::Ctx, name: Label, is_lambda_sugar: bool, body: O::Comatch) -> O::Exp;
+    fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, ctx: O::Ctx, name: Label, is_lambda_sugar: bool, body: O::Match) -> O::Exp;
     fn fold_exp_hole(&mut self, info: O::TypeInfo, kind: HoleKind) -> O::Exp;
     fn fold_motive(&mut self, info: Option<Span>, param: O::ParamInst, ret_typ: O::Exp) -> O::Motive;
     // FIXME: Unifier binder handling into one method
@@ -102,9 +100,7 @@ pub trait Out {
     type Def;
     type Codef;
     type Match;
-    type Comatch;
     type Case;
-    type Cocase;
     type SelfParam;
     type TypApp;
     type Exp;
@@ -138,9 +134,7 @@ impl<P: Phase> Out for Id<P> {
     type Def = Def<P>;
     type Codef = Codef<P>;
     type Match = Match<P>;
-    type Comatch = Comatch<P>;
     type Case = Case<P>;
-    type Cocase = Cocase<P>;
     type SelfParam = SelfParam<P>;
     type TypApp = TypApp<P>;
     type Exp = Rc<Exp<P>>;
@@ -173,9 +167,7 @@ impl<T> Out for Const<T> {
     type Def = T;
     type Codef = T;
     type Match = T;
-    type Comatch = T;
     type Case = T;
-    type Cocase = T;
     type SelfParam = T;
     type TypApp = T;
     type Exp = T;
@@ -438,19 +430,6 @@ impl<P: Phase, O: Out> Fold<P, O> for Match<P> {
     }
 }
 
-impl<P: Phase, O: Out> Fold<P, O> for Comatch<P> {
-    type Out = O::Comatch;
-
-    fn fold<F>(self, f: &mut F) -> Self::Out
-    where
-        F: Folder<P, O>,
-    {
-        let Comatch { info, cases, omit_absurd } = self;
-        let cases = cases.fold(f);
-        f.fold_comatch(info, cases, omit_absurd)
-    }
-}
-
 impl<P: Phase, O: Out> Fold<P, O> for Case<P> {
     type Out = O::Case;
 
@@ -463,21 +442,6 @@ impl<P: Phase, O: Out> Fold<P, O> for Case<P> {
         let (args, body) =
             f.fold_telescope_inst(params, |f, arg| arg.fold(f), |f, args| (args, body.fold(f)));
         f.fold_case(info, name, args, body)
-    }
-}
-
-impl<P: Phase, O: Out> Fold<P, O> for Cocase<P> {
-    type Out = O::Cocase;
-
-    fn fold<F>(self, f: &mut F) -> Self::Out
-    where
-        F: Folder<P, O>,
-    {
-        let Cocase { info, name, params: args, body } = self;
-        let TelescopeInst { params } = args;
-        let (args, body) =
-            f.fold_telescope_inst(params, |f, arg| arg.fold(f), |f, args| (args, body.fold(f)));
-        f.fold_cocase(info, name, args, body)
     }
 }
 

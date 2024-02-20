@@ -28,11 +28,9 @@ pub trait Visitor<P: Phase> {
     fn visit_ctor(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, params: &Telescope<P>, typ: &TypApp<P>) {}
     fn visit_dtor(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>) {}
     fn visit_def(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, hidden: bool, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>, body: &Match<P>) {}
-    fn visit_codef(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, hidden: bool, params: &Telescope<P>, typ: &TypApp<P>, body: &Comatch<P>) {}
+    fn visit_codef(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, hidden: bool, params: &Telescope<P>, typ: &TypApp<P>, body: &Match<P>) {}
     fn visit_match(&mut self, info: &Option<Span>, cases: &[Case<P>], omit_absurd: bool) {}
-    fn visit_comatch(&mut self, info: &Option<Span>, cases: &[Cocase<P>], omit_absurd: bool) {}
     fn visit_case(&mut self, info: &Option<Span>, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
-    fn visit_cocase(&mut self, info: &Option<Span>, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
     fn visit_typ_app(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
     fn visit_exp_var(&mut self, info: &P::TypeInfo, name: &Ident, ctx: &P::Ctx, idx: &Idx) {}
     fn visit_exp_typ_ctor(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
@@ -41,7 +39,7 @@ pub trait Visitor<P: Phase> {
     fn visit_exp_anno(&mut self, info: &P::TypeInfo, exp: &Rc<Exp<P>>, typ: &Rc<Exp<P>>) {}
     fn visit_exp_type(&mut self, info: &P::TypeInfo) {}
     fn visit_exp_match(&mut self, info: &P::TypeAppInfo, ctx: &P::Ctx, name: &Label, on_exp: &Rc<Exp<P>>, ret_typ: &P::InfTyp, body: &Match<P>) {}
-    fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, ctx: &P::Ctx, name: &Label, is_lambda_sugar: &bool, body: &Comatch<P>) {}
+    fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, ctx: &P::Ctx, name: &Label, is_lambda_sugar: &bool, body: &Match<P>) {}
     fn visit_exp_hole(&mut self, info: &P::TypeInfo, kind: HoleKind) {}
     fn visit_motive(&mut self, info: &Option<Span>, param: &ParamInst<P>, ret_typ: &Rc<Exp<P>>) {}
     fn visit_motive_param<X, F>(&mut self, param: &ParamInst<P>, f_inner: F) -> X
@@ -310,18 +308,6 @@ impl<P: Phase> Visit<P> for Match<P> {
     }
 }
 
-impl<P: Phase> Visit<P> for Comatch<P> {
-    fn visit<V>(&self, v: &mut V)
-    where
-        V: Visitor<P>,
-    {
-        let Comatch { info, cases, omit_absurd } = self;
-        cases.visit(v);
-        v.visit_info(info);
-        v.visit_comatch(info, cases, *omit_absurd)
-    }
-}
-
 impl<P: Phase> Visit<P> for Case<P> {
     fn visit<V>(&self, v: &mut V)
     where
@@ -332,19 +318,6 @@ impl<P: Phase> Visit<P> for Case<P> {
         v.visit_telescope_inst(params, |v, arg| arg.visit(v), |v| body.visit(v));
         v.visit_info(info);
         v.visit_case(info, name, args, body)
-    }
-}
-
-impl<P: Phase> Visit<P> for Cocase<P> {
-    fn visit<V>(&self, v: &mut V)
-    where
-        V: Visitor<P>,
-    {
-        let Cocase { info, name, params: args, body } = self;
-        let TelescopeInst { params } = args;
-        v.visit_telescope_inst(params, |v, arg| arg.visit(v), |v| body.visit(v));
-        v.visit_info(info);
-        v.visit_cocase(info, name, args, body)
     }
 }
 

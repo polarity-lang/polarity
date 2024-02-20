@@ -355,16 +355,6 @@ impl Lower for cst::Match {
     }
 }
 
-impl Lower for cst::Comatch {
-    type Target = ust::Comatch;
-
-    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Comatch { span, cases, omit_absurd } = self;
-
-        Ok(ust::Comatch { info: Some(*span), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
-    }
-}
-
 impl Lower for cst::Case {
     type Target = ust::Case;
 
@@ -373,23 +363,6 @@ impl Lower for cst::Case {
 
         lower_telescope_inst(args, ctx, |ctx, args| {
             Ok(ust::Case { info: Some(*span), name: name.clone(), args, body: body.lower(ctx)? })
-        })
-    }
-}
-
-impl Lower for cst::Cocase {
-    type Target = ust::Cocase;
-
-    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Cocase { span, name, args, body } = self;
-
-        lower_telescope_inst(args, ctx, |ctx, args| {
-            Ok(ust::Cocase {
-                info: Some(*span),
-                name: name.clone(),
-                params: args,
-                body: body.lower(ctx)?,
-            })
         })
     }
 }
@@ -506,9 +479,9 @@ impl Lower for cst::Exp {
                     span: *span,
                     name: None,
                     is_lambda_sugar: true,
-                    body: cst::Comatch {
+                    body: cst::Match {
                         span: *span,
-                        cases: vec![cst::Cocase {
+                        cases: vec![cst::Case {
                             span: *span,
                             name: "ap".to_owned(),
                             args: cst::TelescopeInst(vec![

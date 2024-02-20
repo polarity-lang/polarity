@@ -53,24 +53,6 @@ impl<'a> Print<'a> for Neu {
         }
     }
 }
-impl<'a> Print<'a> for Comatch {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Comatch { info: _, cases, omit_absurd } = self;
-        let sep = alloc.text(COMMA).append(alloc.hardline());
-
-        alloc
-            .hardline()
-            .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
-            .append(if *omit_absurd {
-                alloc.text(COMMA).append(alloc.text("..")).append(alloc.keyword(ABSURD))
-            } else {
-                alloc.nil()
-            })
-            .nest(cfg.indent)
-            .append(alloc.hardline())
-            .braces_anno()
-    }
-}
 
 impl<'a> Print<'a> for Match {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
@@ -93,23 +75,6 @@ impl<'a> Print<'a> for Match {
 impl<'a> Print<'a> for Case {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Case { info: _, name, args, body } = self;
-
-        let body = match body {
-            None => alloc.keyword(ABSURD),
-            Some(body) => alloc
-                .text(FAT_ARROW)
-                .append(alloc.line())
-                .append(body.print(cfg, alloc))
-                .nest(cfg.indent),
-        };
-
-        alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
-    }
-}
-
-impl<'a> Print<'a> for Cocase {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Cocase { info: _, name, args, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
