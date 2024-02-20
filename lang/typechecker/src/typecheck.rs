@@ -69,24 +69,6 @@ pub trait InferTelescope {
     ) -> Result<T, TypeError>;
 }
 
-struct WithScrutinee<'a> {
-    inner: &'a ust::Match,
-    scrutinee: nf::TypApp,
-}
-
-struct WithDestructee<'a> {
-    inner: &'a ust::Comatch,
-    /// Name of the global codefinition that gets substituted for the destructor's self parameters
-    label: Option<Ident>,
-    n_label_args: usize,
-    destructee: nf::TypApp,
-}
-
-struct WithEqns<'a, T> {
-    eqns: Vec<Eqn>,
-    inner: &'a T,
-}
-
 impl Infer for ust::Prg {
     type Target = tst::Prg;
 
@@ -317,6 +299,11 @@ impl Infer for ust::Codef {
     }
 }
 
+struct WithScrutinee<'a> {
+    inner: &'a ust::Match,
+    scrutinee: nf::TypApp,
+}
+
 /// Check a pattern match
 impl<'a> Check for WithScrutinee<'a> {
     type Target = tst::Match;
@@ -387,7 +374,7 @@ impl<'a> Check for WithScrutinee<'a> {
                 def_args_nf.iter().cloned().zip(on_args.iter().cloned()).map(Eqn::from).collect();
 
             // Check the case given the equations
-            let case_out = WithEqns { eqns, inner: &case }.check(prg, ctx, t.clone())?;
+            let case_out = check_case(eqns, &case, prg, ctx, t.clone())?;
 
             if !omit {
                 cases_out.push(case_out);
@@ -396,6 +383,14 @@ impl<'a> Check for WithScrutinee<'a> {
 
         Ok(tst::Match { info: *info, cases: cases_out, omit_absurd: *omit_absurd })
     }
+}
+
+struct WithDestructee<'a> {
+    inner: &'a ust::Comatch,
+    /// Name of the global codefinition that gets substituted for the destructor's self parameters
+    label: Option<Ident>,
+    n_label_args: usize,
+    destructee: nf::TypApp,
 }
 
 /// Infer a copattern match
@@ -501,7 +496,7 @@ impl<'a> Infer for WithDestructee<'a> {
             };
 
             // Check the case given the equations
-            let case_out = WithEqns { eqns, inner: &case }.check(prg, ctx, ret_typ_nf)?;
+            let case_out = check_cocase(eqns, &case, prg, ctx, ret_typ_nf)?;
 
             if !omit {
                 cases_out.push(case_out);
@@ -513,163 +508,152 @@ impl<'a> Infer for WithDestructee<'a> {
 }
 
 /// Infer a case in a pattern match
-impl<'a> Check for WithEqns<'a, ust::Case> {
-    type Target = tst::Case;
+#[trace("{:P} |- {:P} <= {:P}", ctx, case, t)]
+fn check_case(
+    eqns: Vec<Eqn>,
+    case: &ust::Case,
+    prg: &ust::Prg,
+    ctx: &mut Ctx,
+    t: Rc<nf::Nf>,
+) -> Result<tst::Case, TypeError> {
+    let ust::Case { info, name, args, body } = case;
+    let ust::Ctor { name, params, .. } = prg.decls.ctor(name, *info)?;
 
-    #[trace("{:P} |- {:P} <= {:P}", ctx, self.inner, t)]
-    fn check(
-        &self,
-        prg: &ust::Prg,
-        ctx: &mut Ctx,
-        t: Rc<nf::Nf>,
-    ) -> Result<Self::Target, TypeError> {
-        let ust::Case { info, name, args, body } = self.inner;
-        let ust::Ctor { name, params, .. } = prg.decls.ctor(name, *info)?;
+    // FIXME: Refactor this
+    let mut subst_ctx_1 = ctx.levels().append(&vec![1, params.len()].into());
+    let mut subst_ctx_2 = ctx.levels().append(&vec![params.len(), 1].into());
+    let curr_lvl = subst_ctx_2.len() - 1;
 
-        // FIXME: Refactor this
-        let mut subst_ctx_1 = ctx.levels().append(&vec![1, params.len()].into());
-        let mut subst_ctx_2 = ctx.levels().append(&vec![params.len(), 1].into());
-        let curr_lvl = subst_ctx_2.len() - 1;
-
-        args.check_telescope(
-            prg,
-            name,
-            ctx,
-            params,
-            |ctx, args_out| {
-                // Substitute the constructor for the self parameter
-                let args = (0..params.len())
-                    .rev()
-                    .map(|snd| ust::Exp::Var {
-                        info: None,
-                        name: "".to_owned(),
-                        ctx: (),
-                        idx: Idx { fst: 1, snd },
-                    })
-                    .map(Rc::new)
-                    .collect();
-                let ctor = Rc::new(ust::Exp::Ctor {
+    args.check_telescope(
+        prg,
+        name,
+        ctx,
+        params,
+        |ctx, args_out| {
+            // Substitute the constructor for the self parameter
+            let args = (0..params.len())
+                .rev()
+                .map(|snd| ust::Exp::Var {
                     info: None,
-                    name: name.clone(),
-                    args: ust::Args { args },
-                });
-                let subst = Assign(Lvl { fst: curr_lvl, snd: 0 }, ctor);
+                    name: "".to_owned(),
+                    ctx: (),
+                    idx: Idx { fst: 1, snd },
+                })
+                .map(Rc::new)
+                .collect();
+            let ctor = Rc::new(ust::Exp::Ctor {
+                info: None,
+                name: name.clone(),
+                args: ust::Args { args },
+            });
+            let subst = Assign(Lvl { fst: curr_lvl, snd: 0 }, ctor);
 
-                // FIXME: Refactor this
-                let t = t
-                    .forget()
-                    .shift((1, 0))
-                    .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
-                    .subst(&mut subst_ctx_2, &subst)
-                    .shift((-1, 0));
+            // FIXME: Refactor this
+            let t = t
+                .forget()
+                .shift((1, 0))
+                .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
+                .subst(&mut subst_ctx_2, &subst)
+                .shift((-1, 0));
 
-                let body_out = match body {
-                    Some(body) => {
-                        let unif = unify(ctx.levels(), self.eqns.clone())
-                            .map_err(TypeError::Unify)?
-                            .map_no(|()| TypeError::PatternIsAbsurd {
-                                name: name.clone(),
-                                span: info.to_miette(),
-                            })
-                            .ok_yes()?;
+            let body_out = match body {
+                Some(body) => {
+                    let unif = unify(ctx.levels(), eqns.clone())
+                        .map_err(TypeError::Unify)?
+                        .map_no(|()| TypeError::PatternIsAbsurd {
+                            name: name.clone(),
+                            span: info.to_miette(),
+                        })
+                        .ok_yes()?;
 
-                        ctx.fork::<Result<_, TypeError>, _>(|ctx| {
-                            ctx.subst(prg, &unif)?;
-                            let body = body.subst(&mut ctx.levels(), &unif);
+                    ctx.fork::<Result<_, TypeError>, _>(|ctx| {
+                        ctx.subst(prg, &unif)?;
+                        let body = body.subst(&mut ctx.levels(), &unif);
 
-                            let t_subst = t.subst(&mut ctx.levels(), &unif);
-                            let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+                        let t_subst = t.subst(&mut ctx.levels(), &unif);
+                        let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
 
-                            let body_out = body.check(prg, ctx, t_nf)?;
+                        let body_out = body.check(prg, ctx, t_nf)?;
 
-                            Ok(Some(body_out))
-                        })?
-                    }
-                    None => {
-                        unify(ctx.levels(), self.eqns.clone())
-                            .map_err(TypeError::Unify)?
-                            .map_yes(|_| TypeError::PatternIsNotAbsurd {
-                                name: name.clone(),
-                                span: info.to_miette(),
-                            })
-                            .ok_no()?;
+                        Ok(Some(body_out))
+                    })?
+                }
+                None => {
+                    unify(ctx.levels(), eqns.clone())
+                        .map_err(TypeError::Unify)?
+                        .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                            name: name.clone(),
+                            span: info.to_miette(),
+                        })
+                        .ok_no()?;
 
-                        None
-                    }
-                };
+                    None
+                }
+            };
 
-                Ok(tst::Case { info: *info, name: name.clone(), args: args_out, body: body_out })
-            },
-            *info,
-        )
-    }
+            Ok(tst::Case { info: *info, name: name.clone(), args: args_out, body: body_out })
+        },
+        *info,
+    )
 }
 
 /// Infer a cocase in a co-pattern match
-impl<'a> Check for WithEqns<'a, ust::Cocase> {
-    type Target = tst::Cocase;
+#[trace("{:P} |- {:P} <= {:P}", ctx, cocase, t)]
+fn check_cocase(
+    eqns: Vec<Eqn>,
+    cocase: &ust::Cocase,
+    prg: &ust::Prg,
+    ctx: &mut Ctx,
+    t: Rc<nf::Nf>,
+) -> Result<tst::Cocase, TypeError> {
+    let ust::Cocase { info, name, params: params_inst, body } = cocase;
+    let ust::Dtor { name, params, .. } = prg.decls.dtor(name, *info)?;
 
-    #[trace("{:P} |- {:P} <= {:P}", ctx, self.inner, t)]
-    fn check(
-        &self,
-        prg: &ust::Prg,
-        ctx: &mut Ctx,
-        t: Rc<nf::Nf>,
-    ) -> Result<Self::Target, TypeError> {
-        let ust::Cocase { info, name, params: params_inst, body } = self.inner;
-        let ust::Dtor { name, params, .. } = prg.decls.dtor(name, *info)?;
+    params_inst.check_telescope(
+        prg,
+        name,
+        ctx,
+        params,
+        |ctx, args_out| {
+            let body_out = match body {
+                Some(body) => {
+                    let unif = unify(ctx.levels(), eqns.clone())
+                        .map_err(TypeError::Unify)?
+                        .map_no(|()| TypeError::PatternIsAbsurd {
+                            name: name.clone(),
+                            span: info.to_miette(),
+                        })
+                        .ok_yes()?;
 
-        params_inst.check_telescope(
-            prg,
-            name,
-            ctx,
-            params,
-            |ctx, args_out| {
-                let body_out = match body {
-                    Some(body) => {
-                        let unif = unify(ctx.levels(), self.eqns.clone())
-                            .map_err(TypeError::Unify)?
-                            .map_no(|()| TypeError::PatternIsAbsurd {
-                                name: name.clone(),
-                                span: info.to_miette(),
-                            })
-                            .ok_yes()?;
+                    ctx.fork::<Result<_, TypeError>, _>(|ctx| {
+                        ctx.subst(prg, &unif)?;
+                        let body = body.subst(&mut ctx.levels(), &unif);
 
-                        ctx.fork::<Result<_, TypeError>, _>(|ctx| {
-                            ctx.subst(prg, &unif)?;
-                            let body = body.subst(&mut ctx.levels(), &unif);
+                        let t_subst = t.forget().subst(&mut ctx.levels(), &unif);
+                        let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
 
-                            let t_subst = t.forget().subst(&mut ctx.levels(), &unif);
-                            let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+                        let body_out = body.check(prg, ctx, t_nf)?;
 
-                            let body_out = body.check(prg, ctx, t_nf)?;
+                        Ok(Some(body_out))
+                    })?
+                }
+                None => {
+                    unify(ctx.levels(), eqns.clone())
+                        .map_err(TypeError::Unify)?
+                        .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                            name: name.clone(),
+                            span: info.to_miette(),
+                        })
+                        .ok_no()?;
 
-                            Ok(Some(body_out))
-                        })?
-                    }
-                    None => {
-                        unify(ctx.levels(), self.eqns.clone())
-                            .map_err(TypeError::Unify)?
-                            .map_yes(|_| TypeError::PatternIsNotAbsurd {
-                                name: name.clone(),
-                                span: info.to_miette(),
-                            })
-                            .ok_no()?;
+                    None
+                }
+            };
 
-                        None
-                    }
-                };
-
-                Ok(tst::Cocase {
-                    info: *info,
-                    name: name.clone(),
-                    params: args_out,
-                    body: body_out,
-                })
-            },
-            *info,
-        )
-    }
+            Ok(tst::Cocase { info: *info, name: name.clone(), params: args_out, body: body_out })
+        },
+        *info,
+    )
 }
 
 /// Check an expression

@@ -647,7 +647,7 @@ fn print_lambda_sugar<'a>(e: &'a Comatch, cfg: &PrintCfg, alloc: &'a Alloc<'a>) 
 }
 
 fn print_comma_separated<'a, T: Print<'a>>(
-    vec: &'a Vec<T>,
+    vec: &'a [T],
     cfg: &PrintCfg,
     alloc: &'a Alloc<'a>,
 ) -> Builder<'a> {
