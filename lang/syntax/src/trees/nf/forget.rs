@@ -69,7 +69,6 @@ impl Forget for Match {
     }
 }
 
-
 impl Forget for Case {
     type Target = ust::Case;
 
@@ -79,7 +78,6 @@ impl Forget for Case {
         ust::Case { info: *info, name: name.clone(), args: args.clone(), body: body.forget() }
     }
 }
-
 
 impl Forget for TypApp {
     type Target = ust::TypApp;

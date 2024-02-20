@@ -261,7 +261,6 @@ impl Lift for tst::Match {
     }
 }
 
-
 impl Lift for tst::Case {
     type Target = ust::Case;
 

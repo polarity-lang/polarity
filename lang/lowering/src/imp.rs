@@ -355,7 +355,6 @@ impl Lower for cst::Match {
     }
 }
 
-
 impl Lower for cst::Case {
     type Target = ust::Case;
 
@@ -367,7 +366,6 @@ impl Lower for cst::Case {
         })
     }
 }
-
 
 impl Lower for cst::TypApp {
     type Target = ust::TypApp;

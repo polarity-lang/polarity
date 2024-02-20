@@ -165,7 +165,6 @@ impl Eval for ust::Case {
     }
 }
 
-
 impl Eval for ust::TypApp {
     type Val = val::TypApp;
 

@@ -172,7 +172,6 @@ impl ShiftInRange for Match {
     }
 }
 
-
 impl ShiftInRange for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Case { info, name, args, body } = self;
@@ -185,7 +184,6 @@ impl ShiftInRange for Case {
         }
     }
 }
-
 
 impl ShiftInRange for Closure {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
@@ -278,7 +276,6 @@ impl<'a> Print<'a> for Case {
         alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
     }
 }
-
 
 impl<'a> Print<'a> for Closure {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {

@@ -386,7 +386,7 @@ impl<'a> Check for WithScrutinee<'a> {
 }
 
 struct WithDestructee<'a> {
-    inner: &'a ust::Comatch,
+    inner: &'a ust::Match,
     /// Name of the global codefinition that gets substituted for the destructor's self parameters
     label: Option<Ident>,
     n_label_args: usize,
@@ -395,10 +395,10 @@ struct WithDestructee<'a> {
 
 /// Infer a copattern match
 impl<'a> Infer for WithDestructee<'a> {
-    type Target = tst::Comatch;
+    type Target = tst::Match;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Comatch { info, cases, omit_absurd } = &self.inner;
+        let ust::Match { info, cases, omit_absurd } = &self.inner;
 
         // Check that this comatch is on a codata type
         let codata = prg.decls.codata(&self.destructee.name, *info)?;
@@ -437,8 +437,7 @@ impl<'a> Infer for WithDestructee<'a> {
             for name in dtors_missing.cloned() {
                 let ust::Dtor { params, .. } = prg.decls.dtor(&name, *info)?;
 
-                let case =
-                    ust::Cocase { info: *info, name, params: params.instantiate(), body: None };
+                let case = ust::Case { info: *info, name, args: params.instantiate(), body: None };
                 cases.push((case, true));
             }
         }
@@ -503,7 +502,7 @@ impl<'a> Infer for WithDestructee<'a> {
             }
         }
 
-        Ok(tst::Comatch { info: *info, cases: cases_out, omit_absurd: *omit_absurd })
+        Ok(tst::Match { info: *info, cases: cases_out, omit_absurd: *omit_absurd })
     }
 }
 
@@ -601,12 +600,12 @@ fn check_case(
 #[trace("{:P} |- {:P} <= {:P}", ctx, cocase, t)]
 fn check_cocase(
     eqns: Vec<Eqn>,
-    cocase: &ust::Cocase,
+    cocase: &ust::Case,
     prg: &ust::Prg,
     ctx: &mut Ctx,
     t: Rc<nf::Nf>,
-) -> Result<tst::Cocase, TypeError> {
-    let ust::Cocase { info, name, params: params_inst, body } = cocase;
+) -> Result<tst::Case, TypeError> {
+    let ust::Case { info, name, args: params_inst, body } = cocase;
     let ust::Dtor { name, params, .. } = prg.decls.dtor(name, *info)?;
 
     params_inst.check_telescope(
@@ -650,7 +649,7 @@ fn check_cocase(
                 }
             };
 
-            Ok(tst::Cocase { info: *info, name: name.clone(), params: args_out, body: body_out })
+            Ok(tst::Case { info: *info, name: name.clone(), args: args_out, body: body_out })
         },
         *info,
     )

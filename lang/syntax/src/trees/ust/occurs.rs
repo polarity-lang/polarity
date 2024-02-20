@@ -39,7 +39,6 @@ impl Occurs for Match {
     }
 }
 
-
 impl Occurs for Case {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Case { args, body, .. } = self;

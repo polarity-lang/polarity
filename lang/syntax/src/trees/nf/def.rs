@@ -133,7 +133,6 @@ impl HasSpan for Case {
     }
 }
 
-
 #[derive(Debug, Clone)]
 pub struct TypApp {
     pub info: Option<Span>,

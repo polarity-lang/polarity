@@ -318,7 +318,6 @@ impl<'a> Print<'a> for Case {
     }
 }
 
-
 impl<'a> Print<'a> for Telescope {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Telescope { params } = self;

@@ -430,7 +430,6 @@ impl<P: Phase, O: Out> Fold<P, O> for Match<P> {
     }
 }
 
-
 impl<P: Phase, O: Out> Fold<P, O> for Case<P> {
     type Out = O::Case;
 
@@ -445,7 +444,6 @@ impl<P: Phase, O: Out> Fold<P, O> for Case<P> {
         f.fold_case(info, name, args, body)
     }
 }
-
 
 impl<P: Phase, O: Out> Fold<P, O> for TypApp<P> {
     type Out = O::TypApp;

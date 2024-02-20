@@ -55,7 +55,6 @@ impl ShiftInRange for Match {
     }
 }
 
-
 impl ShiftInRange for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Case { info, name, args, body } = self;

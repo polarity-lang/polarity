@@ -108,7 +108,6 @@ pub struct Match {
     pub omit_absurd: bool,
 }
 
-
 #[derive(Debug, Clone)]
 pub struct Case {
     pub span: Span,

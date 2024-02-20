@@ -168,7 +168,6 @@ impl Forget for tst::Match {
     }
 }
 
-
 impl Forget for tst::Case {
     type Target = ust::Case;
 

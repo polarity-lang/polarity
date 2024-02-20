@@ -459,7 +459,6 @@ impl<P: Phase> HasPhase for Match<P> {
     type Phase = P;
 }
 
-
 impl<P: Phase> HasPhase for Case<P> {
     type Phase = P;
 }
