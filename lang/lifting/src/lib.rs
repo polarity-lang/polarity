@@ -323,7 +323,7 @@ impl Lift for tst::Exp {
                 ust::Exp::Anno { info: info.forget(), exp: exp.lift(ctx), typ: typ.lift(ctx) }
             }
             tst::Exp::Type { info } => ust::Exp::Type { info: info.forget() },
-            tst::Exp::Hole { info, kind } => ust::Exp::Hole { info: info.forget(), kind: *kind },
+            tst::Exp::Hole { info } => ust::Exp::Hole { info: info.forget() },
             tst::Exp::Match { info, ctx: type_ctx, name, on_exp, motive, ret_typ, body } => {
                 ctx.lift_match(info, type_ctx, name, on_exp, motive, ret_typ, body)
             }

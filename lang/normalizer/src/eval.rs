@@ -52,9 +52,7 @@ impl Eval for Exp {
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.eval(prg, env)?,
             }),
-            Exp::Hole { info, kind } => {
-                Rc::new(Val::Neu { exp: Neu::Hole { info: *info, kind: *kind } })
-            }
+            Exp::Hole { info } => Rc::new(Val::Neu { exp: Neu::Hole { info: *info } }),
         };
         Ok(res)
     }

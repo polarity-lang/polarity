@@ -448,7 +448,7 @@ impl Lower for cst::Exp {
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.lower(ctx)?,
             }),
-            cst::Exp::Hole { span, kind } => Ok(ust::Exp::Hole { info: Some(*span), kind: *kind }),
+            cst::Exp::Hole { span } => Ok(ust::Exp::Hole { info: Some(*span) }),
             cst::Exp::NatLit { span, val } => {
                 let mut out = ust::Exp::Ctor {
                     info: Some(*span),

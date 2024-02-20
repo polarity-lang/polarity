@@ -5,7 +5,7 @@ use codespan::Span;
 use data::HashMap;
 
 use crate::common::*;
-use parser::cst::{DocComment, HoleKind, Ident};
+use parser::cst::{DocComment, Ident};
 
 use super::def::*;
 use super::lookup_table::LookupTable;
@@ -47,7 +47,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
     fn fold_exp_match(&mut self, info: O::TypeAppInfo, ctx: O::Ctx, name: Label, on_exp: O::Exp, motive: Option<O::Motive>, ret_typ: O::Typ, body: O::Match) -> O::Exp;
     fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, ctx: O::Ctx, name: Label, is_lambda_sugar: bool, body: O::Match) -> O::Exp;
-    fn fold_exp_hole(&mut self, info: O::TypeInfo, kind: HoleKind) -> O::Exp;
+    fn fold_exp_hole(&mut self, info: O::TypeInfo) -> O::Exp;
     fn fold_motive(&mut self, info: Option<Span>, param: O::ParamInst, ret_typ: O::Exp) -> O::Motive;
     // FIXME: Unifier binder handling into one method
     fn fold_motive_param<X, F>(&mut self, param: O::ParamInst, f_inner: F) -> X
@@ -514,9 +514,9 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
                 let body = body.fold(f);
                 f.fold_exp_comatch(info, ctx, name, is_lambda_sugar, body)
             }
-            Exp::Hole { info, kind } => {
+            Exp::Hole { info } => {
                 let info = f.fold_type_info(info);
-                f.fold_exp_hole(info, kind)
+                f.fold_exp_hole(info)
             }
         }
     }

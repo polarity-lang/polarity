@@ -49,7 +49,7 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.subst(ctx, by),
             }),
-            Exp::Hole { info, kind } => Rc::new(Exp::Hole { info: *info, kind: *kind }),
+            Exp::Hole { info } => Rc::new(Exp::Hole { info: *info }),
         }
     }
 }

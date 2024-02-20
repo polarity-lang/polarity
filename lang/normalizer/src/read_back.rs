@@ -62,7 +62,7 @@ impl ReadBack for val::Neu {
                 on_exp: on_exp.read_back(prg)?,
                 body: body.read_back(prg)?,
             },
-            val::Neu::Hole { info, kind } => nf::Neu::Hole { info: *info, kind: *kind },
+            val::Neu::Hole { info } => nf::Neu::Hole { info: *info },
         };
         Ok(res)
     }
