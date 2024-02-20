@@ -82,77 +82,24 @@ pub trait InferTelescope {
     ) -> Result<T, TypeError>;
 }
 
-pub trait CheckEqns {
-    type Target;
 
-    fn check_eqns<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
-        &self,
-        ctx: &mut Ctx,
-        eqns: &[Eqn],
-        f: F,
-    ) -> Result<T, TypeError>;
-}
 
-pub trait Convert {
-    fn convert(&self, other: &Self) -> Result<(), TypeError>;
-}
-
-struct WithScrutinee<'a, T> {
-    inner: &'a T,
+struct WithScrutinee<'a> {
+    inner: &'a ust::Match,
     scrutinee: nf::TypApp,
 }
 
-trait WithScrutineeExt: Sized {
-    fn with_scrutinee(&self, scrutinee: nf::TypApp) -> WithScrutinee<'_, Self>;
-}
-
-impl<T> WithScrutineeExt for T {
-    fn with_scrutinee(&self, scrutinee: nf::TypApp) -> WithScrutinee<'_, Self> {
-        WithScrutinee { inner: self, scrutinee }
-    }
-}
-
-struct WithDestructee<'a, T> {
-    inner: &'a T,
+struct WithDestructee<'a> {
+    inner: &'a ust::Comatch,
     /// Name of the global codefinition that gets substituted for the destructor's self parameters
     label: Option<Ident>,
     n_label_args: usize,
     destructee: nf::TypApp,
 }
 
-trait WithDestructeeExt: Sized {
-    fn with_destructee(
-        &self,
-        label: Option<Ident>,
-        n_label_args: usize,
-        destructee: nf::TypApp,
-    ) -> WithDestructee<'_, Self>;
-}
-
-impl<T> WithDestructeeExt for T {
-    fn with_destructee(
-        &self,
-        label: Option<Ident>,
-        n_label_args: usize,
-        destructee: nf::TypApp,
-    ) -> WithDestructee<'_, Self> {
-        WithDestructee { inner: self, label, n_label_args, destructee }
-    }
-}
-
 struct WithEqns<'a, T> {
     eqns: Vec<Eqn>,
     inner: &'a T,
-}
-
-trait WithEqnsExt: Sized {
-    fn with_eqns(&self, eqns: Vec<Eqn>) -> WithEqns<'_, Self>;
-}
-
-impl<T> WithEqnsExt for T {
-    fn with_eqns(&self, eqns: Vec<Eqn>) -> WithEqns<'_, Self> {
-        WithEqns { eqns, inner: self }
-    }
 }
 
 impl Infer for ust::Prg {
@@ -339,7 +286,7 @@ impl Infer for ust::Def {
                     Ok((ret_typ_out, ret_typ_nf, self_param_out))
                 })?;
 
-            let body_out = body.with_scrutinee(self_param_nf).check(prg, ctx, ret_typ_nf)?;
+            let body_out = WithScrutinee { inner: body, scrutinee: self_param_nf }.check(prg, ctx, ret_typ_nf)?;
             Ok(tst::Def {
                 info: *info,
                 doc: doc.clone(),
@@ -364,9 +311,13 @@ impl Infer for ust::Codef {
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.infer(prg, ctx)?;
             let typ_nf = typ.normalize(prg, &mut ctx.env())?;
-            let body_out = body
-                .with_destructee(Some(name.to_owned()), params.len(), typ_nf)
-                .infer(prg, ctx)?;
+            let wd = WithDestructee {
+                inner: body,
+                label: Some(name.to_owned()),
+                n_label_args: params.len(),
+                destructee: typ_nf
+            };
+            let body_out = wd.infer(prg, ctx)?;
             Ok(tst::Codef {
                 info: *info,
                 doc: doc.clone(),
@@ -381,7 +332,7 @@ impl Infer for ust::Codef {
 }
 
 /// Check a pattern match
-impl<'a> Check for WithScrutinee<'a, ust::Match> {
+impl<'a> Check for WithScrutinee<'a> {
     type Target = tst::Match;
 
     fn check(
@@ -450,7 +401,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
                 def_args_nf.iter().cloned().zip(on_args.iter().cloned()).map(Eqn::from).collect();
 
             // Check the case given the equations
-            let case_out = case.with_eqns(eqns).check(prg, ctx, t.clone())?;
+            let case_out = WithEqns { eqns, inner: &case}.check(prg, ctx, t.clone())?;
 
             if !omit {
                 cases_out.push(case_out);
@@ -462,7 +413,7 @@ impl<'a> Check for WithScrutinee<'a, ust::Match> {
 }
 
 /// Infer a copattern match
-impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
+impl<'a> Infer for WithDestructee<'a> {
     type Target = tst::Comatch;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
@@ -564,7 +515,7 @@ impl<'a> Infer for WithDestructee<'a, ust::Comatch> {
             };
 
             // Check the case given the equations
-            let case_out = case.with_eqns(eqns).check(prg, ctx, ret_typ_nf)?;
+            let case_out = WithEqns { eqns, inner: &case }.check(prg, ctx, ret_typ_nf)?;
 
             if !omit {
                 cases_out.push(case_out);
@@ -777,7 +728,7 @@ impl Check for ust::Exp {
                             Assign(Lvl { fst: subst_ctx.len() - 1, snd: 0 }, on_exp_shifted);
                         let motive_t = ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0));
                         let motive_t_nf = motive_t.normalize(prg, &mut ctx.env())?;
-                        motive_t_nf.convert(&t)?;
+                        convert(motive_t_nf,&t)?;
 
                         body_t = ctx.bind_single(&self_binder, |ctx| {
                             ret_typ.normalize(prg, &mut ctx.env())
@@ -799,7 +750,7 @@ impl Check for ust::Exp {
                     }
                 };
 
-                let body_out = body.with_scrutinee(typ_app_nf.clone()).check(prg, ctx, body_t)?;
+                let body_out = WithScrutinee { inner: body, scrutinee: typ_app_nf.clone() }.check(prg, ctx, body_t)?;
 
                 Ok(tst::Exp::Match {
                     info: info.with_type_app(typ_app, typ_app_nf),
@@ -824,7 +775,13 @@ impl Check for ust::Exp {
                     });
                 }
 
-                let body_out = body.with_destructee(None, 0, typ_app_nf.clone()).infer(prg, ctx)?;
+                let wd = WithDestructee {
+                    inner: body,
+                    label: None,
+                    n_label_args: 0,
+                    destructee: typ_app_nf.clone()
+                };
+                let body_out = wd.infer(prg, ctx)?;
 
                 Ok(tst::Exp::Comatch {
                     info: info.with_type_app(typ_app, typ_app_nf),
@@ -840,7 +797,7 @@ impl Check for ust::Exp {
             }),
             _ => {
                 let actual = self.infer(prg, ctx)?;
-                actual.typ().convert(&t)?;
+                convert(actual.typ(),&t)?;
                 Ok(actual)
             }
         }
@@ -1085,23 +1042,6 @@ impl InferTelescope for ust::SelfParam {
     }
 }
 
-// trait SubstUnderTelescope {
-//     /// Substitute under a telescope
-//     fn subst_under_telescope(&self, telescope: &ust::Telescope, args: &[Rc<ust::Exp>]) -> Self;
-// }
-
-// impl<T: Substitutable<Rc<ust::Exp>> + Clone> SubstUnderTelescope for T {
-//     fn subst_under_telescope(&self, telescope: &ust::Telescope, args: &[Rc<ust::Exp>]) -> Self {
-//         let ust::Telescope { params } = telescope;
-
-//         LevelCtx::empty().bind_fold(
-//             params.iter(),
-//             (),
-//             |_, _, _| (),
-//             |ctx, _| self.subst(ctx, &args),
-//         )
-//     }
-// }
 
 trait SubstUnderCtx {
     fn subst_under_ctx<S: Substitution<Rc<ust::Exp>>>(&self, ctx: LevelCtx, s: &S) -> Self;
@@ -1149,14 +1089,15 @@ impl ExpectTypApp for Rc<nf::Nf> {
     }
 }
 
-impl Convert for Rc<nf::Nf> {
-    #[trace("{:P} =? {:P}", self, other)]
-    fn convert(&self, other: &Self) -> Result<(), TypeError> {
-        self.alpha_eq(other)
-            .then_some(())
-            .ok_or_else(|| TypeError::not_eq(self.clone(), other.clone()))
-    }
+
+
+#[trace("{:P} =? {:P}", this, other)]
+fn convert(this: Rc<nf::Nf>, other: &Rc<nf::Nf>) -> Result<(), TypeError> {
+    this.alpha_eq(other)
+        .then_some(())
+        .ok_or_else(|| TypeError::not_eq(this.clone(), other.clone()))
 }
+
 
 impl<T: Check> Check for Rc<T> {
     type Target = Rc<T::Target>;
