@@ -49,7 +49,7 @@ impl<'a> Print<'a> for Neu {
                 .append(alloc.text(name.to_string()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Neu::Hole { .. } => alloc.keyword(HOLE_TODO),
+            Neu::Hole { .. } => alloc.keyword(HOLE),
         }
     }
 }

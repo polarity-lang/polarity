@@ -1,7 +1,6 @@
 use std::rc::Rc;
 
 use derivative::Derivative;
-use parser::cst::HoleKind;
 use parser::cst::Ident;
 
 use crate::env::*;
@@ -76,8 +75,6 @@ pub enum Neu {
     Hole {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        kind: HoleKind,
     },
 }
 
@@ -160,7 +157,7 @@ impl ShiftInRange for Neu {
                 on_exp: on_exp.shift_in_range(range.clone(), by),
                 body: body.shift_in_range(range, by),
             },
-            Neu::Hole { info, kind } => Neu::Hole { info: *info, kind: *kind },
+            Neu::Hole { info } => Neu::Hole { info: *info },
         }
     }
 }
@@ -234,10 +231,7 @@ impl<'a> Print<'a> for Neu {
                 .append(alloc.text(name.to_string()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Neu::Hole { info: _, kind } => match kind {
-                HoleKind::Todo => alloc.keyword(HOLE_TODO),
-                HoleKind::Omitted => alloc.keyword(HOLE_OMITTED),
-            },
+            Neu::Hole { .. } => alloc.keyword(HOLE),
         }
     }
 }

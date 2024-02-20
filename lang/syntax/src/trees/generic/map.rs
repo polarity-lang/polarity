@@ -4,7 +4,7 @@ use codespan::Span;
 use data::HashMap;
 
 use crate::common::*;
-use parser::cst::{DocComment, HoleKind, Ident};
+use parser::cst::{DocComment, Ident};
 
 use super::def::*;
 use super::fold::*;
@@ -97,8 +97,8 @@ pub trait Mapper<P: Phase> {
     fn map_exp_comatch(&mut self, info: P::TypeAppInfo, ctx: P::Ctx, name: Label, is_lambda_sugar: bool, body: Match<P>) -> Exp<P> {
         Exp::Comatch { info, ctx, name, is_lambda_sugar, body }
     }
-    fn map_exp_hole(&mut self, info: P::TypeInfo, kind: HoleKind) -> Exp<P> {
-        Exp::Hole { info, kind }
+    fn map_exp_hole(&mut self, info: P::TypeInfo) -> Exp<P> {
+        Exp::Hole { info }
     }
     fn map_motive(&mut self, info: Option<Span>, param: ParamInst<P>, ret_typ: Rc<Exp<P>>) -> Motive<P> {
         Motive { info, param, ret_typ }
@@ -292,8 +292,8 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         Rc::new(self.map_exp_comatch(info, ctx, name, is_lambda_sugar, body))
     }
 
-    fn fold_exp_hole(&mut self, info: <Id<P> as Out>::TypeInfo, kind: HoleKind) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_hole(info, kind))
+    fn fold_exp_hole(&mut self, info: <Id<P> as Out>::TypeInfo) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_hole(info))
     }
 
     fn fold_motive(&mut self, info: Option<Span>, param: <Id<P> as Out>::ParamInst, ret_typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Motive {

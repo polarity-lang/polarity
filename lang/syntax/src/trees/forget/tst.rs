@@ -240,7 +240,7 @@ impl Forget for tst::Exp {
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.forget(),
             },
-            tst::Exp::Hole { info, kind } => ust::Exp::Hole { info: info.forget(), kind: *kind },
+            tst::Exp::Hole { info } => ust::Exp::Hole { info: info.forget() },
         }
     }
 }

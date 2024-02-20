@@ -47,7 +47,7 @@ impl ShiftInRange for Exp {
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.shift_in_range(range, by),
             },
-            Exp::Hole { info, kind } => Exp::Hole { info: *info, kind: *kind },
+            Exp::Hole { info } => Exp::Hole { info: *info },
         }
     }
 }

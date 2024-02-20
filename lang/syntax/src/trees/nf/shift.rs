@@ -43,7 +43,7 @@ impl ShiftInRange for Neu {
                 on_exp: on_exp.shift_in_range(range.clone(), by),
                 body: body.shift_in_range(range, by),
             },
-            Neu::Hole { info, kind } => Neu::Hole { info: *info, kind: *kind },
+            Neu::Hole { info } => Neu::Hole { info: *info },
         }
     }
 }

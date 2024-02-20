@@ -4,7 +4,7 @@ use codespan::Span;
 use data::HashMap;
 
 use crate::common::*;
-use parser::cst::{DocComment, HoleKind, Ident};
+use parser::cst::{DocComment, Ident};
 
 use super::def::*;
 use super::lookup_table::LookupTable;
@@ -40,7 +40,7 @@ pub trait Visitor<P: Phase> {
     fn visit_exp_type(&mut self, info: &P::TypeInfo) {}
     fn visit_exp_match(&mut self, info: &P::TypeAppInfo, ctx: &P::Ctx, name: &Label, on_exp: &Rc<Exp<P>>, ret_typ: &P::InfTyp, body: &Match<P>) {}
     fn visit_exp_comatch(&mut self, info: &P::TypeAppInfo, ctx: &P::Ctx, name: &Label, is_lambda_sugar: &bool, body: &Match<P>) {}
-    fn visit_exp_hole(&mut self, info: &P::TypeInfo, kind: HoleKind) {}
+    fn visit_exp_hole(&mut self, info: &P::TypeInfo) {}
     fn visit_motive(&mut self, info: &Option<Span>, param: &ParamInst<P>, ret_typ: &Rc<Exp<P>>) {}
     fn visit_motive_param<X, F>(&mut self, param: &ParamInst<P>, f_inner: F) -> X
     where
@@ -388,9 +388,9 @@ impl<P: Phase> Visit<P> for Exp<P> {
                 body.visit(v);
                 v.visit_exp_comatch(info, ctx, name, is_lambda_sugar, body)
             }
-            Exp::Hole { info, kind } => {
+            Exp::Hole { info } => {
                 v.visit_type_info(info);
-                v.visit_exp_hole(info, *kind)
+                v.visit_exp_hole(info)
             }
         }
     }

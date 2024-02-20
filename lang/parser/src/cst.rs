@@ -159,12 +159,6 @@ impl TypApp {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum HoleKind {
-    Todo,
-    Omitted,
-}
-
 #[derive(Debug, Clone)]
 pub enum Exp {
     Call { span: Span, name: Ident, args: Args },
@@ -173,7 +167,7 @@ pub enum Exp {
     Type { span: Span },
     Match { span: Span, name: Option<Ident>, on_exp: Rc<Exp>, motive: Option<Motive>, body: Match },
     Comatch { span: Span, name: Option<Ident>, is_lambda_sugar: bool, body: Match },
-    Hole { span: Span, kind: HoleKind },
+    Hole { span: Span },
     NatLit { span: Span, val: BigUint },
     Fun { span: Span, from: Rc<Exp>, to: Rc<Exp> },
     Lam { span: Span, var: ParamInst, body: Rc<Exp> },

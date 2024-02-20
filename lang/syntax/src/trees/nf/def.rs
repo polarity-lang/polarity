@@ -4,7 +4,7 @@ use crate::common::*;
 use crate::ust;
 use codespan::Span;
 use derivative::Derivative;
-use parser::cst::{HoleKind, Ident};
+use parser::cst::Ident;
 
 /// The syntax of normal forms
 #[derive(Debug, Clone, Derivative)]
@@ -84,8 +84,6 @@ pub enum Neu {
     Hole {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        kind: HoleKind,
     },
 }
 

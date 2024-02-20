@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use pretty::DocAllocator;
 
-use parser::cst::{DocComment, HoleKind};
+use parser::cst::DocComment;
 use syntax::common::*;
 use syntax::generic::Item;
 use syntax::ust::*;
@@ -497,10 +497,7 @@ impl<'a> Print<'a> for Exp {
                         .append(body.print(cfg, alloc))
                 }
             }
-            Exp::Hole { info: _, kind } => match kind {
-                HoleKind::Todo => alloc.keyword(HOLE_TODO),
-                HoleKind::Omitted => alloc.keyword(HOLE_OMITTED),
-            },
+            Exp::Hole { .. } => alloc.keyword(HOLE),
         }
     }
 }

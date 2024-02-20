@@ -12,7 +12,7 @@ grammar;
 // Tokens
 match {
     // Symbols
-    "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".", "?", "...",
+    "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".", "?",
     "->", "\\",
     // Names
     "_",
@@ -153,8 +153,7 @@ pub Builtins: Rc<Exp> = {
 }
 
 pub Hole: Rc<Exp> = {
-    <l: @L> "?" <r: @R> => Rc::new(Exp::Hole { span: span(l, r), kind: HoleKind::Todo }),
-    <l: @L> "..." <r: @R> => Rc::new(Exp::Hole { span: span(l, r), kind: HoleKind::Omitted }),
+    <l: @L> "?" <r: @R> => Rc::new(Exp::Hole { span: span(l, r) }),
     Atom,
 }
 

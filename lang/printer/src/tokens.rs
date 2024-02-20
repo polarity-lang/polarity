@@ -6,8 +6,7 @@ pub const COMMA: &str = ",";
 pub const COLON: &str = ":";
 pub const DOT: &str = ".";
 pub const AT: &str = "@";
-pub const HOLE_TODO: &str = "?";
-pub const HOLE_OMITTED: &str = "...";
+pub const HOLE: &str = "?";
 
 // Keywords
 

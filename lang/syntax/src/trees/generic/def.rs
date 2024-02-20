@@ -7,7 +7,7 @@ use data::HashMap;
 use derivative::Derivative;
 
 use crate::common::*;
-use parser::cst::{DocComment, HoleKind, Ident};
+use parser::cst::{DocComment, Ident};
 
 use super::lookup_table::{DeclKind, LookupTable};
 
@@ -307,8 +307,6 @@ pub enum Exp<P: Phase> {
     Hole {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        kind: HoleKind,
     },
 }
 
