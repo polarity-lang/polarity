@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use data::HashMap;
 use data::HashSet;
-use parser::cst::Ident;
 use renaming::Rename;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;

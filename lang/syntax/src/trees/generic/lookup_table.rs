@@ -3,8 +3,7 @@ use std::fmt;
 use data::HashMap;
 use data::HashSet;
 
-use parser::cst;
-use parser::cst::Ident;
+use crate::common::*;
 
 #[derive(Clone, Copy, Debug)]
 pub enum DeclKind {
@@ -48,41 +47,6 @@ impl DeclMeta {
             DeclMeta::Codef => DeclKind::Codef,
             DeclMeta::Ctor { .. } => DeclKind::Ctor,
             DeclMeta::Dtor { .. } => DeclKind::Dtor,
-        }
-    }
-}
-
-impl From<&cst::Data> for DeclMeta {
-    fn from(data: &cst::Data) -> Self {
-        Self::Data { arity: data.params.len() }
-    }
-}
-
-impl From<&cst::Codata> for DeclMeta {
-    fn from(codata: &cst::Codata) -> Self {
-        Self::Codata { arity: codata.params.len() }
-    }
-}
-
-impl From<&cst::Def> for DeclMeta {
-    fn from(_def: &cst::Def) -> Self {
-        Self::Def
-    }
-}
-
-impl From<&cst::Codef> for DeclMeta {
-    fn from(_codef: &cst::Codef) -> Self {
-        Self::Codef
-    }
-}
-
-impl From<&cst::Decl> for DeclMeta {
-    fn from(decl: &cst::Decl) -> Self {
-        match decl {
-            cst::Decl::Data(data) => DeclMeta::from(data),
-            cst::Decl::Codata(codata) => DeclMeta::from(codata),
-            cst::Decl::Def(_def) => Self::Def,
-            cst::Decl::Codef(_codef) => Self::Codef,
         }
     }
 }

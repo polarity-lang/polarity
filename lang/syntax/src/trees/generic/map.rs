@@ -4,7 +4,6 @@ use codespan::Span;
 use data::HashMap;
 
 use crate::common::*;
-use parser::cst::{DocComment, Ident};
 
 use super::def::*;
 use super::fold::*;

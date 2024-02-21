@@ -12,6 +12,5 @@ codespan = "0.11"
 derivative = "2"
 # workspace members
 data = { path = "../../util/data" }
-parser = { path = "../parser" }
 syntax = { path = "../syntax" }
 renaming = { path = "../renaming" }

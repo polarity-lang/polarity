@@ -13,5 +13,4 @@ miette = "5"
 thiserror = "1"
 # workspace members
 data = { path = "../../util/data" }
-parser = { path= "../parser" }
 syntax = { path = "../syntax" }

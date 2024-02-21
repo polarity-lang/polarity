@@ -1,10 +1,9 @@
 use std::rc::Rc;
 
+use crate::common::*;
 use miette::{Diagnostic, SourceSpan};
 use miette_util::ToMiette;
 use thiserror::Error;
-
-use parser::cst::Ident;
 
 use super::def::*;
 use super::lookup_table;

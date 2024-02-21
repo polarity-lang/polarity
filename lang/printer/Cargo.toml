@@ -8,6 +8,5 @@ edition = "2021"
 [dependencies]
 pretty = { version = "0.11", features = ["termcolor"] }
 # workspace members
-parser = { path = "../parser" }
 syntax = { path = "../syntax" }
 data = { path = "../../util/data" }

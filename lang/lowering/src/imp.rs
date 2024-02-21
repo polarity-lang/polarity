@@ -8,7 +8,6 @@ use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::BindingSite;
 use parser::cst::Ident;
-use syntax::common::*;
 use syntax::ctx::BindContext;
 use syntax::generic::lookup_table;
 use syntax::generic::lookup_table::DeclKind;
@@ -62,7 +61,11 @@ fn build_lookup_table(
         match item {
             cst::Decl::Data(data) => {
                 // top_level_map
-                add_top_level_decl(&data.name, &data.span, DeclMeta::from(data))?;
+                add_top_level_decl(
+                    &data.name,
+                    &data.span,
+                    DeclMeta::Data { arity: data.params.len() },
+                )?;
                 for ctor in &data.ctors {
                     add_top_level_decl(
                         &ctor.name,
@@ -78,7 +81,11 @@ fn build_lookup_table(
             }
             cst::Decl::Codata(codata) => {
                 // top_level_map
-                add_top_level_decl(&codata.name, &codata.span, DeclMeta::from(codata))?;
+                add_top_level_decl(
+                    &codata.name,
+                    &codata.span,
+                    DeclMeta::Codata { arity: codata.params.len() },
+                )?;
                 for dtor in &codata.dtors {
                     add_top_level_decl(
                         &dtor.name,
@@ -94,7 +101,7 @@ fn build_lookup_table(
             }
             cst::Decl::Def(def) => {
                 // top_level_map
-                add_top_level_decl(&def.name, &def.span, DeclMeta::from(def))?;
+                add_top_level_decl(&def.name, &def.span, DeclMeta::Def)?;
 
                 // lookup_table
                 let type_name = def.scrutinee.typ.name.clone();
@@ -102,7 +109,7 @@ fn build_lookup_table(
             }
             cst::Decl::Codef(codef) => {
                 // top_level_map
-                add_top_level_decl(&codef.name, &codef.span, DeclMeta::from(codef))?;
+                add_top_level_decl(&codef.name, &codef.span, DeclMeta::Codef)?;
 
                 // lookup_table
                 let type_name = codef.typ.name.clone();
@@ -112,6 +119,14 @@ fn build_lookup_table(
     }
 
     Ok((top_level_map, lookup_table))
+}
+
+impl Lower for cst::DocComment {
+    type Target = ust::DocComment;
+
+    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        Ok(ust::DocComment { docs: self.docs.clone() })
+    }
 }
 
 impl Lower for cst::Decl {
@@ -143,7 +158,7 @@ impl Lower for cst::Data {
 
         Ok(ust::Data {
             info: Some(*span),
-            doc: doc.clone(),
+            doc: doc.lower(ctx)?,
             name: name.clone(),
             hidden: *hidden,
             typ: Rc::new(ust::TypAbs { params: lower_telescope(params, ctx, |_, out| Ok(out))? }),
@@ -166,7 +181,7 @@ impl Lower for cst::Codata {
 
         Ok(ust::Codata {
             info: Some(*span),
-            doc: doc.clone(),
+            doc: doc.lower(ctx)?,
             name: name.clone(),
             hidden: *hidden,
             typ: Rc::new(ust::TypAbs { params: lower_telescope(params, ctx, |_, out| Ok(out))? }),
@@ -224,7 +239,13 @@ impl Lower for cst::Ctor {
                 }
             };
 
-            Ok(ust::Ctor { info: Some(*span), doc: doc.clone(), name: name.clone(), params, typ })
+            Ok(ust::Ctor {
+                info: Some(*span),
+                doc: doc.lower(ctx)?,
+                name: name.clone(),
+                params,
+                typ,
+            })
         })
     }
 }
@@ -287,7 +308,7 @@ impl Lower for cst::Dtor {
             lower_self_param(&self_param, ctx, |ctx, self_param| {
                 Ok(ust::Dtor {
                     info: Some(*span),
-                    doc: doc.clone(),
+                    doc: doc.lower(ctx)?,
                     name: name.clone(),
                     params,
                     self_param,
@@ -312,7 +333,7 @@ impl Lower for cst::Def {
             lower_self_param(&self_param, ctx, |ctx, self_param| {
                 Ok(ust::Def {
                     info: Some(*span),
-                    doc: doc.clone(),
+                    doc: doc.lower(ctx)?,
                     name: name.clone(),
                     hidden: *hidden,
                     params,
@@ -334,7 +355,7 @@ impl Lower for cst::Codef {
         lower_telescope(params, ctx, |ctx, params| {
             Ok(ust::Codef {
                 info: Some(*span),
-                doc: doc.clone(),
+                doc: doc.lower(ctx)?,
                 name: name.clone(),
                 hidden: *hidden,
                 params,
@@ -506,6 +527,12 @@ impl Lower for cst::Exp {
     }
 }
 
+fn bs_to_name(bs: &cst::BindingSite) -> Ident {
+    match bs {
+        BindingSite::Var { name } => name.clone(),
+        BindingSite::Wildcard => "_".to_owned(),
+    }
+}
 impl Lower for cst::Motive {
     type Target = ust::Motive;
 
@@ -514,7 +541,11 @@ impl Lower for cst::Motive {
 
         Ok(ust::Motive {
             info: Some(*span),
-            param: ust::ParamInst { info: Some(param.span), name: param.name().clone(), typ: () },
+            param: ust::ParamInst {
+                info: Some(param.span),
+                name: bs_to_name(&param.name),
+                typ: (),
+            },
             ret_typ: ctx.bind_single(param, |ctx| ret_typ.lower(ctx))?,
         })
     }
@@ -611,7 +642,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ust::TelescopeInst) -> Result<T, 
             let mut params_out = params_out?;
             let cst::ParamInst { span, name } = param;
             let param_out =
-                ust::ParamInst { info: Some(*span), name: name.name().clone(), typ: () };
+                ust::ParamInst { info: Some(*span), name: bs_to_name(name).clone(), typ: () };
             params_out.push(param_out);
             Ok(params_out)
         },

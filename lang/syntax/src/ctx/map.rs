@@ -1,7 +1,7 @@
+use crate::common::*;
 use crate::ctx::*;
 use crate::generic::*;
 use codespan::Span;
-use parser::cst::Ident;
 
 use std::rc::Rc;
 

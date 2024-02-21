@@ -4,7 +4,6 @@ use codespan::Span;
 use printer::PrintToString;
 use rust_lapper::{Interval, Lapper};
 
-use parser::cst::{DocComment, Ident};
 use syntax::common::*;
 use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
 use syntax::generic::{Visit, Visitor};
@@ -99,7 +98,7 @@ impl Visitor<tst::TST> for InfoCollector {
     fn visit_data(
         &mut self,
         info: &Option<Span>,
-        _doc: &Option<DocComment>,
+        _doc: &Option<tst::DocComment>,
         name: &Ident,
         _hidden: bool,
         _typ: &Rc<tst::TypAbs>,
@@ -111,7 +110,7 @@ impl Visitor<tst::TST> for InfoCollector {
     fn visit_codata(
         &mut self,
         info: &Option<Span>,
-        _doc: &Option<DocComment>,
+        _doc: &Option<tst::DocComment>,
         name: &Ident,
         _hidden: bool,
         _typ: &Rc<tst::TypAbs>,
@@ -123,7 +122,7 @@ impl Visitor<tst::TST> for InfoCollector {
     fn visit_def(
         &mut self,
         info: &Option<Span>,
-        _doc: &Option<DocComment>,
+        _doc: &Option<tst::DocComment>,
         name: &Ident,
         _hidden: bool,
         _params: &tst::Telescope,
@@ -140,7 +139,7 @@ impl Visitor<tst::TST> for InfoCollector {
     fn visit_codef(
         &mut self,
         info: &Option<Span>,
-        _doc: &Option<DocComment>,
+        _doc: &Option<tst::DocComment>,
         name: &Ident,
         _hidden: bool,
         _params: &tst::Telescope,

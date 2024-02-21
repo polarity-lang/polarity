@@ -15,8 +15,6 @@ pub use forget::*;
 pub use named::*;
 pub use subst::*;
 
-use parser::cst::Ident;
-
 pub trait HasSpan {
     fn span(&self) -> Option<Span>;
 }

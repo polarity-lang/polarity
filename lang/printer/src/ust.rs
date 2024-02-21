@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use pretty::DocAllocator;
 
-use parser::cst::DocComment;
 use syntax::common::*;
+use syntax::generic::DocComment;
 use syntax::generic::Item;
 use syntax::ust::*;
 

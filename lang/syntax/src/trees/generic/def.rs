@@ -7,7 +7,6 @@ use data::HashMap;
 use derivative::Derivative;
 
 use crate::common::*;
-use parser::cst::{DocComment, Ident};
 
 use super::lookup_table::{DeclKind, LookupTable};
 
@@ -28,6 +27,11 @@ where
 
 pub trait HasPhase {
     type Phase;
+}
+
+#[derive(Debug, Clone)]
+pub struct DocComment {
+    pub docs: Vec<String>,
 }
 
 #[derive(Debug, Clone)]

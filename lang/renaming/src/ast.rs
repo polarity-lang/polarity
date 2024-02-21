@@ -1,5 +1,4 @@
 use codespan::Span;
-use parser::cst::Ident;
 use syntax::common::*;
 use syntax::ctx::*;
 use syntax::generic::*;

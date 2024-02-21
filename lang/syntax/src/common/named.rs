@@ -1,22 +1,11 @@
 use crate::generic;
-use parser::cst::Ident;
-use parser::cst::{self, BindingSite};
+
+pub type Ident = String;
 
 use lazy_static::lazy_static;
 
 pub trait Named {
     fn name(&self) -> &Ident;
-}
-
-impl Named for cst::Decl {
-    fn name(&self) -> &Ident {
-        match self {
-            cst::Decl::Data(cst::Data { name, .. }) => name,
-            cst::Decl::Codata(cst::Codata { name, .. }) => name,
-            cst::Decl::Def(cst::Def { name, .. }) => name,
-            cst::Decl::Codef(cst::Codef { name, .. }) => name,
-        }
-    }
 }
 
 impl<P: generic::Phase> Named for generic::Decl<P> {
@@ -34,27 +23,6 @@ impl<P: generic::Phase> Named for generic::Decl<P> {
 
 lazy_static! {
     static ref WILDCARD: String = "_".to_owned();
-}
-
-impl Named for cst::Param {
-    fn name(&self) -> &Ident {
-        self.name.name()
-    }
-}
-
-impl Named for cst::ParamInst {
-    fn name(&self) -> &Ident {
-        self.name.name()
-    }
-}
-
-impl Named for BindingSite {
-    fn name(&self) -> &Ident {
-        match &self {
-            BindingSite::Var { name } => name.name(),
-            BindingSite::Wildcard => &WILDCARD,
-        }
-    }
 }
 
 impl Named for Ident {
