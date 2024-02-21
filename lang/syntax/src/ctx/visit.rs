@@ -1,9 +1,9 @@
 use std::rc::Rc;
 
+use crate::common::*;
 use crate::ctx::*;
 use crate::generic::*;
 use codespan::Span;
-use parser::cst::Ident;
 
 pub trait VisitCtxExt<P: Phase> {
     fn ctx_visit_telescope<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)

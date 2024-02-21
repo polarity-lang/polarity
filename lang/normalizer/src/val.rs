@@ -1,7 +1,6 @@
 use std::rc::Rc;
 
 use derivative::Derivative;
-use parser::cst::Ident;
 
 use crate::env::*;
 use codespan::Span;

@@ -1111,7 +1111,6 @@ dependencies = [
  "codespan",
  "data",
  "derivative",
- "parser",
  "renaming",
  "syntax",
 ]
@@ -1344,7 +1343,6 @@ dependencies = [
  "derivative",
  "miette",
  "miette_util",
- "parser",
  "pretty",
  "printer",
  "syntax",
@@ -1624,7 +1622,6 @@ name = "printer"
 version = "0.1.0"
 dependencies = [
  "data",
- "parser",
  "pretty",
  "syntax",
 ]
@@ -1820,7 +1817,6 @@ version = "0.1.0"
 dependencies = [
  "codespan",
  "data",
- "parser",
  "syntax",
 ]
 
@@ -2078,7 +2074,6 @@ dependencies = [
  "miette",
  "miette_util",
  "num-bigint",
- "parser",
  "thiserror",
 ]
 
@@ -2517,7 +2512,6 @@ dependencies = [
  "miette",
  "miette_util",
  "normalizer",
- "parser",
  "printer",
  "syntax",
  "thiserror",
@@ -2877,7 +2871,6 @@ dependencies = [
  "codespan",
  "data",
  "miette",
- "parser",
  "syntax",
  "thiserror",
 ]

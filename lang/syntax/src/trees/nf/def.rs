@@ -4,7 +4,6 @@ use crate::common::*;
 use crate::ust;
 use codespan::Span;
 use derivative::Derivative;
-use parser::cst::Ident;
 
 /// The syntax of normal forms
 #[derive(Debug, Clone, Derivative)]

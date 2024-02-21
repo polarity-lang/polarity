@@ -18,10 +18,10 @@ thiserror = "1"
 # workspace members
 data = { path = "../../util/data" }
 syntax = { path = "../syntax" }
-parser = { path = "../parser" }
 lowering = { path = "../lowering" }
 typechecker = { path = "../typechecker" }
 printer = { path = "../printer" }
+parser = { path = "../parser" }
 renaming = { path = "../renaming" }
 xfunc = { path = "../xfunc" }
 lifting = { path = "../lifting" }
