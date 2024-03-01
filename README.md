@@ -15,32 +15,32 @@ To locally install the executable, run:
 make install
 ```
 
-By default, it gets installed to `~/.cargo/bin/xfunc`.
+By default, it gets installed to `~/.cargo/bin/pol`.
 
 ## Quickstart
 
 From the root of this repository, run:
 
 ```sh
-xfunc run examples/example.pol
+pol run examples/example.pol
 ```
 
 Enable verbose output by supplying the `--trace` option like so:
 
 ```sh
-xfunc --trace run examples/example.pol
+pol --trace run examples/example.pol
 ```
 
 To pretty-print a file, run:
 
 ```sh
-xfunc fmt examples/example.pol
+pol fmt examples/example.pol
 ```
 
 For more information about the CLI, run:
 
 ```sh
-xfunc --help
+pol --help
 ```
 
 ## Project overview
@@ -78,7 +78,7 @@ Please refer to the `README.md` files in the individual subprojects for further 
 
 ## Latex Output
 
-The `xfunc` binary supports the `xfunc texify` subcommand which translates code into typeset latex snippets.
+The `pol` binary supports the `pol texify` subcommand which translates code into typeset latex snippets.
 In order for color highlighting to function correctly, some colors have to be defined in the preamble. We suggest the following definition as a starting point.
 
 ```tex
