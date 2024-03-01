@@ -115,7 +115,10 @@ impl Ctx {
         use generic::Exp::*;
 
         let Eqn { lhs, rhs, .. } = eqn;
-        // FIXME: This is only temporary (not compatible with xfunc in general)
+
+        // Note that this alpha-equality comparision is not naive, i.e. it takes the (co)match labels into account.
+        // In particular, two (co)matches defined in different source code locations are not considered equal:
+        // lowering will have generated distinct labels for them.
         if lhs.alpha_eq(rhs) {
             return Ok(Yes(()));
         }
