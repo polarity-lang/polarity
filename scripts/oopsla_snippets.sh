@@ -9,7 +9,7 @@ trap cleanup EXIT
 
 cd "$TMP_DIR" || exit
 git clone --depth 1 git@github.com:ps-tuebingen/dependent-xfunctionalization.git paper-repo/
-rm "$IMPL_DIR/oopsla_examples"/*.xfn
+rm "$IMPL_DIR/oopsla_examples"/*.pol
 mkdir "$TMP_DIR/staging"
 cp paper-repo/snippets/fullwidth/* "$TMP_DIR/staging"
 cp paper-repo/snippets/halfwidth/* "$TMP_DIR/staging"
@@ -19,5 +19,5 @@ while read -r example; do
 done < "$IMPL_DIR/oopsla_examples/whitelist.txt"
 
 # Strip @hidden attributes from examples
-find "$IMPL_DIR/oopsla_examples" -type f -name '*.xfn' -exec sed -i '/@hidden$/d' {} \;
-find "$IMPL_DIR/oopsla_examples" -type f -name '*.xfn' -exec sed -i 's/@hidden //g' {} \;
+find "$IMPL_DIR/oopsla_examples" -type f -name '*.pol' -exec sed -i '/@hidden$/d' {} \;
+find "$IMPL_DIR/oopsla_examples" -type f -name '*.pol' -exec sed -i 's/@hidden //g' {} \;

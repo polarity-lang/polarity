@@ -22,19 +22,19 @@ By default, it gets installed to `~/.cargo/bin/xfunc`.
 From the root of this repository, run:
 
 ```sh
-xfunc run examples/example.xfn
+xfunc run examples/example.pol
 ```
 
 Enable verbose output by supplying the `--trace` option like so:
 
 ```sh
-xfunc --trace run examples/example.xfn
+xfunc --trace run examples/example.pol
 ```
 
 To pretty-print a file, run:
 
 ```sh
-xfunc fmt examples/example.xfn
+xfunc fmt examples/example.pol
 ```
 
 For more information about the CLI, run:
@@ -83,13 +83,13 @@ In order for color highlighting to function correctly, some colors have to be de
 
 ```tex
 \usepackage{xcolor}
-% Color definitions for XFN
-\definecolor{xfnBlack}{rgb}{0,0,0}
-\definecolor{xfnBlue}{rgb}{0.06, 0.2, 0.65}
-\definecolor{xfnGreen}{RGB}{0,155,85}
-\definecolor{xfnRed}{rgb}{0.8,0.4,0.3}
-\definecolor{xfnCyan}{rgb}{0.0, 1.0, 1.0}
-\definecolor{xfnMagenta}{rgb}{0.8, 0.13, 0.13}
-\definecolor{xfnYellow}{rgb}{0.91, 0.84, 0.42}
-\definecolor{xfnWhite}{rgb}{1,1,1}
+% Color definitions for pol
+\definecolor{polBlack}{rgb}{0,0,0}
+\definecolor{polBlue}{rgb}{0.06, 0.2, 0.65}
+\definecolor{polGreen}{RGB}{0,155,85}
+\definecolor{polRed}{rgb}{0.8,0.4,0.3}
+\definecolor{polCyan}{rgb}{0.0, 1.0, 1.0}
+\definecolor{polMagenta}{rgb}{0.8, 0.13, 0.13}
+\definecolor{polYellow}{rgb}{0.91, 0.84, 0.42}
+\definecolor{polWhite}{rgb}{1,1,1}
 ```

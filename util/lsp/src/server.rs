@@ -161,7 +161,7 @@ fn info_to_hover(index: &DatabaseView, info: Info) -> Hover {
             HoverContents::Markup(MarkupContent { kind: MarkupKind::Markdown, value })
         }
         None => HoverContents::Scalar(MarkedString::LanguageString(LanguageString {
-            language: "xfn".to_owned(),
+            language: "pol".to_owned(),
             value: info.typ,
         })),
     };
