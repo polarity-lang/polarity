@@ -1,6 +1,7 @@
-# Xfunc Implementation
+# Polarity
 
-Extending De-/Refunctionalization to Dependent Types
+A programming language with dependent data and codata types.
+Installation instructions and the language documentation is available at [polarity-lang.github.io](https://polarity-lang.github.io/).
 
 ## Requirements
 
@@ -15,8 +16,6 @@ make install
 ```
 
 By default, it gets installed to `~/.cargo/bin/xfunc`.
-
-Optionally, if you have `npm` and VSCode installed, this will also build and install the VSCode extension.
 
 ## Quickstart
 
@@ -49,8 +48,6 @@ xfunc --help
 ```text
 ├── app                     CLI application
 ├── examples                Example code in the object language
-├── ext/vim/syntax          vim source code highlighting
-├── ext/vscode              VSCode extension
 ├── lang                    Language implementation
 │   ├── lifting             Lift local (co)matches to top-level definitions
 │   ├── lowering            Lowering concrete to (untyped) abstract syntax tree
