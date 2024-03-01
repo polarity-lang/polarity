@@ -25,11 +25,11 @@ const loadMarkdown = () => {
 const loadExamples = () => {
   const dir = fs.readdirSync("../../../oopsla_examples");
   const files = dir
-    .filter((filename) => filename.endsWith(".xfn"))
+    .filter((filename) => filename.endsWith(".pol"))
     .map((filename) => `../../../oopsla_examples/${filename}`);
   let out = [];
   for (const filename of files) {
-    out.push(path.basename(filename, ".xfn"));
+    out.push(path.basename(filename, ".pol"));
   }
   return out;
 };

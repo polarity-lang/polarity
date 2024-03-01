@@ -12,7 +12,7 @@ rm scripts/package_artifact.sh
 rm scripts/oopsla_snippets.sh
 
 # only keep whitelisted files in oopsla_examples/, then delete whitelist
-for file in oopsla_examples/*.xfn; do
+for file in oopsla_examples/*.pol; do
     grep -q $(basename $file) oopsla_examples/whitelist.txt || rm "$file"
 done
 rm oopsla_examples/whitelist.txt
@@ -33,10 +33,10 @@ vsce package --allow-missing-repository
 
 popd
 
-mkdir -p xfn-lang
-cp "$DIR/build-vscode-ext/ext/vscode/xfn-0.0.1.vsix" "xfn-lang/xfn-0.0.1.vsix"
-mv source-code xfn-lang
-zip -r 129.zip xfn-lang
+mkdir -p pol-lang
+cp "$DIR/build-vscode-ext/ext/vscode/pol-0.0.1.vsix" "pol-lang/pol-0.0.1.vsix"
+mv source-code pol-lang
+zip -r 129.zip pol-lang
 
 popd
 

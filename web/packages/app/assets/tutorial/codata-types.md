@@ -1,7 +1,7 @@
 Codata types are specified by a list of methods or destructors.
 A very simple example is the type of pairs of a boolean and a natural number:
 
-```xfn
+```pol
 data Bool { True, False }
 data Nat { Z, S(n: Nat)}
 codata Pair {
@@ -15,7 +15,7 @@ This type supports two observations; the first observations `proj1` yields a boo
 A common codata type that is typically built into many programming languages is the function type.
 In our language, it is not built-in, but we can define it as follows:
 
-```xfn
+```pol
 codata Fun(a b: Type) {
     Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }
@@ -23,7 +23,7 @@ codata Fun(a b: Type) {
 
 Codata types can also model infinite types. The type of infinite streams is a classical example and written like this:
 
-```xfn
+```pol
 codata Stream(a: Type) {
   Stream(a).head(a: Type) : a,
   Stream(a).tail(a: Type) : Stream(a),
@@ -34,7 +34,7 @@ Sometimes we also need to reference the object on which a method is invoked in i
 This is especially the case when we want an observation to yield a proof that the object satisfies some property.
 Here is a simple example which shows how this can be expressed:
 
-```xfn
+```pol
 codata Bool {
   Bool.neg : Bool,
   (x: Bool).neg_inverse : Eq(Bool, x, x.neg.neg),

@@ -12,7 +12,7 @@ const UPPER_IDENT = {
   className: "title.class",
   relevance: 1,
 };
-const xfn: Language = {
+const pol: Language = {
   case_insensitive: false,
   keywords: {
     keyword: ["data", "codata", "impl", "def", "codef", "match", "comatch", "absurd"],
@@ -23,7 +23,7 @@ const xfn: Language = {
 
 export const register = () => {
   document.addEventListener("DOMContentLoaded", () => {
-    hljs.registerLanguage("xfn", () => xfn);
+    hljs.registerLanguage("pol", () => pol);
     hljs.highlightAll();
   });
 };

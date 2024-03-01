@@ -30,9 +30,9 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
     extensions: string[];
     mimetypes: string[];
   } {
-    const id = "xfn";
+    const id = "pol";
     const aliases: string[] = [];
-    const extensions = [".xfn"];
+    const extensions = [".pol"];
     const mimetypes: string[] = [];
     return { id, extensions, aliases, mimetypes };
   }

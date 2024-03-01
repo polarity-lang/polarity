@@ -33,7 +33,7 @@ export default class App {
     const language = Language.initialize(client);
 
     const id = language.id;
-    const uri = monaco.Uri.parse("inmemory://demo.xfn");
+    const uri = monaco.Uri.parse("inmemory://demo.pol");
 
     const model = monaco.editor.createModel("", id, uri);
 
@@ -79,7 +79,7 @@ export default class App {
     async function handleHashChange() {
       let filepath = location.hash.slice(1);
       if (filepath === "") {
-        filepath = "tutorial.xfn";
+        filepath = "tutorial.pol";
       }
       const url = `${location.protocol}//${location.host}/examples/${filepath}`;
       const response = await fetch(url);

@@ -82,7 +82,7 @@ impl FreeVars {
     /// This is because unification may locally refine types.
     /// Example:
     ///
-    /// ```xfn
+    /// ```pol
     /// data Bar(a: Type) { }
     ///
     /// codata Baz { unit: Top }

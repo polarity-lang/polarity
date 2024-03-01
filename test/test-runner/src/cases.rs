@@ -42,7 +42,7 @@ impl Case {
 fn case_paths<P: AsRef<Path>>(path: P) -> impl Iterator<Item = PathBuf> {
     fs::read_dir(path).unwrap().filter_map(|entry| {
         let path = entry.unwrap().path();
-        if path.is_file() && path.extension() == Some(OsStr::new("xfn")) {
+        if path.is_file() && path.extension() == Some(OsStr::new("pol")) {
             Some(path)
         } else {
             None
