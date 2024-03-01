@@ -33,10 +33,10 @@ vsce package --allow-missing-repository
 
 popd
 
-mkdir -p pol-lang
-cp "$DIR/build-vscode-ext/ext/vscode/pol-0.0.1.vsix" "pol-lang/pol-0.0.1.vsix"
-mv source-code pol-lang
-zip -r 129.zip pol-lang
+mkdir -p polarity-lang
+cp "$DIR/build-vscode-ext/ext/vscode/polarity-0.0.1.vsix" "polarity-lang/polarity-0.0.1.vsix"
+mv source-code polarity-lang
+zip -r 129.zip polarity-lang
 
 popd
 
