@@ -81,7 +81,7 @@ export default class App {
       if (filepath === "") {
         filepath = "tutorial.pol";
       }
-      const url = `${location.protocol}//${location.host}/examples/${filepath}`;
+      const url = `${location.protocol}//${location.host}/oopsla24/examples/${filepath}`;
       const response = await fetch(url);
       if (!response.ok) {
         model.setValue("");
