@@ -1,4 +1,4 @@
-name: Deploy for OOPSLA
+name: Deploy demo for OOPSLA 2024
 on:
   push: { branches: [oopsla] }
 permissions:
@@ -27,7 +27,6 @@ jobs:
           branch: gh-pages
           git-config-name: OOPSLA-xfunc
           git-config-email: '<>'
-          repository-name: OOPSLA-xfunc/OOPSLA-xfunc.github.io
-          ssh-key: ${{ secrets.OOPSLA_SSH_KEY }}
+          repository-name: polarity-lang/oopsla24
           commit-message: 'Deploy artifact'
           single-commit: true
