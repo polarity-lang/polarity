@@ -11,7 +11,8 @@ import Server from "./server";
 class Environment implements monaco.Environment {
   getWorkerUrl(moduleId: string, label: string) {
     if (label === "editorWorkerService") {
-      return "/editor.worker.bundle.js";
+      const path = parentPath(location.pathname);
+      return `${path}editor.worker.bundle.js`;
     }
     throw new Error(`getWorkerUrl: unexpected ${JSON.stringify({ moduleId, label })}`);
   }
@@ -79,9 +80,11 @@ export default class App {
     async function handleHashChange() {
       let filepath = location.hash.slice(1);
       if (filepath === "") {
-        filepath = "tutorial.pol";
+        model.setValue("");
+        return;
       }
-      const url = `${location.protocol}//${location.host}/oopsla24/examples/${filepath}`;
+      const path = parentPath(location.pathname);
+      const url = `${location.protocol}//${location.host}${path}examples/${filepath}`;
       const response = await fetch(url);
       if (!response.ok) {
         model.setValue("");
@@ -136,4 +139,14 @@ export default class App {
     window.dispatchEvent(new HashChangeEvent("hashchange"));
     await Promise.all([server.start(), client.start()]);
   }
+}
+
+function parentPath(pathname: string): string {
+  if (pathname.endsWith("/")) {
+    pathname = pathname.slice(0, -1);
+  }
+  if (pathname === "") {
+    return "/";
+  }
+  return pathname.slice(0, pathname.lastIndexOf("/") + 1);
 }
