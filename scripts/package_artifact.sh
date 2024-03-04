@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
+
+set -o pipefail -o errexit -o nounset
+
 test -e xfunc_artifact.zip && rm xfunc_artifact.zip
 
-GIT_URL="$(git remote get-url origin)"
+SOURCE_GIT_URL="https://github.com/polarity-lang/oopsla24"
+VSCODE_GIT_URL="https://github.com/polarity-lang/vscode"
 DIR=$(mktemp -d)
-git clone --depth 1 "$GIT_URL" "$DIR/source-code"
+git clone --depth 1 "$SOURCE_GIT_URL" "$DIR/source-code"
 
 pushd "$DIR" || exit 1
 pushd "$DIR/source-code" || exit 1
@@ -24,25 +28,24 @@ rm -rf .cargo/
 
 popd
 
-git clone --depth 1 "$GIT_URL" "$DIR/build-vscode-ext"
+git clone --depth 1 "$VSCODE_GIT_URL" "$DIR/build-vscode-ext"
 
 pushd "$DIR/build-vscode-ext" || exit 1
-cd ext/vscode
 npm install
 vsce package --allow-missing-repository
 
 popd
 
 mkdir -p polarity-lang
-cp "$DIR/build-vscode-ext/ext/vscode/polarity-0.0.1.vsix" "polarity-lang/polarity-0.0.1.vsix"
+cp "$DIR/build-vscode-ext/polarity-0.0.1.vsix" "polarity-lang/polarity-0.0.1.vsix"
 mv source-code polarity-lang
-zip -r 129.zip polarity-lang
+zip -r polarity-lang.zip polarity-lang
 
 popd
 
-mv "$DIR/129.zip" .
+mv "$DIR/polarity-lang.zip" .
 rm -rf "$DIR"
 
 echo "SHA256 checksum:"
 
-sha256sum 129.zip
+sha256sum polarity-lang.zip
