@@ -93,3 +93,11 @@ In order for color highlighting to function correctly, some colors have to be de
 \definecolor{polYellow}{rgb}{0.91, 0.84, 0.42}
 \definecolor{polWhite}{rgb}{1,1,1}
 ```
+
+## Licenses
+
+Except for the code in the `web` directory, this project is distributed under the terms of both the MIT license and the Apache License 2.0.
+See [LICENSE-APACHE](LICENSE-APACHE) and [LICENSE-MIT](LICENSE-MIT) for details.
+
+The code contained in the `web` directory is based on [tower-lsp-web-demo](https://github.com/silvanshade/tower-lsp-web-demo/) by Darin Morrison.
+It is licensed under Apache-2.0 WITH LLVM-exception.

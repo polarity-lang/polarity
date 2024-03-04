@@ -22,5 +22,5 @@ make run
 
 ## License
 
-The content in this folder is based on [tower-lsp-web-demo](https://github.com/silvanshade/tower-lsp-web-demo/)
-by Darin Morrison. The original work is licensed under Apache-2.0 WITH LLVM-exception (see `LICENSE`).
+The content in this folder is based on [tower-lsp-web-demo](https://github.com/silvanshade/tower-lsp-web-demo/) by Darin Morrison.
+It is licensed under Apache-2.0 WITH LLVM-exception (see `LICENSE`).
