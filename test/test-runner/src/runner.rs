@@ -18,16 +18,14 @@ pub struct Config {
 }
 
 impl Runner {
-    pub fn load<P1, P2, P3>(suites_path: P1, examples_path: P2, _oopsla_examples_path: P3) -> Self
+    pub fn load<P1, P2>(suites_path: P1, examples_path: P2) -> Self
     where
         P1: AsRef<Path>,
         P2: AsRef<Path>,
-        P3: AsRef<Path>,
     {
         let mut suites: HashMap<_, _> =
             suites::load(suites_path.as_ref()).map(|suite| (suite.name.clone(), suite)).collect();
         suites.insert("examples".to_owned(), Suite::new(examples_path.as_ref().into()));
-        // suites.insert("oopsla_examples".to_owned(), Suite::new(oopsla_examples_path.as_ref().into()));
 
         let mut index = Index::new();
         let mut writer = index.writer();
