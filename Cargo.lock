@@ -466,14 +466,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "console"
-version = "0.1.0"
-dependencies = [
- "wasm-bindgen",
- "web-sys",
-]
-
-[[package]]
 name = "console_error_panic_hook"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2067,7 +2059,6 @@ name = "syntax"
 version = "0.1.0"
 dependencies = [
  "codespan",
- "console",
  "data",
  "derivative",
  "lazy_static",

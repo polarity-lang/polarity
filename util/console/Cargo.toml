@@ -1,8 +1,0 @@
-[package]
-name = "console"
-version = "0.1.0"
-edition = "2021"
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = "0.3"
-wasm-bindgen = "0.2"
