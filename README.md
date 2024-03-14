@@ -60,7 +60,6 @@ pol --help
 │   ├── typechecker         Bidirectional type inference
 │   ├── unifier             Unification algorithm
 │   └── xfunc               De-/Refunctionalization implementation
-├── oopsla_examples         Examples from the OOPSLA paper
 ├── test                    Integration tests
 │   ├── suites              Test cases
 │   └── test-runner         Test runner
@@ -76,23 +75,6 @@ pol --help
 
 Please refer to the `README.md` files in the individual subprojects for further information.
 
-## Latex Output
-
-The `pol` binary supports the `pol texify` subcommand which translates code into typeset latex snippets.
-In order for color highlighting to function correctly, some colors have to be defined in the preamble. We suggest the following definition as a starting point.
-
-```tex
-\usepackage{xcolor}
-% Color definitions for pol
-\definecolor{polBlack}{rgb}{0,0,0}
-\definecolor{polBlue}{rgb}{0.06, 0.2, 0.65}
-\definecolor{polGreen}{RGB}{0,155,85}
-\definecolor{polRed}{rgb}{0.8,0.4,0.3}
-\definecolor{polCyan}{rgb}{0.0, 1.0, 1.0}
-\definecolor{polMagenta}{rgb}{0.8, 0.13, 0.13}
-\definecolor{polYellow}{rgb}{0.91, 0.84, 0.42}
-\definecolor{polWhite}{rgb}{1,1,1}
-```
 
 ## Licenses
 

@@ -11,11 +11,7 @@ pub struct Args {
 }
 
 pub fn exec(cmd: Args) {
-    let runner = runner::Runner::load(
-        crate::TEST_SUITES_PATH,
-        crate::EXAMPLES_PATH,
-        crate::OOPSLA_EXAMPLES_PATH,
-    );
+    let runner = runner::Runner::load(crate::TEST_SUITES_PATH, crate::EXAMPLES_PATH);
     let config =
         runner::Config { filter: cmd.filter.unwrap_or_else(|| "*".to_owned()), debug: cmd.debug };
     let res = runner.run(&config);
