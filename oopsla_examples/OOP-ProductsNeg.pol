@@ -1,9 +1,0 @@
-codata ×₋(A B: Type) {
-  ×₋(A,B).π₁(A B: Type): A,
-  ×₋(A,B).π₂(A B: Type): B
-}
-
-codef Pair(A B: Type, x: A, y: B): ×₋(A, B) {
-  π₁(_, _) => x,
-  π₂(_, _) => y,
-}

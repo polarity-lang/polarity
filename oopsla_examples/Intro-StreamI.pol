@@ -1,4 +1,0 @@
-codata Stream(a: Type) {
-    Stream(a).head(a: Type): a,
-    Stream(a).tail(a: Type): Stream(a)
-}

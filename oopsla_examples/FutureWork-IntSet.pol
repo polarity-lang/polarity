@@ -1,6 +1,0 @@
-data Bool { True : Bool, False : Bool}
-data Nat { Z : Nat, S(x : Nat) : Nat }
-codata NatSet {
-   NatSet.member(x : Nat) : Bool,
-   NatSet.union(x : NatSet) : NatSet
-}
