@@ -9,4 +9,3 @@ edition = "2021"
 pretty = { version = "0.11", features = ["termcolor"] }
 # workspace members
 syntax = { path = "../syntax" }
-data = { path = "../../util/data" }

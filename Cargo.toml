@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "util/data",
     "util/tracer",
     "util/tracer_macros",
     "util/lsp",

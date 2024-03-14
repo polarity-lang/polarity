@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use data::HashMap;
+use syntax::common::HashMap;
 
 use super::cases::Case;
 use super::index::Index;

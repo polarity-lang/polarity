@@ -64,7 +64,6 @@ pol --help
 │   ├── suites              Test cases
 │   └── test-runner         Test runner
 ├── util                    Utility libraries
-│   ├── data                Collection of convenient data structures
 │   ├── lsp                 LSP language server implementation
 │   ├── miette_util         Convert source code spans
 │   ├── tracer              Debugging library for generating trace output

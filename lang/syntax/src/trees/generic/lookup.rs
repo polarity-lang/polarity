@@ -11,7 +11,7 @@ use super::lookup_table::DeclKind;
 
 impl<P: Phase> Decls<P> {
     pub fn empty() -> Self {
-        Self { map: data::HashMap::default(), lookup_table: Default::default() }
+        Self { map: HashMap::default(), lookup_table: Default::default() }
     }
 
     pub fn is_empty(&self) -> bool {

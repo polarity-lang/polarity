@@ -2,7 +2,6 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 use codespan::Span;
-use data::HashMap;
 
 use crate::common::*;
 

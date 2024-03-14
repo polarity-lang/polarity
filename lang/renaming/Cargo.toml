@@ -9,5 +9,4 @@ edition = "2021"
 # source code locations
 codespan = "0.11"
 # workspace members
-data = { path = "../../util/data" }
 syntax = { path = "../syntax" }

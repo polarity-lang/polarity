@@ -2,14 +2,13 @@ use std::rc::Rc;
 
 use syntax::ctx::LevelCtx;
 
+use crate::dec::{Dec, No, Yes};
 use crate::result::UnifyError;
-use data::{Dec, HashMap, HashSet, No, Yes};
 use printer::{DocAllocator, Print};
 use syntax::common::*;
 use syntax::generic;
 use syntax::nf;
 use syntax::ust;
-use tracer::trace;
 
 #[derive(Debug, Clone)]
 pub struct Unificator {
@@ -76,7 +75,6 @@ impl Unificator {
     }
 }
 
-#[trace("{} |- unify({:P}) ~> {return:P}", ctx, eqns, data::id)]
 pub fn unify(ctx: LevelCtx, eqns: Vec<Eqn>) -> Result<Dec<Unificator>, UnifyError> {
     let mut ctx = Ctx::new(eqns.clone(), ctx.clone());
     let res = match ctx.unify()? {

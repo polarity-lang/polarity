@@ -4,8 +4,6 @@ use std::rc::Rc;
 use codespan::Span;
 use derivative::Derivative;
 
-use data::{HashMap, HashSet};
-
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;

@@ -10,7 +10,6 @@ pub use pretty::DocAllocator;
 
 mod ctx;
 mod de_bruijn;
-mod dec;
 pub mod fragments;
 mod nf;
 mod print_to_string;

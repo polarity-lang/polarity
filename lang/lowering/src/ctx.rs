@@ -1,5 +1,4 @@
 use codespan::Span;
-use data::{HashMap, HashSet};
 use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::{BindingSite, Ident};

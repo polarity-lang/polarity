@@ -557,13 +557,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "data"
-version = "0.1.0"
-dependencies = [
- "fxhash",
-]
-
-[[package]]
 name = "derivative"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1081,7 +1074,6 @@ name = "lifting"
 version = "0.1.0"
 dependencies = [
  "codespan",
- "data",
  "derivative",
  "renaming",
  "syntax",
@@ -1132,7 +1124,6 @@ name = "lowering"
 version = "0.1.0"
 dependencies = [
  "codespan",
- "data",
  "miette",
  "miette_util",
  "num-bigint",
@@ -1171,7 +1162,6 @@ version = "0.1.0"
 dependencies = [
  "async-lock",
  "codespan",
- "data",
  "lsp-types",
  "miette",
  "miette_util",
@@ -1311,7 +1301,6 @@ name = "normalizer"
 version = "0.1.0"
 dependencies = [
  "codespan",
- "data",
  "derivative",
  "miette",
  "miette_util",
@@ -1613,7 +1602,6 @@ dependencies = [
 name = "printer"
 version = "0.1.0"
 dependencies = [
- "data",
  "pretty",
  "syntax",
 ]
@@ -1656,7 +1644,6 @@ name = "query"
 version = "0.1.0"
 dependencies = [
  "codespan",
- "data",
  "lifting",
  "lowering",
  "miette",
@@ -1808,7 +1795,6 @@ name = "renaming"
 version = "0.1.0"
 dependencies = [
  "codespan",
- "data",
  "syntax",
 ]
 
@@ -2059,8 +2045,8 @@ name = "syntax"
 version = "0.1.0"
 dependencies = [
  "codespan",
- "data",
  "derivative",
+ "fxhash",
  "lazy_static",
  "miette",
  "miette_util",
@@ -2230,7 +2216,6 @@ name = "test-runner"
 version = "0.1.0"
 dependencies = [
  "clap",
- "data",
  "lowering",
  "parser",
  "printer",
@@ -2499,7 +2484,6 @@ name = "typechecker"
 version = "0.1.0"
 dependencies = [
  "codespan",
- "data",
  "miette",
  "miette_util",
  "normalizer",
@@ -2569,7 +2553,6 @@ checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
 name = "unifier"
 version = "0.1.0"
 dependencies = [
- "data",
  "miette",
  "miette_util",
  "normalizer",
@@ -2860,7 +2843,6 @@ name = "xfunc"
 version = "0.1.0"
 dependencies = [
  "codespan",
- "data",
  "miette",
  "syntax",
  "thiserror",
