@@ -10,9 +10,9 @@ impl Forget for tst::Prg {
     type Target = ust::Prg;
 
     fn forget(&self) -> Self::Target {
-        let tst::Prg { decls, exp } = self;
+        let tst::Prg { decls } = self;
 
-        ust::Prg { decls: decls.forget(), exp: exp.forget() }
+        ust::Prg { decls: decls.forget() }
     }
 }
 

@@ -20,7 +20,6 @@ pub enum BindingSite {
 #[derive(Debug, Clone)]
 pub struct Prg {
     pub items: Vec<Decl>,
-    pub exp: Option<Rc<Exp>>,
 }
 
 #[derive(Debug, Clone)]

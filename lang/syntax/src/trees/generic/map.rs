@@ -14,8 +14,8 @@ pub trait Mapper<P: Phase> {
     /// Run just before a declaration is entered
     fn enter_decl(&mut self, decl: &Decl<P>) { let _ = decl; }
 
-    fn map_prg(&mut self, decls: Decls<P>, exp: Option<Rc<Exp<P>>>) -> Prg<P> {
-        Prg { decls, exp }
+    fn map_prg(&mut self, decls: Decls<P>) -> Prg<P> {
+        Prg { decls }
     }
     fn map_decls(&mut self, map: HashMap<Ident, Decl<P>>, lookup_table: LookupTable) -> Decls<P> {
         Decls { map, lookup_table }
@@ -182,8 +182,8 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.enter_decl(decl)
     }
 
-    fn fold_prg(&mut self, decls: <Id<P> as Out>::Decls, exp: Option<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Prg {
-        self.map_prg(decls, exp)
+    fn fold_prg(&mut self, decls: <Id<P> as Out>::Decls) -> <Id<P> as Out>::Prg {
+        self.map_prg(decls)
     }
 
     fn fold_decls(&mut self, map: HashMap<Ident, <Id<P> as Out>::Decl>, source: LookupTable) -> <Id<P> as Out>::Decls {

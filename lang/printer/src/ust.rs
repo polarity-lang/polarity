@@ -14,24 +14,8 @@ use super::util::*;
 
 impl<'a> Print<'a> for Prg {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Prg { decls, exp } = self;
-
-        match exp {
-            Some(exp) => {
-                let top = if decls.is_empty() {
-                    alloc.nil()
-                } else {
-                    let sep = if cfg.omit_decl_sep {
-                        alloc.hardline()
-                    } else {
-                        alloc.hardline().append(alloc.hardline())
-                    };
-                    decls.print(cfg, alloc).append(sep)
-                };
-                top.append(exp.print(cfg, alloc))
-            }
-            None => decls.print(cfg, alloc),
-        }
+        let Prg { decls } = self;
+        decls.print(cfg, alloc)
     }
 }
 

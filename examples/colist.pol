@@ -30,4 +30,3 @@ codef TakeN(n: CoNat, s: CoList(Omega)) : CoList(n) {
     tail(n') => TakeN(n.pred, s.tail(Omega)),
 }
 
-TakeN(3, CountUp(1)).tail(3).tail(2).head(1, SNotZero(0))

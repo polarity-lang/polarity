@@ -11,7 +11,7 @@ use super::lookup_table::LookupTable;
 #[allow(unused_variables)]
 #[allow(clippy::too_many_arguments)]
 pub trait Visitor<P: Phase> {
-    fn visit_prg(&mut self, decls: &Decls<P>, exp: &Option<Rc<Exp<P>>>) {}
+    fn visit_prg(&mut self, decls: &Decls<P>) {}
     fn visit_decls(&mut self, map: &HashMap<Ident, Decl<P>>, source: &LookupTable) {}
     fn visit_decl(&mut self, decl: &Decl<P>) {}
     fn visit_decl_data(&mut self, data: &Data<P>) {}
@@ -128,10 +128,9 @@ impl<P: Phase> Visit<P> for Prg<P> {
     where
         V: Visitor<P>,
     {
-        let Prg { decls, exp } = self;
+        let Prg { decls } = self;
         decls.visit(v);
-        exp.visit(v);
-        v.visit_prg(decls, exp)
+        v.visit_prg(decls)
     }
 }
 

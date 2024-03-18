@@ -71,12 +71,11 @@ impl Infer for ust::Prg {
     type Target = tst::Prg;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Prg { decls, exp } = self;
+        let ust::Prg { decls } = self;
 
         let decls_out = decls.infer(prg, ctx)?;
-        let exp_out = exp.as_ref().map(|exp| exp.infer(prg, ctx)).transpose()?;
 
-        Ok(tst::Prg { decls: decls_out, exp: exp_out })
+        Ok(tst::Prg { decls: decls_out })
     }
 }
 

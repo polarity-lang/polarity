@@ -15,4 +15,8 @@ def Foo(True).foo() : Nat {
     Baz() absurd,
 }
 
-Baz.foo()
+data Unit { Top }
+
+def Unit.example : Nat {
+    Top => Baz.foo
+}

@@ -22,4 +22,3 @@ codata NatToNat {
     ap(x: Nat) : Nat
 }
 
-S(S(Z)).add(S(S(Z)))

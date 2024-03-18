@@ -24,7 +24,7 @@ pub trait Lower {
 }
 
 pub fn lower_prg(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
-    let cst::Prg { items, exp } = prg;
+    let cst::Prg { items } = prg;
 
     let (top_level_map, lookup_table) = build_lookup_table(items)?;
 
@@ -34,9 +34,7 @@ pub fn lower_prg(prg: &cst::Prg) -> Result<ust::Prg, LoweringError> {
         item.lower(&mut ctx)?;
     }
 
-    let exp = exp.lower(&mut ctx)?;
-
-    Ok(ust::Prg { decls: ust::Decls { map: ctx.decls_map, lookup_table }, exp })
+    Ok(ust::Prg { decls: ust::Decls { map: ctx.decls_map, lookup_table } })
 }
 
 /// Build the structure tracking the declaration order in the source code

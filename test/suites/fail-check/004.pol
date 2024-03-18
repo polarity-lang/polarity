@@ -7,9 +7,13 @@ codata Bool {
     and(other: Bool): Bool,
     not: Bool
 }
+data Unit { Top }
 
-comatch {
-    neg_inverse => ?,
-    and(other) => ?,
-    not => ?
-}: Bool
+def Unit.example : Bool {
+    Top => comatch {
+              neg_inverse => ?,
+              and(other) => ?,
+              not => ?
+           }
+}
+
