@@ -4,7 +4,6 @@ use std::rc::Rc;
 
 use codespan::Span;
 
-use data::HashSet;
 use miette_util::ToMiette;
 use normalizer::env::ToEnv;
 use normalizer::normalize::Normalize;

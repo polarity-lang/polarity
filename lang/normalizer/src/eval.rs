@@ -24,7 +24,7 @@ pub trait Apply {
 impl Eval for Exp {
     type Val = Rc<Val>;
 
-    #[trace("{:P} |- {:P} ▷ {return:P}", env, self, data::id)]
+    #[trace("{:P} |- {:P} ▷ {return:P}", env, self, std::convert::identity)]
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
         let res = match self {
             Exp::Var { idx, .. } => env.lookup(*idx),
@@ -111,7 +111,7 @@ fn eval_match(
     }
 }
 
-#[trace("{}(...).match {:P} ▷β {return:P}", ctor_name, body, data::id)]
+#[trace("{}(...).match {:P} ▷β {return:P}", ctor_name, body, std::convert::identity)]
 fn beta_match(
     prg: &Prg,
     body: val::Match,
@@ -124,7 +124,7 @@ fn beta_match(
     body.apply(prg, args)
 }
 
-#[trace("comatch {:P}.{}(...) ▷β {return:P}", body, dtor_name, data::id)]
+#[trace("comatch {:P}.{}(...) ▷β {return:P}", body, dtor_name, std::convert::identity)]
 fn beta_comatch(
     prg: &Prg,
     body: val::Match,

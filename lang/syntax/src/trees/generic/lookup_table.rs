@@ -1,8 +1,5 @@
 use std::fmt;
 
-use data::HashMap;
-use data::HashSet;
-
 use crate::common::*;
 
 #[derive(Clone, Copy, Debug)]

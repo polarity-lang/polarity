@@ -4,7 +4,7 @@ use std::path::Path;
 
 use codespan::{FileId, Files};
 
-use data::HashMap;
+use syntax::common::*;
 
 pub use result::Error;
 

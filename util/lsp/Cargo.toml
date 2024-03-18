@@ -16,5 +16,4 @@ miette = "5"
 # workspace members
 query = { path = "../../lang/query" }
 printer = { path = "../../lang/printer" }
-data = { path = "../data" }
 miette_util = { path = "../miette_util" }

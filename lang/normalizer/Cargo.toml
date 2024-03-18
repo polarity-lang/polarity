@@ -13,7 +13,6 @@ codespan = "0.11"
 derivative = "2"
 pretty = { version = "0.11", features = ["termcolor"] }
 # workspace members
-data = { path = "../../util/data" }
 tracer = { path = "../../util/tracer" }
 syntax = { path = "../syntax" }
 printer = { path = "../printer" }

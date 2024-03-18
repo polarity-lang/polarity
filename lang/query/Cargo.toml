@@ -16,7 +16,6 @@ ropey = "1"
 miette = "5"
 thiserror = "1"
 # workspace members
-data = { path = "../../util/data" }
 syntax = { path = "../syntax" }
 lowering = { path = "../lowering" }
 typechecker = { path = "../typechecker" }

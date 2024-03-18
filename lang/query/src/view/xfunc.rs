@@ -4,7 +4,6 @@ use printer::fragments::Items;
 use printer::PrintToStringInCtx;
 use renaming::Rename;
 
-use data::{HashMap, HashSet};
 use syntax::common::*;
 use syntax::ust;
 use xfunc::matrix;

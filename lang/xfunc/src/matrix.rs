@@ -1,6 +1,5 @@
 use std::rc::Rc;
 
-use data::HashMap;
 use syntax::common::*;
 use syntax::ctx::{BindContext, LevelCtx};
 use syntax::generic::DocComment;

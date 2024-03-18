@@ -3,7 +3,6 @@ use std::hash::Hash;
 use std::rc::Rc;
 
 use codespan::Span;
-use data::HashMap;
 use derivative::Derivative;
 
 use crate::common::*;

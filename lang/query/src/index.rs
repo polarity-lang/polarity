@@ -1,7 +1,7 @@
 use codespan::FileId;
 use rust_lapper::Lapper;
 
-use data::{HashMap, HashSet};
+use syntax::common::*;
 
 use super::info::{Info, Item};
 

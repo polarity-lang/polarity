@@ -64,8 +64,6 @@ pol --help
 │   ├── suites              Test cases
 │   └── test-runner         Test runner
 ├── util                    Utility libraries
-│   ├── console             Print function that works native and on WASM
-│   ├── data                Collection of convenient data structures
 │   ├── lsp                 LSP language server implementation
 │   ├── miette_util         Convert source code spans
 │   ├── tracer              Debugging library for generating trace output

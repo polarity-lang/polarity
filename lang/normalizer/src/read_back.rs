@@ -20,7 +20,7 @@ pub trait ReadBack {
 impl ReadBack for val::Val {
     type Nf = nf::Nf;
 
-    #[trace("↓{:P} ~> {return:P}", self, data::id)]
+    #[trace("↓{:P} ~> {return:P}", self, std::convert::identity)]
     fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
         let res = match self {
             val::Val::TypCtor { info, name, args } => {

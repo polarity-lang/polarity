@@ -3,11 +3,11 @@ use std::rc::Rc;
 use codespan::Span;
 use num_bigint::BigUint;
 
-use data::HashMap;
 use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::BindingSite;
 use parser::cst::Ident;
+use syntax::common::*;
 use syntax::ctx::BindContext;
 use syntax::generic::lookup_table;
 use syntax::generic::lookup_table::DeclKind;

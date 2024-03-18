@@ -1,7 +1,5 @@
 use std::rc::Rc;
 
-use data::HashMap;
-use data::HashSet;
 use renaming::Rename;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;

@@ -5,8 +5,6 @@ use miette_util::ToMiette;
 use thiserror::Error;
 
 use codespan::Span;
-use data::string::{comma_separated, separated};
-use data::HashSet;
 use normalizer::result::EvalError;
 use syntax::common::*;
 use syntax::generic::LookupError;
@@ -14,6 +12,15 @@ use syntax::nf;
 use unifier::result::UnifyError;
 
 use printer::PrintToString;
+
+fn comma_separated<I: IntoIterator<Item = String>>(iter: I) -> String {
+    separated(", ", iter)
+}
+
+fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
+    let vec: Vec<_> = iter.into_iter().collect();
+    vec.join(s)
+}
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum TypeError {
