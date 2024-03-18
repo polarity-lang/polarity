@@ -16,6 +16,7 @@ Please check that you observe the following guidelines:
 
 - If your PR changes the observable behaviour of the binary, then you have to add an entry to the `CHANGELOG.md` file with your PR under the `Unreleased` section of the changelog.
 - Every PR needs to have at least 1 approval before it can be merged.
+- We enforce a linear history on the `main` branch, so every PR must either be rebased or rebased and squashed before it is merged into `main`.
 
 ### Release workflow
 
