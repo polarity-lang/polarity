@@ -1,6 +1,5 @@
 use std::fmt;
 
-pub type HashSet<V> = fxhash::FxHashSet<V>;
 use crate::common::*;
 
 #[derive(Clone, Copy, Debug)]
