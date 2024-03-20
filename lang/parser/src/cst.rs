@@ -11,6 +11,13 @@ pub struct DocComment {
     pub docs: Vec<String>,
 }
 
+/// An attribute can be attached to various nodes in the syntax tree.
+/// We use the same syntax for attributes as Rust, that is `#[attr1,attr2]`.
+#[derive(Debug, Clone)]
+pub struct Attribute {
+    pub attrs: Vec<String>,
+}
+
 #[derive(Debug, Clone)]
 pub enum BindingSite {
     Var { name: Ident },
@@ -35,9 +42,7 @@ pub enum Decl {
 pub struct Data {
     pub span: Span,
     pub doc: Option<DocComment>,
-    /// Whether the declaration should be omitted
-    /// during pretty printing.
-    pub hidden: bool,
+    pub attr: Attribute,
     pub name: Ident,
     pub params: Telescope,
     pub ctors: Vec<Ctor>,
@@ -47,9 +52,7 @@ pub struct Data {
 pub struct Codata {
     pub span: Span,
     pub doc: Option<DocComment>,
-    /// Whether the declaration should be omitted
-    /// during pretty printing.
-    pub hidden: bool,
+    pub attr: Attribute,
     pub name: Ident,
     pub params: Telescope,
     pub dtors: Vec<Dtor>,
@@ -79,9 +82,7 @@ pub struct Def {
     pub span: Span,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    /// Whether the declaration should be omitted
-    /// during pretty printing.
-    pub hidden: bool,
+    pub attr: Attribute,
     pub params: Telescope,
     pub scrutinee: Scrutinee,
     pub ret_typ: Rc<Exp>,
@@ -93,9 +94,7 @@ pub struct Codef {
     pub span: Span,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    /// Whether the declaration should be omitted
-    /// during pretty printing.
-    pub hidden: bool,
+    pub attr: Attribute,
     pub params: Telescope,
     pub typ: TypApp,
     pub body: Match,
