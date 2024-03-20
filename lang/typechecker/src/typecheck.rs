@@ -121,7 +121,7 @@ impl Infer for ust::Data {
     type Target = tst::Data;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Data { info, doc, name, hidden, typ, ctors } = self;
+        let ust::Data { info, doc, name, attr, typ, ctors } = self;
 
         let typ_out = typ.infer(prg, ctx)?;
 
@@ -129,7 +129,7 @@ impl Infer for ust::Data {
             info: *info,
             doc: doc.clone(),
             name: name.clone(),
-            hidden: *hidden,
+            attr: attr.clone(),
             typ: typ_out,
             ctors: ctors.clone(),
         })
@@ -141,7 +141,7 @@ impl Infer for ust::Codata {
     type Target = tst::Codata;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Codata { info, doc, name, hidden, typ, dtors } = self;
+        let ust::Codata { info, doc, name, attr, typ, dtors } = self;
 
         let typ_out = typ.infer(prg, ctx)?;
 
@@ -149,7 +149,7 @@ impl Infer for ust::Codata {
             info: *info,
             doc: doc.clone(),
             name: name.clone(),
-            hidden: *hidden,
+            attr: attr.clone(),
             typ: typ_out,
             dtors: dtors.clone(),
         })
@@ -239,7 +239,7 @@ impl Infer for ust::Def {
     type Target = tst::Def;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Def { info, doc, name, hidden, params, self_param, ret_typ, body } = self;
+        let ust::Def { info, doc, name, attr, params, self_param, ret_typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let self_param_nf = self_param.typ.normalize(prg, &mut ctx.env())?;
@@ -257,7 +257,7 @@ impl Infer for ust::Def {
                 info: *info,
                 doc: doc.clone(),
                 name: name.clone(),
-                hidden: *hidden,
+                attr: attr.clone(),
                 params: params_out,
                 self_param: self_param_out,
                 ret_typ: ret_typ_out,
@@ -272,7 +272,7 @@ impl Infer for ust::Codef {
     type Target = tst::Codef;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Codef { info, doc, name, hidden, params, typ, body } = self;
+        let ust::Codef { info, doc, name, attr, params, typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.infer(prg, ctx)?;
@@ -288,7 +288,7 @@ impl Infer for ust::Codef {
                 info: *info,
                 doc: doc.clone(),
                 name: name.clone(),
-                hidden: *hidden,
+                attr: attr.clone(),
                 params: params_out,
                 typ: typ_out,
                 body: body_out,

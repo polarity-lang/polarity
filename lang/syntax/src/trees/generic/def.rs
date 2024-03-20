@@ -33,6 +33,13 @@ pub struct DocComment {
     pub docs: Vec<String>,
 }
 
+/// An attribute can be attached to various nodes in the syntax tree.
+/// We use the same syntax for attributes as Rust, that is `#[attr1,attr2]`.
+#[derive(Debug, Clone)]
+pub struct Attribute {
+    pub attrs: Vec<String>,
+}
+
 #[derive(Debug, Clone)]
 pub struct Prg<P: Phase> {
     pub decls: Decls<P>,
@@ -87,9 +94,7 @@ pub struct Data<P: Phase> {
     pub info: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    /// Whether the declarations should be omitted
-    /// during pretty printing.
-    pub hidden: bool,
+    pub attr: Attribute,
     pub typ: Rc<TypAbs<P>>,
     pub ctors: Vec<Ident>,
 }
@@ -99,9 +104,7 @@ pub struct Codata<P: Phase> {
     pub info: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    /// Whether the declarations should be omitted
-    /// during pretty printing.
-    pub hidden: bool,
+    pub attr: Attribute,
     pub typ: Rc<TypAbs<P>>,
     pub dtors: Vec<Ident>,
 }
@@ -135,9 +138,7 @@ pub struct Def<P: Phase> {
     pub info: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    /// Whether the declarations should be omitted
-    /// during pretty printing.
-    pub hidden: bool,
+    pub attr: Attribute,
     pub params: Telescope<P>,
     pub self_param: SelfParam<P>,
     pub ret_typ: Rc<Exp<P>>,
@@ -162,9 +163,7 @@ pub struct Codef<P: Phase> {
     pub info: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    /// Whether the declarations should be omitted
-    /// during pretty printing.
-    pub hidden: bool,
+    pub attr: Attribute,
     pub params: Telescope<P>,
     pub typ: TypApp<P>,
     pub body: Match<P>,

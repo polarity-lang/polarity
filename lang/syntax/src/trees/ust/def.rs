@@ -14,6 +14,7 @@ impl generic::Phase for UST {
 }
 
 pub type DocComment = generic::DocComment;
+pub type Attribute = generic::Attribute;
 pub type Prg = generic::Prg<UST>;
 pub type Decls = generic::Decls<UST>;
 pub type Decl = generic::Decl<UST>;

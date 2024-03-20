@@ -220,12 +220,12 @@ pub enum Item<'a, P: Phase> {
 }
 
 impl<'a, P: Phase> Item<'a, P> {
-    pub fn hidden(&self) -> bool {
+    pub fn attributes(&self) -> &Vec<String> {
         match self {
-            Item::Data(data) => data.hidden,
-            Item::Codata(codata) => codata.hidden,
-            Item::Def(def) => def.hidden,
-            Item::Codef(codef) => codef.hidden,
+            Item::Data(data) => &data.attr.attrs,
+            Item::Codata(codata) => &codata.attr.attrs,
+            Item::Def(def) => &def.attr.attrs,
+            Item::Codef(codef) => &codef.attr.attrs,
         }
     }
 }

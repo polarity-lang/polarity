@@ -125,13 +125,13 @@ impl Lift for tst::Data {
     type Target = ust::Data;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Data { info, doc, name, hidden, typ, ctors } = self;
+        let tst::Data { info, doc, name, attr, typ, ctors } = self;
 
         ust::Data {
             info: *info,
             doc: doc.clone(),
             name: name.clone(),
-            hidden: *hidden,
+            attr: attr.clone(),
             typ: typ.lift(ctx),
             ctors: ctors.clone(),
         }
@@ -142,13 +142,13 @@ impl Lift for tst::Codata {
     type Target = ust::Codata;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Codata { info, doc, name, hidden, typ, dtors } = self;
+        let tst::Codata { info, doc, name, attr, typ, dtors } = self;
 
         ust::Codata {
             info: *info,
             doc: doc.clone(),
             name: name.clone(),
-            hidden: *hidden,
+            attr: attr.clone(),
             typ: typ.lift(ctx),
             dtors: dtors.clone(),
         }
@@ -208,7 +208,7 @@ impl Lift for tst::Def {
     type Target = ust::Def;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Def { info, doc, name, hidden, params, self_param, ret_typ, body } = self;
+        let tst::Def { info, doc, name, attr, params, self_param, ret_typ, body } = self;
 
         params.lift_telescope(ctx, |ctx, params| {
             let (self_param, ret_typ) = self_param.lift_telescope(ctx, |ctx, self_param| {
@@ -220,7 +220,7 @@ impl Lift for tst::Def {
                 info: *info,
                 doc: doc.clone(),
                 name: name.clone(),
-                hidden: *hidden,
+                attr: attr.clone(),
                 params,
                 self_param,
                 ret_typ,
@@ -234,13 +234,13 @@ impl Lift for tst::Codef {
     type Target = ust::Codef;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Codef { info, doc, name, hidden, params, typ, body } = self;
+        let tst::Codef { info, doc, name, attr, params, typ, body } = self;
 
         params.lift_telescope(ctx, |ctx, params| ust::Codef {
             info: *info,
             doc: doc.clone(),
             name: name.clone(),
-            hidden: *hidden,
+            attr: attr.clone(),
             params,
             typ: typ.lift(ctx),
             body: body.lift(ctx),
@@ -494,7 +494,7 @@ impl Ctx {
             info: None,
             doc: None,
             name: name.clone(),
-            hidden: false,
+            attr: ust::Attribute { attrs: Vec::new() },
             params: telescope,
             self_param: ust::SelfParam {
                 info: None,
@@ -551,7 +551,7 @@ impl Ctx {
             info: None,
             doc: None,
             name: name.clone(),
-            hidden: false,
+            attr: ust::Attribute { attrs: Vec::new() },
             params: telescope,
             typ,
             body,

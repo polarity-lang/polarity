@@ -22,6 +22,7 @@ impl generic::Phase for TST {
 }
 
 pub type DocComment = generic::DocComment;
+pub type Attribute = generic::Attribute;
 pub type Prg = generic::Prg<TST>;
 pub type Decls = generic::Decls<TST>;
 pub type Decl = generic::Decl<TST>;

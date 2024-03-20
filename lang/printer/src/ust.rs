@@ -37,7 +37,7 @@ impl<'a> Print<'a> for Prg {
 
 impl<'a> Print<'a> for Decls {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let items = self.iter().filter(|item| !item.hidden()).map(|item| match item {
+        let items = self.iter().filter(|item| !item.attributes().contains(&"hidden".to_owned())).map(|item| match item {
             Item::Data(data) => data.print_in_ctx(cfg, self, alloc),
             Item::Codata(codata) => codata.print_in_ctx(cfg, self, alloc),
             Item::Def(def) => def.print(cfg, alloc),
@@ -96,8 +96,8 @@ impl<'a> PrintInCtx<'a> for Data {
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Data { info: _, doc, name, hidden, typ, ctors } = self;
-        if *hidden {
+        let Data { info: _, doc, name, attr, typ, ctors } = self;
+        if attr.attrs.contains(&"hidden".to_owned()) {
             return alloc.nil();
         }
 
@@ -140,8 +140,8 @@ impl<'a> PrintInCtx<'a> for Codata {
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Codata { info: _, doc, name, hidden, typ, dtors } = self;
-        if *hidden {
+        let Codata { info: _, doc, name, attr, typ, dtors } = self;
+        if attr.attrs.contains(&"hidden".to_owned()) {
             return alloc.nil();
         }
 
@@ -177,8 +177,8 @@ impl<'a> PrintInCtx<'a> for Codata {
 
 impl<'a> Print<'a> for Def {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { info: _, doc, name, hidden, params, self_param, ret_typ, body } = self;
-        if *hidden {
+        let Def { info: _, doc, name, attr, params, self_param, ret_typ, body } = self;
+        if attr.attrs.contains(&"hidden".to_owned()) {
             return alloc.nil();
         }
 
@@ -202,8 +202,8 @@ impl<'a> Print<'a> for Def {
 
 impl<'a> Print<'a> for Codef {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codef { info: _, doc, name, hidden, params, typ, body } = self;
-        if *hidden {
+        let Codef { info: _, doc, name, attr, params, typ, body } = self;
+        if attr.attrs.contains(&"hidden".to_owned()) {
             return alloc.nil();
         }
 

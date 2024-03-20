@@ -20,13 +20,13 @@ pub trait Visitor<P: Phase> {
     fn visit_decl_dtor(&mut self, dtor: &Dtor<P>) {}
     fn visit_decl_def(&mut self, def: &Def<P>) {}
     fn visit_decl_codef(&mut self, codef: &Codef<P>) {}
-    fn visit_data(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, hidden: bool, typ: &Rc<TypAbs<P>>, ctors: &[Ident]) {}
-    fn visit_codata(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, hidden: bool,  typ: &Rc<TypAbs<P>>, dtors: &[Ident]) {}
+    fn visit_data(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, attr: &Attribute, typ: &Rc<TypAbs<P>>, ctors: &[Ident]) {}
+    fn visit_codata(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, attr: &Attribute,  typ: &Rc<TypAbs<P>>, dtors: &[Ident]) {}
     fn visit_typ_abs(&mut self, params: &Telescope<P>) {}
     fn visit_ctor(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, params: &Telescope<P>, typ: &TypApp<P>) {}
     fn visit_dtor(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>) {}
-    fn visit_def(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, hidden: bool, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>, body: &Match<P>) {}
-    fn visit_codef(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, hidden: bool, params: &Telescope<P>, typ: &TypApp<P>, body: &Match<P>) {}
+    fn visit_def(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, attr: &Attribute, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>, body: &Match<P>) {}
+    fn visit_codef(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, attr: &Attribute, params: &Telescope<P>, typ: &TypApp<P>, body: &Match<P>) {}
     fn visit_match(&mut self, info: &Option<Span>, cases: &[Case<P>], omit_absurd: bool) {}
     fn visit_case(&mut self, info: &Option<Span>, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
     fn visit_typ_app(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
@@ -188,10 +188,10 @@ impl<P: Phase> Visit<P> for Data<P> {
     where
         V: Visitor<P>,
     {
-        let Data { info, doc, name, hidden, typ, ctors } = self;
+        let Data { info, doc, name, attr, typ, ctors } = self;
         typ.visit(v);
         v.visit_info(info);
-        v.visit_data(info, doc, name, *hidden, typ, ctors)
+        v.visit_data(info, doc, name, attr, typ, ctors)
     }
 }
 
@@ -200,10 +200,10 @@ impl<P: Phase> Visit<P> for Codata<P> {
     where
         V: Visitor<P>,
     {
-        let Codata { info, doc, name, hidden, typ, dtors } = self;
+        let Codata { info, doc, name, attr, typ, dtors } = self;
         typ.visit(v);
         v.visit_info(info);
-        v.visit_codata(info, doc, name, *hidden, typ, dtors)
+        v.visit_codata(info, doc, name, attr, typ, dtors)
     }
 }
 
@@ -257,7 +257,7 @@ impl<P: Phase> Visit<P> for Def<P> {
     where
         V: Visitor<P>,
     {
-        let Def { info, doc, name, hidden, params, self_param, ret_typ, body } = self;
+        let Def { info, doc, name, attr, params, self_param, ret_typ, body } = self;
         v.visit_telescope(
             &params.params,
             |v, param| param.visit(v),
@@ -271,7 +271,7 @@ impl<P: Phase> Visit<P> for Def<P> {
             },
         );
         v.visit_info(info);
-        v.visit_def(info, doc, name, *hidden, params, self_param, ret_typ, body)
+        v.visit_def(info, doc, name, attr, params, self_param, ret_typ, body)
     }
 }
 
@@ -280,7 +280,7 @@ impl<P: Phase> Visit<P> for Codef<P> {
     where
         V: Visitor<P>,
     {
-        let Codef { info, doc, name, hidden, params, typ, body } = self;
+        let Codef { info, doc, name, attr, params, typ, body } = self;
         v.visit_telescope(
             &params.params,
             |v, param| param.visit(v),
@@ -290,7 +290,7 @@ impl<P: Phase> Visit<P> for Codef<P> {
             },
         );
         v.visit_info(info);
-        v.visit_codef(info, doc, name, *hidden, params, typ, body)
+        v.visit_codef(info, doc, name, attr, params, typ, body)
     }
 }
 
