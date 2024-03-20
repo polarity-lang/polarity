@@ -494,7 +494,7 @@ impl Ctx {
             info: None,
             doc: None,
             name: name.clone(),
-            attr: ust::Attribute { attrs: Vec::new() },
+            attr: ust::Attribute::default(),
             params: telescope,
             self_param: ust::SelfParam {
                 info: None,
@@ -551,7 +551,7 @@ impl Ctx {
             info: None,
             doc: None,
             name: name.clone(),
-            attr: ust::Attribute { attrs: Vec::new() },
+            attr: ust::Attribute::default(),
             params: telescope,
             typ,
             body,

@@ -13,7 +13,7 @@ pub struct DocComment {
 
 /// An attribute can be attached to various nodes in the syntax tree.
 /// We use the same syntax for attributes as Rust, that is `#[attr1,attr2]`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Attribute {
     pub attrs: Vec<String>,
 }
