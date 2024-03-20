@@ -2,12 +2,12 @@
 
 Pull requests, bug reports and feature requests are highly welcomed and encouraged!
 
-### Contents
+## Contents
 
 - [Pull Request Workflow](#pull-request-workflow)
 - [Release Workflow](#release-workflow)
 
-### Pull request workflow
+## Pull request workflow
 
 All changes to the codebase should go through pull-requests.
 We do not allow commits directly on the `main` branch of the repository.
@@ -18,7 +18,7 @@ Please check that you observe the following guidelines:
 - Every PR needs to have at least 1 approval before it can be merged.
 - We enforce a linear history on the `main` branch, so every PR must either be rebased or rebased and squashed before it is merged into `main`.
 
-### Release workflow
+## Release workflow
 
 We use the following workflow for generating a new release for version `x.x.x`:
 
