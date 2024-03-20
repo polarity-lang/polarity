@@ -38,4 +38,3 @@ def Top.example2: Vec(4) {
     Unit => Unit.example1.append(2, 2, Unit.example1)
 }
 
-Unit.example2

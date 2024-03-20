@@ -73,4 +73,3 @@ codef Alternate(choose: Bool) : Stream {
     sTail() => Alternate(choose.not())
 }
 
-Unit.example2

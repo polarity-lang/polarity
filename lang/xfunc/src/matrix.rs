@@ -70,8 +70,7 @@ impl Ctx {
 
 impl BuildMatrix for ust::Prg {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ust::Prg { decls, exp } = self;
-        out.exp = exp.clone();
+        let ust::Prg { decls } = self;
 
         for decl in decls.map.values() {
             match decl {

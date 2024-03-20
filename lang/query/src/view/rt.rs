@@ -2,9 +2,7 @@ use std::rc::Rc;
 
 use super::DatabaseView;
 
-use normalizer::normalize::Normalize;
 use parser::cst;
-use syntax::common::Forget;
 use syntax::{nf, tst, ust};
 
 use crate::*;
@@ -35,17 +33,7 @@ impl<'a> DatabaseView<'a> {
     }
 
     pub fn run(&self) -> Result<Option<Rc<nf::Nf>>, Error> {
-        let tst = self.tst()?;
-        let ust = tst.forget();
-        match ust.exp.clone() {
-            None => Ok(None),
-            Some(exp) => {
-                let nf = exp
-                    .normalize_in_empty_env(&ust)
-                    .map_err(|err| Error::Type(typechecker::TypeError::Eval(err)))?;
-                Ok(Some(nf))
-            }
-        }
+        Ok(None)
     }
 
     pub fn pretty_error(&self, err: Error) -> miette::Report {

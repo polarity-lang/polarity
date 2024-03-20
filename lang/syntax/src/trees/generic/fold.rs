@@ -18,7 +18,7 @@ pub trait Folder<P: Phase, O: Out> {
     /// Run just before a declaration is entered
     fn enter_decl(&mut self, decl: &Decl<P>) { let _ = decl; }
 
-    fn fold_prg(&mut self, decls: O::Decls, exp: Option<O::Exp>) -> O::Prg;
+    fn fold_prg(&mut self, decls: O::Decls) -> O::Prg;
     fn fold_decls(&mut self, map: HashMap<Ident, O::Decl>, order: LookupTable) -> O::Decls;
     fn fold_decl(&mut self, decl: O::Decl) -> O::Decl;
     fn fold_decl_data(&mut self, data: O::Data) -> O::Decl;
@@ -226,10 +226,9 @@ where
     where
         F: Folder<P, O>,
     {
-        let Prg { decls, exp } = self;
+        let Prg { decls } = self;
         let decls = decls.fold(f);
-        let exp = exp.fold(f);
-        f.fold_prg(decls, exp)
+        f.fold_prg(decls)
     }
 }
 

@@ -36,7 +36,6 @@ pub struct DocComment {
 #[derive(Debug, Clone)]
 pub struct Prg<P: Phase> {
     pub decls: Decls<P>,
-    pub exp: Option<Rc<Exp<P>>>,
 }
 
 #[derive(Debug, Clone)]

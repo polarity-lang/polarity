@@ -17,5 +17,3 @@ def List(a).head(a: Type) : Option(a) {
     Nil(a) => None(a),
     Cons(a, x, xs) => Some(a, x)
 }
-
-Cons(Nat, Z, Cons(Nat, Z, Nil(Nat)))

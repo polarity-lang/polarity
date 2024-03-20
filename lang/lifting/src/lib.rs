@@ -76,9 +76,9 @@ impl Lift for tst::Prg {
     type Target = ust::Prg;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Prg { decls, exp } = self;
+        let tst::Prg { decls } = self;
 
-        ust::Prg { decls: decls.lift(ctx), exp: exp.lift(ctx) }
+        ust::Prg { decls: decls.lift(ctx) }
     }
 }
 

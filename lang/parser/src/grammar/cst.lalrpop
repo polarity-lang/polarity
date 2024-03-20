@@ -81,7 +81,7 @@ DocComment: DocComment = <docs: DocCommentHelper+> => DocComment { docs };
 // Program
 
 pub Prg: Prg = {
-    <items: Decl*> <exp: Exp?> => Prg { items, exp },
+    <items: Decl*> => Prg { items,  },
 }
 
 pub Decl: Decl = {
