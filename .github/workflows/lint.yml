@@ -10,6 +10,8 @@ on:
       - opened
       - synchronize
 
+permissions: read-all
+
 jobs:
   build:
     name: Lint Code Base
@@ -17,12 +19,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Lint Code Base
-        uses: github/super-linter/slim@v4
+        uses: super-linter/super-linter@v6.3.0
         env:
           VALIDATE_ALL_CODEBASE: false
           # JSCPD is disabled because it falsely flags duplicated Rust generic parameter definitions
@@ -33,5 +35,5 @@ jobs:
           TYPESCRIPT_DEFAULT_STYLE: prettier
           # We use a slightly different stylelint version/setup
           VALIDATE_CSS: false
-          DEFAULT_BRANCH: master
+          DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
