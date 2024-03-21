@@ -12,9 +12,9 @@ use super::tokens::*;
 use super::types::*;
 use super::util::*;
 
-/// Checks whether the `#[hidden]` attribute is present.
+/// Checks whether the `#[omit_print]` attribute is present.
 fn is_visible(attr: &Attribute) -> bool {
-    !attr.attrs.contains(&"hidden".to_owned())
+    !attr.attrs.contains(&"omit_print".to_owned())
 }
 
 impl<'a> Print<'a> for Prg {
