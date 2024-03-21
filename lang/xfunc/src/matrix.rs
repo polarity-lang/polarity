@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use syntax::common::*;
 use syntax::ctx::{BindContext, LevelCtx};
-use syntax::generic::DocComment;
+use syntax::generic::{Attribute, DocComment};
 use syntax::ust;
 use syntax::ust::util::Instantiate;
 
@@ -95,7 +95,7 @@ impl BuildMatrix for ust::Prg {
 
 impl BuildMatrix for ust::Data {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ust::Data { info, doc, name, hidden: _, typ, ctors } = self;
+        let ust::Data { info, doc, name, attr: _, typ, ctors } = self;
 
         let xdata = XData {
             repr: Repr::Data,
@@ -119,7 +119,7 @@ impl BuildMatrix for ust::Data {
 
 impl BuildMatrix for ust::Codata {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ust::Codata { info, doc, name, hidden: _, typ, dtors } = self;
+        let ust::Codata { info, doc, name, attr: _, typ, dtors } = self;
 
         let xdata = XData {
             repr: Repr::Codata,
@@ -230,7 +230,7 @@ impl XData {
             info: None,
             doc: doc.clone(),
             name: name.clone(),
-            hidden: false,
+            attr: Attribute::default(),
             typ: typ.clone(),
             ctors: ctors.keys().cloned().collect(),
         };
@@ -260,7 +260,7 @@ impl XData {
                     info: None,
                     doc: dtor.doc.clone(),
                     name: dtor.name.clone(),
-                    hidden: false,
+                    attr: Attribute::default(),
                     params: dtor.params.clone(),
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
@@ -281,7 +281,7 @@ impl XData {
             info: None,
             doc: doc.clone(),
             name: name.clone(),
-            hidden: false,
+            attr: Attribute::default(),
             typ: typ.clone(),
             dtors: dtors.keys().cloned().collect(),
         };
@@ -320,7 +320,7 @@ impl XData {
                     info: None,
                     doc: ctor.doc.clone(),
                     name: ctor.name.clone(),
-                    hidden: false,
+                    attr: Attribute::default(),
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
                     body: ust::Match { cases, info: None, omit_absurd },

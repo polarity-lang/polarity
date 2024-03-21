@@ -12,8 +12,8 @@ grammar;
 // Tokens
 match {
     // Symbols
-    "(", ")", "{", "}", ";", ":=", "=>", ",", ":", ".", "?",
-    "->", "\\",
+    "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ".", "?",
+    "->", "\\", "#",
     // Names
     "_",
     r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*",
@@ -21,7 +21,6 @@ match {
     // Literals
     r"0|[1-9][0-9]*",
     // Keywords
-    "@hidden",
     "data", "codata",
     "def", "codef",
     "match", "as", "comatch",
@@ -49,11 +48,17 @@ Parens<Rule>: Rule =
 Braces<Rule>: Rule =
     "{" <rule: Rule> "}" => rule;
 
+Brackets<Rule>: Rule =
+    "[" <rule: Rule> "]" => rule;
+
 ParenthesizedArgs<Rule>: Vec<Rule> = Parens<Comma<Rule>>;
 OptParenthesizedArgs<Rule>: Vec<Rule> = <args: Parens<Comma<Rule>>?> => args.unwrap_or_default();
 
 BracedArgs<Rule>: Vec<Rule> = Braces<Comma<Rule>>;
 OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_default();
+
+BracketedArgs<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
+OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
 
 Param: Param = <name: BindingSite> <names: BindingSite*> ":" <typ: Exp> => Param { name, names, typ } ;
 
@@ -71,7 +76,8 @@ OptTelescopeInst: TelescopeInst = <params: Parens<Comma<ParamInst>>?> => Telesco
 Args: Vec<Rc<Exp>> = ParenthesizedArgs<Exp>;
 OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
 
-Hidden: bool = <hidden: "@hidden"?> => hidden.is_some();
+Attribute: Attribute = "#" <attrs: BracketedArgs<LowerIdent>> => Attribute { attrs };
+OptAttribute: Attribute = <attr: Attribute? > => attr.unwrap_or_default();
 
 OmitAbsurd: bool = <absurd: "..absurd"?> => absurd.is_some();
 
@@ -85,10 +91,10 @@ pub Prg: Prg = {
 }
 
 pub Decl: Decl = {
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => Decl::Data(Data { span: span(l, r), doc, name, hidden, params, ctors }),
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => Decl::Codata(Codata { span: span(l, r), doc, name, hidden, params, dtors }),
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => Decl::Def(Def { span: span(l, r), doc, name, hidden, params, scrutinee, ret_typ, body }),
-    <l: @L> <doc: DocComment?> <hidden: Hidden> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Match> "}" <r: @R> => Decl::Codef(Codef { span: span(l, r), doc, name, hidden, params, typ, body }),
+    <l: @L> <doc: DocComment?> <attr: OptAttribute> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> => Decl::Data(Data { span: span(l, r), doc, name, attr, params, ctors }),
+    <l: @L> <doc: DocComment?> <attr: OptAttribute> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => Decl::Codata(Codata { span: span(l, r), doc, name, attr, params, dtors }),
+    <l: @L> <doc: DocComment?> <attr: OptAttribute> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => Decl::Def(Def { span: span(l, r), doc, name, attr, params, scrutinee, ret_typ, body }),
+    <l: @L> <doc: DocComment?> <attr: OptAttribute> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Match> "}" <r: @R> => Decl::Codef(Codef { span: span(l, r), doc, name, attr, params, typ, body }),
 }
 
 Ctor: Ctor = {

@@ -48,13 +48,13 @@ impl Forget for tst::Data {
     type Target = ust::Data;
 
     fn forget(&self) -> Self::Target {
-        let tst::Data { info, doc, name, hidden, typ, ctors } = self;
+        let tst::Data { info, doc, name, attr, typ, ctors } = self;
 
         ust::Data {
             info: *info,
             name: name.clone(),
             doc: doc.clone(),
-            hidden: *hidden,
+            attr: attr.clone(),
             typ: typ.forget(),
             ctors: ctors.clone(),
         }
@@ -65,13 +65,13 @@ impl Forget for tst::Codata {
     type Target = ust::Codata;
 
     fn forget(&self) -> Self::Target {
-        let tst::Codata { info, doc, name, hidden, typ, dtors } = self;
+        let tst::Codata { info, doc, name, attr, typ, dtors } = self;
 
         ust::Codata {
             info: *info,
             doc: doc.clone(),
             name: name.clone(),
-            hidden: *hidden,
+            attr: attr.clone(),
             typ: typ.forget(),
             dtors: dtors.clone(),
         }
@@ -125,13 +125,13 @@ impl Forget for tst::Def {
     type Target = ust::Def;
 
     fn forget(&self) -> Self::Target {
-        let tst::Def { info, doc, name, hidden, params, self_param, ret_typ, body } = self;
+        let tst::Def { info, doc, name, attr, params, self_param, ret_typ, body } = self;
 
         ust::Def {
             info: *info,
             doc: doc.clone(),
             name: name.clone(),
-            hidden: *hidden,
+            attr: attr.clone(),
             params: params.forget(),
             self_param: self_param.forget(),
             ret_typ: ret_typ.forget(),
@@ -144,13 +144,13 @@ impl Forget for tst::Codef {
     type Target = ust::Codef;
 
     fn forget(&self) -> Self::Target {
-        let tst::Codef { info, doc, name, hidden, params, typ, body } = self;
+        let tst::Codef { info, doc, name, attr, params, typ, body } = self;
 
         ust::Codef {
             info: *info,
             doc: doc.clone(),
             name: name.clone(),
-            hidden: *hidden,
+            attr: attr.clone(),
             params: params.forget(),
             typ: typ.forget(),
             body: body.forget(),

@@ -127,6 +127,14 @@ impl Lower for cst::DocComment {
     }
 }
 
+impl Lower for cst::Attribute {
+    type Target = ust::Attribute;
+
+    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        Ok(ust::Attribute { attrs: self.attrs.clone() })
+    }
+}
+
 impl Lower for cst::Decl {
     type Target = ();
 
@@ -146,7 +154,7 @@ impl Lower for cst::Data {
     type Target = ust::Data;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Data { span, doc, name, hidden, params, ctors } = self;
+        let cst::Data { span, doc, name, attr, params, ctors } = self;
 
         let ctor_decls = ctors.lower(ctx)?.into_iter().map(ust::Decl::Ctor);
 
@@ -158,7 +166,7 @@ impl Lower for cst::Data {
             info: Some(*span),
             doc: doc.lower(ctx)?,
             name: name.clone(),
-            hidden: *hidden,
+            attr: attr.lower(ctx)?,
             typ: Rc::new(ust::TypAbs { params: lower_telescope(params, ctx, |_, out| Ok(out))? }),
             ctors: ctor_names,
         })
@@ -169,7 +177,7 @@ impl Lower for cst::Codata {
     type Target = ust::Codata;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Codata { span, doc, name, hidden, params, dtors } = self;
+        let cst::Codata { span, doc, name, attr, params, dtors } = self;
 
         let dtor_decls = dtors.lower(ctx)?.into_iter().map(ust::Decl::Dtor);
 
@@ -181,7 +189,7 @@ impl Lower for cst::Codata {
             info: Some(*span),
             doc: doc.lower(ctx)?,
             name: name.clone(),
-            hidden: *hidden,
+            attr: attr.lower(ctx)?,
             typ: Rc::new(ust::TypAbs { params: lower_telescope(params, ctx, |_, out| Ok(out))? }),
             dtors: dtor_names,
         })
@@ -321,7 +329,7 @@ impl Lower for cst::Def {
     type Target = ust::Def;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Def { span, doc, name, hidden, params, scrutinee, ret_typ, body } = self;
+        let cst::Def { span, doc, name, attr, params, scrutinee, ret_typ, body } = self;
 
         let self_param: cst::SelfParam = scrutinee.clone().into();
 
@@ -333,7 +341,7 @@ impl Lower for cst::Def {
                     info: Some(*span),
                     doc: doc.lower(ctx)?,
                     name: name.clone(),
-                    hidden: *hidden,
+                    attr: attr.lower(ctx)?,
                     params,
                     self_param,
                     ret_typ: ret_typ.lower(ctx)?,
@@ -348,14 +356,14 @@ impl Lower for cst::Codef {
     type Target = ust::Codef;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::Codef { span, doc, name, hidden, params, typ, body, .. } = self;
+        let cst::Codef { span, doc, name, attr, params, typ, body, .. } = self;
 
         lower_telescope(params, ctx, |ctx, params| {
             Ok(ust::Codef {
                 info: Some(*span),
                 doc: doc.lower(ctx)?,
                 name: name.clone(),
-                hidden: *hidden,
+                attr: attr.lower(ctx)?,
                 params,
                 typ: typ.lower(ctx)?,
                 body: body.lower(ctx)?,

@@ -41,11 +41,11 @@ pub trait Mapper<P: Phase> {
     fn map_decl_codef(&mut self, codef: Codef<P>) -> Decl<P> {
         Decl::Codef(codef)
     }
-    fn map_data(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, typ: Rc<TypAbs<P>>, ctors: Vec<Ident>) -> Data<P> {
-        Data { info, doc, name, hidden, typ, ctors }
+    fn map_data(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, typ: Rc<TypAbs<P>>, ctors: Vec<Ident>) -> Data<P> {
+        Data { info, doc, name, attr, typ, ctors }
     }
-    fn map_codata(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, typ: Rc<TypAbs<P>>, dtors: Vec<Ident>) -> Codata<P> {
-        Codata { info, doc, name, hidden, typ, dtors }
+    fn map_codata(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, typ: Rc<TypAbs<P>>, dtors: Vec<Ident>) -> Codata<P> {
+        Codata { info, doc, name, attr, typ, dtors }
     }
     fn map_typ_abs(&mut self, params: Telescope<P>) -> TypAbs<P> {
         TypAbs { params }
@@ -56,11 +56,11 @@ pub trait Mapper<P: Phase> {
     fn map_dtor(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, params: Telescope<P>, self_param: SelfParam<P>, ret_typ: Rc<Exp<P>>) -> Dtor<P> {
         Dtor { info, doc, name, params, self_param, ret_typ }
     }
-    fn map_def(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: Telescope<P>, self_param: SelfParam<P>, ret_typ: Rc<Exp<P>>, body: Match<P>) -> Def<P> {
-        Def { info, doc, name, hidden, params, self_param, ret_typ, body }
+    fn map_def(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: Telescope<P>, self_param: SelfParam<P>, ret_typ: Rc<Exp<P>>, body: Match<P>) -> Def<P> {
+        Def { info, doc, name, attr, params, self_param, ret_typ, body }
     }
-    fn map_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: Telescope<P>, typ: TypApp<P>, body: Match<P>) -> Codef<P> {
-        Codef { info, doc, name, hidden, params, typ, body }
+    fn map_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: Telescope<P>, typ: TypApp<P>, body: Match<P>) -> Codef<P> {
+        Codef { info, doc, name, attr, params, typ, body }
     }
     fn map_match(&mut self, info: Option<Span>, cases: Vec<Case<P>>, omit_absurd: bool) -> Match<P> {
         Match { info, cases, omit_absurd }
@@ -218,12 +218,12 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_decl_codef(codef)
     }
 
-    fn fold_data(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, typ: <Id<P> as Out>::TypAbs, ctors: Vec<Ident>) -> <Id<P> as Out>::Data {
-        self.map_data(info, doc, name, hidden, Rc::new(typ), ctors)
+    fn fold_data(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, typ: <Id<P> as Out>::TypAbs, ctors: Vec<Ident>) -> <Id<P> as Out>::Data {
+        self.map_data(info, doc, name, attr, Rc::new(typ), ctors)
     }
 
-    fn fold_codata(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, typ: <Id<P> as Out>::TypAbs, dtors: Vec<Ident>) -> <Id<P> as Out>::Codata {
-        self.map_codata(info, doc, name, hidden, Rc::new(typ), dtors)
+    fn fold_codata(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, typ: <Id<P> as Out>::TypAbs, dtors: Vec<Ident>) -> <Id<P> as Out>::Codata {
+        self.map_codata(info, doc, name, attr, Rc::new(typ), dtors)
     }
 
     fn fold_typ_abs(&mut self, params: <Id<P> as Out>::Telescope) -> <Id<P> as Out>::TypAbs {
@@ -238,12 +238,12 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_dtor(info, doc, name, params, self_param, ret_typ)
     }
 
-    fn fold_def(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: <Id<P> as Out>::Telescope, self_param: <Id<P> as Out>::SelfParam, ret_typ: <Id<P> as Out>::Exp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Def {
-        self.map_def(info, doc, name, hidden, params, self_param, ret_typ, body)
+    fn fold_def(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: <Id<P> as Out>::Telescope, self_param: <Id<P> as Out>::SelfParam, ret_typ: <Id<P> as Out>::Exp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Def {
+        self.map_def(info, doc, name, attr, params, self_param, ret_typ, body)
     }
 
-    fn fold_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, hidden: bool, params: <Id<P> as Out>::Telescope, typ: <Id<P> as Out>::TypApp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Codef {
-        self.map_codef(info, doc, name, hidden, params, typ, body)
+    fn fold_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: <Id<P> as Out>::Telescope, typ: <Id<P> as Out>::TypApp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Codef {
+        self.map_codef(info, doc, name, attr, params, typ, body)
     }
 
     fn fold_match(&mut self, info: Option<Span>, cases: Vec<<Id<P> as Out>::Case>, omit_absurd: bool) -> <Id<P> as Out>::Match {
