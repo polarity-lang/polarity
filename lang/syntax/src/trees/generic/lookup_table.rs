@@ -10,6 +10,7 @@ pub enum DeclKind {
     Codef,
     Ctor,
     Dtor,
+    Let,
 }
 
 impl fmt::Display for DeclKind {
@@ -21,6 +22,7 @@ impl fmt::Display for DeclKind {
             DeclKind::Codef => write!(f, "codefinition"),
             DeclKind::Ctor => write!(f, "constructor"),
             DeclKind::Dtor => write!(f, "destructor"),
+            DeclKind::Let => write!(f, "toplevel let"),
         }
     }
 }

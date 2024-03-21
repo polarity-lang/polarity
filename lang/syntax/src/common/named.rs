@@ -17,6 +17,7 @@ impl<P: generic::Phase> Named for generic::Decl<P> {
             generic::Decl::Codef(generic::Codef { name, .. }) => name,
             generic::Decl::Ctor(generic::Ctor { name, .. }) => name,
             generic::Decl::Dtor(generic::Dtor { name, .. }) => name,
+            generic::Decl::Let(generic::Let { name, .. }) => name,
         }
     }
 }

@@ -34,6 +34,7 @@ pub type Ctor = generic::Ctor<TST>;
 pub type Dtor = generic::Dtor<TST>;
 pub type Def = generic::Def<TST>;
 pub type Codef = generic::Codef<TST>;
+pub type Let = generic::Let<TST>;
 pub type Match = generic::Match<TST>;
 pub type Case = generic::Case<TST>;
 pub type SelfParam = generic::SelfParam<TST>;

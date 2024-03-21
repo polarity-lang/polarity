@@ -27,6 +27,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_decl_dtor(&mut self, dtor: O::Dtor) -> O::Decl;
     fn fold_decl_def(&mut self, def: O::Def) -> O::Decl;
     fn fold_decl_codef(&mut self, codef: O::Codef) -> O::Decl;
+    fn fold_decl_let(&mut self, tl_let: O::Let) -> O::Decl;
     fn fold_data(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, typ: O::TypAbs, ctors: Vec<Ident>) -> O::Data;
     fn fold_codata(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, typ: O::TypAbs, dtors: Vec<Ident>) -> O::Codata;
     fn fold_typ_abs(&mut self, params: O::Telescope) -> O::TypAbs;
@@ -34,6 +35,7 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_dtor(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp) -> O::Dtor;
     fn fold_def(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: O::Telescope, self_param: O::SelfParam, ret_typ: O::Exp, body: O::Match) -> O::Def;
     fn fold_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: O::Telescope, typ: O::TypApp, body: O::Match) -> O::Codef;
+    fn fold_let(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: O::Telescope, typ: O::Exp, body: O::Exp) -> O::Let;
     fn fold_match(&mut self, info: Option<Span>, cases: Vec<O::Case>, omit_absurd: bool) -> O::Match;
     fn fold_case(&mut self, info: Option<Span>, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Case;
     fn fold_typ_app(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::TypApp;
@@ -97,6 +99,7 @@ pub trait Out {
     type Dtor;
     type Def;
     type Codef;
+    type Let;
     type Match;
     type Case;
     type SelfParam;
@@ -131,6 +134,7 @@ impl<P: Phase> Out for Id<P> {
     type Dtor = Dtor<P>;
     type Def = Def<P>;
     type Codef = Codef<P>;
+    type Let = Let<P>;
     type Match = Match<P>;
     type Case = Case<P>;
     type SelfParam = SelfParam<P>;
@@ -164,6 +168,7 @@ impl<T> Out for Const<T> {
     type Dtor = T;
     type Def = T;
     type Codef = T;
+    type Let = T;
     type Match = T;
     type Case = T;
     type SelfParam = T;
@@ -283,6 +288,10 @@ where
             Decl::Codef(inner) => {
                 let inner = inner.fold(f);
                 f.fold_decl_codef(inner)
+            }
+            Decl::Let(inner) => {
+                let inner = inner.fold(f);
+                f.fold_decl_let(inner)
             }
         };
         f.fold_decl(decl_out)
@@ -411,6 +420,24 @@ impl<P: Phase, O: Out> Fold<P, O> for Codef<P> {
             |f, params| (params, typ.fold(f), body.fold(f)),
         );
         f.fold_codef(info, doc, name, attr, params, typ, body)
+    }
+}
+
+impl<P: Phase, O: Out> Fold<P, O> for Let<P> {
+    type Out = O::Let;
+
+    fn fold<F>(self, f: &mut F) -> Self::Out
+    where
+        F: Folder<P, O>,
+    {
+        let Let { info, doc, name, attr, params, typ, body } = self;
+        let Telescope { params } = params;
+        let (params, typ, body) = f.fold_telescope(
+            params,
+            |f, param| param.fold(f),
+            |f, params| (params, typ.fold(f), body.fold(f)),
+        );
+        f.fold_let(info, doc, name, attr, params, typ, body)
     }
 }
 

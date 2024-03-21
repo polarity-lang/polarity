@@ -61,6 +61,7 @@ pub enum Decl<P: Phase> {
     Dtor(Dtor<P>),
     Def(Def<P>),
     Codef(Codef<P>),
+    Let(Let<P>),
 }
 
 impl<P: Phase> Decl<P> {
@@ -72,6 +73,7 @@ impl<P: Phase> Decl<P> {
             Decl::Dtor(_) => DeclKind::Dtor,
             Decl::Def(_) => DeclKind::Def,
             Decl::Codef(_) => DeclKind::Codef,
+            Decl::Let(_) => DeclKind::Let,
         }
     }
 }
@@ -84,6 +86,7 @@ impl<P: Phase> HasSpan for Decl<P> {
             Decl::Dtor(dtor) => dtor.info,
             Decl::Def(def) => def.info,
             Decl::Codef(codef) => codef.info,
+            Decl::Let(tl_let) => tl_let.info,
         }
     }
 }
@@ -178,6 +181,17 @@ impl<P: Phase> Codef<P> {
             typ: self.typ.clone(),
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct Let<P: Phase> {
+    pub info: Option<Span>,
+    pub doc: Option<DocComment>,
+    pub name: Ident,
+    pub attr: Attribute,
+    pub params: Telescope<P>,
+    pub typ: Rc<Exp<P>>,
+    pub body: Rc<Exp<P>>,
 }
 
 #[derive(Debug, Clone, Derivative)]
@@ -423,6 +437,10 @@ impl<P: Phase> HasPhase for Decls<P> {
 }
 
 impl<P: Phase> HasPhase for Decl<P> {
+    type Phase = P;
+}
+
+impl<P: Phase> HasPhase for Let<P> {
     type Phase = P;
 }
 

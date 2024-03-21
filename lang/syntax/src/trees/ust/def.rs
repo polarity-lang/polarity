@@ -26,6 +26,7 @@ pub type Ctor = generic::Ctor<UST>;
 pub type Dtor = generic::Dtor<UST>;
 pub type Def = generic::Def<UST>;
 pub type Codef = generic::Codef<UST>;
+pub type Let = generic::Let<UST>;
 pub type Match = generic::Match<UST>;
 pub type Case = generic::Case<UST>;
 pub type SelfParam = generic::SelfParam<UST>;
