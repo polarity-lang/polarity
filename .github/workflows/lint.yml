@@ -26,7 +26,6 @@ jobs:
       - name: Lint Code Base
         uses: super-linter/super-linter@v6.3.0
         env:
-          VALIDATE_ALL_CODEBASE: false
           # JSCPD is disabled because it falsely flags duplicated Rust generic parameter definitions
           VALIDATE_JSCPD: false
           # We use eslint instead of the linter named "standard"
