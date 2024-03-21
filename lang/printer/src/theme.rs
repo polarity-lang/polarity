@@ -7,6 +7,7 @@ pub trait ThemeExt<'a> {
     fn ctor(&'a self, text: &str) -> Builder<'a>;
     fn dtor(&'a self, text: &str) -> Builder<'a>;
     fn typ(&'a self, text: &str) -> Builder<'a>;
+    fn identifier(&'a self, text: &str) -> Builder<'a>;
     fn comment(&'a self, text: &str) -> Builder<'a>;
 }
 
@@ -25,6 +26,10 @@ impl<'a> ThemeExt<'a> for Alloc<'a> {
 
     fn typ(&'a self, text: &str) -> Builder<'a> {
         self.text(text.to_owned()).annotate(Anno::Type)
+    }
+
+    fn identifier(&'a self, text: &str) -> Builder<'a> {
+        self.text(text.to_owned()).annotate(Anno::Identifier)
     }
 
     fn comment(&'a self, text: &str) -> Builder<'a> {

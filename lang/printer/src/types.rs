@@ -8,6 +8,7 @@ pub enum Anno {
     Ctor,
     Dtor,
     Type,
+    Identifier,
     Comment,
     Backslash,
     BraceOpen,

@@ -9,6 +9,7 @@ const KEYWORD: Color = Color::Magenta;
 const CTOR: Color = Color::Blue;
 const DTOR: Color = Color::Green;
 const TYPE: Color = Color::Red;
+const IDENTIFIER: Color = Color::Blue; // TODO: Change this?
 const COMMENT: Color = Color::Cyan;
 const ERROR: Color = Color::Red;
 
@@ -67,6 +68,7 @@ impl Anno {
             Anno::Ctor => CTOR.spec(),
             Anno::Dtor => DTOR.spec(),
             Anno::Type => TYPE.spec(),
+            Anno::Identifier => IDENTIFIER.spec(),
             Anno::Comment => COMMENT.spec(),
             Anno::Backslash => KEYWORD.spec(),
             Anno::BraceOpen => Default::default(),

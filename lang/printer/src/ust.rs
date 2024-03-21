@@ -32,6 +32,7 @@ impl<'a> Print<'a> for Decls {
                 Item::Codata(codata) => codata.print_in_ctx(cfg, self, alloc),
                 Item::Def(def) => def.print(cfg, alloc),
                 Item::Codef(codef) => codef.print(cfg, alloc),
+                Item::Let(tl_let) => tl_let.print(cfg, alloc),
             });
 
         let sep = if cfg.omit_decl_sep { alloc.line() } else { alloc.line().append(alloc.line()) };
@@ -55,6 +56,7 @@ impl<'a> PrintInCtx<'a> for Decl {
             Decl::Codef(codef) => codef.print(cfg, alloc),
             Decl::Ctor(ctor) => ctor.print(cfg, alloc),
             Decl::Dtor(dtor) => dtor.print(cfg, alloc),
+            Decl::Let(tl_let) => tl_let.print(cfg, alloc),
         }
     }
 }
@@ -73,6 +75,7 @@ impl<'a> PrintInCtx<'a> for Item<'a, UST> {
             Item::Codata(codata) => codata.print_in_ctx(cfg, ctx, alloc),
             Item::Def(def) => def.print(cfg, alloc),
             Item::Codef(codef) => codef.print(cfg, alloc),
+            Item::Let(tl_let) => tl_let.print(cfg, alloc),
         }
     }
 }
@@ -208,6 +211,29 @@ impl<'a> Print<'a> for Codef {
             .group();
 
         let body = body.print(cfg, alloc);
+
+        doc.append(head).append(alloc.space()).append(body)
+    }
+}
+
+impl<'a> Print<'a> for Let {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Let { info: _, doc, name, attr, params, typ, body } = self;
+        if !is_visible(attr) {
+            return alloc.nil();
+        }
+
+        let doc = doc.print(cfg, alloc);
+
+        let head = alloc
+            .keyword(LET)
+            .append(alloc.space())
+            .append(alloc.identifier(name))
+            .append(params.print(cfg, alloc))
+            .append(print_return_type(cfg, alloc, typ))
+            .group();
+
+        let body = body.print(cfg, alloc).braces_anno();
 
         doc.append(head).append(alloc.space()).append(body)
     }
