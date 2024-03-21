@@ -10,7 +10,9 @@ on:
       - opened
       - synchronize
 
-permissions: read-all
+permissions:
+  contents: read
+  statuses: write
 
 env:
   CARGO_TERM_COLOR: always
