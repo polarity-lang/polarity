@@ -253,7 +253,17 @@ impl Lift for tst::Let {
     type Target = ust::Let;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        todo!()
+        let tst::Let { info, doc, name, attr, params, typ, body } = self;
+
+        params.lift_telescope(ctx, |ctx, params| ust::Let {
+            info: *info,
+            doc: doc.clone(),
+            name: name.clone(),
+            attr: attr.clone(),
+            params,
+            typ: typ.lift(ctx),
+            body: body.lift(ctx),
+        })
     }
 }
 

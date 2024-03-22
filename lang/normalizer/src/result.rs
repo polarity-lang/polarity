@@ -8,7 +8,7 @@ pub enum EvalError {
     #[error(transparent)]
     #[diagnostic(transparent)]
     Lookup(#[from] LookupError),
-    #[error("The impossible happened: {message}")]
+    #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("E-XXX"))]
     /// This error should not occur.
     /// Some internal invariant has been violated.

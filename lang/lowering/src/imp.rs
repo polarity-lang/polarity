@@ -114,7 +114,10 @@ fn build_lookup_table(
                 lookup_table.add_def(type_name, codef.name.to_owned())
             }
             cst::Decl::Let(tl_let) => {
-                todo!()
+                // top_level_map
+                add_top_level_decl(&tl_let.name, &tl_let.span, DeclMeta::Let)?;
+
+                lookup_table.add_let(tl_let.name.clone());
             }
         }
     }
@@ -380,7 +383,19 @@ impl Lower for cst::Let {
     type Target = ust::Let;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        todo!()
+        let cst::Let { span, doc, name, attr, params, typ, body } = self;
+
+        lower_telescope(params, ctx, |ctx, params| {
+            Ok(ust::Let {
+                info: Some(*span),
+                doc: doc.lower(ctx)?,
+                name: name.clone(),
+                attr: attr.lower(ctx)?,
+                params,
+                typ: typ.lower(ctx)?,
+                body: body.lower(ctx)?,
+            })
+        })
     }
 }
 
@@ -447,7 +462,11 @@ impl Lower for cst::Exp {
                         name: name.to_owned(),
                         args: ust::Args { args: args.lower(ctx)? },
                     }),
-                    DeclKind::Let => todo!(),
+                    DeclKind::Let => Err(LoweringError::Impossible {
+                        message: "Referencing top-level let definitions is not implemented, yet"
+                            .to_owned(),
+                        span: Some(span.to_miette()),
+                    }),
                 },
             },
             cst::Exp::DotCall { span, exp, name, args } => match ctx.lookup(name, span)? {

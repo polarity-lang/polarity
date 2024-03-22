@@ -30,6 +30,10 @@ impl<P: Phase> Decls<P> {
                 Decl::Codef(codef) => Item::Codef(codef),
                 _ => unreachable!(),
             },
+            lookup_table::Item::Let { name } => match &self.map[name] {
+                Decl::Let(tl_let) => Item::Let(tl_let),
+                _ => unreachable!(),
+            },
         })
     }
 

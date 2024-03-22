@@ -301,7 +301,23 @@ impl Infer for ust::Let {
     type Target = tst::Let;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        todo!();
+        let ust::Let { info, doc, name, attr, params, typ, body } = self;
+
+        params.infer_telescope(prg, ctx, |ctx, params_out| {
+            let typ_out = typ.infer(prg, ctx)?;
+            let typ_nf = typ.normalize(prg, &mut ctx.env())?;
+            let body_out = body.check(prg, ctx, typ_nf)?;
+
+            Ok(tst::Let {
+                info: *info,
+                doc: doc.clone(),
+                name: name.clone(),
+                attr: attr.clone(),
+                params: params_out,
+                typ: typ_out,
+                body: body_out,
+            })
+        })
     }
 }
 struct WithScrutinee<'a> {
