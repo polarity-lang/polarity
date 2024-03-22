@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
 
       - name: Lint Code Base
-        uses: super-linter/super-linter@v6.3.0
+        uses: super-linter/super-linter/slim@v6.3.0
         env:
           # JSCPD is disabled because it falsely flags duplicated Rust generic parameter definitions
           VALIDATE_JSCPD: false
@@ -34,11 +34,6 @@ jobs:
           TYPESCRIPT_DEFAULT_STYLE: prettier
           # We use a slightly different stylelint version/setup
           VALIDATE_CSS: false
-          # Rust is linted separately
-          VALIDATE_RUST_2021: false
-          VALIDATE_RUST_2018: false
-          VALIDATE_RUST_2015: false
-          VALIDATE_RUST_CLIPPY: false
           # We don't validate formatting of bash scripts
           VALIDATE_SHELL_SHFMT: false
           DEFAULT_BRANCH: main
