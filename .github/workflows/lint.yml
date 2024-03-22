@@ -39,5 +39,7 @@ jobs:
           VALIDATE_RUST_2018: false
           VALIDATE_RUST_2015: false
           VALIDATE_RUST_CLIPPY: false
+          # We don't validate formatting of bash scripts
+          VALIDATE_SHELL_SHFMT: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
