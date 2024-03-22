@@ -45,6 +45,13 @@ pub struct Prg<P: Phase> {
     pub decls: Decls<P>,
 }
 
+impl<P: Phase> Prg<P> {
+    pub fn find_main(&self) -> Option<Rc<Exp<P>>> {
+        let main_candidate = self.decls.map.get("main")?.get_main()?;
+        Some(main_candidate.body)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Decls<P: Phase> {
     /// Map from identifiers to declarations
@@ -74,6 +81,14 @@ impl<P: Phase> Decl<P> {
             Decl::Def(_) => DeclKind::Def,
             Decl::Codef(_) => DeclKind::Codef,
             Decl::Let(_) => DeclKind::Let,
+        }
+    }
+
+    /// Returns whether the declaration is the "main" expression of the module.
+    pub fn get_main(&self) -> Option<Let<P>> {
+        match self {
+            Decl::Let(tl_let) => tl_let.is_main().then(|| tl_let.clone()),
+            _ => None,
         }
     }
 }
@@ -192,6 +207,13 @@ pub struct Let<P: Phase> {
     pub params: Telescope<P>,
     pub typ: Rc<Exp<P>>,
     pub body: Rc<Exp<P>>,
+}
+
+impl<P: Phase> Let<P> {
+    /// Returns whether the declaration is the "main" expression of the module.
+    pub fn is_main(&self) -> bool {
+        self.name == "main" && self.params.is_empty()
+    }
 }
 
 #[derive(Debug, Clone, Derivative)]

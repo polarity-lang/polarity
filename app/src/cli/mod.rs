@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 
+mod check;
 mod format;
 mod ignore_colors;
 mod lift;
@@ -14,6 +15,7 @@ pub fn exec() -> miette::Result<()> {
     typechecker::tracer::set_enabled(cli.trace);
     match cli.command {
         Run(args) => run::exec(args),
+        Check(args) => check::exec(args),
         Fmt(args) => format::exec(args),
         Texify(args) => texify::exec(args),
         Xfunc(args) => xfunc::exec(args),
@@ -34,8 +36,10 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Run a source code file
+    /// Run the main expression of a file
     Run(run::Args),
+    /// Typecheck a file
+    Check(check::Args),
     /// Format a code file
     Fmt(format::Args),
     /// Render a code file as a latex document
