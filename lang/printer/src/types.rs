@@ -39,6 +39,12 @@ pub trait Print<'a> {
     }
 }
 
+impl<'a> Print<'a> for String {
+    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        alloc.text(self)
+    }
+}
+
 pub trait PrintInCtx<'a> {
     type Ctx;
 

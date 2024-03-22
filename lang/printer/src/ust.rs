@@ -96,6 +96,7 @@ impl<'a> PrintInCtx<'a> for Data {
 
         let head = doc
             .print(cfg, alloc)
+            .append(attr.print(cfg, alloc))
             .append(alloc.keyword(DATA))
             .append(alloc.space())
             .append(alloc.typ(name))
@@ -140,6 +141,7 @@ impl<'a> PrintInCtx<'a> for Codata {
 
         let head = doc
             .print(cfg, alloc)
+            .append(attr.print(cfg, alloc))
             .append(alloc.keyword(CODATA))
             .append(alloc.space())
             .append(alloc.typ(name))
@@ -175,7 +177,7 @@ impl<'a> Print<'a> for Def {
             return alloc.nil();
         }
 
-        let doc = doc.print(cfg, alloc);
+        let doc = doc.print(cfg, alloc).append(attr.print(cfg, alloc));
 
         let head = alloc
             .keyword(DEF)
@@ -200,7 +202,7 @@ impl<'a> Print<'a> for Codef {
             return alloc.nil();
         }
 
-        let doc = doc.print(cfg, alloc);
+        let doc = doc.print(cfg, alloc).append(attr.print(cfg, alloc));
 
         let head = alloc
             .keyword(CODEF)
@@ -223,7 +225,7 @@ impl<'a> Print<'a> for Let {
             return alloc.nil();
         }
 
-        let doc = doc.print(cfg, alloc);
+        let doc = doc.print(cfg, alloc).append(attr.print(cfg, alloc));
 
         let head = alloc
             .keyword(LET)
@@ -531,6 +533,17 @@ impl<'a> Print<'a> for Motive {
             .append(alloc.text(FAT_ARROW))
             .append(alloc.space())
             .append(ret_typ.print(cfg, alloc))
+    }
+}
+
+impl<'a> Print<'a> for Attribute {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        if self.attrs.is_empty() {
+            alloc.nil()
+        } else {
+            let p = print_comma_separated(&self.attrs, cfg, alloc);
+            alloc.text(HASH).append(p.brackets()).append(alloc.hardline())
+        }
     }
 }
 
