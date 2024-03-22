@@ -34,5 +34,10 @@ jobs:
           TYPESCRIPT_DEFAULT_STYLE: prettier
           # We use a slightly different stylelint version/setup
           VALIDATE_CSS: false
+          # Rust is linted separately
+          VALIDATE_RUST_2021: false
+          VALIDATE_RUST_2018: false
+          VALIDATE_RUST_2015: false
+          VALIDATE_RUST_CLIPPY: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
