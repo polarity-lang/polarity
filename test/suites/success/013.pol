@@ -1,0 +1,11 @@
+data Nat {
+    Z,
+    S(n: Nat),
+}
+
+let add(x y: Nat): Nat {
+    x.match {
+        Z => y,
+        S(x') => ?,
+    }
+}
