@@ -1,6 +1,6 @@
 .PHONY: install
 install:
-	@cargo install --path app
+	@cargo install --path app --force
 
 .PHONY: check
 check: lint test

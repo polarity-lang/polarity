@@ -1,0 +1,22 @@
+data Nat { Z, S(n: Nat) }
+
+def Nat.add(y: Nat) : Nat {
+    Z => y,
+    S(x') => S(x'.add(y)),
+}
+
+data Bool { True, False }
+
+data Vec(n: Nat) {
+    Nil: Vec(Z),
+    Cons(n: Nat, x: Bool, xs: Vec(n)): Vec(S(n))
+}
+
+def Vec(n).append'(n m: Nat, ys: Vec(m)): Vec(n.add(m)) {
+    Cons(n', x, xs) => Cons(n'.add(m), x, xs.append'(n', m, ys)),
+    Nil => ys
+}
+
+let append(n m: Nat, xs: Vec(n), ys: Vec(m)): Vec(n.add(m)) {
+    xs.append'(n, m, ys)
+}

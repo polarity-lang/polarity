@@ -117,6 +117,7 @@ impl Lift for tst::Decl {
             tst::Decl::Dtor(tdor) => ust::Decl::Dtor(tdor.lift(ctx)),
             tst::Decl::Def(def) => ust::Decl::Def(def.lift(ctx)),
             tst::Decl::Codef(codef) => ust::Decl::Codef(codef.lift(ctx)),
+            tst::Decl::Let(tl_let) => ust::Decl::Let(tl_let.lift(ctx)),
         }
     }
 }
@@ -237,6 +238,24 @@ impl Lift for tst::Codef {
         let tst::Codef { info, doc, name, attr, params, typ, body } = self;
 
         params.lift_telescope(ctx, |ctx, params| ust::Codef {
+            info: *info,
+            doc: doc.clone(),
+            name: name.clone(),
+            attr: attr.clone(),
+            params,
+            typ: typ.lift(ctx),
+            body: body.lift(ctx),
+        })
+    }
+}
+
+impl Lift for tst::Let {
+    type Target = ust::Let;
+
+    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
+        let tst::Let { info, doc, name, attr, params, typ, body } = self;
+
+        params.lift_telescope(ctx, |ctx, params| ust::Let {
             info: *info,
             doc: doc.clone(),
             name: name.clone(),

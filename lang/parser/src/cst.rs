@@ -35,6 +35,7 @@ pub enum Decl {
     Codata(Codata),
     Def(Def),
     Codef(Codef),
+    Let(Let),
 }
 
 #[derive(Debug, Clone)]
@@ -97,6 +98,17 @@ pub struct Codef {
     pub params: Telescope,
     pub typ: TypApp,
     pub body: Match,
+}
+
+#[derive(Debug, Clone)]
+pub struct Let {
+    pub span: Span,
+    pub doc: Option<DocComment>,
+    pub name: Ident,
+    pub attr: Attribute,
+    pub params: Telescope,
+    pub typ: Rc<Exp>,
+    pub body: Rc<Exp>,
 }
 
 #[derive(Debug, Clone)]

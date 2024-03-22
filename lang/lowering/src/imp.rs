@@ -113,6 +113,12 @@ fn build_lookup_table(
                 let type_name = codef.typ.name.clone();
                 lookup_table.add_def(type_name, codef.name.to_owned())
             }
+            cst::Decl::Let(tl_let) => {
+                // top_level_map
+                add_top_level_decl(&tl_let.name, &tl_let.span, DeclMeta::Let)?;
+
+                lookup_table.add_let(tl_let.name.clone());
+            }
         }
     }
 
@@ -144,6 +150,7 @@ impl Lower for cst::Decl {
             cst::Decl::Codata(codata) => ust::Decl::Codata(codata.lower(ctx)?),
             cst::Decl::Def(def) => ust::Decl::Def(def.lower(ctx)?),
             cst::Decl::Codef(codef) => ust::Decl::Codef(codef.lower(ctx)?),
+            cst::Decl::Let(tl_let) => ust::Decl::Let(tl_let.lower(ctx)?),
         };
         ctx.add_decl(decl)?;
         Ok(())
@@ -372,6 +379,26 @@ impl Lower for cst::Codef {
     }
 }
 
+impl Lower for cst::Let {
+    type Target = ust::Let;
+
+    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        let cst::Let { span, doc, name, attr, params, typ, body } = self;
+
+        lower_telescope(params, ctx, |ctx, params| {
+            Ok(ust::Let {
+                info: Some(*span),
+                doc: doc.lower(ctx)?,
+                name: name.clone(),
+                attr: attr.lower(ctx)?,
+                params,
+                typ: typ.lower(ctx)?,
+                body: body.lower(ctx)?,
+            })
+        })
+    }
+}
+
 impl Lower for cst::Match {
     type Target = ust::Match;
 
@@ -434,6 +461,11 @@ impl Lower for cst::Exp {
                         info: Some(*span),
                         name: name.to_owned(),
                         args: ust::Args { args: args.lower(ctx)? },
+                    }),
+                    DeclKind::Let => Err(LoweringError::Impossible {
+                        message: "Referencing top-level let definitions is not implemented, yet"
+                            .to_owned(),
+                        span: Some(span.to_miette()),
                     }),
                 },
             },

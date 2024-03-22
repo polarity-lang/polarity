@@ -22,7 +22,7 @@ match {
     r"0|[1-9][0-9]*",
     // Keywords
     "data", "codata",
-    "def", "codef",
+    "def", "codef", "let",
     "match", "as", "comatch",
     "absurd", "..absurd",
     "Type",
@@ -95,6 +95,8 @@ pub Decl: Decl = {
     <l: @L> <doc: DocComment?> <attr: OptAttribute> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> => Decl::Codata(Codata { span: span(l, r), doc, name, attr, params, dtors }),
     <l: @L> <doc: DocComment?> <attr: OptAttribute> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> => Decl::Def(Def { span: span(l, r), doc, name, attr, params, scrutinee, ret_typ, body }),
     <l: @L> <doc: DocComment?> <attr: OptAttribute> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Match> "}" <r: @R> => Decl::Codef(Codef { span: span(l, r), doc, name, attr, params, typ, body }),
+    <l: @L> <doc: DocComment?> <attr: OptAttribute> "let" <name: LowerIdent><params: OptTelescope> ":" <typ: Exp> "{" <body: Exp> "}" <r: @R> =>
+    Decl::Let(Let { span: span(l,r), doc, name, attr, params, typ, body }),
 }
 
 Ctor: Ctor = {

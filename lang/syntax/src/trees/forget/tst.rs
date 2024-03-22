@@ -40,6 +40,7 @@ impl Forget for tst::Decl {
             tst::Decl::Dtor(dtor) => ust::Decl::Dtor(dtor.forget()),
             tst::Decl::Def(def) => ust::Decl::Def(def.forget()),
             tst::Decl::Codef(codef) => ust::Decl::Codef(codef.forget()),
+            tst::Decl::Let(tl_let) => ust::Decl::Let(tl_let.forget()),
         }
     }
 }
@@ -57,6 +58,24 @@ impl Forget for tst::Data {
             attr: attr.clone(),
             typ: typ.forget(),
             ctors: ctors.clone(),
+        }
+    }
+}
+
+impl Forget for tst::Let {
+    type Target = ust::Let;
+
+    fn forget(&self) -> Self::Target {
+        let tst::Let { info, doc, name, attr, params, typ, body } = self;
+
+        ust::Let {
+            info: *info,
+            doc: doc.clone(),
+            name: name.clone(),
+            attr: attr.clone(),
+            params: params.forget(),
+            typ: typ.forget(),
+            body: body.forget(),
         }
     }
 }

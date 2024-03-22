@@ -112,7 +112,7 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[error("The impossible happened: {message}")]
+    #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("T-XXX"))]
     /// This error should not occur.
     /// Some internal invariant has been violated.

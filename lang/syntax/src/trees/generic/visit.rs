@@ -20,6 +20,7 @@ pub trait Visitor<P: Phase> {
     fn visit_decl_dtor(&mut self, dtor: &Dtor<P>) {}
     fn visit_decl_def(&mut self, def: &Def<P>) {}
     fn visit_decl_codef(&mut self, codef: &Codef<P>) {}
+    fn visit_decl_let(&mut self, tl_let: &Let<P>) {}
     fn visit_data(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, attr: &Attribute, typ: &Rc<TypAbs<P>>, ctors: &[Ident]) {}
     fn visit_codata(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, attr: &Attribute,  typ: &Rc<TypAbs<P>>, dtors: &[Ident]) {}
     fn visit_typ_abs(&mut self, params: &Telescope<P>) {}
@@ -27,6 +28,7 @@ pub trait Visitor<P: Phase> {
     fn visit_dtor(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>) {}
     fn visit_def(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, attr: &Attribute, params: &Telescope<P>, self_param: &SelfParam<P>, ret_typ: &Rc<Exp<P>>, body: &Match<P>) {}
     fn visit_codef(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, attr: &Attribute, params: &Telescope<P>, typ: &TypApp<P>, body: &Match<P>) {}
+    fn visit_let(&mut self, info: &Option<Span>, doc: &Option<DocComment>, name: &Ident, attr: &Attribute, params: &Telescope<P>, typ: &Rc<Exp<P>>, body: &Rc<Exp<P>>) {}
     fn visit_match(&mut self, info: &Option<Span>, cases: &[Case<P>], omit_absurd: bool) {}
     fn visit_case(&mut self, info: &Option<Span>, name: &Ident, args: &TelescopeInst<P>, body: &Option<Rc<Exp<P>>>) {}
     fn visit_typ_app(&mut self, info: &P::TypeInfo, name: &Ident, args: &Args<P>) {}
@@ -177,6 +179,10 @@ impl<P: Phase> Visit<P> for Decl<P> {
                 inner.visit(v);
                 v.visit_decl_codef(inner)
             }
+            Decl::Let(inner) => {
+                inner.visit(v);
+                v.visit_decl_let(inner)
+            }
         }
         v.visit_decl(self)
     }
@@ -290,6 +296,25 @@ impl<P: Phase> Visit<P> for Codef<P> {
         );
         v.visit_info(info);
         v.visit_codef(info, doc, name, attr, params, typ, body)
+    }
+}
+
+impl<P: Phase> Visit<P> for Let<P> {
+    fn visit<V>(&self, v: &mut V)
+    where
+        V: Visitor<P>,
+    {
+        let Let { info, doc, name, attr, params, typ, body } = self;
+        v.visit_telescope(
+            &params.params,
+            |v, param| param.visit(v),
+            |v| {
+                typ.visit(v);
+                body.visit(v);
+            },
+        );
+        v.visit_info(info);
+        v.visit_let(info, doc, name, attr, params, typ, body)
     }
 }
 

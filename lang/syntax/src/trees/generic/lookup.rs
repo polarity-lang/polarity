@@ -30,6 +30,10 @@ impl<P: Phase> Decls<P> {
                 Decl::Codef(codef) => Item::Codef(codef),
                 _ => unreachable!(),
             },
+            lookup_table::Item::Let { name } => match &self.map[name] {
+                Decl::Let(tl_let) => Item::Let(tl_let),
+                _ => unreachable!(),
+            },
         })
     }
 
@@ -217,6 +221,7 @@ pub enum Item<'a, P: Phase> {
     Codata(&'a Codata<P>),
     Def(&'a Def<P>),
     Codef(&'a Codef<P>),
+    Let(&'a Let<P>),
 }
 
 impl<'a, P: Phase> Item<'a, P> {
@@ -226,6 +231,7 @@ impl<'a, P: Phase> Item<'a, P> {
             Item::Codata(codata) => &codata.attr,
             Item::Def(def) => &def.attr,
             Item::Codef(codef) => &codef.attr,
+            Item::Let(tl_let) => &tl_let.attr,
         }
     }
 }

@@ -10,6 +10,7 @@ pub enum DeclKind {
     Codef,
     Ctor,
     Dtor,
+    Let,
 }
 
 impl fmt::Display for DeclKind {
@@ -21,6 +22,7 @@ impl fmt::Display for DeclKind {
             DeclKind::Codef => write!(f, "codefinition"),
             DeclKind::Ctor => write!(f, "constructor"),
             DeclKind::Dtor => write!(f, "destructor"),
+            DeclKind::Let => write!(f, "toplevel let"),
         }
     }
 }
@@ -33,6 +35,7 @@ pub enum DeclMeta {
     Codef,
     Ctor { ret_typ: Ident },
     Dtor { self_typ: Ident },
+    Let,
 }
 
 impl DeclMeta {
@@ -44,6 +47,7 @@ impl DeclMeta {
             DeclMeta::Codef => DeclKind::Codef,
             DeclMeta::Ctor { .. } => DeclKind::Ctor,
             DeclMeta::Dtor { .. } => DeclKind::Dtor,
+            DeclMeta::Let => DeclKind::Let,
         }
     }
 }
@@ -53,6 +57,7 @@ impl DeclMeta {
 pub enum Item {
     Type(Type),
     Def(Def),
+    Let { name: Ident },
 }
 
 /// A type declaration in the source
@@ -114,6 +119,10 @@ impl LookupTable {
         self.items.push(Item::Def(Def::new(def_name.clone())));
         self.type_for_xdef.insert(def_name.clone(), type_name.clone());
         self.xdefs_for_type.entry(type_name).or_default().insert(def_name);
+    }
+
+    pub fn add_let(&mut self, name: Ident) {
+        self.items.push(Item::Let { name });
     }
 
     /// Insert a definition after the corresponding type declaration

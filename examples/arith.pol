@@ -18,16 +18,12 @@ def Bool.and(y: Bool) : Bool {
     False => False
 }
 
-data Top {
-    Unit
-}
+#[opaque]
+let example : Exp { And(IsZero(Add(Num(Z), Num(Z))), Boo(True)) }
 
-def Top.example(): Exp {
-    Unit => And(IsZero(Add(Num(Z), Num(Z))), Boo(True))
-}
-
-def Top.example_has_type(): HasType(And(IsZero(Add(Num(Z()), Num(Z()))), Boo(True())), BooT) {
-    Unit => TAnd(IsZero(Add(Num(Z), Num(Z))), Boo(True),
+#[opaque]
+let example_has_type : HasType(And(IsZero(Add(Num(Z()), Num(Z()))), Boo(True())), BooT) {
+    TAnd(IsZero(Add(Num(Z), Num(Z))), Boo(True),
         TIsZero(Add(Num(Z), Num(Z)), TAdd(Num(Z), Num(Z), TNum(Z), TNum(Z))),
         TBoo(True)
     )

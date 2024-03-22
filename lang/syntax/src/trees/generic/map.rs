@@ -41,6 +41,9 @@ pub trait Mapper<P: Phase> {
     fn map_decl_codef(&mut self, codef: Codef<P>) -> Decl<P> {
         Decl::Codef(codef)
     }
+    fn map_decl_let(&mut self, tl_let: Let<P>) -> Decl<P> {
+        Decl::Let(tl_let)
+    }
     fn map_data(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, typ: Rc<TypAbs<P>>, ctors: Vec<Ident>) -> Data<P> {
         Data { info, doc, name, attr, typ, ctors }
     }
@@ -61,6 +64,9 @@ pub trait Mapper<P: Phase> {
     }
     fn map_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: Telescope<P>, typ: TypApp<P>, body: Match<P>) -> Codef<P> {
         Codef { info, doc, name, attr, params, typ, body }
+    }
+    fn map_let(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: Telescope<P>, typ: Rc<Exp<P>>, body: Rc<Exp<P>>) -> Let<P> {
+        Let { info, doc, name, attr, params, typ, body}
     }
     fn map_match(&mut self, info: Option<Span>, cases: Vec<Case<P>>, omit_absurd: bool) -> Match<P> {
         Match { info, cases, omit_absurd }
@@ -218,6 +224,10 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_decl_codef(codef)
     }
 
+    fn fold_decl_let(&mut self, tl_let: <Id<P> as Out>::Let) -> <Id<P> as Out>::Decl {
+        self.map_decl_let(tl_let)
+    }
+
     fn fold_data(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, typ: <Id<P> as Out>::TypAbs, ctors: Vec<Ident>) -> <Id<P> as Out>::Data {
         self.map_data(info, doc, name, attr, Rc::new(typ), ctors)
     }
@@ -244,6 +254,10 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
 
     fn fold_codef(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: <Id<P> as Out>::Telescope, typ: <Id<P> as Out>::TypApp, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Codef {
         self.map_codef(info, doc, name, attr, params, typ, body)
+    }
+
+    fn fold_let(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: <Id<P> as Out>::Telescope, typ: <Id<P> as Out>::Exp, body: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Let {
+        self.map_let(info, doc, name, attr, params, typ, body)
     }
 
     fn fold_match(&mut self, info: Option<Span>, cases: Vec<<Id<P> as Out>::Case>, omit_absurd: bool) -> <Id<P> as Out>::Match {
