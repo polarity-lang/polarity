@@ -110,6 +110,7 @@ impl Infer for ust::Decl {
             ust::Decl::Dtor(dtor) => tst::Decl::Dtor(dtor.infer(prg, ctx)?),
             ust::Decl::Def(def) => tst::Decl::Def(def.infer(prg, ctx)?),
             ust::Decl::Codef(codef) => tst::Decl::Codef(codef.infer(prg, ctx)?),
+            ust::Decl::Let(tl_let) => tst::Decl::Let(tl_let.infer(prg, ctx)?),
         };
         Ok(out)
     }
@@ -296,6 +297,13 @@ impl Infer for ust::Codef {
     }
 }
 
+impl Infer for ust::Let {
+    type Target = tst::Let;
+
+    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        todo!();
+    }
+}
 struct WithScrutinee<'a> {
     inner: &'a ust::Match,
     scrutinee: nf::TypApp,

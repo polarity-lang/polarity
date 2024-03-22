@@ -117,6 +117,7 @@ impl Lift for tst::Decl {
             tst::Decl::Dtor(tdor) => ust::Decl::Dtor(tdor.lift(ctx)),
             tst::Decl::Def(def) => ust::Decl::Def(def.lift(ctx)),
             tst::Decl::Codef(codef) => ust::Decl::Codef(codef.lift(ctx)),
+            tst::Decl::Let(tl_let) => ust::Decl::Let(tl_let.lift(ctx)),
         }
     }
 }
@@ -245,6 +246,14 @@ impl Lift for tst::Codef {
             typ: typ.lift(ctx),
             body: body.lift(ctx),
         })
+    }
+}
+
+impl Lift for tst::Let {
+    type Target = ust::Let;
+
+    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
+        todo!()
     }
 }
 

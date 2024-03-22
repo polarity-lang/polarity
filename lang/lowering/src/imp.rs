@@ -113,6 +113,9 @@ fn build_lookup_table(
                 let type_name = codef.typ.name.clone();
                 lookup_table.add_def(type_name, codef.name.to_owned())
             }
+            cst::Decl::Let(tl_let) => {
+                todo!()
+            }
         }
     }
 
@@ -144,6 +147,7 @@ impl Lower for cst::Decl {
             cst::Decl::Codata(codata) => ust::Decl::Codata(codata.lower(ctx)?),
             cst::Decl::Def(def) => ust::Decl::Def(def.lower(ctx)?),
             cst::Decl::Codef(codef) => ust::Decl::Codef(codef.lower(ctx)?),
+            cst::Decl::Let(tl_let) => ust::Decl::Let(tl_let.lower(ctx)?),
         };
         ctx.add_decl(decl)?;
         Ok(())
@@ -372,6 +376,14 @@ impl Lower for cst::Codef {
     }
 }
 
+impl Lower for cst::Let {
+    type Target = ust::Let;
+
+    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        todo!()
+    }
+}
+
 impl Lower for cst::Match {
     type Target = ust::Match;
 
@@ -435,6 +447,7 @@ impl Lower for cst::Exp {
                         name: name.to_owned(),
                         args: ust::Args { args: args.lower(ctx)? },
                     }),
+                    DeclKind::Let => todo!(),
                 },
             },
             cst::Exp::DotCall { span, exp, name, args } => match ctx.lookup(name, span)? {
