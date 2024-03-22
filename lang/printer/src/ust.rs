@@ -228,7 +228,7 @@ impl<'a> Print<'a> for Let {
         let head = alloc
             .keyword(LET)
             .append(alloc.space())
-            .append(alloc.identifier(name))
+            .append(name)
             .append(params.print(cfg, alloc))
             .append(print_return_type(cfg, alloc, typ))
             .group();

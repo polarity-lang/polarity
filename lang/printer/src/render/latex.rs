@@ -43,7 +43,6 @@ where
             Anno::Ctor => "\\polCtor{",
             Anno::Dtor => "\\polDtor{",
             Anno::Type => "\\polType{",
-            Anno::Identifier => "\\polCtor{", // TODO: Change this?
             Anno::Comment => "\\polComment{",
             // Produce a backslash
             Anno::Backslash => "\\polBackslash{",
