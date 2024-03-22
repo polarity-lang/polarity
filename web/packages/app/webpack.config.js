@@ -10,23 +10,11 @@ const Handlebars = require("handlebars");
 const { marked } = require("marked");
 const fs = require("fs");
 
-const loadMarkdown = () => {
-  const dir = fs.readdirSync("./assets/tutorial");
-  const files = dir.filter((filename) => filename.endsWith(".md")).map((filename) => `./assets/tutorial/${filename}`);
-  let out = {};
-  for (const filename of files) {
-    const content = fs.readFileSync(filename, "utf8");
-    const html = marked.parse(content);
-    out[path.basename(filename, ".md")] = new Handlebars.SafeString(html);
-  }
-  return out;
-};
-
 const loadExamples = () => {
-  const dir = fs.readdirSync("../../../oopsla_examples");
+  const dir = fs.readdirSync("../../../examples");
   const files = dir
     .filter((filename) => filename.endsWith(".pol"))
-    .map((filename) => `../../../oopsla_examples/${filename}`);
+    .map((filename) => `../../../examples/${filename}`);
   let out = [];
   for (const filename of files) {
     out.push(path.basename(filename, ".pol"));
@@ -98,7 +86,7 @@ module.exports = (env, argv) => {
             preprocessor: (content, loaderContext) => {
               let result;
 
-              const input = Object.assign({}, loadMarkdown(), { examples: loadExamples() });
+              const input = { examples: loadExamples() };
 
               try {
                 result = Handlebars.compile(content)(input);
@@ -118,13 +106,13 @@ module.exports = (env, argv) => {
       new webpack.ProgressPlugin(),
       new CleanWebpackPlugin(),
       new CopyWebpackPlugin({
-        patterns: [{ from: "../../../oopsla_examples", to: "examples" }],
+        patterns: [{ from: "../../../examples", to: "examples" }],
       }),
       new webpack.DefinePlugin({
         DEBUG: !prod,
       }),
       new HtmlWebpackPlugin({
-        template: "assets/tutorial.html",
+        template: "assets/demo.html",
         filename: "index.html",
         chunks: ["tutorial"],
         scriptLoading: "defer",
