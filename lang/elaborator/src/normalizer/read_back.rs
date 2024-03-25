@@ -14,14 +14,14 @@ use crate::result::*;
 pub trait ReadBack {
     type Nf;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError>;
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError>;
 }
 
 impl ReadBack for val::Val {
     type Nf = nf::Nf;
 
     #[trace("↓{:P} ~> {return:P}", self, std::convert::identity)]
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
         let res = match self {
             val::Val::TypCtor { info, name, args } => {
                 nf::Nf::TypCtor { info: *info, name: name.clone(), args: args.read_back(prg)? }
@@ -45,7 +45,7 @@ impl ReadBack for val::Val {
 impl ReadBack for val::Neu {
     type Nf = nf::Neu;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
         let res = match self {
             val::Neu::Var { info, name, idx } => {
                 nf::Neu::Var { info: *info, name: name.clone(), idx: *idx }
@@ -71,7 +71,7 @@ impl ReadBack for val::Neu {
 impl ReadBack for val::Match {
     type Nf = nf::Match;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
         let val::Match { info, cases, omit_absurd } = self;
         Ok(nf::Match { info: *info, cases: cases.read_back(prg)?, omit_absurd: *omit_absurd })
     }
@@ -80,7 +80,7 @@ impl ReadBack for val::Match {
 impl ReadBack for val::Case {
     type Nf = nf::Case;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
         let val::Case { info, name, args, body } = self;
 
         Ok(nf::Case {
@@ -95,7 +95,7 @@ impl ReadBack for val::Case {
 impl ReadBack for val::TypApp {
     type Nf = nf::TypApp;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
         let val::TypApp { info, name, args } = self;
 
         Ok(nf::TypApp { info: *info, name: name.clone(), args: args.read_back(prg)? })
@@ -105,7 +105,7 @@ impl ReadBack for val::TypApp {
 impl ReadBack for val::Closure {
     type Nf = Rc<nf::Nf>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
         let args: Vec<Rc<val::Val>> = (0..self.n_args)
             .rev()
             .map(|snd| val::Val::Neu {
@@ -123,7 +123,7 @@ impl ReadBack for val::Closure {
 impl<T: ReadBack> ReadBack for Vec<T> {
     type Nf = Vec<T::Nf>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
         self.iter().map(|x| x.read_back(prg)).collect()
     }
 }
@@ -131,7 +131,7 @@ impl<T: ReadBack> ReadBack for Vec<T> {
 impl<T: ReadBack> ReadBack for Rc<T> {
     type Nf = Rc<T::Nf>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
         (**self).read_back(prg).map(Rc::new)
     }
 }
@@ -139,7 +139,7 @@ impl<T: ReadBack> ReadBack for Rc<T> {
 impl<T: ReadBack> ReadBack for Option<T> {
     type Nf = Option<T::Nf>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, EvalError> {
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
         self.as_ref().map(|x| x.read_back(prg)).transpose()
     }
 }

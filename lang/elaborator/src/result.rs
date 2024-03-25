@@ -12,22 +12,6 @@ use syntax::ust;
 
 use printer::PrintToString;
 
-#[derive(Error, Diagnostic, Debug)]
-pub enum EvalError {
-    #[error(transparent)]
-    #[diagnostic(transparent)]
-    Lookup(#[from] LookupError),
-    #[error("An unexpected internal error occurred: {message}")]
-    #[diagnostic(code("E-XXX"))]
-    /// This error should not occur.
-    /// Some internal invariant has been violated.
-    Impossible {
-        message: String,
-        #[label]
-        span: Option<SourceSpan>,
-    },
-}
-
 fn comma_separated<I: IntoIterator<Item = String>>(iter: I) -> String {
     separated(", ", iter)
 }
@@ -127,6 +111,31 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
+    #[error("{idx} occurs in {exp}")]
+    #[diagnostic(code("T-013"))]
+    OccursCheckFailed {
+        idx: Idx,
+        exp: String,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Cannot unify annotated expression {exp}")]
+    #[diagnostic(code("T-014"))]
+    UnsupportedAnnotation {
+        exp: String,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Cannot automatically decide whether {lhs} and {rhs} unify")]
+    #[diagnostic(code("T-015"))]
+    CannotDecide {
+        lhs: String,
+        rhs: String,
+        #[label]
+        lhs_span: Option<SourceSpan>,
+        #[label]
+        rhs_span: Option<SourceSpan>,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("T-XXX"))]
     /// This error should not occur.
@@ -136,12 +145,6 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[error(transparent)]
-    #[diagnostic(transparent)]
-    Unify(#[from] UnifyError),
-    #[error(transparent)]
-    #[diagnostic(transparent)]
-    Eval(#[from] EvalError),
     #[error(transparent)]
     #[diagnostic(transparent)]
     Lookup(#[from] LookupError),
@@ -181,38 +184,7 @@ impl TypeError {
     pub fn expected_typ_app(got: Rc<nf::Nf>) -> Self {
         Self::ExpectedTypApp { got: got.print_to_string(None), span: got.span().to_miette() }
     }
-}
 
-#[derive(Error, Diagnostic, Debug)]
-pub enum UnifyError {
-    #[error("{idx} occurs in {exp}")]
-    #[diagnostic(code("U-001"))]
-    OccursCheckFailed {
-        idx: Idx,
-        exp: String,
-        #[label]
-        span: Option<SourceSpan>,
-    },
-    #[error("Cannot unify annotated expression {exp}")]
-    #[diagnostic(code("U-002"))]
-    UnsupportedAnnotation {
-        exp: String,
-        #[label]
-        span: Option<SourceSpan>,
-    },
-    #[error("Cannot automatically decide whether {lhs} and {rhs} unify")]
-    #[diagnostic(code("U-003"))]
-    CannotDecide {
-        lhs: String,
-        rhs: String,
-        #[label]
-        lhs_span: Option<SourceSpan>,
-        #[label]
-        rhs_span: Option<SourceSpan>,
-    },
-}
-
-impl UnifyError {
     pub fn occurs_check_failed(idx: Idx, exp: Rc<ust::Exp>) -> Self {
         Self::OccursCheckFailed {
             idx,

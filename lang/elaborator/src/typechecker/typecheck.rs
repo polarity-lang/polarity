@@ -578,8 +578,7 @@ fn check_case(
 
             let body_out = match body {
                 Some(body) => {
-                    let unif = unify(ctx.levels(), eqns.clone())
-                        .map_err(TypeError::Unify)?
+                    let unif = unify(ctx.levels(), eqns.clone())?
                         .map_no(|()| TypeError::PatternIsAbsurd {
                             name: name.clone(),
                             span: info.to_miette(),
@@ -599,8 +598,7 @@ fn check_case(
                     })?
                 }
                 None => {
-                    unify(ctx.levels(), eqns.clone())
-                        .map_err(TypeError::Unify)?
+                    unify(ctx.levels(), eqns.clone())?
                         .map_yes(|_| TypeError::PatternIsNotAbsurd {
                             name: name.clone(),
                             span: info.to_miette(),
@@ -637,8 +635,7 @@ fn check_cocase(
         |ctx, args_out| {
             let body_out = match body {
                 Some(body) => {
-                    let unif = unify(ctx.levels(), eqns.clone())
-                        .map_err(TypeError::Unify)?
+                    let unif = unify(ctx.levels(), eqns.clone())?
                         .map_no(|()| TypeError::PatternIsAbsurd {
                             name: name.clone(),
                             span: info.to_miette(),
@@ -658,8 +655,7 @@ fn check_cocase(
                     })?
                 }
                 None => {
-                    unify(ctx.levels(), eqns.clone())
-                        .map_err(TypeError::Unify)?
+                    unify(ctx.levels(), eqns.clone())?
                         .map_yes(|_| TypeError::PatternIsNotAbsurd {
                             name: name.clone(),
                             span: info.to_miette(),

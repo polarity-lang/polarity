@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use super::DatabaseView;
 
-use normalizer::normalize::Normalize;
+use elaborator::normalizer::normalize::Normalize;
 use parser::cst;
 use syntax::{nf, tst, ust};
 
@@ -41,9 +41,7 @@ impl<'a> DatabaseView<'a> {
 
         match main {
             Some(exp) => {
-                let nf = exp
-                    .normalize_in_empty_env(&ust)
-                    .map_err(|err| Error::Type(typechecker::TypeError::Eval(err)))?;
+                let nf = exp.normalize_in_empty_env(&ust)?;
                 Ok(Some(nf))
             }
             None => Ok(None),

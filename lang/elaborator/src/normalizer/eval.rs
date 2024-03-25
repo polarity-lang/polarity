@@ -14,18 +14,18 @@ use crate::result::*;
 pub trait Eval {
     type Val;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError>;
+    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError>;
 }
 
 pub trait Apply {
-    fn apply(self, prg: &Prg, args: &[Rc<Val>]) -> Result<Rc<Val>, EvalError>;
+    fn apply(self, prg: &Prg, args: &[Rc<Val>]) -> Result<Rc<Val>, TypeError>;
 }
 
 impl Eval for Exp {
     type Val = Rc<Val>;
 
     #[trace("{:P} |- {:P} ▷ {return:P}", env, self, std::convert::identity)]
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
+    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
         let res = match self {
             Exp::Var { idx, .. } => env.lookup(*idx),
             Exp::TypCtor { info, name, args } => Rc::new(Val::TypCtor {
@@ -64,7 +64,7 @@ fn eval_dtor(
     exp: Rc<Val>,
     dtor_name: &str,
     dtor_args: Vec<Rc<Val>>,
-) -> Result<Rc<Val>, EvalError> {
+) -> Result<Rc<Val>, TypeError> {
     match (*exp).clone() {
         Val::Ctor { name: ctor_name, args: ctor_args, info } => {
             let type_decl = prg.decls.type_decl_for_member(&ctor_name, info)?;
@@ -101,7 +101,7 @@ fn eval_match(
     match_name: &Label,
     on_exp: Rc<Val>,
     body: val::Match,
-) -> Result<Rc<Val>, EvalError> {
+) -> Result<Rc<Val>, TypeError> {
     match (*on_exp).clone() {
         Val::Ctor { name: ctor_name, args, .. } => beta_match(prg, body, &ctor_name, &args),
         Val::Neu { exp } => Ok(Rc::new(Val::Neu {
@@ -117,7 +117,7 @@ fn beta_match(
     body: val::Match,
     ctor_name: &str,
     args: &[Rc<Val>],
-) -> Result<Rc<Val>, EvalError> {
+) -> Result<Rc<Val>, TypeError> {
     let case = body.clone().cases.into_iter().find(|case| case.name == ctor_name).unwrap();
     let val::Case { body, .. } = case;
     let body = body.unwrap();
@@ -130,7 +130,7 @@ fn beta_comatch(
     body: val::Match,
     dtor_name: &str,
     args: &[Rc<Val>],
-) -> Result<Rc<Val>, EvalError> {
+) -> Result<Rc<Val>, TypeError> {
     let cocase = body.clone().cases.into_iter().find(|cocase| cocase.name == dtor_name).unwrap();
     let val::Case { body, .. } = cocase;
     let body = body.unwrap();
@@ -140,7 +140,7 @@ fn beta_comatch(
 impl Eval for ust::Match {
     type Val = val::Match;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
+    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
         let ust::Match { info, cases, omit_absurd } = self;
 
         Ok(val::Match { info: *info, cases: cases.eval(prg, env)?, omit_absurd: *omit_absurd })
@@ -150,7 +150,7 @@ impl Eval for ust::Match {
 impl Eval for ust::Case {
     type Val = val::Case;
 
-    fn eval(&self, _prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
+    fn eval(&self, _prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
         let ust::Case { info, name, args, body } = self;
 
         let body = body.as_ref().map(|body| Closure {
@@ -166,7 +166,7 @@ impl Eval for ust::Case {
 impl Eval for ust::TypApp {
     type Val = val::TypApp;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
+    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
         let ust::TypApp { info, name, args } = self;
 
         Ok(val::TypApp { info: *info, name: name.clone(), args: args.eval(prg, env)? })
@@ -176,13 +176,13 @@ impl Eval for ust::TypApp {
 impl Eval for ust::Args {
     type Val = Vec<Rc<Val>>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
+    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
         self.args.eval(prg, env)
     }
 }
 
 impl Apply for Closure {
-    fn apply(mut self, prg: &Prg, args: &[Rc<Val>]) -> Result<Rc<Val>, EvalError> {
+    fn apply(mut self, prg: &Prg, args: &[Rc<Val>]) -> Result<Rc<Val>, TypeError> {
         self.env.bind_iter(args.iter(), |env| self.body.eval(prg, env))
     }
 }
@@ -190,7 +190,7 @@ impl Apply for Closure {
 impl<T: Eval> Eval for Vec<T> {
     type Val = Vec<T::Val>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
+    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
         self.iter().map(|x| x.eval(prg, env)).collect()
     }
 }
@@ -198,7 +198,7 @@ impl<T: Eval> Eval for Vec<T> {
 impl Eval for Rc<Exp> {
     type Val = Rc<Val>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, EvalError> {
+    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
         (**self).eval(prg, env)
     }
 }
