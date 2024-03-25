@@ -4,7 +4,7 @@ use derivative::Derivative;
 
 use pretty::DocAllocator;
 
-use crate::val::*;
+use crate::normalizer::val::*;
 use printer::tokens::COMMA;
 use printer::Print;
 use syntax::common::*;

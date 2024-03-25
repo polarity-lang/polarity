@@ -3,7 +3,7 @@ use syntax::ust;
 use super::env::Env;
 use super::eval::*;
 use super::read_back::*;
-use super::result::*;
+use crate::result::*;
 
 pub trait Normalize {
     type Nf;

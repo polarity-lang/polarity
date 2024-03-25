@@ -18,6 +18,6 @@ toml = "0.5"
 syntax = { path = "../../lang/syntax" }
 parser = { path = "../../lang/parser" }
 lowering = { path = "../../lang/lowering" }
-typechecker = { path = "../../lang/typechecker" }
+elaborator = { path = "../../lang/elaborator" }
 renaming = { path = "../../lang/renaming" }
 printer = { path = "../../lang/printer" }

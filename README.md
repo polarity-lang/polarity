@@ -51,14 +51,12 @@ pol --help
 ├── lang                    Language implementation
 │   ├── lifting             Lift local (co)matches to top-level definitions
 │   ├── lowering            Lowering concrete to (untyped) abstract syntax tree
-│   ├── normalizer          Implementation of normalization-by-evaluation algorithm
 │   ├── parser              Parse text to concrete syntax tree
 │   ├── printer             Print abstract syntax tree to text
 │   ├── query               Index data structures for annotated source code files and spans
 │   ├── renaming            Rename abstract syntax tree s.t. it can be reparsed
 │   ├── syntax              Syntax tree definitions
-│   ├── typechecker         Bidirectional type inference
-│   ├── unifier             Unification algorithm
+│   ├── elaborator          Elaborating an untyped syntax tree into a typed syntax tree.
 │   └── xfunc               De-/Refunctionalization implementation
 ├── test                    Integration tests
 │   ├── suites              Test cases

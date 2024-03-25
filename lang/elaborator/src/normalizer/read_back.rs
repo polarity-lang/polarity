@@ -9,7 +9,7 @@ use tracer::trace;
 
 use super::eval::Eval;
 
-use super::result::*;
+use crate::result::*;
 
 pub trait ReadBack {
     type Nf;

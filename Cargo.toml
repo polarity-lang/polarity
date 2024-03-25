@@ -8,7 +8,7 @@ members = [
     "lang/parser",
     "lang/lowering",
     "lang/printer",
-    "lang/typechecker",
+    "lang/elaborator",
     "lang/query",
     "lang/renaming",
     "lang/lifting",

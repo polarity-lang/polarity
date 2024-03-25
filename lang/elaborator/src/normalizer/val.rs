@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use derivative::Derivative;
 
-use crate::env::*;
+use crate::normalizer::env::*;
 use codespan::Span;
 use pretty::DocAllocator;
 use printer::theme::ThemeExt;
