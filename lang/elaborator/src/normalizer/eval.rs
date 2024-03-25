@@ -6,10 +6,10 @@ use syntax::ctx::{BindContext, Context};
 use syntax::ust::{self, Exp, Prg, Type};
 use tracer::trace;
 
-use crate::env::*;
-use crate::val::{self, Closure, Neu, Val};
+use crate::normalizer::env::*;
+use crate::normalizer::val::{self, Closure, Neu, Val};
 
-use super::result::*;
+use crate::result::*;
 
 pub trait Eval {
     type Val;

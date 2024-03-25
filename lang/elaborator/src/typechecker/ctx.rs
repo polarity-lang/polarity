@@ -4,8 +4,8 @@
 
 use std::rc::Rc;
 
-use normalizer::env::{Env, ToEnv};
-use normalizer::normalize::Normalize;
+use crate::normalizer::env::{Env, ToEnv};
+use crate::normalizer::normalize::Normalize;
 use printer::Print;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
@@ -13,7 +13,7 @@ use syntax::ctx::{BindContext, Context, LevelCtx};
 use syntax::nf::Nf;
 use syntax::ust;
 
-use crate::TypeError;
+use crate::result::TypeError;
 
 #[derive(Debug, Clone)]
 pub struct Ctx {

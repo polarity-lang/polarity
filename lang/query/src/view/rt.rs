@@ -30,7 +30,7 @@ impl<'a> DatabaseView<'a> {
 
     pub fn tst(&self) -> Result<tst::Prg, Error> {
         let ust = self.ust()?;
-        typechecker::check(&ust).map_err(Error::Type)
+        elaborator::typechecker::check(&ust).map_err(Error::Type)
     }
 
     pub fn run(&self) -> Result<Option<Rc<nf::Nf>>, Error> {

@@ -4,9 +4,10 @@ use std::rc::Rc;
 
 use codespan::Span;
 
+use crate::normalizer::env::ToEnv;
+use crate::normalizer::normalize::Normalize;
+use crate::unifier::unify::*;
 use miette_util::ToMiette;
-use normalizer::env::ToEnv;
-use normalizer::normalize::Normalize;
 use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
@@ -15,10 +16,9 @@ use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
 use syntax::ust::util::Instantiate;
 use syntax::ust::{self, Occurs};
 use tracer::trace;
-use unifier::unify::*;
 
 use super::ctx::*;
-use super::result::TypeError;
+use crate::result::TypeError;
 
 pub fn check(prg: &ust::Prg) -> Result<tst::Prg, TypeError> {
     let mut var_ctx = Ctx::default();

@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use syntax::ctx::LevelCtx;
 
-use crate::dec::{Dec, No, Yes};
 use crate::result::UnifyError;
+use crate::unifier::dec::{Dec, No, Yes};
 use printer::{DocAllocator, Print};
 use syntax::common::*;
 use syntax::generic;

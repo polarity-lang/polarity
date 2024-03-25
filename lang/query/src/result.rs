@@ -7,6 +7,6 @@ use thiserror::Error;
 pub enum Error {
     Parser(#[from] parser::ParseError),
     Lowering(#[from] lowering::LoweringError),
-    Type(#[from] typechecker::TypeError),
+    Type(#[from] elaborator::result::TypeError),
     Xfunc(#[from] xfunc::result::XfuncError),
 }

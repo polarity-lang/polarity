@@ -18,10 +18,9 @@ thiserror = "1"
 # workspace members
 syntax = { path = "../syntax" }
 lowering = { path = "../lowering" }
-typechecker = { path = "../typechecker" }
+elaborator = { path = "../elaborator" }
 printer = { path = "../printer" }
 parser = { path = "../parser" }
 renaming = { path = "../renaming" }
 xfunc = { path = "../xfunc" }
 lifting = { path = "../lifting" }
-normalizer = { path = "../normalizer" }

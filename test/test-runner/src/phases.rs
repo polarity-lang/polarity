@@ -223,7 +223,7 @@ impl Phase for Lower {
 impl Phase for Check {
     type In = ust::Prg;
     type Out = tst::Prg;
-    type Err = typechecker::TypeError;
+    type Err = elaborator::result::TypeError;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -234,7 +234,7 @@ impl Phase for Check {
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        typechecker::check(&input)
+        elaborator::typechecker::check(&input)
     }
 }
 
