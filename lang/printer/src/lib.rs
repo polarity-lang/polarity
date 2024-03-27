@@ -11,13 +11,13 @@ pub use pretty::DocAllocator;
 mod ctx;
 mod de_bruijn;
 pub mod fragments;
+mod generic;
 mod nf;
 mod print_to_string;
 mod render;
 pub mod theme;
 pub mod tokens;
 pub mod types;
-mod ust;
 pub mod util;
 
 pub use print_to_string::*;
