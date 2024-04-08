@@ -47,6 +47,8 @@ where
     }
 }
 
+pub type Ident = String;
+
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Label {

@@ -2,12 +2,10 @@ use codespan::Span;
 
 mod de_bruijn;
 mod equiv;
-mod named;
 mod subst;
 
 pub use de_bruijn::*;
 pub use equiv::*;
-pub use named::*;
 pub use subst::*;
 
 pub type HashMap<K, V> = std::collections::HashMap<K, V, fxhash::FxBuildHasher>;

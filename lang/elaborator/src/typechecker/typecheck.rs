@@ -412,7 +412,7 @@ impl<'a> Check for WithScrutinee<'a> {
 struct WithDestructee<'a> {
     inner: &'a ust::Match,
     /// Name of the global codefinition that gets substituted for the destructor's self parameters
-    label: Option<Ident>,
+    label: Option<ust::Ident>,
     n_label_args: usize,
     destructee: nf::TypApp,
 }

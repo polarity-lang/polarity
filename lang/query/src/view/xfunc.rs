@@ -62,9 +62,9 @@ impl<'a> DatabaseView<'a> {
 }
 
 struct Original {
-    xdefs: Vec<Ident>,
+    xdefs: Vec<ust::Ident>,
     type_span: Span,
-    decl_spans: HashMap<Ident, Span>,
+    decl_spans: HashMap<ust::Ident, Span>,
 }
 
 struct XfuncResult {
@@ -74,7 +74,11 @@ struct XfuncResult {
     new_decls: Vec<ust::Decl>,
 }
 
-fn generate_edits(original: Original, dirty_decls: HashSet<Ident>, result: XfuncResult) -> Xfunc {
+fn generate_edits(
+    original: Original,
+    dirty_decls: HashSet<ust::Ident>,
+    result: XfuncResult,
+) -> Xfunc {
     let XfuncResult { title, decls, new_decls } = result;
 
     // Edits for the type that has been xfunctionalized

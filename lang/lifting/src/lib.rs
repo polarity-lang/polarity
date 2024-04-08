@@ -35,9 +35,9 @@ pub struct LiftResult {
     /// The resulting program
     pub prg: ust::Prg,
     /// List of new top-level definitions
-    pub new_decls: HashSet<Ident>,
+    pub new_decls: HashSet<ust::Ident>,
     /// List of top-level declarations that have been modified in the lifting process
-    pub modified_decls: HashSet<Ident>,
+    pub modified_decls: HashSet<ust::Ident>,
 }
 
 #[derive(Debug)]
@@ -47,9 +47,9 @@ struct Ctx {
     /// List of new top-level declarations that got created in the lifting process
     new_decls: Vec<ust::Decl>,
     /// Current declaration being visited for lifting
-    curr_decl: Ident,
+    curr_decl: ust::Ident,
     /// List of declarations that got modified in the lifting process
-    modified_decls: HashSet<Ident>,
+    modified_decls: HashSet<ust::Ident>,
     /// Tracks the current binders in scope
     ctx: LevelCtx,
 }
@@ -587,7 +587,7 @@ impl Ctx {
     }
 
     /// Set the current declaration
-    fn set_curr_decl(&mut self, name: Ident) {
+    fn set_curr_decl(&mut self, name: ust::Ident) {
         self.curr_decl = name;
     }
 
@@ -597,7 +597,7 @@ impl Ctx {
     }
 
     /// Generate a definition name based on the label and type information
-    fn unique_def_name(&self, label: &tst::Label, type_name: &str) -> Ident {
+    fn unique_def_name(&self, label: &tst::Label, type_name: &str) -> ust::Ident {
         label.user_name.clone().unwrap_or_else(|| {
             let lowered = type_name.to_lowercase();
             let id = label.id;
@@ -606,7 +606,7 @@ impl Ctx {
     }
 
     /// Generate a codefinition name based on the label and type information
-    fn unique_codef_name(&self, label: &tst::Label, type_name: &str) -> Ident {
+    fn unique_codef_name(&self, label: &tst::Label, type_name: &str) -> ust::Ident {
         label.user_name.clone().unwrap_or_else(|| {
             let id = label.id;
             format!("Mk{type_name}{id}")

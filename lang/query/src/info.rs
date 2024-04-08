@@ -4,7 +4,6 @@ use codespan::Span;
 use printer::PrintToString;
 use rust_lapper::{Interval, Lapper};
 
-use syntax::common::*;
 use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
 use syntax::generic::{Visit, Visitor};
 use syntax::nf::forget::ForgetNF;
@@ -100,10 +99,10 @@ impl Visitor<tst::TST> for InfoCollector {
         &mut self,
         info: &Option<Span>,
         _doc: &Option<tst::DocComment>,
-        name: &Ident,
+        name: &tst::Ident,
         _attr: &tst::Attribute,
         _typ: &Rc<tst::TypAbs>,
-        _ctors: &[Ident],
+        _ctors: &[tst::Ident],
     ) {
         self.add_item_span(Item::Data(name.clone()), info.unwrap());
     }
@@ -112,10 +111,10 @@ impl Visitor<tst::TST> for InfoCollector {
         &mut self,
         info: &Option<Span>,
         _doc: &Option<tst::DocComment>,
-        name: &Ident,
+        name: &tst::Ident,
         _attr: &tst::Attribute,
         _typ: &Rc<tst::TypAbs>,
-        _dtors: &[Ident],
+        _dtors: &[tst::Ident],
     ) {
         self.add_item_span(Item::Data(name.clone()), info.unwrap());
     }
@@ -124,7 +123,7 @@ impl Visitor<tst::TST> for InfoCollector {
         &mut self,
         info: &Option<Span>,
         _doc: &Option<tst::DocComment>,
-        name: &Ident,
+        name: &tst::Ident,
         _attr: &tst::Attribute,
         _params: &tst::Telescope,
         self_param: &tst::SelfParam,
@@ -141,7 +140,7 @@ impl Visitor<tst::TST> for InfoCollector {
         &mut self,
         info: &Option<Span>,
         _doc: &Option<tst::DocComment>,
-        name: &Ident,
+        name: &tst::Ident,
         _attr: &tst::Attribute,
         _params: &tst::Telescope,
         typ: &tst::TypApp,

@@ -19,13 +19,13 @@ pub enum Val {
     TypCtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
-        name: Ident,
+        name: ust::Ident,
         args: Args,
     },
     Ctor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
-        name: Ident,
+        name: ust::Ident,
         args: Args,
     },
     Type {
@@ -53,14 +53,14 @@ pub enum Neu {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        name: Ident,
+        name: ust::Ident,
         idx: Idx,
     },
     Dtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
         exp: Rc<Neu>,
-        name: Ident,
+        name: ust::Ident,
         args: Args,
     },
     Match {
@@ -91,7 +91,7 @@ pub struct Match {
 pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: Option<Span>,
-    pub name: Ident,
+    pub name: ust::Ident,
     // TODO: Rename to params
     pub args: ust::TelescopeInst,
     /// Body being `None` represents an absurd pattern
@@ -101,7 +101,7 @@ pub struct Case {
 #[derive(Debug, Clone)]
 pub struct TypApp {
     pub info: Option<Span>,
-    pub name: Ident,
+    pub name: ust::Ident,
     pub args: Args,
 }
 
