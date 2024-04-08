@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use syntax::common::*;
 use syntax::ctx::{BindContext, LevelCtx};
-use syntax::generic::{Attribute, DocComment};
+use syntax::generic::{Attribute, DocComment, Named};
 use syntax::ust;
 use syntax::ust::util::Instantiate;
 

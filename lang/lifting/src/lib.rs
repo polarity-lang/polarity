@@ -5,6 +5,7 @@ use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;
+use syntax::generic::Named;
 use syntax::tst;
 use syntax::tst::forget::ForgetTST;
 use syntax::ust;

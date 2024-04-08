@@ -5,6 +5,7 @@ use parser::cst::{BindingSite, Ident};
 use syntax::common::*;
 use syntax::ctx::{Context, ContextElem};
 use syntax::generic::lookup_table::DeclMeta;
+use syntax::generic::Named;
 use syntax::ust;
 
 use super::result::LoweringError;

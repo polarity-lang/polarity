@@ -11,6 +11,7 @@ use miette_util::ToMiette;
 use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
+use syntax::generic::Named;
 use syntax::nf;
 use syntax::nf::forget::ForgetNF;
 use syntax::tst::forget::ForgetTST;

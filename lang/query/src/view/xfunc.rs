@@ -5,6 +5,7 @@ use printer::PrintToStringInCtx;
 use renaming::Rename;
 
 use syntax::common::*;
+use syntax::generic::Named;
 use syntax::ust;
 use xfunc::matrix;
 use xfunc::result::XfuncError;

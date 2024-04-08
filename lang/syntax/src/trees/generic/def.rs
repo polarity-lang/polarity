@@ -28,6 +28,25 @@ pub trait HasPhase {
     type Phase;
 }
 
+pub trait Named {
+    fn name(&self) -> &Ident;
+}
+
+impl Named for Ident {
+    fn name(&self) -> &Ident {
+        self
+    }
+}
+
+impl<'a, T> Named for &'a T
+where
+    T: Named,
+{
+    fn name(&self) -> &Ident {
+        T::name(self)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DocComment {
     pub docs: Vec<String>,
@@ -92,6 +111,21 @@ impl<P: Phase> Decl<P> {
         }
     }
 }
+
+impl<P: Phase> Named for Decl<P> {
+    fn name(&self) -> &Ident {
+        match self {
+            Decl::Data(Data { name, .. }) => name,
+            Decl::Codata(Codata { name, .. }) => name,
+            Decl::Def(Def { name, .. }) => name,
+            Decl::Codef(Codef { name, .. }) => name,
+            Decl::Ctor(Ctor { name, .. }) => name,
+            Decl::Dtor(Dtor { name, .. }) => name,
+            Decl::Let(Let { name, .. }) => name,
+        }
+    }
+}
+
 impl<P: Phase> HasSpan for Decl<P> {
     fn span(&self) -> Option<Span> {
         match self {
@@ -438,6 +472,12 @@ pub struct Param<P: Phase> {
     pub typ: Rc<Exp<P>>,
 }
 
+impl<P: Phase> Named for Param<P> {
+    fn name(&self) -> &Ident {
+        &self.name
+    }
+}
+
 /// Instantiation of a previously declared parameter
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -448,6 +488,12 @@ pub struct ParamInst<P: Phase> {
     pub name: Ident,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub typ: P::InfTyp,
+}
+
+impl<P: Phase> Named for ParamInst<P> {
+    fn name(&self) -> &Ident {
+        &self.name
+    }
 }
 
 impl<P: Phase> HasPhase for Prg<P> {
