@@ -8,6 +8,7 @@ use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;
 use syntax::generic::{Visit, Visitor};
+use syntax::nf::forget::ForgetNF;
 use syntax::ust::{self, Occurs};
 
 /// Find all free variables
@@ -249,7 +250,7 @@ impl<'b> Visitor<ust::UST> for USTVisitor<'b> {
                 .type_ctx
                 .lookup(lvl)
                 .typ
-                .forget()
+                .forget_nf()
                 .shift(((self.lvl_ctx.len() - self.type_ctx.len()) as isize, 0));
             self.add_fv(name.clone(), lvl, typ, self.lvl_ctx.clone())
         }

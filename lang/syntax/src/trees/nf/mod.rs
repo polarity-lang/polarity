@@ -1,5 +1,5 @@
 mod def;
-mod forget;
+pub mod forget;
 mod shift;
 
 pub use def::*;
