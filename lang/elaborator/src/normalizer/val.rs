@@ -35,7 +35,7 @@ pub enum Val {
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
-        name: Label,
+        name: ust::Label,
         is_lambda_sugar: bool,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Match,
@@ -66,7 +66,7 @@ pub enum Neu {
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
-        name: Label,
+        name: ust::Label,
         on_exp: Rc<Neu>,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Match,

@@ -21,6 +21,7 @@ impl generic::Phase for TST {
     type Ctx = TypeCtx;
 }
 
+pub type Label = generic::Label;
 pub type DocComment = generic::DocComment;
 pub type Attribute = generic::Attribute;
 pub type Prg = generic::Prg<TST>;

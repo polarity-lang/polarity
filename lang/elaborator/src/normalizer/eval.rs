@@ -1,7 +1,6 @@
 use std::rc::Rc;
 
 use codespan::Span;
-use syntax::common::*;
 use syntax::ctx::{BindContext, Context};
 use syntax::ust::{self, Exp, Prg, Type};
 use tracer::trace;
@@ -98,7 +97,7 @@ fn eval_dtor(
 
 fn eval_match(
     prg: &Prg,
-    match_name: &Label,
+    match_name: &ust::Label,
     on_exp: Rc<Val>,
     body: val::Match,
 ) -> Result<Rc<Val>, TypeError> {

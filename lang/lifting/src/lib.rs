@@ -462,7 +462,7 @@ impl Ctx {
         &mut self,
         info: &tst::TypeAppInfo,
         type_ctx: &TypeCtx,
-        name: &Label,
+        name: &tst::Label,
         on_exp: &Rc<tst::Exp>,
         motive: &Option<tst::Motive>,
         ret_typ: &tst::Typ,
@@ -538,7 +538,7 @@ impl Ctx {
         &mut self,
         info: &tst::TypeAppInfo,
         type_ctx: &TypeCtx,
-        name: &Label,
+        name: &tst::Label,
         is_lambda_sugar: bool,
         body: &tst::Match,
     ) -> ust::Exp {
@@ -597,7 +597,7 @@ impl Ctx {
     }
 
     /// Generate a definition name based on the label and type information
-    fn unique_def_name(&self, label: &Label, type_name: &str) -> Ident {
+    fn unique_def_name(&self, label: &tst::Label, type_name: &str) -> Ident {
         label.user_name.clone().unwrap_or_else(|| {
             let lowered = type_name.to_lowercase();
             let id = label.id;
@@ -606,7 +606,7 @@ impl Ctx {
     }
 
     /// Generate a codefinition name based on the label and type information
-    fn unique_codef_name(&self, label: &Label, type_name: &str) -> Ident {
+    fn unique_codef_name(&self, label: &tst::Label, type_name: &str) -> Ident {
         label.user_name.clone().unwrap_or_else(|| {
             let id = label.id;
             format!("Mk{type_name}{id}")
