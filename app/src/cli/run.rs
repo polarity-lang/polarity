@@ -3,11 +3,10 @@ use std::path::PathBuf;
 use miette::Diagnostic;
 use thiserror::Error;
 
+use crate::result::IOError;
 use printer::{ColorChoice, PrintExt, StandardStream};
 use query::{Database, File};
-use syntax::nf;
-
-use crate::result::IOError;
+use syntax::ust;
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -28,7 +27,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     Ok(())
 }
 
-fn print_nf(nf: &nf::Nf) {
+fn print_nf(nf: &ust::Exp) {
     let mut stream = StandardStream::stdout(ColorChoice::Auto);
     nf.print_colored(&Default::default(), &mut stream).expect("Failed to print to stdout");
     println!();

@@ -7,7 +7,7 @@ use std::rc::Rc;
 use crate::common::*;
 use crate::ctx::{Context, LevelCtx};
 use crate::generic::*;
-use crate::nf::*;
+use crate::ust;
 
 use super::ContextElem;
 
@@ -112,7 +112,7 @@ impl TypeCtx {
 
     pub fn map_failable<E, F>(&self, f: F) -> Result<Self, E>
     where
-        F: Fn(&Rc<Nf>) -> Result<Rc<Nf>, E>,
+        F: Fn(&Rc<ust::Exp>) -> Result<Rc<ust::Exp>, E>,
     {
         let bound: Result<_, _> = self
             .bound
@@ -129,7 +129,7 @@ impl TypeCtx {
 #[derive(Debug, Clone)]
 pub struct Binder {
     pub name: Ident,
-    pub typ: Rc<Nf>,
+    pub typ: Rc<ust::Exp>,
 }
 
 impl ShiftInRange for Binder {

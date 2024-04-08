@@ -10,8 +10,6 @@ use printer::Print;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::{BindContext, Context, LevelCtx};
-use syntax::nf::forget::ForgetNF;
-use syntax::nf::Nf;
 use syntax::ust;
 
 use crate::result::TypeError;
@@ -45,7 +43,7 @@ impl ContextSubstExt for Ctx {
         let env = self.vars.env();
         let levels = self.vars.levels();
         self.map_failable(|nf| {
-            let exp = nf.forget_nf().subst(&mut levels.clone(), s);
+            let exp = nf.subst(&mut levels.clone(), s);
             let nf = exp.normalize(prg, &mut env.clone())?;
             Ok(nf)
         })
@@ -75,7 +73,7 @@ impl Ctx {
         self.vars.is_empty()
     }
 
-    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<Nf> {
+    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<ust::Exp> {
         self.vars.lookup(idx).typ
     }
 
@@ -85,7 +83,7 @@ impl Ctx {
 
     pub fn map_failable<E, F>(&mut self, f: F) -> Result<(), E>
     where
-        F: Fn(&Rc<Nf>) -> Result<Rc<Nf>, E>,
+        F: Fn(&Rc<ust::Exp>) -> Result<Rc<ust::Exp>, E>,
     {
         self.vars = self.vars.map_failable(f)?;
         Ok(())
