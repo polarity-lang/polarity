@@ -12,7 +12,6 @@ mod ctx;
 mod de_bruijn;
 pub mod fragments;
 mod generic;
-mod nf;
 mod print_to_string;
 mod render;
 pub mod theme;

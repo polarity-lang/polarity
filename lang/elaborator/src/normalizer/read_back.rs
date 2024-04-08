@@ -3,8 +3,7 @@ use std::rc::Rc;
 use super::val;
 use syntax::common::*;
 use syntax::ctx::BindContext;
-use syntax::nf;
-use syntax::ust::Prg;
+use syntax::ust;
 use tracer::trace;
 
 use super::eval::Eval;
@@ -14,76 +13,84 @@ use crate::result::*;
 pub trait ReadBack {
     type Nf;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError>;
+    fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError>;
 }
 
 impl ReadBack for val::Val {
-    type Nf = nf::Nf;
+    type Nf = ust::Exp;
 
     #[trace("↓{:P} ~> {return:P}", self, std::convert::identity)]
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let res = match self {
-            val::Val::TypCtor { info, name, args } => {
-                nf::Nf::TypCtor { info: *info, name: name.clone(), args: args.read_back(prg)? }
-            }
-            val::Val::Ctor { info, name, args } => {
-                nf::Nf::Ctor { info: *info, name: name.clone(), args: args.read_back(prg)? }
-            }
-            val::Val::Type { info } => nf::Nf::Type { info: *info },
-            val::Val::Comatch { info, name, is_lambda_sugar, body } => nf::Nf::Comatch {
+            val::Val::TypCtor { info, name, args } => ust::Exp::TypCtor {
                 info: *info,
+                name: name.clone(),
+                args: ust::Args { args: args.read_back(prg)? },
+            },
+            val::Val::Ctor { info, name, args } => ust::Exp::Ctor {
+                info: *info,
+                name: name.clone(),
+                args: ust::Args { args: args.read_back(prg)? },
+            },
+            val::Val::Type { info } => ust::Exp::Type { info: *info },
+            val::Val::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::Comatch {
+                info: *info,
+                ctx: (),
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.read_back(prg)?,
             },
-            val::Val::Neu { exp } => nf::Nf::Neu { exp: exp.read_back(prg)? },
+            val::Val::Neu { exp } => exp.read_back(prg)?,
         };
         Ok(res)
     }
 }
 
 impl ReadBack for val::Neu {
-    type Nf = nf::Neu;
+    type Nf = ust::Exp;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let res = match self {
             val::Neu::Var { info, name, idx } => {
-                nf::Neu::Var { info: *info, name: name.clone(), idx: *idx }
+                ust::Exp::Var { info: *info, ctx: (), name: name.clone(), idx: *idx }
             }
-            val::Neu::Dtor { info, exp, name, args } => nf::Neu::Dtor {
+            val::Neu::Dtor { info, exp, name, args } => ust::Exp::Dtor {
                 info: *info,
                 exp: exp.read_back(prg)?,
                 name: name.clone(),
-                args: args.read_back(prg)?,
+                args: ust::Args { args: args.read_back(prg)? },
             },
-            val::Neu::Match { info, name, on_exp, body } => nf::Neu::Match {
+            val::Neu::Match { info, name, on_exp, body } => ust::Exp::Match {
                 info: *info,
+                ctx: (),
+                motive: None,
+                ret_typ: (),
                 name: name.clone(),
                 on_exp: on_exp.read_back(prg)?,
                 body: body.read_back(prg)?,
             },
-            val::Neu::Hole { info } => nf::Neu::Hole { info: *info },
+            val::Neu::Hole { info } => ust::Exp::Hole { info: *info },
         };
         Ok(res)
     }
 }
 
 impl ReadBack for val::Match {
-    type Nf = nf::Match;
+    type Nf = ust::Match;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let val::Match { info, cases, omit_absurd } = self;
-        Ok(nf::Match { info: *info, cases: cases.read_back(prg)?, omit_absurd: *omit_absurd })
+        Ok(ust::Match { info: *info, cases: cases.read_back(prg)?, omit_absurd: *omit_absurd })
     }
 }
 
 impl ReadBack for val::Case {
-    type Nf = nf::Case;
+    type Nf = ust::Case;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let val::Case { info, name, args, body } = self;
 
-        Ok(nf::Case {
+        Ok(ust::Case {
             info: *info,
             name: name.clone(),
             args: args.clone(),
@@ -93,19 +100,23 @@ impl ReadBack for val::Case {
 }
 
 impl ReadBack for val::TypApp {
-    type Nf = nf::TypApp;
+    type Nf = ust::TypApp;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let val::TypApp { info, name, args } = self;
 
-        Ok(nf::TypApp { info: *info, name: name.clone(), args: args.read_back(prg)? })
+        Ok(ust::TypApp {
+            info: *info,
+            name: name.clone(),
+            args: ust::Args { args: args.read_back(prg)? },
+        })
     }
 }
 
 impl ReadBack for val::Closure {
-    type Nf = Rc<nf::Nf>;
+    type Nf = Rc<ust::Exp>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let args: Vec<Rc<val::Val>> = (0..self.n_args)
             .rev()
             .map(|snd| val::Val::Neu {
@@ -123,7 +134,7 @@ impl ReadBack for val::Closure {
 impl<T: ReadBack> ReadBack for Vec<T> {
     type Nf = Vec<T::Nf>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         self.iter().map(|x| x.read_back(prg)).collect()
     }
 }
@@ -131,7 +142,7 @@ impl<T: ReadBack> ReadBack for Vec<T> {
 impl<T: ReadBack> ReadBack for Rc<T> {
     type Nf = Rc<T::Nf>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         (**self).read_back(prg).map(Rc::new)
     }
 }
@@ -139,7 +150,7 @@ impl<T: ReadBack> ReadBack for Rc<T> {
 impl<T: ReadBack> ReadBack for Option<T> {
     type Nf = Option<T::Nf>;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         self.as_ref().map(|x| x.read_back(prg)).transpose()
     }
 }

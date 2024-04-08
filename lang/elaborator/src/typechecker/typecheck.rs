@@ -12,8 +12,6 @@ use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
 use syntax::generic::Named;
-use syntax::nf;
-use syntax::nf::forget::ForgetNF;
 use syntax::tst::forget::ForgetTST;
 use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
 use syntax::ust::util::Instantiate;
@@ -41,7 +39,7 @@ pub trait Check {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
-        t: Rc<nf::Nf>,
+        t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError>;
 }
 
@@ -325,7 +323,7 @@ impl Infer for ust::Let {
 }
 struct WithScrutinee<'a> {
     inner: &'a ust::Match,
-    scrutinee: nf::TypApp,
+    scrutinee: ust::TypApp,
 }
 
 /// Check a pattern match
@@ -336,7 +334,7 @@ impl<'a> Check for WithScrutinee<'a> {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
-        t: Rc<nf::Nf>,
+        t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
         let ust::Match { info, cases, omit_absurd } = &self.inner;
 
@@ -391,11 +389,15 @@ impl<'a> Check for WithScrutinee<'a> {
             let def_args_nf = LevelCtx::empty()
                 .bind_iter(params.params.iter(), |ctx| def_args.normalize(prg, &mut ctx.env()))?;
 
-            let nf::TypApp { args: on_args, .. } = &self.scrutinee;
+            let ust::TypApp { args: on_args, .. } = &self.scrutinee;
             let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
-            let eqns: Vec<_> =
-                def_args_nf.iter().cloned().zip(on_args.iter().cloned()).map(Eqn::from).collect();
+            let eqns: Vec<_> = def_args_nf
+                .iter()
+                .cloned()
+                .zip(on_args.args.iter().cloned())
+                .map(Eqn::from)
+                .collect();
 
             // Check the case given the equations
             let case_out = check_case(eqns, &case, prg, ctx, t.clone())?;
@@ -414,7 +416,7 @@ struct WithDestructee<'a> {
     /// Name of the global codefinition that gets substituted for the destructor's self parameters
     label: Option<ust::Ident>,
     n_label_args: usize,
-    destructee: nf::TypApp,
+    destructee: ust::TypApp,
 }
 
 /// Infer a copattern match
@@ -483,11 +485,15 @@ impl<'a> Infer for WithDestructee<'a> {
             let ret_typ_nf =
                 ret_typ.normalize(prg, &mut LevelCtx::from(vec![params.len(), 1]).env())?;
 
-            let nf::TypApp { args: on_args, .. } = &self.destructee;
+            let ust::TypApp { args: on_args, .. } = &self.destructee;
             let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
-            let eqns: Vec<_> =
-                def_args_nf.iter().cloned().zip(on_args.iter().cloned()).map(Eqn::from).collect();
+            let eqns: Vec<_> = def_args_nf
+                .iter()
+                .cloned()
+                .zip(on_args.args.iter().cloned())
+                .map(Eqn::from)
+                .collect();
 
             let ret_typ_nf = match &self.label {
                 // Substitute the codef label for the self parameter
@@ -509,7 +515,7 @@ impl<'a> Infer for WithDestructee<'a> {
                     });
                     let subst = Assign(Lvl { fst: 1, snd: 0 }, ctor);
                     let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
-                    ret_typ_nf.forget_nf().subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
+                    ret_typ_nf.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
                         prg,
                         &mut LevelCtx::from(vec![self.n_label_args, params.len()]).env(),
                     )?
@@ -537,7 +543,7 @@ fn check_case(
     case: &ust::Case,
     prg: &ust::Prg,
     ctx: &mut Ctx,
-    t: Rc<nf::Nf>,
+    t: Rc<ust::Exp>,
 ) -> Result<tst::Case, TypeError> {
     let ust::Case { info, name, args, body } = case;
     let ust::Ctor { name, params, .. } = prg.decls.ctor(name, *info)?;
@@ -573,7 +579,6 @@ fn check_case(
 
             // FIXME: Refactor this
             let t = t
-                .forget_nf()
                 .shift((1, 0))
                 .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
                 .subst(&mut subst_ctx_2, &subst)
@@ -625,7 +630,7 @@ fn check_cocase(
     cocase: &ust::Case,
     prg: &ust::Prg,
     ctx: &mut Ctx,
-    t: Rc<nf::Nf>,
+    t: Rc<ust::Exp>,
 ) -> Result<tst::Case, TypeError> {
     let ust::Case { info, name, args: params_inst, body } = cocase;
     let ust::Dtor { name, params, .. } = prg.decls.dtor(name, *info)?;
@@ -649,7 +654,7 @@ fn check_cocase(
                         ctx.subst(prg, &unif)?;
                         let body = body.subst(&mut ctx.levels(), &unif);
 
-                        let t_subst = t.forget_nf().subst(&mut ctx.levels(), &unif);
+                        let t_subst = t.subst(&mut ctx.levels(), &unif);
                         let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
 
                         let body_out = body.check(prg, ctx, t_nf)?;
@@ -684,14 +689,14 @@ impl Check for ust::Exp {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
-        t: Rc<nf::Nf>,
+        t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
         match self {
             ust::Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ: (), body } => {
                 let on_exp_out = on_exp.infer(prg, ctx)?;
                 let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
-                let typ_app = typ_app_nf.forget_nf().infer(prg, ctx)?;
-                let ret_typ_out = t.forget_nf().check(prg, ctx, type_univ())?;
+                let typ_app = typ_app_nf.infer(prg, ctx)?;
+                let ret_typ_out = t.check(prg, ctx, type_univ())?;
 
                 let motive_out;
                 let body_t;
@@ -757,7 +762,7 @@ impl Check for ust::Exp {
             }
             ust::Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => {
                 let typ_app_nf = t.expect_typ_app()?;
-                let typ_app = typ_app_nf.forget_nf().infer(prg, ctx)?;
+                let typ_app = typ_app_nf.infer(prg, ctx)?;
 
                 // Local comatches don't support self parameters, yet.
                 let codata = prg.decls.codata(&typ_app.name, info.span())?;
@@ -1060,14 +1065,14 @@ impl SubstInTelescope for ust::Telescope {
 }
 
 trait ExpectTypApp {
-    fn expect_typ_app(&self) -> Result<nf::TypApp, TypeError>;
+    fn expect_typ_app(&self) -> Result<ust::TypApp, TypeError>;
 }
 
-impl ExpectTypApp for Rc<nf::Nf> {
-    fn expect_typ_app(&self) -> Result<nf::TypApp, TypeError> {
+impl ExpectTypApp for Rc<ust::Exp> {
+    fn expect_typ_app(&self) -> Result<ust::TypApp, TypeError> {
         match &**self {
-            nf::Nf::TypCtor { info, name, args } => {
-                Ok(nf::TypApp { info: *info, name: name.clone(), args: args.clone() })
+            ust::Exp::TypCtor { info, name, args } => {
+                Ok(ust::TypApp { info: *info, name: name.clone(), args: args.clone() })
             }
             _ => Err(TypeError::expected_typ_app(self.clone())),
         }
@@ -1075,7 +1080,7 @@ impl ExpectTypApp for Rc<nf::Nf> {
 }
 
 #[trace("{:P} =? {:P}", this, other)]
-fn convert(this: Rc<nf::Nf>, other: &Rc<nf::Nf>) -> Result<(), TypeError> {
+fn convert(this: Rc<ust::Exp>, other: &Rc<ust::Exp>) -> Result<(), TypeError> {
     this.alpha_eq(other).then_some(()).ok_or_else(|| TypeError::not_eq(this.clone(), other.clone()))
 }
 
@@ -1086,7 +1091,7 @@ impl<T: Check> Check for Rc<T> {
         &self,
         prg: &ust::Prg,
         ctx: &mut Ctx,
-        t: Rc<nf::Nf>,
+        t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
         Ok(Rc::new((**self).check(prg, ctx, t)?))
     }
@@ -1100,12 +1105,12 @@ impl<T: Infer> Infer for Rc<T> {
     }
 }
 
-fn type_univ() -> Rc<nf::Nf> {
-    Rc::new(nf::Nf::Type { info: None })
+fn type_univ() -> Rc<ust::Exp> {
+    Rc::new(ust::Exp::Type { info: None })
 }
 
-fn type_hole() -> Rc<nf::Nf> {
-    Rc::new(nf::Nf::Neu { exp: nf::Neu::Hole { info: None } })
+fn type_hole() -> Rc<ust::Exp> {
+    Rc::new(ust::Exp::Hole { info: None })
 }
 
 // Checks whether the codata type contains destructors with a self parameter
