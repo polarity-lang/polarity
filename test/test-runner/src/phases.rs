@@ -4,8 +4,8 @@ use std::fmt;
 use parser::cst;
 use printer::PrintToString;
 use renaming::Rename;
+use syntax::tst::forget::ForgetTST;
 use syntax::{tst, ust};
-use syntax::forget::tst::ForgetTST;
 
 use super::infallible::NoError;
 

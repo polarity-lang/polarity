@@ -5,8 +5,8 @@ use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;
-use syntax::forget::tst::ForgetTST;
 use syntax::tst;
+use syntax::tst::forget::ForgetTST;
 use syntax::ust;
 
 mod fv;

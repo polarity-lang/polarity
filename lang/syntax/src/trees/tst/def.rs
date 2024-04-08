@@ -8,7 +8,7 @@ use crate::common::*;
 use crate::ctx::values::TypeCtx;
 use crate::nf;
 
-use super::generic;
+use crate::generic;
 
 #[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct TST;
