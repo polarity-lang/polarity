@@ -10,6 +10,7 @@ use printer::Print;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::{BindContext, Context, LevelCtx};
+use syntax::nf::forget::ForgetNF;
 use syntax::nf::Nf;
 use syntax::ust;
 
@@ -44,7 +45,7 @@ impl ContextSubstExt for Ctx {
         let env = self.vars.env();
         let levels = self.vars.levels();
         self.map_failable(|nf| {
-            let exp = nf.forget().subst(&mut levels.clone(), s);
+            let exp = nf.forget_nf().subst(&mut levels.clone(), s);
             let nf = exp.normalize(prg, &mut env.clone())?;
             Ok(nf)
         })

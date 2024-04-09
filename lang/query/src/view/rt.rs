@@ -4,6 +4,7 @@ use super::DatabaseView;
 
 use elaborator::normalizer::normalize::Normalize;
 use parser::cst;
+use syntax::tst::forget::ForgetTST;
 use syntax::{nf, tst, ust};
 
 use crate::*;
@@ -35,7 +36,7 @@ impl<'a> DatabaseView<'a> {
 
     pub fn run(&self) -> Result<Option<Rc<nf::Nf>>, Error> {
         let tst = self.tst()?;
-        let ust = tst.forget();
+        let ust = tst.forget_tst();
 
         let main = ust.find_main();
 

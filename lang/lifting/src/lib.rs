@@ -5,7 +5,9 @@ use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;
+use syntax::generic::Named;
 use syntax::tst;
+use syntax::tst::forget::ForgetTST;
 use syntax::ust;
 
 mod fv;
@@ -33,9 +35,9 @@ pub struct LiftResult {
     /// The resulting program
     pub prg: ust::Prg,
     /// List of new top-level definitions
-    pub new_decls: HashSet<Ident>,
+    pub new_decls: HashSet<ust::Ident>,
     /// List of top-level declarations that have been modified in the lifting process
-    pub modified_decls: HashSet<Ident>,
+    pub modified_decls: HashSet<ust::Ident>,
 }
 
 #[derive(Debug)]
@@ -45,9 +47,9 @@ struct Ctx {
     /// List of new top-level declarations that got created in the lifting process
     new_decls: Vec<ust::Decl>,
     /// Current declaration being visited for lifting
-    curr_decl: Ident,
+    curr_decl: ust::Ident,
     /// List of declarations that got modified in the lifting process
-    modified_decls: HashSet<Ident>,
+    modified_decls: HashSet<ust::Ident>,
     /// Tracks the current binders in scope
     ctx: LevelCtx,
 }
@@ -311,7 +313,7 @@ impl Lift for tst::TypApp {
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let tst::TypApp { info, name, args } = self;
 
-        ust::TypApp { info: info.forget(), name: name.clone(), args: args.lift(ctx) }
+        ust::TypApp { info: info.forget_tst(), name: name.clone(), args: args.lift(ctx) }
     }
 }
 
@@ -321,25 +323,27 @@ impl Lift for tst::Exp {
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         match self {
             tst::Exp::Var { info, name, ctx: _, idx } => {
-                ust::Exp::Var { info: info.forget(), name: name.clone(), ctx: (), idx: *idx }
+                ust::Exp::Var { info: info.forget_tst(), name: name.clone(), ctx: (), idx: *idx }
             }
-            tst::Exp::TypCtor { info, name, args } => {
-                ust::Exp::TypCtor { info: info.forget(), name: name.clone(), args: args.lift(ctx) }
-            }
+            tst::Exp::TypCtor { info, name, args } => ust::Exp::TypCtor {
+                info: info.forget_tst(),
+                name: name.clone(),
+                args: args.lift(ctx),
+            },
             tst::Exp::Ctor { info, name, args } => {
-                ust::Exp::Ctor { info: info.forget(), name: name.clone(), args: args.lift(ctx) }
+                ust::Exp::Ctor { info: info.forget_tst(), name: name.clone(), args: args.lift(ctx) }
             }
             tst::Exp::Dtor { info, exp, name, args } => ust::Exp::Dtor {
-                info: info.forget(),
+                info: info.forget_tst(),
                 exp: exp.lift(ctx),
                 name: name.clone(),
                 args: args.lift(ctx),
             },
             tst::Exp::Anno { info, exp, typ } => {
-                ust::Exp::Anno { info: info.forget(), exp: exp.lift(ctx), typ: typ.lift(ctx) }
+                ust::Exp::Anno { info: info.forget_tst(), exp: exp.lift(ctx), typ: typ.lift(ctx) }
             }
-            tst::Exp::Type { info } => ust::Exp::Type { info: info.forget() },
-            tst::Exp::Hole { info } => ust::Exp::Hole { info: info.forget() },
+            tst::Exp::Type { info } => ust::Exp::Type { info: info.forget_tst() },
+            tst::Exp::Hole { info } => ust::Exp::Hole { info: info.forget_tst() },
             tst::Exp::Match { info, ctx: type_ctx, name, on_exp, motive, ret_typ, body } => {
                 ctx.lift_match(info, type_ctx, name, on_exp, motive, ret_typ, body)
             }
@@ -424,7 +428,7 @@ impl Lift for tst::ParamInst {
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
         let tst::ParamInst { info, name, typ: _ } = self;
 
-        ust::ParamInst { info: info.forget(), name: name.clone(), typ: () }
+        ust::ParamInst { info: info.forget_tst(), name: name.clone(), typ: () }
     }
 }
 
@@ -458,7 +462,7 @@ impl Ctx {
         &mut self,
         info: &tst::TypeAppInfo,
         type_ctx: &TypeCtx,
-        name: &Label,
+        name: &tst::Label,
         on_exp: &Rc<tst::Exp>,
         motive: &Option<tst::Motive>,
         ret_typ: &tst::Typ,
@@ -467,7 +471,7 @@ impl Ctx {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
             return ust::Exp::Match {
-                info: info.forget(),
+                info: info.forget_tst(),
                 ctx: (),
                 name: name.clone(),
                 on_exp: on_exp.lift(self),
@@ -484,8 +488,8 @@ impl Ctx {
         // Build a telescope of the types of the lifted variables
         let ret_fvs = motive
             .as_ref()
-            .map(|m| m.forget().free_vars(type_ctx))
-            .unwrap_or_else(|| ret_typ.as_exp().forget().free_vars(type_ctx));
+            .map(|m| m.forget_tst().free_vars(type_ctx))
+            .unwrap_or_else(|| ret_typ.as_exp().forget_tst().free_vars(type_ctx));
 
         let body = body.lift(self);
         let self_typ = info.typ.lift(self);
@@ -534,14 +538,14 @@ impl Ctx {
         &mut self,
         info: &tst::TypeAppInfo,
         type_ctx: &TypeCtx,
-        name: &Label,
+        name: &tst::Label,
         is_lambda_sugar: bool,
         body: &tst::Match,
     ) -> ust::Exp {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
             return ust::Exp::Comatch {
-                info: info.forget(),
+                info: info.forget_tst(),
                 ctx: (),
                 name: name.clone(),
                 is_lambda_sugar,
@@ -583,7 +587,7 @@ impl Ctx {
     }
 
     /// Set the current declaration
-    fn set_curr_decl(&mut self, name: Ident) {
+    fn set_curr_decl(&mut self, name: ust::Ident) {
         self.curr_decl = name;
     }
 
@@ -593,7 +597,7 @@ impl Ctx {
     }
 
     /// Generate a definition name based on the label and type information
-    fn unique_def_name(&self, label: &Label, type_name: &str) -> Ident {
+    fn unique_def_name(&self, label: &tst::Label, type_name: &str) -> ust::Ident {
         label.user_name.clone().unwrap_or_else(|| {
             let lowered = type_name.to_lowercase();
             let id = label.id;
@@ -602,7 +606,7 @@ impl Ctx {
     }
 
     /// Generate a codefinition name based on the label and type information
-    fn unique_codef_name(&self, label: &Label, type_name: &str) -> Ident {
+    fn unique_codef_name(&self, label: &tst::Label, type_name: &str) -> ust::Ident {
         label.user_name.clone().unwrap_or_else(|| {
             let id = label.id;
             format!("Mk{type_name}{id}")

@@ -12,13 +12,13 @@ pub enum Nf {
     TypCtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
-        name: Ident,
+        name: ust::Ident,
         args: Args,
     },
     Ctor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
-        name: Ident,
+        name: ust::Ident,
         args: Args,
     },
     Type {
@@ -28,7 +28,7 @@ pub enum Nf {
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
-        name: Label,
+        name: ust::Label,
         is_lambda_sugar: bool,
         body: Match,
     },
@@ -63,20 +63,20 @@ pub enum Neu {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        name: Ident,
+        name: ust::Ident,
         idx: Idx,
     },
     Dtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
         exp: Rc<Neu>,
-        name: Ident,
+        name: ust::Ident,
         args: Args,
     },
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: Option<Span>,
-        name: Label,
+        name: ust::Label,
         on_exp: Rc<Neu>,
         body: Match,
     },
@@ -117,7 +117,7 @@ impl HasSpan for Match {
 pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: Option<Span>,
-    pub name: Ident,
+    pub name: ust::Ident,
     // TODO: Rename to params
     pub args: ust::TelescopeInst,
     /// Body being `None` represents an absurd pattern
@@ -133,7 +133,7 @@ impl HasSpan for Case {
 #[derive(Debug, Clone)]
 pub struct TypApp {
     pub info: Option<Span>,
-    pub name: Ident,
+    pub name: ust::Ident,
     pub args: Args,
 }
 

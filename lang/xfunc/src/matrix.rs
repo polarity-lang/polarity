@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use syntax::common::*;
 use syntax::ctx::{BindContext, LevelCtx};
-use syntax::generic::{Attribute, DocComment};
+use syntax::generic::{Attribute, DocComment, Named};
 use syntax::ust;
 use syntax::ust::util::Instantiate;
 
@@ -11,7 +11,7 @@ use codespan::Span;
 
 #[derive(Debug, Clone)]
 pub struct Prg {
-    pub map: HashMap<Ident, XData>,
+    pub map: HashMap<ust::Ident, XData>,
     pub exp: Option<Rc<ust::Exp>>,
 }
 
@@ -20,10 +20,10 @@ pub struct XData {
     pub repr: Repr,
     pub info: Option<Span>,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: ust::Ident,
     pub typ: Rc<ust::TypAbs>,
-    pub ctors: HashMap<Ident, ust::Ctor>,
-    pub dtors: HashMap<Ident, ust::Dtor>,
+    pub ctors: HashMap<ust::Ident, ust::Ctor>,
+    pub dtors: HashMap<ust::Ident, ust::Dtor>,
     pub exprs: HashMap<Key, Option<Rc<ust::Exp>>>,
 }
 
@@ -36,8 +36,8 @@ pub struct XData {
 /// between the matrix and other representations
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Key {
-    pub ctor: Ident,
-    pub dtor: Ident,
+    pub ctor: ust::Ident,
+    pub dtor: ust::Ident,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -59,7 +59,7 @@ pub trait BuildMatrix {
 }
 
 pub struct Ctx {
-    type_for_xtor: HashMap<Ident, Ident>,
+    type_for_xtor: HashMap<ust::Ident, ust::Ident>,
 }
 
 impl Ctx {

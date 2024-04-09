@@ -11,7 +11,10 @@ use miette_util::ToMiette;
 use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
+use syntax::generic::Named;
 use syntax::nf;
+use syntax::nf::forget::ForgetNF;
+use syntax::tst::forget::ForgetTST;
 use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
 use syntax::ust::util::Instantiate;
 use syntax::ust::{self, Occurs};
@@ -409,7 +412,7 @@ impl<'a> Check for WithScrutinee<'a> {
 struct WithDestructee<'a> {
     inner: &'a ust::Match,
     /// Name of the global codefinition that gets substituted for the destructor's self parameters
-    label: Option<Ident>,
+    label: Option<ust::Ident>,
     n_label_args: usize,
     destructee: nf::TypApp,
 }
@@ -506,7 +509,7 @@ impl<'a> Infer for WithDestructee<'a> {
                     });
                     let subst = Assign(Lvl { fst: 1, snd: 0 }, ctor);
                     let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
-                    ret_typ_nf.forget().subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
+                    ret_typ_nf.forget_nf().subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
                         prg,
                         &mut LevelCtx::from(vec![self.n_label_args, params.len()]).env(),
                     )?
@@ -570,7 +573,7 @@ fn check_case(
 
             // FIXME: Refactor this
             let t = t
-                .forget()
+                .forget_nf()
                 .shift((1, 0))
                 .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
                 .subst(&mut subst_ctx_2, &subst)
@@ -646,7 +649,7 @@ fn check_cocase(
                         ctx.subst(prg, &unif)?;
                         let body = body.subst(&mut ctx.levels(), &unif);
 
-                        let t_subst = t.forget().subst(&mut ctx.levels(), &unif);
+                        let t_subst = t.forget_nf().subst(&mut ctx.levels(), &unif);
                         let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
 
                         let body_out = body.check(prg, ctx, t_nf)?;
@@ -687,8 +690,8 @@ impl Check for ust::Exp {
             ust::Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ: (), body } => {
                 let on_exp_out = on_exp.infer(prg, ctx)?;
                 let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
-                let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
-                let ret_typ_out = t.forget().check(prg, ctx, type_univ())?;
+                let typ_app = typ_app_nf.forget_nf().infer(prg, ctx)?;
+                let ret_typ_out = t.forget_nf().check(prg, ctx, type_univ())?;
 
                 let motive_out;
                 let body_t;
@@ -697,8 +700,11 @@ impl Check for ust::Exp {
                     // Pattern matching with motive
                     Some(m) => {
                         let ust::Motive { info, param, ret_typ } = m;
-                        let self_t_nf =
-                            typ_app.to_exp().forget().normalize(prg, &mut ctx.env())?.shift((1, 0));
+                        let self_t_nf = typ_app
+                            .to_exp()
+                            .forget_tst()
+                            .normalize(prg, &mut ctx.env())?
+                            .shift((1, 0));
                         let self_binder =
                             Binder { name: param.name.clone(), typ: self_t_nf.clone() };
 
@@ -751,7 +757,7 @@ impl Check for ust::Exp {
             }
             ust::Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => {
                 let typ_app_nf = t.expect_typ_app()?;
-                let typ_app = typ_app_nf.forget().infer(prg, ctx)?;
+                let typ_app = typ_app_nf.forget_nf().infer(prg, ctx)?;
 
                 // Local comatches don't support self parameters, yet.
                 let codata = prg.decls.codata(&typ_app.name, info.span())?;

@@ -8,6 +8,7 @@ use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;
 use syntax::generic::{Visit, Visitor};
+use syntax::nf::forget::ForgetNF;
 use syntax::ust::{self, Occurs};
 
 /// Find all free variables
@@ -120,7 +121,7 @@ impl FreeVars {
 pub struct FreeVar {
     /// Name of the free variable
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub name: Ident,
+    pub name: ust::Ident,
     /// The original De-Bruijn level
     pub lvl: Lvl,
     /// Type of the free variable
@@ -181,7 +182,7 @@ struct USTVisitor<'a> {
 
 impl<'a> USTVisitor<'a> {
     /// Add a free variable as well as all free variables its type
-    fn add_fv(&mut self, name: Ident, lvl: Lvl, typ: Rc<ust::Exp>, ctx: LevelCtx) {
+    fn add_fv(&mut self, name: ust::Ident, lvl: Lvl, typ: Rc<ust::Exp>, ctx: LevelCtx) {
         // Add the free variable
         let fv = FreeVar { name, lvl, typ: typ.clone(), ctx };
         if self.fvs.insert(fv) {
@@ -229,7 +230,7 @@ impl<'b> Visitor<ust::UST> for USTVisitor<'b> {
     fn visit_self_param<X, F>(
         &mut self,
         info: &Option<Span>,
-        name: &Option<Ident>,
+        name: &Option<ust::Ident>,
         typ: &ust::TypApp,
         f_inner: F,
     ) -> X
@@ -239,7 +240,7 @@ impl<'b> Visitor<ust::UST> for USTVisitor<'b> {
         self.ctx_visit_self_param(info, name, typ, f_inner)
     }
 
-    fn visit_exp_var(&mut self, _info: &Option<Span>, name: &Ident, _ctx: &(), idx: &Idx) {
+    fn visit_exp_var(&mut self, _info: &Option<Span>, name: &ust::Ident, _ctx: &(), idx: &Idx) {
         // We use the level context to convert the De Bruijn index to a De Bruijn level
         let lvl = self.lvl_ctx.idx_to_lvl(*idx);
         // If the variable is considered free (based on the cutoff), we look up its type in the typing context
@@ -249,7 +250,7 @@ impl<'b> Visitor<ust::UST> for USTVisitor<'b> {
                 .type_ctx
                 .lookup(lvl)
                 .typ
-                .forget()
+                .forget_nf()
                 .shift(((self.lvl_ctx.len() - self.type_ctx.len()) as isize, 0));
             self.add_fv(name.clone(), lvl, typ, self.lvl_ctx.clone())
         }
@@ -269,7 +270,7 @@ pub struct FVSubst {
 #[derive(Clone, Debug)]
 struct NewVar {
     /// Name of the free variable
-    name: Ident,
+    name: ust::Ident,
     /// New De-Bruijn level
     lvl: Lvl,
 }
@@ -289,7 +290,7 @@ impl FVSubst {
         Self { subst: Default::default(), cutoff }
     }
 
-    fn add(&mut self, name: Ident, lvl: Lvl) {
+    fn add(&mut self, name: ust::Ident, lvl: Lvl) {
         self.subst.insert(lvl, NewVar { name, lvl: Lvl { fst: 0, snd: self.subst.len() } });
     }
 

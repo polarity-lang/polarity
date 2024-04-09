@@ -13,6 +13,8 @@ impl generic::Phase for UST {
     type Ctx = ();
 }
 
+pub type Ident = generic::Ident;
+pub type Label = generic::Label;
 pub type DocComment = generic::DocComment;
 pub type Attribute = generic::Attribute;
 pub type Prg = generic::Prg<UST>;

@@ -5,6 +5,7 @@ use parser::cst::{BindingSite, Ident};
 use syntax::common::*;
 use syntax::ctx::{Context, ContextElem};
 use syntax::generic::lookup_table::DeclMeta;
+use syntax::generic::Named;
 use syntax::ust;
 
 use super::result::LoweringError;
@@ -82,7 +83,7 @@ impl Ctx {
         &mut self,
         user_name: Option<Ident>,
         info: &Span,
-    ) -> Result<Label, LoweringError> {
+    ) -> Result<ust::Label, LoweringError> {
         if let Some(user_name) = &user_name {
             match Context::lookup(self, user_name) {
                 Some(Elem::Decl(_)) => {
@@ -109,7 +110,7 @@ impl Ctx {
         }
         let id = self.next_label_id;
         self.next_label_id += 1;
-        Ok(Label { id, user_name })
+        Ok(ust::Label { id, user_name })
     }
 
     /// Next De Bruijn level to be assigned

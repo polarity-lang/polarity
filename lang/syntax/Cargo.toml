@@ -14,7 +14,6 @@ derivative = "2"
 # big integers
 num-bigint = "0.4"
 # lazy static
-lazy_static = "1.4.0"
 fxhash = "0.2.1"
 # workspace members
 miette_util = { path = "../../util/miette_util" }

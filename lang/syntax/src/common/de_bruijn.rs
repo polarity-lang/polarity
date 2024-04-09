@@ -2,8 +2,6 @@ use std::fmt;
 use std::ops::{Bound, RangeBounds};
 use std::rc::Rc;
 
-use super::equiv::*;
-
 /// Two-dimensional De-Bruijn index
 ///
 /// The first component counts the number of binder lists in scope between the variable
@@ -152,12 +150,6 @@ impl<R: ShiftRange> ShiftRangeExt for R {
         }
 
         (shift_bound(self.start_bound(), by), shift_bound(self.end_bound(), by))
-    }
-}
-
-impl AlphaEq for Idx {
-    fn alpha_eq(&self, other: &Self) -> bool {
-        self.fst == other.fst && self.snd == other.snd
     }
 }
 

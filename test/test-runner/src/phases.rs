@@ -4,7 +4,7 @@ use std::fmt;
 use parser::cst;
 use printer::PrintToString;
 use renaming::Rename;
-use syntax::common::Forget as _;
+use syntax::tst::forget::ForgetTST;
 use syntax::{tst, ust};
 
 use super::infallible::NoError;
@@ -270,7 +270,7 @@ impl Phase for Forget {
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        Ok(input.forget())
+        Ok(input.forget_tst())
     }
 }
 
@@ -289,6 +289,6 @@ impl TestOutput for ust::Prg {
 
 impl TestOutput for tst::Prg {
     fn test_output(&self) -> String {
-        self.forget().print_to_string(None)
+        self.forget_tst().print_to_string(None)
     }
 }

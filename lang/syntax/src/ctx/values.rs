@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::{Context, LevelCtx};
+use crate::generic::*;
 use crate::nf::*;
 
 use super::ContextElem;

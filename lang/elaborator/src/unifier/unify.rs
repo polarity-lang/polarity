@@ -8,6 +8,7 @@ use printer::{DocAllocator, Print};
 use syntax::common::*;
 use syntax::generic;
 use syntax::nf;
+use syntax::nf::forget::ForgetNF;
 use syntax::ust;
 
 #[derive(Debug, Clone)]
@@ -23,7 +24,7 @@ pub struct Eqn {
 
 impl From<(Rc<nf::Nf>, Rc<nf::Nf>)> for Eqn {
     fn from((lhs, rhs): (Rc<nf::Nf>, Rc<nf::Nf>)) -> Self {
-        Eqn { lhs: lhs.forget(), rhs: rhs.forget() }
+        Eqn { lhs: lhs.forget_nf(), rhs: rhs.forget_nf() }
     }
 }
 
