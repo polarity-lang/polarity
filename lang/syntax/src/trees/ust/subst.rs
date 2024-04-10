@@ -7,33 +7,48 @@ use crate::ust::*;
 impl Substitutable<Rc<Exp>> for Rc<Exp> {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         match &**self {
-            Exp::Var { info, name, ctx: (), idx } => {
+            Exp::Var { info, span, name, ctx: (), idx } => {
                 match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
                     Some(exp) => exp,
-                    None => {
-                        Rc::new(Exp::Var { info: *info, name: name.clone(), ctx: (), idx: *idx })
-                    }
+                    None => Rc::new(Exp::Var {
+                        info: *info,
+                        span: *span,
+                        name: name.clone(),
+                        ctx: (),
+                        idx: *idx,
+                    }),
                 }
             }
-            Exp::TypCtor { info, name, args } => {
-                Rc::new(Exp::TypCtor { info: *info, name: name.clone(), args: args.subst(ctx, by) })
-            }
-            Exp::Ctor { info, name, args } => {
-                Rc::new(Exp::Ctor { info: *info, name: name.clone(), args: args.subst(ctx, by) })
-            }
-            Exp::Dtor { info, exp, name, args } => Rc::new(Exp::Dtor {
+            Exp::TypCtor { info, span, name, args } => Rc::new(Exp::TypCtor {
                 info: *info,
+                span: *span,
+                name: name.clone(),
+                args: args.subst(ctx, by),
+            }),
+            Exp::Ctor { info, span, name, args } => Rc::new(Exp::Ctor {
+                info: *info,
+                span: *span,
+                name: name.clone(),
+                args: args.subst(ctx, by),
+            }),
+            Exp::Dtor { info, span, exp, name, args } => Rc::new(Exp::Dtor {
+                info: *info,
+                span: *span,
                 exp: exp.subst(ctx, by),
                 name: name.clone(),
                 args: args.subst(ctx, by),
             }),
-            Exp::Anno { info, exp, typ } => {
-                Rc::new(Exp::Anno { info: *info, exp: exp.subst(ctx, by), typ: typ.subst(ctx, by) })
-            }
-            Exp::Type { info } => Rc::new(Exp::Type { info: *info }),
-            Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ, body } => {
+            Exp::Anno { info, span, exp, typ } => Rc::new(Exp::Anno {
+                info: *info,
+                span: *span,
+                exp: exp.subst(ctx, by),
+                typ: typ.subst(ctx, by),
+            }),
+            Exp::Type { info, span } => Rc::new(Exp::Type { info: *info, span: *span }),
+            Exp::Match { info, span, ctx: (), name, on_exp, motive, ret_typ, body } => {
                 Rc::new(Exp::Match {
                     info: *info,
+                    span: *span,
                     ctx: (),
                     name: name.clone(),
                     on_exp: on_exp.subst(ctx, by),
@@ -42,24 +57,27 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                     body: body.subst(ctx, by),
                 })
             }
-            Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => Rc::new(Exp::Comatch {
-                info: *info,
-                ctx: (),
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.subst(ctx, by),
-            }),
-            Exp::Hole { info } => Rc::new(Exp::Hole { info: *info }),
+            Exp::Comatch { info, span, ctx: (), name, is_lambda_sugar, body } => {
+                Rc::new(Exp::Comatch {
+                    info: *info,
+                    span: *span,
+                    ctx: (),
+                    name: name.clone(),
+                    is_lambda_sugar: *is_lambda_sugar,
+                    body: body.subst(ctx, by),
+                })
+            }
+            Exp::Hole { info, span } => Rc::new(Exp::Hole { info: *info, span: *span }),
         }
     }
 }
 
 impl Substitutable<Rc<Exp>> for Motive {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Motive { info, param, ret_typ } = self;
+        let Motive { span, param, ret_typ } = self;
 
         Motive {
-            info: *info,
+            span: *span,
             param: param.clone(),
             ret_typ: ctx.bind_single((), |ctx| ret_typ.subst(ctx, &by.shift((1, 0)))),
         }
@@ -91,8 +109,8 @@ impl Substitutable<Rc<Exp>> for Case {
 
 impl Substitutable<Rc<Exp>> for TypApp {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let TypApp { info, name, args } = self;
-        TypApp { info: *info, name: name.clone(), args: args.subst(ctx, by) }
+        let TypApp { info, span, name, args } = self;
+        TypApp { info: *info, span: *span, name: name.clone(), args: args.subst(ctx, by) }
     }
 }
 
@@ -143,6 +161,7 @@ impl Substitution<Rc<Exp>> for SwapSubst {
         new_lvl.map(|new_lvl| {
             Rc::new(Exp::Var {
                 info: Default::default(),
+                span: Default::default(),
                 name: "".to_owned(),
                 ctx: (),
                 idx: new_ctx.lvl_to_idx(new_lvl),

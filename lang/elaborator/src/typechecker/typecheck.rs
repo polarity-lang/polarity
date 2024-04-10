@@ -13,7 +13,7 @@ use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
 use syntax::generic::Named;
 use syntax::tst::forget::ForgetTST;
-use syntax::tst::{self, ElabInfoExt, HasTypeInfo};
+use syntax::tst::{self, HasTypeInfo};
 use syntax::ust::util::Instantiate;
 use syntax::ust::{self, Occurs};
 use tracer::trace;
@@ -182,7 +182,7 @@ impl Infer for ust::Ctor {
             return Err(TypeError::NotInType {
                 expected: expected.clone(),
                 actual: typ.name.clone(),
-                span: typ.info.to_miette(),
+                span: typ.span.to_miette(),
             });
         }
 
@@ -214,7 +214,7 @@ impl Infer for ust::Dtor {
             return Err(TypeError::NotInType {
                 expected: expected.clone(),
                 actual: self_param.typ.name.clone(),
-                span: self_param.typ.info.to_miette(),
+                span: self_param.typ.span.to_miette(),
             });
         }
 
@@ -501,7 +501,8 @@ impl<'a> Infer for WithDestructee<'a> {
                     let args = (0..self.n_label_args)
                         .rev()
                         .map(|snd| ust::Exp::Var {
-                            info: None,
+                            info: (),
+                            span: None,
                             name: "".to_owned(),
                             ctx: (),
                             idx: Idx { fst: 2, snd },
@@ -509,7 +510,8 @@ impl<'a> Infer for WithDestructee<'a> {
                         .map(Rc::new)
                         .collect();
                     let ctor = Rc::new(ust::Exp::Ctor {
-                        info: None,
+                        info: (),
+                        span: None,
                         name: label.clone(),
                         args: ust::Args { args },
                     });
@@ -563,7 +565,8 @@ fn check_case(
             let args = (0..params.len())
                 .rev()
                 .map(|snd| ust::Exp::Var {
-                    info: None,
+                    info: (),
+                    span: None,
                     name: "".to_owned(),
                     ctx: (),
                     idx: Idx { fst: 1, snd },
@@ -571,7 +574,8 @@ fn check_case(
                 .map(Rc::new)
                 .collect();
             let ctor = Rc::new(ust::Exp::Ctor {
-                info: None,
+                info: (),
+                span: None,
                 name: name.clone(),
                 args: ust::Args { args },
             });
@@ -692,7 +696,7 @@ impl Check for ust::Exp {
         t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
         match self {
-            ust::Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ: (), body } => {
+            ust::Exp::Match { info: _, span, ctx: (), name, on_exp, motive, ret_typ: (), body } => {
                 let on_exp_out = on_exp.infer(prg, ctx)?;
                 let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
                 let typ_app = typ_app_nf.infer(prg, ctx)?;
@@ -704,7 +708,7 @@ impl Check for ust::Exp {
                 match motive {
                     // Pattern matching with motive
                     Some(m) => {
-                        let ust::Motive { info, param, ret_typ } = m;
+                        let ust::Motive { span, param, ret_typ } = m;
                         let self_t_nf = typ_app
                             .to_exp()
                             .forget_tst()
@@ -731,9 +735,10 @@ impl Check for ust::Exp {
                             ret_typ.normalize(prg, &mut ctx.env())
                         })?;
                         motive_out = Some(tst::Motive {
-                            info: *info,
+                            span: *span,
                             param: tst::ParamInst {
-                                info: param.info.with_type(self_t_nf),
+                                info: tst::TypeInfo { typ: self_t_nf, ctx: None },
+                                span: span.clone(),
                                 name: param.name.clone(),
                                 typ: Rc::new(typ_app.to_exp()).into(),
                             },
@@ -751,7 +756,8 @@ impl Check for ust::Exp {
                     .check(prg, ctx, body_t)?;
 
                 Ok(tst::Exp::Match {
-                    info: info.with_type_app(typ_app, typ_app_nf),
+                    info: tst::TypeAppInfo { typ: typ_app, typ_nf: typ_app_nf },
+                    span: *span,
                     ctx: ctx.vars.clone(),
                     name: name.clone(),
                     on_exp: on_exp_out,
@@ -760,16 +766,16 @@ impl Check for ust::Exp {
                     body: body_out,
                 })
             }
-            ust::Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => {
+            ust::Exp::Comatch { info: _, span, ctx: (), name, is_lambda_sugar, body } => {
                 let typ_app_nf = t.expect_typ_app()?;
                 let typ_app = typ_app_nf.infer(prg, ctx)?;
 
                 // Local comatches don't support self parameters, yet.
-                let codata = prg.decls.codata(&typ_app.name, info.span())?;
+                let codata = prg.decls.codata(&typ_app.name, *span)?;
                 if uses_self(prg, codata)? {
                     return Err(TypeError::LocalComatchWithSelf {
                         type_name: codata.name.to_owned(),
-                        span: info.span().to_miette(),
+                        span: span.to_miette(),
                     });
                 }
 
@@ -782,16 +788,18 @@ impl Check for ust::Exp {
                 let body_out = wd.infer(prg, ctx)?;
 
                 Ok(tst::Exp::Comatch {
-                    info: info.with_type_app(typ_app, typ_app_nf),
+                    info: tst::TypeAppInfo { typ: typ_app, typ_nf: typ_app_nf },
+                    span: *span,
                     ctx: ctx.vars.clone(),
                     name: name.clone(),
                     is_lambda_sugar: *is_lambda_sugar,
                     body: body_out,
                 })
             }
-            ust::Exp::Hole { info } => {
-                Ok(tst::Exp::Hole { info: info.with_type_and_ctx(t.clone(), ctx.vars.clone()) })
-            }
+            ust::Exp::Hole { info: _, span } => Ok(tst::Exp::Hole {
+                info: tst::TypeInfo { typ: t.clone(), ctx: Some(ctx.vars.clone()) },
+                span: *span,
+            }),
             _ => {
                 let actual = self.infer(prg, ctx)?;
                 convert(actual.typ(), &t)?;
@@ -808,46 +816,49 @@ impl Infer for ust::Exp {
     #[trace("{:P} |- {:P} => {return:P}", ctx, self, |ret| ret.as_ref().map(|e| e.typ()))]
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         match self {
-            ust::Exp::Var { info, name, ctx: (), idx } => {
+            ust::Exp::Var { info: _, span, name, ctx: (), idx } => {
                 let typ_nf = ctx.lookup(*idx);
                 Ok(tst::Exp::Var {
-                    info: info.with_type(typ_nf),
+                    info: tst::TypeInfo { typ: typ_nf, ctx: None },
+                    span: *span,
                     name: name.clone(),
                     ctx: ctx.vars.clone(),
                     idx: *idx,
                 })
             }
-            ust::Exp::TypCtor { info, name, args } => {
-                let ust::TypAbs { params } = &*prg.decls.typ(name, *info)?.typ();
+            ust::Exp::TypCtor { info: _, span, name, args } => {
+                let ust::TypAbs { params } = &*prg.decls.typ(name, *span)?.typ();
 
-                let args_out = check_args(args, prg, name, ctx, params, *info)?;
+                let args_out = check_args(args, prg, name, ctx, params, *span)?;
 
                 Ok(tst::Exp::TypCtor {
-                    info: info.with_type(type_univ()),
+                    info: tst::TypeInfo { typ: type_univ(), ctx: None },
+                    span: *span,
                     name: name.clone(),
                     args: args_out,
                 })
             }
-            ust::Exp::Ctor { info, name, args } => {
-                let ust::Ctor { name, params, typ, .. } = &prg.decls.ctor_or_codef(name, *info)?;
+            ust::Exp::Ctor { info: _, span, name, args } => {
+                let ust::Ctor { name, params, typ, .. } = &prg.decls.ctor_or_codef(name, *span)?;
 
-                let args_out = check_args(args, prg, name, ctx, params, *info)?;
+                let args_out = check_args(args, prg, name, ctx, params, *span)?;
                 let typ_out = typ
                     .subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()])
                     .to_exp();
                 let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
 
                 Ok(tst::Exp::Ctor {
-                    info: info.with_type(typ_nf),
+                    info: tst::TypeInfo { typ: typ_nf, ctx: None },
+                    span: *span,
                     name: name.clone(),
                     args: args_out,
                 })
             }
-            ust::Exp::Dtor { info, exp, name, args } => {
+            ust::Exp::Dtor { info: _, span, exp, name, args } => {
                 let ust::Dtor { name, params, self_param, ret_typ, .. } =
-                    &prg.decls.dtor_or_def(name, *info)?;
+                    &prg.decls.dtor_or_def(name, *span)?;
 
-                let args_out = check_args(args, prg, name, ctx, params, *info)?;
+                let args_out = check_args(args, prg, name, ctx, params, *span)?;
 
                 let self_param_out = self_param
                     .typ
@@ -862,24 +873,32 @@ impl Infer for ust::Exp {
                 let typ_out_nf = typ_out.normalize(prg, &mut ctx.env())?;
 
                 Ok(tst::Exp::Dtor {
-                    info: info.with_type(typ_out_nf),
+                    info: tst::TypeInfo { typ: typ_out_nf, ctx: None },
+                    span: *span,
                     exp: exp_out,
                     name: name.clone(),
                     args: args_out,
                 })
             }
-            ust::Exp::Anno { info, exp, typ } => {
+            ust::Exp::Anno { info: _, span, exp, typ } => {
                 let typ_out = typ.check(prg, ctx, type_univ())?;
                 let typ_nf = typ.normalize(prg, &mut ctx.env())?;
                 let exp_out = (**exp).check(prg, ctx, typ_nf.clone())?;
                 Ok(tst::Exp::Anno {
-                    info: info.with_type(typ_nf),
+                    info: tst::TypeInfo { typ: typ_nf, ctx: None },
+                    span: *span,
                     exp: Rc::new(exp_out),
                     typ: typ_out,
                 })
             }
-            ust::Exp::Type { info } => Ok(tst::Exp::Type { info: info.with_type(type_univ()) }),
-            ust::Exp::Hole { info } => Ok(tst::Exp::Hole { info: info.with_type(type_hole()) }),
+            ust::Exp::Type { info: _, span } => Ok(tst::Exp::Type {
+                info: tst::TypeInfo { typ: type_univ(), ctx: None },
+                span: *span,
+            }),
+            ust::Exp::Hole { info: _, span } => Ok(tst::Exp::Hole {
+                info: tst::TypeInfo { typ: type_hole(), ctx: None },
+                span: *span,
+            }),
             ust::Exp::Match { .. } => {
                 Err(TypeError::CannotInferMatch { span: self.span().to_miette() })
             }
@@ -894,11 +913,16 @@ impl Infer for ust::TypApp {
     type Target = tst::TypApp;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::TypApp { info, name, args } = self;
-        let ust::TypAbs { params } = &*prg.decls.typ(name, *info)?.typ();
+        let ust::TypApp { info: _, span, name, args } = self;
+        let ust::TypAbs { params } = &*prg.decls.typ(name, *span)?.typ();
 
-        let args_out = check_args(args, prg, name, ctx, params, *info)?;
-        Ok(tst::TypApp { info: info.with_type(type_univ()), name: name.clone(), args: args_out })
+        let args_out = check_args(args, prg, name, ctx, params, *span)?;
+        Ok(tst::TypApp {
+            info: tst::TypeInfo { typ: type_univ(), ctx: None },
+            span: *span,
+            name: name.clone(),
+            args: args_out,
+        })
     }
 }
 
@@ -965,13 +989,14 @@ impl CheckTelescope for ust::TelescopeInst {
             iter,
             vec![],
             |ctx, params_out, (param_actual, param_expected)| {
-                let ust::ParamInst { info, name, typ: () } = param_actual;
+                let ust::ParamInst { info: _, span, name, typ: () } = param_actual;
                 let ust::Param { typ, .. } = param_expected;
                 let typ_out = typ.check(prg, ctx, type_univ())?;
                 let typ_nf = typ.normalize(prg, &mut ctx.env())?;
                 let mut params_out = params_out;
                 let param_out = tst::ParamInst {
-                    info: info.with_type(typ_nf.clone()),
+                    info: tst::TypeInfo { typ: typ_nf.clone(), ctx: None },
+                    span: span.clone(),
                     name: name.clone(),
                     typ: typ_out.into(),
                 };
@@ -1071,8 +1096,8 @@ trait ExpectTypApp {
 impl ExpectTypApp for Rc<ust::Exp> {
     fn expect_typ_app(&self) -> Result<ust::TypApp, TypeError> {
         match &**self {
-            ust::Exp::TypCtor { info, name, args } => {
-                Ok(ust::TypApp { info: *info, name: name.clone(), args: args.clone() })
+            ust::Exp::TypCtor { info, span, name, args } => {
+                Ok(ust::TypApp { info: *info, span: *span, name: name.clone(), args: args.clone() })
             }
             _ => Err(TypeError::expected_typ_app(self.clone())),
         }
@@ -1106,11 +1131,11 @@ impl<T: Infer> Infer for Rc<T> {
 }
 
 fn type_univ() -> Rc<ust::Exp> {
-    Rc::new(ust::Exp::Type { info: None })
+    Rc::new(ust::Exp::Type { info: (), span: None })
 }
 
 fn type_hole() -> Rc<ust::Exp> {
-    Rc::new(ust::Exp::Hole { info: None })
+    Rc::new(ust::Exp::Hole { info: (), span: None })
 }
 
 // Checks whether the codata type contains destructors with a self parameter

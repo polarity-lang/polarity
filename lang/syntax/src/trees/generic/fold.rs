@@ -38,16 +38,16 @@ pub trait Folder<P: Phase, O: Out> {
     fn fold_let(&mut self, info: Option<Span>, doc: Option<DocComment>, name: Ident, attr: Attribute, params: O::Telescope, typ: O::Exp, body: O::Exp) -> O::Let;
     fn fold_match(&mut self, info: Option<Span>, cases: Vec<O::Case>, omit_absurd: bool) -> O::Match;
     fn fold_case(&mut self, info: Option<Span>, name: Ident, args: O::TelescopeInst, body: Option<O::Exp>) -> O::Case;
-    fn fold_typ_app(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::TypApp;
-    fn fold_exp_var(&mut self, info: O::TypeInfo, name: Ident, ctx: O::Ctx, idx: O::Idx) -> O::Exp;
-    fn fold_exp_typ_ctor(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::Exp;
-    fn fold_exp_ctor(&mut self, info: O::TypeInfo, name: Ident, args: O::Args) -> O::Exp;
-    fn fold_exp_dtor(&mut self, info: O::TypeInfo, exp: O::Exp, name: Ident, args: O::Args) -> O::Exp;
-    fn fold_exp_anno(&mut self, info: O::TypeInfo, exp: O::Exp, typ: O::Exp) -> O::Exp;
-    fn fold_exp_type(&mut self, info: O::TypeInfo) -> O::Exp;
-    fn fold_exp_match(&mut self, info: O::TypeAppInfo, ctx: O::Ctx, name: Label, on_exp: O::Exp, motive: Option<O::Motive>, ret_typ: O::Typ, body: O::Match) -> O::Exp;
-    fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, ctx: O::Ctx, name: Label, is_lambda_sugar: bool, body: O::Match) -> O::Exp;
-    fn fold_exp_hole(&mut self, info: O::TypeInfo) -> O::Exp;
+    fn fold_typ_app(&mut self, info: O::TypeInfo, span: Option<Span>, name: Ident, args: O::Args) -> O::TypApp;
+    fn fold_exp_var(&mut self, info: O::TypeInfo, span: Option<Span>, name: Ident, ctx: O::Ctx, idx: O::Idx) -> O::Exp;
+    fn fold_exp_typ_ctor(&mut self, info: O::TypeInfo, span: Option<Span>, name: Ident, args: O::Args) -> O::Exp;
+    fn fold_exp_ctor(&mut self, info: O::TypeInfo, span: Option<Span>, name: Ident, args: O::Args) -> O::Exp;
+    fn fold_exp_dtor(&mut self, info: O::TypeInfo, span: Option<Span>,  exp: O::Exp, name: Ident, args: O::Args) -> O::Exp;
+    fn fold_exp_anno(&mut self, info: O::TypeInfo, span: Option<Span>, exp: O::Exp, typ: O::Exp) -> O::Exp;
+    fn fold_exp_type(&mut self, info: O::TypeInfo, span: Option<Span>) -> O::Exp;
+    fn fold_exp_match(&mut self, info: O::TypeAppInfo, span: Option<Span>, ctx: O::Ctx, name: Label, on_exp: O::Exp, motive: Option<O::Motive>, ret_typ: O::Typ, body: O::Match) -> O::Exp;
+    fn fold_exp_comatch(&mut self, info: O::TypeAppInfo, span: Option<Span>, ctx: O::Ctx, name: Label, is_lambda_sugar: bool, body: O::Match) -> O::Exp;
+    fn fold_exp_hole(&mut self, info: O::TypeInfo, span: Option<Span>) -> O::Exp;
     fn fold_motive(&mut self, info: Option<Span>, param: O::ParamInst, ret_typ: O::Exp) -> O::Motive;
     // FIXME: Unifier binder handling into one method
     fn fold_motive_param<X, F>(&mut self, param: O::ParamInst, f_inner: F) -> X
@@ -72,7 +72,7 @@ pub trait Folder<P: Phase, O: Out> {
     ;
     fn fold_args(&mut self, args: Vec<O::Exp>) -> O::Args;
     fn fold_param(&mut self, name: Ident, typ: O::Exp) -> O::Param;
-    fn fold_param_inst(&mut self, info: O::TypeInfo, name: Ident, typ: O::Typ) -> O::ParamInst;
+    fn fold_param_inst(&mut self, info: O::TypeInfo, span: Option<Span>, name: Ident, typ: O::Typ) -> O::ParamInst;
     fn fold_type_info(&mut self, info: P::TypeInfo) -> O::TypeInfo;
     fn fold_type_app_info(&mut self, info: P::TypeAppInfo) -> O::TypeAppInfo;
     fn fold_idx(&mut self, idx: Idx) -> O::Idx;
@@ -476,10 +476,10 @@ impl<P: Phase, O: Out> Fold<P, O> for TypApp<P> {
     where
         F: Folder<P, O>,
     {
-        let TypApp { info, name, args } = self;
+        let TypApp { info, span, name, args } = self;
         let args = args.fold(f);
         let info = f.fold_type_info(info);
-        f.fold_typ_app(info, name, args)
+        f.fold_typ_app(info, span, name, args)
     }
 }
 
@@ -491,56 +491,56 @@ impl<P: Phase, O: Out> Fold<P, O> for Exp<P> {
         F: Folder<P, O>,
     {
         match self {
-            Exp::Var { info, name, ctx, idx } => {
+            Exp::Var { info, span, name, ctx, idx } => {
                 let info = f.fold_type_info(info);
                 let idx = f.fold_idx(idx);
                 let ctx = f.fold_ctx(ctx);
-                f.fold_exp_var(info, name, ctx, idx)
+                f.fold_exp_var(info, span, name, ctx, idx)
             }
-            Exp::TypCtor { info, name, args } => {
+            Exp::TypCtor { info, span, name, args } => {
                 let args = args.fold(f);
                 let info = f.fold_type_info(info);
-                f.fold_exp_typ_ctor(info, name, args)
+                f.fold_exp_typ_ctor(info, span, name, args)
             }
-            Exp::Ctor { info, name, args } => {
+            Exp::Ctor { info, span, name, args } => {
                 let args = args.fold(f);
                 let info = f.fold_type_info(info);
-                f.fold_exp_ctor(info, name, args)
+                f.fold_exp_ctor(info, span, name, args)
             }
-            Exp::Dtor { info, exp, name, args } => {
+            Exp::Dtor { info, span, exp, name, args } => {
                 let exp = exp.fold(f);
                 let args = args.fold(f);
                 let info = f.fold_type_info(info);
-                f.fold_exp_dtor(info, exp, name, args)
+                f.fold_exp_dtor(info, span, exp, name, args)
             }
-            Exp::Anno { info, exp, typ } => {
+            Exp::Anno { info, span, exp, typ } => {
                 let exp = exp.fold(f);
                 let typ = typ.fold(f);
                 let info = f.fold_type_info(info);
-                f.fold_exp_anno(info, exp, typ)
+                f.fold_exp_anno(info, span, exp, typ)
             }
-            Exp::Type { info } => {
+            Exp::Type { info, span } => {
                 let info = f.fold_type_info(info);
-                f.fold_exp_type(info)
+                f.fold_exp_type(info, span)
             }
-            Exp::Match { info, ctx, name, on_exp, motive, ret_typ, body } => {
+            Exp::Match { info, span, ctx, name, on_exp, motive, ret_typ, body } => {
                 let info = f.fold_type_app_info(info);
                 let ctx = f.fold_ctx(ctx);
                 let on_exp = on_exp.fold(f);
                 let body = body.fold(f);
                 let motive = motive.map(|m| m.fold(f));
                 let ret_typ = f.fold_typ(ret_typ);
-                f.fold_exp_match(info, ctx, name, on_exp, motive, ret_typ, body)
+                f.fold_exp_match(info, span, ctx, name, on_exp, motive, ret_typ, body)
             }
-            Exp::Comatch { info, ctx, name, is_lambda_sugar, body } => {
+            Exp::Comatch { info, span, ctx, name, is_lambda_sugar, body } => {
                 let info = f.fold_type_app_info(info);
                 let ctx = f.fold_ctx(ctx);
                 let body = body.fold(f);
-                f.fold_exp_comatch(info, ctx, name, is_lambda_sugar, body)
+                f.fold_exp_comatch(info, span, ctx, name, is_lambda_sugar, body)
             }
-            Exp::Hole { info } => {
+            Exp::Hole { info, span } => {
                 let info = f.fold_type_info(info);
-                f.fold_exp_hole(info)
+                f.fold_exp_hole(info, span)
             }
         }
     }
@@ -553,13 +553,13 @@ impl<P: Phase, O: Out> Fold<P, O> for Motive<P> {
     where
         F: Folder<P, O>,
     {
-        let Motive { info, param, ret_typ } = self;
+        let Motive { span, param, ret_typ } = self;
 
         let param = param.fold(f);
 
         f.fold_motive_param(param, |f, param| {
             let ret_typ = ret_typ.fold(f);
-            f.fold_motive(info, param, ret_typ)
+            f.fold_motive(span, param, ret_typ)
         })
     }
 }
@@ -584,10 +584,10 @@ impl<P: Phase, O: Out> Fold<P, O> for ParamInst<P> {
     where
         F: Folder<P, O>,
     {
-        let ParamInst { info, name, typ } = self;
+        let ParamInst { info, span, name, typ } = self;
         let info = f.fold_type_info(info);
         let typ = f.fold_typ(typ);
-        f.fold_param_inst(info, name, typ)
+        f.fold_param_inst(info, span, name, typ)
     }
 }
 

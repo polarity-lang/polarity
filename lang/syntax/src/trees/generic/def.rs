@@ -14,10 +14,10 @@ where
     Self: Default + Clone + fmt::Debug + Eq,
 {
     /// Type of the `info` field, containing span and (depending on the phase) type information
-    type TypeInfo: HasSpan + Clone + fmt::Debug;
+    type TypeInfo: Clone + fmt::Debug;
     /// Type of the `info` field, containing span and (depending on the phase) type information
     /// where the type is required to be the full application of a type constructor
-    type TypeAppInfo: HasSpan + Clone + Into<Self::TypeInfo> + fmt::Debug;
+    type TypeAppInfo: Clone + Into<Self::TypeInfo> + fmt::Debug;
     /// A type which is not annotated in the source, but will be filled in later during typechecking
     type InfTyp: Clone + fmt::Debug;
     /// Context annotated during typechecking
@@ -319,13 +319,19 @@ impl<P: Phase> SelfParam<P> {
 #[derive(Debug, Clone)]
 pub struct TypApp<P: Phase> {
     pub info: P::TypeInfo,
+    pub span: Option<Span>,
     pub name: Ident,
     pub args: Args<P>,
 }
 
 impl<P: Phase> TypApp<P> {
     pub fn to_exp(&self) -> Exp<P> {
-        Exp::TypCtor { info: self.info.clone(), name: self.name.clone(), args: self.args.clone() }
+        Exp::TypCtor {
+            info: self.info.clone(),
+            span: self.span.clone(),
+            name: self.name.clone(),
+            args: self.args.clone(),
+        }
     }
 
     /// A type application is simple if the list of arguments is empty.
@@ -341,6 +347,8 @@ pub enum Exp<P: Phase> {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        span: Option<Span>,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
         name: Ident,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         ctx: P::Ctx,
@@ -349,18 +357,24 @@ pub enum Exp<P: Phase> {
     TypCtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        span: Option<Span>,
         name: Ident,
         args: Args<P>,
     },
     Ctor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        span: Option<Span>,
         name: Ident,
         args: Args<P>,
     },
     Dtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        span: Option<Span>,
         exp: Rc<Exp<P>>,
         name: Ident,
         args: Args<P>,
@@ -368,16 +382,22 @@ pub enum Exp<P: Phase> {
     Anno {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        span: Option<Span>,
         exp: Rc<Exp<P>>,
         typ: Rc<Exp<P>>,
     },
     Type {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        span: Option<Span>,
     },
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        span: Option<Span>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         ctx: P::Ctx,
         name: Label,
@@ -391,6 +411,8 @@ pub enum Exp<P: Phase> {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        span: Option<Span>,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
         ctx: P::Ctx,
         name: Label,
         is_lambda_sugar: bool,
@@ -399,21 +421,23 @@ pub enum Exp<P: Phase> {
     Hole {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        span: Option<Span>,
     },
 }
 
 impl<P: Phase> HasSpan for Exp<P> {
     fn span(&self) -> Option<Span> {
         match self {
-            Exp::Var { info, .. } => info.span(),
-            Exp::TypCtor { info, .. } => info.span(),
-            Exp::Ctor { info, .. } => info.span(),
-            Exp::Dtor { info, .. } => info.span(),
-            Exp::Anno { info, .. } => info.span(),
-            Exp::Type { info } => info.span(),
-            Exp::Match { info, .. } => info.span(),
-            Exp::Comatch { info, .. } => info.span(),
-            Exp::Hole { info, .. } => info.span(),
+            Exp::Var { span, .. } => *span,
+            Exp::TypCtor { span, .. } => *span,
+            Exp::Ctor { span, .. } => *span,
+            Exp::Dtor { span, .. } => *span,
+            Exp::Anno { span, .. } => *span,
+            Exp::Type { span, .. } => *span,
+            Exp::Match { span, .. } => *span,
+            Exp::Comatch { span, .. } => *span,
+            Exp::Hole { span, .. } => *span,
         }
     }
 }
@@ -422,7 +446,7 @@ impl<P: Phase> HasSpan for Exp<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Motive<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub param: ParamInst<P>,
     pub ret_typ: Rc<Exp<P>>,
 }
@@ -505,6 +529,8 @@ impl<P: Phase> Named for Param<P> {
 pub struct ParamInst<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeInfo,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]

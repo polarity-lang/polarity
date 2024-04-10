@@ -53,6 +53,7 @@ impl FreeVars {
             let param = ust::Param { name: name.clone(), typ: typ.clone() };
             let arg = Rc::new(ust::Exp::Var {
                 info: Default::default(),
+                span: Default::default(),
                 name: name.clone(),
                 ctx: (),
                 idx: base_ctx.lvl_to_idx(fv.lvl),
@@ -239,7 +240,7 @@ impl<'b> Visitor<ust::UST> for USTVisitor<'b> {
         self.ctx_visit_self_param(info, name, typ, f_inner)
     }
 
-    fn visit_exp_var(&mut self, _info: &Option<Span>, name: &ust::Ident, _ctx: &(), idx: &Idx) {
+    fn visit_exp_var(&mut self, _info: &(), name: &ust::Ident, _ctx: &(), idx: &Idx) {
         // We use the level context to convert the De Bruijn index to a De Bruijn level
         let lvl = self.lvl_ctx.idx_to_lvl(*idx);
         // If the variable is considered free (based on the cutoff), we look up its type in the typing context
@@ -338,6 +339,7 @@ impl<'a> Substitution<Rc<ust::Exp>> for FVBodySubst<'a> {
         self.inner.subst.get(&lvl).map(|fv| {
             Rc::new(ust::Exp::Var {
                 info: Default::default(),
+                span: Default::default(),
                 name: fv.name.clone(),
                 ctx: (),
                 idx: new_ctx.lvl_to_idx(fv.lvl),
@@ -351,6 +353,7 @@ impl<'a> Substitution<Rc<ust::Exp>> for FVParamSubst<'a> {
         self.inner.subst.get(&lvl).map(|fv| {
             Rc::new(ust::Exp::Var {
                 info: Default::default(),
+                span: Default::default(),
                 name: fv.name.clone(),
                 ctx: (),
                 idx: Idx { fst: 0, snd: self.inner.subst.len() - 1 - fv.lvl.snd },

@@ -348,7 +348,7 @@ impl<P: Phase> Visit<P> for TypApp<P> {
     where
         V: Visitor<P>,
     {
-        let TypApp { info, name, args } = self;
+        let TypApp { info, span: _, name, args } = self;
         args.visit(v);
         v.visit_type_info(info);
         v.visit_typ_app(info, name, args)
@@ -361,39 +361,39 @@ impl<P: Phase> Visit<P> for Exp<P> {
         V: Visitor<P>,
     {
         match self {
-            Exp::Var { info, name, ctx, idx } => {
+            Exp::Var { info, span: _, name, ctx, idx } => {
                 v.visit_type_info(info);
                 v.visit_idx(idx);
                 v.visit_ctx(ctx);
                 v.visit_exp_var(info, name, ctx, idx)
             }
-            Exp::TypCtor { info, name, args } => {
+            Exp::TypCtor { info, span: _, name, args } => {
                 args.visit(v);
                 v.visit_type_info(info);
                 v.visit_exp_typ_ctor(info, name, args)
             }
-            Exp::Ctor { info, name, args } => {
+            Exp::Ctor { info, span: _, name, args } => {
                 args.visit(v);
                 v.visit_type_info(info);
                 v.visit_exp_ctor(info, name, args)
             }
-            Exp::Dtor { info, exp, name, args } => {
+            Exp::Dtor { info, span: _, exp, name, args } => {
                 exp.visit(v);
                 args.visit(v);
                 v.visit_type_info(info);
                 v.visit_exp_dtor(info, exp, name, args)
             }
-            Exp::Anno { info, exp, typ } => {
+            Exp::Anno { info, span: _, exp, typ } => {
                 exp.visit(v);
                 typ.visit(v);
                 v.visit_type_info(info);
                 v.visit_exp_anno(info, exp, typ)
             }
-            Exp::Type { info } => {
+            Exp::Type { info, span: _ } => {
                 v.visit_type_info(info);
                 v.visit_exp_type(info)
             }
-            Exp::Match { info, ctx, name, on_exp, motive, ret_typ, body } => {
+            Exp::Match { info, span: _, ctx, name, on_exp, motive, ret_typ, body } => {
                 v.visit_type_app_info(info);
                 v.visit_ctx(ctx);
                 on_exp.visit(v);
@@ -404,13 +404,13 @@ impl<P: Phase> Visit<P> for Exp<P> {
                 v.visit_typ(ret_typ);
                 v.visit_exp_match(info, ctx, name, on_exp, ret_typ, body)
             }
-            Exp::Comatch { info, ctx, name, is_lambda_sugar, body } => {
+            Exp::Comatch { info, span: _, ctx, name, is_lambda_sugar, body } => {
                 v.visit_type_app_info(info);
                 v.visit_ctx(ctx);
                 body.visit(v);
                 v.visit_exp_comatch(info, ctx, name, is_lambda_sugar, body)
             }
-            Exp::Hole { info } => {
+            Exp::Hole { info, span: _ } => {
                 v.visit_type_info(info);
                 v.visit_exp_hole(info)
             }
@@ -423,12 +423,12 @@ impl<P: Phase> Visit<P> for Motive<P> {
     where
         V: Visitor<P>,
     {
-        let Motive { info, param, ret_typ } = self;
-        v.visit_info(info);
+        let Motive { span, param, ret_typ } = self;
+        v.visit_info(span);
         param.visit(v);
         v.visit_motive_param(param, |v, param| {
             ret_typ.visit(v);
-            v.visit_motive(info, param, ret_typ)
+            v.visit_motive(span, param, ret_typ)
         })
     }
 }
@@ -449,7 +449,7 @@ impl<P: Phase> Visit<P> for ParamInst<P> {
     where
         V: Visitor<P>,
     {
-        let ParamInst { info, name, typ } = self;
+        let ParamInst { info, span: _, name, typ } = self;
         v.visit_type_info(info);
         v.visit_typ(typ);
         v.visit_param_inst(info, name, typ)

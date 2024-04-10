@@ -7,3 +7,9 @@ impl RenameInfo for Option<Span> {
         self
     }
 }
+
+impl RenameInfo for () {
+    fn rename_in_ctx(self, _ctx: &mut crate::Ctx) -> Self {
+        self
+    }
+}

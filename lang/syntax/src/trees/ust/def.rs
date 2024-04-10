@@ -1,13 +1,11 @@
-use codespan::Span;
-
 use crate::trees::generic;
 
 #[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct UST;
 
 impl generic::Phase for UST {
-    type TypeInfo = Option<Span>;
-    type TypeAppInfo = Option<Span>;
+    type TypeInfo = ();
+    type TypeAppInfo = ();
 
     type InfTyp = ();
     type Ctx = ();

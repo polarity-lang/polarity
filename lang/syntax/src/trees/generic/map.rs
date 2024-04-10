@@ -74,38 +74,38 @@ pub trait Mapper<P: Phase> {
     fn map_case(&mut self, info: Option<Span>, name: Ident, args: TelescopeInst<P>, body: Option<Rc<Exp<P>>>) -> Case<P> {
         Case { info, name, args, body }
     }
-    fn map_typ_app(&mut self, info: P::TypeInfo, name: Ident, args: Args<P>) -> TypApp<P> {
-        TypApp { info, name, args }
+    fn map_typ_app(&mut self, info: P::TypeInfo, span: Option<Span>, name: Ident, args: Args<P>) -> TypApp<P> {
+        TypApp { info, span, name, args }
     }
-    fn map_exp_var(&mut self, info: P::TypeInfo, name: Ident, ctx: P::Ctx, idx: Idx) -> Exp<P> {
-        Exp::Var { info, name, ctx, idx }
+    fn map_exp_var(&mut self, info: P::TypeInfo, span: Option<Span>, name: Ident, ctx: P::Ctx, idx: Idx) -> Exp<P> {
+        Exp::Var { info, span, name, ctx, idx }
     }
-    fn map_exp_typ_ctor(&mut self, info: P::TypeInfo, name: Ident, args: Args<P>) -> Exp<P> {
-        Exp::TypCtor { info, name, args }
+    fn map_exp_typ_ctor(&mut self, info: P::TypeInfo, span: Option<Span>, name: Ident, args: Args<P>) -> Exp<P> {
+        Exp::TypCtor { info, span, name, args }
     }
-    fn map_exp_ctor(&mut self, info: P::TypeInfo, name: Ident, args: Args<P>) -> Exp<P> {
-        Exp::Ctor { info, name, args }
+    fn map_exp_ctor(&mut self, info: P::TypeInfo, span: Option<Span>, name: Ident, args: Args<P>) -> Exp<P> {
+        Exp::Ctor { info, span, name, args }
     }
-    fn map_exp_dtor(&mut self, info: P::TypeInfo, exp: Rc<Exp<P>>, name: Ident, args: Args<P>) -> Exp<P> {
-        Exp::Dtor { info, exp, name, args }
+    fn map_exp_dtor(&mut self, info: P::TypeInfo, span: Option<Span>, exp: Rc<Exp<P>>, name: Ident, args: Args<P>) -> Exp<P> {
+        Exp::Dtor { info, span, exp, name, args }
     }
-    fn map_exp_anno(&mut self, info: P::TypeInfo, exp: Rc<Exp<P>>, typ: Rc<Exp<P>>) -> Exp<P> {
-        Exp::Anno { info, exp, typ }
+    fn map_exp_anno(&mut self, info: P::TypeInfo, span: Option<Span>, exp: Rc<Exp<P>>, typ: Rc<Exp<P>>) -> Exp<P> {
+        Exp::Anno { info, span, exp, typ }
     }
-    fn map_exp_type(&mut self, info: P::TypeInfo) -> Exp<P> {
-        Exp::Type { info }
+    fn map_exp_type(&mut self, info: P::TypeInfo, span: Option<Span>) -> Exp<P> {
+        Exp::Type { info, span }
     }
-    fn map_exp_match(&mut self, info: P::TypeAppInfo, ctx: P::Ctx, name: Label, on_exp: Rc<Exp<P>>, motive: Option<Motive<P>>, ret_typ: P::InfTyp, body: Match<P>) -> Exp<P> {
-        Exp::Match { info, ctx, name, on_exp, motive, ret_typ, body }
+    fn map_exp_match(&mut self, info: P::TypeAppInfo, span: Option<Span>, ctx: P::Ctx, name: Label, on_exp: Rc<Exp<P>>, motive: Option<Motive<P>>, ret_typ: P::InfTyp, body: Match<P>) -> Exp<P> {
+        Exp::Match { info, span, ctx, name, on_exp, motive, ret_typ, body }
     }
-    fn map_exp_comatch(&mut self, info: P::TypeAppInfo, ctx: P::Ctx, name: Label, is_lambda_sugar: bool, body: Match<P>) -> Exp<P> {
-        Exp::Comatch { info, ctx, name, is_lambda_sugar, body }
+    fn map_exp_comatch(&mut self, info: P::TypeAppInfo, span: Option<Span>, ctx: P::Ctx, name: Label, is_lambda_sugar: bool, body: Match<P>) -> Exp<P> {
+        Exp::Comatch { info, span, ctx, name, is_lambda_sugar, body }
     }
-    fn map_exp_hole(&mut self, info: P::TypeInfo) -> Exp<P> {
-        Exp::Hole { info }
+    fn map_exp_hole(&mut self, info: P::TypeInfo, span: Option<Span>) -> Exp<P> {
+        Exp::Hole { info, span }
     }
-    fn map_motive(&mut self, info: Option<Span>, param: ParamInst<P>, ret_typ: Rc<Exp<P>>) -> Motive<P> {
-        Motive { info, param, ret_typ }
+    fn map_motive(&mut self, span: Option<Span>, param: ParamInst<P>, ret_typ: Rc<Exp<P>>) -> Motive<P> {
+        Motive { span, param, ret_typ }
     }
     fn map_motive_param<X, F>(&mut self, param: ParamInst<P>, f_inner: F) -> X
     where
@@ -145,8 +145,8 @@ pub trait Mapper<P: Phase> {
     fn map_param(&mut self, name: Ident, typ: Rc<Exp<P>>) -> Param<P> {
         Param { name, typ }
     }
-    fn map_param_inst(&mut self, info: P::TypeInfo, name: Ident, typ: P::InfTyp) -> ParamInst<P> {
-        ParamInst { info, name, typ }
+    fn map_param_inst(&mut self, info: P::TypeInfo, span: Option<Span>, name: Ident, typ: P::InfTyp) -> ParamInst<P> {
+        ParamInst { info, span, name, typ }
     }
     fn map_info(&mut self, info: Option<Span>) -> Option<Span> {
         info
@@ -268,44 +268,44 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_case(info, name, args, body)
     }
 
-    fn fold_typ_app(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::TypApp {
-        self.map_typ_app(info, name, args)
+    fn fold_typ_app(&mut self, info: <Id<P> as Out>::TypeInfo, span: Option<Span>, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::TypApp {
+        self.map_typ_app(info, span, name, args)
     }
 
-    fn fold_exp_var(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, ctx: <P as Phase>::Ctx, idx: <Id<P> as Out>::Idx) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_var(info, name, ctx, idx))
+    fn fold_exp_var(&mut self, info: <Id<P> as Out>::TypeInfo, span: Option<Span>, name: Ident, ctx: <P as Phase>::Ctx, idx: <Id<P> as Out>::Idx) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_var(info, span, name, ctx, idx))
     }
 
-    fn fold_exp_typ_ctor(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_typ_ctor(info, name, args))
+    fn fold_exp_typ_ctor(&mut self, info: <Id<P> as Out>::TypeInfo, span: Option<Span>, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_typ_ctor(info, span, name, args))
     }
 
-    fn fold_exp_ctor(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_ctor(info, name, args))
+    fn fold_exp_ctor(&mut self, info: <Id<P> as Out>::TypeInfo, span: Option<Span>, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_ctor(info, span, name, args))
     }
 
-    fn fold_exp_dtor(&mut self, info: <Id<P> as Out>::TypeInfo, exp: <Id<P> as Out>::Exp, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_dtor(info, exp, name, args))
+    fn fold_exp_dtor(&mut self, info: <Id<P> as Out>::TypeInfo, span: Option<Span>, exp: <Id<P> as Out>::Exp, name: Ident, args: <Id<P> as Out>::Args) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_dtor(info, span, exp, name, args))
     }
 
-    fn fold_exp_anno(&mut self, info: <Id<P> as Out>::TypeInfo, exp: <Id<P> as Out>::Exp, typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_anno(info, exp, typ))
+    fn fold_exp_anno(&mut self, info: <Id<P> as Out>::TypeInfo, span: Option<Span>, exp: <Id<P> as Out>::Exp, typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_anno(info, span, exp, typ))
     }
 
-    fn fold_exp_type(&mut self, info: <Id<P> as Out>::TypeInfo) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_type(info))
+    fn fold_exp_type(&mut self, info: <Id<P> as Out>::TypeInfo, span: Option<Span>) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_type(info, span))
     }
 
-    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeAppInfo, ctx: <Id<P> as Out>::Ctx, name: Label, on_exp: <Id<P> as Out>::Exp, motive: Option<<Id<P> as Out>::Motive>, ret_typ: <Id<P> as Out>::Typ, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_match(info, ctx, name, on_exp, motive, ret_typ, body))
+    fn fold_exp_match(&mut self, info: <Id<P> as Out>::TypeAppInfo, span: Option<Span>, ctx: <Id<P> as Out>::Ctx, name: Label, on_exp: <Id<P> as Out>::Exp, motive: Option<<Id<P> as Out>::Motive>, ret_typ: <Id<P> as Out>::Typ, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_match(info, span, ctx, name, on_exp, motive, ret_typ, body))
     }
 
-    fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, ctx: <Id<P> as Out>::Ctx, name: Label, is_lambda_sugar: bool, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_comatch(info, ctx, name, is_lambda_sugar, body))
+    fn fold_exp_comatch(&mut self, info: <Id<P> as Out>::TypeAppInfo, span: Option<Span>, ctx: <Id<P> as Out>::Ctx, name: Label, is_lambda_sugar: bool, body: <Id<P> as Out>::Match) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_comatch(info, span, ctx, name, is_lambda_sugar, body))
     }
 
-    fn fold_exp_hole(&mut self, info: <Id<P> as Out>::TypeInfo) -> <Id<P> as Out>::Exp {
-        Rc::new(self.map_exp_hole(info))
+    fn fold_exp_hole(&mut self, info: <Id<P> as Out>::TypeInfo, span: Option<Span>) -> <Id<P> as Out>::Exp {
+        Rc::new(self.map_exp_hole(info, span))
     }
 
     fn fold_motive(&mut self, info: Option<Span>, param: <Id<P> as Out>::ParamInst, ret_typ: <Id<P> as Out>::Exp) -> <Id<P> as Out>::Motive {
@@ -354,8 +354,8 @@ impl<P: Phase, T: Mapper<P>> Folder<P, Id<P>> for T {
         self.map_param(name, typ)
     }
 
-    fn fold_param_inst(&mut self, info: <Id<P> as Out>::TypeInfo, name: Ident, typ: <Id<P> as Out>::Typ) -> <Id<P> as Out>::ParamInst {
-        self.map_param_inst(info, name, typ)
+    fn fold_param_inst(&mut self, info: <Id<P> as Out>::TypeInfo, span: Option<Span>, name: Ident, typ: <Id<P> as Out>::Typ) -> <Id<P> as Out>::ParamInst {
+        self.map_param_inst(info, span, name, typ)
     }
 
     fn fold_args(&mut self, args: Vec<<Id<P> as Out>::Exp>) -> <Id<P> as Out>::Args {

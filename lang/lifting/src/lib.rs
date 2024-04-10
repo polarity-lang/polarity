@@ -311,9 +311,9 @@ impl Lift for tst::TypApp {
     type Target = ust::TypApp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::TypApp { info, name, args } = self;
+        let tst::TypApp { info: _, span, name, args } = self;
 
-        ust::TypApp { info: info.forget_tst(), name: name.clone(), args: args.lift(ctx) }
+        ust::TypApp { info: (), span: *span, name: name.clone(), args: args.lift(ctx) }
     }
 }
 
@@ -322,32 +322,38 @@ impl Lift for tst::Exp {
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         match self {
-            tst::Exp::Var { info, name, ctx: _, idx } => {
-                ust::Exp::Var { info: info.forget_tst(), name: name.clone(), ctx: (), idx: *idx }
+            tst::Exp::Var { info: _, span: _, name, ctx: _, idx } => {
+                ust::Exp::Var { info: (), span: None, name: name.clone(), ctx: (), idx: *idx }
             }
-            tst::Exp::TypCtor { info, name, args } => ust::Exp::TypCtor {
-                info: info.forget_tst(),
-                name: name.clone(),
-                args: args.lift(ctx),
-            },
-            tst::Exp::Ctor { info, name, args } => {
-                ust::Exp::Ctor { info: info.forget_tst(), name: name.clone(), args: args.lift(ctx) }
+            tst::Exp::TypCtor { info: _, span: _, name, args } => {
+                ust::Exp::TypCtor { info: (), span: None, name: name.clone(), args: args.lift(ctx) }
             }
-            tst::Exp::Dtor { info, exp, name, args } => ust::Exp::Dtor {
-                info: info.forget_tst(),
+            tst::Exp::Ctor { info: _, span: _, name, args } => {
+                ust::Exp::Ctor { info: (), span: None, name: name.clone(), args: args.lift(ctx) }
+            }
+            tst::Exp::Dtor { info: _, span: _, exp, name, args } => ust::Exp::Dtor {
+                info: (),
+                span: None,
                 exp: exp.lift(ctx),
                 name: name.clone(),
                 args: args.lift(ctx),
             },
-            tst::Exp::Anno { info, exp, typ } => {
-                ust::Exp::Anno { info: info.forget_tst(), exp: exp.lift(ctx), typ: typ.lift(ctx) }
+            tst::Exp::Anno { info: _, span: _, exp, typ } => {
+                ust::Exp::Anno { info: (), span: None, exp: exp.lift(ctx), typ: typ.lift(ctx) }
             }
-            tst::Exp::Type { info } => ust::Exp::Type { info: info.forget_tst() },
-            tst::Exp::Hole { info } => ust::Exp::Hole { info: info.forget_tst() },
-            tst::Exp::Match { info, ctx: type_ctx, name, on_exp, motive, ret_typ, body } => {
-                ctx.lift_match(info, type_ctx, name, on_exp, motive, ret_typ, body)
-            }
-            tst::Exp::Comatch { info, ctx: type_ctx, name, is_lambda_sugar, body } => {
+            tst::Exp::Type { info: _, span: _ } => ust::Exp::Type { info: (), span: None },
+            tst::Exp::Hole { info: _, span: _ } => ust::Exp::Hole { info: (), span: None },
+            tst::Exp::Match {
+                info,
+                span: _,
+                ctx: type_ctx,
+                name,
+                on_exp,
+                motive,
+                ret_typ,
+                body,
+            } => ctx.lift_match(info, type_ctx, name, on_exp, motive, ret_typ, body),
+            tst::Exp::Comatch { info, span: _, ctx: type_ctx, name, is_lambda_sugar, body } => {
                 ctx.lift_comatch(info, type_ctx, name, *is_lambda_sugar, body)
             }
         }
@@ -358,11 +364,11 @@ impl Lift for tst::Motive {
     type Target = ust::Motive;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Motive { info, param, ret_typ } = self;
+        let tst::Motive { span, param, ret_typ } = self;
 
         let param = param.lift(ctx);
 
-        ctx.bind_single((), |ctx| ust::Motive { info: *info, param, ret_typ: ret_typ.lift(ctx) })
+        ctx.bind_single((), |ctx| ust::Motive { span: *span, param, ret_typ: ret_typ.lift(ctx) })
     }
 }
 
@@ -426,9 +432,9 @@ impl Lift for tst::ParamInst {
     type Target = ust::ParamInst;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let tst::ParamInst { info, name, typ: _ } = self;
+        let tst::ParamInst { info: _, span: _, name, typ: _ } = self;
 
-        ust::ParamInst { info: info.forget_tst(), name: name.clone(), typ: () }
+        ust::ParamInst { info: (), span: None, name: name.clone(), typ: () }
     }
 }
 
@@ -471,7 +477,8 @@ impl Ctx {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
             return ust::Exp::Match {
-                info: info.forget_tst(),
+                info: (),
+                span: None,
                 ctx: (),
                 name: name.clone(),
                 on_exp: on_exp.lift(self),
@@ -531,7 +538,7 @@ impl Ctx {
         self.new_decls.push(ust::Decl::Def(def));
 
         // Replace the match by a destructor call of the new top-level definition
-        ust::Exp::Dtor { info: None, exp: on_exp.lift(self), name, args }
+        ust::Exp::Dtor { info: (), span: None, exp: on_exp.lift(self), name, args }
     }
 
     fn lift_comatch(
@@ -545,7 +552,8 @@ impl Ctx {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
             return ust::Exp::Comatch {
-                info: info.forget_tst(),
+                info: (),
+                span: None,
                 ctx: (),
                 name: name.clone(),
                 is_lambda_sugar,
@@ -583,7 +591,7 @@ impl Ctx {
         self.new_decls.push(ust::Decl::Codef(codef));
 
         // Replace the comatch by a call of the new top-level definition
-        ust::Exp::Ctor { info: None, name, args }
+        ust::Exp::Ctor { info: (), span: None, name, args }
     }
 
     /// Set the current declaration

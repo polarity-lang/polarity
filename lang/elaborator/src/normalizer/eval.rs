@@ -27,31 +27,33 @@ impl Eval for Exp {
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
         let res = match self {
             Exp::Var { idx, .. } => env.lookup(*idx),
-            Exp::TypCtor { info, name, args } => Rc::new(Val::TypCtor {
-                info: *info,
+            Exp::TypCtor { info: _, span, name, args } => Rc::new(Val::TypCtor {
+                span: *span,
                 name: name.clone(),
                 args: args.eval(prg, env)?,
             }),
-            Exp::Ctor { info, name, args } => {
-                Rc::new(Val::Ctor { info: *info, name: name.clone(), args: args.eval(prg, env)? })
+            Exp::Ctor { info: _, span, name, args } => {
+                Rc::new(Val::Ctor { span: *span, name: name.clone(), args: args.eval(prg, env)? })
             }
-            Exp::Dtor { info, exp, name, args } => {
+            Exp::Dtor { info: _, span, exp, name, args } => {
                 let exp = exp.eval(prg, env)?;
                 let args = args.eval(prg, env)?;
-                eval_dtor(prg, info, exp, name, args)?
+                eval_dtor(prg, span, exp, name, args)?
             }
             Exp::Anno { exp, .. } => exp.eval(prg, env)?,
-            Exp::Type { info } => Rc::new(Val::Type { info: *info }),
+            Exp::Type { info: _, span } => Rc::new(Val::Type { span: *span }),
             Exp::Match { name, on_exp, body, .. } => {
                 eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?
             }
-            Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => Rc::new(Val::Comatch {
-                info: *info,
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.eval(prg, env)?,
-            }),
-            Exp::Hole { info } => Rc::new(Val::Neu { exp: Neu::Hole { info: *info } }),
+            Exp::Comatch { info: _, span, ctx: (), name, is_lambda_sugar, body } => {
+                Rc::new(Val::Comatch {
+                    span: *span,
+                    name: name.clone(),
+                    is_lambda_sugar: *is_lambda_sugar,
+                    body: body.eval(prg, env)?,
+                })
+            }
+            Exp::Hole { info: _, span } => Rc::new(Val::Neu { exp: Neu::Hole { span: *span } }),
         };
         Ok(res)
     }
@@ -65,8 +67,8 @@ fn eval_dtor(
     dtor_args: Vec<Rc<Val>>,
 ) -> Result<Rc<Val>, TypeError> {
     match (*exp).clone() {
-        Val::Ctor { name: ctor_name, args: ctor_args, info } => {
-            let type_decl = prg.decls.type_decl_for_member(&ctor_name, info)?;
+        Val::Ctor { name: ctor_name, args: ctor_args, span } => {
+            let type_decl = prg.decls.type_decl_for_member(&ctor_name, span)?;
             match type_decl {
                 Type::Data(_) => {
                     let ust::Def { body, .. } = prg.decls.def(dtor_name, None)?;
@@ -85,7 +87,7 @@ fn eval_dtor(
         Val::Comatch { body, .. } => beta_comatch(prg, body, dtor_name, &dtor_args),
         Val::Neu { exp } => Ok(Rc::new(Val::Neu {
             exp: Neu::Dtor {
-                info: *info,
+                span: *info,
                 exp: Rc::new(exp),
                 name: dtor_name.to_owned(),
                 args: dtor_args,
@@ -104,7 +106,7 @@ fn eval_match(
     match (*on_exp).clone() {
         Val::Ctor { name: ctor_name, args, .. } => beta_match(prg, body, &ctor_name, &args),
         Val::Neu { exp } => Ok(Rc::new(Val::Neu {
-            exp: Neu::Match { info: None, name: match_name.to_owned(), on_exp: Rc::new(exp), body },
+            exp: Neu::Match { span: None, name: match_name.to_owned(), on_exp: Rc::new(exp), body },
         })),
         _ => unreachable!(),
     }
@@ -142,7 +144,7 @@ impl Eval for ust::Match {
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
         let ust::Match { info, cases, omit_absurd } = self;
 
-        Ok(val::Match { info: *info, cases: cases.eval(prg, env)?, omit_absurd: *omit_absurd })
+        Ok(val::Match { span: *info, cases: cases.eval(prg, env)?, omit_absurd: *omit_absurd })
     }
 }
 
@@ -158,7 +160,7 @@ impl Eval for ust::Case {
             env: env.clone(),
         });
 
-        Ok(val::Case { info: *info, name: name.clone(), args: args.clone(), body })
+        Ok(val::Case { span: *info, name: name.clone(), args: args.clone(), body })
     }
 }
 
@@ -166,9 +168,9 @@ impl Eval for ust::TypApp {
     type Val = val::TypApp;
 
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::TypApp { info, name, args } = self;
+        let ust::TypApp { info: _, span, name, args } = self;
 
-        Ok(val::TypApp { info: *info, name: name.clone(), args: args.eval(prg, env)? })
+        Ok(val::TypApp { span: *span, name: name.clone(), args: args.eval(prg, env)? })
     }
 }
 

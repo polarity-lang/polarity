@@ -35,8 +35,6 @@ impl<T: ForgetTST> ForgetTST for Vec<T> {
     }
 }
 
-use codespan::Span;
-
 impl ForgetTST for Prg {
     type Target = ust::Prg;
 
@@ -247,9 +245,9 @@ impl ForgetTST for TypApp {
     type Target = ust::TypApp;
 
     fn forget_tst(&self) -> Self::Target {
-        let TypApp { info, name, args } = self;
+        let TypApp { info: _, span, name, args } = self;
 
-        ust::TypApp { info: info.forget_tst(), name: name.clone(), args: args.forget_tst() }
+        ust::TypApp { info: (), span: span.clone(), name: name.clone(), args: args.forget_tst() }
     }
 }
 
@@ -258,48 +256,62 @@ impl ForgetTST for Exp {
 
     fn forget_tst(&self) -> Self::Target {
         match self {
-            Exp::Var { info, name, ctx: _, idx } => {
-                ust::Exp::Var { info: info.forget_tst(), name: name.clone(), ctx: (), idx: *idx }
-            }
-            Exp::TypCtor { info, name, args } => ust::Exp::TypCtor {
-                info: info.forget_tst(),
+            Exp::Var { info: _, span, name, ctx: _, idx } => ust::Exp::Var {
+                info: (),
+                span: span.clone(),
+                name: name.clone(),
+                ctx: (),
+                idx: *idx,
+            },
+            Exp::TypCtor { info: _, span, name, args } => ust::Exp::TypCtor {
+                info: (),
+                span: span.clone(),
                 name: name.clone(),
                 args: args.forget_tst(),
             },
-            Exp::Ctor { info, name, args } => ust::Exp::Ctor {
-                info: info.forget_tst(),
+            Exp::Ctor { info: _, span, name, args } => ust::Exp::Ctor {
+                info: (),
+                span: span.clone(),
                 name: name.clone(),
                 args: args.forget_tst(),
             },
-            Exp::Dtor { info, exp, name, args } => ust::Exp::Dtor {
-                info: info.forget_tst(),
+            Exp::Dtor { info: _, span, exp, name, args } => ust::Exp::Dtor {
+                info: (),
+                span: span.clone(),
                 exp: exp.forget_tst(),
                 name: name.clone(),
                 args: args.forget_tst(),
             },
-            Exp::Anno { info, exp, typ } => ust::Exp::Anno {
-                info: info.forget_tst(),
+            Exp::Anno { info: _, span, exp, typ } => ust::Exp::Anno {
+                info: (),
+                span: span.clone(),
                 exp: exp.forget_tst(),
                 typ: typ.forget_tst(),
             },
-            Exp::Type { info } => ust::Exp::Type { info: info.forget_tst() },
-            Exp::Match { info, ctx: _, name, on_exp, motive, ret_typ, body } => ust::Exp::Match {
-                info: info.forget_tst(),
-                ctx: (),
-                name: name.clone(),
-                on_exp: on_exp.forget_tst(),
-                motive: motive.forget_tst(),
-                ret_typ: ret_typ.forget_tst(),
-                body: body.forget_tst(),
-            },
-            Exp::Comatch { info, ctx: _, name, is_lambda_sugar, body } => ust::Exp::Comatch {
-                info: info.forget_tst(),
-                ctx: (),
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.forget_tst(),
-            },
-            Exp::Hole { info } => ust::Exp::Hole { info: info.forget_tst() },
+            Exp::Type { info: _, span } => ust::Exp::Type { info: (), span: span.clone() },
+            Exp::Match { info: _, span, ctx: _, name, on_exp, motive, ret_typ, body } => {
+                ust::Exp::Match {
+                    info: (),
+                    span: span.clone(),
+                    ctx: (),
+                    name: name.clone(),
+                    on_exp: on_exp.forget_tst(),
+                    motive: motive.forget_tst(),
+                    ret_typ: ret_typ.forget_tst(),
+                    body: body.forget_tst(),
+                }
+            }
+            Exp::Comatch { info: _, span, ctx: _, name, is_lambda_sugar, body } => {
+                ust::Exp::Comatch {
+                    info: (),
+                    span: span.clone(),
+                    ctx: (),
+                    name: name.clone(),
+                    is_lambda_sugar: *is_lambda_sugar,
+                    body: body.forget_tst(),
+                }
+            }
+            Exp::Hole { info: _, span } => ust::Exp::Hole { info: (), span: span.clone() },
         }
     }
 }
@@ -308,9 +320,9 @@ impl ForgetTST for Motive {
     type Target = ust::Motive;
 
     fn forget_tst(&self) -> Self::Target {
-        let Motive { info, param, ret_typ } = self;
+        let Motive { span, param, ret_typ } = self;
 
-        ust::Motive { info: *info, param: param.forget_tst(), ret_typ: ret_typ.forget_tst() }
+        ust::Motive { span: *span, param: param.forget_tst(), ret_typ: ret_typ.forget_tst() }
     }
 }
 
@@ -348,9 +360,9 @@ impl ForgetTST for ParamInst {
     type Target = ust::ParamInst;
 
     fn forget_tst(&self) -> Self::Target {
-        let ParamInst { info, name, typ } = self;
+        let ParamInst { info: _, span, name, typ } = self;
 
-        ust::ParamInst { info: info.forget_tst(), name: name.clone(), typ: typ.forget_tst() }
+        ust::ParamInst { info: (), span: span.clone(), name: name.clone(), typ: typ.forget_tst() }
     }
 }
 
@@ -366,22 +378,4 @@ impl ForgetTST for Typ {
     type Target = ();
 
     fn forget_tst(&self) -> Self::Target {}
-}
-
-impl ForgetTST for TypeInfo {
-    type Target = Option<Span>;
-
-    fn forget_tst(&self) -> Self::Target {
-        let TypeInfo { typ: _, span, ctx: _ } = self;
-        *span
-    }
-}
-
-impl ForgetTST for TypeAppInfo {
-    type Target = Option<Span>;
-
-    fn forget_tst(&self) -> Self::Target {
-        let TypeAppInfo { typ: _, span, .. } = self;
-        *span
-    }
 }
