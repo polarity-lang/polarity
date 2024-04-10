@@ -5,13 +5,12 @@ use printer::PrintToString;
 use rust_lapper::{Interval, Lapper};
 
 use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
-use syntax::generic::{Visit, Visitor};
-use syntax::tst;
+use syntax::tst::{self};
 
 pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
     let mut c = InfoCollector::default();
 
-    prg.visit(&mut c);
+    prg.collect_info(&mut c);
 
     let info_lapper = Lapper::new(c.info_spans);
     let item_lapper = Lapper::new(c.item_spans);
@@ -81,91 +80,204 @@ impl Item {
     }
 }
 
-impl Visitor<tst::TST> for InfoCollector {
-    fn visit_info(&mut self, info: &Option<Span>) {
-        self.add_info(info);
-    }
+trait CollectInfo {
+    fn collect_info(&self, _collector: &mut InfoCollector) {}
+}
 
-    fn visit_type_info(&mut self, info: &tst::TypeInfo) {
-        self.add_typed_info(info);
-    }
-
-    fn visit_data(
-        &mut self,
-        info: &Option<Span>,
-        _doc: &Option<tst::DocComment>,
-        name: &tst::Ident,
-        _attr: &tst::Attribute,
-        _typ: &Rc<tst::TypAbs>,
-        _ctors: &[tst::Ident],
-    ) {
-        self.add_item_span(Item::Data(name.clone()), info.unwrap());
-    }
-
-    fn visit_codata(
-        &mut self,
-        info: &Option<Span>,
-        _doc: &Option<tst::DocComment>,
-        name: &tst::Ident,
-        _attr: &tst::Attribute,
-        _typ: &Rc<tst::TypAbs>,
-        _dtors: &[tst::Ident],
-    ) {
-        self.add_item_span(Item::Data(name.clone()), info.unwrap());
-    }
-
-    fn visit_def(
-        &mut self,
-        info: &Option<Span>,
-        _doc: &Option<tst::DocComment>,
-        name: &tst::Ident,
-        _attr: &tst::Attribute,
-        _params: &tst::Telescope,
-        self_param: &tst::SelfParam,
-        _ret_typ: &Rc<tst::Exp>,
-        _body: &tst::Match,
-    ) {
-        self.add_item_span(
-            Item::Def { name: name.clone(), type_name: self_param.typ.name.clone() },
-            info.unwrap(),
-        );
-    }
-
-    fn visit_codef(
-        &mut self,
-        info: &Option<Span>,
-        _doc: &Option<tst::DocComment>,
-        name: &tst::Ident,
-        _attr: &tst::Attribute,
-        _params: &tst::Telescope,
-        typ: &tst::TypApp,
-        _body: &tst::Match,
-    ) {
-        self.add_item_span(
-            Item::Codef { name: name.clone(), type_name: typ.name.clone() },
-            info.unwrap(),
-        )
+impl CollectInfo for tst::Prg {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Prg { decls } = self;
+        decls.collect_info(collector)
     }
 }
 
-impl InfoCollector {
-    fn add_info(&mut self, _info: &Option<Span>) {}
-
-    fn add_typed_info(&mut self, info: &tst::TypeInfo) {
-        if let Some(span) = info.span {
-            self.info_spans.push(Interval {
-                start: span.start().into(),
-                stop: span.end().into(),
-                val: info.clone().into(),
-            });
+impl CollectInfo for tst::Decls {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Decls { map, .. } = self;
+        for item in map.values() {
+            item.collect_info(collector)
         }
     }
+}
 
-    fn add_item_span(&mut self, item: Item, span: Span) {
-        self.item_spans.push(Interval {
-            start: span.start().into(),
-            stop: span.end().into(),
-            val: item,
-        })
+impl CollectInfo for tst::Decl {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        match self {
+            tst::Decl::Data(data) => data.collect_info(collector),
+            tst::Decl::Codata(codata) => codata.collect_info(collector),
+            tst::Decl::Ctor(ctor) => ctor.collect_info(collector),
+            tst::Decl::Dtor(dtor) => dtor.collect_info(collector),
+            tst::Decl::Def(def) => def.collect_info(collector),
+            tst::Decl::Codef(codef) => codef.collect_info(collector),
+            tst::Decl::Let(lets) => lets.collect_info(collector),
+        }
+    }
+}
+
+impl CollectInfo for tst::Data {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Data { name, info, .. } = self;
+        if let Some(span) = info {
+            let item = Interval {
+                start: span.start().into(),
+                stop: span.end().into(),
+                val: Item::Data(name.clone()),
+            };
+            collector.item_spans.push(item)
+        }
+    }
+}
+
+impl CollectInfo for tst::Codata {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Codata { name, info, .. } = self;
+        if let Some(span) = info {
+            let item = Interval {
+                start: span.start().into(),
+                stop: span.end().into(),
+                val: Item::Codata(name.clone()),
+            };
+            collector.item_spans.push(item)
+        }
+    }
+}
+
+impl CollectInfo for tst::Def {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Def { name, info, self_param, body, .. } = self;
+        if let Some(span) = info {
+            let item = Interval {
+                start: span.start().into(),
+                stop: span.end().into(),
+                val: Item::Def { name: name.clone(), type_name: self_param.typ.name.clone() },
+            };
+            collector.item_spans.push(item);
+        };
+
+        body.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::Codef {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Codef { name, info, typ, body, .. } = self;
+        if let Some(span) = info {
+            let item = Interval {
+                start: span.start().into(),
+                stop: span.end().into(),
+                val: Item::Codef { name: name.clone(), type_name: typ.name.clone() },
+            };
+            collector.item_spans.push(item);
+        }
+        body.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::Ctor {
+    fn collect_info(&self, _collector: &mut InfoCollector) {}
+}
+
+impl CollectInfo for tst::Dtor {
+    fn collect_info(&self, _collector: &mut InfoCollector) {}
+}
+
+impl CollectInfo for tst::Let {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Let { typ, body, .. } = self;
+        typ.collect_info(collector);
+        body.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::Match {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Match { cases, .. } = self;
+        for case in cases.iter() {
+            case.collect_info(collector)
+        }
+    }
+}
+
+impl CollectInfo for tst::Case {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Case { body, .. } = self;
+        body.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::Args {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Args { args } = self;
+        for arg in args.iter() {
+            arg.collect_info(collector)
+        }
+    }
+}
+
+impl CollectInfo for tst::Exp {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        match self {
+            tst::Exp::Var { info, .. } => info.collect_info(collector),
+            tst::Exp::TypCtor { info, name: _, args } => {
+                info.collect_info(collector);
+                args.collect_info(collector)
+            }
+            tst::Exp::Ctor { info, name: _, args } => {
+                info.collect_info(collector);
+                args.collect_info(collector)
+            }
+            tst::Exp::Dtor { info, exp, name: _, args } => {
+                info.collect_info(collector);
+                exp.collect_info(collector);
+                args.collect_info(collector)
+            }
+            tst::Exp::Hole { info } => info.collect_info(collector),
+            tst::Exp::Type { info } => info.collect_info(collector),
+            tst::Exp::Anno { info, exp, typ } => {
+                info.collect_info(collector);
+                exp.collect_info(collector);
+                typ.collect_info(collector)
+            }
+            tst::Exp::Match { info: _, ctx: _, name: _, on_exp, motive: _, ret_typ, body } => {
+                on_exp.collect_info(collector);
+                ret_typ.as_exp().collect_info(collector);
+                body.collect_info(collector)
+            }
+            tst::Exp::Comatch { info: _, ctx: _, name: _, is_lambda_sugar: _, body } => {
+                body.collect_info(collector)
+            }
+        }
+    }
+}
+
+impl CollectInfo for tst::TypeInfo {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::TypeInfo { typ, span, ctx } = self;
+        if let Some(span) = span {
+            let info = Interval {
+                start: span.start().into(),
+                stop: span.end().into(),
+                val: Info {
+                    typ: typ.print_to_string(None),
+                    span: Some(*span),
+                    ctx: ctx.clone().map(Into::into),
+                },
+            };
+            collector.info_spans.push(info)
+        }
+    }
+}
+impl<T: CollectInfo> CollectInfo for Rc<T> {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        (**self).collect_info(collector)
+    }
+}
+
+impl<T: CollectInfo> CollectInfo for Option<T> {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        match self {
+            None => (),
+            Some(x) => x.collect_info(collector),
+        }
     }
 }
