@@ -7,7 +7,6 @@ use syntax::generic::LookupError;
 use codespan::Span;
 use std::rc::Rc;
 use syntax::common::*;
-use syntax::nf;
 use syntax::ust;
 
 use printer::PrintToString;
@@ -151,7 +150,7 @@ pub enum TypeError {
 }
 
 impl TypeError {
-    pub fn not_eq(lhs: Rc<nf::Nf>, rhs: Rc<nf::Nf>) -> Self {
+    pub fn not_eq(lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp>) -> Self {
         Self::NotEq {
             lhs: lhs.print_to_string(None),
             rhs: rhs.print_to_string(None),
@@ -181,7 +180,7 @@ impl TypeError {
         Self::InvalidMatch { msg: separated("; ", msgs), span: info.to_miette() }
     }
 
-    pub fn expected_typ_app(got: Rc<nf::Nf>) -> Self {
+    pub fn expected_typ_app(got: Rc<ust::Exp>) -> Self {
         Self::ExpectedTypApp { got: got.print_to_string(None), span: got.span().to_miette() }
     }
 

@@ -5,7 +5,7 @@ use super::DatabaseView;
 use elaborator::normalizer::normalize::Normalize;
 use parser::cst;
 use syntax::tst::forget::ForgetTST;
-use syntax::{nf, tst, ust};
+use syntax::{tst, ust};
 
 use crate::*;
 
@@ -34,7 +34,7 @@ impl<'a> DatabaseView<'a> {
         elaborator::typechecker::check(&ust).map_err(Error::Type)
     }
 
-    pub fn run(&self) -> Result<Option<Rc<nf::Nf>>, Error> {
+    pub fn run(&self) -> Result<Option<Rc<ust::Exp>>, Error> {
         let tst = self.tst()?;
         let ust = tst.forget_tst();
 

@@ -6,7 +6,6 @@ use rust_lapper::{Interval, Lapper};
 
 use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
 use syntax::generic::{Visit, Visitor};
-use syntax::nf::forget::ForgetNF;
 use syntax::tst;
 
 pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
@@ -53,11 +52,7 @@ struct InfoCollector {
 
 impl From<tst::TypeInfo> for Info {
     fn from(info: tst::TypeInfo) -> Self {
-        Info {
-            typ: info.typ.forget_nf().print_to_string(None),
-            ctx: info.ctx.map(Into::into),
-            span: info.span,
-        }
+        Info { typ: info.typ.print_to_string(None), ctx: info.ctx.map(Into::into), span: info.span }
     }
 }
 
@@ -71,7 +66,7 @@ impl From<TypeCtx> for Ctx {
 
 impl From<TypeCtxBinder> for Binder {
     fn from(binder: TypeCtxBinder) -> Self {
-        Binder { name: binder.name, typ: binder.typ.forget_nf().print_to_string(None) }
+        Binder { name: binder.name, typ: binder.typ.print_to_string(None) }
     }
 }
 
