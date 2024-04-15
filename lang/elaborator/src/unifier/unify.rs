@@ -107,13 +107,14 @@ impl Ctx {
 
         let Eqn { lhs, rhs, .. } = eqn;
 
-        // Note that this alpha-equality comparision is not naive, i.e. it takes the (co)match labels into account.
-        // In particular, two (co)matches defined in different source code locations are not considered equal:
-        // lowering will have generated distinct labels for them.
-        if lhs.alpha_eq(rhs) {
-            return Ok(Yes(()));
-        }
         match (&**lhs, &**rhs) {
+            (Var { idx: idx_1, .. }, Var { idx: idx_2, .. }) => {
+                if idx_1 == idx_2 {
+                    Ok(Yes(()))
+                } else {
+                    self.add_assignment(*idx_1, rhs.clone())
+                }
+            }
             (Var { idx, .. }, _) => self.add_assignment(*idx, rhs.clone()),
             (_, Var { idx, .. }) => self.add_assignment(*idx, lhs.clone()),
             (TypCtor { name, args, .. }, TypCtor { name: name2, args: args2, .. })

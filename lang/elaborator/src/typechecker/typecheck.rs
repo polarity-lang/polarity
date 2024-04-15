@@ -725,7 +725,7 @@ impl Check for ust::Exp {
                             Assign(Lvl { fst: subst_ctx.len() - 1, snd: 0 }, on_exp_shifted);
                         let motive_t = ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0));
                         let motive_t_nf = motive_t.normalize(prg, &mut ctx.env())?;
-                        convert(motive_t_nf, &t)?;
+                        convert(subst_ctx, motive_t_nf, &t)?;
 
                         body_t = ctx.bind_single(&self_binder, |ctx| {
                             ret_typ.normalize(prg, &mut ctx.env())
@@ -794,7 +794,8 @@ impl Check for ust::Exp {
             }
             _ => {
                 let actual = self.infer(prg, ctx)?;
-                convert(actual.typ(), &t)?;
+                let ctx = ctx.levels();
+                convert(ctx, actual.typ(), &t)?;
                 Ok(actual)
             }
         }
@@ -1080,8 +1081,15 @@ impl ExpectTypApp for Rc<ust::Exp> {
 }
 
 #[trace("{:P} =? {:P}", this, other)]
-fn convert(this: Rc<ust::Exp>, other: &Rc<ust::Exp>) -> Result<(), TypeError> {
-    this.alpha_eq(other).then_some(()).ok_or_else(|| TypeError::not_eq(this.clone(), other.clone()))
+fn convert(ctx: LevelCtx, this: Rc<ust::Exp>, other: &Rc<ust::Exp>) -> Result<(), TypeError> {
+    // Convertibility is checked using the unification algorithm.
+    let eqn: Eqn = Eqn { lhs: this.clone(), rhs: other.clone() };
+    let eqns: Vec<Eqn> = vec![eqn];
+    let res = unify(ctx, eqns)?;
+    match res {
+        crate::unifier::dec::Dec::Yes(_) => Ok(()),
+        crate::unifier::dec::Dec::No(_) => Err(TypeError::not_eq(this.clone(), other.clone())),
+    }
 }
 
 impl<T: Check> Check for Rc<T> {

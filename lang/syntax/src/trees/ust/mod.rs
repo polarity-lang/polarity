@@ -1,5 +1,4 @@
 mod def;
-mod equiv;
 mod occurs;
 mod shift;
 mod subst;
