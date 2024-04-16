@@ -174,17 +174,17 @@ impl ContextElem<Ctx> for Ident {
 impl ContextElem<Ctx> for &cst::decls::Param {
     fn as_element(&self) -> <Ctx as Context>::ElemIn {
         match &self.name {
-            BindingSite::Var { name } => name.to_owned(),
-            BindingSite::Wildcard => "_".to_owned(),
+            BindingSite::Var { name, .. } => name.to_owned(),
+            BindingSite::Wildcard { .. } => "_".to_owned(),
         }
     }
 }
 
-impl ContextElem<Ctx> for &cst::exp::ParamInst {
+impl ContextElem<Ctx> for &cst::exp::BindingSite {
     fn as_element(&self) -> <Ctx as Context>::ElemIn {
-        match &self.name {
-            BindingSite::Var { name } => name.to_owned(),
-            BindingSite::Wildcard => "_".to_owned(),
+        match self {
+            BindingSite::Var { name, .. } => name.to_owned(),
+            BindingSite::Wildcard { .. } => "_".to_owned(),
         }
     }
 }

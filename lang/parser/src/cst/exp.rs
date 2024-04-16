@@ -8,8 +8,8 @@ pub type Ident = String;
 
 #[derive(Debug, Clone)]
 pub enum BindingSite {
-    Var { name: Ident },
-    Wildcard,
+    Var { span: Span, name: Ident },
+    Wildcard { span: Span },
 }
 
 #[derive(Debug, Clone)]
@@ -23,7 +23,7 @@ pub struct Match {
 pub struct Case {
     pub span: Span,
     pub name: Ident,
-    pub args: TelescopeInst,
+    pub args: Vec<BindingSite>,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp>>,
 }
@@ -46,7 +46,7 @@ pub enum Exp {
 pub struct Call {
     pub span: Span,
     pub name: Ident,
-    pub args: Args,
+    pub args: Vec<Rc<Exp>>,
 }
 
 #[derive(Debug, Clone)]
@@ -54,7 +54,7 @@ pub struct DotCall {
     pub span: Span,
     pub exp: Rc<Exp>,
     pub name: Ident,
-    pub args: Args,
+    pub args: Vec<Rc<Exp>>,
 }
 
 #[derive(Debug, Clone)]
@@ -107,26 +107,13 @@ pub struct Fun {
 #[derive(Debug, Clone)]
 pub struct Lam {
     pub span: Span,
-    pub var: ParamInst,
+    pub var: BindingSite,
     pub body: Rc<Exp>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Motive {
     pub span: Span,
-    pub param: ParamInst,
+    pub param: BindingSite,
     pub ret_typ: Rc<Exp>,
 }
-
-pub type Args = Vec<Rc<Exp>>;
-
-/// Instantiation of a previously declared parameter
-#[derive(Debug, Clone)]
-pub struct ParamInst {
-    pub span: Span,
-    pub name: BindingSite,
-}
-
-/// Instantiation of a previously declared telescope
-#[derive(Debug, Clone)]
-pub struct TelescopeInst(pub Vec<ParamInst>);

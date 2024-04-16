@@ -609,17 +609,11 @@ impl Lower for cst::exp::Lam {
                 cases: vec![cst::exp::Case {
                     span: *span,
                     name: "ap".to_owned(),
-                    args: cst::exp::TelescopeInst(vec![
-                        cst::exp::ParamInst {
-                            span: Default::default(),
-                            name: BindingSite::Wildcard,
-                        },
-                        cst::exp::ParamInst {
-                            span: Default::default(),
-                            name: BindingSite::Wildcard,
-                        },
+                    args: vec![
+                        cst::exp::BindingSite::Wildcard { span: Default::default() },
+                        cst::exp::BindingSite::Wildcard { span: Default::default() },
                         var.clone(),
-                    ]),
+                    ],
                     body: Some(body.clone()),
                 }],
                 omit_absurd: false,
@@ -650,10 +644,18 @@ impl Lower for cst::exp::Exp {
 
 fn bs_to_name(bs: &cst::exp::BindingSite) -> Ident {
     match bs {
-        BindingSite::Var { name } => name.clone(),
-        BindingSite::Wildcard => "_".to_owned(),
+        BindingSite::Var { name, .. } => name.clone(),
+        BindingSite::Wildcard { .. } => "_".to_owned(),
     }
 }
+
+fn bs_to_span(bs: &cst::exp::BindingSite) -> Span {
+    match bs {
+        BindingSite::Var { span, .. } => *span,
+        BindingSite::Wildcard { span } => *span,
+    }
+}
+
 impl Lower for cst::exp::Motive {
     type Target = ust::Motive;
 
@@ -663,8 +665,8 @@ impl Lower for cst::exp::Motive {
         Ok(ust::Motive {
             info: Some(*span),
             param: ust::ParamInst {
-                info: Some(param.span),
-                name: bs_to_name(&param.name),
+                info: Some(bs_to_span(param)),
+                name: bs_to_name(param),
                 typ: (),
             },
             ret_typ: ctx.bind_single(param, |ctx| ret_typ.lower(ctx))?,
@@ -748,8 +750,8 @@ where
             let cst::decls::Param { name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
             let typ_out = typ.lower(ctx)?;
             let name = match name {
-                BindingSite::Var { name } => name.clone(),
-                BindingSite::Wildcard => "_".to_owned(),
+                BindingSite::Var { name, .. } => name.clone(),
+                BindingSite::Wildcard { .. } => "_".to_owned(),
             };
             let param_out = ust::Param { name, typ: typ_out };
             params_out.push(param_out);
@@ -760,18 +762,18 @@ where
 }
 
 fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ust::TelescopeInst) -> Result<T, LoweringError>>(
-    tel_inst: &cst::exp::TelescopeInst,
+    tel_inst: &[cst::exp::BindingSite],
     ctx: &mut Ctx,
     f: F,
 ) -> Result<T, LoweringError> {
     ctx.bind_fold(
-        tel_inst.0.iter(),
+        tel_inst.iter(),
         Ok(vec![]),
         |_ctx, params_out, param| {
             let mut params_out = params_out?;
-            let cst::exp::ParamInst { span, name } = param;
-            let param_out =
-                ust::ParamInst { info: Some(*span), name: bs_to_name(name).clone(), typ: () };
+            let span = bs_to_span(param);
+            let name = bs_to_name(param);
+            let param_out = ust::ParamInst { info: Some(span), name, typ: () };
             params_out.push(param_out);
             Ok(params_out)
         },

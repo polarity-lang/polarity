@@ -63,16 +63,14 @@ OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwra
 
 Param: Param = <name: BindingSite> <names: BindingSite*> ":" <typ: Exp> => Param { name, names, typ } ;
 
-ParamInst: ParamInst = <l: @L> <name: BindingSite> <r: @R> => ParamInst { span: span(l, r), name };
-
 Params: Vec<Param> = ParenthesizedArgs<Param>;
 OptParams: Vec<Param> = OptParenthesizedArgs<Param>;
 
 Telescope: Telescope = <params: Params> => Telescope(params);
 OptTelescope: Telescope = <params: OptParams> => Telescope(params);
 
-TelescopeInst: TelescopeInst = <params: Parens<Comma<ParamInst>>> => TelescopeInst(params);
-OptTelescopeInst: TelescopeInst = <params: Parens<Comma<ParamInst>>?> => TelescopeInst(params.unwrap_or_default());
+
+OptTelescopeInst: Vec<BindingSite> = <params: Parens<Comma<BindingSite>>?> => params.unwrap_or_default();
 
 Args: Vec<Rc<Exp>> = ParenthesizedArgs<Exp>;
 OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
@@ -154,7 +152,7 @@ pub Destructee: Destructee = {
 }
 
 pub Scrutinee: Scrutinee = {
-    <l: @L> "(" <name: BindingSite> ":" <typ: TypApp> ")" <r: @R> => Scrutinee { span: span(l, r), name: match name { BindingSite::Wildcard => None, BindingSite::Var { name } => Some(name) }, typ },
+    <l: @L> "(" <name: BindingSite> ":" <typ: TypApp> ")" <r: @R> => Scrutinee { span: span(l, r), name: match name { BindingSite::Wildcard{..} => None, BindingSite::Var { name,.. } => Some(name) }, typ },
     <l: @L> <typ: TypApp> <r: @R> => Scrutinee { span: span(l, r), name: None, typ },
 }
 
@@ -211,7 +209,7 @@ Anno: Anno = <l: @L> <exp: Ops> ":" <typ: Exp> <r: @R> =>
 Fun: Fun = <l: @L> <from: Ops> "->" <to: Exp> <r: @R> =>
   Fun { span: span(l, r), from, to };
 
-Lam: Lam = <l: @L> "\\" <var: ParamInst> "." <body: Exp> <r: @R> =>
+Lam: Lam = <l: @L> "\\" <var: BindingSite> "." <body: Exp> <r: @R> =>
   Lam { span: span(l, r), var, body };
 
 DotCall: DotCall = <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> =>
@@ -224,7 +222,7 @@ CallWithArgs: Call = <l: @L> <name: Ident> <args: Args> <r: @R> =>
   Call { span: span(l, r), name, args };
 
 CallWithoutArgs: Call = <l: @L> <name: Ident> <r: @R> =>
-  Call { span: span(l, r), name, args: Args::new() };
+  Call { span: span(l, r), name, args: vec![] };
 
 LocalComatch: LocalComatch = <l: @L> "comatch" <name: Ident?> "{" <body: Match> "}" <r: @R> =>
   LocalComatch { span: span(l, r), name, is_lambda_sugar: false, body };
@@ -243,14 +241,14 @@ NatLit: NatLit = <l: @L> <s: r"0|[1-9][0-9]*"> <r: @R> =>
 //
 
 Motive: Motive = {
-    <l: @L> "as" <param: ParamInst> "=>" <ret_typ: Exp> <r: @R> => Motive { span: span(l, r), param, ret_typ },
+    <l: @L> "as" <param: BindingSite> "=>" <ret_typ: Exp> <r: @R> => Motive { span: span(l, r), param, ret_typ },
 }
 
 // Names
 
 BindingSite: BindingSite = {
-    <i: Ident> => BindingSite::Var { name: i },
-    "_" => BindingSite::Wildcard,
+    <l: @L> <i: Ident> <r: @R> => BindingSite::Var { span: span(l,r), name: i },
+    <l: @L> "_" <r: @R> => BindingSite::Wildcard { span: span(l,r) },
 }
 
 Ident: String = {

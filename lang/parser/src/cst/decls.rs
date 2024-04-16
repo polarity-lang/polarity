@@ -128,7 +128,7 @@ pub struct SelfParam {
 pub struct TypApp {
     pub span: Span,
     pub name: exp::Ident,
-    pub args: exp::Args,
+    pub args: Vec<Rc<exp::Exp>>,
 }
 
 impl TypApp {
