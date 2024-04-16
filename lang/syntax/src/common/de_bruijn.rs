@@ -97,11 +97,18 @@ pub trait Leveled {
 ///
 /// Ref: https://www.cs.cornell.edu/courses/cs4110/2018fa/lectures/lecture15.pdf
 pub trait Shift: Sized {
-    /// Shift a term in the first component of the two-dimensional De-Bruijn index
+    /// Shift all open variables in `self` by the the value indicated with the
+    /// `by` argument.
     fn shift(&self, by: (isize, isize)) -> Self {
         self.shift_in_range(0.., by)
     }
 
+    /// Shift every de Bruijn index contained in `self` by the value indicated
+    /// with the `by` argument. De Bruijn indices whose first component does not
+    /// lie within the indicated `range` are not affected by the shift.
+    ///
+    /// In order to implement `shift_in_range` correctly you have to increase the
+    /// left endpoint of `range` by 1 whenever you go recursively under a binder.
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self;
 }
 
