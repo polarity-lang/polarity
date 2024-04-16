@@ -77,6 +77,25 @@ pub trait Leveled {
 }
 
 /// De-Bruijn shifting
+///
+/// When we manipulate terms using de Bruijn notation we often
+/// have to change the de Bruijn indices of the variables inside
+/// a term. This is what the "shift" and "shift_in_range" functions
+/// from this trait are for.
+///
+/// Simplified Example: Consider the lambda calculus with de Bruijn
+/// indices whose syntax is "e := n | λ_. e | e e". The shift_in_range
+/// operation would be defined as follows:
+/// - n.shift_in_range(range, by) = if (n ∈ range) then { n + by } else { n }
+/// - (λ_. e).shift_in_range(range, by) = λ_.(e.shift_in_range(range.left += 1, by))
+/// - (e1 e2).shift_in_range(range, by) = (e1.shift_in_range(range, by)) (e2.shift_in_range(range, by))
+/// So whenever we traverse a binding occurrence we have to bump the left
+/// side of the range by one.
+///
+/// Note: We use two-level de Bruijn indices. The cutoff-range only applies to
+/// the first element of a two-level de Bruijn index.
+///
+/// Ref: https://www.cs.cornell.edu/courses/cs4110/2018fa/lectures/lecture15.pdf
 pub trait Shift: Sized {
     /// Shift a term in the first component of the two-dimensional De-Bruijn index
     fn shift(&self, by: (isize, isize)) -> Self {
@@ -84,14 +103,6 @@ pub trait Shift: Sized {
     }
 
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self;
-}
-
-pub trait ShiftRange: RangeBounds<usize> + Clone {}
-
-impl<T: RangeBounds<usize> + Clone> ShiftRange for T {}
-
-impl Shift for () {
-    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {}
 }
 
 impl Shift for Idx {
@@ -105,6 +116,43 @@ impl Shift for Idx {
             *self
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn shift_fst() {
+        let result = Idx { fst: 0, snd: 0 }.shift((1, 0));
+        assert_eq!(result, Idx { fst: 1, snd: 0 });
+    }
+
+    #[test]
+    fn shift_snd() {
+        let result = Idx { fst: 0, snd: 0 }.shift((0, 1));
+        assert_eq!(result, Idx { fst: 0, snd: 1 });
+    }
+
+    #[test]
+    fn shift_in_range_fst() {
+        let result = Idx { fst: 0, snd: 0 }.shift_in_range(1.., (1, 0));
+        assert_eq!(result, Idx { fst: 0, snd: 0 });
+    }
+
+    #[test]
+    fn shift_in_range_snd() {
+        let result = Idx { fst: 0, snd: 0 }.shift_in_range(1.., (0, 1));
+        assert_eq!(result, Idx { fst: 0, snd: 0 });
+    }
+}
+
+pub trait ShiftRange: RangeBounds<usize> + Clone {}
+
+impl<T: RangeBounds<usize> + Clone> ShiftRange for T {}
+
+impl Shift for () {
+    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {}
 }
 
 impl<T: Shift> Shift for Rc<T> {
