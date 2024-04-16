@@ -223,7 +223,7 @@ impl<P: Phase, O: Out, T: Fold<P, O>> Fold<P, O> for Vec<T> {
 
 impl<P: Phase, O: Out> Fold<P, O> for Prg<P>
 where
-    P::InfTyp: ShiftInRange,
+    P::InfTyp: Shift,
 {
     type Out = O::Prg;
 
@@ -239,7 +239,7 @@ where
 
 impl<P: Phase, O: Out> Fold<P, O> for Decls<P>
 where
-    P::InfTyp: ShiftInRange,
+    P::InfTyp: Shift,
 {
     type Out = O::Decls;
 
@@ -255,7 +255,7 @@ where
 
 impl<P: Phase, O: Out> Fold<P, O> for Decl<P>
 where
-    P::InfTyp: ShiftInRange,
+    P::InfTyp: Shift,
 {
     type Out = O::Decl;
 
@@ -379,7 +379,7 @@ impl<P: Phase, O: Out> Fold<P, O> for Dtor<P> {
 
 impl<P: Phase, O: Out> Fold<P, O> for Def<P>
 where
-    P::InfTyp: ShiftInRange,
+    P::InfTyp: Shift,
 {
     type Out = O::Def;
 

@@ -77,24 +77,24 @@ pub trait Leveled {
 }
 
 /// De-Bruijn shifting
-pub trait Shift {
+pub trait Shift: Sized {
     /// Shift a term in the first component of the two-dimensional De-Bruijn index
-    fn shift(&self, by: (isize, isize)) -> Self;
+    fn shift(&self, by: (isize, isize)) -> Self {
+        self.shift_in_range(0.., by)
+    }
+
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self;
 }
 
 pub trait ShiftRange: RangeBounds<usize> + Clone {}
 
 impl<T: RangeBounds<usize> + Clone> ShiftRange for T {}
 
-pub trait ShiftInRange {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self;
-}
-
-impl ShiftInRange for () {
+impl Shift for () {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {}
 }
 
-impl ShiftInRange for Idx {
+impl Shift for Idx {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         if range.contains(&self.fst) {
             Self {
@@ -107,27 +107,21 @@ impl ShiftInRange for Idx {
     }
 }
 
-impl<T: ShiftInRange> ShiftInRange for Rc<T> {
+impl<T: Shift> Shift for Rc<T> {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         Rc::new((**self).shift_in_range(range, by))
     }
 }
 
-impl<T: ShiftInRange> ShiftInRange for Option<T> {
+impl<T: Shift> Shift for Option<T> {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         self.as_ref().map(|inner| inner.shift_in_range(range, by))
     }
 }
 
-impl<T: ShiftInRange> ShiftInRange for Vec<T> {
+impl<T: Shift> Shift for Vec<T> {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         self.iter().map(|x| x.shift_in_range(range.clone(), by)).collect()
-    }
-}
-
-impl<T: ShiftInRange> Shift for T {
-    fn shift(&self, by: (isize, isize)) -> Self {
-        self.shift_in_range(0.., by)
     }
 }
 

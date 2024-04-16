@@ -121,7 +121,7 @@ struct SwapSubst {
     fst2: usize,
 }
 
-impl ShiftInRange for SwapSubst {
+impl Shift for SwapSubst {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
         // Since SwapSubst works with levels, it is shift-invariant
         self.clone()
