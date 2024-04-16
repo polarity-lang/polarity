@@ -2,9 +2,7 @@ use std::rc::Rc;
 
 use codespan::Span;
 
-use num_bigint::BigUint;
-
-pub type Ident = String;
+use super::exp;
 
 #[derive(Debug, Clone)]
 pub struct DocComment {
@@ -16,12 +14,6 @@ pub struct DocComment {
 #[derive(Debug, Clone, Default)]
 pub struct Attribute {
     pub attrs: Vec<String>,
-}
-
-#[derive(Debug, Clone)]
-pub enum BindingSite {
-    Var { name: Ident },
-    Wildcard,
 }
 
 #[derive(Debug, Clone)]
@@ -43,7 +35,7 @@ pub struct Data {
     pub span: Span,
     pub doc: Option<DocComment>,
     pub attr: Attribute,
-    pub name: Ident,
+    pub name: exp::Ident,
     pub params: Telescope,
     pub ctors: Vec<Ctor>,
 }
@@ -53,7 +45,7 @@ pub struct Codata {
     pub span: Span,
     pub doc: Option<DocComment>,
     pub attr: Attribute,
-    pub name: Ident,
+    pub name: exp::Ident,
     pub params: Telescope,
     pub dtors: Vec<Dtor>,
 }
@@ -62,7 +54,7 @@ pub struct Codata {
 pub struct Ctor {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: exp::Ident,
     pub params: Telescope,
     pub typ: Option<TypApp>,
 }
@@ -71,81 +63,78 @@ pub struct Ctor {
 pub struct Dtor {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: exp::Ident,
     pub params: Telescope,
     pub destructee: Destructee,
-    pub ret_typ: Rc<Exp>,
+    pub ret_typ: Rc<exp::Exp>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Def {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: exp::Ident,
     pub attr: Attribute,
     pub params: Telescope,
     pub scrutinee: Scrutinee,
-    pub ret_typ: Rc<Exp>,
-    pub body: Match,
+    pub ret_typ: Rc<exp::Exp>,
+    pub body: exp::Match,
 }
 
 #[derive(Debug, Clone)]
 pub struct Codef {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: exp::Ident,
     pub attr: Attribute,
     pub params: Telescope,
     pub typ: TypApp,
-    pub body: Match,
+    pub body: exp::Match,
 }
 
 #[derive(Debug, Clone)]
 pub struct Let {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: exp::Ident,
     pub attr: Attribute,
     pub params: Telescope,
-    pub typ: Rc<Exp>,
-    pub body: Rc<Exp>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Match {
-    pub span: Span,
-    pub cases: Vec<Case>,
-    pub omit_absurd: bool,
-}
-
-#[derive(Debug, Clone)]
-pub struct Case {
-    pub span: Span,
-    pub name: Ident,
-    pub args: TelescopeInst,
-    /// Body being `None` represents an absurd pattern
-    pub body: Option<Rc<Exp>>,
+    pub typ: Rc<exp::Exp>,
+    pub body: Rc<exp::Exp>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Scrutinee {
     pub span: Span,
-    pub name: Option<Ident>,
+    pub name: Option<exp::Ident>,
     pub typ: TypApp,
 }
 
 #[derive(Debug, Clone)]
 pub struct Destructee {
     pub span: Span,
-    pub name: Option<Ident>,
+    pub name: Option<exp::Ident>,
     pub typ: Option<TypApp>,
 }
 
 #[derive(Debug, Clone)]
 pub struct SelfParam {
     pub span: Span,
-    pub name: Option<Ident>,
+    pub name: Option<exp::Ident>,
     pub typ: TypApp,
+}
+
+#[derive(Debug, Clone)]
+pub struct TypApp {
+    pub span: Span,
+    pub name: exp::Ident,
+    pub args: exp::Args,
+}
+
+impl TypApp {
+    pub fn to_exp(&self) -> exp::Exp {
+        exp::Exp::Call { span: self.span, name: self.name.clone(), args: self.args.clone() }
+    }
 }
 
 impl From<Scrutinee> for SelfParam {
@@ -156,38 +145,15 @@ impl From<Scrutinee> for SelfParam {
     }
 }
 
+/// A `Param` can either be a single parameter, like `x : T`, or a list of parameters, like `x, y, z : T`.
 #[derive(Debug, Clone)]
-pub struct TypApp {
-    pub span: Span,
-    pub name: Ident,
-    pub args: Args,
-}
-
-impl TypApp {
-    pub fn to_exp(&self) -> Exp {
-        Exp::Call { span: self.span, name: self.name.clone(), args: self.args.clone() }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Exp {
-    Call { span: Span, name: Ident, args: Args },
-    DotCall { span: Span, exp: Rc<Exp>, name: Ident, args: Args },
-    Anno { span: Span, exp: Rc<Exp>, typ: Rc<Exp> },
-    Type { span: Span },
-    Match { span: Span, name: Option<Ident>, on_exp: Rc<Exp>, motive: Option<Motive>, body: Match },
-    Comatch { span: Span, name: Option<Ident>, is_lambda_sugar: bool, body: Match },
-    Hole { span: Span },
-    NatLit { span: Span, val: BigUint },
-    Fun { span: Span, from: Rc<Exp>, to: Rc<Exp> },
-    Lam { span: Span, var: ParamInst, body: Rc<Exp> },
-}
-
-#[derive(Debug, Clone)]
-pub struct Motive {
-    pub span: Span,
-    pub param: ParamInst,
-    pub ret_typ: Rc<Exp>,
+pub struct Param {
+    /// The obligatory parameter.
+    pub name: exp::BindingSite,
+    /// A possible list of additional parameters.
+    pub names: Vec<exp::BindingSite>,
+    /// The type of the parameter.
+    pub typ: Rc<exp::Exp>,
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope
@@ -195,10 +161,6 @@ pub struct Motive {
 /// for the following parameters. This influences the lowering semantic.
 #[derive(Debug, Clone)]
 pub struct Telescope(pub Params);
-
-/// Instantiation of a previously declared telescope
-#[derive(Debug, Clone)]
-pub struct TelescopeInst(pub Vec<ParamInst>);
 
 impl Telescope {
     pub fn is_empty(&self) -> bool {
@@ -211,22 +173,3 @@ impl Telescope {
 }
 
 pub type Params = Vec<Param>;
-pub type Args = Vec<Rc<Exp>>;
-
-/// A `Param` can either be a single parameter, like `x : T`, or a list of parameters, like `x, y, z : T`.
-#[derive(Debug, Clone)]
-pub struct Param {
-    /// The obligatory parameter.
-    pub name: BindingSite,
-    /// A possible list of additional parameters.
-    pub names: Vec<BindingSite>,
-    /// The type of the parameter.
-    pub typ: Rc<Exp>,
-}
-
-/// Instantiation of a previously declared parameter
-#[derive(Debug, Clone)]
-pub struct ParamInst {
-    pub span: Span,
-    pub name: BindingSite,
-}
