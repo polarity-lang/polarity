@@ -11,8 +11,17 @@ use syntax::generic::{Visit, Visitor};
 use syntax::ust::{self, Occurs};
 
 /// Find all free variables
-pub trait FreeVarsExt {
-    fn free_vars(&self, ctx: &TypeCtx) -> FreeVars;
+pub fn free_vars<T: Visit<ust::UST>>(arg: &T, ctx: &TypeCtx) -> FreeVars {
+    let mut v = USTVisitor {
+        fvs: Default::default(),
+        cutoff: ctx.len(),
+        type_ctx: ctx,
+        lvl_ctx: ctx.levels(),
+    };
+
+    arg.visit(&mut v);
+
+    FreeVars { fvs: v.fvs, cutoff: ctx.len() }
 }
 
 #[derive(Debug)]
@@ -149,21 +158,6 @@ impl Ord for FreeVar {
         } else {
             self.lvl.cmp(&other.lvl)
         }
-    }
-}
-
-impl<T: Visit<ust::UST>> FreeVarsExt for T {
-    fn free_vars(&self, type_ctx: &TypeCtx) -> FreeVars {
-        let mut v = USTVisitor {
-            fvs: Default::default(),
-            cutoff: type_ctx.len(),
-            type_ctx,
-            lvl_ctx: type_ctx.levels(),
-        };
-
-        self.visit(&mut v);
-
-        FreeVars { fvs: v.fvs, cutoff: type_ctx.len() }
     }
 }
 
