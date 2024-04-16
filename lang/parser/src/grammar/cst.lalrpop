@@ -167,76 +167,76 @@ pub TypApp: TypApp = {
 //
 
 pub Exp: Rc<Exp> = {
-    <e: Anno> => Rc::new(e),
-    <e: Fun> => Rc::new(e),
-    <e: Lam> => Rc::new(e),
+    <e: Anno> => Rc::new(Exp::Anno(e)),
+    <e: Fun> => Rc::new(Exp::Fun(e)),
+    <e: Lam> => Rc::new(Exp::Lam(e)),
     Ops,
 }
 
 pub Ops = {
-    <e: DotCall> => Rc::new(e),
-    <e: LocalMatch> => Rc::new(e),
+    <e: DotCall> => Rc::new(Exp::DotCall(e)),
+    <e: LocalMatch> => Rc::new(Exp::LocalMatch(e)),
     App,
 }
 
 pub App = {
-    <e: CallWithArgs> => Rc::new(e),
-    <e: LocalComatch> => Rc::new(e),
+    <e: CallWithArgs> => Rc::new(Exp::Call(e)),
+    <e: LocalComatch> => Rc::new(Exp::LocalComatch(e)),
     Builtins,
 }
 
 pub Builtins: Rc<Exp> = {
-    <e: TypeUniv> => Rc::new(e),
+    <e: TypeUniv> => Rc::new(Exp::Type(e)),
     Holes,
 }
 
 pub Holes: Rc<Exp> = {
-    <e: Hole> => Rc::new(e),
+    <e: Hole> => Rc::new(Exp::Hole(e)),
     Atom,
 }
 
 pub Atom: Rc<Exp> = {
-    <e: NatLit> => Rc::new(e),
+    <e: NatLit> => Rc::new(Exp::NatLit(e)),
     "(" <exp: Exp> ")" => exp,
-    <e: CallWithoutArgs> => Rc::new(e),
+    <e: CallWithoutArgs> => Rc::new(Exp::Call(e)),
 }
 
 // Constituent parts of expressions
 //
 //
 
-Anno: Exp = <l: @L> <exp: Ops> ":" <typ: Exp> <r: @R> =>
-  Exp::Anno { span: span(l, r), exp, typ };
+Anno: Anno = <l: @L> <exp: Ops> ":" <typ: Exp> <r: @R> =>
+  Anno { span: span(l, r), exp, typ };
 
-Fun: Exp = <l: @L> <from: Ops> "->" <to: Exp> <r: @R> =>
-  Exp::Fun { span: span(l, r), from, to };
+Fun: Fun = <l: @L> <from: Ops> "->" <to: Exp> <r: @R> =>
+  Fun { span: span(l, r), from, to };
 
-Lam: Exp = <l: @L> "\\" <var: ParamInst> "." <body: Exp> <r: @R> =>
-  Exp::Lam { span: span(l, r), var, body };
+Lam: Lam = <l: @L> "\\" <var: ParamInst> "." <body: Exp> <r: @R> =>
+  Lam { span: span(l, r), var, body };
 
-DotCall: Exp = <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> =>
-  Exp::DotCall { span: span(l, r), exp, name, args };
+DotCall: DotCall = <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> =>
+  DotCall { span: span(l, r), exp, name, args };
 
-LocalMatch: Exp = <l: @L> <on_exp: Ops> "." "match" <name: Ident?> <motive: Motive?> "{" <body: Match> "}" <r: @R> =>
-  Exp::Match { span: span(l, r), name, on_exp, motive, body };
+LocalMatch: LocalMatch = <l: @L> <on_exp: Ops> "." "match" <name: Ident?> <motive: Motive?> "{" <body: Match> "}" <r: @R> =>
+  LocalMatch { span: span(l, r), name, on_exp, motive, body };
 
-CallWithArgs: Exp = <l: @L> <name: Ident> <args: Args> <r: @R> =>
-  Exp::Call { span: span(l, r), name, args };
+CallWithArgs: Call = <l: @L> <name: Ident> <args: Args> <r: @R> =>
+  Call { span: span(l, r), name, args };
 
-CallWithoutArgs: Exp = <l: @L> <name: Ident> <r: @R> =>
-  Exp::Call { span: span(l, r), name, args: Args::new() };
+CallWithoutArgs: Call = <l: @L> <name: Ident> <r: @R> =>
+  Call { span: span(l, r), name, args: Args::new() };
 
-LocalComatch: Exp = <l: @L> "comatch" <name: Ident?> "{" <body: Match> "}" <r: @R> =>
-  Exp::Comatch { span: span(l, r), name, is_lambda_sugar: false, body };
+LocalComatch: LocalComatch = <l: @L> "comatch" <name: Ident?> "{" <body: Match> "}" <r: @R> =>
+  LocalComatch { span: span(l, r), name, is_lambda_sugar: false, body };
 
-TypeUniv: Exp = <l: @L> "Type" <r: @R> =>
-  Exp::Type { span: span(l, r) };
+TypeUniv: Type = <l: @L> "Type" <r: @R> =>
+  Type { span: span(l, r) };
 
-Hole: Exp = <l: @L> "?" <r: @R> =>
-  Exp::Hole { span: span(l, r) };
+Hole: Hole = <l: @L> "?" <r: @R> =>
+  Hole { span: span(l, r) };
 
-NatLit: Exp = <l: @L> <s: r"0|[1-9][0-9]*"> <r: @R> =>
-  Exp::NatLit { span: span(l, r), val: BigUint::parse_bytes(s.as_ref(), 10).unwrap() };
+NatLit: NatLit = <l: @L> <s: r"0|[1-9][0-9]*"> <r: @R> =>
+  NatLit { span: span(l, r), val: BigUint::parse_bytes(s.as_ref(), 10).unwrap() };
 
 // Helpers
 //

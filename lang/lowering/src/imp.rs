@@ -440,7 +440,9 @@ impl Lower for cst::exp::Exp {
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         match self {
-            cst::exp::Exp::Call { span, name, args } => match ctx.lookup(name, span)? {
+            cst::exp::Exp::Call(cst::exp::Call { span, name, args }) => match ctx
+                .lookup(name, span)?
+            {
                 Elem::Bound(lvl) => Ok(ust::Exp::Var {
                     info: Some(*span),
                     name: name.clone(),
@@ -469,29 +471,39 @@ impl Lower for cst::exp::Exp {
                     }),
                 },
             },
-            cst::exp::Exp::DotCall { span, exp, name, args } => match ctx.lookup(name, span)? {
-                Elem::Bound(_) => Err(LoweringError::CannotUseAsDtor {
-                    name: name.clone(),
-                    span: span.to_miette(),
-                }),
-                Elem::Decl(meta) => match meta.kind() {
-                    DeclKind::Def | DeclKind::Dtor => Ok(ust::Exp::Dtor {
-                        info: Some(*span),
-                        exp: exp.lower(ctx)?,
-                        name: name.clone(),
-                        args: ust::Args { args: args.lower(ctx)? },
-                    }),
-                    _ => Err(LoweringError::CannotUseAsDtor {
+            cst::exp::Exp::DotCall(cst::exp::DotCall { span, exp, name, args }) => {
+                match ctx.lookup(name, span)? {
+                    Elem::Bound(_) => Err(LoweringError::CannotUseAsDtor {
                         name: name.clone(),
                         span: span.to_miette(),
                     }),
-                },
-            },
-            cst::exp::Exp::Anno { span, exp, typ } => {
+                    Elem::Decl(meta) => match meta.kind() {
+                        DeclKind::Def | DeclKind::Dtor => Ok(ust::Exp::Dtor {
+                            info: Some(*span),
+                            exp: exp.lower(ctx)?,
+                            name: name.clone(),
+                            args: ust::Args { args: args.lower(ctx)? },
+                        }),
+                        _ => Err(LoweringError::CannotUseAsDtor {
+                            name: name.clone(),
+                            span: span.to_miette(),
+                        }),
+                    },
+                }
+            }
+            cst::exp::Exp::Anno(cst::exp::Anno { span, exp, typ }) => {
                 Ok(ust::Exp::Anno { info: Some(*span), exp: exp.lower(ctx)?, typ: typ.lower(ctx)? })
             }
-            cst::exp::Exp::Type { span } => Ok(ust::Exp::Type { info: Some(*span) }),
-            cst::exp::Exp::Match { span, name, on_exp, motive, body } => Ok(ust::Exp::Match {
+            cst::exp::Exp::Type(cst::exp::Type { span }) => {
+                Ok(ust::Exp::Type { info: Some(*span) })
+            }
+            cst::exp::Exp::LocalMatch(cst::exp::LocalMatch {
+                span,
+                name,
+                on_exp,
+                motive,
+                body,
+            }) => Ok(ust::Exp::Match {
                 info: Some(*span),
                 ctx: (),
                 name: ctx.unique_label(name.to_owned(), span)?,
@@ -500,15 +512,22 @@ impl Lower for cst::exp::Exp {
                 ret_typ: (),
                 body: body.lower(ctx)?,
             }),
-            cst::exp::Exp::Comatch { span, name, is_lambda_sugar, body } => Ok(ust::Exp::Comatch {
+            cst::exp::Exp::LocalComatch(cst::exp::LocalComatch {
+                span,
+                name,
+                is_lambda_sugar,
+                body,
+            }) => Ok(ust::Exp::Comatch {
                 info: Some(*span),
                 ctx: (),
                 name: ctx.unique_label(name.to_owned(), span)?,
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.lower(ctx)?,
             }),
-            cst::exp::Exp::Hole { span } => Ok(ust::Exp::Hole { info: Some(*span) }),
-            cst::exp::Exp::NatLit { span, val } => {
+            cst::exp::Exp::Hole(cst::exp::Hole { span }) => {
+                Ok(ust::Exp::Hole { info: Some(*span) })
+            }
+            cst::exp::Exp::NatLit(cst::exp::NatLit { span, val }) => {
                 let mut out = ust::Exp::Ctor {
                     info: Some(*span),
                     name: "Z".to_owned(),
@@ -528,13 +547,13 @@ impl Lower for cst::exp::Exp {
 
                 Ok(out)
             }
-            cst::exp::Exp::Fun { span, from, to } => Ok(ust::Exp::TypCtor {
+            cst::exp::Exp::Fun(cst::exp::Fun { span, from, to }) => Ok(ust::Exp::TypCtor {
                 info: Some(*span),
                 name: "Fun".to_owned(),
                 args: ust::Args { args: vec![from.lower(ctx)?, to.lower(ctx)?] },
             }),
-            cst::exp::Exp::Lam { span, var, body } => {
-                let comatch = cst::exp::Exp::Comatch {
+            cst::exp::Exp::Lam(cst::exp::Lam { span, var, body }) => {
+                let comatch = cst::exp::Exp::LocalComatch(cst::exp::LocalComatch {
                     span: *span,
                     name: None,
                     is_lambda_sugar: true,
@@ -558,7 +577,7 @@ impl Lower for cst::exp::Exp {
                         }],
                         omit_absurd: false,
                     },
-                };
+                });
                 comatch.lower(ctx)
             }
         }

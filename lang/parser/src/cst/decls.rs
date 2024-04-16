@@ -133,7 +133,11 @@ pub struct TypApp {
 
 impl TypApp {
     pub fn to_exp(&self) -> exp::Exp {
-        exp::Exp::Call { span: self.span, name: self.name.clone(), args: self.args.clone() }
+        exp::Exp::Call(exp::Call {
+            span: self.span,
+            name: self.name.clone(),
+            args: self.args.clone(),
+        })
     }
 }
 
