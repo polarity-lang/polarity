@@ -1,7 +1,26 @@
 mod ctx;
-mod imp;
+mod downsweep;
+mod lower;
 mod result;
 
+use parser::cst;
+use syntax::ust;
+
+use crate::downsweep::build_lookup_table;
+use crate::lower::Lower;
 pub use ctx::*;
-pub use imp::lower_prg;
 pub use result::*;
+
+pub fn lower_prg(prg: &cst::decls::Prg) -> Result<ust::Prg, LoweringError> {
+    let cst::decls::Prg { items } = prg;
+
+    let (top_level_map, lookup_table) = build_lookup_table(items)?;
+
+    let mut ctx = Ctx::empty(top_level_map);
+    // Lower definitions
+    for item in items {
+        item.lower(&mut ctx)?;
+    }
+
+    Ok(ust::Prg { decls: ust::Decls { map: ctx.decls_map, lookup_table } })
+}

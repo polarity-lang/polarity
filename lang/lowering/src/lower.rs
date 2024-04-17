@@ -7,9 +7,7 @@ use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::exp::BindingSite;
 use parser::cst::exp::Ident;
-use syntax::common::*;
 use syntax::ctx::BindContext;
-use syntax::generic::lookup_table;
 use syntax::generic::lookup_table::DeclKind;
 use syntax::generic::lookup_table::DeclMeta;
 use syntax::ust;
@@ -21,108 +19,6 @@ pub trait Lower {
     type Target;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError>;
-}
-
-pub fn lower_prg(prg: &cst::decls::Prg) -> Result<ust::Prg, LoweringError> {
-    let cst::decls::Prg { items } = prg;
-
-    let (top_level_map, lookup_table) = build_lookup_table(items)?;
-
-    let mut ctx = Ctx::empty(top_level_map);
-    // Lower definitions
-    for item in items {
-        item.lower(&mut ctx)?;
-    }
-
-    Ok(ust::Prg { decls: ust::Decls { map: ctx.decls_map, lookup_table } })
-}
-
-/// Build the structure tracking the declaration order in the source code
-fn build_lookup_table(
-    items: &[cst::decls::Decl],
-) -> Result<(HashMap<Ident, DeclMeta>, lookup_table::LookupTable), LoweringError> {
-    let mut lookup_table = lookup_table::LookupTable::default();
-    let mut top_level_map = HashMap::default();
-
-    let mut add_top_level_decl = |name: &Ident, span: &Span, decl_kind: DeclMeta| {
-        if top_level_map.contains_key(name) {
-            return Err(LoweringError::AlreadyDefined {
-                name: name.to_owned(),
-                span: Some(span.to_miette()),
-            });
-        }
-        top_level_map.insert(name.clone(), decl_kind);
-        Ok(())
-    };
-
-    for item in items {
-        match item {
-            cst::decls::Decl::Data(data) => {
-                // top_level_map
-                add_top_level_decl(
-                    &data.name,
-                    &data.span,
-                    DeclMeta::Data { arity: data.params.len() },
-                )?;
-                for ctor in &data.ctors {
-                    add_top_level_decl(
-                        &ctor.name,
-                        &ctor.span,
-                        DeclMeta::Ctor { ret_typ: data.name.clone() },
-                    )?;
-                }
-
-                // lookup_table
-                let mut typ_decl = lookup_table.add_type_decl(data.name.clone());
-                let xtors = data.ctors.iter().map(|ctor| ctor.name.clone());
-                typ_decl.set_xtors(xtors);
-            }
-            cst::decls::Decl::Codata(codata) => {
-                // top_level_map
-                add_top_level_decl(
-                    &codata.name,
-                    &codata.span,
-                    DeclMeta::Codata { arity: codata.params.len() },
-                )?;
-                for dtor in &codata.dtors {
-                    add_top_level_decl(
-                        &dtor.name,
-                        &dtor.span,
-                        DeclMeta::Dtor { self_typ: codata.name.clone() },
-                    )?;
-                }
-
-                // lookup_table
-                let mut typ_decl = lookup_table.add_type_decl(codata.name.clone());
-                let xtors = codata.dtors.iter().map(|ctor| ctor.name.clone());
-                typ_decl.set_xtors(xtors);
-            }
-            cst::decls::Decl::Def(def) => {
-                // top_level_map
-                add_top_level_decl(&def.name, &def.span, DeclMeta::Def)?;
-
-                // lookup_table
-                let type_name = def.scrutinee.typ.name.clone();
-                lookup_table.add_def(type_name, def.name.to_owned());
-            }
-            cst::decls::Decl::Codef(codef) => {
-                // top_level_map
-                add_top_level_decl(&codef.name, &codef.span, DeclMeta::Codef)?;
-
-                // lookup_table
-                let type_name = codef.typ.name.clone();
-                lookup_table.add_def(type_name, codef.name.to_owned())
-            }
-            cst::decls::Decl::Let(tl_let) => {
-                // top_level_map
-                add_top_level_decl(&tl_let.name, &tl_let.span, DeclMeta::Let)?;
-
-                lookup_table.add_let(tl_let.name.clone());
-            }
-        }
-    }
-
-    Ok((top_level_map, lookup_table))
 }
 
 impl Lower for cst::decls::DocComment {
