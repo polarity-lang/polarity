@@ -22,7 +22,7 @@ pub fn free_vars<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
     FreeVars { fvs: v.fvs, cutoff: ctx.len() }
 }
 
-trait FV {
+pub trait FV {
     fn visit_fv(&self, v: &mut USTVisitor);
 }
 
@@ -268,7 +268,7 @@ impl Ord for FreeVar {
 }
 
 /// Visitor that collects free variables in an untyped syntax tree
-struct USTVisitor<'a> {
+pub struct USTVisitor<'a> {
     /// Set of collected free variables
     fvs: HashSet<FreeVar>,
     /// The De-Bruijn level (fst index) up to which a variable counts as free
