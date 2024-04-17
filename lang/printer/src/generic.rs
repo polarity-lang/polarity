@@ -17,7 +17,7 @@ fn is_visible(attr: &Attribute) -> bool {
 
 impl<'a, P: Phase> Print<'a> for Prg<P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Prg { decls } = self;
@@ -27,7 +27,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Decls<P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let items =
@@ -46,7 +46,7 @@ where
 
 impl<'a, P: Phase> PrintInCtx<'a> for Decl<P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     type Ctx = Decls<P>;
 
@@ -70,7 +70,7 @@ where
 
 impl<'a, P: Phase> PrintInCtx<'a> for Item<'a, P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     type Ctx = Decls<P>;
 
@@ -92,7 +92,7 @@ where
 
 impl<'a, P: Phase> PrintInCtx<'a> for Data<P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     type Ctx = Decls<P>;
 
@@ -140,7 +140,7 @@ where
 
 impl<'a, P: Phase> PrintInCtx<'a> for Codata<P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     type Ctx = Decls<P>;
 
@@ -188,7 +188,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Def<P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Def { info: _, doc, name, attr, params, self_param, ret_typ, body } = self;
@@ -216,7 +216,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Codef<P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Codef { info: _, doc, name, attr, params, typ, body } = self;
@@ -242,7 +242,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Let<P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Let { info: _, doc, name, attr, params, typ, body } = self;
@@ -268,7 +268,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Ctor<P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Ctor { info: _, doc, name, params, typ } = self;
@@ -287,7 +287,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Dtor<P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Dtor { info: _, doc, name, params, self_param, ret_typ } = self;
@@ -369,7 +369,7 @@ impl<'a, P: Phase> Print<'a> for Case<P> {
 
 impl<'a, P: Phase> Print<'a> for Telescope<P>
 where
-    Exp<P>: ShiftInRange,
+    Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Telescope { params } = self;

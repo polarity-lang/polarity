@@ -2,7 +2,7 @@ use crate::common::*;
 
 use super::def::*;
 
-impl ShiftInRange for Exp {
+impl Shift for Exp {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
             Exp::Var { info, name, ctx: (), idx } => Exp::Var {
@@ -52,7 +52,7 @@ impl ShiftInRange for Exp {
     }
 }
 
-impl ShiftInRange for Motive {
+impl Shift for Motive {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Motive { info, param, ret_typ } = self;
 
@@ -64,14 +64,14 @@ impl ShiftInRange for Motive {
     }
 }
 
-impl ShiftInRange for Match {
+impl Shift for Match {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Match { info, cases, omit_absurd } = self;
         Match { info: *info, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
     }
 }
 
-impl ShiftInRange for Case {
+impl Shift for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Case { info, name, args, body } = self;
         Case {
@@ -83,14 +83,14 @@ impl ShiftInRange for Case {
     }
 }
 
-impl ShiftInRange for TypApp {
+impl Shift for TypApp {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let TypApp { info, name, args } = self;
         TypApp { info: *info, name: name.clone(), args: args.shift_in_range(range, by) }
     }
 }
 
-impl ShiftInRange for Args {
+impl Shift for Args {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         Self { args: self.args.shift_in_range(range, by) }
     }

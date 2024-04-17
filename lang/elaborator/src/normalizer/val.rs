@@ -115,7 +115,7 @@ pub struct Closure {
     pub body: Rc<ust::Exp>,
 }
 
-impl ShiftInRange for Val {
+impl Shift for Val {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
             Val::TypCtor { info, name, args } => Val::TypCtor {
@@ -138,7 +138,7 @@ impl ShiftInRange for Val {
     }
 }
 
-impl ShiftInRange for Neu {
+impl Shift for Neu {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
             Neu::Var { info, name, idx } => {
@@ -161,14 +161,14 @@ impl ShiftInRange for Neu {
     }
 }
 
-impl ShiftInRange for Match {
+impl Shift for Match {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Match { info, cases, omit_absurd } = self;
         Match { info: *info, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
     }
 }
 
-impl ShiftInRange for Case {
+impl Shift for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Case { info, name, args, body } = self;
 
@@ -181,7 +181,7 @@ impl ShiftInRange for Case {
     }
 }
 
-impl ShiftInRange for Closure {
+impl Shift for Closure {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Closure { env, n_args, body } = self;
 

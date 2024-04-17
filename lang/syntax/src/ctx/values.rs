@@ -132,7 +132,7 @@ pub struct Binder {
     pub typ: Rc<ust::Exp>,
 }
 
-impl ShiftInRange for Binder {
+impl Shift for Binder {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         Self { name: self.name.clone(), typ: self.typ.shift_in_range(range, by) }
     }

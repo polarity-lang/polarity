@@ -301,21 +301,21 @@ impl FVSubst {
     }
 }
 
-impl ShiftInRange for FVSubst {
+impl Shift for FVSubst {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
         // Since FVSubst works with levels, it is shift-invariant
         self.clone()
     }
 }
 
-impl<'a> ShiftInRange for FVBodySubst<'a> {
+impl<'a> Shift for FVBodySubst<'a> {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> FVBodySubst<'a> {
         // Since FVSubst works with levels, it is shift-invariant
         FVBodySubst { inner: self.inner }
     }
 }
 
-impl<'a> ShiftInRange for FVParamSubst<'a> {
+impl<'a> Shift for FVParamSubst<'a> {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> FVParamSubst<'a> {
         // Since FVSubst works with levels, it is shift-invariant
         FVParamSubst { inner: self.inner }

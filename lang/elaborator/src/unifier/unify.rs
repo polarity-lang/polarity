@@ -26,7 +26,7 @@ impl From<(Rc<ust::Exp>, Rc<ust::Exp>)> for Eqn {
     }
 }
 
-impl ShiftInRange for Eqn {
+impl Shift for Eqn {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Eqn { lhs, rhs } = self;
         Eqn { lhs: lhs.shift_in_range(range.clone(), by), rhs: rhs.shift_in_range(range, by) }
@@ -44,7 +44,7 @@ impl Substitutable<Rc<ust::Exp>> for Unificator {
     }
 }
 
-impl ShiftInRange for Unificator {
+impl Shift for Unificator {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         Self {
             map: self
