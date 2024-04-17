@@ -152,11 +152,11 @@ impl From<Scrutinee> for SelfParam {
 /// A `Param` can either be a single parameter, like `x : T`, or a list of parameters, like `x, y, z : T`.
 #[derive(Debug, Clone)]
 pub struct Param {
-    /// The obligatory parameter.
+    /// The obligatory parameter name.
     pub name: exp::BindingSite,
-    /// A possible list of additional parameters.
+    /// A possible list of additional parameter names.
     pub names: Vec<exp::BindingSite>,
-    /// The type of the parameter.
+    /// The type of the parameter(s).
     pub typ: Rc<exp::Exp>,
 }
 
