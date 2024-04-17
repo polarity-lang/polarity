@@ -19,7 +19,7 @@ impl<'a> DatabaseView<'a> {
         database.files.source(*file_id)
     }
 
-    pub fn cst(&self) -> Result<cst::Prg, Error> {
+    pub fn cst(&self) -> Result<cst::decls::Prg, Error> {
         let source = self.source();
         parser::parse_program(source).map_err(Error::Parser)
     }

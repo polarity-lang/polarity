@@ -1,7 +1,7 @@
 use codespan::Span;
 use miette_util::ToMiette;
 use parser::cst;
-use parser::cst::{BindingSite, Ident};
+use parser::cst::exp::{BindingSite, Ident};
 use syntax::common::*;
 use syntax::ctx::{Context, ContextElem};
 use syntax::generic::lookup_table::DeclMeta;
@@ -171,20 +171,20 @@ impl ContextElem<Ctx> for Ident {
     }
 }
 
-impl ContextElem<Ctx> for &cst::Param {
+impl ContextElem<Ctx> for &cst::decls::Param {
     fn as_element(&self) -> <Ctx as Context>::ElemIn {
         match &self.name {
-            BindingSite::Var { name } => name.to_owned(),
-            BindingSite::Wildcard => "_".to_owned(),
+            BindingSite::Var { name, .. } => name.to_owned(),
+            BindingSite::Wildcard { .. } => "_".to_owned(),
         }
     }
 }
 
-impl ContextElem<Ctx> for &cst::ParamInst {
+impl ContextElem<Ctx> for &cst::exp::BindingSite {
     fn as_element(&self) -> <Ctx as Context>::ElemIn {
-        match &self.name {
-            BindingSite::Var { name } => name.to_owned(),
-            BindingSite::Wildcard => "_".to_owned(),
+        match self {
+            BindingSite::Var { name, .. } => name.to_owned(),
+            BindingSite::Wildcard { .. } => "_".to_owned(),
         }
     }
 }

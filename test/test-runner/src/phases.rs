@@ -186,7 +186,7 @@ pub struct Print {
 
 impl Phase for Parse {
     type In = String;
-    type Out = cst::Prg;
+    type Out = cst::decls::Prg;
     type Err = parser::ParseError;
 
     fn new(name: &'static str) -> Self {
@@ -203,7 +203,7 @@ impl Phase for Parse {
 }
 
 impl Phase for Lower {
-    type In = cst::Prg;
+    type In = cst::decls::Prg;
     type Out = ust::Prg;
     type Err = lowering::LoweringError;
 
@@ -274,7 +274,7 @@ impl Phase for Forget {
     }
 }
 
-impl TestOutput for cst::Prg {
+impl TestOutput for cst::decls::Prg {
     fn test_output(&self) -> String {
         // TODO: Improve test output
         format!("{self:?}")
