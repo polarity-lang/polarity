@@ -586,7 +586,7 @@ fn check_case(
 
             let body_out = match body {
                 Some(body) => {
-                    let unif = unify(ctx.levels(), eqns.clone())?
+                    let unif = unify(ctx.levels(), eqns.clone(), false)?
                         .map_no(|()| TypeError::PatternIsAbsurd {
                             name: name.clone(),
                             span: info.to_miette(),
@@ -606,7 +606,7 @@ fn check_case(
                     })?
                 }
                 None => {
-                    unify(ctx.levels(), eqns.clone())?
+                    unify(ctx.levels(), eqns.clone(), false)?
                         .map_yes(|_| TypeError::PatternIsNotAbsurd {
                             name: name.clone(),
                             span: info.to_miette(),
@@ -643,7 +643,7 @@ fn check_cocase(
         |ctx, args_out| {
             let body_out = match body {
                 Some(body) => {
-                    let unif = unify(ctx.levels(), eqns.clone())?
+                    let unif = unify(ctx.levels(), eqns.clone(), false)?
                         .map_no(|()| TypeError::PatternIsAbsurd {
                             name: name.clone(),
                             span: info.to_miette(),
@@ -663,7 +663,7 @@ fn check_cocase(
                     })?
                 }
                 None => {
-                    unify(ctx.levels(), eqns.clone())?
+                    unify(ctx.levels(), eqns.clone(), false)?
                         .map_yes(|_| TypeError::PatternIsNotAbsurd {
                             name: name.clone(),
                             span: info.to_miette(),
@@ -1085,7 +1085,7 @@ fn convert(ctx: LevelCtx, this: Rc<ust::Exp>, other: &Rc<ust::Exp>) -> Result<()
     // Convertibility is checked using the unification algorithm.
     let eqn: Eqn = Eqn { lhs: this.clone(), rhs: other.clone() };
     let eqns: Vec<Eqn> = vec![eqn];
-    let res = unify(ctx, eqns)?;
+    let res = unify(ctx, eqns, true)?;
     match res {
         crate::unifier::dec::Dec::Yes(_) => Ok(()),
         crate::unifier::dec::Dec::No(_) => Err(TypeError::not_eq(this.clone(), other.clone())),

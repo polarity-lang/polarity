@@ -68,8 +68,12 @@ impl Unificator {
     }
 }
 
-pub fn unify(ctx: LevelCtx, eqns: Vec<Eqn>) -> Result<Dec<Unificator>, TypeError> {
-    let mut ctx = Ctx::new(eqns.clone(), ctx.clone());
+pub fn unify(
+    ctx: LevelCtx,
+    eqns: Vec<Eqn>,
+    vars_are_rigid: bool,
+) -> Result<Dec<Unificator>, TypeError> {
+    let mut ctx = Ctx::new(eqns.clone(), ctx.clone(), vars_are_rigid);
     let res = match ctx.unify()? {
         Yes(_) => Yes(ctx.unif),
         No(()) => No(()),
@@ -78,15 +82,23 @@ pub fn unify(ctx: LevelCtx, eqns: Vec<Eqn>) -> Result<Dec<Unificator>, TypeError
 }
 
 struct Ctx {
+    /// Constraints that have not yet been solved
     eqns: Vec<Eqn>,
+    /// A cache of solved constraints. We can skip solving a constraint
+    /// if we have seen it before
     done: HashSet<Eqn>,
     ctx: LevelCtx,
+    /// Partial solution that we have computed from solving previous constraints.
     unif: Unificator,
+    /// When we use the unifier as a conversion checker then we don't want to
+    /// treat two distinct variables as unifiable. In that case we call the unifier
+    /// and enable this boolean flag in order to treat all variables as rigid.
+    vars_are_rigid: bool,
 }
 
 impl Ctx {
-    fn new(eqns: Vec<Eqn>, ctx: LevelCtx) -> Self {
-        Self { eqns, done: HashSet::default(), ctx, unif: Unificator::empty() }
+    fn new(eqns: Vec<Eqn>, ctx: LevelCtx, vars_are_rigid: bool) -> Self {
+        Self { eqns, done: HashSet::default(), ctx, unif: Unificator::empty(), vars_are_rigid }
     }
 
     fn unify(&mut self) -> Result<Dec, TypeError> {
@@ -111,12 +123,26 @@ impl Ctx {
             (Var { idx: idx_1, .. }, Var { idx: idx_2, .. }) => {
                 if idx_1 == idx_2 {
                     Ok(Yes(()))
+                } else if self.vars_are_rigid {
+                    Ok(No(()))
                 } else {
                     self.add_assignment(*idx_1, rhs.clone())
                 }
             }
-            (Var { idx, .. }, _) => self.add_assignment(*idx, rhs.clone()),
-            (_, Var { idx, .. }) => self.add_assignment(*idx, lhs.clone()),
+            (Var { idx, .. }, _) => {
+                if self.vars_are_rigid {
+                    Ok(No(()))
+                } else {
+                    self.add_assignment(*idx, rhs.clone())
+                }
+            }
+            (_, Var { idx, .. }) => {
+                if self.vars_are_rigid {
+                    Ok(No(()))
+                } else {
+                    self.add_assignment(*idx, lhs.clone())
+                }
+            }
             (TypCtor { name, args, .. }, TypCtor { name: name2, args: args2, .. })
                 if name == name2 =>
             {
