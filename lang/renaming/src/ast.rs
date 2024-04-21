@@ -54,9 +54,9 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Prg { decls } => Prg { decls: decls.rename_in_ctx(ctx) },
-        }
+        let Prg { decls } = self;
+
+        Prg { decls: decls.rename_in_ctx(ctx) }
     }
 }
 
@@ -103,11 +103,8 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Data { info, doc, name, attr, typ, ctors } => {
-                Data { info, doc, name, attr, typ: typ.rename_in_ctx(ctx), ctors }
-            }
-        }
+        let Data { info, doc, name, attr, typ, ctors } = self;
+        Data { info, doc, name, attr, typ: typ.rename_in_ctx(ctx), ctors }
     }
 }
 
@@ -119,11 +116,9 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Codata { info, doc, name, attr, typ, dtors } => {
-                Codata { info, doc, name, attr, typ: typ.rename_in_ctx(ctx), dtors }
-            }
-        }
+        let Codata { info, doc, name, attr, typ, dtors } = self;
+
+        Codata { info, doc, name, attr, typ: typ.rename_in_ctx(ctx), dtors }
     }
 }
 
@@ -503,10 +498,7 @@ impl Rename for Option<Span> {
 
 impl<T: Rename> Rename for Option<T> {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            None => None,
-            Some(x) => Some(x.rename_in_ctx(ctx)),
-        }
+        self.map(|x| x.rename_in_ctx(ctx))
     }
 }
 
@@ -517,7 +509,5 @@ impl<T: Rename> Rename for Vec<T> {
 }
 
 impl Rename for () {
-    fn rename_in_ctx(self, _ctx: &mut Ctx) -> Self {
-        ()
-    }
+    fn rename_in_ctx(self, _ctx: &mut Ctx) -> Self {}
 }
