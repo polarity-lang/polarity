@@ -86,19 +86,22 @@ impl FV for ust::Match {
 }
 
 impl FV for ust::Case {
-    fn visit_fv(&self, _v: &mut USTVisitor) {
-        let ust::Case { info: _, name: _, args: _, body: _ } = self;
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        let ust::Case { info: _, name: _, args, body } = self;
 
-        //body.visit_fv(v);
-        // TODO: The visitor context must be extended somehow.
+        v.bind_iter(args.params.iter(), |v| {
+            body.visit_fv(v);
+        })
     }
 }
 
 impl FV for ust::Motive {
     fn visit_fv(&self, v: &mut USTVisitor) {
         let ust::Motive { info: _, param, ret_typ } = self;
+
         param.visit_fv(v);
-        ret_typ.visit_fv(v);
+
+        v.bind_single(param, |v| ret_typ.visit_fv(v))
     }
 }
 
@@ -123,9 +126,8 @@ impl<T: FV> FV for Rc<T> {
 
 impl<T: FV> FV for Option<T> {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        match self {
-            None => {}
-            Some(x) => x.visit_fv(v),
+        if let Some(x) = self {
+            x.visit_fv(v)
         }
     }
 }
