@@ -5,7 +5,8 @@ use miette::{Diagnostic, SourceSpan};
 use miette_util::ToMiette;
 use thiserror::Error;
 
-use super::def::*;
+use super::decls::*;
+use super::exp::*;
 use super::lookup_table;
 use super::lookup_table::DeclKind;
 
