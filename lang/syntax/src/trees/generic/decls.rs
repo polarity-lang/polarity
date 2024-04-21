@@ -244,7 +244,11 @@ pub struct TypApp<P: Phase> {
 
 impl<P: Phase> TypApp<P> {
     pub fn to_exp(&self) -> Exp<P> {
-        Exp::TypCtor { info: self.info.clone(), name: self.name.clone(), args: self.args.clone() }
+        Exp::TypCtor(TypCtor {
+            info: self.info.clone(),
+            name: self.name.clone(),
+            args: self.args.clone(),
+        })
     }
 
     /// A type application is simple if the list of arguments is empty.

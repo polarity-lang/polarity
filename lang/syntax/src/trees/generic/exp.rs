@@ -69,86 +69,216 @@ pub type Ident = String;
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Exp<P: Phase> {
-    Var {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: P::TypeInfo,
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        name: Ident,
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        ctx: P::Ctx,
-        idx: Idx,
-    },
-    TypCtor {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: P::TypeInfo,
-        name: Ident,
-        args: Args<P>,
-    },
-    Ctor {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: P::TypeInfo,
-        name: Ident,
-        args: Args<P>,
-    },
-    Dtor {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: P::TypeInfo,
-        exp: Rc<Exp<P>>,
-        name: Ident,
-        args: Args<P>,
-    },
-    Anno {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: P::TypeInfo,
-        exp: Rc<Exp<P>>,
-        typ: Rc<Exp<P>>,
-    },
-    Type {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: P::TypeInfo,
-    },
-    LocalMatch {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: P::TypeAppInfo,
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        ctx: P::Ctx,
-        name: Label,
-        on_exp: Rc<Exp<P>>,
-        motive: Option<Motive<P>>,
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        ret_typ: P::InfTyp,
-        body: Match<P>,
-    },
-    LocalComatch {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: P::TypeAppInfo,
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        ctx: P::Ctx,
-        name: Label,
-        is_lambda_sugar: bool,
-        body: Match<P>,
-    },
-    Hole {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: P::TypeInfo,
-    },
+    Variable(Variable<P>),
+    TypCtor(TypCtor<P>),
+    Call(Call<P>),
+    DotCall(DotCall<P>),
+    Anno(Anno<P>),
+    Type(Type<P>),
+    LocalMatch(LocalMatch<P>),
+    LocalComatch(LocalComatch<P>),
+    Hole(Hole<P>),
 }
 
 impl<P: Phase> HasSpan for Exp<P> {
     fn span(&self) -> Option<Span> {
         match self {
-            Exp::Var { info, .. } => info.span(),
-            Exp::TypCtor { info, .. } => info.span(),
-            Exp::Ctor { info, .. } => info.span(),
-            Exp::Dtor { info, .. } => info.span(),
-            Exp::Anno { info, .. } => info.span(),
-            Exp::Type { info } => info.span(),
-            Exp::LocalMatch { info, .. } => info.span(),
-            Exp::LocalComatch { info, .. } => info.span(),
-            Exp::Hole { info, .. } => info.span(),
+            Exp::Variable(e) => e.span(),
+            Exp::TypCtor(e) => e.span(),
+            Exp::Call(e) => e.span(),
+            Exp::DotCall(e) => e.span(),
+            Exp::Anno(e) => e.span(),
+            Exp::Type(e) => e.span(),
+            Exp::LocalMatch(e) => e.span(),
+            Exp::LocalComatch(e) => e.span(),
+            Exp::Hole(e) => e.span(),
         }
     }
 }
+
+// Variable
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Variable<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: P::TypeInfo,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub name: Ident,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub ctx: P::Ctx,
+    pub idx: Idx,
+}
+
+impl<P: Phase> HasSpan for Variable<P> {
+    fn span(&self) -> Option<Span> {
+        self.info.span()
+    }
+}
+
+// TypCtor
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct TypCtor<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: P::TypeInfo,
+    pub name: Ident,
+    pub args: Args<P>,
+}
+
+impl<P: Phase> HasSpan for TypCtor<P> {
+    fn span(&self) -> Option<Span> {
+        self.info.span()
+    }
+}
+
+// Call
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Call<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: P::TypeInfo,
+    pub name: Ident,
+    pub args: Args<P>,
+}
+
+impl<P: Phase> HasSpan for Call<P> {
+    fn span(&self) -> Option<Span> {
+        self.info.span()
+    }
+}
+
+// DotCall
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct DotCall<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: P::TypeInfo,
+    pub exp: Rc<Exp<P>>,
+    pub name: Ident,
+    pub args: Args<P>,
+}
+
+impl<P: Phase> HasSpan for DotCall<P> {
+    fn span(&self) -> Option<Span> {
+        self.info.span()
+    }
+}
+
+// Anno
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Anno<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: P::TypeInfo,
+    pub exp: Rc<Exp<P>>,
+    pub typ: Rc<Exp<P>>,
+}
+
+impl<P: Phase> HasSpan for Anno<P> {
+    fn span(&self) -> Option<Span> {
+        self.info.span()
+    }
+}
+
+// Type
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Type<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: P::TypeInfo,
+}
+
+impl<P: Phase> HasSpan for Type<P> {
+    fn span(&self) -> Option<Span> {
+        self.info.span()
+    }
+}
+
+// LocalMatch
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct LocalMatch<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: P::TypeAppInfo,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub ctx: P::Ctx,
+    pub name: Label,
+    pub on_exp: Rc<Exp<P>>,
+    pub motive: Option<Motive<P>>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub ret_typ: P::InfTyp,
+    pub body: Match<P>,
+}
+
+impl<P: Phase> HasSpan for LocalMatch<P> {
+    fn span(&self) -> Option<Span> {
+        self.info.span()
+    }
+}
+
+// LocalComatch
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct LocalComatch<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: P::TypeAppInfo,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub ctx: P::Ctx,
+    pub name: Label,
+    pub is_lambda_sugar: bool,
+    pub body: Match<P>,
+}
+
+impl<P: Phase> HasSpan for LocalComatch<P> {
+    fn span(&self) -> Option<Span> {
+        self.info.span()
+    }
+}
+
+// Hole
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Hole<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub info: P::TypeInfo,
+}
+
+impl<P: Phase> HasSpan for Hole<P> {
+    fn span(&self) -> Option<Span> {
+        self.info.span()
+    }
+}
+
+// Other
+//
+//
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]

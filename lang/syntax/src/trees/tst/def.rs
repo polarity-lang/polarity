@@ -28,7 +28,7 @@ pub type Attribute = generic::Attribute;
 pub type Prg = generic::Prg<TST>;
 pub type Decls = generic::Decls<TST>;
 pub type Decl = generic::Decl<TST>;
-pub type Type<'a> = generic::Type<'a, TST>;
+pub type Polarity<'a> = generic::Polarity<'a, TST>;
 pub type Data = generic::Data<TST>;
 pub type Codata = generic::Codata<TST>;
 pub type TypAbs = generic::TypAbs<TST>;
@@ -48,6 +48,16 @@ pub type TelescopeInst = generic::TelescopeInst<TST>;
 pub type Args = generic::Args<TST>;
 pub type Param = generic::Param<TST>;
 pub type ParamInst = generic::ParamInst<TST>;
+
+pub type Variable = generic::Variable<TST>;
+pub type TypCtor = generic::TypCtor<TST>;
+pub type Call = generic::Call<TST>;
+pub type DotCall = generic::DotCall<TST>;
+pub type Anno = generic::Anno<TST>;
+pub type Type = generic::Type<TST>;
+pub type LocalMatch = generic::LocalMatch<TST>;
+pub type LocalComatch = generic::LocalComatch<TST>;
+pub type Hole = generic::Hole<TST>;
 
 #[derive(Clone, Debug)]
 pub struct Typ(Rc<Exp>);
@@ -93,7 +103,11 @@ pub struct TypeAppInfo {
 impl From<TypeAppInfo> for TypeInfo {
     fn from(type_app_info: TypeAppInfo) -> Self {
         let ust::TypApp { info, name, args } = type_app_info.typ_nf;
-        Self { span: info.span(), typ: Rc::new(ust::Exp::TypCtor { info, name, args }), ctx: None }
+        Self {
+            span: info.span(),
+            typ: Rc::new(ust::Exp::TypCtor(ust::TypCtor { info, name, args })),
+            ctx: None,
+        }
     }
 }
 
@@ -109,21 +123,21 @@ pub trait HasTypeInfo {
 impl HasTypeInfo for Exp {
     fn typ(&self) -> Rc<ust::Exp> {
         match self {
-            Exp::Var { info, .. } => info.clone().typ,
-            Exp::TypCtor { info, .. } => info.clone().typ,
-            Exp::Ctor { info, .. } => info.clone().typ,
-            Exp::Dtor { info, .. } => info.clone().typ,
-            Exp::Anno { info, .. } => info.clone().typ,
-            Exp::Type { info } => info.clone().typ,
-            Exp::LocalMatch { info, .. } => {
-                let ust::TypApp { info, name, args } = info.clone().typ_nf;
-                Rc::new(ust::Exp::TypCtor { info, name, args })
+            Exp::Variable(e) => e.info.clone().typ,
+            Exp::TypCtor(e) => e.info.clone().typ,
+            Exp::Call(e) => e.info.clone().typ,
+            Exp::DotCall(e) => e.info.clone().typ,
+            Exp::Anno(e) => e.info.clone().typ,
+            Exp::Type(e) => e.info.clone().typ,
+            Exp::LocalMatch(e) => {
+                let ust::TypApp { info, name, args } = e.info.clone().typ_nf;
+                Rc::new(ust::Exp::TypCtor(ust::TypCtor { info, name, args }))
             }
-            Exp::LocalComatch { info, .. } => {
-                let ust::TypApp { info, name, args } = info.clone().typ_nf;
-                Rc::new(ust::Exp::TypCtor { info, name, args })
+            Exp::LocalComatch(e) => {
+                let ust::TypApp { info, name, args } = e.info.clone().typ_nf;
+                Rc::new(ust::Exp::TypCtor(ust::TypCtor { info, name, args }))
             }
-            Exp::Hole { info, .. } => info.clone().typ,
+            Exp::Hole(e) => e.info.clone().typ,
         }
     }
 }

@@ -29,11 +29,11 @@ pub trait FV {
 impl FV for ust::Exp {
     fn visit_fv(&self, v: &mut USTVisitor) {
         match self {
-            ust::Exp::Anno { info: _, exp, typ } => {
+            ust::Exp::Anno(ust::Anno { info: _, exp, typ }) => {
                 exp.visit_fv(v);
                 typ.visit_fv(v)
             }
-            ust::Exp::Var { info: _, name, ctx: _, idx } => {
+            ust::Exp::Variable(ust::Variable { info: _, name, ctx: _, idx }) => {
                 // We use the level context to convert the De Bruijn index to a De Bruijn level
                 let lvl = v.lvl_ctx.idx_to_lvl(*idx);
                 // If the variable is considered free (based on the cutoff), we look up its type in the typing context
@@ -47,18 +47,30 @@ impl FV for ust::Exp {
                     v.add_fv(name.clone(), lvl, typ, v.lvl_ctx.clone())
                 }
             }
-            ust::Exp::LocalComatch { info: _, ctx: _, name: _, is_lambda_sugar: _, body } => {
-                body.visit_fv(v)
-            }
-            ust::Exp::Ctor { info: _, name: _, args } => args.visit_fv(v),
-            ust::Exp::Dtor { info: _, exp, name: _, args } => {
+            ust::Exp::LocalComatch(ust::LocalComatch {
+                info: _,
+                ctx: _,
+                name: _,
+                is_lambda_sugar: _,
+                body,
+            }) => body.visit_fv(v),
+            ust::Exp::Call(ust::Call { info: _, name: _, args }) => args.visit_fv(v),
+            ust::Exp::DotCall(ust::DotCall { info: _, exp, name: _, args }) => {
                 exp.visit_fv(v);
                 args.visit_fv(v);
             }
-            ust::Exp::TypCtor { info: _, name: _, args } => args.visit_fv(v),
-            ust::Exp::Hole { info: _ } => {}
-            ust::Exp::Type { info: _ } => {}
-            ust::Exp::LocalMatch { info: _, ctx: _, name: _, on_exp, motive, ret_typ: _, body } => {
+            ust::Exp::TypCtor(ust::TypCtor { info: _, name: _, args }) => args.visit_fv(v),
+            ust::Exp::Hole(ust::Hole { info: _ }) => {}
+            ust::Exp::Type(ust::Type { info: _ }) => {}
+            ust::Exp::LocalMatch(ust::LocalMatch {
+                info: _,
+                ctx: _,
+                name: _,
+                on_exp,
+                motive,
+                ret_typ: _,
+                body,
+            }) => {
                 on_exp.visit_fv(v);
                 motive.visit_fv(v);
                 body.visit_fv(v)
@@ -168,12 +180,12 @@ impl FreeVars {
             let typ = typ.subst(&mut ctx, &subst.in_param());
 
             let param = ust::Param { name: name.clone(), typ: typ.clone() };
-            let arg = Rc::new(ust::Exp::Var {
+            let arg = Rc::new(ust::Exp::Variable(ust::Variable {
                 info: Default::default(),
                 name: name.clone(),
                 ctx: (),
                 idx: base_ctx.lvl_to_idx(fv.lvl),
-            });
+            }));
             args.push(arg);
             params.push(param);
             subst.add(name, lvl);
@@ -383,12 +395,12 @@ impl<'a> Substitution<Rc<ust::Exp>> for FVBodySubst<'a> {
         let new_ctx =
             LevelCtx::from(vec![self.inner.subst.len()]).append(&ctx.tail(self.inner.cutoff));
         self.inner.subst.get(&lvl).map(|fv| {
-            Rc::new(ust::Exp::Var {
+            Rc::new(ust::Exp::Variable(ust::Variable {
                 info: Default::default(),
                 name: fv.name.clone(),
                 ctx: (),
                 idx: new_ctx.lvl_to_idx(fv.lvl),
-            })
+            }))
         })
     }
 }
@@ -396,12 +408,12 @@ impl<'a> Substitution<Rc<ust::Exp>> for FVBodySubst<'a> {
 impl<'a> Substitution<Rc<ust::Exp>> for FVParamSubst<'a> {
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<ust::Exp>> {
         self.inner.subst.get(&lvl).map(|fv| {
-            Rc::new(ust::Exp::Var {
+            Rc::new(ust::Exp::Variable(ust::Variable {
                 info: Default::default(),
                 name: fv.name.clone(),
                 ctx: (),
                 idx: Idx { fst: 0, snd: self.inner.subst.len() - 1 - fv.lvl.snd },
-            })
+            }))
         })
     }
 }

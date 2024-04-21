@@ -6,7 +6,6 @@ use crate::result::TypeError;
 use crate::unifier::dec::{Dec, No, Yes};
 use printer::{DocAllocator, Print};
 use syntax::common::*;
-use syntax::generic;
 use syntax::ust;
 
 #[derive(Debug, Clone)]
@@ -115,12 +114,13 @@ impl Ctx {
     }
 
     fn unify_eqn(&mut self, eqn: &Eqn) -> Result<Dec, TypeError> {
-        use generic::Exp::*;
-
         let Eqn { lhs, rhs, .. } = eqn;
 
         match (&**lhs, &**rhs) {
-            (Var { idx: idx_1, .. }, Var { idx: idx_2, .. }) => {
+            (
+                ust::Exp::Variable(ust::Variable { idx: idx_1, .. }),
+                ust::Exp::Variable(ust::Variable { idx: idx_2, .. }),
+            ) => {
                 if idx_1 == idx_2 {
                     Ok(Yes(()))
                 } else if self.vars_are_rigid {
@@ -129,39 +129,46 @@ impl Ctx {
                     self.add_assignment(*idx_1, rhs.clone())
                 }
             }
-            (Var { idx, .. }, _) => {
+            (ust::Exp::Variable(ust::Variable { idx, .. }), _) => {
                 if self.vars_are_rigid {
                     Ok(No(()))
                 } else {
                     self.add_assignment(*idx, rhs.clone())
                 }
             }
-            (_, Var { idx, .. }) => {
+            (_, ust::Exp::Variable(ust::Variable { idx, .. })) => {
                 if self.vars_are_rigid {
                     Ok(No(()))
                 } else {
                     self.add_assignment(*idx, lhs.clone())
                 }
             }
-            (TypCtor { name, args, .. }, TypCtor { name: name2, args: args2, .. })
-                if name == name2 =>
-            {
-                self.unify_args(args, args2)
-            }
-            (TypCtor { name, .. }, TypCtor { name: name2, .. }) if name != name2 => Ok(No(())),
-            (Ctor { name, args, .. }, Ctor { name: name2, args: args2, .. }) if name == name2 => {
-                self.unify_args(args, args2)
-            }
-            (Ctor { name, .. }, Ctor { name: name2, .. }) if name != name2 => Ok(No(())),
-            (Dtor { exp, name, args, .. }, Dtor { exp: exp2, name: name2, args: args2, .. })
-                if name == name2 =>
-            {
+            (
+                ust::Exp::TypCtor(ust::TypCtor { name, args, .. }),
+                ust::Exp::TypCtor(ust::TypCtor { name: name2, args: args2, .. }),
+            ) if name == name2 => self.unify_args(args, args2),
+            (
+                ust::Exp::TypCtor(ust::TypCtor { name, .. }),
+                ust::Exp::TypCtor(ust::TypCtor { name: name2, .. }),
+            ) if name != name2 => Ok(No(())),
+            (
+                ust::Exp::Call(ust::Call { name, args, .. }),
+                ust::Exp::Call(ust::Call { name: name2, args: args2, .. }),
+            ) if name == name2 => self.unify_args(args, args2),
+            (
+                ust::Exp::Call(ust::Call { name, .. }),
+                ust::Exp::Call(ust::Call { name: name2, .. }),
+            ) if name != name2 => Ok(No(())),
+            (
+                ust::Exp::DotCall(ust::DotCall { exp, name, args, .. }),
+                ust::Exp::DotCall(ust::DotCall { exp: exp2, name: name2, args: args2, .. }),
+            ) if name == name2 => {
                 self.add_equation(Eqn { lhs: exp.clone(), rhs: exp2.clone() })?;
                 self.unify_args(args, args2)
             }
-            (Type { .. }, Type { .. }) => Ok(Yes(())),
-            (Anno { .. }, _) => Err(TypeError::unsupported_annotation(lhs.clone())),
-            (_, Anno { .. }) => Err(TypeError::unsupported_annotation(rhs.clone())),
+            (ust::Exp::Type(_), ust::Exp::Type(_)) => Ok(Yes(())),
+            (ust::Exp::Anno(_), _) => Err(TypeError::unsupported_annotation(lhs.clone())),
+            (_, ust::Exp::Anno(_)) => Err(TypeError::unsupported_annotation(rhs.clone())),
             (_, _) => Err(TypeError::cannot_decide(lhs.clone(), rhs.clone())),
         }
     }
