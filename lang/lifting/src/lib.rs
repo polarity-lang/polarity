@@ -488,15 +488,14 @@ impl Ctx {
         // Build a telescope of the types of the lifted variables
         let ret_fvs = motive
             .as_ref()
-            .map(|m| m.forget_tst().free_vars(type_ctx))
-            .unwrap_or_else(|| ret_typ.as_exp().forget_tst().free_vars(type_ctx));
+            .map(|m| free_vars(&m.forget_tst(), type_ctx))
+            .unwrap_or_else(|| free_vars(&ret_typ.as_exp().forget_tst(), type_ctx));
 
         let body = body.lift(self);
         let self_typ = info.typ.lift(self);
 
-        let FreeVarsResult { telescope, subst, args } = body
-            .free_vars(type_ctx)
-            .union(self_typ.free_vars(type_ctx))
+        let FreeVarsResult { telescope, subst, args } = free_vars(&body, type_ctx)
+            .union(free_vars(&self_typ, type_ctx))
             .union(ret_fvs)
             .telescope(&self.ctx);
 
@@ -561,7 +560,7 @@ impl Ctx {
         // Collect the free variables in the comatch and the return type
         // Build a telescope of the types of the lifted variables
         let FreeVarsResult { telescope, subst, args } =
-            body.free_vars(type_ctx).union(typ.free_vars(type_ctx)).telescope(&self.ctx);
+            free_vars(&body, type_ctx).union(free_vars(&typ, type_ctx)).telescope(&self.ctx);
 
         // Substitute the new parameters for the free variables
         let body = body.subst(&mut self.ctx, &subst.in_body());

@@ -1,18 +1,135 @@
 use std::cmp;
 use std::rc::Rc;
 
-use codespan::Span;
 use derivative::Derivative;
 
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;
-use syntax::generic::{Visit, Visitor};
 use syntax::ust::{self, Occurs};
 
 /// Find all free variables
-pub trait FreeVarsExt {
-    fn free_vars(&self, ctx: &TypeCtx) -> FreeVars;
+pub fn free_vars<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
+    let mut v = USTVisitor {
+        fvs: Default::default(),
+        cutoff: ctx.len(),
+        type_ctx: ctx,
+        lvl_ctx: ctx.levels(),
+    };
+
+    arg.visit_fv(&mut v);
+
+    FreeVars { fvs: v.fvs, cutoff: ctx.len() }
+}
+
+pub trait FV {
+    fn visit_fv(&self, v: &mut USTVisitor);
+}
+
+impl FV for ust::Exp {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        match self {
+            ust::Exp::Anno { info: _, exp, typ } => {
+                exp.visit_fv(v);
+                typ.visit_fv(v)
+            }
+            ust::Exp::Var { info: _, name, ctx: _, idx } => {
+                // We use the level context to convert the De Bruijn index to a De Bruijn level
+                let lvl = v.lvl_ctx.idx_to_lvl(*idx);
+                // If the variable is considered free (based on the cutoff), we look up its type in the typing context
+                // The typing context contains the types for all free variables where lvl < cutoff
+                if lvl.fst < v.cutoff {
+                    let typ = v
+                        .type_ctx
+                        .lookup(lvl)
+                        .typ
+                        .shift(((v.lvl_ctx.len() - v.type_ctx.len()) as isize, 0));
+                    v.add_fv(name.clone(), lvl, typ, v.lvl_ctx.clone())
+                }
+            }
+            ust::Exp::Comatch { info: _, ctx: _, name: _, is_lambda_sugar: _, body } => {
+                body.visit_fv(v)
+            }
+            ust::Exp::Ctor { info: _, name: _, args } => args.visit_fv(v),
+            ust::Exp::Dtor { info: _, exp, name: _, args } => {
+                exp.visit_fv(v);
+                args.visit_fv(v);
+            }
+            ust::Exp::TypCtor { info: _, name: _, args } => args.visit_fv(v),
+            ust::Exp::Hole { info: _ } => {}
+            ust::Exp::Type { info: _ } => {}
+            ust::Exp::Match { info: _, ctx: _, name: _, on_exp, motive, ret_typ: _, body } => {
+                on_exp.visit_fv(v);
+                motive.visit_fv(v);
+                body.visit_fv(v)
+            }
+        }
+    }
+}
+
+impl FV for ust::Args {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        let ust::Args { args } = self;
+        for arg in args {
+            arg.visit_fv(v)
+        }
+    }
+}
+
+impl FV for ust::Match {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        let ust::Match { info: _, cases, omit_absurd: _ } = self;
+        for case in cases {
+            case.visit_fv(v)
+        }
+    }
+}
+
+impl FV for ust::Case {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        let ust::Case { info: _, name: _, args, body } = self;
+
+        v.bind_iter(args.params.iter(), |v| {
+            body.visit_fv(v);
+        })
+    }
+}
+
+impl FV for ust::Motive {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        let ust::Motive { info: _, param, ret_typ } = self;
+
+        param.visit_fv(v);
+
+        v.bind_single(param, |v| ret_typ.visit_fv(v))
+    }
+}
+
+impl FV for ust::ParamInst {
+    fn visit_fv(&self, _v: &mut USTVisitor) {
+        //contains no type info for ust.
+    }
+}
+
+impl FV for ust::TypApp {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        let ust::TypApp { info: _, name: _, args } = self;
+        args.visit_fv(v)
+    }
+}
+
+impl<T: FV> FV for Rc<T> {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        (**self).visit_fv(v)
+    }
+}
+
+impl<T: FV> FV for Option<T> {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        if let Some(x) = self {
+            x.visit_fv(v)
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -152,23 +269,8 @@ impl Ord for FreeVar {
     }
 }
 
-impl<T: Visit<ust::UST>> FreeVarsExt for T {
-    fn free_vars(&self, type_ctx: &TypeCtx) -> FreeVars {
-        let mut v = USTVisitor {
-            fvs: Default::default(),
-            cutoff: type_ctx.len(),
-            type_ctx,
-            lvl_ctx: type_ctx.levels(),
-        };
-
-        self.visit(&mut v);
-
-        FreeVars { fvs: v.fvs, cutoff: type_ctx.len() }
-    }
-}
-
 /// Visitor that collects free variables in an untyped syntax tree
-struct USTVisitor<'a> {
+pub struct USTVisitor<'a> {
     /// Set of collected free variables
     fvs: HashSet<FreeVar>,
     /// The De-Bruijn level (fst index) up to which a variable counts as free
@@ -187,7 +289,7 @@ impl<'a> USTVisitor<'a> {
         if self.fvs.insert(fv) {
             // If it has not already been added:
             // Find all free variables in the type of the free variable
-            typ.visit(self);
+            typ.visit_fv(self);
         }
     }
 }
@@ -197,61 +299,6 @@ impl<'a> BindContext for USTVisitor<'a> {
 
     fn ctx_mut(&mut self) -> &mut Self::Ctx {
         &mut self.lvl_ctx
-    }
-}
-
-impl<'b> Visitor<ust::UST> for USTVisitor<'b> {
-    fn visit_telescope<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
-    where
-        I: IntoIterator<Item = &'a ust::Param>,
-        F1: Fn(&mut Self, &'a ust::Param),
-        F2: FnOnce(&mut Self),
-    {
-        self.ctx_visit_telescope(params, f_acc, f_inner)
-    }
-
-    fn visit_telescope_inst<'a, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2)
-    where
-        I: IntoIterator<Item = &'a ust::ParamInst>,
-        F1: Fn(&mut Self, &'a ust::ParamInst),
-        F2: FnOnce(&mut Self),
-    {
-        self.ctx_visit_telescope_inst(params, f_acc, f_inner)
-    }
-
-    fn visit_motive_param<X, F>(&mut self, param: &ust::ParamInst, f_inner: F) -> X
-    where
-        F: FnOnce(&mut Self, &ust::ParamInst) -> X,
-    {
-        self.ctx_visit_motive_param(param, f_inner)
-    }
-
-    fn visit_self_param<X, F>(
-        &mut self,
-        info: &Option<Span>,
-        name: &Option<ust::Ident>,
-        typ: &ust::TypApp,
-        f_inner: F,
-    ) -> X
-    where
-        F: FnOnce(&mut Self) -> X,
-    {
-        self.ctx_visit_self_param(info, name, typ, f_inner)
-    }
-
-    fn visit_exp_var(&mut self, _info: &Option<Span>, name: &ust::Ident, _ctx: &(), idx: &Idx) {
-        // We use the level context to convert the De Bruijn index to a De Bruijn level
-        let lvl = self.lvl_ctx.idx_to_lvl(*idx);
-        // If the variable is considered free (based on the cutoff), we look up its type in the typing context
-        // The typing context contains the types for all free variables where lvl < cutoff
-        if lvl.fst < self.cutoff {
-            let typ = self
-                .type_ctx
-                .lookup(lvl)
-                .typ
-                .shift(((self.lvl_ctx.len() - self.type_ctx.len()) as isize, 0));
-            self.add_fv(name.clone(), lvl, typ, self.lvl_ctx.clone())
-        }
     }
 }
 

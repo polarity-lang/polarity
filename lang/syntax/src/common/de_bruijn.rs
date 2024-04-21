@@ -95,7 +95,7 @@ pub trait Leveled {
 /// Note: We use two-level de Bruijn indices. The cutoff-range only applies to
 /// the first element of a two-level de Bruijn index.
 ///
-/// Ref: https://www.cs.cornell.edu/courses/cs4110/2018fa/lectures/lecture15.pdf
+/// Ref: <https://www.cs.cornell.edu/courses/cs4110/2018fa/lectures/lecture15.pdf>
 pub trait Shift: Sized {
     /// Shift all open variables in `self` by the the value indicated with the
     /// `by` argument.
