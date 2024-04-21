@@ -81,3 +81,9 @@ impl<P: Phase> ContextElem<Ctx> for ParamInst<P> {
         self.name.to_owned()
     }
 }
+
+impl<P: Phase> ContextElem<Ctx> for SelfParam<P> {
+    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+        self.name.to_owned().unwrap_or_default()
+    }
+}

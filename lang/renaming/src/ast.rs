@@ -135,16 +135,12 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Ctor { info, doc, name, params, typ } => {
-                let new_params = params.rename_in_ctx(ctx);
-                let new_typ = ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
-                    typ.rename_in_ctx(new_ctx)
-                });
+        let Ctor { info, doc, name, params, typ } = self;
+        let new_params = params.rename_in_ctx(ctx);
+        let new_typ = ctx
+            .bind_iter(new_params.params.clone().into_iter(), |new_ctx| typ.rename_in_ctx(new_ctx));
 
-                Ctor { info, doc, name, params: new_params, typ: new_typ }
-            }
-        }
+        Ctor { info, doc, name, params: new_params, typ: new_typ }
     }
 }
 
@@ -156,31 +152,17 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Dtor { info, doc, name, params, self_param, ret_typ } => {
-                let new_params = params.rename_in_ctx(ctx);
-                ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
-                    let new_self = self_param.rename_in_ctx(new_ctx);
+        let Dtor { info, doc, name, params, self_param, ret_typ } = self;
 
-                    let param = Param {
-                        name: new_self.name.clone().unwrap_or_default(),
-                        typ: Rc::new(new_self.typ.to_exp()),
-                    };
+        let new_params = params.rename_in_ctx(ctx);
+        ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
+            let new_self = self_param.rename_in_ctx(new_ctx);
 
-                    new_ctx.bind_single(param, |new_ctx| {
-                        let new_ret = ret_typ.rename_in_ctx(new_ctx);
-                        Dtor {
-                            info,
-                            doc,
-                            name,
-                            params: new_params,
-                            self_param: new_self,
-                            ret_typ: new_ret,
-                        }
-                    })
-                })
-            }
-        }
+            new_ctx.bind_single(new_self.clone(), |new_ctx| {
+                let new_ret = ret_typ.rename_in_ctx(new_ctx);
+                Dtor { info, doc, name, params: new_params, self_param: new_self, ret_typ: new_ret }
+            })
+        })
     }
 }
 
@@ -192,18 +174,27 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Def { info, doc, name, attr, params, self_param, ret_typ, body } => Def {
-                info,
-                doc,
-                name,
-                attr,
-                params: params.rename_in_ctx(ctx),
-                self_param: self_param.rename_in_ctx(ctx),
-                ret_typ: ret_typ.rename_in_ctx(ctx),
-                body: body.rename_in_ctx(ctx),
-            },
-        }
+        let Def { info, doc, name, attr, params, self_param, ret_typ, body } = self;
+
+        let new_params = params.rename_in_ctx(ctx);
+        ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
+            let new_self = self_param.rename_in_ctx(new_ctx);
+            let new_body = body.rename_in_ctx(new_ctx);
+
+            new_ctx.bind_single(new_self.clone(), |new_ctx| {
+                let new_ret = ret_typ.rename_in_ctx(new_ctx);
+                Def {
+                    info,
+                    doc,
+                    name,
+                    attr,
+                    params: new_params,
+                    self_param: new_self,
+                    ret_typ: new_ret,
+                    body: new_body,
+                }
+            })
+        })
     }
 }
 
@@ -215,17 +206,17 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Codef { info, doc, name, attr, params, typ, body } => Codef {
-                info,
-                doc,
-                name,
-                attr,
-                params: params.rename_in_ctx(ctx),
-                typ: typ.rename_in_ctx(ctx),
-                body: body.rename_in_ctx(ctx),
-            },
-        }
+        let Codef { info, doc, name, attr, params, typ, body } = self;
+
+        let new_params = params.rename_in_ctx(ctx);
+
+        ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
+            let new_typ = typ.rename_in_ctx(new_ctx);
+
+            let new_body = body.rename_in_ctx(new_ctx);
+
+            Codef { info, doc, name, attr, params: new_params, typ: new_typ, body: new_body }
+        })
     }
 }
 
@@ -237,17 +228,17 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Let { info, doc, name, attr, params, typ, body } => Let {
-                info,
-                doc,
-                name,
-                attr,
-                params: params.rename_in_ctx(ctx),
-                typ: typ.rename_in_ctx(ctx),
-                body: body.rename_in_ctx(ctx),
-            },
-        }
+        let Let { info, doc, name, attr, params, typ, body } = self;
+
+        let new_params = params.rename_in_ctx(ctx);
+
+        ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
+            let new_typ = typ.rename_in_ctx(new_ctx);
+
+            let new_body = body.rename_in_ctx(new_ctx);
+
+            Let { info, doc, name, attr, params: new_params, typ: new_typ, body: new_body }
+        })
     }
 }
 
@@ -259,9 +250,8 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            TypAbs { params } => TypAbs { params: params.rename_in_ctx(ctx) },
-        }
+        let TypAbs { params } = self;
+        TypAbs { params: params.rename_in_ctx(ctx) }
     }
 }
 
@@ -273,28 +263,36 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Telescope { params } => ctx.bind_fold2(
-                params.into_iter(),
-                vec![],
-                |ctx, mut acc, mut param| {
-                    param = param.rename_in_ctx(ctx);
-                    let new_name = ctx.disambiguate_name(param.name);
-                    param.name = new_name.clone();
-                    acc.push(param);
-                    BindElem { elem: new_name, ret: acc }
-                },
-                |_ctx, params| Telescope { params },
-            ),
-        }
+        let Telescope { params } = self;
+
+        ctx.bind_fold2(
+            params.into_iter(),
+            vec![],
+            |ctx, mut acc, mut param| {
+                param = param.rename_in_ctx(ctx);
+                let new_name = param.name.clone();
+                acc.push(param);
+                BindElem { elem: new_name, ret: acc }
+            },
+            |_ctx, params| Telescope { params },
+        )
     }
 }
 
-impl<P: Phase> Rename for Param<P> {
+impl<P: Phase> Rename for Param<P>
+where
+    P::TypeInfo: Rename,
+    P::TypeAppInfo: Rename,
+    P::Ctx: Rename,
+    P::InfTyp: Rename,
+{
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Param { name, typ } => Param { name: todo!(), typ: todo!() },
-        }
+        let Param { name, typ } = self;
+
+        let new_typ = typ.rename_in_ctx(ctx);
+        let new_name = ctx.disambiguate_name(name);
+
+        Param { name: new_name, typ: new_typ }
     }
 }
 
@@ -306,26 +304,37 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            TelescopeInst { params } => ctx.bind_fold2(
-                params.into_iter(),
-                vec![],
-                |ctx, mut acc, mut param| {
-                    param = param.rename_in_ctx(ctx);
-                    let new_name = ctx.disambiguate_name(param.name);
-                    param.name = new_name.clone();
-                    acc.push(param);
-                    BindElem { elem: new_name, ret: acc }
-                },
-                |_ctx, params| TelescopeInst { params },
-            ),
-        }
+        let TelescopeInst { params } = self;
+
+        ctx.bind_fold2(
+            params.into_iter(),
+            vec![],
+            |ctx, mut acc, mut param| {
+                param = param.rename_in_ctx(ctx);
+                let new_name = param.name.clone();
+                acc.push(param);
+                BindElem { elem: new_name, ret: acc }
+            },
+            |_ctx, params| TelescopeInst { params },
+        )
     }
 }
 
-impl<P: Phase> Rename for ParamInst<P> {
+impl<P: Phase> Rename for ParamInst<P>
+where
+    P::TypeInfo: Rename,
+    P::TypeAppInfo: Rename,
+    P::Ctx: Rename,
+    P::InfTyp: Rename,
+{
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        todo!()
+        let ParamInst { name, typ, info } = self;
+
+        let new_typ = typ.rename_in_ctx(ctx);
+        let new_name = ctx.disambiguate_name(name);
+        let new_info = info.rename_in_ctx(ctx);
+
+        ParamInst { name: new_name, typ: new_typ, info: new_info }
     }
 }
 impl<P: Phase> Rename for TypApp<P>
@@ -336,26 +345,12 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            TypApp { info, name, args } => {
-                TypApp { info: info.rename_in_ctx(ctx), name, args: args.rename_in_ctx(ctx) }
-            }
-        }
+        let TypApp { info, name, args } = self;
+
+        TypApp { info: info.rename_in_ctx(ctx), name, args: args.rename_in_ctx(ctx) }
     }
 }
 
-//     fn map_self_param<X, F>(
-//         &mut self,
-//         info: Option<Span>,
-//         name: Option<Ident>,
-//         typ: TypApp<P>,
-//         f_inner: F,
-//     ) -> X
-//     where
-//         F: FnOnce(&mut Self, SelfParam<P>) -> X,
-//     {
-//         self.ctx_map_self_param(info, name.map(|name| self.disambiguate_name(name)), typ, f_inner)
-//     }
 impl<P: Phase> Rename for SelfParam<P>
 where
     P::TypeInfo: Rename,
@@ -364,9 +359,11 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            SelfParam { info, name, typ } => SelfParam { info, name, typ: typ.rename_in_ctx(ctx) },
-        }
+        let SelfParam { info, name, typ } = self;
+
+        let new_name = name.map(|name| ctx.disambiguate_name(name));
+
+        SelfParam { info, name: new_name, typ: typ.rename_in_ctx(ctx) }
     }
 }
 
@@ -380,7 +377,8 @@ where
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         match self {
             Exp::Var { info, name: _, ctx: ctx2, idx } => {
-                // Look, something is happening here :)
+                // This is the only place where we look up the renamed variables from the context
+                let ctx2 = ctx2.rename_in_ctx(ctx);
                 Exp::Var { info: info.rename_in_ctx(ctx), name: ctx.lookup(idx), ctx: ctx2, idx }
             }
             Exp::Comatch { info, ctx: ctx2, name, is_lambda_sugar, body } => Exp::Comatch {
@@ -422,13 +420,17 @@ where
     }
 }
 
-impl<P: Phase> Rename for Match<P> {
+impl<P: Phase> Rename for Match<P>
+where
+    P::TypeInfo: Rename,
+    P::TypeAppInfo: Rename,
+    P::Ctx: Rename,
+    P::InfTyp: Rename,
+{
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Match { info, cases, omit_absurd } => {
-                Match { info, cases: cases.rename_in_ctx(ctx), omit_absurd }
-            }
-        }
+        let Match { info, cases, omit_absurd } = self;
+
+        Match { info, cases: cases.rename_in_ctx(ctx), omit_absurd }
     }
 }
 
@@ -440,15 +442,29 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Args { args } => Args { args: args.rename_in_ctx(ctx) },
-        }
+        let Args { args } = self;
+
+        Args { args: args.rename_in_ctx(ctx) }
     }
 }
 
-impl<P: Phase> Rename for Case<P> {
+impl<P: Phase> Rename for Case<P>
+where
+    P::TypeInfo: Rename,
+    P::TypeAppInfo: Rename,
+    P::Ctx: Rename,
+    P::InfTyp: Rename,
+{
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        todo!()
+        let Case { info, name, args, body } = self;
+
+        let new_args = args.rename_in_ctx(ctx);
+
+        ctx.bind_iter(new_args.params.clone().into_iter(), |new_ctx| {
+            let new_body = body.rename_in_ctx(new_ctx);
+
+            Case { info, name, args: new_args, body: new_body }
+        })
     }
 }
 
@@ -459,13 +475,23 @@ impl<P: Phase> Rename for Case<P> {
 //         param.name = self.disambiguate_name(param.name);
 //         self.ctx_map_motive_param(param, f_inner)
 //     }
-impl<P: Phase> Rename for Motive<P> {
+
+impl<P: Phase> Rename for Motive<P>
+where
+    P::TypeInfo: Rename,
+    P::TypeAppInfo: Rename,
+    P::Ctx: Rename,
+    P::InfTyp: Rename,
+{
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        match self {
-            Motive { info, param, ret_typ } => {
-                Motive { info: info, param: todo!(), ret_typ: todo!() }
-            }
-        }
+        let Motive { info, param, ret_typ } = self;
+
+        let new_param = param.rename_in_ctx(ctx);
+        ctx.bind_single(new_param.clone(), |new_ctx| {
+            let new_ret_typ = ret_typ.rename_in_ctx(new_ctx);
+
+            Motive { info, param: new_param, ret_typ: new_ret_typ }
+        })
     }
 }
 
@@ -486,12 +512,12 @@ impl<T: Rename> Rename for Option<T> {
 
 impl<T: Rename> Rename for Vec<T> {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        todo!()
+        self.into_iter().map(|x| x.rename_in_ctx(ctx)).collect()
     }
 }
 
 impl Rename for () {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        self
+    fn rename_in_ctx(self, _ctx: &mut Ctx) -> Self {
+        ()
     }
 }
