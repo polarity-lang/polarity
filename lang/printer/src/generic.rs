@@ -524,7 +524,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
             Exp::Type { info: _ } => alloc.keyword(TYPE),
-            Exp::Match { info: _, ctx: _, name, on_exp, motive, ret_typ: _, body } => on_exp
+            Exp::LocalMatch { info: _, ctx: _, name, on_exp, motive, ret_typ: _, body } => on_exp
                 .print(cfg, alloc)
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
@@ -535,7 +535,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Exp::Comatch { info: _, ctx: _, name, is_lambda_sugar, body } => {
+            Exp::LocalComatch { info: _, ctx: _, name, is_lambda_sugar, body } => {
                 if *is_lambda_sugar && cfg.print_lambda_sugar {
                     print_lambda_sugar(body, cfg, alloc)
                 } else {

@@ -47,7 +47,7 @@ impl FV for ust::Exp {
                     v.add_fv(name.clone(), lvl, typ, v.lvl_ctx.clone())
                 }
             }
-            ust::Exp::Comatch { info: _, ctx: _, name: _, is_lambda_sugar: _, body } => {
+            ust::Exp::LocalComatch { info: _, ctx: _, name: _, is_lambda_sugar: _, body } => {
                 body.visit_fv(v)
             }
             ust::Exp::Ctor { info: _, name: _, args } => args.visit_fv(v),
@@ -58,7 +58,7 @@ impl FV for ust::Exp {
             ust::Exp::TypCtor { info: _, name: _, args } => args.visit_fv(v),
             ust::Exp::Hole { info: _ } => {}
             ust::Exp::Type { info: _ } => {}
-            ust::Exp::Match { info: _, ctx: _, name: _, on_exp, motive, ret_typ: _, body } => {
+            ust::Exp::LocalMatch { info: _, ctx: _, name: _, on_exp, motive, ret_typ: _, body } => {
                 on_exp.visit_fv(v);
                 motive.visit_fv(v);
                 body.visit_fv(v)

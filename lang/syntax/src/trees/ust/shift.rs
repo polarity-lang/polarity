@@ -31,16 +31,18 @@ impl Shift for Exp {
                 typ: typ.shift_in_range(range, by),
             },
             Exp::Type { info } => Exp::Type { info: *info },
-            Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ: (), body } => Exp::Match {
-                info: *info,
-                ctx: (),
-                name: name.clone(),
-                on_exp: on_exp.shift_in_range(range.clone(), by),
-                motive: motive.shift_in_range(range.clone(), by),
-                ret_typ: (),
-                body: body.shift_in_range(range, by),
-            },
-            Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => Exp::Comatch {
+            Exp::LocalMatch { info, ctx: (), name, on_exp, motive, ret_typ: (), body } => {
+                Exp::LocalMatch {
+                    info: *info,
+                    ctx: (),
+                    name: name.clone(),
+                    on_exp: on_exp.shift_in_range(range.clone(), by),
+                    motive: motive.shift_in_range(range.clone(), by),
+                    ret_typ: (),
+                    body: body.shift_in_range(range, by),
+                }
+            }
+            Exp::LocalComatch { info, ctx: (), name, is_lambda_sugar, body } => Exp::LocalComatch {
                 info: *info,
                 ctx: (),
                 name: name.clone(),

@@ -107,7 +107,7 @@ pub enum Exp<P: Phase> {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeInfo,
     },
-    Match {
+    LocalMatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
@@ -119,7 +119,7 @@ pub enum Exp<P: Phase> {
         ret_typ: P::InfTyp,
         body: Match<P>,
     },
-    Comatch {
+    LocalComatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         info: P::TypeAppInfo,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
@@ -143,8 +143,8 @@ impl<P: Phase> HasSpan for Exp<P> {
             Exp::Dtor { info, .. } => info.span(),
             Exp::Anno { info, .. } => info.span(),
             Exp::Type { info } => info.span(),
-            Exp::Match { info, .. } => info.span(),
-            Exp::Comatch { info, .. } => info.span(),
+            Exp::LocalMatch { info, .. } => info.span(),
+            Exp::LocalComatch { info, .. } => info.span(),
             Exp::Hole { info, .. } => info.span(),
         }
     }

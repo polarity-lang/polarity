@@ -42,15 +42,17 @@ impl Eval for Exp {
             }
             Exp::Anno { exp, .. } => exp.eval(prg, env)?,
             Exp::Type { info } => Rc::new(Val::Type { info: *info }),
-            Exp::Match { name, on_exp, body, .. } => {
+            Exp::LocalMatch { name, on_exp, body, .. } => {
                 eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?
             }
-            Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => Rc::new(Val::Comatch {
-                info: *info,
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.eval(prg, env)?,
-            }),
+            Exp::LocalComatch { info, ctx: (), name, is_lambda_sugar, body } => {
+                Rc::new(Val::Comatch {
+                    info: *info,
+                    name: name.clone(),
+                    is_lambda_sugar: *is_lambda_sugar,
+                    body: body.eval(prg, env)?,
+                })
+            }
             Exp::Hole { info } => Rc::new(Val::Neu { exp: Neu::Hole { info: *info } }),
         };
         Ok(res)

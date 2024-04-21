@@ -283,22 +283,26 @@ impl ForgetTST for Exp {
                 typ: typ.forget_tst(),
             },
             Exp::Type { info } => ust::Exp::Type { info: info.forget_tst() },
-            Exp::Match { info, ctx: _, name, on_exp, motive, ret_typ, body } => ust::Exp::Match {
-                info: info.forget_tst(),
-                ctx: (),
-                name: name.clone(),
-                on_exp: on_exp.forget_tst(),
-                motive: motive.forget_tst(),
-                ret_typ: ret_typ.forget_tst(),
-                body: body.forget_tst(),
-            },
-            Exp::Comatch { info, ctx: _, name, is_lambda_sugar, body } => ust::Exp::Comatch {
-                info: info.forget_tst(),
-                ctx: (),
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.forget_tst(),
-            },
+            Exp::LocalMatch { info, ctx: _, name, on_exp, motive, ret_typ, body } => {
+                ust::Exp::LocalMatch {
+                    info: info.forget_tst(),
+                    ctx: (),
+                    name: name.clone(),
+                    on_exp: on_exp.forget_tst(),
+                    motive: motive.forget_tst(),
+                    ret_typ: ret_typ.forget_tst(),
+                    body: body.forget_tst(),
+                }
+            }
+            Exp::LocalComatch { info, ctx: _, name, is_lambda_sugar, body } => {
+                ust::Exp::LocalComatch {
+                    info: info.forget_tst(),
+                    ctx: (),
+                    name: name.clone(),
+                    is_lambda_sugar: *is_lambda_sugar,
+                    body: body.forget_tst(),
+                }
+            }
             Exp::Hole { info } => ust::Exp::Hole { info: info.forget_tst() },
         }
     }

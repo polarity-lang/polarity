@@ -344,10 +344,10 @@ impl Lift for tst::Exp {
             }
             tst::Exp::Type { info } => ust::Exp::Type { info: info.forget_tst() },
             tst::Exp::Hole { info } => ust::Exp::Hole { info: info.forget_tst() },
-            tst::Exp::Match { info, ctx: type_ctx, name, on_exp, motive, ret_typ, body } => {
+            tst::Exp::LocalMatch { info, ctx: type_ctx, name, on_exp, motive, ret_typ, body } => {
                 ctx.lift_match(info, type_ctx, name, on_exp, motive, ret_typ, body)
             }
-            tst::Exp::Comatch { info, ctx: type_ctx, name, is_lambda_sugar, body } => {
+            tst::Exp::LocalComatch { info, ctx: type_ctx, name, is_lambda_sugar, body } => {
                 ctx.lift_comatch(info, type_ctx, name, *is_lambda_sugar, body)
             }
         }
@@ -470,7 +470,7 @@ impl Ctx {
     ) -> ust::Exp {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
-            return ust::Exp::Match {
+            return ust::Exp::LocalMatch {
                 info: info.forget_tst(),
                 ctx: (),
                 name: name.clone(),
@@ -543,7 +543,7 @@ impl Ctx {
     ) -> ust::Exp {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
-            return ust::Exp::Comatch {
+            return ust::Exp::LocalComatch {
                 info: info.forget_tst(),
                 ctx: (),
                 name: name.clone(),

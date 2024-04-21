@@ -376,13 +376,15 @@ where
                 let ctx2 = ctx2.rename_in_ctx(ctx);
                 Exp::Var { info: info.rename_in_ctx(ctx), name: ctx.lookup(idx), ctx: ctx2, idx }
             }
-            Exp::Comatch { info, ctx: ctx2, name, is_lambda_sugar, body } => Exp::Comatch {
-                info: info.rename_in_ctx(ctx),
-                ctx: ctx2.rename_in_ctx(ctx),
-                name,
-                is_lambda_sugar,
-                body: body.rename_in_ctx(ctx),
-            },
+            Exp::LocalComatch { info, ctx: ctx2, name, is_lambda_sugar, body } => {
+                Exp::LocalComatch {
+                    info: info.rename_in_ctx(ctx),
+                    ctx: ctx2.rename_in_ctx(ctx),
+                    name,
+                    is_lambda_sugar,
+                    body: body.rename_in_ctx(ctx),
+                }
+            }
             Exp::Anno { info, exp, typ } => Exp::Anno {
                 info: info.rename_in_ctx(ctx),
                 exp: exp.rename_in_ctx(ctx),
@@ -396,15 +398,17 @@ where
             Exp::Ctor { info, name, args } => {
                 Exp::Ctor { info: info.rename_in_ctx(ctx), name, args: args.rename_in_ctx(ctx) }
             }
-            Exp::Match { info, ctx: ctx2, name, on_exp, motive, ret_typ, body } => Exp::Match {
-                info: info.rename_in_ctx(ctx),
-                ctx: ctx2.rename_in_ctx(ctx),
-                name,
-                on_exp: on_exp.rename_in_ctx(ctx),
-                motive: motive.rename_in_ctx(ctx),
-                ret_typ: ret_typ.rename_in_ctx(ctx),
-                body: body.rename_in_ctx(ctx),
-            },
+            Exp::LocalMatch { info, ctx: ctx2, name, on_exp, motive, ret_typ, body } => {
+                Exp::LocalMatch {
+                    info: info.rename_in_ctx(ctx),
+                    ctx: ctx2.rename_in_ctx(ctx),
+                    name,
+                    on_exp: on_exp.rename_in_ctx(ctx),
+                    motive: motive.rename_in_ctx(ctx),
+                    ret_typ: ret_typ.rename_in_ctx(ctx),
+                    body: body.rename_in_ctx(ctx),
+                }
+            }
             Exp::Dtor { info, exp, name, args } => Exp::Dtor {
                 info: info.rename_in_ctx(ctx),
                 name,

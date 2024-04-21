@@ -162,7 +162,7 @@ impl Lower for cst::exp::LocalMatch {
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::LocalMatch { span, name, on_exp, motive, body } = self;
-        Ok(ust::Exp::Match {
+        Ok(ust::Exp::LocalMatch {
             info: Some(*span),
             ctx: (),
             name: ctx.unique_label(name.to_owned(), span)?,
@@ -179,7 +179,7 @@ impl Lower for cst::exp::LocalComatch {
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::LocalComatch { span, name, is_lambda_sugar, body } = self;
-        Ok(ust::Exp::Comatch {
+        Ok(ust::Exp::LocalComatch {
             info: Some(*span),
             ctx: (),
             name: ctx.unique_label(name.to_owned(), span)?,

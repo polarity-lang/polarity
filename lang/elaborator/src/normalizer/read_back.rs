@@ -33,7 +33,7 @@ impl ReadBack for val::Val {
                 args: ust::Args { args: args.read_back(prg)? },
             },
             val::Val::Type { info } => ust::Exp::Type { info: *info },
-            val::Val::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::Comatch {
+            val::Val::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::LocalComatch {
                 info: *info,
                 ctx: (),
                 name: name.clone(),
@@ -60,7 +60,7 @@ impl ReadBack for val::Neu {
                 name: name.clone(),
                 args: ust::Args { args: args.read_back(prg)? },
             },
-            val::Neu::Match { info, name, on_exp, body } => ust::Exp::Match {
+            val::Neu::Match { info, name, on_exp, body } => ust::Exp::LocalMatch {
                 info: *info,
                 ctx: (),
                 motive: None,

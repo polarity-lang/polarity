@@ -692,7 +692,7 @@ impl Check for ust::Exp {
         t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
         match self {
-            ust::Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ: (), body } => {
+            ust::Exp::LocalMatch { info, ctx: (), name, on_exp, motive, ret_typ: (), body } => {
                 let on_exp_out = on_exp.infer(prg, ctx)?;
                 let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
                 let typ_app = typ_app_nf.infer(prg, ctx)?;
@@ -750,7 +750,7 @@ impl Check for ust::Exp {
                 let body_out = WithScrutinee { inner: body, scrutinee: typ_app_nf.clone() }
                     .check(prg, ctx, body_t)?;
 
-                Ok(tst::Exp::Match {
+                Ok(tst::Exp::LocalMatch {
                     info: info.with_type_app(typ_app, typ_app_nf),
                     ctx: ctx.vars.clone(),
                     name: name.clone(),
@@ -760,7 +760,7 @@ impl Check for ust::Exp {
                     body: body_out,
                 })
             }
-            ust::Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => {
+            ust::Exp::LocalComatch { info, ctx: (), name, is_lambda_sugar, body } => {
                 let typ_app_nf = t.expect_typ_app()?;
                 let typ_app = typ_app_nf.infer(prg, ctx)?;
 
@@ -781,7 +781,7 @@ impl Check for ust::Exp {
                 };
                 let body_out = wd.infer(prg, ctx)?;
 
-                Ok(tst::Exp::Comatch {
+                Ok(tst::Exp::LocalComatch {
                     info: info.with_type_app(typ_app, typ_app_nf),
                     ctx: ctx.vars.clone(),
                     name: name.clone(),
@@ -881,10 +881,10 @@ impl Infer for ust::Exp {
             }
             ust::Exp::Type { info } => Ok(tst::Exp::Type { info: info.with_type(type_univ()) }),
             ust::Exp::Hole { info } => Ok(tst::Exp::Hole { info: info.with_type(type_hole()) }),
-            ust::Exp::Match { .. } => {
+            ust::Exp::LocalMatch { .. } => {
                 Err(TypeError::CannotInferMatch { span: self.span().to_miette() })
             }
-            ust::Exp::Comatch { .. } => {
+            ust::Exp::LocalComatch { .. } => {
                 Err(TypeError::CannotInferComatch { span: self.span().to_miette() })
             }
         }

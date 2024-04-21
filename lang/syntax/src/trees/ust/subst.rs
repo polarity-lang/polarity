@@ -31,8 +31,8 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                 Rc::new(Exp::Anno { info: *info, exp: exp.subst(ctx, by), typ: typ.subst(ctx, by) })
             }
             Exp::Type { info } => Rc::new(Exp::Type { info: *info }),
-            Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ, body } => {
-                Rc::new(Exp::Match {
+            Exp::LocalMatch { info, ctx: (), name, on_exp, motive, ret_typ, body } => {
+                Rc::new(Exp::LocalMatch {
                     info: *info,
                     ctx: (),
                     name: name.clone(),
@@ -42,13 +42,15 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                     body: body.subst(ctx, by),
                 })
             }
-            Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => Rc::new(Exp::Comatch {
-                info: *info,
-                ctx: (),
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.subst(ctx, by),
-            }),
+            Exp::LocalComatch { info, ctx: (), name, is_lambda_sugar, body } => {
+                Rc::new(Exp::LocalComatch {
+                    info: *info,
+                    ctx: (),
+                    name: name.clone(),
+                    is_lambda_sugar: *is_lambda_sugar,
+                    body: body.subst(ctx, by),
+                })
+            }
             Exp::Hole { info } => Rc::new(Exp::Hole { info: *info }),
         }
     }

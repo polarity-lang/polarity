@@ -25,8 +25,10 @@ impl Occurs for Exp {
             }
             Exp::Anno { exp, typ, .. } => exp.occurs(ctx, lvl) || typ.occurs(ctx, lvl),
             Exp::Type { .. } => false,
-            Exp::Match { on_exp, body, .. } => on_exp.occurs(ctx, lvl) || body.occurs(ctx, lvl),
-            Exp::Comatch { body, .. } => body.occurs(ctx, lvl),
+            Exp::LocalMatch { on_exp, body, .. } => {
+                on_exp.occurs(ctx, lvl) || body.occurs(ctx, lvl)
+            }
+            Exp::LocalComatch { body, .. } => body.occurs(ctx, lvl),
             Exp::Hole { .. } => false,
         }
     }

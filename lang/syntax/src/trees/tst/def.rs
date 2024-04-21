@@ -115,11 +115,11 @@ impl HasTypeInfo for Exp {
             Exp::Dtor { info, .. } => info.clone().typ,
             Exp::Anno { info, .. } => info.clone().typ,
             Exp::Type { info } => info.clone().typ,
-            Exp::Match { info, .. } => {
+            Exp::LocalMatch { info, .. } => {
                 let ust::TypApp { info, name, args } = info.clone().typ_nf;
                 Rc::new(ust::Exp::TypCtor { info, name, args })
             }
-            Exp::Comatch { info, .. } => {
+            Exp::LocalComatch { info, .. } => {
                 let ust::TypApp { info, name, args } = info.clone().typ_nf;
                 Rc::new(ust::Exp::TypCtor { info, name, args })
             }

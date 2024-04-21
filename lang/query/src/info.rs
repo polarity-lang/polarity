@@ -238,12 +238,12 @@ impl CollectInfo for tst::Exp {
                 exp.collect_info(collector);
                 typ.collect_info(collector)
             }
-            tst::Exp::Match { info: _, ctx: _, name: _, on_exp, motive: _, ret_typ, body } => {
+            tst::Exp::LocalMatch { info: _, ctx: _, name: _, on_exp, motive: _, ret_typ, body } => {
                 on_exp.collect_info(collector);
                 ret_typ.as_exp().collect_info(collector);
                 body.collect_info(collector)
             }
-            tst::Exp::Comatch { info: _, ctx: _, name: _, is_lambda_sugar: _, body } => {
+            tst::Exp::LocalComatch { info: _, ctx: _, name: _, is_lambda_sugar: _, body } => {
                 body.collect_info(collector)
             }
         }
