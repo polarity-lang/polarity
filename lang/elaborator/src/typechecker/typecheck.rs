@@ -827,89 +827,134 @@ impl Infer for ust::Exp {
     #[trace("{:P} |- {:P} => {return:P}", ctx, self, |ret| ret.as_ref().map(|e| e.typ()))]
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         match self {
-            ust::Exp::Variable(ust::Variable { info, name, ctx: (), idx }) => {
-                let typ_nf = ctx.lookup(*idx);
-                Ok(tst::Exp::Variable(tst::Variable {
-                    info: info.with_type(typ_nf),
-                    name: name.clone(),
-                    ctx: ctx.vars.clone(),
-                    idx: *idx,
-                }))
-            }
-            ust::Exp::TypCtor(ust::TypCtor { info, name, args }) => {
-                let ust::TypAbs { params } = &*prg.decls.typ(name, *info)?.typ();
-
-                let args_out = check_args(args, prg, name, ctx, params, *info)?;
-
-                Ok(tst::Exp::TypCtor(tst::TypCtor {
-                    info: info.with_type(type_univ()),
-                    name: name.clone(),
-                    args: args_out,
-                }))
-            }
-            ust::Exp::Call(ust::Call { info, name, args }) => {
-                let ust::Ctor { name, params, typ, .. } = &prg.decls.ctor_or_codef(name, *info)?;
-
-                let args_out = check_args(args, prg, name, ctx, params, *info)?;
-                let typ_out = typ
-                    .subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()])
-                    .to_exp();
-                let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
-
-                Ok(tst::Exp::Call(tst::Call {
-                    info: info.with_type(typ_nf),
-                    name: name.clone(),
-                    args: args_out,
-                }))
-            }
-            ust::Exp::DotCall(ust::DotCall { info, exp, name, args }) => {
-                let ust::Dtor { name, params, self_param, ret_typ, .. } =
-                    &prg.decls.dtor_or_def(name, *info)?;
-
-                let args_out = check_args(args, prg, name, ctx, params, *info)?;
-
-                let self_param_out = self_param
-                    .typ
-                    .subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()])
-                    .to_exp();
-                let self_param_nf = self_param_out.normalize(prg, &mut ctx.env())?;
-
-                let exp_out = exp.check(prg, ctx, self_param_nf)?;
-
-                let subst = vec![args.args.clone(), vec![exp.clone()]];
-                let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &subst);
-                let typ_out_nf = typ_out.normalize(prg, &mut ctx.env())?;
-
-                Ok(tst::Exp::DotCall(tst::DotCall {
-                    info: info.with_type(typ_out_nf),
-                    exp: exp_out,
-                    name: name.clone(),
-                    args: args_out,
-                }))
-            }
-            ust::Exp::Anno(ust::Anno { info, exp, typ }) => {
-                let typ_out = typ.check(prg, ctx, type_univ())?;
-                let typ_nf = typ.normalize(prg, &mut ctx.env())?;
-                let exp_out = (**exp).check(prg, ctx, typ_nf.clone())?;
-                Ok(tst::Exp::Anno(tst::Anno {
-                    info: info.with_type(typ_nf),
-                    exp: Rc::new(exp_out),
-                    typ: typ_out,
-                }))
-            }
-            ust::Exp::Type(ust::Type { info }) => {
-                Ok(tst::Exp::Type(tst::Type { info: info.with_type(type_univ()) }))
-            }
-            ust::Exp::Hole(ust::Hole { info }) => {
-                Ok(tst::Exp::Hole(tst::Hole { info: info.with_type(type_hole()) }))
-            }
-            ust::Exp::LocalMatch { .. } => {
-                Err(TypeError::CannotInferMatch { span: self.span().to_miette() })
-            }
-            ust::Exp::LocalComatch { .. } => {
-                Err(TypeError::CannotInferComatch { span: self.span().to_miette() })
-            }
+            ust::Exp::Variable(e) => Ok(tst::Exp::Variable(e.infer(prg, ctx)?)),
+            ust::Exp::TypCtor(e) => Ok(tst::Exp::TypCtor(e.infer(prg, ctx)?)),
+            ust::Exp::Call(e) => Ok(tst::Exp::Call(e.infer(prg, ctx)?)),
+            ust::Exp::DotCall(e) => Ok(tst::Exp::DotCall(e.infer(prg, ctx)?)),
+            ust::Exp::Anno(e) => Ok(tst::Exp::Anno(e.infer(prg, ctx)?)),
+            ust::Exp::Type(e) => Ok(tst::Exp::Type(e.infer(prg, ctx)?)),
+            ust::Exp::Hole(e) => Ok(tst::Exp::Hole(e.infer(prg, ctx)?)),
+            ust::Exp::LocalMatch(e) => Ok(tst::Exp::LocalMatch(e.infer(prg, ctx)?)),
+            ust::Exp::LocalComatch(e) => Ok(tst::Exp::LocalComatch(e.infer(prg, ctx)?)),
         }
+    }
+}
+
+impl Infer for ust::Variable {
+    type Target = tst::Variable;
+
+    fn infer(&self, _prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        let ust::Variable { info, name, ctx: (), idx } = self;
+        let typ_nf = ctx.lookup(*idx);
+        Ok(tst::Variable {
+            info: info.with_type(typ_nf),
+            name: name.clone(),
+            ctx: ctx.vars.clone(),
+            idx: *idx,
+        })
+    }
+}
+
+impl Infer for ust::TypCtor {
+    type Target = tst::TypCtor;
+
+    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        let ust::TypCtor { info, name, args } = self;
+        let ust::TypAbs { params } = &*prg.decls.typ(name, *info)?.typ();
+        let args_out = check_args(args, prg, name, ctx, params, *info)?;
+
+        Ok(tst::TypCtor { info: info.with_type(type_univ()), name: name.clone(), args: args_out })
+    }
+}
+
+impl Infer for ust::Call {
+    type Target = tst::Call;
+
+    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        let ust::Call { info, name, args } = self;
+        let ust::Ctor { name, params, typ, .. } = &prg.decls.ctor_or_codef(name, *info)?;
+        let args_out = check_args(args, prg, name, ctx, params, *info)?;
+        let typ_out =
+            typ.subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()]).to_exp();
+        let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
+        Ok(tst::Call { info: info.with_type(typ_nf), name: name.clone(), args: args_out })
+    }
+}
+
+impl Infer for ust::DotCall {
+    type Target = tst::DotCall;
+
+    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        let ust::DotCall { info, exp, name, args } = self;
+        let ust::Dtor { name, params, self_param, ret_typ, .. } =
+            &prg.decls.dtor_or_def(name, *info)?;
+
+        let args_out = check_args(args, prg, name, ctx, params, *info)?;
+
+        let self_param_out = self_param
+            .typ
+            .subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()])
+            .to_exp();
+        let self_param_nf = self_param_out.normalize(prg, &mut ctx.env())?;
+
+        let exp_out = exp.check(prg, ctx, self_param_nf)?;
+
+        let subst = vec![args.args.clone(), vec![exp.clone()]];
+        let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &subst);
+        let typ_out_nf = typ_out.normalize(prg, &mut ctx.env())?;
+
+        Ok(tst::DotCall {
+            info: info.with_type(typ_out_nf),
+            exp: exp_out,
+            name: name.clone(),
+            args: args_out,
+        })
+    }
+}
+
+impl Infer for ust::Anno {
+    type Target = tst::Anno;
+
+    fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        let ust::Anno { info, exp, typ } = self;
+        let typ_out = typ.check(prg, ctx, type_univ())?;
+        let typ_nf = typ.normalize(prg, &mut ctx.env())?;
+        let exp_out = (**exp).check(prg, ctx, typ_nf.clone())?;
+        Ok(tst::Anno { info: info.with_type(typ_nf), exp: Rc::new(exp_out), typ: typ_out })
+    }
+}
+
+impl Infer for ust::Type {
+    type Target = tst::Type;
+
+    fn infer(&self, _prg: &ust::Prg, _ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        let ust::Type { info } = self;
+        Ok(tst::Type { info: info.with_type(type_univ()) })
+    }
+}
+
+impl Infer for ust::Hole {
+    type Target = tst::Hole;
+
+    fn infer(&self, _prg: &ust::Prg, _ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        let ust::Hole { info } = self;
+        Ok(tst::Hole { info: info.with_type(type_hole()) })
+    }
+}
+
+impl Infer for ust::LocalMatch {
+    type Target = tst::LocalMatch;
+
+    fn infer(&self, _prg: &ust::Prg, _ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        Err(TypeError::CannotInferMatch { span: self.span().to_miette() })
+    }
+}
+
+impl Infer for ust::LocalComatch {
+    type Target = tst::LocalComatch;
+
+    fn infer(&self, _prg: &ust::Prg, _ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        Err(TypeError::CannotInferComatch { span: self.span().to_miette() })
     }
 }
 
