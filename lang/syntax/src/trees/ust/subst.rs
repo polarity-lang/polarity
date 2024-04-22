@@ -7,32 +7,41 @@ use crate::ust::*;
 impl Substitutable<Rc<Exp>> for Rc<Exp> {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         match &**self {
-            Exp::Var { info, name, ctx: (), idx } => {
+            Exp::Variable(Variable { info, name, ctx: (), idx }) => {
                 match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
                     Some(exp) => exp,
-                    None => {
-                        Rc::new(Exp::Var { info: *info, name: name.clone(), ctx: (), idx: *idx })
-                    }
+                    None => Rc::new(Exp::Variable(Variable {
+                        info: *info,
+                        name: name.clone(),
+                        ctx: (),
+                        idx: *idx,
+                    })),
                 }
             }
-            Exp::TypCtor { info, name, args } => {
-                Rc::new(Exp::TypCtor { info: *info, name: name.clone(), args: args.subst(ctx, by) })
-            }
-            Exp::Ctor { info, name, args } => {
-                Rc::new(Exp::Ctor { info: *info, name: name.clone(), args: args.subst(ctx, by) })
-            }
-            Exp::Dtor { info, exp, name, args } => Rc::new(Exp::Dtor {
+            Exp::TypCtor(TypCtor { info, name, args }) => Rc::new(Exp::TypCtor(TypCtor {
+                info: *info,
+                name: name.clone(),
+                args: args.subst(ctx, by),
+            })),
+            Exp::Call(Call { info, name, args }) => Rc::new(Exp::Call(Call {
+                info: *info,
+                name: name.clone(),
+                args: args.subst(ctx, by),
+            })),
+            Exp::DotCall(DotCall { info, exp, name, args }) => Rc::new(Exp::DotCall(DotCall {
                 info: *info,
                 exp: exp.subst(ctx, by),
                 name: name.clone(),
                 args: args.subst(ctx, by),
-            }),
-            Exp::Anno { info, exp, typ } => {
-                Rc::new(Exp::Anno { info: *info, exp: exp.subst(ctx, by), typ: typ.subst(ctx, by) })
-            }
-            Exp::Type { info } => Rc::new(Exp::Type { info: *info }),
-            Exp::Match { info, ctx: (), name, on_exp, motive, ret_typ, body } => {
-                Rc::new(Exp::Match {
+            })),
+            Exp::Anno(Anno { info, exp, typ }) => Rc::new(Exp::Anno(Anno {
+                info: *info,
+                exp: exp.subst(ctx, by),
+                typ: typ.subst(ctx, by),
+            })),
+            Exp::Type(Type { info }) => Rc::new(Exp::Type(Type { info: *info })),
+            Exp::LocalMatch(LocalMatch { info, ctx: (), name, on_exp, motive, ret_typ, body }) => {
+                Rc::new(Exp::LocalMatch(LocalMatch {
                     info: *info,
                     ctx: (),
                     name: name.clone(),
@@ -40,16 +49,18 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                     motive: motive.subst(ctx, by),
                     ret_typ: ret_typ.subst(ctx, by),
                     body: body.subst(ctx, by),
-                })
+                }))
             }
-            Exp::Comatch { info, ctx: (), name, is_lambda_sugar, body } => Rc::new(Exp::Comatch {
-                info: *info,
-                ctx: (),
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.subst(ctx, by),
-            }),
-            Exp::Hole { info } => Rc::new(Exp::Hole { info: *info }),
+            Exp::LocalComatch(LocalComatch { info, ctx: (), name, is_lambda_sugar, body }) => {
+                Rc::new(Exp::LocalComatch(LocalComatch {
+                    info: *info,
+                    ctx: (),
+                    name: name.clone(),
+                    is_lambda_sugar: *is_lambda_sugar,
+                    body: body.subst(ctx, by),
+                }))
+            }
+            Exp::Hole(Hole { info }) => Rc::new(Exp::Hole(Hole { info: *info })),
         }
     }
 }
@@ -141,12 +152,12 @@ impl Substitution<Rc<Exp>> for SwapSubst {
         let new_ctx = ctx.swap(self.fst1, self.fst2);
 
         new_lvl.map(|new_lvl| {
-            Rc::new(Exp::Var {
+            Rc::new(Exp::Variable(Variable {
                 info: Default::default(),
                 name: "".to_owned(),
                 ctx: (),
                 idx: new_ctx.lvl_to_idx(new_lvl),
-            })
+            }))
         })
     }
 }

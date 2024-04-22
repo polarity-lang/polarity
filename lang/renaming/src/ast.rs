@@ -371,32 +371,51 @@ where
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         match self {
-            Exp::Var { info, name: _, ctx: ctx2, idx } => {
+            Exp::Variable(Variable { info, name: _, ctx: ctx2, idx }) => {
                 // This is the only place where we look up the renamed variables from the context
                 let ctx2 = ctx2.rename_in_ctx(ctx);
-                Exp::Var { info: info.rename_in_ctx(ctx), name: ctx.lookup(idx), ctx: ctx2, idx }
+                Exp::Variable(Variable {
+                    info: info.rename_in_ctx(ctx),
+                    name: ctx.lookup(idx),
+                    ctx: ctx2,
+                    idx,
+                })
             }
-            Exp::Comatch { info, ctx: ctx2, name, is_lambda_sugar, body } => Exp::Comatch {
-                info: info.rename_in_ctx(ctx),
-                ctx: ctx2.rename_in_ctx(ctx),
-                name,
-                is_lambda_sugar,
-                body: body.rename_in_ctx(ctx),
-            },
-            Exp::Anno { info, exp, typ } => Exp::Anno {
+            Exp::LocalComatch(LocalComatch { info, ctx: ctx2, name, is_lambda_sugar, body }) => {
+                Exp::LocalComatch(LocalComatch {
+                    info: info.rename_in_ctx(ctx),
+                    ctx: ctx2.rename_in_ctx(ctx),
+                    name,
+                    is_lambda_sugar,
+                    body: body.rename_in_ctx(ctx),
+                })
+            }
+            Exp::Anno(Anno { info, exp, typ }) => Exp::Anno(Anno {
                 info: info.rename_in_ctx(ctx),
                 exp: exp.rename_in_ctx(ctx),
                 typ: typ.rename_in_ctx(ctx),
-            },
-            Exp::TypCtor { info, name, args } => {
-                Exp::TypCtor { info: info.rename_in_ctx(ctx), name, args: args.rename_in_ctx(ctx) }
-            }
-            Exp::Hole { info } => Exp::Hole { info: info.rename_in_ctx(ctx) },
-            Exp::Type { info } => Exp::Type { info: info.rename_in_ctx(ctx) },
-            Exp::Ctor { info, name, args } => {
-                Exp::Ctor { info: info.rename_in_ctx(ctx), name, args: args.rename_in_ctx(ctx) }
-            }
-            Exp::Match { info, ctx: ctx2, name, on_exp, motive, ret_typ, body } => Exp::Match {
+            }),
+            Exp::TypCtor(TypCtor { info, name, args }) => Exp::TypCtor(TypCtor {
+                info: info.rename_in_ctx(ctx),
+                name,
+                args: args.rename_in_ctx(ctx),
+            }),
+            Exp::Hole(Hole { info }) => Exp::Hole(Hole { info: info.rename_in_ctx(ctx) }),
+            Exp::Type(Type { info }) => Exp::Type(Type { info: info.rename_in_ctx(ctx) }),
+            Exp::Call(Call { info, name, args }) => Exp::Call(Call {
+                info: info.rename_in_ctx(ctx),
+                name,
+                args: args.rename_in_ctx(ctx),
+            }),
+            Exp::LocalMatch(LocalMatch {
+                info,
+                ctx: ctx2,
+                name,
+                on_exp,
+                motive,
+                ret_typ,
+                body,
+            }) => Exp::LocalMatch(LocalMatch {
                 info: info.rename_in_ctx(ctx),
                 ctx: ctx2.rename_in_ctx(ctx),
                 name,
@@ -404,13 +423,13 @@ where
                 motive: motive.rename_in_ctx(ctx),
                 ret_typ: ret_typ.rename_in_ctx(ctx),
                 body: body.rename_in_ctx(ctx),
-            },
-            Exp::Dtor { info, exp, name, args } => Exp::Dtor {
+            }),
+            Exp::DotCall(DotCall { info, exp, name, args }) => Exp::DotCall(DotCall {
                 info: info.rename_in_ctx(ctx),
                 name,
                 exp: exp.rename_in_ctx(ctx),
                 args: args.rename_in_ctx(ctx),
-            },
+            }),
         }
     }
 }
@@ -462,14 +481,6 @@ where
         })
     }
 }
-
-//     fn map_motive_param<X, F>(&mut self, mut param: ParamInst<P>, f_inner: F) -> X
-//     where
-//         F: FnOnce(&mut Self, ParamInst<P>) -> X,
-//     {
-//         param.name = self.disambiguate_name(param.name);
-//         self.ctx_map_motive_param(param, f_inner)
-//     }
 
 impl<P: Phase> Rename for Motive<P>
 where

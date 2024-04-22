@@ -258,49 +258,117 @@ impl ForgetTST for Exp {
 
     fn forget_tst(&self) -> Self::Target {
         match self {
-            Exp::Var { info, name, ctx: _, idx } => {
-                ust::Exp::Var { info: info.forget_tst(), name: name.clone(), ctx: (), idx: *idx }
-            }
-            Exp::TypCtor { info, name, args } => ust::Exp::TypCtor {
-                info: info.forget_tst(),
-                name: name.clone(),
-                args: args.forget_tst(),
-            },
-            Exp::Ctor { info, name, args } => ust::Exp::Ctor {
-                info: info.forget_tst(),
-                name: name.clone(),
-                args: args.forget_tst(),
-            },
-            Exp::Dtor { info, exp, name, args } => ust::Exp::Dtor {
-                info: info.forget_tst(),
-                exp: exp.forget_tst(),
-                name: name.clone(),
-                args: args.forget_tst(),
-            },
-            Exp::Anno { info, exp, typ } => ust::Exp::Anno {
-                info: info.forget_tst(),
-                exp: exp.forget_tst(),
-                typ: typ.forget_tst(),
-            },
-            Exp::Type { info } => ust::Exp::Type { info: info.forget_tst() },
-            Exp::Match { info, ctx: _, name, on_exp, motive, ret_typ, body } => ust::Exp::Match {
-                info: info.forget_tst(),
-                ctx: (),
-                name: name.clone(),
-                on_exp: on_exp.forget_tst(),
-                motive: motive.forget_tst(),
-                ret_typ: ret_typ.forget_tst(),
-                body: body.forget_tst(),
-            },
-            Exp::Comatch { info, ctx: _, name, is_lambda_sugar, body } => ust::Exp::Comatch {
-                info: info.forget_tst(),
-                ctx: (),
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.forget_tst(),
-            },
-            Exp::Hole { info } => ust::Exp::Hole { info: info.forget_tst() },
+            Exp::Variable(e) => ust::Exp::Variable(e.forget_tst()),
+            Exp::TypCtor(e) => ust::Exp::TypCtor(e.forget_tst()),
+            Exp::Call(e) => ust::Exp::Call(e.forget_tst()),
+            Exp::DotCall(e) => ust::Exp::DotCall(e.forget_tst()),
+            Exp::Anno(e) => ust::Exp::Anno(e.forget_tst()),
+            Exp::Type(e) => ust::Exp::Type(e.forget_tst()),
+            Exp::LocalMatch(e) => ust::Exp::LocalMatch(e.forget_tst()),
+            Exp::LocalComatch(e) => ust::Exp::LocalComatch(e.forget_tst()),
+            Exp::Hole(e) => ust::Exp::Hole(e.forget_tst()),
         }
+    }
+}
+
+impl ForgetTST for Variable {
+    type Target = ust::Variable;
+
+    fn forget_tst(&self) -> Self::Target {
+        let Variable { info, name, ctx: _, idx } = self;
+        ust::Variable { info: info.forget_tst(), name: name.clone(), ctx: (), idx: *idx }
+    }
+}
+
+impl ForgetTST for TypCtor {
+    type Target = ust::TypCtor;
+
+    fn forget_tst(&self) -> Self::Target {
+        let TypCtor { info, name, args } = self;
+        ust::TypCtor { info: info.forget_tst(), name: name.clone(), args: args.forget_tst() }
+    }
+}
+
+impl ForgetTST for Call {
+    type Target = ust::Call;
+
+    fn forget_tst(&self) -> Self::Target {
+        let Call { info, name, args } = self;
+        ust::Call { info: info.forget_tst(), name: name.clone(), args: args.forget_tst() }
+    }
+}
+
+impl ForgetTST for DotCall {
+    type Target = ust::DotCall;
+
+    fn forget_tst(&self) -> Self::Target {
+        let DotCall { info, exp, name, args } = self;
+        ust::DotCall {
+            info: info.forget_tst(),
+            exp: exp.forget_tst(),
+            name: name.clone(),
+            args: args.forget_tst(),
+        }
+    }
+}
+
+impl ForgetTST for Anno {
+    type Target = ust::Anno;
+
+    fn forget_tst(&self) -> Self::Target {
+        let Anno { info, exp, typ } = self;
+        ust::Anno { info: info.forget_tst(), exp: exp.forget_tst(), typ: typ.forget_tst() }
+    }
+}
+
+impl ForgetTST for Type {
+    type Target = ust::Type;
+
+    fn forget_tst(&self) -> Self::Target {
+        let Type { info } = self;
+        ust::Type { info: info.forget_tst() }
+    }
+}
+
+impl ForgetTST for LocalMatch {
+    type Target = ust::LocalMatch;
+
+    fn forget_tst(&self) -> Self::Target {
+        let LocalMatch { info, ctx: _, name, on_exp, motive, ret_typ, body } = self;
+        ust::LocalMatch {
+            info: info.forget_tst(),
+            ctx: (),
+            name: name.clone(),
+            on_exp: on_exp.forget_tst(),
+            motive: motive.forget_tst(),
+            ret_typ: ret_typ.forget_tst(),
+            body: body.forget_tst(),
+        }
+    }
+}
+
+impl ForgetTST for LocalComatch {
+    type Target = ust::LocalComatch;
+
+    fn forget_tst(&self) -> Self::Target {
+        let LocalComatch { info, ctx: _, name, is_lambda_sugar, body } = self;
+
+        ust::LocalComatch {
+            info: info.forget_tst(),
+            ctx: (),
+            name: name.clone(),
+            is_lambda_sugar: *is_lambda_sugar,
+            body: body.forget_tst(),
+        }
+    }
+}
+
+impl ForgetTST for Hole {
+    type Target = ust::Hole;
+
+    fn forget_tst(&self) -> Self::Target {
+        let Hole { info } = self;
+        ust::Hole { info: info.forget_tst() }
     }
 }
 

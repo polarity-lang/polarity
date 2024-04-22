@@ -217,35 +217,47 @@ impl CollectInfo for tst::Args {
 impl CollectInfo for tst::Exp {
     fn collect_info(&self, collector: &mut InfoCollector) {
         match self {
-            tst::Exp::Var { info, .. } => info.collect_info(collector),
-            tst::Exp::TypCtor { info, name: _, args } => {
+            tst::Exp::Variable(tst::Variable { info, .. }) => info.collect_info(collector),
+            tst::Exp::TypCtor(tst::TypCtor { info, name: _, args }) => {
                 info.collect_info(collector);
                 args.collect_info(collector)
             }
-            tst::Exp::Ctor { info, name: _, args } => {
+            tst::Exp::Call(tst::Call { info, name: _, args }) => {
                 info.collect_info(collector);
                 args.collect_info(collector)
             }
-            tst::Exp::Dtor { info, exp, name: _, args } => {
+            tst::Exp::DotCall(tst::DotCall { info, exp, name: _, args }) => {
                 info.collect_info(collector);
                 exp.collect_info(collector);
                 args.collect_info(collector)
             }
-            tst::Exp::Hole { info } => info.collect_info(collector),
-            tst::Exp::Type { info } => info.collect_info(collector),
-            tst::Exp::Anno { info, exp, typ } => {
+            tst::Exp::Hole(tst::Hole { info }) => info.collect_info(collector),
+            tst::Exp::Type(tst::Type { info }) => info.collect_info(collector),
+            tst::Exp::Anno(tst::Anno { info, exp, typ }) => {
                 info.collect_info(collector);
                 exp.collect_info(collector);
                 typ.collect_info(collector)
             }
-            tst::Exp::Match { info: _, ctx: _, name: _, on_exp, motive: _, ret_typ, body } => {
+            tst::Exp::LocalMatch(tst::LocalMatch {
+                info: _,
+                ctx: _,
+                name: _,
+                on_exp,
+                motive: _,
+                ret_typ,
+                body,
+            }) => {
                 on_exp.collect_info(collector);
                 ret_typ.as_exp().collect_info(collector);
                 body.collect_info(collector)
             }
-            tst::Exp::Comatch { info: _, ctx: _, name: _, is_lambda_sugar: _, body } => {
-                body.collect_info(collector)
-            }
+            tst::Exp::LocalComatch(tst::LocalComatch {
+                info: _,
+                ctx: _,
+                name: _,
+                is_lambda_sugar: _,
+                body,
+            }) => body.collect_info(collector),
         }
     }
 }

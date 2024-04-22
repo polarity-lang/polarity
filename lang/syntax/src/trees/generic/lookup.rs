@@ -5,7 +5,8 @@ use miette::{Diagnostic, SourceSpan};
 use miette_util::ToMiette;
 use thiserror::Error;
 
-use super::def::*;
+use super::decls::*;
+use super::exp::*;
 use super::lookup_table;
 use super::lookup_table::DeclKind;
 
@@ -41,7 +42,7 @@ impl<P: Phase> Decls<P> {
         &self,
         name: &Ident,
         span: Option<codespan::Span>,
-    ) -> Result<Type<'_, P>, LookupError> {
+    ) -> Result<DataCodata<'_, P>, LookupError> {
         let type_decl = self
             .lookup_table
             .type_decl_for_xtor(name)
@@ -89,10 +90,10 @@ impl<P: Phase> Decls<P> {
         &self,
         name: &str,
         span: Option<codespan::Span>,
-    ) -> Result<Type<'_, P>, LookupError> {
+    ) -> Result<DataCodata<'_, P>, LookupError> {
         match self.decl(name, span)? {
-            Decl::Data(data) => Ok(Type::Data(data)),
-            Decl::Codata(codata) => Ok(Type::Codata(codata)),
+            Decl::Data(data) => Ok(DataCodata::Data(data)),
+            Decl::Codata(codata) => Ok(DataCodata::Codata(codata)),
             other => Err(LookupError::ExpectedDataCodata {
                 name: name.to_owned(),
                 actual: other.kind(),
@@ -237,23 +238,23 @@ impl<'a, P: Phase> Item<'a, P> {
 }
 
 #[derive(Debug, Clone)]
-pub enum Type<'a, P: Phase> {
+pub enum DataCodata<'a, P: Phase> {
     Data(&'a Data<P>),
     Codata(&'a Codata<P>),
 }
 
-impl<'a, P: Phase> Type<'a, P> {
+impl<'a, P: Phase> DataCodata<'a, P> {
     pub fn name(&self) -> &Ident {
         match self {
-            Type::Data(data) => &data.name,
-            Type::Codata(codata) => &codata.name,
+            DataCodata::Data(data) => &data.name,
+            DataCodata::Codata(codata) => &codata.name,
         }
     }
 
     pub fn typ(&self) -> Rc<TypAbs<P>> {
         match self {
-            Type::Data(data) => data.typ.clone(),
-            Type::Codata(codata) => codata.typ.clone(),
+            DataCodata::Data(data) => data.typ.clone(),
+            DataCodata::Codata(codata) => codata.typ.clone(),
         }
     }
 }

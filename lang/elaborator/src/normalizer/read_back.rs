@@ -22,24 +22,26 @@ impl ReadBack for val::Val {
     #[trace("↓{:P} ~> {return:P}", self, std::convert::identity)]
     fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let res = match self {
-            val::Val::TypCtor { info, name, args } => ust::Exp::TypCtor {
+            val::Val::TypCtor { info, name, args } => ust::Exp::TypCtor(ust::TypCtor {
                 info: *info,
                 name: name.clone(),
                 args: ust::Args { args: args.read_back(prg)? },
-            },
-            val::Val::Ctor { info, name, args } => ust::Exp::Ctor {
+            }),
+            val::Val::Ctor { info, name, args } => ust::Exp::Call(ust::Call {
                 info: *info,
                 name: name.clone(),
                 args: ust::Args { args: args.read_back(prg)? },
-            },
-            val::Val::Type { info } => ust::Exp::Type { info: *info },
-            val::Val::Comatch { info, name, is_lambda_sugar, body } => ust::Exp::Comatch {
-                info: *info,
-                ctx: (),
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.read_back(prg)?,
-            },
+            }),
+            val::Val::Type { info } => ust::Exp::Type(ust::Type { info: *info }),
+            val::Val::Comatch { info, name, is_lambda_sugar, body } => {
+                ust::Exp::LocalComatch(ust::LocalComatch {
+                    info: *info,
+                    ctx: (),
+                    name: name.clone(),
+                    is_lambda_sugar: *is_lambda_sugar,
+                    body: body.read_back(prg)?,
+                })
+            }
             val::Val::Neu { exp } => exp.read_back(prg)?,
         };
         Ok(res)
@@ -51,16 +53,19 @@ impl ReadBack for val::Neu {
 
     fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let res = match self {
-            val::Neu::Var { info, name, idx } => {
-                ust::Exp::Var { info: *info, ctx: (), name: name.clone(), idx: *idx }
-            }
-            val::Neu::Dtor { info, exp, name, args } => ust::Exp::Dtor {
+            val::Neu::Var { info, name, idx } => ust::Exp::Variable(ust::Variable {
+                info: *info,
+                ctx: (),
+                name: name.clone(),
+                idx: *idx,
+            }),
+            val::Neu::Dtor { info, exp, name, args } => ust::Exp::DotCall(ust::DotCall {
                 info: *info,
                 exp: exp.read_back(prg)?,
                 name: name.clone(),
                 args: ust::Args { args: args.read_back(prg)? },
-            },
-            val::Neu::Match { info, name, on_exp, body } => ust::Exp::Match {
+            }),
+            val::Neu::Match { info, name, on_exp, body } => ust::Exp::LocalMatch(ust::LocalMatch {
                 info: *info,
                 ctx: (),
                 motive: None,
@@ -68,8 +73,8 @@ impl ReadBack for val::Neu {
                 name: name.clone(),
                 on_exp: on_exp.read_back(prg)?,
                 body: body.read_back(prg)?,
-            },
-            val::Neu::Hole { info } => ust::Exp::Hole { info: *info },
+            }),
+            val::Neu::Hole { info } => ust::Exp::Hole(ust::Hole { info: *info }),
         };
         Ok(res)
     }

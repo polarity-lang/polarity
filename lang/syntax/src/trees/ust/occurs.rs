@@ -17,18 +17,77 @@ pub trait Occurs {
 impl Occurs for Exp {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         match self {
-            Exp::Var { idx, .. } => ctx.idx_to_lvl(*idx) == lvl,
-            Exp::TypCtor { args, .. } => args.args.iter().any(|arg| arg.occurs(ctx, lvl)),
-            Exp::Ctor { args, .. } => args.args.iter().any(|arg| arg.occurs(ctx, lvl)),
-            Exp::Dtor { exp, args, .. } => {
-                exp.occurs(ctx, lvl) || args.args.iter().any(|arg| arg.occurs(ctx, lvl))
-            }
-            Exp::Anno { exp, typ, .. } => exp.occurs(ctx, lvl) || typ.occurs(ctx, lvl),
-            Exp::Type { .. } => false,
-            Exp::Match { on_exp, body, .. } => on_exp.occurs(ctx, lvl) || body.occurs(ctx, lvl),
-            Exp::Comatch { body, .. } => body.occurs(ctx, lvl),
-            Exp::Hole { .. } => false,
+            Exp::Variable(e) => e.occurs(ctx, lvl),
+            Exp::TypCtor(e) => e.occurs(ctx, lvl),
+            Exp::Call(e) => e.occurs(ctx, lvl),
+            Exp::DotCall(e) => e.occurs(ctx, lvl),
+            Exp::Anno(e) => e.occurs(ctx, lvl),
+            Exp::Type(e) => e.occurs(ctx, lvl),
+            Exp::LocalMatch(e) => e.occurs(ctx, lvl),
+            Exp::LocalComatch(e) => e.occurs(ctx, lvl),
+            Exp::Hole(e) => e.occurs(ctx, lvl),
         }
+    }
+}
+
+impl Occurs for Variable {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let Variable { idx, .. } = self;
+        ctx.idx_to_lvl(*idx) == lvl
+    }
+}
+
+impl Occurs for TypCtor {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let TypCtor { args, .. } = self;
+        args.args.iter().any(|arg| arg.occurs(ctx, lvl))
+    }
+}
+
+impl Occurs for Call {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let Call { args, .. } = self;
+        args.args.iter().any(|arg| arg.occurs(ctx, lvl))
+    }
+}
+
+impl Occurs for DotCall {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let DotCall { exp, args, .. } = self;
+        exp.occurs(ctx, lvl) || args.args.iter().any(|arg| arg.occurs(ctx, lvl))
+    }
+}
+
+impl Occurs for Anno {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let Anno { exp, typ, .. } = self;
+        exp.occurs(ctx, lvl) || typ.occurs(ctx, lvl)
+    }
+}
+
+impl Occurs for Type {
+    fn occurs(&self, _ctx: &mut LevelCtx, _lvl: Lvl) -> bool {
+        false
+    }
+}
+
+impl Occurs for LocalMatch {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let LocalMatch { on_exp, body, .. } = self;
+        on_exp.occurs(ctx, lvl) || body.occurs(ctx, lvl)
+    }
+}
+
+impl Occurs for LocalComatch {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let LocalComatch { body, .. } = self;
+        body.occurs(ctx, lvl)
+    }
+}
+
+impl Occurs for Hole {
+    fn occurs(&self, _ctx: &mut LevelCtx, _lvl: Lvl) -> bool {
+        false
     }
 }
 
