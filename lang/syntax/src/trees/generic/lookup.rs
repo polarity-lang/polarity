@@ -42,7 +42,7 @@ impl<P: Phase> Decls<P> {
         &self,
         name: &Ident,
         span: Option<codespan::Span>,
-    ) -> Result<Polarity<'_, P>, LookupError> {
+    ) -> Result<DataCodata<'_, P>, LookupError> {
         let type_decl = self
             .lookup_table
             .type_decl_for_xtor(name)
@@ -90,10 +90,10 @@ impl<P: Phase> Decls<P> {
         &self,
         name: &str,
         span: Option<codespan::Span>,
-    ) -> Result<Polarity<'_, P>, LookupError> {
+    ) -> Result<DataCodata<'_, P>, LookupError> {
         match self.decl(name, span)? {
-            Decl::Data(data) => Ok(Polarity::Data(data)),
-            Decl::Codata(codata) => Ok(Polarity::Codata(codata)),
+            Decl::Data(data) => Ok(DataCodata::Data(data)),
+            Decl::Codata(codata) => Ok(DataCodata::Codata(codata)),
             other => Err(LookupError::ExpectedDataCodata {
                 name: name.to_owned(),
                 actual: other.kind(),
@@ -238,23 +238,23 @@ impl<'a, P: Phase> Item<'a, P> {
 }
 
 #[derive(Debug, Clone)]
-pub enum Polarity<'a, P: Phase> {
+pub enum DataCodata<'a, P: Phase> {
     Data(&'a Data<P>),
     Codata(&'a Codata<P>),
 }
 
-impl<'a, P: Phase> Polarity<'a, P> {
+impl<'a, P: Phase> DataCodata<'a, P> {
     pub fn name(&self) -> &Ident {
         match self {
-            Polarity::Data(data) => &data.name,
-            Polarity::Codata(codata) => &codata.name,
+            DataCodata::Data(data) => &data.name,
+            DataCodata::Codata(codata) => &codata.name,
         }
     }
 
     pub fn typ(&self) -> Rc<TypAbs<P>> {
         match self {
-            Polarity::Data(data) => data.typ.clone(),
-            Polarity::Codata(codata) => codata.typ.clone(),
+            DataCodata::Data(data) => data.typ.clone(),
+            DataCodata::Codata(codata) => codata.typ.clone(),
         }
     }
 }

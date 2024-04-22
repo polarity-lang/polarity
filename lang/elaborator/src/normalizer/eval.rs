@@ -76,13 +76,13 @@ fn eval_dtor(
         Val::Ctor { name: ctor_name, args: ctor_args, info } => {
             let type_decl = prg.decls.type_decl_for_member(&ctor_name, info)?;
             match type_decl {
-                ust::Polarity::Data(_) => {
+                ust::DataCodata::Data(_) => {
                     let ust::Def { body, .. } = prg.decls.def(dtor_name, None)?;
                     let body =
                         Env::empty().bind_iter(dtor_args.iter(), |env| body.eval(prg, env))?;
                     beta_match(prg, body, &ctor_name, &ctor_args)
                 }
-                ust::Polarity::Codata(_) => {
+                ust::DataCodata::Codata(_) => {
                     let ust::Codef { body, .. } = prg.decls.codef(&ctor_name, None)?;
                     let body =
                         Env::empty().bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
