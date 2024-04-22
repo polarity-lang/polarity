@@ -1,6 +1,5 @@
 use std::rc::Rc;
 
-use codespan::Span;
 use syntax::ctx::{BindContext, Context};
 use syntax::ust;
 use tracer::trace;
@@ -73,46 +72,30 @@ impl Eval for ust::DotCall {
         let ust::DotCall { info, exp, name, args } = self;
         let exp = exp.eval(prg, env)?;
         let args = args.eval(prg, env)?;
-        Ok(eval_dtor(prg, info, exp, name, args)?)
-    }
-}
-
-// TODO: Merge in trait above
-fn eval_dtor(
-    prg: &ust::Prg,
-    info: &Option<Span>,
-    exp: Rc<Val>,
-    dtor_name: &str,
-    dtor_args: Vec<Rc<Val>>,
-) -> Result<Rc<Val>, TypeError> {
-    match (*exp).clone() {
-        Val::Ctor { name: ctor_name, args: ctor_args, info } => {
-            let type_decl = prg.decls.type_decl_for_member(&ctor_name, info)?;
-            match type_decl {
-                ust::DataCodata::Data(_) => {
-                    let ust::Def { body, .. } = prg.decls.def(dtor_name, None)?;
-                    let body =
-                        Env::empty().bind_iter(dtor_args.iter(), |env| body.eval(prg, env))?;
-                    beta_match(prg, body, &ctor_name, &ctor_args)
-                }
-                ust::DataCodata::Codata(_) => {
-                    let ust::Codef { body, .. } = prg.decls.codef(&ctor_name, None)?;
-                    let body =
-                        Env::empty().bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
-                    beta_comatch(prg, body, dtor_name, &dtor_args)
+        match (*exp).clone() {
+            Val::Ctor { name: ctor_name, args: ctor_args, info } => {
+                let type_decl = prg.decls.type_decl_for_member(&ctor_name, info)?;
+                match type_decl {
+                    ust::DataCodata::Data(_) => {
+                        let ust::Def { body, .. } = prg.decls.def(name, None)?;
+                        let body =
+                            Env::empty().bind_iter(args.iter(), |env| body.eval(prg, env))?;
+                        beta_match(prg, body, &ctor_name, &ctor_args)
+                    }
+                    ust::DataCodata::Codata(_) => {
+                        let ust::Codef { body, .. } = prg.decls.codef(&ctor_name, None)?;
+                        let body =
+                            Env::empty().bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
+                        beta_comatch(prg, body, name, &args)
+                    }
                 }
             }
+            Val::Comatch { body, .. } => beta_comatch(prg, body, name, &args),
+            Val::Neu { exp } => Ok(Rc::new(Val::Neu {
+                exp: Neu::Dtor { info: *info, exp: Rc::new(exp), name: name.to_owned(), args },
+            })),
+            _ => unreachable!(),
         }
-        Val::Comatch { body, .. } => beta_comatch(prg, body, dtor_name, &dtor_args),
-        Val::Neu { exp } => Ok(Rc::new(Val::Neu {
-            exp: Neu::Dtor {
-                info: *info,
-                exp: Rc::new(exp),
-                name: dtor_name.to_owned(),
-                args: dtor_args,
-            },
-        })),
-        _ => unreachable!(),
     }
 }
 
@@ -121,7 +104,7 @@ impl Eval for ust::Anno {
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
         let ust::Anno { exp, .. } = self;
-        Ok(exp.eval(prg, env)?)
+        exp.eval(prg, env)
     }
 }
 
@@ -138,23 +121,21 @@ impl Eval for ust::LocalMatch {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::LocalMatch { name, on_exp, body, .. } = self;
-        Ok(eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?)
-    }
-}
-// TODO: Inline in trait above
-fn eval_match(
-    prg: &ust::Prg,
-    match_name: &ust::Label,
-    on_exp: Rc<Val>,
-    body: val::Match,
-) -> Result<Rc<Val>, TypeError> {
-    match (*on_exp).clone() {
-        Val::Ctor { name: ctor_name, args, .. } => beta_match(prg, body, &ctor_name, &args),
-        Val::Neu { exp } => Ok(Rc::new(Val::Neu {
-            exp: Neu::Match { info: None, name: match_name.to_owned(), on_exp: Rc::new(exp), body },
-        })),
-        _ => unreachable!(),
+        let ust::LocalMatch { name: match_name, on_exp, body, .. } = self;
+        let on_exp = on_exp.eval(prg, env)?;
+        let body = body.eval(prg, env)?;
+        match (*on_exp).clone() {
+            Val::Ctor { name: ctor_name, args, .. } => beta_match(prg, body, &ctor_name, &args),
+            Val::Neu { exp } => Ok(Rc::new(Val::Neu {
+                exp: Neu::Match {
+                    info: None,
+                    name: match_name.to_owned(),
+                    on_exp: Rc::new(exp),
+                    body,
+                },
+            })),
+            _ => unreachable!(),
+        }
     }
 }
 
