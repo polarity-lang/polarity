@@ -25,46 +25,59 @@ impl Eval for ust::Exp {
 
     #[trace("{:P} |- {:P} ▷ {return:P}", env, self, std::convert::identity)]
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let res = match self {
-            ust::Exp::Variable(ust::Variable { idx, .. }) => env.lookup(*idx),
-            ust::Exp::TypCtor(ust::TypCtor { info, name, args }) => Rc::new(Val::TypCtor {
-                info: *info,
-                name: name.clone(),
-                args: args.eval(prg, env)?,
-            }),
-            ust::Exp::Call(ust::Call { info, name, args }) => {
-                Rc::new(Val::Ctor { info: *info, name: name.clone(), args: args.eval(prg, env)? })
-            }
-            ust::Exp::DotCall(ust::DotCall { info, exp, name, args }) => {
-                let exp = exp.eval(prg, env)?;
-                let args = args.eval(prg, env)?;
-                eval_dtor(prg, info, exp, name, args)?
-            }
-            ust::Exp::Anno(ust::Anno { exp, .. }) => exp.eval(prg, env)?,
-            ust::Exp::Type(ust::Type { info }) => Rc::new(Val::Type { info: *info }),
-            ust::Exp::LocalMatch(ust::LocalMatch { name, on_exp, body, .. }) => {
-                eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?
-            }
-            ust::Exp::LocalComatch(ust::LocalComatch {
-                info,
-                ctx: (),
-                name,
-                is_lambda_sugar,
-                body,
-            }) => Rc::new(Val::Comatch {
-                info: *info,
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.eval(prg, env)?,
-            }),
-            ust::Exp::Hole(ust::Hole { info }) => {
-                Rc::new(Val::Neu { exp: Neu::Hole { info: *info } })
-            }
-        };
-        Ok(res)
+        match self {
+            ust::Exp::Variable(e) => e.eval(prg, env),
+            ust::Exp::TypCtor(e) => e.eval(prg, env),
+            ust::Exp::Call(e) => e.eval(prg, env),
+            ust::Exp::DotCall(e) => e.eval(prg, env),
+            ust::Exp::Anno(e) => e.eval(prg, env),
+            ust::Exp::Type(e) => e.eval(prg, env),
+            ust::Exp::LocalMatch(e) => e.eval(prg, env),
+            ust::Exp::LocalComatch(e) => e.eval(prg, env),
+            ust::Exp::Hole(e) => e.eval(prg, env),
+        }
     }
 }
 
+impl Eval for ust::Variable {
+    type Val = Rc<Val>;
+
+    fn eval(&self, _prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+        let ust::Variable { idx, .. } = self;
+        Ok(env.lookup(*idx))
+    }
+}
+
+impl Eval for ust::TypCtor {
+    type Val = Rc<Val>;
+
+    fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+        let ust::TypCtor { info, name, args } = self;
+        Ok(Rc::new(Val::TypCtor { info: *info, name: name.clone(), args: args.eval(prg, env)? }))
+    }
+}
+
+impl Eval for ust::Call {
+    type Val = Rc<Val>;
+
+    fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+        let ust::Call { info, name, args } = self;
+        Ok(Rc::new(Val::Ctor { info: *info, name: name.clone(), args: args.eval(prg, env)? }))
+    }
+}
+
+impl Eval for ust::DotCall {
+    type Val = Rc<Val>;
+
+    fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+        let ust::DotCall { info, exp, name, args } = self;
+        let exp = exp.eval(prg, env)?;
+        let args = args.eval(prg, env)?;
+        Ok(eval_dtor(prg, info, exp, name, args)?)
+    }
+}
+
+// TODO: Merge in trait above
 fn eval_dtor(
     prg: &ust::Prg,
     info: &Option<Span>,
@@ -103,6 +116,33 @@ fn eval_dtor(
     }
 }
 
+impl Eval for ust::Anno {
+    type Val = Rc<Val>;
+
+    fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+        let ust::Anno { exp, .. } = self;
+        Ok(exp.eval(prg, env)?)
+    }
+}
+
+impl Eval for ust::Type {
+    type Val = Rc<Val>;
+
+    fn eval(&self, _prg: &ust::Prg, _env: &mut Env) -> Result<Self::Val, TypeError> {
+        let ust::Type { info } = self;
+        Ok(Rc::new(Val::Type { info: *info }))
+    }
+}
+
+impl Eval for ust::LocalMatch {
+    type Val = Rc<Val>;
+
+    fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+        let ust::LocalMatch { name, on_exp, body, .. } = self;
+        Ok(eval_match(prg, name, on_exp.eval(prg, env)?, body.eval(prg, env)?)?)
+    }
+}
+// TODO: Inline in trait above
 fn eval_match(
     prg: &ust::Prg,
     match_name: &ust::Label,
@@ -115,6 +155,29 @@ fn eval_match(
             exp: Neu::Match { info: None, name: match_name.to_owned(), on_exp: Rc::new(exp), body },
         })),
         _ => unreachable!(),
+    }
+}
+
+impl Eval for ust::LocalComatch {
+    type Val = Rc<Val>;
+
+    fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+        let ust::LocalComatch { info, ctx: (), name, is_lambda_sugar, body } = self;
+        Ok(Rc::new(Val::Comatch {
+            info: *info,
+            name: name.clone(),
+            is_lambda_sugar: *is_lambda_sugar,
+            body: body.eval(prg, env)?,
+        }))
+    }
+}
+
+impl Eval for ust::Hole {
+    type Val = Rc<Val>;
+
+    fn eval(&self, _prg: &ust::Prg, _env: &mut Env) -> Result<Self::Val, TypeError> {
+        let ust::Hole { info } = self;
+        Ok(Rc::new(Val::Neu { exp: Neu::Hole { info: *info } }))
     }
 }
 

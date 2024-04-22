@@ -684,7 +684,7 @@ fn check_cocase(
     )
 }
 
-/// Check an expressio
+/// Check an expression
 impl Check for ust::Exp {
     type Target = tst::Exp;
 
