@@ -684,7 +684,7 @@ fn check_cocase(
     )
 }
 
-/// Check an expression
+/// Check an expressio
 impl Check for ust::Exp {
     type Target = tst::Exp;
 
@@ -696,120 +696,11 @@ impl Check for ust::Exp {
         t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
         match self {
-            ust::Exp::LocalMatch(ust::LocalMatch {
-                info,
-                ctx: (),
-                name,
-                on_exp,
-                motive,
-                ret_typ: (),
-                body,
-            }) => {
-                let on_exp_out = on_exp.infer(prg, ctx)?;
-                let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
-                let typ_app = typ_app_nf.infer(prg, ctx)?;
-                let ret_typ_out = t.check(prg, ctx, type_univ())?;
-
-                let motive_out;
-                let body_t;
-
-                match motive {
-                    // Pattern matching with motive
-                    Some(m) => {
-                        let ust::Motive { info, param, ret_typ } = m;
-                        let self_t_nf = typ_app
-                            .to_exp()
-                            .forget_tst()
-                            .normalize(prg, &mut ctx.env())?
-                            .shift((1, 0));
-                        let self_binder =
-                            Binder { name: param.name.clone(), typ: self_t_nf.clone() };
-
-                        // Typecheck the motive
-                        let ret_typ_out = ctx.bind_single(&self_binder, |ctx| {
-                            ret_typ.check(prg, ctx, type_univ())
-                        })?;
-
-                        // Ensure that the motive matches the expected type
-                        let mut subst_ctx = ctx.levels().append(&vec![1].into());
-                        let on_exp_shifted = on_exp.shift((1, 0));
-                        let subst =
-                            Assign(Lvl { fst: subst_ctx.len() - 1, snd: 0 }, on_exp_shifted);
-                        let motive_t = ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0));
-                        let motive_t_nf = motive_t.normalize(prg, &mut ctx.env())?;
-                        convert(subst_ctx, motive_t_nf, &t)?;
-
-                        body_t = ctx.bind_single(&self_binder, |ctx| {
-                            ret_typ.normalize(prg, &mut ctx.env())
-                        })?;
-                        motive_out = Some(tst::Motive {
-                            info: *info,
-                            param: tst::ParamInst {
-                                info: param.info.with_type(self_t_nf),
-                                name: param.name.clone(),
-                                typ: Rc::new(typ_app.to_exp()).into(),
-                            },
-                            ret_typ: ret_typ_out,
-                        });
-                    }
-                    // Pattern matching without motive
-                    None => {
-                        body_t = t.shift((1, 0));
-                        motive_out = None;
-                    }
-                };
-
-                let body_out = WithScrutinee { inner: body, scrutinee: typ_app_nf.clone() }
-                    .check(prg, ctx, body_t)?;
-
-                Ok(tst::Exp::LocalMatch(tst::LocalMatch {
-                    info: info.with_type_app(typ_app, typ_app_nf),
-                    ctx: ctx.vars.clone(),
-                    name: name.clone(),
-                    on_exp: on_exp_out,
-                    motive: motive_out,
-                    ret_typ: ret_typ_out.into(),
-                    body: body_out,
-                }))
+            ust::Exp::LocalMatch(e) => Ok(tst::Exp::LocalMatch(e.check(prg, ctx, t.clone())?)),
+            ust::Exp::LocalComatch(e) => {
+                Ok(tst::Exp::LocalComatch(e.check(prg, ctx, t.clone())?))
             }
-            ust::Exp::LocalComatch(ust::LocalComatch {
-                info,
-                ctx: (),
-                name,
-                is_lambda_sugar,
-                body,
-            }) => {
-                let typ_app_nf = t.expect_typ_app()?;
-                let typ_app = typ_app_nf.infer(prg, ctx)?;
-
-                // Local comatches don't support self parameters, yet.
-                let codata = prg.decls.codata(&typ_app.name, info.span())?;
-                if uses_self(prg, codata)? {
-                    return Err(TypeError::LocalComatchWithSelf {
-                        type_name: codata.name.to_owned(),
-                        span: info.span().to_miette(),
-                    });
-                }
-
-                let wd = WithDestructee {
-                    inner: body,
-                    label: None,
-                    n_label_args: 0,
-                    destructee: typ_app_nf.clone(),
-                };
-                let body_out = wd.infer(prg, ctx)?;
-
-                Ok(tst::Exp::LocalComatch(tst::LocalComatch {
-                    info: info.with_type_app(typ_app, typ_app_nf),
-                    ctx: ctx.vars.clone(),
-                    name: name.clone(),
-                    is_lambda_sugar: *is_lambda_sugar,
-                    body: body_out,
-                }))
-            }
-            ust::Exp::Hole(ust::Hole { info }) => Ok(tst::Exp::Hole(tst::Hole {
-                info: info.with_type_and_ctx(t.clone(), ctx.vars.clone()),
-            })),
+            ust::Exp::Hole(e) => Ok(tst::Exp::Hole(e.check(prg, ctx, t.clone())?)),
             _ => {
                 let actual = self.infer(prg, ctx)?;
                 let ctx = ctx.levels();
@@ -817,6 +708,132 @@ impl Check for ust::Exp {
                 Ok(actual)
             }
         }
+    }
+}
+
+impl Check for ust::LocalMatch {
+    type Target = tst::LocalMatch;
+
+    fn check(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        t: Rc<ust::Exp>,
+    ) -> Result<Self::Target, TypeError> {
+        let ust::LocalMatch { info, ctx: (), name, on_exp, motive, ret_typ: (), body } = self;
+        let on_exp_out = on_exp.infer(prg, ctx)?;
+        let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
+        let typ_app = typ_app_nf.infer(prg, ctx)?;
+        let ret_typ_out = t.check(prg, ctx, type_univ())?;
+
+        let motive_out;
+        let body_t;
+
+        match motive {
+            // Pattern matching with motive
+            Some(m) => {
+                let ust::Motive { info, param, ret_typ } = m;
+                let self_t_nf =
+                    typ_app.to_exp().forget_tst().normalize(prg, &mut ctx.env())?.shift((1, 0));
+                let self_binder = Binder { name: param.name.clone(), typ: self_t_nf.clone() };
+
+                // Typecheck the motive
+                let ret_typ_out =
+                    ctx.bind_single(&self_binder, |ctx| ret_typ.check(prg, ctx, type_univ()))?;
+
+                // Ensure that the motive matches the expected type
+                let mut subst_ctx = ctx.levels().append(&vec![1].into());
+                let on_exp_shifted = on_exp.shift((1, 0));
+                let subst = Assign(Lvl { fst: subst_ctx.len() - 1, snd: 0 }, on_exp_shifted);
+                let motive_t = ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0));
+                let motive_t_nf = motive_t.normalize(prg, &mut ctx.env())?;
+                convert(subst_ctx, motive_t_nf, &t)?;
+
+                body_t =
+                    ctx.bind_single(&self_binder, |ctx| ret_typ.normalize(prg, &mut ctx.env()))?;
+                motive_out = Some(tst::Motive {
+                    info: *info,
+                    param: tst::ParamInst {
+                        info: param.info.with_type(self_t_nf),
+                        name: param.name.clone(),
+                        typ: Rc::new(typ_app.to_exp()).into(),
+                    },
+                    ret_typ: ret_typ_out,
+                });
+            }
+            // Pattern matching without motive
+            None => {
+                body_t = t.shift((1, 0));
+                motive_out = None;
+            }
+        };
+
+        let body_out =
+            WithScrutinee { inner: body, scrutinee: typ_app_nf.clone() }.check(prg, ctx, body_t)?;
+
+        Ok(tst::LocalMatch {
+            info: info.with_type_app(typ_app, typ_app_nf),
+            ctx: ctx.vars.clone(),
+            name: name.clone(),
+            on_exp: on_exp_out,
+            motive: motive_out,
+            ret_typ: ret_typ_out.into(),
+            body: body_out,
+        })
+    }
+}
+
+impl Check for ust::LocalComatch {
+    type Target = tst::LocalComatch;
+
+    fn check(
+        &self,
+        prg: &ust::Prg,
+        ctx: &mut Ctx,
+        t: Rc<ust::Exp>,
+    ) -> Result<Self::Target, TypeError> {
+        let ust::LocalComatch { info, ctx: (), name, is_lambda_sugar, body } = self;
+        let typ_app_nf = t.expect_typ_app()?;
+        let typ_app = typ_app_nf.infer(prg, ctx)?;
+
+        // Local comatches don't support self parameters, yet.
+        let codata = prg.decls.codata(&typ_app.name, info.span())?;
+        if uses_self(prg, codata)? {
+            return Err(TypeError::LocalComatchWithSelf {
+                type_name: codata.name.to_owned(),
+                span: info.span().to_miette(),
+            });
+        }
+
+        let wd = WithDestructee {
+            inner: body,
+            label: None,
+            n_label_args: 0,
+            destructee: typ_app_nf.clone(),
+        };
+        let body_out = wd.infer(prg, ctx)?;
+
+        Ok(tst::LocalComatch {
+            info: info.with_type_app(typ_app, typ_app_nf),
+            ctx: ctx.vars.clone(),
+            name: name.clone(),
+            is_lambda_sugar: *is_lambda_sugar,
+            body: body_out,
+        })
+    }
+}
+
+impl Check for ust::Hole {
+    type Target = tst::Hole;
+
+    fn check(
+        &self,
+        _prg: &ust::Prg,
+        ctx: &mut Ctx,
+        t: Rc<ust::Exp>,
+    ) -> Result<Self::Target, TypeError> {
+        let ust::Hole { info } = self;
+        Ok(tst::Hole { info: info.with_type_and_ctx(t.clone(), ctx.vars.clone()) })
     }
 }
 
