@@ -23,6 +23,7 @@ pub enum HoverInfoContent {
     TypeCtorInfo(TypeCtorInfo),
     CallInfo(CallInfo),
     DotCallInfo(DotCallInfo),
+    TypeUnivInfo(TypeUnivInfo),
 }
 
 // TODO: Completely remove generic info and replace it with concrete types.
@@ -53,6 +54,12 @@ pub struct CallInfo {
 /// Hover information for dotcalls (destructors or definitions)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DotCallInfo {
+    pub typ: String,
+}
+
+/// Hover information for type universes
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TypeUnivInfo {
     pub typ: String,
 }
 

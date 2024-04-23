@@ -69,6 +69,7 @@ impl ToHoverContent for HoverInfoContent {
             HoverInfoContent::TypeCtorInfo(i) => i.to_hover_content(),
             HoverInfoContent::CallInfo(i) => i.to_hover_content(),
             HoverInfoContent::DotCallInfo(i) => i.to_hover_content(),
+            HoverInfoContent::TypeUnivInfo(i) => i.to_hover_content(),
         }
     }
 }
@@ -115,10 +116,20 @@ impl ToHoverContent for CallInfo {
         HoverContents::Array(vec![header, typ])
     }
 }
+
 impl ToHoverContent for DotCallInfo {
     fn to_hover_content(self) -> HoverContents {
         let DotCallInfo { typ } = self;
         let header = MarkedString::String("Destructor / definition".to_owned());
+        let typ = string_to_language_string(typ);
+        HoverContents::Array(vec![header, typ])
+    }
+}
+
+impl ToHoverContent for TypeUnivInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let TypeUnivInfo { typ } = self;
+        let header = MarkedString::String("Type universe".to_owned());
         let typ = string_to_language_string(typ);
         HoverContents::Array(vec![header, typ])
     }

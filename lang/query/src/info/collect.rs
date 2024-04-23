@@ -250,7 +250,12 @@ impl CollectInfo for tst::Hole {
 impl CollectInfo for tst::Type {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let tst::Type { info } = self;
-        info.collect_info(collector)
+        if let Some(span) = info.span {
+            let content = HoverInfoContent::TypeUnivInfo(TypeUnivInfo {
+                typ: info.typ.print_to_string(None),
+            });
+            collector.add_hover_content(span, content)
+        }
     }
 }
 
