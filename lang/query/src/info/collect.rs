@@ -1,12 +1,15 @@
+
 use std::rc::Rc;
 
-use codespan::Span;
 use printer::PrintToString;
 use rust_lapper::{Interval, Lapper};
 
-use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
 use syntax::tst::{self};
 
+use super::data::*;
+
+
+/// Traverse the program and collect information for the LSP server.
 pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
     let mut c = InfoCollector::default();
 
@@ -17,72 +20,41 @@ pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
     (info_lapper, item_lapper)
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Info {
-    pub typ: String,
-    pub span: Option<Span>,
-    pub ctx: Option<Ctx>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Ctx {
-    pub bound: Vec<Vec<Binder>>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Binder {
-    pub name: String,
-    pub typ: String,
-}
-
-#[derive(PartialEq, Eq, Clone)]
-pub enum Item {
-    Data(String),
-    Codata(String),
-    Def { name: String, type_name: String },
-    Codef { name: String, type_name: String },
-}
-
 #[derive(Default)]
 struct InfoCollector {
     info_spans: Vec<Interval<u32, Info>>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
-impl From<tst::TypeInfo> for Info {
-    fn from(info: tst::TypeInfo) -> Self {
-        Info { typ: info.typ.print_to_string(None), ctx: info.ctx.map(Into::into), span: info.span }
+/// Every syntax node which implements this trait can be traversed and
+/// make source-code indexed information available for the LSP server.
+trait CollectInfo {
+    fn collect_info(&self, _collector: &mut InfoCollector) {}
+}
+
+
+// Generic implementations
+//
+//
+
+impl<T: CollectInfo> CollectInfo for Rc<T> {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        (**self).collect_info(collector)
     }
 }
 
-impl From<TypeCtx> for Ctx {
-    fn from(ctx: TypeCtx) -> Self {
-        let bound =
-            ctx.bound.into_iter().map(|tel| tel.into_iter().map(Into::into).collect()).collect();
-        Ctx { bound }
-    }
-}
-
-impl From<TypeCtxBinder> for Binder {
-    fn from(binder: TypeCtxBinder) -> Self {
-        Binder { name: binder.name, typ: binder.typ.print_to_string(None) }
-    }
-}
-
-impl Item {
-    pub fn type_name(&self) -> &str {
+impl<T: CollectInfo> CollectInfo for Option<T> {
+    fn collect_info(&self, collector: &mut InfoCollector) {
         match self {
-            Item::Data(name) => name,
-            Item::Codata(name) => name,
-            Item::Def { type_name, .. } => type_name,
-            Item::Codef { type_name, .. } => type_name,
+            None => (),
+            Some(x) => x.collect_info(collector),
         }
     }
 }
 
-trait CollectInfo {
-    fn collect_info(&self, _collector: &mut InfoCollector) {}
-}
+// Traversing a module and toplevel declarations
+//
+//
 
 impl CollectInfo for tst::Prg {
     fn collect_info(&self, collector: &mut InfoCollector) {
@@ -189,30 +161,9 @@ impl CollectInfo for tst::Let {
     }
 }
 
-impl CollectInfo for tst::Match {
-    fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Match { cases, .. } = self;
-        for case in cases.iter() {
-            case.collect_info(collector)
-        }
-    }
-}
-
-impl CollectInfo for tst::Case {
-    fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Case { body, .. } = self;
-        body.collect_info(collector)
-    }
-}
-
-impl CollectInfo for tst::Args {
-    fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Args { args } = self;
-        for arg in args.iter() {
-            arg.collect_info(collector)
-        }
-    }
-}
+// Traversing expressions and collection information
+//
+//
 
 impl CollectInfo for tst::Exp {
     fn collect_info(&self, collector: &mut InfoCollector) {
@@ -318,17 +269,28 @@ impl CollectInfo for tst::TypeInfo {
         }
     }
 }
-impl<T: CollectInfo> CollectInfo for Rc<T> {
+
+impl CollectInfo for tst::Match {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        (**self).collect_info(collector)
+        let tst::Match { cases, .. } = self;
+        for case in cases.iter() {
+            case.collect_info(collector)
+        }
     }
 }
 
-impl<T: CollectInfo> CollectInfo for Option<T> {
+impl CollectInfo for tst::Case {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        match self {
-            None => (),
-            Some(x) => x.collect_info(collector),
+        let tst::Case { body, .. } = self;
+        body.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::Args {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Args { args } = self;
+        for arg in args.iter() {
+            arg.collect_info(collector)
         }
     }
 }
