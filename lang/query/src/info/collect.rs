@@ -218,7 +218,11 @@ impl CollectInfo for tst::TypCtor {
 impl CollectInfo for tst::Call {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let tst::Call { info, args, .. } = self;
-        info.collect_info(collector);
+        if let Some(span) = info.span {
+            let content =
+                HoverInfoContent::CallInfo(CallInfo { typ: info.typ.print_to_string(None) });
+            collector.add_hover_content(span, content)
+        }
         args.collect_info(collector)
     }
 }
@@ -226,7 +230,11 @@ impl CollectInfo for tst::Call {
 impl CollectInfo for tst::DotCall {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let tst::DotCall { info, exp, args, .. } = self;
-        info.collect_info(collector);
+        if let Some(span) = info.span {
+            let content =
+                HoverInfoContent::DotCallInfo(DotCallInfo { typ: info.typ.print_to_string(None) });
+            collector.add_hover_content(span, content)
+        }
         exp.collect_info(collector);
         args.collect_info(collector)
     }
