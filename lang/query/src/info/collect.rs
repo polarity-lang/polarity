@@ -258,7 +258,7 @@ impl CollectInfo for tst::TypeInfo {
                 stop: span.end().into(),
                 val: HoverInfo {
                     typ: typ.print_to_string(None),
-                    span: Some(*span),
+                    span: *span,
                     ctx: ctx.clone().map(Into::into),
                 },
             };

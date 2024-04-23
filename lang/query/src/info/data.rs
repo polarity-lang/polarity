@@ -2,16 +2,16 @@ use codespan::Span;
 use printer::PrintToString;
 
 use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
-use syntax::tst::{self};
 
-// Info
+// HoverInfo
 //
-//
+// Types which contain the information that is displayed in a
+// code editor when hovering over a point in the program code.
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HoverInfo {
     pub typ: String,
-    pub span: Option<Span>,
+    pub span: Span,
     pub ctx: Option<Ctx>,
 }
 
@@ -24,16 +24,6 @@ pub struct Ctx {
 pub struct Binder {
     pub name: String,
     pub typ: String,
-}
-
-impl From<tst::TypeInfo> for HoverInfo {
-    fn from(info: tst::TypeInfo) -> Self {
-        HoverInfo {
-            typ: info.typ.print_to_string(None),
-            ctx: info.ctx.map(Into::into),
-            span: info.span,
-        }
-    }
 }
 
 impl From<TypeCtx> for Ctx {
