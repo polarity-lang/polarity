@@ -20,6 +20,7 @@ pub struct HoverInfo {
 pub enum HoverInfoContent {
     GenericInfo(GenericInfo),
     VariableInfo(VariableInfo),
+    TypeCtorInfo(TypeCtorInfo),
 }
 
 // TODO: Completely remove generic info and replace it with concrete types.
@@ -29,8 +30,15 @@ pub struct GenericInfo {
     pub ctx: Option<Ctx>,
 }
 
+/// Hover information for bound variables
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VariableInfo {
+    pub typ: String,
+}
+
+/// Hover information for type constructors
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TypeCtorInfo {
     pub typ: String,
 }
 

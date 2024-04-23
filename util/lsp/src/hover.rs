@@ -66,6 +66,7 @@ impl ToHoverContent for HoverInfoContent {
         match self {
             HoverInfoContent::GenericInfo(i) => i.to_hover_content(),
             HoverInfoContent::VariableInfo(i) => i.to_hover_content(),
+            HoverInfoContent::TypeCtorInfo(i) => i.to_hover_content(),
         }
     }
 }
@@ -89,6 +90,15 @@ impl ToHoverContent for VariableInfo {
     fn to_hover_content(self) -> HoverContents {
         let VariableInfo { typ } = self;
         let header = MarkedString::String("Bound variable".to_owned());
+        let typ = string_to_language_string(typ);
+        HoverContents::Array(vec![header, typ])
+    }
+}
+
+impl ToHoverContent for TypeCtorInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let TypeCtorInfo { typ } = self;
+        let header = MarkedString::String("Type constructor".to_owned());
         let typ = string_to_language_string(typ);
         HoverContents::Array(vec![header, typ])
     }
