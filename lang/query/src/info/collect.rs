@@ -243,7 +243,13 @@ impl CollectInfo for tst::DotCall {
 impl CollectInfo for tst::Hole {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let tst::Hole { info } = self;
-        info.collect_info(collector)
+        if let Some(span) = info.span {
+            let content = HoverInfoContent::HoleInfo(HoleInfo {
+                goal: info.typ.print_to_string(None),
+                ctx: info.ctx.clone().map(Into::into),
+            });
+            collector.add_hover_content(span, content)
+        }
     }
 }
 

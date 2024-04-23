@@ -24,6 +24,7 @@ pub enum HoverInfoContent {
     CallInfo(CallInfo),
     DotCallInfo(DotCallInfo),
     TypeUnivInfo(TypeUnivInfo),
+    HoleInfo(HoleInfo),
 }
 
 // TODO: Completely remove generic info and replace it with concrete types.
@@ -61,6 +62,13 @@ pub struct DotCallInfo {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeUnivInfo {
     pub typ: String,
+}
+
+/// Hover information for typed holes
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HoleInfo {
+    pub goal: String,
+    pub ctx: Option<Ctx>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

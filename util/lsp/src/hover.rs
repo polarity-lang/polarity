@@ -70,6 +70,7 @@ impl ToHoverContent for HoverInfoContent {
             HoverInfoContent::CallInfo(i) => i.to_hover_content(),
             HoverInfoContent::DotCallInfo(i) => i.to_hover_content(),
             HoverInfoContent::TypeUnivInfo(i) => i.to_hover_content(),
+            HoverInfoContent::HoleInfo(i) => i.to_hover_content(),
         }
     }
 }
@@ -132,5 +133,20 @@ impl ToHoverContent for TypeUnivInfo {
         let header = MarkedString::String("Type universe".to_owned());
         let typ = string_to_language_string(typ);
         HoverContents::Array(vec![header, typ])
+    }
+}
+
+impl ToHoverContent for HoleInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let HoleInfo { goal, ctx } = self;
+        if let Some(ctx) = ctx {
+            let mut value = String::new();
+            goal_to_markdown(&goal, &mut value);
+            value.push_str("\n\n");
+            ctx_to_markdown(&ctx, &mut value);
+            HoverContents::Markup(MarkupContent { kind: MarkupKind::Markdown, value })
+        } else {
+            HoverContents::Scalar(string_to_language_string(goal))
+        }
     }
 }
