@@ -217,48 +217,87 @@ impl CollectInfo for tst::Args {
 impl CollectInfo for tst::Exp {
     fn collect_info(&self, collector: &mut InfoCollector) {
         match self {
-            tst::Exp::Variable(tst::Variable { info, .. }) => info.collect_info(collector),
-            tst::Exp::TypCtor(tst::TypCtor { info, name: _, args }) => {
-                info.collect_info(collector);
-                args.collect_info(collector)
-            }
-            tst::Exp::Call(tst::Call { info, name: _, args }) => {
-                info.collect_info(collector);
-                args.collect_info(collector)
-            }
-            tst::Exp::DotCall(tst::DotCall { info, exp, name: _, args }) => {
-                info.collect_info(collector);
-                exp.collect_info(collector);
-                args.collect_info(collector)
-            }
-            tst::Exp::Hole(tst::Hole { info }) => info.collect_info(collector),
-            tst::Exp::Type(tst::Type { info }) => info.collect_info(collector),
-            tst::Exp::Anno(tst::Anno { info, exp, typ }) => {
-                info.collect_info(collector);
-                exp.collect_info(collector);
-                typ.collect_info(collector)
-            }
-            tst::Exp::LocalMatch(tst::LocalMatch {
-                info: _,
-                ctx: _,
-                name: _,
-                on_exp,
-                motive: _,
-                ret_typ,
-                body,
-            }) => {
-                on_exp.collect_info(collector);
-                ret_typ.as_exp().collect_info(collector);
-                body.collect_info(collector)
-            }
-            tst::Exp::LocalComatch(tst::LocalComatch {
-                info: _,
-                ctx: _,
-                name: _,
-                is_lambda_sugar: _,
-                body,
-            }) => body.collect_info(collector),
+            tst::Exp::Variable(e) => e.collect_info(collector),
+            tst::Exp::TypCtor(e) => e.collect_info(collector),
+            tst::Exp::Call(e) => e.collect_info(collector),
+            tst::Exp::DotCall(e) => e.collect_info(collector),
+            tst::Exp::Hole(e) => e.collect_info(collector),
+            tst::Exp::Type(e) => e.collect_info(collector),
+            tst::Exp::Anno(e) => e.collect_info(collector),
+            tst::Exp::LocalMatch(e) => e.collect_info(collector),
+            tst::Exp::LocalComatch(e) => e.collect_info(collector),
         }
+    }
+}
+
+impl CollectInfo for tst::Variable {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Variable { info, .. } = self;
+        info.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::TypCtor {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::TypCtor { info, args, .. } = self;
+        info.collect_info(collector);
+        args.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::Call {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Call { info, args, .. } = self;
+        info.collect_info(collector);
+        args.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::DotCall {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::DotCall { info, exp, args, .. } = self;
+        info.collect_info(collector);
+        exp.collect_info(collector);
+        args.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::Hole {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Hole { info } = self;
+        info.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::Type {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Type { info } = self;
+        info.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::Anno {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::Anno { info, exp, typ } = self;
+        info.collect_info(collector);
+        exp.collect_info(collector);
+        typ.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::LocalMatch {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::LocalMatch { on_exp, ret_typ, body, .. } = self;
+        on_exp.collect_info(collector);
+        ret_typ.as_exp().collect_info(collector);
+        body.collect_info(collector)
+    }
+}
+
+impl CollectInfo for tst::LocalComatch {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let tst::LocalComatch { body, .. } = self;
+        body.collect_info(collector)
     }
 }
 
