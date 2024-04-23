@@ -4,7 +4,7 @@ use tower_lsp::jsonrpc::Result;
 use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
 use printer::{PrintCfg, PrintToString};
-use query::{Binder, Ctx, Database, DatabaseView, File, Info, Xfunc};
+use query::{Binder, Ctx, Database, DatabaseView, File, HoverInfo, Xfunc};
 
 use super::capabilities::*;
 use super::conversion::*;
@@ -67,7 +67,8 @@ impl LanguageServer for Server {
         let pos = pos_params.position;
         let db = self.database.read().await;
         let index = db.get(text_document.uri.as_str()).unwrap();
-        let info = index.location_to_index(pos.from_lsp()).and_then(|idx| index.info_at_index(idx));
+        let info =
+            index.location_to_index(pos.from_lsp()).and_then(|idx| index.hoverinfo_at_index(idx));
         let res = info.map(|info| info_to_hover(&index, info));
         Ok(res)
     }
@@ -149,7 +150,7 @@ impl Server {
     }
 }
 
-fn info_to_hover(index: &DatabaseView, info: Info) -> Hover {
+fn info_to_hover(index: &DatabaseView, info: HoverInfo) -> Hover {
     let range = info.span.and_then(|span| index.span_to_locations(span)).map(ToLsp::to_lsp);
 
     let contents = match info.ctx {

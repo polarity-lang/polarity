@@ -1,4 +1,3 @@
-
 use std::rc::Rc;
 
 use printer::PrintToString;
@@ -8,9 +7,8 @@ use syntax::tst::{self};
 
 use super::data::*;
 
-
 /// Traverse the program and collect information for the LSP server.
-pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
+pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, HoverInfo>, Lapper<u32, Item>) {
     let mut c = InfoCollector::default();
 
     prg.collect_info(&mut c);
@@ -22,7 +20,7 @@ pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
 
 #[derive(Default)]
 struct InfoCollector {
-    info_spans: Vec<Interval<u32, Info>>,
+    info_spans: Vec<Interval<u32, HoverInfo>>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
@@ -31,7 +29,6 @@ struct InfoCollector {
 trait CollectInfo {
     fn collect_info(&self, _collector: &mut InfoCollector) {}
 }
-
 
 // Generic implementations
 //
@@ -259,7 +256,7 @@ impl CollectInfo for tst::TypeInfo {
             let info = Interval {
                 start: span.start().into(),
                 stop: span.end().into(),
-                val: Info {
+                val: HoverInfo {
                     typ: typ.print_to_string(None),
                     span: Some(*span),
                     ctx: ctx.clone().map(Into::into),

@@ -9,7 +9,7 @@ use syntax::tst::{self};
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Info {
+pub struct HoverInfo {
     pub typ: String,
     pub span: Option<Span>,
     pub ctx: Option<Ctx>,
@@ -26,9 +26,13 @@ pub struct Binder {
     pub typ: String,
 }
 
-impl From<tst::TypeInfo> for Info {
+impl From<tst::TypeInfo> for HoverInfo {
     fn from(info: tst::TypeInfo) -> Self {
-        Info { typ: info.typ.print_to_string(None), ctx: info.ctx.map(Into::into), span: info.span }
+        HoverInfo {
+            typ: info.typ.print_to_string(None),
+            ctx: info.ctx.map(Into::into),
+            span: info.span,
+        }
     }
 }
 

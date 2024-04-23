@@ -3,12 +3,12 @@ use rust_lapper::Lapper;
 
 use syntax::common::*;
 
-use super::info::{Info, Item};
+use super::info::{HoverInfo, Item};
 
 #[derive(Default)]
 pub struct Index {
     pub(crate) index_enabled: HashSet<FileId>,
-    pub(crate) info_index_by_id: HashMap<FileId, Lapper<u32, Info>>,
+    pub(crate) info_index_by_id: HashMap<FileId, Lapper<u32, HoverInfo>>,
     pub(crate) item_index_by_id: HashMap<FileId, Lapper<u32, Item>>,
 }
 
@@ -55,14 +55,14 @@ impl<'a> IndexViewMut<'a> {
         self.index.item_index_by_id.insert(self.file_id, Lapper::new(vec![]));
     }
 
-    pub fn set(&mut self, info_index: Lapper<u32, Info>, item_index: Lapper<u32, Item>) {
+    pub fn set(&mut self, info_index: Lapper<u32, HoverInfo>, item_index: Lapper<u32, Item>) {
         self.index.info_index_by_id.insert(self.file_id, info_index);
         self.index.item_index_by_id.insert(self.file_id, item_index);
     }
 }
 
 impl<'a> IndexView<'a> {
-    pub fn infos(&self) -> &Lapper<u32, Info> {
+    pub fn infos(&self) -> &Lapper<u32, HoverInfo> {
         &self.index.info_index_by_id[&self.file_id]
     }
 
