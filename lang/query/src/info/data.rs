@@ -10,14 +10,28 @@ use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HoverInfo {
+    /// The source code location to which the content applies
     pub span: Span,
+    /// The information that should be displayed on hover
     pub content: HoverInfoContent,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct HoverInfoContent {
+pub enum HoverInfoContent {
+    GenericInfo(GenericInfo),
+    VariableInfo(VariableInfo),
+}
+
+// TODO: Completely remove generic info and replace it with concrete types.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GenericInfo {
     pub typ: String,
     pub ctx: Option<Ctx>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VariableInfo {
+    pub typ: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

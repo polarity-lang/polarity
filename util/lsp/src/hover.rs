@@ -2,7 +2,7 @@
 
 use tower_lsp::{jsonrpc, lsp_types::*};
 
-use query::{Binder, Ctx, DatabaseView, HoverInfo, HoverInfoContent};
+use query::*;
 
 use super::conversion::*;
 use super::server::*;
@@ -49,24 +49,47 @@ fn goal_to_markdown(goal_type: &str, value: &mut String) {
     value.push_str("\n```\n");
 }
 
+fn string_to_language_string(s: String) -> MarkedString {
+    MarkedString::LanguageString(LanguageString { language: "pol".to_owned(), value: s })
+}
+
+// Transforming HoverContent to the correct LSP library type.
+//
+//
+
 trait ToHoverContent {
     fn to_hover_content(self) -> HoverContents;
 }
 
 impl ToHoverContent for HoverInfoContent {
     fn to_hover_content(self) -> HoverContents {
-        match self.ctx {
-            Some(ctx) => {
+        match self {
+            HoverInfoContent::GenericInfo(i) => i.to_hover_content(),
+            HoverInfoContent::VariableInfo(i) => i.to_hover_content(),
+        }
+    }
+}
+
+impl ToHoverContent for GenericInfo {
+    fn to_hover_content(self) -> HoverContents {
+        match self {
+            GenericInfo { typ, ctx: Some(ctx) } => {
                 let mut value = String::new();
-                goal_to_markdown(&self.typ, &mut value);
+                goal_to_markdown(&typ, &mut value);
                 value.push_str("\n\n");
                 ctx_to_markdown(&ctx, &mut value);
                 HoverContents::Markup(MarkupContent { kind: MarkupKind::Markdown, value })
             }
-            None => HoverContents::Scalar(MarkedString::LanguageString(LanguageString {
-                language: "pol".to_owned(),
-                value: self.typ,
-            })),
+            GenericInfo { typ, ctx: None } => HoverContents::Scalar(string_to_language_string(typ)),
         }
+    }
+}
+
+impl ToHoverContent for VariableInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let VariableInfo { typ } = self;
+        let header = MarkedString::String("Bound variable".to_owned());
+        let typ = string_to_language_string(typ);
+        HoverContents::Array(vec![header, typ])
     }
 }

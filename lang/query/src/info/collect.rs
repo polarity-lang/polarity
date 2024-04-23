@@ -1,8 +1,9 @@
 use std::rc::Rc;
 
-use printer::PrintToString;
+use codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
+use printer::PrintToString;
 use syntax::tst::{self};
 
 use super::data::*;
@@ -22,6 +23,17 @@ pub fn collect_info(prg: &tst::Prg) -> (Lapper<u32, HoverInfo>, Lapper<u32, Item
 struct InfoCollector {
     info_spans: Vec<Interval<u32, HoverInfo>>,
     item_spans: Vec<Interval<u32, Item>>,
+}
+
+impl InfoCollector {
+    fn add_hover_content(&mut self, span: Span, content: HoverInfoContent) {
+        let info = Interval {
+            start: span.start().into(),
+            stop: span.end().into(),
+            val: HoverInfo { span: span, content },
+        };
+        self.info_spans.push(info)
+    }
 }
 
 /// Every syntax node which implements this trait can be traversed and
@@ -181,7 +193,12 @@ impl CollectInfo for tst::Exp {
 impl CollectInfo for tst::Variable {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let tst::Variable { info, .. } = self;
-        info.collect_info(collector)
+        if let Some(span) = info.span {
+            let content = HoverInfoContent::VariableInfo(VariableInfo {
+                typ: info.typ.print_to_string(None),
+            });
+            collector.add_hover_content(span, content)
+        }
     }
 }
 
@@ -253,18 +270,11 @@ impl CollectInfo for tst::TypeInfo {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let tst::TypeInfo { typ, span, ctx } = self;
         if let Some(span) = span {
-            let info = Interval {
-                start: span.start().into(),
-                stop: span.end().into(),
-                val: HoverInfo {
-                    span: *span,
-                    content: HoverInfoContent {
-                        typ: typ.print_to_string(None),
-                        ctx: ctx.clone().map(Into::into),
-                    },
-                },
-            };
-            collector.info_spans.push(info)
+            let content = HoverInfoContent::GenericInfo(GenericInfo {
+                typ: typ.print_to_string(None),
+                ctx: ctx.clone().map(Into::into),
+            });
+            collector.add_hover_content(*span, content)
         }
     }
 }
