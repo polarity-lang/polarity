@@ -64,28 +64,13 @@ trait ToHoverContent {
 impl ToHoverContent for HoverInfoContent {
     fn to_hover_content(self) -> HoverContents {
         match self {
-            HoverInfoContent::GenericInfo(i) => i.to_hover_content(),
             HoverInfoContent::VariableInfo(i) => i.to_hover_content(),
             HoverInfoContent::TypeCtorInfo(i) => i.to_hover_content(),
             HoverInfoContent::CallInfo(i) => i.to_hover_content(),
             HoverInfoContent::DotCallInfo(i) => i.to_hover_content(),
             HoverInfoContent::TypeUnivInfo(i) => i.to_hover_content(),
             HoverInfoContent::HoleInfo(i) => i.to_hover_content(),
-        }
-    }
-}
-
-impl ToHoverContent for GenericInfo {
-    fn to_hover_content(self) -> HoverContents {
-        match self {
-            GenericInfo { typ, ctx: Some(ctx) } => {
-                let mut value = String::new();
-                goal_to_markdown(&typ, &mut value);
-                value.push_str("\n\n");
-                ctx_to_markdown(&ctx, &mut value);
-                HoverContents::Markup(MarkupContent { kind: MarkupKind::Markdown, value })
-            }
-            GenericInfo { typ, ctx: None } => HoverContents::Scalar(string_to_language_string(typ)),
+            HoverInfoContent::AnnoInfo(i) => i.to_hover_content(),
         }
     }
 }
@@ -131,6 +116,15 @@ impl ToHoverContent for TypeUnivInfo {
     fn to_hover_content(self) -> HoverContents {
         let TypeUnivInfo { typ } = self;
         let header = MarkedString::String("Type universe".to_owned());
+        let typ = string_to_language_string(typ);
+        HoverContents::Array(vec![header, typ])
+    }
+}
+
+impl ToHoverContent for AnnoInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let AnnoInfo { typ } = self;
+        let header = MarkedString::String("Annotated term".to_owned());
         let typ = string_to_language_string(typ);
         HoverContents::Array(vec![header, typ])
     }

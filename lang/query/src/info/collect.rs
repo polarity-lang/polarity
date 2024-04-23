@@ -30,7 +30,7 @@ impl InfoCollector {
         let info = Interval {
             start: span.start().into(),
             stop: span.end().into(),
-            val: HoverInfo { span: span, content },
+            val: HoverInfo { span, content },
         };
         self.info_spans.push(info)
     }
@@ -268,7 +268,11 @@ impl CollectInfo for tst::Type {
 impl CollectInfo for tst::Anno {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let tst::Anno { info, exp, typ } = self;
-        info.collect_info(collector);
+        if let Some(span) = info.span {
+            let content =
+                HoverInfoContent::AnnoInfo(AnnoInfo { typ: info.typ.print_to_string(None) });
+            collector.add_hover_content(span, content)
+        }
         exp.collect_info(collector);
         typ.collect_info(collector)
     }
@@ -287,19 +291,6 @@ impl CollectInfo for tst::LocalComatch {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let tst::LocalComatch { body, .. } = self;
         body.collect_info(collector)
-    }
-}
-
-impl CollectInfo for tst::TypeInfo {
-    fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::TypeInfo { typ, span, ctx } = self;
-        if let Some(span) = span {
-            let content = HoverInfoContent::GenericInfo(GenericInfo {
-                typ: typ.print_to_string(None),
-                ctx: ctx.clone().map(Into::into),
-            });
-            collector.add_hover_content(*span, content)
-        }
     }
 }
 
