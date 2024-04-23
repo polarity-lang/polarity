@@ -10,8 +10,13 @@ use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HoverInfo {
-    pub typ: String,
     pub span: Span,
+    pub content: HoverInfoContent,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HoverInfoContent {
+    pub typ: String,
     pub ctx: Option<Ctx>,
 }
 

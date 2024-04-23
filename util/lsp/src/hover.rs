@@ -2,7 +2,7 @@
 
 use tower_lsp::{jsonrpc, lsp_types::*};
 
-use query::{Binder, Ctx, DatabaseView, HoverInfo};
+use query::{Binder, Ctx, DatabaseView, HoverInfo, HoverInfoContent};
 
 use super::conversion::*;
 use super::server::*;
@@ -22,7 +22,7 @@ pub async fn hover(server: &Server, params: HoverParams) -> jsonrpc::Result<Opti
 
 fn info_to_hover(index: &DatabaseView, info: HoverInfo) -> Hover {
     let range = index.span_to_locations(info.span).map(ToLsp::to_lsp);
-    let contents = info.to_hover_content();
+    let contents = info.content.to_hover_content();
     Hover { contents, range }
 }
 
@@ -53,7 +53,7 @@ trait ToHoverContent {
     fn to_hover_content(self) -> HoverContents;
 }
 
-impl ToHoverContent for HoverInfo {
+impl ToHoverContent for HoverInfoContent {
     fn to_hover_content(self) -> HoverContents {
         match self.ctx {
             Some(ctx) => {
