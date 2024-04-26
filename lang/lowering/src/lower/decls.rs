@@ -55,7 +55,7 @@ impl Lower for cst::decls::Data {
         ctx.add_decls(ctor_decls)?;
 
         Ok(ust::Data {
-            info: Some(*span),
+            span: Some(*span),
             doc: doc.lower(ctx)?,
             name: name.clone(),
             attr: attr.lower(ctx)?,
@@ -78,7 +78,7 @@ impl Lower for cst::decls::Codata {
         ctx.add_decls(dtor_decls)?;
 
         Ok(ust::Codata {
-            info: Some(*span),
+            span: Some(*span),
             doc: doc.lower(ctx)?,
             name: name.clone(),
             attr: attr.lower(ctx)?,
@@ -139,7 +139,7 @@ impl Lower for cst::decls::Ctor {
             };
 
             Ok(ust::Ctor {
-                info: Some(*span),
+                span: Some(*span),
                 doc: doc.lower(ctx)?,
                 name: name.clone(),
                 params,
@@ -206,7 +206,7 @@ impl Lower for cst::decls::Dtor {
 
             lower_self_param(&self_param, ctx, |ctx, self_param| {
                 Ok(ust::Dtor {
-                    info: Some(*span),
+                    span: Some(*span),
                     doc: doc.lower(ctx)?,
                     name: name.clone(),
                     params,
@@ -231,7 +231,7 @@ impl Lower for cst::decls::Def {
 
             lower_self_param(&self_param, ctx, |ctx, self_param| {
                 Ok(ust::Def {
-                    info: Some(*span),
+                    span: Some(*span),
                     doc: doc.lower(ctx)?,
                     name: name.clone(),
                     attr: attr.lower(ctx)?,
@@ -253,7 +253,7 @@ impl Lower for cst::decls::Codef {
 
         lower_telescope(params, ctx, |ctx, params| {
             Ok(ust::Codef {
-                info: Some(*span),
+                span: Some(*span),
                 doc: doc.lower(ctx)?,
                 name: name.clone(),
                 attr: attr.lower(ctx)?,
@@ -273,7 +273,7 @@ impl Lower for cst::decls::Let {
 
         lower_telescope(params, ctx, |ctx, params| {
             Ok(ust::Let {
-                info: Some(*span),
+                span: Some(*span),
                 doc: doc.lower(ctx)?,
                 name: name.clone(),
                 attr: attr.lower(ctx)?,

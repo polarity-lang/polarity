@@ -90,20 +90,20 @@ impl<P: Phase> Named for Decl<P> {
 impl<P: Phase> HasSpan for Decl<P> {
     fn span(&self) -> Option<Span> {
         match self {
-            Decl::Data(data) => data.info,
-            Decl::Codata(codata) => codata.info,
-            Decl::Ctor(ctor) => ctor.info,
-            Decl::Dtor(dtor) => dtor.info,
-            Decl::Def(def) => def.info,
-            Decl::Codef(codef) => codef.info,
-            Decl::Let(tl_let) => tl_let.info,
+            Decl::Data(data) => data.span,
+            Decl::Codata(codata) => codata.span,
+            Decl::Ctor(ctor) => ctor.span,
+            Decl::Dtor(dtor) => dtor.span,
+            Decl::Def(def) => def.span,
+            Decl::Codef(codef) => codef.span,
+            Decl::Let(tl_let) => tl_let.span,
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct Data<P: Phase> {
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,
@@ -113,7 +113,7 @@ pub struct Data<P: Phase> {
 
 #[derive(Debug, Clone)]
 pub struct Codata<P: Phase> {
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,
@@ -128,7 +128,7 @@ pub struct TypAbs<P: Phase> {
 
 #[derive(Debug, Clone)]
 pub struct Ctor<P: Phase> {
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope<P>,
@@ -137,7 +137,7 @@ pub struct Ctor<P: Phase> {
 
 #[derive(Debug, Clone)]
 pub struct Dtor<P: Phase> {
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope<P>,
@@ -147,7 +147,7 @@ pub struct Dtor<P: Phase> {
 
 #[derive(Debug, Clone)]
 pub struct Def<P: Phase> {
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,
@@ -160,7 +160,7 @@ pub struct Def<P: Phase> {
 impl<P: Phase> Def<P> {
     pub fn to_dtor(&self) -> Dtor<P> {
         Dtor {
-            info: self.info,
+            span: self.span,
             doc: self.doc.clone(),
             name: self.name.clone(),
             params: self.params.clone(),
@@ -172,7 +172,7 @@ impl<P: Phase> Def<P> {
 
 #[derive(Debug, Clone)]
 pub struct Codef<P: Phase> {
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,
@@ -184,7 +184,7 @@ pub struct Codef<P: Phase> {
 impl<P: Phase> Codef<P> {
     pub fn to_ctor(&self) -> Ctor<P> {
         Ctor {
-            info: self.info,
+            span: self.span,
             doc: self.doc.clone(),
             name: self.name.clone(),
             params: self.params.clone(),
@@ -195,7 +195,7 @@ impl<P: Phase> Codef<P> {
 
 #[derive(Debug, Clone)]
 pub struct Let<P: Phase> {
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,

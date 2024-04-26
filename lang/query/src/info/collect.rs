@@ -97,8 +97,8 @@ impl CollectInfo for tst::Decl {
 
 impl CollectInfo for tst::Data {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Data { name, info, .. } = self;
-        if let Some(span) = info {
+        let tst::Data { name, span, .. } = self;
+        if let Some(span) = span {
             let item = Interval {
                 start: span.start().into(),
                 stop: span.end().into(),
@@ -111,8 +111,8 @@ impl CollectInfo for tst::Data {
 
 impl CollectInfo for tst::Codata {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Codata { name, info, .. } = self;
-        if let Some(span) = info {
+        let tst::Codata { name, span, .. } = self;
+        if let Some(span) = span {
             let item = Interval {
                 start: span.start().into(),
                 stop: span.end().into(),
@@ -125,8 +125,8 @@ impl CollectInfo for tst::Codata {
 
 impl CollectInfo for tst::Def {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Def { name, info, self_param, body, .. } = self;
-        if let Some(span) = info {
+        let tst::Def { name, span, self_param, body, .. } = self;
+        if let Some(span) = span {
             let item = Interval {
                 start: span.start().into(),
                 stop: span.end().into(),
@@ -141,8 +141,8 @@ impl CollectInfo for tst::Def {
 
 impl CollectInfo for tst::Codef {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Codef { name, info, typ, body, .. } = self;
-        if let Some(span) = info {
+        let tst::Codef { name, span, typ, body, .. } = self;
+        if let Some(span) = span {
             let item = Interval {
                 start: span.start().into(),
                 stop: span.end().into(),

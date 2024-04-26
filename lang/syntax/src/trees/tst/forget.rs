@@ -78,10 +78,10 @@ impl ForgetTST for Data {
     type Target = ust::Data;
 
     fn forget_tst(&self) -> Self::Target {
-        let Data { info, doc, name, attr, typ, ctors } = self;
+        let Data { span, doc, name, attr, typ, ctors } = self;
 
         ust::Data {
-            info: *info,
+            span: *span,
             name: name.clone(),
             doc: doc.clone(),
             attr: attr.clone(),
@@ -95,10 +95,10 @@ impl ForgetTST for Let {
     type Target = ust::Let;
 
     fn forget_tst(&self) -> Self::Target {
-        let Let { info, doc, name, attr, params, typ, body } = self;
+        let Let { span, doc, name, attr, params, typ, body } = self;
 
         ust::Let {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
@@ -113,10 +113,10 @@ impl ForgetTST for Codata {
     type Target = ust::Codata;
 
     fn forget_tst(&self) -> Self::Target {
-        let Codata { info, doc, name, attr, typ, dtors } = self;
+        let Codata { span, doc, name, attr, typ, dtors } = self;
 
         ust::Codata {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
@@ -140,10 +140,10 @@ impl ForgetTST for Ctor {
     type Target = ust::Ctor;
 
     fn forget_tst(&self) -> Self::Target {
-        let Ctor { info, doc, name, params, typ } = self;
+        let Ctor { span, doc, name, params, typ } = self;
 
         ust::Ctor {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             params: params.forget_tst(),
@@ -156,10 +156,10 @@ impl ForgetTST for Dtor {
     type Target = ust::Dtor;
 
     fn forget_tst(&self) -> Self::Target {
-        let Dtor { info, doc, name, params, self_param, ret_typ } = self;
+        let Dtor { span, doc, name, params, self_param, ret_typ } = self;
 
         ust::Dtor {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             params: params.forget_tst(),
@@ -173,10 +173,10 @@ impl ForgetTST for Def {
     type Target = ust::Def;
 
     fn forget_tst(&self) -> Self::Target {
-        let Def { info, doc, name, attr, params, self_param, ret_typ, body } = self;
+        let Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
 
         ust::Def {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
@@ -192,10 +192,10 @@ impl ForgetTST for Codef {
     type Target = ust::Codef;
 
     fn forget_tst(&self) -> Self::Target {
-        let Codef { info, doc, name, attr, params, typ, body } = self;
+        let Codef { span, doc, name, attr, params, typ, body } = self;
 
         ust::Codef {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),

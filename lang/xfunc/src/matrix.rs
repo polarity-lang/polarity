@@ -18,7 +18,7 @@ pub struct Prg {
 #[derive(Debug, Clone)]
 pub struct XData {
     pub repr: Repr,
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: ust::Ident,
     pub typ: Rc<ust::TypAbs>,
@@ -95,11 +95,11 @@ impl BuildMatrix for ust::Prg {
 
 impl BuildMatrix for ust::Data {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ust::Data { info, doc, name, attr: _, typ, ctors } = self;
+        let ust::Data { span, doc, name, attr: _, typ, ctors } = self;
 
         let xdata = XData {
             repr: Repr::Data,
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             typ: typ.clone(),
@@ -119,11 +119,11 @@ impl BuildMatrix for ust::Data {
 
 impl BuildMatrix for ust::Codata {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ust::Codata { info, doc, name, attr: _, typ, dtors } = self;
+        let ust::Codata { span, doc, name, attr: _, typ, dtors } = self;
 
         let xdata = XData {
             repr: Repr::Codata,
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             typ: typ.clone(),
@@ -227,7 +227,7 @@ impl XData {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let data = ust::Data {
-            info: None,
+            span: None,
             doc: doc.clone(),
             name: name.clone(),
             attr: Attribute::default(),
@@ -257,7 +257,7 @@ impl XData {
                     .collect();
 
                 ust::Def {
-                    info: None,
+                    span: None,
                     doc: dtor.doc.clone(),
                     name: dtor.name.clone(),
                     attr: Attribute::default(),
@@ -278,7 +278,7 @@ impl XData {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let codata = ust::Codata {
-            info: None,
+            span: None,
             doc: doc.clone(),
             name: name.clone(),
             attr: Attribute::default(),
@@ -317,7 +317,7 @@ impl XData {
                     .collect();
 
                 ust::Codef {
-                    info: None,
+                    span: None,
                     doc: ctor.doc.clone(),
                     name: ctor.name.clone(),
                     attr: Attribute::default(),

@@ -122,12 +122,12 @@ impl Infer for ust::Data {
     type Target = tst::Data;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Data { info, doc, name, attr, typ, ctors } = self;
+        let ust::Data { span, doc, name, attr, typ, ctors } = self;
 
         let typ_out = typ.infer(prg, ctx)?;
 
         Ok(tst::Data {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
@@ -142,12 +142,12 @@ impl Infer for ust::Codata {
     type Target = tst::Codata;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Codata { info, doc, name, attr, typ, dtors } = self;
+        let ust::Codata { span, doc, name, attr, typ, dtors } = self;
 
         let typ_out = typ.infer(prg, ctx)?;
 
         Ok(tst::Codata {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
@@ -173,10 +173,10 @@ impl Infer for ust::Ctor {
     type Target = tst::Ctor;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Ctor { info, doc, name, params, typ } = self;
+        let ust::Ctor { span, doc, name, params, typ } = self;
 
         // Check that the constructor lies in the data type it is defined in
-        let data_type = prg.decls.data_for_ctor(name, *info)?;
+        let data_type = prg.decls.data_for_ctor(name, *span)?;
         let expected = &data_type.name;
         if &typ.name != expected {
             return Err(TypeError::NotInType {
@@ -190,7 +190,7 @@ impl Infer for ust::Ctor {
             let typ_out = typ.infer(prg, ctx)?;
 
             Ok(tst::Ctor {
-                info: *info,
+                span: *span,
                 doc: doc.clone(),
                 name: name.clone(),
                 params: params_out,
@@ -205,10 +205,10 @@ impl Infer for ust::Dtor {
     type Target = tst::Dtor;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Dtor { info, doc, name, params, self_param, ret_typ } = self;
+        let ust::Dtor { span, doc, name, params, self_param, ret_typ } = self;
 
         // Check that the destructor lies in the codata type it is defined in
-        let codata_type = prg.decls.codata_for_dtor(name, *info)?;
+        let codata_type = prg.decls.codata_for_dtor(name, *span)?;
         let expected = &codata_type.name;
         if &self_param.typ.name != expected {
             return Err(TypeError::NotInType {
@@ -223,7 +223,7 @@ impl Infer for ust::Dtor {
                 let ret_typ_out = ret_typ.infer(prg, ctx)?;
 
                 Ok(tst::Dtor {
-                    info: *info,
+                    span: *span,
                     doc: doc.clone(),
                     name: name.clone(),
                     params: params_out,
@@ -240,7 +240,7 @@ impl Infer for ust::Def {
     type Target = tst::Def;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Def { info, doc, name, attr, params, self_param, ret_typ, body } = self;
+        let ust::Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let self_param_nf = self_param.typ.normalize(prg, &mut ctx.env())?;
@@ -255,7 +255,7 @@ impl Infer for ust::Def {
             let body_out = WithScrutinee { inner: body, scrutinee: self_param_nf }
                 .check(prg, ctx, ret_typ_nf)?;
             Ok(tst::Def {
-                info: *info,
+                span: *span,
                 doc: doc.clone(),
                 name: name.clone(),
                 attr: attr.clone(),
@@ -273,7 +273,7 @@ impl Infer for ust::Codef {
     type Target = tst::Codef;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Codef { info, doc, name, attr, params, typ, body } = self;
+        let ust::Codef { span, doc, name, attr, params, typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.infer(prg, ctx)?;
@@ -286,7 +286,7 @@ impl Infer for ust::Codef {
             };
             let body_out = wd.infer(prg, ctx)?;
             Ok(tst::Codef {
-                info: *info,
+                span: *span,
                 doc: doc.clone(),
                 name: name.clone(),
                 attr: attr.clone(),
@@ -302,7 +302,7 @@ impl Infer for ust::Let {
     type Target = tst::Let;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Let { info, doc, name, attr, params, typ, body } = self;
+        let ust::Let { span, doc, name, attr, params, typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.infer(prg, ctx)?;
@@ -310,7 +310,7 @@ impl Infer for ust::Let {
             let body_out = body.check(prg, ctx, typ_nf)?;
 
             Ok(tst::Let {
-                info: *info,
+                span: *span,
                 doc: doc.clone(),
                 name: name.clone(),
                 attr: attr.clone(),

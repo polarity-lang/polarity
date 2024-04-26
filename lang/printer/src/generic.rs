@@ -102,7 +102,7 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Data { info: _, doc, name, attr, typ, ctors } = self;
+        let Data { span: _, doc, name, attr, typ, ctors } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -150,7 +150,7 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Codata { info: _, doc, name, attr, typ, dtors } = self;
+        let Codata { span: _, doc, name, attr, typ, dtors } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -191,7 +191,7 @@ where
     Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { info: _, doc, name, attr, params, self_param, ret_typ, body } = self;
+        let Def { span: _, doc, name, attr, params, self_param, ret_typ, body } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -219,7 +219,7 @@ where
     Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codef { info: _, doc, name, attr, params, typ, body } = self;
+        let Codef { span: _, doc, name, attr, params, typ, body } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -245,7 +245,7 @@ where
     Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Let { info: _, doc, name, attr, params, typ, body } = self;
+        let Let { span: _, doc, name, attr, params, typ, body } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -271,7 +271,7 @@ where
     Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Ctor { info: _, doc, name, params, typ } = self;
+        let Ctor { span: _, doc, name, params, typ } = self;
 
         let doc = doc.print(cfg, alloc);
         let head = alloc.ctor(name).append(params.print(cfg, alloc));
@@ -290,7 +290,7 @@ where
     Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Dtor { info: _, doc, name, params, self_param, ret_typ } = self;
+        let Dtor { span: _, doc, name, params, self_param, ret_typ } = self;
 
         let doc = doc.print(cfg, alloc);
         let head = if self_param.is_simple() {

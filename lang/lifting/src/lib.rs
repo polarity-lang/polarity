@@ -129,10 +129,10 @@ impl Lift for tst::Data {
     type Target = ust::Data;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Data { info, doc, name, attr, typ, ctors } = self;
+        let tst::Data { span, doc, name, attr, typ, ctors } = self;
 
         ust::Data {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
@@ -146,10 +146,10 @@ impl Lift for tst::Codata {
     type Target = ust::Codata;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Codata { info, doc, name, attr, typ, dtors } = self;
+        let tst::Codata { span, doc, name, attr, typ, dtors } = self;
 
         ust::Codata {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
@@ -173,10 +173,10 @@ impl Lift for tst::Ctor {
     type Target = ust::Ctor;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Ctor { info, doc, name, params, typ } = self;
+        let tst::Ctor { span, doc, name, params, typ } = self;
 
         params.lift_telescope(ctx, |ctx, params| ust::Ctor {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             params,
@@ -189,7 +189,7 @@ impl Lift for tst::Dtor {
     type Target = ust::Dtor;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Dtor { info, doc, name, params, self_param, ret_typ } = self;
+        let tst::Dtor { span, doc, name, params, self_param, ret_typ } = self;
 
         params.lift_telescope(ctx, |ctx, params| {
             let (self_param, ret_typ) = self_param.lift_telescope(ctx, |ctx, self_param| {
@@ -197,7 +197,7 @@ impl Lift for tst::Dtor {
                 (self_param, ret_typ)
             });
             ust::Dtor {
-                info: *info,
+                span: *span,
                 doc: doc.clone(),
                 name: name.clone(),
                 params,
@@ -212,7 +212,7 @@ impl Lift for tst::Def {
     type Target = ust::Def;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Def { info, doc, name, attr, params, self_param, ret_typ, body } = self;
+        let tst::Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
 
         params.lift_telescope(ctx, |ctx, params| {
             let (self_param, ret_typ) = self_param.lift_telescope(ctx, |ctx, self_param| {
@@ -221,7 +221,7 @@ impl Lift for tst::Def {
             });
 
             ust::Def {
-                info: *info,
+                span: *span,
                 doc: doc.clone(),
                 name: name.clone(),
                 attr: attr.clone(),
@@ -238,10 +238,10 @@ impl Lift for tst::Codef {
     type Target = ust::Codef;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Codef { info, doc, name, attr, params, typ, body } = self;
+        let tst::Codef { span, doc, name, attr, params, typ, body } = self;
 
         params.lift_telescope(ctx, |ctx, params| ust::Codef {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
@@ -256,10 +256,10 @@ impl Lift for tst::Let {
     type Target = ust::Let;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Let { info, doc, name, attr, params, typ, body } = self;
+        let tst::Let { span, doc, name, attr, params, typ, body } = self;
 
         params.lift_telescope(ctx, |ctx, params| ust::Let {
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
@@ -555,7 +555,7 @@ impl Ctx {
         let name = self.unique_def_name(name, &info.typ.name);
 
         let def = ust::Def {
-            info: None,
+            span: None,
             doc: None,
             name: name.clone(),
             attr: ust::Attribute::default(),
@@ -614,7 +614,7 @@ impl Ctx {
         let name = self.unique_codef_name(name, &info.typ.name);
 
         let codef = ust::Codef {
-            info: None,
+            span: None,
             doc: None,
             name: name.clone(),
             attr: ust::Attribute::default(),
