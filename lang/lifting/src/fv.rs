@@ -101,9 +101,9 @@ impl FV for ust::Match {
 
 impl FV for ust::Case {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::Case { span: _, name: _, args, body } = self;
+        let ust::Case { span: _, name: _, params, body } = self;
 
-        v.bind_iter(args.params.iter(), |v| {
+        v.bind_iter(params.params.iter(), |v| {
             body.visit_fv(v);
         })
     }

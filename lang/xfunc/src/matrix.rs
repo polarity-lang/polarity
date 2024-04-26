@@ -211,7 +211,7 @@ impl BuildMatrix for ust::Codef {
                 let mut ctx = LevelCtx::empty();
                 // TODO: Reconsider where to swap this
                 ctx.bind_iter(self.params.params.iter().map(|_| ()), |ctx| {
-                    ctx.bind_iter(case.args.params.iter().map(|_| ()), |ctx| {
+                    ctx.bind_iter(case.params.params.iter().map(|_| ()), |ctx| {
                         body.swap_with_ctx(ctx, 0, 1)
                     })
                 })
@@ -250,7 +250,7 @@ impl XData {
                         body.map(|body| ust::Case {
                             span: None,
                             name: ctor.name.clone(),
-                            args: ctor.params.instantiate(),
+                            params: ctor.params.instantiate(),
                             body,
                         })
                     })
@@ -310,7 +310,7 @@ impl XData {
                         body.map(|body| ust::Case {
                             span: None,
                             name: dtor.name.clone(),
-                            args: dtor.params.instantiate(),
+                            params: dtor.params.instantiate(),
                             body,
                         })
                     })

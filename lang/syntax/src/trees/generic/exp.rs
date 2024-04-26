@@ -312,8 +312,7 @@ pub struct Case<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub name: Ident,
-    // TODO: Rename to params
-    pub args: TelescopeInst<P>,
+    pub params: TelescopeInst<P>,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp<P>>>,
 }

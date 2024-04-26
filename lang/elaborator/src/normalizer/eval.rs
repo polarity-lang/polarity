@@ -202,15 +202,15 @@ impl Eval for ust::Case {
     type Val = val::Case;
 
     fn eval(&self, _prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Case { span, name, args, body } = self;
+        let ust::Case { span, name, params, body } = self;
 
         let body = body.as_ref().map(|body| Closure {
             body: body.clone(),
-            n_args: args.len(),
+            n_args: params.len(),
             env: env.clone(),
         });
 
-        Ok(val::Case { span: *span, name: name.clone(), args: args.clone(), body })
+        Ok(val::Case { span: *span, name: name.clone(), params: params.clone(), body })
     }
 }
 

@@ -99,12 +99,12 @@ impl ReadBack for val::Case {
     type Nf = ust::Case;
 
     fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
-        let val::Case { span, name, args, body } = self;
+        let val::Case { span, name, params, body } = self;
 
         Ok(ust::Case {
             span: *span,
             name: name.clone(),
-            args: args.clone(),
+            params: params.clone(),
             body: body.read_back(prg)?,
         })
     }

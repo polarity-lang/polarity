@@ -136,7 +136,7 @@ pub Match : Match = {
 }
 
 pub Case : Case = {
-    <l: @L> <name: Ident> <args: OptTelescopeInst> <body: AbsurdOrBody> <r: @R> => Case { span: span(l, r), name, args, body },
+    <l: @L> <name: Ident> <params: OptTelescopeInst> <body: AbsurdOrBody> <r: @R> => Case { span: span(l, r), name, params, body },
 }
 
 pub AbsurdOrBody: Option<Rc<Exp>> = {

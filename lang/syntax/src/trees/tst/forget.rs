@@ -220,12 +220,12 @@ impl ForgetTST for Case {
     type Target = ust::Case;
 
     fn forget_tst(&self) -> Self::Target {
-        let Case { span, name, args, body } = self;
+        let Case { span, name, params, body } = self;
 
         ust::Case {
             span: *span,
             name: name.clone(),
-            args: args.forget_tst(),
+            params: params.forget_tst(),
             body: body.forget_tst(),
         }
     }

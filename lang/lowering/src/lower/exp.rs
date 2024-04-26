@@ -68,10 +68,10 @@ impl Lower for cst::exp::Case {
     type Target = ust::Case;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::Case { span, name, args, body } = self;
+        let cst::exp::Case { span, name, params, body } = self;
 
-        lower_telescope_inst(args, ctx, |ctx, args| {
-            Ok(ust::Case { span: Some(*span), name: name.clone(), args, body: body.lower(ctx)? })
+        lower_telescope_inst(params, ctx, |ctx, params| {
+            Ok(ust::Case { span: Some(*span), name: name.clone(), params, body: body.lower(ctx)? })
         })
     }
 }
@@ -264,7 +264,7 @@ impl Lower for cst::exp::Lam {
                 cases: vec![cst::exp::Case {
                     span: *span,
                     name: "ap".to_owned(),
-                    args: vec![
+                    params: vec![
                         cst::exp::BindingSite::Wildcard { span: Default::default() },
                         cst::exp::BindingSite::Wildcard { span: Default::default() },
                         var.clone(),

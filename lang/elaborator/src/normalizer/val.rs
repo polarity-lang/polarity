@@ -92,8 +92,7 @@ pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub name: ust::Ident,
-    // TODO: Rename to params
-    pub args: ust::TelescopeInst,
+    pub params: ust::TelescopeInst,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Closure>,
 }
@@ -170,12 +169,12 @@ impl Shift for Match {
 
 impl Shift for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Case { span, name, args, body } = self;
+        let Case { span, name, params, body } = self;
 
         Case {
             span: *span,
             name: name.clone(),
-            args: args.clone(),
+            params: params.clone(),
             body: body.shift_in_range(range.shift(1), by),
         }
     }
@@ -255,7 +254,7 @@ impl<'a> Print<'a> for Match {
 
 impl<'a> Print<'a> for Case {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Case { span: _, name, args, body } = self;
+        let Case { span: _, name, params, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -266,7 +265,7 @@ impl<'a> Print<'a> for Case {
                 .nest(cfg.indent),
         };
 
-        alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
+        alloc.ctor(name).append(params.print(cfg, alloc)).append(alloc.space()).append(body).group()
     }
 }
 

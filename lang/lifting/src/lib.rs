@@ -284,12 +284,12 @@ impl Lift for tst::Case {
     type Target = ust::Case;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Case { span, name, args, body } = self;
+        let tst::Case { span, name, params, body } = self;
 
-        args.lift_telescope(ctx, |ctx, args| ust::Case {
+        params.lift_telescope(ctx, |ctx, params| ust::Case {
             span: *span,
             name: name.clone(),
-            args,
+            params,
             body: body.lift(ctx),
         })
     }

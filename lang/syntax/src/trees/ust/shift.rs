@@ -140,11 +140,11 @@ impl Shift for Match {
 
 impl Shift for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Case { span, name, args, body } = self;
+        let Case { span, name, params, body } = self;
         Case {
             span: *span,
             name: name.clone(),
-            args: args.clone(),
+            params: params.clone(),
             body: body.shift_in_range(range.shift(1), by),
         }
     }

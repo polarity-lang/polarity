@@ -352,7 +352,7 @@ impl<'a, P: Phase> Print<'a> for Match<P> {
 
 impl<'a, P: Phase> Print<'a> for Case<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Case { span: _, name, args, body } = self;
+        let Case { span: _, name, params, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -363,7 +363,7 @@ impl<'a, P: Phase> Print<'a> for Case<P> {
                 .nest(cfg.indent),
         };
 
-        alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
+        alloc.ctor(name).append(params.print(cfg, alloc)).append(alloc.space()).append(body).group()
     }
 }
 
@@ -651,8 +651,8 @@ fn print_lambda_sugar<'a, P: Phase>(
     alloc: &'a Alloc<'a>,
 ) -> Builder<'a> {
     let Match { cases, .. } = e;
-    let Case { args, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
-    let var_name = args
+    let Case { params, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
+    let var_name = params
         .params
         .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
         .expect("No parameter bound in comatch marked as lambda sugar")

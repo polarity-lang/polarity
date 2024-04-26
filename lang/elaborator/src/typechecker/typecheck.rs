@@ -374,7 +374,8 @@ impl<'a> Check for WithScrutinee<'a> {
             for name in ctors_missing.cloned() {
                 let ust::Ctor { params, .. } = prg.decls.ctor(&name, *span)?;
 
-                let case = ust::Case { span: *span, name, args: params.instantiate(), body: None };
+                let case =
+                    ust::Case { span: *span, name, params: params.instantiate(), body: None };
                 cases.push((case, true));
             }
         }
@@ -463,7 +464,8 @@ impl<'a> Infer for WithDestructee<'a> {
             for name in dtors_missing.cloned() {
                 let ust::Dtor { params, .. } = prg.decls.dtor(&name, *span)?;
 
-                let case = ust::Case { span: *span, name, args: params.instantiate(), body: None };
+                let case =
+                    ust::Case { span: *span, name, params: params.instantiate(), body: None };
                 cases.push((case, true));
             }
         }
@@ -549,7 +551,7 @@ fn check_case(
     ctx: &mut Ctx,
     t: Rc<ust::Exp>,
 ) -> Result<tst::Case, TypeError> {
-    let ust::Case { span, name, args, body } = case;
+    let ust::Case { span, name, params: args, body } = case;
     let ust::Ctor { name, params, .. } = prg.decls.ctor(name, *span)?;
 
     // FIXME: Refactor this
@@ -625,7 +627,7 @@ fn check_case(
                 }
             };
 
-            Ok(tst::Case { span: *span, name: name.clone(), args: args_out, body: body_out })
+            Ok(tst::Case { span: *span, name: name.clone(), params: args_out, body: body_out })
         },
         *span,
     )
@@ -640,7 +642,7 @@ fn check_cocase(
     ctx: &mut Ctx,
     t: Rc<ust::Exp>,
 ) -> Result<tst::Case, TypeError> {
-    let ust::Case { span, name, args: params_inst, body } = cocase;
+    let ust::Case { span, name, params: params_inst, body } = cocase;
     let ust::Dtor { name, params, .. } = prg.decls.dtor(name, *span)?;
 
     params_inst.check_telescope(
@@ -682,7 +684,7 @@ fn check_cocase(
                 }
             };
 
-            Ok(tst::Case { span: *span, name: name.clone(), args: args_out, body: body_out })
+            Ok(tst::Case { span: *span, name: name.clone(), params: args_out, body: body_out })
         },
         *span,
     )

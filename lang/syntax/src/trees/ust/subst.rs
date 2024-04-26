@@ -111,11 +111,11 @@ impl Substitutable<Rc<Exp>> for Match {
 
 impl Substitutable<Rc<Exp>> for Case {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Case { span, name, args, body } = self;
-        ctx.bind_iter(args.params.iter(), |ctx| Case {
+        let Case { span, name, params, body } = self;
+        ctx.bind_iter(params.params.iter(), |ctx| Case {
             span: *span,
             name: name.clone(),
-            args: args.clone(),
+            params: params.clone(),
             body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
         })
     }

@@ -487,14 +487,14 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Case { span, name, args, body } = self;
+        let Case { span, name, params, body } = self;
 
-        let new_args = args.rename_in_ctx(ctx);
+        let new_params = params.rename_in_ctx(ctx);
 
-        ctx.bind_iter(new_args.params.clone().into_iter(), |new_ctx| {
+        ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
             let new_body = body.rename_in_ctx(new_ctx);
 
-            Case { span, name, args: new_args, body: new_body }
+            Case { span, name, params: new_params, body: new_body }
         })
     }
 }
