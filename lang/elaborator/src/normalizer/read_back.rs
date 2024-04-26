@@ -23,19 +23,22 @@ impl ReadBack for val::Val {
     fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let res = match self {
             val::Val::TypCtor { span, name, args } => ust::Exp::TypCtor(ust::TypCtor {
-                info: *span,
+                span: *span,
+                info: (),
                 name: name.clone(),
                 args: ust::Args { args: args.read_back(prg)? },
             }),
             val::Val::Ctor { span, name, args } => ust::Exp::Call(ust::Call {
-                info: *span,
+                span: *span,
+                info: (),
                 name: name.clone(),
                 args: ust::Args { args: args.read_back(prg)? },
             }),
-            val::Val::Type { span } => ust::Exp::Type(ust::Type { info: *span }),
+            val::Val::Type { span } => ust::Exp::Type(ust::Type { span: *span, info: () }),
             val::Val::Comatch { span, name, is_lambda_sugar, body } => {
                 ust::Exp::LocalComatch(ust::LocalComatch {
-                    info: *span,
+                    span: *span,
+                    info: (),
                     ctx: (),
                     name: name.clone(),
                     is_lambda_sugar: *is_lambda_sugar,
@@ -54,19 +57,22 @@ impl ReadBack for val::Neu {
     fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let res = match self {
             val::Neu::Var { span, name, idx } => ust::Exp::Variable(ust::Variable {
-                info: *span,
+                span: *span,
+                info: (),
                 ctx: (),
                 name: name.clone(),
                 idx: *idx,
             }),
             val::Neu::Dtor { span, exp, name, args } => ust::Exp::DotCall(ust::DotCall {
-                info: *span,
+                span: *span,
+                info: (),
                 exp: exp.read_back(prg)?,
                 name: name.clone(),
                 args: ust::Args { args: args.read_back(prg)? },
             }),
             val::Neu::Match { span, name, on_exp, body } => ust::Exp::LocalMatch(ust::LocalMatch {
-                info: *span,
+                span: *span,
+                info: (),
                 ctx: (),
                 motive: None,
                 ret_typ: (),
@@ -74,7 +80,7 @@ impl ReadBack for val::Neu {
                 on_exp: on_exp.read_back(prg)?,
                 body: body.read_back(prg)?,
             }),
-            val::Neu::Hole { span } => ust::Exp::Hole(ust::Hole { info: *span }),
+            val::Neu::Hole { span } => ust::Exp::Hole(ust::Hole { span: *span, info: () }),
         };
         Ok(res)
     }
@@ -111,7 +117,8 @@ impl ReadBack for val::TypApp {
         let val::TypApp { span, name, args } = self;
 
         Ok(ust::TypApp {
-            info: *span,
+            span: *span,
+            info: (),
             name: name.clone(),
             args: ust::Args { args: args.read_back(prg)? },
         })

@@ -123,7 +123,8 @@ impl Lower for cst::decls::Ctor {
                 None => {
                     if type_arity == 0 {
                         ust::TypApp {
-                            info: None,
+                            span: None,
+                            info: (),
                             name: typ_name.clone(),
                             args: ust::Args { args: vec![] },
                         }
@@ -291,7 +292,8 @@ impl Lower for cst::decls::TypApp {
         let cst::decls::TypApp { span, name, args } = self;
 
         Ok(ust::TypApp {
-            info: Some(*span),
+            span: Some(*span),
+            info: (),
             name: name.clone(),
             args: ust::Args { args: args.lower(ctx)? },
         })

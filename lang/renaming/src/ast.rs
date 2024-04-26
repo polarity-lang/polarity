@@ -323,13 +323,13 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let ParamInst { name, typ, info } = self;
+        let ParamInst { span, name, typ, info } = self;
 
         let new_typ = typ.rename_in_ctx(ctx);
         let new_name = ctx.disambiguate_name(name);
         let new_info = info.rename_in_ctx(ctx);
 
-        ParamInst { name: new_name, typ: new_typ, info: new_info }
+        ParamInst { span, name: new_name, typ: new_typ, info: new_info }
     }
 }
 impl<P: Phase> Rename for TypApp<P>
@@ -340,9 +340,9 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let TypApp { info, name, args } = self;
+        let TypApp { span, info, name, args } = self;
 
-        TypApp { info: info.rename_in_ctx(ctx), name, args: args.rename_in_ctx(ctx) }
+        TypApp { span, info: info.rename_in_ctx(ctx), name, args: args.rename_in_ctx(ctx) }
     }
 }
 
@@ -371,43 +371,58 @@ where
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         match self {
-            Exp::Variable(Variable { info, name: _, ctx: ctx2, idx }) => {
+            Exp::Variable(Variable { span, info, name: _, ctx: ctx2, idx }) => {
                 // This is the only place where we look up the renamed variables from the context
                 let ctx2 = ctx2.rename_in_ctx(ctx);
                 Exp::Variable(Variable {
+                    span: span,
                     info: info.rename_in_ctx(ctx),
                     name: ctx.lookup(idx),
                     ctx: ctx2,
                     idx,
                 })
             }
-            Exp::LocalComatch(LocalComatch { info, ctx: ctx2, name, is_lambda_sugar, body }) => {
-                Exp::LocalComatch(LocalComatch {
-                    info: info.rename_in_ctx(ctx),
-                    ctx: ctx2.rename_in_ctx(ctx),
-                    name,
-                    is_lambda_sugar,
-                    body: body.rename_in_ctx(ctx),
-                })
-            }
-            Exp::Anno(Anno { info, exp, typ }) => Exp::Anno(Anno {
+            Exp::LocalComatch(LocalComatch {
+                span,
+                info,
+                ctx: ctx2,
+                name,
+                is_lambda_sugar,
+                body,
+            }) => Exp::LocalComatch(LocalComatch {
+                span,
+                info: info.rename_in_ctx(ctx),
+                ctx: ctx2.rename_in_ctx(ctx),
+                name,
+                is_lambda_sugar,
+                body: body.rename_in_ctx(ctx),
+            }),
+            Exp::Anno(Anno { span, info, exp, typ }) => Exp::Anno(Anno {
+                span,
                 info: info.rename_in_ctx(ctx),
                 exp: exp.rename_in_ctx(ctx),
                 typ: typ.rename_in_ctx(ctx),
             }),
-            Exp::TypCtor(TypCtor { info, name, args }) => Exp::TypCtor(TypCtor {
+            Exp::TypCtor(TypCtor { span, info, name, args }) => Exp::TypCtor(TypCtor {
+                span,
                 info: info.rename_in_ctx(ctx),
                 name,
                 args: args.rename_in_ctx(ctx),
             }),
-            Exp::Hole(Hole { info }) => Exp::Hole(Hole { info: info.rename_in_ctx(ctx) }),
-            Exp::Type(Type { info }) => Exp::Type(Type { info: info.rename_in_ctx(ctx) }),
-            Exp::Call(Call { info, name, args }) => Exp::Call(Call {
+            Exp::Hole(Hole { span, info }) => {
+                Exp::Hole(Hole { span, info: info.rename_in_ctx(ctx) })
+            }
+            Exp::Type(Type { span, info }) => {
+                Exp::Type(Type { span, info: info.rename_in_ctx(ctx) })
+            }
+            Exp::Call(Call { span, info, name, args }) => Exp::Call(Call {
+                span,
                 info: info.rename_in_ctx(ctx),
                 name,
                 args: args.rename_in_ctx(ctx),
             }),
             Exp::LocalMatch(LocalMatch {
+                span,
                 info,
                 ctx: ctx2,
                 name,
@@ -416,6 +431,7 @@ where
                 ret_typ,
                 body,
             }) => Exp::LocalMatch(LocalMatch {
+                span,
                 info: info.rename_in_ctx(ctx),
                 ctx: ctx2.rename_in_ctx(ctx),
                 name,
@@ -424,7 +440,8 @@ where
                 ret_typ: ret_typ.rename_in_ctx(ctx),
                 body: body.rename_in_ctx(ctx),
             }),
-            Exp::DotCall(DotCall { info, exp, name, args }) => Exp::DotCall(DotCall {
+            Exp::DotCall(DotCall { span, info, exp, name, args }) => Exp::DotCall(DotCall {
+                span,
                 info: info.rename_in_ctx(ctx),
                 name,
                 exp: exp.rename_in_ctx(ctx),

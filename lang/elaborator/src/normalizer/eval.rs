@@ -51,8 +51,8 @@ impl Eval for ust::TypCtor {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::TypCtor { info, name, args } = self;
-        Ok(Rc::new(Val::TypCtor { span: *info, name: name.clone(), args: args.eval(prg, env)? }))
+        let ust::TypCtor { span, info: (), name, args } = self;
+        Ok(Rc::new(Val::TypCtor { span: *span, name: name.clone(), args: args.eval(prg, env)? }))
     }
 }
 
@@ -60,8 +60,8 @@ impl Eval for ust::Call {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Call { info, name, args } = self;
-        Ok(Rc::new(Val::Ctor { span: *info, name: name.clone(), args: args.eval(prg, env)? }))
+        let ust::Call { span, info: (), name, args } = self;
+        Ok(Rc::new(Val::Ctor { span: *span, name: name.clone(), args: args.eval(prg, env)? }))
     }
 }
 
@@ -69,7 +69,7 @@ impl Eval for ust::DotCall {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::DotCall { info, exp, name, args } = self;
+        let ust::DotCall { span, info: (), exp, name, args } = self;
         let exp = exp.eval(prg, env)?;
         let args = args.eval(prg, env)?;
         match (*exp).clone() {
@@ -92,7 +92,7 @@ impl Eval for ust::DotCall {
             }
             Val::Comatch { body, .. } => beta_comatch(prg, body, name, &args),
             Val::Neu { exp } => Ok(Rc::new(Val::Neu {
-                exp: Neu::Dtor { span: *info, exp: Rc::new(exp), name: name.to_owned(), args },
+                exp: Neu::Dtor { span: *span, exp: Rc::new(exp), name: name.to_owned(), args },
             })),
             _ => unreachable!(),
         }
@@ -112,8 +112,8 @@ impl Eval for ust::Type {
     type Val = Rc<Val>;
 
     fn eval(&self, _prg: &ust::Prg, _env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Type { info } = self;
-        Ok(Rc::new(Val::Type { span: *info }))
+        let ust::Type { span, info: () } = self;
+        Ok(Rc::new(Val::Type { span: *span }))
     }
 }
 
@@ -143,9 +143,9 @@ impl Eval for ust::LocalComatch {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::LocalComatch { info, ctx: (), name, is_lambda_sugar, body } = self;
+        let ust::LocalComatch { span, info: (), ctx: (), name, is_lambda_sugar, body } = self;
         Ok(Rc::new(Val::Comatch {
-            span: *info,
+            span: *span,
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             body: body.eval(prg, env)?,
@@ -157,8 +157,8 @@ impl Eval for ust::Hole {
     type Val = Rc<Val>;
 
     fn eval(&self, _prg: &ust::Prg, _env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Hole { info } = self;
-        Ok(Rc::new(Val::Neu { exp: Neu::Hole { span: *info } }))
+        let ust::Hole { span, info: () } = self;
+        Ok(Rc::new(Val::Neu { exp: Neu::Hole { span: *span } }))
     }
 }
 
@@ -218,9 +218,9 @@ impl Eval for ust::TypApp {
     type Val = val::TypApp;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::TypApp { info, name, args } = self;
+        let ust::TypApp { span, info: (), name, args } = self;
 
-        Ok(val::TypApp { span: *info, name: name.clone(), args: args.eval(prg, env)? })
+        Ok(val::TypApp { span: *span, name: name.clone(), args: args.eval(prg, env)? })
     }
 }
 

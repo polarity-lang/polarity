@@ -7,10 +7,11 @@ use crate::ust::*;
 impl Substitutable<Rc<Exp>> for Rc<Exp> {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         match &**self {
-            Exp::Variable(Variable { info, name, ctx: (), idx }) => {
+            Exp::Variable(Variable { span, info, name, ctx: (), idx }) => {
                 match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
                     Some(exp) => exp,
                     None => Rc::new(Exp::Variable(Variable {
+                        span: *span,
                         info: *info,
                         name: name.clone(),
                         ctx: (),
@@ -18,49 +19,69 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                     })),
                 }
             }
-            Exp::TypCtor(TypCtor { info, name, args }) => Rc::new(Exp::TypCtor(TypCtor {
+            Exp::TypCtor(TypCtor { span, info, name, args }) => Rc::new(Exp::TypCtor(TypCtor {
+                span: *span,
                 info: *info,
                 name: name.clone(),
                 args: args.subst(ctx, by),
             })),
-            Exp::Call(Call { info, name, args }) => Rc::new(Exp::Call(Call {
+            Exp::Call(Call { span, info, name, args }) => Rc::new(Exp::Call(Call {
+                span: *span,
                 info: *info,
                 name: name.clone(),
                 args: args.subst(ctx, by),
             })),
-            Exp::DotCall(DotCall { info, exp, name, args }) => Rc::new(Exp::DotCall(DotCall {
-                info: *info,
-                exp: exp.subst(ctx, by),
-                name: name.clone(),
-                args: args.subst(ctx, by),
-            })),
-            Exp::Anno(Anno { info, exp, typ }) => Rc::new(Exp::Anno(Anno {
+            Exp::DotCall(DotCall { span, info, exp, name, args }) => {
+                Rc::new(Exp::DotCall(DotCall {
+                    span: *span,
+                    info: *info,
+                    exp: exp.subst(ctx, by),
+                    name: name.clone(),
+                    args: args.subst(ctx, by),
+                }))
+            }
+            Exp::Anno(Anno { span, info, exp, typ }) => Rc::new(Exp::Anno(Anno {
+                span: *span,
                 info: *info,
                 exp: exp.subst(ctx, by),
                 typ: typ.subst(ctx, by),
             })),
-            Exp::Type(Type { info }) => Rc::new(Exp::Type(Type { info: *info })),
-            Exp::LocalMatch(LocalMatch { info, ctx: (), name, on_exp, motive, ret_typ, body }) => {
-                Rc::new(Exp::LocalMatch(LocalMatch {
-                    info: *info,
-                    ctx: (),
-                    name: name.clone(),
-                    on_exp: on_exp.subst(ctx, by),
-                    motive: motive.subst(ctx, by),
-                    ret_typ: ret_typ.subst(ctx, by),
-                    body: body.subst(ctx, by),
-                }))
-            }
-            Exp::LocalComatch(LocalComatch { info, ctx: (), name, is_lambda_sugar, body }) => {
-                Rc::new(Exp::LocalComatch(LocalComatch {
-                    info: *info,
-                    ctx: (),
-                    name: name.clone(),
-                    is_lambda_sugar: *is_lambda_sugar,
-                    body: body.subst(ctx, by),
-                }))
-            }
-            Exp::Hole(Hole { info }) => Rc::new(Exp::Hole(Hole { info: *info })),
+            Exp::Type(Type { span, info }) => Rc::new(Exp::Type(Type { span: *span, info: *info })),
+            Exp::LocalMatch(LocalMatch {
+                span,
+                info,
+                ctx: (),
+                name,
+                on_exp,
+                motive,
+                ret_typ,
+                body,
+            }) => Rc::new(Exp::LocalMatch(LocalMatch {
+                span: *span,
+                info: *info,
+                ctx: (),
+                name: name.clone(),
+                on_exp: on_exp.subst(ctx, by),
+                motive: motive.subst(ctx, by),
+                ret_typ: ret_typ.subst(ctx, by),
+                body: body.subst(ctx, by),
+            })),
+            Exp::LocalComatch(LocalComatch {
+                span,
+                info,
+                ctx: (),
+                name,
+                is_lambda_sugar,
+                body,
+            }) => Rc::new(Exp::LocalComatch(LocalComatch {
+                span: *span,
+                info: *info,
+                ctx: (),
+                name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
+                body: body.subst(ctx, by),
+            })),
+            Exp::Hole(Hole { span, info }) => Rc::new(Exp::Hole(Hole { span: *span, info: *info })),
         }
     }
 }
@@ -102,8 +123,8 @@ impl Substitutable<Rc<Exp>> for Case {
 
 impl Substitutable<Rc<Exp>> for TypApp {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let TypApp { info, name, args } = self;
-        TypApp { info: *info, name: name.clone(), args: args.subst(ctx, by) }
+        let TypApp { span, info, name, args } = self;
+        TypApp { span: *span, info: *info, name: name.clone(), args: args.subst(ctx, by) }
     }
 }
 
@@ -153,6 +174,7 @@ impl Substitution<Rc<Exp>> for SwapSubst {
 
         new_lvl.map(|new_lvl| {
             Rc::new(Exp::Variable(Variable {
+                span: None,
                 info: Default::default(),
                 name: "".to_owned(),
                 ctx: (),

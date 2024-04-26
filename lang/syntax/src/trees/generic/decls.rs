@@ -237,6 +237,7 @@ impl<P: Phase> SelfParam<P> {
 
 #[derive(Debug, Clone)]
 pub struct TypApp<P: Phase> {
+    pub span: Option<Span>,
     pub info: P::TypeInfo,
     pub name: Ident,
     pub args: Args<P>,
@@ -245,6 +246,7 @@ pub struct TypApp<P: Phase> {
 impl<P: Phase> TypApp<P> {
     pub fn to_exp(&self) -> Exp<P> {
         Exp::TypCtor(TypCtor {
+            span: self.span,
             info: self.info.clone(),
             name: self.name.clone(),
             args: self.args.clone(),

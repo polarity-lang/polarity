@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use codespan::Span;
 use renaming::Rename;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
@@ -311,9 +312,14 @@ impl Lift for tst::TypApp {
     type Target = ust::TypApp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::TypApp { info, name, args } = self;
+        let tst::TypApp { span, info, name, args } = self;
 
-        ust::TypApp { info: info.forget_tst(), name: name.clone(), args: args.lift(ctx) }
+        ust::TypApp {
+            span: *span,
+            info: info.forget_tst(),
+            name: name.clone(),
+            args: args.lift(ctx),
+        }
     }
 }
 
@@ -322,46 +328,52 @@ impl Lift for tst::Exp {
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         match self {
-            tst::Exp::Variable(tst::Variable { info, name, ctx: _, idx }) => {
+            tst::Exp::Variable(tst::Variable { span, info, name, ctx: _, idx }) => {
                 ust::Exp::Variable(ust::Variable {
+                    span: *span,
                     info: info.forget_tst(),
                     name: name.clone(),
                     ctx: (),
                     idx: *idx,
                 })
             }
-            tst::Exp::TypCtor(tst::TypCtor { info, name, args }) => {
+            tst::Exp::TypCtor(tst::TypCtor { span, info, name, args }) => {
                 ust::Exp::TypCtor(ust::TypCtor {
+                    span: *span,
                     info: info.forget_tst(),
                     name: name.clone(),
                     args: args.lift(ctx),
                 })
             }
-            tst::Exp::Call(tst::Call { info, name, args }) => ust::Exp::Call(ust::Call {
+            tst::Exp::Call(tst::Call { span, info, name, args }) => ust::Exp::Call(ust::Call {
+                span: *span,
                 info: info.forget_tst(),
                 name: name.clone(),
                 args: args.lift(ctx),
             }),
-            tst::Exp::DotCall(tst::DotCall { info, exp, name, args }) => {
+            tst::Exp::DotCall(tst::DotCall { span, info, exp, name, args }) => {
                 ust::Exp::DotCall(ust::DotCall {
+                    span: *span,
                     info: info.forget_tst(),
                     exp: exp.lift(ctx),
                     name: name.clone(),
                     args: args.lift(ctx),
                 })
             }
-            tst::Exp::Anno(tst::Anno { info, exp, typ }) => ust::Exp::Anno(ust::Anno {
+            tst::Exp::Anno(tst::Anno { span, info, exp, typ }) => ust::Exp::Anno(ust::Anno {
+                span: *span,
                 info: info.forget_tst(),
                 exp: exp.lift(ctx),
                 typ: typ.lift(ctx),
             }),
-            tst::Exp::Type(tst::Type { info }) => {
-                ust::Exp::Type(ust::Type { info: info.forget_tst() })
+            tst::Exp::Type(tst::Type { span, info }) => {
+                ust::Exp::Type(ust::Type { span: *span, info: info.forget_tst() })
             }
-            tst::Exp::Hole(tst::Hole { info }) => {
-                ust::Exp::Hole(ust::Hole { info: info.forget_tst() })
+            tst::Exp::Hole(tst::Hole { span, info }) => {
+                ust::Exp::Hole(ust::Hole { span: *span, info: info.forget_tst() })
             }
             tst::Exp::LocalMatch(tst::LocalMatch {
+                span,
                 info,
                 ctx: type_ctx,
                 name,
@@ -369,14 +381,15 @@ impl Lift for tst::Exp {
                 motive,
                 ret_typ,
                 body,
-            }) => ctx.lift_match(info, type_ctx, name, on_exp, motive, ret_typ, body),
+            }) => ctx.lift_match(span, info, type_ctx, name, on_exp, motive, ret_typ, body),
             tst::Exp::LocalComatch(tst::LocalComatch {
+                span,
                 info,
                 ctx: type_ctx,
                 name,
                 is_lambda_sugar,
                 body,
-            }) => ctx.lift_comatch(info, type_ctx, name, *is_lambda_sugar, body),
+            }) => ctx.lift_comatch(span, info, type_ctx, name, *is_lambda_sugar, body),
         }
     }
 }
@@ -453,9 +466,9 @@ impl Lift for tst::ParamInst {
     type Target = ust::ParamInst;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let tst::ParamInst { info, name, typ: _ } = self;
+        let tst::ParamInst { span, info, name, typ: _ } = self;
 
-        ust::ParamInst { info: info.forget_tst(), name: name.clone(), typ: () }
+        ust::ParamInst { span: *span, info: info.forget_tst(), name: name.clone(), typ: () }
     }
 }
 
@@ -487,6 +500,7 @@ impl Ctx {
     #[allow(clippy::too_many_arguments)]
     fn lift_match(
         &mut self,
+        span: &Option<Span>,
         info: &tst::TypeAppInfo,
         type_ctx: &TypeCtx,
         name: &tst::Label,
@@ -498,6 +512,7 @@ impl Ctx {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
             return ust::Exp::LocalMatch(ust::LocalMatch {
+                span: *span,
                 info: info.forget_tst(),
                 ctx: (),
                 name: name.clone(),
@@ -557,11 +572,12 @@ impl Ctx {
         self.new_decls.push(ust::Decl::Def(def));
 
         // Replace the match by a destructor call of the new top-level definition
-        ust::Exp::DotCall(ust::DotCall { info: None, exp: on_exp.lift(self), name, args })
+        ust::Exp::DotCall(ust::DotCall { span: None, info: (), exp: on_exp.lift(self), name, args })
     }
 
     fn lift_comatch(
         &mut self,
+        span: &Option<Span>,
         info: &tst::TypeAppInfo,
         type_ctx: &TypeCtx,
         name: &tst::Label,
@@ -571,6 +587,7 @@ impl Ctx {
         // Only lift local matches for the specified type
         if info.typ.name != self.name {
             return ust::Exp::LocalComatch(ust::LocalComatch {
+                span: *span,
                 info: info.forget_tst(),
                 ctx: (),
                 name: name.clone(),
@@ -609,7 +626,7 @@ impl Ctx {
         self.new_decls.push(ust::Decl::Codef(codef));
 
         // Replace the comatch by a call of the new top-level definition
-        ust::Exp::Call(ust::Call { info: None, name, args })
+        ust::Exp::Call(ust::Call { span: None, info: (), name, args })
     }
 
     /// Set the current declaration

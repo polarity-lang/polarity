@@ -9,7 +9,12 @@ impl Instantiate for Telescope {
         let params = self
             .params
             .iter()
-            .map(|Param { name, .. }| ParamInst { name: name.clone(), info: None, typ: () })
+            .map(|Param { name, .. }| ParamInst {
+                span: None,
+                name: name.clone(),
+                info: (),
+                typ: (),
+            })
             .collect();
         TelescopeInst { params }
     }

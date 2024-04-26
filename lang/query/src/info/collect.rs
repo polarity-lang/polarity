@@ -192,24 +192,24 @@ impl CollectInfo for tst::Exp {
 
 impl CollectInfo for tst::Variable {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Variable { info, .. } = self;
-        if let Some(span) = info.span {
+        let tst::Variable { info, span, .. } = self;
+        if let Some(span) = span {
             let content = HoverInfoContent::VariableInfo(VariableInfo {
                 typ: info.typ.print_to_string(None),
             });
-            collector.add_hover_content(span, content)
+            collector.add_hover_content(*span, content)
         }
     }
 }
 
 impl CollectInfo for tst::TypCtor {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::TypCtor { info, args, .. } = self;
-        if let Some(span) = info.span {
+        let tst::TypCtor { info, span, args, .. } = self;
+        if let Some(span) = span {
             let content = HoverInfoContent::TypeCtorInfo(TypeCtorInfo {
                 typ: info.typ.print_to_string(None),
             });
-            collector.add_hover_content(span, content)
+            collector.add_hover_content(*span, content)
         }
         args.collect_info(collector)
     }
@@ -217,11 +217,11 @@ impl CollectInfo for tst::TypCtor {
 
 impl CollectInfo for tst::Call {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Call { info, args, .. } = self;
-        if let Some(span) = info.span {
+        let tst::Call { info, span, args, .. } = self;
+        if let Some(span) = span {
             let content =
                 HoverInfoContent::CallInfo(CallInfo { typ: info.typ.print_to_string(None) });
-            collector.add_hover_content(span, content)
+            collector.add_hover_content(*span, content)
         }
         args.collect_info(collector)
     }
@@ -229,11 +229,11 @@ impl CollectInfo for tst::Call {
 
 impl CollectInfo for tst::DotCall {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::DotCall { info, exp, args, .. } = self;
-        if let Some(span) = info.span {
+        let tst::DotCall { info, span, exp, args, .. } = self;
+        if let Some(span) = span {
             let content =
                 HoverInfoContent::DotCallInfo(DotCallInfo { typ: info.typ.print_to_string(None) });
-            collector.add_hover_content(span, content)
+            collector.add_hover_content(*span, content)
         }
         exp.collect_info(collector);
         args.collect_info(collector)
@@ -242,36 +242,36 @@ impl CollectInfo for tst::DotCall {
 
 impl CollectInfo for tst::Hole {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Hole { info } = self;
-        if let Some(span) = info.span {
+        let tst::Hole { info, span } = self;
+        if let Some(span) = span {
             let content = HoverInfoContent::HoleInfo(HoleInfo {
                 goal: info.typ.print_to_string(None),
                 ctx: info.ctx.clone().map(Into::into),
             });
-            collector.add_hover_content(span, content)
+            collector.add_hover_content(*span, content)
         }
     }
 }
 
 impl CollectInfo for tst::Type {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Type { info } = self;
-        if let Some(span) = info.span {
+        let tst::Type { info, span } = self;
+        if let Some(span) = span {
             let content = HoverInfoContent::TypeUnivInfo(TypeUnivInfo {
                 typ: info.typ.print_to_string(None),
             });
-            collector.add_hover_content(span, content)
+            collector.add_hover_content(*span, content)
         }
     }
 }
 
 impl CollectInfo for tst::Anno {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Anno { info, exp, typ } = self;
-        if let Some(span) = info.span {
+        let tst::Anno { info, span, exp, typ } = self;
+        if let Some(span) = span {
             let content =
                 HoverInfoContent::AnnoInfo(AnnoInfo { typ: info.typ.print_to_string(None) });
-            collector.add_hover_content(span, content)
+            collector.add_hover_content(*span, content)
         }
         exp.collect_info(collector);
         typ.collect_info(collector)

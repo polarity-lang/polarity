@@ -447,7 +447,7 @@ impl<'a, P: Phase> Print<'a> for Param<P> {
 
 impl<'a, P: Phase> Print<'a> for ParamInst<P> {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let ParamInst { info: _, name, typ: _ } = self;
+        let ParamInst { span: _, info: _, name, typ: _ } = self;
         alloc.text(name)
     }
 }
@@ -470,7 +470,7 @@ impl<'a, P: Phase> Print<'a> for SelfParam<P> {
 
 impl<'a, P: Phase> Print<'a> for TypApp<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let TypApp { info: _, name, args } = self;
+        let TypApp { span: _, info: _, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
         alloc.typ(name).append(psubst)
     }
@@ -479,14 +479,14 @@ impl<'a, P: Phase> Print<'a> for TypApp<P> {
 impl<'a, P: Phase> Print<'a> for Exp<P> {
     fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
         match self {
-            Exp::Variable(Variable { info: _, name, ctx: _, idx }) => {
+            Exp::Variable(Variable { span: _, info: _, name, ctx: _, idx }) => {
                 if cfg.de_bruijn {
                     alloc.text(format!("{name}@{idx}"))
                 } else {
                     alloc.text(name)
                 }
             }
-            Exp::TypCtor(TypCtor { info: _, name, args }) => {
+            Exp::TypCtor(TypCtor { span: _, info: _, name, args }) => {
                 if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
                     let arg = args.args[0].print_prec(cfg, alloc, 1);
                     let res = args.args[1].print_prec(cfg, alloc, 0);
@@ -502,14 +502,14 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                     alloc.typ(name).append(psubst)
                 }
             }
-            Exp::Call(Call { info: _, name, args }) => {
+            Exp::Call(Call { span: _, info: _, name, args }) => {
                 let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                 alloc.ctor(name).append(psubst)
             }
             mut dtor @ Exp::DotCall(DotCall { .. }) => {
                 // A series of destructors forms an aligned group
                 let mut dtors_group = alloc.nil();
-                while let Exp::DotCall(DotCall { info: _, exp, name, args }) = &dtor {
+                while let Exp::DotCall(DotCall { span: _, info: _, exp, name, args }) = &dtor {
                     let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                     if !dtors_group.is_nil() {
                         dtors_group = alloc.line_().append(dtors_group);
@@ -520,11 +520,12 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 }
                 dtor.print(cfg, alloc).append(dtors_group.align().group())
             }
-            Exp::Anno(syntax::generic::Anno { info: _, exp, typ }) => {
+            Exp::Anno(syntax::generic::Anno { span: _, info: _, exp, typ }) => {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
-            Exp::Type(Type { info: _ }) => alloc.keyword(TYPE),
+            Exp::Type(Type { span: _, info: _ }) => alloc.keyword(TYPE),
             Exp::LocalMatch(LocalMatch {
+                span: _,
                 info: _,
                 ctx: _,
                 name,
@@ -543,7 +544,14 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Exp::LocalComatch(LocalComatch { info: _, ctx: _, name, is_lambda_sugar, body }) => {
+            Exp::LocalComatch(LocalComatch {
+                span: _,
+                info: _,
+                ctx: _,
+                name,
+                is_lambda_sugar,
+                body,
+            }) => {
                 if *is_lambda_sugar && cfg.print_lambda_sugar {
                     print_lambda_sugar(body, cfg, alloc)
                 } else {
