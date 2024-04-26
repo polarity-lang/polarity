@@ -273,9 +273,9 @@ impl Lift for tst::Match {
     type Target = ust::Match;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Match { info, cases, omit_absurd } = self;
+        let tst::Match { span, cases, omit_absurd } = self;
 
-        ust::Match { info: *info, cases: cases.lift(ctx), omit_absurd: *omit_absurd }
+        ust::Match { span: *span, cases: cases.lift(ctx), omit_absurd: *omit_absurd }
     }
 }
 
@@ -283,10 +283,10 @@ impl Lift for tst::Case {
     type Target = ust::Case;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Case { info, name, args, body } = self;
+        let tst::Case { span, name, args, body } = self;
 
         args.lift_telescope(ctx, |ctx, args| ust::Case {
-            info: *info,
+            span: *span,
             name: name.clone(),
             args,
             body: body.lift(ctx),
@@ -385,11 +385,11 @@ impl Lift for tst::Motive {
     type Target = ust::Motive;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Motive { info, param, ret_typ } = self;
+        let tst::Motive { span, param, ret_typ } = self;
 
         let param = param.lift(ctx);
 
-        ctx.bind_single((), |ctx| ust::Motive { info: *info, param, ret_typ: ret_typ.lift(ctx) })
+        ctx.bind_single((), |ctx| ust::Motive { span: *span, param, ret_typ: ret_typ.lift(ctx) })
     }
 }
 

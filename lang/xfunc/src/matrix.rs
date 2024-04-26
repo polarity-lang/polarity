@@ -248,7 +248,7 @@ impl XData {
                             omit_absurd = true;
                         }
                         body.map(|body| ust::Case {
-                            info: None,
+                            span: None,
                             name: ctor.name.clone(),
                             args: ctor.params.instantiate(),
                             body,
@@ -264,7 +264,7 @@ impl XData {
                     params: dtor.params.clone(),
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
-                    body: ust::Match { cases, info: None, omit_absurd },
+                    body: ust::Match { cases, span: None, omit_absurd },
                 }
             })
             .collect();
@@ -308,7 +308,7 @@ impl XData {
                             omit_absurd = true;
                         }
                         body.map(|body| ust::Case {
-                            info: None,
+                            span: None,
                             name: dtor.name.clone(),
                             args: dtor.params.instantiate(),
                             body,
@@ -323,7 +323,7 @@ impl XData {
                     attr: Attribute::default(),
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
-                    body: ust::Match { cases, info: None, omit_absurd },
+                    body: ust::Match { cases, span: None, omit_absurd },
                 }
             })
             .collect();

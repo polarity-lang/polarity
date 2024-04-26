@@ -90,7 +90,7 @@ impl FV for ust::Args {
 
 impl FV for ust::Match {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::Match { info: _, cases, omit_absurd: _ } = self;
+        let ust::Match { span: _, cases, omit_absurd: _ } = self;
         for case in cases {
             case.visit_fv(v)
         }
@@ -99,7 +99,7 @@ impl FV for ust::Match {
 
 impl FV for ust::Case {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::Case { info: _, name: _, args, body } = self;
+        let ust::Case { span: _, name: _, args, body } = self;
 
         v.bind_iter(args.params.iter(), |v| {
             body.visit_fv(v);
@@ -109,7 +109,7 @@ impl FV for ust::Case {
 
 impl FV for ust::Motive {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::Motive { info: _, param, ret_typ } = self;
+        let ust::Motive { span: _, param, ret_typ } = self;
 
         param.visit_fv(v);
 

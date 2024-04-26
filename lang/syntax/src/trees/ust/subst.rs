@@ -67,10 +67,10 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
 
 impl Substitutable<Rc<Exp>> for Motive {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Motive { info, param, ret_typ } = self;
+        let Motive { span, param, ret_typ } = self;
 
         Motive {
-            info: *info,
+            span: *span,
             param: param.clone(),
             ret_typ: ctx.bind_single((), |ctx| ret_typ.subst(ctx, &by.shift((1, 0)))),
         }
@@ -79,9 +79,9 @@ impl Substitutable<Rc<Exp>> for Motive {
 
 impl Substitutable<Rc<Exp>> for Match {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Match { info, cases, omit_absurd } = self;
+        let Match { span, cases, omit_absurd } = self;
         Match {
-            info: *info,
+            span: *span,
             cases: cases.iter().map(|case| case.subst(ctx, by)).collect(),
             omit_absurd: *omit_absurd,
         }
@@ -90,9 +90,9 @@ impl Substitutable<Rc<Exp>> for Match {
 
 impl Substitutable<Rc<Exp>> for Case {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Case { info, name, args, body } = self;
+        let Case { span, name, args, body } = self;
         ctx.bind_iter(args.params.iter(), |ctx| Case {
-            info: *info,
+            span: *span,
             name: name.clone(),
             args: args.clone(),
             body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),

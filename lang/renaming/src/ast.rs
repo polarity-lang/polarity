@@ -442,9 +442,9 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Match { info, cases, omit_absurd } = self;
+        let Match { span, cases, omit_absurd } = self;
 
-        Match { info, cases: cases.rename_in_ctx(ctx), omit_absurd }
+        Match { span, cases: cases.rename_in_ctx(ctx), omit_absurd }
     }
 }
 
@@ -470,14 +470,14 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Case { info, name, args, body } = self;
+        let Case { span, name, args, body } = self;
 
         let new_args = args.rename_in_ctx(ctx);
 
         ctx.bind_iter(new_args.params.clone().into_iter(), |new_ctx| {
             let new_body = body.rename_in_ctx(new_ctx);
 
-            Case { info, name, args: new_args, body: new_body }
+            Case { span, name, args: new_args, body: new_body }
         })
     }
 }
@@ -490,13 +490,13 @@ where
     P::InfTyp: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Motive { info, param, ret_typ } = self;
+        let Motive { span, param, ret_typ } = self;
 
         let new_param = param.rename_in_ctx(ctx);
         ctx.bind_single(new_param.clone(), |new_ctx| {
             let new_ret_typ = ret_typ.rename_in_ctx(new_ctx);
 
-            Motive { info, param: new_param, ret_typ: new_ret_typ }
+            Motive { span, param: new_param, ret_typ: new_ret_typ }
         })
     }
 }

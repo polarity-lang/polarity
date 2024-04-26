@@ -336,10 +336,10 @@ impl<'a> Check for WithScrutinee<'a> {
         ctx: &mut Ctx,
         t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
-        let ust::Match { info, cases, omit_absurd } = &self.inner;
+        let ust::Match { span, cases, omit_absurd } = &self.inner;
 
         // Check that this match is on a data type
-        let data = prg.decls.data(&self.scrutinee.name, *info)?;
+        let data = prg.decls.data(&self.scrutinee.name, *span)?;
 
         // Check exhaustiveness
         let ctors_expected: HashSet<_> = data.ctors.iter().cloned().collect();
@@ -363,7 +363,7 @@ impl<'a> Check for WithScrutinee<'a> {
                 ctors_missing.cloned().collect(),
                 ctors_undeclared.cloned().collect(),
                 ctors_duplicate,
-                info,
+                span,
             ));
         }
 
@@ -372,9 +372,9 @@ impl<'a> Check for WithScrutinee<'a> {
 
         if *omit_absurd {
             for name in ctors_missing.cloned() {
-                let ust::Ctor { params, .. } = prg.decls.ctor(&name, *info)?;
+                let ust::Ctor { params, .. } = prg.decls.ctor(&name, *span)?;
 
-                let case = ust::Case { info: *info, name, args: params.instantiate(), body: None };
+                let case = ust::Case { span: *span, name, args: params.instantiate(), body: None };
                 cases.push((case, true));
             }
         }
@@ -384,7 +384,7 @@ impl<'a> Check for WithScrutinee<'a> {
         for (case, omit) in cases {
             // Build equations for this case
             let ust::Ctor { typ: ust::TypApp { args: def_args, .. }, params, .. } =
-                prg.decls.ctor(&case.name, case.info)?;
+                prg.decls.ctor(&case.name, case.span)?;
 
             let def_args_nf = LevelCtx::empty()
                 .bind_iter(params.params.iter(), |ctx| def_args.normalize(prg, &mut ctx.env()))?;
@@ -407,7 +407,7 @@ impl<'a> Check for WithScrutinee<'a> {
             }
         }
 
-        Ok(tst::Match { info: *info, cases: cases_out, omit_absurd: *omit_absurd })
+        Ok(tst::Match { span: *span, cases: cases_out, omit_absurd: *omit_absurd })
     }
 }
 
@@ -424,10 +424,10 @@ impl<'a> Infer for WithDestructee<'a> {
     type Target = tst::Match;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Match { info, cases, omit_absurd } = &self.inner;
+        let ust::Match { span, cases, omit_absurd } = &self.inner;
 
         // Check that this comatch is on a codata type
-        let codata = prg.decls.codata(&self.destructee.name, *info)?;
+        let codata = prg.decls.codata(&self.destructee.name, *span)?;
 
         // Check exhaustiveness
         let dtors_expected: HashSet<_> = codata.dtors.iter().cloned().collect();
@@ -452,7 +452,7 @@ impl<'a> Infer for WithDestructee<'a> {
                 dtors_missing.cloned().collect(),
                 dtors_exessive.cloned().collect(),
                 dtors_duplicate,
-                info,
+                span,
             ));
         }
 
@@ -461,9 +461,9 @@ impl<'a> Infer for WithDestructee<'a> {
 
         if *omit_absurd {
             for name in dtors_missing.cloned() {
-                let ust::Dtor { params, .. } = prg.decls.dtor(&name, *info)?;
+                let ust::Dtor { params, .. } = prg.decls.dtor(&name, *span)?;
 
-                let case = ust::Case { info: *info, name, args: params.instantiate(), body: None };
+                let case = ust::Case { span: *span, name, args: params.instantiate(), body: None };
                 cases.push((case, true));
             }
         }
@@ -477,7 +477,7 @@ impl<'a> Infer for WithDestructee<'a> {
                 ret_typ,
                 params,
                 ..
-            } = prg.decls.dtor(&case.name, case.info)?;
+            } = prg.decls.dtor(&case.name, case.span)?;
 
             let def_args_nf =
                 def_args.normalize(prg, &mut LevelCtx::from(vec![params.len()]).env())?;
@@ -534,7 +534,7 @@ impl<'a> Infer for WithDestructee<'a> {
             }
         }
 
-        Ok(tst::Match { info: *info, cases: cases_out, omit_absurd: *omit_absurd })
+        Ok(tst::Match { span: *span, cases: cases_out, omit_absurd: *omit_absurd })
     }
 }
 
@@ -547,8 +547,8 @@ fn check_case(
     ctx: &mut Ctx,
     t: Rc<ust::Exp>,
 ) -> Result<tst::Case, TypeError> {
-    let ust::Case { info, name, args, body } = case;
-    let ust::Ctor { name, params, .. } = prg.decls.ctor(name, *info)?;
+    let ust::Case { span, name, args, body } = case;
+    let ust::Ctor { name, params, .. } = prg.decls.ctor(name, *span)?;
 
     // FIXME: Refactor this
     let mut subst_ctx_1 = ctx.levels().append(&vec![1, params.len()].into());
@@ -593,7 +593,7 @@ fn check_case(
                     let unif = unify(ctx.levels(), eqns.clone(), false)?
                         .map_no(|()| TypeError::PatternIsAbsurd {
                             name: name.clone(),
-                            span: info.to_miette(),
+                            span: span.to_miette(),
                         })
                         .ok_yes()?;
 
@@ -613,7 +613,7 @@ fn check_case(
                     unify(ctx.levels(), eqns.clone(), false)?
                         .map_yes(|_| TypeError::PatternIsNotAbsurd {
                             name: name.clone(),
-                            span: info.to_miette(),
+                            span: span.to_miette(),
                         })
                         .ok_no()?;
 
@@ -621,9 +621,9 @@ fn check_case(
                 }
             };
 
-            Ok(tst::Case { info: *info, name: name.clone(), args: args_out, body: body_out })
+            Ok(tst::Case { span: *span, name: name.clone(), args: args_out, body: body_out })
         },
-        *info,
+        *span,
     )
 }
 
@@ -636,8 +636,8 @@ fn check_cocase(
     ctx: &mut Ctx,
     t: Rc<ust::Exp>,
 ) -> Result<tst::Case, TypeError> {
-    let ust::Case { info, name, args: params_inst, body } = cocase;
-    let ust::Dtor { name, params, .. } = prg.decls.dtor(name, *info)?;
+    let ust::Case { span, name, args: params_inst, body } = cocase;
+    let ust::Dtor { name, params, .. } = prg.decls.dtor(name, *span)?;
 
     params_inst.check_telescope(
         prg,
@@ -650,7 +650,7 @@ fn check_cocase(
                     let unif = unify(ctx.levels(), eqns.clone(), false)?
                         .map_no(|()| TypeError::PatternIsAbsurd {
                             name: name.clone(),
-                            span: info.to_miette(),
+                            span: span.to_miette(),
                         })
                         .ok_yes()?;
 
@@ -670,7 +670,7 @@ fn check_cocase(
                     unify(ctx.levels(), eqns.clone(), false)?
                         .map_yes(|_| TypeError::PatternIsNotAbsurd {
                             name: name.clone(),
-                            span: info.to_miette(),
+                            span: span.to_miette(),
                         })
                         .ok_no()?;
 
@@ -678,9 +678,9 @@ fn check_cocase(
                 }
             };
 
-            Ok(tst::Case { info: *info, name: name.clone(), args: args_out, body: body_out })
+            Ok(tst::Case { span: *span, name: name.clone(), args: args_out, body: body_out })
         },
-        *info,
+        *span,
     )
 }
 
@@ -732,7 +732,7 @@ impl Check for ust::LocalMatch {
         match motive {
             // Pattern matching with motive
             Some(m) => {
-                let ust::Motive { info, param, ret_typ } = m;
+                let ust::Motive { span: info, param, ret_typ } = m;
                 let self_t_nf =
                     typ_app.to_exp().forget_tst().normalize(prg, &mut ctx.env())?.shift((1, 0));
                 let self_binder = Binder { name: param.name.clone(), typ: self_t_nf.clone() };
@@ -752,7 +752,7 @@ impl Check for ust::LocalMatch {
                 body_t =
                     ctx.bind_single(&self_binder, |ctx| ret_typ.normalize(prg, &mut ctx.env()))?;
                 motive_out = Some(tst::Motive {
-                    info: *info,
+                    span: *info,
                     param: tst::ParamInst {
                         info: param.info.with_type(self_t_nf),
                         name: param.name.clone(),

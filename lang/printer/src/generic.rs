@@ -309,7 +309,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Match<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Match { info: _, cases, omit_absurd } = self;
+        let Match { span: _, cases, omit_absurd } = self;
         match cases.len() {
             0 => {
                 if *omit_absurd {
@@ -352,7 +352,7 @@ impl<'a, P: Phase> Print<'a> for Match<P> {
 
 impl<'a, P: Phase> Print<'a> for Case<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Case { info: _, name, args, body } = self;
+        let Case { span: _, name, args, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -564,7 +564,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
 
 impl<'a, P: Phase> Print<'a> for Motive<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Motive { info: _, param, ret_typ } = self;
+        let Motive { span: _, param, ret_typ } = self;
 
         alloc
             .space()

@@ -284,7 +284,7 @@ impl<P: Phase> HasSpan for Hole<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Match<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub cases: Vec<Case<P>>,
     pub omit_absurd: bool,
 }
@@ -293,7 +293,7 @@ pub struct Match<P: Phase> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Case<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub name: Ident,
     // TODO: Rename to params
     pub args: TelescopeInst<P>,
@@ -356,7 +356,7 @@ impl<P: Phase> Args<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Motive<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub param: ParamInst<P>,
     pub ret_typ: Rc<Exp<P>>,
 }

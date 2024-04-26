@@ -40,7 +40,7 @@ impl Lower for cst::exp::Match {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Match { span, cases, omit_absurd } = self;
 
-        Ok(ust::Match { info: Some(*span), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
+        Ok(ust::Match { span: Some(*span), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
     }
 }
 
@@ -71,7 +71,7 @@ impl Lower for cst::exp::Case {
         let cst::exp::Case { span, name, args, body } = self;
 
         lower_telescope_inst(args, ctx, |ctx, args| {
-            Ok(ust::Case { info: Some(*span), name: name.clone(), args, body: body.lower(ctx)? })
+            Ok(ust::Case { span: Some(*span), name: name.clone(), args, body: body.lower(ctx)? })
         })
     }
 }
@@ -289,7 +289,7 @@ impl Lower for cst::exp::Motive {
         let cst::exp::Motive { span, param, ret_typ } = self;
 
         Ok(ust::Motive {
-            info: Some(*span),
+            span: Some(*span),
             param: ust::ParamInst {
                 info: Some(bs_to_span(param)),
                 name: bs_to_name(param),

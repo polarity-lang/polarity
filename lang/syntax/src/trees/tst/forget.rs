@@ -212,9 +212,9 @@ impl ForgetTST for Match {
     type Target = ust::Match;
 
     fn forget_tst(&self) -> Self::Target {
-        let Match { info, cases, omit_absurd } = self;
+        let Match { span, cases, omit_absurd } = self;
 
-        ust::Match { info: *info, cases: cases.forget_tst(), omit_absurd: *omit_absurd }
+        ust::Match { span: *span, cases: cases.forget_tst(), omit_absurd: *omit_absurd }
     }
 }
 
@@ -222,10 +222,10 @@ impl ForgetTST for Case {
     type Target = ust::Case;
 
     fn forget_tst(&self) -> Self::Target {
-        let Case { info, name, args, body } = self;
+        let Case { span, name, args, body } = self;
 
         ust::Case {
-            info: *info,
+            span: *span,
             name: name.clone(),
             args: args.forget_tst(),
             body: body.forget_tst(),
@@ -376,9 +376,9 @@ impl ForgetTST for Motive {
     type Target = ust::Motive;
 
     fn forget_tst(&self) -> Self::Target {
-        let Motive { info, param, ret_typ } = self;
+        let Motive { span, param, ret_typ } = self;
 
-        ust::Motive { info: *info, param: param.forget_tst(), ret_typ: ret_typ.forget_tst() }
+        ust::Motive { span: *span, param: param.forget_tst(), ret_typ: ret_typ.forget_tst() }
     }
 }
 

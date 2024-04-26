@@ -106,10 +106,10 @@ impl Shift for Hole {
 
 impl Shift for Motive {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Motive { info, param, ret_typ } = self;
+        let Motive { span, param, ret_typ } = self;
 
         Motive {
-            info: *info,
+            span: *span,
             param: param.clone(),
             ret_typ: ret_typ.shift_in_range(range.shift(1), by),
         }
@@ -118,16 +118,16 @@ impl Shift for Motive {
 
 impl Shift for Match {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Match { info, cases, omit_absurd } = self;
-        Match { info: *info, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
+        let Match { span, cases, omit_absurd } = self;
+        Match { span: *span, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
     }
 }
 
 impl Shift for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Case { info, name, args, body } = self;
+        let Case { span, name, args, body } = self;
         Case {
-            info: *info,
+            span: *span,
             name: name.clone(),
             args: args.clone(),
             body: body.shift_in_range(range.shift(1), by),
