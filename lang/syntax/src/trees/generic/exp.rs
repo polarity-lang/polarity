@@ -38,10 +38,6 @@ impl fmt::Display for Label {
     }
 }
 
-pub trait HasPhase {
-    type Phase;
-}
-
 pub trait Named {
     fn name(&self) -> &Ident;
 }
