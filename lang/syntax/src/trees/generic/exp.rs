@@ -132,6 +132,17 @@ pub struct TypCtor<P: Phase> {
     pub args: Args<P>,
 }
 
+impl<P: Phase> TypCtor<P> {
+    pub fn to_exp(&self) -> Exp<P> {
+        Exp::TypCtor(self.clone())
+    }
+
+    /// A type application is simple if the list of arguments is empty.
+    pub fn is_simple(&self) -> bool {
+        self.args.is_empty()
+    }
+}
+
 impl<P: Phase> HasSpan for TypCtor<P> {
     fn span(&self) -> Option<Span> {
         self.span

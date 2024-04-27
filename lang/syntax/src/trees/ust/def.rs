@@ -27,7 +27,6 @@ pub type Let = generic::Let<UST>;
 pub type Match = generic::Match<UST>;
 pub type Case = generic::Case<UST>;
 pub type SelfParam = generic::SelfParam<UST>;
-pub type TypApp = generic::TypApp<UST>;
 pub type Exp = generic::Exp<UST>;
 pub type Motive = generic::Motive<UST>;
 pub type Telescope = generic::Telescope<UST>;

@@ -111,12 +111,12 @@ impl ReadBack for val::Case {
 }
 
 impl ReadBack for val::TypApp {
-    type Nf = ust::TypApp;
+    type Nf = ust::TypCtor;
 
     fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let val::TypApp { span, name, args } = self;
 
-        Ok(ust::TypApp {
+        Ok(ust::TypCtor {
             span: *span,
             info: (),
             name: name.clone(),

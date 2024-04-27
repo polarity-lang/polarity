@@ -150,18 +150,6 @@ impl Shift for Case {
     }
 }
 
-impl Shift for TypApp {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let TypApp { span, info, name, args } = self;
-        TypApp {
-            span: *span,
-            info: *info,
-            name: name.clone(),
-            args: args.shift_in_range(range, by),
-        }
-    }
-}
-
 impl Shift for Args {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         Self { args: self.args.shift_in_range(range, by) }

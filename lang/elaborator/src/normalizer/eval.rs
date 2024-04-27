@@ -214,16 +214,6 @@ impl Eval for ust::Case {
     }
 }
 
-impl Eval for ust::TypApp {
-    type Val = val::TypApp;
-
-    fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::TypApp { span, info: (), name, args } = self;
-
-        Ok(val::TypApp { span: *span, name: name.clone(), args: args.eval(prg, env)? })
-    }
-}
-
 impl Eval for ust::Args {
     type Val = Vec<Rc<Val>>;
 

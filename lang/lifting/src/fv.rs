@@ -60,7 +60,7 @@ impl FV for ust::Exp {
                 exp.visit_fv(v);
                 args.visit_fv(v);
             }
-            ust::Exp::TypCtor(ust::TypCtor { span: _, info: _, name: _, args }) => args.visit_fv(v),
+            ust::Exp::TypCtor(e) => e.visit_fv(v),
             ust::Exp::Hole(ust::Hole { span: _, info: _ }) => {}
             ust::Exp::Type(ust::Type { span: _, info: _ }) => {}
             ust::Exp::LocalMatch(ust::LocalMatch {
@@ -78,6 +78,13 @@ impl FV for ust::Exp {
                 body.visit_fv(v)
             }
         }
+    }
+}
+
+impl FV for ust::TypCtor {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        let ust::TypCtor { span: _, info: _, name: _, args } = self;
+        args.visit_fv(v)
     }
 }
 
@@ -122,13 +129,6 @@ impl FV for ust::Motive {
 impl FV for ust::ParamInst {
     fn visit_fv(&self, _v: &mut USTVisitor) {
         //contains no type info for ust.
-    }
-}
-
-impl FV for ust::TypApp {
-    fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::TypApp { span: _, info: _, name: _, args } = self;
-        args.visit_fv(v)
     }
 }
 

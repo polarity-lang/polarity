@@ -302,17 +302,6 @@ where
         ParamInst { span, name: new_name, typ: new_typ, info: new_info }
     }
 }
-impl<P: Phase> Rename for TypApp<P>
-where
-    P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
-{
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let TypApp { span, info, name, args } = self;
-
-        TypApp { span, info: info.rename_in_ctx(ctx), name, args: args.rename_in_ctx(ctx) }
-    }
-}
 
 impl<P: Phase> Rename for SelfParam<P>
 where
@@ -360,12 +349,7 @@ where
                 exp: exp.rename_in_ctx(ctx),
                 typ: typ.rename_in_ctx(ctx),
             }),
-            Exp::TypCtor(TypCtor { span, info, name, args }) => Exp::TypCtor(TypCtor {
-                span,
-                info: info.rename_in_ctx(ctx),
-                name,
-                args: args.rename_in_ctx(ctx),
-            }),
+            Exp::TypCtor(e) => Exp::TypCtor(e.rename_in_ctx(ctx)),
             Exp::Hole(Hole { span, info }) => {
                 Exp::Hole(Hole { span, info: info.rename_in_ctx(ctx) })
             }
@@ -405,6 +389,17 @@ where
                 args: args.rename_in_ctx(ctx),
             }),
         }
+    }
+}
+
+impl<P: Phase> Rename for TypCtor<P>
+where
+    P::TypeInfo: Rename,
+    P::TypeAppInfo: Rename,
+{
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+        let TypCtor { span, info, name, args } = self;
+        TypCtor { span, info: info.rename_in_ctx(ctx), name, args: args.rename_in_ctx(ctx) }
     }
 }
 

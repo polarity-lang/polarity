@@ -19,12 +19,7 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                     })),
                 }
             }
-            Exp::TypCtor(TypCtor { span, info, name, args }) => Rc::new(Exp::TypCtor(TypCtor {
-                span: *span,
-                info: *info,
-                name: name.clone(),
-                args: args.subst(ctx, by),
-            })),
+            Exp::TypCtor(e) => Rc::new(Exp::TypCtor(e.subst(ctx, by))),
             Exp::Call(Call { span, info, name, args }) => Rc::new(Exp::Call(Call {
                 span: *span,
                 info: *info,
@@ -81,6 +76,13 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
     }
 }
 
+impl Substitutable<Rc<Exp>> for TypCtor {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        let TypCtor { span, info, name, args } = self;
+        TypCtor { span: *span, info: *info, name: name.clone(), args: args.subst(ctx, by) }
+    }
+}
+
 impl Substitutable<Rc<Exp>> for Motive {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Motive { span, param, ret_typ } = self;
@@ -113,13 +115,6 @@ impl Substitutable<Rc<Exp>> for Case {
             params: params.clone(),
             body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
         })
-    }
-}
-
-impl Substitutable<Rc<Exp>> for TypApp {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let TypApp { span, info, name, args } = self;
-        TypApp { span: *span, info: *info, name: name.clone(), args: args.subst(ctx, by) }
     }
 }
 

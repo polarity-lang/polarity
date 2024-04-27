@@ -241,21 +241,6 @@ impl ForgetTST for SelfParam {
     }
 }
 
-impl ForgetTST for TypApp {
-    type Target = ust::TypApp;
-
-    fn forget_tst(&self) -> Self::Target {
-        let TypApp { span, info, name, args } = self;
-
-        ust::TypApp {
-            span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            args: args.forget_tst(),
-        }
-    }
-}
-
 impl ForgetTST for Exp {
     type Target = ust::Exp;
 

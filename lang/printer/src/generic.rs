@@ -468,14 +468,6 @@ impl<'a, P: Phase> Print<'a> for SelfParam<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for TypApp<P> {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let TypApp { span: _, info: _, name, args } = self;
-        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-        alloc.typ(name).append(psubst)
-    }
-}
-
 impl<'a, P: Phase> Print<'a> for Exp<P> {
     fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
         match self {
@@ -486,22 +478,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                     alloc.text(name)
                 }
             }
-            Exp::TypCtor(TypCtor { span: _, info: _, name, args }) => {
-                if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
-                    let arg = args.args[0].print_prec(cfg, alloc, 1);
-                    let res = args.args[1].print_prec(cfg, alloc, 0);
-                    let fun =
-                        arg.append(alloc.space()).append(ARROW).append(alloc.space()).append(res);
-                    if prec == 0 {
-                        fun
-                    } else {
-                        fun.parens()
-                    }
-                } else {
-                    let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-                    alloc.typ(name).append(psubst)
-                }
-            }
+            Exp::TypCtor(e) => e.print_prec(cfg, alloc, prec),
             Exp::Call(Call { span: _, info: _, name, args }) => {
                 let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                 alloc.ctor(name).append(psubst)
@@ -566,6 +543,25 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 }
             }
             Exp::Hole { .. } => alloc.keyword(HOLE),
+        }
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for TypCtor<P> {
+    fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
+        let TypCtor { span: _, info: _, name, args } = self;
+        if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
+            let arg = args.args[0].print_prec(cfg, alloc, 1);
+            let res = args.args[1].print_prec(cfg, alloc, 0);
+            let fun = arg.append(alloc.space()).append(ARROW).append(alloc.space()).append(res);
+            if prec == 0 {
+                fun
+            } else {
+                fun.parens()
+            }
+        } else {
+            let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
+            alloc.typ(name).append(psubst)
         }
     }
 }

@@ -25,7 +25,7 @@ pub trait MapCtxExt<P: Phase> {
         &mut self,
         info: Option<Span>,
         name: Option<Ident>,
-        typ: TypApp<P>,
+        typ: TypCtor<P>,
         f_inner: F,
     ) -> X
     where
@@ -88,7 +88,7 @@ where
         &mut self,
         info: Option<Span>,
         name: Option<Ident>,
-        typ: TypApp<P>,
+        typ: TypCtor<P>,
         f_inner: F,
     ) -> X
     where

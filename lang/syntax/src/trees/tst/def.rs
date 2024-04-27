@@ -34,7 +34,6 @@ pub type Let = generic::Let<TST>;
 pub type Match = generic::Match<TST>;
 pub type Case = generic::Case<TST>;
 pub type SelfParam = generic::SelfParam<TST>;
-pub type TypApp = generic::TypApp<TST>;
 pub type Exp = generic::Exp<TST>;
 pub type Motive = generic::Motive<TST>;
 pub type Telescope = generic::Telescope<TST>;
@@ -67,13 +66,13 @@ impl From<Rc<ust::Exp>> for TypeInfo {
 
 #[derive(Debug, Clone)]
 pub struct TypeAppInfo {
-    pub typ: TypApp,
-    pub typ_nf: ust::TypApp,
+    pub typ: TypCtor,
+    pub typ_nf: ust::TypCtor,
 }
 
 impl From<TypeAppInfo> for TypeInfo {
     fn from(type_app_info: TypeAppInfo) -> Self {
-        let ust::TypApp { span, info, name, args } = type_app_info.typ_nf;
+        let ust::TypCtor { span, info, name, args } = type_app_info.typ_nf;
         Self { typ: Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args })), ctx: None }
     }
 }
@@ -92,11 +91,11 @@ impl HasTypeInfo for Exp {
             Exp::Anno(e) => e.info.clone().typ,
             Exp::Type(e) => e.info.clone().typ,
             Exp::LocalMatch(e) => {
-                let ust::TypApp { span, info, name, args } = e.info.clone().typ_nf;
+                let ust::TypCtor { span, info, name, args } = e.info.clone().typ_nf;
                 Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args }))
             }
             Exp::LocalComatch(e) => {
-                let ust::TypApp { span, info, name, args } = e.info.clone().typ_nf;
+                let ust::TypCtor { span, info, name, args } = e.info.clone().typ_nf;
                 Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args }))
             }
             Exp::Hole(e) => e.info.clone().typ,

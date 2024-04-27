@@ -308,28 +308,13 @@ impl LiftTelescope for tst::SelfParam {
     }
 }
 
-impl Lift for tst::TypApp {
-    type Target = ust::TypApp;
-
-    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::TypApp { span, info, name, args } = self;
-
-        ust::TypApp {
-            span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            args: args.lift(ctx),
-        }
-    }
-}
-
 impl Lift for tst::Exp {
     type Target = ust::Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         match self {
             tst::Exp::Variable(e) => e.lift(ctx),
-            tst::Exp::TypCtor(e) => e.lift(ctx),
+            tst::Exp::TypCtor(e) => ust::Exp::TypCtor(e.lift(ctx)),
             tst::Exp::Call(e) => e.lift(ctx),
             tst::Exp::DotCall(e) => e.lift(ctx),
             tst::Exp::Anno(e) => e.lift(ctx),
@@ -357,16 +342,16 @@ impl Lift for tst::Variable {
 }
 
 impl Lift for tst::TypCtor {
-    type Target = ust::Exp;
+    type Target = ust::TypCtor;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let tst::TypCtor { span, info, name, args } = self;
-        ust::Exp::TypCtor(ust::TypCtor {
+        ust::TypCtor {
             span: *span,
             info: info.forget_tst(),
             name: name.clone(),
             args: args.lift(ctx),
-        })
+        }
     }
 }
 
