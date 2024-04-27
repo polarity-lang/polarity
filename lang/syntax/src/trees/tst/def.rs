@@ -13,9 +13,6 @@ pub struct TST;
 impl generic::Phase for TST {
     type TypeInfo = TypeInfo;
     type TypeAppInfo = TypeAppInfo;
-
-    type InfTyp = Typ;
-    type Ctx = TypeCtx;
 }
 
 pub type Ident = generic::Ident;
@@ -55,21 +52,6 @@ pub type Type = generic::Type<TST>;
 pub type LocalMatch = generic::LocalMatch<TST>;
 pub type LocalComatch = generic::LocalComatch<TST>;
 pub type Hole = generic::Hole<TST>;
-
-#[derive(Clone, Debug)]
-pub struct Typ(Rc<Exp>);
-
-impl Typ {
-    pub fn as_exp(&self) -> &Rc<Exp> {
-        &self.0
-    }
-}
-
-impl From<Rc<Exp>> for Typ {
-    fn from(exp: Rc<Exp>) -> Self {
-        Self(exp)
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct TypeInfo {

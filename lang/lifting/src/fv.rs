@@ -186,7 +186,7 @@ impl FreeVars {
                 span: None,
                 info: Default::default(),
                 name: name.clone(),
-                ctx: (),
+                ctx: None,
                 idx: base_ctx.lvl_to_idx(fv.lvl),
             }));
             args.push(arg);
@@ -402,7 +402,7 @@ impl<'a> Substitution<Rc<ust::Exp>> for FVBodySubst<'a> {
                 span: None,
                 info: Default::default(),
                 name: fv.name.clone(),
-                ctx: (),
+                ctx: None,
                 idx: new_ctx.lvl_to_idx(fv.lvl),
             }))
         })
@@ -416,7 +416,7 @@ impl<'a> Substitution<Rc<ust::Exp>> for FVParamSubst<'a> {
                 span: None,
                 info: Default::default(),
                 name: fv.name.clone(),
-                ctx: (),
+                ctx: None,
                 idx: Idx { fst: 0, snd: self.inner.subst.len() - 1 - fv.lvl.snd },
             }))
         })

@@ -13,7 +13,7 @@ impl Instantiate for Telescope {
                 span: None,
                 name: name.clone(),
                 info: (),
-                typ: (),
+                typ: None,
             })
             .collect();
         TelescopeInst { params }

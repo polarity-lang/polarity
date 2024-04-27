@@ -283,7 +283,7 @@ impl ForgetTST for Variable {
             span: *span,
             info: info.forget_tst(),
             name: name.clone(),
-            ctx: (),
+            ctx: None,
             idx: *idx,
         }
     }
@@ -363,7 +363,7 @@ impl ForgetTST for LocalMatch {
         ust::LocalMatch {
             span: *span,
             info: info.forget_tst(),
-            ctx: (),
+            ctx: None,
             name: name.clone(),
             on_exp: on_exp.forget_tst(),
             motive: motive.forget_tst(),
@@ -382,7 +382,7 @@ impl ForgetTST for LocalComatch {
         ust::LocalComatch {
             span: *span,
             info: info.forget_tst(),
-            ctx: (),
+            ctx: None,
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             body: body.forget_tst(),
@@ -460,12 +460,6 @@ impl ForgetTST for Args {
     fn forget_tst(&self) -> Self::Target {
         ust::Args { args: self.args.forget_tst() }
     }
-}
-
-impl ForgetTST for Typ {
-    type Target = ();
-
-    fn forget_tst(&self) -> Self::Target {}
 }
 
 impl ForgetTST for TypeInfo {

@@ -507,7 +507,7 @@ impl<'a> Infer for WithDestructee<'a> {
                                 span: None,
                                 info: (),
                                 name: "".to_owned(),
-                                ctx: (),
+                                ctx: None,
                                 idx: Idx { fst: 2, snd },
                             })
                         })
@@ -573,7 +573,7 @@ fn check_case(
                         span: None,
                         info: (),
                         name: "".to_owned(),
-                        ctx: (),
+                        ctx: None,
                         idx: Idx { fst: 1, snd },
                     })
                 })
@@ -726,7 +726,7 @@ impl Check for ust::LocalMatch {
         ctx: &mut Ctx,
         t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
-        let ust::LocalMatch { span, info: (), ctx: (), name, on_exp, motive, ret_typ: (), body } =
+        let ust::LocalMatch { span, info: (), ctx: _, name, on_exp, motive, ret_typ: _, body } =
             self;
         let on_exp_out = on_exp.infer(prg, ctx)?;
         let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
@@ -782,7 +782,7 @@ impl Check for ust::LocalMatch {
         Ok(tst::LocalMatch {
             span: *span,
             info: tst::TypeAppInfo { typ: typ_app, typ_nf: typ_app_nf },
-            ctx: ctx.vars.clone(),
+            ctx: Some(ctx.vars.clone()),
             name: name.clone(),
             on_exp: on_exp_out,
             motive: motive_out,
@@ -801,7 +801,7 @@ impl Check for ust::LocalComatch {
         ctx: &mut Ctx,
         t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
-        let ust::LocalComatch { span, info: (), ctx: (), name, is_lambda_sugar, body } = self;
+        let ust::LocalComatch { span, info: (), ctx: _, name, is_lambda_sugar, body } = self;
         let typ_app_nf = t.expect_typ_app()?;
         let typ_app = typ_app_nf.infer(prg, ctx)?;
 
@@ -825,7 +825,7 @@ impl Check for ust::LocalComatch {
         Ok(tst::LocalComatch {
             span: *span,
             info: tst::TypeAppInfo { typ: typ_app, typ_nf: typ_app_nf },
-            ctx: ctx.vars.clone(),
+            ctx: Some(ctx.vars.clone()),
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             body: body_out,
@@ -874,13 +874,13 @@ impl Infer for ust::Variable {
     type Target = tst::Variable;
 
     fn infer(&self, _prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Variable { span, info: (), name, ctx: (), idx } = self;
+        let ust::Variable { span, info: (), name, ctx: _, idx } = self;
         let typ_nf = ctx.lookup(*idx);
         Ok(tst::Variable {
             span: *span,
             info: tst::TypeInfo { typ: typ_nf, ctx: None },
             name: name.clone(),
-            ctx: ctx.vars.clone(),
+            ctx: Some(ctx.vars.clone()),
             idx: *idx,
         })
     }
@@ -1085,7 +1085,7 @@ impl CheckTelescope for ust::TelescopeInst {
             iter,
             vec![],
             |ctx, params_out, (param_actual, param_expected)| {
-                let ust::ParamInst { span, info: (), name, typ: () } = param_actual;
+                let ust::ParamInst { span, info: (), name, typ: _ } = param_actual;
                 let ust::Param { typ, .. } = param_expected;
                 let typ_out = typ.check(prg, ctx, type_univ())?;
                 let typ_nf = typ.normalize(prg, &mut ctx.env())?;
