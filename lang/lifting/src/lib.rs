@@ -7,6 +7,7 @@ use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;
 use syntax::generic::Named;
+use syntax::generic::Variable;
 use syntax::tst;
 use syntax::tst::forget::ForgetTST;
 use syntax::ust;
@@ -326,17 +327,16 @@ impl Lift for tst::Exp {
     }
 }
 
-impl Lift for tst::Variable {
+impl Lift for Variable {
     type Target = ust::Exp;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let tst::Variable { span, info, name, ctx: _, idx } = self;
-        ust::Exp::Variable(ust::Variable {
+        let Variable { span, idx, name, .. } = self;
+        ust::Exp::Variable(Variable {
             span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            ctx: None,
             idx: *idx,
+            name: name.clone(),
+            inferred_type: None,
         })
     }
 }

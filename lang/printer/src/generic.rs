@@ -501,14 +501,14 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Variable<P> {
+impl<'a> Print<'a> for Variable {
     fn print_prec(
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let Variable { span: _, info: _, name, ctx: _, idx } = self;
+        let Variable { name, idx, .. } = self;
         if cfg.de_bruijn {
             alloc.text(format!("{name}@{idx}"))
         } else {

@@ -9,6 +9,7 @@ use parser::cst::exp::BindingSite;
 use parser::cst::exp::Ident;
 use syntax::ctx::BindContext;
 use syntax::generic::lookup_table::DeclKind;
+use syntax::generic::Variable;
 use syntax::ust;
 
 use super::Lower;
@@ -82,12 +83,11 @@ impl Lower for cst::exp::Call {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Call { span, name, args } = self;
         match ctx.lookup(name, span)? {
-            Elem::Bound(lvl) => Ok(ust::Exp::Variable(ust::Variable {
+            Elem::Bound(lvl) => Ok(ust::Exp::Variable(Variable {
                 span: Some(*span),
-                info: (),
-                name: name.clone(),
-                ctx: None,
                 idx: ctx.level_to_index(lvl),
+                name: name.clone(),
+                inferred_type: None,
             })),
             Elem::Decl(meta) => match meta.kind() {
                 DeclKind::Data | DeclKind::Codata => Ok(ust::Exp::TypCtor(ust::TypCtor {

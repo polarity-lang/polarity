@@ -3,7 +3,7 @@
 use std::rc::Rc;
 
 use super::def::*;
-use crate::ust;
+use crate::{generic::Variable, ust};
 
 pub trait ForgetTST {
     type Target;
@@ -260,17 +260,11 @@ impl ForgetTST for Exp {
 }
 
 impl ForgetTST for Variable {
-    type Target = ust::Variable;
+    type Target = Variable;
 
     fn forget_tst(&self) -> Self::Target {
-        let Variable { span, info, name, ctx: _, idx } = self;
-        ust::Variable {
-            span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            ctx: None,
-            idx: *idx,
-        }
+        let Variable { span, idx, name, .. } = self;
+        Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: None }
     }
 }
 

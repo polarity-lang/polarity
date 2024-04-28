@@ -11,7 +11,7 @@ use miette_util::ToMiette;
 use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
-use syntax::generic::Named;
+use syntax::generic::{Named, Variable};
 use syntax::tst::forget::ForgetTST;
 use syntax::tst::{self, HasTypeInfo};
 use syntax::ust::util::Instantiate;
@@ -504,12 +504,11 @@ impl<'a> Infer for WithDestructee<'a> {
                     let args = (0..self.n_label_args)
                         .rev()
                         .map(|snd| {
-                            ust::Exp::Variable(ust::Variable {
+                            ust::Exp::Variable(Variable {
                                 span: None,
-                                info: (),
-                                name: "".to_owned(),
-                                ctx: None,
                                 idx: Idx { fst: 2, snd },
+                                name: "".to_owned(),
+                                inferred_type: None,
                             })
                         })
                         .map(Rc::new)
@@ -570,12 +569,11 @@ fn check_case(
             let args = (0..params.len())
                 .rev()
                 .map(|snd| {
-                    ust::Exp::Variable(ust::Variable {
+                    ust::Exp::Variable(Variable {
                         span: None,
-                        info: (),
-                        name: "".to_owned(),
-                        ctx: None,
                         idx: Idx { fst: 1, snd },
+                        name: "".to_owned(),
+                        inferred_type: None,
                     })
                 })
                 .map(Rc::new)
@@ -709,10 +707,14 @@ impl Check for ust::Exp {
             }
             ust::Exp::Hole(e) => Ok(tst::Exp::Hole(e.check(prg, ctx, t.clone())?)),
             _ => {
-                let actual = self.infer(prg, ctx)?;
+                let inferred_term = self.infer(prg, ctx)?;
+                let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
+                    message: "Expected inferred type".to_owned(),
+                    span: None,
+                })?;
                 let ctx = ctx.levels();
-                convert(ctx, actual.typ(), &t)?;
-                Ok(actual)
+                convert(ctx, inferred_typ, &t)?;
+                Ok(inferred_term)
             }
         }
     }
@@ -730,7 +732,13 @@ impl Check for ust::LocalMatch {
         let ust::LocalMatch { span, info: (), ctx: _, name, on_exp, motive, ret_typ: _, body } =
             self;
         let on_exp_out = on_exp.infer(prg, ctx)?;
-        let typ_app_nf = on_exp_out.typ().expect_typ_app()?;
+        let typ_app_nf = on_exp_out
+            .typ()
+            .ok_or(TypeError::Impossible {
+                message: "Expected inferred type".to_owned(),
+                span: None,
+            })?
+            .expect_typ_app()?;
         let typ_app = typ_app_nf.infer(prg, ctx)?;
         let ret_typ_out = t.check(prg, ctx, type_univ())?;
 
@@ -871,19 +879,13 @@ impl Infer for ust::Exp {
     }
 }
 
-impl Infer for ust::Variable {
-    type Target = tst::Variable;
+impl Infer for Variable {
+    type Target = Variable;
 
     fn infer(&self, _prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Variable { span, info: (), name, ctx: _, idx } = self;
+        let Variable { span, idx, name, .. } = self;
         let typ_nf = ctx.lookup(*idx);
-        Ok(tst::Variable {
-            span: *span,
-            info: tst::TypeInfo { typ: typ_nf, ctx: None },
-            name: name.clone(),
-            ctx: Some(ctx.vars.clone()),
-            idx: *idx,
-        })
+        Ok(Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: Some(typ_nf) })
     }
 }
 

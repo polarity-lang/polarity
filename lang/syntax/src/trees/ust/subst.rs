@@ -2,20 +2,20 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::*;
+use crate::generic::Variable;
 use crate::ust::*;
 
 impl Substitutable<Rc<Exp>> for Rc<Exp> {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         match &**self {
-            Exp::Variable(Variable { span, info, name, ctx: _, idx }) => {
+            Exp::Variable(Variable { span, idx, name, .. }) => {
                 match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
                     Some(exp) => exp,
                     None => Rc::new(Exp::Variable(Variable {
                         span: *span,
-                        info: *info,
-                        name: name.clone(),
-                        ctx: None,
                         idx: *idx,
+                        name: name.clone(),
+                        inferred_type: None,
                     })),
                 }
             }
@@ -165,10 +165,9 @@ impl Substitution<Rc<Exp>> for SwapSubst {
         new_lvl.map(|new_lvl| {
             Rc::new(Exp::Variable(Variable {
                 span: None,
-                info: Default::default(),
-                name: "".to_owned(),
-                ctx: None,
                 idx: new_ctx.lvl_to_idx(new_lvl),
+                name: "".to_owned(),
+                inferred_type: None,
             }))
         })
     }

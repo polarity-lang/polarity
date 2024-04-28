@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use syntax::ctx::{BindContext, Context};
+use syntax::generic::Variable;
 use syntax::ust;
 use tracer::trace;
 
@@ -38,11 +39,11 @@ impl Eval for ust::Exp {
     }
 }
 
-impl Eval for ust::Variable {
+impl Eval for Variable {
     type Val = Rc<Val>;
 
     fn eval(&self, _prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Variable { idx, .. } = self;
+        let Variable { idx, .. } = self;
         Ok(env.lookup(*idx))
     }
 }

@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::*;
+use crate::generic::Variable;
 
 use super::def::*;
 

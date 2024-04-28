@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use syntax::ctx::LevelCtx;
+use syntax::generic::Variable;
 
 use crate::result::TypeError;
 use crate::unifier::dec::{Dec, No, Yes};
@@ -118,8 +119,8 @@ impl Ctx {
 
         match (&**lhs, &**rhs) {
             (
-                ust::Exp::Variable(ust::Variable { idx: idx_1, .. }),
-                ust::Exp::Variable(ust::Variable { idx: idx_2, .. }),
+                ust::Exp::Variable(Variable { idx: idx_1, .. }),
+                ust::Exp::Variable(Variable { idx: idx_2, .. }),
             ) => {
                 if idx_1 == idx_2 {
                     Ok(Yes(()))
@@ -129,14 +130,14 @@ impl Ctx {
                     self.add_assignment(*idx_1, rhs.clone())
                 }
             }
-            (ust::Exp::Variable(ust::Variable { idx, .. }), _) => {
+            (ust::Exp::Variable(Variable { idx, .. }), _) => {
                 if self.vars_are_rigid {
                     Ok(No(()))
                 } else {
                     self.add_assignment(*idx, rhs.clone())
                 }
             }
-            (_, ust::Exp::Variable(ust::Variable { idx, .. })) => {
+            (_, ust::Exp::Variable(Variable { idx, .. })) => {
                 if self.vars_are_rigid {
                     Ok(No(()))
                 } else {

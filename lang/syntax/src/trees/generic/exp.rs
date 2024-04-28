@@ -7,6 +7,7 @@ use derivative::Derivative;
 
 use crate::common::*;
 use crate::ctx::values::TypeCtx;
+use crate::ust::UST;
 
 pub trait Phase
 where
@@ -62,7 +63,7 @@ pub type Ident = String;
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Exp<P: Phase> {
-    Variable(Variable<P>),
+    Variable(Variable),
     TypCtor(TypCtor<P>),
     Call(Call<P>),
     DotCall(DotCall<P>),
@@ -93,21 +94,29 @@ impl<P: Phase> HasSpan for Exp<P> {
 //
 //
 
+/// A bound variable occurrence. The variable is represented
+/// using a de-Bruijn index, but we keep the information
+/// about the name that was originally annotated in the program.
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Variable<P: Phase> {
+pub struct Variable {
+    /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    /// The de-Bruijn index that is used to represent the
+    /// binding structure of terms.
+    pub idx: Idx,
+    /// The name that was originally annotated in the program
+    /// We do not use this information for tracking the binding
+    /// structure, but only for prettyprinting code.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
+    /// Inferred type annotated after elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub ctx: Option<TypeCtx>,
-    pub idx: Idx,
+    pub inferred_type: Option<Rc<Exp<UST>>>,
 }
 
-impl<P: Phase> HasSpan for Variable<P> {
+impl HasSpan for Variable {
     fn span(&self) -> Option<Span> {
         self.span
     }

@@ -1,4 +1,4 @@
-use crate::common::*;
+use crate::{common::*, generic::Variable};
 
 use super::def::*;
 
@@ -20,13 +20,12 @@ impl Shift for Exp {
 
 impl Shift for Variable {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Variable { span, info, name, ctx: _, idx } = self;
+        let Variable { span, idx, name, .. } = self;
         Variable {
             span: *span,
-            info: *info,
-            name: name.clone(),
-            ctx: None,
             idx: idx.shift_in_range(range, by),
+            name: name.clone(),
+            inferred_type: None,
         }
     }
 }

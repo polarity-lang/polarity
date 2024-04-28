@@ -35,7 +35,6 @@ pub type Args = generic::Args<UST>;
 pub type Param = generic::Param<UST>;
 pub type ParamInst = generic::ParamInst<UST>;
 
-pub type Variable = generic::Variable<UST>;
 pub type TypCtor = generic::TypCtor<UST>;
 pub type Call = generic::Call<UST>;
 pub type DotCall = generic::DotCall<UST>;

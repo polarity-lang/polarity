@@ -3,6 +3,7 @@ use std::rc::Rc;
 use super::val;
 use syntax::common::*;
 use syntax::ctx::BindContext;
+use syntax::generic::Variable;
 use syntax::ust;
 use tracer::trace;
 
@@ -56,12 +57,11 @@ impl ReadBack for val::Neu {
 
     fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let res = match self {
-            val::Neu::Var { span, name, idx } => ust::Exp::Variable(ust::Variable {
+            val::Neu::Var { span, name, idx } => ust::Exp::Variable(Variable {
                 span: *span,
-                info: (),
-                ctx: None,
-                name: name.clone(),
                 idx: *idx,
+                name: name.clone(),
+                inferred_type: None,
             }),
             val::Neu::Dtor { span, exp, name, args } => ust::Exp::DotCall(ust::DotCall {
                 span: *span,

@@ -42,7 +42,6 @@ pub type Args = generic::Args<TST>;
 pub type Param = generic::Param<TST>;
 pub type ParamInst = generic::ParamInst<TST>;
 
-pub type Variable = generic::Variable<TST>;
 pub type TypCtor = generic::TypCtor<TST>;
 pub type Call = generic::Call<TST>;
 pub type DotCall = generic::DotCall<TST>;
@@ -78,27 +77,27 @@ impl From<TypeAppInfo> for TypeInfo {
 }
 
 pub trait HasTypeInfo {
-    fn typ(&self) -> Rc<ust::Exp>;
+    fn typ(&self) -> Option<Rc<ust::Exp>>;
 }
 
 impl HasTypeInfo for Exp {
-    fn typ(&self) -> Rc<ust::Exp> {
+    fn typ(&self) -> Option<Rc<ust::Exp>> {
         match self {
-            Exp::Variable(e) => e.info.clone().typ,
-            Exp::TypCtor(e) => e.info.clone().typ,
-            Exp::Call(e) => e.info.clone().typ,
-            Exp::DotCall(e) => e.info.clone().typ,
-            Exp::Anno(e) => e.info.clone().typ,
-            Exp::Type(e) => e.info.clone().typ,
+            Exp::Variable(e) => e.inferred_type.clone(),
+            Exp::TypCtor(e) => Some(e.info.clone().typ),
+            Exp::Call(e) => Some(e.info.clone().typ),
+            Exp::DotCall(e) => Some(e.info.clone().typ),
+            Exp::Anno(e) => Some(e.info.clone().typ),
+            Exp::Type(e) => Some(e.info.clone().typ),
             Exp::LocalMatch(e) => {
                 let ust::TypCtor { span, info, name, args } = e.info.clone().typ_nf;
-                Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args }))
+                Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args })))
             }
             Exp::LocalComatch(e) => {
                 let ust::TypCtor { span, info, name, args } = e.info.clone().typ_nf;
-                Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args }))
+                Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args })))
             }
-            Exp::Hole(e) => e.info.clone().typ,
+            Exp::Hole(e) => Some(e.info.clone().typ),
         }
     }
 }

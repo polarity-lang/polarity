@@ -4,7 +4,7 @@ use codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
 use printer::PrintToString;
-use syntax::tst::{self};
+use syntax::{generic::Variable, tst};
 
 use super::data::*;
 
@@ -190,13 +190,12 @@ impl CollectInfo for tst::Exp {
     }
 }
 
-impl CollectInfo for tst::Variable {
+impl CollectInfo for Variable {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Variable { info, span, .. } = self;
-        if let Some(span) = span {
-            let content = HoverInfoContent::VariableInfo(VariableInfo {
-                typ: info.typ.print_to_string(None),
-            });
+        let Variable { span, inferred_type, .. } = self;
+        if let (Some(span), Some(typ)) = (span, inferred_type) {
+            let content =
+                HoverInfoContent::VariableInfo(VariableInfo { typ: typ.print_to_string(None) });
             collector.add_hover_content(*span, content)
         }
     }

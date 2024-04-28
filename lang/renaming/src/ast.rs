@@ -324,15 +324,7 @@ where
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         match self {
-            Exp::Variable(Variable { span, info, name: _, ctx: _, idx }) => {
-                Exp::Variable(Variable {
-                    span,
-                    info: info.rename_in_ctx(ctx),
-                    name: ctx.lookup(idx),
-                    ctx: None,
-                    idx,
-                })
-            }
+            Exp::Variable(e) => Exp::Variable(e.rename_in_ctx(ctx)),
             Exp::LocalComatch(LocalComatch { span, info, ctx: _, name, is_lambda_sugar, body }) => {
                 Exp::LocalComatch(LocalComatch {
                     span,
@@ -392,6 +384,17 @@ where
     }
 }
 
+impl Rename for Variable {
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+        let Variable { span, idx, inferred_type, .. } = self;
+        Variable {
+            span,
+            idx,
+            name: ctx.lookup(idx),
+            inferred_type: inferred_type.rename_in_ctx(ctx),
+        }
+    }
+}
 impl<P: Phase> Rename for TypCtor<P>
 where
     P::TypeInfo: Rename,
