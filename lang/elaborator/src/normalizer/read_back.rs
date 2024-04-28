@@ -30,9 +30,9 @@ impl ReadBack for val::Val {
             }),
             val::Val::Ctor { span, name, args } => ust::Exp::Call(ust::Call {
                 span: *span,
-                info: (),
                 name: name.clone(),
                 args: ust::Args { args: args.read_back(prg)? },
+                inferred_type: None,
             }),
             val::Val::TypeUniv { span } => ust::Exp::TypeUniv(TypeUniv { span: *span }),
             val::Val::Comatch { span, name, is_lambda_sugar, body } => {
@@ -64,10 +64,10 @@ impl ReadBack for val::Neu {
             }),
             val::Neu::Dtor { span, exp, name, args } => ust::Exp::DotCall(ust::DotCall {
                 span: *span,
-                info: (),
                 exp: exp.read_back(prg)?,
                 name: name.clone(),
                 args: ust::Args { args: args.read_back(prg)? },
+                inferred_type: None,
             }),
             val::Neu::Match { span, name, on_exp, body } => ust::Exp::LocalMatch(ust::LocalMatch {
                 span: *span,

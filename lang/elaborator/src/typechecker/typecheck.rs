@@ -515,9 +515,9 @@ impl<'a> Infer for WithDestructee<'a> {
                         .collect();
                     let ctor = Rc::new(ust::Exp::Call(ust::Call {
                         span: None,
-                        info: (),
                         name: label.clone(),
                         args: ust::Args { args },
+                        inferred_type: None,
                     }));
                     let subst = Assign(Lvl { fst: 1, snd: 0 }, ctor);
                     let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
@@ -580,9 +580,9 @@ fn check_case(
                 .collect();
             let ctor = Rc::new(ust::Exp::Call(ust::Call {
                 span: None,
-                info: (),
                 name: name.clone(),
                 args: ust::Args { args },
+                inferred_type: None,
             }));
             let subst = Assign(Lvl { fst: curr_lvl, snd: 0 }, ctor);
 
@@ -906,7 +906,7 @@ impl Infer for ust::Call {
     type Target = tst::Call;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Call { span, info: (), name, args } = self;
+        let ust::Call { span, name, args, .. } = self;
         let ust::Ctor { name, params, typ, .. } = &prg.decls.ctor_or_codef(name, *span)?;
         let args_out = check_args(args, prg, name, ctx, params, *span)?;
         let typ_out =
@@ -914,9 +914,9 @@ impl Infer for ust::Call {
         let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
         Ok(tst::Call {
             span: *span,
-            info: tst::TypeInfo { typ: typ_nf, ctx: None },
             name: name.clone(),
             args: args_out,
+            inferred_type: Some(typ_nf),
         })
     }
 }
@@ -925,7 +925,7 @@ impl Infer for ust::DotCall {
     type Target = tst::DotCall;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::DotCall { span, info: (), exp, name, args } = self;
+        let ust::DotCall { span, exp, name, args, .. } = self;
         let ust::Dtor { name, params, self_param, ret_typ, .. } =
             &prg.decls.dtor_or_def(name, *span)?;
 
@@ -945,10 +945,10 @@ impl Infer for ust::DotCall {
 
         Ok(tst::DotCall {
             span: *span,
-            info: tst::TypeInfo { typ: typ_out_nf, ctx: None },
             exp: exp_out,
             name: name.clone(),
             args: args_out,
+            inferred_type: Some(typ_out_nf),
         })
     }
 }

@@ -348,11 +348,11 @@ where
                 inferred_ctx: None, // TODO: Rename TypeCtx!
             }),
             Exp::TypeUniv(e) => Exp::TypeUniv(e),
-            Exp::Call(Call { span, info, name, args }) => Exp::Call(Call {
+            Exp::Call(Call { span, name, args, inferred_type }) => Exp::Call(Call {
                 span,
-                info: info.rename_in_ctx(ctx),
                 name,
                 args: args.rename_in_ctx(ctx),
+                inferred_type: inferred_type.rename_in_ctx(ctx),
             }),
             Exp::LocalMatch(LocalMatch {
                 span,
@@ -373,13 +373,15 @@ where
                 ret_typ: ret_typ.rename_in_ctx(ctx),
                 body: body.rename_in_ctx(ctx),
             }),
-            Exp::DotCall(DotCall { span, info, exp, name, args }) => Exp::DotCall(DotCall {
-                span,
-                info: info.rename_in_ctx(ctx),
-                name,
-                exp: exp.rename_in_ctx(ctx),
-                args: args.rename_in_ctx(ctx),
-            }),
+            Exp::DotCall(DotCall { span, exp, name, args, inferred_type }) => {
+                Exp::DotCall(DotCall {
+                    span,
+                    name,
+                    exp: exp.rename_in_ctx(ctx),
+                    args: args.rename_in_ctx(ctx),
+                    inferred_type: inferred_type.rename_in_ctx(ctx),
+                })
+            }
         }
     }
 }

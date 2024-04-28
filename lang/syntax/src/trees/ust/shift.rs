@@ -42,20 +42,25 @@ impl Shift for TypCtor {
 
 impl Shift for Call {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Call { span, info, name, args } = self;
-        Call { span: *span, info: *info, name: name.clone(), args: args.shift_in_range(range, by) }
+        let Call { span, name, args, .. } = self;
+        Call {
+            span: *span,
+            name: name.clone(),
+            args: args.shift_in_range(range, by),
+            inferred_type: None,
+        }
     }
 }
 
 impl Shift for DotCall {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let DotCall { span, info, exp, name, args } = self;
+        let DotCall { span, exp, name, args, .. } = self;
         DotCall {
             span: *span,
-            info: *info,
             exp: exp.shift_in_range(range.clone(), by),
             name: name.clone(),
             args: args.shift_in_range(range, by),
+            inferred_type: None,
         }
     }
 }

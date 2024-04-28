@@ -481,7 +481,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
             mut dtor @ Exp::DotCall(DotCall { .. }) => {
                 // A series of destructors forms an aligned group
                 let mut dtors_group = alloc.nil();
-                while let Exp::DotCall(DotCall { span: _, info: _, exp, name, args }) = &dtor {
+                while let Exp::DotCall(DotCall { exp, name, args, .. }) = &dtor {
                     let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                     if !dtors_group.is_nil() {
                         dtors_group = alloc.line_().append(dtors_group);
@@ -543,7 +543,7 @@ impl<'a, P: Phase> Print<'a> for Call<P> {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let Call { span: _, info: _, name, args } = self;
+        let Call { name, args, .. } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
         alloc.ctor(name).append(psubst)
     }

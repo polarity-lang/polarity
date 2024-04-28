@@ -103,9 +103,9 @@ impl Lower for cst::exp::Call {
                 }),
                 DeclKind::Codef | DeclKind::Ctor => Ok(ust::Exp::Call(ust::Call {
                     span: Some(*span),
-                    info: (),
                     name: name.to_owned(),
                     args: ust::Args { args: args.lower(ctx)? },
+                    inferred_type: None,
                 })),
                 DeclKind::Let => Err(LoweringError::Impossible {
                     message: "Referencing top-level let definitions is not implemented, yet"
@@ -130,10 +130,10 @@ impl Lower for cst::exp::DotCall {
             Elem::Decl(meta) => match meta.kind() {
                 DeclKind::Def | DeclKind::Dtor => Ok(ust::Exp::DotCall(ust::DotCall {
                     span: Some(*span),
-                    info: (),
                     exp: exp.lower(ctx)?,
                     name: name.clone(),
                     args: ust::Args { args: args.lower(ctx)? },
+                    inferred_type: None,
                 })),
                 _ => Err(LoweringError::CannotUseAsDtor {
                     name: name.clone(),
@@ -217,9 +217,9 @@ impl Lower for cst::exp::NatLit {
         let cst::exp::NatLit { span, val } = self;
         let mut out = ust::Exp::Call(ust::Call {
             span: Some(*span),
-            info: (),
             name: "Z".to_owned(),
             args: ust::Args { args: vec![] },
+            inferred_type: None,
         });
 
         let mut i = BigUint::from(0usize);
@@ -228,9 +228,9 @@ impl Lower for cst::exp::NatLit {
             i += 1usize;
             out = ust::Exp::Call(ust::Call {
                 span: Some(*span),
-                info: (),
                 name: "S".to_owned(),
                 args: ust::Args { args: vec![Rc::new(out)] },
+                inferred_type: None,
             });
         }
 

@@ -284,13 +284,8 @@ impl ForgetTST for Call {
     type Target = ust::Call;
 
     fn forget_tst(&self) -> Self::Target {
-        let Call { span, info, name, args } = self;
-        ust::Call {
-            span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            args: args.forget_tst(),
-        }
+        let Call { span, name, args, .. } = self;
+        ust::Call { span: *span, name: name.clone(), args: args.forget_tst(), inferred_type: None }
     }
 }
 
@@ -298,13 +293,13 @@ impl ForgetTST for DotCall {
     type Target = ust::DotCall;
 
     fn forget_tst(&self) -> Self::Target {
-        let DotCall { span, info, exp, name, args } = self;
+        let DotCall { span, exp, name, args, .. } = self;
         ust::DotCall {
             span: *span,
-            info: info.forget_tst(),
             exp: exp.forget_tst(),
             name: name.clone(),
             args: args.forget_tst(),
+            inferred_type: None,
         }
     }
 }

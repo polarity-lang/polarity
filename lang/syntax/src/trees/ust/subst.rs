@@ -22,21 +22,19 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                 }
             }
             Exp::TypCtor(e) => Rc::new(Exp::TypCtor(e.subst(ctx, by))),
-            Exp::Call(Call { span, info, name, args }) => Rc::new(Exp::Call(Call {
+            Exp::Call(Call { span, name, args, .. }) => Rc::new(Exp::Call(Call {
                 span: *span,
-                info: *info,
                 name: name.clone(),
                 args: args.subst(ctx, by),
+                inferred_type: None,
             })),
-            Exp::DotCall(DotCall { span, info, exp, name, args }) => {
-                Rc::new(Exp::DotCall(DotCall {
-                    span: *span,
-                    info: *info,
-                    exp: exp.subst(ctx, by),
-                    name: name.clone(),
-                    args: args.subst(ctx, by),
-                }))
-            }
+            Exp::DotCall(DotCall { span, exp, name, args, .. }) => Rc::new(Exp::DotCall(DotCall {
+                span: *span,
+                exp: exp.subst(ctx, by),
+                name: name.clone(),
+                args: args.subst(ctx, by),
+                inferred_type: None,
+            })),
             Exp::Anno(Anno { span, exp, typ, .. }) => Rc::new(Exp::Anno(Anno {
                 span: *span,
                 exp: exp.subst(ctx, by),

@@ -217,10 +217,9 @@ impl CollectInfo for tst::TypCtor {
 
 impl CollectInfo for tst::Call {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Call { info, span, args, .. } = self;
-        if let Some(span) = span {
-            let content =
-                HoverInfoContent::CallInfo(CallInfo { typ: info.typ.print_to_string(None) });
+        let tst::Call { span, args, inferred_type, .. } = self;
+        if let (Some(span), Some(typ)) = (span, inferred_type) {
+            let content = HoverInfoContent::CallInfo(CallInfo { typ: typ.print_to_string(None) });
             collector.add_hover_content(*span, content)
         }
         args.collect_info(collector)
@@ -229,10 +228,10 @@ impl CollectInfo for tst::Call {
 
 impl CollectInfo for tst::DotCall {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::DotCall { info, span, exp, args, .. } = self;
-        if let Some(span) = span {
+        let tst::DotCall { span, exp, args, inferred_type, .. } = self;
+        if let (Some(span), Some(typ)) = (span, inferred_type) {
             let content =
-                HoverInfoContent::DotCallInfo(DotCallInfo { typ: info.typ.print_to_string(None) });
+                HoverInfoContent::DotCallInfo(DotCallInfo { typ: typ.print_to_string(None) });
             collector.add_hover_content(*span, content)
         }
         exp.collect_info(collector);

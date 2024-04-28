@@ -356,12 +356,12 @@ impl Lift for tst::Call {
     type Target = ust::Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Call { span, info, name, args } = self;
+        let tst::Call { span, name, args, .. } = self;
         ust::Exp::Call(ust::Call {
             span: *span,
-            info: info.forget_tst(),
             name: name.clone(),
             args: args.lift(ctx),
+            inferred_type: None,
         })
     }
 }
@@ -370,13 +370,13 @@ impl Lift for tst::DotCall {
     type Target = ust::Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::DotCall { span, info, exp, name, args } = self;
+        let tst::DotCall { span, exp, name, args, .. } = self;
         ust::Exp::DotCall(ust::DotCall {
             span: *span,
-            info: info.forget_tst(),
             exp: exp.lift(ctx),
             name: name.clone(),
             args: args.lift(ctx),
+            inferred_type: None,
         })
     }
 }
@@ -612,7 +612,13 @@ impl Ctx {
         self.new_decls.push(ust::Decl::Def(def));
 
         // Replace the match by a destructor call of the new top-level definition
-        ust::Exp::DotCall(ust::DotCall { span: None, info: (), exp: on_exp.lift(self), name, args })
+        ust::Exp::DotCall(ust::DotCall {
+            span: None,
+            exp: on_exp.lift(self),
+            name,
+            args,
+            inferred_type: None,
+        })
     }
 
     fn lift_comatch(
@@ -666,7 +672,7 @@ impl Ctx {
         self.new_decls.push(ust::Decl::Codef(codef));
 
         // Replace the comatch by a call of the new top-level definition
-        ust::Exp::Call(ust::Call { span: None, info: (), name, args })
+        ust::Exp::Call(ust::Call { span: None, name, args, inferred_type: None })
     }
 
     /// Set the current declaration

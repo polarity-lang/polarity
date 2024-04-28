@@ -77,8 +77,8 @@ impl HasTypeInfo for Exp {
         match self {
             Exp::Variable(e) => e.inferred_type.clone(),
             Exp::TypCtor(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
-            Exp::Call(e) => Some(e.info.clone().typ),
-            Exp::DotCall(e) => Some(e.info.clone().typ),
+            Exp::Call(e) => e.inferred_type.clone(),
+            Exp::DotCall(e) => e.inferred_type.clone(),
             Exp::Anno(e) => e.normalized_type.clone(),
             Exp::TypeUniv(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
             Exp::LocalMatch(e) => {

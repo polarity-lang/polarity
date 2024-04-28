@@ -126,12 +126,18 @@ impl HasSpan for Variable {
 //
 //
 
+/// A type constructor applied to arguments. The type of `TypCtor`
+/// is always the type universe `Type`.
+/// Examples: `Nat`, `List(Nat)`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct TypCtor<P: Phase> {
+    /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
+    /// Name of the type constructor
     pub name: Ident,
+    /// Arguments to the type constructor
     pub args: Args<P>,
 }
 
@@ -156,15 +162,24 @@ impl<P: Phase> HasSpan for TypCtor<P> {
 //
 //
 
+/// A Call is either a constructor, a codefinition or a toplevel let-bound definition.
+/// Examples: `Zero`, `Cons(True, Nil)`, `minimum(x,y)`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Call<P: Phase> {
+    /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    /// The name of the call.
+    /// The `f` in `f(e1...en)`
     pub name: Ident,
+    /// The arguments to the call.
+    /// The `(e1...en)` in `f(e1...en)`
     pub args: Args<P>,
+    /// The inferred result type of the call.
+    /// This type is annotated during elaboration.
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub inferred_type: Option<Rc<Exp<UST>>>,
 }
 
 impl<P: Phase> HasSpan for Call<P> {
@@ -177,16 +192,27 @@ impl<P: Phase> HasSpan for Call<P> {
 //
 //
 
+/// A DotCall is either a destructor or a definition, applied to a destructee
+/// Examples: `e.head` `xs.append(ys)`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct DotCall<P: Phase> {
+    /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    /// The expression to which the dotcall is applied.
+    /// The `e` in `e.f(e1...en)`
     pub exp: Rc<Exp<P>>,
+    /// The name of the dotcall.
+    /// The `f` in `e.f(e1...en)`
     pub name: Ident,
+    /// The arguments of the dotcall.
+    /// The `(e1...en)` in `e.f(e1...en)`
     pub args: Args<P>,
+    /// The inferred result type of the dotcall.
+    /// This type is annotated during elaboration.
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub inferred_type: Option<Rc<Exp<UST>>>,
 }
 
 impl<P: Phase> HasSpan for DotCall<P> {

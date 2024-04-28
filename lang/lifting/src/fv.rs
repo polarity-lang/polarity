@@ -43,8 +43,8 @@ impl FV for ust::Exp {
                 is_lambda_sugar: _,
                 body,
             }) => body.visit_fv(v),
-            ust::Exp::Call(ust::Call { span: _, info: _, name: _, args }) => args.visit_fv(v),
-            ust::Exp::DotCall(ust::DotCall { span: _, info: _, exp, name: _, args }) => {
+            ust::Exp::Call(ust::Call { args, .. }) => args.visit_fv(v),
+            ust::Exp::DotCall(ust::DotCall { exp, args, .. }) => {
                 exp.visit_fv(v);
                 args.visit_fv(v);
             }

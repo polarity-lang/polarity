@@ -61,7 +61,7 @@ impl Eval for ust::Call {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Call { span, info: (), name, args } = self;
+        let ust::Call { span, name, args, .. } = self;
         Ok(Rc::new(Val::Ctor { span: *span, name: name.clone(), args: args.eval(prg, env)? }))
     }
 }
@@ -70,7 +70,7 @@ impl Eval for ust::DotCall {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::DotCall { span, info: (), exp, name, args } = self;
+        let ust::DotCall { span, exp, name, args, .. } = self;
         let exp = exp.eval(prg, env)?;
         let args = args.eval(prg, env)?;
         match (*exp).clone() {
