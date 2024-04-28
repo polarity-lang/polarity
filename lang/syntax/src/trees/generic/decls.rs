@@ -132,7 +132,7 @@ pub struct Ctor<P: Phase> {
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope<P>,
-    pub typ: TypApp<P>,
+    pub typ: TypCtor<P>,
 }
 
 #[derive(Debug, Clone)]
@@ -177,7 +177,7 @@ pub struct Codef<P: Phase> {
     pub name: Ident,
     pub attr: Attribute,
     pub params: Telescope<P>,
-    pub typ: TypApp<P>,
+    pub typ: TypCtor<P>,
     pub body: Match<P>,
 }
 
@@ -215,7 +215,7 @@ impl<P: Phase> Let<P> {
 pub struct SelfParam<P: Phase> {
     pub info: Option<Span>,
     pub name: Option<Ident>,
-    pub typ: TypApp<P>,
+    pub typ: TypCtor<P>,
 }
 
 impl<P: Phase> SelfParam<P> {
@@ -232,30 +232,6 @@ impl<P: Phase> SelfParam<P> {
     /// If the self parameter is simple, we can omit it during prettyprinting.
     pub fn is_simple(&self) -> bool {
         self.typ.is_simple() && self.name.is_none()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct TypApp<P: Phase> {
-    pub span: Option<Span>,
-    pub info: P::TypeInfo,
-    pub name: Ident,
-    pub args: Args<P>,
-}
-
-impl<P: Phase> TypApp<P> {
-    pub fn to_exp(&self) -> Exp<P> {
-        Exp::TypCtor(TypCtor {
-            span: self.span,
-            info: self.info.clone(),
-            name: self.name.clone(),
-            args: self.args.clone(),
-        })
-    }
-
-    /// A type application is simple if the list of arguments is empty.
-    pub fn is_simple(&self) -> bool {
-        self.args.is_empty()
     }
 }
 
@@ -296,80 +272,4 @@ impl<P: Phase> Named for ParamInst<P> {
     fn name(&self) -> &Ident {
         &self.name
     }
-}
-
-impl<P: Phase> HasPhase for Prg<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Decls<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Decl<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Let<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Data<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Codata<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for TypAbs<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Ctor<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Dtor<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Def<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Codef<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Match<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Case<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for TypApp<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Exp<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Telescope<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Args<P> {
-    type Phase = P;
-}
-
-impl<P: Phase> HasPhase for Param<P> {
-    type Phase = P;
-}
-
-impl<T: HasPhase> HasPhase for Rc<T> {
-    type Phase = T::Phase;
 }

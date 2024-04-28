@@ -7,24 +7,19 @@ use crate::ust::*;
 impl Substitutable<Rc<Exp>> for Rc<Exp> {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         match &**self {
-            Exp::Variable(Variable { span, info, name, ctx: (), idx }) => {
+            Exp::Variable(Variable { span, info, name, ctx: _, idx }) => {
                 match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
                     Some(exp) => exp,
                     None => Rc::new(Exp::Variable(Variable {
                         span: *span,
                         info: *info,
                         name: name.clone(),
-                        ctx: (),
+                        ctx: None,
                         idx: *idx,
                     })),
                 }
             }
-            Exp::TypCtor(TypCtor { span, info, name, args }) => Rc::new(Exp::TypCtor(TypCtor {
-                span: *span,
-                info: *info,
-                name: name.clone(),
-                args: args.subst(ctx, by),
-            })),
+            Exp::TypCtor(e) => Rc::new(Exp::TypCtor(e.subst(ctx, by))),
             Exp::Call(Call { span, info, name, args }) => Rc::new(Exp::Call(Call {
                 span: *span,
                 info: *info,
@@ -50,7 +45,7 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
             Exp::LocalMatch(LocalMatch {
                 span,
                 info,
-                ctx: (),
+                ctx: _,
                 name,
                 on_exp,
                 motive,
@@ -59,30 +54,32 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
             }) => Rc::new(Exp::LocalMatch(LocalMatch {
                 span: *span,
                 info: *info,
-                ctx: (),
+                ctx: None,
                 name: name.clone(),
                 on_exp: on_exp.subst(ctx, by),
                 motive: motive.subst(ctx, by),
                 ret_typ: ret_typ.subst(ctx, by),
                 body: body.subst(ctx, by),
             })),
-            Exp::LocalComatch(LocalComatch {
-                span,
-                info,
-                ctx: (),
-                name,
-                is_lambda_sugar,
-                body,
-            }) => Rc::new(Exp::LocalComatch(LocalComatch {
-                span: *span,
-                info: *info,
-                ctx: (),
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.subst(ctx, by),
-            })),
+            Exp::LocalComatch(LocalComatch { span, info, ctx: _, name, is_lambda_sugar, body }) => {
+                Rc::new(Exp::LocalComatch(LocalComatch {
+                    span: *span,
+                    info: *info,
+                    ctx: None,
+                    name: name.clone(),
+                    is_lambda_sugar: *is_lambda_sugar,
+                    body: body.subst(ctx, by),
+                }))
+            }
             Exp::Hole(Hole { span, info }) => Rc::new(Exp::Hole(Hole { span: *span, info: *info })),
         }
+    }
+}
+
+impl Substitutable<Rc<Exp>> for TypCtor {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        let TypCtor { span, info, name, args } = self;
+        TypCtor { span: *span, info: *info, name: name.clone(), args: args.subst(ctx, by) }
     }
 }
 
@@ -118,13 +115,6 @@ impl Substitutable<Rc<Exp>> for Case {
             params: params.clone(),
             body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
         })
-    }
-}
-
-impl Substitutable<Rc<Exp>> for TypApp {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let TypApp { span, info, name, args } = self;
-        TypApp { span: *span, info: *info, name: name.clone(), args: args.subst(ctx, by) }
     }
 }
 
@@ -177,7 +167,7 @@ impl Substitution<Rc<Exp>> for SwapSubst {
                 span: None,
                 info: Default::default(),
                 name: "".to_owned(),
-                ctx: (),
+                ctx: None,
                 idx: new_ctx.lvl_to_idx(new_lvl),
             }))
         })

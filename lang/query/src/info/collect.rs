@@ -282,7 +282,7 @@ impl CollectInfo for tst::LocalMatch {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let tst::LocalMatch { on_exp, ret_typ, body, .. } = self;
         on_exp.collect_info(collector);
-        ret_typ.as_exp().collect_info(collector);
+        ret_typ.collect_info(collector);
         body.collect_info(collector)
     }
 }

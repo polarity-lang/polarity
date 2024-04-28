@@ -122,7 +122,7 @@ impl Lower for cst::decls::Ctor {
                 Some(typ) => typ.lower(ctx)?,
                 None => {
                     if type_arity == 0 {
-                        ust::TypApp {
+                        ust::TypCtor {
                             span: None,
                             info: (),
                             name: typ_name.clone(),
@@ -286,12 +286,12 @@ impl Lower for cst::decls::Let {
 }
 
 impl Lower for cst::decls::TypApp {
-    type Target = ust::TypApp;
+    type Target = ust::TypCtor;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::decls::TypApp { span, name, args } = self;
 
-        Ok(ust::TypApp {
+        Ok(ust::TypCtor {
             span: Some(*span),
             info: (),
             name: name.clone(),

@@ -56,7 +56,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ust::TelescopeInst) -> Result<T, 
             let mut params_out = params_out?;
             let span = bs_to_span(param);
             let name = bs_to_name(param);
-            let param_out = ust::ParamInst { span: Some(span), info: (), name, typ: () };
+            let param_out = ust::ParamInst { span: Some(span), info: (), name, typ: None };
             params_out.push(param_out);
             Ok(params_out)
         },
@@ -86,7 +86,7 @@ impl Lower for cst::exp::Call {
                 span: Some(*span),
                 info: (),
                 name: name.clone(),
-                ctx: (),
+                ctx: None,
                 idx: ctx.level_to_index(lvl),
             })),
             Elem::Decl(meta) => match meta.kind() {
@@ -174,11 +174,11 @@ impl Lower for cst::exp::LocalMatch {
         Ok(ust::Exp::LocalMatch(ust::LocalMatch {
             span: Some(*span),
             info: (),
-            ctx: (),
+            ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
             on_exp: on_exp.lower(ctx)?,
             motive: motive.lower(ctx)?,
-            ret_typ: (),
+            ret_typ: None,
             body: body.lower(ctx)?,
         }))
     }
@@ -192,7 +192,7 @@ impl Lower for cst::exp::LocalComatch {
         Ok(ust::Exp::LocalComatch(ust::LocalComatch {
             span: Some(*span),
             info: (),
-            ctx: (),
+            ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
             is_lambda_sugar: *is_lambda_sugar,
             body: body.lower(ctx)?,
@@ -304,7 +304,7 @@ impl Lower for cst::exp::Motive {
                 span: Some(bs_to_span(param)),
                 info: (),
                 name: bs_to_name(param),
-                typ: (),
+                typ: None,
             },
             ret_typ: ctx.bind_single(param, |ctx| ret_typ.lower(ctx))?,
         })

@@ -6,6 +6,7 @@ use codespan::Span;
 use derivative::Derivative;
 
 use crate::common::*;
+use crate::ctx::values::TypeCtx;
 
 pub trait Phase
 where
@@ -16,10 +17,6 @@ where
     /// Type of the `info` field, containing (depending on the phase) type information
     /// where the type is required to be the full application of a type constructor
     type TypeAppInfo: Clone + Into<Self::TypeInfo> + fmt::Debug;
-    /// A type which is not annotated in the source, but will be filled in later during typechecking
-    type InfTyp: Clone + fmt::Debug;
-    /// Context annotated during typechecking
-    type Ctx: Clone + fmt::Debug;
 }
 
 #[derive(Debug, Clone, Derivative)]
@@ -39,10 +36,6 @@ impl fmt::Display for Label {
             Some(user_name) => user_name.fmt(f),
         }
     }
-}
-
-pub trait HasPhase {
-    type Phase;
 }
 
 pub trait Named {
@@ -110,7 +103,7 @@ pub struct Variable<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub ctx: P::Ctx,
+    pub ctx: Option<TypeCtx>,
     pub idx: Idx,
 }
 
@@ -133,6 +126,17 @@ pub struct TypCtor<P: Phase> {
     pub info: P::TypeInfo,
     pub name: Ident,
     pub args: Args<P>,
+}
+
+impl<P: Phase> TypCtor<P> {
+    pub fn to_exp(&self) -> Exp<P> {
+        Exp::TypCtor(self.clone())
+    }
+
+    /// A type application is simple if the list of arguments is empty.
+    pub fn is_simple(&self) -> bool {
+        self.args.is_empty()
+    }
 }
 
 impl<P: Phase> HasSpan for TypCtor<P> {
@@ -236,12 +240,12 @@ pub struct LocalMatch<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeAppInfo,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub ctx: P::Ctx,
+    pub ctx: Option<TypeCtx>,
     pub name: Label,
     pub on_exp: Rc<Exp<P>>,
     pub motive: Option<Motive<P>>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub ret_typ: P::InfTyp,
+    pub ret_typ: Option<Rc<Exp<P>>>,
     pub body: Match<P>,
 }
 
@@ -263,7 +267,7 @@ pub struct LocalComatch<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeAppInfo,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub ctx: P::Ctx,
+    pub ctx: Option<TypeCtx>,
     pub name: Label,
     pub is_lambda_sugar: bool,
     pub body: Match<P>,
@@ -345,7 +349,7 @@ pub struct ParamInst<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub typ: P::InfTyp,
+    pub typ: Option<Rc<Exp<P>>>,
 }
 
 /// A list of arguments

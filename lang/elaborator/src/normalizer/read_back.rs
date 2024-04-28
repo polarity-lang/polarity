@@ -39,7 +39,7 @@ impl ReadBack for val::Val {
                 ust::Exp::LocalComatch(ust::LocalComatch {
                     span: *span,
                     info: (),
-                    ctx: (),
+                    ctx: None,
                     name: name.clone(),
                     is_lambda_sugar: *is_lambda_sugar,
                     body: body.read_back(prg)?,
@@ -59,7 +59,7 @@ impl ReadBack for val::Neu {
             val::Neu::Var { span, name, idx } => ust::Exp::Variable(ust::Variable {
                 span: *span,
                 info: (),
-                ctx: (),
+                ctx: None,
                 name: name.clone(),
                 idx: *idx,
             }),
@@ -73,9 +73,9 @@ impl ReadBack for val::Neu {
             val::Neu::Match { span, name, on_exp, body } => ust::Exp::LocalMatch(ust::LocalMatch {
                 span: *span,
                 info: (),
-                ctx: (),
+                ctx: None,
                 motive: None,
-                ret_typ: (),
+                ret_typ: None,
                 name: name.clone(),
                 on_exp: on_exp.read_back(prg)?,
                 body: body.read_back(prg)?,
@@ -111,12 +111,12 @@ impl ReadBack for val::Case {
 }
 
 impl ReadBack for val::TypApp {
-    type Nf = ust::TypApp;
+    type Nf = ust::TypCtor;
 
     fn read_back(&self, prg: &ust::Prg) -> Result<Self::Nf, TypeError> {
         let val::TypApp { span, name, args } = self;
 
-        Ok(ust::TypApp {
+        Ok(ust::TypCtor {
             span: *span,
             info: (),
             name: name.clone(),

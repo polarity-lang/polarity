@@ -143,7 +143,7 @@ impl Eval for ust::LocalComatch {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::LocalComatch { span, info: (), ctx: (), name, is_lambda_sugar, body } = self;
+        let ust::LocalComatch { span, info: (), ctx: _, name, is_lambda_sugar, body } = self;
         Ok(Rc::new(Val::Comatch {
             span: *span,
             name: name.clone(),
@@ -211,16 +211,6 @@ impl Eval for ust::Case {
         });
 
         Ok(val::Case { span: *span, name: name.clone(), params: params.clone(), body })
-    }
-}
-
-impl Eval for ust::TypApp {
-    type Val = val::TypApp;
-
-    fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::TypApp { span, info: (), name, args } = self;
-
-        Ok(val::TypApp { span: *span, name: name.clone(), args: args.eval(prg, env)? })
     }
 }
 
