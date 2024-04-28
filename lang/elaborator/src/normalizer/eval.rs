@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use syntax::ctx::{BindContext, Context};
-use syntax::generic::{TypeUniv, Variable};
+use syntax::generic::{Hole, TypeUniv, Variable};
 use syntax::ust;
 use tracer::trace;
 
@@ -154,11 +154,11 @@ impl Eval for ust::LocalComatch {
     }
 }
 
-impl Eval for ust::Hole {
+impl Eval for Hole {
     type Val = Rc<Val>;
 
     fn eval(&self, _prg: &ust::Prg, _env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Hole { span, info: () } = self;
+        let Hole { span, .. } = self;
         Ok(Rc::new(Val::Neu { exp: Neu::Hole { span: *span } }))
     }
 }

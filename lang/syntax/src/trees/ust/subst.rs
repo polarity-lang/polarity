@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::*;
+use crate::generic::Hole;
 use crate::generic::TypeUniv;
 use crate::generic::Variable;
 use crate::ust::*;
@@ -72,7 +73,9 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                     body: body.subst(ctx, by),
                 }))
             }
-            Exp::Hole(Hole { span, info }) => Rc::new(Exp::Hole(Hole { span: *span, info: *info })),
+            Exp::Hole(Hole { span, .. }) => {
+                Rc::new(Exp::Hole(Hole { span: *span, inferred_type: None, inferred_ctx: None }))
+            }
         }
     }
 }

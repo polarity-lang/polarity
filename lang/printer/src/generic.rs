@@ -572,14 +572,13 @@ impl<'a> Print<'a> for TypeUniv {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Hole<P> {
+impl<'a> Print<'a> for Hole {
     fn print_prec(
         &'a self,
         _cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let Hole { span: _, info: _ } = self;
         alloc.keyword(HOLE)
     }
 }

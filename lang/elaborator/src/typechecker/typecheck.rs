@@ -11,7 +11,7 @@ use miette_util::ToMiette;
 use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
-use syntax::generic::{Named, TypeUniv, Variable};
+use syntax::generic::{Hole, Named, TypeUniv, Variable};
 use syntax::tst::forget::ForgetTST;
 use syntax::tst::{self, HasTypeInfo};
 use syntax::ust::util::Instantiate;
@@ -842,8 +842,8 @@ impl Check for ust::LocalComatch {
     }
 }
 
-impl Check for ust::Hole {
-    type Target = tst::Hole;
+impl Check for Hole {
+    type Target = Hole;
 
     fn check(
         &self,
@@ -851,10 +851,11 @@ impl Check for ust::Hole {
         ctx: &mut Ctx,
         t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
-        let ust::Hole { span, info: () } = self;
-        Ok(tst::Hole {
+        let Hole { span, .. } = self;
+        Ok(Hole {
             span: *span,
-            info: tst::TypeInfo { typ: t.clone(), ctx: Some(ctx.vars.clone()) },
+            inferred_type: Some(t.clone()),
+            inferred_ctx: Some(ctx.vars.clone()),
         })
     }
 }
@@ -982,12 +983,12 @@ impl Infer for TypeUniv {
     }
 }
 
-impl Infer for ust::Hole {
-    type Target = tst::Hole;
+impl Infer for Hole {
+    type Target = Hole;
 
     fn infer(&self, _prg: &ust::Prg, _ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Hole { span, info: () } = self;
-        Ok(tst::Hole { span: *span, info: tst::TypeInfo { typ: type_hole(), ctx: None } })
+        let Hole { span, .. } = self;
+        Ok(Hole { span: *span, inferred_type: Some(type_hole()), inferred_ctx: None })
     }
 }
 
@@ -1226,7 +1227,7 @@ fn type_univ() -> Rc<ust::Exp> {
 }
 
 fn type_hole() -> Rc<ust::Exp> {
-    Rc::new(ust::Exp::Hole(ust::Hole { span: None, info: () }))
+    Rc::new(ust::Exp::Hole(Hole { span: None, inferred_type: None, inferred_ctx: None }))
 }
 
 // Checks whether the codata type contains destructors with a self parameter

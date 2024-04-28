@@ -342,9 +342,11 @@ where
                 typ: typ.rename_in_ctx(ctx),
             }),
             Exp::TypCtor(e) => Exp::TypCtor(e.rename_in_ctx(ctx)),
-            Exp::Hole(Hole { span, info }) => {
-                Exp::Hole(Hole { span, info: info.rename_in_ctx(ctx) })
-            }
+            Exp::Hole(Hole { span, inferred_type, inferred_ctx: _ }) => Exp::Hole(Hole {
+                span,
+                inferred_type: inferred_type.rename_in_ctx(ctx),
+                inferred_ctx: None, // TODO: Rename TypeCtx!
+            }),
             Exp::TypeUniv(e) => Exp::TypeUniv(e),
             Exp::Call(Call { span, info, name, args }) => Exp::Call(Call {
                 span,

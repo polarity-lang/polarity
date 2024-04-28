@@ -6,6 +6,7 @@ use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;
+use syntax::generic::Hole;
 use syntax::generic::Named;
 use syntax::generic::TypeUniv;
 use syntax::generic::Variable;
@@ -408,12 +409,12 @@ impl Lift for TypeUniv {
     }
 }
 
-impl Lift for tst::Hole {
+impl Lift for Hole {
     type Target = ust::Exp;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let tst::Hole { span, info } = self;
-        ust::Exp::Hole(ust::Hole { span: *span, info: info.forget_tst() })
+        let Hole { span, .. } = self;
+        ust::Exp::Hole(Hole { span: *span, inferred_type: None, inferred_ctx: None })
     }
 }
 

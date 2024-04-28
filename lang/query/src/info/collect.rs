@@ -5,7 +5,7 @@ use rust_lapper::{Interval, Lapper};
 
 use printer::PrintToString;
 use syntax::{
-    generic::{TypeUniv, Variable},
+    generic::{Hole, TypeUniv, Variable},
     tst,
 };
 
@@ -242,13 +242,13 @@ impl CollectInfo for tst::DotCall {
     }
 }
 
-impl CollectInfo for tst::Hole {
+impl CollectInfo for Hole {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Hole { info, span } = self;
+        let Hole { span, inferred_type, inferred_ctx } = self;
         if let Some(span) = span {
             let content = HoverInfoContent::HoleInfo(HoleInfo {
-                goal: info.typ.print_to_string(None),
-                ctx: info.ctx.clone().map(Into::into),
+                goal: inferred_type.print_to_string(None),
+                ctx: inferred_ctx.clone().map(Into::into),
             });
             collector.add_hover_content(*span, content)
         }

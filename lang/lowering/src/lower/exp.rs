@@ -9,6 +9,7 @@ use parser::cst::exp::BindingSite;
 use parser::cst::exp::Ident;
 use syntax::ctx::BindContext;
 use syntax::generic::lookup_table::DeclKind;
+use syntax::generic::Hole;
 use syntax::generic::TypeUniv;
 use syntax::generic::Variable;
 use syntax::ust;
@@ -206,7 +207,7 @@ impl Lower for cst::exp::Hole {
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Hole { span } = self;
-        Ok(ust::Exp::Hole(ust::Hole { span: Some(*span), info: () }))
+        Ok(ust::Exp::Hole(Hole { span: Some(*span), inferred_type: None, inferred_ctx: None }))
     }
 }
 

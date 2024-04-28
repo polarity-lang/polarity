@@ -1,6 +1,6 @@
 use crate::{
     common::*,
-    generic::{TypeUniv, Variable},
+    generic::{Hole, TypeUniv, Variable},
 };
 
 use super::def::*;
@@ -115,8 +115,8 @@ impl Shift for LocalComatch {
 
 impl Shift for Hole {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
-        let Hole { span, info } = self;
-        Hole { span: *span, info: *info }
+        let Hole { span, .. } = self;
+        Hole { span: *span, inferred_type: None, inferred_ctx: None }
     }
 }
 

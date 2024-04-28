@@ -49,7 +49,6 @@ pub type DotCall = generic::DotCall<TST>;
 pub type Anno = generic::Anno<TST>;
 pub type LocalMatch = generic::LocalMatch<TST>;
 pub type LocalComatch = generic::LocalComatch<TST>;
-pub type Hole = generic::Hole<TST>;
 
 #[derive(Debug, Clone)]
 pub struct TypeInfo {
@@ -97,7 +96,7 @@ impl HasTypeInfo for Exp {
                 let ust::TypCtor { span, info, name, args } = e.info.clone().typ_nf;
                 Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args })))
             }
-            Exp::Hole(e) => Some(e.info.clone().typ),
+            Exp::Hole(e) => e.inferred_type.clone(),
         }
     }
 }

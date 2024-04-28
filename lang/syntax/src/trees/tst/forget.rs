@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use super::def::*;
 use crate::{
-    generic::{TypeUniv, Variable},
+    generic::{Hole, TypeUniv, Variable},
     ust,
 };
 
@@ -373,11 +373,11 @@ impl ForgetTST for LocalComatch {
 }
 
 impl ForgetTST for Hole {
-    type Target = ust::Hole;
+    type Target = Hole;
 
     fn forget_tst(&self) -> Self::Target {
-        let Hole { span, info } = self;
-        ust::Hole { span: *span, info: info.forget_tst() }
+        let Hole { span, .. } = self;
+        Hole { span: *span, inferred_type: None, inferred_ctx: None }
     }
 }
 

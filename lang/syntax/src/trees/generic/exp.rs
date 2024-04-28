@@ -71,7 +71,7 @@ pub enum Exp<P: Phase> {
     TypeUniv(TypeUniv),
     LocalMatch(LocalMatch<P>),
     LocalComatch(LocalComatch<P>),
-    Hole(Hole<P>),
+    Hole(Hole),
 }
 
 impl<P: Phase> HasSpan for Exp<P> {
@@ -298,13 +298,19 @@ impl<P: Phase> HasSpan for LocalComatch<P> {
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Hole<P: Phase> {
+pub struct Hole {
+    /// Source code location
     pub span: Option<Span>,
+    /// The inferred type of the hole annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    pub inferred_type: Option<Rc<Exp<UST>>>,
+    /// The type context in which the hole occurs.
+    /// This context is annotated during elaboration.
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub inferred_ctx: Option<TypeCtx>,
 }
 
-impl<P: Phase> HasSpan for Hole<P> {
+impl HasSpan for Hole {
     fn span(&self) -> Option<Span> {
         self.span
     }

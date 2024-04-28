@@ -41,4 +41,3 @@ pub type DotCall = generic::DotCall<UST>;
 pub type Anno = generic::Anno<UST>;
 pub type LocalMatch = generic::LocalMatch<UST>;
 pub type LocalComatch = generic::LocalComatch<UST>;
-pub type Hole = generic::Hole<UST>;

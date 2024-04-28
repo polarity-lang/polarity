@@ -3,7 +3,7 @@ use std::rc::Rc;
 use super::val;
 use syntax::common::*;
 use syntax::ctx::BindContext;
-use syntax::generic::{TypeUniv, Variable};
+use syntax::generic::{Hole, TypeUniv, Variable};
 use syntax::ust;
 use tracer::trace;
 
@@ -80,7 +80,9 @@ impl ReadBack for val::Neu {
                 on_exp: on_exp.read_back(prg)?,
                 body: body.read_back(prg)?,
             }),
-            val::Neu::Hole { span } => ust::Exp::Hole(ust::Hole { span: *span, info: () }),
+            val::Neu::Hole { span } => {
+                ust::Exp::Hole(Hole { span: *span, inferred_type: None, inferred_ctx: None })
+            }
         };
         Ok(res)
     }

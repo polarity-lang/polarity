@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::*;
+use crate::generic::Hole;
 use crate::generic::TypeUniv;
 use crate::generic::Variable;
 
