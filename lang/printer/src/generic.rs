@@ -231,7 +231,11 @@ where
             .append(alloc.space())
             .append(alloc.ctor(name))
             .append(params.print(cfg, alloc))
-            .append(print_return_type(cfg, alloc, typ))
+            .append(print_return_type(
+                &PrintCfg { print_function_sugar: false, ..*cfg },
+                alloc,
+                typ,
+            ))
             .group();
 
         let body = body.print(cfg, alloc);
@@ -296,7 +300,7 @@ where
         let head = if self_param.is_simple() {
             alloc.nil()
         } else {
-            self_param.print(cfg, alloc).append(DOT)
+            self_param.print(&PrintCfg { print_function_sugar: false, ..*cfg }, alloc).append(DOT)
         };
         let head = head
             .append(alloc.dtor(name))
@@ -471,18 +475,9 @@ impl<'a, P: Phase> Print<'a> for SelfParam<P> {
 impl<'a, P: Phase> Print<'a> for Exp<P> {
     fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
         match self {
-            Exp::Variable(Variable { span: _, info: _, name, ctx: _, idx }) => {
-                if cfg.de_bruijn {
-                    alloc.text(format!("{name}@{idx}"))
-                } else {
-                    alloc.text(name)
-                }
-            }
+            Exp::Variable(e) => e.print_prec(cfg, alloc, prec),
             Exp::TypCtor(e) => e.print_prec(cfg, alloc, prec),
-            Exp::Call(Call { span: _, info: _, name, args }) => {
-                let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-                alloc.ctor(name).append(psubst)
-            }
+            Exp::Call(e) => e.print_prec(cfg, alloc, prec),
             mut dtor @ Exp::DotCall(DotCall { .. }) => {
                 // A series of destructors forms an aligned group
                 let mut dtors_group = alloc.nil();
@@ -497,52 +492,27 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 }
                 dtor.print(cfg, alloc).append(dtors_group.align().group())
             }
-            Exp::Anno(syntax::generic::Anno { span: _, info: _, exp, typ }) => {
-                exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
-            }
-            Exp::Type(Type { span: _, info: _ }) => alloc.keyword(TYPE),
-            Exp::LocalMatch(LocalMatch {
-                span: _,
-                info: _,
-                ctx: _,
-                name,
-                on_exp,
-                motive,
-                ret_typ: _,
-                body,
-            }) => on_exp
-                .print(cfg, alloc)
-                .append(DOT)
-                .append(alloc.keyword(MATCH))
-                .append(match &name.user_name {
-                    Some(name) => alloc.space().append(alloc.dtor(name)),
-                    None => alloc.nil(),
-                })
-                .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
-                .append(alloc.space())
-                .append(body.print(cfg, alloc)),
-            Exp::LocalComatch(LocalComatch {
-                span: _,
-                info: _,
-                ctx: _,
-                name,
-                is_lambda_sugar,
-                body,
-            }) => {
-                if *is_lambda_sugar && cfg.print_lambda_sugar {
-                    print_lambda_sugar(body, cfg, alloc)
-                } else {
-                    alloc
-                        .keyword(COMATCH)
-                        .append(match &name.user_name {
-                            Some(name) => alloc.space().append(alloc.ctor(name)),
-                            None => alloc.nil(),
-                        })
-                        .append(alloc.space())
-                        .append(body.print(cfg, alloc))
-                }
-            }
-            Exp::Hole { .. } => alloc.keyword(HOLE),
+            Exp::Anno(e) => e.print_prec(cfg, alloc, prec),
+            Exp::Type(e) => e.print_prec(cfg, alloc, prec),
+            Exp::LocalMatch(e) => e.print_prec(cfg, alloc, prec),
+            Exp::LocalComatch(e) => e.print_prec(cfg, alloc, prec),
+            Exp::Hole(e) => e.print_prec(cfg, alloc, prec),
+        }
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for Variable<P> {
+    fn print_prec(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let Variable { span: _, info: _, name, ctx: _, idx } = self;
+        if cfg.de_bruijn {
+            alloc.text(format!("{name}@{idx}"))
+        } else {
+            alloc.text(name)
         }
     }
 }
@@ -562,6 +532,100 @@ impl<'a, P: Phase> Print<'a> for TypCtor<P> {
         } else {
             let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
             alloc.typ(name).append(psubst)
+        }
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for Call<P> {
+    fn print_prec(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let Call { span: _, info: _, name, args } = self;
+        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
+        alloc.ctor(name).append(psubst)
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for syntax::generic::Anno<P> {
+    fn print_prec(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let syntax::generic::Anno { span: _, info: _, exp, typ } = self;
+        exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for Type<P> {
+    fn print_prec(
+        &'a self,
+        _cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let Type { span: _, info: _ } = self;
+        alloc.keyword(TYPE)
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for Hole<P> {
+    fn print_prec(
+        &'a self,
+        _cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let Hole { span: _, info: _ } = self;
+        alloc.keyword(HOLE)
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for LocalMatch<P> {
+    fn print_prec(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let LocalMatch { span: _, info: _, ctx: _, name, on_exp, motive, ret_typ: _, body } = self;
+        on_exp
+            .print(cfg, alloc)
+            .append(DOT)
+            .append(alloc.keyword(MATCH))
+            .append(match &name.user_name {
+                Some(name) => alloc.space().append(alloc.dtor(name)),
+                None => alloc.nil(),
+            })
+            .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
+            .append(alloc.space())
+            .append(body.print(cfg, alloc))
+    }
+}
+
+impl<'a, P: Phase> Print<'a> for LocalComatch<P> {
+    fn print_prec(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let LocalComatch { span: _, info: _, ctx: _, name, is_lambda_sugar, body } = self;
+        if *is_lambda_sugar && cfg.print_lambda_sugar {
+            print_lambda_sugar(body, cfg, alloc)
+        } else {
+            alloc
+                .keyword(COMATCH)
+                .append(match &name.user_name {
+                    Some(name) => alloc.space().append(alloc.ctor(name)),
+                    None => alloc.nil(),
+                })
+                .append(alloc.space())
+                .append(body.print(cfg, alloc))
         }
     }
 }
