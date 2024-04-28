@@ -206,11 +206,9 @@ impl CollectInfo for Variable {
 
 impl CollectInfo for tst::TypCtor {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::TypCtor { info, span, args, .. } = self;
+        let tst::TypCtor { span, args, .. } = self;
         if let Some(span) = span {
-            let content = HoverInfoContent::TypeCtorInfo(TypeCtorInfo {
-                typ: info.typ.print_to_string(None),
-            });
+            let content = HoverInfoContent::TypeCtorInfo(TypeCtorInfo {});
             collector.add_hover_content(*span, content)
         }
         args.collect_info(collector)

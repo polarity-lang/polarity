@@ -347,13 +347,8 @@ impl Lift for tst::TypCtor {
     type Target = ust::TypCtor;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::TypCtor { span, info, name, args } = self;
-        ust::TypCtor {
-            span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            args: args.lift(ctx),
-        }
+        let tst::TypCtor { span, name, args } = self;
+        ust::TypCtor { span: *span, name: name.clone(), args: args.lift(ctx) }
     }
 }
 

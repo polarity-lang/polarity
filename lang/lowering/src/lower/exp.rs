@@ -94,7 +94,6 @@ impl Lower for cst::exp::Call {
             Elem::Decl(meta) => match meta.kind() {
                 DeclKind::Data | DeclKind::Codata => Ok(ust::Exp::TypCtor(ust::TypCtor {
                     span: Some(*span),
-                    info: (),
                     name: name.to_owned(),
                     args: ust::Args { args: args.lower(ctx)? },
                 })),
@@ -245,7 +244,6 @@ impl Lower for cst::exp::Fun {
         let cst::exp::Fun { span, from, to } = self;
         Ok(ust::Exp::TypCtor(ust::TypCtor {
             span: Some(*span),
-            info: (),
             name: "Fun".to_owned(),
             args: ust::Args { args: vec![from.lower(ctx)?, to.lower(ctx)?] },
         }))

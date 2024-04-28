@@ -519,7 +519,7 @@ impl<'a> Print<'a> for Variable {
 
 impl<'a, P: Phase> Print<'a> for TypCtor<P> {
     fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
-        let TypCtor { span: _, info: _, name, args } = self;
+        let TypCtor { span: _, name, args } = self;
         if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
             let arg = args.args[0].print_prec(cfg, alloc, 1);
             let res = args.args[1].print_prec(cfg, alloc, 0);

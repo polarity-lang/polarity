@@ -35,9 +35,7 @@ pub struct VariableInfo {
 
 /// Hover information for type constructors
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TypeCtorInfo {
-    pub typ: String,
-}
+pub struct TypeCtorInfo {}
 
 /// Hover information for calls (constructors, codefinitions or lets)
 #[derive(Debug, Clone, PartialEq, Eq)]

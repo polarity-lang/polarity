@@ -86,10 +86,8 @@ impl ToHoverContent for VariableInfo {
 
 impl ToHoverContent for TypeCtorInfo {
     fn to_hover_content(self) -> HoverContents {
-        let TypeCtorInfo { typ } = self;
         let header = MarkedString::String("Type constructor".to_owned());
-        let typ = string_to_language_string(typ);
-        HoverContents::Array(vec![header, typ])
+        HoverContents::Array(vec![header])
     }
 }
 

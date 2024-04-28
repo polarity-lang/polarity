@@ -52,7 +52,7 @@ impl Eval for ust::TypCtor {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::TypCtor { span, info: (), name, args } = self;
+        let ust::TypCtor { span, name, args } = self;
         Ok(Rc::new(Val::TypCtor { span: *span, name: name.clone(), args: args.eval(prg, env)? }))
     }
 }

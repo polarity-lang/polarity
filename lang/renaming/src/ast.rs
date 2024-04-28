@@ -401,8 +401,8 @@ where
     P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let TypCtor { span, info, name, args } = self;
-        TypCtor { span, info: info.rename_in_ctx(ctx), name, args: args.rename_in_ctx(ctx) }
+        let TypCtor { span, name, args } = self;
+        TypCtor { span, name, args: args.rename_in_ctx(ctx) }
     }
 }
 

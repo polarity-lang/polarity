@@ -82,8 +82,8 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
 
 impl Substitutable<Rc<Exp>> for TypCtor {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let TypCtor { span, info, name, args } = self;
-        TypCtor { span: *span, info: *info, name: name.clone(), args: args.subst(ctx, by) }
+        let TypCtor { span, name, args } = self;
+        TypCtor { span: *span, name: name.clone(), args: args.subst(ctx, by) }
     }
 }
 

@@ -68,13 +68,6 @@ pub struct TypeAppInfo {
     pub typ_nf: ust::TypCtor,
 }
 
-impl From<TypeAppInfo> for TypeInfo {
-    fn from(type_app_info: TypeAppInfo) -> Self {
-        let ust::TypCtor { span, info, name, args } = type_app_info.typ_nf;
-        Self { typ: Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args })), ctx: None }
-    }
-}
-
 pub trait HasTypeInfo {
     fn typ(&self) -> Option<Rc<ust::Exp>>;
 }
@@ -83,18 +76,18 @@ impl HasTypeInfo for Exp {
     fn typ(&self) -> Option<Rc<ust::Exp>> {
         match self {
             Exp::Variable(e) => e.inferred_type.clone(),
-            Exp::TypCtor(e) => Some(e.info.clone().typ),
+            Exp::TypCtor(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
             Exp::Call(e) => Some(e.info.clone().typ),
             Exp::DotCall(e) => Some(e.info.clone().typ),
             Exp::Anno(e) => e.normalized_type.clone(),
             Exp::TypeUniv(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
             Exp::LocalMatch(e) => {
-                let ust::TypCtor { span, info, name, args } = e.info.clone().typ_nf;
-                Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args })))
+                let ust::TypCtor { span, name, args } = e.info.clone().typ_nf;
+                Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, name, args })))
             }
             Exp::LocalComatch(e) => {
-                let ust::TypCtor { span, info, name, args } = e.info.clone().typ_nf;
-                Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args })))
+                let ust::TypCtor { span, name, args } = e.info.clone().typ_nf;
+                Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, name, args })))
             }
             Exp::Hole(e) => e.inferred_type.clone(),
         }

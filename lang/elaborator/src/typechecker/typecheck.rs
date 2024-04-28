@@ -894,16 +894,11 @@ impl Infer for ust::TypCtor {
     type Target = tst::TypCtor;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::TypCtor { span, info: (), name, args } = self;
+        let ust::TypCtor { span, name, args } = self;
         let ust::TypAbs { params } = &*prg.decls.typ(name, *span)?.typ();
         let args_out = check_args(args, prg, name, ctx, params, *span)?;
 
-        Ok(tst::TypCtor {
-            span: *span,
-            info: tst::TypeInfo { typ: type_univ(), ctx: None },
-            name: name.clone(),
-            args: args_out,
-        })
+        Ok(tst::TypCtor { span: *span, name: name.clone(), args: args_out })
     }
 }
 
@@ -1178,12 +1173,9 @@ trait ExpectTypApp {
 impl ExpectTypApp for Rc<ust::Exp> {
     fn expect_typ_app(&self) -> Result<ust::TypCtor, TypeError> {
         match &**self {
-            ust::Exp::TypCtor(ust::TypCtor { span, info, name, args }) => Ok(ust::TypCtor {
-                span: *span,
-                info: *info,
-                name: name.clone(),
-                args: args.clone(),
-            }),
+            ust::Exp::TypCtor(ust::TypCtor { span, name, args }) => {
+                Ok(ust::TypCtor { span: *span, name: name.clone(), args: args.clone() })
+            }
             _ => Err(TypeError::expected_typ_app(self.clone())),
         }
     }

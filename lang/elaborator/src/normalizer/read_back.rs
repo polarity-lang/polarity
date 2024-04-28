@@ -25,7 +25,6 @@ impl ReadBack for val::Val {
         let res = match self {
             val::Val::TypCtor { span, name, args } => ust::Exp::TypCtor(ust::TypCtor {
                 span: *span,
-                info: (),
                 name: name.clone(),
                 args: ust::Args { args: args.read_back(prg)? },
             }),
@@ -120,7 +119,6 @@ impl ReadBack for val::TypApp {
 
         Ok(ust::TypCtor {
             span: *span,
-            info: (),
             name: name.clone(),
             args: ust::Args { args: args.read_back(prg)? },
         })

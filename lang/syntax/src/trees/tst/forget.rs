@@ -275,13 +275,8 @@ impl ForgetTST for TypCtor {
     type Target = ust::TypCtor;
 
     fn forget_tst(&self) -> Self::Target {
-        let TypCtor { span, info, name, args } = self;
-        ust::TypCtor {
-            span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            args: args.forget_tst(),
-        }
+        let TypCtor { span, name, args } = self;
+        ust::TypCtor { span: *span, name: name.clone(), args: args.forget_tst() }
     }
 }
 

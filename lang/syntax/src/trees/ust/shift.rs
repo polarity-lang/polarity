@@ -35,13 +35,8 @@ impl Shift for Variable {
 
 impl Shift for TypCtor {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let TypCtor { span, info, name, args } = self;
-        TypCtor {
-            span: *span,
-            info: *info,
-            name: name.clone(),
-            args: args.shift_in_range(range, by),
-        }
+        let TypCtor { span, name, args } = self;
+        TypCtor { span: *span, name: name.clone(), args: args.shift_in_range(range, by) }
     }
 }
 

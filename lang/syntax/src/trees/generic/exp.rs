@@ -17,7 +17,7 @@ where
     type TypeInfo: Clone + fmt::Debug;
     /// Type of the `info` field, containing (depending on the phase) type information
     /// where the type is required to be the full application of a type constructor
-    type TypeAppInfo: Clone + Into<Self::TypeInfo> + fmt::Debug;
+    type TypeAppInfo: Clone + fmt::Debug;
 }
 
 #[derive(Debug, Clone, Derivative)]
@@ -132,7 +132,6 @@ pub struct TypCtor<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
     pub name: Ident,
     pub args: Args<P>,
 }

@@ -89,7 +89,7 @@ impl FV for Variable {
 
 impl FV for ust::TypCtor {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::TypCtor { span: _, info: _, name: _, args } = self;
+        let ust::TypCtor { span: _, name: _, args } = self;
         args.visit_fv(v)
     }
 }
