@@ -30,7 +30,7 @@ pub trait FV {
 impl FV for ust::Exp {
     fn visit_fv(&self, v: &mut USTVisitor) {
         match self {
-            ust::Exp::Anno(ust::Anno { span: _, info: _, exp, typ }) => {
+            ust::Exp::Anno(ust::Anno { exp, typ, .. }) => {
                 exp.visit_fv(v);
                 typ.visit_fv(v)
             }

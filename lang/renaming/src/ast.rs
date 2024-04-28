@@ -335,11 +335,11 @@ where
                     body: body.rename_in_ctx(ctx),
                 })
             }
-            Exp::Anno(Anno { span, info, exp, typ }) => Exp::Anno(Anno {
+            Exp::Anno(Anno { span, exp, typ, normalized_type }) => Exp::Anno(Anno {
                 span,
-                info: info.rename_in_ctx(ctx),
                 exp: exp.rename_in_ctx(ctx),
                 typ: typ.rename_in_ctx(ctx),
+                normalized_type: normalized_type.map(|e| e.rename_in_ctx(ctx)),
             }),
             Exp::TypCtor(e) => Exp::TypCtor(e.rename_in_ctx(ctx)),
             Exp::Hole(Hole { span, inferred_type, inferred_ctx: _ }) => Exp::Hole(Hole {

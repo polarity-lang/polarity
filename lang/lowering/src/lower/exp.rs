@@ -152,9 +152,9 @@ impl Lower for cst::exp::Anno {
         let cst::exp::Anno { span, exp, typ } = self;
         Ok(ust::Exp::Anno(ust::Anno {
             span: Some(*span),
-            info: (),
             exp: exp.lower(ctx)?,
             typ: typ.lower(ctx)?,
+            normalized_type: None,
         }))
     }
 }

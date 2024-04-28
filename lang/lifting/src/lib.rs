@@ -390,12 +390,12 @@ impl Lift for tst::Anno {
     type Target = ust::Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Anno { span, info, exp, typ } = self;
+        let tst::Anno { span, exp, typ, .. } = self;
         ust::Exp::Anno(ust::Anno {
             span: *span,
-            info: info.forget_tst(),
             exp: exp.lift(ctx),
             typ: typ.lift(ctx),
+            normalized_type: None,
         })
     }
 }

@@ -556,7 +556,7 @@ impl<'a, P: Phase> Print<'a> for syntax::generic::Anno<P> {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let syntax::generic::Anno { span: _, info: _, exp, typ } = self;
+        let syntax::generic::Anno { exp, typ, .. } = self;
         exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
     }
 }

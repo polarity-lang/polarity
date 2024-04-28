@@ -962,15 +962,15 @@ impl Infer for ust::Anno {
     type Target = tst::Anno;
 
     fn infer(&self, prg: &ust::Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Anno { span, info: (), exp, typ } = self;
+        let ust::Anno { span, exp, typ, .. } = self;
         let typ_out = typ.check(prg, ctx, type_univ())?;
         let typ_nf = typ.normalize(prg, &mut ctx.env())?;
         let exp_out = (**exp).check(prg, ctx, typ_nf.clone())?;
         Ok(tst::Anno {
             span: *span,
-            info: tst::TypeInfo { typ: typ_nf, ctx: None },
             exp: Rc::new(exp_out),
             typ: typ_out,
+            normalized_type: Some(typ_nf),
         })
     }
 }

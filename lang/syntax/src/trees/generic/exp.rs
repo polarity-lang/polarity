@@ -201,15 +201,22 @@ impl<P: Phase> HasSpan for DotCall<P> {
 //
 //
 
+/// Type annotated term `e : t`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Anno<P: Phase> {
+    /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    /// The annotated term, i.e. `e` in `e : t`
     pub exp: Rc<Exp<P>>,
+    /// The annotated type, i.e. `t` in `e : t`
     pub typ: Rc<Exp<P>>,
+    /// The annotated type written by the user might not
+    /// be in normal form. After elaboration we therefore
+    /// annotate the normalized type.
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub normalized_type: Option<Rc<Exp<UST>>>,
 }
 
 impl<P: Phase> HasSpan for Anno<P> {

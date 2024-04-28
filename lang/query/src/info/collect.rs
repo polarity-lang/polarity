@@ -267,10 +267,9 @@ impl CollectInfo for TypeUniv {
 
 impl CollectInfo for tst::Anno {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Anno { info, span, exp, typ } = self;
-        if let Some(span) = span {
-            let content =
-                HoverInfoContent::AnnoInfo(AnnoInfo { typ: info.typ.print_to_string(None) });
+        let tst::Anno { span, exp, typ, normalized_type } = self;
+        if let (Some(span), Some(typ)) = (span, normalized_type) {
+            let content = HoverInfoContent::AnnoInfo(AnnoInfo { typ: typ.print_to_string(None) });
             collector.add_hover_content(*span, content)
         }
         exp.collect_info(collector);

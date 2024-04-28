@@ -86,7 +86,7 @@ impl HasTypeInfo for Exp {
             Exp::TypCtor(e) => Some(e.info.clone().typ),
             Exp::Call(e) => Some(e.info.clone().typ),
             Exp::DotCall(e) => Some(e.info.clone().typ),
-            Exp::Anno(e) => Some(e.info.clone().typ),
+            Exp::Anno(e) => e.normalized_type.clone(),
             Exp::TypeUniv(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
             Exp::LocalMatch(e) => {
                 let ust::TypCtor { span, info, name, args } = e.info.clone().typ_nf;

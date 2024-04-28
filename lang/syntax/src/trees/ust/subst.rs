@@ -37,11 +37,11 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                     args: args.subst(ctx, by),
                 }))
             }
-            Exp::Anno(Anno { span, info, exp, typ }) => Rc::new(Exp::Anno(Anno {
+            Exp::Anno(Anno { span, exp, typ, .. }) => Rc::new(Exp::Anno(Anno {
                 span: *span,
-                info: *info,
                 exp: exp.subst(ctx, by),
                 typ: typ.subst(ctx, by),
+                normalized_type: None,
             })),
             Exp::TypeUniv(TypeUniv { span }) => Rc::new(Exp::TypeUniv(TypeUniv { span: *span })),
             Exp::LocalMatch(LocalMatch {

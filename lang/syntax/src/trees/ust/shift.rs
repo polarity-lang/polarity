@@ -67,12 +67,12 @@ impl Shift for DotCall {
 
 impl Shift for Anno {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Anno { span, info, exp, typ } = self;
+        let Anno { span, exp, typ, .. } = self;
         Anno {
             span: *span,
-            info: *info,
             exp: exp.shift_in_range(range.clone(), by),
             typ: typ.shift_in_range(range, by),
+            normalized_type: None,
         }
     }
 }

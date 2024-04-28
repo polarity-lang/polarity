@@ -318,12 +318,12 @@ impl ForgetTST for Anno {
     type Target = ust::Anno;
 
     fn forget_tst(&self) -> Self::Target {
-        let Anno { span, info, exp, typ } = self;
+        let Anno { span, exp, typ, .. } = self;
         ust::Anno {
             span: *span,
-            info: info.forget_tst(),
             exp: exp.forget_tst(),
             typ: typ.forget_tst(),
+            normalized_type: None,
         }
     }
 }
