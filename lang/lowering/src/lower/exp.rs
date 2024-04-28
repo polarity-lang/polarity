@@ -174,13 +174,13 @@ impl Lower for cst::exp::LocalMatch {
         let cst::exp::LocalMatch { span, name, on_exp, motive, body } = self;
         Ok(ust::Exp::LocalMatch(ust::LocalMatch {
             span: Some(*span),
-            info: (),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
             on_exp: on_exp.lower(ctx)?,
             motive: motive.lower(ctx)?,
             ret_typ: None,
             body: body.lower(ctx)?,
+            inferred_type: None,
         }))
     }
 }
@@ -192,11 +192,11 @@ impl Lower for cst::exp::LocalComatch {
         let cst::exp::LocalComatch { span, name, is_lambda_sugar, body } = self;
         Ok(ust::Exp::LocalComatch(ust::LocalComatch {
             span: Some(*span),
-            info: (),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
             is_lambda_sugar: *is_lambda_sugar,
             body: body.lower(ctx)?,
+            inferred_type: None,
         }))
     }
 }

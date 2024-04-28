@@ -5,7 +5,6 @@ pub struct UST;
 
 impl generic::Phase for UST {
     type TypeInfo = ();
-    type TypeAppInfo = ();
 }
 
 pub type Ident = generic::Ident;

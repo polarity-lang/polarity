@@ -7,6 +7,7 @@ use derivative::Derivative;
 
 use crate::common::*;
 use crate::ctx::values::TypeCtx;
+use crate::tst::TST;
 use crate::ust::UST;
 
 pub trait Phase
@@ -15,9 +16,6 @@ where
 {
     /// Type of the `info` field, containing (depending on the phase) type information
     type TypeInfo: Clone + fmt::Debug;
-    /// Type of the `info` field, containing (depending on the phase) type information
-    /// where the type is required to be the full application of a type constructor
-    type TypeAppInfo: Clone + fmt::Debug;
 }
 
 #[derive(Debug, Clone, Derivative)]
@@ -282,8 +280,6 @@ pub struct LocalMatch<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeAppInfo,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: Option<TypeCtx>,
     pub name: Label,
     pub on_exp: Rc<Exp<P>>,
@@ -291,6 +287,8 @@ pub struct LocalMatch<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ret_typ: Option<Rc<Exp<P>>>,
     pub body: Match<P>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub inferred_type: Option<TypCtor<TST>>,
 }
 
 impl<P: Phase> HasSpan for LocalMatch<P> {
@@ -309,12 +307,12 @@ pub struct LocalComatch<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeAppInfo,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: Option<TypeCtx>,
     pub name: Label,
     pub is_lambda_sugar: bool,
     pub body: Match<P>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub inferred_type: Option<TypCtor<TST>>,
 }
 
 impl<P: Phase> HasSpan for LocalComatch<P> {

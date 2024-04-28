@@ -331,16 +331,16 @@ impl ForgetTST for LocalMatch {
     type Target = ust::LocalMatch;
 
     fn forget_tst(&self) -> Self::Target {
-        let LocalMatch { span, info, ctx: _, name, on_exp, motive, ret_typ, body } = self;
+        let LocalMatch { span, ctx: _, name, on_exp, motive, ret_typ, body, .. } = self;
         ust::LocalMatch {
             span: *span,
-            info: info.forget_tst(),
             ctx: None,
             name: name.clone(),
             on_exp: on_exp.forget_tst(),
             motive: motive.forget_tst(),
             ret_typ: ret_typ.forget_tst(),
             body: body.forget_tst(),
+            inferred_type: None,
         }
     }
 }
@@ -349,15 +349,15 @@ impl ForgetTST for LocalComatch {
     type Target = ust::LocalComatch;
 
     fn forget_tst(&self) -> Self::Target {
-        let LocalComatch { span, info, ctx: _, name, is_lambda_sugar, body } = self;
+        let LocalComatch { span, ctx: _, name, is_lambda_sugar, body, .. } = self;
 
         ust::LocalComatch {
             span: *span,
-            info: info.forget_tst(),
             ctx: None,
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             body: body.forget_tst(),
+            inferred_type: None,
         }
     }
 }
@@ -435,12 +435,6 @@ impl ForgetTST for Args {
 }
 
 impl ForgetTST for TypeInfo {
-    type Target = ();
-
-    fn forget_tst(&self) -> Self::Target {}
-}
-
-impl ForgetTST for TypeAppInfo {
     type Target = ();
 
     fn forget_tst(&self) -> Self::Target {}

@@ -729,8 +729,7 @@ impl Check for ust::LocalMatch {
         ctx: &mut Ctx,
         t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
-        let ust::LocalMatch { span, info: (), ctx: _, name, on_exp, motive, ret_typ: _, body } =
-            self;
+        let ust::LocalMatch { span, name, on_exp, motive, body, .. } = self;
         let on_exp_out = on_exp.infer(prg, ctx)?;
         let typ_app_nf = on_exp_out
             .typ()
@@ -790,13 +789,13 @@ impl Check for ust::LocalMatch {
 
         Ok(tst::LocalMatch {
             span: *span,
-            info: tst::TypeAppInfo { typ: typ_app },
             ctx: Some(ctx.vars.clone()),
             name: name.clone(),
             on_exp: on_exp_out,
             motive: motive_out,
             ret_typ: ret_typ_out.into(),
             body: body_out,
+            inferred_type: Some(typ_app),
         })
     }
 }
@@ -810,7 +809,7 @@ impl Check for ust::LocalComatch {
         ctx: &mut Ctx,
         t: Rc<ust::Exp>,
     ) -> Result<Self::Target, TypeError> {
-        let ust::LocalComatch { span, info: (), ctx: _, name, is_lambda_sugar, body } = self;
+        let ust::LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
         let typ_app_nf = t.expect_typ_app()?;
         let typ_app = typ_app_nf.infer(prg, ctx)?;
 
@@ -833,11 +832,11 @@ impl Check for ust::LocalComatch {
 
         Ok(tst::LocalComatch {
             span: *span,
-            info: tst::TypeAppInfo { typ: typ_app },
             ctx: Some(ctx.vars.clone()),
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             body: body_out,
+            inferred_type: Some(typ_app),
         })
     }
 }

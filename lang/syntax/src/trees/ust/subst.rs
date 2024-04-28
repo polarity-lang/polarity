@@ -42,33 +42,26 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                 normalized_type: None,
             })),
             Exp::TypeUniv(TypeUniv { span }) => Rc::new(Exp::TypeUniv(TypeUniv { span: *span })),
-            Exp::LocalMatch(LocalMatch {
-                span,
-                info,
-                ctx: _,
-                name,
-                on_exp,
-                motive,
-                ret_typ,
-                body,
-            }) => Rc::new(Exp::LocalMatch(LocalMatch {
-                span: *span,
-                info: *info,
-                ctx: None,
-                name: name.clone(),
-                on_exp: on_exp.subst(ctx, by),
-                motive: motive.subst(ctx, by),
-                ret_typ: ret_typ.subst(ctx, by),
-                body: body.subst(ctx, by),
-            })),
-            Exp::LocalComatch(LocalComatch { span, info, ctx: _, name, is_lambda_sugar, body }) => {
+            Exp::LocalMatch(LocalMatch { span, name, on_exp, motive, ret_typ, body, .. }) => {
+                Rc::new(Exp::LocalMatch(LocalMatch {
+                    span: *span,
+                    ctx: None,
+                    name: name.clone(),
+                    on_exp: on_exp.subst(ctx, by),
+                    motive: motive.subst(ctx, by),
+                    ret_typ: ret_typ.subst(ctx, by),
+                    body: body.subst(ctx, by),
+                    inferred_type: None,
+                }))
+            }
+            Exp::LocalComatch(LocalComatch { span, name, is_lambda_sugar, body, .. }) => {
                 Rc::new(Exp::LocalComatch(LocalComatch {
                     span: *span,
-                    info: *info,
                     ctx: None,
                     name: name.clone(),
                     is_lambda_sugar: *is_lambda_sugar,
                     body: body.subst(ctx, by),
+                    inferred_type: None,
                 }))
             }
             Exp::Hole(Hole { span, .. }) => {

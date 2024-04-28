@@ -15,7 +15,6 @@ pub struct TST;
 
 impl generic::Phase for TST {
     type TypeInfo = TypeInfo;
-    type TypeAppInfo = TypeAppInfo;
 }
 
 pub type Ident = generic::Ident;
@@ -64,11 +63,6 @@ impl From<Rc<ust::Exp>> for TypeInfo {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct TypeAppInfo {
-    pub typ: TypCtor,
-}
-
 pub trait HasTypeInfo {
     fn typ(&self) -> Option<Rc<ust::Exp>>;
 }
@@ -83,12 +77,10 @@ impl HasTypeInfo for Exp {
             Exp::Anno(e) => e.normalized_type.clone(),
             Exp::TypeUniv(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
             Exp::LocalMatch(e) => {
-                let ust::TypCtor { span, name, args } = e.info.clone().typ.forget_tst();
-                Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, name, args })))
+                e.inferred_type.forget_tst().map(|typctor| Rc::new(ust::Exp::TypCtor(typctor)))
             }
             Exp::LocalComatch(e) => {
-                let ust::TypCtor { span, name, args } = e.info.clone().typ.forget_tst();
-                Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, name, args })))
+                e.inferred_type.forget_tst().map(|typctor| Rc::new(ust::Exp::TypCtor(typctor)))
             }
             Exp::Hole(e) => e.inferred_type.clone(),
         }

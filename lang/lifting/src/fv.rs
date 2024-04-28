@@ -35,14 +35,7 @@ impl FV for ust::Exp {
                 typ.visit_fv(v)
             }
             ust::Exp::Variable(e) => e.visit_fv(v),
-            ust::Exp::LocalComatch(ust::LocalComatch {
-                span: _,
-                info: _,
-                ctx: _,
-                name: _,
-                is_lambda_sugar: _,
-                body,
-            }) => body.visit_fv(v),
+            ust::Exp::LocalComatch(ust::LocalComatch { body, .. }) => body.visit_fv(v),
             ust::Exp::Call(ust::Call { args, .. }) => args.visit_fv(v),
             ust::Exp::DotCall(ust::DotCall { exp, args, .. }) => {
                 exp.visit_fv(v);
@@ -51,16 +44,7 @@ impl FV for ust::Exp {
             ust::Exp::TypCtor(e) => e.visit_fv(v),
             ust::Exp::Hole(Hole { .. }) => {}
             ust::Exp::TypeUniv(TypeUniv { span: _ }) => {}
-            ust::Exp::LocalMatch(ust::LocalMatch {
-                span: _,
-                info: _,
-                ctx: _,
-                name: _,
-                on_exp,
-                motive,
-                ret_typ: _,
-                body,
-            }) => {
+            ust::Exp::LocalMatch(ust::LocalMatch { on_exp, motive, body, .. }) => {
                 on_exp.visit_fv(v);
                 motive.visit_fv(v);
                 body.visit_fv(v)

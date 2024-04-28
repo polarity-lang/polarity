@@ -38,11 +38,11 @@ impl ReadBack for val::Val {
             val::Val::Comatch { span, name, is_lambda_sugar, body } => {
                 ust::Exp::LocalComatch(ust::LocalComatch {
                     span: *span,
-                    info: (),
                     ctx: None,
                     name: name.clone(),
                     is_lambda_sugar: *is_lambda_sugar,
                     body: body.read_back(prg)?,
+                    inferred_type: None,
                 })
             }
             val::Val::Neu { exp } => exp.read_back(prg)?,
@@ -71,13 +71,13 @@ impl ReadBack for val::Neu {
             }),
             val::Neu::Match { span, name, on_exp, body } => ust::Exp::LocalMatch(ust::LocalMatch {
                 span: *span,
-                info: (),
                 ctx: None,
                 motive: None,
                 ret_typ: None,
                 name: name.clone(),
                 on_exp: on_exp.read_back(prg)?,
                 body: body.read_back(prg)?,
+                inferred_type: None,
             }),
             val::Neu::Hole { span } => {
                 ust::Exp::Hole(Hole { span: *span, inferred_type: None, inferred_ctx: None })

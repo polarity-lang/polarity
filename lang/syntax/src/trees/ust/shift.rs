@@ -85,30 +85,30 @@ impl Shift for TypeUniv {
 
 impl Shift for LocalMatch {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let LocalMatch { span, info, ctx: _, name, on_exp, motive, ret_typ: _, body } = self;
+        let LocalMatch { span, name, on_exp, motive, body, .. } = self;
         LocalMatch {
             span: *span,
-            info: *info,
             ctx: None,
             name: name.clone(),
             on_exp: on_exp.shift_in_range(range.clone(), by),
             motive: motive.shift_in_range(range.clone(), by),
             ret_typ: None,
             body: body.shift_in_range(range, by),
+            inferred_type: None,
         }
     }
 }
 
 impl Shift for LocalComatch {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let LocalComatch { span, info, ctx: _, name, is_lambda_sugar, body } = self;
+        let LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
         LocalComatch {
             span: *span,
-            info: *info,
             ctx: None,
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             body: body.shift_in_range(range, by),
+            inferred_type: None,
         }
     }
 }

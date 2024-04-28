@@ -590,7 +590,7 @@ impl<'a, P: Phase> Print<'a> for LocalMatch<P> {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let LocalMatch { span: _, info: _, ctx: _, name, on_exp, motive, ret_typ: _, body } = self;
+        let LocalMatch { name, on_exp, motive, body, .. } = self;
         on_exp
             .print(cfg, alloc)
             .append(DOT)
@@ -612,7 +612,7 @@ impl<'a, P: Phase> Print<'a> for LocalComatch<P> {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let LocalComatch { span: _, info: _, ctx: _, name, is_lambda_sugar, body } = self;
+        let LocalComatch { name, is_lambda_sugar, body, .. } = self;
         if *is_lambda_sugar && cfg.print_lambda_sugar {
             print_lambda_sugar(body, cfg, alloc)
         } else {
