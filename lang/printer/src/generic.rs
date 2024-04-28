@@ -493,7 +493,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 dtor.print(cfg, alloc).append(dtors_group.align().group())
             }
             Exp::Anno(e) => e.print_prec(cfg, alloc, prec),
-            Exp::Type(e) => e.print_prec(cfg, alloc, prec),
+            Exp::TypeUniv(e) => e.print_prec(cfg, alloc, prec),
             Exp::LocalMatch(e) => e.print_prec(cfg, alloc, prec),
             Exp::LocalComatch(e) => e.print_prec(cfg, alloc, prec),
             Exp::Hole(e) => e.print_prec(cfg, alloc, prec),
@@ -561,14 +561,13 @@ impl<'a, P: Phase> Print<'a> for syntax::generic::Anno<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Type<P> {
+impl<'a> Print<'a> for TypeUniv {
     fn print_prec(
         &'a self,
         _cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let Type { span: _, info: _ } = self;
         alloc.keyword(TYPE)
     }
 }

@@ -39,7 +39,6 @@ pub type TypCtor = generic::TypCtor<UST>;
 pub type Call = generic::Call<UST>;
 pub type DotCall = generic::DotCall<UST>;
 pub type Anno = generic::Anno<UST>;
-pub type Type = generic::Type<UST>;
 pub type LocalMatch = generic::LocalMatch<UST>;
 pub type LocalComatch = generic::LocalComatch<UST>;
 pub type Hole = generic::Hole<UST>;

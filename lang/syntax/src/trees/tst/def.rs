@@ -3,6 +3,7 @@
 use std::rc::Rc;
 
 use crate::ctx::values::TypeCtx;
+use crate::generic::TypeUniv;
 use crate::ust;
 
 use crate::generic;
@@ -46,7 +47,6 @@ pub type TypCtor = generic::TypCtor<TST>;
 pub type Call = generic::Call<TST>;
 pub type DotCall = generic::DotCall<TST>;
 pub type Anno = generic::Anno<TST>;
-pub type Type = generic::Type<TST>;
 pub type LocalMatch = generic::LocalMatch<TST>;
 pub type LocalComatch = generic::LocalComatch<TST>;
 pub type Hole = generic::Hole<TST>;
@@ -88,7 +88,7 @@ impl HasTypeInfo for Exp {
             Exp::Call(e) => Some(e.info.clone().typ),
             Exp::DotCall(e) => Some(e.info.clone().typ),
             Exp::Anno(e) => Some(e.info.clone().typ),
-            Exp::Type(e) => Some(e.info.clone().typ),
+            Exp::TypeUniv(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
             Exp::LocalMatch(e) => {
                 let ust::TypCtor { span, info, name, args } = e.info.clone().typ_nf;
                 Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args })))

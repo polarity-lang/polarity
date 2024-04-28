@@ -11,7 +11,7 @@ use miette_util::ToMiette;
 use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
-use syntax::generic::{Named, Variable};
+use syntax::generic::{Named, TypeUniv, Variable};
 use syntax::tst::forget::ForgetTST;
 use syntax::tst::{self, HasTypeInfo};
 use syntax::ust::util::Instantiate;
@@ -871,7 +871,7 @@ impl Infer for ust::Exp {
             ust::Exp::Call(e) => Ok(tst::Exp::Call(e.infer(prg, ctx)?)),
             ust::Exp::DotCall(e) => Ok(tst::Exp::DotCall(e.infer(prg, ctx)?)),
             ust::Exp::Anno(e) => Ok(tst::Exp::Anno(e.infer(prg, ctx)?)),
-            ust::Exp::Type(e) => Ok(tst::Exp::Type(e.infer(prg, ctx)?)),
+            ust::Exp::TypeUniv(e) => Ok(tst::Exp::TypeUniv(e.infer(prg, ctx)?)),
             ust::Exp::Hole(e) => Ok(tst::Exp::Hole(e.infer(prg, ctx)?)),
             ust::Exp::LocalMatch(e) => Ok(tst::Exp::LocalMatch(e.infer(prg, ctx)?)),
             ust::Exp::LocalComatch(e) => Ok(tst::Exp::LocalComatch(e.infer(prg, ctx)?)),
@@ -974,12 +974,11 @@ impl Infer for ust::Anno {
     }
 }
 
-impl Infer for ust::Type {
-    type Target = tst::Type;
+impl Infer for TypeUniv {
+    type Target = TypeUniv;
 
     fn infer(&self, _prg: &ust::Prg, _ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let ust::Type { span, info: () } = self;
-        Ok(tst::Type { span: *span, info: tst::TypeInfo { typ: type_univ(), ctx: None } })
+        Ok(self.clone())
     }
 }
 
@@ -1223,7 +1222,7 @@ impl<T: Infer> Infer for Rc<T> {
 }
 
 fn type_univ() -> Rc<ust::Exp> {
-    Rc::new(ust::Exp::Type(ust::Type { span: None, info: () }))
+    Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))
 }
 
 fn type_hole() -> Rc<ust::Exp> {

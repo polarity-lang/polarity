@@ -9,6 +9,7 @@ use parser::cst::exp::BindingSite;
 use parser::cst::exp::Ident;
 use syntax::ctx::BindContext;
 use syntax::generic::lookup_table::DeclKind;
+use syntax::generic::TypeUniv;
 use syntax::generic::Variable;
 use syntax::ust;
 
@@ -24,7 +25,7 @@ impl Lower for cst::exp::Exp {
             cst::exp::Exp::Call(e) => e.lower(ctx),
             cst::exp::Exp::DotCall(e) => e.lower(ctx),
             cst::exp::Exp::Anno(e) => e.lower(ctx),
-            cst::exp::Exp::Type(e) => e.lower(ctx),
+            cst::exp::Exp::TypeUniv(e) => e.lower(ctx),
             cst::exp::Exp::LocalMatch(e) => e.lower(ctx),
             cst::exp::Exp::LocalComatch(e) => e.lower(ctx),
             cst::exp::Exp::Hole(e) => e.lower(ctx),
@@ -157,12 +158,12 @@ impl Lower for cst::exp::Anno {
     }
 }
 
-impl Lower for cst::exp::Type {
+impl Lower for cst::exp::TypeUniv {
     type Target = ust::Exp;
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::Type { span } = self;
-        Ok(ust::Exp::Type(ust::Type { span: Some(*span), info: () }))
+        let cst::exp::TypeUniv { span } = self;
+        Ok(ust::Exp::TypeUniv(TypeUniv { span: Some(*span) }))
     }
 }
 

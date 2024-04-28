@@ -3,7 +3,7 @@ use std::rc::Rc;
 use super::val;
 use syntax::common::*;
 use syntax::ctx::BindContext;
-use syntax::generic::Variable;
+use syntax::generic::{TypeUniv, Variable};
 use syntax::ust;
 use tracer::trace;
 
@@ -35,7 +35,7 @@ impl ReadBack for val::Val {
                 name: name.clone(),
                 args: ust::Args { args: args.read_back(prg)? },
             }),
-            val::Val::Type { span } => ust::Exp::Type(ust::Type { span: *span, info: () }),
+            val::Val::TypeUniv { span } => ust::Exp::TypeUniv(TypeUniv { span: *span }),
             val::Val::Comatch { span, name, is_lambda_sugar, body } => {
                 ust::Exp::LocalComatch(ust::LocalComatch {
                     span: *span,

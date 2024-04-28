@@ -114,10 +114,8 @@ impl ToHoverContent for DotCallInfo {
 
 impl ToHoverContent for TypeUnivInfo {
     fn to_hover_content(self) -> HoverContents {
-        let TypeUnivInfo { typ } = self;
         let header = MarkedString::String("Type universe".to_owned());
-        let typ = string_to_language_string(typ);
-        HoverContents::Array(vec![header, typ])
+        HoverContents::Array(vec![header])
     }
 }
 

@@ -4,7 +4,10 @@ use codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
 use printer::PrintToString;
-use syntax::{generic::Variable, tst};
+use syntax::{
+    generic::{TypeUniv, Variable},
+    tst,
+};
 
 use super::data::*;
 
@@ -182,7 +185,7 @@ impl CollectInfo for tst::Exp {
             tst::Exp::Call(e) => e.collect_info(collector),
             tst::Exp::DotCall(e) => e.collect_info(collector),
             tst::Exp::Hole(e) => e.collect_info(collector),
-            tst::Exp::Type(e) => e.collect_info(collector),
+            tst::Exp::TypeUniv(e) => e.collect_info(collector),
             tst::Exp::Anno(e) => e.collect_info(collector),
             tst::Exp::LocalMatch(e) => e.collect_info(collector),
             tst::Exp::LocalComatch(e) => e.collect_info(collector),
@@ -252,13 +255,11 @@ impl CollectInfo for tst::Hole {
     }
 }
 
-impl CollectInfo for tst::Type {
+impl CollectInfo for TypeUniv {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let tst::Type { info, span } = self;
+        let TypeUniv { span } = self;
         if let Some(span) = span {
-            let content = HoverInfoContent::TypeUnivInfo(TypeUnivInfo {
-                typ: info.typ.print_to_string(None),
-            });
+            let content = HoverInfoContent::TypeUnivInfo(TypeUnivInfo {});
             collector.add_hover_content(*span, content)
         }
     }

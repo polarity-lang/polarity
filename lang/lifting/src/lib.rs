@@ -7,6 +7,7 @@ use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;
 use syntax::generic::Named;
+use syntax::generic::TypeUniv;
 use syntax::generic::Variable;
 use syntax::tst;
 use syntax::tst::forget::ForgetTST;
@@ -319,7 +320,7 @@ impl Lift for tst::Exp {
             tst::Exp::Call(e) => e.lift(ctx),
             tst::Exp::DotCall(e) => e.lift(ctx),
             tst::Exp::Anno(e) => e.lift(ctx),
-            tst::Exp::Type(e) => e.lift(ctx),
+            tst::Exp::TypeUniv(e) => e.lift(ctx),
             tst::Exp::Hole(e) => e.lift(ctx),
             tst::Exp::LocalMatch(e) => e.lift(ctx),
             tst::Exp::LocalComatch(e) => e.lift(ctx),
@@ -398,12 +399,12 @@ impl Lift for tst::Anno {
     }
 }
 
-impl Lift for tst::Type {
+impl Lift for TypeUniv {
     type Target = ust::Exp;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let tst::Type { span, info } = self;
-        ust::Exp::Type(ust::Type { span: *span, info: info.forget_tst() })
+        let TypeUniv { span } = self;
+        ust::Exp::TypeUniv(TypeUniv { span: *span })
     }
 }
 

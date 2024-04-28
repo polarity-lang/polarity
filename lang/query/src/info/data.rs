@@ -53,9 +53,7 @@ pub struct DotCallInfo {
 
 /// Hover information for type universes
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TypeUnivInfo {
-    pub typ: String,
-}
+pub struct TypeUnivInfo {}
 
 /// Hover information for type annotated terms
 #[derive(Debug, Clone, PartialEq, Eq)]

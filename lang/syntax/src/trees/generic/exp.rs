@@ -68,7 +68,7 @@ pub enum Exp<P: Phase> {
     Call(Call<P>),
     DotCall(DotCall<P>),
     Anno(Anno<P>),
-    Type(Type<P>),
+    TypeUniv(TypeUniv),
     LocalMatch(LocalMatch<P>),
     LocalComatch(LocalComatch<P>),
     Hole(Hole<P>),
@@ -82,7 +82,7 @@ impl<P: Phase> HasSpan for Exp<P> {
             Exp::Call(e) => e.span(),
             Exp::DotCall(e) => e.span(),
             Exp::Anno(e) => e.span(),
-            Exp::Type(e) => e.span(),
+            Exp::TypeUniv(e) => e.span(),
             Exp::LocalMatch(e) => e.span(),
             Exp::LocalComatch(e) => e.span(),
             Exp::Hole(e) => e.span(),
@@ -218,20 +218,24 @@ impl<P: Phase> HasSpan for Anno<P> {
     }
 }
 
-// Type
+// TypeUniv
 //
 //
 
+/// The impredicative type universe "Type" is used
+/// for typing data and codata types. I.e. we have
+/// - `Nat : Type`
+/// - `Stream(Nat) : Type`
+/// - `Type : Type`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Type<P: Phase> {
+pub struct TypeUniv {
+    /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
 }
 
-impl<P: Phase> HasSpan for Type<P> {
+impl HasSpan for TypeUniv {
     fn span(&self) -> Option<Span> {
         self.span
     }

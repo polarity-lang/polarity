@@ -345,9 +345,7 @@ where
             Exp::Hole(Hole { span, info }) => {
                 Exp::Hole(Hole { span, info: info.rename_in_ctx(ctx) })
             }
-            Exp::Type(Type { span, info }) => {
-                Exp::Type(Type { span, info: info.rename_in_ctx(ctx) })
-            }
+            Exp::TypeUniv(e) => Exp::TypeUniv(e),
             Exp::Call(Call { span, info, name, args }) => Exp::Call(Call {
                 span,
                 info: info.rename_in_ctx(ctx),

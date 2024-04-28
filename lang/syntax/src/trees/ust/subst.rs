@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::*;
+use crate::generic::TypeUniv;
 use crate::generic::Variable;
 use crate::ust::*;
 
@@ -41,7 +42,7 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                 exp: exp.subst(ctx, by),
                 typ: typ.subst(ctx, by),
             })),
-            Exp::Type(Type { span, info }) => Rc::new(Exp::Type(Type { span: *span, info: *info })),
+            Exp::TypeUniv(TypeUniv { span }) => Rc::new(Exp::TypeUniv(TypeUniv { span: *span })),
             Exp::LocalMatch(LocalMatch {
                 span,
                 info,

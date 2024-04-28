@@ -1,4 +1,7 @@
-use crate::{common::*, generic::Variable};
+use crate::{
+    common::*,
+    generic::{TypeUniv, Variable},
+};
 
 use super::def::*;
 
@@ -10,7 +13,7 @@ impl Shift for Exp {
             Exp::Call(e) => Exp::Call(e.shift_in_range(range, by)),
             Exp::DotCall(e) => Exp::DotCall(e.shift_in_range(range, by)),
             Exp::Anno(e) => Exp::Anno(e.shift_in_range(range, by)),
-            Exp::Type(e) => Exp::Type(e.shift_in_range(range, by)),
+            Exp::TypeUniv(e) => Exp::TypeUniv(e.shift_in_range(range, by)),
             Exp::LocalMatch(e) => Exp::LocalMatch(e.shift_in_range(range, by)),
             Exp::LocalComatch(e) => Exp::LocalComatch(e.shift_in_range(range, by)),
             Exp::Hole(e) => Exp::Hole(e.shift_in_range(range, by)),
@@ -74,10 +77,9 @@ impl Shift for Anno {
     }
 }
 
-impl Shift for Type {
+impl Shift for TypeUniv {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
-        let Type { span, info } = self;
-        Type { span: *span, info: *info }
+        self.clone()
     }
 }
 

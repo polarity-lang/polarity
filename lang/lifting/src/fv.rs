@@ -6,7 +6,7 @@ use derivative::Derivative;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;
-use syntax::generic::Variable;
+use syntax::generic::{TypeUniv, Variable};
 use syntax::ust::{self, Occurs};
 
 /// Find all free variables
@@ -50,7 +50,7 @@ impl FV for ust::Exp {
             }
             ust::Exp::TypCtor(e) => e.visit_fv(v),
             ust::Exp::Hole(ust::Hole { span: _, info: _ }) => {}
-            ust::Exp::Type(ust::Type { span: _, info: _ }) => {}
+            ust::Exp::TypeUniv(TypeUniv { span: _ }) => {}
             ust::Exp::LocalMatch(ust::LocalMatch {
                 span: _,
                 info: _,

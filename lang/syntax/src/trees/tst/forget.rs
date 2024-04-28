@@ -3,7 +3,10 @@
 use std::rc::Rc;
 
 use super::def::*;
-use crate::{generic::Variable, ust};
+use crate::{
+    generic::{TypeUniv, Variable},
+    ust,
+};
 
 pub trait ForgetTST {
     type Target;
@@ -251,7 +254,7 @@ impl ForgetTST for Exp {
             Exp::Call(e) => ust::Exp::Call(e.forget_tst()),
             Exp::DotCall(e) => ust::Exp::DotCall(e.forget_tst()),
             Exp::Anno(e) => ust::Exp::Anno(e.forget_tst()),
-            Exp::Type(e) => ust::Exp::Type(e.forget_tst()),
+            Exp::TypeUniv(e) => ust::Exp::TypeUniv(e.forget_tst()),
             Exp::LocalMatch(e) => ust::Exp::LocalMatch(e.forget_tst()),
             Exp::LocalComatch(e) => ust::Exp::LocalComatch(e.forget_tst()),
             Exp::Hole(e) => ust::Exp::Hole(e.forget_tst()),
@@ -325,12 +328,12 @@ impl ForgetTST for Anno {
     }
 }
 
-impl ForgetTST for Type {
-    type Target = ust::Type;
+impl ForgetTST for TypeUniv {
+    type Target = TypeUniv;
 
     fn forget_tst(&self) -> Self::Target {
-        let Type { span, info } = self;
-        ust::Type { span: *span, info: info.forget_tst() }
+        let TypeUniv { span } = self;
+        TypeUniv { span: *span }
     }
 }
 

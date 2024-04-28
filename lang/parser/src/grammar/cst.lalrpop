@@ -184,7 +184,7 @@ pub App = {
 }
 
 pub Builtins: Rc<Exp> = {
-    <e: TypeUniv> => Rc::new(Exp::Type(e)),
+    <e: TypeUniv> => Rc::new(Exp::TypeUniv(e)),
     Holes,
 }
 
@@ -227,8 +227,8 @@ CallWithoutArgs: Call = <l: @L> <name: Ident> <r: @R> =>
 LocalComatch: LocalComatch = <l: @L> "comatch" <name: Ident?> "{" <body: Match> "}" <r: @R> =>
   LocalComatch { span: span(l, r), name, is_lambda_sugar: false, body };
 
-TypeUniv: Type = <l: @L> "Type" <r: @R> =>
-  Type { span: span(l, r) };
+TypeUniv: TypeUniv = <l: @L> "Type" <r: @R> =>
+  TypeUniv { span: span(l, r) };
 
 Hole: Hole = <l: @L> "?" <r: @R> =>
   Hole { span: span(l, r) };

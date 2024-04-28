@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use syntax::ctx::{BindContext, Context};
-use syntax::generic::Variable;
+use syntax::generic::{TypeUniv, Variable};
 use syntax::ust;
 use tracer::trace;
 
@@ -31,7 +31,7 @@ impl Eval for ust::Exp {
             ust::Exp::Call(e) => e.eval(prg, env),
             ust::Exp::DotCall(e) => e.eval(prg, env),
             ust::Exp::Anno(e) => e.eval(prg, env),
-            ust::Exp::Type(e) => e.eval(prg, env),
+            ust::Exp::TypeUniv(e) => e.eval(prg, env),
             ust::Exp::LocalMatch(e) => e.eval(prg, env),
             ust::Exp::LocalComatch(e) => e.eval(prg, env),
             ust::Exp::Hole(e) => e.eval(prg, env),
@@ -109,12 +109,12 @@ impl Eval for ust::Anno {
     }
 }
 
-impl Eval for ust::Type {
+impl Eval for TypeUniv {
     type Val = Rc<Val>;
 
     fn eval(&self, _prg: &ust::Prg, _env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Type { span, info: () } = self;
-        Ok(Rc::new(Val::Type { span: *span }))
+        let TypeUniv { span } = self;
+        Ok(Rc::new(Val::TypeUniv { span: *span }))
     }
 }
 

@@ -28,7 +28,7 @@ pub enum Val {
         name: ust::Ident,
         args: Args,
     },
-    Type {
+    TypeUniv {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
     },
@@ -125,7 +125,7 @@ impl Shift for Val {
             Val::Ctor { span, name, args } => {
                 Val::Ctor { span: *span, name: name.clone(), args: args.shift_in_range(range, by) }
             }
-            Val::Type { span } => Val::Type { span: *span },
+            Val::TypeUniv { span } => Val::TypeUniv { span: *span },
             Val::Comatch { span, name, is_lambda_sugar, body } => Val::Comatch {
                 span: *span,
                 name: name.clone(),
@@ -200,7 +200,7 @@ impl<'a> Print<'a> for Val {
                     if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 alloc.ctor(name).append(psubst)
             }
-            Val::Type { span: _ } => alloc.typ(TYPE),
+            Val::TypeUniv { span: _ } => alloc.typ(TYPE),
             Val::Comatch { span: _, name, is_lambda_sugar: _, body } => alloc
                 .keyword(COMATCH)
                 .append(alloc.space())

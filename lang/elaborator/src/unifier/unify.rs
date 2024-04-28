@@ -167,7 +167,7 @@ impl Ctx {
                 self.add_equation(Eqn { lhs: exp.clone(), rhs: exp2.clone() })?;
                 self.unify_args(args, args2)
             }
-            (ust::Exp::Type(_), ust::Exp::Type(_)) => Ok(Yes(())),
+            (ust::Exp::TypeUniv(_), ust::Exp::TypeUniv(_)) => Ok(Yes(())),
             (ust::Exp::Anno(_), _) => Err(TypeError::unsupported_annotation(lhs.clone())),
             (_, ust::Exp::Anno(_)) => Err(TypeError::unsupported_annotation(rhs.clone())),
             (_, _) => Err(TypeError::cannot_decide(lhs.clone(), rhs.clone())),
