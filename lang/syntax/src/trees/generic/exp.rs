@@ -131,7 +131,6 @@ impl HasSpan for Variable {
 pub struct TypCtor<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     pub args: Args<P>,
 }
