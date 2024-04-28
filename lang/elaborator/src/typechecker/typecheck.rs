@@ -790,7 +790,7 @@ impl Check for ust::LocalMatch {
 
         Ok(tst::LocalMatch {
             span: *span,
-            info: tst::TypeAppInfo { typ: typ_app, typ_nf: typ_app_nf },
+            info: tst::TypeAppInfo { typ: typ_app },
             ctx: Some(ctx.vars.clone()),
             name: name.clone(),
             on_exp: on_exp_out,
@@ -833,7 +833,7 @@ impl Check for ust::LocalComatch {
 
         Ok(tst::LocalComatch {
             span: *span,
-            info: tst::TypeAppInfo { typ: typ_app, typ_nf: typ_app_nf },
+            info: tst::TypeAppInfo { typ: typ_app },
             ctx: Some(ctx.vars.clone()),
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,

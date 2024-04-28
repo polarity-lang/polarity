@@ -8,6 +8,8 @@ use crate::ust;
 
 use crate::generic;
 
+use super::forget::ForgetTST;
+
 #[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct TST;
 
@@ -65,7 +67,6 @@ impl From<Rc<ust::Exp>> for TypeInfo {
 #[derive(Debug, Clone)]
 pub struct TypeAppInfo {
     pub typ: TypCtor,
-    pub typ_nf: ust::TypCtor,
 }
 
 pub trait HasTypeInfo {
@@ -82,11 +83,11 @@ impl HasTypeInfo for Exp {
             Exp::Anno(e) => e.normalized_type.clone(),
             Exp::TypeUniv(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
             Exp::LocalMatch(e) => {
-                let ust::TypCtor { span, name, args } = e.info.clone().typ_nf;
+                let ust::TypCtor { span, name, args } = e.info.clone().typ.forget_tst();
                 Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, name, args })))
             }
             Exp::LocalComatch(e) => {
-                let ust::TypCtor { span, name, args } = e.info.clone().typ_nf;
+                let ust::TypCtor { span, name, args } = e.info.clone().typ.forget_tst();
                 Some(Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, name, args })))
             }
             Exp::Hole(e) => e.inferred_type.clone(),
