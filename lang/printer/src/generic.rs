@@ -102,7 +102,7 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Data { info: _, doc, name, attr, typ, ctors } = self;
+        let Data { span: _, doc, name, attr, typ, ctors } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -150,7 +150,7 @@ where
         ctx: &'a Self::Ctx,
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
-        let Codata { info: _, doc, name, attr, typ, dtors } = self;
+        let Codata { span: _, doc, name, attr, typ, dtors } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -191,7 +191,7 @@ where
     Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { info: _, doc, name, attr, params, self_param, ret_typ, body } = self;
+        let Def { span: _, doc, name, attr, params, self_param, ret_typ, body } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -219,7 +219,7 @@ where
     Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codef { info: _, doc, name, attr, params, typ, body } = self;
+        let Codef { span: _, doc, name, attr, params, typ, body } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -245,7 +245,7 @@ where
     Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Let { info: _, doc, name, attr, params, typ, body } = self;
+        let Let { span: _, doc, name, attr, params, typ, body } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -271,7 +271,7 @@ where
     Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Ctor { info: _, doc, name, params, typ } = self;
+        let Ctor { span: _, doc, name, params, typ } = self;
 
         let doc = doc.print(cfg, alloc);
         let head = alloc.ctor(name).append(params.print(cfg, alloc));
@@ -290,7 +290,7 @@ where
     Exp<P>: Shift,
 {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Dtor { info: _, doc, name, params, self_param, ret_typ } = self;
+        let Dtor { span: _, doc, name, params, self_param, ret_typ } = self;
 
         let doc = doc.print(cfg, alloc);
         let head = if self_param.is_simple() {
@@ -309,7 +309,7 @@ where
 
 impl<'a, P: Phase> Print<'a> for Match<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Match { info: _, cases, omit_absurd } = self;
+        let Match { span: _, cases, omit_absurd } = self;
         match cases.len() {
             0 => {
                 if *omit_absurd {
@@ -352,7 +352,7 @@ impl<'a, P: Phase> Print<'a> for Match<P> {
 
 impl<'a, P: Phase> Print<'a> for Case<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Case { info: _, name, args, body } = self;
+        let Case { span: _, name, params, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -363,7 +363,7 @@ impl<'a, P: Phase> Print<'a> for Case<P> {
                 .nest(cfg.indent),
         };
 
-        alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
+        alloc.ctor(name).append(params.print(cfg, alloc)).append(alloc.space()).append(body).group()
     }
 }
 
@@ -447,7 +447,7 @@ impl<'a, P: Phase> Print<'a> for Param<P> {
 
 impl<'a, P: Phase> Print<'a> for ParamInst<P> {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let ParamInst { info: _, name, typ: _ } = self;
+        let ParamInst { span: _, info: _, name, typ: _ } = self;
         alloc.text(name)
     }
 }
@@ -470,7 +470,7 @@ impl<'a, P: Phase> Print<'a> for SelfParam<P> {
 
 impl<'a, P: Phase> Print<'a> for TypApp<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let TypApp { info: _, name, args } = self;
+        let TypApp { span: _, info: _, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
         alloc.typ(name).append(psubst)
     }
@@ -479,14 +479,14 @@ impl<'a, P: Phase> Print<'a> for TypApp<P> {
 impl<'a, P: Phase> Print<'a> for Exp<P> {
     fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
         match self {
-            Exp::Variable(Variable { info: _, name, ctx: _, idx }) => {
+            Exp::Variable(Variable { span: _, info: _, name, ctx: _, idx }) => {
                 if cfg.de_bruijn {
                     alloc.text(format!("{name}@{idx}"))
                 } else {
                     alloc.text(name)
                 }
             }
-            Exp::TypCtor(TypCtor { info: _, name, args }) => {
+            Exp::TypCtor(TypCtor { span: _, info: _, name, args }) => {
                 if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
                     let arg = args.args[0].print_prec(cfg, alloc, 1);
                     let res = args.args[1].print_prec(cfg, alloc, 0);
@@ -502,14 +502,14 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                     alloc.typ(name).append(psubst)
                 }
             }
-            Exp::Call(Call { info: _, name, args }) => {
+            Exp::Call(Call { span: _, info: _, name, args }) => {
                 let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                 alloc.ctor(name).append(psubst)
             }
             mut dtor @ Exp::DotCall(DotCall { .. }) => {
                 // A series of destructors forms an aligned group
                 let mut dtors_group = alloc.nil();
-                while let Exp::DotCall(DotCall { info: _, exp, name, args }) = &dtor {
+                while let Exp::DotCall(DotCall { span: _, info: _, exp, name, args }) = &dtor {
                     let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                     if !dtors_group.is_nil() {
                         dtors_group = alloc.line_().append(dtors_group);
@@ -520,11 +520,12 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 }
                 dtor.print(cfg, alloc).append(dtors_group.align().group())
             }
-            Exp::Anno(syntax::generic::Anno { info: _, exp, typ }) => {
+            Exp::Anno(syntax::generic::Anno { span: _, info: _, exp, typ }) => {
                 exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
             }
-            Exp::Type(Type { info: _ }) => alloc.keyword(TYPE),
+            Exp::Type(Type { span: _, info: _ }) => alloc.keyword(TYPE),
             Exp::LocalMatch(LocalMatch {
+                span: _,
                 info: _,
                 ctx: _,
                 name,
@@ -543,7 +544,14 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
                 .append(alloc.space())
                 .append(body.print(cfg, alloc)),
-            Exp::LocalComatch(LocalComatch { info: _, ctx: _, name, is_lambda_sugar, body }) => {
+            Exp::LocalComatch(LocalComatch {
+                span: _,
+                info: _,
+                ctx: _,
+                name,
+                is_lambda_sugar,
+                body,
+            }) => {
                 if *is_lambda_sugar && cfg.print_lambda_sugar {
                     print_lambda_sugar(body, cfg, alloc)
                 } else {
@@ -564,7 +572,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
 
 impl<'a, P: Phase> Print<'a> for Motive<P> {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Motive { info: _, param, ret_typ } = self;
+        let Motive { span: _, param, ret_typ } = self;
 
         alloc
             .space()
@@ -643,8 +651,8 @@ fn print_lambda_sugar<'a, P: Phase>(
     alloc: &'a Alloc<'a>,
 ) -> Builder<'a> {
     let Match { cases, .. } = e;
-    let Case { args, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
-    let var_name = args
+    let Case { params, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
+    let var_name = params
         .params
         .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
         .expect("No parameter bound in comatch marked as lambda sugar")

@@ -20,29 +20,41 @@ impl Shift for Exp {
 
 impl Shift for Variable {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Variable { info, name, ctx: (), idx } = self;
-        Variable { info: *info, name: name.clone(), ctx: (), idx: idx.shift_in_range(range, by) }
+        let Variable { span, info, name, ctx: (), idx } = self;
+        Variable {
+            span: *span,
+            info: *info,
+            name: name.clone(),
+            ctx: (),
+            idx: idx.shift_in_range(range, by),
+        }
     }
 }
 
 impl Shift for TypCtor {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let TypCtor { info, name, args } = self;
-        TypCtor { info: *info, name: name.clone(), args: args.shift_in_range(range, by) }
+        let TypCtor { span, info, name, args } = self;
+        TypCtor {
+            span: *span,
+            info: *info,
+            name: name.clone(),
+            args: args.shift_in_range(range, by),
+        }
     }
 }
 
 impl Shift for Call {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Call { info, name, args } = self;
-        Call { info: *info, name: name.clone(), args: args.shift_in_range(range, by) }
+        let Call { span, info, name, args } = self;
+        Call { span: *span, info: *info, name: name.clone(), args: args.shift_in_range(range, by) }
     }
 }
 
 impl Shift for DotCall {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let DotCall { info, exp, name, args } = self;
+        let DotCall { span, info, exp, name, args } = self;
         DotCall {
+            span: *span,
             info: *info,
             exp: exp.shift_in_range(range.clone(), by),
             name: name.clone(),
@@ -53,8 +65,9 @@ impl Shift for DotCall {
 
 impl Shift for Anno {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Anno { info, exp, typ } = self;
+        let Anno { span, info, exp, typ } = self;
         Anno {
+            span: *span,
             info: *info,
             exp: exp.shift_in_range(range.clone(), by),
             typ: typ.shift_in_range(range, by),
@@ -64,15 +77,16 @@ impl Shift for Anno {
 
 impl Shift for Type {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
-        let Type { info } = self;
-        Type { info: *info }
+        let Type { span, info } = self;
+        Type { span: *span, info: *info }
     }
 }
 
 impl Shift for LocalMatch {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let LocalMatch { info, ctx: (), name, on_exp, motive, ret_typ: (), body } = self;
+        let LocalMatch { span, info, ctx: (), name, on_exp, motive, ret_typ: (), body } = self;
         LocalMatch {
+            span: *span,
             info: *info,
             ctx: (),
             name: name.clone(),
@@ -86,8 +100,9 @@ impl Shift for LocalMatch {
 
 impl Shift for LocalComatch {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let LocalComatch { info, ctx: (), name, is_lambda_sugar, body } = self;
+        let LocalComatch { span, info, ctx: (), name, is_lambda_sugar, body } = self;
         LocalComatch {
+            span: *span,
             info: *info,
             ctx: (),
             name: name.clone(),
@@ -99,17 +114,17 @@ impl Shift for LocalComatch {
 
 impl Shift for Hole {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
-        let Hole { info } = self;
-        Hole { info: *info }
+        let Hole { span, info } = self;
+        Hole { span: *span, info: *info }
     }
 }
 
 impl Shift for Motive {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Motive { info, param, ret_typ } = self;
+        let Motive { span, param, ret_typ } = self;
 
         Motive {
-            info: *info,
+            span: *span,
             param: param.clone(),
             ret_typ: ret_typ.shift_in_range(range.shift(1), by),
         }
@@ -118,18 +133,18 @@ impl Shift for Motive {
 
 impl Shift for Match {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Match { info, cases, omit_absurd } = self;
-        Match { info: *info, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
+        let Match { span, cases, omit_absurd } = self;
+        Match { span: *span, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
     }
 }
 
 impl Shift for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Case { info, name, args, body } = self;
+        let Case { span, name, params, body } = self;
         Case {
-            info: *info,
+            span: *span,
             name: name.clone(),
-            args: args.clone(),
+            params: params.clone(),
             body: body.shift_in_range(range.shift(1), by),
         }
     }
@@ -137,8 +152,13 @@ impl Shift for Case {
 
 impl Shift for TypApp {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let TypApp { info, name, args } = self;
-        TypApp { info: *info, name: name.clone(), args: args.shift_in_range(range, by) }
+        let TypApp { span, info, name, args } = self;
+        TypApp {
+            span: *span,
+            info: *info,
+            name: name.clone(),
+            args: args.shift_in_range(range, by),
+        }
     }
 }
 

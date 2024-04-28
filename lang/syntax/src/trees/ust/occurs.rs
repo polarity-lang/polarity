@@ -100,8 +100,8 @@ impl Occurs for Match {
 
 impl Occurs for Case {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
-        let Case { args, body, .. } = self;
-        ctx.bind_iter(args.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
+        let Case { params, body, .. } = self;
+        ctx.bind_iter(params.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
     }
 }
 

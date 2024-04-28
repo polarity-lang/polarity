@@ -11,11 +11,11 @@ pub trait Phase
 where
     Self: Default + Clone + fmt::Debug + Eq,
 {
-    /// Type of the `info` field, containing span and (depending on the phase) type information
-    type TypeInfo: HasSpan + Clone + fmt::Debug;
-    /// Type of the `info` field, containing span and (depending on the phase) type information
+    /// Type of the `info` field, containing (depending on the phase) type information
+    type TypeInfo: Clone + fmt::Debug;
+    /// Type of the `info` field, containing (depending on the phase) type information
     /// where the type is required to be the full application of a type constructor
-    type TypeAppInfo: HasSpan + Clone + Into<Self::TypeInfo> + fmt::Debug;
+    type TypeAppInfo: Clone + Into<Self::TypeInfo> + fmt::Debug;
     /// A type which is not annotated in the source, but will be filled in later during typechecking
     type InfTyp: Clone + fmt::Debug;
     /// Context annotated during typechecking
@@ -104,6 +104,8 @@ impl<P: Phase> HasSpan for Exp<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Variable<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeInfo,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
@@ -114,7 +116,7 @@ pub struct Variable<P: Phase> {
 
 impl<P: Phase> HasSpan for Variable<P> {
     fn span(&self) -> Option<Span> {
-        self.info.span()
+        self.span
     }
 }
 
@@ -126,6 +128,8 @@ impl<P: Phase> HasSpan for Variable<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct TypCtor<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeInfo,
     pub name: Ident,
     pub args: Args<P>,
@@ -133,7 +137,7 @@ pub struct TypCtor<P: Phase> {
 
 impl<P: Phase> HasSpan for TypCtor<P> {
     fn span(&self) -> Option<Span> {
-        self.info.span()
+        self.span
     }
 }
 
@@ -145,6 +149,8 @@ impl<P: Phase> HasSpan for TypCtor<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Call<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeInfo,
     pub name: Ident,
     pub args: Args<P>,
@@ -152,7 +158,7 @@ pub struct Call<P: Phase> {
 
 impl<P: Phase> HasSpan for Call<P> {
     fn span(&self) -> Option<Span> {
-        self.info.span()
+        self.span
     }
 }
 
@@ -164,6 +170,8 @@ impl<P: Phase> HasSpan for Call<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct DotCall<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeInfo,
     pub exp: Rc<Exp<P>>,
     pub name: Ident,
@@ -172,7 +180,7 @@ pub struct DotCall<P: Phase> {
 
 impl<P: Phase> HasSpan for DotCall<P> {
     fn span(&self) -> Option<Span> {
-        self.info.span()
+        self.span
     }
 }
 
@@ -184,6 +192,8 @@ impl<P: Phase> HasSpan for DotCall<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Anno<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeInfo,
     pub exp: Rc<Exp<P>>,
     pub typ: Rc<Exp<P>>,
@@ -191,7 +201,7 @@ pub struct Anno<P: Phase> {
 
 impl<P: Phase> HasSpan for Anno<P> {
     fn span(&self) -> Option<Span> {
-        self.info.span()
+        self.span
     }
 }
 
@@ -203,12 +213,14 @@ impl<P: Phase> HasSpan for Anno<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Type<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeInfo,
 }
 
 impl<P: Phase> HasSpan for Type<P> {
     fn span(&self) -> Option<Span> {
-        self.info.span()
+        self.span
     }
 }
 
@@ -219,6 +231,8 @@ impl<P: Phase> HasSpan for Type<P> {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct LocalMatch<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeAppInfo,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
@@ -233,7 +247,7 @@ pub struct LocalMatch<P: Phase> {
 
 impl<P: Phase> HasSpan for LocalMatch<P> {
     fn span(&self) -> Option<Span> {
-        self.info.span()
+        self.span
     }
 }
 
@@ -245,6 +259,8 @@ impl<P: Phase> HasSpan for LocalMatch<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct LocalComatch<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeAppInfo,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: P::Ctx,
@@ -255,7 +271,7 @@ pub struct LocalComatch<P: Phase> {
 
 impl<P: Phase> HasSpan for LocalComatch<P> {
     fn span(&self) -> Option<Span> {
-        self.info.span()
+        self.span
     }
 }
 
@@ -266,13 +282,14 @@ impl<P: Phase> HasSpan for LocalComatch<P> {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Hole<P: Phase> {
+    pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeInfo,
 }
 
 impl<P: Phase> HasSpan for Hole<P> {
     fn span(&self) -> Option<Span> {
-        self.info.span()
+        self.span
     }
 }
 
@@ -284,7 +301,7 @@ impl<P: Phase> HasSpan for Hole<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Match<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub cases: Vec<Case<P>>,
     pub omit_absurd: bool,
 }
@@ -293,10 +310,9 @@ pub struct Match<P: Phase> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Case<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub name: Ident,
-    // TODO: Rename to params
-    pub args: TelescopeInst<P>,
+    pub params: TelescopeInst<P>,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp<P>>>,
 }
@@ -322,6 +338,8 @@ impl<P: Phase> TelescopeInst<P> {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct ParamInst<P: Phase> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: P::TypeInfo,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
@@ -356,7 +374,7 @@ impl<P: Phase> Args<P> {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Motive<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub param: ParamInst<P>,
     pub ret_typ: Rc<Exp<P>>,
 }

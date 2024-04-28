@@ -18,7 +18,7 @@ pub struct Prg {
 #[derive(Debug, Clone)]
 pub struct XData {
     pub repr: Repr,
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: ust::Ident,
     pub typ: Rc<ust::TypAbs>,
@@ -95,11 +95,11 @@ impl BuildMatrix for ust::Prg {
 
 impl BuildMatrix for ust::Data {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ust::Data { info, doc, name, attr: _, typ, ctors } = self;
+        let ust::Data { span, doc, name, attr: _, typ, ctors } = self;
 
         let xdata = XData {
             repr: Repr::Data,
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             typ: typ.clone(),
@@ -119,11 +119,11 @@ impl BuildMatrix for ust::Data {
 
 impl BuildMatrix for ust::Codata {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ust::Codata { info, doc, name, attr: _, typ, dtors } = self;
+        let ust::Codata { span, doc, name, attr: _, typ, dtors } = self;
 
         let xdata = XData {
             repr: Repr::Codata,
-            info: *info,
+            span: *span,
             doc: doc.clone(),
             name: name.clone(),
             typ: typ.clone(),
@@ -211,7 +211,7 @@ impl BuildMatrix for ust::Codef {
                 let mut ctx = LevelCtx::empty();
                 // TODO: Reconsider where to swap this
                 ctx.bind_iter(self.params.params.iter().map(|_| ()), |ctx| {
-                    ctx.bind_iter(case.args.params.iter().map(|_| ()), |ctx| {
+                    ctx.bind_iter(case.params.params.iter().map(|_| ()), |ctx| {
                         body.swap_with_ctx(ctx, 0, 1)
                     })
                 })
@@ -227,7 +227,7 @@ impl XData {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let data = ust::Data {
-            info: None,
+            span: None,
             doc: doc.clone(),
             name: name.clone(),
             attr: Attribute::default(),
@@ -248,23 +248,23 @@ impl XData {
                             omit_absurd = true;
                         }
                         body.map(|body| ust::Case {
-                            info: None,
+                            span: None,
                             name: ctor.name.clone(),
-                            args: ctor.params.instantiate(),
+                            params: ctor.params.instantiate(),
                             body,
                         })
                     })
                     .collect();
 
                 ust::Def {
-                    info: None,
+                    span: None,
                     doc: dtor.doc.clone(),
                     name: dtor.name.clone(),
                     attr: Attribute::default(),
                     params: dtor.params.clone(),
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
-                    body: ust::Match { cases, info: None, omit_absurd },
+                    body: ust::Match { cases, span: None, omit_absurd },
                 }
             })
             .collect();
@@ -278,7 +278,7 @@ impl XData {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let codata = ust::Codata {
-            info: None,
+            span: None,
             doc: doc.clone(),
             name: name.clone(),
             attr: Attribute::default(),
@@ -308,22 +308,22 @@ impl XData {
                             omit_absurd = true;
                         }
                         body.map(|body| ust::Case {
-                            info: None,
+                            span: None,
                             name: dtor.name.clone(),
-                            args: dtor.params.instantiate(),
+                            params: dtor.params.instantiate(),
                             body,
                         })
                     })
                     .collect();
 
                 ust::Codef {
-                    info: None,
+                    span: None,
                     doc: ctor.doc.clone(),
                     name: ctor.name.clone(),
                     attr: Attribute::default(),
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
-                    body: ust::Match { cases, info: None, omit_absurd },
+                    body: ust::Match { cases, span: None, omit_absurd },
                 }
             })
             .collect();

@@ -23,7 +23,7 @@ pub struct Match {
 pub struct Case {
     pub span: Span,
     pub name: Ident,
-    pub args: Vec<BindingSite>,
+    pub params: Vec<BindingSite>,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp>>,
 }

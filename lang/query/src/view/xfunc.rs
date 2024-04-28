@@ -43,7 +43,7 @@ impl<'a> DatabaseView<'a> {
         let mat = xfunc::as_matrix(&prg)?;
 
         let type_span =
-            mat.map.get(type_name).and_then(|x| x.info).ok_or(XfuncError::Impossible {
+            mat.map.get(type_name).and_then(|x| x.span).ok_or(XfuncError::Impossible {
                 message: format!("Could not resolve {type_name}"),
                 span: None,
             })?;

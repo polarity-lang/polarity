@@ -40,7 +40,7 @@ impl Lower for cst::exp::Match {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Match { span, cases, omit_absurd } = self;
 
-        Ok(ust::Match { info: Some(*span), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
+        Ok(ust::Match { span: Some(*span), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
     }
 }
 
@@ -56,7 +56,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ust::TelescopeInst) -> Result<T, 
             let mut params_out = params_out?;
             let span = bs_to_span(param);
             let name = bs_to_name(param);
-            let param_out = ust::ParamInst { info: Some(span), name, typ: () };
+            let param_out = ust::ParamInst { span: Some(span), info: (), name, typ: () };
             params_out.push(param_out);
             Ok(params_out)
         },
@@ -68,10 +68,10 @@ impl Lower for cst::exp::Case {
     type Target = ust::Case;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::Case { span, name, args, body } = self;
+        let cst::exp::Case { span, name, params, body } = self;
 
-        lower_telescope_inst(args, ctx, |ctx, args| {
-            Ok(ust::Case { info: Some(*span), name: name.clone(), args, body: body.lower(ctx)? })
+        lower_telescope_inst(params, ctx, |ctx, params| {
+            Ok(ust::Case { span: Some(*span), name: name.clone(), params, body: body.lower(ctx)? })
         })
     }
 }
@@ -83,14 +83,16 @@ impl Lower for cst::exp::Call {
         let cst::exp::Call { span, name, args } = self;
         match ctx.lookup(name, span)? {
             Elem::Bound(lvl) => Ok(ust::Exp::Variable(ust::Variable {
-                info: Some(*span),
+                span: Some(*span),
+                info: (),
                 name: name.clone(),
                 ctx: (),
                 idx: ctx.level_to_index(lvl),
             })),
             Elem::Decl(meta) => match meta.kind() {
                 DeclKind::Data | DeclKind::Codata => Ok(ust::Exp::TypCtor(ust::TypCtor {
-                    info: Some(*span),
+                    span: Some(*span),
+                    info: (),
                     name: name.to_owned(),
                     args: ust::Args { args: args.lower(ctx)? },
                 })),
@@ -99,7 +101,8 @@ impl Lower for cst::exp::Call {
                     span: span.to_miette(),
                 }),
                 DeclKind::Codef | DeclKind::Ctor => Ok(ust::Exp::Call(ust::Call {
-                    info: Some(*span),
+                    span: Some(*span),
+                    info: (),
                     name: name.to_owned(),
                     args: ust::Args { args: args.lower(ctx)? },
                 })),
@@ -125,7 +128,8 @@ impl Lower for cst::exp::DotCall {
             }
             Elem::Decl(meta) => match meta.kind() {
                 DeclKind::Def | DeclKind::Dtor => Ok(ust::Exp::DotCall(ust::DotCall {
-                    info: Some(*span),
+                    span: Some(*span),
+                    info: (),
                     exp: exp.lower(ctx)?,
                     name: name.clone(),
                     args: ust::Args { args: args.lower(ctx)? },
@@ -145,7 +149,8 @@ impl Lower for cst::exp::Anno {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Anno { span, exp, typ } = self;
         Ok(ust::Exp::Anno(ust::Anno {
-            info: Some(*span),
+            span: Some(*span),
+            info: (),
             exp: exp.lower(ctx)?,
             typ: typ.lower(ctx)?,
         }))
@@ -157,7 +162,7 @@ impl Lower for cst::exp::Type {
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Type { span } = self;
-        Ok(ust::Exp::Type(ust::Type { info: Some(*span) }))
+        Ok(ust::Exp::Type(ust::Type { span: Some(*span), info: () }))
     }
 }
 
@@ -167,7 +172,8 @@ impl Lower for cst::exp::LocalMatch {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::LocalMatch { span, name, on_exp, motive, body } = self;
         Ok(ust::Exp::LocalMatch(ust::LocalMatch {
-            info: Some(*span),
+            span: Some(*span),
+            info: (),
             ctx: (),
             name: ctx.unique_label(name.to_owned(), span)?,
             on_exp: on_exp.lower(ctx)?,
@@ -184,7 +190,8 @@ impl Lower for cst::exp::LocalComatch {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::LocalComatch { span, name, is_lambda_sugar, body } = self;
         Ok(ust::Exp::LocalComatch(ust::LocalComatch {
-            info: Some(*span),
+            span: Some(*span),
+            info: (),
             ctx: (),
             name: ctx.unique_label(name.to_owned(), span)?,
             is_lambda_sugar: *is_lambda_sugar,
@@ -198,7 +205,7 @@ impl Lower for cst::exp::Hole {
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Hole { span } = self;
-        Ok(ust::Exp::Hole(ust::Hole { info: Some(*span) }))
+        Ok(ust::Exp::Hole(ust::Hole { span: Some(*span), info: () }))
     }
 }
 
@@ -208,7 +215,8 @@ impl Lower for cst::exp::NatLit {
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::NatLit { span, val } = self;
         let mut out = ust::Exp::Call(ust::Call {
-            info: Some(*span),
+            span: Some(*span),
+            info: (),
             name: "Z".to_owned(),
             args: ust::Args { args: vec![] },
         });
@@ -218,7 +226,8 @@ impl Lower for cst::exp::NatLit {
         while &i != val {
             i += 1usize;
             out = ust::Exp::Call(ust::Call {
-                info: Some(*span),
+                span: Some(*span),
+                info: (),
                 name: "S".to_owned(),
                 args: ust::Args { args: vec![Rc::new(out)] },
             });
@@ -233,7 +242,8 @@ impl Lower for cst::exp::Fun {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Fun { span, from, to } = self;
         Ok(ust::Exp::TypCtor(ust::TypCtor {
-            info: Some(*span),
+            span: Some(*span),
+            info: (),
             name: "Fun".to_owned(),
             args: ust::Args { args: vec![from.lower(ctx)?, to.lower(ctx)?] },
         }))
@@ -254,7 +264,7 @@ impl Lower for cst::exp::Lam {
                 cases: vec![cst::exp::Case {
                     span: *span,
                     name: "ap".to_owned(),
-                    args: vec![
+                    params: vec![
                         cst::exp::BindingSite::Wildcard { span: Default::default() },
                         cst::exp::BindingSite::Wildcard { span: Default::default() },
                         var.clone(),
@@ -289,9 +299,10 @@ impl Lower for cst::exp::Motive {
         let cst::exp::Motive { span, param, ret_typ } = self;
 
         Ok(ust::Motive {
-            info: Some(*span),
+            span: Some(*span),
             param: ust::ParamInst {
-                info: Some(bs_to_span(param)),
+                span: Some(bs_to_span(param)),
+                info: (),
                 name: bs_to_name(param),
                 typ: (),
             },

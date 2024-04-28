@@ -18,23 +18,23 @@ use syntax::ust;
 pub enum Val {
     TypCtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Option<Span>,
+        span: Option<Span>,
         name: ust::Ident,
         args: Args,
     },
     Ctor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Option<Span>,
+        span: Option<Span>,
         name: ust::Ident,
         args: Args,
     },
     Type {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Option<Span>,
+        span: Option<Span>,
     },
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Option<Span>,
+        span: Option<Span>,
         name: ust::Label,
         is_lambda_sugar: bool,
         // TODO: Ignore this field for PartialEq, Hash?
@@ -51,21 +51,21 @@ pub enum Val {
 pub enum Neu {
     Var {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Option<Span>,
+        span: Option<Span>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         name: ust::Ident,
         idx: Idx,
     },
     Dtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Option<Span>,
+        span: Option<Span>,
         exp: Rc<Neu>,
         name: ust::Ident,
         args: Args,
     },
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Option<Span>,
+        span: Option<Span>,
         name: ust::Label,
         on_exp: Rc<Neu>,
         // TODO: Ignore this field for PartialEq, Hash?
@@ -73,7 +73,7 @@ pub enum Neu {
     },
     Hole {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        info: Option<Span>,
+        span: Option<Span>,
     },
 }
 
@@ -81,7 +81,7 @@ pub enum Neu {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Match {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub cases: Vec<Case>,
     pub omit_absurd: bool,
 }
@@ -90,17 +90,16 @@ pub struct Match {
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub name: ust::Ident,
-    // TODO: Rename to params
-    pub args: ust::TelescopeInst,
+    pub params: ust::TelescopeInst,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Closure>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TypApp {
-    pub info: Option<Span>,
+    pub span: Option<Span>,
     pub name: ust::Ident,
     pub args: Args,
 }
@@ -118,17 +117,17 @@ pub struct Closure {
 impl Shift for Val {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
-            Val::TypCtor { info, name, args } => Val::TypCtor {
-                info: *info,
+            Val::TypCtor { span, name, args } => Val::TypCtor {
+                span: *span,
                 name: name.clone(),
                 args: args.shift_in_range(range, by),
             },
-            Val::Ctor { info, name, args } => {
-                Val::Ctor { info: *info, name: name.clone(), args: args.shift_in_range(range, by) }
+            Val::Ctor { span, name, args } => {
+                Val::Ctor { span: *span, name: name.clone(), args: args.shift_in_range(range, by) }
             }
-            Val::Type { info } => Val::Type { info: *info },
-            Val::Comatch { info, name, is_lambda_sugar, body } => Val::Comatch {
-                info: *info,
+            Val::Type { span } => Val::Type { span: *span },
+            Val::Comatch { span, name, is_lambda_sugar, body } => Val::Comatch {
+                span: *span,
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 body: body.shift_in_range(range, by),
@@ -141,41 +140,41 @@ impl Shift for Val {
 impl Shift for Neu {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
-            Neu::Var { info, name, idx } => {
-                Neu::Var { info: *info, name: name.clone(), idx: idx.shift_in_range(range, by) }
+            Neu::Var { span, name, idx } => {
+                Neu::Var { span: *span, name: name.clone(), idx: idx.shift_in_range(range, by) }
             }
-            Neu::Dtor { info, exp, name, args } => Neu::Dtor {
-                info: *info,
+            Neu::Dtor { span, exp, name, args } => Neu::Dtor {
+                span: *span,
                 exp: exp.shift_in_range(range.clone(), by),
                 name: name.clone(),
                 args: args.shift_in_range(range, by),
             },
-            Neu::Match { info, name, on_exp, body } => Neu::Match {
-                info: *info,
+            Neu::Match { span, name, on_exp, body } => Neu::Match {
+                span: *span,
                 name: name.clone(),
                 on_exp: on_exp.shift_in_range(range.clone(), by),
                 body: body.shift_in_range(range, by),
             },
-            Neu::Hole { info } => Neu::Hole { info: *info },
+            Neu::Hole { span } => Neu::Hole { span: *span },
         }
     }
 }
 
 impl Shift for Match {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Match { info, cases, omit_absurd } = self;
-        Match { info: *info, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
+        let Match { span, cases, omit_absurd } = self;
+        Match { span: *span, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
     }
 }
 
 impl Shift for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Case { info, name, args, body } = self;
+        let Case { span, name, params, body } = self;
 
         Case {
-            info: *info,
+            span: *span,
             name: name.clone(),
-            args: args.clone(),
+            params: params.clone(),
             body: body.shift_in_range(range.shift(1), by),
         }
     }
@@ -191,18 +190,18 @@ impl Shift for Closure {
 impl<'a> Print<'a> for Val {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Val::TypCtor { info: _, name, args } => {
+            Val::TypCtor { span: _, name, args } => {
                 let psubst =
                     if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 alloc.typ(name).append(psubst)
             }
-            Val::Ctor { info: _, name, args } => {
+            Val::Ctor { span: _, name, args } => {
                 let psubst =
                     if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 alloc.ctor(name).append(psubst)
             }
-            Val::Type { info: _ } => alloc.typ(TYPE),
-            Val::Comatch { info: _, name, is_lambda_sugar: _, body } => alloc
+            Val::Type { span: _ } => alloc.typ(TYPE),
+            Val::Comatch { span: _, name, is_lambda_sugar: _, body } => alloc
                 .keyword(COMATCH)
                 .append(alloc.space())
                 .append(alloc.text(name.to_string()))
@@ -216,13 +215,13 @@ impl<'a> Print<'a> for Val {
 impl<'a> Print<'a> for Neu {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Neu::Var { info: _, name, idx } => alloc.text(format!("{name}@{idx}")),
-            Neu::Dtor { info: _, exp, name, args } => {
+            Neu::Var { span: _, name, idx } => alloc.text(format!("{name}@{idx}")),
+            Neu::Dtor { span: _, exp, name, args } => {
                 let psubst =
                     if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
             }
-            Neu::Match { info: _, name, on_exp, body } => on_exp
+            Neu::Match { span: _, name, on_exp, body } => on_exp
                 .print(cfg, alloc)
                 .append(DOT)
                 .append(alloc.keyword(MATCH))
@@ -237,7 +236,7 @@ impl<'a> Print<'a> for Neu {
 
 impl<'a> Print<'a> for Match {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Match { info: _, cases, omit_absurd } = self;
+        let Match { span: _, cases, omit_absurd } = self;
         let sep = alloc.text(COMMA).append(alloc.hardline());
         alloc
             .hardline()
@@ -255,7 +254,7 @@ impl<'a> Print<'a> for Match {
 
 impl<'a> Print<'a> for Case {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Case { info: _, name, args, body } = self;
+        let Case { span: _, name, params, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -266,7 +265,7 @@ impl<'a> Print<'a> for Case {
                 .nest(cfg.indent),
         };
 
-        alloc.ctor(name).append(args.print(cfg, alloc)).append(alloc.space()).append(body).group()
+        alloc.ctor(name).append(params.print(cfg, alloc)).append(alloc.space()).append(body).group()
     }
 }
 

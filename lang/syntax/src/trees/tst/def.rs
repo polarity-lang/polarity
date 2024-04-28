@@ -2,9 +2,6 @@
 
 use std::rc::Rc;
 
-use codespan::Span;
-
-use crate::common::*;
 use crate::ctx::values::TypeCtx;
 use crate::ust;
 
@@ -77,19 +74,12 @@ impl From<Rc<Exp>> for Typ {
 #[derive(Debug, Clone)]
 pub struct TypeInfo {
     pub typ: Rc<ust::Exp>,
-    pub span: Option<Span>,
     pub ctx: Option<TypeCtx>,
 }
 
 impl From<Rc<ust::Exp>> for TypeInfo {
     fn from(typ: Rc<ust::Exp>) -> Self {
-        TypeInfo { span: typ.span(), typ, ctx: None }
-    }
-}
-
-impl HasSpan for TypeInfo {
-    fn span(&self) -> Option<Span> {
-        self.span
+        TypeInfo { typ, ctx: None }
     }
 }
 
@@ -97,29 +87,19 @@ impl HasSpan for TypeInfo {
 pub struct TypeAppInfo {
     pub typ: TypApp,
     pub typ_nf: ust::TypApp,
-    pub span: Option<Span>,
 }
 
 impl From<TypeAppInfo> for TypeInfo {
     fn from(type_app_info: TypeAppInfo) -> Self {
-        let ust::TypApp { info, name, args } = type_app_info.typ_nf;
-        Self {
-            span: info.span(),
-            typ: Rc::new(ust::Exp::TypCtor(ust::TypCtor { info, name, args })),
-            ctx: None,
-        }
-    }
-}
-
-impl HasSpan for TypeAppInfo {
-    fn span(&self) -> Option<Span> {
-        self.span
+        let ust::TypApp { span, info, name, args } = type_app_info.typ_nf;
+        Self { typ: Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args })), ctx: None }
     }
 }
 
 pub trait HasTypeInfo {
     fn typ(&self) -> Rc<ust::Exp>;
 }
+
 impl HasTypeInfo for Exp {
     fn typ(&self) -> Rc<ust::Exp> {
         match self {
@@ -130,34 +110,14 @@ impl HasTypeInfo for Exp {
             Exp::Anno(e) => e.info.clone().typ,
             Exp::Type(e) => e.info.clone().typ,
             Exp::LocalMatch(e) => {
-                let ust::TypApp { info, name, args } = e.info.clone().typ_nf;
-                Rc::new(ust::Exp::TypCtor(ust::TypCtor { info, name, args }))
+                let ust::TypApp { span, info, name, args } = e.info.clone().typ_nf;
+                Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args }))
             }
             Exp::LocalComatch(e) => {
-                let ust::TypApp { info, name, args } = e.info.clone().typ_nf;
-                Rc::new(ust::Exp::TypCtor(ust::TypCtor { info, name, args }))
+                let ust::TypApp { span, info, name, args } = e.info.clone().typ_nf;
+                Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args }))
             }
             Exp::Hole(e) => e.info.clone().typ,
         }
-    }
-}
-
-pub trait ElabInfoExt {
-    fn with_type(&self, typ: Rc<ust::Exp>) -> TypeInfo;
-    fn with_type_and_ctx(&self, typ: Rc<ust::Exp>, ctx: TypeCtx) -> TypeInfo;
-    fn with_type_app(&self, typ: TypApp, typ_nf: ust::TypApp) -> TypeAppInfo;
-}
-
-impl ElabInfoExt for Option<Span> {
-    fn with_type(&self, typ: Rc<ust::Exp>) -> TypeInfo {
-        TypeInfo { typ, span: *self, ctx: None }
-    }
-
-    fn with_type_and_ctx(&self, typ: Rc<ust::Exp>, ctx: TypeCtx) -> TypeInfo {
-        TypeInfo { typ, span: *self, ctx: Some(ctx) }
-    }
-
-    fn with_type_app(&self, typ: TypApp, typ_nf: ust::TypApp) -> TypeAppInfo {
-        TypeAppInfo { typ, typ_nf, span: *self }
     }
 }
