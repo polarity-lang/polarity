@@ -120,6 +120,12 @@ impl HasSpan for Variable {
     }
 }
 
+impl<P: Phase> From<Variable> for Exp<P> {
+    fn from(val: Variable) -> Self {
+        Exp::Variable(val)
+    }
+}
+
 // TypCtor
 //
 //
@@ -156,6 +162,12 @@ impl<P: Phase> HasSpan for TypCtor<P> {
     }
 }
 
+impl<P: Phase> From<TypCtor<P>> for Exp<P> {
+    fn from(val: TypCtor<P>) -> Self {
+        Exp::TypCtor(val)
+    }
+}
+
 // Call
 //
 //
@@ -183,6 +195,12 @@ pub struct Call<P: Phase> {
 impl<P: Phase> HasSpan for Call<P> {
     fn span(&self) -> Option<Span> {
         self.span
+    }
+}
+
+impl<P: Phase> From<Call<P>> for Exp<P> {
+    fn from(val: Call<P>) -> Self {
+        Exp::Call(val)
     }
 }
 
@@ -219,6 +237,12 @@ impl<P: Phase> HasSpan for DotCall<P> {
     }
 }
 
+impl<P: Phase> From<DotCall<P>> for Exp<P> {
+    fn from(val: DotCall<P>) -> Self {
+        Exp::DotCall(val)
+    }
+}
+
 // Anno
 //
 //
@@ -247,6 +271,12 @@ impl<P: Phase> HasSpan for Anno<P> {
     }
 }
 
+impl<P: Phase> From<Anno<P>> for Exp<P> {
+    fn from(val: Anno<P>) -> Self {
+        Exp::Anno(val)
+    }
+}
+
 // TypeUniv
 //
 //
@@ -267,6 +297,12 @@ pub struct TypeUniv {
 impl HasSpan for TypeUniv {
     fn span(&self) -> Option<Span> {
         self.span
+    }
+}
+
+impl<P: Phase> From<TypeUniv> for Exp<P> {
+    fn from(val: TypeUniv) -> Self {
+        Exp::TypeUniv(val)
     }
 }
 
@@ -297,6 +333,12 @@ impl<P: Phase> HasSpan for LocalMatch<P> {
     }
 }
 
+impl<P: Phase> From<LocalMatch<P>> for Exp<P> {
+    fn from(val: LocalMatch<P>) -> Self {
+        Exp::LocalMatch(val)
+    }
+}
+
 // LocalComatch
 //
 //
@@ -321,6 +363,12 @@ impl<P: Phase> HasSpan for LocalComatch<P> {
     }
 }
 
+impl<P: Phase> From<LocalComatch<P>> for Exp<P> {
+    fn from(val: LocalComatch<P>) -> Self {
+        Exp::LocalComatch(val)
+    }
+}
+
 // Hole
 //
 //
@@ -342,6 +390,12 @@ pub struct Hole {
 impl HasSpan for Hole {
     fn span(&self) -> Option<Span> {
         self.span
+    }
+}
+
+impl<P: Phase> From<Hole> for Exp<P> {
+    fn from(val: Hole) -> Self {
+        Exp::Hole(val)
     }
 }
 
