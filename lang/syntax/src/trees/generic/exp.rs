@@ -160,7 +160,7 @@ impl<P: Phase> HasSpan for TypCtor<P> {
 //
 //
 
-/// A Call is either a constructor, a codefinition or a toplevel let-bound definition.
+/// A Call invokes a constructor, a codefinition or a toplevel let-bound definition.
 /// Examples: `Zero`, `Cons(True, Nil)`, `minimum(x,y)`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
