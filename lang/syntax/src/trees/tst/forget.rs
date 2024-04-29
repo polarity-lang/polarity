@@ -3,7 +3,10 @@
 use std::rc::Rc;
 
 use super::def::*;
-use crate::ust;
+use crate::{
+    generic::{Hole, TypeUniv, Variable},
+    ust,
+};
 
 pub trait ForgetTST {
     type Target;
@@ -251,7 +254,7 @@ impl ForgetTST for Exp {
             Exp::Call(e) => ust::Exp::Call(e.forget_tst()),
             Exp::DotCall(e) => ust::Exp::DotCall(e.forget_tst()),
             Exp::Anno(e) => ust::Exp::Anno(e.forget_tst()),
-            Exp::Type(e) => ust::Exp::Type(e.forget_tst()),
+            Exp::TypeUniv(e) => ust::Exp::TypeUniv(e.forget_tst()),
             Exp::LocalMatch(e) => ust::Exp::LocalMatch(e.forget_tst()),
             Exp::LocalComatch(e) => ust::Exp::LocalComatch(e.forget_tst()),
             Exp::Hole(e) => ust::Exp::Hole(e.forget_tst()),
@@ -260,17 +263,11 @@ impl ForgetTST for Exp {
 }
 
 impl ForgetTST for Variable {
-    type Target = ust::Variable;
+    type Target = Variable;
 
     fn forget_tst(&self) -> Self::Target {
-        let Variable { span, info, name, ctx: _, idx } = self;
-        ust::Variable {
-            span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            ctx: None,
-            idx: *idx,
-        }
+        let Variable { span, idx, name, .. } = self;
+        Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: None }
     }
 }
 
@@ -278,13 +275,8 @@ impl ForgetTST for TypCtor {
     type Target = ust::TypCtor;
 
     fn forget_tst(&self) -> Self::Target {
-        let TypCtor { span, info, name, args } = self;
-        ust::TypCtor {
-            span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            args: args.forget_tst(),
-        }
+        let TypCtor { span, name, args } = self;
+        ust::TypCtor { span: *span, name: name.clone(), args: args.forget_tst() }
     }
 }
 
@@ -292,13 +284,8 @@ impl ForgetTST for Call {
     type Target = ust::Call;
 
     fn forget_tst(&self) -> Self::Target {
-        let Call { span, info, name, args } = self;
-        ust::Call {
-            span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            args: args.forget_tst(),
-        }
+        let Call { span, name, args, .. } = self;
+        ust::Call { span: *span, name: name.clone(), args: args.forget_tst(), inferred_type: None }
     }
 }
 
@@ -306,13 +293,13 @@ impl ForgetTST for DotCall {
     type Target = ust::DotCall;
 
     fn forget_tst(&self) -> Self::Target {
-        let DotCall { span, info, exp, name, args } = self;
+        let DotCall { span, exp, name, args, .. } = self;
         ust::DotCall {
             span: *span,
-            info: info.forget_tst(),
             exp: exp.forget_tst(),
             name: name.clone(),
             args: args.forget_tst(),
+            inferred_type: None,
         }
     }
 }
@@ -321,22 +308,22 @@ impl ForgetTST for Anno {
     type Target = ust::Anno;
 
     fn forget_tst(&self) -> Self::Target {
-        let Anno { span, info, exp, typ } = self;
+        let Anno { span, exp, typ, .. } = self;
         ust::Anno {
             span: *span,
-            info: info.forget_tst(),
             exp: exp.forget_tst(),
             typ: typ.forget_tst(),
+            normalized_type: None,
         }
     }
 }
 
-impl ForgetTST for Type {
-    type Target = ust::Type;
+impl ForgetTST for TypeUniv {
+    type Target = TypeUniv;
 
     fn forget_tst(&self) -> Self::Target {
-        let Type { span, info } = self;
-        ust::Type { span: *span, info: info.forget_tst() }
+        let TypeUniv { span } = self;
+        TypeUniv { span: *span }
     }
 }
 
@@ -344,16 +331,16 @@ impl ForgetTST for LocalMatch {
     type Target = ust::LocalMatch;
 
     fn forget_tst(&self) -> Self::Target {
-        let LocalMatch { span, info, ctx: _, name, on_exp, motive, ret_typ, body } = self;
+        let LocalMatch { span, ctx: _, name, on_exp, motive, ret_typ, body, .. } = self;
         ust::LocalMatch {
             span: *span,
-            info: info.forget_tst(),
             ctx: None,
             name: name.clone(),
             on_exp: on_exp.forget_tst(),
             motive: motive.forget_tst(),
             ret_typ: ret_typ.forget_tst(),
             body: body.forget_tst(),
+            inferred_type: None,
         }
     }
 }
@@ -362,25 +349,25 @@ impl ForgetTST for LocalComatch {
     type Target = ust::LocalComatch;
 
     fn forget_tst(&self) -> Self::Target {
-        let LocalComatch { span, info, ctx: _, name, is_lambda_sugar, body } = self;
+        let LocalComatch { span, ctx: _, name, is_lambda_sugar, body, .. } = self;
 
         ust::LocalComatch {
             span: *span,
-            info: info.forget_tst(),
             ctx: None,
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             body: body.forget_tst(),
+            inferred_type: None,
         }
     }
 }
 
 impl ForgetTST for Hole {
-    type Target = ust::Hole;
+    type Target = Hole;
 
     fn forget_tst(&self) -> Self::Target {
-        let Hole { span, info } = self;
-        ust::Hole { span: *span, info: info.forget_tst() }
+        let Hole { span, .. } = self;
+        Hole { span: *span, inferred_type: None, inferred_ctx: None }
     }
 }
 
@@ -448,12 +435,6 @@ impl ForgetTST for Args {
 }
 
 impl ForgetTST for TypeInfo {
-    type Target = ();
-
-    fn forget_tst(&self) -> Self::Target {}
-}
-
-impl ForgetTST for TypeAppInfo {
     type Target = ();
 
     fn forget_tst(&self) -> Self::Target {}

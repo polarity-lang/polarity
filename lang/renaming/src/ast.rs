@@ -49,7 +49,6 @@ impl<R: Rename + Clone> Rename for Rc<R> {
 impl<P: Phase> Rename for Prg<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Prg { decls } = self;
@@ -61,7 +60,6 @@ where
 impl<P: Phase> Rename for Decls<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         Decls {
@@ -74,7 +72,6 @@ where
 impl<P: Phase> Rename for Decl<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         match self {
@@ -92,7 +89,6 @@ where
 impl<P: Phase> Rename for Data<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Data { span, doc, name, attr, typ, ctors } = self;
@@ -103,7 +99,6 @@ where
 impl<P: Phase> Rename for Codata<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Codata { span, doc, name, attr, typ, dtors } = self;
@@ -115,7 +110,6 @@ where
 impl<P: Phase> Rename for Ctor<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Ctor { span, doc, name, params, typ } = self;
@@ -130,7 +124,6 @@ where
 impl<P: Phase> Rename for Dtor<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Dtor { span, doc, name, params, self_param, ret_typ } = self;
@@ -150,7 +143,6 @@ where
 impl<P: Phase> Rename for Def<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
@@ -180,7 +172,6 @@ where
 impl<P: Phase> Rename for Codef<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Codef { span, doc, name, attr, params, typ, body } = self;
@@ -200,7 +191,6 @@ where
 impl<P: Phase> Rename for Let<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Let { span, doc, name, attr, params, typ, body } = self;
@@ -220,7 +210,6 @@ where
 impl<P: Phase> Rename for TypAbs<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let TypAbs { params } = self;
@@ -231,7 +220,6 @@ where
 impl<P: Phase> Rename for Telescope<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Telescope { params } = self;
@@ -253,7 +241,6 @@ where
 impl<P: Phase> Rename for Param<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Param { name, typ } = self;
@@ -268,7 +255,6 @@ where
 impl<P: Phase> Rename for TelescopeInst<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let TelescopeInst { params } = self;
@@ -290,7 +276,6 @@ where
 impl<P: Phase> Rename for ParamInst<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let ParamInst { span, name, typ, info } = self;
@@ -306,7 +291,6 @@ where
 impl<P: Phase> Rename for SelfParam<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let SelfParam { info, name, typ } = self;
@@ -320,93 +304,88 @@ where
 impl<P: Phase> Rename for Exp<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         match self {
-            Exp::Variable(Variable { span, info, name: _, ctx: _, idx }) => {
-                Exp::Variable(Variable {
-                    span,
-                    info: info.rename_in_ctx(ctx),
-                    name: ctx.lookup(idx),
-                    ctx: None,
-                    idx,
-                })
-            }
-            Exp::LocalComatch(LocalComatch { span, info, ctx: _, name, is_lambda_sugar, body }) => {
+            Exp::Variable(e) => Exp::Variable(e.rename_in_ctx(ctx)),
+            Exp::LocalComatch(LocalComatch { span, name, is_lambda_sugar, body, .. }) => {
                 Exp::LocalComatch(LocalComatch {
                     span,
-                    info: info.rename_in_ctx(ctx),
                     ctx: None,
                     name,
                     is_lambda_sugar,
                     body: body.rename_in_ctx(ctx),
+                    inferred_type: None,
                 })
             }
-            Exp::Anno(Anno { span, info, exp, typ }) => Exp::Anno(Anno {
+            Exp::Anno(Anno { span, exp, typ, normalized_type }) => Exp::Anno(Anno {
                 span,
-                info: info.rename_in_ctx(ctx),
                 exp: exp.rename_in_ctx(ctx),
                 typ: typ.rename_in_ctx(ctx),
+                normalized_type: normalized_type.map(|e| e.rename_in_ctx(ctx)),
             }),
             Exp::TypCtor(e) => Exp::TypCtor(e.rename_in_ctx(ctx)),
-            Exp::Hole(Hole { span, info }) => {
-                Exp::Hole(Hole { span, info: info.rename_in_ctx(ctx) })
-            }
-            Exp::Type(Type { span, info }) => {
-                Exp::Type(Type { span, info: info.rename_in_ctx(ctx) })
-            }
-            Exp::Call(Call { span, info, name, args }) => Exp::Call(Call {
+            Exp::Hole(Hole { span, inferred_type, inferred_ctx: _ }) => Exp::Hole(Hole {
                 span,
-                info: info.rename_in_ctx(ctx),
+                inferred_type: inferred_type.rename_in_ctx(ctx),
+                inferred_ctx: None, // TODO: Rename TypeCtx!
+            }),
+            Exp::TypeUniv(e) => Exp::TypeUniv(e),
+            Exp::Call(Call { span, name, args, inferred_type }) => Exp::Call(Call {
+                span,
                 name,
                 args: args.rename_in_ctx(ctx),
+                inferred_type: inferred_type.rename_in_ctx(ctx),
             }),
-            Exp::LocalMatch(LocalMatch {
-                span,
-                info,
-                ctx: _,
-                name,
-                on_exp,
-                motive,
-                ret_typ,
-                body,
-            }) => Exp::LocalMatch(LocalMatch {
-                span,
-                info: info.rename_in_ctx(ctx),
-                ctx: None,
-                name,
-                on_exp: on_exp.rename_in_ctx(ctx),
-                motive: motive.rename_in_ctx(ctx),
-                ret_typ: ret_typ.rename_in_ctx(ctx),
-                body: body.rename_in_ctx(ctx),
-            }),
-            Exp::DotCall(DotCall { span, info, exp, name, args }) => Exp::DotCall(DotCall {
-                span,
-                info: info.rename_in_ctx(ctx),
-                name,
-                exp: exp.rename_in_ctx(ctx),
-                args: args.rename_in_ctx(ctx),
-            }),
+            Exp::LocalMatch(LocalMatch { span, name, on_exp, motive, ret_typ, body, .. }) => {
+                Exp::LocalMatch(LocalMatch {
+                    span,
+                    ctx: None,
+                    name,
+                    on_exp: on_exp.rename_in_ctx(ctx),
+                    motive: motive.rename_in_ctx(ctx),
+                    ret_typ: ret_typ.rename_in_ctx(ctx),
+                    body: body.rename_in_ctx(ctx),
+                    inferred_type: None,
+                })
+            }
+            Exp::DotCall(DotCall { span, exp, name, args, inferred_type }) => {
+                Exp::DotCall(DotCall {
+                    span,
+                    name,
+                    exp: exp.rename_in_ctx(ctx),
+                    args: args.rename_in_ctx(ctx),
+                    inferred_type: inferred_type.rename_in_ctx(ctx),
+                })
+            }
         }
     }
 }
 
+impl Rename for Variable {
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+        let Variable { span, idx, inferred_type, .. } = self;
+        Variable {
+            span,
+            idx,
+            name: ctx.lookup(idx),
+            inferred_type: inferred_type.rename_in_ctx(ctx),
+        }
+    }
+}
 impl<P: Phase> Rename for TypCtor<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let TypCtor { span, info, name, args } = self;
-        TypCtor { span, info: info.rename_in_ctx(ctx), name, args: args.rename_in_ctx(ctx) }
+        let TypCtor { span, name, args } = self;
+        TypCtor { span, name, args: args.rename_in_ctx(ctx) }
     }
 }
 
 impl<P: Phase> Rename for Match<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Match { span, cases, omit_absurd } = self;
@@ -418,7 +397,6 @@ where
 impl<P: Phase> Rename for Args<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Args { args } = self;
@@ -430,7 +408,6 @@ where
 impl<P: Phase> Rename for Case<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Case { span, name, params, body } = self;
@@ -448,7 +425,6 @@ where
 impl<P: Phase> Rename for Motive<P>
 where
     P::TypeInfo: Rename,
-    P::TypeAppInfo: Rename,
 {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Motive { span, param, ret_typ } = self;

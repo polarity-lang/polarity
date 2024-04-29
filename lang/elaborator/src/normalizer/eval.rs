@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use syntax::ctx::{BindContext, Context};
+use syntax::generic::{Hole, TypeUniv, Variable};
 use syntax::ust;
 use tracer::trace;
 
@@ -30,7 +31,7 @@ impl Eval for ust::Exp {
             ust::Exp::Call(e) => e.eval(prg, env),
             ust::Exp::DotCall(e) => e.eval(prg, env),
             ust::Exp::Anno(e) => e.eval(prg, env),
-            ust::Exp::Type(e) => e.eval(prg, env),
+            ust::Exp::TypeUniv(e) => e.eval(prg, env),
             ust::Exp::LocalMatch(e) => e.eval(prg, env),
             ust::Exp::LocalComatch(e) => e.eval(prg, env),
             ust::Exp::Hole(e) => e.eval(prg, env),
@@ -38,11 +39,11 @@ impl Eval for ust::Exp {
     }
 }
 
-impl Eval for ust::Variable {
+impl Eval for Variable {
     type Val = Rc<Val>;
 
     fn eval(&self, _prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Variable { idx, .. } = self;
+        let Variable { idx, .. } = self;
         Ok(env.lookup(*idx))
     }
 }
@@ -51,7 +52,7 @@ impl Eval for ust::TypCtor {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::TypCtor { span, info: (), name, args } = self;
+        let ust::TypCtor { span, name, args } = self;
         Ok(Rc::new(Val::TypCtor { span: *span, name: name.clone(), args: args.eval(prg, env)? }))
     }
 }
@@ -60,7 +61,7 @@ impl Eval for ust::Call {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Call { span, info: (), name, args } = self;
+        let ust::Call { span, name, args, .. } = self;
         Ok(Rc::new(Val::Ctor { span: *span, name: name.clone(), args: args.eval(prg, env)? }))
     }
 }
@@ -69,7 +70,7 @@ impl Eval for ust::DotCall {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::DotCall { span, info: (), exp, name, args } = self;
+        let ust::DotCall { span, exp, name, args, .. } = self;
         let exp = exp.eval(prg, env)?;
         let args = args.eval(prg, env)?;
         match (*exp).clone() {
@@ -108,12 +109,12 @@ impl Eval for ust::Anno {
     }
 }
 
-impl Eval for ust::Type {
+impl Eval for TypeUniv {
     type Val = Rc<Val>;
 
     fn eval(&self, _prg: &ust::Prg, _env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Type { span, info: () } = self;
-        Ok(Rc::new(Val::Type { span: *span }))
+        let TypeUniv { span } = self;
+        Ok(Rc::new(Val::TypeUniv { span: *span }))
     }
 }
 
@@ -143,7 +144,7 @@ impl Eval for ust::LocalComatch {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &ust::Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::LocalComatch { span, info: (), ctx: _, name, is_lambda_sugar, body } = self;
+        let ust::LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
         Ok(Rc::new(Val::Comatch {
             span: *span,
             name: name.clone(),
@@ -153,11 +154,11 @@ impl Eval for ust::LocalComatch {
     }
 }
 
-impl Eval for ust::Hole {
+impl Eval for Hole {
     type Val = Rc<Val>;
 
     fn eval(&self, _prg: &ust::Prg, _env: &mut Env) -> Result<Self::Val, TypeError> {
-        let ust::Hole { span, info: () } = self;
+        let Hole { span, .. } = self;
         Ok(Rc::new(Val::Neu { exp: Neu::Hole { span: *span } }))
     }
 }

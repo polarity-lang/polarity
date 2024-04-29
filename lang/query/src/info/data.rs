@@ -35,9 +35,7 @@ pub struct VariableInfo {
 
 /// Hover information for type constructors
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TypeCtorInfo {
-    pub typ: String,
-}
+pub struct TypeCtorInfo {}
 
 /// Hover information for calls (constructors, codefinitions or lets)
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -53,9 +51,7 @@ pub struct DotCallInfo {
 
 /// Hover information for type universes
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TypeUnivInfo {
-    pub typ: String,
-}
+pub struct TypeUnivInfo {}
 
 /// Hover information for type annotated terms
 #[derive(Debug, Clone, PartialEq, Eq)]

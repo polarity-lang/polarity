@@ -6,7 +6,10 @@ use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;
+use syntax::generic::Hole;
 use syntax::generic::Named;
+use syntax::generic::TypeUniv;
+use syntax::generic::Variable;
 use syntax::tst;
 use syntax::tst::forget::ForgetTST;
 use syntax::ust;
@@ -318,7 +321,7 @@ impl Lift for tst::Exp {
             tst::Exp::Call(e) => e.lift(ctx),
             tst::Exp::DotCall(e) => e.lift(ctx),
             tst::Exp::Anno(e) => e.lift(ctx),
-            tst::Exp::Type(e) => e.lift(ctx),
+            tst::Exp::TypeUniv(e) => e.lift(ctx),
             tst::Exp::Hole(e) => e.lift(ctx),
             tst::Exp::LocalMatch(e) => e.lift(ctx),
             tst::Exp::LocalComatch(e) => e.lift(ctx),
@@ -326,17 +329,16 @@ impl Lift for tst::Exp {
     }
 }
 
-impl Lift for tst::Variable {
+impl Lift for Variable {
     type Target = ust::Exp;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let tst::Variable { span, info, name, ctx: _, idx } = self;
-        ust::Exp::Variable(ust::Variable {
+        let Variable { span, idx, name, .. } = self;
+        ust::Exp::Variable(Variable {
             span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            ctx: None,
             idx: *idx,
+            name: name.clone(),
+            inferred_type: None,
         })
     }
 }
@@ -345,13 +347,8 @@ impl Lift for tst::TypCtor {
     type Target = ust::TypCtor;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::TypCtor { span, info, name, args } = self;
-        ust::TypCtor {
-            span: *span,
-            info: info.forget_tst(),
-            name: name.clone(),
-            args: args.lift(ctx),
-        }
+        let tst::TypCtor { span, name, args } = self;
+        ust::TypCtor { span: *span, name: name.clone(), args: args.lift(ctx) }
     }
 }
 
@@ -359,12 +356,12 @@ impl Lift for tst::Call {
     type Target = ust::Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Call { span, info, name, args } = self;
+        let tst::Call { span, name, args, .. } = self;
         ust::Exp::Call(ust::Call {
             span: *span,
-            info: info.forget_tst(),
             name: name.clone(),
             args: args.lift(ctx),
+            inferred_type: None,
         })
     }
 }
@@ -373,13 +370,13 @@ impl Lift for tst::DotCall {
     type Target = ust::Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::DotCall { span, info, exp, name, args } = self;
+        let tst::DotCall { span, exp, name, args, .. } = self;
         ust::Exp::DotCall(ust::DotCall {
             span: *span,
-            info: info.forget_tst(),
             exp: exp.lift(ctx),
             name: name.clone(),
             args: args.lift(ctx),
+            inferred_type: None,
         })
     }
 }
@@ -388,31 +385,31 @@ impl Lift for tst::Anno {
     type Target = ust::Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::Anno { span, info, exp, typ } = self;
+        let tst::Anno { span, exp, typ, .. } = self;
         ust::Exp::Anno(ust::Anno {
             span: *span,
-            info: info.forget_tst(),
             exp: exp.lift(ctx),
             typ: typ.lift(ctx),
+            normalized_type: None,
         })
     }
 }
 
-impl Lift for tst::Type {
+impl Lift for TypeUniv {
     type Target = ust::Exp;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let tst::Type { span, info } = self;
-        ust::Exp::Type(ust::Type { span: *span, info: info.forget_tst() })
+        let TypeUniv { span } = self;
+        ust::Exp::TypeUniv(TypeUniv { span: *span })
     }
 }
 
-impl Lift for tst::Hole {
+impl Lift for Hole {
     type Target = ust::Exp;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let tst::Hole { span, info } = self;
-        ust::Exp::Hole(ust::Hole { span: *span, info: info.forget_tst() })
+        let Hole { span, .. } = self;
+        ust::Exp::Hole(Hole { span: *span, inferred_type: None, inferred_ctx: None })
     }
 }
 
@@ -420,9 +417,26 @@ impl Lift for tst::LocalMatch {
     type Target = ust::Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::LocalMatch { span, info, ctx: type_ctx, name, on_exp, motive, ret_typ, body } =
-            self;
-        ctx.lift_match(span, info, &type_ctx.clone().unwrap(), name, on_exp, motive, ret_typ, body)
+        let tst::LocalMatch {
+            span,
+            ctx: type_ctx,
+            name,
+            on_exp,
+            motive,
+            ret_typ,
+            body,
+            inferred_type,
+        } = self;
+        ctx.lift_match(
+            span,
+            &inferred_type.clone().unwrap(),
+            &type_ctx.clone().unwrap(),
+            name,
+            on_exp,
+            motive,
+            ret_typ,
+            body,
+        )
     }
 }
 
@@ -430,8 +444,16 @@ impl Lift for tst::LocalComatch {
     type Target = ust::Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let tst::LocalComatch { span, info, ctx: type_ctx, name, is_lambda_sugar, body } = self;
-        ctx.lift_comatch(span, info, &type_ctx.clone().unwrap(), name, *is_lambda_sugar, body)
+        let tst::LocalComatch { span, ctx: type_ctx, name, is_lambda_sugar, body, inferred_type } =
+            self;
+        ctx.lift_comatch(
+            span,
+            &inferred_type.clone().unwrap(),
+            &type_ctx.clone().unwrap(),
+            name,
+            *is_lambda_sugar,
+            body,
+        )
     }
 }
 impl Lift for tst::Motive {
@@ -541,7 +563,7 @@ impl Ctx {
     fn lift_match(
         &mut self,
         span: &Option<Span>,
-        info: &tst::TypeAppInfo,
+        inferred_type: &tst::TypCtor,
         type_ctx: &TypeCtx,
         name: &tst::Label,
         on_exp: &Rc<tst::Exp>,
@@ -550,10 +572,10 @@ impl Ctx {
         body: &tst::Match,
     ) -> ust::Exp {
         // Only lift local matches for the specified type
-        if info.typ.name != self.name {
+        if inferred_type.name != self.name {
             return ust::Exp::LocalMatch(ust::LocalMatch {
                 span: *span,
-                info: info.forget_tst(),
+                inferred_type: None,
                 ctx: None,
                 name: name.clone(),
                 on_exp: on_exp.lift(self),
@@ -574,7 +596,7 @@ impl Ctx {
             .unwrap_or_else(|| free_vars(&ret_typ.forget_tst(), type_ctx));
 
         let body = body.lift(self);
-        let self_typ = info.typ.lift(self);
+        let self_typ = inferred_type.lift(self);
 
         let FreeVarsResult { telescope, subst, args } = free_vars(&body, type_ctx)
             .union(free_vars(&self_typ, type_ctx))
@@ -595,7 +617,7 @@ impl Ctx {
         };
 
         // Build the new top-level definition
-        let name = self.unique_def_name(name, &info.typ.name);
+        let name = self.unique_def_name(name, &inferred_type.name);
 
         let def = ust::Def {
             span: None,
@@ -615,34 +637,40 @@ impl Ctx {
         self.new_decls.push(ust::Decl::Def(def));
 
         // Replace the match by a destructor call of the new top-level definition
-        ust::Exp::DotCall(ust::DotCall { span: None, info: (), exp: on_exp.lift(self), name, args })
+        ust::Exp::DotCall(ust::DotCall {
+            span: None,
+            exp: on_exp.lift(self),
+            name,
+            args,
+            inferred_type: None,
+        })
     }
 
     fn lift_comatch(
         &mut self,
         span: &Option<Span>,
-        info: &tst::TypeAppInfo,
+        inferred_type: &tst::TypCtor,
         type_ctx: &TypeCtx,
         name: &tst::Label,
         is_lambda_sugar: bool,
         body: &tst::Match,
     ) -> ust::Exp {
         // Only lift local matches for the specified type
-        if info.typ.name != self.name {
+        if inferred_type.name != self.name {
             return ust::Exp::LocalComatch(ust::LocalComatch {
                 span: *span,
-                info: info.forget_tst(),
                 ctx: None,
                 name: name.clone(),
                 is_lambda_sugar,
                 body: body.lift(self),
+                inferred_type: None,
             });
         }
 
         self.mark_modified();
 
         let body = body.lift(self);
-        let typ = info.typ.lift(self);
+        let typ = inferred_type.lift(self);
 
         // Collect the free variables in the comatch and the return type
         // Build a telescope of the types of the lifted variables
@@ -654,7 +682,7 @@ impl Ctx {
         let typ = typ.subst(&mut self.ctx, &subst.in_body());
 
         // Build the new top-level definition
-        let name = self.unique_codef_name(name, &info.typ.name);
+        let name = self.unique_codef_name(name, &inferred_type.name);
 
         let codef = ust::Codef {
             span: None,
@@ -669,7 +697,7 @@ impl Ctx {
         self.new_decls.push(ust::Decl::Codef(codef));
 
         // Replace the comatch by a call of the new top-level definition
-        ust::Exp::Call(ust::Call { span: None, info: (), name, args })
+        ust::Exp::Call(ust::Call { span: None, name, args, inferred_type: None })
     }
 
     /// Set the current declaration

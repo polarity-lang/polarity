@@ -6,6 +6,7 @@ use derivative::Derivative;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;
+use syntax::generic::{Hole, TypeUniv, Variable};
 use syntax::ust::{self, Occurs};
 
 /// Find all free variables
@@ -29,50 +30,21 @@ pub trait FV {
 impl FV for ust::Exp {
     fn visit_fv(&self, v: &mut USTVisitor) {
         match self {
-            ust::Exp::Anno(ust::Anno { span: _, info: _, exp, typ }) => {
+            ust::Exp::Anno(ust::Anno { exp, typ, .. }) => {
                 exp.visit_fv(v);
                 typ.visit_fv(v)
             }
-            ust::Exp::Variable(ust::Variable { span: _, info: _, name, ctx: _, idx }) => {
-                // We use the level context to convert the De Bruijn index to a De Bruijn level
-                let lvl = v.lvl_ctx.idx_to_lvl(*idx);
-                // If the variable is considered free (based on the cutoff), we look up its type in the typing context
-                // The typing context contains the types for all free variables where lvl < cutoff
-                if lvl.fst < v.cutoff {
-                    let typ = v
-                        .type_ctx
-                        .lookup(lvl)
-                        .typ
-                        .shift(((v.lvl_ctx.len() - v.type_ctx.len()) as isize, 0));
-                    v.add_fv(name.clone(), lvl, typ, v.lvl_ctx.clone())
-                }
-            }
-            ust::Exp::LocalComatch(ust::LocalComatch {
-                span: _,
-                info: _,
-                ctx: _,
-                name: _,
-                is_lambda_sugar: _,
-                body,
-            }) => body.visit_fv(v),
-            ust::Exp::Call(ust::Call { span: _, info: _, name: _, args }) => args.visit_fv(v),
-            ust::Exp::DotCall(ust::DotCall { span: _, info: _, exp, name: _, args }) => {
+            ust::Exp::Variable(e) => e.visit_fv(v),
+            ust::Exp::LocalComatch(ust::LocalComatch { body, .. }) => body.visit_fv(v),
+            ust::Exp::Call(ust::Call { args, .. }) => args.visit_fv(v),
+            ust::Exp::DotCall(ust::DotCall { exp, args, .. }) => {
                 exp.visit_fv(v);
                 args.visit_fv(v);
             }
             ust::Exp::TypCtor(e) => e.visit_fv(v),
-            ust::Exp::Hole(ust::Hole { span: _, info: _ }) => {}
-            ust::Exp::Type(ust::Type { span: _, info: _ }) => {}
-            ust::Exp::LocalMatch(ust::LocalMatch {
-                span: _,
-                info: _,
-                ctx: _,
-                name: _,
-                on_exp,
-                motive,
-                ret_typ: _,
-                body,
-            }) => {
+            ust::Exp::Hole(Hole { .. }) => {}
+            ust::Exp::TypeUniv(TypeUniv { span: _ }) => {}
+            ust::Exp::LocalMatch(ust::LocalMatch { on_exp, motive, body, .. }) => {
                 on_exp.visit_fv(v);
                 motive.visit_fv(v);
                 body.visit_fv(v)
@@ -81,9 +53,27 @@ impl FV for ust::Exp {
     }
 }
 
+impl FV for Variable {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        let Variable { idx, name, .. } = self;
+        // We use the level context to convert the De Bruijn index to a De Bruijn level
+        let lvl = v.lvl_ctx.idx_to_lvl(*idx);
+        // If the variable is considered free (based on the cutoff), we look up its type in the typing context
+        // The typing context contains the types for all free variables where lvl < cutoff
+        if lvl.fst < v.cutoff {
+            let typ = v
+                .type_ctx
+                .lookup(lvl)
+                .typ
+                .shift(((v.lvl_ctx.len() - v.type_ctx.len()) as isize, 0));
+            v.add_fv(name.clone(), lvl, typ, v.lvl_ctx.clone())
+        }
+    }
+}
+
 impl FV for ust::TypCtor {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::TypCtor { span: _, info: _, name: _, args } = self;
+        let ust::TypCtor { span: _, name: _, args } = self;
         args.visit_fv(v)
     }
 }
@@ -182,12 +172,11 @@ impl FreeVars {
             let typ = typ.subst(&mut ctx, &subst.in_param());
 
             let param = ust::Param { name: name.clone(), typ: typ.clone() };
-            let arg = Rc::new(ust::Exp::Variable(ust::Variable {
+            let arg = Rc::new(ust::Exp::Variable(Variable {
                 span: None,
-                info: Default::default(),
-                name: name.clone(),
-                ctx: None,
                 idx: base_ctx.lvl_to_idx(fv.lvl),
+                name: name.clone(),
+                inferred_type: None,
             }));
             args.push(arg);
             params.push(param);
@@ -398,12 +387,11 @@ impl<'a> Substitution<Rc<ust::Exp>> for FVBodySubst<'a> {
         let new_ctx =
             LevelCtx::from(vec![self.inner.subst.len()]).append(&ctx.tail(self.inner.cutoff));
         self.inner.subst.get(&lvl).map(|fv| {
-            Rc::new(ust::Exp::Variable(ust::Variable {
+            Rc::new(ust::Exp::Variable(Variable {
                 span: None,
-                info: Default::default(),
-                name: fv.name.clone(),
-                ctx: None,
                 idx: new_ctx.lvl_to_idx(fv.lvl),
+                name: fv.name.clone(),
+                inferred_type: None,
             }))
         })
     }
@@ -412,12 +400,11 @@ impl<'a> Substitution<Rc<ust::Exp>> for FVBodySubst<'a> {
 impl<'a> Substitution<Rc<ust::Exp>> for FVParamSubst<'a> {
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<ust::Exp>> {
         self.inner.subst.get(&lvl).map(|fv| {
-            Rc::new(ust::Exp::Variable(ust::Variable {
+            Rc::new(ust::Exp::Variable(Variable {
                 span: None,
-                info: Default::default(),
-                name: fv.name.clone(),
-                ctx: None,
                 idx: Idx { fst: 0, snd: self.inner.subst.len() - 1 - fv.lvl.snd },
+                name: fv.name.clone(),
+                inferred_type: None,
             }))
         })
     }

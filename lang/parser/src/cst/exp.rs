@@ -33,7 +33,7 @@ pub enum Exp {
     Call(Call),
     DotCall(DotCall),
     Anno(Anno),
-    Type(Type),
+    TypeUniv(TypeUniv),
     LocalMatch(LocalMatch),
     LocalComatch(LocalComatch),
     Hole(Hole),
@@ -65,7 +65,7 @@ pub struct Anno {
 }
 
 #[derive(Debug, Clone)]
-pub struct Type {
+pub struct TypeUniv {
     pub span: Span,
 }
 

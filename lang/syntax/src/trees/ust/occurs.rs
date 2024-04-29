@@ -2,6 +2,9 @@ use std::rc::Rc;
 
 use crate::common::*;
 use crate::ctx::*;
+use crate::generic::Hole;
+use crate::generic::TypeUniv;
+use crate::generic::Variable;
 
 use super::def::*;
 
@@ -22,7 +25,7 @@ impl Occurs for Exp {
             Exp::Call(e) => e.occurs(ctx, lvl),
             Exp::DotCall(e) => e.occurs(ctx, lvl),
             Exp::Anno(e) => e.occurs(ctx, lvl),
-            Exp::Type(e) => e.occurs(ctx, lvl),
+            Exp::TypeUniv(e) => e.occurs(ctx, lvl),
             Exp::LocalMatch(e) => e.occurs(ctx, lvl),
             Exp::LocalComatch(e) => e.occurs(ctx, lvl),
             Exp::Hole(e) => e.occurs(ctx, lvl),
@@ -65,7 +68,7 @@ impl Occurs for Anno {
     }
 }
 
-impl Occurs for Type {
+impl Occurs for TypeUniv {
     fn occurs(&self, _ctx: &mut LevelCtx, _lvl: Lvl) -> bool {
         false
     }

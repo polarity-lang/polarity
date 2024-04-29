@@ -5,7 +5,6 @@ pub struct UST;
 
 impl generic::Phase for UST {
     type TypeInfo = ();
-    type TypeAppInfo = ();
 }
 
 pub type Ident = generic::Ident;
@@ -35,12 +34,9 @@ pub type Args = generic::Args<UST>;
 pub type Param = generic::Param<UST>;
 pub type ParamInst = generic::ParamInst<UST>;
 
-pub type Variable = generic::Variable<UST>;
 pub type TypCtor = generic::TypCtor<UST>;
 pub type Call = generic::Call<UST>;
 pub type DotCall = generic::DotCall<UST>;
 pub type Anno = generic::Anno<UST>;
-pub type Type = generic::Type<UST>;
 pub type LocalMatch = generic::LocalMatch<UST>;
 pub type LocalComatch = generic::LocalComatch<UST>;
-pub type Hole = generic::Hole<UST>;

@@ -9,6 +9,9 @@ use parser::cst::exp::BindingSite;
 use parser::cst::exp::Ident;
 use syntax::ctx::BindContext;
 use syntax::generic::lookup_table::DeclKind;
+use syntax::generic::Hole;
+use syntax::generic::TypeUniv;
+use syntax::generic::Variable;
 use syntax::ust;
 
 use super::Lower;
@@ -23,7 +26,7 @@ impl Lower for cst::exp::Exp {
             cst::exp::Exp::Call(e) => e.lower(ctx),
             cst::exp::Exp::DotCall(e) => e.lower(ctx),
             cst::exp::Exp::Anno(e) => e.lower(ctx),
-            cst::exp::Exp::Type(e) => e.lower(ctx),
+            cst::exp::Exp::TypeUniv(e) => e.lower(ctx),
             cst::exp::Exp::LocalMatch(e) => e.lower(ctx),
             cst::exp::Exp::LocalComatch(e) => e.lower(ctx),
             cst::exp::Exp::Hole(e) => e.lower(ctx),
@@ -82,17 +85,15 @@ impl Lower for cst::exp::Call {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Call { span, name, args } = self;
         match ctx.lookup(name, span)? {
-            Elem::Bound(lvl) => Ok(ust::Exp::Variable(ust::Variable {
+            Elem::Bound(lvl) => Ok(ust::Exp::Variable(Variable {
                 span: Some(*span),
-                info: (),
-                name: name.clone(),
-                ctx: None,
                 idx: ctx.level_to_index(lvl),
+                name: name.clone(),
+                inferred_type: None,
             })),
             Elem::Decl(meta) => match meta.kind() {
                 DeclKind::Data | DeclKind::Codata => Ok(ust::Exp::TypCtor(ust::TypCtor {
                     span: Some(*span),
-                    info: (),
                     name: name.to_owned(),
                     args: ust::Args { args: args.lower(ctx)? },
                 })),
@@ -102,9 +103,9 @@ impl Lower for cst::exp::Call {
                 }),
                 DeclKind::Codef | DeclKind::Ctor => Ok(ust::Exp::Call(ust::Call {
                     span: Some(*span),
-                    info: (),
                     name: name.to_owned(),
                     args: ust::Args { args: args.lower(ctx)? },
+                    inferred_type: None,
                 })),
                 DeclKind::Let => Err(LoweringError::Impossible {
                     message: "Referencing top-level let definitions is not implemented, yet"
@@ -129,10 +130,10 @@ impl Lower for cst::exp::DotCall {
             Elem::Decl(meta) => match meta.kind() {
                 DeclKind::Def | DeclKind::Dtor => Ok(ust::Exp::DotCall(ust::DotCall {
                     span: Some(*span),
-                    info: (),
                     exp: exp.lower(ctx)?,
                     name: name.clone(),
                     args: ust::Args { args: args.lower(ctx)? },
+                    inferred_type: None,
                 })),
                 _ => Err(LoweringError::CannotUseAsDtor {
                     name: name.clone(),
@@ -150,19 +151,19 @@ impl Lower for cst::exp::Anno {
         let cst::exp::Anno { span, exp, typ } = self;
         Ok(ust::Exp::Anno(ust::Anno {
             span: Some(*span),
-            info: (),
             exp: exp.lower(ctx)?,
             typ: typ.lower(ctx)?,
+            normalized_type: None,
         }))
     }
 }
 
-impl Lower for cst::exp::Type {
+impl Lower for cst::exp::TypeUniv {
     type Target = ust::Exp;
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::Type { span } = self;
-        Ok(ust::Exp::Type(ust::Type { span: Some(*span), info: () }))
+        let cst::exp::TypeUniv { span } = self;
+        Ok(ust::Exp::TypeUniv(TypeUniv { span: Some(*span) }))
     }
 }
 
@@ -173,13 +174,13 @@ impl Lower for cst::exp::LocalMatch {
         let cst::exp::LocalMatch { span, name, on_exp, motive, body } = self;
         Ok(ust::Exp::LocalMatch(ust::LocalMatch {
             span: Some(*span),
-            info: (),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
             on_exp: on_exp.lower(ctx)?,
             motive: motive.lower(ctx)?,
             ret_typ: None,
             body: body.lower(ctx)?,
+            inferred_type: None,
         }))
     }
 }
@@ -191,11 +192,11 @@ impl Lower for cst::exp::LocalComatch {
         let cst::exp::LocalComatch { span, name, is_lambda_sugar, body } = self;
         Ok(ust::Exp::LocalComatch(ust::LocalComatch {
             span: Some(*span),
-            info: (),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
             is_lambda_sugar: *is_lambda_sugar,
             body: body.lower(ctx)?,
+            inferred_type: None,
         }))
     }
 }
@@ -205,7 +206,7 @@ impl Lower for cst::exp::Hole {
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Hole { span } = self;
-        Ok(ust::Exp::Hole(ust::Hole { span: Some(*span), info: () }))
+        Ok(ust::Exp::Hole(Hole { span: Some(*span), inferred_type: None, inferred_ctx: None }))
     }
 }
 
@@ -216,9 +217,9 @@ impl Lower for cst::exp::NatLit {
         let cst::exp::NatLit { span, val } = self;
         let mut out = ust::Exp::Call(ust::Call {
             span: Some(*span),
-            info: (),
             name: "Z".to_owned(),
             args: ust::Args { args: vec![] },
+            inferred_type: None,
         });
 
         let mut i = BigUint::from(0usize);
@@ -227,9 +228,9 @@ impl Lower for cst::exp::NatLit {
             i += 1usize;
             out = ust::Exp::Call(ust::Call {
                 span: Some(*span),
-                info: (),
                 name: "S".to_owned(),
                 args: ust::Args { args: vec![Rc::new(out)] },
+                inferred_type: None,
             });
         }
 
@@ -243,7 +244,6 @@ impl Lower for cst::exp::Fun {
         let cst::exp::Fun { span, from, to } = self;
         Ok(ust::Exp::TypCtor(ust::TypCtor {
             span: Some(*span),
-            info: (),
             name: "Fun".to_owned(),
             args: ust::Args { args: vec![from.lower(ctx)?, to.lower(ctx)?] },
         }))

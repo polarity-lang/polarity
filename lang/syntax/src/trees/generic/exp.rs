@@ -7,6 +7,8 @@ use derivative::Derivative;
 
 use crate::common::*;
 use crate::ctx::values::TypeCtx;
+use crate::tst::TST;
+use crate::ust::UST;
 
 pub trait Phase
 where
@@ -14,9 +16,6 @@ where
 {
     /// Type of the `info` field, containing (depending on the phase) type information
     type TypeInfo: Clone + fmt::Debug;
-    /// Type of the `info` field, containing (depending on the phase) type information
-    /// where the type is required to be the full application of a type constructor
-    type TypeAppInfo: Clone + Into<Self::TypeInfo> + fmt::Debug;
 }
 
 #[derive(Debug, Clone, Derivative)]
@@ -62,15 +61,15 @@ pub type Ident = String;
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Exp<P: Phase> {
-    Variable(Variable<P>),
+    Variable(Variable),
     TypCtor(TypCtor<P>),
     Call(Call<P>),
     DotCall(DotCall<P>),
     Anno(Anno<P>),
-    Type(Type<P>),
+    TypeUniv(TypeUniv),
     LocalMatch(LocalMatch<P>),
     LocalComatch(LocalComatch<P>),
-    Hole(Hole<P>),
+    Hole(Hole),
 }
 
 impl<P: Phase> HasSpan for Exp<P> {
@@ -81,7 +80,7 @@ impl<P: Phase> HasSpan for Exp<P> {
             Exp::Call(e) => e.span(),
             Exp::DotCall(e) => e.span(),
             Exp::Anno(e) => e.span(),
-            Exp::Type(e) => e.span(),
+            Exp::TypeUniv(e) => e.span(),
             Exp::LocalMatch(e) => e.span(),
             Exp::LocalComatch(e) => e.span(),
             Exp::Hole(e) => e.span(),
@@ -93,23 +92,37 @@ impl<P: Phase> HasSpan for Exp<P> {
 //
 //
 
+/// A bound variable occurrence. The variable is represented
+/// using a de-Bruijn index, but we keep the information
+/// about the name that was originally annotated in the program.
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Variable<P: Phase> {
+pub struct Variable {
+    /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    /// The de-Bruijn index that is used to represent the
+    /// binding structure of terms.
+    pub idx: Idx,
+    /// The name that was originally annotated in the program
+    /// We do not use this information for tracking the binding
+    /// structure, but only for prettyprinting code.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
+    /// Inferred type annotated after elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub ctx: Option<TypeCtx>,
-    pub idx: Idx,
+    pub inferred_type: Option<Rc<Exp<UST>>>,
 }
 
-impl<P: Phase> HasSpan for Variable<P> {
+impl HasSpan for Variable {
     fn span(&self) -> Option<Span> {
         self.span
+    }
+}
+
+impl<P: Phase> From<Variable> for Exp<P> {
+    fn from(val: Variable) -> Self {
+        Exp::Variable(val)
     }
 }
 
@@ -117,14 +130,18 @@ impl<P: Phase> HasSpan for Variable<P> {
 //
 //
 
+/// A type constructor applied to arguments. The type of `TypCtor`
+/// is always the type universe `Type`.
+/// Examples: `Nat`, `List(Nat)`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct TypCtor<P: Phase> {
+    /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    /// Name of the type constructor
     pub name: Ident,
+    /// Arguments to the type constructor
     pub args: Args<P>,
 }
 
@@ -145,19 +162,34 @@ impl<P: Phase> HasSpan for TypCtor<P> {
     }
 }
 
+impl<P: Phase> From<TypCtor<P>> for Exp<P> {
+    fn from(val: TypCtor<P>) -> Self {
+        Exp::TypCtor(val)
+    }
+}
+
 // Call
 //
 //
 
+/// A Call invokes a constructor, a codefinition or a toplevel let-bound definition.
+/// Examples: `Zero`, `Cons(True, Nil)`, `minimum(x,y)`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Call<P: Phase> {
+    /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    /// The name of the call.
+    /// The `f` in `f(e1...en)`
     pub name: Ident,
+    /// The arguments to the call.
+    /// The `(e1...en)` in `f(e1...en)`
     pub args: Args<P>,
+    /// The inferred result type of the call.
+    /// This type is annotated during elaboration.
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub inferred_type: Option<Rc<Exp<UST>>>,
 }
 
 impl<P: Phase> HasSpan for Call<P> {
@@ -166,20 +198,37 @@ impl<P: Phase> HasSpan for Call<P> {
     }
 }
 
+impl<P: Phase> From<Call<P>> for Exp<P> {
+    fn from(val: Call<P>) -> Self {
+        Exp::Call(val)
+    }
+}
+
 // DotCall
 //
 //
 
+/// A DotCall is either a destructor or a definition, applied to a destructee
+/// Examples: `e.head` `xs.append(ys)`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct DotCall<P: Phase> {
+    /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    /// The expression to which the dotcall is applied.
+    /// The `e` in `e.f(e1...en)`
     pub exp: Rc<Exp<P>>,
+    /// The name of the dotcall.
+    /// The `f` in `e.f(e1...en)`
     pub name: Ident,
+    /// The arguments of the dotcall.
+    /// The `(e1...en)` in `e.f(e1...en)`
     pub args: Args<P>,
+    /// The inferred result type of the dotcall.
+    /// This type is annotated during elaboration.
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub inferred_type: Option<Rc<Exp<UST>>>,
 }
 
 impl<P: Phase> HasSpan for DotCall<P> {
@@ -188,19 +237,32 @@ impl<P: Phase> HasSpan for DotCall<P> {
     }
 }
 
+impl<P: Phase> From<DotCall<P>> for Exp<P> {
+    fn from(val: DotCall<P>) -> Self {
+        Exp::DotCall(val)
+    }
+}
+
 // Anno
 //
 //
 
+/// Type annotated term `e : t`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Anno<P: Phase> {
+    /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    /// The annotated term, i.e. `e` in `e : t`
     pub exp: Rc<Exp<P>>,
+    /// The annotated type, i.e. `t` in `e : t`
     pub typ: Rc<Exp<P>>,
+    /// The annotated type written by the user might not
+    /// be in normal form. After elaboration we therefore
+    /// annotate the normalized type.
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub normalized_type: Option<Rc<Exp<UST>>>,
 }
 
 impl<P: Phase> HasSpan for Anno<P> {
@@ -209,22 +271,38 @@ impl<P: Phase> HasSpan for Anno<P> {
     }
 }
 
-// Type
-//
-//
-
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
-pub struct Type<P: Phase> {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+impl<P: Phase> From<Anno<P>> for Exp<P> {
+    fn from(val: Anno<P>) -> Self {
+        Exp::Anno(val)
+    }
 }
 
-impl<P: Phase> HasSpan for Type<P> {
+// TypeUniv
+//
+//
+
+/// The impredicative type universe "Type" is used
+/// for typing data and codata types. I.e. we have
+/// - `Nat : Type`
+/// - `Stream(Nat) : Type`
+/// - `Type : Type`
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct TypeUniv {
+    /// Source code location
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+}
+
+impl HasSpan for TypeUniv {
     fn span(&self) -> Option<Span> {
         self.span
+    }
+}
+
+impl<P: Phase> From<TypeUniv> for Exp<P> {
+    fn from(val: TypeUniv) -> Self {
+        Exp::TypeUniv(val)
     }
 }
 
@@ -238,8 +316,6 @@ pub struct LocalMatch<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeAppInfo,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: Option<TypeCtx>,
     pub name: Label,
     pub on_exp: Rc<Exp<P>>,
@@ -247,11 +323,19 @@ pub struct LocalMatch<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ret_typ: Option<Rc<Exp<P>>>,
     pub body: Match<P>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub inferred_type: Option<TypCtor<TST>>,
 }
 
 impl<P: Phase> HasSpan for LocalMatch<P> {
     fn span(&self) -> Option<Span> {
         self.span
+    }
+}
+
+impl<P: Phase> From<LocalMatch<P>> for Exp<P> {
+    fn from(val: LocalMatch<P>) -> Self {
+        Exp::LocalMatch(val)
     }
 }
 
@@ -265,17 +349,23 @@ pub struct LocalComatch<P: Phase> {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeAppInfo,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: Option<TypeCtx>,
     pub name: Label,
     pub is_lambda_sugar: bool,
     pub body: Match<P>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub inferred_type: Option<TypCtor<TST>>,
 }
 
 impl<P: Phase> HasSpan for LocalComatch<P> {
     fn span(&self) -> Option<Span> {
         self.span
+    }
+}
+
+impl<P: Phase> From<LocalComatch<P>> for Exp<P> {
+    fn from(val: LocalComatch<P>) -> Self {
+        Exp::LocalComatch(val)
     }
 }
 
@@ -285,15 +375,27 @@ impl<P: Phase> HasSpan for LocalComatch<P> {
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Hole<P: Phase> {
+pub struct Hole {
+    /// Source code location
     pub span: Option<Span>,
+    /// The inferred type of the hole annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    pub inferred_type: Option<Rc<Exp<UST>>>,
+    /// The type context in which the hole occurs.
+    /// This context is annotated during elaboration.
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub inferred_ctx: Option<TypeCtx>,
 }
 
-impl<P: Phase> HasSpan for Hole<P> {
+impl HasSpan for Hole {
     fn span(&self) -> Option<Span> {
         self.span
+    }
+}
+
+impl<P: Phase> From<Hole> for Exp<P> {
+    fn from(val: Hole) -> Self {
+        Exp::Hole(val)
     }
 }
 

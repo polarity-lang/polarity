@@ -481,7 +481,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
             mut dtor @ Exp::DotCall(DotCall { .. }) => {
                 // A series of destructors forms an aligned group
                 let mut dtors_group = alloc.nil();
-                while let Exp::DotCall(DotCall { span: _, info: _, exp, name, args }) = &dtor {
+                while let Exp::DotCall(DotCall { exp, name, args, .. }) = &dtor {
                     let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
                     if !dtors_group.is_nil() {
                         dtors_group = alloc.line_().append(dtors_group);
@@ -493,7 +493,7 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
                 dtor.print(cfg, alloc).append(dtors_group.align().group())
             }
             Exp::Anno(e) => e.print_prec(cfg, alloc, prec),
-            Exp::Type(e) => e.print_prec(cfg, alloc, prec),
+            Exp::TypeUniv(e) => e.print_prec(cfg, alloc, prec),
             Exp::LocalMatch(e) => e.print_prec(cfg, alloc, prec),
             Exp::LocalComatch(e) => e.print_prec(cfg, alloc, prec),
             Exp::Hole(e) => e.print_prec(cfg, alloc, prec),
@@ -501,14 +501,14 @@ impl<'a, P: Phase> Print<'a> for Exp<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Variable<P> {
+impl<'a> Print<'a> for Variable {
     fn print_prec(
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let Variable { span: _, info: _, name, ctx: _, idx } = self;
+        let Variable { name, idx, .. } = self;
         if cfg.de_bruijn {
             alloc.text(format!("{name}@{idx}"))
         } else {
@@ -519,7 +519,7 @@ impl<'a, P: Phase> Print<'a> for Variable<P> {
 
 impl<'a, P: Phase> Print<'a> for TypCtor<P> {
     fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
-        let TypCtor { span: _, info: _, name, args } = self;
+        let TypCtor { span: _, name, args } = self;
         if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
             let arg = args.args[0].print_prec(cfg, alloc, 1);
             let res = args.args[1].print_prec(cfg, alloc, 0);
@@ -543,7 +543,7 @@ impl<'a, P: Phase> Print<'a> for Call<P> {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let Call { span: _, info: _, name, args } = self;
+        let Call { name, args, .. } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
         alloc.ctor(name).append(psubst)
     }
@@ -556,31 +556,29 @@ impl<'a, P: Phase> Print<'a> for syntax::generic::Anno<P> {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let syntax::generic::Anno { span: _, info: _, exp, typ } = self;
+        let syntax::generic::Anno { exp, typ, .. } = self;
         exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Type<P> {
+impl<'a> Print<'a> for TypeUniv {
     fn print_prec(
         &'a self,
         _cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let Type { span: _, info: _ } = self;
         alloc.keyword(TYPE)
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Hole<P> {
+impl<'a> Print<'a> for Hole {
     fn print_prec(
         &'a self,
         _cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let Hole { span: _, info: _ } = self;
         alloc.keyword(HOLE)
     }
 }
@@ -592,7 +590,7 @@ impl<'a, P: Phase> Print<'a> for LocalMatch<P> {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let LocalMatch { span: _, info: _, ctx: _, name, on_exp, motive, ret_typ: _, body } = self;
+        let LocalMatch { name, on_exp, motive, body, .. } = self;
         on_exp
             .print(cfg, alloc)
             .append(DOT)
@@ -614,7 +612,7 @@ impl<'a, P: Phase> Print<'a> for LocalComatch<P> {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let LocalComatch { span: _, info: _, ctx: _, name, is_lambda_sugar, body } = self;
+        let LocalComatch { name, is_lambda_sugar, body, .. } = self;
         if *is_lambda_sugar && cfg.print_lambda_sugar {
             print_lambda_sugar(body, cfg, alloc)
         } else {

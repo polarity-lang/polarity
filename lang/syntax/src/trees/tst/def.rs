@@ -3,16 +3,18 @@
 use std::rc::Rc;
 
 use crate::ctx::values::TypeCtx;
+use crate::generic::TypeUniv;
 use crate::ust;
 
 use crate::generic;
+
+use super::forget::ForgetTST;
 
 #[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct TST;
 
 impl generic::Phase for TST {
     type TypeInfo = TypeInfo;
-    type TypeAppInfo = TypeAppInfo;
 }
 
 pub type Ident = generic::Ident;
@@ -42,15 +44,12 @@ pub type Args = generic::Args<TST>;
 pub type Param = generic::Param<TST>;
 pub type ParamInst = generic::ParamInst<TST>;
 
-pub type Variable = generic::Variable<TST>;
 pub type TypCtor = generic::TypCtor<TST>;
 pub type Call = generic::Call<TST>;
 pub type DotCall = generic::DotCall<TST>;
 pub type Anno = generic::Anno<TST>;
-pub type Type = generic::Type<TST>;
 pub type LocalMatch = generic::LocalMatch<TST>;
 pub type LocalComatch = generic::LocalComatch<TST>;
-pub type Hole = generic::Hole<TST>;
 
 #[derive(Debug, Clone)]
 pub struct TypeInfo {
@@ -64,41 +63,26 @@ impl From<Rc<ust::Exp>> for TypeInfo {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct TypeAppInfo {
-    pub typ: TypCtor,
-    pub typ_nf: ust::TypCtor,
-}
-
-impl From<TypeAppInfo> for TypeInfo {
-    fn from(type_app_info: TypeAppInfo) -> Self {
-        let ust::TypCtor { span, info, name, args } = type_app_info.typ_nf;
-        Self { typ: Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args })), ctx: None }
-    }
-}
-
 pub trait HasTypeInfo {
-    fn typ(&self) -> Rc<ust::Exp>;
+    fn typ(&self) -> Option<Rc<ust::Exp>>;
 }
 
 impl HasTypeInfo for Exp {
-    fn typ(&self) -> Rc<ust::Exp> {
+    fn typ(&self) -> Option<Rc<ust::Exp>> {
         match self {
-            Exp::Variable(e) => e.info.clone().typ,
-            Exp::TypCtor(e) => e.info.clone().typ,
-            Exp::Call(e) => e.info.clone().typ,
-            Exp::DotCall(e) => e.info.clone().typ,
-            Exp::Anno(e) => e.info.clone().typ,
-            Exp::Type(e) => e.info.clone().typ,
+            Exp::Variable(e) => e.inferred_type.clone(),
+            Exp::TypCtor(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
+            Exp::Call(e) => e.inferred_type.clone(),
+            Exp::DotCall(e) => e.inferred_type.clone(),
+            Exp::Anno(e) => e.normalized_type.clone(),
+            Exp::TypeUniv(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
             Exp::LocalMatch(e) => {
-                let ust::TypCtor { span, info, name, args } = e.info.clone().typ_nf;
-                Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args }))
+                e.inferred_type.forget_tst().map(|typctor| Rc::new(ust::Exp::TypCtor(typctor)))
             }
             Exp::LocalComatch(e) => {
-                let ust::TypCtor { span, info, name, args } = e.info.clone().typ_nf;
-                Rc::new(ust::Exp::TypCtor(ust::TypCtor { span, info, name, args }))
+                e.inferred_type.forget_tst().map(|typctor| Rc::new(ust::Exp::TypCtor(typctor)))
             }
-            Exp::Hole(e) => e.info.clone().typ,
+            Exp::Hole(e) => e.inferred_type.clone(),
         }
     }
 }
