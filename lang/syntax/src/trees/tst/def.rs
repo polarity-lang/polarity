@@ -2,7 +2,6 @@
 
 use std::rc::Rc;
 
-use crate::ctx::values::TypeCtx;
 use crate::generic::TypeUniv;
 use crate::ust;
 
@@ -10,58 +9,39 @@ use crate::generic;
 
 use super::forget::ForgetTST;
 
-#[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
-pub struct TST;
-
-impl generic::Phase for TST {
-    type TypeInfo = TypeInfo;
-}
-
 pub type Ident = generic::Ident;
 pub type Label = generic::Label;
 pub type DocComment = generic::DocComment;
 pub type Attribute = generic::Attribute;
-pub type Prg = generic::Prg<TST>;
-pub type Decls = generic::Decls<TST>;
-pub type Decl = generic::Decl<TST>;
-pub type DataCodata<'a> = generic::DataCodata<'a, TST>;
-pub type Data = generic::Data<TST>;
-pub type Codata = generic::Codata<TST>;
-pub type TypAbs = generic::TypAbs<TST>;
-pub type Ctor = generic::Ctor<TST>;
-pub type Dtor = generic::Dtor<TST>;
-pub type Def = generic::Def<TST>;
-pub type Codef = generic::Codef<TST>;
-pub type Let = generic::Let<TST>;
-pub type Match = generic::Match<TST>;
-pub type Case = generic::Case<TST>;
-pub type SelfParam = generic::SelfParam<TST>;
-pub type Exp = generic::Exp<TST>;
-pub type Motive = generic::Motive<TST>;
-pub type Telescope = generic::Telescope<TST>;
-pub type TelescopeInst = generic::TelescopeInst<TST>;
-pub type Args = generic::Args<TST>;
-pub type Param = generic::Param<TST>;
-pub type ParamInst = generic::ParamInst<TST>;
+pub type Prg = generic::Prg;
+pub type Decls = generic::Decls;
+pub type Decl = generic::Decl;
+pub type DataCodata<'a> = generic::DataCodata<'a>;
+pub type Data = generic::Data;
+pub type Codata = generic::Codata;
+pub type TypAbs = generic::TypAbs;
+pub type Ctor = generic::Ctor;
+pub type Dtor = generic::Dtor;
+pub type Def = generic::Def;
+pub type Codef = generic::Codef;
+pub type Let = generic::Let;
+pub type Match = generic::Match;
+pub type Case = generic::Case;
+pub type SelfParam = generic::SelfParam;
+pub type Exp = generic::Exp;
+pub type Motive = generic::Motive;
+pub type Telescope = generic::Telescope;
+pub type TelescopeInst = generic::TelescopeInst;
+pub type Args = generic::Args;
+pub type Param = generic::Param;
+pub type ParamInst = generic::ParamInst;
 
-pub type TypCtor = generic::TypCtor<TST>;
-pub type Call = generic::Call<TST>;
-pub type DotCall = generic::DotCall<TST>;
-pub type Anno = generic::Anno<TST>;
-pub type LocalMatch = generic::LocalMatch<TST>;
-pub type LocalComatch = generic::LocalComatch<TST>;
-
-#[derive(Debug, Clone)]
-pub struct TypeInfo {
-    pub typ: Rc<ust::Exp>,
-    pub ctx: Option<TypeCtx>,
-}
-
-impl From<Rc<ust::Exp>> for TypeInfo {
-    fn from(typ: Rc<ust::Exp>) -> Self {
-        TypeInfo { typ, ctx: None }
-    }
-}
+pub type TypCtor = generic::TypCtor;
+pub type Call = generic::Call;
+pub type DotCall = generic::DotCall;
+pub type Anno = generic::Anno;
+pub type LocalMatch = generic::LocalMatch;
+pub type LocalComatch = generic::LocalComatch;
 
 pub trait HasTypeInfo {
     fn typ(&self) -> Option<Rc<ust::Exp>>;

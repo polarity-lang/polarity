@@ -10,7 +10,7 @@ use super::exp::*;
 use super::lookup_table;
 use super::lookup_table::DeclKind;
 
-impl<P: Phase> Decls<P> {
+impl Decls {
     pub fn empty() -> Self {
         Self { map: HashMap::default(), lookup_table: Default::default() }
     }
@@ -19,7 +19,7 @@ impl<P: Phase> Decls<P> {
         self.map.is_empty()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = Item<'_, P>> {
+    pub fn iter(&self) -> impl Iterator<Item = Item<'_>> {
         self.lookup_table.iter().map(|item| match item {
             lookup_table::Item::Type(type_decl) => match &self.map[&type_decl.name] {
                 Decl::Data(data) => Item::Data(data),
@@ -42,7 +42,7 @@ impl<P: Phase> Decls<P> {
         &self,
         name: &Ident,
         span: Option<codespan::Span>,
-    ) -> Result<DataCodata<'_, P>, LookupError> {
+    ) -> Result<DataCodata<'_>, LookupError> {
         let type_decl = self
             .lookup_table
             .type_decl_for_xtor(name)
@@ -58,7 +58,7 @@ impl<P: Phase> Decls<P> {
         &self,
         name: &str,
         span: Option<codespan::Span>,
-    ) -> Result<&Data<P>, LookupError> {
+    ) -> Result<&Data, LookupError> {
         self.ctor(name, span)?;
         let type_decl = self.lookup_table.type_decl_for_xtor(name).ok_or_else(|| {
             LookupError::MissingTypeDeclaration { name: name.to_owned(), span: span.to_miette() }
@@ -70,7 +70,7 @@ impl<P: Phase> Decls<P> {
         &self,
         name: &str,
         span: Option<codespan::Span>,
-    ) -> Result<&Codata<P>, LookupError> {
+    ) -> Result<&Codata, LookupError> {
         self.dtor(name, span)?;
         let type_decl = self.lookup_table.type_decl_for_xtor(name).ok_or_else(|| {
             LookupError::MissingTypeDeclaration { name: name.to_owned(), span: span.to_miette() }
@@ -90,7 +90,7 @@ impl<P: Phase> Decls<P> {
         &self,
         name: &str,
         span: Option<codespan::Span>,
-    ) -> Result<DataCodata<'_, P>, LookupError> {
+    ) -> Result<DataCodata<'_>, LookupError> {
         match self.decl(name, span)? {
             Decl::Data(data) => Ok(DataCodata::Data(data)),
             Decl::Codata(codata) => Ok(DataCodata::Codata(codata)),
@@ -102,7 +102,7 @@ impl<P: Phase> Decls<P> {
         }
     }
 
-    pub fn data(&self, name: &str, span: Option<codespan::Span>) -> Result<&Data<P>, LookupError> {
+    pub fn data(&self, name: &str, span: Option<codespan::Span>) -> Result<&Data, LookupError> {
         match self.decl(name, span)? {
             Decl::Data(data) => Ok(data),
             other => Err(LookupError::ExpectedData {
@@ -113,11 +113,7 @@ impl<P: Phase> Decls<P> {
         }
     }
 
-    pub fn codata(
-        &self,
-        name: &str,
-        span: Option<codespan::Span>,
-    ) -> Result<&Codata<P>, LookupError> {
+    pub fn codata(&self, name: &str, span: Option<codespan::Span>) -> Result<&Codata, LookupError> {
         match self.decl(name, span)? {
             Decl::Codata(codata) => Ok(codata),
             other => Err(LookupError::ExpectedCodata {
@@ -128,7 +124,7 @@ impl<P: Phase> Decls<P> {
         }
     }
 
-    pub fn def(&self, name: &str, span: Option<codespan::Span>) -> Result<&Def<P>, LookupError> {
+    pub fn def(&self, name: &str, span: Option<codespan::Span>) -> Result<&Def, LookupError> {
         match self.decl(name, span)? {
             Decl::Def(def) => Ok(def),
             other => Err(LookupError::ExpectedDef {
@@ -139,11 +135,7 @@ impl<P: Phase> Decls<P> {
         }
     }
 
-    pub fn codef(
-        &self,
-        name: &str,
-        span: Option<codespan::Span>,
-    ) -> Result<&Codef<P>, LookupError> {
+    pub fn codef(&self, name: &str, span: Option<codespan::Span>) -> Result<&Codef, LookupError> {
         match self.decl(name, span)? {
             Decl::Codef(codef) => Ok(codef),
             other => Err(LookupError::ExpectedCodef {
@@ -154,7 +146,7 @@ impl<P: Phase> Decls<P> {
         }
     }
 
-    pub fn ctor(&self, name: &str, span: Option<codespan::Span>) -> Result<&Ctor<P>, LookupError> {
+    pub fn ctor(&self, name: &str, span: Option<codespan::Span>) -> Result<&Ctor, LookupError> {
         match self.decl(name, span)? {
             Decl::Ctor(ctor) => Ok(ctor),
             other => Err(LookupError::ExpectedCtor {
@@ -165,7 +157,7 @@ impl<P: Phase> Decls<P> {
         }
     }
 
-    pub fn dtor(&self, name: &str, span: Option<codespan::Span>) -> Result<&Dtor<P>, LookupError> {
+    pub fn dtor(&self, name: &str, span: Option<codespan::Span>) -> Result<&Dtor, LookupError> {
         match self.decl(name, span)? {
             Decl::Dtor(dtor) => Ok(dtor),
             other => Err(LookupError::ExpectedDtor {
@@ -180,7 +172,7 @@ impl<P: Phase> Decls<P> {
         &self,
         name: &str,
         span: Option<codespan::Span>,
-    ) -> Result<Ctor<P>, LookupError> {
+    ) -> Result<Ctor, LookupError> {
         match self.decl(name, span)? {
             Decl::Ctor(ctor) => Ok(ctor.clone()),
             Decl::Codef(codef) => Ok(codef.to_ctor()),
@@ -196,7 +188,7 @@ impl<P: Phase> Decls<P> {
         &self,
         name: &str,
         span: Option<codespan::Span>,
-    ) -> Result<Dtor<P>, LookupError> {
+    ) -> Result<Dtor, LookupError> {
         match self.decl(name, span)? {
             Decl::Dtor(dtor) => Ok(dtor.clone()),
             Decl::Def(def) => Ok(def.to_dtor()),
@@ -208,7 +200,7 @@ impl<P: Phase> Decls<P> {
         }
     }
 
-    fn decl(&self, name: &str, span: Option<codespan::Span>) -> Result<&Decl<P>, LookupError> {
+    fn decl(&self, name: &str, span: Option<codespan::Span>) -> Result<&Decl, LookupError> {
         self.map.get(name).ok_or_else(|| LookupError::UndefinedDeclaration {
             name: name.to_owned(),
             span: span.to_miette(),
@@ -217,15 +209,15 @@ impl<P: Phase> Decls<P> {
 }
 
 #[derive(Debug, Clone)]
-pub enum Item<'a, P: Phase> {
-    Data(&'a Data<P>),
-    Codata(&'a Codata<P>),
-    Def(&'a Def<P>),
-    Codef(&'a Codef<P>),
-    Let(&'a Let<P>),
+pub enum Item<'a> {
+    Data(&'a Data),
+    Codata(&'a Codata),
+    Def(&'a Def),
+    Codef(&'a Codef),
+    Let(&'a Let),
 }
 
-impl<'a, P: Phase> Item<'a, P> {
+impl<'a> Item<'a> {
     pub fn attributes(&self) -> &Attribute {
         match self {
             Item::Data(data) => &data.attr,
@@ -238,12 +230,12 @@ impl<'a, P: Phase> Item<'a, P> {
 }
 
 #[derive(Debug, Clone)]
-pub enum DataCodata<'a, P: Phase> {
-    Data(&'a Data<P>),
-    Codata(&'a Codata<P>),
+pub enum DataCodata<'a> {
+    Data(&'a Data),
+    Codata(&'a Codata),
 }
 
-impl<'a, P: Phase> DataCodata<'a, P> {
+impl<'a> DataCodata<'a> {
     pub fn name(&self) -> &Ident {
         match self {
             DataCodata::Data(data) => &data.name,
@@ -251,7 +243,7 @@ impl<'a, P: Phase> DataCodata<'a, P> {
         }
     }
 
-    pub fn typ(&self) -> Rc<TypAbs<P>> {
+    pub fn typ(&self) -> Rc<TypAbs> {
         match self {
             DataCodata::Data(data) => data.typ.clone(),
             DataCodata::Codata(codata) => codata.typ.clone(),

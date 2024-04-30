@@ -21,37 +21,37 @@ pub struct Attribute {
 }
 
 #[derive(Debug, Clone)]
-pub struct Prg<P: Phase> {
-    pub decls: Decls<P>,
+pub struct Prg {
+    pub decls: Decls,
 }
 
-impl<P: Phase> Prg<P> {
-    pub fn find_main(&self) -> Option<Rc<Exp<P>>> {
+impl Prg {
+    pub fn find_main(&self) -> Option<Rc<Exp>> {
         let main_candidate = self.decls.map.get("main")?.get_main()?;
         Some(main_candidate.body)
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Decls<P: Phase> {
+pub struct Decls {
     /// Map from identifiers to declarations
-    pub map: HashMap<Ident, Decl<P>>,
+    pub map: HashMap<Ident, Decl>,
     /// Metadata on declarations
     pub lookup_table: LookupTable,
 }
 
 #[derive(Debug, Clone)]
-pub enum Decl<P: Phase> {
-    Data(Data<P>),
-    Codata(Codata<P>),
-    Ctor(Ctor<P>),
-    Dtor(Dtor<P>),
-    Def(Def<P>),
-    Codef(Codef<P>),
-    Let(Let<P>),
+pub enum Decl {
+    Data(Data),
+    Codata(Codata),
+    Ctor(Ctor),
+    Dtor(Dtor),
+    Def(Def),
+    Codef(Codef),
+    Let(Let),
 }
 
-impl<P: Phase> Decl<P> {
+impl Decl {
     pub fn kind(&self) -> DeclKind {
         match self {
             Decl::Data(_) => DeclKind::Data,
@@ -65,7 +65,7 @@ impl<P: Phase> Decl<P> {
     }
 
     /// Returns whether the declaration is the "main" expression of the module.
-    pub fn get_main(&self) -> Option<Let<P>> {
+    pub fn get_main(&self) -> Option<Let> {
         match self {
             Decl::Let(tl_let) => tl_let.is_main().then(|| tl_let.clone()),
             _ => None,
@@ -73,7 +73,7 @@ impl<P: Phase> Decl<P> {
     }
 }
 
-impl<P: Phase> Named for Decl<P> {
+impl Named for Decl {
     fn name(&self) -> &Ident {
         match self {
             Decl::Data(Data { name, .. }) => name,
@@ -87,7 +87,7 @@ impl<P: Phase> Named for Decl<P> {
     }
 }
 
-impl<P: Phase> HasSpan for Decl<P> {
+impl HasSpan for Decl {
     fn span(&self) -> Option<Span> {
         match self {
             Decl::Data(data) => data.span,
@@ -102,63 +102,63 @@ impl<P: Phase> HasSpan for Decl<P> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Data<P: Phase> {
+pub struct Data {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,
-    pub typ: Rc<TypAbs<P>>,
+    pub typ: Rc<TypAbs>,
     pub ctors: Vec<Ident>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Codata<P: Phase> {
+pub struct Codata {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,
-    pub typ: Rc<TypAbs<P>>,
+    pub typ: Rc<TypAbs>,
     pub dtors: Vec<Ident>,
 }
 
 #[derive(Debug, Clone)]
-pub struct TypAbs<P: Phase> {
-    pub params: Telescope<P>,
+pub struct TypAbs {
+    pub params: Telescope,
 }
 
 #[derive(Debug, Clone)]
-pub struct Ctor<P: Phase> {
+pub struct Ctor {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    pub params: Telescope<P>,
-    pub typ: TypCtor<P>,
+    pub params: Telescope,
+    pub typ: TypCtor,
 }
 
 #[derive(Debug, Clone)]
-pub struct Dtor<P: Phase> {
+pub struct Dtor {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    pub params: Telescope<P>,
-    pub self_param: SelfParam<P>,
-    pub ret_typ: Rc<Exp<P>>,
+    pub params: Telescope,
+    pub self_param: SelfParam,
+    pub ret_typ: Rc<Exp>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Def<P: Phase> {
+pub struct Def {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,
-    pub params: Telescope<P>,
-    pub self_param: SelfParam<P>,
-    pub ret_typ: Rc<Exp<P>>,
-    pub body: Match<P>,
+    pub params: Telescope,
+    pub self_param: SelfParam,
+    pub ret_typ: Rc<Exp>,
+    pub body: Match,
 }
 
-impl<P: Phase> Def<P> {
-    pub fn to_dtor(&self) -> Dtor<P> {
+impl Def {
+    pub fn to_dtor(&self) -> Dtor {
         Dtor {
             span: self.span,
             doc: self.doc.clone(),
@@ -171,18 +171,18 @@ impl<P: Phase> Def<P> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Codef<P: Phase> {
+pub struct Codef {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,
-    pub params: Telescope<P>,
-    pub typ: TypCtor<P>,
-    pub body: Match<P>,
+    pub params: Telescope,
+    pub typ: TypCtor,
+    pub body: Match,
 }
 
-impl<P: Phase> Codef<P> {
-    pub fn to_ctor(&self) -> Ctor<P> {
+impl Codef {
+    pub fn to_ctor(&self) -> Ctor {
         Ctor {
             span: self.span,
             doc: self.doc.clone(),
@@ -194,17 +194,17 @@ impl<P: Phase> Codef<P> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Let<P: Phase> {
+pub struct Let {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,
-    pub params: Telescope<P>,
-    pub typ: Rc<Exp<P>>,
-    pub body: Rc<Exp<P>>,
+    pub params: Telescope,
+    pub typ: Rc<Exp>,
+    pub body: Rc<Exp>,
 }
 
-impl<P: Phase> Let<P> {
+impl Let {
     /// Returns whether the declaration is the "main" expression of the module.
     pub fn is_main(&self) -> bool {
         self.name == "main" && self.params.is_empty()
@@ -212,14 +212,14 @@ impl<P: Phase> Let<P> {
 }
 
 #[derive(Debug, Clone)]
-pub struct SelfParam<P: Phase> {
+pub struct SelfParam {
     pub info: Option<Span>,
     pub name: Option<Ident>,
-    pub typ: TypCtor<P>,
+    pub typ: TypCtor,
 }
 
-impl<P: Phase> SelfParam<P> {
-    pub fn telescope(&self) -> Telescope<P> {
+impl SelfParam {
+    pub fn telescope(&self) -> Telescope {
         Telescope {
             params: vec![Param {
                 name: self.name.clone().unwrap_or_default(),
@@ -240,11 +240,11 @@ impl<P: Phase> SelfParam<P> {
 /// for the following parameters.
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Telescope<P: Phase> {
-    pub params: Vec<Param<P>>,
+pub struct Telescope {
+    pub params: Vec<Param>,
 }
 
-impl<P: Phase> Telescope<P> {
+impl Telescope {
     pub fn len(&self) -> usize {
         self.params.len()
     }
@@ -256,19 +256,19 @@ impl<P: Phase> Telescope<P> {
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Param<P: Phase> {
+pub struct Param {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
-    pub typ: Rc<Exp<P>>,
+    pub typ: Rc<Exp>,
 }
 
-impl<P: Phase> Named for Param<P> {
+impl Named for Param {
     fn name(&self) -> &Ident {
         &self.name
     }
 }
 
-impl<P: Phase> Named for ParamInst<P> {
+impl Named for ParamInst {
     fn name(&self) -> &Ident {
         &self.name
     }

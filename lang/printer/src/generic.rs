@@ -15,20 +15,14 @@ fn is_visible(attr: &Attribute) -> bool {
     !attr.attrs.contains(&"omit_print".to_owned())
 }
 
-impl<'a, P: Phase> Print<'a> for Prg<P>
-where
-    Exp<P>: Shift,
-{
+impl<'a> Print<'a> for Prg {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Prg { decls } = self;
         decls.print(cfg, alloc)
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Decls<P>
-where
-    Exp<P>: Shift,
-{
+impl<'a> Print<'a> for Decls {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let items =
             self.iter().filter(|item| is_visible(item.attributes())).map(|item| match item {
@@ -44,11 +38,8 @@ where
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Decl<P>
-where
-    Exp<P>: Shift,
-{
-    type Ctx = Decls<P>;
+impl<'a> PrintInCtx<'a> for Decl {
+    type Ctx = Decls;
 
     fn print_in_ctx(
         &'a self,
@@ -68,11 +59,8 @@ where
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Item<'a, P>
-where
-    Exp<P>: Shift,
-{
-    type Ctx = Decls<P>;
+impl<'a> PrintInCtx<'a> for Item<'a> {
+    type Ctx = Decls;
 
     fn print_in_ctx(
         &'a self,
@@ -90,11 +78,8 @@ where
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Data<P>
-where
-    Exp<P>: Shift,
-{
-    type Ctx = Decls<P>;
+impl<'a> PrintInCtx<'a> for Data {
+    type Ctx = Decls;
 
     fn print_in_ctx(
         &'a self,
@@ -138,11 +123,8 @@ where
     }
 }
 
-impl<'a, P: Phase> PrintInCtx<'a> for Codata<P>
-where
-    Exp<P>: Shift,
-{
-    type Ctx = Decls<P>;
+impl<'a> PrintInCtx<'a> for Codata {
+    type Ctx = Decls;
 
     fn print_in_ctx(
         &'a self,
@@ -186,10 +168,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Def<P>
-where
-    Exp<P>: Shift,
-{
+impl<'a> Print<'a> for Def {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Def { span: _, doc, name, attr, params, self_param, ret_typ, body } = self;
         if !is_visible(attr) {
@@ -214,10 +193,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Codef<P>
-where
-    Exp<P>: Shift,
-{
+impl<'a> Print<'a> for Codef {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Codef { span: _, doc, name, attr, params, typ, body } = self;
         if !is_visible(attr) {
@@ -244,10 +220,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Let<P>
-where
-    Exp<P>: Shift,
-{
+impl<'a> Print<'a> for Let {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Let { span: _, doc, name, attr, params, typ, body } = self;
         if !is_visible(attr) {
@@ -270,10 +243,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Ctor<P>
-where
-    Exp<P>: Shift,
-{
+impl<'a> Print<'a> for Ctor {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Ctor { span: _, doc, name, params, typ } = self;
 
@@ -289,10 +259,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Dtor<P>
-where
-    Exp<P>: Shift,
-{
+impl<'a> Print<'a> for Dtor {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Dtor { span: _, doc, name, params, self_param, ret_typ } = self;
 
@@ -311,7 +278,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Match<P> {
+impl<'a> Print<'a> for Match {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { span: _, cases, omit_absurd } = self;
         match cases.len() {
@@ -354,7 +321,7 @@ impl<'a, P: Phase> Print<'a> for Match<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Case<P> {
+impl<'a> Print<'a> for Case {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Case { span: _, name, params, body } = self;
 
@@ -371,17 +338,14 @@ impl<'a, P: Phase> Print<'a> for Case<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Telescope<P>
-where
-    Exp<P>: Shift,
-{
+impl<'a> Print<'a> for Telescope {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Telescope { params } = self;
         let mut output = alloc.nil();
         if params.is_empty() {
             return output;
         };
-        let mut running_type: Option<&Rc<Exp<P>>> = None;
+        let mut running_type: Option<&Rc<Exp>> = None;
         for Param { name, typ } in params {
             match running_type {
                 // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
@@ -418,7 +382,7 @@ where
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Args<P> {
+impl<'a> Print<'a> for Args {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let mut doc = alloc.nil();
         let mut iter = self.args.iter().peekable();
@@ -432,7 +396,7 @@ impl<'a, P: Phase> Print<'a> for Args<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for TelescopeInst<P> {
+impl<'a> Print<'a> for TelescopeInst {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         if self.params.is_empty() {
             alloc.nil()
@@ -442,21 +406,21 @@ impl<'a, P: Phase> Print<'a> for TelescopeInst<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Param<P> {
+impl<'a> Print<'a> for Param {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Param { name, typ } = self;
         alloc.text(name).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
     }
 }
 
-impl<'a, P: Phase> Print<'a> for ParamInst<P> {
+impl<'a> Print<'a> for ParamInst {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let ParamInst { span: _, info: _, name, typ: _ } = self;
         alloc.text(name)
     }
 }
 
-impl<'a, P: Phase> Print<'a> for SelfParam<P> {
+impl<'a> Print<'a> for SelfParam {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let SelfParam { info: _, name, typ } = self;
 
@@ -472,7 +436,7 @@ impl<'a, P: Phase> Print<'a> for SelfParam<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Exp<P> {
+impl<'a> Print<'a> for Exp {
     fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
         match self {
             Exp::Variable(e) => e.print_prec(cfg, alloc, prec),
@@ -517,7 +481,7 @@ impl<'a> Print<'a> for Variable {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for TypCtor<P> {
+impl<'a> Print<'a> for TypCtor {
     fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
         let TypCtor { span: _, name, args } = self;
         if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
@@ -536,7 +500,7 @@ impl<'a, P: Phase> Print<'a> for TypCtor<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Call<P> {
+impl<'a> Print<'a> for Call {
     fn print_prec(
         &'a self,
         cfg: &PrintCfg,
@@ -549,7 +513,7 @@ impl<'a, P: Phase> Print<'a> for Call<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for syntax::generic::Anno<P> {
+impl<'a> Print<'a> for syntax::generic::Anno {
     fn print_prec(
         &'a self,
         cfg: &PrintCfg,
@@ -583,7 +547,7 @@ impl<'a> Print<'a> for Hole {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for LocalMatch<P> {
+impl<'a> Print<'a> for LocalMatch {
     fn print_prec(
         &'a self,
         cfg: &PrintCfg,
@@ -605,7 +569,7 @@ impl<'a, P: Phase> Print<'a> for LocalMatch<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for LocalComatch<P> {
+impl<'a> Print<'a> for LocalComatch {
     fn print_prec(
         &'a self,
         cfg: &PrintCfg,
@@ -628,7 +592,7 @@ impl<'a, P: Phase> Print<'a> for LocalComatch<P> {
     }
 }
 
-impl<'a, P: Phase> Print<'a> for Motive<P> {
+impl<'a> Print<'a> for Motive {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Motive { span: _, param, ret_typ } = self;
 
@@ -703,11 +667,7 @@ fn print_return_type<'a, T: Print<'a>>(
 /// Only invoke this function if the comatch contains exactly
 /// one cocase "ap" with three arguments; the function will
 /// panic otherwise.
-fn print_lambda_sugar<'a, P: Phase>(
-    e: &'a Match<P>,
-    cfg: &PrintCfg,
-    alloc: &'a Alloc<'a>,
-) -> Builder<'a> {
+fn print_lambda_sugar<'a>(e: &'a Match, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
     let Match { cases, .. } = e;
     let Case { params, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
     let var_name = params

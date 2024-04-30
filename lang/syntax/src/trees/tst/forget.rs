@@ -433,9 +433,3 @@ impl ForgetTST for Args {
         ust::Args { args: self.args.forget_tst() }
     }
 }
-
-impl ForgetTST for TypeInfo {
-    type Target = ();
-
-    fn forget_tst(&self) -> Self::Target {}
-}
