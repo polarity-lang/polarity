@@ -528,9 +528,9 @@ impl Lift for tst::ParamInst {
     type Target = ust::ParamInst;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let tst::ParamInst { span, info, name, typ: _ } = self;
+        let tst::ParamInst { span, name, typ: _, .. } = self;
 
-        ust::ParamInst { span: *span, info: info.forget_tst(), name: name.clone(), typ: None }
+        ust::ParamInst { span: *span, info: None, name: name.clone(), typ: None }
     }
 }
 
@@ -593,7 +593,7 @@ impl Ctx {
         let ret_fvs = motive
             .as_ref()
             .map(|m| free_vars(&m.forget_tst(), type_ctx))
-            .unwrap_or_else(|| free_vars(&ret_typ.forget_tst(), type_ctx));
+            .unwrap_or_else(|| free_vars(&ret_typ.as_ref().map(|x| x.forget_tst()), type_ctx));
 
         let body = body.lift(self);
         let self_typ = inferred_type.lift(self);

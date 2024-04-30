@@ -22,14 +22,6 @@ impl<T: ForgetTST> ForgetTST for Rc<T> {
     }
 }
 
-impl<T: ForgetTST> ForgetTST for Option<T> {
-    type Target = Option<T::Target>;
-
-    fn forget_tst(&self) -> Self::Target {
-        self.as_ref().map(ForgetTST::forget_tst)
-    }
-}
-
 impl<T: ForgetTST> ForgetTST for Vec<T> {
     type Target = Vec<T::Target>;
 
@@ -229,7 +221,7 @@ impl ForgetTST for Case {
             span: *span,
             name: name.clone(),
             params: params.forget_tst(),
-            body: body.forget_tst(),
+            body: body.as_ref().map(|x| x.forget_tst()),
         }
     }
 }
@@ -337,8 +329,8 @@ impl ForgetTST for LocalMatch {
             ctx: None,
             name: name.clone(),
             on_exp: on_exp.forget_tst(),
-            motive: motive.forget_tst(),
-            ret_typ: ret_typ.forget_tst(),
+            motive: motive.as_ref().map(|x| x.forget_tst()),
+            ret_typ: ret_typ.as_ref().map(|x| x.forget_tst()),
             body: body.forget_tst(),
             inferred_type: None,
         }
@@ -415,13 +407,13 @@ impl ForgetTST for ParamInst {
     type Target = ust::ParamInst;
 
     fn forget_tst(&self) -> Self::Target {
-        let ParamInst { span, info, name, typ } = self;
+        let ParamInst { span, name, typ, .. } = self;
 
         ust::ParamInst {
             span: *span,
-            info: info.forget_tst(),
+            info: None,
             name: name.clone(),
-            typ: typ.forget_tst(),
+            typ: typ.as_ref().map(|x| x.forget_tst()),
         }
     }
 }

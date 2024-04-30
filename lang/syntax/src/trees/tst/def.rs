@@ -7,8 +7,6 @@ use crate::ust;
 
 use crate::generic;
 
-use super::forget::ForgetTST;
-
 pub type Ident = generic::Ident;
 pub type Label = generic::Label;
 pub type DocComment = generic::DocComment;
@@ -56,12 +54,8 @@ impl HasTypeInfo for Exp {
             Exp::DotCall(e) => e.inferred_type.clone(),
             Exp::Anno(e) => e.normalized_type.clone(),
             Exp::TypeUniv(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
-            Exp::LocalMatch(e) => {
-                e.inferred_type.forget_tst().map(|typctor| Rc::new(ust::Exp::TypCtor(typctor)))
-            }
-            Exp::LocalComatch(e) => {
-                e.inferred_type.forget_tst().map(|typctor| Rc::new(ust::Exp::TypCtor(typctor)))
-            }
+            Exp::LocalMatch(e) => e.inferred_type.clone().map(|x| Rc::new(x.into())),
+            Exp::LocalComatch(e) => e.inferred_type.clone().map(|x| Rc::new(x.into())),
             Exp::Hole(e) => e.inferred_type.clone(),
         }
     }
