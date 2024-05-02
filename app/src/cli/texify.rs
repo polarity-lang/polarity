@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use printer::{PrintCfg, PrintExt};
 use query::Database;
-use syntax::ust;
+use syntax::generic;
 
 use crate::result::IOError;
 
@@ -111,7 +111,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     Ok(())
 }
 
-fn print_prg<W: io::Write>(prg: ust::Prg, cfg: &PrintCfg, stream: &mut W) {
+fn print_prg<W: io::Write>(prg: generic::Prg, cfg: &PrintCfg, stream: &mut W) {
     prg.print_latex(cfg, stream).expect("Failed to print to stdout");
     println!();
 }

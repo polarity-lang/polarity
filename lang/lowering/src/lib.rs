@@ -4,14 +4,14 @@ mod lower;
 mod result;
 
 use parser::cst;
-use syntax::ust;
+use syntax::generic;
 
 use crate::downsweep::build_lookup_table;
 use crate::lower::Lower;
 pub use ctx::*;
 pub use result::*;
 
-pub fn lower_prg(prg: &cst::decls::Prg) -> Result<ust::Prg, LoweringError> {
+pub fn lower_prg(prg: &cst::decls::Prg) -> Result<generic::Prg, LoweringError> {
     let cst::decls::Prg { items } = prg;
 
     let (top_level_map, lookup_table) = build_lookup_table(items)?;
@@ -22,5 +22,5 @@ pub fn lower_prg(prg: &cst::decls::Prg) -> Result<ust::Prg, LoweringError> {
         item.lower(&mut ctx)?;
     }
 
-    Ok(ust::Prg { decls: ust::Decls { map: ctx.decls_map, lookup_table } })
+    Ok(generic::Prg { decls: generic::Decls { map: ctx.decls_map, lookup_table } })
 }

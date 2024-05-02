@@ -5,7 +5,8 @@ use crate::ctx::*;
 use crate::generic::Hole;
 use crate::generic::TypeUniv;
 use crate::generic::Variable;
-use crate::ust::*;
+
+use super::*;
 
 impl Substitutable<Rc<Exp>> for Rc<Exp> {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {

@@ -8,18 +8,18 @@ use parser::cst;
 use parser::cst::exp::BindingSite;
 use parser::cst::exp::Ident;
 use syntax::ctx::BindContext;
+use syntax::generic;
 use syntax::generic::lookup_table::DeclKind;
 use syntax::generic::Hole;
 use syntax::generic::TypeUniv;
 use syntax::generic::Variable;
-use syntax::ust;
 
 use super::Lower;
 use crate::ctx::*;
 use crate::result::*;
 
 impl Lower for cst::exp::Exp {
-    type Target = ust::Exp;
+    type Target = generic::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         match self {
@@ -38,16 +38,23 @@ impl Lower for cst::exp::Exp {
 }
 
 impl Lower for cst::exp::Match {
-    type Target = ust::Match;
+    type Target = generic::Match;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Match { span, cases, omit_absurd } = self;
 
-        Ok(ust::Match { span: Some(*span), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
+        Ok(generic::Match {
+            span: Some(*span),
+            cases: cases.lower(ctx)?,
+            omit_absurd: *omit_absurd,
+        })
     }
 }
 
-fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ust::TelescopeInst) -> Result<T, LoweringError>>(
+fn lower_telescope_inst<
+    T,
+    F: FnOnce(&mut Ctx, generic::TelescopeInst) -> Result<T, LoweringError>,
+>(
     tel_inst: &[cst::exp::BindingSite],
     ctx: &mut Ctx,
     f: F,
@@ -59,52 +66,57 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ust::TelescopeInst) -> Result<T, 
             let mut params_out = params_out?;
             let span = bs_to_span(param);
             let name = bs_to_name(param);
-            let param_out = ust::ParamInst { span: Some(span), info: None, name, typ: None };
+            let param_out = generic::ParamInst { span: Some(span), info: None, name, typ: None };
             params_out.push(param_out);
             Ok(params_out)
         },
-        |ctx, params| f(ctx, params.map(|params| ust::TelescopeInst { params })?),
+        |ctx, params| f(ctx, params.map(|params| generic::TelescopeInst { params })?),
     )
 }
 
 impl Lower for cst::exp::Case {
-    type Target = ust::Case;
+    type Target = generic::Case;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Case { span, name, params, body } = self;
 
         lower_telescope_inst(params, ctx, |ctx, params| {
-            Ok(ust::Case { span: Some(*span), name: name.clone(), params, body: body.lower(ctx)? })
+            Ok(generic::Case {
+                span: Some(*span),
+                name: name.clone(),
+                params,
+                body: body.lower(ctx)?,
+            })
         })
     }
 }
 
 impl Lower for cst::exp::Call {
-    type Target = ust::Exp;
+    type Target = generic::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Call { span, name, args } = self;
         match ctx.lookup(name, span)? {
-            Elem::Bound(lvl) => Ok(ust::Exp::Variable(Variable {
+            Elem::Bound(lvl) => Ok(generic::Exp::Variable(Variable {
                 span: Some(*span),
                 idx: ctx.level_to_index(lvl),
                 name: name.clone(),
                 inferred_type: None,
             })),
             Elem::Decl(meta) => match meta.kind() {
-                DeclKind::Data | DeclKind::Codata => Ok(ust::Exp::TypCtor(ust::TypCtor {
+                DeclKind::Data | DeclKind::Codata => Ok(generic::Exp::TypCtor(generic::TypCtor {
                     span: Some(*span),
                     name: name.to_owned(),
-                    args: ust::Args { args: args.lower(ctx)? },
+                    args: generic::Args { args: args.lower(ctx)? },
                 })),
                 DeclKind::Def | DeclKind::Dtor => Err(LoweringError::MustUseAsDtor {
                     name: name.to_owned(),
                     span: span.to_miette(),
                 }),
-                DeclKind::Codef | DeclKind::Ctor => Ok(ust::Exp::Call(ust::Call {
+                DeclKind::Codef | DeclKind::Ctor => Ok(generic::Exp::Call(generic::Call {
                     span: Some(*span),
                     name: name.to_owned(),
-                    args: ust::Args { args: args.lower(ctx)? },
+                    args: generic::Args { args: args.lower(ctx)? },
                     inferred_type: None,
                 })),
                 DeclKind::Let => Err(LoweringError::Impossible {
@@ -118,7 +130,7 @@ impl Lower for cst::exp::Call {
 }
 
 impl Lower for cst::exp::DotCall {
-    type Target = ust::Exp;
+    type Target = generic::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::DotCall { span, exp, name, args } = self;
@@ -128,11 +140,11 @@ impl Lower for cst::exp::DotCall {
                 Err(LoweringError::CannotUseAsDtor { name: name.clone(), span: span.to_miette() })
             }
             Elem::Decl(meta) => match meta.kind() {
-                DeclKind::Def | DeclKind::Dtor => Ok(ust::Exp::DotCall(ust::DotCall {
+                DeclKind::Def | DeclKind::Dtor => Ok(generic::Exp::DotCall(generic::DotCall {
                     span: Some(*span),
                     exp: exp.lower(ctx)?,
                     name: name.clone(),
-                    args: ust::Args { args: args.lower(ctx)? },
+                    args: generic::Args { args: args.lower(ctx)? },
                     inferred_type: None,
                 })),
                 _ => Err(LoweringError::CannotUseAsDtor {
@@ -145,11 +157,11 @@ impl Lower for cst::exp::DotCall {
 }
 
 impl Lower for cst::exp::Anno {
-    type Target = ust::Exp;
+    type Target = generic::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Anno { span, exp, typ } = self;
-        Ok(ust::Exp::Anno(ust::Anno {
+        Ok(generic::Exp::Anno(generic::Anno {
             span: Some(*span),
             exp: exp.lower(ctx)?,
             typ: typ.lower(ctx)?,
@@ -159,20 +171,20 @@ impl Lower for cst::exp::Anno {
 }
 
 impl Lower for cst::exp::TypeUniv {
-    type Target = ust::Exp;
+    type Target = generic::Exp;
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::TypeUniv { span } = self;
-        Ok(ust::Exp::TypeUniv(TypeUniv { span: Some(*span) }))
+        Ok(generic::Exp::TypeUniv(TypeUniv { span: Some(*span) }))
     }
 }
 
 impl Lower for cst::exp::LocalMatch {
-    type Target = ust::Exp;
+    type Target = generic::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::LocalMatch { span, name, on_exp, motive, body } = self;
-        Ok(ust::Exp::LocalMatch(ust::LocalMatch {
+        Ok(generic::Exp::LocalMatch(generic::LocalMatch {
             span: Some(*span),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
@@ -186,11 +198,11 @@ impl Lower for cst::exp::LocalMatch {
 }
 
 impl Lower for cst::exp::LocalComatch {
-    type Target = ust::Exp;
+    type Target = generic::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::LocalComatch { span, name, is_lambda_sugar, body } = self;
-        Ok(ust::Exp::LocalComatch(ust::LocalComatch {
+        Ok(generic::Exp::LocalComatch(generic::LocalComatch {
             span: Some(*span),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
@@ -202,23 +214,23 @@ impl Lower for cst::exp::LocalComatch {
 }
 
 impl Lower for cst::exp::Hole {
-    type Target = ust::Exp;
+    type Target = generic::Exp;
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Hole { span } = self;
-        Ok(ust::Exp::Hole(Hole { span: Some(*span), inferred_type: None, inferred_ctx: None }))
+        Ok(generic::Exp::Hole(Hole { span: Some(*span), inferred_type: None, inferred_ctx: None }))
     }
 }
 
 impl Lower for cst::exp::NatLit {
-    type Target = ust::Exp;
+    type Target = generic::Exp;
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::NatLit { span, val } = self;
-        let mut out = ust::Exp::Call(ust::Call {
+        let mut out = generic::Exp::Call(generic::Call {
             span: Some(*span),
             name: "Z".to_owned(),
-            args: ust::Args { args: vec![] },
+            args: generic::Args { args: vec![] },
             inferred_type: None,
         });
 
@@ -226,10 +238,10 @@ impl Lower for cst::exp::NatLit {
 
         while &i != val {
             i += 1usize;
-            out = ust::Exp::Call(ust::Call {
+            out = generic::Exp::Call(generic::Call {
                 span: Some(*span),
                 name: "S".to_owned(),
-                args: ust::Args { args: vec![Rc::new(out)] },
+                args: generic::Args { args: vec![Rc::new(out)] },
                 inferred_type: None,
             });
         }
@@ -239,19 +251,19 @@ impl Lower for cst::exp::NatLit {
 }
 
 impl Lower for cst::exp::Fun {
-    type Target = ust::Exp;
+    type Target = generic::Exp;
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Fun { span, from, to } = self;
-        Ok(ust::Exp::TypCtor(ust::TypCtor {
+        Ok(generic::Exp::TypCtor(generic::TypCtor {
             span: Some(*span),
             name: "Fun".to_owned(),
-            args: ust::Args { args: vec![from.lower(ctx)?, to.lower(ctx)?] },
+            args: generic::Args { args: vec![from.lower(ctx)?, to.lower(ctx)?] },
         }))
     }
 }
 
 impl Lower for cst::exp::Lam {
-    type Target = ust::Exp;
+    type Target = generic::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Lam { span, var, body } = self;
@@ -293,14 +305,14 @@ fn bs_to_span(bs: &cst::exp::BindingSite) -> Span {
 }
 
 impl Lower for cst::exp::Motive {
-    type Target = ust::Motive;
+    type Target = generic::Motive;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Motive { span, param, ret_typ } = self;
 
-        Ok(ust::Motive {
+        Ok(generic::Motive {
             span: Some(*span),
-            param: ust::ParamInst {
+            param: generic::ParamInst {
                 span: Some(bs_to_span(param)),
                 info: None,
                 name: bs_to_name(param),

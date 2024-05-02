@@ -4,25 +4,25 @@ use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::exp::BindingSite;
 use syntax::ctx::BindContext;
+use syntax::generic;
 use syntax::generic::lookup_table::DeclKind;
 use syntax::generic::lookup_table::DeclMeta;
-use syntax::ust;
 
 use super::*;
 
 impl Lower for cst::decls::DocComment {
-    type Target = ust::DocComment;
+    type Target = generic::DocComment;
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        Ok(ust::DocComment { docs: self.docs.clone() })
+        Ok(generic::DocComment { docs: self.docs.clone() })
     }
 }
 
 impl Lower for cst::decls::Attribute {
-    type Target = ust::Attribute;
+    type Target = generic::Attribute;
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        Ok(ust::Attribute { attrs: self.attrs.clone() })
+        Ok(generic::Attribute { attrs: self.attrs.clone() })
     }
 }
 
@@ -31,11 +31,11 @@ impl Lower for cst::decls::Decl {
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let decl = match self {
-            cst::decls::Decl::Data(data) => ust::Decl::Data(data.lower(ctx)?),
-            cst::decls::Decl::Codata(codata) => ust::Decl::Codata(codata.lower(ctx)?),
-            cst::decls::Decl::Def(def) => ust::Decl::Def(def.lower(ctx)?),
-            cst::decls::Decl::Codef(codef) => ust::Decl::Codef(codef.lower(ctx)?),
-            cst::decls::Decl::Let(tl_let) => ust::Decl::Let(tl_let.lower(ctx)?),
+            cst::decls::Decl::Data(data) => generic::Decl::Data(data.lower(ctx)?),
+            cst::decls::Decl::Codata(codata) => generic::Decl::Codata(codata.lower(ctx)?),
+            cst::decls::Decl::Def(def) => generic::Decl::Def(def.lower(ctx)?),
+            cst::decls::Decl::Codef(codef) => generic::Decl::Codef(codef.lower(ctx)?),
+            cst::decls::Decl::Let(tl_let) => generic::Decl::Let(tl_let.lower(ctx)?),
         };
         ctx.add_decl(decl)?;
         Ok(())
@@ -43,53 +43,57 @@ impl Lower for cst::decls::Decl {
 }
 
 impl Lower for cst::decls::Data {
-    type Target = ust::Data;
+    type Target = generic::Data;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::decls::Data { span, doc, name, attr, params, ctors } = self;
 
-        let ctor_decls = ctors.lower(ctx)?.into_iter().map(ust::Decl::Ctor);
+        let ctor_decls = ctors.lower(ctx)?.into_iter().map(generic::Decl::Ctor);
 
         let ctor_names = ctors.iter().map(|ctor| ctor.name.clone()).collect();
 
         ctx.add_decls(ctor_decls)?;
 
-        Ok(ust::Data {
+        Ok(generic::Data {
             span: Some(*span),
             doc: doc.lower(ctx)?,
             name: name.clone(),
             attr: attr.lower(ctx)?,
-            typ: Rc::new(ust::TypAbs { params: lower_telescope(params, ctx, |_, out| Ok(out))? }),
+            typ: Rc::new(generic::TypAbs {
+                params: lower_telescope(params, ctx, |_, out| Ok(out))?,
+            }),
             ctors: ctor_names,
         })
     }
 }
 
 impl Lower for cst::decls::Codata {
-    type Target = ust::Codata;
+    type Target = generic::Codata;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::decls::Codata { span, doc, name, attr, params, dtors } = self;
 
-        let dtor_decls = dtors.lower(ctx)?.into_iter().map(ust::Decl::Dtor);
+        let dtor_decls = dtors.lower(ctx)?.into_iter().map(generic::Decl::Dtor);
 
         let dtor_names = dtors.iter().map(|dtor| dtor.name.clone()).collect();
 
         ctx.add_decls(dtor_decls)?;
 
-        Ok(ust::Codata {
+        Ok(generic::Codata {
             span: Some(*span),
             doc: doc.lower(ctx)?,
             name: name.clone(),
             attr: attr.lower(ctx)?,
-            typ: Rc::new(ust::TypAbs { params: lower_telescope(params, ctx, |_, out| Ok(out))? }),
+            typ: Rc::new(generic::TypAbs {
+                params: lower_telescope(params, ctx, |_, out| Ok(out))?,
+            }),
             dtors: dtor_names,
         })
     }
 }
 
 impl Lower for cst::decls::Ctor {
-    type Target = ust::Ctor;
+    type Target = generic::Ctor;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::decls::Ctor { span, doc, name, params, typ } = self;
@@ -122,10 +126,10 @@ impl Lower for cst::decls::Ctor {
                 Some(typ) => typ.lower(ctx)?,
                 None => {
                     if type_arity == 0 {
-                        ust::TypCtor {
+                        generic::TypCtor {
                             span: None,
                             name: typ_name.clone(),
-                            args: ust::Args { args: vec![] },
+                            args: generic::Args { args: vec![] },
                         }
                     } else {
                         return Err(LoweringError::MustProvideArgs {
@@ -137,7 +141,7 @@ impl Lower for cst::decls::Ctor {
                 }
             };
 
-            Ok(ust::Ctor {
+            Ok(generic::Ctor {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
                 name: name.clone(),
@@ -149,7 +153,7 @@ impl Lower for cst::decls::Ctor {
 }
 
 impl Lower for cst::decls::Dtor {
-    type Target = ust::Dtor;
+    type Target = generic::Dtor;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::decls::Dtor { span, doc, name, params, destructee, ret_typ } = self;
@@ -204,7 +208,7 @@ impl Lower for cst::decls::Dtor {
             };
 
             lower_self_param(&self_param, ctx, |ctx, self_param| {
-                Ok(ust::Dtor {
+                Ok(generic::Dtor {
                     span: Some(*span),
                     doc: doc.lower(ctx)?,
                     name: name.clone(),
@@ -218,7 +222,7 @@ impl Lower for cst::decls::Dtor {
 }
 
 impl Lower for cst::decls::Def {
-    type Target = ust::Def;
+    type Target = generic::Def;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::decls::Def { span, doc, name, attr, params, scrutinee, ret_typ, body } = self;
@@ -229,7 +233,7 @@ impl Lower for cst::decls::Def {
             let body = body.lower(ctx)?;
 
             lower_self_param(&self_param, ctx, |ctx, self_param| {
-                Ok(ust::Def {
+                Ok(generic::Def {
                     span: Some(*span),
                     doc: doc.lower(ctx)?,
                     name: name.clone(),
@@ -245,13 +249,13 @@ impl Lower for cst::decls::Def {
 }
 
 impl Lower for cst::decls::Codef {
-    type Target = ust::Codef;
+    type Target = generic::Codef;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::decls::Codef { span, doc, name, attr, params, typ, body, .. } = self;
 
         lower_telescope(params, ctx, |ctx, params| {
-            Ok(ust::Codef {
+            Ok(generic::Codef {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
                 name: name.clone(),
@@ -265,13 +269,13 @@ impl Lower for cst::decls::Codef {
 }
 
 impl Lower for cst::decls::Let {
-    type Target = ust::Let;
+    type Target = generic::Let;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::decls::Let { span, doc, name, attr, params, typ, body } = self;
 
         lower_telescope(params, ctx, |ctx, params| {
-            Ok(ust::Let {
+            Ok(generic::Let {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
                 name: name.clone(),
@@ -285,20 +289,20 @@ impl Lower for cst::decls::Let {
 }
 
 impl Lower for cst::decls::TypApp {
-    type Target = ust::TypCtor;
+    type Target = generic::TypCtor;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::decls::TypApp { span, name, args } = self;
 
-        Ok(ust::TypCtor {
+        Ok(generic::TypCtor {
             span: Some(*span),
             name: name.clone(),
-            args: ust::Args { args: args.lower(ctx)? },
+            args: generic::Args { args: args.lower(ctx)? },
         })
     }
 }
 
-fn lower_self_param<T, F: FnOnce(&mut Ctx, ust::SelfParam) -> Result<T, LoweringError>>(
+fn lower_self_param<T, F: FnOnce(&mut Ctx, generic::SelfParam) -> Result<T, LoweringError>>(
     self_param: &cst::decls::SelfParam,
     ctx: &mut Ctx,
     f: F,
@@ -306,7 +310,7 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ust::SelfParam) -> Result<T, Lowering
     let cst::decls::SelfParam { span, name, typ } = self_param;
     let typ_out = typ.lower(ctx)?;
     ctx.bind_single(name.clone().unwrap_or_default(), |ctx| {
-        f(ctx, ust::SelfParam { info: Some(*span), name: name.clone(), typ: typ_out })
+        f(ctx, generic::SelfParam { info: Some(*span), name: name.clone(), typ: typ_out })
     })
 }
 
@@ -339,7 +343,7 @@ fn lower_telescope<T, F>(
     f: F,
 ) -> Result<T, LoweringError>
 where
-    F: FnOnce(&mut Ctx, ust::Telescope) -> Result<T, LoweringError>,
+    F: FnOnce(&mut Ctx, generic::Telescope) -> Result<T, LoweringError>,
 {
     let tel = desugar_telescope(tele);
     ctx.bind_fold(
@@ -353,10 +357,10 @@ where
                 BindingSite::Var { name, .. } => name.clone(),
                 BindingSite::Wildcard { .. } => "_".to_owned(),
             };
-            let param_out = ust::Param { name, typ: typ_out };
+            let param_out = generic::Param { name, typ: typ_out };
             params_out.push(param_out);
             Ok(params_out)
         },
-        |ctx, params| f(ctx, params.map(|params| ust::Telescope { params })?),
+        |ctx, params| f(ctx, params.map(|params| generic::Telescope { params })?),
     )
 }

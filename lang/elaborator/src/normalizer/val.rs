@@ -10,7 +10,7 @@ use printer::tokens::*;
 use printer::types::*;
 use printer::util::*;
 use syntax::common::*;
-use syntax::ust;
+use syntax::generic;
 
 /// The result of evaluation
 #[derive(Debug, Clone, Derivative)]
@@ -19,13 +19,13 @@ pub enum Val {
     TypCtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
-        name: ust::Ident,
+        name: generic::Ident,
         args: Args,
     },
     Ctor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
-        name: ust::Ident,
+        name: generic::Ident,
         args: Args,
     },
     TypeUniv {
@@ -35,7 +35,7 @@ pub enum Val {
     Comatch {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
-        name: ust::Label,
+        name: generic::Label,
         is_lambda_sugar: bool,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Match,
@@ -53,20 +53,20 @@ pub enum Neu {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        name: ust::Ident,
+        name: generic::Ident,
         idx: Idx,
     },
     Dtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
         exp: Rc<Neu>,
-        name: ust::Ident,
+        name: generic::Ident,
         args: Args,
     },
     Match {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
-        name: ust::Label,
+        name: generic::Label,
         on_exp: Rc<Neu>,
         // TODO: Ignore this field for PartialEq, Hash?
         body: Match,
@@ -91,8 +91,8 @@ pub struct Match {
 pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub name: ust::Ident,
-    pub params: ust::TelescopeInst,
+    pub name: generic::Ident,
+    pub params: generic::TelescopeInst,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Closure>,
 }
@@ -100,7 +100,7 @@ pub struct Case {
 #[derive(Debug, Clone)]
 pub struct TypApp {
     pub span: Option<Span>,
-    pub name: ust::Ident,
+    pub name: generic::Ident,
     pub args: Args,
 }
 
@@ -111,7 +111,7 @@ pub type Args = Vec<Rc<Val>>;
 pub struct Closure {
     pub env: Env,
     pub n_args: usize,
-    pub body: Rc<ust::Exp>,
+    pub body: Rc<generic::Exp>,
 }
 
 impl Shift for Val {

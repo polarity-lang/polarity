@@ -7,8 +7,6 @@ use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;
 use syntax::generic::*;
-use syntax::ust;
-
 mod fv;
 
 use fv::*;
@@ -32,11 +30,11 @@ pub fn lift(prg: Prg, name: &str) -> LiftResult {
 /// Result of lifting
 pub struct LiftResult {
     /// The resulting program
-    pub prg: ust::Prg,
+    pub prg: Prg,
     /// List of new top-level definitions
-    pub new_decls: HashSet<ust::Ident>,
+    pub new_decls: HashSet<Ident>,
     /// List of top-level declarations that have been modified in the lifting process
-    pub modified_decls: HashSet<ust::Ident>,
+    pub modified_decls: HashSet<Ident>,
 }
 
 #[derive(Debug)]
@@ -44,11 +42,11 @@ struct Ctx {
     /// The type name that should be lifted
     name: String,
     /// List of new top-level declarations that got created in the lifting process
-    new_decls: Vec<ust::Decl>,
+    new_decls: Vec<Decl>,
     /// Current declaration being visited for lifting
-    curr_decl: ust::Ident,
+    curr_decl: Ident,
     /// List of declarations that got modified in the lifting process
-    modified_decls: HashSet<ust::Ident>,
+    modified_decls: HashSet<Ident>,
     /// Tracks the current binders in scope
     ctx: LevelCtx,
 }
@@ -74,17 +72,17 @@ trait LiftTelescope {
 }
 
 impl Lift for Prg {
-    type Target = ust::Prg;
+    type Target = Prg;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Prg { decls } = self;
 
-        ust::Prg { decls: decls.lift(ctx) }
+        Prg { decls: decls.lift(ctx) }
     }
 }
 
 impl Lift for Decls {
-    type Target = ust::Decls;
+    type Target = Decls;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Decls { map, lookup_table } = self;
@@ -102,34 +100,34 @@ impl Lift for Decls {
         let decls_iter = ctx.new_decls.iter().map(|decl| (decl.name().clone(), decl.clone()));
         map.extend(decls_iter);
 
-        ust::Decls { map, lookup_table }
+        Decls { map, lookup_table }
     }
 }
 
 impl Lift for Decl {
-    type Target = ust::Decl;
+    type Target = Decl;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         ctx.set_curr_decl(self.name().clone());
         match self {
-            Decl::Data(data) => ust::Decl::Data(data.lift(ctx)),
-            Decl::Codata(cotata) => ust::Decl::Codata(cotata.lift(ctx)),
-            Decl::Ctor(ctor) => ust::Decl::Ctor(ctor.lift(ctx)),
-            Decl::Dtor(tdor) => ust::Decl::Dtor(tdor.lift(ctx)),
-            Decl::Def(def) => ust::Decl::Def(def.lift(ctx)),
-            Decl::Codef(codef) => ust::Decl::Codef(codef.lift(ctx)),
-            Decl::Let(tl_let) => ust::Decl::Let(tl_let.lift(ctx)),
+            Decl::Data(data) => Decl::Data(data.lift(ctx)),
+            Decl::Codata(cotata) => Decl::Codata(cotata.lift(ctx)),
+            Decl::Ctor(ctor) => Decl::Ctor(ctor.lift(ctx)),
+            Decl::Dtor(tdor) => Decl::Dtor(tdor.lift(ctx)),
+            Decl::Def(def) => Decl::Def(def.lift(ctx)),
+            Decl::Codef(codef) => Decl::Codef(codef.lift(ctx)),
+            Decl::Let(tl_let) => Decl::Let(tl_let.lift(ctx)),
         }
     }
 }
 
 impl Lift for Data {
-    type Target = ust::Data;
+    type Target = Data;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Data { span, doc, name, attr, typ, ctors } = self;
 
-        ust::Data {
+        Data {
             span: *span,
             doc: doc.clone(),
             name: name.clone(),
@@ -141,12 +139,12 @@ impl Lift for Data {
 }
 
 impl Lift for Codata {
-    type Target = ust::Codata;
+    type Target = Codata;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Codata { span, doc, name, attr, typ, dtors } = self;
 
-        ust::Codata {
+        Codata {
             span: *span,
             doc: doc.clone(),
             name: name.clone(),
@@ -158,22 +156,22 @@ impl Lift for Codata {
 }
 
 impl Lift for TypAbs {
-    type Target = ust::TypAbs;
+    type Target = TypAbs;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let TypAbs { params } = self;
 
-        ust::TypAbs { params: params.lift_telescope(ctx, |_, params| params) }
+        TypAbs { params: params.lift_telescope(ctx, |_, params| params) }
     }
 }
 
 impl Lift for Ctor {
-    type Target = ust::Ctor;
+    type Target = Ctor;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Ctor { span, doc, name, params, typ } = self;
 
-        params.lift_telescope(ctx, |ctx, params| ust::Ctor {
+        params.lift_telescope(ctx, |ctx, params| Ctor {
             span: *span,
             doc: doc.clone(),
             name: name.clone(),
@@ -184,7 +182,7 @@ impl Lift for Ctor {
 }
 
 impl Lift for Dtor {
-    type Target = ust::Dtor;
+    type Target = Dtor;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Dtor { span, doc, name, params, self_param, ret_typ } = self;
@@ -194,20 +192,13 @@ impl Lift for Dtor {
                 let ret_typ = ret_typ.lift(ctx);
                 (self_param, ret_typ)
             });
-            ust::Dtor {
-                span: *span,
-                doc: doc.clone(),
-                name: name.clone(),
-                params,
-                self_param,
-                ret_typ,
-            }
+            Dtor { span: *span, doc: doc.clone(), name: name.clone(), params, self_param, ret_typ }
         })
     }
 }
 
 impl Lift for Def {
-    type Target = ust::Def;
+    type Target = Def;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
@@ -218,7 +209,7 @@ impl Lift for Def {
                 (self_param, ret_typ)
             });
 
-            ust::Def {
+            Def {
                 span: *span,
                 doc: doc.clone(),
                 name: name.clone(),
@@ -233,12 +224,12 @@ impl Lift for Def {
 }
 
 impl Lift for Codef {
-    type Target = ust::Codef;
+    type Target = Codef;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Codef { span, doc, name, attr, params, typ, body } = self;
 
-        params.lift_telescope(ctx, |ctx, params| ust::Codef {
+        params.lift_telescope(ctx, |ctx, params| Codef {
             span: *span,
             doc: doc.clone(),
             name: name.clone(),
@@ -251,12 +242,12 @@ impl Lift for Codef {
 }
 
 impl Lift for Let {
-    type Target = ust::Let;
+    type Target = Let;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Let { span, doc, name, attr, params, typ, body } = self;
 
-        params.lift_telescope(ctx, |ctx, params| ust::Let {
+        params.lift_telescope(ctx, |ctx, params| Let {
             span: *span,
             doc: doc.clone(),
             name: name.clone(),
@@ -269,22 +260,22 @@ impl Lift for Let {
 }
 
 impl Lift for Match {
-    type Target = ust::Match;
+    type Target = Match;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Match { span, cases, omit_absurd } = self;
 
-        ust::Match { span: *span, cases: cases.lift(ctx), omit_absurd: *omit_absurd }
+        Match { span: *span, cases: cases.lift(ctx), omit_absurd: *omit_absurd }
     }
 }
 
 impl Lift for Case {
-    type Target = ust::Case;
+    type Target = Case;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Case { span, name, params, body } = self;
 
-        params.lift_telescope(ctx, |ctx, params| ust::Case {
+        params.lift_telescope(ctx, |ctx, params| Case {
             span: *span,
             name: name.clone(),
             params,
@@ -294,25 +285,25 @@ impl Lift for Case {
 }
 
 impl LiftTelescope for SelfParam {
-    type Target = ust::SelfParam;
+    type Target = SelfParam;
 
     fn lift_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> T>(&self, ctx: &mut Ctx, f: F) -> T {
         let SelfParam { info, name, typ } = self;
 
         ctx.bind_single((), |ctx| {
-            let self_param = ust::SelfParam { info: *info, name: name.clone(), typ: typ.lift(ctx) };
+            let self_param = SelfParam { info: *info, name: name.clone(), typ: typ.lift(ctx) };
             f(ctx, self_param)
         })
     }
 }
 
 impl Lift for Exp {
-    type Target = ust::Exp;
+    type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         match self {
             Exp::Variable(e) => e.lift(ctx),
-            Exp::TypCtor(e) => ust::Exp::TypCtor(e.lift(ctx)),
+            Exp::TypCtor(e) => Exp::TypCtor(e.lift(ctx)),
             Exp::Call(e) => e.lift(ctx),
             Exp::DotCall(e) => e.lift(ctx),
             Exp::Anno(e) => e.lift(ctx),
@@ -325,34 +316,29 @@ impl Lift for Exp {
 }
 
 impl Lift for Variable {
-    type Target = ust::Exp;
+    type Target = Exp;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
         let Variable { span, idx, name, .. } = self;
-        ust::Exp::Variable(Variable {
-            span: *span,
-            idx: *idx,
-            name: name.clone(),
-            inferred_type: None,
-        })
+        Exp::Variable(Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: None })
     }
 }
 
 impl Lift for TypCtor {
-    type Target = ust::TypCtor;
+    type Target = TypCtor;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let TypCtor { span, name, args } = self;
-        ust::TypCtor { span: *span, name: name.clone(), args: args.lift(ctx) }
+        TypCtor { span: *span, name: name.clone(), args: args.lift(ctx) }
     }
 }
 
 impl Lift for Call {
-    type Target = ust::Exp;
+    type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Call { span, name, args, .. } = self;
-        ust::Exp::Call(ust::Call {
+        Exp::Call(Call {
             span: *span,
             name: name.clone(),
             args: args.lift(ctx),
@@ -362,11 +348,11 @@ impl Lift for Call {
 }
 
 impl Lift for DotCall {
-    type Target = ust::Exp;
+    type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let DotCall { span, exp, name, args, .. } = self;
-        ust::Exp::DotCall(ust::DotCall {
+        Exp::DotCall(DotCall {
             span: *span,
             exp: exp.lift(ctx),
             name: name.clone(),
@@ -377,11 +363,11 @@ impl Lift for DotCall {
 }
 
 impl Lift for Anno {
-    type Target = ust::Exp;
+    type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Anno { span, exp, typ, .. } = self;
-        ust::Exp::Anno(ust::Anno {
+        Exp::Anno(Anno {
             span: *span,
             exp: exp.lift(ctx),
             typ: typ.lift(ctx),
@@ -391,25 +377,25 @@ impl Lift for Anno {
 }
 
 impl Lift for TypeUniv {
-    type Target = ust::Exp;
+    type Target = Exp;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
         let TypeUniv { span } = self;
-        ust::Exp::TypeUniv(TypeUniv { span: *span })
+        Exp::TypeUniv(TypeUniv { span: *span })
     }
 }
 
 impl Lift for Hole {
-    type Target = ust::Exp;
+    type Target = Exp;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
         let Hole { span, .. } = self;
-        ust::Exp::Hole(Hole { span: *span, inferred_type: None, inferred_ctx: None })
+        Exp::Hole(Hole { span: *span, inferred_type: None, inferred_ctx: None })
     }
 }
 
 impl Lift for LocalMatch {
-    type Target = ust::Exp;
+    type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let LocalMatch { span, ctx: type_ctx, name, on_exp, motive, ret_typ, body, inferred_type } =
@@ -428,7 +414,7 @@ impl Lift for LocalMatch {
 }
 
 impl Lift for LocalComatch {
-    type Target = ust::Exp;
+    type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let LocalComatch { span, ctx: type_ctx, name, is_lambda_sugar, body, inferred_type } = self;
@@ -443,19 +429,19 @@ impl Lift for LocalComatch {
     }
 }
 impl Lift for Motive {
-    type Target = ust::Motive;
+    type Target = Motive;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Motive { span, param, ret_typ } = self;
 
         let param = param.lift(ctx);
 
-        ctx.bind_single((), |ctx| ust::Motive { span: *span, param, ret_typ: ret_typ.lift(ctx) })
+        ctx.bind_single((), |ctx| Motive { span: *span, param, ret_typ: ret_typ.lift(ctx) })
     }
 }
 
 impl LiftTelescope for Telescope {
-    type Target = ust::Telescope;
+    type Target = Telescope;
 
     fn lift_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> T>(&self, ctx: &mut Ctx, f: F) -> T {
         let Telescope { params } = self;
@@ -467,13 +453,13 @@ impl LiftTelescope for Telescope {
                 acc.push(param.lift(ctx));
                 acc
             },
-            |ctx, params| f(ctx, ust::Telescope { params }),
+            |ctx, params| f(ctx, Telescope { params }),
         )
     }
 }
 
 impl LiftTelescope for TelescopeInst {
-    type Target = ust::TelescopeInst;
+    type Target = TelescopeInst;
 
     fn lift_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> T>(&self, ctx: &mut Ctx, f: F) -> T {
         let TelescopeInst { params } = self;
@@ -485,38 +471,38 @@ impl LiftTelescope for TelescopeInst {
                 acc.push(param.lift(ctx));
                 acc
             },
-            |ctx, params| f(ctx, ust::TelescopeInst { params }),
+            |ctx, params| f(ctx, TelescopeInst { params }),
         )
     }
 }
 
 impl Lift for Args {
-    type Target = ust::Args;
+    type Target = Args;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Args { args } = self;
 
-        ust::Args { args: args.lift(ctx) }
+        Args { args: args.lift(ctx) }
     }
 }
 
 impl Lift for Param {
-    type Target = ust::Param;
+    type Target = Param;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Param { name, typ } = self;
 
-        ust::Param { name: name.clone(), typ: typ.lift(ctx) }
+        Param { name: name.clone(), typ: typ.lift(ctx) }
     }
 }
 
 impl Lift for ParamInst {
-    type Target = ust::ParamInst;
+    type Target = ParamInst;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
         let ParamInst { span, name, typ: _, .. } = self;
 
-        ust::ParamInst { span: *span, info: None, name: name.clone(), typ: None }
+        ParamInst { span: *span, info: None, name: name.clone(), typ: None }
     }
 }
 
@@ -556,10 +542,10 @@ impl Ctx {
         motive: &Option<Motive>,
         ret_typ: &Option<Rc<Exp>>,
         body: &Match,
-    ) -> ust::Exp {
+    ) -> Exp {
         // Only lift local matches for the specified type
         if inferred_type.name != self.name {
-            return ust::Exp::LocalMatch(ust::LocalMatch {
+            return Exp::LocalMatch(LocalMatch {
                 span: *span,
                 inferred_type: None,
                 ctx: None,
@@ -605,13 +591,13 @@ impl Ctx {
         // Build the new top-level definition
         let name = self.unique_def_name(name, &inferred_type.name);
 
-        let def = ust::Def {
+        let def = Def {
             span: None,
             doc: None,
             name: name.clone(),
-            attr: ust::Attribute::default(),
+            attr: Attribute::default(),
             params: telescope,
-            self_param: ust::SelfParam {
+            self_param: SelfParam {
                 info: None,
                 name: motive.as_ref().map(|m| m.param.name.clone()),
                 typ: self_typ,
@@ -620,10 +606,10 @@ impl Ctx {
             body,
         };
 
-        self.new_decls.push(ust::Decl::Def(def));
+        self.new_decls.push(Decl::Def(def));
 
         // Replace the match by a destructor call of the new top-level definition
-        ust::Exp::DotCall(ust::DotCall {
+        Exp::DotCall(DotCall {
             span: None,
             exp: on_exp.lift(self),
             name,
@@ -640,10 +626,10 @@ impl Ctx {
         name: &Label,
         is_lambda_sugar: bool,
         body: &Match,
-    ) -> ust::Exp {
+    ) -> Exp {
         // Only lift local matches for the specified type
         if inferred_type.name != self.name {
-            return ust::Exp::LocalComatch(ust::LocalComatch {
+            return Exp::LocalComatch(LocalComatch {
                 span: *span,
                 ctx: None,
                 name: name.clone(),
@@ -670,24 +656,24 @@ impl Ctx {
         // Build the new top-level definition
         let name = self.unique_codef_name(name, &inferred_type.name);
 
-        let codef = ust::Codef {
+        let codef = Codef {
             span: None,
             doc: None,
             name: name.clone(),
-            attr: ust::Attribute::default(),
+            attr: Attribute::default(),
             params: telescope,
             typ,
             body,
         };
 
-        self.new_decls.push(ust::Decl::Codef(codef));
+        self.new_decls.push(Decl::Codef(codef));
 
         // Replace the comatch by a call of the new top-level definition
-        ust::Exp::Call(ust::Call { span: None, name, args, inferred_type: None })
+        Exp::Call(Call { span: None, name, args, inferred_type: None })
     }
 
     /// Set the current declaration
-    fn set_curr_decl(&mut self, name: ust::Ident) {
+    fn set_curr_decl(&mut self, name: Ident) {
         self.curr_decl = name;
     }
 
@@ -697,7 +683,7 @@ impl Ctx {
     }
 
     /// Generate a definition name based on the label and type information
-    fn unique_def_name(&self, label: &Label, type_name: &str) -> ust::Ident {
+    fn unique_def_name(&self, label: &Label, type_name: &str) -> Ident {
         label.user_name.clone().unwrap_or_else(|| {
             let lowered = type_name.to_lowercase();
             let id = label.id;
@@ -706,7 +692,7 @@ impl Ctx {
     }
 
     /// Generate a codefinition name based on the label and type information
-    fn unique_codef_name(&self, label: &Label, type_name: &str) -> ust::Ident {
+    fn unique_codef_name(&self, label: &Label, type_name: &str) -> Ident {
         label.user_name.clone().unwrap_or_else(|| {
             let id = label.id;
             format!("Mk{type_name}{id}")

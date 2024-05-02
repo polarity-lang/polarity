@@ -7,7 +7,7 @@ use syntax::generic::LookupError;
 use codespan::Span;
 use std::rc::Rc;
 use syntax::common::*;
-use syntax::ust;
+use syntax::generic::*;
 
 use printer::PrintToString;
 
@@ -44,14 +44,14 @@ pub enum TypeError {
     #[error("Cannot match on codata type {name}")]
     #[diagnostic(code("T-003"))]
     MatchOnCodata {
-        name: ust::Ident,
+        name: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
     #[error("Cannot comatch on data type {name}")]
     #[diagnostic(code("T-004"))]
     ComatchOnData {
-        name: ust::Ident,
+        name: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
@@ -65,22 +65,22 @@ pub enum TypeError {
     #[error("Got {actual}, which is not in type {expected}")]
     #[diagnostic(code("T-006"))]
     NotInType {
-        expected: ust::Ident,
-        actual: ust::Ident,
+        expected: Ident,
+        actual: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
     #[error("Pattern for {name} is marked as absurd but that could not be proven")]
     #[diagnostic(code("T-007"))]
     PatternIsNotAbsurd {
-        name: ust::Ident,
+        name: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
     #[error("Pattern for {name} is absurd and must be marked accordingly")]
     #[diagnostic(code("T-008"))]
     PatternIsAbsurd {
-        name: ust::Ident,
+        name: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
@@ -150,7 +150,7 @@ pub enum TypeError {
 }
 
 impl TypeError {
-    pub fn not_eq(lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp>) -> Self {
+    pub fn not_eq(lhs: Rc<Exp>, rhs: Rc<Exp>) -> Self {
         Self::NotEq {
             lhs: lhs.print_to_string(None),
             rhs: rhs.print_to_string(None),
@@ -180,11 +180,11 @@ impl TypeError {
         Self::InvalidMatch { msg: separated("; ", msgs), span: info.to_miette() }
     }
 
-    pub fn expected_typ_app(got: Rc<ust::Exp>) -> Self {
+    pub fn expected_typ_app(got: Rc<Exp>) -> Self {
         Self::ExpectedTypApp { got: got.print_to_string(None), span: got.span().to_miette() }
     }
 
-    pub fn occurs_check_failed(idx: Idx, exp: Rc<ust::Exp>) -> Self {
+    pub fn occurs_check_failed(idx: Idx, exp: Rc<Exp>) -> Self {
         Self::OccursCheckFailed {
             idx,
             exp: exp.print_to_string(None),
@@ -192,11 +192,11 @@ impl TypeError {
         }
     }
 
-    pub fn unsupported_annotation(exp: Rc<ust::Exp>) -> Self {
+    pub fn unsupported_annotation(exp: Rc<Exp>) -> Self {
         Self::UnsupportedAnnotation { exp: exp.print_to_string(None), span: exp.span().to_miette() }
     }
 
-    pub fn cannot_decide(lhs: Rc<ust::Exp>, rhs: Rc<ust::Exp>) -> Self {
+    pub fn cannot_decide(lhs: Rc<Exp>, rhs: Rc<Exp>) -> Self {
         Self::CannotDecide {
             lhs: lhs.print_to_string(None),
             rhs: rhs.print_to_string(None),
