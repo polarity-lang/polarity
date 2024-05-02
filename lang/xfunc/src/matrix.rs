@@ -2,9 +2,8 @@ use std::rc::Rc;
 
 use syntax::common::*;
 use syntax::ctx::{BindContext, LevelCtx};
-use syntax::generic::{Attribute, DocComment, Named};
+use syntax::generic::{Attribute, DocComment, Instantiate, Named};
 use syntax::ust;
-use syntax::ust::util::Instantiate;
 
 use crate::result::XfuncError;
 use codespan::Span;

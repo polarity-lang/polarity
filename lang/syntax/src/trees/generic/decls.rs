@@ -5,8 +5,8 @@ use derivative::Derivative;
 
 use crate::common::*;
 
-use super::exp::*;
 use super::lookup_table::{DeclKind, LookupTable};
+use super::{exp::*, Instantiate};
 
 #[derive(Debug, Clone)]
 pub struct DocComment {
@@ -251,6 +251,21 @@ impl Telescope {
 
     pub fn is_empty(&self) -> bool {
         self.params.is_empty()
+    }
+}
+impl Instantiate for Telescope {
+    fn instantiate(&self) -> TelescopeInst {
+        let params = self
+            .params
+            .iter()
+            .map(|Param { name, .. }| ParamInst {
+                span: None,
+                name: name.clone(),
+                info: None,
+                typ: None,
+            })
+            .collect();
+        TelescopeInst { params }
     }
 }
 
