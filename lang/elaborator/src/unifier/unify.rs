@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use syntax::ctx::LevelCtx;
-use syntax::generic::Variable;
+use syntax::generic::{occurs_in, Variable};
 
 use crate::result::TypeError;
 use crate::unifier::dec::{Dec, No, Yes};
@@ -181,7 +181,7 @@ impl Ctx {
     }
 
     fn add_assignment(&mut self, idx: Idx, exp: Rc<ust::Exp>) -> Result<Dec, TypeError> {
-        if ust::occurs_in(&mut self.ctx, idx, &exp) {
+        if occurs_in(&mut self.ctx, idx, &exp) {
             return Err(TypeError::occurs_check_failed(idx, exp));
         }
         let insert_lvl = self.ctx.idx_to_lvl(idx);

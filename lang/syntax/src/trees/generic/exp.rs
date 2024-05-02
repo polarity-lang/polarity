@@ -7,6 +7,9 @@ use derivative::Derivative;
 
 use crate::common::*;
 use crate::ctx::values::TypeCtx;
+use crate::ctx::{BindContext, LevelCtx};
+
+use super::traits::Occurs;
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -47,6 +50,10 @@ where
 }
 
 pub type Ident = String;
+
+// Exp
+//
+//
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -90,6 +97,22 @@ impl Shift for Exp {
             Exp::LocalMatch(e) => Exp::LocalMatch(e.shift_in_range(range, by)),
             Exp::LocalComatch(e) => Exp::LocalComatch(e.shift_in_range(range, by)),
             Exp::Hole(e) => Exp::Hole(e.shift_in_range(range, by)),
+        }
+    }
+}
+
+impl Occurs for Exp {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        match self {
+            Exp::Variable(e) => e.occurs(ctx, lvl),
+            Exp::TypCtor(e) => e.occurs(ctx, lvl),
+            Exp::Call(e) => e.occurs(ctx, lvl),
+            Exp::DotCall(e) => e.occurs(ctx, lvl),
+            Exp::Anno(e) => e.occurs(ctx, lvl),
+            Exp::TypeUniv(e) => e.occurs(ctx, lvl),
+            Exp::LocalMatch(e) => e.occurs(ctx, lvl),
+            Exp::LocalComatch(e) => e.occurs(ctx, lvl),
+            Exp::Hole(e) => e.occurs(ctx, lvl),
         }
     }
 }
@@ -144,6 +167,13 @@ impl Shift for Variable {
     }
 }
 
+impl Occurs for Variable {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let Variable { idx, .. } = self;
+        ctx.idx_to_lvl(*idx) == lvl
+    }
+}
+
 // TypCtor
 //
 //
@@ -193,6 +223,13 @@ impl Shift for TypCtor {
     }
 }
 
+impl Occurs for TypCtor {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let TypCtor { args, .. } = self;
+        args.args.iter().any(|arg| arg.occurs(ctx, lvl))
+    }
+}
+
 // Call
 //
 //
@@ -238,6 +275,13 @@ impl Shift for Call {
             args: args.shift_in_range(range, by),
             inferred_type: None,
         }
+    }
+}
+
+impl Occurs for Call {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let Call { args, .. } = self;
+        args.args.iter().any(|arg| arg.occurs(ctx, lvl))
     }
 }
 
@@ -293,6 +337,13 @@ impl Shift for DotCall {
     }
 }
 
+impl Occurs for DotCall {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let DotCall { exp, args, .. } = self;
+        exp.occurs(ctx, lvl) || args.args.iter().any(|arg| arg.occurs(ctx, lvl))
+    }
+}
+
 // Anno
 //
 //
@@ -339,6 +390,13 @@ impl Shift for Anno {
     }
 }
 
+impl Occurs for Anno {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let Anno { exp, typ, .. } = self;
+        exp.occurs(ctx, lvl) || typ.occurs(ctx, lvl)
+    }
+}
+
 // TypeUniv
 //
 //
@@ -371,6 +429,12 @@ impl From<TypeUniv> for Exp {
 impl Shift for TypeUniv {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
         self.clone()
+    }
+}
+
+impl Occurs for TypeUniv {
+    fn occurs(&self, _ctx: &mut LevelCtx, _lvl: Lvl) -> bool {
+        false
     }
 }
 
@@ -423,6 +487,13 @@ impl Shift for LocalMatch {
     }
 }
 
+impl Occurs for LocalMatch {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let LocalMatch { on_exp, body, .. } = self;
+        on_exp.occurs(ctx, lvl) || body.occurs(ctx, lvl)
+    }
+}
+
 // LocalComatch
 //
 //
@@ -467,6 +538,13 @@ impl Shift for LocalComatch {
     }
 }
 
+impl Occurs for LocalComatch {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let LocalComatch { body, .. } = self;
+        body.occurs(ctx, lvl)
+    }
+}
+
 // Hole
 //
 //
@@ -504,7 +582,13 @@ impl Shift for Hole {
     }
 }
 
-// Other
+impl Occurs for Hole {
+    fn occurs(&self, _ctx: &mut LevelCtx, _lvl: Lvl) -> bool {
+        false
+    }
+}
+
+// Match
 //
 //
 
@@ -523,6 +607,17 @@ impl Shift for Match {
         Match { span: *span, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
     }
 }
+
+impl Occurs for Match {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let Match { cases, .. } = self;
+        cases.occurs(ctx, lvl)
+    }
+}
+
+// Case
+//
+//
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -547,6 +642,17 @@ impl Shift for Case {
     }
 }
 
+impl Occurs for Case {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        let Case { params, body, .. } = self;
+        ctx.bind_iter(params.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
+    }
+}
+
+// Telescope Inst
+//
+//
+
 /// Instantiation of a previously declared telescope
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -564,6 +670,10 @@ impl TelescopeInst {
     }
 }
 
+// ParamInst
+//
+//
+
 /// Instantiation of a previously declared parameter
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -577,6 +687,10 @@ pub struct ParamInst {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub typ: Option<Rc<Exp>>,
 }
+
+// Args
+//
+//
 
 /// A list of arguments
 /// In dependent type theory, this concept is usually called a "substitution" but that name would be confusing in this implementation
@@ -605,6 +719,10 @@ impl Shift for Args {
         Self { args: self.args.shift_in_range(range, by) }
     }
 }
+
+// Motive
+//
+//
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]

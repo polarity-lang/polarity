@@ -6,8 +6,8 @@ use derivative::Derivative;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;
-use syntax::generic::{Hole, TypeUniv, Variable};
-use syntax::ust::{self, Occurs};
+use syntax::generic::{Hole, Occurs, TypeUniv, Variable};
+use syntax::ust::{self};
 
 /// Find all free variables
 pub fn free_vars<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
