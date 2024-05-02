@@ -52,3 +52,23 @@ pub trait Instantiate {
 pub trait HasTypeInfo {
     fn typ(&self) -> Option<Rc<Exp>>;
 }
+
+// ForgetTST
+//
+//
+
+pub trait ForgetTST {
+    fn forget_tst(&self) -> Self;
+}
+
+impl<T: ForgetTST> ForgetTST for Rc<T> {
+    fn forget_tst(&self) -> Self {
+        Rc::new(T::forget_tst(self))
+    }
+}
+
+impl<T: ForgetTST> ForgetTST for Vec<T> {
+    fn forget_tst(&self) -> Self {
+        self.iter().map(ForgetTST::forget_tst).collect()
+    }
+}

@@ -4,8 +4,7 @@ use super::DatabaseView;
 
 use elaborator::normalizer::normalize::Normalize;
 use parser::cst;
-use syntax::tst::forget::ForgetTST;
-use syntax::{tst, ust};
+use syntax::{generic::ForgetTST, tst, ust};
 
 use crate::*;
 

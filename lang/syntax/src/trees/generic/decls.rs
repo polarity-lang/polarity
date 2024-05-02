@@ -6,7 +6,7 @@ use derivative::Derivative;
 use crate::common::*;
 
 use super::lookup_table::{DeclKind, LookupTable};
-use super::{exp::*, Instantiate};
+use super::{exp::*, ForgetTST, Instantiate};
 
 #[derive(Debug, Clone)]
 pub struct DocComment {
@@ -20,6 +20,10 @@ pub struct Attribute {
     pub attrs: Vec<String>,
 }
 
+// Prg
+//
+//
+
 #[derive(Debug, Clone)]
 pub struct Prg {
     pub decls: Decls,
@@ -32,6 +36,18 @@ impl Prg {
     }
 }
 
+impl ForgetTST for Prg {
+    fn forget_tst(&self) -> Self {
+        let Prg { decls } = self;
+
+        Prg { decls: decls.forget_tst() }
+    }
+}
+
+// Decls
+//
+//
+
 #[derive(Debug, Clone)]
 pub struct Decls {
     /// Map from identifiers to declarations
@@ -39,6 +55,21 @@ pub struct Decls {
     /// Metadata on declarations
     pub lookup_table: LookupTable,
 }
+
+impl ForgetTST for Decls {
+    fn forget_tst(&self) -> Self {
+        let Decls { map, lookup_table } = self;
+
+        Decls {
+            map: map.iter().map(|(name, decl)| (name.clone(), decl.forget_tst())).collect(),
+            lookup_table: lookup_table.clone(),
+        }
+    }
+}
+
+// Decl
+//
+//
 
 #[derive(Debug, Clone)]
 pub enum Decl {
@@ -101,6 +132,24 @@ impl HasSpan for Decl {
     }
 }
 
+impl ForgetTST for Decl {
+    fn forget_tst(&self) -> Self {
+        match self {
+            Decl::Data(data) => Decl::Data(data.forget_tst()),
+            Decl::Codata(codata) => Decl::Codata(codata.forget_tst()),
+            Decl::Ctor(ctor) => Decl::Ctor(ctor.forget_tst()),
+            Decl::Dtor(dtor) => Decl::Dtor(dtor.forget_tst()),
+            Decl::Def(def) => Decl::Def(def.forget_tst()),
+            Decl::Codef(codef) => Decl::Codef(codef.forget_tst()),
+            Decl::Let(tl_let) => Decl::Let(tl_let.forget_tst()),
+        }
+    }
+}
+
+// Data
+//
+//
+
 #[derive(Debug, Clone)]
 pub struct Data {
     pub span: Option<Span>,
@@ -110,6 +159,25 @@ pub struct Data {
     pub typ: Rc<TypAbs>,
     pub ctors: Vec<Ident>,
 }
+
+impl ForgetTST for Data {
+    fn forget_tst(&self) -> Self {
+        let Data { span, doc, name, attr, typ, ctors } = self;
+
+        Data {
+            span: *span,
+            name: name.clone(),
+            doc: doc.clone(),
+            attr: attr.clone(),
+            typ: typ.forget_tst(),
+            ctors: ctors.clone(),
+        }
+    }
+}
+
+// Codata
+//
+//
 
 #[derive(Debug, Clone)]
 pub struct Codata {
@@ -121,10 +189,41 @@ pub struct Codata {
     pub dtors: Vec<Ident>,
 }
 
+impl ForgetTST for Codata {
+    fn forget_tst(&self) -> Self {
+        let Codata { span, doc, name, attr, typ, dtors } = self;
+
+        Codata {
+            span: *span,
+            doc: doc.clone(),
+            name: name.clone(),
+            attr: attr.clone(),
+            typ: typ.forget_tst(),
+            dtors: dtors.clone(),
+        }
+    }
+}
+
+// TypAbs
+//
+//
+
 #[derive(Debug, Clone)]
 pub struct TypAbs {
     pub params: Telescope,
 }
+
+impl ForgetTST for TypAbs {
+    fn forget_tst(&self) -> Self {
+        let TypAbs { params } = self;
+
+        TypAbs { params: params.forget_tst() }
+    }
+}
+
+// Ctor
+//
+//
 
 #[derive(Debug, Clone)]
 pub struct Ctor {
@@ -135,6 +234,24 @@ pub struct Ctor {
     pub typ: TypCtor,
 }
 
+impl ForgetTST for Ctor {
+    fn forget_tst(&self) -> Self {
+        let Ctor { span, doc, name, params, typ } = self;
+
+        Ctor {
+            span: *span,
+            doc: doc.clone(),
+            name: name.clone(),
+            params: params.forget_tst(),
+            typ: typ.forget_tst(),
+        }
+    }
+}
+
+// Dtor
+//
+//
+
 #[derive(Debug, Clone)]
 pub struct Dtor {
     pub span: Option<Span>,
@@ -144,6 +261,25 @@ pub struct Dtor {
     pub self_param: SelfParam,
     pub ret_typ: Rc<Exp>,
 }
+
+impl ForgetTST for Dtor {
+    fn forget_tst(&self) -> Self {
+        let Dtor { span, doc, name, params, self_param, ret_typ } = self;
+
+        Dtor {
+            span: *span,
+            doc: doc.clone(),
+            name: name.clone(),
+            params: params.forget_tst(),
+            self_param: self_param.forget_tst(),
+            ret_typ: ret_typ.forget_tst(),
+        }
+    }
+}
+
+// Def
+//
+//
 
 #[derive(Debug, Clone)]
 pub struct Def {
@@ -170,6 +306,27 @@ impl Def {
     }
 }
 
+impl ForgetTST for Def {
+    fn forget_tst(&self) -> Self {
+        let Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
+
+        Def {
+            span: *span,
+            doc: doc.clone(),
+            name: name.clone(),
+            attr: attr.clone(),
+            params: params.forget_tst(),
+            self_param: self_param.forget_tst(),
+            ret_typ: ret_typ.forget_tst(),
+            body: body.forget_tst(),
+        }
+    }
+}
+
+// Codef
+//
+//
+
 #[derive(Debug, Clone)]
 pub struct Codef {
     pub span: Option<Span>,
@@ -193,6 +350,26 @@ impl Codef {
     }
 }
 
+impl ForgetTST for Codef {
+    fn forget_tst(&self) -> Self {
+        let Codef { span, doc, name, attr, params, typ, body } = self;
+
+        Codef {
+            span: *span,
+            doc: doc.clone(),
+            name: name.clone(),
+            attr: attr.clone(),
+            params: params.forget_tst(),
+            typ: typ.forget_tst(),
+            body: body.forget_tst(),
+        }
+    }
+}
+
+// Let
+//
+//
+
 #[derive(Debug, Clone)]
 pub struct Let {
     pub span: Option<Span>,
@@ -210,6 +387,25 @@ impl Let {
         self.name == "main" && self.params.is_empty()
     }
 }
+
+impl ForgetTST for Let {
+    fn forget_tst(&self) -> Self {
+        let Let { span, doc, name, attr, params, typ, body } = self;
+
+        Let {
+            span: *span,
+            doc: doc.clone(),
+            name: name.clone(),
+            attr: attr.clone(),
+            params: params.forget_tst(),
+            typ: typ.forget_tst(),
+            body: body.forget_tst(),
+        }
+    }
+}
+// SelfParam
+//
+//
 
 #[derive(Debug, Clone)]
 pub struct SelfParam {
@@ -234,6 +430,18 @@ impl SelfParam {
         self.typ.is_simple() && self.name.is_none()
     }
 }
+
+impl ForgetTST for SelfParam {
+    fn forget_tst(&self) -> Self {
+        let SelfParam { info, name, typ } = self;
+
+        SelfParam { info: *info, name: name.clone(), typ: typ.forget_tst() }
+    }
+}
+
+// Telescope
+//
+//
 
 /// Wrapper type signifying the wrapped parameters have telescope
 /// semantics. I.e. each parameter binding in the parameter list is in scope
@@ -269,6 +477,18 @@ impl Instantiate for Telescope {
     }
 }
 
+impl ForgetTST for Telescope {
+    fn forget_tst(&self) -> Self {
+        let Telescope { params } = self;
+
+        Telescope { params: params.forget_tst() }
+    }
+}
+
+// Param
+//
+//
+
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Param {
@@ -282,9 +502,10 @@ impl Named for Param {
         &self.name
     }
 }
+impl ForgetTST for Param {
+    fn forget_tst(&self) -> Self {
+        let Param { name, typ } = self;
 
-impl Named for ParamInst {
-    fn name(&self) -> &Ident {
-        &self.name
+        Param { name: name.clone(), typ: typ.forget_tst() }
     }
 }

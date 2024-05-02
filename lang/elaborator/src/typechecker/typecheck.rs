@@ -11,8 +11,9 @@ use miette_util::ToMiette;
 use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
-use syntax::generic::{HasTypeInfo, Hole, Instantiate, Named, Occurs, TypeUniv, Variable};
-use syntax::tst::forget::ForgetTST;
+use syntax::generic::{
+    ForgetTST, HasTypeInfo, Hole, Instantiate, Named, Occurs, TypeUniv, Variable,
+};
 use syntax::tst::{self};
 use syntax::ust::{self};
 use tracer::trace;

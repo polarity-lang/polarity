@@ -6,12 +6,12 @@ use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;
+use syntax::generic::ForgetTST;
 use syntax::generic::Hole;
 use syntax::generic::Named;
 use syntax::generic::TypeUniv;
 use syntax::generic::Variable;
 use syntax::tst;
-use syntax::tst::forget::ForgetTST;
 use syntax::ust;
 
 mod fv;
