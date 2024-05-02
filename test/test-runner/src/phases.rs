@@ -4,7 +4,10 @@ use std::fmt;
 use parser::cst;
 use printer::PrintToString;
 use renaming::Rename;
-use syntax::{generic::ForgetTST, tst, ust};
+use syntax::{
+    generic::{ForgetTST, Prg},
+    ust,
+};
 
 use super::infallible::NoError;
 
@@ -221,7 +224,7 @@ impl Phase for Lower {
 
 impl Phase for Check {
     type In = ust::Prg;
-    type Out = tst::Prg;
+    type Out = Prg;
     type Err = elaborator::result::TypeError;
 
     fn new(name: &'static str) -> Self {
@@ -256,7 +259,7 @@ impl Phase for Print {
 }
 
 impl Phase for Forget {
-    type In = tst::Prg;
+    type In = Prg;
     type Out = ust::Prg;
     type Err = NoError;
 

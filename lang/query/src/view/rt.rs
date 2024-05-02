@@ -4,7 +4,7 @@ use super::DatabaseView;
 
 use elaborator::normalizer::normalize::Normalize;
 use parser::cst;
-use syntax::{generic::ForgetTST, tst, ust};
+use syntax::{generic::ForgetTST, generic::Prg, ust};
 
 use crate::*;
 
@@ -28,7 +28,7 @@ impl<'a> DatabaseView<'a> {
         lowering::lower_prg(&cst).map_err(Error::Lowering)
     }
 
-    pub fn tst(&self) -> Result<tst::Prg, Error> {
+    pub fn tst(&self) -> Result<Prg, Error> {
         let ust = self.ust()?;
         elaborator::typechecker::check(&ust).map_err(Error::Type)
     }
