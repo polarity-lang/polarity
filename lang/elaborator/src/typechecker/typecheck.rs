@@ -19,23 +19,23 @@ use super::subst::{SubstInTelescope, SubstUnderCtx};
 use super::util::*;
 use crate::result::TypeError;
 
-pub trait Infer: Sized {
+/// The CheckInfer trait for bidirectional type inference.
+/// Expressions which implement this trait provide both a `check` function
+/// to typecheck the expression against an expected type and a `infer` function
+/// to infer the type of the given expression.
+pub trait CheckInfer: Sized {
+    /// Checks whether the expression has the given expected type
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError>;
+    /// Tries to infer a type for the given expression.
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError>;
 }
 
-impl<T: Infer> Infer for Rc<T> {
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
-        Ok(Rc::new((**self).infer(prg, ctx)?))
-    }
-}
-
-pub trait Check: Sized {
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError>;
-}
-
-impl<T: Check> Check for Rc<T> {
+impl<T: CheckInfer> CheckInfer for Rc<T> {
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         Ok(Rc::new((**self).check(prg, ctx, t)?))
+    }
+    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
+        Ok(Rc::new((**self).infer(prg, ctx)?))
     }
 }
 
@@ -43,7 +43,7 @@ impl<T: Check> Check for Rc<T> {
 //
 //
 
-impl Check for Exp {
+impl CheckInfer for Exp {
     #[trace("{:P} |- {:P} <= {:P}", ctx, self, t)]
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         match self {
@@ -58,21 +58,19 @@ impl Check for Exp {
             Exp::LocalComatch(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
         }
     }
-}
 
-impl Infer for Exp {
     #[trace("{:P} |- {:P} => {return:P}", ctx, self, |ret| ret.as_ref().map(|e| e.typ()))]
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         match self {
-            Exp::Variable(e) => Ok(Exp::Variable(e.infer(prg, ctx)?)),
-            Exp::TypCtor(e) => Ok(Exp::TypCtor(e.infer(prg, ctx)?)),
-            Exp::Call(e) => Ok(Exp::Call(e.infer(prg, ctx)?)),
-            Exp::DotCall(e) => Ok(Exp::DotCall(e.infer(prg, ctx)?)),
-            Exp::Anno(e) => Ok(Exp::Anno(e.infer(prg, ctx)?)),
-            Exp::TypeUniv(e) => Ok(Exp::TypeUniv(e.infer(prg, ctx)?)),
-            Exp::Hole(e) => Ok(Exp::Hole(e.infer(prg, ctx)?)),
-            Exp::LocalMatch(e) => Ok(Exp::LocalMatch(e.infer(prg, ctx)?)),
-            Exp::LocalComatch(e) => Ok(Exp::LocalComatch(e.infer(prg, ctx)?)),
+            Exp::Variable(e) => Ok(e.infer(prg, ctx)?.into()),
+            Exp::TypCtor(e) => Ok(e.infer(prg, ctx)?.into()),
+            Exp::Call(e) => Ok(e.infer(prg, ctx)?.into()),
+            Exp::DotCall(e) => Ok(e.infer(prg, ctx)?.into()),
+            Exp::Anno(e) => Ok(e.infer(prg, ctx)?.into()),
+            Exp::TypeUniv(e) => Ok(e.infer(prg, ctx)?.into()),
+            Exp::Hole(e) => Ok(e.infer(prg, ctx)?.into()),
+            Exp::LocalMatch(e) => Ok(e.infer(prg, ctx)?.into()),
+            Exp::LocalComatch(e) => Ok(e.infer(prg, ctx)?.into()),
         }
     }
 }
@@ -81,7 +79,7 @@ impl Infer for Exp {
 //
 //
 
-impl Check for Variable {
+impl CheckInfer for Variable {
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
@@ -92,9 +90,7 @@ impl Check for Variable {
         convert(ctx, inferred_typ, &t)?;
         Ok(inferred_term)
     }
-}
 
-impl Infer for Variable {
     fn infer(&self, _prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Variable { span, idx, name, .. } = self;
         let typ_nf = ctx.lookup(*idx);
@@ -106,7 +102,7 @@ impl Infer for Variable {
 //
 //
 
-impl Check for TypCtor {
+impl CheckInfer for TypCtor {
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
@@ -117,9 +113,7 @@ impl Check for TypCtor {
         convert(ctx, inferred_typ, &t)?;
         Ok(inferred_term)
     }
-}
 
-impl Infer for TypCtor {
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let TypCtor { span, name, args } = self;
         let TypAbs { params } = &*prg.decls.typ(name, *span)?.typ();
@@ -133,7 +127,7 @@ impl Infer for TypCtor {
 //
 //
 
-impl Check for Call {
+impl CheckInfer for Call {
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
@@ -144,9 +138,7 @@ impl Check for Call {
         convert(ctx, inferred_typ, &t)?;
         Ok(inferred_term)
     }
-}
 
-impl Infer for Call {
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Call { span, name, args, .. } = self;
         let Ctor { name, params, typ, .. } = &prg.decls.ctor_or_codef(name, *span)?;
@@ -162,7 +154,7 @@ impl Infer for Call {
 //
 //
 
-impl Check for DotCall {
+impl CheckInfer for DotCall {
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
@@ -173,9 +165,7 @@ impl Check for DotCall {
         convert(ctx, inferred_typ, &t)?;
         Ok(inferred_term)
     }
-}
 
-impl Infer for DotCall {
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let DotCall { span, exp, name, args, .. } = self;
         let Dtor { name, params, self_param, ret_typ, .. } = &prg.decls.dtor_or_def(name, *span)?;
@@ -208,7 +198,7 @@ impl Infer for DotCall {
 //
 //
 
-impl Check for Anno {
+impl CheckInfer for Anno {
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
@@ -219,9 +209,7 @@ impl Check for Anno {
         convert(ctx, inferred_typ, &t)?;
         Ok(inferred_term)
     }
-}
 
-impl Infer for Anno {
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Anno { span, exp, typ, .. } = self;
         let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
@@ -235,7 +223,7 @@ impl Infer for Anno {
 //
 //
 
-impl Check for TypeUniv {
+impl CheckInfer for TypeUniv {
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
@@ -246,9 +234,7 @@ impl Check for TypeUniv {
         convert(ctx, inferred_typ, &t)?;
         Ok(inferred_term)
     }
-}
 
-impl Infer for TypeUniv {
     fn infer(&self, _prg: &Prg, _ctx: &mut Ctx) -> Result<Self, TypeError> {
         Ok(self.clone())
     }
@@ -258,7 +244,7 @@ impl Infer for TypeUniv {
 //
 //
 
-impl Check for Hole {
+impl CheckInfer for Hole {
     fn check(&self, _prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let Hole { span, .. } = self;
         Ok(Hole {
@@ -267,9 +253,7 @@ impl Check for Hole {
             inferred_ctx: Some(ctx.vars.clone()),
         })
     }
-}
 
-impl Infer for Hole {
     fn infer(&self, _prg: &Prg, _ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Hole { span, .. } = self;
         Ok(Hole {
@@ -284,7 +268,7 @@ impl Infer for Hole {
 //
 //
 
-impl Check for LocalMatch {
+impl CheckInfer for LocalMatch {
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let LocalMatch { span, name, on_exp, motive, body, .. } = self;
         let on_exp_out = on_exp.infer(prg, ctx)?;
@@ -356,9 +340,7 @@ impl Check for LocalMatch {
             inferred_type: Some(typ_app),
         })
     }
-}
 
-impl Infer for LocalMatch {
     fn infer(&self, _prg: &Prg, _ctx: &mut Ctx) -> Result<Self, TypeError> {
         Err(TypeError::CannotInferMatch { span: self.span().to_miette() })
     }
@@ -368,7 +350,7 @@ impl Infer for LocalMatch {
 //
 //
 
-impl Check for LocalComatch {
+impl CheckInfer for LocalComatch {
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
         let typ_app_nf = t.expect_typ_app()?;
@@ -400,9 +382,7 @@ impl Check for LocalComatch {
             inferred_type: Some(typ_app),
         })
     }
-}
 
-impl Infer for LocalComatch {
     fn infer(&self, _prg: &Prg, _ctx: &mut Ctx) -> Result<Self, TypeError> {
         Err(TypeError::CannotInferComatch { span: self.span().to_miette() })
     }

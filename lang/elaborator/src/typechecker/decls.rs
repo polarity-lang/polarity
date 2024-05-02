@@ -8,7 +8,7 @@ use crate::normalizer::{env::ToEnv, normalize::Normalize};
 
 use super::{
     ctx::Ctx,
-    typecheck::{Check, Infer, InferTelescope, WithDestructee, WithScrutinee},
+    typecheck::{CheckInfer, InferTelescope, WithDestructee, WithScrutinee},
     util::ExpectTypApp,
     TypeError,
 };
