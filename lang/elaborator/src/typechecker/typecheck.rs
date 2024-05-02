@@ -428,20 +428,105 @@ impl Check for Exp {
     #[trace("{:P} |- {:P} <= {:P}", ctx, self, t)]
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self::Target, TypeError> {
         match self {
-            Exp::LocalMatch(e) => Ok(Exp::LocalMatch(e.check(prg, ctx, t.clone())?)),
-            Exp::LocalComatch(e) => Ok(Exp::LocalComatch(e.check(prg, ctx, t.clone())?)),
-            Exp::Hole(e) => Ok(Exp::Hole(e.check(prg, ctx, t.clone())?)),
-            _ => {
-                let inferred_term = self.infer(prg, ctx)?;
-                let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
-                    message: "Expected inferred type".to_owned(),
-                    span: None,
-                })?;
-                let ctx = ctx.levels();
-                convert(ctx, inferred_typ, &t)?;
-                Ok(inferred_term)
-            }
+            Exp::LocalMatch(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
+            Exp::LocalComatch(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
+            Exp::Hole(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
+            Exp::Anno(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
+            Exp::Variable(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
+            Exp::TypCtor(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
+            Exp::TypeUniv(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
+            Exp::Call(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
+            Exp::DotCall(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
         }
+    }
+}
+
+impl Check for Anno {
+    type Target = Anno;
+
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self::Target, TypeError> {
+        let inferred_term = self.infer(prg, ctx)?;
+        let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
+            message: "Expected inferred type".to_owned(),
+            span: None,
+        })?;
+        let ctx = ctx.levels();
+        convert(ctx, inferred_typ, &t)?;
+        Ok(inferred_term)
+    }
+}
+
+impl Check for Variable {
+    type Target = Variable;
+
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self::Target, TypeError> {
+        let inferred_term = self.infer(prg, ctx)?;
+        let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
+            message: "Expected inferred type".to_owned(),
+            span: None,
+        })?;
+        let ctx = ctx.levels();
+        convert(ctx, inferred_typ, &t)?;
+        Ok(inferred_term)
+    }
+}
+impl Check for TypCtor {
+    type Target = TypCtor;
+
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self::Target, TypeError> {
+        let inferred_term = self.infer(prg, ctx)?;
+        let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
+            message: "Expected inferred type".to_owned(),
+            span: None,
+        })?;
+        let ctx = ctx.levels();
+        convert(ctx, inferred_typ, &t)?;
+        Ok(inferred_term)
+    }
+}
+
+impl Check for TypeUniv {
+    type Target = TypeUniv;
+
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self::Target, TypeError> {
+        let inferred_term = self.infer(prg, ctx)?;
+        let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
+            message: "Expected inferred type".to_owned(),
+            span: None,
+        })?;
+        let ctx = ctx.levels();
+        convert(ctx, inferred_typ, &t)?;
+        Ok(inferred_term)
+    }
+}
+
+impl Check for Call {
+    type Target = Call;
+
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self::Target, TypeError> {
+        let inferred_term = self.infer(prg, ctx)?;
+        let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
+            message: "Expected inferred type".to_owned(),
+            span: None,
+        })?;
+        let ctx = ctx.levels();
+        convert(ctx, inferred_typ, &t)?;
+        Ok(inferred_term)
+    }
+}
+
+impl Check for DotCall {
+    type Target = DotCall;
+
+    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self::Target, TypeError> {
+        let inferred_term = self.infer(prg, ctx)?;
+        let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
+            message: "Expected inferred type".to_owned(),
+            span: None,
+        })?;
+        let ctx = ctx.levels();
+        convert(ctx, inferred_typ, &t)?;
+        Ok(inferred_term)
     }
 }
 
