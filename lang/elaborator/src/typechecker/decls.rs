@@ -87,14 +87,14 @@ impl CheckToplevel for Data {
     fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Data { span, doc, name, attr, typ, ctors } = self;
 
-        let typ_out = typ.check_wf(prg, ctx)?;
+        let typ_out = typ.infer_telescope(prg, ctx, |_, params_out| Ok(params_out))?;
 
         Ok(Data {
             span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
-            typ: typ_out,
+            typ: Rc::new(typ_out),
             ctors: ctors.clone(),
         })
     }
@@ -107,27 +107,16 @@ impl CheckToplevel for Codata {
     fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Codata { span, doc, name, attr, typ, dtors } = self;
 
-        let typ_out = typ.check_wf(prg, ctx)?;
+        let typ_out = typ.infer_telescope(prg, ctx, |_, params_out| Ok(params_out))?;
 
         Ok(Codata {
             span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
-            typ: typ_out,
+            typ: Rc::new(typ_out),
             dtors: dtors.clone(),
         })
-    }
-}
-
-/// Infer a codata declaration
-impl CheckToplevel for TypAbs {
-    type Target = TypAbs;
-
-    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
-        let TypAbs { params } = self;
-
-        params.infer_telescope(prg, ctx, |_, params_out| Ok(TypAbs { params: params_out }))
     }
 }
 

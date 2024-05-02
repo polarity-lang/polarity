@@ -98,7 +98,7 @@ impl<'a> PrintInCtx<'a> for Data {
             .append(alloc.keyword(DATA))
             .append(alloc.space())
             .append(alloc.typ(name))
-            .append(typ.params.print(cfg, alloc))
+            .append(typ.print(cfg, alloc))
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.line());
@@ -143,7 +143,7 @@ impl<'a> PrintInCtx<'a> for Codata {
             .append(alloc.keyword(CODATA))
             .append(alloc.space())
             .append(alloc.typ(name))
-            .append(typ.params.print(cfg, alloc))
+            .append(typ.print(cfg, alloc))
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.line());

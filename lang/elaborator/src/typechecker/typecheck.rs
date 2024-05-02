@@ -116,7 +116,7 @@ impl CheckInfer for TypCtor {
 
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let TypCtor { span, name, args } = self;
-        let TypAbs { params } = &*prg.decls.typ(name, *span)?.typ();
+        let params = &*prg.decls.typ(name, *span)?.typ();
         let args_out = check_args(args, prg, name, ctx, params, *span)?;
 
         Ok(TypCtor { span: *span, name: name.clone(), args: args_out })

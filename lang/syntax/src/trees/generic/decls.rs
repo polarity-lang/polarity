@@ -156,7 +156,7 @@ pub struct Data {
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,
-    pub typ: Rc<TypAbs>,
+    pub typ: Rc<Telescope>,
     pub ctors: Vec<Ident>,
 }
 
@@ -185,7 +185,7 @@ pub struct Codata {
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attribute,
-    pub typ: Rc<TypAbs>,
+    pub typ: Rc<Telescope>,
     pub dtors: Vec<Ident>,
 }
 
@@ -201,23 +201,6 @@ impl ForgetTST for Codata {
             typ: typ.forget_tst(),
             dtors: dtors.clone(),
         }
-    }
-}
-
-// TypAbs
-//
-//
-
-#[derive(Debug, Clone)]
-pub struct TypAbs {
-    pub params: Telescope,
-}
-
-impl ForgetTST for TypAbs {
-    fn forget_tst(&self) -> Self {
-        let TypAbs { params } = self;
-
-        TypAbs { params: params.forget_tst() }
     }
 }
 

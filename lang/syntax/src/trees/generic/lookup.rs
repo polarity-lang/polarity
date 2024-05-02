@@ -243,7 +243,7 @@ impl<'a> DataCodata<'a> {
         }
     }
 
-    pub fn typ(&self) -> Rc<TypAbs> {
+    pub fn typ(&self) -> Rc<Telescope> {
         match self {
             DataCodata::Data(data) => data.typ.clone(),
             DataCodata::Codata(codata) => codata.typ.clone(),
