@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use miette_util::ToMiette;
 use syntax::generic::*;
 use tracer::trace;
@@ -11,63 +13,81 @@ use super::{
     TypeError,
 };
 
-impl Infer for Prg {
+pub fn check(prg: &Prg) -> Result<Prg, TypeError> {
+    let mut var_ctx = Ctx::default();
+    prg.check_wf(prg, &mut var_ctx)
+}
+
+pub trait CheckToplevel {
+    type Target;
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError>;
+}
+
+impl<T: CheckToplevel> CheckToplevel for Rc<T> {
+    type Target = Rc<T::Target>;
+
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+        Ok(Rc::new((**self).check_wf(prg, ctx)?))
+    }
+}
+
+impl CheckToplevel for Prg {
     type Target = Prg;
 
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Prg { decls } = self;
 
-        let decls_out = decls.infer(prg, ctx)?;
+        let decls_out = decls.check_wf(prg, ctx)?;
 
         Ok(Prg { decls: decls_out })
     }
 }
 
-/// Infer all declarations in a program
-impl Infer for Decls {
+/// Check all declarations in a program
+impl CheckToplevel for Decls {
     type Target = Decls;
 
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Decls { map, lookup_table } = self;
 
         // FIXME: Reconsider order
 
         let map_out = map
             .iter()
-            .map(|(name, decl)| Ok((name.clone(), decl.infer(prg, ctx)?)))
+            .map(|(name, decl)| Ok((name.clone(), decl.check_wf(prg, ctx)?)))
             .collect::<Result<_, TypeError>>()?;
 
         Ok(Decls { map: map_out, lookup_table: lookup_table.clone() })
     }
 }
 
-/// Infer a declaration
-impl Infer for Decl {
+/// Check a declaration
+impl CheckToplevel for Decl {
     type Target = Decl;
 
     #[trace("{:P} |- {} =>", ctx, self.name())]
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let out = match self {
-            Decl::Data(data) => Decl::Data(data.infer(prg, ctx)?),
-            Decl::Codata(codata) => Decl::Codata(codata.infer(prg, ctx)?),
-            Decl::Ctor(ctor) => Decl::Ctor(ctor.infer(prg, ctx)?),
-            Decl::Dtor(dtor) => Decl::Dtor(dtor.infer(prg, ctx)?),
-            Decl::Def(def) => Decl::Def(def.infer(prg, ctx)?),
-            Decl::Codef(codef) => Decl::Codef(codef.infer(prg, ctx)?),
-            Decl::Let(tl_let) => Decl::Let(tl_let.infer(prg, ctx)?),
+            Decl::Data(data) => Decl::Data(data.check_wf(prg, ctx)?),
+            Decl::Codata(codata) => Decl::Codata(codata.check_wf(prg, ctx)?),
+            Decl::Ctor(ctor) => Decl::Ctor(ctor.check_wf(prg, ctx)?),
+            Decl::Dtor(dtor) => Decl::Dtor(dtor.check_wf(prg, ctx)?),
+            Decl::Def(def) => Decl::Def(def.check_wf(prg, ctx)?),
+            Decl::Codef(codef) => Decl::Codef(codef.check_wf(prg, ctx)?),
+            Decl::Let(tl_let) => Decl::Let(tl_let.check_wf(prg, ctx)?),
         };
         Ok(out)
     }
 }
 
-/// Infer a data declaration
-impl Infer for Data {
+/// Check a data declaration
+impl CheckToplevel for Data {
     type Target = Data;
 
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Data { span, doc, name, attr, typ, ctors } = self;
 
-        let typ_out = typ.infer(prg, ctx)?;
+        let typ_out = typ.check_wf(prg, ctx)?;
 
         Ok(Data {
             span: *span,
@@ -81,13 +101,13 @@ impl Infer for Data {
 }
 
 /// Infer a codata declaration
-impl Infer for Codata {
+impl CheckToplevel for Codata {
     type Target = Codata;
 
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Codata { span, doc, name, attr, typ, dtors } = self;
 
-        let typ_out = typ.infer(prg, ctx)?;
+        let typ_out = typ.check_wf(prg, ctx)?;
 
         Ok(Codata {
             span: *span,
@@ -101,10 +121,10 @@ impl Infer for Codata {
 }
 
 /// Infer a codata declaration
-impl Infer for TypAbs {
+impl CheckToplevel for TypAbs {
     type Target = TypAbs;
 
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let TypAbs { params } = self;
 
         params.infer_telescope(prg, ctx, |_, params_out| Ok(TypAbs { params: params_out }))
@@ -112,10 +132,10 @@ impl Infer for TypAbs {
 }
 
 /// Infer a constructor declaration
-impl Infer for Ctor {
+impl CheckToplevel for Ctor {
     type Target = Ctor;
 
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Ctor { span, doc, name, params, typ } = self;
 
         // Check that the constructor lies in the data type it is defined in
@@ -144,10 +164,10 @@ impl Infer for Ctor {
 }
 
 /// Infer a destructor declaration
-impl Infer for Dtor {
+impl CheckToplevel for Dtor {
     type Target = Dtor;
 
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Dtor { span, doc, name, params, self_param, ret_typ } = self;
 
         // Check that the destructor lies in the codata type it is defined in
@@ -179,10 +199,10 @@ impl Infer for Dtor {
 }
 
 /// Infer a definition
-impl Infer for Def {
+impl CheckToplevel for Def {
     type Target = Def;
 
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
@@ -213,10 +233,10 @@ impl Infer for Def {
 }
 
 /// Infer a co-definition
-impl Infer for Codef {
+impl CheckToplevel for Codef {
     type Target = Codef;
 
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Codef { span, doc, name, attr, params, typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
@@ -242,10 +262,10 @@ impl Infer for Codef {
     }
 }
 
-impl Infer for Let {
+impl CheckToplevel for Let {
     type Target = Let;
 
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+    fn check_wf(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Let { span, doc, name, attr, params, typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {

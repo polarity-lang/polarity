@@ -5,5 +5,5 @@ pub mod typecheck;
 pub mod util;
 
 pub use crate::result::TypeError;
+pub use decls::check;
 pub use tracer;
-pub use typecheck::check;

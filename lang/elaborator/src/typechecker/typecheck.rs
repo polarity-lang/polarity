@@ -19,11 +19,6 @@ use super::subst::{SubstInTelescope, SubstUnderCtx};
 use super::util::*;
 use crate::result::TypeError;
 
-pub fn check(prg: &Prg) -> Result<Prg, TypeError> {
-    let mut var_ctx = Ctx::default();
-    prg.infer(prg, &mut var_ctx)
-}
-
 pub trait Infer {
     type Target;
 
