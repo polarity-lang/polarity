@@ -78,6 +78,22 @@ impl HasSpan for Exp {
     }
 }
 
+impl Shift for Exp {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        match self {
+            Exp::Variable(e) => Exp::Variable(e.shift_in_range(range, by)),
+            Exp::TypCtor(e) => Exp::TypCtor(e.shift_in_range(range, by)),
+            Exp::Call(e) => Exp::Call(e.shift_in_range(range, by)),
+            Exp::DotCall(e) => Exp::DotCall(e.shift_in_range(range, by)),
+            Exp::Anno(e) => Exp::Anno(e.shift_in_range(range, by)),
+            Exp::TypeUniv(e) => Exp::TypeUniv(e.shift_in_range(range, by)),
+            Exp::LocalMatch(e) => Exp::LocalMatch(e.shift_in_range(range, by)),
+            Exp::LocalComatch(e) => Exp::LocalComatch(e.shift_in_range(range, by)),
+            Exp::Hole(e) => Exp::Hole(e.shift_in_range(range, by)),
+        }
+    }
+}
+
 // Variable
 //
 //
@@ -113,6 +129,18 @@ impl HasSpan for Variable {
 impl From<Variable> for Exp {
     fn from(val: Variable) -> Self {
         Exp::Variable(val)
+    }
+}
+
+impl Shift for Variable {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Variable { span, idx, name, .. } = self;
+        Variable {
+            span: *span,
+            idx: idx.shift_in_range(range, by),
+            name: name.clone(),
+            inferred_type: None,
+        }
     }
 }
 
@@ -158,6 +186,13 @@ impl From<TypCtor> for Exp {
     }
 }
 
+impl Shift for TypCtor {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let TypCtor { span, name, args } = self;
+        TypCtor { span: *span, name: name.clone(), args: args.shift_in_range(range, by) }
+    }
+}
+
 // Call
 //
 //
@@ -191,6 +226,18 @@ impl HasSpan for Call {
 impl From<Call> for Exp {
     fn from(val: Call) -> Self {
         Exp::Call(val)
+    }
+}
+
+impl Shift for Call {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Call { span, name, args, .. } = self;
+        Call {
+            span: *span,
+            name: name.clone(),
+            args: args.shift_in_range(range, by),
+            inferred_type: None,
+        }
     }
 }
 
@@ -233,6 +280,19 @@ impl From<DotCall> for Exp {
     }
 }
 
+impl Shift for DotCall {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let DotCall { span, exp, name, args, .. } = self;
+        DotCall {
+            span: *span,
+            exp: exp.shift_in_range(range.clone(), by),
+            name: name.clone(),
+            args: args.shift_in_range(range, by),
+            inferred_type: None,
+        }
+    }
+}
+
 // Anno
 //
 //
@@ -267,6 +327,18 @@ impl From<Anno> for Exp {
     }
 }
 
+impl Shift for Anno {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Anno { span, exp, typ, .. } = self;
+        Anno {
+            span: *span,
+            exp: exp.shift_in_range(range.clone(), by),
+            typ: typ.shift_in_range(range, by),
+            normalized_type: None,
+        }
+    }
+}
+
 // TypeUniv
 //
 //
@@ -293,6 +365,12 @@ impl HasSpan for TypeUniv {
 impl From<TypeUniv> for Exp {
     fn from(val: TypeUniv) -> Self {
         Exp::TypeUniv(val)
+    }
+}
+
+impl Shift for TypeUniv {
+    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
+        self.clone()
     }
 }
 
@@ -329,6 +407,22 @@ impl From<LocalMatch> for Exp {
     }
 }
 
+impl Shift for LocalMatch {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let LocalMatch { span, name, on_exp, motive, body, .. } = self;
+        LocalMatch {
+            span: *span,
+            ctx: None,
+            name: name.clone(),
+            on_exp: on_exp.shift_in_range(range.clone(), by),
+            motive: motive.shift_in_range(range.clone(), by),
+            ret_typ: None,
+            body: body.shift_in_range(range, by),
+            inferred_type: None,
+        }
+    }
+}
+
 // LocalComatch
 //
 //
@@ -356,6 +450,20 @@ impl HasSpan for LocalComatch {
 impl From<LocalComatch> for Exp {
     fn from(val: LocalComatch) -> Self {
         Exp::LocalComatch(val)
+    }
+}
+
+impl Shift for LocalComatch {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
+        LocalComatch {
+            span: *span,
+            ctx: None,
+            name: name.clone(),
+            is_lambda_sugar: *is_lambda_sugar,
+            body: body.shift_in_range(range, by),
+            inferred_type: None,
+        }
     }
 }
 
@@ -389,6 +497,13 @@ impl From<Hole> for Exp {
     }
 }
 
+impl Shift for Hole {
+    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
+        let Hole { span, .. } = self;
+        Hole { span: *span, inferred_type: None, inferred_ctx: None }
+    }
+}
+
 // Other
 //
 //
@@ -402,6 +517,13 @@ pub struct Match {
     pub omit_absurd: bool,
 }
 
+impl Shift for Match {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Match { span, cases, omit_absurd } = self;
+        Match { span: *span, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
+    }
+}
+
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Case {
@@ -411,6 +533,18 @@ pub struct Case {
     pub params: TelescopeInst,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp>>,
+}
+
+impl Shift for Case {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Case { span, name, params, body } = self;
+        Case {
+            span: *span,
+            name: name.clone(),
+            params: params.clone(),
+            body: body.shift_in_range(range.shift(1), by),
+        }
+    }
 }
 
 /// Instantiation of a previously declared telescope
@@ -466,6 +600,12 @@ impl Args {
     }
 }
 
+impl Shift for Args {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        Self { args: self.args.shift_in_range(range, by) }
+    }
+}
+
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Motive {
@@ -473,4 +613,16 @@ pub struct Motive {
     pub span: Option<Span>,
     pub param: ParamInst,
     pub ret_typ: Rc<Exp>,
+}
+
+impl Shift for Motive {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Motive { span, param, ret_typ } = self;
+
+        Motive {
+            span: *span,
+            param: param.clone(),
+            ret_typ: ret_typ.shift_in_range(range.shift(1), by),
+        }
+    }
 }

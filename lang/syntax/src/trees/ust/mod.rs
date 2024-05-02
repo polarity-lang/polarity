@@ -1,6 +1,5 @@
 mod def;
 mod occurs;
-mod shift;
 mod subst;
 pub mod util;
 
