@@ -15,6 +15,8 @@ use syntax::generic::*;
 use tracer::trace;
 
 use super::ctx::*;
+use super::subst::{SubstInTelescope, SubstUnderCtx};
+use super::util::*;
 use crate::result::TypeError;
 
 pub fn check(prg: &Prg) -> Result<Prg, TypeError> {
@@ -711,7 +713,7 @@ impl Check for LocalMatch {
             })?
             .expect_typ_app()?;
         let typ_app = typ_app_nf.infer(prg, ctx)?;
-        let ret_typ_out = t.check(prg, ctx, type_univ())?;
+        let ret_typ_out = t.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
 
         let motive_out;
         let body_t;
@@ -725,8 +727,9 @@ impl Check for LocalMatch {
                 let self_binder = Binder { name: param.name.clone(), typ: self_t_nf.clone() };
 
                 // Typecheck the motive
-                let ret_typ_out =
-                    ctx.bind_single(&self_binder, |ctx| ret_typ.check(prg, ctx, type_univ()))?;
+                let ret_typ_out = ctx.bind_single(&self_binder, |ctx| {
+                    ret_typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))
+                })?;
 
                 // Ensure that the motive matches the expected type
                 let mut subst_ctx = ctx.levels().append(&vec![1].into());
@@ -913,7 +916,7 @@ impl Infer for Anno {
 
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Anno { span, exp, typ, .. } = self;
-        let typ_out = typ.check(prg, ctx, type_univ())?;
+        let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
         let typ_nf = typ.normalize(prg, &mut ctx.env())?;
         let exp_out = (**exp).check(prg, ctx, typ_nf.clone())?;
         Ok(Anno { span: *span, exp: Rc::new(exp_out), typ: typ_out, normalized_type: Some(typ_nf) })
@@ -933,7 +936,11 @@ impl Infer for Hole {
 
     fn infer(&self, _prg: &Prg, _ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         let Hole { span, .. } = self;
-        Ok(Hole { span: *span, inferred_type: Some(type_hole()), inferred_ctx: None })
+        Ok(Hole {
+            span: *span,
+            inferred_type: Some(Rc::new(Hole::new().into())),
+            inferred_ctx: None,
+        })
     }
 }
 
@@ -1018,7 +1025,7 @@ impl CheckTelescope for TelescopeInst {
             |ctx, params_out, (param_actual, param_expected)| {
                 let ParamInst { span, name, .. } = param_actual;
                 let Param { typ, .. } = param_expected;
-                let typ_out = typ.check(prg, ctx, type_univ())?;
+                let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
                 let typ_nf = typ.normalize(prg, &mut ctx.env())?;
                 let mut params_out = params_out;
                 let param_out = ParamInst {
@@ -1052,7 +1059,7 @@ impl InferTelescope for Telescope {
             vec![],
             |ctx, mut params_out, param| {
                 let Param { typ, name } = param;
-                let typ_out = typ.check(prg, ctx, type_univ())?;
+                let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
                 let typ_nf = typ.normalize(prg, &mut ctx.env())?;
                 let param_out = Param { name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
@@ -1085,64 +1092,6 @@ impl InferTelescope for SelfParam {
     }
 }
 
-trait SubstUnderCtx {
-    fn subst_under_ctx<S: Substitution<Rc<Exp>>>(&self, ctx: LevelCtx, s: &S) -> Self;
-}
-
-impl<T: Substitutable<Rc<Exp>> + Clone> SubstUnderCtx for T {
-    fn subst_under_ctx<S: Substitution<Rc<Exp>>>(&self, mut ctx: LevelCtx, s: &S) -> Self {
-        self.subst(&mut ctx, s)
-    }
-}
-
-trait SubstInTelescope {
-    /// Substitute in a telescope
-    fn subst_in_telescope<S: Substitution<Rc<Exp>>>(&self, ctx: LevelCtx, s: &S) -> Self;
-}
-
-impl SubstInTelescope for Telescope {
-    fn subst_in_telescope<S: Substitution<Rc<Exp>>>(&self, mut ctx: LevelCtx, s: &S) -> Self {
-        let Telescope { params } = self;
-
-        ctx.bind_fold(
-            params.iter(),
-            Vec::new(),
-            |ctx, mut params_out, param| {
-                params_out.push(param.subst(ctx, s));
-                params_out
-            },
-            |_, params_out| Telescope { params: params_out },
-        )
-    }
-}
-
-trait ExpectTypApp {
-    fn expect_typ_app(&self) -> Result<TypCtor, TypeError>;
-}
-
-impl ExpectTypApp for Rc<Exp> {
-    fn expect_typ_app(&self) -> Result<TypCtor, TypeError> {
-        match &**self {
-            Exp::TypCtor(TypCtor { span, name, args }) => {
-                Ok(TypCtor { span: *span, name: name.clone(), args: args.clone() })
-            }
-            _ => Err(TypeError::expected_typ_app(self.clone())),
-        }
-    }
-}
-
-#[trace("{:P} =? {:P}", this, other)]
-fn convert(ctx: LevelCtx, this: Rc<Exp>, other: &Rc<Exp>) -> Result<(), TypeError> {
-    // Convertibility is checked using the unification algorithm.
-    let eqn: Eqn = Eqn { lhs: this.clone(), rhs: other.clone() };
-    let eqns: Vec<Eqn> = vec![eqn];
-    let res = unify(ctx, eqns, true)?;
-    match res {
-        crate::unifier::dec::Dec::Yes(_) => Ok(()),
-        crate::unifier::dec::Dec::No(_) => Err(TypeError::not_eq(this.clone(), other.clone())),
-    }
-}
-
 impl<T: Check> Check for Rc<T> {
     type Target = Rc<T::Target>;
 
@@ -1157,24 +1106,4 @@ impl<T: Infer> Infer for Rc<T> {
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
         Ok(Rc::new((**self).infer(prg, ctx)?))
     }
-}
-
-fn type_univ() -> Rc<Exp> {
-    Rc::new(Exp::TypeUniv(TypeUniv { span: None }))
-}
-
-fn type_hole() -> Rc<Exp> {
-    Rc::new(Exp::Hole(Hole { span: None, inferred_type: None, inferred_ctx: None }))
-}
-
-// Checks whether the codata type contains destructors with a self parameter
-fn uses_self(prg: &Prg, codata: &Codata) -> Result<bool, TypeError> {
-    for dtor_name in &codata.dtors {
-        let dtor = prg.decls.dtor(dtor_name, None)?;
-        let mut ctx = LevelCtx::from(vec![dtor.params.len(), 1]);
-        if dtor.ret_typ.occurs(&mut ctx, Lvl { fst: 1, snd: 0 }) {
-            return Ok(true);
-        }
-    }
-    Ok(false)
 }

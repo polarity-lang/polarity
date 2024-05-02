@@ -487,6 +487,12 @@ pub struct TypeUniv {
     pub span: Option<Span>,
 }
 
+impl TypeUniv {
+    pub fn new() -> TypeUniv {
+        TypeUniv { span: None }
+    }
+}
+
 impl HasSpan for TypeUniv {
     fn span(&self) -> Option<Span> {
         self.span
@@ -674,6 +680,11 @@ pub struct Hole {
     pub inferred_ctx: Option<TypeCtx>,
 }
 
+impl Hole {
+    pub fn new() -> Hole {
+        Hole { span: None, inferred_type: None, inferred_ctx: None }
+    }
+}
 impl HasSpan for Hole {
     fn span(&self) -> Option<Span> {
         self.span
