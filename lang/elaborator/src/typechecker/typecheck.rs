@@ -384,8 +384,8 @@ impl Check for LocalMatch {
             }
         };
 
-        let body_out =
-            WithScrutinee { inner: body, scrutinee: typ_app_nf.clone() }.check(prg, ctx, body_t)?;
+        let body_out = WithScrutinee { inner: body, scrutinee: typ_app_nf.clone() }
+            .check_ws(prg, ctx, body_t)?;
 
         Ok(LocalMatch {
             span: *span,
@@ -435,7 +435,7 @@ impl Check for LocalComatch {
             n_label_args: 0,
             destructee: typ_app_nf.clone(),
         };
-        let body_out = wd.infer(prg, ctx)?;
+        let body_out = wd.infer_wd(prg, ctx)?;
 
         Ok(LocalComatch {
             span: *span,
@@ -491,10 +491,8 @@ pub struct WithScrutinee<'a> {
 }
 
 /// Check a pattern match
-impl<'a> Check for WithScrutinee<'a> {
-    type Target = Match;
-
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self::Target, TypeError> {
+impl<'a> WithScrutinee<'a> {
+    pub fn check_ws(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Match, TypeError> {
         let Match { span, cases, omit_absurd } = &self.inner;
 
         // Check that this match is on a data type
@@ -579,10 +577,8 @@ pub struct WithDestructee<'a> {
 }
 
 /// Infer a copattern match
-impl<'a> Infer for WithDestructee<'a> {
-    type Target = Match;
-
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self::Target, TypeError> {
+impl<'a> WithDestructee<'a> {
+    pub fn infer_wd(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Match, TypeError> {
         let Match { span, cases, omit_absurd } = &self.inner;
 
         // Check that this comatch is on a codata type

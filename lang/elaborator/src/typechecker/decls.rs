@@ -217,7 +217,7 @@ impl CheckToplevel for Def {
 
             let body_out =
                 WithScrutinee { inner: body, scrutinee: self_param_nf.expect_typ_app()? }
-                    .check(prg, ctx, ret_typ_nf)?;
+                    .check_ws(prg, ctx, ret_typ_nf)?;
             Ok(Def {
                 span: *span,
                 doc: doc.clone(),
@@ -248,7 +248,7 @@ impl CheckToplevel for Codef {
                 n_label_args: params.len(),
                 destructee: typ_nf.expect_typ_app()?,
             };
-            let body_out = wd.infer(prg, ctx)?;
+            let body_out = wd.infer_wd(prg, ctx)?;
             Ok(Codef {
                 span: *span,
                 doc: doc.clone(),
