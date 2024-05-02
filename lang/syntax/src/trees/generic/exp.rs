@@ -10,6 +10,7 @@ use crate::ctx::values::TypeCtx;
 use crate::ctx::{BindContext, LevelCtx};
 
 use super::traits::Occurs;
+use super::HasTypeInfo;
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -113,6 +114,22 @@ impl Occurs for Exp {
             Exp::LocalMatch(e) => e.occurs(ctx, lvl),
             Exp::LocalComatch(e) => e.occurs(ctx, lvl),
             Exp::Hole(e) => e.occurs(ctx, lvl),
+        }
+    }
+}
+
+impl HasTypeInfo for Exp {
+    fn typ(&self) -> Option<Rc<Exp>> {
+        match self {
+            Exp::Variable(e) => e.inferred_type.clone(),
+            Exp::TypCtor(_) => Some(Rc::new(Exp::TypeUniv(TypeUniv { span: None }))),
+            Exp::Call(e) => e.inferred_type.clone(),
+            Exp::DotCall(e) => e.inferred_type.clone(),
+            Exp::Anno(e) => e.normalized_type.clone(),
+            Exp::TypeUniv(_) => Some(Rc::new(Exp::TypeUniv(TypeUniv { span: None }))),
+            Exp::LocalMatch(e) => e.inferred_type.clone().map(|x| Rc::new(x.into())),
+            Exp::LocalComatch(e) => e.inferred_type.clone().map(|x| Rc::new(x.into())),
+            Exp::Hole(e) => e.inferred_type.clone(),
         }
     }
 }

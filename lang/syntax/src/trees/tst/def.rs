@@ -1,10 +1,5 @@
 //! AST with type information
 
-use std::rc::Rc;
-
-use crate::generic::TypeUniv;
-use crate::ust;
-
 use crate::generic;
 
 pub type Ident = generic::Ident;
@@ -40,23 +35,3 @@ pub type DotCall = generic::DotCall;
 pub type Anno = generic::Anno;
 pub type LocalMatch = generic::LocalMatch;
 pub type LocalComatch = generic::LocalComatch;
-
-pub trait HasTypeInfo {
-    fn typ(&self) -> Option<Rc<ust::Exp>>;
-}
-
-impl HasTypeInfo for Exp {
-    fn typ(&self) -> Option<Rc<ust::Exp>> {
-        match self {
-            Exp::Variable(e) => e.inferred_type.clone(),
-            Exp::TypCtor(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
-            Exp::Call(e) => e.inferred_type.clone(),
-            Exp::DotCall(e) => e.inferred_type.clone(),
-            Exp::Anno(e) => e.normalized_type.clone(),
-            Exp::TypeUniv(_) => Some(Rc::new(ust::Exp::TypeUniv(TypeUniv { span: None }))),
-            Exp::LocalMatch(e) => e.inferred_type.clone().map(|x| Rc::new(x.into())),
-            Exp::LocalComatch(e) => e.inferred_type.clone().map(|x| Rc::new(x.into())),
-            Exp::Hole(e) => e.inferred_type.clone(),
-        }
-    }
-}

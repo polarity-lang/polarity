@@ -44,3 +44,11 @@ impl<T: Occurs> Occurs for Option<T> {
 pub trait Instantiate {
     fn instantiate(&self) -> TelescopeInst;
 }
+
+// HasTypeInfo
+//
+//
+
+pub trait HasTypeInfo {
+    fn typ(&self) -> Option<Rc<Exp>>;
+}
