@@ -536,6 +536,12 @@ impl From<TypeUniv> for Exp {
     }
 }
 
+impl Default for TypeUniv {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Shift for TypeUniv {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
         self.clone()
@@ -743,6 +749,12 @@ impl HasSpan for Hole {
 impl From<Hole> for Exp {
     fn from(val: Hole) -> Self {
         Exp::Hole(val)
+    }
+}
+
+impl Default for Hole {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

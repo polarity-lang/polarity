@@ -24,9 +24,21 @@ use crate::result::TypeError;
 /// to typecheck the expression against an expected type and a `infer` function
 /// to infer the type of the given expression.
 pub trait CheckInfer: Sized {
-    /// Checks whether the expression has the given expected type
+    /// Checks whether the expression has the given expected type. For checking we use
+    /// the following syntax:
+    /// ```text
+    ///            P, Γ ⊢ e ⇐ τ
+    /// ```
+    /// - P: The program context of toplevel declarations.
+    /// - Γ: The context of locally bound variables.
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError>;
-    /// Tries to infer a type for the given expression.
+    /// Tries to infer a type for the given expression. For inference we use the
+    /// following syntax:
+    /// ```text
+    ///            P, Γ ⊢ e ⇒ τ
+    /// ```
+    ///  - P: The program context of toplevel declarations.
+    ///  - Γ: The context of locally bound variables.
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError>;
 }
 
@@ -80,6 +92,13 @@ impl CheckInfer for Exp {
 //
 
 impl CheckInfer for Variable {
+    /// The *checking* rule for variables is:
+    /// ```text
+    ///            P, Γ ⊢ x ⇒ τ
+    ///            P, Γ ⊢ τ ≃ σ
+    ///           ───────────────
+    ///            P, Γ ⊢ x ⇐ σ
+    /// ```
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
@@ -91,6 +110,12 @@ impl CheckInfer for Variable {
         Ok(inferred_term)
     }
 
+    /// The *inference* rule for variables is:
+    /// ```text
+    ///            Γ(x) = τ
+    ///           ───────────────
+    ///            P, Γ ⊢ x ⇒ τ
+    /// ```
     fn infer(&self, _prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Variable { span, idx, name, .. } = self;
         let typ_nf = ctx.lookup(*idx);
@@ -103,6 +128,13 @@ impl CheckInfer for Variable {
 //
 
 impl CheckInfer for TypCtor {
+    /// The *checking* rule for type constructors is:
+    /// ```text
+    ///            P, Γ ⊢ Tσ ⇒ ρ
+    ///            P, Γ ⊢ τ ≃ ρ
+    ///           ──────────────────
+    ///            P, Γ ⊢ Tσ ⇐ τ
+    /// ```
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
@@ -114,6 +146,13 @@ impl CheckInfer for TypCtor {
         Ok(inferred_term)
     }
 
+    /// The *inference* rule for type constructors is:
+    /// ```text
+    ///            (co)data Tψ {...} ∈ P
+    ///            P, Γ ⊢ σ ⇐ ψ
+    ///           ─────────────────────────
+    ///            P, Γ ⊢ Tσ ⇒ Type
+    /// ```
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let TypCtor { span, name, args } = self;
         let params = &*prg.decls.typ(name, *span)?.typ();
@@ -128,6 +167,12 @@ impl CheckInfer for TypCtor {
 //
 
 impl CheckInfer for Call {
+    /// The *checking* rule for calls is:
+    /// ```text
+    ///                 ...
+    ///           ──────────────────
+    ///            P, Γ ⊢ Cσ ⇐ τ
+    /// ```
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
@@ -138,7 +183,12 @@ impl CheckInfer for Call {
         convert(ctx, inferred_typ, &t)?;
         Ok(inferred_term)
     }
-
+    /// The *inference* rule for calls is:
+    /// ```text
+    ///                 ...
+    ///           ──────────────────
+    ///            P, Γ ⊢ Cσ ⇒ ...
+    /// ```
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Call { span, name, args, .. } = self;
         let Ctor { name, params, typ, .. } = &prg.decls.ctor_or_codef(name, *span)?;
@@ -155,6 +205,12 @@ impl CheckInfer for Call {
 //
 
 impl CheckInfer for DotCall {
+    /// The *checking* rule for dotcalls is:
+    /// ```text
+    ///                 ...
+    ///           ──────────────────
+    ///            P, Γ ⊢ e.Dσ ⇐ τ
+    /// ```
     fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
@@ -166,6 +222,12 @@ impl CheckInfer for DotCall {
         Ok(inferred_term)
     }
 
+    /// The *inference* rule for dotcalls is:
+    /// ```text
+    ///                 ...
+    ///           ──────────────────
+    ///            P, Γ ⊢ e.Dσ ⇒ ...
+    /// ```
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let DotCall { span, exp, name, args, .. } = self;
         let Dtor { name, params, self_param, ret_typ, .. } = &prg.decls.dtor_or_def(name, *span)?;
@@ -210,6 +272,14 @@ impl CheckInfer for Anno {
         Ok(inferred_term)
     }
 
+    /// The *inference* rule for type annotations is:
+    /// ```text
+    ///            P, Γ ⊢ τ ⇐ Type
+    ///            P, Γ ⊢ τ ▷ τ'
+    ///            P, Γ ⊢ e ⇐ τ'
+    ///           ──────────────────────
+    ///            P, Γ ⊢ (e : τ) ⇒ τ'
+    /// ```
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Anno { span, exp, typ, .. } = self;
         let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
@@ -224,17 +294,24 @@ impl CheckInfer for Anno {
 //
 
 impl CheckInfer for TypeUniv {
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        let inferred_term = self.infer(prg, ctx)?;
-        let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
-            message: "Expected inferred type".to_owned(),
-            span: None,
-        })?;
-        let ctx = ctx.levels();
-        convert(ctx, inferred_typ, &t)?;
-        Ok(inferred_term)
+    /// The *checking* rule for the type universe is:
+    /// ```text
+    ///            P, Γ ⊢ τ ≃ Type
+    ///           ──────────────────
+    ///            P, Γ ⊢ Type ⇐ τ
+    /// ```
+    fn check(&self, _prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+        convert(ctx.levels(), Rc::new(TypeUniv::new().into()), &t)?;
+        Ok(self.clone())
     }
 
+    /// The *inference* rule for the type universe is:
+    /// ```text
+    ///           ─────────────────────
+    ///            P, Γ ⊢ Type ⇒ Type
+    /// ```
+    /// Note: The type universe is impredicative and the theory
+    /// therefore inconsistent.
     fn infer(&self, _prg: &Prg, _ctx: &mut Ctx) -> Result<Self, TypeError> {
         Ok(self.clone())
     }
