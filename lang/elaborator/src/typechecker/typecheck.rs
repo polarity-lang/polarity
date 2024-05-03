@@ -770,7 +770,7 @@ impl Check for ust::LocalMatch {
                     span: *info,
                     param: tst::ParamInst {
                         span: *info,
-                        info: tst::TypeInfo { typ: self_t_nf, ctx: None },
+                        info: Some(self_t_nf),
                         name: param.name.clone(),
                         typ: Rc::new(typ_app.to_exp()).into(),
                     },
@@ -1065,14 +1065,14 @@ impl CheckTelescope for ust::TelescopeInst {
             iter,
             vec![],
             |ctx, params_out, (param_actual, param_expected)| {
-                let ust::ParamInst { span, info: (), name, typ: _ } = param_actual;
+                let ust::ParamInst { span, name, .. } = param_actual;
                 let ust::Param { typ, .. } = param_expected;
                 let typ_out = typ.check(prg, ctx, type_univ())?;
                 let typ_nf = typ.normalize(prg, &mut ctx.env())?;
                 let mut params_out = params_out;
                 let param_out = tst::ParamInst {
                     span: *span,
-                    info: tst::TypeInfo { typ: typ_nf.clone(), ctx: None },
+                    info: Some(typ_nf.clone()),
                     name: name.clone(),
                     typ: typ_out.into(),
                 };

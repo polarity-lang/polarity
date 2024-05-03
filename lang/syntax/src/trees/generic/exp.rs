@@ -7,16 +7,6 @@ use derivative::Derivative;
 
 use crate::common::*;
 use crate::ctx::values::TypeCtx;
-use crate::tst::TST;
-use crate::ust::UST;
-
-pub trait Phase
-where
-    Self: Default + Clone + fmt::Debug + Eq,
-{
-    /// Type of the `info` field, containing (depending on the phase) type information
-    type TypeInfo: Clone + fmt::Debug;
-}
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -60,19 +50,19 @@ pub type Ident = String;
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub enum Exp<P: Phase> {
+pub enum Exp {
     Variable(Variable),
-    TypCtor(TypCtor<P>),
-    Call(Call<P>),
-    DotCall(DotCall<P>),
-    Anno(Anno<P>),
+    TypCtor(TypCtor),
+    Call(Call),
+    DotCall(DotCall),
+    Anno(Anno),
     TypeUniv(TypeUniv),
-    LocalMatch(LocalMatch<P>),
-    LocalComatch(LocalComatch<P>),
+    LocalMatch(LocalMatch),
+    LocalComatch(LocalComatch),
     Hole(Hole),
 }
 
-impl<P: Phase> HasSpan for Exp<P> {
+impl HasSpan for Exp {
     fn span(&self) -> Option<Span> {
         match self {
             Exp::Variable(e) => e.span(),
@@ -111,7 +101,7 @@ pub struct Variable {
     pub name: Ident,
     /// Inferred type annotated after elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub inferred_type: Option<Rc<Exp<UST>>>,
+    pub inferred_type: Option<Rc<Exp>>,
 }
 
 impl HasSpan for Variable {
@@ -120,7 +110,7 @@ impl HasSpan for Variable {
     }
 }
 
-impl<P: Phase> From<Variable> for Exp<P> {
+impl From<Variable> for Exp {
     fn from(val: Variable) -> Self {
         Exp::Variable(val)
     }
@@ -135,18 +125,18 @@ impl<P: Phase> From<Variable> for Exp<P> {
 /// Examples: `Nat`, `List(Nat)`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct TypCtor<P: Phase> {
+pub struct TypCtor {
     /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     /// Name of the type constructor
     pub name: Ident,
     /// Arguments to the type constructor
-    pub args: Args<P>,
+    pub args: Args,
 }
 
-impl<P: Phase> TypCtor<P> {
-    pub fn to_exp(&self) -> Exp<P> {
+impl TypCtor {
+    pub fn to_exp(&self) -> Exp {
         Exp::TypCtor(self.clone())
     }
 
@@ -156,14 +146,14 @@ impl<P: Phase> TypCtor<P> {
     }
 }
 
-impl<P: Phase> HasSpan for TypCtor<P> {
+impl HasSpan for TypCtor {
     fn span(&self) -> Option<Span> {
         self.span
     }
 }
 
-impl<P: Phase> From<TypCtor<P>> for Exp<P> {
-    fn from(val: TypCtor<P>) -> Self {
+impl From<TypCtor> for Exp {
+    fn from(val: TypCtor) -> Self {
         Exp::TypCtor(val)
     }
 }
@@ -176,7 +166,7 @@ impl<P: Phase> From<TypCtor<P>> for Exp<P> {
 /// Examples: `Zero`, `Cons(True, Nil)`, `minimum(x,y)`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Call<P: Phase> {
+pub struct Call {
     /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
@@ -185,21 +175,21 @@ pub struct Call<P: Phase> {
     pub name: Ident,
     /// The arguments to the call.
     /// The `(e1...en)` in `f(e1...en)`
-    pub args: Args<P>,
+    pub args: Args,
     /// The inferred result type of the call.
     /// This type is annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub inferred_type: Option<Rc<Exp<UST>>>,
+    pub inferred_type: Option<Rc<Exp>>,
 }
 
-impl<P: Phase> HasSpan for Call<P> {
+impl HasSpan for Call {
     fn span(&self) -> Option<Span> {
         self.span
     }
 }
 
-impl<P: Phase> From<Call<P>> for Exp<P> {
-    fn from(val: Call<P>) -> Self {
+impl From<Call> for Exp {
+    fn from(val: Call) -> Self {
         Exp::Call(val)
     }
 }
@@ -212,33 +202,33 @@ impl<P: Phase> From<Call<P>> for Exp<P> {
 /// Examples: `e.head` `xs.append(ys)`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct DotCall<P: Phase> {
+pub struct DotCall {
     /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     /// The expression to which the dotcall is applied.
     /// The `e` in `e.f(e1...en)`
-    pub exp: Rc<Exp<P>>,
+    pub exp: Rc<Exp>,
     /// The name of the dotcall.
     /// The `f` in `e.f(e1...en)`
     pub name: Ident,
     /// The arguments of the dotcall.
     /// The `(e1...en)` in `e.f(e1...en)`
-    pub args: Args<P>,
+    pub args: Args,
     /// The inferred result type of the dotcall.
     /// This type is annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub inferred_type: Option<Rc<Exp<UST>>>,
+    pub inferred_type: Option<Rc<Exp>>,
 }
 
-impl<P: Phase> HasSpan for DotCall<P> {
+impl HasSpan for DotCall {
     fn span(&self) -> Option<Span> {
         self.span
     }
 }
 
-impl<P: Phase> From<DotCall<P>> for Exp<P> {
-    fn from(val: DotCall<P>) -> Self {
+impl From<DotCall> for Exp {
+    fn from(val: DotCall) -> Self {
         Exp::DotCall(val)
     }
 }
@@ -250,29 +240,29 @@ impl<P: Phase> From<DotCall<P>> for Exp<P> {
 /// Type annotated term `e : t`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Anno<P: Phase> {
+pub struct Anno {
     /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     /// The annotated term, i.e. `e` in `e : t`
-    pub exp: Rc<Exp<P>>,
+    pub exp: Rc<Exp>,
     /// The annotated type, i.e. `t` in `e : t`
-    pub typ: Rc<Exp<P>>,
+    pub typ: Rc<Exp>,
     /// The annotated type written by the user might not
     /// be in normal form. After elaboration we therefore
     /// annotate the normalized type.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub normalized_type: Option<Rc<Exp<UST>>>,
+    pub normalized_type: Option<Rc<Exp>>,
 }
 
-impl<P: Phase> HasSpan for Anno<P> {
+impl HasSpan for Anno {
     fn span(&self) -> Option<Span> {
         self.span
     }
 }
 
-impl<P: Phase> From<Anno<P>> for Exp<P> {
-    fn from(val: Anno<P>) -> Self {
+impl From<Anno> for Exp {
+    fn from(val: Anno) -> Self {
         Exp::Anno(val)
     }
 }
@@ -300,7 +290,7 @@ impl HasSpan for TypeUniv {
     }
 }
 
-impl<P: Phase> From<TypeUniv> for Exp<P> {
+impl From<TypeUniv> for Exp {
     fn from(val: TypeUniv) -> Self {
         Exp::TypeUniv(val)
     }
@@ -312,29 +302,29 @@ impl<P: Phase> From<TypeUniv> for Exp<P> {
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct LocalMatch<P: Phase> {
+pub struct LocalMatch {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: Option<TypeCtx>,
     pub name: Label,
-    pub on_exp: Rc<Exp<P>>,
-    pub motive: Option<Motive<P>>,
+    pub on_exp: Rc<Exp>,
+    pub motive: Option<Motive>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub ret_typ: Option<Rc<Exp<P>>>,
-    pub body: Match<P>,
+    pub ret_typ: Option<Rc<Exp>>,
+    pub body: Match,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub inferred_type: Option<TypCtor<TST>>,
+    pub inferred_type: Option<TypCtor>,
 }
 
-impl<P: Phase> HasSpan for LocalMatch<P> {
+impl HasSpan for LocalMatch {
     fn span(&self) -> Option<Span> {
         self.span
     }
 }
 
-impl<P: Phase> From<LocalMatch<P>> for Exp<P> {
-    fn from(val: LocalMatch<P>) -> Self {
+impl From<LocalMatch> for Exp {
+    fn from(val: LocalMatch) -> Self {
         Exp::LocalMatch(val)
     }
 }
@@ -345,26 +335,26 @@ impl<P: Phase> From<LocalMatch<P>> for Exp<P> {
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct LocalComatch<P: Phase> {
+pub struct LocalComatch {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: Option<TypeCtx>,
     pub name: Label,
     pub is_lambda_sugar: bool,
-    pub body: Match<P>,
+    pub body: Match,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub inferred_type: Option<TypCtor<TST>>,
+    pub inferred_type: Option<TypCtor>,
 }
 
-impl<P: Phase> HasSpan for LocalComatch<P> {
+impl HasSpan for LocalComatch {
     fn span(&self) -> Option<Span> {
         self.span
     }
 }
 
-impl<P: Phase> From<LocalComatch<P>> for Exp<P> {
-    fn from(val: LocalComatch<P>) -> Self {
+impl From<LocalComatch> for Exp {
+    fn from(val: LocalComatch) -> Self {
         Exp::LocalComatch(val)
     }
 }
@@ -380,7 +370,7 @@ pub struct Hole {
     pub span: Option<Span>,
     /// The inferred type of the hole annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub inferred_type: Option<Rc<Exp<UST>>>,
+    pub inferred_type: Option<Rc<Exp>>,
     /// The type context in which the hole occurs.
     /// This context is annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
@@ -393,7 +383,7 @@ impl HasSpan for Hole {
     }
 }
 
-impl<P: Phase> From<Hole> for Exp<P> {
+impl From<Hole> for Exp {
     fn from(val: Hole) -> Self {
         Exp::Hole(val)
     }
@@ -405,32 +395,32 @@ impl<P: Phase> From<Hole> for Exp<P> {
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Match<P: Phase> {
+pub struct Match {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub cases: Vec<Case<P>>,
+    pub cases: Vec<Case>,
     pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Case<P: Phase> {
+pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub name: Ident,
-    pub params: TelescopeInst<P>,
+    pub params: TelescopeInst,
     /// Body being `None` represents an absurd pattern
-    pub body: Option<Rc<Exp<P>>>,
+    pub body: Option<Rc<Exp>>,
 }
 
 /// Instantiation of a previously declared telescope
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct TelescopeInst<P: Phase> {
-    pub params: Vec<ParamInst<P>>,
+pub struct TelescopeInst {
+    pub params: Vec<ParamInst>,
 }
 
-impl<P: Phase> TelescopeInst<P> {
+impl TelescopeInst {
     pub fn len(&self) -> usize {
         self.params.len()
     }
@@ -443,15 +433,15 @@ impl<P: Phase> TelescopeInst<P> {
 /// Instantiation of a previously declared parameter
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct ParamInst<P: Phase> {
+pub struct ParamInst {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: P::TypeInfo,
+    pub info: Option<Rc<Exp>>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub typ: Option<Rc<Exp<P>>>,
+    pub typ: Option<Rc<Exp>>,
 }
 
 /// A list of arguments
@@ -462,11 +452,11 @@ pub struct ParamInst<P: Phase> {
 /// Unifiers are another example of context morphisms and applying a unifier to an expression mean substituting various terms,
 /// which are not necessarily part of a single argument list.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Args<P: Phase> {
-    pub args: Vec<Rc<Exp<P>>>,
+pub struct Args {
+    pub args: Vec<Rc<Exp>>,
 }
 
-impl<P: Phase> Args<P> {
+impl Args {
     pub fn len(&self) -> usize {
         self.args.len()
     }
@@ -478,9 +468,9 @@ impl<P: Phase> Args<P> {
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Motive<P: Phase> {
+pub struct Motive {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub param: ParamInst<P>,
-    pub ret_typ: Rc<Exp<P>>,
+    pub param: ParamInst,
+    pub ret_typ: Rc<Exp>,
 }

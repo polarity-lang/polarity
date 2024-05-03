@@ -4,44 +4,44 @@ use codespan::Span;
 
 use std::rc::Rc;
 
-pub trait MapCtxExt<P: Phase> {
+pub trait MapCtxExt {
     fn ctx_map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
-        I: IntoIterator<Item = Param<P>>,
-        F1: Fn(&mut Self, Param<P>) -> Param<P>,
-        F2: FnOnce(&mut Self, Telescope<P>) -> X;
+        I: IntoIterator<Item = Param>,
+        F1: Fn(&mut Self, Param) -> Param,
+        F2: FnOnce(&mut Self, Telescope) -> X;
 
     fn ctx_map_telescope_inst<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
-        I: IntoIterator<Item = ParamInst<P>>,
-        F1: Fn(&mut Self, ParamInst<P>) -> ParamInst<P>,
-        F2: FnOnce(&mut Self, TelescopeInst<P>) -> X;
+        I: IntoIterator<Item = ParamInst>,
+        F1: Fn(&mut Self, ParamInst) -> ParamInst,
+        F2: FnOnce(&mut Self, TelescopeInst) -> X;
 
-    fn ctx_map_motive_param<X, F>(&mut self, param: ParamInst<P>, f_inner: F) -> X
+    fn ctx_map_motive_param<X, F>(&mut self, param: ParamInst, f_inner: F) -> X
     where
-        F: FnOnce(&mut Self, ParamInst<P>) -> X;
+        F: FnOnce(&mut Self, ParamInst) -> X;
 
     fn ctx_map_self_param<X, F>(
         &mut self,
         info: Option<Span>,
         name: Option<Ident>,
-        typ: TypCtor<P>,
+        typ: TypCtor,
         f_inner: F,
     ) -> X
     where
-        F: FnOnce(&mut Self, SelfParam<P>) -> X;
+        F: FnOnce(&mut Self, SelfParam) -> X;
 }
 
-impl<P: Phase, C: BindContext> MapCtxExt<P> for C
+impl<C: BindContext> MapCtxExt for C
 where
-    Param<P>: ContextElem<C::Ctx>,
-    ParamInst<P>: ContextElem<C::Ctx>,
+    Param: ContextElem<C::Ctx>,
+    ParamInst: ContextElem<C::Ctx>,
 {
     fn ctx_map_telescope<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
-        I: IntoIterator<Item = Param<P>>,
-        F1: Fn(&mut Self, Param<P>) -> Param<P>,
-        F2: FnOnce(&mut Self, Telescope<P>) -> X,
+        I: IntoIterator<Item = Param>,
+        F1: Fn(&mut Self, Param) -> Param,
+        F2: FnOnce(&mut Self, Telescope) -> X,
     {
         self.bind_fold(
             params.into_iter(),
@@ -59,9 +59,9 @@ where
 
     fn ctx_map_telescope_inst<X, I, F1, F2>(&mut self, params: I, f_acc: F1, f_inner: F2) -> X
     where
-        I: IntoIterator<Item = ParamInst<P>>,
-        F1: Fn(&mut Self, ParamInst<P>) -> ParamInst<P>,
-        F2: FnOnce(&mut Self, TelescopeInst<P>) -> X,
+        I: IntoIterator<Item = ParamInst>,
+        F1: Fn(&mut Self, ParamInst) -> ParamInst,
+        F2: FnOnce(&mut Self, TelescopeInst) -> X,
     {
         self.bind_fold(
             params.into_iter(),
@@ -77,9 +77,9 @@ where
         )
     }
 
-    fn ctx_map_motive_param<X, F>(&mut self, param: ParamInst<P>, f_inner: F) -> X
+    fn ctx_map_motive_param<X, F>(&mut self, param: ParamInst, f_inner: F) -> X
     where
-        F: FnOnce(&mut Self, ParamInst<P>) -> X,
+        F: FnOnce(&mut Self, ParamInst) -> X,
     {
         self.bind_single(param.clone(), |ctx| f_inner(ctx, param))
     }
@@ -88,11 +88,11 @@ where
         &mut self,
         info: Option<Span>,
         name: Option<Ident>,
-        typ: TypCtor<P>,
+        typ: TypCtor,
         f_inner: F,
     ) -> X
     where
-        F: FnOnce(&mut Self, SelfParam<P>) -> X,
+        F: FnOnce(&mut Self, SelfParam) -> X,
     {
         let param = Param { name: name.clone().unwrap_or_default(), typ: Rc::new(typ.to_exp()) };
         self.bind_single(param, |ctx| f_inner(ctx, SelfParam { info, name, typ }))

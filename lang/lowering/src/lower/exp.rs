@@ -59,7 +59,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ust::TelescopeInst) -> Result<T, 
             let mut params_out = params_out?;
             let span = bs_to_span(param);
             let name = bs_to_name(param);
-            let param_out = ust::ParamInst { span: Some(span), info: (), name, typ: None };
+            let param_out = ust::ParamInst { span: Some(span), info: None, name, typ: None };
             params_out.push(param_out);
             Ok(params_out)
         },
@@ -302,7 +302,7 @@ impl Lower for cst::exp::Motive {
             span: Some(*span),
             param: ust::ParamInst {
                 span: Some(bs_to_span(param)),
-                info: (),
+                info: None,
                 name: bs_to_name(param),
                 typ: None,
             },

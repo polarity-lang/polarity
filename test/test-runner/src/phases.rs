@@ -286,9 +286,3 @@ impl TestOutput for ust::Prg {
         self.print_to_string(None)
     }
 }
-
-impl TestOutput for tst::Prg {
-    fn test_output(&self) -> String {
-        self.forget_tst().print_to_string(None)
-    }
-}

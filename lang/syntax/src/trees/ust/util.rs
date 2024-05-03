@@ -12,7 +12,7 @@ impl Instantiate for Telescope {
             .map(|Param { name, .. }| ParamInst {
                 span: None,
                 name: name.clone(),
-                info: (),
+                info: None,
                 typ: None,
             })
             .collect();
