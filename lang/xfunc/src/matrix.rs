@@ -2,17 +2,16 @@ use std::rc::Rc;
 
 use syntax::common::*;
 use syntax::ctx::{BindContext, LevelCtx};
-use syntax::generic::{Attribute, DocComment, Named};
-use syntax::ust;
-use syntax::ust::util::Instantiate;
+use syntax::generic;
+use syntax::generic::{Attribute, DocComment, Instantiate, Named};
 
 use crate::result::XfuncError;
 use codespan::Span;
 
 #[derive(Debug, Clone)]
 pub struct Prg {
-    pub map: HashMap<ust::Ident, XData>,
-    pub exp: Option<Rc<ust::Exp>>,
+    pub map: HashMap<generic::Ident, XData>,
+    pub exp: Option<Rc<generic::Exp>>,
 }
 
 #[derive(Debug, Clone)]
@@ -20,11 +19,11 @@ pub struct XData {
     pub repr: Repr,
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
-    pub name: ust::Ident,
-    pub typ: Rc<ust::TypAbs>,
-    pub ctors: HashMap<ust::Ident, ust::Ctor>,
-    pub dtors: HashMap<ust::Ident, ust::Dtor>,
-    pub exprs: HashMap<Key, Option<Rc<ust::Exp>>>,
+    pub name: generic::Ident,
+    pub typ: Rc<generic::TypAbs>,
+    pub ctors: HashMap<generic::Ident, generic::Ctor>,
+    pub dtors: HashMap<generic::Ident, generic::Dtor>,
+    pub exprs: HashMap<Key, Option<Rc<generic::Exp>>>,
 }
 
 /// A key points to a matrix cell
@@ -36,8 +35,8 @@ pub struct XData {
 /// between the matrix and other representations
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Key {
-    pub ctor: ust::Ident,
-    pub dtor: ust::Ident,
+    pub ctor: generic::Ident,
+    pub dtor: generic::Ident,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -47,7 +46,7 @@ pub enum Repr {
 }
 
 /// Take the red pill
-pub fn build(prg: &ust::Prg) -> Result<Prg, XfuncError> {
+pub fn build(prg: &generic::Prg) -> Result<Prg, XfuncError> {
     let mut out = Prg { map: HashMap::default(), exp: None };
     let mut ctx = Ctx::empty();
     prg.build_matrix(&mut ctx, &mut out)?;
@@ -59,7 +58,7 @@ pub trait BuildMatrix {
 }
 
 pub struct Ctx {
-    type_for_xtor: HashMap<ust::Ident, ust::Ident>,
+    type_for_xtor: HashMap<generic::Ident, generic::Ident>,
 }
 
 impl Ctx {
@@ -68,24 +67,24 @@ impl Ctx {
     }
 }
 
-impl BuildMatrix for ust::Prg {
+impl BuildMatrix for generic::Prg {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ust::Prg { decls } = self;
+        let generic::Prg { decls } = self;
 
         for decl in decls.map.values() {
             match decl {
-                ust::Decl::Data(data) => data.build_matrix(ctx, out),
-                ust::Decl::Codata(codata) => codata.build_matrix(ctx, out),
+                generic::Decl::Data(data) => data.build_matrix(ctx, out),
+                generic::Decl::Codata(codata) => codata.build_matrix(ctx, out),
                 _ => Ok(()),
             }?
         }
 
         for decl in decls.map.values() {
             match decl {
-                ust::Decl::Ctor(ctor) => ctor.build_matrix(ctx, out),
-                ust::Decl::Dtor(dtor) => dtor.build_matrix(ctx, out),
-                ust::Decl::Def(def) => def.build_matrix(ctx, out),
-                ust::Decl::Codef(codef) => codef.build_matrix(ctx, out),
+                generic::Decl::Ctor(ctor) => ctor.build_matrix(ctx, out),
+                generic::Decl::Dtor(dtor) => dtor.build_matrix(ctx, out),
+                generic::Decl::Def(def) => def.build_matrix(ctx, out),
+                generic::Decl::Codef(codef) => codef.build_matrix(ctx, out),
                 _ => Ok(()),
             }?
         }
@@ -93,9 +92,9 @@ impl BuildMatrix for ust::Prg {
     }
 }
 
-impl BuildMatrix for ust::Data {
+impl BuildMatrix for generic::Data {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ust::Data { span, doc, name, attr: _, typ, ctors } = self;
+        let generic::Data { span, doc, name, attr: _, typ, ctors } = self;
 
         let xdata = XData {
             repr: Repr::Data,
@@ -117,9 +116,9 @@ impl BuildMatrix for ust::Data {
     }
 }
 
-impl BuildMatrix for ust::Codata {
+impl BuildMatrix for generic::Codata {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ust::Codata { span, doc, name, attr: _, typ, dtors } = self;
+        let generic::Codata { span, doc, name, attr: _, typ, dtors } = self;
 
         let xdata = XData {
             repr: Repr::Codata,
@@ -142,7 +141,7 @@ impl BuildMatrix for ust::Codata {
     }
 }
 
-impl BuildMatrix for ust::Ctor {
+impl BuildMatrix for generic::Ctor {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &ctx.type_for_xtor.get(&self.name).ok_or(XfuncError::Impossible {
             message: format!("Could not resolve {}", self.name),
@@ -157,7 +156,7 @@ impl BuildMatrix for ust::Ctor {
     }
 }
 
-impl BuildMatrix for ust::Dtor {
+impl BuildMatrix for generic::Dtor {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &ctx.type_for_xtor.get(&self.name).ok_or(XfuncError::Impossible {
             message: format!("Could not resolve {}", self.name),
@@ -172,7 +171,7 @@ impl BuildMatrix for ust::Dtor {
     }
 }
 
-impl BuildMatrix for ust::Def {
+impl BuildMatrix for generic::Def {
     fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.self_param.typ.name;
         let xdata = out.map.get_mut(type_name).ok_or(XfuncError::Impossible {
@@ -181,10 +180,10 @@ impl BuildMatrix for ust::Def {
         })?;
         xdata.dtors.insert(self.name.clone(), self.to_dtor());
 
-        let ust::Match { cases, .. } = &self.body;
+        let generic::Match { cases, .. } = &self.body;
 
         for case in cases {
-            let ust::Case { name, body, .. } = case;
+            let generic::Case { name, body, .. } = case;
             let key = Key { dtor: self.name.clone(), ctor: name.clone() };
             xdata.exprs.insert(key, body.clone());
         }
@@ -192,7 +191,7 @@ impl BuildMatrix for ust::Def {
     }
 }
 
-impl BuildMatrix for ust::Codef {
+impl BuildMatrix for generic::Codef {
     fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.typ.name;
         let xdata = out.map.get_mut(type_name).ok_or(XfuncError::Impossible {
@@ -201,10 +200,10 @@ impl BuildMatrix for ust::Codef {
         })?;
         xdata.ctors.insert(self.name.clone(), self.to_ctor());
 
-        let ust::Match { cases, .. } = &self.body;
+        let generic::Match { cases, .. } = &self.body;
 
         for case in cases {
-            let ust::Case { name, body, .. } = case;
+            let generic::Case { name, body, .. } = case;
             let key = Key { ctor: self.name.clone(), dtor: name.clone() };
             // Swap binding order to the order imposed by the matrix representation
             let body = body.as_ref().map(|body| {
@@ -223,10 +222,10 @@ impl BuildMatrix for ust::Codef {
 }
 
 impl XData {
-    pub fn as_data(&self) -> (ust::Data, Vec<ust::Ctor>, Vec<ust::Def>) {
+    pub fn as_data(&self) -> (generic::Data, Vec<generic::Ctor>, Vec<generic::Def>) {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
-        let data = ust::Data {
+        let data = generic::Data {
             span: None,
             doc: doc.clone(),
             name: name.clone(),
@@ -247,7 +246,7 @@ impl XData {
                         if body.is_none() {
                             omit_absurd = true;
                         }
-                        body.map(|body| ust::Case {
+                        body.map(|body| generic::Case {
                             span: None,
                             name: ctor.name.clone(),
                             params: ctor.params.instantiate(),
@@ -256,7 +255,7 @@ impl XData {
                     })
                     .collect();
 
-                ust::Def {
+                generic::Def {
                     span: None,
                     doc: dtor.doc.clone(),
                     name: dtor.name.clone(),
@@ -264,7 +263,7 @@ impl XData {
                     params: dtor.params.clone(),
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
-                    body: ust::Match { cases, span: None, omit_absurd },
+                    body: generic::Match { cases, span: None, omit_absurd },
                 }
             })
             .collect();
@@ -274,10 +273,10 @@ impl XData {
         (data, ctors, defs)
     }
 
-    pub fn as_codata(&self) -> (ust::Codata, Vec<ust::Dtor>, Vec<ust::Codef>) {
+    pub fn as_codata(&self) -> (generic::Codata, Vec<generic::Dtor>, Vec<generic::Codef>) {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
-        let codata = ust::Codata {
+        let codata = generic::Codata {
             span: None,
             doc: doc.clone(),
             name: name.clone(),
@@ -307,7 +306,7 @@ impl XData {
                         if body.is_none() {
                             omit_absurd = true;
                         }
-                        body.map(|body| ust::Case {
+                        body.map(|body| generic::Case {
                             span: None,
                             name: dtor.name.clone(),
                             params: dtor.params.instantiate(),
@@ -316,14 +315,14 @@ impl XData {
                     })
                     .collect();
 
-                ust::Codef {
+                generic::Codef {
                     span: None,
                     doc: ctor.doc.clone(),
                     name: ctor.name.clone(),
                     attr: Attribute::default(),
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
-                    body: ust::Match { cases, span: None, omit_absurd },
+                    body: generic::Match { cases, span: None, omit_absurd },
                 }
             })
             .collect();

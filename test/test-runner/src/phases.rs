@@ -4,8 +4,7 @@ use std::fmt;
 use parser::cst;
 use printer::PrintToString;
 use renaming::Rename;
-use syntax::tst::forget::ForgetTST;
-use syntax::{tst, ust};
+use syntax::generic::{ForgetTST, Prg};
 
 use super::infallible::NoError;
 
@@ -204,7 +203,7 @@ impl Phase for Parse {
 
 impl Phase for Lower {
     type In = cst::decls::Prg;
-    type Out = ust::Prg;
+    type Out = Prg;
     type Err = lowering::LoweringError;
 
     fn new(name: &'static str) -> Self {
@@ -221,8 +220,8 @@ impl Phase for Lower {
 }
 
 impl Phase for Check {
-    type In = ust::Prg;
-    type Out = tst::Prg;
+    type In = Prg;
+    type Out = Prg;
     type Err = elaborator::result::TypeError;
 
     fn new(name: &'static str) -> Self {
@@ -239,7 +238,7 @@ impl Phase for Check {
 }
 
 impl Phase for Print {
-    type In = ust::Prg;
+    type In = Prg;
     type Out = String;
     type Err = NoError;
 
@@ -257,8 +256,8 @@ impl Phase for Print {
 }
 
 impl Phase for Forget {
-    type In = tst::Prg;
-    type Out = ust::Prg;
+    type In = Prg;
+    type Out = Prg;
     type Err = NoError;
 
     fn new(name: &'static str) -> Self {
@@ -281,7 +280,7 @@ impl TestOutput for cst::decls::Prg {
     }
 }
 
-impl TestOutput for ust::Prg {
+impl TestOutput for Prg {
     fn test_output(&self) -> String {
         self.print_to_string(None)
     }

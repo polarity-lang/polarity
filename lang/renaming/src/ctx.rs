@@ -48,7 +48,7 @@ impl Context for Ctx {
 impl Ctx {
     pub(super) fn disambiguate_name(&self, mut name: Ident) -> Ident {
         if name == "_" || name.is_empty() {
-            name = "x".to_owned();
+            "x".clone_into(&mut name);
         }
         while self.contains_name(&name) {
             name = increment_name(name);

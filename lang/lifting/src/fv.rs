@@ -6,8 +6,8 @@ use derivative::Derivative;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;
-use syntax::generic::{Hole, TypeUniv, Variable};
-use syntax::ust::{self, Occurs};
+use syntax::generic::*;
+use syntax::generic::{Hole, Occurs, TypeUniv, Variable};
 
 /// Find all free variables
 pub fn free_vars<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
@@ -27,24 +27,24 @@ pub trait FV {
     fn visit_fv(&self, v: &mut USTVisitor);
 }
 
-impl FV for ust::Exp {
+impl FV for Exp {
     fn visit_fv(&self, v: &mut USTVisitor) {
         match self {
-            ust::Exp::Anno(ust::Anno { exp, typ, .. }) => {
+            Exp::Anno(Anno { exp, typ, .. }) => {
                 exp.visit_fv(v);
                 typ.visit_fv(v)
             }
-            ust::Exp::Variable(e) => e.visit_fv(v),
-            ust::Exp::LocalComatch(ust::LocalComatch { body, .. }) => body.visit_fv(v),
-            ust::Exp::Call(ust::Call { args, .. }) => args.visit_fv(v),
-            ust::Exp::DotCall(ust::DotCall { exp, args, .. }) => {
+            Exp::Variable(e) => e.visit_fv(v),
+            Exp::LocalComatch(LocalComatch { body, .. }) => body.visit_fv(v),
+            Exp::Call(Call { args, .. }) => args.visit_fv(v),
+            Exp::DotCall(DotCall { exp, args, .. }) => {
                 exp.visit_fv(v);
                 args.visit_fv(v);
             }
-            ust::Exp::TypCtor(e) => e.visit_fv(v),
-            ust::Exp::Hole(Hole { .. }) => {}
-            ust::Exp::TypeUniv(TypeUniv { span: _ }) => {}
-            ust::Exp::LocalMatch(ust::LocalMatch { on_exp, motive, body, .. }) => {
+            Exp::TypCtor(e) => e.visit_fv(v),
+            Exp::Hole(Hole { .. }) => {}
+            Exp::TypeUniv(TypeUniv { span: _ }) => {}
+            Exp::LocalMatch(LocalMatch { on_exp, motive, body, .. }) => {
                 on_exp.visit_fv(v);
                 motive.visit_fv(v);
                 body.visit_fv(v)
@@ -71,34 +71,34 @@ impl FV for Variable {
     }
 }
 
-impl FV for ust::TypCtor {
+impl FV for TypCtor {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::TypCtor { span: _, name: _, args } = self;
+        let TypCtor { span: _, name: _, args } = self;
         args.visit_fv(v)
     }
 }
 
-impl FV for ust::Args {
+impl FV for Args {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::Args { args } = self;
+        let Args { args } = self;
         for arg in args {
             arg.visit_fv(v)
         }
     }
 }
 
-impl FV for ust::Match {
+impl FV for Match {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::Match { span: _, cases, omit_absurd: _ } = self;
+        let Match { span: _, cases, omit_absurd: _ } = self;
         for case in cases {
             case.visit_fv(v)
         }
     }
 }
 
-impl FV for ust::Case {
+impl FV for Case {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::Case { span: _, name: _, params, body } = self;
+        let Case { span: _, name: _, params, body } = self;
 
         v.bind_iter(params.params.iter(), |v| {
             body.visit_fv(v);
@@ -106,9 +106,9 @@ impl FV for ust::Case {
     }
 }
 
-impl FV for ust::Motive {
+impl FV for Motive {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let ust::Motive { span: _, param, ret_typ } = self;
+        let Motive { span: _, param, ret_typ } = self;
 
         param.visit_fv(v);
 
@@ -116,7 +116,7 @@ impl FV for ust::Motive {
     }
 }
 
-impl FV for ust::ParamInst {
+impl FV for ParamInst {
     fn visit_fv(&self, _v: &mut USTVisitor) {
         //contains no type info for ust.
     }
@@ -147,11 +147,11 @@ pub struct FreeVars {
 /// The result of closing under the set of free variables
 pub struct FreeVarsResult {
     /// Telescope of the types of the free variables
-    pub telescope: ust::Telescope,
+    pub telescope: Telescope,
     /// A substitution close the free variables under `telescope`
     pub subst: FVSubst,
     /// An instantiation of `telescope` with the free variables
-    pub args: ust::Args,
+    pub args: Args,
 }
 
 impl FreeVars {
@@ -161,7 +161,7 @@ impl FreeVars {
         // Types can only depend on types which occur earlier in the context.
         let fvs = self.sorted();
 
-        let mut params: Vec<ust::Param> = vec![];
+        let mut params: Vec<Param> = vec![];
         let mut args = vec![];
         let mut subst = FVSubst::new(cutoff);
 
@@ -171,8 +171,8 @@ impl FreeVars {
 
             let typ = typ.subst(&mut ctx, &subst.in_param());
 
-            let param = ust::Param { name: name.clone(), typ: typ.clone() };
-            let arg = Rc::new(ust::Exp::Variable(Variable {
+            let param = Param { name: name.clone(), typ: typ.clone() };
+            let arg = Rc::new(Exp::Variable(Variable {
                 span: None,
                 idx: base_ctx.lvl_to_idx(fv.lvl),
                 name: name.clone(),
@@ -183,7 +183,7 @@ impl FreeVars {
             subst.add(name, lvl);
         }
 
-        FreeVarsResult { telescope: ust::Telescope { params }, subst, args: ust::Args { args } }
+        FreeVarsResult { telescope: Telescope { params }, subst, args: Args { args } }
     }
 
     /// Compute the union of two free variable sets
@@ -241,12 +241,12 @@ impl FreeVars {
 pub struct FreeVar {
     /// Name of the free variable
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub name: ust::Ident,
+    pub name: Ident,
     /// The original De-Bruijn level
     pub lvl: Lvl,
     /// Type of the free variable
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub typ: Rc<ust::Exp>,
+    pub typ: Rc<Exp>,
     /// Context under which the type is closed
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: LevelCtx,
@@ -287,7 +287,7 @@ pub struct USTVisitor<'a> {
 
 impl<'a> USTVisitor<'a> {
     /// Add a free variable as well as all free variables its type
-    fn add_fv(&mut self, name: ust::Ident, lvl: Lvl, typ: Rc<ust::Exp>, ctx: LevelCtx) {
+    fn add_fv(&mut self, name: Ident, lvl: Lvl, typ: Rc<Exp>, ctx: LevelCtx) {
         // Add the free variable
         let fv = FreeVar { name, lvl, typ: typ.clone(), ctx };
         if self.fvs.insert(fv) {
@@ -319,7 +319,7 @@ pub struct FVSubst {
 #[derive(Clone, Debug)]
 struct NewVar {
     /// Name of the free variable
-    name: ust::Ident,
+    name: Ident,
     /// New De-Bruijn level
     lvl: Lvl,
 }
@@ -339,7 +339,7 @@ impl FVSubst {
         Self { subst: Default::default(), cutoff }
     }
 
-    fn add(&mut self, name: ust::Ident, lvl: Lvl) {
+    fn add(&mut self, name: Ident, lvl: Lvl) {
         self.subst.insert(lvl, NewVar { name, lvl: Lvl { fst: 0, snd: self.subst.len() } });
     }
 
@@ -373,8 +373,8 @@ impl<'a> Shift for FVParamSubst<'a> {
     }
 }
 
-impl<'a> Substitution<Rc<ust::Exp>> for FVBodySubst<'a> {
-    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<ust::Exp>> {
+impl<'a> Substitution<Rc<Exp>> for FVBodySubst<'a> {
+    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
         // Let Γ be the original context, let Δ be the context according to which the new De-Bruijn index should be calculated
         //
         // Γ = [[x], [y], [z]]
@@ -387,7 +387,7 @@ impl<'a> Substitution<Rc<ust::Exp>> for FVBodySubst<'a> {
         let new_ctx =
             LevelCtx::from(vec![self.inner.subst.len()]).append(&ctx.tail(self.inner.cutoff));
         self.inner.subst.get(&lvl).map(|fv| {
-            Rc::new(ust::Exp::Variable(Variable {
+            Rc::new(Exp::Variable(Variable {
                 span: None,
                 idx: new_ctx.lvl_to_idx(fv.lvl),
                 name: fv.name.clone(),
@@ -397,10 +397,10 @@ impl<'a> Substitution<Rc<ust::Exp>> for FVBodySubst<'a> {
     }
 }
 
-impl<'a> Substitution<Rc<ust::Exp>> for FVParamSubst<'a> {
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<ust::Exp>> {
+impl<'a> Substitution<Rc<Exp>> for FVParamSubst<'a> {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
         self.inner.subst.get(&lvl).map(|fv| {
-            Rc::new(ust::Exp::Variable(Variable {
+            Rc::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: self.inner.subst.len() - 1 - fv.lvl.snd },
                 name: fv.name.clone(),

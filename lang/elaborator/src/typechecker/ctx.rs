@@ -10,7 +10,7 @@ use printer::Print;
 use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::{BindContext, Context, LevelCtx};
-use syntax::ust;
+use syntax::generic::*;
 
 use crate::result::TypeError;
 
@@ -27,19 +27,11 @@ impl Default for Ctx {
 }
 
 pub trait ContextSubstExt: Sized {
-    fn subst<S: Substitution<Rc<ust::Exp>>>(
-        &mut self,
-        prg: &ust::Prg,
-        s: &S,
-    ) -> Result<(), TypeError>;
+    fn subst<S: Substitution<Rc<Exp>>>(&mut self, prg: &Prg, s: &S) -> Result<(), TypeError>;
 }
 
 impl ContextSubstExt for Ctx {
-    fn subst<S: Substitution<Rc<ust::Exp>>>(
-        &mut self,
-        prg: &ust::Prg,
-        s: &S,
-    ) -> Result<(), TypeError> {
+    fn subst<S: Substitution<Rc<Exp>>>(&mut self, prg: &Prg, s: &S) -> Result<(), TypeError> {
         let env = self.vars.env();
         let levels = self.vars.levels();
         self.map_failable(|nf| {
@@ -73,7 +65,7 @@ impl Ctx {
         self.vars.is_empty()
     }
 
-    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<ust::Exp> {
+    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<Exp> {
         self.vars.lookup(idx).typ
     }
 
@@ -83,7 +75,7 @@ impl Ctx {
 
     pub fn map_failable<E, F>(&mut self, f: F) -> Result<(), E>
     where
-        F: Fn(&Rc<ust::Exp>) -> Result<Rc<ust::Exp>, E>,
+        F: Fn(&Rc<Exp>) -> Result<Rc<Exp>, E>,
     {
         self.vars = self.vars.map_failable(f)?;
         Ok(())

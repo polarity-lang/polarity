@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use printer::{ColorChoice, PrintCfg, PrintExt, StandardStream, WriteColor};
 use query::Database;
-use syntax::ust;
+use syntax::generic;
 
 use crate::result::IOError;
 
@@ -73,7 +73,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     Ok(())
 }
 
-fn print_prg<W: WriteColor>(prg: ust::Prg, cfg: &PrintCfg, stream: &mut W) {
+fn print_prg<W: WriteColor>(prg: generic::Prg, cfg: &PrintCfg, stream: &mut W) {
     prg.print_colored(cfg, stream).expect("Failed to print to stdout");
     println!();
 }

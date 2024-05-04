@@ -1,15 +1,14 @@
 use pretty::DocAllocator;
 
-use syntax::ust;
-
 use super::types::*;
+use syntax::generic::{Decl, Decls};
 
 pub struct Items {
-    pub items: Vec<ust::Decl>,
+    pub items: Vec<Decl>,
 }
 
 impl<'a> PrintInCtx<'a> for Items {
-    type Ctx = ust::Decls;
+    type Ctx = Decls;
 
     fn print_in_ctx(
         &'a self,

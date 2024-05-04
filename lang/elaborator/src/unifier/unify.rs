@@ -1,27 +1,27 @@
 use std::rc::Rc;
 
 use syntax::ctx::LevelCtx;
-use syntax::generic::Variable;
+use syntax::generic::{occurs_in, Variable};
 
 use crate::result::TypeError;
 use crate::unifier::dec::{Dec, No, Yes};
 use printer::{DocAllocator, Print};
 use syntax::common::*;
-use syntax::ust;
+use syntax::generic::*;
 
 #[derive(Debug, Clone)]
 pub struct Unificator {
-    map: HashMap<Lvl, Rc<ust::Exp>>,
+    map: HashMap<Lvl, Rc<Exp>>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Eqn {
-    pub lhs: Rc<ust::Exp>,
-    pub rhs: Rc<ust::Exp>,
+    pub lhs: Rc<Exp>,
+    pub rhs: Rc<Exp>,
 }
 
-impl From<(Rc<ust::Exp>, Rc<ust::Exp>)> for Eqn {
-    fn from((lhs, rhs): (Rc<ust::Exp>, Rc<ust::Exp>)) -> Self {
+impl From<(Rc<Exp>, Rc<Exp>)> for Eqn {
+    fn from((lhs, rhs): (Rc<Exp>, Rc<Exp>)) -> Self {
         Eqn { lhs, rhs }
     }
 }
@@ -33,8 +33,8 @@ impl Shift for Eqn {
     }
 }
 
-impl Substitutable<Rc<ust::Exp>> for Unificator {
-    fn subst<S: Substitution<Rc<ust::Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+impl Substitutable<Rc<Exp>> for Unificator {
+    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let map = self
             .map
             .iter()
@@ -56,8 +56,8 @@ impl Shift for Unificator {
     }
 }
 
-impl Substitution<Rc<ust::Exp>> for Unificator {
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<ust::Exp>> {
+impl Substitution<Rc<Exp>> for Unificator {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
         self.map.get(&lvl).cloned()
     }
 }
@@ -119,8 +119,8 @@ impl Ctx {
 
         match (&**lhs, &**rhs) {
             (
-                ust::Exp::Variable(Variable { idx: idx_1, .. }),
-                ust::Exp::Variable(Variable { idx: idx_2, .. }),
+                Exp::Variable(Variable { idx: idx_1, .. }),
+                Exp::Variable(Variable { idx: idx_2, .. }),
             ) => {
                 if idx_1 == idx_2 {
                     Ok(Yes(()))
@@ -130,14 +130,14 @@ impl Ctx {
                     self.add_assignment(*idx_1, rhs.clone())
                 }
             }
-            (ust::Exp::Variable(Variable { idx, .. }), _) => {
+            (Exp::Variable(Variable { idx, .. }), _) => {
                 if self.vars_are_rigid {
                     Ok(No(()))
                 } else {
                     self.add_assignment(*idx, rhs.clone())
                 }
             }
-            (_, ust::Exp::Variable(Variable { idx, .. })) => {
+            (_, Exp::Variable(Variable { idx, .. })) => {
                 if self.vars_are_rigid {
                     Ok(No(()))
                 } else {
@@ -145,43 +145,45 @@ impl Ctx {
                 }
             }
             (
-                ust::Exp::TypCtor(ust::TypCtor { name, args, .. }),
-                ust::Exp::TypCtor(ust::TypCtor { name: name2, args: args2, .. }),
+                Exp::TypCtor(TypCtor { name, args, .. }),
+                Exp::TypCtor(TypCtor { name: name2, args: args2, .. }),
             ) if name == name2 => self.unify_args(args, args2),
+            (Exp::TypCtor(TypCtor { name, .. }), Exp::TypCtor(TypCtor { name: name2, .. }))
+                if name != name2 =>
+            {
+                Ok(No(()))
+            }
             (
-                ust::Exp::TypCtor(ust::TypCtor { name, .. }),
-                ust::Exp::TypCtor(ust::TypCtor { name: name2, .. }),
-            ) if name != name2 => Ok(No(())),
-            (
-                ust::Exp::Call(ust::Call { name, args, .. }),
-                ust::Exp::Call(ust::Call { name: name2, args: args2, .. }),
+                Exp::Call(Call { name, args, .. }),
+                Exp::Call(Call { name: name2, args: args2, .. }),
             ) if name == name2 => self.unify_args(args, args2),
+            (Exp::Call(Call { name, .. }), Exp::Call(Call { name: name2, .. }))
+                if name != name2 =>
+            {
+                Ok(No(()))
+            }
             (
-                ust::Exp::Call(ust::Call { name, .. }),
-                ust::Exp::Call(ust::Call { name: name2, .. }),
-            ) if name != name2 => Ok(No(())),
-            (
-                ust::Exp::DotCall(ust::DotCall { exp, name, args, .. }),
-                ust::Exp::DotCall(ust::DotCall { exp: exp2, name: name2, args: args2, .. }),
+                Exp::DotCall(DotCall { exp, name, args, .. }),
+                Exp::DotCall(DotCall { exp: exp2, name: name2, args: args2, .. }),
             ) if name == name2 => {
                 self.add_equation(Eqn { lhs: exp.clone(), rhs: exp2.clone() })?;
                 self.unify_args(args, args2)
             }
-            (ust::Exp::TypeUniv(_), ust::Exp::TypeUniv(_)) => Ok(Yes(())),
-            (ust::Exp::Anno(_), _) => Err(TypeError::unsupported_annotation(lhs.clone())),
-            (_, ust::Exp::Anno(_)) => Err(TypeError::unsupported_annotation(rhs.clone())),
+            (Exp::TypeUniv(_), Exp::TypeUniv(_)) => Ok(Yes(())),
+            (Exp::Anno(_), _) => Err(TypeError::unsupported_annotation(lhs.clone())),
+            (_, Exp::Anno(_)) => Err(TypeError::unsupported_annotation(rhs.clone())),
             (_, _) => Err(TypeError::cannot_decide(lhs.clone(), rhs.clone())),
         }
     }
 
-    fn unify_args(&mut self, lhs: &ust::Args, rhs: &ust::Args) -> Result<Dec, TypeError> {
+    fn unify_args(&mut self, lhs: &Args, rhs: &Args) -> Result<Dec, TypeError> {
         let new_eqns = lhs.args.iter().cloned().zip(rhs.args.iter().cloned()).map(Eqn::from);
         self.add_equations(new_eqns)?;
         Ok(Yes(()))
     }
 
-    fn add_assignment(&mut self, idx: Idx, exp: Rc<ust::Exp>) -> Result<Dec, TypeError> {
-        if ust::occurs_in(&mut self.ctx, idx, &exp) {
+    fn add_assignment(&mut self, idx: Idx, exp: Rc<Exp>) -> Result<Dec, TypeError> {
+        if occurs_in(&mut self.ctx, idx, &exp) {
             return Err(TypeError::occurs_check_failed(idx, exp));
         }
         let insert_lvl = self.ctx.idx_to_lvl(idx);

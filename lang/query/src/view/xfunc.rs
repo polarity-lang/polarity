@@ -5,8 +5,7 @@ use printer::PrintToStringInCtx;
 use renaming::Rename;
 
 use syntax::common::*;
-use syntax::generic::Named;
-use syntax::ust;
+use syntax::generic::*;
 use xfunc::matrix;
 use xfunc::result::XfuncError;
 
@@ -62,23 +61,19 @@ impl<'a> DatabaseView<'a> {
 }
 
 struct Original {
-    xdefs: Vec<ust::Ident>,
+    xdefs: Vec<Ident>,
     type_span: Span,
-    decl_spans: HashMap<ust::Ident, Span>,
+    decl_spans: HashMap<Ident, Span>,
 }
 
 struct XfuncResult {
     title: String,
-    decls: ust::Decls,
+    decls: Decls,
     /// The new type (co)data definition as well as all associated (co)definitions
-    new_decls: Vec<ust::Decl>,
+    new_decls: Vec<Decl>,
 }
 
-fn generate_edits(
-    original: Original,
-    dirty_decls: HashSet<ust::Ident>,
-    result: XfuncResult,
-) -> Xfunc {
+fn generate_edits(original: Original, dirty_decls: HashSet<Ident>, result: XfuncResult) -> Xfunc {
     let XfuncResult { title, decls, new_decls } = result;
 
     // Edits for the type that has been xfunctionalized
@@ -108,7 +103,7 @@ fn generate_edits(
 }
 
 fn refunctionalize(
-    prg: ust::Prg,
+    prg: Prg,
     mat: &matrix::Prg,
     type_name: &str,
 ) -> Result<XfuncResult, crate::Error> {
@@ -116,23 +111,23 @@ fn refunctionalize(
 
     let mut decls = prg.decls;
     let map = &mut decls.map;
-    map.insert(codata.name.clone(), ust::Decl::Codata(codata.clone()));
-    map.extend(codefs.clone().into_iter().map(|def| (def.name.clone(), ust::Decl::Codef(def))));
-    map.extend(dtors.into_iter().map(|dtor| (dtor.name.clone(), ust::Decl::Dtor(dtor))));
+    map.insert(codata.name.clone(), Decl::Codata(codata.clone()));
+    map.extend(codefs.clone().into_iter().map(|def| (def.name.clone(), Decl::Codef(def))));
+    map.extend(dtors.into_iter().map(|dtor| (dtor.name.clone(), Decl::Dtor(dtor))));
 
     let codata = codata.rename();
     let decls = decls.rename();
     let codefs = codefs.into_iter().map(Rename::rename);
 
     // FIXME: Unnecessary duplication
-    let mut new_decls = vec![ust::Decl::Codata(codata)];
-    new_decls.extend(codefs.map(ust::Decl::Codef));
+    let mut new_decls = vec![Decl::Codata(codata)];
+    new_decls.extend(codefs.map(Decl::Codef));
 
     Ok(XfuncResult { title: format!("Refunctionalize {type_name}"), decls, new_decls })
 }
 
 fn defunctionalize(
-    prg: ust::Prg,
+    prg: Prg,
     mat: &matrix::Prg,
     type_name: &str,
 ) -> Result<XfuncResult, crate::Error> {
@@ -141,17 +136,17 @@ fn defunctionalize(
     let mut decls = prg.decls;
     let map = &mut decls.map;
 
-    map.insert(data.name.clone(), ust::Decl::Data(data.clone()));
-    map.extend(defs.clone().into_iter().map(|def| (def.name.clone(), ust::Decl::Def(def))));
-    map.extend(ctors.into_iter().map(|ctor| (ctor.name.clone(), ust::Decl::Ctor(ctor))));
+    map.insert(data.name.clone(), Decl::Data(data.clone()));
+    map.extend(defs.clone().into_iter().map(|def| (def.name.clone(), Decl::Def(def))));
+    map.extend(ctors.into_iter().map(|ctor| (ctor.name.clone(), Decl::Ctor(ctor))));
 
     let data = data.rename();
     let decls = decls.rename();
     let defs = defs.into_iter().map(Rename::rename);
 
     // FIXME: Unnecessary duplication
-    let mut new_decls = vec![ust::Decl::Data(data)];
-    new_decls.extend(defs.into_iter().map(ust::Decl::Def));
+    let mut new_decls = vec![Decl::Data(data)];
+    new_decls.extend(defs.into_iter().map(Decl::Def));
 
     Ok(XfuncResult { title: format!("Defunctionalize {type_name}"), decls, new_decls })
 }

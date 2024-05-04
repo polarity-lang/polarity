@@ -4,8 +4,7 @@ use super::DatabaseView;
 
 use elaborator::normalizer::normalize::Normalize;
 use parser::cst;
-use syntax::tst::forget::ForgetTST;
-use syntax::{tst, ust};
+use syntax::{generic::Exp, generic::ForgetTST, generic::Prg};
 
 use crate::*;
 
@@ -24,17 +23,17 @@ impl<'a> DatabaseView<'a> {
         parser::parse_program(source).map_err(Error::Parser)
     }
 
-    pub fn ust(&self) -> Result<ust::Prg, Error> {
+    pub fn ust(&self) -> Result<Prg, Error> {
         let cst = self.cst()?;
         lowering::lower_prg(&cst).map_err(Error::Lowering)
     }
 
-    pub fn tst(&self) -> Result<tst::Prg, Error> {
+    pub fn tst(&self) -> Result<Prg, Error> {
         let ust = self.ust()?;
         elaborator::typechecker::check(&ust).map_err(Error::Type)
     }
 
-    pub fn run(&self) -> Result<Option<Rc<ust::Exp>>, Error> {
+    pub fn run(&self) -> Result<Option<Rc<Exp>>, Error> {
         let tst = self.tst()?;
         let ust = tst.forget_tst();
 
