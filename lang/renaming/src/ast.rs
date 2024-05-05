@@ -177,13 +177,6 @@ impl Rename for Let {
     }
 }
 
-impl Rename for TypAbs {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let TypAbs { params } = self;
-        TypAbs { params: params.rename_in_ctx(ctx) }
-    }
-}
-
 impl Rename for Telescope {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Telescope { params } = self;

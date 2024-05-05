@@ -59,9 +59,7 @@ impl Lower for cst::decls::Data {
             doc: doc.lower(ctx)?,
             name: name.clone(),
             attr: attr.lower(ctx)?,
-            typ: Rc::new(generic::TypAbs {
-                params: lower_telescope(params, ctx, |_, out| Ok(out))?,
-            }),
+            typ: Rc::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
             ctors: ctor_names,
         })
     }
@@ -84,9 +82,7 @@ impl Lower for cst::decls::Codata {
             doc: doc.lower(ctx)?,
             name: name.clone(),
             attr: attr.lower(ctx)?,
-            typ: Rc::new(generic::TypAbs {
-                params: lower_telescope(params, ctx, |_, out| Ok(out))?,
-            }),
+            typ: Rc::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
             dtors: dtor_names,
         })
     }

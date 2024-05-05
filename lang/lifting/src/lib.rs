@@ -132,7 +132,7 @@ impl Lift for Data {
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
-            typ: typ.lift(ctx),
+            typ: Rc::new(typ.lift_telescope(ctx, |_, params| params)),
             ctors: ctors.clone(),
         }
     }
@@ -149,19 +149,9 @@ impl Lift for Codata {
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
-            typ: typ.lift(ctx),
+            typ: Rc::new(typ.lift_telescope(ctx, |_, params| params)),
             dtors: dtors.clone(),
         }
-    }
-}
-
-impl Lift for TypAbs {
-    type Target = TypAbs;
-
-    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let TypAbs { params } = self;
-
-        TypAbs { params: params.lift_telescope(ctx, |_, params| params) }
     }
 }
 

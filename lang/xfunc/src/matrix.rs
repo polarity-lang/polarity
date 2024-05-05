@@ -20,7 +20,7 @@ pub struct XData {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: generic::Ident,
-    pub typ: Rc<generic::TypAbs>,
+    pub typ: Rc<generic::Telescope>,
     pub ctors: HashMap<generic::Ident, generic::Ctor>,
     pub dtors: HashMap<generic::Ident, generic::Dtor>,
     pub exprs: HashMap<Key, Option<Rc<generic::Exp>>>,

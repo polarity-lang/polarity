@@ -121,15 +121,15 @@ impl Occurs for Exp {
 impl HasTypeInfo for Exp {
     fn typ(&self) -> Option<Rc<Exp>> {
         match self {
-            Exp::Variable(e) => e.inferred_type.clone(),
-            Exp::TypCtor(_) => Some(Rc::new(Exp::TypeUniv(TypeUniv { span: None }))),
-            Exp::Call(e) => e.inferred_type.clone(),
-            Exp::DotCall(e) => e.inferred_type.clone(),
-            Exp::Anno(e) => e.normalized_type.clone(),
-            Exp::TypeUniv(_) => Some(Rc::new(Exp::TypeUniv(TypeUniv { span: None }))),
-            Exp::LocalMatch(e) => e.inferred_type.clone().map(|x| Rc::new(x.into())),
-            Exp::LocalComatch(e) => e.inferred_type.clone().map(|x| Rc::new(x.into())),
-            Exp::Hole(e) => e.inferred_type.clone(),
+            Exp::Variable(e) => e.typ(),
+            Exp::TypCtor(e) => e.typ(),
+            Exp::Call(e) => e.typ(),
+            Exp::DotCall(e) => e.typ(),
+            Exp::Anno(e) => e.typ(),
+            Exp::TypeUniv(e) => e.typ(),
+            Exp::LocalMatch(e) => e.typ(),
+            Exp::LocalComatch(e) => e.typ(),
+            Exp::Hole(e) => e.typ(),
         }
     }
 }
@@ -214,6 +214,12 @@ impl ForgetTST for Variable {
     }
 }
 
+impl HasTypeInfo for Variable {
+    fn typ(&self) -> Option<Rc<Exp>> {
+        self.inferred_type.clone()
+    }
+}
+
 // TypCtor
 //
 //
@@ -277,6 +283,12 @@ impl ForgetTST for TypCtor {
     }
 }
 
+impl HasTypeInfo for TypCtor {
+    fn typ(&self) -> Option<Rc<Exp>> {
+        Some(Rc::new(TypeUniv::new().into()))
+    }
+}
+
 // Call
 //
 //
@@ -336,6 +348,12 @@ impl ForgetTST for Call {
     fn forget_tst(&self) -> Self {
         let Call { span, name, args, .. } = self;
         Call { span: *span, name: name.clone(), args: args.forget_tst(), inferred_type: None }
+    }
+}
+
+impl HasTypeInfo for Call {
+    fn typ(&self) -> Option<Rc<Exp>> {
+        self.inferred_type.clone()
     }
 }
 
@@ -411,6 +429,12 @@ impl ForgetTST for DotCall {
     }
 }
 
+impl HasTypeInfo for DotCall {
+    fn typ(&self) -> Option<Rc<Exp>> {
+        self.inferred_type.clone()
+    }
+}
+
 // Anno
 //
 //
@@ -470,6 +494,13 @@ impl ForgetTST for Anno {
         Anno { span: *span, exp: exp.forget_tst(), typ: typ.forget_tst(), normalized_type: None }
     }
 }
+
+impl HasTypeInfo for Anno {
+    fn typ(&self) -> Option<Rc<Exp>> {
+        self.normalized_type.clone()
+    }
+}
+
 // TypeUniv
 //
 //
@@ -487,6 +518,12 @@ pub struct TypeUniv {
     pub span: Option<Span>,
 }
 
+impl TypeUniv {
+    pub fn new() -> TypeUniv {
+        TypeUniv { span: None }
+    }
+}
+
 impl HasSpan for TypeUniv {
     fn span(&self) -> Option<Span> {
         self.span
@@ -496,6 +533,12 @@ impl HasSpan for TypeUniv {
 impl From<TypeUniv> for Exp {
     fn from(val: TypeUniv) -> Self {
         Exp::TypeUniv(val)
+    }
+}
+
+impl Default for TypeUniv {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -515,6 +558,12 @@ impl ForgetTST for TypeUniv {
     fn forget_tst(&self) -> Self {
         let TypeUniv { span } = self;
         TypeUniv { span: *span }
+    }
+}
+
+impl HasTypeInfo for TypeUniv {
+    fn typ(&self) -> Option<Rc<Exp>> {
+        Some(Rc::new(TypeUniv::new().into()))
     }
 }
 
@@ -590,6 +639,12 @@ impl ForgetTST for LocalMatch {
     }
 }
 
+impl HasTypeInfo for LocalMatch {
+    fn typ(&self) -> Option<Rc<Exp>> {
+        self.inferred_type.clone().map(|x| Rc::new(x.into()))
+    }
+}
+
 // LocalComatch
 //
 //
@@ -656,6 +711,12 @@ impl ForgetTST for LocalComatch {
     }
 }
 
+impl HasTypeInfo for LocalComatch {
+    fn typ(&self) -> Option<Rc<Exp>> {
+        self.inferred_type.clone().map(|x| Rc::new(x.into()))
+    }
+}
+
 // Hole
 //
 //
@@ -674,6 +735,11 @@ pub struct Hole {
     pub inferred_ctx: Option<TypeCtx>,
 }
 
+impl Hole {
+    pub fn new() -> Hole {
+        Hole { span: None, inferred_type: None, inferred_ctx: None }
+    }
+}
 impl HasSpan for Hole {
     fn span(&self) -> Option<Span> {
         self.span
@@ -683,6 +749,12 @@ impl HasSpan for Hole {
 impl From<Hole> for Exp {
     fn from(val: Hole) -> Self {
         Exp::Hole(val)
+    }
+}
+
+impl Default for Hole {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -703,6 +775,12 @@ impl ForgetTST for Hole {
     fn forget_tst(&self) -> Self {
         let Hole { span, .. } = self;
         Hole { span: *span, inferred_type: None, inferred_ctx: None }
+    }
+}
+
+impl HasTypeInfo for Hole {
+    fn typ(&self) -> Option<Rc<Exp>> {
+        self.inferred_type.clone()
     }
 }
 
