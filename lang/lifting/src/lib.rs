@@ -327,9 +327,10 @@ impl Lift for Call {
     type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Call { span, name, args, .. } = self;
+        let Call { span, name, args, kind, .. } = self;
         Exp::Call(Call {
             span: *span,
+            kind: *kind,
             name: name.clone(),
             args: args.lift(ctx),
             inferred_type: None,
@@ -658,8 +659,14 @@ impl Ctx {
 
         self.new_decls.push(Decl::Codef(codef));
 
-        // Replace the comatch by a call of the new top-level definition
-        Exp::Call(Call { span: None, name, args, inferred_type: None })
+        // Replace the comatch by a call of the new top-level codefinition
+        Exp::Call(Call {
+            span: None,
+            kind: CallKind::Codefinition,
+            name,
+            args,
+            inferred_type: None,
+        })
     }
 
     /// Set the current declaration

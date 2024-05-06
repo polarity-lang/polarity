@@ -113,8 +113,16 @@ impl Lower for cst::exp::Call {
                     name: name.to_owned(),
                     span: span.to_miette(),
                 }),
-                DeclKind::Codef | DeclKind::Ctor => Ok(generic::Exp::Call(generic::Call {
+                DeclKind::Ctor => Ok(generic::Exp::Call(generic::Call {
                     span: Some(*span),
+                    kind: generic::CallKind::Constructor,
+                    name: name.to_owned(),
+                    args: generic::Args { args: args.lower(ctx)? },
+                    inferred_type: None,
+                })),
+                DeclKind::Codef => Ok(generic::Exp::Call(generic::Call {
+                    span: Some(*span),
+                    kind: generic::CallKind::Codefinition,
                     name: name.to_owned(),
                     args: generic::Args { args: args.lower(ctx)? },
                     inferred_type: None,
@@ -229,6 +237,7 @@ impl Lower for cst::exp::NatLit {
         let cst::exp::NatLit { span, val } = self;
         let mut out = generic::Exp::Call(generic::Call {
             span: Some(*span),
+            kind: generic::CallKind::Constructor,
             name: "Z".to_owned(),
             args: generic::Args { args: vec![] },
             inferred_type: None,
@@ -240,6 +249,7 @@ impl Lower for cst::exp::NatLit {
             i += 1usize;
             out = generic::Exp::Call(generic::Call {
                 span: Some(*span),
+                kind: generic::CallKind::Constructor,
                 name: "S".to_owned(),
                 args: generic::Args { args: vec![Rc::new(out)] },
                 inferred_type: None,

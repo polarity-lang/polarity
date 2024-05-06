@@ -23,8 +23,9 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                 }
             }
             Exp::TypCtor(e) => Rc::new(Exp::TypCtor(e.subst(ctx, by))),
-            Exp::Call(Call { span, name, args, .. }) => Rc::new(Exp::Call(Call {
+            Exp::Call(Call { span, name, args, kind, .. }) => Rc::new(Exp::Call(Call {
                 span: *span,
+                kind: *kind,
                 name: name.clone(),
                 args: args.subst(ctx, by),
                 inferred_type: None,
