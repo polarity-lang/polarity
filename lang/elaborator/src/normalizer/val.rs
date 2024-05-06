@@ -22,7 +22,7 @@ pub enum Val {
         name: generic::Ident,
         args: Args,
     },
-    Ctor {
+    Call {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
         kind: generic::CallKind,
@@ -57,7 +57,7 @@ pub enum Neu {
         name: generic::Ident,
         idx: Idx,
     },
-    Dtor {
+    DotCall {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
         kind: generic::DotCallKind,
@@ -124,7 +124,7 @@ impl Shift for Val {
                 name: name.clone(),
                 args: args.shift_in_range(range, by),
             },
-            Val::Ctor { span, kind, name, args } => Val::Ctor {
+            Val::Call { span, kind, name, args } => Val::Call {
                 span: *span,
                 kind: *kind,
                 name: name.clone(),
@@ -148,7 +148,7 @@ impl Shift for Neu {
             Neu::Var { span, name, idx } => {
                 Neu::Var { span: *span, name: name.clone(), idx: idx.shift_in_range(range, by) }
             }
-            Neu::Dtor { span, kind, exp, name, args } => Neu::Dtor {
+            Neu::DotCall { span, kind, exp, name, args } => Neu::DotCall {
                 span: *span,
                 kind: *kind,
                 exp: exp.shift_in_range(range.clone(), by),
@@ -201,7 +201,7 @@ impl<'a> Print<'a> for Val {
                     if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 alloc.typ(name).append(psubst)
             }
-            Val::Ctor { span: _, kind: _, name, args } => {
+            Val::Call { span: _, kind: _, name, args } => {
                 let psubst =
                     if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 alloc.ctor(name).append(psubst)
@@ -222,7 +222,7 @@ impl<'a> Print<'a> for Neu {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Neu::Var { span: _, name, idx } => alloc.text(format!("{name}@{idx}")),
-            Neu::Dtor { span: _, kind: _, exp, name, args } => {
+            Neu::DotCall { span: _, kind: _, exp, name, args } => {
                 let psubst =
                     if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)

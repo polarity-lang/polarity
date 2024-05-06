@@ -27,7 +27,7 @@ impl ReadBack for val::Val {
                 name: name.clone(),
                 args: Args { args: args.read_back(prg)? },
             }),
-            val::Val::Ctor { span, kind, name, args } => Exp::Call(Call {
+            val::Val::Call { span, kind, name, args } => Exp::Call(Call {
                 span: *span,
                 kind: *kind,
                 name: name.clone(),
@@ -62,7 +62,7 @@ impl ReadBack for val::Neu {
                 name: name.clone(),
                 inferred_type: None,
             }),
-            val::Neu::Dtor { span, kind, exp, name, args } => Exp::DotCall(DotCall {
+            val::Neu::DotCall { span, kind, exp, name, args } => Exp::DotCall(DotCall {
                 span: *span,
                 kind: *kind,
                 exp: exp.read_back(prg)?,

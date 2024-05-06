@@ -61,7 +61,7 @@ impl Eval for Call {
 
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Call { span, name, kind, args, .. } = self;
-        Ok(Rc::new(Val::Ctor {
+        Ok(Rc::new(Val::Call {
             span: *span,
             kind: *kind,
             name: name.clone(),
@@ -78,7 +78,7 @@ impl Eval for DotCall {
         let exp = exp.eval(prg, env)?;
         let args = args.eval(prg, env)?;
         match (*exp).clone() {
-            Val::Ctor { name: ctor_name, kind: _, args: ctor_args, span } => {
+            Val::Call { name: ctor_name, kind: _, args: ctor_args, span } => {
                 let type_decl = prg.decls.type_decl_for_member(&ctor_name, span)?;
                 match type_decl {
                     DataCodata::Data(_) => {
@@ -97,7 +97,7 @@ impl Eval for DotCall {
             }
             Val::Comatch { body, .. } => beta_comatch(prg, body, name, &args),
             Val::Neu { exp } => Ok(Rc::new(Val::Neu {
-                exp: Neu::Dtor {
+                exp: Neu::DotCall {
                     span: *span,
                     kind: *kind,
                     exp: Rc::new(exp),
@@ -136,7 +136,7 @@ impl Eval for LocalMatch {
         let on_exp = on_exp.eval(prg, env)?;
         let body = body.eval(prg, env)?;
         match (*on_exp).clone() {
-            Val::Ctor { name: ctor_name, args, .. } => beta_match(prg, body, &ctor_name, &args),
+            Val::Call { name: ctor_name, args, .. } => beta_match(prg, body, &ctor_name, &args),
             Val::Neu { exp } => Ok(Rc::new(Val::Neu {
                 exp: Neu::Match {
                     span: None,
