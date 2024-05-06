@@ -382,6 +382,16 @@ impl HasTypeInfo for Call {
 //
 //
 
+/// A DotCall expression can be one of two different kinds:
+/// - A destructor introduced by a codata type declaration
+/// - A definition introduced at the toplevel
+#[derive(Debug, Clone, Copy, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub enum DotCallKind {
+    Destructor,
+    Definition,
+}
+
 /// A DotCall is either a destructor or a definition, applied to a destructee
 /// Examples: `e.head` `xs.append(ys)`
 #[derive(Debug, Clone, Derivative)]
@@ -390,6 +400,8 @@ pub struct DotCall {
     /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
+    /// Whether the dotcall is a destructor or codefinition.
+    pub kind: DotCallKind,
     /// The expression to which the dotcall is applied.
     /// The `e` in `e.f(e1...en)`
     pub exp: Rc<Exp>,
@@ -419,9 +431,10 @@ impl From<DotCall> for Exp {
 
 impl Shift for DotCall {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let DotCall { span, exp, name, args, .. } = self;
+        let DotCall { span, kind, exp, name, args, .. } = self;
         DotCall {
             span: *span,
+            kind: *kind,
             exp: exp.shift_in_range(range.clone(), by),
             name: name.clone(),
             args: args.shift_in_range(range, by),
@@ -439,9 +452,10 @@ impl Occurs for DotCall {
 
 impl ForgetTST for DotCall {
     fn forget_tst(&self) -> Self {
-        let DotCall { span, exp, name, args, .. } = self;
+        let DotCall { span, kind, exp, name, args, .. } = self;
         DotCall {
             span: *span,
+            kind: *kind,
             exp: exp.forget_tst(),
             name: name.clone(),
             args: args.forget_tst(),

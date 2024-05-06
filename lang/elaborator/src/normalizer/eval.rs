@@ -74,7 +74,7 @@ impl Eval for DotCall {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let DotCall { span, exp, name, args, .. } = self;
+        let DotCall { span, kind, exp, name, args, .. } = self;
         let exp = exp.eval(prg, env)?;
         let args = args.eval(prg, env)?;
         match (*exp).clone() {
@@ -97,7 +97,13 @@ impl Eval for DotCall {
             }
             Val::Comatch { body, .. } => beta_comatch(prg, body, name, &args),
             Val::Neu { exp } => Ok(Rc::new(Val::Neu {
-                exp: Neu::Dtor { span: *span, exp: Rc::new(exp), name: name.to_owned(), args },
+                exp: Neu::Dtor {
+                    span: *span,
+                    kind: *kind,
+                    exp: Rc::new(exp),
+                    name: name.to_owned(),
+                    args,
+                },
             })),
             _ => unreachable!(),
         }

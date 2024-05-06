@@ -342,9 +342,10 @@ impl Lift for DotCall {
     type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let DotCall { span, exp, name, args, .. } = self;
+        let DotCall { span, kind, exp, name, args, .. } = self;
         Exp::DotCall(DotCall {
             span: *span,
+            kind: *kind,
             exp: exp.lift(ctx),
             name: name.clone(),
             args: args.lift(ctx),
@@ -599,9 +600,10 @@ impl Ctx {
 
         self.new_decls.push(Decl::Def(def));
 
-        // Replace the match by a destructor call of the new top-level definition
+        // Replace the match by a dotcall of the new top-level definition
         Exp::DotCall(DotCall {
             span: None,
+            kind: DotCallKind::Definition,
             exp: on_exp.lift(self),
             name,
             args,

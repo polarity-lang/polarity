@@ -291,9 +291,10 @@ impl Rename for Exp {
                     inferred_type: None,
                 })
             }
-            Exp::DotCall(DotCall { span, exp, name, args, inferred_type }) => {
+            Exp::DotCall(DotCall { span, kind, exp, name, args, inferred_type }) => {
                 Exp::DotCall(DotCall {
                     span,
+                    kind,
                     name,
                     exp: exp.rename_in_ctx(ctx),
                     args: args.rename_in_ctx(ctx),

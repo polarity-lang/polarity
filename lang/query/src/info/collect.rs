@@ -231,10 +231,12 @@ impl CollectInfo for Call {
 
 impl CollectInfo for DotCall {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let DotCall { span, exp, args, inferred_type, .. } = self;
+        let DotCall { span, kind, exp, args, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let content =
-                HoverInfoContent::DotCallInfo(DotCallInfo { typ: typ.print_to_string(None) });
+            let content = HoverInfoContent::DotCallInfo(DotCallInfo {
+                kind: *kind,
+                typ: typ.print_to_string(None),
+            });
             collector.add_hover_content(*span, content)
         }
         exp.collect_info(collector);

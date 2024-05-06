@@ -60,6 +60,7 @@ pub enum Neu {
     Dtor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
+        kind: generic::DotCallKind,
         exp: Rc<Neu>,
         name: generic::Ident,
         args: Args,
@@ -147,8 +148,9 @@ impl Shift for Neu {
             Neu::Var { span, name, idx } => {
                 Neu::Var { span: *span, name: name.clone(), idx: idx.shift_in_range(range, by) }
             }
-            Neu::Dtor { span, exp, name, args } => Neu::Dtor {
+            Neu::Dtor { span, kind, exp, name, args } => Neu::Dtor {
                 span: *span,
+                kind: *kind,
                 exp: exp.shift_in_range(range.clone(), by),
                 name: name.clone(),
                 args: args.shift_in_range(range, by),
@@ -220,7 +222,7 @@ impl<'a> Print<'a> for Neu {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Neu::Var { span: _, name, idx } => alloc.text(format!("{name}@{idx}")),
-            Neu::Dtor { span: _, exp, name, args } => {
+            Neu::Dtor { span: _, kind: _, exp, name, args } => {
                 let psubst =
                     if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
