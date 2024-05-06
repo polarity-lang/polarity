@@ -2,6 +2,7 @@
 
 use query::*;
 use syntax::generic::CallKind;
+use syntax::generic::DotCallKind;
 use tower_lsp::{jsonrpc, lsp_types::*};
 
 use super::conversion::*;
@@ -107,8 +108,11 @@ impl ToHoverContent for CallInfo {
 
 impl ToHoverContent for DotCallInfo {
     fn to_hover_content(self) -> HoverContents {
-        let DotCallInfo { typ } = self;
-        let header = MarkedString::String("Destructor / definition".to_owned());
+        let DotCallInfo { kind, typ } = self;
+        let header = match kind {
+            DotCallKind::Destructor => MarkedString::String("Destructor".to_owned()),
+            DotCallKind::Definition => MarkedString::String("Definition".to_owned()),
+        };
         let typ = string_to_language_string(typ);
         HoverContents::Array(vec![header, typ])
     }

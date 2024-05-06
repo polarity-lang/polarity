@@ -30,13 +30,16 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                 args: args.subst(ctx, by),
                 inferred_type: None,
             })),
-            Exp::DotCall(DotCall { span, exp, name, args, .. }) => Rc::new(Exp::DotCall(DotCall {
-                span: *span,
-                exp: exp.subst(ctx, by),
-                name: name.clone(),
-                args: args.subst(ctx, by),
-                inferred_type: None,
-            })),
+            Exp::DotCall(DotCall { span, kind, exp, name, args, .. }) => {
+                Rc::new(Exp::DotCall(DotCall {
+                    span: *span,
+                    kind: *kind,
+                    exp: exp.subst(ctx, by),
+                    name: name.clone(),
+                    args: args.subst(ctx, by),
+                    inferred_type: None,
+                }))
+            }
             Exp::Anno(Anno { span, exp, typ, .. }) => Rc::new(Exp::Anno(Anno {
                 span: *span,
                 exp: exp.subst(ctx, by),

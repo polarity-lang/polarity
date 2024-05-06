@@ -4,6 +4,7 @@ use printer::PrintToString;
 use syntax::{
     ctx::values::{Binder as TypeCtxBinder, TypeCtx},
     generic::CallKind,
+    generic::DotCallKind,
 };
 
 // HoverInfo
@@ -50,6 +51,7 @@ pub struct CallInfo {
 /// Hover information for dotcalls (destructors or definitions)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DotCallInfo {
+    pub kind: DotCallKind,
     pub typ: String,
 }
 

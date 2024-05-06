@@ -148,8 +148,17 @@ impl Lower for cst::exp::DotCall {
                 Err(LoweringError::CannotUseAsDtor { name: name.clone(), span: span.to_miette() })
             }
             Elem::Decl(meta) => match meta.kind() {
-                DeclKind::Def | DeclKind::Dtor => Ok(generic::Exp::DotCall(generic::DotCall {
+                DeclKind::Dtor => Ok(generic::Exp::DotCall(generic::DotCall {
                     span: Some(*span),
+                    kind: generic::DotCallKind::Destructor,
+                    exp: exp.lower(ctx)?,
+                    name: name.clone(),
+                    args: generic::Args { args: args.lower(ctx)? },
+                    inferred_type: None,
+                })),
+                DeclKind::Def => Ok(generic::Exp::DotCall(generic::DotCall {
+                    span: Some(*span),
+                    kind: generic::DotCallKind::Definition,
                     exp: exp.lower(ctx)?,
                     name: name.clone(),
                     args: generic::Args { args: args.lower(ctx)? },

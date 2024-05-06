@@ -235,7 +235,7 @@ impl CheckInfer for DotCall {
     ///            P, Γ ⊢ e.Dσ ⇒ ...
     /// ```
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
-        let DotCall { span, exp, name, args, .. } = self;
+        let DotCall { span, kind, exp, name, args, .. } = self;
         let Dtor { name, params, self_param, ret_typ, .. } = &prg.decls.dtor_or_def(name, *span)?;
 
         let args_out = check_args(args, prg, name, ctx, params, *span)?;
@@ -254,6 +254,7 @@ impl CheckInfer for DotCall {
 
         Ok(DotCall {
             span: *span,
+            kind: *kind,
             exp: exp_out,
             name: name.clone(),
             args: args_out,
