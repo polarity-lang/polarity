@@ -12,39 +12,167 @@ use printer::util::*;
 use syntax::common::*;
 use syntax::generic;
 
+// Val
+//
+//
+
 /// The result of evaluation
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Val {
-    TypCtor {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        span: Option<Span>,
-        name: generic::Ident,
-        args: Args,
-    },
-    Call {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        span: Option<Span>,
-        kind: generic::CallKind,
-        name: generic::Ident,
-        args: Args,
-    },
-    TypeUniv {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        span: Option<Span>,
-    },
-    Comatch {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        span: Option<Span>,
-        name: generic::Label,
-        is_lambda_sugar: bool,
-        // TODO: Ignore this field for PartialEq, Hash?
-        body: Match,
-    },
-    Neu {
-        exp: Neu,
-    },
+    TypCtor(TypCtor),
+    Call(Call),
+    TypeUniv(TypeUniv),
+    LocalComatch(LocalComatch),
+    Neu(Neu),
 }
+
+impl Shift for Val {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        match self {
+            Val::TypCtor(e) => Val::TypCtor(e.shift_in_range(range, by)),
+            Val::Call(e) => Val::Call(e.shift_in_range(range, by)),
+            Val::TypeUniv(e) => Val::TypeUniv(e.shift_in_range(range, by)),
+            Val::LocalComatch(e) => Val::LocalComatch(e.shift_in_range(range, by)),
+            Val::Neu(exp) => Val::Neu(exp.shift_in_range(range, by)),
+        }
+    }
+}
+
+impl<'a> Print<'a> for Val {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Val::TypCtor(e) => e.print(cfg, alloc),
+            Val::Call(e) => e.print(cfg, alloc),
+            Val::TypeUniv(e) => e.print(cfg, alloc),
+            Val::LocalComatch(e) => e.print(cfg, alloc),
+            Val::Neu(exp) => exp.print(cfg, alloc),
+        }
+    }
+}
+
+// TypCtor
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct TypCtor {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    pub name: generic::Ident,
+    pub args: Args,
+}
+
+impl Shift for TypCtor {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let TypCtor { span, name, args } = self;
+        TypCtor { span: *span, name: name.clone(), args: args.shift_in_range(range, by) }
+    }
+}
+
+impl<'a> Print<'a> for TypCtor {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let TypCtor { span: _, name, args } = self;
+        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
+        alloc.typ(name).append(psubst)
+    }
+}
+
+// Call
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Call {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    pub kind: generic::CallKind,
+    pub name: generic::Ident,
+    pub args: Args,
+}
+
+impl Shift for Call {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Call { span, kind, name, args } = self;
+        Call { span: *span, kind: *kind, name: name.clone(), args: args.shift_in_range(range, by) }
+    }
+}
+
+impl<'a> Print<'a> for Call {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Call { span: _, kind: _, name, args } = self;
+        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
+        alloc.ctor(name).append(psubst)
+    }
+}
+
+// TypeUniv
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct TypeUniv {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+}
+
+impl Shift for TypeUniv {
+    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
+        self.clone()
+    }
+}
+
+impl<'a> Print<'a> for TypeUniv {
+    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        alloc.typ(TYPE)
+    }
+}
+
+// LocalComatch
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct LocalComatch {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    pub name: generic::Label,
+    pub is_lambda_sugar: bool,
+    // TODO: Ignore this field for PartialEq, Hash?
+    pub body: Match,
+}
+
+impl Shift for LocalComatch {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let LocalComatch { span, name, is_lambda_sugar, body } = self;
+        LocalComatch {
+            span: *span,
+            name: name.clone(),
+            is_lambda_sugar: *is_lambda_sugar,
+            body: body.shift_in_range(range, by),
+        }
+    }
+}
+
+impl<'a> Print<'a> for LocalComatch {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let LocalComatch { span: _, name, is_lambda_sugar: _, body } = self;
+        alloc
+            .keyword(COMATCH)
+            .append(alloc.space())
+            .append(alloc.text(name.to_string()))
+            .append(alloc.space())
+            .append(body.print(cfg, alloc))
+    }
+}
+
+// Neu
+//
+//
 
 /// A term whose evaluation is blocked
 #[derive(Debug, Clone, Derivative)]
@@ -99,13 +227,6 @@ pub struct Case {
     pub body: Option<Closure>,
 }
 
-#[derive(Debug, Clone)]
-pub struct TypApp {
-    pub span: Option<Span>,
-    pub name: generic::Ident,
-    pub args: Args,
-}
-
 pub type Args = Vec<Rc<Val>>;
 
 #[derive(Debug, Clone, Derivative)]
@@ -114,32 +235,6 @@ pub struct Closure {
     pub env: Env,
     pub n_args: usize,
     pub body: Rc<generic::Exp>,
-}
-
-impl Shift for Val {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        match self {
-            Val::TypCtor { span, name, args } => Val::TypCtor {
-                span: *span,
-                name: name.clone(),
-                args: args.shift_in_range(range, by),
-            },
-            Val::Call { span, kind, name, args } => Val::Call {
-                span: *span,
-                kind: *kind,
-                name: name.clone(),
-                args: args.shift_in_range(range, by),
-            },
-            Val::TypeUniv { span } => Val::TypeUniv { span: *span },
-            Val::Comatch { span, name, is_lambda_sugar, body } => Val::Comatch {
-                span: *span,
-                name: name.clone(),
-                is_lambda_sugar: *is_lambda_sugar,
-                body: body.shift_in_range(range, by),
-            },
-            Val::Neu { exp } => Val::Neu { exp: exp.shift_in_range(range, by) },
-        }
-    }
 }
 
 impl Shift for Neu {
@@ -191,30 +286,6 @@ impl Shift for Closure {
         let Closure { env, n_args, body } = self;
 
         Closure { env: env.shift_in_range(range, by), n_args: *n_args, body: body.clone() }
-    }
-}
-impl<'a> Print<'a> for Val {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        match self {
-            Val::TypCtor { span: _, name, args } => {
-                let psubst =
-                    if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
-                alloc.typ(name).append(psubst)
-            }
-            Val::Call { span: _, kind: _, name, args } => {
-                let psubst =
-                    if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
-                alloc.ctor(name).append(psubst)
-            }
-            Val::TypeUniv { span: _ } => alloc.typ(TYPE),
-            Val::Comatch { span: _, name, is_lambda_sugar: _, body } => alloc
-                .keyword(COMATCH)
-                .append(alloc.space())
-                .append(alloc.text(name.to_string()))
-                .append(alloc.space())
-                .append(body.print(cfg, alloc)),
-            Val::Neu { exp } => exp.print(cfg, alloc),
-        }
     }
 }
 

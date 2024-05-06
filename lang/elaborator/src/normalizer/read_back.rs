@@ -16,36 +16,64 @@ pub trait ReadBack {
     fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError>;
 }
 
+impl ReadBack for val::TypCtor {
+    type Nf = TypCtor;
+
+    fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
+        let val::TypCtor { span, name, args } = self;
+        Ok(TypCtor { span: *span, name: name.clone(), args: Args { args: args.read_back(prg)? } })
+    }
+}
+
+impl ReadBack for val::Call {
+    type Nf = Call;
+
+    fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
+        let val::Call { span, kind, name, args } = self;
+        Ok(Call {
+            span: *span,
+            kind: *kind,
+            name: name.clone(),
+            args: Args { args: args.read_back(prg)? },
+            inferred_type: None,
+        })
+    }
+}
+
+impl ReadBack for val::TypeUniv {
+    type Nf = TypeUniv;
+
+    fn read_back(&self, _prg: &Module) -> Result<Self::Nf, TypeError> {
+        let val::TypeUniv { span } = self;
+        Ok(TypeUniv { span: *span })
+    }
+}
+
+impl ReadBack for val::LocalComatch {
+    type Nf = LocalComatch;
+    fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
+        let val::LocalComatch { span, name, is_lambda_sugar, body } = self;
+        Ok(LocalComatch {
+            span: *span,
+            ctx: None,
+            name: name.clone(),
+            is_lambda_sugar: *is_lambda_sugar,
+            body: body.read_back(prg)?,
+            inferred_type: None,
+        })
+    }
+}
 impl ReadBack for val::Val {
     type Nf = Exp;
 
     #[trace("↓{:P} ~> {return:P}", self, std::convert::identity)]
     fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
         let res = match self {
-            val::Val::TypCtor { span, name, args } => Exp::TypCtor(TypCtor {
-                span: *span,
-                name: name.clone(),
-                args: Args { args: args.read_back(prg)? },
-            }),
-            val::Val::Call { span, kind, name, args } => Exp::Call(Call {
-                span: *span,
-                kind: *kind,
-                name: name.clone(),
-                args: Args { args: args.read_back(prg)? },
-                inferred_type: None,
-            }),
-            val::Val::TypeUniv { span } => Exp::TypeUniv(TypeUniv { span: *span }),
-            val::Val::Comatch { span, name, is_lambda_sugar, body } => {
-                Exp::LocalComatch(LocalComatch {
-                    span: *span,
-                    ctx: None,
-                    name: name.clone(),
-                    is_lambda_sugar: *is_lambda_sugar,
-                    body: body.read_back(prg)?,
-                    inferred_type: None,
-                })
-            }
-            val::Val::Neu { exp } => exp.read_back(prg)?,
+            val::Val::TypCtor(e) => Exp::TypCtor(e.read_back(prg)?),
+            val::Val::Call(e) => Exp::Call(e.read_back(prg)?),
+            val::Val::TypeUniv(e) => Exp::TypeUniv(e.read_back(prg)?),
+            val::Val::LocalComatch(e) => Exp::LocalComatch(e.read_back(prg)?),
+            val::Val::Neu(exp) => exp.read_back(prg)?,
         };
         Ok(res)
     }
@@ -112,24 +140,18 @@ impl ReadBack for val::Case {
     }
 }
 
-impl ReadBack for val::TypApp {
-    type Nf = TypCtor;
-
-    fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
-        let val::TypApp { span, name, args } = self;
-
-        Ok(TypCtor { span: *span, name: name.clone(), args: Args { args: args.read_back(prg)? } })
-    }
-}
-
 impl ReadBack for val::Closure {
     type Nf = Rc<Exp>;
 
     fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
         let args: Vec<Rc<val::Val>> = (0..self.n_args)
             .rev()
-            .map(|snd| val::Val::Neu {
-                exp: val::Neu::Var { span: None, name: "".to_owned(), idx: Idx { fst: 0, snd } },
+            .map(|snd| {
+                val::Val::Neu(val::Neu::Var {
+                    span: None,
+                    name: "".to_owned(),
+                    idx: Idx { fst: 0, snd },
+                })
             })
             .map(Rc::new)
             .collect();
