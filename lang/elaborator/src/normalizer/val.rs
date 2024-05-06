@@ -178,34 +178,166 @@ impl<'a> Print<'a> for LocalComatch {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Neu {
-    Var {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        span: Option<Span>,
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        name: generic::Ident,
-        idx: Idx,
-    },
-    DotCall {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        span: Option<Span>,
-        kind: generic::DotCallKind,
-        exp: Rc<Neu>,
-        name: generic::Ident,
-        args: Args,
-    },
-    Match {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        span: Option<Span>,
-        name: generic::Label,
-        on_exp: Rc<Neu>,
-        // TODO: Ignore this field for PartialEq, Hash?
-        body: Match,
-    },
-    Hole {
-        #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        span: Option<Span>,
-    },
+    Variable(Variable),
+    DotCall(DotCall),
+    LocalMatch(LocalMatch),
+    Hole(Hole),
 }
+
+impl Shift for Neu {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        match self {
+            Neu::Variable(e) => Neu::Variable(e.shift_in_range(range, by)),
+            Neu::DotCall(e) => Neu::DotCall(e.shift_in_range(range, by)),
+            Neu::LocalMatch(e) => Neu::LocalMatch(e.shift_in_range(range, by)),
+            Neu::Hole(e) => Neu::Hole(e.shift_in_range(range, by)),
+        }
+    }
+}
+
+impl<'a> Print<'a> for Neu {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Neu::Variable(e) => e.print(cfg, alloc),
+            Neu::DotCall(e) => e.print(cfg, alloc),
+            Neu::LocalMatch(e) => e.print(cfg, alloc),
+            Neu::Hole(e) => e.print(cfg, alloc),
+        }
+    }
+}
+
+// Variable
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Variable {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub name: generic::Ident,
+    pub idx: Idx,
+}
+
+impl Shift for Variable {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Variable { span, name, idx } = self;
+        Variable { span: *span, name: name.clone(), idx: idx.shift_in_range(range, by) }
+    }
+}
+
+impl<'a> Print<'a> for Variable {
+    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Variable { span: _, name, idx } = self;
+        alloc.text(format!("{name}@{idx}"))
+    }
+}
+
+// DotCall
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct DotCall {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    pub kind: generic::DotCallKind,
+    pub exp: Rc<Neu>,
+    pub name: generic::Ident,
+    pub args: Args,
+}
+
+impl Shift for DotCall {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let DotCall { span, kind, exp, name, args } = self;
+        DotCall {
+            span: *span,
+            kind: *kind,
+            exp: exp.shift_in_range(range.clone(), by),
+            name: name.clone(),
+            args: args.shift_in_range(range, by),
+        }
+    }
+}
+
+impl<'a> Print<'a> for DotCall {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let DotCall { span: _, kind: _, exp, name, args } = self;
+        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
+        exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
+    }
+}
+
+// LocalMatch
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct LocalMatch {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    pub name: generic::Label,
+    pub on_exp: Rc<Neu>,
+    // TODO: Ignore this field for PartialEq, Hash?
+    pub body: Match,
+}
+
+impl Shift for LocalMatch {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let LocalMatch { span, name, on_exp, body } = self;
+        LocalMatch {
+            span: *span,
+            name: name.clone(),
+            on_exp: on_exp.shift_in_range(range.clone(), by),
+            body: body.shift_in_range(range, by),
+        }
+    }
+}
+
+impl<'a> Print<'a> for LocalMatch {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let LocalMatch { span: _, name, on_exp, body } = self;
+        on_exp
+            .print(cfg, alloc)
+            .append(DOT)
+            .append(alloc.keyword(MATCH))
+            .append(alloc.space())
+            .append(alloc.text(name.to_string()))
+            .append(alloc.space())
+            .append(body.print(cfg, alloc))
+    }
+}
+
+// Hole
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Hole {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+}
+
+impl Shift for Hole {
+    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
+        let Hole { span } = self;
+        Hole { span: *span }
+    }
+}
+
+impl<'a> Print<'a> for Hole {
+    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        alloc.keyword(HOLE)
+    }
+}
+
+// Match
+//
+//
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -216,98 +348,10 @@ pub struct Match {
     pub omit_absurd: bool,
 }
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
-pub struct Case {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub span: Option<Span>,
-    pub name: generic::Ident,
-    pub params: generic::TelescopeInst,
-    /// Body being `None` represents an absurd pattern
-    pub body: Option<Closure>,
-}
-
-pub type Args = Vec<Rc<Val>>;
-
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
-pub struct Closure {
-    pub env: Env,
-    pub n_args: usize,
-    pub body: Rc<generic::Exp>,
-}
-
-impl Shift for Neu {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        match self {
-            Neu::Var { span, name, idx } => {
-                Neu::Var { span: *span, name: name.clone(), idx: idx.shift_in_range(range, by) }
-            }
-            Neu::DotCall { span, kind, exp, name, args } => Neu::DotCall {
-                span: *span,
-                kind: *kind,
-                exp: exp.shift_in_range(range.clone(), by),
-                name: name.clone(),
-                args: args.shift_in_range(range, by),
-            },
-            Neu::Match { span, name, on_exp, body } => Neu::Match {
-                span: *span,
-                name: name.clone(),
-                on_exp: on_exp.shift_in_range(range.clone(), by),
-                body: body.shift_in_range(range, by),
-            },
-            Neu::Hole { span } => Neu::Hole { span: *span },
-        }
-    }
-}
-
 impl Shift for Match {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Match { span, cases, omit_absurd } = self;
         Match { span: *span, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
-    }
-}
-
-impl Shift for Case {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Case { span, name, params, body } = self;
-
-        Case {
-            span: *span,
-            name: name.clone(),
-            params: params.clone(),
-            body: body.shift_in_range(range.shift(1), by),
-        }
-    }
-}
-
-impl Shift for Closure {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Closure { env, n_args, body } = self;
-
-        Closure { env: env.shift_in_range(range, by), n_args: *n_args, body: body.clone() }
-    }
-}
-
-impl<'a> Print<'a> for Neu {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        match self {
-            Neu::Var { span: _, name, idx } => alloc.text(format!("{name}@{idx}")),
-            Neu::DotCall { span: _, kind: _, exp, name, args } => {
-                let psubst =
-                    if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
-                exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
-            }
-            Neu::Match { span: _, name, on_exp, body } => on_exp
-                .print(cfg, alloc)
-                .append(DOT)
-                .append(alloc.keyword(MATCH))
-                .append(alloc.space())
-                .append(alloc.text(name.to_string()))
-                .append(alloc.space())
-                .append(body.print(cfg, alloc)),
-            Neu::Hole { .. } => alloc.keyword(HOLE),
-        }
     }
 }
 
@@ -329,6 +373,34 @@ impl<'a> Print<'a> for Match {
     }
 }
 
+// Case
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Case {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    pub name: generic::Ident,
+    pub params: generic::TelescopeInst,
+    /// Body being `None` represents an absurd pattern
+    pub body: Option<Closure>,
+}
+
+impl Shift for Case {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Case { span, name, params, body } = self;
+
+        Case {
+            span: *span,
+            name: name.clone(),
+            params: params.clone(),
+            body: body.shift_in_range(range.shift(1), by),
+        }
+    }
+}
+
 impl<'a> Print<'a> for Case {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Case { span: _, name, params, body } = self;
@@ -343,6 +415,32 @@ impl<'a> Print<'a> for Case {
         };
 
         alloc.ctor(name).append(params.print(cfg, alloc)).append(alloc.space()).append(body).group()
+    }
+}
+
+// Args
+//
+//
+
+pub type Args = Vec<Rc<Val>>;
+
+// Closure
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Closure {
+    pub env: Env,
+    pub n_args: usize,
+    pub body: Rc<generic::Exp>,
+}
+
+impl Shift for Closure {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Closure { env, n_args, body } = self;
+
+        Closure { env: env.shift_in_range(range, by), n_args: *n_args, body: body.clone() }
     }
 }
 

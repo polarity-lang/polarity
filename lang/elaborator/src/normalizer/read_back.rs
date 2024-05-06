@@ -79,38 +79,67 @@ impl ReadBack for val::Val {
     }
 }
 
+impl ReadBack for val::Variable {
+    type Nf = Variable;
+
+    fn read_back(&self, _prg: &Prg) -> Result<Self::Nf, TypeError> {
+        let val::Variable { span, name, idx } = self;
+        Ok(Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: None })
+    }
+}
+
+impl ReadBack for val::DotCall {
+    type Nf = DotCall;
+
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+        let val::DotCall { span, kind, exp, name, args } = self;
+        Ok(DotCall {
+            span: *span,
+            kind: *kind,
+            exp: exp.read_back(prg)?,
+            name: name.clone(),
+            args: Args { args: args.read_back(prg)? },
+            inferred_type: None,
+        })
+    }
+}
+
+impl ReadBack for val::LocalMatch {
+    type Nf = LocalMatch;
+
+    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+        let val::LocalMatch { span, name, on_exp, body } = self;
+        Ok(LocalMatch {
+            span: *span,
+            ctx: None,
+            motive: None,
+            ret_typ: None,
+            name: name.clone(),
+            on_exp: on_exp.read_back(prg)?,
+            body: body.read_back(prg)?,
+            inferred_type: None,
+        })
+    }
+}
+
+impl ReadBack for val::Hole {
+    type Nf = Hole;
+
+    fn read_back(&self, _prg: &Prg) -> Result<Self::Nf, TypeError> {
+        let val::Hole { span } = self;
+        Ok(Hole { span: *span, inferred_type: None, inferred_ctx: None })
+    }
+}
+
 impl ReadBack for val::Neu {
     type Nf = Exp;
 
     fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
         let res = match self {
-            val::Neu::Var { span, name, idx } => Exp::Variable(Variable {
-                span: *span,
-                idx: *idx,
-                name: name.clone(),
-                inferred_type: None,
-            }),
-            val::Neu::DotCall { span, kind, exp, name, args } => Exp::DotCall(DotCall {
-                span: *span,
-                kind: *kind,
-                exp: exp.read_back(prg)?,
-                name: name.clone(),
-                args: Args { args: args.read_back(prg)? },
-                inferred_type: None,
-            }),
-            val::Neu::Match { span, name, on_exp, body } => Exp::LocalMatch(LocalMatch {
-                span: *span,
-                ctx: None,
-                motive: None,
-                ret_typ: None,
-                name: name.clone(),
-                on_exp: on_exp.read_back(prg)?,
-                body: body.read_back(prg)?,
-                inferred_type: None,
-            }),
-            val::Neu::Hole { span } => {
-                Exp::Hole(Hole { span: *span, inferred_type: None, inferred_ctx: None })
-            }
+            val::Neu::Variable(e) => Exp::Variable(e.read_back(prg)?),
+            val::Neu::DotCall(e) => Exp::DotCall(e.read_back(prg)?),
+            val::Neu::LocalMatch(e) => Exp::LocalMatch(e.read_back(prg)?),
+            val::Neu::Hole(e) => Exp::Hole(e.read_back(prg)?),
         };
         Ok(res)
     }
@@ -147,11 +176,11 @@ impl ReadBack for val::Closure {
         let args: Vec<Rc<val::Val>> = (0..self.n_args)
             .rev()
             .map(|snd| {
-                val::Val::Neu(val::Neu::Var {
+                val::Val::Neu(val::Neu::Variable(val::Variable {
                     span: None,
                     name: "".to_owned(),
                     idx: Idx { fst: 0, snd },
-                })
+                }))
             })
             .map(Rc::new)
             .collect();
