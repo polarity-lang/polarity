@@ -3,6 +3,7 @@ mod codeactions;
 mod conversion;
 mod diagnostics;
 mod format;
+mod gotodefinition;
 mod hover;
 mod server;
 

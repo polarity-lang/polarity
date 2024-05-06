@@ -62,6 +62,13 @@ impl LanguageServer for Server {
         super::hover::hover(self, params).await
     }
 
+    async fn goto_definition(
+        &self,
+        params: GotoDefinitionParams,
+    ) -> jsonrpc::Result<Option<GotoDefinitionResponse>> {
+        super::gotodefinition::goto_definition(self, params).await
+    }
+
     async fn code_action(
         &self,
         params: CodeActionParams,
