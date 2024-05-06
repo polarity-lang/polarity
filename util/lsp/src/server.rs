@@ -1,13 +1,10 @@
 use async_lock::RwLock;
-use std::collections::HashMap;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
-use printer::{PrintCfg, PrintToString};
-use query::{Database, File, Xfunc};
+use query::{Database, File};
 
 use super::capabilities::*;
-use super::conversion::*;
 use super::diagnostics::*;
 
 pub struct Server {
@@ -69,70 +66,11 @@ impl LanguageServer for Server {
         &self,
         params: CodeActionParams,
     ) -> jsonrpc::Result<Option<CodeActionResponse>> {
-        let text_document = params.text_document;
-        let range = params.range;
-
-        let db = self.database.read().await;
-        let index = db.get(text_document.uri.as_str()).unwrap();
-        let span_start = index.location_to_index(range.start.from_lsp());
-        let span_end = index.location_to_index(range.end.from_lsp());
-        let span = span_start.and_then(|start| span_end.map(|end| codespan::Span::new(start, end)));
-        let item = span.and_then(|span| index.item_at_span(span));
-
-        if let Some(item) = item {
-            let Xfunc { title, edits } = index.xfunc(item.type_name()).unwrap();
-            let edits = edits
-                .into_iter()
-                .map(|edit| TextEdit {
-                    range: index.span_to_locations(edit.span).unwrap().to_lsp(),
-                    new_text: edit.text,
-                })
-                .collect();
-
-            let mut changes = HashMap::new();
-            changes.insert(text_document.uri, edits);
-
-            let res = vec![CodeActionOrCommand::CodeAction(CodeAction {
-                title,
-                kind: Some(CodeActionKind::REFACTOR_REWRITE),
-                edit: Some(WorkspaceEdit { changes: Some(changes), ..Default::default() }),
-                ..Default::default()
-            })];
-
-            Ok(Some(res))
-        } else {
-            Ok(Some(vec![]))
-        }
+        super::codeactions::code_action(self, params).await
     }
+
     async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
-        let text_document = params.text_document;
-        let db = self.database.read().await;
-        let index = db.get(text_document.uri.as_str()).unwrap();
-        let prg = match index.ust() {
-            Ok(prg) => prg,
-            Err(_) => return Ok(None),
-        };
-
-        let rng: Range = Range {
-            start: Position { line: 0, character: 0 },
-            end: Position { line: u32::MAX, character: u32::MAX },
-        };
-
-        let cfg = PrintCfg {
-            width: 100,
-            latex: false,
-            omit_decl_sep: false,
-            de_bruijn: false,
-            indent: 4,
-            print_lambda_sugar: true,
-            print_function_sugar: true,
-        };
-
-        let formatted_prog: String = prg.print_to_string(Some(&cfg));
-
-        let text_edit: TextEdit = TextEdit { range: rng, new_text: formatted_prog };
-
-        Ok(Some(vec![text_edit]))
+        super::format::formatting(self, params).await
     }
 }
 
