@@ -60,8 +60,13 @@ impl Eval for Call {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let Call { span, name, args, .. } = self;
-        Ok(Rc::new(Val::Ctor { span: *span, name: name.clone(), args: args.eval(prg, env)? }))
+        let Call { span, name, kind, args, .. } = self;
+        Ok(Rc::new(Val::Ctor {
+            span: *span,
+            kind: *kind,
+            name: name.clone(),
+            args: args.eval(prg, env)?,
+        }))
     }
 }
 
@@ -73,7 +78,7 @@ impl Eval for DotCall {
         let exp = exp.eval(prg, env)?;
         let args = args.eval(prg, env)?;
         match (*exp).clone() {
-            Val::Ctor { name: ctor_name, args: ctor_args, span } => {
+            Val::Ctor { name: ctor_name, kind: _, args: ctor_args, span } => {
                 let type_decl = prg.decls.type_decl_for_member(&ctor_name, span)?;
                 match type_decl {
                     DataCodata::Data(_) => {

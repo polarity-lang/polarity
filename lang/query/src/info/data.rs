@@ -1,7 +1,10 @@
 use codespan::Span;
 use printer::PrintToString;
 
-use syntax::ctx::values::{Binder as TypeCtxBinder, TypeCtx};
+use syntax::{
+    ctx::values::{Binder as TypeCtxBinder, TypeCtx},
+    generic::CallKind,
+};
 
 // HoverInfo
 //
@@ -40,6 +43,7 @@ pub struct TypeCtorInfo {}
 /// Hover information for calls (constructors, codefinitions or lets)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CallInfo {
+    pub kind: CallKind,
     pub typ: String,
 }
 

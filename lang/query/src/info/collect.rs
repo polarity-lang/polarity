@@ -217,9 +217,12 @@ impl CollectInfo for TypCtor {
 
 impl CollectInfo for Call {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Call { span, args, inferred_type, .. } = self;
+        let Call { span, kind, args, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let content = HoverInfoContent::CallInfo(CallInfo { typ: typ.print_to_string(None) });
+            let content = HoverInfoContent::CallInfo(CallInfo {
+                kind: *kind,
+                typ: typ.print_to_string(None),
+            });
             collector.add_hover_content(*span, content)
         }
         args.collect_info(collector)

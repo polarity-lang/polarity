@@ -293,6 +293,18 @@ impl HasTypeInfo for TypCtor {
 //
 //
 
+/// A Call expression can be one of three different kinds:
+/// - A constructor introduced by a data type declaration
+/// - A codefinition introduced at the toplevel
+/// - A LetBound definition introduced at the toplevel
+#[derive(Debug, Clone, Copy, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub enum CallKind {
+    Constructor,
+    Codefinition,
+    LetBound,
+}
+
 /// A Call invokes a constructor, a codefinition or a toplevel let-bound definition.
 /// Examples: `Zero`, `Cons(True, Nil)`, `minimum(x,y)`
 #[derive(Debug, Clone, Derivative)]
@@ -301,6 +313,8 @@ pub struct Call {
     /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
+    /// Whether the call is a constructor, codefinition or let bound definition.
+    pub kind: CallKind,
     /// The name of the call.
     /// The `f` in `f(e1...en)`
     pub name: Ident,
@@ -327,9 +341,10 @@ impl From<Call> for Exp {
 
 impl Shift for Call {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Call { span, name, args, .. } = self;
+        let Call { span, name, args, kind, .. } = self;
         Call {
             span: *span,
+            kind: *kind,
             name: name.clone(),
             args: args.shift_in_range(range, by),
             inferred_type: None,
@@ -346,8 +361,14 @@ impl Occurs for Call {
 
 impl ForgetTST for Call {
     fn forget_tst(&self) -> Self {
-        let Call { span, name, args, .. } = self;
-        Call { span: *span, name: name.clone(), args: args.forget_tst(), inferred_type: None }
+        let Call { span, name, args, kind, .. } = self;
+        Call {
+            span: *span,
+            kind: *kind,
+            name: name.clone(),
+            args: args.forget_tst(),
+            inferred_type: None,
+        }
     }
 }
 

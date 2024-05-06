@@ -14,6 +14,7 @@ codespan = "0.11"
 # fancy error messages
 miette = "5"
 # workspace members
+syntax = { path = "../../lang/syntax" }
 query = { path = "../../lang/query" }
 printer = { path = "../../lang/printer" }
 miette_util = { path = "../miette_util" }

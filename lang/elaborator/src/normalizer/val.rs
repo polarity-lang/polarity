@@ -25,6 +25,7 @@ pub enum Val {
     Ctor {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
+        kind: generic::CallKind,
         name: generic::Ident,
         args: Args,
     },
@@ -122,9 +123,12 @@ impl Shift for Val {
                 name: name.clone(),
                 args: args.shift_in_range(range, by),
             },
-            Val::Ctor { span, name, args } => {
-                Val::Ctor { span: *span, name: name.clone(), args: args.shift_in_range(range, by) }
-            }
+            Val::Ctor { span, kind, name, args } => Val::Ctor {
+                span: *span,
+                kind: *kind,
+                name: name.clone(),
+                args: args.shift_in_range(range, by),
+            },
             Val::TypeUniv { span } => Val::TypeUniv { span: *span },
             Val::Comatch { span, name, is_lambda_sugar, body } => Val::Comatch {
                 span: *span,
@@ -195,7 +199,7 @@ impl<'a> Print<'a> for Val {
                     if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 alloc.typ(name).append(psubst)
             }
-            Val::Ctor { span: _, name, args } => {
+            Val::Ctor { span: _, kind: _, name, args } => {
                 let psubst =
                     if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
                 alloc.ctor(name).append(psubst)

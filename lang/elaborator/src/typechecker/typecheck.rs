@@ -190,13 +190,19 @@ impl CheckInfer for Call {
     ///            P, Γ ⊢ Cσ ⇒ ...
     /// ```
     fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
-        let Call { span, name, args, .. } = self;
+        let Call { span, kind, name, args, .. } = self;
         let Ctor { name, params, typ, .. } = &prg.decls.ctor_or_codef(name, *span)?;
         let args_out = check_args(args, prg, name, ctx, params, *span)?;
         let typ_out =
             typ.subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()]).to_exp();
         let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
-        Ok(Call { span: *span, name: name.clone(), args: args_out, inferred_type: Some(typ_nf) })
+        Ok(Call {
+            span: *span,
+            kind: *kind,
+            name: name.clone(),
+            args: args_out,
+            inferred_type: Some(typ_nf),
+        })
     }
 }
 
@@ -676,6 +682,7 @@ impl<'a> WithDestructee<'a> {
                         .collect();
                     let ctor = Rc::new(Exp::Call(Call {
                         span: None,
+                        kind: CallKind::Codefinition,
                         name: label.clone(),
                         args: Args { args },
                         inferred_type: None,
@@ -741,6 +748,7 @@ fn check_case(
                 .collect();
             let ctor = Rc::new(Exp::Call(Call {
                 span: None,
+                kind: CallKind::Constructor,
                 name: name.clone(),
                 args: Args { args },
                 inferred_type: None,

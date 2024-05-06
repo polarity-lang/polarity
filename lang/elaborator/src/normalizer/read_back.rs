@@ -27,8 +27,9 @@ impl ReadBack for val::Val {
                 name: name.clone(),
                 args: Args { args: args.read_back(prg)? },
             }),
-            val::Val::Ctor { span, name, args } => Exp::Call(Call {
+            val::Val::Ctor { span, kind, name, args } => Exp::Call(Call {
                 span: *span,
+                kind: *kind,
                 name: name.clone(),
                 args: Args { args: args.read_back(prg)? },
                 inferred_type: None,

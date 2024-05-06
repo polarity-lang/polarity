@@ -1,8 +1,8 @@
 //! Implementation of the type-on-hover functionality of the LSP server
 
-use tower_lsp::{jsonrpc, lsp_types::*};
-
 use query::*;
+use syntax::generic::CallKind;
+use tower_lsp::{jsonrpc, lsp_types::*};
 
 use super::conversion::*;
 use super::server::*;
@@ -93,9 +93,13 @@ impl ToHoverContent for TypeCtorInfo {
 
 impl ToHoverContent for CallInfo {
     fn to_hover_content(self) -> HoverContents {
-        let CallInfo { typ } = self;
-        let header =
-            MarkedString::String("Constructor / codefinition / let-bound definition".to_owned());
+        let CallInfo { kind, typ } = self;
+        let header = match kind {
+            CallKind::Constructor => MarkedString::String("Constructor".to_owned()),
+            CallKind::Codefinition => MarkedString::String("Codefinition".to_owned()),
+            CallKind::LetBound => MarkedString::String("Let-bound definition".to_owned()),
+        };
+
         let typ = string_to_language_string(typ);
         HoverContents::Array(vec![header, typ])
     }

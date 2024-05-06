@@ -272,8 +272,9 @@ impl Rename for Exp {
                 inferred_ctx: None, // TODO: Rename TypeCtx!
             }),
             Exp::TypeUniv(e) => Exp::TypeUniv(e),
-            Exp::Call(Call { span, name, args, inferred_type }) => Exp::Call(Call {
+            Exp::Call(Call { span, name, args, inferred_type, kind }) => Exp::Call(Call {
                 span,
+                kind,
                 name,
                 args: args.rename_in_ctx(ctx),
                 inferred_type: inferred_type.rename_in_ctx(ctx),
