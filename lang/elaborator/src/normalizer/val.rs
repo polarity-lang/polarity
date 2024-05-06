@@ -30,11 +30,11 @@ pub enum Val {
 impl Shift for Val {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
-            Val::TypCtor(e) => Val::TypCtor(e.shift_in_range(range, by)),
-            Val::Call(e) => Val::Call(e.shift_in_range(range, by)),
-            Val::TypeUniv(e) => Val::TypeUniv(e.shift_in_range(range, by)),
-            Val::LocalComatch(e) => Val::LocalComatch(e.shift_in_range(range, by)),
-            Val::Neu(exp) => Val::Neu(exp.shift_in_range(range, by)),
+            Val::TypCtor(e) => e.shift_in_range(range, by).into(),
+            Val::Call(e) => e.shift_in_range(range, by).into(),
+            Val::TypeUniv(e) => e.shift_in_range(range, by).into(),
+            Val::LocalComatch(e) => e.shift_in_range(range, by).into(),
+            Val::Neu(exp) => exp.shift_in_range(range, by).into(),
         }
     }
 }
@@ -79,6 +79,12 @@ impl<'a> Print<'a> for TypCtor {
     }
 }
 
+impl From<TypCtor> for Val {
+    fn from(value: TypCtor) -> Self {
+        Val::TypCtor(value)
+    }
+}
+
 // Call
 //
 //
@@ -108,6 +114,12 @@ impl<'a> Print<'a> for Call {
     }
 }
 
+impl From<Call> for Val {
+    fn from(value: Call) -> Self {
+        Val::Call(value)
+    }
+}
+
 // TypeUniv
 //
 //
@@ -128,6 +140,12 @@ impl Shift for TypeUniv {
 impl<'a> Print<'a> for TypeUniv {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.typ(TYPE)
+    }
+}
+
+impl From<TypeUniv> for Val {
+    fn from(value: TypeUniv) -> Self {
+        Val::TypeUniv(value)
     }
 }
 
@@ -170,6 +188,12 @@ impl<'a> Print<'a> for LocalComatch {
     }
 }
 
+impl From<LocalComatch> for Val {
+    fn from(value: LocalComatch) -> Self {
+        Val::LocalComatch(value)
+    }
+}
+
 // Neu
 //
 //
@@ -187,10 +211,10 @@ pub enum Neu {
 impl Shift for Neu {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         match self {
-            Neu::Variable(e) => Neu::Variable(e.shift_in_range(range, by)),
-            Neu::DotCall(e) => Neu::DotCall(e.shift_in_range(range, by)),
-            Neu::LocalMatch(e) => Neu::LocalMatch(e.shift_in_range(range, by)),
-            Neu::Hole(e) => Neu::Hole(e.shift_in_range(range, by)),
+            Neu::Variable(e) => e.shift_in_range(range, by).into(),
+            Neu::DotCall(e) => e.shift_in_range(range, by).into(),
+            Neu::LocalMatch(e) => e.shift_in_range(range, by).into(),
+            Neu::Hole(e) => e.shift_in_range(range, by).into(),
         }
     }
 }
@@ -203,6 +227,12 @@ impl<'a> Print<'a> for Neu {
             Neu::LocalMatch(e) => e.print(cfg, alloc),
             Neu::Hole(e) => e.print(cfg, alloc),
         }
+    }
+}
+
+impl From<Neu> for Val {
+    fn from(value: Neu) -> Self {
+        Val::Neu(value)
     }
 }
 
@@ -231,6 +261,12 @@ impl<'a> Print<'a> for Variable {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Variable { span: _, name, idx } = self;
         alloc.text(format!("{name}@{idx}"))
+    }
+}
+
+impl From<Variable> for Neu {
+    fn from(value: Variable) -> Self {
+        Neu::Variable(value)
     }
 }
 
@@ -267,6 +303,12 @@ impl<'a> Print<'a> for DotCall {
         let DotCall { span: _, kind: _, exp, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
         exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
+    }
+}
+
+impl From<DotCall> for Neu {
+    fn from(value: DotCall) -> Self {
+        Neu::DotCall(value)
     }
 }
 
@@ -311,6 +353,12 @@ impl<'a> Print<'a> for LocalMatch {
     }
 }
 
+impl From<LocalMatch> for Neu {
+    fn from(value: LocalMatch) -> Self {
+        Neu::LocalMatch(value)
+    }
+}
+
 // Hole
 //
 //
@@ -332,6 +380,12 @@ impl Shift for Hole {
 impl<'a> Print<'a> for Hole {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.keyword(HOLE)
+    }
+}
+
+impl From<Hole> for Neu {
+    fn from(value: Hole) -> Self {
+        Neu::Hole(value)
     }
 }
 

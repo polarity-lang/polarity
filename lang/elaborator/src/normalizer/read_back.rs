@@ -69,10 +69,10 @@ impl ReadBack for val::Val {
     #[trace("↓{:P} ~> {return:P}", self, std::convert::identity)]
     fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
         let res = match self {
-            val::Val::TypCtor(e) => Exp::TypCtor(e.read_back(prg)?),
-            val::Val::Call(e) => Exp::Call(e.read_back(prg)?),
-            val::Val::TypeUniv(e) => Exp::TypeUniv(e.read_back(prg)?),
-            val::Val::LocalComatch(e) => Exp::LocalComatch(e.read_back(prg)?),
+            val::Val::TypCtor(e) => e.read_back(prg)?.into(),
+            val::Val::Call(e) => e.read_back(prg)?.into(),
+            val::Val::TypeUniv(e) => e.read_back(prg)?.into(),
+            val::Val::LocalComatch(e) => e.read_back(prg)?.into(),
             val::Val::Neu(exp) => exp.read_back(prg)?,
         };
         Ok(res)
@@ -82,7 +82,7 @@ impl ReadBack for val::Val {
 impl ReadBack for val::Variable {
     type Nf = Variable;
 
-    fn read_back(&self, _prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, _prg: &Module) -> Result<Self::Nf, TypeError> {
         let val::Variable { span, name, idx } = self;
         Ok(Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: None })
     }
@@ -91,7 +91,7 @@ impl ReadBack for val::Variable {
 impl ReadBack for val::DotCall {
     type Nf = DotCall;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
         let val::DotCall { span, kind, exp, name, args } = self;
         Ok(DotCall {
             span: *span,
@@ -107,7 +107,7 @@ impl ReadBack for val::DotCall {
 impl ReadBack for val::LocalMatch {
     type Nf = LocalMatch;
 
-    fn read_back(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
         let val::LocalMatch { span, name, on_exp, body } = self;
         Ok(LocalMatch {
             span: *span,
@@ -125,7 +125,7 @@ impl ReadBack for val::LocalMatch {
 impl ReadBack for val::Hole {
     type Nf = Hole;
 
-    fn read_back(&self, _prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, _prg: &Module) -> Result<Self::Nf, TypeError> {
         let val::Hole { span } = self;
         Ok(Hole { span: *span, inferred_type: None, inferred_ctx: None })
     }
@@ -136,10 +136,10 @@ impl ReadBack for val::Neu {
 
     fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
         let res = match self {
-            val::Neu::Variable(e) => Exp::Variable(e.read_back(prg)?),
-            val::Neu::DotCall(e) => Exp::DotCall(e.read_back(prg)?),
-            val::Neu::LocalMatch(e) => Exp::LocalMatch(e.read_back(prg)?),
-            val::Neu::Hole(e) => Exp::Hole(e.read_back(prg)?),
+            val::Neu::Variable(e) => e.read_back(prg)?.into(),
+            val::Neu::DotCall(e) => e.read_back(prg)?.into(),
+            val::Neu::LocalMatch(e) => e.read_back(prg)?.into(),
+            val::Neu::Hole(e) => e.read_back(prg)?.into(),
         };
         Ok(res)
     }
