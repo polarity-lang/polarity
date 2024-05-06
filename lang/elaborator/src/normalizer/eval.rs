@@ -102,13 +102,13 @@ impl Eval for DotCall {
             Val::LocalComatch(val::LocalComatch { body, .. }) => {
                 beta_comatch(prg, body, name, &args)
             }
-            Val::Neu(exp) => Ok(Rc::new(Val::Neu(Neu::DotCall {
+            Val::Neu(exp) => Ok(Rc::new(Val::Neu(Neu::DotCall(val::DotCall {
                 span: *span,
                 kind: *kind,
                 exp: Rc::new(exp),
                 name: name.to_owned(),
                 args,
-            }))),
+            })))),
             _ => unreachable!(),
         }
     }
@@ -143,12 +143,12 @@ impl Eval for LocalMatch {
             Val::Call(val::Call { name: ctor_name, args, .. }) => {
                 beta_match(prg, body, &ctor_name, &args)
             }
-            Val::Neu(exp) => Ok(Rc::new(Val::Neu(Neu::Match {
+            Val::Neu(exp) => Ok(Rc::new(Val::Neu(Neu::LocalMatch(val::LocalMatch {
                 span: None,
                 name: match_name.to_owned(),
                 on_exp: Rc::new(exp),
                 body,
-            }))),
+            })))),
             _ => unreachable!(),
         }
     }
@@ -173,7 +173,7 @@ impl Eval for Hole {
 
     fn eval(&self, _prg: &Module, _env: &mut Env) -> Result<Self::Val, TypeError> {
         let Hole { span, .. } = self;
-        Ok(Rc::new(Val::Neu(Neu::Hole { span: *span })))
+        Ok(Rc::new(Val::Neu(Neu::Hole(val::Hole { span: *span }))))
     }
 }
 

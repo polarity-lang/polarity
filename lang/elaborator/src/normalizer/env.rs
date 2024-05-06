@@ -116,7 +116,11 @@ impl ToEnv for LevelCtx {
                 (0..*len)
                     .map(|snd| {
                         let idx = Idx { fst: self.bound.len() - 1 - fst, snd: len - 1 - snd };
-                        Rc::new(Val::Neu(Neu::Var { span: None, name: String::new(), idx }))
+                        Rc::new(Val::Neu(Neu::Variable(Variable {
+                            span: None,
+                            name: String::new(),
+                            idx,
+                        })))
                     })
                     .collect()
             })
@@ -131,12 +135,12 @@ impl ToEnv for TypeCtx {
         let bound = self
             .bound
             .map_idx(|idx, binder| {
-                Rc::new(Val::Neu(Neu::Var {
+                Rc::new(Val::Neu(Neu::Variable(Variable {
                     // FIXME: handle info
                     span: None,
                     name: binder.name.clone(),
                     idx,
-                }))
+                })))
             })
             .collect();
 
