@@ -52,7 +52,11 @@ impl Eval for TypCtor {
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let TypCtor { span, name, args } = self;
-        Ok(Rc::new(Val::TypCtor { span: *span, name: name.clone(), args: args.eval(prg, env)? }))
+        Ok(Rc::new(Val::TypCtor(val::TypCtor {
+            span: *span,
+            name: name.clone(),
+            args: args.eval(prg, env)?,
+        })))
     }
 }
 
@@ -61,12 +65,12 @@ impl Eval for Call {
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Call { span, name, kind, args, .. } = self;
-        Ok(Rc::new(Val::Call {
+        Ok(Rc::new(Val::Call(val::Call {
             span: *span,
             kind: *kind,
             name: name.clone(),
             args: args.eval(prg, env)?,
-        }))
+        })))
     }
 }
 
@@ -78,7 +82,7 @@ impl Eval for DotCall {
         let exp = exp.eval(prg, env)?;
         let args = args.eval(prg, env)?;
         match (*exp).clone() {
-            Val::Call { name: ctor_name, kind: _, args: ctor_args, span } => {
+            Val::Call(val::Call { name: ctor_name, kind: _, args: ctor_args, span }) => {
                 let type_decl = prg.type_decl_for_member(&ctor_name, span)?;
                 match type_decl {
                     DataCodata::Data(_) => {
@@ -95,16 +99,16 @@ impl Eval for DotCall {
                     }
                 }
             }
-            Val::Comatch { body, .. } => beta_comatch(prg, body, name, &args),
-            Val::Neu { exp } => Ok(Rc::new(Val::Neu {
-                exp: Neu::DotCall {
-                    span: *span,
-                    kind: *kind,
-                    exp: Rc::new(exp),
-                    name: name.to_owned(),
-                    args,
-                },
-            })),
+            Val::LocalComatch(val::LocalComatch { body, .. }) => {
+                beta_comatch(prg, body, name, &args)
+            }
+            Val::Neu(exp) => Ok(Rc::new(Val::Neu(Neu::DotCall {
+                span: *span,
+                kind: *kind,
+                exp: Rc::new(exp),
+                name: name.to_owned(),
+                args,
+            }))),
             _ => unreachable!(),
         }
     }
@@ -124,7 +128,7 @@ impl Eval for TypeUniv {
 
     fn eval(&self, _prg: &Module, _env: &mut Env) -> Result<Self::Val, TypeError> {
         let TypeUniv { span } = self;
-        Ok(Rc::new(Val::TypeUniv { span: *span }))
+        Ok(Rc::new(Val::TypeUniv(val::TypeUniv { span: *span })))
     }
 }
 
@@ -136,15 +140,15 @@ impl Eval for LocalMatch {
         let on_exp = on_exp.eval(prg, env)?;
         let body = body.eval(prg, env)?;
         match (*on_exp).clone() {
-            Val::Call { name: ctor_name, args, .. } => beta_match(prg, body, &ctor_name, &args),
-            Val::Neu { exp } => Ok(Rc::new(Val::Neu {
-                exp: Neu::Match {
-                    span: None,
-                    name: match_name.to_owned(),
-                    on_exp: Rc::new(exp),
-                    body,
-                },
-            })),
+            Val::Call(val::Call { name: ctor_name, args, .. }) => {
+                beta_match(prg, body, &ctor_name, &args)
+            }
+            Val::Neu(exp) => Ok(Rc::new(Val::Neu(Neu::Match {
+                span: None,
+                name: match_name.to_owned(),
+                on_exp: Rc::new(exp),
+                body,
+            }))),
             _ => unreachable!(),
         }
     }
@@ -155,12 +159,12 @@ impl Eval for LocalComatch {
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
-        Ok(Rc::new(Val::Comatch {
+        Ok(Rc::new(Val::LocalComatch(val::LocalComatch {
             span: *span,
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             body: body.eval(prg, env)?,
-        }))
+        })))
     }
 }
 
@@ -169,7 +173,7 @@ impl Eval for Hole {
 
     fn eval(&self, _prg: &Module, _env: &mut Env) -> Result<Self::Val, TypeError> {
         let Hole { span, .. } = self;
-        Ok(Rc::new(Val::Neu { exp: Neu::Hole { span: *span } }))
+        Ok(Rc::new(Val::Neu(Neu::Hole { span: *span })))
     }
 }
 
