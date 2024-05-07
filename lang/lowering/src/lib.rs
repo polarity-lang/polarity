@@ -11,8 +11,8 @@ use crate::lower::Lower;
 pub use ctx::*;
 pub use result::*;
 
-pub fn lower_module(prg: &cst::decls::Prg) -> Result<generic::Module, LoweringError> {
-    let cst::decls::Prg { items } = prg;
+pub fn lower_module(prg: &cst::decls::Module) -> Result<generic::Module, LoweringError> {
+    let cst::decls::Module { items } = prg;
 
     let (top_level_map, lookup_table) = build_lookup_table(items)?;
 
