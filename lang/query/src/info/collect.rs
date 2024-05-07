@@ -194,9 +194,15 @@ impl CollectInfo for Variable {
 
 impl CollectInfo for TypCtor {
     fn collect_info(&self, map: &HashMap<Ident, Decl>, collector: &mut InfoCollector) {
-        let TypCtor { span, args, .. } = self;
+        let TypCtor { span, args, name, .. } = self;
         if let Some(span) = span {
-            let content = TypeCtorInfo {};
+            let x = map.get(name);
+            let target_span = match x {
+                Some(Decl::Data(d)) => d.span,
+                Some(Decl::Codata(d)) => d.span,
+                _ => None,
+            };
+            let content = TypeCtorInfo { target_span };
             collector.add_hover_content(*span, content.into())
         }
         args.collect_info(map, collector)
