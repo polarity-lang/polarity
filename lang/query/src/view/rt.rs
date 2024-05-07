@@ -4,7 +4,7 @@ use super::DatabaseView;
 
 use elaborator::normalizer::normalize::Normalize;
 use parser::cst;
-use syntax::{generic::Exp, generic::ForgetTST, generic::Prg};
+use syntax::{generic::Exp, generic::ForgetTST, generic::Module};
 
 use crate::*;
 
@@ -23,12 +23,12 @@ impl<'a> DatabaseView<'a> {
         parser::parse_program(source).map_err(Error::Parser)
     }
 
-    pub fn ust(&self) -> Result<Prg, Error> {
+    pub fn ust(&self) -> Result<Module, Error> {
         let cst = self.cst()?;
-        lowering::lower_prg(&cst).map_err(Error::Lowering)
+        lowering::lower_module(&cst).map_err(Error::Lowering)
     }
 
-    pub fn tst(&self) -> Result<Prg, Error> {
+    pub fn tst(&self) -> Result<Module, Error> {
         let ust = self.ust()?;
         elaborator::typechecker::check(&ust).map_err(Error::Type)
     }

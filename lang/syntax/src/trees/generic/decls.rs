@@ -20,47 +20,33 @@ pub struct Attribute {
     pub attrs: Vec<String>,
 }
 
-// Prg
+// Module
 //
 //
 
+/// A module containing declarations
+///
+/// There is a 1-1 correspondence between modules and files in our system.
 #[derive(Debug, Clone)]
-pub struct Prg {
-    pub decls: Decls,
-}
-
-impl Prg {
-    pub fn find_main(&self) -> Option<Rc<Exp>> {
-        let main_candidate = self.decls.map.get("main")?.get_main()?;
-        Some(main_candidate.body)
-    }
-}
-
-impl ForgetTST for Prg {
-    fn forget_tst(&self) -> Self {
-        let Prg { decls } = self;
-
-        Prg { decls: decls.forget_tst() }
-    }
-}
-
-// Decls
-//
-//
-
-#[derive(Debug, Clone)]
-pub struct Decls {
+pub struct Module {
     /// Map from identifiers to declarations
     pub map: HashMap<Ident, Decl>,
     /// Metadata on declarations
     pub lookup_table: LookupTable,
 }
 
-impl ForgetTST for Decls {
-    fn forget_tst(&self) -> Self {
-        let Decls { map, lookup_table } = self;
+impl Module {
+    pub fn find_main(&self) -> Option<Rc<Exp>> {
+        let main_candidate = self.map.get("main")?.get_main()?;
+        Some(main_candidate.body)
+    }
+}
 
-        Decls {
+impl ForgetTST for Module {
+    fn forget_tst(&self) -> Self {
+        let Module { map, lookup_table } = self;
+
+        Module {
             map: map.iter().map(|(name, decl)| (name.clone(), decl.forget_tst())).collect(),
             lookup_table: lookup_table.clone(),
         }

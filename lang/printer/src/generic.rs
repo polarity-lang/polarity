@@ -15,14 +15,7 @@ fn is_visible(attr: &Attribute) -> bool {
     !attr.attrs.contains(&"omit_print".to_owned())
 }
 
-impl<'a> Print<'a> for Prg {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Prg { decls } = self;
-        decls.print(cfg, alloc)
-    }
-}
-
-impl<'a> Print<'a> for Decls {
+impl<'a> Print<'a> for Module {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let items =
             self.iter().filter(|item| is_visible(item.attributes())).map(|item| match item {
@@ -39,7 +32,7 @@ impl<'a> Print<'a> for Decls {
 }
 
 impl<'a> PrintInCtx<'a> for Decl {
-    type Ctx = Decls;
+    type Ctx = Module;
 
     fn print_in_ctx(
         &'a self,
@@ -60,7 +53,7 @@ impl<'a> PrintInCtx<'a> for Decl {
 }
 
 impl<'a> PrintInCtx<'a> for Item<'a> {
-    type Ctx = Decls;
+    type Ctx = Module;
 
     fn print_in_ctx(
         &'a self,
@@ -79,7 +72,7 @@ impl<'a> PrintInCtx<'a> for Item<'a> {
 }
 
 impl<'a> PrintInCtx<'a> for Data {
-    type Ctx = Decls;
+    type Ctx = Module;
 
     fn print_in_ctx(
         &'a self,
@@ -124,7 +117,7 @@ impl<'a> PrintInCtx<'a> for Data {
 }
 
 impl<'a> PrintInCtx<'a> for Codata {
-    type Ctx = Decls;
+    type Ctx = Module;
 
     fn print_in_ctx(
         &'a self,

@@ -8,9 +8,9 @@ use crate::unifier::unify::{unify, Eqn};
 use super::TypeError;
 
 // Checks whether the codata type contains destructors with a self parameter
-pub fn uses_self(prg: &Prg, codata: &Codata) -> Result<bool, TypeError> {
+pub fn uses_self(prg: &Module, codata: &Codata) -> Result<bool, TypeError> {
     for dtor_name in &codata.dtors {
-        let dtor = prg.decls.dtor(dtor_name, None)?;
+        let dtor = prg.dtor(dtor_name, None)?;
         let mut ctx = LevelCtx::from(vec![dtor.params.len(), 1]);
         if dtor.ret_typ.occurs(&mut ctx, Lvl { fst: 1, snd: 0 }) {
             return Ok(true);

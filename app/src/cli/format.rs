@@ -73,7 +73,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     Ok(())
 }
 
-fn print_prg<W: WriteColor>(prg: generic::Prg, cfg: &PrintCfg, stream: &mut W) {
+fn print_prg<W: WriteColor>(prg: generic::Module, cfg: &PrintCfg, stream: &mut W) {
     prg.print_colored(cfg, stream).expect("Failed to print to stdout");
     println!();
 }
