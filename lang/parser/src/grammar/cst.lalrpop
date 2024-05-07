@@ -87,8 +87,8 @@ DocComment: DocComment = <docs: DocCommentHelper+> => DocComment { docs };
 //
 //
 
-pub Prg: Prg = {
-    <items: Decl*> => Prg { items,  },
+pub Prg: Module = {
+    <items: Decl*> => Module { items,  },
 }
 
 pub Decl: Decl = {

@@ -17,7 +17,7 @@ pub struct Attribute {
 }
 
 #[derive(Debug, Clone)]
-pub struct Prg {
+pub struct Module {
     pub items: Vec<Decl>,
 }
 
