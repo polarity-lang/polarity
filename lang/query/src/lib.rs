@@ -34,8 +34,6 @@ pub struct File {
     pub name: String,
     /// The source code text of the file
     pub source: String,
-    /// Whether to index this file
-    pub index: bool,
 }
 
 impl File {
@@ -43,19 +41,15 @@ impl File {
         Ok(Self {
             name: path.to_str().unwrap().to_owned(),
             source: fs::read_to_string(path)?,
-            index: false,
         })
     }
 }
 
 impl Database {
     pub fn add(&mut self, file: File) -> DatabaseViewMut<'_> {
-        let File { name, source, index } = file;
+        let File { name, source } = file;
         let file_id = self.files.add(name.clone(), source);
         self.id_by_name.insert(name, file_id);
-        if index {
-            self.index.enable(file_id);
-        }
         DatabaseViewMut { file_id, database: self }
     }
 

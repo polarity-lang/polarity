@@ -27,7 +27,7 @@ impl<'a> DatabaseView<'a> {
     }
 
     pub fn hoverinfo_at_span(&self, span: Span) -> Option<HoverInfo> {
-        let index = self.index()?;
+        let index = self.index();
         let lapper = index.infos();
         let intervals = lapper.find(span.start().into(), span.end().into());
         let smallest_interval =
@@ -36,7 +36,7 @@ impl<'a> DatabaseView<'a> {
     }
 
     pub fn item_at_span(&self, span: Span) -> Option<Item> {
-        let index = self.index()?;
+        let index = self.index();
         let lapper = index.items();
         let intervals = lapper.find(span.start().into(), span.end().into());
         let largest_interval =

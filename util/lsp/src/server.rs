@@ -37,7 +37,7 @@ impl LanguageServer for Server {
         let text_document = params.text_document;
         let mut db = self.database.write().await;
         let file =
-            File { name: text_document.uri.to_string(), source: text_document.text, index: true };
+            File { name: text_document.uri.to_string(), source: text_document.text };
         let mut view = db.add(file);
 
         let res = view.load();

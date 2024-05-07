@@ -18,7 +18,7 @@ pub struct DatabaseView<'a> {
 }
 
 impl<'a> DatabaseView<'a> {
-    pub fn index(&self) -> Option<IndexView<'_>> {
+    pub fn index(&self) -> IndexView<'_> {
         let DatabaseView { file_id, database } = self;
         database.index.get(*file_id)
     }

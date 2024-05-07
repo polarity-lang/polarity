@@ -7,7 +7,6 @@ use super::info::{HoverInfo, Item};
 
 #[derive(Default)]
 pub struct Index {
-    pub(crate) index_enabled: HashSet<FileId>,
     pub(crate) info_index_by_id: HashMap<FileId, Lapper<u32, HoverInfo>>,
     pub(crate) item_index_by_id: HashMap<FileId, Lapper<u32, Item>>,
 }
@@ -23,29 +22,20 @@ pub struct IndexView<'a> {
 }
 
 impl Index {
-    pub fn enable(&mut self, file_id: FileId) {
-        self.index_enabled.insert(file_id);
+    pub fn get(&self, file_id: FileId) -> IndexView<'_> {
+        IndexView { file_id, index: self }
     }
 
-    pub fn get(&self, file_id: FileId) -> Option<IndexView<'_>> {
-        self.index_enabled.get(&file_id).map(|_| IndexView { file_id, index: self })
-    }
-
-    pub fn get_mut(&mut self, file_id: FileId) -> Option<IndexViewMut<'_>> {
-        if self.index_enabled.contains(&file_id) {
-            Some(IndexViewMut { file_id, index: self })
-        } else {
-            None
-        }
+    pub fn get_mut(&mut self, file_id: FileId) -> IndexViewMut<'_> {
+        IndexViewMut { file_id, index: self }
     }
 
     pub fn modify<F>(&mut self, file_id: FileId, f: F)
     where
         F: FnOnce(IndexViewMut<'_>),
     {
-        if let Some(view) = self.get_mut(file_id) {
-            f(view);
-        }
+        let view = self.get_mut(file_id);
+        f(view);
     }
 }
 
