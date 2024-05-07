@@ -16,12 +16,12 @@ pub async fn goto_definition(
     let db = server.database.read().await;
     let index = db.get(text_document.uri.as_str()).unwrap();
     let info = index.location_to_index(pos.from_lsp()).and_then(|idx| index.info_at_index(idx));
-    let res = info.and_then(|info| info_to_jump(info));
+    let res = info.and_then(info_to_jump);
     Ok(res)
 }
 
 fn info_to_jump(info: Info) -> Option<GotoDefinitionResponse> {
-    info.content.to_jump_content().map(|location| GotoDefinitionResponse::Scalar(location))
+    info.content.to_jump_content().map(GotoDefinitionResponse::Scalar)
 }
 
 trait ToJumpContent {

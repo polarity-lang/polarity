@@ -37,15 +37,33 @@ pub struct VariableInfo {
     pub typ: String,
 }
 
+impl From<VariableInfo> for InfoContent {
+    fn from(value: VariableInfo) -> Self {
+        InfoContent::VariableInfo(value)
+    }
+}
+
 /// Hover information for type constructors
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeCtorInfo {}
+
+impl From<TypeCtorInfo> for InfoContent {
+    fn from(value: TypeCtorInfo) -> Self {
+        InfoContent::TypeCtorInfo(value)
+    }
+}
 
 /// Hover information for calls (constructors, codefinitions or lets)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CallInfo {
     pub kind: CallKind,
     pub typ: String,
+}
+
+impl From<CallInfo> for InfoContent {
+    fn from(value: CallInfo) -> Self {
+        InfoContent::CallInfo(value)
+    }
 }
 
 /// Hover information for dotcalls (destructors or definitions)
@@ -55,9 +73,21 @@ pub struct DotCallInfo {
     pub typ: String,
 }
 
+impl From<DotCallInfo> for InfoContent {
+    fn from(value: DotCallInfo) -> Self {
+        InfoContent::DotCallInfo(value)
+    }
+}
+
 /// Hover information for type universes
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeUnivInfo {}
+
+impl From<TypeUnivInfo> for InfoContent {
+    fn from(value: TypeUnivInfo) -> Self {
+        InfoContent::TypeUnivInfo(value)
+    }
+}
 
 /// Hover information for type annotated terms
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -65,11 +95,23 @@ pub struct AnnoInfo {
     pub typ: String,
 }
 
+impl From<AnnoInfo> for InfoContent {
+    fn from(value: AnnoInfo) -> Self {
+        InfoContent::AnnoInfo(value)
+    }
+}
+
 /// Hover information for typed holes
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HoleInfo {
     pub goal: String,
     pub ctx: Option<Ctx>,
+}
+
+impl From<HoleInfo> for InfoContent {
+    fn from(value: HoleInfo) -> Self {
+        InfoContent::HoleInfo(value)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

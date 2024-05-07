@@ -197,9 +197,8 @@ impl CollectInfo for Variable {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let Variable { span, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let content =
-                InfoContent::VariableInfo(VariableInfo { typ: typ.print_to_string(None) });
-            collector.add_hover_content(*span, content)
+            let content = VariableInfo { typ: typ.print_to_string(None) };
+            collector.add_hover_content(*span, content.into())
         }
     }
 }
@@ -208,8 +207,8 @@ impl CollectInfo for TypCtor {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let TypCtor { span, args, .. } = self;
         if let Some(span) = span {
-            let content = InfoContent::TypeCtorInfo(TypeCtorInfo {});
-            collector.add_hover_content(*span, content)
+            let content = TypeCtorInfo {};
+            collector.add_hover_content(*span, content.into())
         }
         args.collect_info(collector)
     }
@@ -219,9 +218,8 @@ impl CollectInfo for Call {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let Call { span, kind, args, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let content =
-                InfoContent::CallInfo(CallInfo { kind: *kind, typ: typ.print_to_string(None) });
-            collector.add_hover_content(*span, content)
+            let content = CallInfo { kind: *kind, typ: typ.print_to_string(None) };
+            collector.add_hover_content(*span, content.into())
         }
         args.collect_info(collector)
     }
@@ -231,11 +229,8 @@ impl CollectInfo for DotCall {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let DotCall { span, kind, exp, args, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let content = InfoContent::DotCallInfo(DotCallInfo {
-                kind: *kind,
-                typ: typ.print_to_string(None),
-            });
-            collector.add_hover_content(*span, content)
+            let content = DotCallInfo { kind: *kind, typ: typ.print_to_string(None) };
+            collector.add_hover_content(*span, content.into())
         }
         exp.collect_info(collector);
         args.collect_info(collector)
@@ -246,11 +241,11 @@ impl CollectInfo for Hole {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let Hole { span, inferred_type, inferred_ctx } = self;
         if let Some(span) = span {
-            let content = InfoContent::HoleInfo(HoleInfo {
+            let content = HoleInfo {
                 goal: inferred_type.print_to_string(None),
                 ctx: inferred_ctx.clone().map(Into::into),
-            });
-            collector.add_hover_content(*span, content)
+            };
+            collector.add_hover_content(*span, content.into())
         }
     }
 }
@@ -259,8 +254,8 @@ impl CollectInfo for TypeUniv {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let TypeUniv { span } = self;
         if let Some(span) = span {
-            let content = InfoContent::TypeUnivInfo(TypeUnivInfo {});
-            collector.add_hover_content(*span, content)
+            let content = TypeUnivInfo {};
+            collector.add_hover_content(*span, content.into())
         }
     }
 }
@@ -269,8 +264,8 @@ impl CollectInfo for Anno {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let Anno { span, exp, typ, normalized_type } = self;
         if let (Some(span), Some(typ)) = (span, normalized_type) {
-            let content = InfoContent::AnnoInfo(AnnoInfo { typ: typ.print_to_string(None) });
-            collector.add_hover_content(*span, content)
+            let content = AnnoInfo { typ: typ.print_to_string(None) };
+            collector.add_hover_content(*span, content.into())
         }
         exp.collect_info(collector);
         typ.collect_info(collector)
