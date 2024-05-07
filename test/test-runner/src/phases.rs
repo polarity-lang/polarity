@@ -1,5 +1,5 @@
-use std::error::Error;
 use std::fmt;
+use std::{error::Error, path::Path};
 
 use parser::cst;
 use printer::PrintToString;
@@ -197,7 +197,7 @@ impl Phase for Parse {
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        parser::parse_module(&input)
+        parser::parse_module(Path::new("/"), &input) // TODO: Fix this!
     }
 }
 

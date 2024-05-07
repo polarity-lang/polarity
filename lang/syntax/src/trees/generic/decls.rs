@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use codespan::Span;
 use derivative::Derivative;
+use url::Url;
 
 use crate::common::*;
 
@@ -29,6 +30,8 @@ pub struct Attribute {
 /// There is a 1-1 correspondence between modules and files in our system.
 #[derive(Debug, Clone)]
 pub struct Module {
+    /// The location of the module on disk
+    pub uri: Url,
     /// Map from identifiers to declarations
     pub map: HashMap<Ident, Decl>,
     /// Metadata on declarations
@@ -44,9 +47,10 @@ impl Module {
 
 impl ForgetTST for Module {
     fn forget_tst(&self) -> Self {
-        let Module { map, lookup_table } = self;
+        let Module { uri, map, lookup_table } = self;
 
         Module {
+            uri: uri.clone(),
             map: map.iter().map(|(name, decl)| (name.clone(), decl.forget_tst())).collect(),
             lookup_table: lookup_table.clone(),
         }

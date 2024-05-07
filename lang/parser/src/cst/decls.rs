@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use codespan::Span;
+use url::Url;
 
 use super::exp;
 
@@ -18,6 +19,8 @@ pub struct Attribute {
 
 #[derive(Debug, Clone)]
 pub struct Module {
+    /// The location of the module on disk
+    pub uri: Url,
     pub items: Vec<Decl>,
 }
 

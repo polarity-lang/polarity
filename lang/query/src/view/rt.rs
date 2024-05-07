@@ -20,7 +20,7 @@ impl<'a> DatabaseView<'a> {
 
     pub fn cst(&self) -> Result<cst::decls::Module, Error> {
         let source = self.source();
-        parser::parse_module(source).map_err(Error::Parser)
+        parser::parse_module(Path::new(self.filename()), source).map_err(Error::Parser)
     }
 
     pub fn ust(&self) -> Result<Module, Error> {

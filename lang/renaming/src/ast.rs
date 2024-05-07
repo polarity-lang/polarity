@@ -49,6 +49,7 @@ impl<R: Rename + Clone> Rename for Rc<R> {
 impl Rename for Module {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         Module {
+            uri: self.uri,
             map: self.map.into_iter().map(|(name, decl)| (name, decl.rename_in_ctx(ctx))).collect(),
             lookup_table: self.lookup_table,
         }
