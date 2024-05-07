@@ -10,7 +10,7 @@ use super::exp::*;
 use super::lookup_table;
 use super::lookup_table::DeclKind;
 
-impl Decls {
+impl Module {
     pub fn empty() -> Self {
         Self { map: HashMap::default(), lookup_table: Default::default() }
     }

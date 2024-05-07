@@ -8,9 +8,9 @@ use crate::result::*;
 pub trait Normalize {
     type Nf;
 
-    fn normalize(&self, prg: &Prg, env: &mut Env) -> Result<Self::Nf, TypeError>;
+    fn normalize(&self, prg: &Module, env: &mut Env) -> Result<Self::Nf, TypeError>;
 
-    fn normalize_in_empty_env(&self, prg: &Prg) -> Result<Self::Nf, TypeError> {
+    fn normalize_in_empty_env(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
         self.normalize(prg, &mut Env::empty())
     }
 }
@@ -22,7 +22,7 @@ where
 {
     type Nf = <<T as Eval>::Val as ReadBack>::Nf;
 
-    fn normalize(&self, prg: &Prg, env: &mut Env) -> Result<Self::Nf, TypeError> {
+    fn normalize(&self, prg: &Module, env: &mut Env) -> Result<Self::Nf, TypeError> {
         let val = self.eval(prg, env)?;
         val.read_back(prg)
     }

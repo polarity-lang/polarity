@@ -20,16 +20,12 @@ impl<'a> DatabaseView<'a> {
     pub fn xfunc(&self, type_name: &str) -> Result<Xfunc, crate::Error> {
         let prg = self.tst()?;
 
-        let decl_spans = prg
-            .decls
-            .map
-            .values()
-            .map(|decl| (decl.name().clone(), decl.span().unwrap()))
-            .collect();
+        let decl_spans =
+            prg.map.values().map(|decl| (decl.name().clone(), decl.span().unwrap())).collect();
 
         // xdefs and xtors before xfunc
-        let xdefs = prg.decls.xdefs_for_type(type_name);
-        let xtors = prg.decls.xtors_for_type(type_name);
+        let xdefs = prg.xdefs_for_type(type_name);
+        let xtors = prg.xtors_for_type(type_name);
 
         // Filter out dirty declarations of the type being xfunctionalized which are handled separately
         let mut filter_out = HashSet::default();
@@ -68,7 +64,7 @@ struct Original {
 
 struct XfuncResult {
     title: String,
-    decls: Decls,
+    decls: Module,
     /// The new type (co)data definition as well as all associated (co)definitions
     new_decls: Vec<Decl>,
 }
@@ -103,13 +99,13 @@ fn generate_edits(original: Original, dirty_decls: HashSet<Ident>, result: Xfunc
 }
 
 fn refunctionalize(
-    prg: Prg,
+    prg: Module,
     mat: &matrix::Prg,
     type_name: &str,
 ) -> Result<XfuncResult, crate::Error> {
     let (codata, dtors, codefs) = xfunc::as_codata(mat, type_name)?;
 
-    let mut decls = prg.decls;
+    let mut decls = prg;
     let map = &mut decls.map;
     map.insert(codata.name.clone(), Decl::Codata(codata.clone()));
     map.extend(codefs.clone().into_iter().map(|def| (def.name.clone(), Decl::Codef(def))));
@@ -127,13 +123,13 @@ fn refunctionalize(
 }
 
 fn defunctionalize(
-    prg: Prg,
+    prg: Module,
     mat: &matrix::Prg,
     type_name: &str,
 ) -> Result<XfuncResult, crate::Error> {
     let (data, ctors, defs) = xfunc::as_data(mat, type_name)?;
 
-    let mut decls = prg.decls;
+    let mut decls = prg;
     let map = &mut decls.map;
 
     map.insert(data.name.clone(), Decl::Data(data.clone()));

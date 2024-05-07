@@ -12,7 +12,7 @@ use super::data::{
 };
 
 /// Traverse the program and collect information for the LSP server.
-pub fn collect_info(prg: &Prg) -> (Lapper<u32, HoverInfo>, Lapper<u32, Item>) {
+pub fn collect_info(prg: &Module) -> (Lapper<u32, HoverInfo>, Lapper<u32, Item>) {
     let mut c = InfoCollector::default();
 
     prg.collect_info(&mut c);
@@ -68,16 +68,9 @@ impl<T: CollectInfo> CollectInfo for Option<T> {
 //
 //
 
-impl CollectInfo for Prg {
+impl CollectInfo for Module {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Prg { decls } = self;
-        decls.collect_info(collector)
-    }
-}
-
-impl CollectInfo for Decls {
-    fn collect_info(&self, collector: &mut InfoCollector) {
-        let Decls { map, .. } = self;
+        let Module { map, .. } = self;
         for item in map.values() {
             item.collect_info(collector)
         }

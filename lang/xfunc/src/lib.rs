@@ -3,7 +3,7 @@ use syntax::generic;
 pub mod matrix;
 pub mod result;
 
-pub fn as_matrix(prg: &generic::Prg) -> Result<matrix::Prg, crate::result::XfuncError> {
+pub fn as_matrix(prg: &generic::Module) -> Result<matrix::Prg, crate::result::XfuncError> {
     matrix::build(prg)
 }
 

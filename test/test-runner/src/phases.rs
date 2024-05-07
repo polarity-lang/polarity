@@ -4,7 +4,7 @@ use std::fmt;
 use parser::cst;
 use printer::PrintToString;
 use renaming::Rename;
-use syntax::generic::{ForgetTST, Prg};
+use syntax::generic::{ForgetTST, Module};
 
 use super::infallible::NoError;
 
@@ -203,7 +203,7 @@ impl Phase for Parse {
 
 impl Phase for Lower {
     type In = cst::decls::Prg;
-    type Out = Prg;
+    type Out = Module;
     type Err = lowering::LoweringError;
 
     fn new(name: &'static str) -> Self {
@@ -215,13 +215,13 @@ impl Phase for Lower {
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        lowering::lower_prg(&input)
+        lowering::lower_module(&input)
     }
 }
 
 impl Phase for Check {
-    type In = Prg;
-    type Out = Prg;
+    type In = Module;
+    type Out = Module;
     type Err = elaborator::result::TypeError;
 
     fn new(name: &'static str) -> Self {
@@ -238,7 +238,7 @@ impl Phase for Check {
 }
 
 impl Phase for Print {
-    type In = Prg;
+    type In = Module;
     type Out = String;
     type Err = NoError;
 
@@ -256,8 +256,8 @@ impl Phase for Print {
 }
 
 impl Phase for Forget {
-    type In = Prg;
-    type Out = Prg;
+    type In = Module;
+    type Out = Module;
     type Err = NoError;
 
     fn new(name: &'static str) -> Self {
@@ -280,7 +280,7 @@ impl TestOutput for cst::decls::Prg {
     }
 }
 
-impl TestOutput for Prg {
+impl TestOutput for Module {
     fn test_output(&self) -> String {
         self.print_to_string(None)
     }

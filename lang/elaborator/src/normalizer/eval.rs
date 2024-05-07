@@ -12,18 +12,18 @@ use crate::result::*;
 pub trait Eval {
     type Val;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError>;
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError>;
 }
 
 pub trait Apply {
-    fn apply(self, prg: &Prg, args: &[Rc<Val>]) -> Result<Rc<Val>, TypeError>;
+    fn apply(self, prg: &Module, args: &[Rc<Val>]) -> Result<Rc<Val>, TypeError>;
 }
 
 impl Eval for Exp {
     type Val = Rc<Val>;
 
     #[trace("{:P} |- {:P} ▷ {return:P}", env, self, std::convert::identity)]
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         match self {
             Exp::Variable(e) => e.eval(prg, env),
             Exp::TypCtor(e) => e.eval(prg, env),
@@ -41,7 +41,7 @@ impl Eval for Exp {
 impl Eval for Variable {
     type Val = Rc<Val>;
 
-    fn eval(&self, _prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, _prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Variable { idx, .. } = self;
         Ok(env.lookup(*idx))
     }
@@ -50,7 +50,7 @@ impl Eval for Variable {
 impl Eval for TypCtor {
     type Val = Rc<Val>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let TypCtor { span, name, args } = self;
         Ok(Rc::new(Val::TypCtor { span: *span, name: name.clone(), args: args.eval(prg, env)? }))
     }
@@ -59,7 +59,7 @@ impl Eval for TypCtor {
 impl Eval for Call {
     type Val = Rc<Val>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Call { span, name, args, .. } = self;
         Ok(Rc::new(Val::Ctor { span: *span, name: name.clone(), args: args.eval(prg, env)? }))
     }
@@ -68,22 +68,22 @@ impl Eval for Call {
 impl Eval for DotCall {
     type Val = Rc<Val>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let DotCall { span, exp, name, args, .. } = self;
         let exp = exp.eval(prg, env)?;
         let args = args.eval(prg, env)?;
         match (*exp).clone() {
             Val::Ctor { name: ctor_name, args: ctor_args, span } => {
-                let type_decl = prg.decls.type_decl_for_member(&ctor_name, span)?;
+                let type_decl = prg.type_decl_for_member(&ctor_name, span)?;
                 match type_decl {
                     DataCodata::Data(_) => {
-                        let Def { body, .. } = prg.decls.def(name, None)?;
+                        let Def { body, .. } = prg.def(name, None)?;
                         let body =
                             Env::empty().bind_iter(args.iter(), |env| body.eval(prg, env))?;
                         beta_match(prg, body, &ctor_name, &ctor_args)
                     }
                     DataCodata::Codata(_) => {
-                        let Codef { body, .. } = prg.decls.codef(&ctor_name, None)?;
+                        let Codef { body, .. } = prg.codef(&ctor_name, None)?;
                         let body =
                             Env::empty().bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
                         beta_comatch(prg, body, name, &args)
@@ -102,7 +102,7 @@ impl Eval for DotCall {
 impl Eval for Anno {
     type Val = Rc<Val>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Anno { exp, .. } = self;
         exp.eval(prg, env)
     }
@@ -111,7 +111,7 @@ impl Eval for Anno {
 impl Eval for TypeUniv {
     type Val = Rc<Val>;
 
-    fn eval(&self, _prg: &Prg, _env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, _prg: &Module, _env: &mut Env) -> Result<Self::Val, TypeError> {
         let TypeUniv { span } = self;
         Ok(Rc::new(Val::TypeUniv { span: *span }))
     }
@@ -120,7 +120,7 @@ impl Eval for TypeUniv {
 impl Eval for LocalMatch {
     type Val = Rc<Val>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let LocalMatch { name: match_name, on_exp, body, .. } = self;
         let on_exp = on_exp.eval(prg, env)?;
         let body = body.eval(prg, env)?;
@@ -142,7 +142,7 @@ impl Eval for LocalMatch {
 impl Eval for LocalComatch {
     type Val = Rc<Val>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
         Ok(Rc::new(Val::Comatch {
             span: *span,
@@ -156,7 +156,7 @@ impl Eval for LocalComatch {
 impl Eval for Hole {
     type Val = Rc<Val>;
 
-    fn eval(&self, _prg: &Prg, _env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, _prg: &Module, _env: &mut Env) -> Result<Self::Val, TypeError> {
         let Hole { span, .. } = self;
         Ok(Rc::new(Val::Neu { exp: Neu::Hole { span: *span } }))
     }
@@ -164,7 +164,7 @@ impl Eval for Hole {
 
 #[trace("{}(...).match {:P} ▷β {return:P}", ctor_name, body, std::convert::identity)]
 fn beta_match(
-    prg: &Prg,
+    prg: &Module,
     body: val::Match,
     ctor_name: &str,
     args: &[Rc<Val>],
@@ -177,7 +177,7 @@ fn beta_match(
 
 #[trace("comatch {:P}.{}(...) ▷β {return:P}", body, dtor_name, std::convert::identity)]
 fn beta_comatch(
-    prg: &Prg,
+    prg: &Module,
     body: val::Match,
     dtor_name: &str,
     args: &[Rc<Val>],
@@ -191,7 +191,7 @@ fn beta_comatch(
 impl Eval for Match {
     type Val = val::Match;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Match { span, cases, omit_absurd } = self;
 
         Ok(val::Match { span: *span, cases: cases.eval(prg, env)?, omit_absurd: *omit_absurd })
@@ -201,7 +201,7 @@ impl Eval for Match {
 impl Eval for Case {
     type Val = val::Case;
 
-    fn eval(&self, _prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, _prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Case { span, name, params, body } = self;
 
         let body = body.as_ref().map(|body| Closure {
@@ -217,13 +217,13 @@ impl Eval for Case {
 impl Eval for Args {
     type Val = Vec<Rc<Val>>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         self.args.eval(prg, env)
     }
 }
 
 impl Apply for Closure {
-    fn apply(mut self, prg: &Prg, args: &[Rc<Val>]) -> Result<Rc<Val>, TypeError> {
+    fn apply(mut self, prg: &Module, args: &[Rc<Val>]) -> Result<Rc<Val>, TypeError> {
         self.env.bind_iter(args.iter(), |env| self.body.eval(prg, env))
     }
 }
@@ -231,7 +231,7 @@ impl Apply for Closure {
 impl<T: Eval> Eval for Vec<T> {
     type Val = Vec<T::Val>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         self.iter().map(|x| x.eval(prg, env)).collect()
     }
 }
@@ -239,7 +239,7 @@ impl<T: Eval> Eval for Vec<T> {
 impl Eval for Rc<Exp> {
     type Val = Rc<Val>;
 
-    fn eval(&self, prg: &Prg, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         (**self).eval(prg, env)
     }
 }

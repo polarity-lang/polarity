@@ -11,7 +11,7 @@ use crate::lower::Lower;
 pub use ctx::*;
 pub use result::*;
 
-pub fn lower_prg(prg: &cst::decls::Prg) -> Result<generic::Prg, LoweringError> {
+pub fn lower_module(prg: &cst::decls::Prg) -> Result<generic::Module, LoweringError> {
     let cst::decls::Prg { items } = prg;
 
     let (top_level_map, lookup_table) = build_lookup_table(items)?;
@@ -22,5 +22,5 @@ pub fn lower_prg(prg: &cst::decls::Prg) -> Result<generic::Prg, LoweringError> {
         item.lower(&mut ctx)?;
     }
 
-    Ok(generic::Prg { decls: generic::Decls { map: ctx.decls_map, lookup_table } })
+    Ok(generic::Module { map: ctx.decls_map, lookup_table })
 }

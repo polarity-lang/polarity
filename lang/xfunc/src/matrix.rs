@@ -46,7 +46,7 @@ pub enum Repr {
 }
 
 /// Take the red pill
-pub fn build(prg: &generic::Prg) -> Result<Prg, XfuncError> {
+pub fn build(prg: &generic::Module) -> Result<Prg, XfuncError> {
     let mut out = Prg { map: HashMap::default(), exp: None };
     let mut ctx = Ctx::empty();
     prg.build_matrix(&mut ctx, &mut out)?;
@@ -67,11 +67,11 @@ impl Ctx {
     }
 }
 
-impl BuildMatrix for generic::Prg {
+impl BuildMatrix for generic::Module {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let generic::Prg { decls } = self;
+        let generic::Module { map, .. } = self;
 
-        for decl in decls.map.values() {
+        for decl in map.values() {
             match decl {
                 generic::Decl::Data(data) => data.build_matrix(ctx, out),
                 generic::Decl::Codata(codata) => codata.build_matrix(ctx, out),
@@ -79,7 +79,7 @@ impl BuildMatrix for generic::Prg {
             }?
         }
 
-        for decl in decls.map.values() {
+        for decl in map.values() {
             match decl {
                 generic::Decl::Ctor(ctor) => ctor.build_matrix(ctx, out),
                 generic::Decl::Dtor(dtor) => dtor.build_matrix(ctx, out),
