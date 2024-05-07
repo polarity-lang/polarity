@@ -9,8 +9,9 @@ use syntax::{
 
 // Info
 //
-// Types which contain the information that is displayed in a
-// code editor when hovering over a point in the program code.
+// Types which contain the information that is used by the LSP server
+// to compute type-on-hover information and to provide the jump-to-definition
+// functionality.
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Info {
@@ -31,7 +32,7 @@ pub enum InfoContent {
     AnnoInfo(AnnoInfo),
 }
 
-/// Hover information for bound variables
+/// Information for bound variables
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VariableInfo {
     pub typ: String,
@@ -43,7 +44,7 @@ impl From<VariableInfo> for InfoContent {
     }
 }
 
-/// Hover information for type constructors
+/// Information for type constructors
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeCtorInfo {}
 
@@ -53,7 +54,7 @@ impl From<TypeCtorInfo> for InfoContent {
     }
 }
 
-/// Hover information for calls (constructors, codefinitions or lets)
+/// Information for calls (constructors, codefinitions or lets)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CallInfo {
     pub kind: CallKind,
@@ -66,7 +67,7 @@ impl From<CallInfo> for InfoContent {
     }
 }
 
-/// Hover information for dotcalls (destructors or definitions)
+/// Information for dotcalls (destructors or definitions)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DotCallInfo {
     pub kind: DotCallKind,
@@ -79,7 +80,7 @@ impl From<DotCallInfo> for InfoContent {
     }
 }
 
-/// Hover information for type universes
+/// Information for type universes
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeUnivInfo {}
 
@@ -89,7 +90,7 @@ impl From<TypeUnivInfo> for InfoContent {
     }
 }
 
-/// Hover information for type annotated terms
+/// Information for type annotated terms
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnnoInfo {
     pub typ: String,
@@ -101,7 +102,7 @@ impl From<AnnoInfo> for InfoContent {
     }
 }
 
-/// Hover information for typed holes
+/// Information for typed holes
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HoleInfo {
     pub goal: String,
