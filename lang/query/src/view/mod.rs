@@ -16,10 +16,3 @@ pub struct DatabaseView<'a> {
     pub(crate) file_id: FileId,
     pub(crate) database: &'a Database,
 }
-
-impl<'a> DatabaseView<'a> {
-    pub fn index(&self) -> IndexView<'_> {
-        let DatabaseView { file_id, database } = self;
-        database.index.get(*file_id)
-    }
-}

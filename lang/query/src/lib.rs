@@ -4,18 +4,17 @@ use std::path::Path;
 
 use codespan::{FileId, Files};
 
+use rust_lapper::Lapper;
 use syntax::common::*;
 
 pub use result::Error;
 
 mod asserts;
-mod index;
 mod info;
 mod result;
 mod view;
 mod view_mut;
 
-pub use index::*;
 pub use info::*;
 pub use view::*;
 pub use view_mut::*;
@@ -24,7 +23,8 @@ pub use view_mut::*;
 pub struct Database {
     id_by_name: HashMap<String, FileId>,
     files: Files<String>,
-    index: index::Index,
+    info_by_id: HashMap<FileId, Lapper<u32, HoverInfo>>,
+    item_by_id: HashMap<FileId, Lapper<u32, Item>>,
 }
 
 /// File that can be added to the database
@@ -38,10 +38,7 @@ pub struct File {
 
 impl File {
     pub fn read(path: &Path) -> io::Result<Self> {
-        Ok(Self {
-            name: path.to_str().unwrap().to_owned(),
-            source: fs::read_to_string(path)?,
-        })
+        Ok(Self { name: path.to_str().unwrap().to_owned(), source: fs::read_to_string(path)? })
     }
 }
 
