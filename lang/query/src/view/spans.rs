@@ -1,6 +1,6 @@
 use codespan::{ByteIndex, Location, Span};
 
-use super::info::{HoverInfo, Item};
+use super::info::{Info, Item};
 use super::DatabaseView;
 
 impl<'a> DatabaseView<'a> {
@@ -22,11 +22,11 @@ impl<'a> DatabaseView<'a> {
         Some((start, end))
     }
 
-    pub fn hoverinfo_at_index(&self, idx: ByteIndex) -> Option<HoverInfo> {
-        self.hoverinfo_at_span(Span::new(idx, ByteIndex(u32::from(idx) + 1)))
+    pub fn info_at_index(&self, idx: ByteIndex) -> Option<Info> {
+        self.info_at_span(Span::new(idx, ByteIndex(u32::from(idx) + 1)))
     }
 
-    pub fn hoverinfo_at_span(&self, span: Span) -> Option<HoverInfo> {
+    pub fn info_at_span(&self, span: Span) -> Option<Info> {
         let index = self.index()?;
         let lapper = index.infos();
         let intervals = lapper.find(span.start().into(), span.end().into());

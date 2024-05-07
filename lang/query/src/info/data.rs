@@ -7,21 +7,21 @@ use syntax::{
     generic::DotCallKind,
 };
 
-// HoverInfo
+// Info
 //
 // Types which contain the information that is displayed in a
 // code editor when hovering over a point in the program code.
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct HoverInfo {
+pub struct Info {
     /// The source code location to which the content applies
     pub span: Span,
     /// The information that should be displayed on hover
-    pub content: HoverInfoContent,
+    pub content: InfoContent,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum HoverInfoContent {
+pub enum InfoContent {
     VariableInfo(VariableInfo),
     TypeCtorInfo(TypeCtorInfo),
     CallInfo(CallInfo),

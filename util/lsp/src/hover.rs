@@ -15,13 +15,12 @@ pub async fn hover(server: &Server, params: HoverParams) -> jsonrpc::Result<Opti
     let pos = pos_params.position;
     let db = server.database.read().await;
     let index = db.get(text_document.uri.as_str()).unwrap();
-    let info =
-        index.location_to_index(pos.from_lsp()).and_then(|idx| index.hoverinfo_at_index(idx));
+    let info = index.location_to_index(pos.from_lsp()).and_then(|idx| index.info_at_index(idx));
     let res = info.map(|info| info_to_hover(&index, info));
     Ok(res)
 }
 
-fn info_to_hover(index: &DatabaseView, info: HoverInfo) -> Hover {
+fn info_to_hover(index: &DatabaseView, info: Info) -> Hover {
     let range = index.span_to_locations(info.span).map(ToLsp::to_lsp);
     let contents = info.content.to_hover_content();
     Hover { contents, range }
@@ -62,16 +61,16 @@ trait ToHoverContent {
     fn to_hover_content(self) -> HoverContents;
 }
 
-impl ToHoverContent for HoverInfoContent {
+impl ToHoverContent for InfoContent {
     fn to_hover_content(self) -> HoverContents {
         match self {
-            HoverInfoContent::VariableInfo(i) => i.to_hover_content(),
-            HoverInfoContent::TypeCtorInfo(i) => i.to_hover_content(),
-            HoverInfoContent::CallInfo(i) => i.to_hover_content(),
-            HoverInfoContent::DotCallInfo(i) => i.to_hover_content(),
-            HoverInfoContent::TypeUnivInfo(i) => i.to_hover_content(),
-            HoverInfoContent::HoleInfo(i) => i.to_hover_content(),
-            HoverInfoContent::AnnoInfo(i) => i.to_hover_content(),
+            InfoContent::VariableInfo(i) => i.to_hover_content(),
+            InfoContent::TypeCtorInfo(i) => i.to_hover_content(),
+            InfoContent::CallInfo(i) => i.to_hover_content(),
+            InfoContent::DotCallInfo(i) => i.to_hover_content(),
+            InfoContent::TypeUnivInfo(i) => i.to_hover_content(),
+            InfoContent::HoleInfo(i) => i.to_hover_content(),
+            InfoContent::AnnoInfo(i) => i.to_hover_content(),
         }
     }
 }
