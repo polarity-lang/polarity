@@ -13,28 +13,18 @@ use super::{
     TypeError,
 };
 
-pub fn check(prg: &Prg) -> Result<Prg, TypeError> {
+pub fn check(prg: &Module) -> Result<Module, TypeError> {
     prg.check_wf(prg)
 }
 
 pub trait CheckToplevel: Sized {
-    fn check_wf(&self, prg: &Prg) -> Result<Self, TypeError>;
-}
-
-impl CheckToplevel for Prg {
-    fn check_wf(&self, prg: &Prg) -> Result<Self, TypeError> {
-        let Prg { decls } = self;
-
-        let decls_out = decls.check_wf(prg)?;
-
-        Ok(Prg { decls: decls_out })
-    }
+    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError>;
 }
 
 /// Check all declarations in a program
-impl CheckToplevel for Decls {
-    fn check_wf(&self, prg: &Prg) -> Result<Self, TypeError> {
-        let Decls { map, lookup_table } = self;
+impl CheckToplevel for Module {
+    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
+        let Module { map, lookup_table } = self;
 
         // FIXME: Reconsider order
 
@@ -43,14 +33,14 @@ impl CheckToplevel for Decls {
             .map(|(name, decl)| Ok((name.clone(), decl.check_wf(prg)?)))
             .collect::<Result<_, TypeError>>()?;
 
-        Ok(Decls { map: map_out, lookup_table: lookup_table.clone() })
+        Ok(Module { map: map_out, lookup_table: lookup_table.clone() })
     }
 }
 
 /// Check a declaration
 impl CheckToplevel for Decl {
     #[trace(" |- {} =>", self.name())]
-    fn check_wf(&self, prg: &Prg) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
         let out = match self {
             Decl::Data(data) => Decl::Data(data.check_wf(prg)?),
             Decl::Codata(codata) => Decl::Codata(codata.check_wf(prg)?),
@@ -66,7 +56,7 @@ impl CheckToplevel for Decl {
 
 /// Check a data declaration
 impl CheckToplevel for Data {
-    fn check_wf(&self, prg: &Prg) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
         let Data { span, doc, name, attr, typ, ctors } = self;
 
         let mut var_ctx = Ctx::default();
@@ -86,7 +76,7 @@ impl CheckToplevel for Data {
 
 /// Infer a codata declaration
 impl CheckToplevel for Codata {
-    fn check_wf(&self, prg: &Prg) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
         let Codata { span, doc, name, attr, typ, dtors } = self;
 
         let mut var_ctx = Ctx::default();
@@ -106,11 +96,11 @@ impl CheckToplevel for Codata {
 
 /// Infer a constructor declaration
 impl CheckToplevel for Ctor {
-    fn check_wf(&self, prg: &Prg) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
         let Ctor { span, doc, name, params, typ } = self;
 
         // Check that the constructor lies in the data type it is defined in
-        let data_type = prg.decls.data_for_ctor(name, *span)?;
+        let data_type = prg.data_for_ctor(name, *span)?;
         let expected = &data_type.name;
         if &typ.name != expected {
             return Err(TypeError::NotInType {
@@ -138,11 +128,11 @@ impl CheckToplevel for Ctor {
 
 /// Infer a destructor declaration
 impl CheckToplevel for Dtor {
-    fn check_wf(&self, prg: &Prg) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
         let Dtor { span, doc, name, params, self_param, ret_typ } = self;
 
         // Check that the destructor lies in the codata type it is defined in
-        let codata_type = prg.decls.codata_for_dtor(name, *span)?;
+        let codata_type = prg.codata_for_dtor(name, *span)?;
         let expected = &codata_type.name;
         if &self_param.typ.name != expected {
             return Err(TypeError::NotInType {
@@ -173,7 +163,7 @@ impl CheckToplevel for Dtor {
 
 /// Infer a definition
 impl CheckToplevel for Def {
-    fn check_wf(&self, prg: &Prg) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
         let Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
 
         let mut var_ctx = Ctx::default();
@@ -207,7 +197,7 @@ impl CheckToplevel for Def {
 
 /// Infer a co-definition
 impl CheckToplevel for Codef {
-    fn check_wf(&self, prg: &Prg) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
         let Codef { span, doc, name, attr, params, typ, body } = self;
 
         let mut var_ctx = Ctx::default();
@@ -236,7 +226,7 @@ impl CheckToplevel for Codef {
 }
 
 impl CheckToplevel for Let {
-    fn check_wf(&self, prg: &Prg) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
         let Let { span, doc, name, attr, params, typ, body } = self;
 
         let mut var_ctx = Ctx::default();

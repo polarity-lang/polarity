@@ -31,7 +31,7 @@ pub trait CheckInfer: Sized {
     /// ```
     /// - P: The program context of toplevel declarations.
     /// - Γ: The context of locally bound variables.
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError>;
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError>;
     /// Tries to infer a type for the given expression. For inference we use the
     /// following syntax:
     /// ```text
@@ -39,14 +39,14 @@ pub trait CheckInfer: Sized {
     /// ```
     ///  - P: The program context of toplevel declarations.
     ///  - Γ: The context of locally bound variables.
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError>;
+    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError>;
 }
 
 impl<T: CheckInfer> CheckInfer for Rc<T> {
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         Ok(Rc::new((**self).check(prg, ctx, t)?))
     }
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         Ok(Rc::new((**self).infer(prg, ctx)?))
     }
 }
@@ -57,7 +57,7 @@ impl<T: CheckInfer> CheckInfer for Rc<T> {
 
 impl CheckInfer for Exp {
     #[trace("{:P} |- {:P} <= {:P}", ctx, self, t)]
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         match self {
             Exp::Variable(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
             Exp::TypCtor(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
@@ -72,7 +72,7 @@ impl CheckInfer for Exp {
     }
 
     #[trace("{:P} |- {:P} => {return:P}", ctx, self, |ret| ret.as_ref().map(|e| e.typ()))]
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         match self {
             Exp::Variable(e) => Ok(e.infer(prg, ctx)?.into()),
             Exp::TypCtor(e) => Ok(e.infer(prg, ctx)?.into()),
@@ -99,7 +99,7 @@ impl CheckInfer for Variable {
     ///           ───────────────
     ///            P, Γ ⊢ x ⇐ σ
     /// ```
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
@@ -116,7 +116,7 @@ impl CheckInfer for Variable {
     ///           ───────────────
     ///            P, Γ ⊢ x ⇒ τ
     /// ```
-    fn infer(&self, _prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, _prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Variable { span, idx, name, .. } = self;
         let typ_nf = ctx.lookup(*idx);
         Ok(Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: Some(typ_nf) })
@@ -135,7 +135,7 @@ impl CheckInfer for TypCtor {
     ///           ──────────────────
     ///            P, Γ ⊢ Tσ ⇐ τ
     /// ```
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
@@ -153,9 +153,9 @@ impl CheckInfer for TypCtor {
     ///           ─────────────────────────
     ///            P, Γ ⊢ Tσ ⇒ Type
     /// ```
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let TypCtor { span, name, args } = self;
-        let params = &*prg.decls.typ(name, *span)?.typ();
+        let params = &*prg.typ(name, *span)?.typ();
         let args_out = check_args(args, prg, name, ctx, params, *span)?;
 
         Ok(TypCtor { span: *span, name: name.clone(), args: args_out })
@@ -173,7 +173,7 @@ impl CheckInfer for Call {
     ///           ──────────────────
     ///            P, Γ ⊢ Cσ ⇐ τ
     /// ```
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
@@ -189,9 +189,9 @@ impl CheckInfer for Call {
     ///           ──────────────────
     ///            P, Γ ⊢ Cσ ⇒ ...
     /// ```
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Call { span, kind, name, args, .. } = self;
-        let Ctor { name, params, typ, .. } = &prg.decls.ctor_or_codef(name, *span)?;
+        let Ctor { name, params, typ, .. } = &prg.ctor_or_codef(name, *span)?;
         let args_out = check_args(args, prg, name, ctx, params, *span)?;
         let typ_out =
             typ.subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()]).to_exp();
@@ -217,7 +217,7 @@ impl CheckInfer for DotCall {
     ///           ──────────────────
     ///            P, Γ ⊢ e.Dσ ⇐ τ
     /// ```
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
@@ -234,9 +234,9 @@ impl CheckInfer for DotCall {
     ///           ──────────────────
     ///            P, Γ ⊢ e.Dσ ⇒ ...
     /// ```
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let DotCall { span, kind, exp, name, args, .. } = self;
-        let Dtor { name, params, self_param, ret_typ, .. } = &prg.decls.dtor_or_def(name, *span)?;
+        let Dtor { name, params, self_param, ret_typ, .. } = &prg.dtor_or_def(name, *span)?;
 
         let args_out = check_args(args, prg, name, ctx, params, *span)?;
 
@@ -268,7 +268,7 @@ impl CheckInfer for DotCall {
 //
 
 impl CheckInfer for Anno {
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let inferred_term = self.infer(prg, ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
@@ -287,7 +287,7 @@ impl CheckInfer for Anno {
     ///           ──────────────────────
     ///            P, Γ ⊢ (e : τ) ⇒ τ'
     /// ```
-    fn infer(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Anno { span, exp, typ, .. } = self;
         let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
         let typ_nf = typ.normalize(prg, &mut ctx.env())?;
@@ -307,7 +307,7 @@ impl CheckInfer for TypeUniv {
     ///           ──────────────────
     ///            P, Γ ⊢ Type ⇐ τ
     /// ```
-    fn check(&self, _prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, _prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         convert(ctx.levels(), Rc::new(TypeUniv::new().into()), &t)?;
         Ok(self.clone())
     }
@@ -319,7 +319,7 @@ impl CheckInfer for TypeUniv {
     /// ```
     /// Note: The type universe is impredicative and the theory
     /// therefore inconsistent.
-    fn infer(&self, _prg: &Prg, _ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, _prg: &Module, _ctx: &mut Ctx) -> Result<Self, TypeError> {
         Ok(self.clone())
     }
 }
@@ -329,7 +329,7 @@ impl CheckInfer for TypeUniv {
 //
 
 impl CheckInfer for Hole {
-    fn check(&self, _prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, _prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let Hole { span, .. } = self;
         Ok(Hole {
             span: *span,
@@ -338,7 +338,7 @@ impl CheckInfer for Hole {
         })
     }
 
-    fn infer(&self, _prg: &Prg, _ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, _prg: &Module, _ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Hole { span, .. } = self;
         Ok(Hole {
             span: *span,
@@ -353,7 +353,7 @@ impl CheckInfer for Hole {
 //
 
 impl CheckInfer for LocalMatch {
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let LocalMatch { span, name, on_exp, motive, body, .. } = self;
         let on_exp_out = on_exp.infer(prg, ctx)?;
         let typ_app_nf = on_exp_out
@@ -425,7 +425,7 @@ impl CheckInfer for LocalMatch {
         })
     }
 
-    fn infer(&self, _prg: &Prg, _ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, _prg: &Module, _ctx: &mut Ctx) -> Result<Self, TypeError> {
         Err(TypeError::CannotInferMatch { span: self.span().to_miette() })
     }
 }
@@ -435,13 +435,13 @@ impl CheckInfer for LocalMatch {
 //
 
 impl CheckInfer for LocalComatch {
-    fn check(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
         let typ_app_nf = t.expect_typ_app()?;
         let typ_app = typ_app_nf.infer(prg, ctx)?;
 
         // Local comatches don't support self parameters, yet.
-        let codata = prg.decls.codata(&typ_app.name, *span)?;
+        let codata = prg.codata(&typ_app.name, *span)?;
         if uses_self(prg, codata)? {
             return Err(TypeError::LocalComatchWithSelf {
                 type_name: codata.name.to_owned(),
@@ -467,7 +467,7 @@ impl CheckInfer for LocalComatch {
         })
     }
 
-    fn infer(&self, _prg: &Prg, _ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, _prg: &Module, _ctx: &mut Ctx) -> Result<Self, TypeError> {
         Err(TypeError::CannotInferComatch { span: self.span().to_miette() })
     }
 }
@@ -481,7 +481,7 @@ pub trait CheckTelescope {
 
     fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
-        prg: &Prg,
+        prg: &Module,
         name: &str,
         ctx: &mut Ctx,
         params: &Telescope,
@@ -495,7 +495,7 @@ pub trait InferTelescope {
 
     fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
-        prg: &Prg,
+        prg: &Module,
         ctx: &mut Ctx,
         f: F,
     ) -> Result<T, TypeError>;
@@ -508,11 +508,11 @@ pub struct WithScrutinee<'a> {
 
 /// Check a pattern match
 impl<'a> WithScrutinee<'a> {
-    pub fn check_ws(&self, prg: &Prg, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Match, TypeError> {
+    pub fn check_ws(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Match, TypeError> {
         let Match { span, cases, omit_absurd } = &self.inner;
 
         // Check that this match is on a data type
-        let data = prg.decls.data(&self.scrutinee.name, *span)?;
+        let data = prg.data(&self.scrutinee.name, *span)?;
 
         // Check exhaustiveness
         let ctors_expected: HashSet<_> = data.ctors.iter().cloned().collect();
@@ -545,7 +545,7 @@ impl<'a> WithScrutinee<'a> {
 
         if *omit_absurd {
             for name in ctors_missing.cloned() {
-                let Ctor { params, .. } = prg.decls.ctor(&name, *span)?;
+                let Ctor { params, .. } = prg.ctor(&name, *span)?;
 
                 let case = Case { span: *span, name, params: params.instantiate(), body: None };
                 cases.push((case, true));
@@ -557,7 +557,7 @@ impl<'a> WithScrutinee<'a> {
         for (case, omit) in cases {
             // Build equations for this case
             let Ctor { typ: TypCtor { args: def_args, .. }, params, .. } =
-                prg.decls.ctor(&case.name, case.span)?;
+                prg.ctor(&case.name, case.span)?;
 
             let def_args_nf = LevelCtx::empty()
                 .bind_iter(params.params.iter(), |ctx| def_args.normalize(prg, &mut ctx.env()))?;
@@ -594,11 +594,11 @@ pub struct WithDestructee<'a> {
 
 /// Infer a copattern match
 impl<'a> WithDestructee<'a> {
-    pub fn infer_wd(&self, prg: &Prg, ctx: &mut Ctx) -> Result<Match, TypeError> {
+    pub fn infer_wd(&self, prg: &Module, ctx: &mut Ctx) -> Result<Match, TypeError> {
         let Match { span, cases, omit_absurd } = &self.inner;
 
         // Check that this comatch is on a codata type
-        let codata = prg.decls.codata(&self.destructee.name, *span)?;
+        let codata = prg.codata(&self.destructee.name, *span)?;
 
         // Check exhaustiveness
         let dtors_expected: HashSet<_> = codata.dtors.iter().cloned().collect();
@@ -632,7 +632,7 @@ impl<'a> WithDestructee<'a> {
 
         if *omit_absurd {
             for name in dtors_missing.cloned() {
-                let Dtor { params, .. } = prg.decls.dtor(&name, *span)?;
+                let Dtor { params, .. } = prg.dtor(&name, *span)?;
 
                 let case = Case { span: *span, name, params: params.instantiate(), body: None };
                 cases.push((case, true));
@@ -648,7 +648,7 @@ impl<'a> WithDestructee<'a> {
                 ret_typ,
                 params,
                 ..
-            } = prg.decls.dtor(&case.name, case.span)?;
+            } = prg.dtor(&case.name, case.span)?;
 
             let def_args_nf =
                 def_args.normalize(prg, &mut LevelCtx::from(vec![params.len()]).env())?;
@@ -716,12 +716,12 @@ impl<'a> WithDestructee<'a> {
 fn check_case(
     eqns: Vec<Eqn>,
     case: &Case,
-    prg: &Prg,
+    prg: &Module,
     ctx: &mut Ctx,
     t: Rc<Exp>,
 ) -> Result<Case, TypeError> {
     let Case { span, name, params: args, body } = case;
-    let Ctor { name, params, .. } = prg.decls.ctor(name, *span)?;
+    let Ctor { name, params, .. } = prg.ctor(name, *span)?;
 
     // FIXME: Refactor this
     let mut subst_ctx_1 = ctx.levels().append(&vec![1, params.len()].into());
@@ -807,12 +807,12 @@ fn check_case(
 fn check_cocase(
     eqns: Vec<Eqn>,
     cocase: &Case,
-    prg: &Prg,
+    prg: &Module,
     ctx: &mut Ctx,
     t: Rc<Exp>,
 ) -> Result<Case, TypeError> {
     let Case { span, name, params: params_inst, body } = cocase;
-    let Dtor { name, params, .. } = prg.decls.dtor(name, *span)?;
+    let Dtor { name, params, .. } = prg.dtor(name, *span)?;
 
     params_inst.check_telescope(
         prg,
@@ -861,7 +861,7 @@ fn check_cocase(
 
 fn check_args(
     this: &Args,
-    prg: &Prg,
+    prg: &Module,
     name: &str,
     ctx: &mut Ctx,
     params: &Telescope,
@@ -897,7 +897,7 @@ impl CheckTelescope for TelescopeInst {
 
     fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
-        prg: &Prg,
+        prg: &Module,
         name: &str,
         ctx: &mut Ctx,
         param_types: &Telescope,
@@ -947,7 +947,7 @@ impl InferTelescope for Telescope {
 
     fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
-        prg: &Prg,
+        prg: &Module,
         ctx: &mut Ctx,
         f: F,
     ) -> Result<T, TypeError> {
@@ -975,7 +975,7 @@ impl InferTelescope for SelfParam {
 
     fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
-        prg: &Prg,
+        prg: &Module,
         ctx: &mut Ctx,
         f: F,
     ) -> Result<T, TypeError> {

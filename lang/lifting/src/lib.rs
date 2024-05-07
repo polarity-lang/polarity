@@ -12,7 +12,7 @@ mod fv;
 use fv::*;
 
 /// Lift local (co)matches for `name` in `prg` to top-level (co)definitions
-pub fn lift(prg: Prg, name: &str) -> LiftResult {
+pub fn lift(prg: Module, name: &str) -> LiftResult {
     let mut ctx = Ctx {
         name: name.to_owned(),
         new_decls: vec![],
@@ -30,7 +30,7 @@ pub fn lift(prg: Prg, name: &str) -> LiftResult {
 /// Result of lifting
 pub struct LiftResult {
     /// The resulting program
-    pub prg: Prg,
+    pub prg: Module,
     /// List of new top-level definitions
     pub new_decls: HashSet<Ident>,
     /// List of top-level declarations that have been modified in the lifting process
@@ -71,21 +71,11 @@ trait LiftTelescope {
     fn lift_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> T>(&self, ctx: &mut Ctx, f: F) -> T;
 }
 
-impl Lift for Prg {
-    type Target = Prg;
+impl Lift for Module {
+    type Target = Module;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Prg { decls } = self;
-
-        Prg { decls: decls.lift(ctx) }
-    }
-}
-
-impl Lift for Decls {
-    type Target = Decls;
-
-    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Decls { map, lookup_table } = self;
+        let Module { map, lookup_table } = self;
 
         let mut map: HashMap<_, _> =
             map.iter().map(|(name, decl)| (name.clone(), decl.lift(ctx))).collect();
@@ -100,7 +90,7 @@ impl Lift for Decls {
         let decls_iter = ctx.new_decls.iter().map(|decl| (decl.name().clone(), decl.clone()));
         map.extend(decls_iter);
 
-        Decls { map, lookup_table }
+        Module { map, lookup_table }
     }
 }
 
