@@ -5,7 +5,7 @@ use syntax::generic::*;
 use tracer::trace;
 
 use crate::normalizer::env::*;
-use crate::normalizer::val::{self, Closure, Neu, Val};
+use crate::normalizer::val::{self, Closure, Val};
 
 use crate::result::*;
 
@@ -52,11 +52,9 @@ impl Eval for TypCtor {
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let TypCtor { span, name, args } = self;
-        Ok(Rc::new(Val::TypCtor(val::TypCtor {
-            span: *span,
-            name: name.clone(),
-            args: args.eval(prg, env)?,
-        })))
+        Ok(Rc::new(
+            val::TypCtor { span: *span, name: name.clone(), args: args.eval(prg, env)? }.into(),
+        ))
     }
 }
 
@@ -65,12 +63,10 @@ impl Eval for Call {
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Call { span, name, kind, args, .. } = self;
-        Ok(Rc::new(Val::Call(val::Call {
-            span: *span,
-            kind: *kind,
-            name: name.clone(),
-            args: args.eval(prg, env)?,
-        })))
+        Ok(Rc::new(
+            val::Call { span: *span, kind: *kind, name: name.clone(), args: args.eval(prg, env)? }
+                .into(),
+        ))
     }
 }
 
@@ -102,13 +98,16 @@ impl Eval for DotCall {
             Val::LocalComatch(val::LocalComatch { body, .. }) => {
                 beta_comatch(prg, body, name, &args)
             }
-            Val::Neu(exp) => Ok(Rc::new(Val::Neu(Neu::DotCall(val::DotCall {
-                span: *span,
-                kind: *kind,
-                exp: Rc::new(exp),
-                name: name.to_owned(),
-                args,
-            })))),
+            Val::Neu(exp) => Ok(Rc::new(Val::Neu(
+                val::DotCall {
+                    span: *span,
+                    kind: *kind,
+                    exp: Rc::new(exp),
+                    name: name.to_owned(),
+                    args,
+                }
+                .into(),
+            ))),
             _ => unreachable!(),
         }
     }
@@ -128,7 +127,7 @@ impl Eval for TypeUniv {
 
     fn eval(&self, _prg: &Module, _env: &mut Env) -> Result<Self::Val, TypeError> {
         let TypeUniv { span } = self;
-        Ok(Rc::new(Val::TypeUniv(val::TypeUniv { span: *span })))
+        Ok(Rc::new(val::TypeUniv { span: *span }.into()))
     }
 }
 
@@ -143,12 +142,15 @@ impl Eval for LocalMatch {
             Val::Call(val::Call { name: ctor_name, args, .. }) => {
                 beta_match(prg, body, &ctor_name, &args)
             }
-            Val::Neu(exp) => Ok(Rc::new(Val::Neu(Neu::LocalMatch(val::LocalMatch {
-                span: None,
-                name: match_name.to_owned(),
-                on_exp: Rc::new(exp),
-                body,
-            })))),
+            Val::Neu(exp) => Ok(Rc::new(Val::Neu(
+                val::LocalMatch {
+                    span: None,
+                    name: match_name.to_owned(),
+                    on_exp: Rc::new(exp),
+                    body,
+                }
+                .into(),
+            ))),
             _ => unreachable!(),
         }
     }
@@ -159,12 +161,15 @@ impl Eval for LocalComatch {
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
-        Ok(Rc::new(Val::LocalComatch(val::LocalComatch {
-            span: *span,
-            name: name.clone(),
-            is_lambda_sugar: *is_lambda_sugar,
-            body: body.eval(prg, env)?,
-        })))
+        Ok(Rc::new(
+            val::LocalComatch {
+                span: *span,
+                name: name.clone(),
+                is_lambda_sugar: *is_lambda_sugar,
+                body: body.eval(prg, env)?,
+            }
+            .into(),
+        ))
     }
 }
 
@@ -173,7 +178,7 @@ impl Eval for Hole {
 
     fn eval(&self, _prg: &Module, _env: &mut Env) -> Result<Self::Val, TypeError> {
         let Hole { span, .. } = self;
-        Ok(Rc::new(Val::Neu(Neu::Hole(val::Hole { span: *span }))))
+        Ok(Rc::new(Val::Neu(val::Hole { span: *span }.into())))
     }
 }
 
