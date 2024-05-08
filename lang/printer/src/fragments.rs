@@ -1,7 +1,7 @@
 use pretty::DocAllocator;
 
 use super::types::*;
-use syntax::generic::{Decl, Module};
+use syntax::ast::{Decl, Module};
 
 pub struct Items {
     pub items: Vec<Decl>,

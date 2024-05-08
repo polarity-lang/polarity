@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
+use syntax::ast::*;
 use syntax::ctx::{BindContext, Context};
-use syntax::generic::*;
 use tracer::trace;
 
 use crate::normalizer::env::*;

@@ -4,8 +4,8 @@ use printer::fragments::Items;
 use printer::PrintToStringInCtx;
 use renaming::Rename;
 
+use syntax::ast::*;
 use syntax::common::*;
-use syntax::generic::*;
 use xfunc::matrix;
 use xfunc::result::XfuncError;
 

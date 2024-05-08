@@ -1,9 +1,9 @@
-use syntax::generic;
+use syntax::ast;
 
 pub mod matrix;
 pub mod result;
 
-pub fn as_matrix(prg: &generic::Module) -> Result<matrix::Prg, crate::result::XfuncError> {
+pub fn as_matrix(prg: &ast::Module) -> Result<matrix::Prg, crate::result::XfuncError> {
     matrix::build(prg)
 }
 
@@ -20,7 +20,7 @@ pub fn repr(prg: &matrix::Prg, name: &str) -> Result<matrix::Repr, crate::result
 pub fn as_data(
     prg: &matrix::Prg,
     name: &str,
-) -> Result<(generic::Data, Vec<generic::Ctor>, Vec<generic::Def>), crate::result::XfuncError> {
+) -> Result<(ast::Data, Vec<ast::Ctor>, Vec<ast::Def>), crate::result::XfuncError> {
     prg.map
         .get(name)
         .ok_or_else(|| crate::result::XfuncError::Impossible {
@@ -33,7 +33,7 @@ pub fn as_data(
 pub fn as_codata(
     prg: &matrix::Prg,
     name: &str,
-) -> Result<(generic::Codata, Vec<generic::Dtor>, Vec<generic::Codef>), crate::result::XfuncError> {
+) -> Result<(ast::Codata, Vec<ast::Dtor>, Vec<ast::Codef>), crate::result::XfuncError> {
     prg.map
         .get(name)
         .ok_or_else(|| crate::result::XfuncError::Impossible {

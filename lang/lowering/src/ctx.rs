@@ -2,11 +2,11 @@ use codespan::Span;
 use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::exp::{BindingSite, Ident};
+use syntax::ast;
+use syntax::ast::lookup_table::DeclMeta;
+use syntax::ast::Named;
 use syntax::common::*;
 use syntax::ctx::{Context, ContextElem};
-use syntax::generic;
-use syntax::generic::lookup_table::DeclMeta;
-use syntax::generic::Named;
 
 use super::result::LoweringError;
 
@@ -22,7 +22,7 @@ pub struct Ctx {
     /// Metadata for top-level names
     top_level_map: HashMap<Ident, DeclMeta>,
     /// Accumulates top-level declarations
-    pub decls_map: HashMap<Ident, generic::Decl>,
+    pub decls_map: HashMap<Ident, ast::Decl>,
     /// Counts the number of entries for each De-Bruijn level
     levels: Vec<usize>,
     /// Counter for unique label ids
@@ -63,12 +63,12 @@ impl Ctx {
 
     pub fn add_decls<I>(&mut self, decls: I) -> Result<(), LoweringError>
     where
-        I: IntoIterator<Item = generic::Decl>,
+        I: IntoIterator<Item = ast::Decl>,
     {
         decls.into_iter().try_for_each(|decl| self.add_decl(decl))
     }
 
-    pub fn add_decl(&mut self, decl: generic::Decl) -> Result<(), LoweringError> {
+    pub fn add_decl(&mut self, decl: ast::Decl) -> Result<(), LoweringError> {
         if self.decls_map.contains_key(decl.name()) {
             return Err(LoweringError::AlreadyDefined {
                 name: decl.name().clone(),
@@ -83,7 +83,7 @@ impl Ctx {
         &mut self,
         user_name: Option<Ident>,
         info: &Span,
-    ) -> Result<generic::Label, LoweringError> {
+    ) -> Result<ast::Label, LoweringError> {
         if let Some(user_name) = &user_name {
             match Context::lookup(self, user_name) {
                 Some(Elem::Decl(_)) => {
@@ -110,7 +110,7 @@ impl Ctx {
         }
         let id = self.next_label_id;
         self.next_label_id += 1;
-        Ok(generic::Label { id, user_name })
+        Ok(ast::Label { id, user_name })
     }
 
     /// Next De Bruijn level to be assigned

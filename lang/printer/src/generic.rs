@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use pretty::DocAllocator;
 
+use syntax::ast::*;
 use syntax::common::*;
-use syntax::generic::*;
 
 use super::theme::ThemeExt;
 use super::tokens::*;
@@ -506,14 +506,14 @@ impl<'a> Print<'a> for Call {
     }
 }
 
-impl<'a> Print<'a> for syntax::generic::Anno {
+impl<'a> Print<'a> for syntax::ast::Anno {
     fn print_prec(
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let syntax::generic::Anno { exp, typ, .. } = self;
+        let syntax::ast::Anno { exp, typ, .. } = self;
         exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
     }
 }

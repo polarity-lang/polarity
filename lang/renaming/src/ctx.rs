@@ -1,6 +1,6 @@
+use syntax::ast::*;
 use syntax::common::*;
 use syntax::ctx::{Context, ContextElem};
-use syntax::generic::*;
 
 use super::util::increment_name;
 

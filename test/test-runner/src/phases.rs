@@ -4,7 +4,7 @@ use std::fmt;
 use parser::cst;
 use printer::PrintToString;
 use renaming::Rename;
-use syntax::generic::{ForgetTST, Module};
+use syntax::ast::{ForgetTST, Module};
 
 use super::infallible::NoError;
 

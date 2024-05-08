@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use printer::{ColorChoice, PrintExt, StandardStream};
 use query::{Database, File};
-use syntax::generic;
+use syntax::ast;
 
 use crate::result::IOError;
 
@@ -28,7 +28,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     Ok(())
 }
 
-fn print_nf(nf: &generic::Exp) {
+fn print_nf(nf: &ast::Exp) {
     let mut stream = StandardStream::stdout(ColorChoice::Auto);
     nf.print_colored(&Default::default(), &mut stream).expect("Failed to print to stdout");
     println!();

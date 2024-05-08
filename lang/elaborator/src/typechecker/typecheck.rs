@@ -8,10 +8,10 @@ use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::unifier::unify::*;
 use miette_util::ToMiette;
+use syntax::ast::*;
 use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
-use syntax::generic::*;
 use tracer::trace;
 
 use super::ctx::*;

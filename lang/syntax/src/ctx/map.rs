@@ -1,5 +1,5 @@
+use crate::ast::*;
 use crate::ctx::*;
-use crate::generic::*;
 use codespan::Span;
 
 use std::rc::Rc;
