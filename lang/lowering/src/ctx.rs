@@ -1,7 +1,9 @@
 use codespan::Span;
 use miette_util::ToMiette;
 use parser::cst;
-use parser::cst::exp::{BindingSite, Ident};
+
+use parser::cst::exp::BindingSite;
+use parser::cst::ident::Ident;
 use syntax::ast;
 use syntax::ast::lookup_table::DeclMeta;
 use syntax::ast::Named;

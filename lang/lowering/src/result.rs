@@ -1,5 +1,5 @@
 use miette::{Diagnostic, SourceSpan};
-use parser::cst::exp::Ident;
+use parser::cst::ident::Ident;
 use syntax::ast::lookup_table::DeclKind;
 use thiserror::Error;
 

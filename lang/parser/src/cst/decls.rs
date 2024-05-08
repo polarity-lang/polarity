@@ -3,6 +3,7 @@ use std::rc::Rc;
 use codespan::Span;
 
 use super::exp;
+use super::ident::*;
 
 #[derive(Debug, Clone)]
 pub struct DocComment {
@@ -44,7 +45,7 @@ pub struct Data {
     pub span: Span,
     pub doc: Option<DocComment>,
     pub attr: Attribute,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub params: Telescope,
     pub ctors: Vec<Ctor>,
 }
@@ -62,7 +63,7 @@ pub struct Codata {
     pub span: Span,
     pub doc: Option<DocComment>,
     pub attr: Attribute,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub params: Telescope,
     pub dtors: Vec<Dtor>,
 }
@@ -81,7 +82,7 @@ pub struct Codata {
 pub struct Ctor {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub params: Telescope,
     pub typ: Option<TypApp>,
 }
@@ -100,7 +101,7 @@ pub struct Ctor {
 pub struct Dtor {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub params: Telescope,
     pub destructee: Destructee,
     pub ret_typ: Rc<exp::Exp>,
@@ -117,7 +118,7 @@ pub struct Dtor {
 #[derive(Debug, Clone)]
 pub struct Destructee {
     pub span: Span,
-    pub name: Option<exp::Ident>,
+    pub name: Option<Ident>,
     pub typ: Option<TypApp>,
 }
 
@@ -136,7 +137,7 @@ pub struct Destructee {
 pub struct Def {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub attr: Attribute,
     pub params: Telescope,
     pub scrutinee: Scrutinee,
@@ -155,7 +156,7 @@ pub struct Def {
 #[derive(Debug, Clone)]
 pub struct Scrutinee {
     pub span: Span,
-    pub name: Option<exp::Ident>,
+    pub name: Option<Ident>,
     pub typ: TypApp,
 }
 
@@ -173,7 +174,7 @@ pub struct Scrutinee {
 pub struct Codef {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub attr: Attribute,
     pub params: Telescope,
     pub typ: TypApp,
@@ -194,7 +195,7 @@ pub struct Codef {
 pub struct Let {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub attr: Attribute,
     pub params: Telescope,
     pub typ: Rc<exp::Exp>,
@@ -205,7 +206,7 @@ pub struct Let {
 #[derive(Debug, Clone)]
 pub struct TypApp {
     pub span: Span,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub args: Vec<Rc<exp::Exp>>,
 }
 
@@ -251,7 +252,7 @@ pub type Params = Vec<Param>;
 #[derive(Debug, Clone)]
 pub struct SelfParam {
     pub span: Span,
-    pub name: Option<exp::Ident>,
+    pub name: Option<Ident>,
     pub typ: TypApp,
 }
 

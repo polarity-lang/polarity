@@ -6,7 +6,7 @@ use num_bigint::BigUint;
 use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::exp::BindingSite;
-use parser::cst::exp::Ident;
+use parser::cst::ident::Ident;
 use syntax::ast;
 use syntax::ast::lookup_table::DeclKind;
 use syntax::ast::Hole;

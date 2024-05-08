@@ -1,6 +1,6 @@
 use std::fmt;
 
-use super::exp::*;
+use super::ident::*;
 use crate::common::*;
 
 #[derive(Clone, Copy, Debug)]

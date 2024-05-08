@@ -6,7 +6,7 @@ use miette_util::ToMiette;
 use thiserror::Error;
 
 use super::decls::*;
-use super::exp::*;
+use super::ident::*;
 use super::lookup_table;
 use super::lookup_table::DeclKind;
 

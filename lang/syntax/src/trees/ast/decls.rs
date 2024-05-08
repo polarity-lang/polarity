@@ -5,6 +5,7 @@ use derivative::Derivative;
 
 use crate::common::*;
 
+use super::ident::*;
 use super::lookup_table::{DeclKind, LookupTable};
 use super::{exp::*, ForgetTST, Instantiate};
 
