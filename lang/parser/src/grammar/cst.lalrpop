@@ -4,6 +4,7 @@ use num_bigint::BigUint;
 
 use crate::cst::exp::*;
 use crate::cst::decls::*;
+use crate::cst::ident::*;
 
 use super::util::span;
 
@@ -75,7 +76,8 @@ OptTelescopeInst: Vec<BindingSite> = <params: Parens<Comma<BindingSite>>?> => pa
 Args: Vec<Rc<Exp>> = ParenthesizedArgs<Exp>;
 OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
 
-Attribute: Attribute = "#" <attrs: BracketedArgs<LowerIdent>> => Attribute { attrs };
+Attr: String = <s:r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*"> => s.to_owned();
+Attribute: Attribute = "#" <attrs: BracketedArgs<Attr>> => Attribute { attrs };
 OptAttribute: Attribute = <attr: Attribute? > => attr.unwrap_or_default();
 
 OmitAbsurd: bool = <absurd: "..absurd"?> => absurd.is_some();
@@ -251,9 +253,9 @@ BindingSite: BindingSite = {
     <l: @L> "_" <r: @R> => BindingSite::Wildcard { span: span(l,r) },
 }
 
-Ident: String = {
+Ident: Ident = {
     <s: LowerIdent> => s.to_owned(),
     <s: UpperIdent> => s.to_owned(),
 }
-LowerIdent: String = <s:r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*"> => s.to_owned();
-UpperIdent: String = <s:r"[A-ZΑ-Ω𝔹ℕ𝕍∃∀×][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*"> => s.to_owned();
+LowerIdent: Ident = <s:r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*"> => Ident { id: s.to_owned() };
+UpperIdent: Ident = <s:r"[A-ZΑ-Ω𝔹ℕ𝕍∃∀×][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*"> => Ident { id: s.to_owned() };

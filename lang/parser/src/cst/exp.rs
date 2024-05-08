@@ -1,10 +1,9 @@
 use std::rc::Rc;
 
 use codespan::Span;
-
 use num_bigint::BigUint;
 
-pub type Ident = String;
+use super::ident::*;
 
 #[derive(Debug, Clone)]
 pub enum BindingSite {

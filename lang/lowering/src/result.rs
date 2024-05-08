@@ -1,39 +1,39 @@
 use miette::{Diagnostic, SourceSpan};
-use parser::cst::exp::Ident;
+use parser::cst::ident::Ident;
 use syntax::ast::lookup_table::DeclKind;
 use thiserror::Error;
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum LoweringError {
-    #[error("Undefined identifier {name}")]
+    #[error("Undefined identifier {}", name.id)]
     #[diagnostic(code("L-001"))]
     UndefinedIdent {
         name: Ident,
         #[label]
         span: SourceSpan,
     },
-    #[error("Duplicate definition of {name}")]
+    #[error("Duplicate definition of {}", name.id)]
     #[diagnostic(code("L-002"))]
     AlreadyDefined {
         name: Ident,
         #[label]
         span: Option<SourceSpan>,
     },
-    #[error("{name} must be used as destructor")]
+    #[error("{} must be used as destructor", name.id)]
     #[diagnostic(code("L-003"))]
     MustUseAsDtor {
         name: Ident,
         #[label]
         span: SourceSpan,
     },
-    #[error("{name} cannot be used as a destructor")]
+    #[error("{} cannot be used as a destructor", name.id)]
     #[diagnostic(code("L-004"))]
     CannotUseAsDtor {
         name: Ident,
         #[label]
         span: SourceSpan,
     },
-    #[error("Arguments to type constructor {typ} must be provided for {xtor}")]
+    #[error("Arguments to type constructor {} must be provided for {}", typ.id, xtor.id)]
     #[diagnostic(code("L-005"))]
     MustProvideArgs {
         xtor: Ident,

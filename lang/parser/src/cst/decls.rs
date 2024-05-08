@@ -3,6 +3,7 @@ use std::rc::Rc;
 use codespan::Span;
 
 use super::exp;
+use super::ident::*;
 
 #[derive(Debug, Clone)]
 pub struct DocComment {
@@ -30,50 +31,112 @@ pub enum Decl {
     Let(Let),
 }
 
+/// Data type declaration
+///
+/// ```text
+/// data F(...) { ... }
+///      ^  ^      ^----- ctors
+///      |  \------------ params
+///      \--------------- name
+/// ```
 #[derive(Debug, Clone)]
 pub struct Data {
     pub span: Span,
     pub doc: Option<DocComment>,
     pub attr: Attribute,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub params: Telescope,
     pub ctors: Vec<Ctor>,
 }
 
+/// Codata type declaration
+///
+/// ```text
+/// codata F(...) { ... }
+///        ^  ^      ^----- ctors
+///        |  \------------ params
+///        \--------------- name
+/// ```
 #[derive(Debug, Clone)]
 pub struct Codata {
     pub span: Span,
     pub doc: Option<DocComment>,
     pub attr: Attribute,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub params: Telescope,
     pub dtors: Vec<Dtor>,
 }
 
+/// Declaration of a constructor within the context of a data type declaration.
+///
+/// ```text
+/// data F(...) { C(...) : F(...) }
+///               ^  ^     ^^^^^^
+///               |  |       \---- typ
+///               |  \------------ params
+///               \--------------- name
+/// ```
+/// The `typ` of the constructor is optional.
 #[derive(Debug, Clone)]
 pub struct Ctor {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub params: Telescope,
     pub typ: Option<TypApp>,
 }
 
+/// Declaration of a destructor within the context of a codata type declaration.
+///
+/// ```text
+/// codata F(...) { (self: F(...)).d(...) : t }
+///                 ^^^^^^^^^^^^^^ ^  ^     ^
+///                       |        |  |     \----- ret_typ
+///                       |        |  \----------- params
+///                       |        \-------------- name
+///                       \----------------------- destructee
+/// ```
 #[derive(Debug, Clone)]
 pub struct Dtor {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub params: Telescope,
     pub destructee: Destructee,
     pub ret_typ: Rc<exp::Exp>,
 }
 
+/// Destructee within the context of a destructor declaration in a codata type.
+///
+/// ```text
+/// codata F(...) { (self: F(...)).d(...) : t }
+///                  ^^^^  ^^^^^^
+///                    |      \----- typ
+///                    \------------ name
+/// ```
+#[derive(Debug, Clone)]
+pub struct Destructee {
+    pub span: Span,
+    pub name: Option<Ident>,
+    pub typ: Option<TypApp>,
+}
+
+/// Toplevel definition, i.e. a global pattern match.
+///
+/// ```text
+/// def (self: F(...)).d(...) : t { ... }
+///     ^^^^^^^^^^^^^^ ^  ^     ^    ^
+///            |       |  |     |    \----- body
+///            |       |  |     \---------- ret_typ
+///            |       |  \---------------- params
+///            |       \------------------- name
+///            \--------------------------- scrutinee
+/// ```
 #[derive(Debug, Clone)]
 pub struct Def {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub attr: Attribute,
     pub params: Telescope,
     pub scrutinee: Scrutinee,
@@ -81,53 +144,68 @@ pub struct Def {
     pub body: exp::Match,
 }
 
+/// Scrutinee within a toplevel definition
+///
+/// ```text
+/// def (self: F(...)).d(...) : t { ... }
+///      ^^^^  ^^^^^^
+///        |      \----- typ
+///        \------------ name
+/// ```
+#[derive(Debug, Clone)]
+pub struct Scrutinee {
+    pub span: Span,
+    pub name: Option<Ident>,
+    pub typ: TypApp,
+}
+
+/// Toplevel codefinition, i.e. a global copattern match.
+///
+/// ```text
+/// codef C(...) : F(...) { ... }
+///       ^  ^     ^^^^^^    ^
+///       |  |        |      \------ body
+///       |  |        \------------- typ
+///       |  \---------------------- params
+///       \------------------------- name
+/// ```
 #[derive(Debug, Clone)]
 pub struct Codef {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub attr: Attribute,
     pub params: Telescope,
     pub typ: TypApp,
     pub body: exp::Match,
 }
 
+/// Toplevel let-bound expression.
+///
+/// ```text
+/// let f(...) : t { e }
+///     ^  ^     ^   ^
+///     |  |     |   \---- body
+///     |  |     \-------- typ
+///     |  \-------------- params
+///     \----------------- name
+/// ```
 #[derive(Debug, Clone)]
 pub struct Let {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub attr: Attribute,
     pub params: Telescope,
     pub typ: Rc<exp::Exp>,
     pub body: Rc<exp::Exp>,
 }
 
-#[derive(Debug, Clone)]
-pub struct Scrutinee {
-    pub span: Span,
-    pub name: Option<exp::Ident>,
-    pub typ: TypApp,
-}
-
-#[derive(Debug, Clone)]
-pub struct Destructee {
-    pub span: Span,
-    pub name: Option<exp::Ident>,
-    pub typ: Option<TypApp>,
-}
-
-#[derive(Debug, Clone)]
-pub struct SelfParam {
-    pub span: Span,
-    pub name: Option<exp::Ident>,
-    pub typ: TypApp,
-}
-
+/// A typconstructor applied to arguments.
 #[derive(Debug, Clone)]
 pub struct TypApp {
     pub span: Span,
-    pub name: exp::Ident,
+    pub name: Ident,
     pub args: Vec<Rc<exp::Exp>>,
 }
 
@@ -138,14 +216,6 @@ impl TypApp {
             name: self.name.clone(),
             args: self.args.clone(),
         })
-    }
-}
-
-impl From<Scrutinee> for SelfParam {
-    fn from(scrutinee: Scrutinee) -> Self {
-        let Scrutinee { span, name, typ } = scrutinee;
-
-        SelfParam { span, name, typ }
     }
 }
 
@@ -177,3 +247,18 @@ impl Telescope {
 }
 
 pub type Params = Vec<Param>;
+
+#[derive(Debug, Clone)]
+pub struct SelfParam {
+    pub span: Span,
+    pub name: Option<Ident>,
+    pub typ: TypApp,
+}
+
+impl From<Scrutinee> for SelfParam {
+    fn from(scrutinee: Scrutinee) -> Self {
+        let Scrutinee { span, name, typ } = scrutinee;
+
+        SelfParam { span, name, typ }
+    }
+}
