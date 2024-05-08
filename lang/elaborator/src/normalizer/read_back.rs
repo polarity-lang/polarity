@@ -1,9 +1,9 @@
 use std::rc::Rc;
 
 use super::val;
+use syntax::ast::*;
 use syntax::common::*;
 use syntax::ctx::BindContext;
-use syntax::generic::*;
 use tracer::trace;
 
 use super::eval::Eval;

@@ -3,9 +3,9 @@ use miette_util::ToMiette;
 
 use parser::cst;
 use parser::cst::exp::Ident;
+use syntax::ast::lookup_table;
+use syntax::ast::lookup_table::DeclMeta;
 use syntax::common::*;
-use syntax::generic::lookup_table;
-use syntax::generic::lookup_table::DeclMeta;
 
 use super::result::*;
 

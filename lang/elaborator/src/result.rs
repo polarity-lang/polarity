@@ -2,12 +2,12 @@ use miette::{Diagnostic, SourceSpan};
 use miette_util::ToMiette;
 use thiserror::Error;
 
-use syntax::generic::LookupError;
+use syntax::ast::LookupError;
 
 use codespan::Span;
 use std::rc::Rc;
+use syntax::ast::*;
 use syntax::common::*;
-use syntax::generic::*;
 
 use printer::PrintToString;
 

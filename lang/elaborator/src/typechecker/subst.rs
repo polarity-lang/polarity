@@ -1,9 +1,9 @@
 use std::rc::Rc;
 
 use syntax::{
+    ast::*,
     common::{Substitutable, Substitution},
     ctx::{BindContext, LevelCtx},
-    generic::*,
 };
 
 pub trait SubstUnderCtx {

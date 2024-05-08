@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use syntax::{common::Lvl, ctx::LevelCtx, generic::*};
+use syntax::{ast::*, common::Lvl, ctx::LevelCtx};
 use tracer::trace;
 
 use crate::unifier::unify::{unify, Eqn};

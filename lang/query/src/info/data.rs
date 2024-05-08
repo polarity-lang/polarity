@@ -2,9 +2,9 @@ use codespan::Span;
 use printer::PrintToString;
 
 use syntax::{
+    ast::CallKind,
+    ast::DotCallKind,
     ctx::values::{Binder as TypeCtxBinder, TypeCtx},
-    generic::CallKind,
-    generic::DotCallKind,
 };
 
 // HoverInfo

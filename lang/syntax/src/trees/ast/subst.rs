@@ -1,10 +1,10 @@
 use std::rc::Rc;
 
+use crate::ast::Hole;
+use crate::ast::TypeUniv;
+use crate::ast::Variable;
 use crate::common::*;
 use crate::ctx::*;
-use crate::generic::Hole;
-use crate::generic::TypeUniv;
-use crate::generic::Variable;
 
 use super::*;
 

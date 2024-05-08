@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use miette_util::ToMiette;
-use syntax::generic::*;
+use syntax::ast::*;
 use tracer::trace;
 
 use crate::normalizer::{env::ToEnv, normalize::Normalize};

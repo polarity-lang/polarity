@@ -4,7 +4,7 @@ use codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
 use printer::PrintToString;
-use syntax::generic::*;
+use syntax::ast::*;
 
 use super::data::{
     AnnoInfo, CallInfo, DotCallInfo, HoleInfo, HoverInfo, HoverInfoContent, Item, TypeCtorInfo,

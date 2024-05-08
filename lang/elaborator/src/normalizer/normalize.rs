@@ -1,4 +1,4 @@
-use syntax::generic::*;
+use syntax::ast::*;
 
 use super::env::Env;
 use super::eval::*;

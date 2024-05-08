@@ -9,8 +9,8 @@ use printer::theme::ThemeExt;
 use printer::tokens::*;
 use printer::types::*;
 use printer::util::*;
+use syntax::ast;
 use syntax::common::*;
-use syntax::generic;
 
 // Val
 //
@@ -60,7 +60,7 @@ impl<'a> Print<'a> for Val {
 pub struct TypCtor {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub name: generic::Ident,
+    pub name: ast::Ident,
     pub args: Args,
 }
 
@@ -94,8 +94,8 @@ impl From<TypCtor> for Val {
 pub struct Call {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub kind: generic::CallKind,
-    pub name: generic::Ident,
+    pub kind: ast::CallKind,
+    pub name: ast::Ident,
     pub args: Args,
 }
 
@@ -158,7 +158,7 @@ impl From<TypeUniv> for Val {
 pub struct LocalComatch {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub name: generic::Label,
+    pub name: ast::Label,
     pub is_lambda_sugar: bool,
     // TODO: Ignore this field for PartialEq, Hash?
     pub body: Match,
@@ -246,7 +246,7 @@ pub struct Variable {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub name: generic::Ident,
+    pub name: ast::Ident,
     pub idx: Idx,
 }
 
@@ -279,9 +279,9 @@ impl From<Variable> for Neu {
 pub struct DotCall {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub kind: generic::DotCallKind,
+    pub kind: ast::DotCallKind,
     pub exp: Rc<Neu>,
-    pub name: generic::Ident,
+    pub name: ast::Ident,
     pub args: Args,
 }
 
@@ -321,7 +321,7 @@ impl From<DotCall> for Neu {
 pub struct LocalMatch {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub name: generic::Label,
+    pub name: ast::Label,
     pub on_exp: Rc<Neu>,
     // TODO: Ignore this field for PartialEq, Hash?
     pub body: Match,
@@ -436,8 +436,8 @@ impl<'a> Print<'a> for Match {
 pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub name: generic::Ident,
-    pub params: generic::TelescopeInst,
+    pub name: ast::Ident,
+    pub params: ast::TelescopeInst,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Closure>,
 }
@@ -487,7 +487,7 @@ pub type Args = Vec<Rc<Val>>;
 pub struct Closure {
     pub env: Env,
     pub n_args: usize,
-    pub body: Rc<generic::Exp>,
+    pub body: Rc<ast::Exp>,
 }
 
 impl Shift for Closure {
