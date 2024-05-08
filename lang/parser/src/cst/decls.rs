@@ -183,7 +183,7 @@ pub struct Codef {
 /// Toplevel let-bound expression.
 ///
 /// ```text
-/// let I(...) : t { e }
+/// let f(...) : t { e }
 ///     ^  ^     ^   ^
 ///     |  |     |   \---- body
 ///     |  |     \-------- typ

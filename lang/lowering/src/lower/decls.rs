@@ -309,9 +309,19 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, Lowering
 ) -> Result<T, LoweringError> {
     let cst::decls::SelfParam { span, name, typ } = self_param;
     let typ_out = typ.lower(ctx)?;
-    ctx.bind_single(name.clone().unwrap_or_else(|| parser::cst::ident::Ident { id: "".to_owned() }), |ctx| {
-        f(ctx, ast::SelfParam { info: Some(*span), name: name.clone().map(|name| name.id), typ: typ_out })
-    })
+    ctx.bind_single(
+        name.clone().unwrap_or_else(|| parser::cst::ident::Ident { id: "".to_owned() }),
+        |ctx| {
+            f(
+                ctx,
+                ast::SelfParam {
+                    info: Some(*span),
+                    name: name.clone().map(|name| name.id),
+                    typ: typ_out,
+                },
+            )
+        },
+    )
 }
 
 fn desugar_telescope(tel: &cst::decls::Telescope) -> cst::decls::Telescope {

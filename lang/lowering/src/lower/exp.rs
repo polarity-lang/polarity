@@ -59,7 +59,8 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
             let mut params_out = params_out?;
             let span = bs_to_span(param);
             let name = bs_to_name(param);
-            let param_out = ast::ParamInst { span: Some(span), info: None, name: name.id, typ: None };
+            let param_out =
+                ast::ParamInst { span: Some(span), info: None, name: name.id, typ: None };
             params_out.push(param_out);
             Ok(params_out)
         },
@@ -74,7 +75,12 @@ impl Lower for cst::exp::Case {
         let cst::exp::Case { span, name, params, body } = self;
 
         lower_telescope_inst(params, ctx, |ctx, params| {
-            Ok(ast::Case { span: Some(*span), name: name.id.clone(), params, body: body.lower(ctx)? })
+            Ok(ast::Case {
+                span: Some(*span),
+                name: name.id.clone(),
+                params,
+                body: body.lower(ctx)?,
+            })
         })
     }
 }
