@@ -50,14 +50,14 @@ impl Lower for cst::decls::Data {
 
         let ctor_decls = ctors.lower(ctx)?.into_iter().map(ast::Decl::Ctor);
 
-        let ctor_names = ctors.iter().map(|ctor| ctor.name.clone()).collect();
+        let ctor_names = ctors.iter().map(|ctor| ctor.name.id.clone()).collect();
 
         ctx.add_decls(ctor_decls)?;
 
         Ok(ast::Data {
             span: Some(*span),
             doc: doc.lower(ctx)?,
-            name: name.clone(),
+            name: name.id.clone(),
             attr: attr.lower(ctx)?,
             typ: Rc::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
             ctors: ctor_names,
@@ -73,14 +73,14 @@ impl Lower for cst::decls::Codata {
 
         let dtor_decls = dtors.lower(ctx)?.into_iter().map(ast::Decl::Dtor);
 
-        let dtor_names = dtors.iter().map(|dtor| dtor.name.clone()).collect();
+        let dtor_names = dtors.iter().map(|dtor| dtor.name.id.clone()).collect();
 
         ctx.add_decls(dtor_decls)?;
 
         Ok(ast::Codata {
             span: Some(*span),
             doc: doc.lower(ctx)?,
-            name: name.clone(),
+            name: name.id.clone(),
             attr: attr.lower(ctx)?,
             typ: Rc::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
             dtors: dtor_names,
@@ -98,18 +98,20 @@ impl Lower for cst::decls::Ctor {
             DeclMeta::Ctor { ret_typ } => ret_typ,
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
-                    name: name.clone(),
+                    name: name.id.clone(),
                     expected: DeclKind::Ctor,
                     actual: other.kind(),
                 })
             }
         };
 
-        let type_arity = match ctx.lookup_top_level_decl(&typ_name, span)? {
+        let type_arity = match ctx
+            .lookup_top_level_decl(&parser::cst::ident::Ident { id: typ_name.clone() }, span)?
+        {
             DeclMeta::Data { arity } => arity,
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
-                    name: name.clone(),
+                    name: name.id.clone(),
                     expected: DeclKind::Data,
                     actual: other.kind(),
                 })
@@ -130,7 +132,7 @@ impl Lower for cst::decls::Ctor {
                     } else {
                         return Err(LoweringError::MustProvideArgs {
                             xtor: name.clone(),
-                            typ: typ_name.clone(),
+                            typ: parser::cst::ident::Ident { id: typ_name.clone() },
                             span: span.to_miette(),
                         });
                     }
@@ -140,7 +142,7 @@ impl Lower for cst::decls::Ctor {
             Ok(ast::Ctor {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
-                name: name.clone(),
+                name: name.id.clone(),
                 params,
                 typ,
             })
@@ -158,18 +160,20 @@ impl Lower for cst::decls::Dtor {
             DeclMeta::Dtor { self_typ } => self_typ,
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
-                    name: name.clone(),
+                    name: name.id.clone(),
                     expected: DeclKind::Dtor,
                     actual: other.kind(),
                 })
             }
         };
 
-        let type_arity = match ctx.lookup_top_level_decl(&typ_name, span)? {
+        let type_arity = match ctx
+            .lookup_top_level_decl(&parser::cst::ident::Ident { id: typ_name.clone() }, span)?
+        {
             DeclMeta::Codata { arity } => arity,
             other => {
                 return Err(LoweringError::InvalidDeclarationKind {
-                    name: name.clone(),
+                    name: name.id.clone(),
                     expected: DeclKind::Codata,
                     actual: other.kind(),
                 })
@@ -184,13 +188,13 @@ impl Lower for cst::decls::Dtor {
                     if type_arity == 0 {
                         cst::decls::TypApp {
                             span: Default::default(),
-                            name: typ_name.clone(),
+                            name: parser::cst::ident::Ident { id: typ_name.clone() },
                             args: vec![],
                         }
                     } else {
                         return Err(LoweringError::MustProvideArgs {
                             xtor: name.clone(),
-                            typ: typ_name.clone(),
+                            typ: parser::cst::ident::Ident { id: typ_name.clone() },
                             span: span.to_miette(),
                         });
                     }
@@ -207,7 +211,7 @@ impl Lower for cst::decls::Dtor {
                 Ok(ast::Dtor {
                     span: Some(*span),
                     doc: doc.lower(ctx)?,
-                    name: name.clone(),
+                    name: name.id.clone(),
                     params,
                     self_param,
                     ret_typ: ret_typ.lower(ctx)?,
@@ -232,7 +236,7 @@ impl Lower for cst::decls::Def {
                 Ok(ast::Def {
                     span: Some(*span),
                     doc: doc.lower(ctx)?,
-                    name: name.clone(),
+                    name: name.id.clone(),
                     attr: attr.lower(ctx)?,
                     params,
                     self_param,
@@ -254,7 +258,7 @@ impl Lower for cst::decls::Codef {
             Ok(ast::Codef {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
-                name: name.clone(),
+                name: name.id.clone(),
                 attr: attr.lower(ctx)?,
                 params,
                 typ: typ.lower(ctx)?,
@@ -274,7 +278,7 @@ impl Lower for cst::decls::Let {
             Ok(ast::Let {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
-                name: name.clone(),
+                name: name.id.clone(),
                 attr: attr.lower(ctx)?,
                 params,
                 typ: typ.lower(ctx)?,
@@ -292,7 +296,7 @@ impl Lower for cst::decls::TypApp {
 
         Ok(ast::TypCtor {
             span: Some(*span),
-            name: name.clone(),
+            name: name.id.clone(),
             args: ast::Args { args: args.lower(ctx)? },
         })
     }
@@ -305,8 +309,8 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, Lowering
 ) -> Result<T, LoweringError> {
     let cst::decls::SelfParam { span, name, typ } = self_param;
     let typ_out = typ.lower(ctx)?;
-    ctx.bind_single(name.clone().unwrap_or_default(), |ctx| {
-        f(ctx, ast::SelfParam { info: Some(*span), name: name.clone(), typ: typ_out })
+    ctx.bind_single(name.clone().unwrap_or_else(|| parser::cst::ident::Ident { id: "".to_owned() }), |ctx| {
+        f(ctx, ast::SelfParam { info: Some(*span), name: name.clone().map(|name| name.id), typ: typ_out })
     })
 }
 
@@ -351,9 +355,9 @@ where
             let typ_out = typ.lower(ctx)?;
             let name = match name {
                 BindingSite::Var { name, .. } => name.clone(),
-                BindingSite::Wildcard { .. } => "_".to_owned(),
+                BindingSite::Wildcard { .. } => parser::cst::ident::Ident { id: "_".to_owned() },
             };
-            let param_out = ast::Param { name, typ: typ_out };
+            let param_out = ast::Param { name: name.id, typ: typ_out };
             params_out.push(param_out);
             Ok(params_out)
         },

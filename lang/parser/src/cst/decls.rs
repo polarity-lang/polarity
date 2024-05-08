@@ -41,7 +41,6 @@ pub enum Decl {
 /// ```
 #[derive(Debug, Clone)]
 pub struct Data {
-    ///
     pub span: Span,
     pub doc: Option<DocComment>,
     pub attr: Attribute,

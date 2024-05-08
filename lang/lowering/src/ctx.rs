@@ -24,7 +24,7 @@ pub struct Ctx {
     /// Metadata for top-level names
     top_level_map: HashMap<Ident, DeclMeta>,
     /// Accumulates top-level declarations
-    pub decls_map: HashMap<Ident, ast::Decl>,
+    pub decls_map: HashMap<String, ast::Decl>,
     /// Counts the number of entries for each De-Bruijn level
     levels: Vec<usize>,
     /// Counter for unique label ids
@@ -45,7 +45,7 @@ impl Ctx {
         }
     }
 
-    pub fn lookup(&self, name: &str, info: &Span) -> Result<Elem, LoweringError> {
+    pub fn lookup(&self, name: &Ident, info: &Span) -> Result<Elem, LoweringError> {
         Context::lookup(self, name.to_owned()).ok_or_else(|| LoweringError::UndefinedIdent {
             name: name.to_owned(),
             span: info.to_miette(),
@@ -54,7 +54,7 @@ impl Ctx {
 
     pub fn lookup_top_level_decl(
         &self,
-        name: &str,
+        name: &Ident,
         info: &Span,
     ) -> Result<DeclMeta, LoweringError> {
         self.top_level_map.get(name).cloned().ok_or_else(|| LoweringError::UndefinedIdent {
@@ -71,9 +71,9 @@ impl Ctx {
     }
 
     pub fn add_decl(&mut self, decl: ast::Decl) -> Result<(), LoweringError> {
-        if self.decls_map.contains_key(decl.name()) {
+        if self.decls_map.contains_key(&decl.name().clone()) {
             return Err(LoweringError::AlreadyDefined {
-                name: decl.name().clone(),
+                name: Ident { id: decl.name().clone() },
                 span: decl.span().to_miette(),
             });
         }
@@ -87,16 +87,16 @@ impl Ctx {
         info: &Span,
     ) -> Result<ast::Label, LoweringError> {
         if let Some(user_name) = &user_name {
-            match Context::lookup(self, user_name) {
+            match Context::lookup(self, user_name.clone()) {
                 Some(Elem::Decl(_)) => {
                     return Err(LoweringError::LabelNotUnique {
-                        name: user_name.to_owned(),
+                        name: user_name.id.to_owned(),
                         span: info.to_miette(),
                     })
                 }
                 Some(Elem::Bound(_)) => {
                     return Err(LoweringError::LabelShadowed {
-                        name: user_name.to_owned(),
+                        name: user_name.id.to_owned(),
                         span: info.to_miette(),
                     })
                 }
@@ -104,7 +104,7 @@ impl Ctx {
             }
             if self.user_labels.contains(user_name) {
                 return Err(LoweringError::LabelNotUnique {
-                    name: user_name.to_owned(),
+                    name: user_name.id.to_owned(),
                     span: info.to_miette(),
                 });
             }
@@ -112,7 +112,7 @@ impl Ctx {
         }
         let id = self.next_label_id;
         self.next_label_id += 1;
-        Ok(ast::Label { id, user_name })
+        Ok(ast::Label { id, user_name: user_name.map(|name| name.id) })
     }
 
     /// Next De Bruijn level to be assigned
@@ -177,7 +177,7 @@ impl ContextElem<Ctx> for &cst::decls::Param {
     fn as_element(&self) -> <Ctx as Context>::ElemIn {
         match &self.name {
             BindingSite::Var { name, .. } => name.to_owned(),
-            BindingSite::Wildcard { .. } => "_".to_owned(),
+            BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
         }
     }
 }
@@ -186,7 +186,7 @@ impl ContextElem<Ctx> for &cst::exp::BindingSite {
     fn as_element(&self) -> <Ctx as Context>::ElemIn {
         match self {
             BindingSite::Var { name, .. } => name.to_owned(),
-            BindingSite::Wildcard { .. } => "_".to_owned(),
+            BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
         }
     }
 }

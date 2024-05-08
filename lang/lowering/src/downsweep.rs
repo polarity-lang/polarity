@@ -40,13 +40,13 @@ pub fn build_lookup_table(
                     add_top_level_decl(
                         &ctor.name,
                         &ctor.span,
-                        DeclMeta::Ctor { ret_typ: data.name.clone() },
+                        DeclMeta::Ctor { ret_typ: data.name.id.clone() },
                     )?;
                 }
 
                 // lookup_table
-                let mut typ_decl = lookup_table.add_type_decl(data.name.clone());
-                let xtors = data.ctors.iter().map(|ctor| ctor.name.clone());
+                let mut typ_decl = lookup_table.add_type_decl(data.name.id.clone());
+                let xtors = data.ctors.iter().map(|ctor| ctor.name.id.clone());
                 typ_decl.set_xtors(xtors);
             }
             cst::decls::Decl::Codata(codata) => {
@@ -60,13 +60,13 @@ pub fn build_lookup_table(
                     add_top_level_decl(
                         &dtor.name,
                         &dtor.span,
-                        DeclMeta::Dtor { self_typ: codata.name.clone() },
+                        DeclMeta::Dtor { self_typ: codata.name.id.clone() },
                     )?;
                 }
 
                 // lookup_table
-                let mut typ_decl = lookup_table.add_type_decl(codata.name.clone());
-                let xtors = codata.dtors.iter().map(|ctor| ctor.name.clone());
+                let mut typ_decl = lookup_table.add_type_decl(codata.name.id.clone());
+                let xtors = codata.dtors.iter().map(|ctor| ctor.name.id.clone());
                 typ_decl.set_xtors(xtors);
             }
             cst::decls::Decl::Def(def) => {
@@ -75,7 +75,7 @@ pub fn build_lookup_table(
 
                 // lookup_table
                 let type_name = def.scrutinee.typ.name.clone();
-                lookup_table.add_def(type_name, def.name.to_owned());
+                lookup_table.add_def(type_name.id, def.name.id.to_owned());
             }
             cst::decls::Decl::Codef(codef) => {
                 // top_level_map
@@ -83,13 +83,13 @@ pub fn build_lookup_table(
 
                 // lookup_table
                 let type_name = codef.typ.name.clone();
-                lookup_table.add_def(type_name, codef.name.to_owned())
+                lookup_table.add_def(type_name.id, codef.name.id.to_owned())
             }
             cst::decls::Decl::Let(tl_let) => {
                 // top_level_map
                 add_top_level_decl(&tl_let.name, &tl_let.span, DeclMeta::Let)?;
 
-                lookup_table.add_let(tl_let.name.clone());
+                lookup_table.add_let(tl_let.name.id.clone());
             }
         }
     }
