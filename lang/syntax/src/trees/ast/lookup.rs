@@ -1,6 +1,5 @@
 use std::rc::Rc;
 
-use crate::common::*;
 use miette::{Diagnostic, SourceSpan};
 use miette_util::ToMiette;
 use thiserror::Error;
@@ -11,14 +10,6 @@ use super::lookup_table;
 use super::lookup_table::DeclKind;
 
 impl Module {
-    pub fn empty() -> Self {
-        Self { map: HashMap::default(), lookup_table: Default::default() }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = Item<'_>> {
         self.lookup_table.iter().map(|item| match item {
             lookup_table::Item::Type(type_decl) => match &self.map[&type_decl.name] {

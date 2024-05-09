@@ -7,6 +7,8 @@ edition = "2021"
 # fancy error messages
 miette = "5"
 thiserror = "1"
+# url (for file locations)
+url = "2.5.0"
 # source code locations
 codespan = "0.11"
 # ignoring fields when deriving traits (e.g. Eq, Hash)

@@ -12,7 +12,7 @@ pub use ctx::*;
 pub use result::*;
 
 pub fn lower_module(prg: &cst::decls::Module) -> Result<ast::Module, LoweringError> {
-    let cst::decls::Module { items } = prg;
+    let cst::decls::Module { uri, items } = prg;
 
     let (top_level_map, lookup_table) = build_lookup_table(items)?;
 
@@ -22,5 +22,5 @@ pub fn lower_module(prg: &cst::decls::Module) -> Result<ast::Module, LoweringErr
         item.lower(&mut ctx)?;
     }
 
-    Ok(ast::Module { map: ctx.decls_map, lookup_table })
+    Ok(ast::Module { uri: uri.clone(), map: ctx.decls_map, lookup_table })
 }

@@ -75,7 +75,7 @@ impl Lift for Module {
     type Target = Module;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Module { map, lookup_table } = self;
+        let Module { uri, map, lookup_table } = self;
 
         let mut map: HashMap<_, _> =
             map.iter().map(|(name, decl)| (name.clone(), decl.lift(ctx))).collect();
@@ -90,7 +90,7 @@ impl Lift for Module {
         let decls_iter = ctx.new_decls.iter().map(|decl| (decl.name().clone(), decl.clone()));
         map.extend(decls_iter);
 
-        Module { map, lookup_table }
+        Module { uri: uri.clone(), map, lookup_table }
     }
 }
 

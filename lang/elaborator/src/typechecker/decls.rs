@@ -24,7 +24,7 @@ pub trait CheckToplevel: Sized {
 /// Check all declarations in a program
 impl CheckToplevel for Module {
     fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
-        let Module { map, lookup_table } = self;
+        let Module { uri, map, lookup_table } = self;
 
         // FIXME: Reconsider order
 
@@ -33,7 +33,7 @@ impl CheckToplevel for Module {
             .map(|(name, decl)| Ok((name.clone(), decl.check_wf(prg)?)))
             .collect::<Result<_, TypeError>>()?;
 
-        Ok(Module { map: map_out, lookup_table: lookup_table.clone() })
+        Ok(Module { uri: uri.clone(), map: map_out, lookup_table: lookup_table.clone() })
     }
 }
 

@@ -10,6 +10,8 @@ edition = "2021"
 clap = { version = "4", features = ["derive"] }
 # full text search engine
 tantivy = "0.18"
+# url (for file locations)
+url = "2.5.0"
 # config
 serde = "1"
 serde_derive = "1"

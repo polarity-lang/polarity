@@ -1,6 +1,8 @@
 use std::error::Error;
 use std::fmt;
 
+use url::Url;
+
 use parser::cst;
 use printer::PrintToString;
 use renaming::Rename;
@@ -184,7 +186,7 @@ pub struct Print {
 }
 
 impl Phase for Parse {
-    type In = String;
+    type In = (Url, String);
     type Out = cst::decls::Module;
     type Err = parser::ParseError;
 
@@ -197,7 +199,8 @@ impl Phase for Parse {
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        parser::parse_module(&input)
+        let (uri, input) = &input;
+        parser::parse_module(uri.clone(), input)
     }
 }
 
@@ -239,7 +242,7 @@ impl Phase for Check {
 
 impl Phase for Print {
     type In = Module;
-    type Out = String;
+    type Out = (Url, String);
     type Err = NoError;
 
     fn new(name: &'static str) -> Self {
@@ -251,7 +254,7 @@ impl Phase for Print {
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        Ok(input.rename().print_to_string(None))
+        Ok((input.uri.clone(), input.rename().print_to_string(None)))
     }
 }
 
@@ -283,5 +286,18 @@ impl TestOutput for cst::decls::Module {
 impl TestOutput for Module {
     fn test_output(&self) -> String {
         self.print_to_string(None)
+    }
+}
+
+impl TestOutput for Url {
+    fn test_output(&self) -> String {
+        self.to_string()
+    }
+}
+
+impl<S: TestOutput, T: TestOutput> TestOutput for (S, T) {
+    fn test_output(&self) -> String {
+        let (x, y) = self;
+        format!("({},{})", x.test_output(), y.test_output())
     }
 }
