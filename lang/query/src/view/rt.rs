@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use url::Url;
+
 use super::DatabaseView;
 
 use elaborator::normalizer::normalize::Normalize;
@@ -13,6 +15,16 @@ impl<'a> DatabaseView<'a> {
         self.database.files.name(self.file_id).to_str().unwrap()
     }
 
+    pub fn uri(&self) -> Result<Url, Error> {
+        // TODO: The database should use Urls as keys everywhere
+        // instead of FileId.
+        let filename = self.filename();
+        let uri = Url::from_file_path(filename).map_err(|_| parser::ParseError::User {
+            error: format!("Cannot convert filepath {:?} to url", filename),
+        })?;
+        Ok(uri)
+    }
+
     pub fn source(&self) -> &'a str {
         let DatabaseView { file_id, database } = self;
         database.files.source(*file_id)
@@ -20,7 +32,8 @@ impl<'a> DatabaseView<'a> {
 
     pub fn cst(&self) -> Result<cst::decls::Module, Error> {
         let source = self.source();
-        parser::parse_module(source).map_err(Error::Parser)
+        let uri = self.uri()?;
+        parser::parse_module(uri, source).map_err(Error::Parser)
     }
 
     pub fn ust(&self) -> Result<Module, Error> {

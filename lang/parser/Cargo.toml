@@ -7,6 +7,8 @@ edition = "2021"
 # parser generator
 lalrpop = "0.20"
 lalrpop-util = "0.20"
+# url (for file locations)
+url = "2.5.0"
 # source code locations
 codespan = "0.11"
 # fancy error messages

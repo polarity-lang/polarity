@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use syntax::common::HashMap;
+use url::Url;
 
 use super::cases::Case;
 use super::index::Index;
@@ -82,7 +83,9 @@ impl Runner {
     }
 
     pub fn run_case(&self, config: &suites::Config, case: &Case) -> Report {
-        let input = case.content().unwrap();
+        let canonicalized_path = case.path.clone().canonicalize().unwrap();
+        let uri = Url::from_file_path(canonicalized_path).unwrap();
+        let input = (uri, case.content().unwrap());
 
         Phases::start(input)
             .then(expect(config, case, Parse::new("parse")))
