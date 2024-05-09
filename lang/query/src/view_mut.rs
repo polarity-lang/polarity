@@ -10,12 +10,9 @@ pub struct DatabaseViewMut<'a> {
 
 impl<'a> DatabaseViewMut<'a> {
     pub fn load(&mut self) -> Result<(), Error> {
-        self.database.index.modify(self.file_id, |mut index| index.reset());
         let prg = self.query_ref().tst()?;
-        self.database.index.modify(self.file_id, |mut index| {
-            let (info_lapper, item_lapper) = collect_info(&prg);
-            index.set(info_lapper, item_lapper);
-        });
+        let (info_lapper, item_lapper) = collect_info(&prg);
+        self.set(info_lapper, item_lapper);
         Ok(())
     }
 
@@ -33,5 +30,15 @@ impl<'a> DatabaseViewMut<'a> {
     pub fn query_ref(&self) -> DatabaseView<'_> {
         let DatabaseViewMut { file_id, database } = self;
         DatabaseView { file_id: *file_id, database }
+    }
+
+    pub fn reset(&mut self) {
+        self.database.info_by_id.insert(self.file_id, Lapper::new(vec![]));
+        self.database.item_by_id.insert(self.file_id, Lapper::new(vec![]));
+    }
+
+    pub fn set(&mut self, info_index: Lapper<u32, HoverInfo>, item_index: Lapper<u32, Item>) {
+        self.database.info_by_id.insert(self.file_id, info_index);
+        self.database.item_by_id.insert(self.file_id, item_index);
     }
 }
