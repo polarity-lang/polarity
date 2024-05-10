@@ -38,7 +38,7 @@ impl<'a> DatabaseViewMut<'a> {
         self.database.item_by_id.insert(self.file_id, Lapper::new(vec![]));
     }
 
-    pub fn set(&mut self, info_index: Lapper<u32, HoverInfo>, item_index: Lapper<u32, Item>) {
+    pub fn set(&mut self, info_index: Lapper<u32, Info>, item_index: Lapper<u32, Item>) {
         self.database.info_by_id.insert(self.file_id, info_index);
         self.database.item_by_id.insert(self.file_id, item_index);
     }

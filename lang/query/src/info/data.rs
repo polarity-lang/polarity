@@ -7,21 +7,23 @@ use syntax::{
     ctx::values::{Binder as TypeCtxBinder, TypeCtx},
 };
 
-// HoverInfo
+// Info
 //
-// Types which contain the information that is displayed in a
-// code editor when hovering over a point in the program code.
+// Types which contain information about source code locations
+// that can be used by the LSP server to provide various services,
+// such as type-on-hover and jump-to-definition.
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct HoverInfo {
+pub struct Info {
     /// The source code location to which the content applies
     pub span: Span,
-    /// The information that should be displayed on hover
-    pub content: HoverInfoContent,
+    /// The information that is available for that span
+    pub content: InfoContent,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum HoverInfoContent {
+pub enum InfoContent {
+    // Expressions
     VariableInfo(VariableInfo),
     TypeCtorInfo(TypeCtorInfo),
     CallInfo(CallInfo),
@@ -29,47 +31,175 @@ pub enum HoverInfoContent {
     TypeUnivInfo(TypeUnivInfo),
     HoleInfo(HoleInfo),
     AnnoInfo(AnnoInfo),
+    LocalMatchInfo(LocalMatchInfo),
+    LocalComatchInfo(LocalComatchInfo),
+    // Toplevel Declarations
+    DataInfo(DataInfo),
+    CodataInfo(CodataInfo),
+    DefInfo(DefInfo),
+    CodefInfo(CodefInfo),
+    LetInfo(LetInfo),
 }
 
-/// Hover information for bound variables
+// Info structs for toplevel declarations
+//
+//
+
+/// Information for toplevel data type declarations
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DataInfo {}
+
+impl From<DataInfo> for InfoContent {
+    fn from(value: DataInfo) -> Self {
+        InfoContent::DataInfo(value)
+    }
+}
+
+/// Information for toplevel codata type declarations
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CodataInfo {}
+
+impl From<CodataInfo> for InfoContent {
+    fn from(value: CodataInfo) -> Self {
+        InfoContent::CodataInfo(value)
+    }
+}
+
+/// Information for toplevel definitions
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DefInfo {}
+
+impl From<DefInfo> for InfoContent {
+    fn from(value: DefInfo) -> Self {
+        InfoContent::DefInfo(value)
+    }
+}
+
+/// Information for toplevel codefinitions
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CodefInfo {}
+
+impl From<CodefInfo> for InfoContent {
+    fn from(value: CodefInfo) -> Self {
+        InfoContent::CodefInfo(value)
+    }
+}
+
+/// Information for toplevel let bindings
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LetInfo {}
+
+impl From<LetInfo> for InfoContent {
+    fn from(value: LetInfo) -> Self {
+        InfoContent::LetInfo(value)
+    }
+}
+
+// Info structs for expressions
+//
+//
+
+/// Information for bound variables
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VariableInfo {
     pub typ: String,
 }
 
-/// Hover information for type constructors
+impl From<VariableInfo> for InfoContent {
+    fn from(value: VariableInfo) -> Self {
+        InfoContent::VariableInfo(value)
+    }
+}
+
+/// Information for type constructors
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeCtorInfo {}
 
-/// Hover information for calls (constructors, codefinitions or lets)
+impl From<TypeCtorInfo> for InfoContent {
+    fn from(value: TypeCtorInfo) -> Self {
+        InfoContent::TypeCtorInfo(value)
+    }
+}
+
+/// Information for calls (constructors, codefinitions or lets)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CallInfo {
     pub kind: CallKind,
     pub typ: String,
 }
 
-/// Hover information for dotcalls (destructors or definitions)
+impl From<CallInfo> for InfoContent {
+    fn from(value: CallInfo) -> Self {
+        InfoContent::CallInfo(value)
+    }
+}
+
+/// Information for dotcalls (destructors or definitions)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DotCallInfo {
     pub kind: DotCallKind,
     pub typ: String,
 }
 
-/// Hover information for type universes
+impl From<DotCallInfo> for InfoContent {
+    fn from(value: DotCallInfo) -> Self {
+        InfoContent::DotCallInfo(value)
+    }
+}
+
+/// Information for type universes
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeUnivInfo {}
 
-/// Hover information for type annotated terms
+impl From<TypeUnivInfo> for InfoContent {
+    fn from(value: TypeUnivInfo) -> Self {
+        InfoContent::TypeUnivInfo(value)
+    }
+}
+
+/// Information for type annotated terms
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnnoInfo {
     pub typ: String,
 }
 
-/// Hover information for typed holes
+impl From<AnnoInfo> for InfoContent {
+    fn from(value: AnnoInfo) -> Self {
+        InfoContent::AnnoInfo(value)
+    }
+}
+
+/// Information for local matches
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LocalMatchInfo {}
+
+impl From<LocalMatchInfo> for InfoContent {
+    fn from(value: LocalMatchInfo) -> Self {
+        InfoContent::LocalMatchInfo(value)
+    }
+}
+
+/// Information for local comatches
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LocalComatchInfo {}
+
+impl From<LocalComatchInfo> for InfoContent {
+    fn from(value: LocalComatchInfo) -> Self {
+        InfoContent::LocalComatchInfo(value)
+    }
+}
+
+/// Information for typed holes
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HoleInfo {
     pub goal: String,
     pub ctx: Option<Ctx>,
+}
+
+impl From<HoleInfo> for InfoContent {
+    fn from(value: HoleInfo) -> Self {
+        InfoContent::HoleInfo(value)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -94,28 +224,5 @@ impl From<TypeCtx> for Ctx {
 impl From<TypeCtxBinder> for Binder {
     fn from(binder: TypeCtxBinder) -> Self {
         Binder { name: binder.name, typ: binder.typ.print_to_string(None) }
-    }
-}
-
-// Item
-//
-//
-
-#[derive(PartialEq, Eq, Clone)]
-pub enum Item {
-    Data(String),
-    Codata(String),
-    Def { name: String, type_name: String },
-    Codef { name: String, type_name: String },
-}
-
-impl Item {
-    pub fn type_name(&self) -> &str {
-        match self {
-            Item::Data(name) => name,
-            Item::Codata(name) => name,
-            Item::Def { type_name, .. } => type_name,
-            Item::Codef { type_name, .. } => type_name,
-        }
     }
 }

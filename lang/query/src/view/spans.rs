@@ -1,7 +1,7 @@
 use codespan::{ByteIndex, Location, Span};
 use rust_lapper::Lapper;
 
-use super::info::{HoverInfo, Item};
+use super::info::{Info, Item};
 use super::DatabaseView;
 
 impl<'a> DatabaseView<'a> {
@@ -23,11 +23,11 @@ impl<'a> DatabaseView<'a> {
         Some((start, end))
     }
 
-    pub fn hoverinfo_at_index(&self, idx: ByteIndex) -> Option<HoverInfo> {
+    pub fn hoverinfo_at_index(&self, idx: ByteIndex) -> Option<Info> {
         self.hoverinfo_at_span(Span::new(idx, ByteIndex(u32::from(idx) + 1)))
     }
 
-    pub fn hoverinfo_at_span(&self, span: Span) -> Option<HoverInfo> {
+    pub fn hoverinfo_at_span(&self, span: Span) -> Option<Info> {
         let lapper = self.infos();
         let intervals = lapper.find(span.start().into(), span.end().into());
         let smallest_interval =
@@ -43,7 +43,7 @@ impl<'a> DatabaseView<'a> {
         largest_interval.map(|interval| interval.val.clone())
     }
 
-    pub fn infos(&self) -> &Lapper<u32, HoverInfo> {
+    pub fn infos(&self) -> &Lapper<u32, Info> {
         &self.database.info_by_id[&self.file_id]
     }
 

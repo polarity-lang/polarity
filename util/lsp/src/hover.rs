@@ -27,7 +27,7 @@ pub async fn hover(server: &Server, params: HoverParams) -> jsonrpc::Result<Opti
     Ok(res)
 }
 
-fn info_to_hover(index: &DatabaseView, info: HoverInfo) -> Hover {
+fn info_to_hover(index: &DatabaseView, info: Info) -> Hover {
     let range = index.span_to_locations(info.span).map(ToLsp::to_lsp);
     let contents = info.content.to_hover_content();
     Hover { contents, range }
@@ -68,19 +68,30 @@ trait ToHoverContent {
     fn to_hover_content(self) -> HoverContents;
 }
 
-impl ToHoverContent for HoverInfoContent {
+impl ToHoverContent for InfoContent {
     fn to_hover_content(self) -> HoverContents {
         match self {
-            HoverInfoContent::VariableInfo(i) => i.to_hover_content(),
-            HoverInfoContent::TypeCtorInfo(i) => i.to_hover_content(),
-            HoverInfoContent::CallInfo(i) => i.to_hover_content(),
-            HoverInfoContent::DotCallInfo(i) => i.to_hover_content(),
-            HoverInfoContent::TypeUnivInfo(i) => i.to_hover_content(),
-            HoverInfoContent::HoleInfo(i) => i.to_hover_content(),
-            HoverInfoContent::AnnoInfo(i) => i.to_hover_content(),
+            InfoContent::VariableInfo(i) => i.to_hover_content(),
+            InfoContent::TypeCtorInfo(i) => i.to_hover_content(),
+            InfoContent::CallInfo(i) => i.to_hover_content(),
+            InfoContent::DotCallInfo(i) => i.to_hover_content(),
+            InfoContent::TypeUnivInfo(i) => i.to_hover_content(),
+            InfoContent::LocalMatchInfo(i) => i.to_hover_content(),
+            InfoContent::LocalComatchInfo(i) => i.to_hover_content(),
+            InfoContent::HoleInfo(i) => i.to_hover_content(),
+            InfoContent::AnnoInfo(i) => i.to_hover_content(),
+            InfoContent::DataInfo(i) => i.to_hover_content(),
+            InfoContent::CodataInfo(i) => i.to_hover_content(),
+            InfoContent::DefInfo(i) => i.to_hover_content(),
+            InfoContent::CodefInfo(i) => i.to_hover_content(),
+            InfoContent::LetInfo(i) => i.to_hover_content(),
         }
     }
 }
+
+// Expressions
+//
+//
 
 impl ToHoverContent for VariableInfo {
     fn to_hover_content(self) -> HoverContents {
@@ -140,6 +151,20 @@ impl ToHoverContent for AnnoInfo {
     }
 }
 
+impl ToHoverContent for LocalMatchInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let header = MarkedString::String("Local match".to_owned());
+        HoverContents::Scalar(header)
+    }
+}
+
+impl ToHoverContent for LocalComatchInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let header = MarkedString::String("Local comatch".to_owned());
+        HoverContents::Scalar(header)
+    }
+}
+
 impl ToHoverContent for HoleInfo {
     fn to_hover_content(self) -> HoverContents {
         let HoleInfo { goal, ctx } = self;
@@ -152,5 +177,44 @@ impl ToHoverContent for HoleInfo {
         } else {
             HoverContents::Scalar(string_to_language_string(goal))
         }
+    }
+}
+
+// Toplevel declarations
+//
+//
+
+impl ToHoverContent for DataInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let header = MarkedString::String("Data type declaration".to_owned());
+        HoverContents::Scalar(header)
+    }
+}
+
+impl ToHoverContent for CodataInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let header = MarkedString::String("Codata type declaration".to_owned());
+        HoverContents::Scalar(header)
+    }
+}
+
+impl ToHoverContent for DefInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let header = MarkedString::String("Definition".to_owned());
+        HoverContents::Scalar(header)
+    }
+}
+
+impl ToHoverContent for CodefInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let header = MarkedString::String("Codefinition".to_owned());
+        HoverContents::Scalar(header)
+    }
+}
+
+impl ToHoverContent for LetInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let header = MarkedString::String("Let-binding".to_owned());
+        HoverContents::Scalar(header)
     }
 }
