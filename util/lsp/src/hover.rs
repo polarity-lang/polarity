@@ -186,31 +186,60 @@ impl ToHoverContent for HoleInfo {
 //
 //
 
+fn add_doc_comment(builder: &mut Vec<MarkedString>, doc: Option<Vec<String>>) {
+    if let Some(doc) = doc {
+        builder.push(MarkedString::String("---".to_owned()));
+        for d in doc {
+            builder.push(MarkedString::String(d))
+        }
+    }
+}
+
 impl ToHoverContent for DataInfo {
     fn to_hover_content(self) -> HoverContents {
-        let header = MarkedString::String("Data type declaration".to_owned());
-        HoverContents::Scalar(header)
+        let DataInfo { name, doc, params } = self;
+        let mut content: Vec<MarkedString> = Vec::new();
+        content.push(MarkedString::String(format!("Data declaration: `{name}`")));
+        add_doc_comment(&mut content, doc);
+        if !params.is_empty() {
+            content.push(MarkedString::String("---".to_owned()).to_owned());
+            content.push(MarkedString::String(format!("Parameters: `{}`", params)))
+        }
+        HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for CtorInfo {
     fn to_hover_content(self) -> HoverContents {
-        let header = MarkedString::String("Constructor".to_owned());
-        HoverContents::Scalar(header)
+        let CtorInfo { name, doc } = self;
+        let mut content: Vec<MarkedString> = Vec::new();
+        content.push(MarkedString::String(format!("Constructor: `{}`", name)));
+        add_doc_comment(&mut content, doc);
+        HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for CodataInfo {
     fn to_hover_content(self) -> HoverContents {
-        let header = MarkedString::String("Codata type declaration".to_owned());
-        HoverContents::Scalar(header)
+        let CodataInfo { name, doc, params } = self;
+        let mut content: Vec<MarkedString> = Vec::new();
+        content.push(MarkedString::String(format!("Codata declaration: `{}`", name)));
+        add_doc_comment(&mut content, doc);
+        if !params.is_empty() {
+            content.push(MarkedString::String("---".to_owned()).to_owned());
+            content.push(MarkedString::String(format!("Parameters: `{}`", params)))
+        }
+        HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for DtorInfo {
     fn to_hover_content(self) -> HoverContents {
-        let header = MarkedString::String("Destructor".to_owned());
-        HoverContents::Scalar(header)
+        let DtorInfo { name, doc } = self;
+        let mut content: Vec<MarkedString> = Vec::new();
+        content.push(MarkedString::String(format!("Destructor: `{}`", name)));
+        add_doc_comment(&mut content, doc);
+        HoverContents::Array(content)
     }
 }
 

@@ -49,7 +49,14 @@ pub enum InfoContent {
 
 /// Information for toplevel data type declarations
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DataInfo {}
+pub struct DataInfo {
+    /// Name of the data type
+    pub name: String,
+    /// Doc comments for data type
+    pub doc: Option<Vec<String>>,
+    /// Parameters
+    pub params: String,
+}
 
 impl From<DataInfo> for InfoContent {
     fn from(value: DataInfo) -> Self {
@@ -59,7 +66,10 @@ impl From<DataInfo> for InfoContent {
 
 /// Information about constructor within a data type declaration
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CtorInfo {}
+pub struct CtorInfo {
+    pub name: String,
+    pub doc: Option<Vec<String>>,
+}
 
 impl From<CtorInfo> for InfoContent {
     fn from(value: CtorInfo) -> Self {
@@ -69,7 +79,14 @@ impl From<CtorInfo> for InfoContent {
 
 /// Information for toplevel codata type declarations
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CodataInfo {}
+pub struct CodataInfo {
+    /// Name of the data type
+    pub name: String,
+    /// Doc comments for data type
+    pub doc: Option<Vec<String>>,
+    /// Parameters
+    pub params: String,
+}
 
 impl From<CodataInfo> for InfoContent {
     fn from(value: CodataInfo) -> Self {
@@ -79,7 +96,10 @@ impl From<CodataInfo> for InfoContent {
 
 /// Information about destructor within a data type declaration
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DtorInfo {}
+pub struct DtorInfo {
+    pub name: String,
+    pub doc: Option<Vec<String>>,
+}
 
 impl From<DtorInfo> for InfoContent {
     fn from(value: DtorInfo) -> Self {
