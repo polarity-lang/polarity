@@ -104,13 +104,15 @@ impl CollectInfo for Decl {
 
 impl CollectInfo for Data {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Data { name, span, .. } = self;
+        let Data { name, span, doc, typ, .. } = self;
         if let Some(span) = span {
             // Add item
             let item = Item::Data(name.clone());
             collector.add_item(*span, item);
             // Add info
-            let info = DataInfo {};
+            let doc = doc.clone().map(|doc| doc.docs);
+            let info =
+                DataInfo { name: name.clone(), doc, params: typ.params.print_to_string(None) };
             collector.add_info(*span, info)
         }
     }
@@ -118,13 +120,15 @@ impl CollectInfo for Data {
 
 impl CollectInfo for Codata {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Codata { name, span, .. } = self;
+        let Codata { name, doc, typ, span, .. } = self;
         if let Some(span) = span {
             // Add item
             let item = Item::Codata(name.clone());
             collector.add_item(*span, item);
             // Add info
-            let info = CodataInfo {};
+            let doc = doc.clone().map(|doc| doc.docs);
+            let info =
+                CodataInfo { name: name.clone(), doc, params: typ.params.print_to_string(None) };
             collector.add_info(*span, info);
         }
     }
@@ -163,10 +167,11 @@ impl CollectInfo for Codef {
 
 impl CollectInfo for Ctor {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Ctor { span, .. } = self;
+        let Ctor { span, name, doc, .. } = self;
         if let Some(span) = span {
             // Add info
-            let info = CtorInfo {};
+            let doc = doc.clone().map(|doc| doc.docs);
+            let info = CtorInfo { name: name.clone(), doc };
             collector.add_info(*span, info)
         }
     }
@@ -174,10 +179,11 @@ impl CollectInfo for Ctor {
 
 impl CollectInfo for Dtor {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Dtor { span, .. } = self;
+        let Dtor { span, name, doc, .. } = self;
         if let Some(span) = span {
             // Add info
-            let info = DtorInfo {};
+            let doc = doc.clone().map(|doc| doc.docs);
+            let info = DtorInfo { name: name.clone(), doc };
             collector.add_info(*span, info)
         }
     }
