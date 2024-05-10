@@ -35,7 +35,9 @@ pub enum InfoContent {
     LocalComatchInfo(LocalComatchInfo),
     // Toplevel Declarations
     DataInfo(DataInfo),
+    CtorInfo(CtorInfo),
     CodataInfo(CodataInfo),
+    DtorInfo(DtorInfo),
     DefInfo(DefInfo),
     CodefInfo(CodefInfo),
     LetInfo(LetInfo),
@@ -55,6 +57,16 @@ impl From<DataInfo> for InfoContent {
     }
 }
 
+/// Information about constructor within a data type declaration
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CtorInfo {}
+
+impl From<CtorInfo> for InfoContent {
+    fn from(value: CtorInfo) -> Self {
+        InfoContent::CtorInfo(value)
+    }
+}
+
 /// Information for toplevel codata type declarations
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CodataInfo {}
@@ -62,6 +74,16 @@ pub struct CodataInfo {}
 impl From<CodataInfo> for InfoContent {
     fn from(value: CodataInfo) -> Self {
         InfoContent::CodataInfo(value)
+    }
+}
+
+/// Information about destructor within a data type declaration
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DtorInfo {}
+
+impl From<DtorInfo> for InfoContent {
+    fn from(value: DtorInfo) -> Self {
+        InfoContent::DtorInfo(value)
     }
 }
 

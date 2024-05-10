@@ -6,7 +6,10 @@ use rust_lapper::{Interval, Lapper};
 use printer::PrintToString;
 use syntax::ast::*;
 
-use crate::{CodataInfo, CodefInfo, DataInfo, DefInfo, LetInfo, LocalComatchInfo, LocalMatchInfo};
+use crate::{
+    CodataInfo, CodefInfo, CtorInfo, DataInfo, DefInfo, DtorInfo, LetInfo, LocalComatchInfo,
+    LocalMatchInfo,
+};
 
 use super::data::{
     AnnoInfo, CallInfo, DotCallInfo, HoleInfo, Info, InfoContent, TypeCtorInfo, TypeUnivInfo,
@@ -159,11 +162,25 @@ impl CollectInfo for Codef {
 }
 
 impl CollectInfo for Ctor {
-    fn collect_info(&self, _collector: &mut InfoCollector) {}
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let Ctor { span, .. } = self;
+        if let Some(span) = span {
+            // Add info
+            let info = CtorInfo {};
+            collector.add_info(*span, info)
+        }
+    }
 }
 
 impl CollectInfo for Dtor {
-    fn collect_info(&self, _collector: &mut InfoCollector) {}
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let Dtor { span, .. } = self;
+        if let Some(span) = span {
+            // Add info
+            let info = DtorInfo {};
+            collector.add_info(*span, info)
+        }
+    }
 }
 
 impl CollectInfo for Let {
