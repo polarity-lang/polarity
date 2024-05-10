@@ -23,7 +23,7 @@ pub use view_mut::*;
 pub struct Database {
     id_by_name: HashMap<String, FileId>,
     files: Files<String>,
-    info_by_id: HashMap<FileId, Lapper<u32, HoverInfo>>,
+    info_by_id: HashMap<FileId, Lapper<u32, Info>>,
     item_by_id: HashMap<FileId, Lapper<u32, Item>>,
 }
 
