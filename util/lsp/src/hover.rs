@@ -81,7 +81,9 @@ impl ToHoverContent for InfoContent {
             InfoContent::HoleInfo(i) => i.to_hover_content(),
             InfoContent::AnnoInfo(i) => i.to_hover_content(),
             InfoContent::DataInfo(i) => i.to_hover_content(),
+            InfoContent::CtorInfo(i) => i.to_hover_content(),
             InfoContent::CodataInfo(i) => i.to_hover_content(),
+            InfoContent::DtorInfo(i) => i.to_hover_content(),
             InfoContent::DefInfo(i) => i.to_hover_content(),
             InfoContent::CodefInfo(i) => i.to_hover_content(),
             InfoContent::LetInfo(i) => i.to_hover_content(),
@@ -191,9 +193,23 @@ impl ToHoverContent for DataInfo {
     }
 }
 
+impl ToHoverContent for CtorInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let header = MarkedString::String("Constructor".to_owned());
+        HoverContents::Scalar(header)
+    }
+}
+
 impl ToHoverContent for CodataInfo {
     fn to_hover_content(self) -> HoverContents {
         let header = MarkedString::String("Codata type declaration".to_owned());
+        HoverContents::Scalar(header)
+    }
+}
+
+impl ToHoverContent for DtorInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let header = MarkedString::String("Destructor".to_owned());
         HoverContents::Scalar(header)
     }
 }
