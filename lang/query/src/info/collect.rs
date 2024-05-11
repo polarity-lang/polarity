@@ -247,9 +247,9 @@ impl CollectInfo for Variable {
 
 impl CollectInfo for TypCtor {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let TypCtor { span, args, .. } = self;
+        let TypCtor { span, args, name } = self;
         if let Some(span) = span {
-            let info = TypeCtorInfo {};
+            let info = TypeCtorInfo { name: name.clone() };
             collector.add_info(*span, info)
         }
         args.collect_info(collector)
