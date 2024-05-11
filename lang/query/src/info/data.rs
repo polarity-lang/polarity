@@ -155,7 +155,9 @@ impl From<VariableInfo> for InfoContent {
 
 /// Information for type constructors
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TypeCtorInfo {}
+pub struct TypeCtorInfo {
+    pub name: String,
+}
 
 impl From<TypeCtorInfo> for InfoContent {
     fn from(value: TypeCtorInfo) -> Self {
