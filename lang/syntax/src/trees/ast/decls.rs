@@ -26,6 +26,18 @@ pub struct Attribute {
 //
 //
 
+/// The state of a metavariable during the elaboration phase.
+/// All metavariables start in the unsolved state, but as we
+/// learn more information during elaboration we find out what
+/// precise terms the metavariables stand for.
+#[derive(Debug, Clone)]
+pub enum MetaVarState {
+    /// We know what the metavariable stands for.
+    Solved,
+    /// We don't know yet what the metavariable stands for.
+    Unsolved,
+}
+
 /// A module containing declarations
 ///
 /// There is a 1-1 correspondence between modules and files in our system.
@@ -36,6 +48,7 @@ pub struct Module {
     pub map: HashMap<Ident, Decl>,
     /// Metadata on declarations
     pub lookup_table: LookupTable,
+    pub meta_vars: HashMap<MetaVar, MetaVarState>,
 }
 
 impl Module {
@@ -47,12 +60,13 @@ impl Module {
 
 impl ForgetTST for Module {
     fn forget_tst(&self) -> Self {
-        let Module { uri, map, lookup_table } = self;
+        let Module { uri, map, lookup_table, meta_vars } = self;
 
         Module {
             uri: uri.clone(),
             map: map.iter().map(|(name, decl)| (name.clone(), decl.forget_tst())).collect(),
             lookup_table: lookup_table.clone(),
+            meta_vars: meta_vars.clone(),
         }
     }
 }

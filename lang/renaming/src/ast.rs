@@ -52,6 +52,7 @@ impl Rename for Module {
             uri: self.uri,
             map: self.map.into_iter().map(|(name, decl)| (name, decl.rename_in_ctx(ctx))).collect(),
             lookup_table: self.lookup_table,
+            meta_vars: self.meta_vars,
         }
     }
 }
