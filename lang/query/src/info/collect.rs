@@ -258,9 +258,9 @@ impl CollectInfo for TypCtor {
 
 impl CollectInfo for Call {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Call { span, kind, args, inferred_type, .. } = self;
+        let Call { span, kind, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let info = CallInfo { kind: *kind, typ: typ.print_to_string(None) };
+            let info = CallInfo { kind: *kind, typ: typ.print_to_string(None), name: name.clone() };
             collector.add_info(*span, info)
         }
         args.collect_info(collector)
