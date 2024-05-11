@@ -183,6 +183,7 @@ impl From<CallInfo> for InfoContent {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DotCallInfo {
     pub kind: DotCallKind,
+    pub name: String,
     pub typ: String,
 }
 
