@@ -237,9 +237,9 @@ impl CollectInfo for Exp {
 
 impl CollectInfo for Variable {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Variable { span, inferred_type, .. } = self;
+        let Variable { span, inferred_type, name, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let info = VariableInfo { typ: typ.print_to_string(None) };
+            let info = VariableInfo { typ: typ.print_to_string(None), name: name.clone() };
             collector.add_info(*span, info)
         }
     }

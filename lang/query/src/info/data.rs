@@ -144,6 +144,7 @@ impl From<LetInfo> for InfoContent {
 /// Information for bound variables
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VariableInfo {
+    pub name: String,
     pub typ: String,
 }
 

@@ -97,8 +97,8 @@ impl ToHoverContent for InfoContent {
 
 impl ToHoverContent for VariableInfo {
     fn to_hover_content(self) -> HoverContents {
-        let VariableInfo { typ } = self;
-        let header = MarkedString::String("Bound variable".to_owned());
+        let VariableInfo { typ, name } = self;
+        let header = MarkedString::String(format!("Bound variable: `{}`", name));
         let typ = string_to_language_string(typ);
         HoverContents::Array(vec![header, typ])
     }
