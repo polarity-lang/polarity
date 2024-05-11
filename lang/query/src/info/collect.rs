@@ -75,6 +75,14 @@ impl<T: CollectInfo> CollectInfo for Option<T> {
     }
 }
 
+impl<T: CollectInfo> CollectInfo for Vec<T> {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        for i in self {
+            i.collect_info(collector)
+        }
+    }
+}
+
 // Traversing a module and toplevel declarations
 //
 //
@@ -115,6 +123,7 @@ impl CollectInfo for Data {
                 DataInfo { name: name.clone(), doc, params: typ.params.print_to_string(None) };
             collector.add_info(*span, info)
         }
+        typ.collect_info(collector)
     }
 }
 
@@ -131,12 +140,13 @@ impl CollectInfo for Codata {
                 CodataInfo { name: name.clone(), doc, params: typ.params.print_to_string(None) };
             collector.add_info(*span, info);
         }
+        typ.collect_info(collector)
     }
 }
 
 impl CollectInfo for Def {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Def { name, span, self_param, body, .. } = self;
+        let Def { name, span, self_param, body, params, .. } = self;
         if let Some(span) = span {
             // Add Item
             let item = Item::Def { name: name.clone(), type_name: self_param.typ.name.clone() };
@@ -146,13 +156,14 @@ impl CollectInfo for Def {
             collector.add_info(*span, info);
         };
 
-        body.collect_info(collector)
+        body.collect_info(collector);
+        params.collect_info(collector)
     }
 }
 
 impl CollectInfo for Codef {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Codef { name, span, typ, body, .. } = self;
+        let Codef { name, span, typ, body, params, .. } = self;
         if let Some(span) = span {
             // Add item
             let item = Item::Codef { name: name.clone(), type_name: typ.name.clone() };
@@ -161,7 +172,8 @@ impl CollectInfo for Codef {
             let info = CodefInfo {};
             collector.add_info(*span, info);
         }
-        body.collect_info(collector)
+        body.collect_info(collector);
+        params.collect_info(collector)
     }
 }
 
@@ -191,14 +203,15 @@ impl CollectInfo for Dtor {
 
 impl CollectInfo for Let {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Let { span, typ, body, .. } = self;
+        let Let { span, typ, body, params, .. } = self;
         if let Some(span) = span {
             // Add info
             let info = LetInfo {};
             collector.add_info(*span, info);
         }
         typ.collect_info(collector);
-        body.collect_info(collector)
+        body.collect_info(collector);
+        params.collect_info(collector)
     }
 }
 
@@ -349,5 +362,18 @@ impl CollectInfo for Args {
         for arg in args.iter() {
             arg.collect_info(collector)
         }
+    }
+}
+
+impl CollectInfo for Telescope {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        self.params.collect_info(collector)
+    }
+}
+
+impl CollectInfo for Param {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let Param { typ, .. } = self;
+        typ.collect_info(collector)
     }
 }
