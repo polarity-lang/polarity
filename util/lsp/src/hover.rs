@@ -128,10 +128,10 @@ impl ToHoverContent for CallInfo {
 
 impl ToHoverContent for DotCallInfo {
     fn to_hover_content(self) -> HoverContents {
-        let DotCallInfo { kind, typ } = self;
+        let DotCallInfo { kind, name, typ } = self;
         let header = match kind {
-            DotCallKind::Destructor => MarkedString::String("Destructor".to_owned()),
-            DotCallKind::Definition => MarkedString::String("Definition".to_owned()),
+            DotCallKind::Destructor => MarkedString::String(format!("Destructor: `{}`", name)),
+            DotCallKind::Definition => MarkedString::String(format!("Definition: `{}`", name)),
         };
         let typ = string_to_language_string(typ);
         HoverContents::Array(vec![header, typ])

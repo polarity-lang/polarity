@@ -269,9 +269,10 @@ impl CollectInfo for Call {
 
 impl CollectInfo for DotCall {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let DotCall { span, kind, exp, args, inferred_type, .. } = self;
+        let DotCall { span, kind, exp, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let info = DotCallInfo { kind: *kind, typ: typ.print_to_string(None) };
+            let info =
+                DotCallInfo { kind: *kind, name: name.clone(), typ: typ.print_to_string(None) };
             collector.add_info(*span, info)
         }
         exp.collect_info(collector);
