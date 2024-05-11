@@ -3,8 +3,6 @@ mod downsweep;
 mod lower;
 mod result;
 
-use std::collections::HashMap;
-
 use parser::cst;
 use syntax::ast;
 

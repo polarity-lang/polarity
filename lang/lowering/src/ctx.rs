@@ -134,6 +134,16 @@ impl Ctx {
         let snd = self.levels[lvl.fst] - 1 - lvl.snd;
         Idx { fst, snd }
     }
+
+    /// Create a fresh MetaVar which stands for an unkown term that
+    /// we have to elaborate later. The generated fresh variable is
+    /// also registered as unsolved.
+    pub fn fresh_metavar(&mut self) -> MetaVar {
+        let mv = MetaVar { id: self.next_meta_var };
+        self.next_meta_var += 1;
+        self.meta_vars.insert(mv, MetaVarState::Unsolved);
+        mv
+    }
 }
 
 impl Context for Ctx {
