@@ -169,6 +169,7 @@ impl From<TypeCtorInfo> for InfoContent {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CallInfo {
     pub kind: CallKind,
+    pub name: String,
     pub typ: String,
 }
 

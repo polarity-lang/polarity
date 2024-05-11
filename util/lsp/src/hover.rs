@@ -114,11 +114,11 @@ impl ToHoverContent for TypeCtorInfo {
 
 impl ToHoverContent for CallInfo {
     fn to_hover_content(self) -> HoverContents {
-        let CallInfo { kind, typ } = self;
+        let CallInfo { kind, typ, name } = self;
         let header = match kind {
-            CallKind::Constructor => MarkedString::String("Constructor".to_owned()),
-            CallKind::Codefinition => MarkedString::String("Codefinition".to_owned()),
-            CallKind::LetBound => MarkedString::String("Let-bound definition".to_owned()),
+            CallKind::Constructor => MarkedString::String(format!("Constructor: `{}`", name)),
+            CallKind::Codefinition => MarkedString::String(format!("Codefinition: `{}`", name)),
+            CallKind::LetBound => MarkedString::String(format!("Let-bound definition: `{}`", name)),
         };
 
         let typ = string_to_language_string(typ);
