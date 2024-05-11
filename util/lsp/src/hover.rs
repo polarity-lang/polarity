@@ -155,15 +155,19 @@ impl ToHoverContent for AnnoInfo {
 
 impl ToHoverContent for LocalMatchInfo {
     fn to_hover_content(self) -> HoverContents {
+        let LocalMatchInfo { typ } = self;
         let header = MarkedString::String("Local match".to_owned());
-        HoverContents::Scalar(header)
+        let typ = string_to_language_string(typ);
+        HoverContents::Array(vec![header, typ])
     }
 }
 
 impl ToHoverContent for LocalComatchInfo {
     fn to_hover_content(self) -> HoverContents {
+        let LocalComatchInfo { typ } = self;
         let header = MarkedString::String("Local comatch".to_owned());
-        HoverContents::Scalar(header)
+        let typ = string_to_language_string(typ);
+        HoverContents::Array(vec![header, typ])
     }
 }
 
