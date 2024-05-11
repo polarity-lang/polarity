@@ -303,10 +303,10 @@ impl CollectInfo for Anno {
 
 impl CollectInfo for LocalMatch {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let LocalMatch { span, on_exp, ret_typ, body, .. } = self;
-        if let Some(span) = span {
+        let LocalMatch { span, on_exp, ret_typ, body, inferred_type, .. } = self;
+        if let (Some(span), Some(typ)) = (span, inferred_type) {
             // Add info
-            let info = LocalMatchInfo {};
+            let info = LocalMatchInfo { typ: typ.print_to_string(None) };
             collector.add_info(*span, info)
         }
         on_exp.collect_info(collector);
@@ -317,10 +317,10 @@ impl CollectInfo for LocalMatch {
 
 impl CollectInfo for LocalComatch {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let LocalComatch { span, body, .. } = self;
-        if let Some(span) = span {
+        let LocalComatch { span, body, inferred_type, .. } = self;
+        if let (Some(span), Some(typ)) = (span, inferred_type) {
             // Add info
-            let info = LocalComatchInfo {};
+            let info = LocalComatchInfo { typ: typ.print_to_string(None) };
             collector.add_info(*span, info)
         }
         body.collect_info(collector)

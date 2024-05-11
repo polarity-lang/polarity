@@ -213,7 +213,9 @@ impl From<AnnoInfo> for InfoContent {
 
 /// Information for local matches
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LocalMatchInfo {}
+pub struct LocalMatchInfo {
+    pub typ: String,
+}
 
 impl From<LocalMatchInfo> for InfoContent {
     fn from(value: LocalMatchInfo) -> Self {
@@ -223,7 +225,9 @@ impl From<LocalMatchInfo> for InfoContent {
 
 /// Information for local comatches
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LocalComatchInfo {}
+pub struct LocalComatchInfo {
+    pub typ: String,
+}
 
 impl From<LocalComatchInfo> for InfoContent {
     fn from(value: LocalComatchInfo) -> Self {
