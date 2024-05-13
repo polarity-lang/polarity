@@ -146,7 +146,7 @@ impl CollectInfo for Codata {
 
 impl CollectInfo for Def {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Def { name, span, self_param, body, params, .. } = self;
+        let Def { name, span, self_param, body, params, ret_typ, .. } = self;
         if let Some(span) = span {
             // Add Item
             let item = Item::Def { name: name.clone(), type_name: self_param.typ.name.clone() };
@@ -156,8 +156,10 @@ impl CollectInfo for Def {
             collector.add_info(*span, info);
         };
 
+        self_param.collect_info(collector);
         body.collect_info(collector);
-        params.collect_info(collector)
+        params.collect_info(collector);
+        ret_typ.collect_info(collector);
     }
 }
 
@@ -179,25 +181,29 @@ impl CollectInfo for Codef {
 
 impl CollectInfo for Ctor {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Ctor { span, name, doc, .. } = self;
+        let Ctor { span, name, doc, typ, .. } = self;
         if let Some(span) = span {
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
             let info = CtorInfo { name: name.clone(), doc };
-            collector.add_info(*span, info)
+            collector.add_info(*span, info);
         }
+        typ.collect_info(collector);
     }
 }
 
 impl CollectInfo for Dtor {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Dtor { span, name, doc, .. } = self;
+        let Dtor { span, name, doc, self_param, params, ret_typ } = self;
         if let Some(span) = span {
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
             let info = DtorInfo { name: name.clone(), doc };
-            collector.add_info(*span, info)
+            collector.add_info(*span, info);
         }
+        self_param.collect_info(collector);
+        params.collect_info(collector);
+        ret_typ.collect_info(collector);
     }
 }
 
@@ -376,5 +382,12 @@ impl CollectInfo for Param {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let Param { typ, .. } = self;
         typ.collect_info(collector)
+    }
+}
+
+impl CollectInfo for SelfParam {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        let SelfParam { typ, .. } = self;
+        typ.collect_info(collector);
     }
 }
