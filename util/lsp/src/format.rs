@@ -10,6 +10,12 @@ pub async fn formatting(
     params: DocumentFormattingParams,
 ) -> Result<Option<Vec<TextEdit>>> {
     let text_document = params.text_document;
+
+    server
+        .client
+        .log_message(MessageType::INFO, format!("Formatting request: {}", text_document.uri))
+        .await;
+
     let db = server.database.read().await;
     let index = db.get(text_document.uri.as_str()).unwrap();
     let prg = match index.ust() {

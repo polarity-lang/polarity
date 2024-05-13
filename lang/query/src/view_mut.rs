@@ -10,6 +10,7 @@ pub struct DatabaseViewMut<'a> {
 
 impl<'a> DatabaseViewMut<'a> {
     pub fn load(&mut self) -> Result<(), Error> {
+        self.reset();
         let prg = self.query_ref().tst()?;
         let (info_lapper, item_lapper) = collect_info(&prg);
         self.set(info_lapper, item_lapper);

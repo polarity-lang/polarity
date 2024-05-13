@@ -12,6 +12,12 @@ use super::server::*;
 pub async fn hover(server: &Server, params: HoverParams) -> jsonrpc::Result<Option<Hover>> {
     let pos_params = params.text_document_position_params;
     let text_document = pos_params.text_document;
+
+    server
+        .client
+        .log_message(MessageType::INFO, format!("Hover request: {}", text_document.uri))
+        .await;
+
     let pos = pos_params.position;
     let db = server.database.read().await;
     let index = db.get(text_document.uri.as_str()).unwrap();
