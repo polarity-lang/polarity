@@ -19,7 +19,7 @@ impl<'a> DatabaseView<'a> {
         // TODO: The database should use Urls as keys everywhere
         // instead of FileId.
         let filename = self.filename();
-        let uri = Url::from_file_path(filename).map_err(|_| parser::ParseError::User {
+        let uri = Url::parse(filename).map_err(|_| parser::ParseError::User {
             error: format!("Cannot convert filepath {:?} to url", filename),
         })?;
         Ok(uri)
