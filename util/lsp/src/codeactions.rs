@@ -14,6 +14,11 @@ pub async fn code_action(
     let text_document = params.text_document;
     let range = params.range;
 
+    server
+        .client
+        .log_message(MessageType::INFO, format!("Code action request: {}", text_document.uri))
+        .await;
+
     let db = server.database.read().await;
     let index = db.get(text_document.uri.as_str()).unwrap();
     let span_start = index.location_to_index(range.start.from_lsp());

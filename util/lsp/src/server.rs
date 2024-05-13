@@ -30,12 +30,18 @@ impl LanguageServer for Server {
     }
 
     async fn shutdown(&self) -> jsonrpc::Result<()> {
+        self.client.log_message(MessageType::INFO, "server shutdown!").await;
         Ok(())
     }
 
     async fn did_open(&self, params: lsp::DidOpenTextDocumentParams) {
         let text_document = params.text_document;
         let mut db = self.database.write().await;
+
+        self.client
+            .log_message(MessageType::INFO, format!("Opened file: {}", text_document.uri))
+            .await;
+
         let file = File { name: text_document.uri.to_string(), source: text_document.text };
         let mut view = db.add(file);
 
@@ -47,6 +53,11 @@ impl LanguageServer for Server {
     async fn did_change(&self, params: lsp::DidChangeTextDocumentParams) {
         let text_document = params.text_document;
         let mut content_changes = params.content_changes;
+
+        self.client
+            .log_message(MessageType::INFO, format!("Changed file: {}", text_document.uri))
+            .await;
+
         let mut db = self.database.write().await;
         let text = content_changes.drain(0..).next().unwrap().text;
 
