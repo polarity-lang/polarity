@@ -31,7 +31,7 @@ impl<'a> DatabaseView<'a> {
         let lapper = self.infos();
         let intervals = lapper.find(span.start().into(), span.end().into());
         let smallest_interval =
-            intervals.min_by(|i1, i2| (i1.stop - i1.start).cmp(&(i2.stop - i1.start)));
+            intervals.min_by(|i1, i2| (i1.stop - i1.start).cmp(&(i2.stop - i2.start)));
         smallest_interval.map(|interval| interval.val.clone())
     }
 
