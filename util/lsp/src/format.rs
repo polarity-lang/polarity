@@ -17,7 +17,7 @@ pub async fn formatting(
         .await;
 
     let db = server.database.read().await;
-    let index = db.get(text_document.uri.as_str()).unwrap();
+    let index = db.get(&text_document.uri).unwrap();
     let prg = match index.ust() {
         Ok(prg) => prg,
         Err(_) => return Ok(None),

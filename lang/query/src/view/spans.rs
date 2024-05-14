@@ -6,15 +6,17 @@ use super::DatabaseView;
 
 impl<'a> DatabaseView<'a> {
     pub fn location_to_index(&self, location: Location) -> Option<ByteIndex> {
-        let DatabaseView { file_id, database } = self;
-        let line_span = database.files.line_span(*file_id, location.line).ok()?;
-        let index = line_span.start().to_usize() + location.column.to_usize();
+        let DatabaseView { url, database } = self;
+        let file = database.files.get(url).unwrap();
+        let line_span = file.line_span(location.line).ok()?;
+        let index: usize = line_span.start().to_usize() + location.column.to_usize();
         Some((index as u32).into())
     }
 
     pub fn index_to_location(&self, idx: ByteIndex) -> Option<Location> {
-        let DatabaseView { file_id, database } = self;
-        database.files.location(*file_id, idx).ok()
+        let DatabaseView { url, database } = self;
+        let file = database.files.get(url).unwrap();
+        file.location(idx).ok()
     }
 
     pub fn span_to_locations(&self, span: Span) -> Option<(Location, Location)> {
@@ -44,10 +46,10 @@ impl<'a> DatabaseView<'a> {
     }
 
     pub fn infos(&self) -> &Lapper<u32, Info> {
-        &self.database.info_by_id[&self.file_id]
+        &self.database.info_by_id[&self.url]
     }
 
     pub fn items(&self) -> &Lapper<u32, Item> {
-        &self.database.item_by_id[&self.file_id]
+        &self.database.item_by_id[&self.url]
     }
 }

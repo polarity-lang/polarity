@@ -1,10 +1,9 @@
-use codespan::FileId;
-
 use crate::*;
+use url::Url;
 
 /// Mutable view on a file in the database
 pub struct DatabaseViewMut<'a> {
-    pub(crate) file_id: FileId,
+    pub(crate) url: Url,
     pub(crate) database: &'a mut Database,
 }
 
@@ -18,28 +17,30 @@ impl<'a> DatabaseViewMut<'a> {
     }
 
     pub fn update(&mut self, source: String) -> Result<(), Error> {
-        let DatabaseViewMut { file_id, database } = self;
-        database.files.update(*file_id, source);
+        let DatabaseViewMut { url, database } = self;
+        let mut file = database.files.remove(url).unwrap();
+        file.update(source);
+        database.files.insert(url.clone(), file);
         self.load()
     }
 
     pub fn query(self) -> DatabaseView<'a> {
-        let DatabaseViewMut { file_id, database } = self;
-        DatabaseView { file_id, database }
+        let DatabaseViewMut { url, database } = self;
+        DatabaseView { url, database }
     }
 
     pub fn query_ref(&self) -> DatabaseView<'_> {
-        let DatabaseViewMut { file_id, database } = self;
-        DatabaseView { file_id: *file_id, database }
+        let DatabaseViewMut { url, database } = self;
+        DatabaseView { url: url.clone(), database }
     }
 
     pub fn reset(&mut self) {
-        self.database.info_by_id.insert(self.file_id, Lapper::new(vec![]));
-        self.database.item_by_id.insert(self.file_id, Lapper::new(vec![]));
+        self.database.info_by_id.insert(self.url.clone(), Lapper::new(vec![]));
+        self.database.item_by_id.insert(self.url.clone(), Lapper::new(vec![]));
     }
 
     pub fn set(&mut self, info_index: Lapper<u32, Info>, item_index: Lapper<u32, Item>) {
-        self.database.info_by_id.insert(self.file_id, info_index);
-        self.database.item_by_id.insert(self.file_id, item_index);
+        self.database.info_by_id.insert(self.url.clone(), info_index);
+        self.database.item_by_id.insert(self.url.clone(), item_index);
     }
 }
