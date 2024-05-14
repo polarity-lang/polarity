@@ -1,4 +1,4 @@
-use codespan::FileId;
+use url::Url;
 
 mod edit;
 mod lift;
@@ -13,6 +13,6 @@ use crate::*;
 
 /// View on a file in the database
 pub struct DatabaseView<'a> {
-    pub(crate) file_id: FileId,
+    pub(crate) url: Url,
     pub(crate) database: &'a Database,
 }

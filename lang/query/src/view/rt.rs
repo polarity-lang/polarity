@@ -1,7 +1,5 @@
 use std::rc::Rc;
 
-use url::Url;
-
 use super::DatabaseView;
 
 use elaborator::normalizer::normalize::Normalize;
@@ -11,29 +9,14 @@ use syntax::{ast::Exp, ast::ForgetTST, ast::Module};
 use crate::*;
 
 impl<'a> DatabaseView<'a> {
-    pub fn filename(&self) -> &str {
-        self.database.files.name(self.file_id).to_str().unwrap()
-    }
-
-    pub fn uri(&self) -> Result<Url, Error> {
-        // TODO: The database should use Urls as keys everywhere
-        // instead of FileId.
-        let filename = self.filename();
-        let uri = Url::parse(filename).map_err(|_| parser::ParseError::User {
-            error: format!("Cannot convert filepath {:?} to url", filename),
-        })?;
-        Ok(uri)
-    }
-
     pub fn source(&self) -> &'a str {
-        let DatabaseView { file_id, database } = self;
-        database.files.source(*file_id)
+        let DatabaseView { url, database } = self;
+        &database.files.get(url).unwrap().source
     }
 
     pub fn cst(&self) -> Result<cst::decls::Module, Error> {
         let source = self.source();
-        let uri = self.uri()?;
-        parser::parse_module(uri, source).map_err(Error::Parser)
+        parser::parse_module(self.url.clone(), source).map_err(Error::Parser)
     }
 
     pub fn ust(&self) -> Result<Module, Error> {
@@ -63,7 +46,6 @@ impl<'a> DatabaseView<'a> {
 
     pub fn pretty_error(&self, err: Error) -> miette::Report {
         let miette_error: miette::Error = err.into();
-        miette_error
-            .with_source_code(miette::NamedSource::new(self.filename(), self.source().to_owned()))
+        miette_error.with_source_code(miette::NamedSource::new(&self.url, self.source().to_owned()))
     }
 }

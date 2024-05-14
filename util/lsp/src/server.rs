@@ -42,7 +42,7 @@ impl LanguageServer for Server {
             .log_message(MessageType::INFO, format!("Opened file: {}", text_document.uri))
             .await;
 
-        let file = File { name: text_document.uri.to_string(), source: text_document.text };
+        let file = File { name: text_document.uri.clone(), source: text_document.text };
         let mut view = db.add(file);
 
         let res = view.load();
@@ -61,7 +61,7 @@ impl LanguageServer for Server {
         let mut db = self.database.write().await;
         let text = content_changes.drain(0..).next().unwrap().text;
 
-        let mut view = db.get_mut(text_document.uri.as_str()).unwrap();
+        let mut view = db.get_mut(&text_document.uri).unwrap();
 
         let res = view.update(text);
         let diags = view.query().diagnostics(res);
