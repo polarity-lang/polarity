@@ -2,32 +2,45 @@
 -- Specification --
 -------------------
 
+-- | Expressions of the object language
 data Exp {
+    -- | Variables using a deBruijn representation
     Var(x: Nat),
+    -- | Lambda abstractions
     Lam(body: Exp),
+    -- | Function applications
     App(lhs: Exp, rhs: Exp)
 }
 
+-- | Types of the object language
 data Typ {
+    -- | Function type
     FunT(t1 t2: Typ),
     VarT(x: Nat),
 }
 
+-- | Typing contexts.
+-- | Because we use de Bruijn indices the typing context does not contain variable names.
 data Ctx {
+    -- | The empty context
     Nil,
+    -- | Adding a typed binding to the context
     Cons(t: Typ, ts: Ctx),
 }
 
+-- | Appending two contexts
 def Ctx.append(other: Ctx): Ctx {
     Nil => other,
     Cons(t, ts) => Cons(t, ts.append(other))
 }
 
+-- | Computing the length of a context
 def Ctx.len: Nat {
     Nil => 0,
     Cons(_, ts) => S(ts.len)
 }
 
+-- | Substituting an expression for a variable in an expression.
 def Exp.subst(v: Nat, by: Exp): Exp {
     Var(x) => x.cmp(v).subst_result(x, by),
     Lam(e) => Lam(e.subst(S(v), by)),
@@ -45,6 +58,8 @@ data Elem(x: Nat, t: Typ, ctx: Ctx) {
     There(x: Nat, t: Typ, t2: Typ, ts: Ctx, prf: Elem(x, t, ts)): Elem(S(x), t, Cons(t2, ts)),
 }
 
+-- | The typing judgement.
+-- | HasType(ctx, e, t) means `ctx |- e : t`
 data HasType(ctx: Ctx, e: Exp, t: Typ) {
     TVar(ctx: Ctx, x: Nat, t: Typ, elem: Elem(x, t, ctx)) : HasType(ctx, Var(x), t),
     TLam(ctx: Ctx, t1: Typ, t2: Typ, e: Exp, body: HasType(Cons(t1, ctx), e, t2)) : HasType(ctx, Lam(e), FunT(t1, t2)),
@@ -53,13 +68,17 @@ data HasType(ctx: Ctx, e: Exp, t: Typ) {
          e2_t: HasType(ctx, e2, t1)): HasType(ctx, App(e1, e2), t2),
 }
 
+-- | The evaluation relation
+-- | Eval(e1,e2) means that e1 evaluates to e2
 data Eval(e1 e2: Exp) {
     EBeta(e1 e2: Exp): Eval(App(Lam(e1), e2), e1.subst(0, e2)),
     ECongApp1(e1 e1': Exp, h: Eval(e1, e1'), e2: Exp): Eval(App(e1, e2), App(e1', e2)),
     ECongApp2(e1 e2 e2': Exp, h: Eval(e2, e2')): Eval(App(e1, e2), App(e1, e2')),
 }
 
+-- | Characterizes the subset of Values.
 data IsValue(e: Exp) {
+    -- | Every lambda abstraction is a value
     VLam(e: Exp): IsValue(Lam(e)),
 }
 

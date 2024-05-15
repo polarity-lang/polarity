@@ -140,8 +140,15 @@ impl ToHoverContent for DotCallInfo {
 
 impl ToHoverContent for TypeUnivInfo {
     fn to_hover_content(self) -> HoverContents {
-        let header = MarkedString::String("Type universe".to_owned());
-        HoverContents::Array(vec![header])
+        let content: Vec<MarkedString> = vec![
+            MarkedString::String("Universe: `Type`".to_owned()),
+            MarkedString::String("---".to_owned()),
+            MarkedString::String(
+                "The impredicative universe whose terms are types or the universe `Type` itself."
+                    .to_owned(),
+            ),
+        ];
+        HoverContents::Array(content)
     }
 }
 
