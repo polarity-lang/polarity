@@ -6,6 +6,7 @@ use syntax::{
     ast::DotCallKind,
     ctx::values::{Binder as TypeCtxBinder, TypeCtx},
 };
+use url::Url;
 
 // Info
 //
@@ -157,6 +158,9 @@ impl From<VariableInfo> for InfoContent {
 /// Information for type constructors
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeCtorInfo {
+    /// The span where the type constructor was defined.
+    /// This is used for the jump-to-definition feature.
+    pub target_span: Option<(Url, Span)>,
     pub name: String,
 }
 
