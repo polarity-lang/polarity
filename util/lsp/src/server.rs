@@ -68,6 +68,13 @@ impl LanguageServer for Server {
         self.send_diagnostics(text_document.uri, diags).await;
     }
 
+    async fn goto_definition(
+        &self,
+        params: GotoDefinitionParams,
+    ) -> jsonrpc::Result<Option<GotoDefinitionResponse>> {
+        super::gotodefinition::goto_definition(self, params).await
+    }
+
     async fn hover(&self, params: HoverParams) -> jsonrpc::Result<Option<Hover>> {
         super::hover::hover(self, params).await
     }
