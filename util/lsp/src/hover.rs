@@ -114,7 +114,7 @@ impl ToHoverContent for TypeCtorInfo {
 
 impl ToHoverContent for CallInfo {
     fn to_hover_content(self) -> HoverContents {
-        let CallInfo { kind, typ, name } = self;
+        let CallInfo { kind, typ, name, .. } = self;
         let header = match kind {
             CallKind::Constructor => MarkedString::String(format!("Constructor: `{}`", name)),
             CallKind::Codefinition => MarkedString::String(format!("Codefinition: `{}`", name)),
@@ -128,7 +128,7 @@ impl ToHoverContent for CallInfo {
 
 impl ToHoverContent for DotCallInfo {
     fn to_hover_content(self) -> HoverContents {
-        let DotCallInfo { kind, name, typ } = self;
+        let DotCallInfo { kind, name, typ, .. } = self;
         let header = match kind {
             DotCallKind::Destructor => MarkedString::String(format!("Destructor: `{}`", name)),
             DotCallKind::Definition => MarkedString::String(format!("Definition: `{}`", name)),

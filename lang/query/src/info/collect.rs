@@ -274,7 +274,19 @@ impl CollectInfo for Call {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let Call { span, kind, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let info = CallInfo { kind: *kind, typ: typ.print_to_string(None), name: name.clone() };
+            let decl = collector.lookup_table.get(name);
+            let target_span = match decl {
+                Some(Decl::Codef(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                Some(Decl::Ctor(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                Some(Decl::Let(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                _ => None,
+            };
+            let info = CallInfo {
+                kind: *kind,
+                typ: typ.print_to_string(None),
+                name: name.clone(),
+                target_span,
+            };
             collector.add_info(*span, info)
         }
         args.collect_info(collector)
@@ -285,8 +297,18 @@ impl CollectInfo for DotCall {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let DotCall { span, kind, exp, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let info =
-                DotCallInfo { kind: *kind, name: name.clone(), typ: typ.print_to_string(None) };
+            let decl = collector.lookup_table.get(name);
+            let target_span = match decl {
+                Some(Decl::Def(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                Some(Decl::Dtor(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                _ => None,
+            };
+            let info = DotCallInfo {
+                kind: *kind,
+                name: name.clone(),
+                typ: typ.print_to_string(None),
+                target_span,
+            };
             collector.add_info(*span, info)
         }
         exp.collect_info(collector);

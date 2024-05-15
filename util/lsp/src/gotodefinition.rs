@@ -12,6 +12,12 @@ pub async fn goto_definition(
 ) -> jsonrpc::Result<Option<GotoDefinitionResponse>> {
     let pos_params = params.text_document_position_params;
     let text_document = pos_params.text_document;
+
+    server
+        .client
+        .log_message(MessageType::INFO, format!("GotoDefinition request: {}", text_document.uri))
+        .await;
+
     let pos = pos_params.position;
     let db = server.database.read().await;
     let index = db.get(&text_document.uri).unwrap();
@@ -69,14 +75,22 @@ impl ToJumpContent for TypeCtorInfo {
 }
 
 impl ToJumpContent for CallInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
+    fn to_jump_content(&self, index: &DatabaseView) -> Option<Location> {
+        let CallInfo { target_span, .. } = self;
+        target_span.as_ref().map(|span| {
+            let rng = index.span_to_locations(span.1).map(ToLsp::to_lsp);
+            Location { uri: span.0.clone(), range: rng.unwrap() }
+        })
     }
 }
 
 impl ToJumpContent for DotCallInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
+    fn to_jump_content(&self, index: &DatabaseView) -> Option<Location> {
+        let DotCallInfo { target_span, .. } = self;
+        target_span.as_ref().map(|span| {
+            let rng = index.span_to_locations(span.1).map(ToLsp::to_lsp);
+            Location { uri: span.0.clone(), range: rng.unwrap() }
+        })
     }
 }
 
