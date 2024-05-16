@@ -5,6 +5,8 @@ use rust_lapper::{Interval, Lapper};
 
 use printer::PrintToString;
 use syntax::ast::*;
+use syntax::common::HashMap;
+use url::Url;
 
 use crate::{
     CodataInfo, CodefInfo, CtorInfo, DataInfo, DefInfo, DtorInfo, LetInfo, LocalComatchInfo,
@@ -19,22 +21,31 @@ use super::item::Item;
 
 /// Traverse the program and collect information for the LSP server.
 pub fn collect_info(prg: &Module) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
-    let mut c = InfoCollector::default();
+    let Module { uri, map, .. } = prg;
 
-    prg.collect_info(&mut c);
+    let mut collector = InfoCollector::new(uri.clone(), map.clone());
 
-    let info_lapper = Lapper::new(c.info_spans);
-    let item_lapper = Lapper::new(c.item_spans);
+    for item in map.values() {
+        item.collect_info(&mut collector)
+    }
+
+    let info_lapper = Lapper::new(collector.info_spans);
+    let item_lapper = Lapper::new(collector.item_spans);
     (info_lapper, item_lapper)
 }
 
-#[derive(Default)]
 struct InfoCollector {
+    uri: Url,
+    lookup_table: HashMap<Ident, Decl>,
     info_spans: Vec<Interval<u32, Info>>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
 impl InfoCollector {
+    fn new(uri: Url, map: HashMap<Ident, Decl>) -> Self {
+        InfoCollector { uri, lookup_table: map, info_spans: vec![], item_spans: vec![] }
+    }
+
     fn add_info<T: Into<InfoContent>>(&mut self, span: Span, info: T) {
         let info = Interval {
             start: span.start().into(),
@@ -83,18 +94,9 @@ impl<T: CollectInfo> CollectInfo for Vec<T> {
     }
 }
 
-// Traversing a module and toplevel declarations
+// Traversing toplevel declarations
 //
 //
-
-impl CollectInfo for Module {
-    fn collect_info(&self, collector: &mut InfoCollector) {
-        let Module { map, .. } = self;
-        for item in map.values() {
-            item.collect_info(collector)
-        }
-    }
-}
 
 impl CollectInfo for Decl {
     fn collect_info(&self, collector: &mut InfoCollector) {
@@ -255,7 +257,13 @@ impl CollectInfo for TypCtor {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let TypCtor { span, args, name } = self;
         if let Some(span) = span {
-            let info = TypeCtorInfo { name: name.clone() };
+            let decl = collector.lookup_table.get(name);
+            let definition_site = match decl {
+                Some(Decl::Data(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                Some(Decl::Codata(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                _ => None,
+            };
+            let info = TypeCtorInfo { name: name.clone(), definition_site };
             collector.add_info(*span, info)
         }
         args.collect_info(collector)
@@ -266,7 +274,19 @@ impl CollectInfo for Call {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let Call { span, kind, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let info = CallInfo { kind: *kind, typ: typ.print_to_string(None), name: name.clone() };
+            let decl = collector.lookup_table.get(name);
+            let definition_site = match decl {
+                Some(Decl::Codef(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                Some(Decl::Ctor(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                Some(Decl::Let(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                _ => None,
+            };
+            let info = CallInfo {
+                kind: *kind,
+                typ: typ.print_to_string(None),
+                name: name.clone(),
+                definition_site,
+            };
             collector.add_info(*span, info)
         }
         args.collect_info(collector)
@@ -277,8 +297,18 @@ impl CollectInfo for DotCall {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let DotCall { span, kind, exp, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let info =
-                DotCallInfo { kind: *kind, name: name.clone(), typ: typ.print_to_string(None) };
+            let decl = collector.lookup_table.get(name);
+            let definition_site = match decl {
+                Some(Decl::Def(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                Some(Decl::Dtor(d)) => d.span.map(|span| (collector.uri.clone(), span)),
+                _ => None,
+            };
+            let info = DotCallInfo {
+                kind: *kind,
+                name: name.clone(),
+                typ: typ.print_to_string(None),
+                definition_site,
+            };
             collector.add_info(*span, info)
         }
         exp.collect_info(collector);
