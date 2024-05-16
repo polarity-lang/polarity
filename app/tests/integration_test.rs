@@ -15,6 +15,6 @@ fn version_command() {
 #[test]
 fn check_command() {
     let mut cmd = Command::cargo_bin(BINARY).unwrap();
-    let assert = cmd.args(vec!["check", "examples/absurd.pol"]).assert();
-    assert.success().stdout("Typechecks!");
+    let assert = cmd.args(vec!["check", "../examples/absurd.pol"]).assert();
+    assert.success().stdout("../examples/absurd.pol typechecked successfully!\n");
 }
