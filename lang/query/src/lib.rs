@@ -36,7 +36,8 @@ pub struct File {
 
 impl File {
     pub fn read(path: &Path) -> io::Result<Self> {
-        let url = Url::from_file_path(path).map_err(|_| {
+        let path = path.canonicalize()?;
+        let url = Url::from_file_path(&path).map_err(|_| {
             std::io::Error::new(std::io::ErrorKind::Other, "Cannot convert filepath to url.")
         })?;
         let file = fs::read_to_string(path)?;

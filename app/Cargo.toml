@@ -25,3 +25,7 @@ elaborator = { path = "../lang/elaborator" }
 syntax = { path = "../lang/syntax" }
 printer = { path = "../lang/printer" }
 lsp-server = { path = "../util/lsp" }
+
+[dev-dependencies]
+# For testing the binary
+assert_cmd = "2.0.14"
