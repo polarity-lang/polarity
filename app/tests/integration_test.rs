@@ -18,3 +18,13 @@ fn check_command() {
     let assert = cmd.args(vec!["check", "../examples/absurd.pol"]).assert();
     assert.success().stdout("../examples/absurd.pol typechecked successfully!\n");
 }
+
+/// Check that "pol run" works correctly
+#[test]
+fn run_command() {
+    let mut cmd = Command::cargo_bin(BINARY).unwrap();
+    let assert = cmd.args(vec!["run", "../examples/vect.pol"]).assert();
+    assert
+        .success()
+        .stdout("Cons(S(S(S(Z))), Z, Cons(S(S(Z)), Z, Cons(S(Z), Z, Cons(Z, Z, Nil))))\n");
+}
