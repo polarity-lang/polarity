@@ -29,7 +29,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 }
 
 fn print_nf(nf: &ast::Exp) {
-    let mut stream = StandardStream::stdout(ColorChoice::Never);
+    let mut stream = StandardStream::stdout(ColorChoice::Auto);
     nf.print_colored(&Default::default(), &mut stream).expect("Failed to print to stdout");
     println!();
 }
