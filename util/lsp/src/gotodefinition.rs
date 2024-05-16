@@ -1,5 +1,6 @@
 //! Implementation of the goto-definition functionality of the LSP server
 
+use codespan::Span;
 use tower_lsp::{jsonrpc, lsp_types::*};
 
 use super::conversion::*;
@@ -28,140 +29,47 @@ pub async fn goto_definition(
 }
 
 fn info_to_jump(index: &DatabaseView, info: Info) -> Option<GotoDefinitionResponse> {
-    info.content.to_jump_content(index).map(GotoDefinitionResponse::Scalar)
+    let (uri, span) = info.content.to_jump_target()?;
+    let jump_location = span_to_location(&span, uri, index)?;
+    Some(GotoDefinitionResponse::Scalar(jump_location))
 }
 
-trait ToJumpContent {
-    fn to_jump_content(&self, index: &DatabaseView) -> Option<Location>;
+fn span_to_location(span: &Span, uri: Url, index: &DatabaseView) -> Option<Location> {
+    let range = index.span_to_locations(*span).map(ToLsp::to_lsp)?;
+    Some(Location { uri, range })
+}
+trait ToJumpTarget {
+    fn to_jump_target(&self) -> Option<(Url, Span)>;
 }
 
-impl ToJumpContent for InfoContent {
-    fn to_jump_content(&self, index: &DatabaseView) -> Option<Location> {
+impl ToJumpTarget for InfoContent {
+    fn to_jump_target(&self) -> Option<(Url, Span)> {
         match self {
-            InfoContent::VariableInfo(i) => i.to_jump_content(index),
-            InfoContent::TypeCtorInfo(i) => i.to_jump_content(index),
-            InfoContent::CallInfo(i) => i.to_jump_content(index),
-            InfoContent::DotCallInfo(i) => i.to_jump_content(index),
-            InfoContent::TypeUnivInfo(i) => i.to_jump_content(index),
-            InfoContent::HoleInfo(i) => i.to_jump_content(index),
-            InfoContent::AnnoInfo(i) => i.to_jump_content(index),
-            InfoContent::LocalComatchInfo(i) => i.to_jump_content(index),
-            InfoContent::LocalMatchInfo(i) => i.to_jump_content(index),
-            InfoContent::DefInfo(i) => i.to_jump_content(index),
-            InfoContent::CodefInfo(i) => i.to_jump_content(index),
-            InfoContent::LetInfo(i) => i.to_jump_content(index),
-            InfoContent::DataInfo(i) => i.to_jump_content(index),
-            InfoContent::CodataInfo(i) => i.to_jump_content(index),
-            InfoContent::CtorInfo(i) => i.to_jump_content(index),
-            InfoContent::DtorInfo(i) => i.to_jump_content(index),
+            InfoContent::TypeCtorInfo(i) => i.to_jump_target(),
+            InfoContent::CallInfo(i) => i.to_jump_target(),
+            InfoContent::DotCallInfo(i) => i.to_jump_target(),
+            _ => None,
         }
     }
 }
 
-impl ToJumpContent for VariableInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
+impl ToJumpTarget for TypeCtorInfo {
+    fn to_jump_target(&self) -> Option<(Url, Span)> {
+        let TypeCtorInfo { definition_site, .. } = self;
+        definition_site.clone()
     }
 }
 
-impl ToJumpContent for TypeCtorInfo {
-    fn to_jump_content(&self, index: &DatabaseView) -> Option<Location> {
-        let TypeCtorInfo { target_span, .. } = self;
-        target_span.as_ref().map(|span| {
-            let rng = index.span_to_locations(span.1).map(ToLsp::to_lsp);
-            Location { uri: span.0.clone(), range: rng.unwrap() }
-        })
+impl ToJumpTarget for CallInfo {
+    fn to_jump_target(&self) -> Option<(Url, Span)> {
+        let CallInfo { definition_site, .. } = self;
+        definition_site.clone()
     }
 }
 
-impl ToJumpContent for CallInfo {
-    fn to_jump_content(&self, index: &DatabaseView) -> Option<Location> {
-        let CallInfo { target_span, .. } = self;
-        target_span.as_ref().map(|span| {
-            let rng = index.span_to_locations(span.1).map(ToLsp::to_lsp);
-            Location { uri: span.0.clone(), range: rng.unwrap() }
-        })
-    }
-}
-
-impl ToJumpContent for DotCallInfo {
-    fn to_jump_content(&self, index: &DatabaseView) -> Option<Location> {
-        let DotCallInfo { target_span, .. } = self;
-        target_span.as_ref().map(|span| {
-            let rng = index.span_to_locations(span.1).map(ToLsp::to_lsp);
-            Location { uri: span.0.clone(), range: rng.unwrap() }
-        })
-    }
-}
-
-impl ToJumpContent for TypeUnivInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
-    }
-}
-
-impl ToJumpContent for HoleInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
-    }
-}
-
-impl ToJumpContent for AnnoInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
-    }
-}
-
-impl ToJumpContent for LocalMatchInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
-    }
-}
-
-impl ToJumpContent for LocalComatchInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
-    }
-}
-
-impl ToJumpContent for DefInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
-    }
-}
-
-impl ToJumpContent for CodefInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
-    }
-}
-
-impl ToJumpContent for LetInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
-    }
-}
-
-impl ToJumpContent for DataInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
-    }
-}
-
-impl ToJumpContent for CodataInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
-    }
-}
-
-impl ToJumpContent for CtorInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
-    }
-}
-
-impl ToJumpContent for DtorInfo {
-    fn to_jump_content(&self, _index: &DatabaseView) -> Option<Location> {
-        None
+impl ToJumpTarget for DotCallInfo {
+    fn to_jump_target(&self) -> Option<(Url, Span)> {
+        let DotCallInfo { definition_site, .. } = self;
+        definition_site.clone()
     }
 }

@@ -160,7 +160,7 @@ impl From<VariableInfo> for InfoContent {
 pub struct TypeCtorInfo {
     /// The span where the type constructor was defined.
     /// This is used for the jump-to-definition feature.
-    pub target_span: Option<(Url, Span)>,
+    pub definition_site: Option<(Url, Span)>,
     pub name: String,
 }
 
@@ -175,7 +175,7 @@ impl From<TypeCtorInfo> for InfoContent {
 pub struct CallInfo {
     /// The span where the call was defined.
     /// This is used for the jump-to-definition feature.
-    pub target_span: Option<(Url, Span)>,
+    pub definition_site: Option<(Url, Span)>,
     pub kind: CallKind,
     pub name: String,
     pub typ: String,
@@ -192,7 +192,7 @@ impl From<CallInfo> for InfoContent {
 pub struct DotCallInfo {
     /// The span where the dotcall was defined.
     /// This is used for the jump-to-definition feature.
-    pub target_span: Option<(Url, Span)>,
+    pub definition_site: Option<(Url, Span)>,
     pub kind: DotCallKind,
     pub name: String,
     pub typ: String,

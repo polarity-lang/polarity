@@ -258,12 +258,12 @@ impl CollectInfo for TypCtor {
         let TypCtor { span, args, name } = self;
         if let Some(span) = span {
             let decl = collector.lookup_table.get(name);
-            let target_span = match decl {
+            let definition_site = match decl {
                 Some(Decl::Data(d)) => d.span.map(|span| (collector.uri.clone(), span)),
                 Some(Decl::Codata(d)) => d.span.map(|span| (collector.uri.clone(), span)),
                 _ => None,
             };
-            let info = TypeCtorInfo { name: name.clone(), target_span };
+            let info = TypeCtorInfo { name: name.clone(), definition_site };
             collector.add_info(*span, info)
         }
         args.collect_info(collector)
@@ -275,7 +275,7 @@ impl CollectInfo for Call {
         let Call { span, kind, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             let decl = collector.lookup_table.get(name);
-            let target_span = match decl {
+            let definition_site = match decl {
                 Some(Decl::Codef(d)) => d.span.map(|span| (collector.uri.clone(), span)),
                 Some(Decl::Ctor(d)) => d.span.map(|span| (collector.uri.clone(), span)),
                 Some(Decl::Let(d)) => d.span.map(|span| (collector.uri.clone(), span)),
@@ -285,7 +285,7 @@ impl CollectInfo for Call {
                 kind: *kind,
                 typ: typ.print_to_string(None),
                 name: name.clone(),
-                target_span,
+                definition_site,
             };
             collector.add_info(*span, info)
         }
@@ -298,7 +298,7 @@ impl CollectInfo for DotCall {
         let DotCall { span, kind, exp, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             let decl = collector.lookup_table.get(name);
-            let target_span = match decl {
+            let definition_site = match decl {
                 Some(Decl::Def(d)) => d.span.map(|span| (collector.uri.clone(), span)),
                 Some(Decl::Dtor(d)) => d.span.map(|span| (collector.uri.clone(), span)),
                 _ => None,
@@ -307,7 +307,7 @@ impl CollectInfo for DotCall {
                 kind: *kind,
                 name: name.clone(),
                 typ: typ.print_to_string(None),
-                target_span,
+                definition_site,
             };
             collector.add_info(*span, info)
         }
