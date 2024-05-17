@@ -161,6 +161,8 @@ pub struct TypeCtorInfo {
     /// The span where the type constructor was defined.
     /// This is used for the jump-to-definition feature.
     pub definition_site: Option<(Url, Span)>,
+    /// Doc comment from the definition site
+    pub doc: Option<Vec<String>>,
     pub name: String,
 }
 
@@ -176,6 +178,8 @@ pub struct CallInfo {
     /// The span where the call was defined.
     /// This is used for the jump-to-definition feature.
     pub definition_site: Option<(Url, Span)>,
+    /// Doc comment from the definition site
+    pub doc: Option<Vec<String>>,
     pub kind: CallKind,
     pub name: String,
     pub typ: String,
@@ -193,6 +197,8 @@ pub struct DotCallInfo {
     /// The span where the dotcall was defined.
     /// This is used for the jump-to-definition feature.
     pub definition_site: Option<(Url, Span)>,
+    /// Doc comment from the definition site
+    pub doc: Option<Vec<String>>,
     pub kind: DotCallKind,
     pub name: String,
     pub typ: String,

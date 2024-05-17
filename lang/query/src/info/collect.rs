@@ -264,7 +264,12 @@ impl CollectInfo for TypCtor {
                 Some(Decl::Codata(d)) => d.span.map(|span| (collector.uri.clone(), span)),
                 _ => None,
             };
-            let info = TypeCtorInfo { name: name.clone(), definition_site };
+            let doc = match decl {
+                Some(Decl::Data(d)) => d.doc.clone().map(|doc| doc.docs),
+                Some(Decl::Codata(d)) => d.doc.clone().map(|doc| doc.docs),
+                _ => None,
+            };
+            let info = TypeCtorInfo { name: name.clone(), definition_site, doc };
             collector.add_info(*span, info)
         }
         args.collect_info(collector)
@@ -282,8 +287,16 @@ impl CollectInfo for Call {
                 Some(Decl::Let(d)) => d.span.map(|span| (collector.uri.clone(), span)),
                 _ => None,
             };
+            let doc = match decl {
+                Some(Decl::Codef(d)) => d.doc.clone().map(|doc| doc.docs),
+                Some(Decl::Ctor(d)) => d.doc.clone().map(|doc| doc.docs),
+                Some(Decl::Let(d)) => d.doc.clone().map(|doc| doc.docs),
+                _ => None,
+            };
+
             let info = CallInfo {
                 kind: *kind,
+                doc,
                 typ: typ.print_to_string(None),
                 name: name.clone(),
                 definition_site,
@@ -304,8 +317,14 @@ impl CollectInfo for DotCall {
                 Some(Decl::Dtor(d)) => d.span.map(|span| (collector.uri.clone(), span)),
                 _ => None,
             };
+            let doc = match decl {
+                Some(Decl::Def(d)) => d.doc.clone().map(|doc| doc.docs),
+                Some(Decl::Dtor(d)) => d.doc.clone().map(|doc| doc.docs),
+                _ => None,
+            };
             let info = DotCallInfo {
                 kind: *kind,
+                doc,
                 name: name.clone(),
                 typ: typ.print_to_string(None),
                 definition_site,

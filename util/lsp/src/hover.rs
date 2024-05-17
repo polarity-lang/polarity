@@ -60,6 +60,15 @@ fn string_to_language_string(s: String) -> MarkedString {
     MarkedString::LanguageString(LanguageString { language: "pol".to_owned(), value: s })
 }
 
+fn add_doc_comment(builder: &mut Vec<MarkedString>, doc: Option<Vec<String>>) {
+    if let Some(doc) = doc {
+        builder.push(MarkedString::String("---".to_owned()));
+        for d in doc {
+            builder.push(MarkedString::String(d))
+        }
+    }
+}
+
 // Transforming HoverContent to the correct LSP library type.
 //
 //
@@ -106,35 +115,42 @@ impl ToHoverContent for VariableInfo {
 
 impl ToHoverContent for TypeCtorInfo {
     fn to_hover_content(self) -> HoverContents {
-        let TypeCtorInfo { name, .. } = self;
-        let header = MarkedString::String(format!("Type constructor: `{}`", name));
-        HoverContents::Array(vec![header])
+        let TypeCtorInfo { name, doc, .. } = self;
+        let mut content: Vec<MarkedString> = Vec::new();
+        content.push(MarkedString::String(format!("Type constructor: `{}`", name)));
+        add_doc_comment(&mut content, doc);
+        HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for CallInfo {
     fn to_hover_content(self) -> HoverContents {
-        let CallInfo { kind, typ, name, .. } = self;
-        let header = match kind {
+        let CallInfo { kind, typ, name, doc, .. } = self;
+        let mut content: Vec<MarkedString> = Vec::new();
+        content.push(match kind {
             CallKind::Constructor => MarkedString::String(format!("Constructor: `{}`", name)),
             CallKind::Codefinition => MarkedString::String(format!("Codefinition: `{}`", name)),
             CallKind::LetBound => MarkedString::String(format!("Let-bound definition: `{}`", name)),
-        };
-
-        let typ = string_to_language_string(typ);
-        HoverContents::Array(vec![header, typ])
+        });
+        add_doc_comment(&mut content, doc);
+        content.push(MarkedString::String("---".to_owned()));
+        content.push(string_to_language_string(typ));
+        HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for DotCallInfo {
     fn to_hover_content(self) -> HoverContents {
-        let DotCallInfo { kind, name, typ, .. } = self;
-        let header = match kind {
+        let DotCallInfo { kind, name, typ, doc, .. } = self;
+        let mut content: Vec<MarkedString> = Vec::new();
+        content.push(match kind {
             DotCallKind::Destructor => MarkedString::String(format!("Destructor: `{}`", name)),
             DotCallKind::Definition => MarkedString::String(format!("Definition: `{}`", name)),
-        };
-        let typ = string_to_language_string(typ);
-        HoverContents::Array(vec![header, typ])
+        });
+        add_doc_comment(&mut content, doc);
+        content.push(MarkedString::String("---".to_owned()));
+        content.push(string_to_language_string(typ));
+        HoverContents::Array(content)
     }
 }
 
@@ -197,15 +213,6 @@ impl ToHoverContent for HoleInfo {
 // Toplevel declarations
 //
 //
-
-fn add_doc_comment(builder: &mut Vec<MarkedString>, doc: Option<Vec<String>>) {
-    if let Some(doc) = doc {
-        builder.push(MarkedString::String("---".to_owned()));
-        for d in doc {
-            builder.push(MarkedString::String(d))
-        }
-    }
-}
 
 impl ToHoverContent for DataInfo {
     fn to_hover_content(self) -> HoverContents {
