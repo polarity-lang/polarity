@@ -126,8 +126,8 @@ impl ReadBack for val::Hole {
     type Nf = Hole;
 
     fn read_back(&self, _prg: &Module) -> Result<Self::Nf, TypeError> {
-        let val::Hole { span } = self;
-        Ok(Hole { span: *span, inferred_type: None, inferred_ctx: None })
+        let val::Hole { span, metavar } = self;
+        Ok(Hole { span: *span, metavar: *metavar, inferred_type: None, inferred_ctx: None })
     }
 }
 

@@ -260,8 +260,9 @@ impl Rename for Exp {
                 normalized_type: normalized_type.map(|e| e.rename_in_ctx(ctx)),
             }),
             Exp::TypCtor(e) => Exp::TypCtor(e.rename_in_ctx(ctx)),
-            Exp::Hole(Hole { span, inferred_type, inferred_ctx: _ }) => Exp::Hole(Hole {
+            Exp::Hole(Hole { span, metavar, inferred_type, inferred_ctx: _ }) => Exp::Hole(Hole {
                 span,
+                metavar,
                 inferred_type: inferred_type.rename_in_ctx(ctx),
                 inferred_ctx: None, // TODO: Rename TypeCtx!
             }),

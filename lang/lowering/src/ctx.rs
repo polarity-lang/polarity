@@ -44,7 +44,8 @@ impl Ctx {
             top_level_map,
             decls_map: HashMap::default(),
             levels: Vec::new(),
-            next_label_id: 0,
+            // We start with 1 because "?1" looks better than "?0" in my opinion.
+            next_label_id: 1,
             user_labels: HashSet::default(),
             next_meta_var: 0,
             meta_vars: HashMap::default(),

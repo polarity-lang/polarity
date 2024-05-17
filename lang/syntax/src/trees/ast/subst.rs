@@ -69,9 +69,12 @@ impl Substitutable<Rc<Exp>> for Rc<Exp> {
                     inferred_type: None,
                 }))
             }
-            Exp::Hole(Hole { span, .. }) => {
-                Rc::new(Exp::Hole(Hole { span: *span, inferred_type: None, inferred_ctx: None }))
-            }
+            Exp::Hole(Hole { span, metavar, .. }) => Rc::new(Exp::Hole(Hole {
+                span: *span,
+                metavar: *metavar,
+                inferred_type: None,
+                inferred_ctx: None,
+            })),
         }
     }
 }
