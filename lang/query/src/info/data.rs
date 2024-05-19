@@ -260,6 +260,7 @@ impl From<LocalComatchInfo> for InfoContent {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HoleInfo {
     pub goal: String,
+    pub metavar: Option<String>,
     pub ctx: Option<Ctx>,
 }
 

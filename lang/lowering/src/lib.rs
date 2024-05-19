@@ -22,5 +22,5 @@ pub fn lower_module(prg: &cst::decls::Module) -> Result<ast::Module, LoweringErr
         item.lower(&mut ctx)?;
     }
 
-    Ok(ast::Module { uri: uri.clone(), map: ctx.decls_map, lookup_table })
+    Ok(ast::Module { uri: uri.clone(), map: ctx.decls_map, lookup_table, meta_vars: ctx.meta_vars })
 }

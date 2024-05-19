@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use derivative::Derivative;
+use syntax::ast::MetaVar;
 
 use crate::normalizer::env::*;
 use codespan::Span;
@@ -368,12 +369,13 @@ impl From<LocalMatch> for Neu {
 pub struct Hole {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
+    pub metavar: Option<MetaVar>,
 }
 
 impl Shift for Hole {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
-        let Hole { span } = self;
-        Hole { span: *span }
+        let Hole { span, metavar } = self;
+        Hole { span: *span, metavar: *metavar }
     }
 }
 

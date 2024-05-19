@@ -172,12 +172,13 @@ impl Lower for cst::exp::Anno {
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Anno { span, exp, typ } = self;
-        Ok(ast::Exp::Anno(ast::Anno {
+        Ok(ast::Anno {
             span: Some(*span),
             exp: exp.lower(ctx)?,
             typ: typ.lower(ctx)?,
             normalized_type: None,
-        }))
+        }
+        .into())
     }
 }
 
@@ -186,7 +187,7 @@ impl Lower for cst::exp::TypeUniv {
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::TypeUniv { span } = self;
-        Ok(ast::Exp::TypeUniv(TypeUniv { span: Some(*span) }))
+        Ok(TypeUniv { span: Some(*span) }.into())
     }
 }
 
@@ -195,7 +196,7 @@ impl Lower for cst::exp::LocalMatch {
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::LocalMatch { span, name, on_exp, motive, body } = self;
-        Ok(ast::Exp::LocalMatch(ast::LocalMatch {
+        Ok(ast::LocalMatch {
             span: Some(*span),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
@@ -204,7 +205,8 @@ impl Lower for cst::exp::LocalMatch {
             ret_typ: None,
             body: body.lower(ctx)?,
             inferred_type: None,
-        }))
+        }
+        .into())
     }
 }
 
@@ -213,23 +215,26 @@ impl Lower for cst::exp::LocalComatch {
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::LocalComatch { span, name, is_lambda_sugar, body } = self;
-        Ok(ast::Exp::LocalComatch(ast::LocalComatch {
+        Ok(ast::LocalComatch {
             span: Some(*span),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
             is_lambda_sugar: *is_lambda_sugar,
             body: body.lower(ctx)?,
             inferred_type: None,
-        }))
+        }
+        .into())
     }
 }
 
 impl Lower for cst::exp::Hole {
     type Target = ast::Exp;
 
-    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Hole { span } = self;
-        Ok(ast::Exp::Hole(Hole { span: Some(*span), inferred_type: None, inferred_ctx: None }))
+        let mv = ctx.fresh_metavar();
+        Ok(Hole { span: Some(*span), metavar: Some(mv), inferred_type: None, inferred_ctx: None }
+            .into())
     }
 }
 
@@ -267,11 +272,12 @@ impl Lower for cst::exp::Fun {
     type Target = ast::Exp;
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Fun { span, from, to } = self;
-        Ok(ast::Exp::TypCtor(ast::TypCtor {
+        Ok(ast::TypCtor {
             span: Some(*span),
             name: "Fun".to_owned(),
             args: ast::Args { args: vec![from.lower(ctx)?, to.lower(ctx)?] },
-        }))
+        }
+        .into())
     }
 }
 

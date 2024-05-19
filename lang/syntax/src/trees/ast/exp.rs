@@ -760,6 +760,8 @@ impl HasTypeInfo for LocalComatch {
 pub struct Hole {
     /// Source code location
     pub span: Option<Span>,
+    /// The metavariable that we want to solve for that hole
+    pub metavar: Option<MetaVar>,
     /// The inferred type of the hole annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<Rc<Exp>>,
@@ -771,9 +773,10 @@ pub struct Hole {
 
 impl Hole {
     pub fn new() -> Hole {
-        Hole { span: None, inferred_type: None, inferred_ctx: None }
+        Hole { span: None, metavar: None, inferred_type: None, inferred_ctx: None }
     }
 }
+
 impl HasSpan for Hole {
     fn span(&self) -> Option<Span> {
         self.span
@@ -794,8 +797,8 @@ impl Default for Hole {
 
 impl Shift for Hole {
     fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
-        let Hole { span, .. } = self;
-        Hole { span: *span, inferred_type: None, inferred_ctx: None }
+        let Hole { span, metavar, .. } = self;
+        Hole { span: *span, metavar: *metavar, inferred_type: None, inferred_ctx: None }
     }
 }
 
@@ -807,8 +810,8 @@ impl Occurs for Hole {
 
 impl ForgetTST for Hole {
     fn forget_tst(&self) -> Self {
-        let Hole { span, .. } = self;
-        Hole { span: *span, inferred_type: None, inferred_ctx: None }
+        let Hole { span, metavar, .. } = self;
+        Hole { span: *span, metavar: *metavar, inferred_type: None, inferred_ctx: None }
     }
 }
 

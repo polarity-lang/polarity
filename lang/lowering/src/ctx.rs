@@ -4,9 +4,9 @@ use parser::cst;
 
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
-use syntax::ast;
 use syntax::ast::lookup_table::DeclMeta;
 use syntax::ast::Named;
+use syntax::ast::{self, MetaVar, MetaVarState};
 use syntax::common::*;
 use syntax::ctx::{Context, ContextElem};
 
@@ -31,6 +31,10 @@ pub struct Ctx {
     next_label_id: usize,
     /// Set of user-annotated label names
     user_labels: HashSet<Ident>,
+    /// Counter for unique meta variables
+    next_meta_var: u64,
+    /// Meta variables
+    pub meta_vars: HashMap<MetaVar, MetaVarState>,
 }
 
 impl Ctx {
@@ -42,6 +46,8 @@ impl Ctx {
             levels: Vec::new(),
             next_label_id: 0,
             user_labels: HashSet::default(),
+            next_meta_var: 0,
+            meta_vars: HashMap::default(),
         }
     }
 
@@ -127,6 +133,16 @@ impl Ctx {
         let fst = self.levels.len() - 1 - lvl.fst;
         let snd = self.levels[lvl.fst] - 1 - lvl.snd;
         Idx { fst, snd }
+    }
+
+    /// Create a fresh MetaVar which stands for an unkown term that
+    /// we have to elaborate later. The generated fresh variable is
+    /// also registered as unsolved.
+    pub fn fresh_metavar(&mut self) -> MetaVar {
+        let mv = MetaVar { id: self.next_meta_var };
+        self.next_meta_var += 1;
+        self.meta_vars.insert(mv, MetaVarState::Unsolved);
+        mv
     }
 }
 
