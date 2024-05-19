@@ -183,13 +183,14 @@ impl CollectInfo for Codef {
 
 impl CollectInfo for Ctor {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Ctor { span, name, doc, typ, .. } = self;
+        let Ctor { span, name, doc, typ, params } = self;
         if let Some(span) = span {
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
             let info = CtorInfo { name: name.clone(), doc };
             collector.add_info(*span, info);
         }
+        params.collect_info(collector);
         typ.collect_info(collector);
     }
 }
