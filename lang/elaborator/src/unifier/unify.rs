@@ -70,6 +70,7 @@ impl Unificator {
 
 pub fn unify(
     ctx: LevelCtx,
+    _meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     eqns: Vec<Eqn>,
     vars_are_rigid: bool,
 ) -> Result<Dec<Unificator>, TypeError> {
