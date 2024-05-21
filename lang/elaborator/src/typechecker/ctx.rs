@@ -18,11 +18,13 @@ use crate::result::TypeError;
 pub struct Ctx {
     /// Typing of bound variables
     pub vars: TypeCtx,
+    /// Global meta variables and their state
+    pub meta_vars: HashMap<MetaVar, MetaVarState>,
 }
 
-impl Default for Ctx {
-    fn default() -> Self {
-        Self { vars: TypeCtx::empty() }
+impl Ctx {
+    pub fn new(meta_vars: HashMap<MetaVar, MetaVarState>) -> Self {
+        Self { vars: TypeCtx::empty(), meta_vars }
     }
 }
 
@@ -82,8 +84,11 @@ impl Ctx {
     }
 
     pub fn fork<T, F: FnOnce(&mut Ctx) -> T>(&mut self, f: F) -> T {
-        let mut inner_ctx = Ctx { vars: self.vars.clone() };
-        f(&mut inner_ctx)
+        let meta_vars = std::mem::take(&mut self.meta_vars);
+        let mut inner_ctx = Ctx { vars: self.vars.clone(), meta_vars };
+        let res = f(&mut inner_ctx);
+        self.meta_vars = inner_ctx.meta_vars;
+        res
     }
 }
 
