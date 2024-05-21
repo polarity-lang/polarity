@@ -534,11 +534,15 @@ impl<'a> Print<'a> for TypeUniv {
 impl<'a> Print<'a> for Hole {
     fn print_prec(
         &'a self,
-        _cfg: &PrintCfg,
+        cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        alloc.keyword(HOLE)
+        if cfg.print_metavar_ids {
+            alloc.text(format!("?{}", self.metavar.id))
+        } else {
+            alloc.keyword(HOLE)
+        }
     }
 }
 

@@ -3,7 +3,7 @@ use std::rc::Rc;
 use codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
-use printer::PrintToString;
+use printer::{PrintCfg, PrintToString};
 use syntax::ast::*;
 use syntax::common::HashMap;
 use url::Url;
@@ -347,7 +347,9 @@ impl CollectInfo for Hole {
                 .get(metavar)
                 .unwrap_or_else(|| panic!("Metavar {:?} not found", metavar));
 
-            let metavar_str = metavar_state.solution().map(|e| e.print_to_string(None));
+            let metavar_str = metavar_state.solution().map(|e| {
+                e.print_to_string(Some(&PrintCfg { print_metavar_ids: true, ..Default::default() }))
+            });
 
             let info = HoleInfo {
                 goal: inferred_type.print_to_string(None),
