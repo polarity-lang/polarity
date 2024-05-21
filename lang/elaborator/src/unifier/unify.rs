@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::rc::Rc;
 
 use syntax::ast::{occurs_in, Variable};
@@ -70,12 +71,12 @@ impl Unificator {
 
 pub fn unify(
     ctx: LevelCtx,
-    _meta_vars: &mut HashMap<MetaVar, MetaVarState>,
+    meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     eqns: Vec<Eqn>,
     vars_are_rigid: bool,
 ) -> Result<Dec<Unificator>, TypeError> {
     let mut ctx = Ctx::new(eqns.clone(), ctx.clone(), vars_are_rigid);
-    let res = match ctx.unify()? {
+    let res = match ctx.unify(meta_vars)? {
         Yes(_) => Yes(ctx.unif),
         No(()) => No(()),
     };
@@ -97,14 +98,35 @@ struct Ctx {
     vars_are_rigid: bool,
 }
 
+/// Tests whether the hole is in Miller's pattern fragment, i.e. whether it is applied
+/// to distinct bound variables.
+fn is_solvable(h: &Hole) -> bool {
+    let Hole { args, .. } = h;
+    let mut seen: HashSet<Idx> = HashSet::new();
+    for subst in args {
+        for exp in subst {
+            let Exp::Variable(v) = &**exp else {
+                return false;
+            };
+            if seen.contains(&v.idx) {
+                return false;
+            } else {
+                seen.insert(v.idx);
+                continue;
+            }
+        }
+    }
+    true
+}
+
 impl Ctx {
     fn new(eqns: Vec<Eqn>, ctx: LevelCtx, vars_are_rigid: bool) -> Self {
         Self { eqns, done: HashSet::default(), ctx, unif: Unificator::empty(), vars_are_rigid }
     }
 
-    fn unify(&mut self) -> Result<Dec, TypeError> {
+    fn unify(&mut self, meta_vars: &mut HashMap<MetaVar, MetaVarState>) -> Result<Dec, TypeError> {
         while let Some(eqn) = self.eqns.pop() {
-            match self.unify_eqn(&eqn)? {
+            match self.unify_eqn(&eqn, meta_vars)? {
                 Yes(_) => {
                     self.done.insert(eqn);
                 }
@@ -115,10 +137,42 @@ impl Ctx {
         Ok(Yes(()))
     }
 
-    fn unify_eqn(&mut self, eqn: &Eqn) -> Result<Dec, TypeError> {
+    fn unify_eqn(
+        &mut self,
+        eqn: &Eqn,
+        meta_vars: &mut HashMap<MetaVar, MetaVarState>,
+    ) -> Result<Dec, TypeError> {
         let Eqn { lhs, rhs, .. } = eqn;
 
         match (&**lhs, &**rhs) {
+            (Exp::Hole(h), e) | (e, Exp::Hole(h))=> {
+                if let Some(metavar) = h.metavar {
+                    let metavar_state = meta_vars.get(&metavar).unwrap();
+                    match metavar_state {
+                        MetaVarState::Solved { ctx, solution } => {
+                            let lhs = solution.clone().subst(&mut ctx.clone(), &h.args);
+                            self.add_equation(Eqn { lhs, rhs: Rc::new(e.clone()) })?;
+                        }
+                        MetaVarState::Unsolved { ctx } => {
+                            if is_solvable(h) {
+                                meta_vars.insert(
+                                    metavar,
+                                    MetaVarState::Solved {
+                                        ctx: ctx.clone(),
+                                        solution: Rc::new(e.clone()),
+                                    },
+                                );
+                            } else {
+                                return Err(TypeError::cannot_decide(
+                                    Rc::new(Exp::Hole(h.clone())),
+                                    Rc::new(e.clone()),
+                                ));
+                            }
+                        }
+                    }
+                }
+                Ok(Yes(()))
+            }
             (
                 Exp::Variable(Variable { idx: idx_1, .. }),
                 Exp::Variable(Variable { idx: idx_2, .. }),
