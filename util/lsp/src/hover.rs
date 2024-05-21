@@ -208,7 +208,9 @@ impl ToHoverContent for HoleInfo {
             value.push_str("\n\n");
             ctx_to_markdown(&ctx, &mut value);
             value.push_str("\n\nArguments:\n\n");
-            value.push_str(&args);
+            let args_str = args.iter().cloned().map(comma_separated).map(|s| format!("({})", s));
+            let args_str = format!("({})", comma_separated(args_str));
+            value.push_str(&args_str);
             HoverContents::Markup(MarkupContent { kind: MarkupKind::Markdown, value })
         } else {
             HoverContents::Scalar(string_to_language_string(goal))
@@ -287,4 +289,13 @@ impl ToHoverContent for LetInfo {
         let header = MarkedString::String("Let-binding".to_owned());
         HoverContents::Scalar(header)
     }
+}
+
+fn comma_separated<I: IntoIterator<Item = String>>(iter: I) -> String {
+    separated(", ", iter)
+}
+
+fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
+    let vec: Vec<_> = iter.into_iter().collect();
+    vec.join(s)
 }

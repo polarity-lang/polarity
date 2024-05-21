@@ -344,7 +344,10 @@ impl CollectInfo for Hole {
                 goal: inferred_type.print_to_string(None),
                 metavar: metavar.map(|mv| format!("?{}", mv.id)),
                 ctx: inferred_ctx.clone().map(Into::into),
-                args: args.print_to_string(None),
+                args: args
+                    .iter()
+                    .map(|subst| subst.iter().map(|exp| exp.print_to_string(None)).collect())
+                    .collect(),
             };
             collector.add_info(*span, info)
         }
