@@ -468,7 +468,7 @@ impl<'a> Print<'a> for Variable {
         let Variable { name, idx, .. } = self;
         if cfg.de_bruijn {
             alloc.text(format!("{name}@{idx}"))
-        } else if name == "" {
+        } else if name.is_empty() {
             alloc.text(format!("@{idx}"))
         } else {
             alloc.text(name)
