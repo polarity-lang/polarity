@@ -20,13 +20,6 @@ pub struct Eqn {
     pub rhs: Rc<Exp>,
 }
 
-impl Shift for Eqn {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Eqn { lhs, rhs } = self;
-        Eqn { lhs: lhs.shift_in_range(range.clone(), by), rhs: rhs.shift_in_range(range, by) }
-    }
-}
-
 impl Substitutable<Rc<Exp>> for Unificator {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let map = self
