@@ -259,6 +259,10 @@ pub enum Params {
 }
 
 impl Params {
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn len(&self) -> usize {
         match self {
             Params::Implicit(params) => params.len(),
