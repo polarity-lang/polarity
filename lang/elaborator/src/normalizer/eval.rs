@@ -63,6 +63,13 @@ impl Eval for Call {
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Call { span, name, kind, args, .. } = self;
+        if matches!(kind, CallKind::LetBound) {
+            let Let { attr, body, .. } = prg.top_level_let(name, *span)?;
+            if attr.attrs.contains(&String::from("transparent")) {
+                let args = args.eval(prg, env)?;
+                return env.bind_iter(args.iter(), |env| body.eval(prg, env));
+            }
+        }
         Ok(Rc::new(
             val::Call { span: *span, kind: *kind, name: name.clone(), args: args.eval(prg, env)? }
                 .into(),

@@ -1,0 +1,11 @@
+data Nat { Z, S(n: Nat) }
+
+data Eq(a: Type, x y: a) {
+    Refl(a: Type, x: a): Eq(a, x, x)
+}
+
+#[opaque]
+let opaqueTwo: Nat {S(S(Z))}
+
+-- | This proof typechecks
+let p2: Eq(Nat, S(S(Z)), opaqueTwo) {Refl(Nat, S(S(Z)))}

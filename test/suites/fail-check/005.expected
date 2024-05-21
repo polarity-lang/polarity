@@ -1,0 +1,3 @@
+The following terms are not equal:
+  1: Eq(Nat, S(S(Z)), S(S(Z)))
+  2: Eq(Nat, S(S(Z)), opaqueTwo)

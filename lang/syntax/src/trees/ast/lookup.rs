@@ -191,6 +191,21 @@ impl Module {
         }
     }
 
+    pub fn top_level_let(
+        &self,
+        name: &str,
+        span: Option<codespan::Span>,
+    ) -> Result<&Let, LookupError> {
+        match self.decl(name, span)? {
+            Decl::Let(tl_let) => Ok(tl_let),
+            other => Err(LookupError::ExpectedLet {
+                name: name.to_owned(),
+                actual: other.kind(),
+                span: span.to_miette(),
+            }),
+        }
+    }
+
     fn decl(&self, name: &str, span: Option<codespan::Span>) -> Result<&Decl, LookupError> {
         self.map.get(name).ok_or_else(|| LookupError::UndefinedDeclaration {
             name: name.to_owned(),
@@ -308,6 +323,13 @@ pub enum LookupError {
     },
     #[error("Expected {name} to be a definition, but it is a {actual}")]
     ExpectedDef {
+        name: String,
+        actual: DeclKind,
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Expected {name} to be a let binding, but it is a {actual}")]
+    ExpectedLet {
         name: String,
         actual: DeclKind,
         #[label]
