@@ -148,7 +148,10 @@ impl Ctx {
         mv
     }
 
-    /// TODO
+    /// With every context Γ there is a associated substitution id_Γ which consists of
+    /// all variables in Γ. This function computes the substitution id_Γ.
+    /// This substitution is needed when lowering typed holes since they stand for unknown terms which
+    /// could potentially use all variables in the context.
     pub fn subst_from_ctx(&self) -> Vec<Vec<Rc<ast::Exp>>> {
         let mut lvl_to_name: HashMap<Lvl, Ident> = HashMap::default();
 
