@@ -371,8 +371,15 @@ impl Lift for Hole {
     type Target = Exp;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let Hole { span, metavar, .. } = self;
-        Hole { span: *span, metavar: *metavar, inferred_type: None, inferred_ctx: None }.into()
+        let Hole { span, metavar, args, .. } = self;
+        Hole {
+            span: *span,
+            metavar: *metavar,
+            inferred_type: None,
+            inferred_ctx: None,
+            args: args.clone(),
+        }
+        .into()
     }
 }
 

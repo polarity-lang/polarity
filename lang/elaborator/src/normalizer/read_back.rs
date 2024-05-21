@@ -125,9 +125,10 @@ impl ReadBack for val::LocalMatch {
 impl ReadBack for val::Hole {
     type Nf = Hole;
 
-    fn read_back(&self, _prg: &Module) -> Result<Self::Nf, TypeError> {
-        let val::Hole { span, metavar } = self;
-        Ok(Hole { span: *span, metavar: *metavar, inferred_type: None, inferred_ctx: None })
+    fn read_back(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
+        let val::Hole { span, metavar, args } = self;
+        let args = args.read_back(prg)?;
+        Ok(Hole { span: *span, metavar: *metavar, inferred_type: None, inferred_ctx: None, args })
     }
 }
 

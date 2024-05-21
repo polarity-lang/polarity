@@ -197,7 +197,7 @@ impl ToHoverContent for LocalComatchInfo {
 
 impl ToHoverContent for HoleInfo {
     fn to_hover_content(self) -> HoverContents {
-        let HoleInfo { metavar, goal, ctx } = self;
+        let HoleInfo { metavar, goal, ctx, args } = self;
         if let Some(ctx) = ctx {
             let mut value = String::new();
             match metavar {
@@ -207,6 +207,8 @@ impl ToHoverContent for HoleInfo {
             goal_to_markdown(&goal, &mut value);
             value.push_str("\n\n");
             ctx_to_markdown(&ctx, &mut value);
+            value.push_str("\n\nArguments:\n\n");
+            value.push_str(&args);
             HoverContents::Markup(MarkupContent { kind: MarkupKind::Markdown, value })
         } else {
             HoverContents::Scalar(string_to_language_string(goal))

@@ -769,11 +769,22 @@ pub struct Hole {
     /// This context is annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_ctx: Option<TypeCtx>,
+    /// When a hole is lowered, we apply it to all variables available in the
+    /// context, since intuitively, a hole stands for an unknown term which can use
+    /// any of these variables.
+    /// Some other implementations use a functional application to all variables instead,
+    /// but since we do not have a function type we have to use an explicit substitution.
+    /// Since our system uses 2-level De-Bruijn indices, the explicit substitution id_Г
+    /// is a nested vector.
+    ///
+    /// Example:
+    /// [x, y][z][v, w] |- ?[x, y][z][v,w]
+    pub args: Vec<Vec<Rc<Exp>>>,
 }
 
 impl Hole {
     pub fn new() -> Hole {
-        Hole { span: None, metavar: None, inferred_type: None, inferred_ctx: None }
+        Hole { span: None, metavar: None, inferred_type: None, inferred_ctx: None, args: vec![] }
     }
 }
 
@@ -796,9 +807,16 @@ impl Default for Hole {
 }
 
 impl Shift for Hole {
-    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
-        let Hole { span, metavar, .. } = self;
-        Hole { span: *span, metavar: *metavar, inferred_type: None, inferred_ctx: None }
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Hole { span, metavar, args, .. } = self;
+        let new_args = args.shift_in_range(range, by);
+        Hole {
+            span: *span,
+            metavar: *metavar,
+            inferred_type: None,
+            inferred_ctx: None,
+            args: new_args,
+        }
     }
 }
 
@@ -810,8 +828,14 @@ impl Occurs for Hole {
 
 impl ForgetTST for Hole {
     fn forget_tst(&self) -> Self {
-        let Hole { span, metavar, .. } = self;
-        Hole { span: *span, metavar: *metavar, inferred_type: None, inferred_ctx: None }
+        let Hole { span, metavar, args, .. } = self;
+        Hole {
+            span: *span,
+            metavar: *metavar,
+            inferred_type: None,
+            inferred_ctx: None,
+            args: args.clone(),
+        }
     }
 }
 

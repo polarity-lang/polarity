@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use codespan::Span;
 use miette_util::ToMiette;
 use parser::cst;
@@ -143,6 +145,41 @@ impl Ctx {
         self.next_meta_var += 1;
         self.meta_vars.insert(mv, MetaVarState::Unsolved);
         mv
+    }
+
+    /// TODO
+    pub fn subst_from_ctx(&self) -> Vec<Vec<Rc<ast::Exp>>> {
+        let mut lvl_to_name: HashMap<Lvl, Ident> = HashMap::default();
+
+        for (name, lvls) in self.local_map.iter() {
+            for lvl in lvls {
+                lvl_to_name.insert(*lvl, name.clone());
+            }
+        }
+
+        let mut args: Vec<Vec<Rc<ast::Exp>>> = Vec::new();
+        let mut curr_subst = Vec::new();
+
+        for (fst, n) in self.levels.iter().cloned().enumerate() {
+            for snd in 0..n {
+                let lvl = Lvl { fst, snd };
+                let name =
+                    lvl_to_name.get(&lvl).map(|ident| ident.id.to_owned()).unwrap_or_default();
+                curr_subst.push(Rc::new(
+                    ast::Variable {
+                        span: None,
+                        idx: self.level_to_index(Lvl { fst, snd }),
+                        name: name.to_owned(),
+                        inferred_type: None,
+                    }
+                    .into(),
+                ))
+            }
+            args.push(curr_subst);
+            curr_subst = vec![];
+        }
+
+        args
     }
 }
 
