@@ -3,7 +3,7 @@ use std::rc::Rc;
 use codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
-use printer::PrintToString;
+use printer::{PrintCfg, PrintToString};
 use syntax::ast::*;
 use syntax::common::HashMap;
 use url::Url;
@@ -177,6 +177,7 @@ impl CollectInfo for Codef {
             let info = CodefInfo {};
             collector.add_info(*span, info);
         }
+        typ.collect_info(collector);
         body.collect_info(collector);
         params.collect_info(collector)
     }
@@ -340,13 +341,15 @@ impl CollectInfo for DotCall {
 impl CollectInfo for Hole {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let Hole { span, metavar, inferred_type, inferred_ctx, args } = self;
-        if let (Some(span), Some(metavar)) = (span, metavar) {
+        if let Some(span) = span {
             let metavar_state = collector
                 .metavars
                 .get(metavar)
                 .unwrap_or_else(|| panic!("Metavar {:?} not found", metavar));
 
-            let metavar_str = metavar_state.solution().map(|e| e.print_to_string(None));
+            let metavar_str = metavar_state.solution().map(|e| {
+                e.print_to_string(Some(&PrintCfg { print_metavar_ids: true, ..Default::default() }))
+            });
 
             let info = HoleInfo {
                 goal: inferred_type.print_to_string(None),

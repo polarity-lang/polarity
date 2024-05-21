@@ -339,19 +339,8 @@ impl CheckInfer for Hole {
         })
     }
 
-    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
-        let Hole { span, metavar, args, .. } = self;
-        let args: Vec<Vec<Rc<Exp>>> = args
-            .iter()
-            .map(|subst| subst.iter().map(|exp| exp.infer(prg, ctx)).collect::<Result<Vec<_>, _>>())
-            .collect::<Result<_, _>>()?;
-        Ok(Hole {
-            span: *span,
-            metavar: *metavar,
-            inferred_type: Some(Rc::new(Hole::new().into())),
-            inferred_ctx: None,
-            args,
-        })
+    fn infer(&self, _prg: &Module, _ctx: &mut Ctx) -> Result<Self, TypeError> {
+        Err(TypeError::CannotInferHole { span: self.span().to_miette() })
     }
 }
 

@@ -761,7 +761,7 @@ pub struct Hole {
     /// Source code location
     pub span: Option<Span>,
     /// The metavariable that we want to solve for that hole
-    pub metavar: Option<MetaVar>,
+    pub metavar: MetaVar,
     /// The inferred type of the hole annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<Rc<Exp>>,
@@ -782,12 +782,6 @@ pub struct Hole {
     pub args: Vec<Vec<Rc<Exp>>>,
 }
 
-impl Hole {
-    pub fn new() -> Hole {
-        Hole { span: None, metavar: None, inferred_type: None, inferred_ctx: None, args: vec![] }
-    }
-}
-
 impl HasSpan for Hole {
     fn span(&self) -> Option<Span> {
         self.span
@@ -797,12 +791,6 @@ impl HasSpan for Hole {
 impl From<Hole> for Exp {
     fn from(val: Hole) -> Self {
         Exp::Hole(val)
-    }
-}
-
-impl Default for Hole {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

@@ -103,6 +103,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         indent: cmd.indent,
         print_lambda_sugar: !cmd.omit_lambda_sugar,
         print_function_sugar: !cmd.omit_function_sugar,
+        print_metavar_ids: false,
     };
 
     stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();

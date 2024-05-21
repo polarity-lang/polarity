@@ -113,6 +113,8 @@ pub struct PrintCfg {
     pub print_lambda_sugar: bool,
     /// Whether to print the syntactic sugar "a -> b".
     pub print_function_sugar: bool,
+    /// Whether to print the ids of metavariables
+    pub print_metavar_ids: bool,
 }
 
 impl Default for PrintCfg {
@@ -125,6 +127,7 @@ impl Default for PrintCfg {
             indent: 4,
             print_lambda_sugar: true,
             print_function_sugar: true,
+            print_metavar_ids: false,
         }
     }
 }
