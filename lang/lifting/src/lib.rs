@@ -553,8 +553,8 @@ impl Ctx {
         // Build a telescope of the types of the lifted variables
         let ret_fvs = motive
             .as_ref()
-            .map(|m| free_vars(&m.forget_tst(), type_ctx))
-            .unwrap_or_else(|| free_vars(&ret_typ.as_ref().map(|x| x.forget_tst()), type_ctx));
+            .map(|m| free_vars(m, type_ctx))
+            .unwrap_or_else(|| free_vars(ret_typ, type_ctx));
 
         let body = body.lift(self);
         let self_typ = inferred_type.lift(self);

@@ -9,7 +9,7 @@ use crate::ctx::LevelCtx;
 
 use super::ident::*;
 use super::lookup_table::{DeclKind, LookupTable};
-use super::{exp::*, ForgetTST, Instantiate};
+use super::{exp::*, Instantiate};
 
 #[derive(Debug, Clone)]
 pub struct DocComment {
@@ -67,19 +67,6 @@ impl Module {
     pub fn find_main(&self) -> Option<Rc<Exp>> {
         let main_candidate = self.map.get("main")?.get_main()?;
         Some(main_candidate.body)
-    }
-}
-
-impl ForgetTST for Module {
-    fn forget_tst(&self) -> Self {
-        let Module { uri, map, lookup_table, meta_vars } = self;
-
-        Module {
-            uri: uri.clone(),
-            map: map.iter().map(|(name, decl)| (name.clone(), decl.forget_tst())).collect(),
-            lookup_table: lookup_table.clone(),
-            meta_vars: meta_vars.clone(),
-        }
     }
 }
 
@@ -148,20 +135,6 @@ impl HasSpan for Decl {
     }
 }
 
-impl ForgetTST for Decl {
-    fn forget_tst(&self) -> Self {
-        match self {
-            Decl::Data(data) => Decl::Data(data.forget_tst()),
-            Decl::Codata(codata) => Decl::Codata(codata.forget_tst()),
-            Decl::Ctor(ctor) => Decl::Ctor(ctor.forget_tst()),
-            Decl::Dtor(dtor) => Decl::Dtor(dtor.forget_tst()),
-            Decl::Def(def) => Decl::Def(def.forget_tst()),
-            Decl::Codef(codef) => Decl::Codef(codef.forget_tst()),
-            Decl::Let(tl_let) => Decl::Let(tl_let.forget_tst()),
-        }
-    }
-}
-
 // Data
 //
 //
@@ -174,21 +147,6 @@ pub struct Data {
     pub attr: Attribute,
     pub typ: Rc<Telescope>,
     pub ctors: Vec<Ident>,
-}
-
-impl ForgetTST for Data {
-    fn forget_tst(&self) -> Self {
-        let Data { span, doc, name, attr, typ, ctors } = self;
-
-        Data {
-            span: *span,
-            name: name.clone(),
-            doc: doc.clone(),
-            attr: attr.clone(),
-            typ: typ.forget_tst(),
-            ctors: ctors.clone(),
-        }
-    }
 }
 
 // Codata
@@ -205,21 +163,6 @@ pub struct Codata {
     pub dtors: Vec<Ident>,
 }
 
-impl ForgetTST for Codata {
-    fn forget_tst(&self) -> Self {
-        let Codata { span, doc, name, attr, typ, dtors } = self;
-
-        Codata {
-            span: *span,
-            doc: doc.clone(),
-            name: name.clone(),
-            attr: attr.clone(),
-            typ: typ.forget_tst(),
-            dtors: dtors.clone(),
-        }
-    }
-}
-
 // Ctor
 //
 //
@@ -231,20 +174,6 @@ pub struct Ctor {
     pub name: Ident,
     pub params: Telescope,
     pub typ: TypCtor,
-}
-
-impl ForgetTST for Ctor {
-    fn forget_tst(&self) -> Self {
-        let Ctor { span, doc, name, params, typ } = self;
-
-        Ctor {
-            span: *span,
-            doc: doc.clone(),
-            name: name.clone(),
-            params: params.forget_tst(),
-            typ: typ.forget_tst(),
-        }
-    }
 }
 
 // Dtor
@@ -259,21 +188,6 @@ pub struct Dtor {
     pub params: Telescope,
     pub self_param: SelfParam,
     pub ret_typ: Rc<Exp>,
-}
-
-impl ForgetTST for Dtor {
-    fn forget_tst(&self) -> Self {
-        let Dtor { span, doc, name, params, self_param, ret_typ } = self;
-
-        Dtor {
-            span: *span,
-            doc: doc.clone(),
-            name: name.clone(),
-            params: params.forget_tst(),
-            self_param: self_param.forget_tst(),
-            ret_typ: ret_typ.forget_tst(),
-        }
-    }
 }
 
 // Def
@@ -305,23 +219,6 @@ impl Def {
     }
 }
 
-impl ForgetTST for Def {
-    fn forget_tst(&self) -> Self {
-        let Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
-
-        Def {
-            span: *span,
-            doc: doc.clone(),
-            name: name.clone(),
-            attr: attr.clone(),
-            params: params.forget_tst(),
-            self_param: self_param.forget_tst(),
-            ret_typ: ret_typ.forget_tst(),
-            body: body.forget_tst(),
-        }
-    }
-}
-
 // Codef
 //
 //
@@ -349,22 +246,6 @@ impl Codef {
     }
 }
 
-impl ForgetTST for Codef {
-    fn forget_tst(&self) -> Self {
-        let Codef { span, doc, name, attr, params, typ, body } = self;
-
-        Codef {
-            span: *span,
-            doc: doc.clone(),
-            name: name.clone(),
-            attr: attr.clone(),
-            params: params.forget_tst(),
-            typ: typ.forget_tst(),
-            body: body.forget_tst(),
-        }
-    }
-}
-
 // Let
 //
 //
@@ -387,21 +268,6 @@ impl Let {
     }
 }
 
-impl ForgetTST for Let {
-    fn forget_tst(&self) -> Self {
-        let Let { span, doc, name, attr, params, typ, body } = self;
-
-        Let {
-            span: *span,
-            doc: doc.clone(),
-            name: name.clone(),
-            attr: attr.clone(),
-            params: params.forget_tst(),
-            typ: typ.forget_tst(),
-            body: body.forget_tst(),
-        }
-    }
-}
 // SelfParam
 //
 //
@@ -427,14 +293,6 @@ impl SelfParam {
     /// If the self parameter is simple, we can omit it during prettyprinting.
     pub fn is_simple(&self) -> bool {
         self.typ.is_simple() && self.name.is_none()
-    }
-}
-
-impl ForgetTST for SelfParam {
-    fn forget_tst(&self) -> Self {
-        let SelfParam { info, name, typ } = self;
-
-        SelfParam { info: *info, name: name.clone(), typ: typ.forget_tst() }
     }
 }
 
@@ -476,14 +334,6 @@ impl Instantiate for Telescope {
     }
 }
 
-impl ForgetTST for Telescope {
-    fn forget_tst(&self) -> Self {
-        let Telescope { params } = self;
-
-        Telescope { params: params.forget_tst() }
-    }
-}
-
 // Param
 //
 //
@@ -499,12 +349,5 @@ pub struct Param {
 impl Named for Param {
     fn name(&self) -> &Ident {
         &self.name
-    }
-}
-impl ForgetTST for Param {
-    fn forget_tst(&self) -> Self {
-        let Param { name, typ } = self;
-
-        Param { name: name.clone(), typ: typ.forget_tst() }
     }
 }

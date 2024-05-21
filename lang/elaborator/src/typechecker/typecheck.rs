@@ -380,8 +380,7 @@ impl CheckInfer for LocalMatch {
             // Pattern matching with motive
             Some(m) => {
                 let Motive { span: info, param, ret_typ } = m;
-                let self_t_nf =
-                    typ_app.to_exp().forget_tst().normalize(prg, &mut ctx.env())?.shift((1, 0));
+                let self_t_nf = typ_app.to_exp().normalize(prg, &mut ctx.env())?.shift((1, 0));
                 let self_binder = Binder { name: param.name.clone(), typ: self_t_nf.clone() };
 
                 // Typecheck the motive
