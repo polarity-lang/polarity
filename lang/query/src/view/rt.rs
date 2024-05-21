@@ -4,7 +4,7 @@ use super::DatabaseView;
 
 use elaborator::normalizer::normalize::Normalize;
 use parser::cst;
-use syntax::{ast::Exp, ast::ForgetTST, ast::Module};
+use syntax::{ast::Exp, ast::Module};
 
 use crate::*;
 
@@ -31,13 +31,12 @@ impl<'a> DatabaseView<'a> {
 
     pub fn run(&self) -> Result<Option<Rc<Exp>>, Error> {
         let tst = self.tst()?;
-        let ust = tst.forget_tst();
 
-        let main = ust.find_main();
+        let main = tst.find_main();
 
         match main {
             Some(exp) => {
-                let nf = exp.normalize_in_empty_env(&ust)?;
+                let nf = exp.normalize_in_empty_env(&tst)?;
                 Ok(Some(nf))
             }
             None => Ok(None),

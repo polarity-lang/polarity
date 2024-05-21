@@ -6,7 +6,7 @@ use url::Url;
 use parser::cst;
 use printer::PrintToString;
 use renaming::Rename;
-use syntax::ast::{ForgetTST, Module};
+use syntax::ast::Module;
 
 use super::infallible::NoError;
 
@@ -177,10 +177,6 @@ pub struct Check {
     name: &'static str,
 }
 
-pub struct Forget {
-    name: &'static str,
-}
-
 pub struct Print {
     name: &'static str,
 }
@@ -255,24 +251,6 @@ impl Phase for Print {
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
         Ok((input.uri.clone(), input.rename().print_to_string(None)))
-    }
-}
-
-impl Phase for Forget {
-    type In = Module;
-    type Out = Module;
-    type Err = NoError;
-
-    fn new(name: &'static str) -> Self {
-        Self { name }
-    }
-
-    fn name(&self) -> &'static str {
-        self.name
-    }
-
-    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        Ok(input.forget_tst())
     }
 }
 

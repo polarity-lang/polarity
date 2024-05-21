@@ -11,7 +11,7 @@ use crate::ctx::{BindContext, LevelCtx};
 
 use super::ident::*;
 use super::traits::Occurs;
-use super::{ForgetTST, HasTypeInfo};
+use super::HasTypeInfo;
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -133,22 +133,6 @@ impl HasTypeInfo for Exp {
     }
 }
 
-impl ForgetTST for Exp {
-    fn forget_tst(&self) -> Self {
-        match self {
-            Exp::Variable(e) => Exp::Variable(e.forget_tst()),
-            Exp::TypCtor(e) => Exp::TypCtor(e.forget_tst()),
-            Exp::Call(e) => Exp::Call(e.forget_tst()),
-            Exp::DotCall(e) => Exp::DotCall(e.forget_tst()),
-            Exp::Anno(e) => Exp::Anno(e.forget_tst()),
-            Exp::TypeUniv(e) => Exp::TypeUniv(e.forget_tst()),
-            Exp::LocalMatch(e) => Exp::LocalMatch(e.forget_tst()),
-            Exp::LocalComatch(e) => Exp::LocalComatch(e.forget_tst()),
-            Exp::Hole(e) => Exp::Hole(e.forget_tst()),
-        }
-    }
-}
-
 // Variable
 //
 //
@@ -203,13 +187,6 @@ impl Occurs for Variable {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Variable { idx, .. } = self;
         ctx.idx_to_lvl(*idx) == lvl
-    }
-}
-
-impl ForgetTST for Variable {
-    fn forget_tst(&self) -> Self {
-        let Variable { span, idx, name, .. } = self;
-        Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: None }
     }
 }
 
@@ -272,13 +249,6 @@ impl Occurs for TypCtor {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let TypCtor { args, .. } = self;
         args.args.iter().any(|arg| arg.occurs(ctx, lvl))
-    }
-}
-
-impl ForgetTST for TypCtor {
-    fn forget_tst(&self) -> Self {
-        let TypCtor { span, name, args } = self;
-        TypCtor { span: *span, name: name.clone(), args: args.forget_tst() }
     }
 }
 
@@ -355,19 +325,6 @@ impl Occurs for Call {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Call { args, .. } = self;
         args.args.iter().any(|arg| arg.occurs(ctx, lvl))
-    }
-}
-
-impl ForgetTST for Call {
-    fn forget_tst(&self) -> Self {
-        let Call { span, name, args, kind, .. } = self;
-        Call {
-            span: *span,
-            kind: *kind,
-            name: name.clone(),
-            args: args.forget_tst(),
-            inferred_type: None,
-        }
     }
 }
 
@@ -449,20 +406,6 @@ impl Occurs for DotCall {
     }
 }
 
-impl ForgetTST for DotCall {
-    fn forget_tst(&self) -> Self {
-        let DotCall { span, kind, exp, name, args, .. } = self;
-        DotCall {
-            span: *span,
-            kind: *kind,
-            exp: exp.forget_tst(),
-            name: name.clone(),
-            args: args.forget_tst(),
-            inferred_type: None,
-        }
-    }
-}
-
 impl HasTypeInfo for DotCall {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone()
@@ -522,13 +465,6 @@ impl Occurs for Anno {
     }
 }
 
-impl ForgetTST for Anno {
-    fn forget_tst(&self) -> Self {
-        let Anno { span, exp, typ, .. } = self;
-        Anno { span: *span, exp: exp.forget_tst(), typ: typ.forget_tst(), normalized_type: None }
-    }
-}
-
 impl HasTypeInfo for Anno {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.normalized_type.clone()
@@ -585,13 +521,6 @@ impl Shift for TypeUniv {
 impl Occurs for TypeUniv {
     fn occurs(&self, _ctx: &mut LevelCtx, _lvl: Lvl) -> bool {
         false
-    }
-}
-
-impl ForgetTST for TypeUniv {
-    fn forget_tst(&self) -> Self {
-        let TypeUniv { span } = self;
-        TypeUniv { span: *span }
     }
 }
 
@@ -657,22 +586,6 @@ impl Occurs for LocalMatch {
     }
 }
 
-impl ForgetTST for LocalMatch {
-    fn forget_tst(&self) -> Self {
-        let LocalMatch { span, ctx: _, name, on_exp, motive, ret_typ, body, .. } = self;
-        LocalMatch {
-            span: *span,
-            ctx: None,
-            name: name.clone(),
-            on_exp: on_exp.forget_tst(),
-            motive: motive.as_ref().map(|x| x.forget_tst()),
-            ret_typ: ret_typ.as_ref().map(|x| x.forget_tst()),
-            body: body.forget_tst(),
-            inferred_type: None,
-        }
-    }
-}
-
 impl HasTypeInfo for LocalMatch {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone().map(|x| Rc::new(x.into()))
@@ -727,21 +640,6 @@ impl Occurs for LocalComatch {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let LocalComatch { body, .. } = self;
         body.occurs(ctx, lvl)
-    }
-}
-
-impl ForgetTST for LocalComatch {
-    fn forget_tst(&self) -> Self {
-        let LocalComatch { span, ctx: _, name, is_lambda_sugar, body, .. } = self;
-
-        LocalComatch {
-            span: *span,
-            ctx: None,
-            name: name.clone(),
-            is_lambda_sugar: *is_lambda_sugar,
-            body: body.forget_tst(),
-            inferred_type: None,
-        }
     }
 }
 
@@ -814,19 +712,6 @@ impl Occurs for Hole {
     }
 }
 
-impl ForgetTST for Hole {
-    fn forget_tst(&self) -> Self {
-        let Hole { span, metavar, args, .. } = self;
-        Hole {
-            span: *span,
-            metavar: *metavar,
-            inferred_type: None,
-            inferred_ctx: None,
-            args: args.clone(),
-        }
-    }
-}
-
 impl HasTypeInfo for Hole {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone()
@@ -857,14 +742,6 @@ impl Occurs for Match {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Match { cases, .. } = self;
         cases.occurs(ctx, lvl)
-    }
-}
-
-impl ForgetTST for Match {
-    fn forget_tst(&self) -> Self {
-        let Match { span, cases, omit_absurd } = self;
-
-        Match { span: *span, cases: cases.forget_tst(), omit_absurd: *omit_absurd }
     }
 }
 
@@ -902,19 +779,6 @@ impl Occurs for Case {
     }
 }
 
-impl ForgetTST for Case {
-    fn forget_tst(&self) -> Self {
-        let Case { span, name, params, body } = self;
-
-        Case {
-            span: *span,
-            name: name.clone(),
-            params: params.forget_tst(),
-            body: body.as_ref().map(|x| x.forget_tst()),
-        }
-    }
-}
-
 // Telescope Inst
 //
 //
@@ -933,14 +797,6 @@ impl TelescopeInst {
 
     pub fn is_empty(&self) -> bool {
         self.params.is_empty()
-    }
-}
-
-impl ForgetTST for TelescopeInst {
-    fn forget_tst(&self) -> Self {
-        let TelescopeInst { params } = self;
-
-        TelescopeInst { params: params.forget_tst() }
     }
 }
 
@@ -965,19 +821,6 @@ pub struct ParamInst {
 impl Named for ParamInst {
     fn name(&self) -> &Ident {
         &self.name
-    }
-}
-
-impl ForgetTST for ParamInst {
-    fn forget_tst(&self) -> Self {
-        let ParamInst { span, name, typ, .. } = self;
-
-        ParamInst {
-            span: *span,
-            info: None,
-            name: name.clone(),
-            typ: typ.as_ref().map(|x| x.forget_tst()),
-        }
     }
 }
 
@@ -1013,12 +856,6 @@ impl Shift for Args {
     }
 }
 
-impl ForgetTST for Args {
-    fn forget_tst(&self) -> Self {
-        Args { args: self.args.forget_tst() }
-    }
-}
-
 // Motive
 //
 //
@@ -1041,13 +878,5 @@ impl Shift for Motive {
             param: param.clone(),
             ret_typ: ret_typ.shift_in_range(range.shift(1), by),
         }
-    }
-}
-
-impl ForgetTST for Motive {
-    fn forget_tst(&self) -> Self {
-        let Motive { span, param, ret_typ } = self;
-
-        Motive { span: *span, param: param.forget_tst(), ret_typ: ret_typ.forget_tst() }
     }
 }
