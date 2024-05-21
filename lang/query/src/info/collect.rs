@@ -21,9 +21,9 @@ use super::item::Item;
 
 /// Traverse the program and collect information for the LSP server.
 pub fn collect_info(prg: &Module) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
-    let Module { uri, map, .. } = prg;
+    let Module { uri, map, meta_vars, .. } = prg;
 
-    let mut collector = InfoCollector::new(uri.clone(), map.clone());
+    let mut collector = InfoCollector::new(uri.clone(), meta_vars.clone(), map.clone());
 
     for item in map.values() {
         item.collect_info(&mut collector)
@@ -37,13 +37,14 @@ pub fn collect_info(prg: &Module) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
 struct InfoCollector {
     uri: Url,
     lookup_table: HashMap<Ident, Decl>,
+    metavars: HashMap<MetaVar, MetaVarState>,
     info_spans: Vec<Interval<u32, Info>>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
 impl InfoCollector {
-    fn new(uri: Url, map: HashMap<Ident, Decl>) -> Self {
-        InfoCollector { uri, lookup_table: map, info_spans: vec![], item_spans: vec![] }
+    fn new(uri: Url, metavars: HashMap<MetaVar, MetaVarState>, map: HashMap<Ident, Decl>) -> Self {
+        InfoCollector { uri, lookup_table: map, info_spans: vec![], item_spans: vec![], metavars }
     }
 
     fn add_info<T: Into<InfoContent>>(&mut self, span: Span, info: T) {
@@ -339,15 +340,23 @@ impl CollectInfo for DotCall {
 impl CollectInfo for Hole {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let Hole { span, metavar, inferred_type, inferred_ctx, args } = self;
-        if let Some(span) = span {
+        if let (Some(span), Some(metavar)) = (span, metavar) {
+            let metavar_state = collector
+                .metavars
+                .get(metavar)
+                .unwrap_or_else(|| panic!("Metavar {:?} not found", metavar));
+
+            let metavar_str = metavar_state.solution().map(|e| e.print_to_string(None));
+
             let info = HoleInfo {
                 goal: inferred_type.print_to_string(None),
-                metavar: metavar.map(|mv| format!("?{}", mv.id)),
+                metavar: Some(format!("?{}", metavar.id)),
                 ctx: inferred_ctx.clone().map(Into::into),
                 args: args
                     .iter()
                     .map(|subst| subst.iter().map(|exp| exp.print_to_string(None)).collect())
                     .collect(),
+                metavar_state: metavar_str,
             };
             collector.add_info(*span, info)
         }
