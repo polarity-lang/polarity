@@ -121,11 +121,13 @@ impl Lower for cst::exp::Call {
                     args: ast::Args { args: args.lower(ctx)? },
                     inferred_type: None,
                 })),
-                DeclKind::Let => Err(LoweringError::Impossible {
-                    message: "Referencing top-level let definitions is not implemented, yet"
-                        .to_owned(),
-                    span: Some(span.to_miette()),
-                }),
+                DeclKind::Let => Ok(ast::Exp::Call(ast::Call {
+                    span: Some(*span),
+                    kind: ast::CallKind::LetBound,
+                    name: name.id.to_owned(),
+                    args: ast::Args { args: args.lower(ctx)? },
+                    inferred_type: None,
+                })),
             },
         }
     }
