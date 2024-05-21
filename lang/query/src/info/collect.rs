@@ -177,6 +177,7 @@ impl CollectInfo for Codef {
             let info = CodefInfo {};
             collector.add_info(*span, info);
         }
+        typ.collect_info(collector);
         body.collect_info(collector);
         params.collect_info(collector)
     }
