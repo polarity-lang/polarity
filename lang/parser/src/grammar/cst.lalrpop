@@ -64,8 +64,20 @@ OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwra
 
 Param: Param = <name: BindingSite> <names: BindingSite*> ":" <typ: Exp> => Param { name, names, typ } ;
 
-Params: Vec<Param> = ParenthesizedArgs<Param>;
-OptParams: Vec<Param> = OptParenthesizedArgs<Param>;
+Params: Vec<Params> = {
+  <params: Params?> <explicit_params: ParenthesizedArgs<Param>>  => {
+    let mut params = params.unwrap_or_default();
+    params.push(Params::Explicit(explicit_params));
+    params
+  },
+  <params: Params?> <implicit_params: BracketedArgs<Param>>  => {
+    let mut params = params.unwrap_or_default();
+    params.push(Params::Implicit(implicit_params));
+    params
+  },
+}
+
+OptParams: Vec<Params> = <params: Params?> => params.unwrap_or_default();
 
 Telescope: Telescope = <params: Params> => Telescope(params);
 OptTelescope: Telescope = <params: OptParams> => Telescope(params);

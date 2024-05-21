@@ -124,8 +124,8 @@ impl Substitutable<Rc<Exp>> for Case {
 
 impl Substitutable<Rc<Exp>> for Param {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Param { name, typ } = self;
-        Param { name: name.clone(), typ: typ.subst(ctx, by) }
+        let Param { name, typ, implicit } = self;
+        Param { name: name.clone(), typ: typ.subst(ctx, by), implicit: *implicit }
     }
 }
 

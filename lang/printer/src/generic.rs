@@ -338,40 +338,73 @@ impl<'a> Print<'a> for Telescope {
         if params.is_empty() {
             return output;
         };
-        let mut running_type: Option<&Rc<Exp>> = None;
-        for Param { name, typ } in params {
-            match running_type {
-                // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
-                Some(rtype) if &rtype.shift((0, 1)) == typ => {
-                    // We are adding another parameter of the same type.
-                    output = output.append(alloc.space()).append(alloc.text(name));
-                }
-                Some(rtype) => {
-                    // We are adding another parameter with a different type,
-                    // and have to close the previous list first.
-                    output = output
-                        .append(COLON)
-                        .append(alloc.space())
-                        .append(rtype.print(cfg, alloc))
-                        .append(COMMA)
-                        .append(alloc.line());
-                    output = output.append(alloc.text(name));
-                }
-                None => {
-                    // We are adding the very first parameter.
-                    output = output.append(alloc.text(name));
-                }
+        let mut implicit = params[0].implicit;
+        let mut start = 0;
+
+        for i in 0..params.len() {
+            let param = &params[i];
+            if param.implicit != implicit {
+                output = output.append(print_params_list(&params[start..i], implicit, cfg, alloc));
+                implicit = param.implicit;
+                start = i;
             }
-            running_type = Some(typ);
+            if i == params.len() - 1 {
+                output = output.append(print_params_list(&params[start..], implicit, cfg, alloc));
+            }
         }
-        // Close the last parameter
+
+        output
+    }
+}
+
+fn print_params_list<'a>(
+    params: &'a [Param],
+    implicit: bool,
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a> {
+    let mut output = alloc.nil();
+    if params.is_empty() {
+        return output;
+    };
+    let mut running_type: Option<&Rc<Exp>> = None;
+    for Param { name, typ, .. } in params {
         match running_type {
-            None => {}
+            // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
+            Some(rtype) if &rtype.shift((0, 1)) == typ => {
+                // We are adding another parameter of the same type.
+                output = output.append(alloc.space()).append(alloc.text(name));
+            }
             Some(rtype) => {
-                output = output.append(COLON).append(alloc.space()).append(rtype.print(cfg, alloc));
+                // We are adding another parameter with a different type,
+                // and have to close the previous list first.
+                output = output
+                    .append(COLON)
+                    .append(alloc.space())
+                    .append(rtype.print(cfg, alloc))
+                    .append(COMMA)
+                    .append(alloc.line());
+                output = output.append(alloc.text(name));
+            }
+            None => {
+                // We are adding the very first parameter.
+                output = output.append(alloc.text(name));
             }
         }
-        output.append(alloc.line_()).align().parens().group()
+        running_type = Some(typ);
+    }
+    // Close the last parameter
+    match running_type {
+        None => {}
+        Some(rtype) => {
+            output = output.append(COLON).append(alloc.space()).append(rtype.print(cfg, alloc));
+        }
+    }
+    let output = output.append(alloc.line_()).align();
+    if implicit {
+        output.brackets().group()
+    } else {
+        output.parens().group()
     }
 }
 
@@ -401,7 +434,7 @@ impl<'a> Print<'a> for TelescopeInst {
 
 impl<'a> Print<'a> for Param {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Param { name, typ } = self;
+        let Param { name, typ, implicit: _ } = self;
         alloc.text(name).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
     }
 }

@@ -182,7 +182,7 @@ impl FreeVars {
 
             let typ = typ.subst(&mut ctx, &subst.in_param());
 
-            let param = Param { name: name.clone(), typ: typ.clone() };
+            let param = Param { name: name.clone(), typ: typ.clone(), implicit: false };
             let arg = Rc::new(Exp::Variable(Variable {
                 span: None,
                 idx: base_ctx.lvl_to_idx(fv.lvl),

@@ -230,7 +230,7 @@ impl ContextElem<Ctx> for Ident {
     }
 }
 
-impl ContextElem<Ctx> for &cst::decls::Param {
+impl ContextElem<Ctx> for &cst::decls::DesugaredParam {
     fn as_element(&self) -> <Ctx as Context>::ElemIn {
         match &self.name {
             BindingSite::Var { name, .. } => name.to_owned(),

@@ -285,6 +285,7 @@ impl SelfParam {
             params: vec![Param {
                 name: self.name.clone().unwrap_or_default(),
                 typ: Rc::new(self.typ.to_exp()),
+                implicit: false,
             }],
         }
     }
@@ -344,6 +345,7 @@ pub struct Param {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     pub typ: Rc<Exp>,
+    pub implicit: bool,
 }
 
 impl Named for Param {

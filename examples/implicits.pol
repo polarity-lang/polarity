@@ -1,0 +1,4 @@
+
+data Eq[a: Type](x y: a) {
+    Refl[a: Type](x: a) : Eq(a, x, x)
+}

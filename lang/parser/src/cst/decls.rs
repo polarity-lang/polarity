@@ -237,7 +237,7 @@ pub struct Param {
 /// semantics. I.e. each parameter binding in the parameter list is in scope
 /// for the following parameters. This influences the lowering semantic.
 #[derive(Debug, Clone)]
-pub struct Telescope(pub Params);
+pub struct Telescope(pub Vec<Params>);
 
 impl Telescope {
     pub fn is_empty(&self) -> bool {
@@ -245,11 +245,39 @@ impl Telescope {
     }
 
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.0.iter().map(|params| params.len()).sum()
     }
 }
 
-pub type Params = Vec<Param>;
+/// There can be an arbitrary mix of implicit and explicit parameters.
+/// Implicit parameters are written `[ x : T, y : T, ... ]`, while explicit
+/// parameters are written `(x : T, y : T, ...)`.
+#[derive(Debug, Clone)]
+pub enum Params {
+    Implicit(Vec<Param>),
+    Explicit(Vec<Param>),
+}
+
+impl Params {
+    pub fn len(&self) -> usize {
+        match self {
+            Params::Implicit(params) => params.len(),
+            Params::Explicit(params) => params.len(),
+        }
+    }
+}
+
+pub struct DesugaredTelescope(pub Vec<DesugaredParam>);
+
+#[derive(Debug, Clone)]
+pub struct DesugaredParam {
+    /// The parameter name.
+    pub name: exp::BindingSite,
+    /// The type of the parameter.
+    pub typ: Rc<exp::Exp>,
+    /// Whether the parameter is implicit or not.
+    pub implicit: bool,
+}
 
 #[derive(Debug, Clone)]
 pub struct SelfParam {

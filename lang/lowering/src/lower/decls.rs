@@ -324,20 +324,32 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, Lowering
     )
 }
 
-fn desugar_telescope(tel: &cst::decls::Telescope) -> cst::decls::Telescope {
+fn desugar_telescope(tel: &cst::decls::Telescope) -> cst::decls::DesugaredTelescope {
     let cst::decls::Telescope(params) = tel;
-    let params: Vec<cst::decls::Param> = params.iter().flat_map(desugar_param).collect();
-    cst::decls::Telescope(params)
+    let params = params.iter().flat_map(desugar_params).collect();
+    cst::decls::DesugaredTelescope(params)
 }
-fn desugar_param(param: &cst::decls::Param) -> Vec<cst::decls::Param> {
+
+fn desugar_params(params: &cst::decls::Params) -> Vec<cst::decls::DesugaredParam> {
+    match params {
+        cst::decls::Params::Explicit(params) => {
+            params.iter().flat_map(|p| desugar_param(p, false)).collect()
+        }
+        cst::decls::Params::Implicit(params) => {
+            params.iter().flat_map(|p| desugar_param(p, true)).collect()
+        }
+    }
+}
+
+fn desugar_param(param: &cst::decls::Param, implicit: bool) -> Vec<cst::decls::DesugaredParam> {
     let cst::decls::Param { name, names, typ } = param;
-    let mut params: Vec<cst::decls::Param> =
-        vec![cst::decls::Param { name: name.clone(), names: vec![], typ: typ.clone() }];
+    let mut params =
+        vec![cst::decls::DesugaredParam { name: name.clone(), typ: typ.clone(), implicit }];
     for extra_name in names {
-        params.push(cst::decls::Param {
+        params.push(cst::decls::DesugaredParam {
             name: extra_name.clone(),
-            names: vec![],
             typ: typ.clone(),
+            implicit,
         });
     }
     params
@@ -361,13 +373,13 @@ where
         Ok(vec![]),
         |ctx, params_out, param| {
             let mut params_out = params_out?;
-            let cst::decls::Param { name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
+            let cst::decls::DesugaredParam { name, typ, implicit } = param;
             let typ_out = typ.lower(ctx)?;
             let name = match name {
                 BindingSite::Var { name, .. } => name.clone(),
                 BindingSite::Wildcard { .. } => parser::cst::ident::Ident { id: "_".to_owned() },
             };
-            let param_out = ast::Param { name: name.id, typ: typ_out };
+            let param_out = ast::Param { name: name.id, typ: typ_out, implicit: *implicit };
             params_out.push(param_out);
             Ok(params_out)
         },
