@@ -263,6 +263,8 @@ pub struct HoleInfo {
     pub metavar: Option<String>,
     pub ctx: Option<Ctx>,
     pub args: Vec<Vec<String>>,
+    /// `Some(e)` if the solution`e` has been found for the metavariable.
+    pub metavar_state: Option<String>,
 }
 
 impl From<HoleInfo> for InfoContent {

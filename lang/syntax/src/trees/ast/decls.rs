@@ -37,11 +37,19 @@ pub struct Attribute {
 #[derive(Debug, Clone)]
 pub enum MetaVarState {
     /// We know what the metavariable stands for.
-    Solved { ctx: LevelCtx },
+    Solved { ctx: LevelCtx, solution: Rc<Exp> },
     /// We don't know yet what the metavariable stands for.
     Unsolved { ctx: LevelCtx },
 }
 
+impl MetaVarState {
+    pub fn solution(&self) -> Option<Rc<Exp>> {
+        match self {
+            MetaVarState::Solved { solution, .. } => Some(solution.clone()),
+            MetaVarState::Unsolved { .. } => None,
+        }
+    }
+}
 /// A module containing declarations
 ///
 /// There is a 1-1 correspondence between modules and files in our system.
