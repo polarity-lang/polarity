@@ -10,7 +10,7 @@ use syntax::ast::lookup_table::DeclMeta;
 use syntax::ast::Named;
 use syntax::ast::{self, MetaVar, MetaVarState};
 use syntax::common::*;
-use syntax::ctx::{Context, ContextElem};
+use syntax::ctx::{Context, ContextElem, LevelCtx};
 
 use super::result::LoweringError;
 
@@ -142,8 +142,9 @@ impl Ctx {
     /// also registered as unsolved.
     pub fn fresh_metavar(&mut self) -> MetaVar {
         let mv = MetaVar { id: self.next_meta_var };
+        let ctx = LevelCtx { bound: self.levels.clone() };
         self.next_meta_var += 1;
-        self.meta_vars.insert(mv, MetaVarState::Unsolved);
+        self.meta_vars.insert(mv, MetaVarState::Unsolved { ctx });
         mv
     }
 
