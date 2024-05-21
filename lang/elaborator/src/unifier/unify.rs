@@ -145,7 +145,7 @@ impl Ctx {
         let Eqn { lhs, rhs, .. } = eqn;
 
         match (&**lhs, &**rhs) {
-            (Exp::Hole(h), e) | (e, Exp::Hole(h)) => {
+            (Exp::Hole(h), e) | (e, Exp::Hole(h)) if self.vars_are_rigid => {
                 let metavar_state = meta_vars.get(&h.metavar).unwrap();
                 match metavar_state {
                     MetaVarState::Solved { ctx, solution } => {
