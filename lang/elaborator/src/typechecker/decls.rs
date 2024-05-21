@@ -199,7 +199,7 @@ impl CheckToplevel for Codef {
         let Codef { span, doc, name, attr, params, typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
-            let typ_out = typ.infer(prg, ctx)?;
+            let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
             let typ_nf = typ.normalize(prg, &mut ctx.env())?;
             let wd = WithDestructee {
                 inner: body,

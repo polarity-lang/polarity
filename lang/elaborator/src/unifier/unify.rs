@@ -145,32 +145,31 @@ impl Ctx {
         let Eqn { lhs, rhs, .. } = eqn;
 
         match (&**lhs, &**rhs) {
-            (Exp::Hole(h), e) | (e, Exp::Hole(h))=> {
-                if let Some(metavar) = h.metavar {
-                    let metavar_state = meta_vars.get(&metavar).unwrap();
-                    match metavar_state {
-                        MetaVarState::Solved { ctx, solution } => {
-                            let lhs = solution.clone().subst(&mut ctx.clone(), &h.args);
-                            self.add_equation(Eqn { lhs, rhs: Rc::new(e.clone()) })?;
-                        }
-                        MetaVarState::Unsolved { ctx } => {
-                            if is_solvable(h) {
-                                meta_vars.insert(
-                                    metavar,
-                                    MetaVarState::Solved {
-                                        ctx: ctx.clone(),
-                                        solution: Rc::new(e.clone()),
-                                    },
-                                );
-                            } else {
-                                return Err(TypeError::cannot_decide(
-                                    Rc::new(Exp::Hole(h.clone())),
-                                    Rc::new(e.clone()),
-                                ));
-                            }
+            (Exp::Hole(h), e) | (e, Exp::Hole(h)) => {
+                let metavar_state = meta_vars.get(&h.metavar).unwrap();
+                match metavar_state {
+                    MetaVarState::Solved { ctx, solution } => {
+                        let lhs = solution.clone().subst(&mut ctx.clone(), &h.args);
+                        self.add_equation(Eqn { lhs, rhs: Rc::new(e.clone()) })?;
+                    }
+                    MetaVarState::Unsolved { ctx } => {
+                        if is_solvable(h) {
+                            meta_vars.insert(
+                                h.metavar,
+                                MetaVarState::Solved {
+                                    ctx: ctx.clone(),
+                                    solution: Rc::new(e.clone()),
+                                },
+                            );
+                        } else {
+                            return Err(TypeError::cannot_decide(
+                                Rc::new(Exp::Hole(h.clone())),
+                                Rc::new(e.clone()),
+                            ));
                         }
                     }
                 }
+
                 Ok(Yes(()))
             }
             (

@@ -341,7 +341,7 @@ impl CollectInfo for DotCall {
 impl CollectInfo for Hole {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let Hole { span, metavar, inferred_type, inferred_ctx, args } = self;
-        if let (Some(span), Some(metavar)) = (span, metavar) {
+        if let Some(span) = span {
             let metavar_state = collector
                 .metavars
                 .get(metavar)

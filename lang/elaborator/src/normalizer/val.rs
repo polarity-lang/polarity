@@ -536,7 +536,7 @@ impl ReadBack for LocalMatch {
 pub struct Hole {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub metavar: Option<MetaVar>,
+    pub metavar: MetaVar,
     /// Explicit substitution of the context, compare documentation of ast::Hole
     pub args: Vec<Vec<Rc<Val>>>,
 }

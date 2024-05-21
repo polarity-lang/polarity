@@ -96,22 +96,28 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[error("Expected type constructor application, got {got}")]
+    #[error("Type annotation required for typed hole")]
     #[diagnostic(code("T-011"))]
+    CannotInferHole {
+        #[label]
+        span: Option<SourceSpan>,
+    },
+    #[error("Expected type constructor application, got {got}")]
+    #[diagnostic(code("T-012"))]
     ExpectedTypApp {
         got: String,
         #[label]
         span: Option<SourceSpan>,
     },
     #[error("Local comatch not supported for type {type_name} because {type_name} contains destructors with self parameters")]
-    #[diagnostic(code("T-012"), help("Use a top-level codefinition instead"))]
+    #[diagnostic(code("T-013"), help("Use a top-level codefinition instead"))]
     LocalComatchWithSelf {
         type_name: String,
         #[label]
         span: Option<SourceSpan>,
     },
     #[error("{idx} occurs in {exp}")]
-    #[diagnostic(code("T-013"))]
+    #[diagnostic(code("T-014"))]
     OccursCheckFailed {
         idx: Idx,
         exp: String,
@@ -119,14 +125,14 @@ pub enum TypeError {
         span: Option<SourceSpan>,
     },
     #[error("Cannot unify annotated expression {exp}")]
-    #[diagnostic(code("T-014"))]
+    #[diagnostic(code("T-015"))]
     UnsupportedAnnotation {
         exp: String,
         #[label]
         span: Option<SourceSpan>,
     },
     #[error("Cannot automatically decide whether {lhs} and {rhs} unify")]
-    #[diagnostic(code("T-015"))]
+    #[diagnostic(code("T-016"))]
     CannotDecide {
         lhs: String,
         rhs: String,
