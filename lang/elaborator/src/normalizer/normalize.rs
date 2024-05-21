@@ -2,7 +2,7 @@ use syntax::ast::*;
 
 use super::env::Env;
 use super::eval::*;
-use super::read_back::*;
+use crate::normalizer::val::ReadBack;
 use crate::result::*;
 
 pub trait Normalize {

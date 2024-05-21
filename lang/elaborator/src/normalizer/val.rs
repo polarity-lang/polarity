@@ -12,6 +12,48 @@ use printer::types::*;
 use printer::util::*;
 use syntax::ast;
 use syntax::common::*;
+use syntax::ctx::BindContext;
+use tracer::trace;
+
+use super::eval::Eval;
+use crate::result::*;
+
+// Read back
+//
+//
+
+/// Every value and neutral term defined in this module
+/// corresponds to an expression in normal form.
+/// This trait allows to convert values and neutral terms back to expressions.
+pub trait ReadBack {
+    type Nf;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError>;
+}
+
+impl<T: ReadBack> ReadBack for Vec<T> {
+    type Nf = Vec<T::Nf>;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        self.iter().map(|x| x.read_back(prg)).collect()
+    }
+}
+
+impl<T: ReadBack> ReadBack for Rc<T> {
+    type Nf = Rc<T::Nf>;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        (**self).read_back(prg).map(Rc::new)
+    }
+}
+
+impl<T: ReadBack> ReadBack for Option<T> {
+    type Nf = Option<T::Nf>;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        self.as_ref().map(|x| x.read_back(prg)).transpose()
+    }
+}
 
 // Val
 //
@@ -52,6 +94,22 @@ impl<'a> Print<'a> for Val {
     }
 }
 
+impl ReadBack for Val {
+    type Nf = ast::Exp;
+
+    #[trace("↓{:P} ~> {return:P}", self, std::convert::identity)]
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let res = match self {
+            Val::TypCtor(e) => e.read_back(prg)?.into(),
+            Val::Call(e) => e.read_back(prg)?.into(),
+            Val::TypeUniv(e) => e.read_back(prg)?.into(),
+            Val::LocalComatch(e) => e.read_back(prg)?.into(),
+            Val::Neu(exp) => exp.read_back(prg)?,
+        };
+        Ok(res)
+    }
+}
+
 // TypCtor
 //
 //
@@ -83,6 +141,19 @@ impl<'a> Print<'a> for TypCtor {
 impl From<TypCtor> for Val {
     fn from(value: TypCtor) -> Self {
         Val::TypCtor(value)
+    }
+}
+
+impl ReadBack for TypCtor {
+    type Nf = ast::TypCtor;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let TypCtor { span, name, args } = self;
+        Ok(ast::TypCtor {
+            span: *span,
+            name: name.clone(),
+            args: ast::Args { args: args.read_back(prg)? },
+        })
     }
 }
 
@@ -121,6 +192,21 @@ impl From<Call> for Val {
     }
 }
 
+impl ReadBack for Call {
+    type Nf = ast::Call;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let Call { span, kind, name, args } = self;
+        Ok(ast::Call {
+            span: *span,
+            kind: *kind,
+            name: name.clone(),
+            args: ast::Args { args: args.read_back(prg)? },
+            inferred_type: None,
+        })
+    }
+}
+
 // TypeUniv
 //
 //
@@ -147,6 +233,15 @@ impl<'a> Print<'a> for TypeUniv {
 impl From<TypeUniv> for Val {
     fn from(value: TypeUniv) -> Self {
         Val::TypeUniv(value)
+    }
+}
+
+impl ReadBack for TypeUniv {
+    type Nf = ast::TypeUniv;
+
+    fn read_back(&self, _prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let TypeUniv { span } = self;
+        Ok(ast::TypeUniv { span: *span })
     }
 }
 
@@ -195,6 +290,21 @@ impl From<LocalComatch> for Val {
     }
 }
 
+impl ReadBack for LocalComatch {
+    type Nf = ast::LocalComatch;
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let LocalComatch { span, name, is_lambda_sugar, body } = self;
+        Ok(ast::LocalComatch {
+            span: *span,
+            ctx: None,
+            name: name.clone(),
+            is_lambda_sugar: *is_lambda_sugar,
+            body: body.read_back(prg)?,
+            inferred_type: None,
+        })
+    }
+}
+
 // Neu
 //
 //
@@ -237,6 +347,20 @@ impl From<Neu> for Val {
     }
 }
 
+impl ReadBack for Neu {
+    type Nf = ast::Exp;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let res = match self {
+            Neu::Variable(e) => e.read_back(prg)?.into(),
+            Neu::DotCall(e) => e.read_back(prg)?.into(),
+            Neu::LocalMatch(e) => e.read_back(prg)?.into(),
+            Neu::Hole(e) => e.read_back(prg)?.into(),
+        };
+        Ok(res)
+    }
+}
+
 // Variable
 //
 //
@@ -268,6 +392,15 @@ impl<'a> Print<'a> for Variable {
 impl From<Variable> for Neu {
     fn from(value: Variable) -> Self {
         Neu::Variable(value)
+    }
+}
+
+impl ReadBack for Variable {
+    type Nf = ast::Variable;
+
+    fn read_back(&self, _prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let Variable { span, name, idx } = self;
+        Ok(ast::Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: None })
     }
 }
 
@@ -310,6 +443,22 @@ impl<'a> Print<'a> for DotCall {
 impl From<DotCall> for Neu {
     fn from(value: DotCall) -> Self {
         Neu::DotCall(value)
+    }
+}
+
+impl ReadBack for DotCall {
+    type Nf = ast::DotCall;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let DotCall { span, kind, exp, name, args } = self;
+        Ok(ast::DotCall {
+            span: *span,
+            kind: *kind,
+            exp: exp.read_back(prg)?,
+            name: name.clone(),
+            args: ast::Args { args: args.read_back(prg)? },
+            inferred_type: None,
+        })
     }
 }
 
@@ -360,6 +509,24 @@ impl From<LocalMatch> for Neu {
     }
 }
 
+impl ReadBack for LocalMatch {
+    type Nf = ast::LocalMatch;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let LocalMatch { span, name, on_exp, body } = self;
+        Ok(ast::LocalMatch {
+            span: *span,
+            ctx: None,
+            motive: None,
+            ret_typ: None,
+            name: name.clone(),
+            on_exp: on_exp.read_back(prg)?,
+            body: body.read_back(prg)?,
+            inferred_type: None,
+        })
+    }
+}
+
 // Hole
 //
 //
@@ -390,6 +557,22 @@ impl<'a> Print<'a> for Hole {
 impl From<Hole> for Neu {
     fn from(value: Hole) -> Self {
         Neu::Hole(value)
+    }
+}
+
+impl ReadBack for Hole {
+    type Nf = ast::Hole;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let Hole { span, metavar, args } = self;
+        let args = args.read_back(prg)?;
+        Ok(ast::Hole {
+            span: *span,
+            metavar: *metavar,
+            inferred_type: None,
+            inferred_ctx: None,
+            args,
+        })
     }
 }
 
@@ -428,6 +611,15 @@ impl<'a> Print<'a> for Match {
             .nest(cfg.indent)
             .append(alloc.hardline())
             .braces_anno()
+    }
+}
+
+impl ReadBack for Match {
+    type Nf = ast::Match;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let Match { span, cases, omit_absurd } = self;
+        Ok(ast::Match { span: *span, cases: cases.read_back(prg)?, omit_absurd: *omit_absurd })
     }
 }
 
@@ -476,6 +668,21 @@ impl<'a> Print<'a> for Case {
     }
 }
 
+impl ReadBack for Case {
+    type Nf = ast::Case;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let Case { span, name, params, body } = self;
+
+        Ok(ast::Case {
+            span: *span,
+            name: name.clone(),
+            params: params.clone(),
+            body: body.read_back(prg)?,
+        })
+    }
+}
+
 // Args
 //
 //
@@ -505,5 +712,27 @@ impl Shift for Closure {
 impl<'a> Print<'a> for Closure {
     fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.text("...")
+    }
+}
+
+impl ReadBack for Closure {
+    type Nf = Rc<ast::Exp>;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let args: Vec<Rc<Val>> = (0..self.n_args)
+            .rev()
+            .map(|snd| {
+                Val::Neu(Neu::Variable(Variable {
+                    span: None,
+                    name: "".to_owned(),
+                    idx: Idx { fst: 0, snd },
+                }))
+            })
+            .map(Rc::new)
+            .collect();
+        self.env
+            .shift((1, 0))
+            .bind_iter(args.iter(), |env| self.body.eval(prg, env))?
+            .read_back(prg)
     }
 }
