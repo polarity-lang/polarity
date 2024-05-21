@@ -262,6 +262,7 @@ pub struct HoleInfo {
     pub goal: String,
     pub metavar: Option<String>,
     pub ctx: Option<Ctx>,
+    pub args: Vec<Vec<String>>,
 }
 
 impl From<HoleInfo> for InfoContent {

@@ -370,12 +370,14 @@ pub struct Hole {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub metavar: Option<MetaVar>,
+    /// Explicit substitution of the context, compare documentation of ast::Hole
+    pub args: Vec<Vec<Rc<Val>>>,
 }
 
 impl Shift for Hole {
-    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
-        let Hole { span, metavar } = self;
-        Hole { span: *span, metavar: *metavar }
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let Hole { span, metavar, args } = self;
+        Hole { span: *span, metavar: *metavar, args: args.shift_in_range(range, by) }
     }
 }
 

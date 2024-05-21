@@ -42,7 +42,7 @@ impl FV for Exp {
                 args.visit_fv(v);
             }
             Exp::TypCtor(e) => e.visit_fv(v),
-            Exp::Hole(Hole { .. }) => {}
+            Exp::Hole(e) => e.visit_fv(v),
             Exp::TypeUniv(TypeUniv { span: _ }) => {}
             Exp::LocalMatch(LocalMatch { on_exp, motive, body, .. }) => {
                 on_exp.visit_fv(v);
@@ -83,6 +83,17 @@ impl FV for Args {
         let Args { args } = self;
         for arg in args {
             arg.visit_fv(v)
+        }
+    }
+}
+
+impl FV for Hole {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        let Hole { args, .. } = self;
+        for subst in args {
+            for exp in subst {
+                exp.visit_fv(v);
+            }
         }
     }
 }

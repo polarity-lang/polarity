@@ -329,23 +329,33 @@ impl CheckInfer for TypeUniv {
 //
 
 impl CheckInfer for Hole {
-    fn check(&self, _prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        let Hole { span, metavar, .. } = self;
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+        let Hole { span, metavar, args, .. } = self;
+        let args: Vec<Vec<Rc<Exp>>> = args
+            .iter()
+            .map(|subst| subst.iter().map(|exp| exp.infer(prg, ctx)).collect::<Result<Vec<_>, _>>())
+            .collect::<Result<_, _>>()?;
         Ok(Hole {
             span: *span,
             metavar: *metavar,
             inferred_type: Some(t.clone()),
             inferred_ctx: Some(ctx.vars.clone()),
+            args,
         })
     }
 
-    fn infer(&self, _prg: &Module, _ctx: &mut Ctx) -> Result<Self, TypeError> {
-        let Hole { span, metavar, .. } = self;
+    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+        let Hole { span, metavar, args, .. } = self;
+        let args: Vec<Vec<Rc<Exp>>> = args
+            .iter()
+            .map(|subst| subst.iter().map(|exp| exp.infer(prg, ctx)).collect::<Result<Vec<_>, _>>())
+            .collect::<Result<_, _>>()?;
         Ok(Hole {
             span: *span,
             metavar: *metavar,
             inferred_type: Some(Rc::new(Hole::new().into())),
             inferred_ctx: None,
+            args,
         })
     }
 }

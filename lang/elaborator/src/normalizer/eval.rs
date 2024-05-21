@@ -176,9 +176,10 @@ impl Eval for LocalComatch {
 impl Eval for Hole {
     type Val = Rc<Val>;
 
-    fn eval(&self, _prg: &Module, _env: &mut Env) -> Result<Self::Val, TypeError> {
-        let Hole { span, metavar, .. } = self;
-        Ok(Rc::new(Val::Neu(val::Hole { span: *span, metavar: *metavar }.into())))
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
+        let Hole { span, metavar, args, .. } = self;
+        let args = args.eval(prg, env)?;
+        Ok(Rc::new(Val::Neu(val::Hole { span: *span, metavar: *metavar, args }.into())))
     }
 }
 

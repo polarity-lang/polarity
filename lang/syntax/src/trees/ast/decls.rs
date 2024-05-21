@@ -5,6 +5,7 @@ use derivative::Derivative;
 use url::Url;
 
 use crate::common::*;
+use crate::ctx::LevelCtx;
 
 use super::ident::*;
 use super::lookup_table::{DeclKind, LookupTable};
@@ -30,12 +31,15 @@ pub struct Attribute {
 /// All metavariables start in the unsolved state, but as we
 /// learn more information during elaboration we find out what
 /// precise terms the metavariables stand for.
+///
+/// A metavariable is always annotated with a local context which specifies
+/// which free variables may occur in the solution.
 #[derive(Debug, Clone)]
 pub enum MetaVarState {
     /// We know what the metavariable stands for.
-    Solved,
+    Solved { ctx: LevelCtx },
     /// We don't know yet what the metavariable stands for.
-    Unsolved,
+    Unsolved { ctx: LevelCtx },
 }
 
 /// A module containing declarations

@@ -338,12 +338,16 @@ impl CollectInfo for DotCall {
 
 impl CollectInfo for Hole {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Hole { span, metavar, inferred_type, inferred_ctx } = self;
+        let Hole { span, metavar, inferred_type, inferred_ctx, args } = self;
         if let Some(span) = span {
             let info = HoleInfo {
                 goal: inferred_type.print_to_string(None),
                 metavar: metavar.map(|mv| format!("?{}", mv.id)),
                 ctx: inferred_ctx.clone().map(Into::into),
+                args: args
+                    .iter()
+                    .map(|subst| subst.iter().map(|exp| exp.print_to_string(None)).collect())
+                    .collect(),
             };
             collector.add_info(*span, info)
         }

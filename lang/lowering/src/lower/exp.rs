@@ -233,8 +233,15 @@ impl Lower for cst::exp::Hole {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Hole { span } = self;
         let mv = ctx.fresh_metavar();
-        Ok(Hole { span: Some(*span), metavar: Some(mv), inferred_type: None, inferred_ctx: None }
-            .into())
+        let args = ctx.subst_from_ctx();
+        Ok(Hole {
+            span: Some(*span),
+            metavar: Some(mv),
+            inferred_type: None,
+            inferred_ctx: None,
+            args,
+        }
+        .into())
     }
 }
 
