@@ -14,23 +14,26 @@ use super::{
 };
 
 pub fn check(prg: &Module) -> Result<Module, TypeError> {
-    prg.check_wf(prg)
+    let mut ctx = Ctx::new(prg.meta_vars.clone());
+    let mut prg = prg.check_wf(prg, &mut ctx)?;
+    prg.meta_vars = ctx.meta_vars;
+    Ok(prg)
 }
 
 pub trait CheckToplevel: Sized {
-    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError>;
+    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError>;
 }
 
 /// Check all declarations in a program
 impl CheckToplevel for Module {
-    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Module { uri, map, lookup_table, meta_vars: _ } = self;
 
         // FIXME: Reconsider order
 
         let map_out = map
             .iter()
-            .map(|(name, decl)| Ok((name.clone(), decl.check_wf(prg)?)))
+            .map(|(name, decl)| Ok((name.clone(), decl.check_wf(prg, ctx)?)))
             .collect::<Result<_, TypeError>>()?;
 
         Ok(Module {
@@ -45,15 +48,15 @@ impl CheckToplevel for Module {
 /// Check a declaration
 impl CheckToplevel for Decl {
     #[trace(" |- {} =>", self.name())]
-    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let out = match self {
-            Decl::Data(data) => Decl::Data(data.check_wf(prg)?),
-            Decl::Codata(codata) => Decl::Codata(codata.check_wf(prg)?),
-            Decl::Ctor(ctor) => Decl::Ctor(ctor.check_wf(prg)?),
-            Decl::Dtor(dtor) => Decl::Dtor(dtor.check_wf(prg)?),
-            Decl::Def(def) => Decl::Def(def.check_wf(prg)?),
-            Decl::Codef(codef) => Decl::Codef(codef.check_wf(prg)?),
-            Decl::Let(tl_let) => Decl::Let(tl_let.check_wf(prg)?),
+            Decl::Data(data) => Decl::Data(data.check_wf(prg, ctx)?),
+            Decl::Codata(codata) => Decl::Codata(codata.check_wf(prg, ctx)?),
+            Decl::Ctor(ctor) => Decl::Ctor(ctor.check_wf(prg, ctx)?),
+            Decl::Dtor(dtor) => Decl::Dtor(dtor.check_wf(prg, ctx)?),
+            Decl::Def(def) => Decl::Def(def.check_wf(prg, ctx)?),
+            Decl::Codef(codef) => Decl::Codef(codef.check_wf(prg, ctx)?),
+            Decl::Let(tl_let) => Decl::Let(tl_let.check_wf(prg, ctx)?),
         };
         Ok(out)
     }
@@ -61,12 +64,10 @@ impl CheckToplevel for Decl {
 
 /// Check a data declaration
 impl CheckToplevel for Data {
-    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Data { span, doc, name, attr, typ, ctors } = self;
 
-        let mut var_ctx = Ctx::default();
-
-        let typ_out = typ.infer_telescope(prg, &mut var_ctx, |_, params_out| Ok(params_out))?;
+        let typ_out = typ.infer_telescope(prg, ctx, |_, params_out| Ok(params_out))?;
 
         Ok(Data {
             span: *span,
@@ -81,12 +82,10 @@ impl CheckToplevel for Data {
 
 /// Infer a codata declaration
 impl CheckToplevel for Codata {
-    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Codata { span, doc, name, attr, typ, dtors } = self;
 
-        let mut var_ctx = Ctx::default();
-
-        let typ_out = typ.infer_telescope(prg, &mut var_ctx, |_, params_out| Ok(params_out))?;
+        let typ_out = typ.infer_telescope(prg, ctx, |_, params_out| Ok(params_out))?;
 
         Ok(Codata {
             span: *span,
@@ -101,7 +100,7 @@ impl CheckToplevel for Codata {
 
 /// Infer a constructor declaration
 impl CheckToplevel for Ctor {
-    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Ctor { span, doc, name, params, typ } = self;
 
         // Check that the constructor lies in the data type it is defined in
@@ -115,9 +114,7 @@ impl CheckToplevel for Ctor {
             });
         }
 
-        let mut var_ctx = Ctx::default();
-
-        params.infer_telescope(prg, &mut var_ctx, |ctx, params_out| {
+        params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.infer(prg, ctx)?;
 
             Ok(Ctor {
@@ -133,7 +130,7 @@ impl CheckToplevel for Ctor {
 
 /// Infer a destructor declaration
 impl CheckToplevel for Dtor {
-    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Dtor { span, doc, name, params, self_param, ret_typ } = self;
 
         // Check that the destructor lies in the codata type it is defined in
@@ -147,9 +144,7 @@ impl CheckToplevel for Dtor {
             });
         }
 
-        let mut var_ctx = Ctx::default();
-
-        params.infer_telescope(prg, &mut var_ctx, |ctx, params_out| {
+        params.infer_telescope(prg, ctx, |ctx, params_out| {
             self_param.infer_telescope(prg, ctx, |ctx, self_param_out| {
                 let ret_typ_out = ret_typ.infer(prg, ctx)?;
 
@@ -168,12 +163,10 @@ impl CheckToplevel for Dtor {
 
 /// Infer a definition
 impl CheckToplevel for Def {
-    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
 
-        let mut var_ctx = Ctx::default();
-
-        params.infer_telescope(prg, &mut var_ctx, |ctx, params_out| {
+        params.infer_telescope(prg, ctx, |ctx, params_out| {
             let self_param_nf = self_param.typ.normalize(prg, &mut ctx.env())?;
 
             let (ret_typ_out, ret_typ_nf, self_param_out) =
@@ -202,12 +195,10 @@ impl CheckToplevel for Def {
 
 /// Infer a co-definition
 impl CheckToplevel for Codef {
-    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Codef { span, doc, name, attr, params, typ, body } = self;
 
-        let mut var_ctx = Ctx::default();
-
-        params.infer_telescope(prg, &mut var_ctx, |ctx, params_out| {
+        params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.infer(prg, ctx)?;
             let typ_nf = typ.normalize(prg, &mut ctx.env())?;
             let wd = WithDestructee {
@@ -231,12 +222,10 @@ impl CheckToplevel for Codef {
 }
 
 impl CheckToplevel for Let {
-    fn check_wf(&self, prg: &Module) -> Result<Self, TypeError> {
+    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Let { span, doc, name, attr, params, typ, body } = self;
 
-        let mut var_ctx = Ctx::default();
-
-        params.infer_telescope(prg, &mut var_ctx, |ctx, params_out| {
+        params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.infer(prg, ctx)?;
             let typ_nf = typ.normalize(prg, &mut ctx.env())?;
             let body_out = body.check(prg, ctx, typ_nf)?;

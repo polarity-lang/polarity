@@ -105,8 +105,7 @@ impl CheckInfer for Variable {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        let ctx = ctx.levels();
-        convert(ctx, inferred_typ, &t)?;
+        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, &t)?;
         Ok(inferred_term)
     }
 
@@ -141,8 +140,7 @@ impl CheckInfer for TypCtor {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        let ctx = ctx.levels();
-        convert(ctx, inferred_typ, &t)?;
+        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, &t)?;
         Ok(inferred_term)
     }
 
@@ -179,8 +177,7 @@ impl CheckInfer for Call {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        let ctx = ctx.levels();
-        convert(ctx, inferred_typ, &t)?;
+        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, &t)?;
         Ok(inferred_term)
     }
     /// The *inference* rule for calls is:
@@ -223,8 +220,7 @@ impl CheckInfer for DotCall {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        let ctx = ctx.levels();
-        convert(ctx, inferred_typ, &t)?;
+        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, &t)?;
         Ok(inferred_term)
     }
 
@@ -274,8 +270,7 @@ impl CheckInfer for Anno {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        let ctx = ctx.levels();
-        convert(ctx, inferred_typ, &t)?;
+        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, &t)?;
         Ok(inferred_term)
     }
 
@@ -308,7 +303,7 @@ impl CheckInfer for TypeUniv {
     ///            P, Γ ⊢ Type ⇐ τ
     /// ```
     fn check(&self, _prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        convert(ctx.levels(), Rc::new(TypeUniv::new().into()), &t)?;
+        convert(ctx.levels(), &mut ctx.meta_vars, Rc::new(TypeUniv::new().into()), &t)?;
         Ok(self.clone())
     }
 
@@ -400,7 +395,7 @@ impl CheckInfer for LocalMatch {
                 let subst = Assign(Lvl { fst: subst_ctx.len() - 1, snd: 0 }, on_exp_shifted);
                 let motive_t = ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0));
                 let motive_t_nf = motive_t.normalize(prg, &mut ctx.env())?;
-                convert(subst_ctx, motive_t_nf, &t)?;
+                convert(subst_ctx, &mut ctx.meta_vars, motive_t_nf, &t)?;
 
                 body_t =
                     ctx.bind_single(&self_binder, |ctx| ret_typ.normalize(prg, &mut ctx.env()))?;
@@ -777,7 +772,7 @@ fn check_case(
 
             let body_out = match body {
                 Some(body) => {
-                    let unif = unify(ctx.levels(), eqns.clone(), false)?
+                    let unif = unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
                         .map_no(|()| TypeError::PatternIsAbsurd {
                             name: name.clone(),
                             span: span.to_miette(),
@@ -797,7 +792,7 @@ fn check_case(
                     })?
                 }
                 None => {
-                    unify(ctx.levels(), eqns.clone(), false)?
+                    unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
                         .map_yes(|_| TypeError::PatternIsNotAbsurd {
                             name: name.clone(),
                             span: span.to_miette(),
@@ -834,7 +829,7 @@ fn check_cocase(
         |ctx, args_out| {
             let body_out = match body {
                 Some(body) => {
-                    let unif = unify(ctx.levels(), eqns.clone(), false)?
+                    let unif = unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
                         .map_no(|()| TypeError::PatternIsAbsurd {
                             name: name.clone(),
                             span: span.to_miette(),
@@ -854,7 +849,7 @@ fn check_cocase(
                     })?
                 }
                 None => {
-                    unify(ctx.levels(), eqns.clone(), false)?
+                    unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
                         .map_yes(|_| TypeError::PatternIsNotAbsurd {
                             name: name.clone(),
                             span: span.to_miette(),

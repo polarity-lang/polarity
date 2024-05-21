@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use syntax::{ast::*, common::Lvl, ctx::LevelCtx};
+use syntax::{ast::*, common::HashMap, common::Lvl, ctx::LevelCtx};
 use tracer::trace;
 
 use crate::unifier::unify::{unify, Eqn};
@@ -20,11 +20,16 @@ pub fn uses_self(prg: &Module, codata: &Codata) -> Result<bool, TypeError> {
 }
 
 #[trace("{:P} =? {:P}", this, other)]
-pub fn convert(ctx: LevelCtx, this: Rc<Exp>, other: &Rc<Exp>) -> Result<(), TypeError> {
+pub fn convert(
+    ctx: LevelCtx,
+    meta_vars: &mut HashMap<MetaVar, MetaVarState>,
+    this: Rc<Exp>,
+    other: &Rc<Exp>,
+) -> Result<(), TypeError> {
     // Convertibility is checked using the unification algorithm.
     let eqn: Eqn = Eqn { lhs: this.clone(), rhs: other.clone() };
     let eqns: Vec<Eqn> = vec![eqn];
-    let res = unify(ctx, eqns, true)?;
+    let res = unify(ctx, meta_vars, eqns, true)?;
     match res {
         crate::unifier::dec::Dec::Yes(_) => Ok(()),
         crate::unifier::dec::Dec::No(_) => Err(TypeError::not_eq(this.clone(), other.clone())),
