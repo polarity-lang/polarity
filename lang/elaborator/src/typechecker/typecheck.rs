@@ -565,7 +565,7 @@ impl<'a> WithScrutinee<'a> {
                 .iter()
                 .cloned()
                 .zip(on_args.args.iter().cloned())
-                .map(Eqn::from)
+                .map(|(lhs, rhs)| Eqn { lhs, rhs })
                 .collect();
 
             // Check the case given the equations
@@ -659,7 +659,7 @@ impl<'a> WithDestructee<'a> {
                 .iter()
                 .cloned()
                 .zip(on_args.args.iter().cloned())
-                .map(Eqn::from)
+                .map(|(lhs, rhs)| Eqn { lhs, rhs })
                 .collect();
 
             let ret_typ_nf = match &self.label {

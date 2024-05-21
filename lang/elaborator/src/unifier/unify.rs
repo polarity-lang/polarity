@@ -21,19 +21,6 @@ pub struct Eqn {
     pub rhs: Rc<Exp>,
 }
 
-impl From<(Rc<Exp>, Rc<Exp>)> for Eqn {
-    fn from((lhs, rhs): (Rc<Exp>, Rc<Exp>)) -> Self {
-        Eqn { lhs, rhs }
-    }
-}
-
-impl Shift for Eqn {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Eqn { lhs, rhs } = self;
-        Eqn { lhs: lhs.shift_in_range(range.clone(), by), rhs: rhs.shift_in_range(range, by) }
-    }
-}
-
 impl Substitutable<Rc<Exp>> for Unificator {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let map = self
@@ -231,7 +218,12 @@ impl Ctx {
     }
 
     fn unify_args(&mut self, lhs: &Args, rhs: &Args) -> Result<Dec, TypeError> {
-        let new_eqns = lhs.args.iter().cloned().zip(rhs.args.iter().cloned()).map(Eqn::from);
+        let new_eqns = lhs
+            .args
+            .iter()
+            .cloned()
+            .zip(rhs.args.iter().cloned())
+            .map(|(lhs, rhs)| Eqn { lhs, rhs });
         self.add_equations(new_eqns)?;
         Ok(Yes(()))
     }
