@@ -148,7 +148,7 @@ impl Ctx {
         mv
     }
 
-    /// With every context Γ there is a associated substitution id_Γ which consists of
+    /// With every context Γ there is an associated substitution id_Γ which consists of
     /// all variables in Γ. This function computes the substitution id_Γ.
     /// This substitution is needed when lowering typed holes since they stand for unknown terms which
     /// could potentially use all variables in the context.
