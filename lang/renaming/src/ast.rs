@@ -242,67 +242,51 @@ impl Rename for SelfParam {
 impl Rename for Exp {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         match self {
-            Exp::Variable(e) => Exp::Variable(e.rename_in_ctx(ctx)),
-            Exp::LocalComatch(LocalComatch { span, name, is_lambda_sugar, body, .. }) => {
-                Exp::LocalComatch(LocalComatch {
-                    span,
-                    ctx: None,
-                    name,
-                    is_lambda_sugar,
-                    body: body.rename_in_ctx(ctx),
-                    inferred_type: None,
-                })
-            }
-            Exp::Anno(Anno { span, exp, typ, normalized_type }) => Exp::Anno(Anno {
-                span,
-                exp: exp.rename_in_ctx(ctx),
-                typ: typ.rename_in_ctx(ctx),
-                normalized_type: normalized_type.map(|e| e.rename_in_ctx(ctx)),
-            }),
-            Exp::TypCtor(e) => Exp::TypCtor(e.rename_in_ctx(ctx)),
-            Exp::Hole(Hole { span, metavar, inferred_type, inferred_ctx: _, args }) => {
-                Exp::Hole(Hole {
-                    span,
-                    metavar,
-                    inferred_type: inferred_type.rename_in_ctx(ctx),
-                    inferred_ctx: None, // TODO: Rename TypeCtx!
-                    args: args.rename_in_ctx(ctx),
-                })
-            }
-            Exp::TypeUniv(e) => Exp::TypeUniv(e),
-            Exp::Call(Call { span, name, args, inferred_type, kind }) => Exp::Call(Call {
-                span,
-                kind,
-                name,
-                args: args.rename_in_ctx(ctx),
-                inferred_type: inferred_type.rename_in_ctx(ctx),
-            }),
-            Exp::LocalMatch(LocalMatch { span, name, on_exp, motive, ret_typ, body, .. }) => {
-                Exp::LocalMatch(LocalMatch {
-                    span,
-                    ctx: None,
-                    name,
-                    on_exp: on_exp.rename_in_ctx(ctx),
-                    motive: motive.rename_in_ctx(ctx),
-                    ret_typ: ret_typ.rename_in_ctx(ctx),
-                    body: body.rename_in_ctx(ctx),
-                    inferred_type: None,
-                })
-            }
-            Exp::DotCall(DotCall { span, kind, exp, name, args, inferred_type }) => {
-                Exp::DotCall(DotCall {
-                    span,
-                    kind,
-                    name,
-                    exp: exp.rename_in_ctx(ctx),
-                    args: args.rename_in_ctx(ctx),
-                    inferred_type: inferred_type.rename_in_ctx(ctx),
-                })
-            }
+            Exp::Variable(e) => e.rename_in_ctx(ctx).into(),
+            Exp::LocalComatch(e) => e.rename_in_ctx(ctx).into(),
+            Exp::Anno(e) => e.rename_in_ctx(ctx).into(),
+            Exp::TypCtor(e) => e.rename_in_ctx(ctx).into(),
+            Exp::Hole(e) => e.rename_in_ctx(ctx).into(),
+            Exp::TypeUniv(e) => e.rename_in_ctx(ctx).into(),
+            Exp::Call(e) => e.rename_in_ctx(ctx).into(),
+            Exp::LocalMatch(e) => e.rename_in_ctx(ctx).into(),
+            Exp::DotCall(e) => e.rename_in_ctx(ctx).into(),
         }
     }
 }
 
+impl Rename for TypeUniv {
+    fn rename_in_ctx(self, _ctx: &mut Ctx) -> Self {
+        self
+    }
+}
+
+impl Rename for Call {
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+        let Call { span, name, args, inferred_type, kind } = self;
+        Call {
+            span,
+            kind,
+            name,
+            args: args.rename_in_ctx(ctx),
+            inferred_type: inferred_type.rename_in_ctx(ctx),
+        }
+    }
+}
+
+impl Rename for DotCall {
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+        let DotCall { span, kind, exp, name, args, inferred_type } = self;
+        DotCall {
+            span,
+            kind,
+            name,
+            exp: exp.rename_in_ctx(ctx),
+            args: args.rename_in_ctx(ctx),
+            inferred_type: inferred_type.rename_in_ctx(ctx),
+        }
+    }
+}
 impl Rename for Variable {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Variable { span, idx, inferred_type, .. } = self;
@@ -314,10 +298,65 @@ impl Rename for Variable {
         }
     }
 }
+
+impl Rename for LocalComatch {
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+        let LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
+        LocalComatch {
+            span,
+            ctx: None,
+            name,
+            is_lambda_sugar,
+            body: body.rename_in_ctx(ctx),
+            inferred_type: None,
+        }
+    }
+}
+
+impl Rename for Hole {
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+        let Hole { span, metavar, inferred_type, inferred_ctx: _, args } = self;
+        Hole {
+            span,
+            metavar,
+            inferred_type: inferred_type.rename_in_ctx(ctx),
+            inferred_ctx: None, // TODO: Rename TypeCtx!
+            args: args.rename_in_ctx(ctx),
+        }
+    }
+}
+impl Rename for LocalMatch {
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+        let LocalMatch { span, name, on_exp, motive, ret_typ, body, .. } = self;
+        LocalMatch {
+            span,
+            ctx: None,
+            name,
+            on_exp: on_exp.rename_in_ctx(ctx),
+            motive: motive.rename_in_ctx(ctx),
+            ret_typ: ret_typ.rename_in_ctx(ctx),
+            body: body.rename_in_ctx(ctx),
+            inferred_type: None,
+        }
+    }
+}
+
 impl Rename for TypCtor {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let TypCtor { span, name, args } = self;
         TypCtor { span, name, args: args.rename_in_ctx(ctx) }
+    }
+}
+
+impl Rename for Anno {
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+        let Anno { span, exp, typ, normalized_type } = self;
+        Anno {
+            span,
+            exp: exp.rename_in_ctx(ctx),
+            typ: typ.rename_in_ctx(ctx),
+            normalized_type: normalized_type.map(|e| e.rename_in_ctx(ctx)),
+        }
     }
 }
 
