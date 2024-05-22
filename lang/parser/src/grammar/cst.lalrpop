@@ -77,8 +77,8 @@ Args: Vec<Rc<Exp>> = ParenthesizedArgs<Exp>;
 OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
 
 Attr: String = <s:r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*"> => s.to_owned();
-Attribute: Attribute = "#" <attrs: BracketedArgs<Attr>> => Attribute { attrs };
-OptAttribute: Attribute = <attr: Attribute? > => attr.unwrap_or_default();
+Attributes: Attributes = "#" <attrs: BracketedArgs<Attr>> => Attributes { attrs };
+OptAttributes: Attributes = <attr: Attributes? > => attr.unwrap_or_default();
 
 OmitAbsurd: bool = <absurd: "..absurd"?> => absurd.is_some();
 
@@ -110,7 +110,7 @@ Ctor: Ctor = {
 }
 
 // Toplevel data type declaration
-Data: Data = <l: @L> <doc: DocComment?> <attr: OptAttribute> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> =>
+Data: Data = <l: @L> <doc: DocComment?> <attr: OptAttributes> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> =>
   Data { span: span(l, r), doc, name, attr, params, ctors };
 
 Dtor: Dtor = {
@@ -118,19 +118,19 @@ Dtor: Dtor = {
 }
 
 // Toplevel codata type declaration
-Codata: Codata = <l: @L> <doc: DocComment?> <attr: OptAttribute> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> =>
+Codata: Codata = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> =>
   Codata { span: span(l, r), doc, name, attr, params, dtors };
 
 // Toplevel definition
-Def: Def = <l: @L> <doc: DocComment?> <attr: OptAttribute> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> =>
+Def: Def = <l: @L> <doc: DocComment?> <attr: OptAttributes> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> =>
   Def { span: span(l, r), doc, name, attr, params, scrutinee, ret_typ, body };
 
 // Toplevel codefinition
-Codef: Codef = <l: @L> <doc: DocComment?> <attr: OptAttribute> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Match> "}" <r: @R> =>
+Codef: Codef = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Match> "}" <r: @R> =>
   Codef { span: span(l, r), doc, name, attr, params, typ, body };
 
 // Toplevel let binding
-Let: Let = <l: @L> <doc: DocComment?> <attr: OptAttribute> "let" <name: LowerIdent><params: OptTelescope> ":" <typ: Exp> "{" <body: Exp> "}" <r: @R> =>
+Let: Let = <l: @L> <doc: DocComment?> <attr: OptAttributes> "let" <name: LowerIdent><params: OptTelescope> ":" <typ: Exp> "{" <body: Exp> "}" <r: @R> =>
   Let { span: span(l,r), doc, name, attr, params, typ, body };
 
 pub Match : Match = {

@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use syntax::ast;
-use syntax::ast::{Attribute, DocComment, Instantiate, Named};
+use syntax::ast::{Attributes, DocComment, Instantiate, Named};
 use syntax::common::*;
 use syntax::ctx::{BindContext, LevelCtx};
 
@@ -229,7 +229,7 @@ impl XData {
             span: None,
             doc: doc.clone(),
             name: name.clone(),
-            attr: Attribute::default(),
+            attr: Attributes::default(),
             typ: typ.clone(),
             ctors: ctors.keys().cloned().collect(),
         };
@@ -259,7 +259,7 @@ impl XData {
                     span: None,
                     doc: dtor.doc.clone(),
                     name: dtor.name.clone(),
-                    attr: Attribute::default(),
+                    attr: Attributes::default(),
                     params: dtor.params.clone(),
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
@@ -280,7 +280,7 @@ impl XData {
             span: None,
             doc: doc.clone(),
             name: name.clone(),
-            attr: Attribute::default(),
+            attr: Attributes::default(),
             typ: typ.clone(),
             dtors: dtors.keys().cloned().collect(),
         };
@@ -319,7 +319,7 @@ impl XData {
                     span: None,
                     doc: ctor.doc.clone(),
                     name: ctor.name.clone(),
-                    attr: Attribute::default(),
+                    attr: Attributes::default(),
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
                     body: ast::Match { cases, span: None, omit_absurd },

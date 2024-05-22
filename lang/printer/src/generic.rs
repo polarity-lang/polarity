@@ -11,8 +11,8 @@ use super::types::*;
 use super::util::*;
 
 /// Checks whether the `#[omit_print]` attribute is present.
-fn is_visible(attr: &Attribute) -> bool {
-    !attr.attrs.contains(&"omit_print".to_owned())
+fn is_visible(attr: &Attributes) -> bool {
+    !attr.attrs.contains(&Attribute::OmitPrint)
 }
 
 impl<'a> Print<'a> for Module {
@@ -608,6 +608,16 @@ impl<'a> Print<'a> for Motive {
 }
 
 impl<'a> Print<'a> for Attribute {
+    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Attribute::OmitPrint => alloc.text("omit_print"),
+            Attribute::Opaque => alloc.text("opaque"),
+            Attribute::Transparent => alloc.text("transparent"),
+            Attribute::Other(s) => alloc.text(s),
+        }
+    }
+}
+impl<'a> Print<'a> for Attributes {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         if self.attrs.is_empty() {
             alloc.nil()

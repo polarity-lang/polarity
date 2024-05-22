@@ -224,7 +224,7 @@ pub enum Item<'a> {
 }
 
 impl<'a> Item<'a> {
-    pub fn attributes(&self) -> &Attribute {
+    pub fn attributes(&self) -> &Attributes {
         match self {
             Item::Data(data) => &data.attr,
             Item::Codata(codata) => &codata.attr,
