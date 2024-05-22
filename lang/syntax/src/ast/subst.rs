@@ -40,7 +40,7 @@ pub struct Assign {
 impl Shift for Assign {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Assign { lvl, exp } = self;
-        Assign { lvl: lvl.clone(), exp: exp.shift_in_range(range, by) }
+        Assign { lvl: *lvl, exp: exp.shift_in_range(range, by) }
     }
 }
 
