@@ -364,3 +364,11 @@ impl Named for Param {
         &self.name
     }
 }
+
+impl Substitutable for Param {
+    type Result = Param;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        let Param { name, typ } = self;
+        Param { name: name.clone(), typ: typ.subst(ctx, by) }
+    }
+}
