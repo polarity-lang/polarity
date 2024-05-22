@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use syntax::ast;
+use syntax::ast::{self, SwapWithCtx};
 use syntax::ast::{Attributes, DocComment, Instantiate, Named};
 use syntax::common::*;
 use syntax::ctx::{BindContext, LevelCtx};

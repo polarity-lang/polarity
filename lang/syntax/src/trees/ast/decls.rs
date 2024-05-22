@@ -9,6 +9,7 @@ use crate::ctx::LevelCtx;
 
 use super::ident::*;
 use super::lookup_table::{DeclKind, LookupTable};
+use super::subst::{Substitutable, Substitution};
 use super::{exp::*, Instantiate};
 
 #[derive(Debug, Clone)]

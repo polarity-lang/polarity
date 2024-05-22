@@ -41,6 +41,13 @@ impl LevelCtx {
     pub fn tail(&self, skip: usize) -> Self {
         Self { bound: self.bound.iter().skip(skip).cloned().collect() }
     }
+
+    // Swap the given indices
+    pub fn swap(&self, fst1: usize, fst2: usize) -> Self {
+        let mut new_ctx = self.clone();
+        new_ctx.bound.swap(fst1, fst2);
+        new_ctx
+    }
 }
 
 impl Context for LevelCtx {
@@ -92,14 +99,6 @@ impl Leveled for LevelCtx {
         let fst = self.bound.len() - 1 - lvl.fst;
         let snd = self.bound[lvl.fst] - 1 - lvl.snd;
         Idx { fst, snd }
-    }
-}
-
-impl Swap for LevelCtx {
-    fn swap(&self, fst1: usize, fst2: usize) -> Self {
-        let mut new_ctx = self.clone();
-        new_ctx.bound.swap(fst1, fst2);
-        new_ctx
     }
 }
 

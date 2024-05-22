@@ -10,4 +10,5 @@ pub use decls::*;
 pub use exp::*;
 pub use ident::*;
 pub use lookup::*;
+pub use subst::*;
 pub use traits::*;

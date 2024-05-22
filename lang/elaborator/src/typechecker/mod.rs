@@ -1,6 +1,5 @@
 pub mod ctx;
 pub mod decls;
-pub mod subst;
 pub mod typecheck;
 pub mod util;
 
