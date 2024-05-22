@@ -9,7 +9,7 @@ use crate::ctx::*;
 use super::*;
 
 impl Substitutable for Rc<Exp> {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         match &**self {
             Exp::Variable(Variable { span, idx, name, .. }) => {
                 match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
@@ -81,14 +81,14 @@ impl Substitutable for Rc<Exp> {
 }
 
 impl Substitutable for TypCtor {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let TypCtor { span, name, args } = self;
         TypCtor { span: *span, name: name.clone(), args: args.subst(ctx, by) }
     }
 }
 
 impl Substitutable for Motive {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Motive { span, param, ret_typ } = self;
 
         Motive {
@@ -100,7 +100,7 @@ impl Substitutable for Motive {
 }
 
 impl Substitutable for Match {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Match { span, cases, omit_absurd } = self;
         Match {
             span: *span,
@@ -111,7 +111,7 @@ impl Substitutable for Match {
 }
 
 impl Substitutable for Case {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Case { span, name, params, body } = self;
         ctx.bind_iter(params.params.iter(), |ctx| Case {
             span: *span,
@@ -123,19 +123,19 @@ impl Substitutable for Case {
 }
 
 impl Substitutable for Param {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Param { name, typ } = self;
         Param { name: name.clone(), typ: typ.subst(ctx, by) }
     }
 }
 
 impl Substitutable for Args {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         Args { args: self.args.subst(ctx, by) }
     }
 }
 
-impl<T: Substitutable> SwapWithCtx<Rc<Exp>> for T {
+impl<T: Substitutable> SwapWithCtx for T {
     fn swap_with_ctx(&self, ctx: &mut LevelCtx, fst1: usize, fst2: usize) -> Self {
         self.subst(ctx, &SwapSubst { fst1, fst2 })
     }
@@ -154,7 +154,7 @@ impl Shift for SwapSubst {
     }
 }
 
-impl Substitution<Rc<Exp>> for SwapSubst {
+impl Substitution for SwapSubst {
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
         let new_lvl = if lvl.fst == self.fst1 {
             Some(Lvl { fst: self.fst2, snd: lvl.snd })

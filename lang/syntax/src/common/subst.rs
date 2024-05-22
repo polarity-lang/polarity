@@ -6,12 +6,12 @@ use crate::ctx::*;
 
 pub struct Assign<K, V>(pub K, pub V);
 
-pub trait Substitution<E>: Shift {
-    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<E>;
+pub trait Substitution: Shift {
+    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>>;
 }
 
-impl<E: Clone + Shift> Substitution<E> for Vec<Vec<E>> {
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<E> {
+impl Substitution for Vec<Vec<Rc<Exp>>> {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
         if lvl.fst >= self.len() {
             return None;
         }
@@ -25,8 +25,8 @@ impl<K: Clone, V: Shift> Shift for Assign<K, V> {
     }
 }
 
-impl<E: Clone + Shift> Substitution<E> for Assign<Lvl, E> {
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<E> {
+impl Substitution for Assign<Lvl, Rc<Exp>> {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
         if self.0 == lvl {
             Some(self.1.clone())
         } else {
@@ -36,21 +36,21 @@ impl<E: Clone + Shift> Substitution<E> for Assign<Lvl, E> {
 }
 
 pub trait Substitutable: Sized {
-    fn subst<S: Substitution<Rc<crate::ast::Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self;
 }
 
-pub trait SubstTelescope<E> {
-    fn subst_telescope<S: Substitution<E>>(&self, lvl: Lvl, by: &S) -> Self;
+pub trait SubstTelescope {
+    fn subst_telescope<S: Substitution>(&self, lvl: Lvl, by: &S) -> Self;
 }
 
 impl<T: Substitutable> Substitutable for Option<T> {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         self.as_ref().map(|x| x.subst(ctx, by))
     }
 }
 
 impl<T: Substitutable> Substitutable for Vec<T> {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         self.iter().map(|x| x.subst(ctx, by)).collect()
     }
 }
@@ -60,6 +60,6 @@ pub trait Swap {
     fn swap(&self, fst1: usize, fst2: usize) -> Self;
 }
 
-pub trait SwapWithCtx<E> {
+pub trait SwapWithCtx {
     fn swap_with_ctx(&self, ctx: &mut LevelCtx, fst1: usize, fst2: usize) -> Self;
 }

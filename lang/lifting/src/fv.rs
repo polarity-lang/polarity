@@ -384,7 +384,7 @@ impl<'a> Shift for FVParamSubst<'a> {
     }
 }
 
-impl<'a> Substitution<Rc<Exp>> for FVBodySubst<'a> {
+impl<'a> Substitution for FVBodySubst<'a> {
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
         // Let Γ be the original context, let Δ be the context according to which the new De-Bruijn index should be calculated
         //
@@ -408,7 +408,7 @@ impl<'a> Substitution<Rc<Exp>> for FVBodySubst<'a> {
     }
 }
 
-impl<'a> Substitution<Rc<Exp>> for FVParamSubst<'a> {
+impl<'a> Substitution for FVParamSubst<'a> {
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
         self.inner.subst.get(&lvl).map(|fv| {
             Rc::new(Exp::Variable(Variable {

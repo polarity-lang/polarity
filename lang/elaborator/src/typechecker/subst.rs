@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use syntax::{
     ast::*,
     common::{Substitutable, Substitution},
@@ -7,22 +5,22 @@ use syntax::{
 };
 
 pub trait SubstUnderCtx {
-    fn subst_under_ctx<S: Substitution<Rc<Exp>>>(&self, ctx: LevelCtx, s: &S) -> Self;
+    fn subst_under_ctx<S: Substitution>(&self, ctx: LevelCtx, s: &S) -> Self;
 }
 
 impl<T: Substitutable + Clone> SubstUnderCtx for T {
-    fn subst_under_ctx<S: Substitution<Rc<Exp>>>(&self, mut ctx: LevelCtx, s: &S) -> Self {
+    fn subst_under_ctx<S: Substitution>(&self, mut ctx: LevelCtx, s: &S) -> Self {
         self.subst(&mut ctx, s)
     }
 }
 
 pub trait SubstInTelescope {
     /// Substitute in a telescope
-    fn subst_in_telescope<S: Substitution<Rc<Exp>>>(&self, ctx: LevelCtx, s: &S) -> Self;
+    fn subst_in_telescope<S: Substitution>(&self, ctx: LevelCtx, s: &S) -> Self;
 }
 
 impl SubstInTelescope for Telescope {
-    fn subst_in_telescope<S: Substitution<Rc<Exp>>>(&self, mut ctx: LevelCtx, s: &S) -> Self {
+    fn subst_in_telescope<S: Substitution>(&self, mut ctx: LevelCtx, s: &S) -> Self {
         let Telescope { params } = self;
 
         ctx.bind_fold(
