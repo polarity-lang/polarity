@@ -39,10 +39,6 @@ pub trait Substitutable: Sized {
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self;
 }
 
-pub trait SubstTelescope {
-    fn subst_telescope<S: Substitution>(&self, lvl: Lvl, by: &S) -> Self;
-}
-
 impl<T: Substitutable> Substitutable for Option<T> {
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         self.as_ref().map(|x| x.subst(ctx, by))
