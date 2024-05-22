@@ -12,7 +12,7 @@ pub struct GenericContext<A> {
     pub bound: Vec<Vec<A>>,
 }
 
-impl <A: Shift> GenericContext<A> {
+impl<A: Shift> GenericContext<A> {
     pub fn empty() -> Self {
         Self { bound: vec![] }
     }
@@ -47,7 +47,7 @@ impl <A: Shift> GenericContext<A> {
     }
 }
 
-impl <A: Clone + Shift> Context for GenericContext<A> {
+impl<A: Clone + Shift> Context for GenericContext<A> {
     type ElemIn = A;
 
     type ElemOut = A;
@@ -85,13 +85,13 @@ impl <A: Clone + Shift> Context for GenericContext<A> {
     }
 }
 
-impl <A: Clone + Shift> ContextElem<GenericContext<A>> for &A {
+impl<A: Clone + Shift> ContextElem<GenericContext<A>> for &A {
     fn as_element(&self) -> <GenericContext<A> as Context>::ElemIn {
         (*self).clone()
     }
 }
 
-impl <A> Leveled for GenericContext<A> {
+impl<A> Leveled for GenericContext<A> {
     fn idx_to_lvl(&self, idx: Idx) -> Lvl {
         let fst = self.bound.len() - 1 - idx.fst;
         let snd = self.bound[fst].len() - 1 - idx.snd;
