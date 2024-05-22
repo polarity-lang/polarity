@@ -16,11 +16,24 @@ pub struct DocComment {
     pub docs: Vec<String>,
 }
 
+/// A single attribute.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Attribute {
+    /// Declarations with this annotation are omitted during prettyprinting.
+    OmitPrint,
+    /// A transparent let-binding is expanded during normalization.
+    Transparent,
+    /// An opaque let-binding is not expanded during normalization.
+    Opaque,
+    /// The compiler does not know about the meaning of this annotation.
+    Other(String),
+}
+
 /// An attribute can be attached to various nodes in the syntax tree.
 /// We use the same syntax for attributes as Rust, that is `#[attr1,attr2]`.
 #[derive(Debug, Clone, Default)]
-pub struct Attribute {
-    pub attrs: Vec<String>,
+pub struct Attributes {
+    pub attrs: Vec<Attribute>,
 }
 
 // Module
@@ -144,7 +157,7 @@ pub struct Data {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    pub attr: Attribute,
+    pub attr: Attributes,
     pub typ: Rc<Telescope>,
     pub ctors: Vec<Ident>,
 }
@@ -158,7 +171,7 @@ pub struct Codata {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    pub attr: Attribute,
+    pub attr: Attributes,
     pub typ: Rc<Telescope>,
     pub dtors: Vec<Ident>,
 }
@@ -199,7 +212,7 @@ pub struct Def {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    pub attr: Attribute,
+    pub attr: Attributes,
     pub params: Telescope,
     pub self_param: SelfParam,
     pub ret_typ: Rc<Exp>,
@@ -228,7 +241,7 @@ pub struct Codef {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    pub attr: Attribute,
+    pub attr: Attributes,
     pub params: Telescope,
     pub typ: TypCtor,
     pub body: Match,
@@ -255,7 +268,7 @@ pub struct Let {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    pub attr: Attribute,
+    pub attr: Attributes,
     pub params: Telescope,
     pub typ: Rc<Exp>,
     pub body: Rc<Exp>,

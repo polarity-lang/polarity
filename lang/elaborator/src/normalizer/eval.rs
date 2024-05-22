@@ -65,7 +65,7 @@ impl Eval for Call {
         let Call { span, name, kind, args, .. } = self;
         if matches!(kind, CallKind::LetBound) {
             let Let { attr, body, .. } = prg.top_level_let(name, *span)?;
-            if attr.attrs.contains(&String::from("transparent")) {
+            if attr.attrs.contains(&Attribute::Transparent) {
                 let args = args.eval(prg, env)?;
                 return env.bind_iter(args.iter(), |env| body.eval(prg, env));
             }

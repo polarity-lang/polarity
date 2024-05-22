@@ -584,7 +584,7 @@ impl Ctx {
             span: None,
             doc: None,
             name: name.clone(),
-            attr: Attribute::default(),
+            attr: Attributes::default(),
             params: telescope,
             self_param: SelfParam {
                 info: None,
@@ -650,7 +650,7 @@ impl Ctx {
             span: None,
             doc: None,
             name: name.clone(),
-            attr: Attribute::default(),
+            attr: Attributes::default(),
             params: telescope,
             typ,
             body,

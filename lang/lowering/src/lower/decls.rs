@@ -18,11 +18,19 @@ impl Lower for cst::decls::DocComment {
     }
 }
 
-impl Lower for cst::decls::Attribute {
-    type Target = ast::Attribute;
+fn parse_attribute(s: String) -> ast::Attribute {
+    match s.as_str() {
+        "omit_print" => ast::Attribute::OmitPrint,
+        "transparent" => ast::Attribute::Transparent,
+        "opaque" => ast::Attribute::Opaque,
+        v => ast::Attribute::Other(v.to_string()),
+    }
+}
+impl Lower for cst::decls::Attributes {
+    type Target = ast::Attributes;
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        Ok(ast::Attribute { attrs: self.attrs.clone() })
+        Ok(ast::Attributes { attrs: self.attrs.clone().into_iter().map(parse_attribute).collect() })
     }
 }
 

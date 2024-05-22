@@ -14,7 +14,7 @@ pub struct DocComment {
 /// An attribute can be attached to various nodes in the syntax tree.
 /// We use the same syntax for attributes as Rust, that is `#[attr1,attr2]`.
 #[derive(Debug, Clone, Default)]
-pub struct Attribute {
+pub struct Attributes {
     pub attrs: Vec<String>,
 }
 
@@ -46,7 +46,7 @@ pub enum Decl {
 pub struct Data {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub attr: Attribute,
+    pub attr: Attributes,
     pub name: Ident,
     pub params: Telescope,
     pub ctors: Vec<Ctor>,
@@ -64,7 +64,7 @@ pub struct Data {
 pub struct Codata {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub attr: Attribute,
+    pub attr: Attributes,
     pub name: Ident,
     pub params: Telescope,
     pub dtors: Vec<Dtor>,
@@ -140,7 +140,7 @@ pub struct Def {
     pub span: Span,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    pub attr: Attribute,
+    pub attr: Attributes,
     pub params: Telescope,
     pub scrutinee: Scrutinee,
     pub ret_typ: Rc<exp::Exp>,
@@ -177,7 +177,7 @@ pub struct Codef {
     pub span: Span,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    pub attr: Attribute,
+    pub attr: Attributes,
     pub params: Telescope,
     pub typ: TypApp,
     pub body: exp::Match,
@@ -198,7 +198,7 @@ pub struct Let {
     pub span: Span,
     pub doc: Option<DocComment>,
     pub name: Ident,
-    pub attr: Attribute,
+    pub attr: Attributes,
     pub params: Telescope,
     pub typ: Rc<exp::Exp>,
     pub body: Rc<exp::Exp>,
