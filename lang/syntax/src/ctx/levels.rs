@@ -1,14 +1,3 @@
-use std::fmt;
-
-// use data::string::comma_separated;
-fn comma_separated<I: IntoIterator<Item = String>>(iter: I) -> String {
-    separated(", ", iter)
-}
-fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
-    let vec: Vec<_> = iter.into_iter().collect();
-    vec.join(s)
-}
-
 use crate::ast::*;
 
 use super::def::*;
@@ -99,11 +88,5 @@ impl Leveled for LevelCtx {
         let fst = self.bound.len() - 1 - lvl.fst;
         let snd = self.bound[lvl.fst] - 1 - lvl.snd;
         Idx { fst, snd }
-    }
-}
-
-impl fmt::Display for LevelCtx {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}]", comma_separated(self.bound.iter().map(ToString::to_string)))
     }
 }
