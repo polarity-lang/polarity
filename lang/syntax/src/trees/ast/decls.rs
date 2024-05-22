@@ -7,10 +7,10 @@ use url::Url;
 use crate::common::*;
 use crate::ctx::LevelCtx;
 
+use super::exp::*;
 use super::ident::*;
 use super::lookup_table::{DeclKind, LookupTable};
 use super::subst::{Substitutable, Substitution};
-use super::{exp::*, Instantiate};
 
 #[derive(Debug, Clone)]
 pub struct DocComment {
@@ -331,9 +331,8 @@ impl Telescope {
     pub fn is_empty(&self) -> bool {
         self.params.is_empty()
     }
-}
-impl Instantiate for Telescope {
-    fn instantiate(&self) -> TelescopeInst {
+
+    pub fn instantiate(&self) -> TelescopeInst {
         let params = self
             .params
             .iter()

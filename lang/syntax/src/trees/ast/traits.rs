@@ -1,6 +1,5 @@
 use std::rc::Rc;
 
-use super::TelescopeInst;
 use crate::common::{Idx, Leveled, Lvl};
 use crate::ctx::LevelCtx;
 
@@ -35,14 +34,6 @@ impl<T: Occurs> Occurs for Option<T> {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         self.as_ref().map(|inner| inner.occurs(ctx, lvl)).unwrap_or_default()
     }
-}
-
-// Instantiate
-//
-//
-
-pub trait Instantiate {
-    fn instantiate(&self) -> TelescopeInst;
 }
 
 // HasTypeInfo
