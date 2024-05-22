@@ -35,18 +35,25 @@ impl Substitution for Assign<Lvl, Rc<Exp>> {
     }
 }
 
+/// A trait for all entities to which we can apply a substitution.
+/// Every syntax node should implement this trait.
+/// The result type of applying a substitution is parameterized, because substituting for
+/// a variable does not, in general, yield another variable.
 pub trait Substitutable: Sized {
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self;
+    type Result;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result;
 }
 
 impl<T: Substitutable> Substitutable for Option<T> {
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    type Result = Option<T::Result>;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
         self.as_ref().map(|x| x.subst(ctx, by))
     }
 }
 
 impl<T: Substitutable> Substitutable for Vec<T> {
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    type Result = Vec<T::Result>;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
         self.iter().map(|x| x.subst(ctx, by)).collect()
     }
 }
@@ -56,6 +63,6 @@ pub trait Swap {
     fn swap(&self, fst1: usize, fst2: usize) -> Self;
 }
 
-pub trait SwapWithCtx {
-    fn swap_with_ctx(&self, ctx: &mut LevelCtx, fst1: usize, fst2: usize) -> Self;
+pub trait SwapWithCtx: Substitutable {
+    fn swap_with_ctx(&self, ctx: &mut LevelCtx, fst1: usize, fst2: usize) -> Self::Result;
 }

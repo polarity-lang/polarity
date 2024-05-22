@@ -22,6 +22,7 @@ pub struct Eqn {
 }
 
 impl Substitutable for Unificator {
+    type Result = Unificator;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let map = self
             .map

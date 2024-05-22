@@ -9,6 +9,7 @@ use crate::ctx::*;
 use super::*;
 
 impl Substitutable for Rc<Exp> {
+    type Result = Rc<Exp>;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         match &**self {
             Exp::Variable(Variable { span, idx, name, .. }) => {
@@ -81,6 +82,7 @@ impl Substitutable for Rc<Exp> {
 }
 
 impl Substitutable for TypCtor {
+    type Result = TypCtor;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let TypCtor { span, name, args } = self;
         TypCtor { span: *span, name: name.clone(), args: args.subst(ctx, by) }
@@ -88,6 +90,7 @@ impl Substitutable for TypCtor {
 }
 
 impl Substitutable for Motive {
+    type Result = Motive;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Motive { span, param, ret_typ } = self;
 
@@ -100,6 +103,7 @@ impl Substitutable for Motive {
 }
 
 impl Substitutable for Match {
+    type Result = Match;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Match { span, cases, omit_absurd } = self;
         Match {
@@ -111,6 +115,7 @@ impl Substitutable for Match {
 }
 
 impl Substitutable for Case {
+    type Result = Case;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Case { span, name, params, body } = self;
         ctx.bind_iter(params.params.iter(), |ctx| Case {
@@ -123,6 +128,7 @@ impl Substitutable for Case {
 }
 
 impl Substitutable for Param {
+    type Result = Param;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let Param { name, typ } = self;
         Param { name: name.clone(), typ: typ.subst(ctx, by) }
@@ -130,13 +136,19 @@ impl Substitutable for Param {
 }
 
 impl Substitutable for Args {
+    type Result = Args;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         Args { args: self.args.subst(ctx, by) }
     }
 }
 
 impl<T: Substitutable> SwapWithCtx for T {
-    fn swap_with_ctx(&self, ctx: &mut LevelCtx, fst1: usize, fst2: usize) -> Self {
+    fn swap_with_ctx(
+        &self,
+        ctx: &mut LevelCtx,
+        fst1: usize,
+        fst2: usize,
+    ) -> <T as Substitutable>::Result {
         self.subst(ctx, &SwapSubst { fst1, fst2 })
     }
 }

@@ -4,12 +4,12 @@ use syntax::{
     ctx::{BindContext, LevelCtx},
 };
 
-pub trait SubstUnderCtx {
-    fn subst_under_ctx<S: Substitution>(&self, ctx: LevelCtx, s: &S) -> Self;
+pub trait SubstUnderCtx: Substitutable {
+    fn subst_under_ctx<S: Substitution>(&self, ctx: LevelCtx, s: &S) -> Self::Result;
 }
 
 impl<T: Substitutable + Clone> SubstUnderCtx for T {
-    fn subst_under_ctx<S: Substitution>(&self, mut ctx: LevelCtx, s: &S) -> Self {
+    fn subst_under_ctx<S: Substitution>(&self, mut ctx: LevelCtx, s: &S) -> Self::Result {
         self.subst(&mut ctx, s)
     }
 }
