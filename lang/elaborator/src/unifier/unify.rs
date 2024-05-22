@@ -21,7 +21,7 @@ pub struct Eqn {
     pub rhs: Rc<Exp>,
 }
 
-impl Substitutable<Rc<Exp>> for Unificator {
+impl Substitutable for Unificator {
     fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let map = self
             .map

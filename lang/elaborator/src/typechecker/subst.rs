@@ -10,7 +10,7 @@ pub trait SubstUnderCtx {
     fn subst_under_ctx<S: Substitution<Rc<Exp>>>(&self, ctx: LevelCtx, s: &S) -> Self;
 }
 
-impl<T: Substitutable<Rc<Exp>> + Clone> SubstUnderCtx for T {
+impl<T: Substitutable + Clone> SubstUnderCtx for T {
     fn subst_under_ctx<S: Substitution<Rc<Exp>>>(&self, mut ctx: LevelCtx, s: &S) -> Self {
         self.subst(&mut ctx, s)
     }
