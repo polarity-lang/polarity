@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use log::trace;
 
+use printer::PrintToString;
 use syntax::{ast::*, common::HashMap, common::Lvl, ctx::LevelCtx};
 
 use crate::unifier::unify::{unify, Eqn};
@@ -26,7 +27,7 @@ pub fn convert(
     this: Rc<Exp>,
     other: &Rc<Exp>,
 ) -> Result<(), TypeError> {
-    trace!("{:?} =? {:?}", this, other);
+    trace!("{} =? {}", this.print_to_string(None), other.print_to_string(None));
     // Convertibility is checked using the unification algorithm.
     let eqn: Eqn = Eqn { lhs: this.clone(), rhs: other.clone() };
     let eqns: Vec<Eqn> = vec![eqn];

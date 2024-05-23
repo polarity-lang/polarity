@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 mod run;
 
 pub fn exec() {
-    env_logger::init();
+    env_logger::builder().format_timestamp(None).format_target(false).init();
     use Command::*;
     let cli = Cli::parse();
     match cli.command {
@@ -16,9 +16,6 @@ pub fn exec() {
 struct Cli {
     #[clap(subcommand)]
     command: Command,
-    /// Enable internal debug output
-    #[clap(long, num_args = 0)]
-    trace: bool,
 }
 
 #[derive(Subcommand)]

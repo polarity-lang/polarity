@@ -25,7 +25,7 @@ From the root of this repository, run:
 pol run examples/example.pol
 ```
 
-Enable verbose output by supplying by enabling the tracing output:
+Enable verbose tracing output:
 
 ```sh
 RUST_LOG=trace pol run examples/example.pol

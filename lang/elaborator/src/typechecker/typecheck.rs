@@ -4,6 +4,7 @@ use std::rc::Rc;
 
 use codespan::Span;
 use log::trace;
+use printer::PrintToString;
 
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
@@ -56,7 +57,12 @@ impl<T: CheckInfer> CheckInfer for Rc<T> {
 
 impl CheckInfer for Exp {
     fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        trace!("{:?} |- {:?} <= {:?}", ctx, self, t);
+        trace!(
+            "{} |- {} <= {}",
+            ctx.print_to_string(None),
+            self.print_to_string(None),
+            t.print_to_string(None)
+        );
         match self {
             Exp::Variable(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
             Exp::TypCtor(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
@@ -82,7 +88,12 @@ impl CheckInfer for Exp {
             Exp::LocalMatch(e) => Ok(e.infer(prg, ctx)?.into()),
             Exp::LocalComatch(e) => Ok(e.infer(prg, ctx)?.into()),
         };
-        trace!("{:?} |- {:?} => {:?}", ctx, self, res.as_ref().map(|e| e.typ()));
+        trace!(
+            "{} |- {} => {}",
+            ctx.print_to_string(None),
+            self.print_to_string(None),
+            res.as_ref().map(|e| e.typ()).print_to_string(None)
+        );
         res
     }
 }
@@ -735,7 +746,12 @@ fn check_case(
     ctx: &mut Ctx,
     t: Rc<Exp>,
 ) -> Result<Case, TypeError> {
-    trace!("{:?} |- {:?} <= {:?}", ctx, case, t);
+    trace!(
+        "{} |- {} <= {}",
+        ctx.print_to_string(None),
+        case.print_to_string(None),
+        t.print_to_string(None)
+    );
     let Case { span, name, params: args, body } = case;
     let Ctor { name, params, .. } = prg.ctor(name, *span)?;
 
@@ -826,7 +842,12 @@ fn check_cocase(
     ctx: &mut Ctx,
     t: Rc<Exp>,
 ) -> Result<Case, TypeError> {
-    trace!("{:?} |- {:?} <= {:?}", ctx, cocase, t);
+    trace!(
+        "{} |- {} <= {}",
+        ctx.print_to_string(None),
+        cocase.print_to_string(None),
+        t.print_to_string(None)
+    );
     let Case { span, name, params: params_inst, body } = cocase;
     let Dtor { name, params, .. } = prg.dtor(name, *span)?;
 

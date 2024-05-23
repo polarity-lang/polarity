@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use derivative::Derivative;
 use log::trace;
+use printer::PrintToString;
 use syntax::ast::MetaVar;
 
 use crate::normalizer::env::*;
@@ -105,7 +106,7 @@ impl ReadBack for Val {
             Val::LocalComatch(e) => e.read_back(prg)?.into(),
             Val::Neu(exp) => exp.read_back(prg)?,
         };
-        trace!("↓{:?} ~> {:?}", self, res);
+        trace!("↓{} ~> {}", self.print_to_string(None), res.print_to_string(None));
         Ok(res)
     }
 }
