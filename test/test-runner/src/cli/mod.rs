@@ -3,9 +3,9 @@ use clap::{Parser, Subcommand};
 mod run;
 
 pub fn exec() {
+    env_logger::init();
     use Command::*;
     let cli = Cli::parse();
-    //elaborator::typechecker::tracer::set_enabled(cli.trace);
     match cli.command {
         Run(args) => run::exec(args),
     }

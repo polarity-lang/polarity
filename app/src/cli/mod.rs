@@ -12,7 +12,6 @@ mod xfunc;
 pub fn exec() -> miette::Result<()> {
     use Command::*;
     let cli = Cli::parse();
-    //elaborator::typechecker::tracer::set_enabled(cli.trace);
     match cli.command {
         Run(args) => run::exec(args),
         Check(args) => check::exec(args),
@@ -29,9 +28,6 @@ pub fn exec() -> miette::Result<()> {
 struct Cli {
     #[clap(subcommand)]
     command: Command,
-    /// Enable internal debug output
-    #[clap(long, num_args = 0)]
-    trace: bool,
 }
 
 #[derive(Subcommand)]

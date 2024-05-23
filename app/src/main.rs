@@ -5,6 +5,7 @@ mod result;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> miette::Result<()> {
+    env_logger::init();
     miette::set_panic_hook();
     cli::exec()
 }
