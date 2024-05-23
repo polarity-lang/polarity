@@ -3,6 +3,7 @@
 use std::rc::Rc;
 
 use codespan::Span;
+use log::trace;
 
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
@@ -12,7 +13,6 @@ use syntax::ast::*;
 use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
-use tracer::trace;
 
 use super::ctx::*;
 use super::util::*;
@@ -55,8 +55,8 @@ impl<T: CheckInfer> CheckInfer for Rc<T> {
 //
 
 impl CheckInfer for Exp {
-    #[trace("{:P} |- {:P} <= {:P}", ctx, self, t)]
     fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+        trace!("{:?} |- {:?} <= {:?}", ctx, self, t);
         match self {
             Exp::Variable(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
             Exp::TypCtor(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
@@ -70,9 +70,8 @@ impl CheckInfer for Exp {
         }
     }
 
-    #[trace("{:P} |- {:P} => {return:P}", ctx, self, |ret| ret.as_ref().map(|e| e.typ()))]
     fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
-        match self {
+        let res: Result<Exp, TypeError> = match self {
             Exp::Variable(e) => Ok(e.infer(prg, ctx)?.into()),
             Exp::TypCtor(e) => Ok(e.infer(prg, ctx)?.into()),
             Exp::Call(e) => Ok(e.infer(prg, ctx)?.into()),
@@ -82,7 +81,9 @@ impl CheckInfer for Exp {
             Exp::Hole(e) => Ok(e.infer(prg, ctx)?.into()),
             Exp::LocalMatch(e) => Ok(e.infer(prg, ctx)?.into()),
             Exp::LocalComatch(e) => Ok(e.infer(prg, ctx)?.into()),
-        }
+        };
+        trace!("{:?} |- {:?} => {:?}", ctx, self, res.as_ref().map(|e| e.typ()));
+        res
     }
 }
 
@@ -727,7 +728,6 @@ impl<'a> WithDestructee<'a> {
 }
 
 /// Infer a case in a pattern match
-#[trace("{:P} |- {:P} <= {:P}", ctx, case, t)]
 fn check_case(
     eqns: Vec<Eqn>,
     case: &Case,
@@ -735,6 +735,7 @@ fn check_case(
     ctx: &mut Ctx,
     t: Rc<Exp>,
 ) -> Result<Case, TypeError> {
+    trace!("{:?} |- {:?} <= {:?}", ctx, case, t);
     let Case { span, name, params: args, body } = case;
     let Ctor { name, params, .. } = prg.ctor(name, *span)?;
 
@@ -818,7 +819,6 @@ fn check_case(
 }
 
 /// Infer a cocase in a co-pattern match
-#[trace("{:P} |- {:P} <= {:P}", ctx, cocase, t)]
 fn check_cocase(
     eqns: Vec<Eqn>,
     cocase: &Case,
@@ -826,6 +826,7 @@ fn check_cocase(
     ctx: &mut Ctx,
     t: Rc<Exp>,
 ) -> Result<Case, TypeError> {
+    trace!("{:?} |- {:?} <= {:?}", ctx, cocase, t);
     let Case { span, name, params: params_inst, body } = cocase;
     let Dtor { name, params, .. } = prg.dtor(name, *span)?;
 

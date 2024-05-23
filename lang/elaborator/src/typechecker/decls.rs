@@ -1,8 +1,9 @@
 use std::rc::Rc;
 
+use log::trace;
+
 use miette_util::ToMiette;
 use syntax::ast::*;
-use tracer::trace;
 
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
 
@@ -47,8 +48,8 @@ impl CheckToplevel for Module {
 
 /// Check a declaration
 impl CheckToplevel for Decl {
-    #[trace(" |- {} =>", self.name())]
     fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+        trace!(" |- {} =>", self.name());
         let out = match self {
             Decl::Data(data) => Decl::Data(data.check_wf(prg, ctx)?),
             Decl::Codata(codata) => Decl::Codata(codata.check_wf(prg, ctx)?),
