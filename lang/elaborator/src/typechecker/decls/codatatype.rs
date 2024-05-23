@@ -1,6 +1,9 @@
+//! Checking the well-formedness of toplevel codata type declarations
 use std::rc::Rc;
 
+use log::trace;
 use miette_util::ToMiette;
+
 use syntax::ast::*;
 
 use crate::typechecker::{
@@ -14,6 +17,8 @@ use super::CheckToplevel;
 /// Infer a codata declaration
 impl CheckToplevel for Codata {
     fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+        trace!("Checking well-formedness of codata type: {}", self.name);
+
         let Codata { span, doc, name, attr, typ, dtors } = self;
 
         let typ_out = typ.infer_telescope(prg, ctx, |_, params_out| Ok(params_out))?;
@@ -32,6 +37,8 @@ impl CheckToplevel for Codata {
 /// Infer a destructor declaration
 impl CheckToplevel for Dtor {
     fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+        trace!("Checking well-formedness of destructor: {}", self.name);
+
         let Dtor { span, doc, name, params, self_param, ret_typ } = self;
 
         // Check that the destructor lies in the codata type it is defined in

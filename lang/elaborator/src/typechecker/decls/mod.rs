@@ -1,10 +1,8 @@
-mod datatype;
 mod codatatype;
-mod definition;
 mod codefinition;
+mod datatype;
+mod definition;
 mod global_let;
-
-use log::trace;
 
 use syntax::ast::*;
 
@@ -45,7 +43,6 @@ impl CheckToplevel for Module {
 /// Check a declaration
 impl CheckToplevel for Decl {
     fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
-        trace!(" |- {} =>", self.name());
         let out = match self {
             Decl::Data(data) => Decl::Data(data.check_wf(prg, ctx)?),
             Decl::Codata(codata) => Decl::Codata(codata.check_wf(prg, ctx)?),

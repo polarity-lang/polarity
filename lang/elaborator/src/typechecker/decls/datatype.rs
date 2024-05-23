@@ -1,8 +1,10 @@
+//! Checking the well-formedness of toplevel data type declarations
 use std::rc::Rc;
 
+use log::trace;
 use miette_util::ToMiette;
-use syntax::ast::*;
 
+use syntax::ast::*;
 
 use crate::typechecker::{
     ctx::Ctx,
@@ -15,6 +17,8 @@ use super::CheckToplevel;
 /// Check a data declaration
 impl CheckToplevel for Data {
     fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+        trace!("Checking well-formedness of data type: {}", self.name);
+
         let Data { span, doc, name, attr, typ, ctors } = self;
 
         let typ_out = typ.infer_telescope(prg, ctx, |_, params_out| Ok(params_out))?;
@@ -33,6 +37,8 @@ impl CheckToplevel for Data {
 /// Infer a constructor declaration
 impl CheckToplevel for Ctor {
     fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+        trace!("Checking well-formedness of constructor: {}", self.name);
+
         let Ctor { span, doc, name, params, typ } = self;
 
         // Check that the constructor lies in the data type it is defined in

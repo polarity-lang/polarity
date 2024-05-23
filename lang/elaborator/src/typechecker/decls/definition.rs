@@ -1,7 +1,10 @@
+//! Checking the well-formedness of definitions
+use log::trace;
+
 use syntax::ast::*;
 
+use super::CheckToplevel;
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
-
 use crate::typechecker::{
     ctx::Ctx,
     typecheck::{CheckInfer, InferTelescope, WithScrutinee},
@@ -9,11 +12,11 @@ use crate::typechecker::{
     TypeError,
 };
 
-use super::CheckToplevel;
-
 /// Infer a definition
 impl CheckToplevel for Def {
     fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+        trace!("Checking well-formedness of definition: {}", self.name);
+
         let Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {

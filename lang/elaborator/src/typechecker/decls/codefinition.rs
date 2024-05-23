@@ -1,4 +1,7 @@
+//! Checking the well-formedness of codefinitions
 use std::rc::Rc;
+
+use log::trace;
 
 use syntax::ast::*;
 
@@ -16,6 +19,8 @@ use super::CheckToplevel;
 /// Infer a co-definition
 impl CheckToplevel for Codef {
     fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+        trace!("Checking well-formedness of codefinition: {}", self.name);
+
         let Codef { span, doc, name, attr, params, typ, body } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
