@@ -25,10 +25,10 @@ From the root of this repository, run:
 pol run examples/example.pol
 ```
 
-Enable verbose output by supplying the `--trace` option like so:
+Enable verbose output by supplying by enabling the tracing output:
 
 ```sh
-pol --trace run examples/example.pol
+RUST_LOG=trace pol run examples/example.pol
 ```
 
 To pretty-print a file, run:
@@ -63,9 +63,7 @@ pol --help
 │   └── test-runner         Test runner
 ├── util                    Utility libraries
 │   ├── lsp                 LSP language server implementation
-│   ├── miette_util         Convert source code spans
-│   ├── tracer              Debugging library for generating trace output
-│   └── tracer_macros       Procedural macros that generate trace output
+│   └── miette_util         Convert source code spans
 └── web                     Web demo application
 ```
 
