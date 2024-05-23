@@ -10,6 +10,7 @@ use crate::ctx::values::TypeCtx;
 use crate::ctx::{BindContext, LevelCtx};
 
 use super::ident::*;
+use super::subst::{Substitutable, Substitution};
 use super::traits::Occurs;
 use super::HasTypeInfo;
 
@@ -133,6 +134,23 @@ impl HasTypeInfo for Exp {
     }
 }
 
+impl Substitutable for Rc<Exp> {
+    type Result = Rc<Exp>;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        match &**self {
+            Exp::Variable(e) => e.subst(ctx, by),
+            Exp::TypCtor(e) => Rc::new(e.subst(ctx, by).into()),
+            Exp::Call(e) => Rc::new(e.subst(ctx, by).into()),
+            Exp::DotCall(e) => Rc::new(e.subst(ctx, by).into()),
+            Exp::Anno(e) => Rc::new(e.subst(ctx, by).into()),
+            Exp::TypeUniv(e) => Rc::new(e.subst(ctx, by).into()),
+            Exp::LocalMatch(e) => Rc::new(e.subst(ctx, by).into()),
+            Exp::LocalComatch(e) => Rc::new(e.subst(ctx, by).into()),
+            Exp::Hole(e) => Rc::new(e.subst(ctx, by).into()),
+        }
+    }
+}
+
 // Variable
 //
 //
@@ -196,6 +214,22 @@ impl HasTypeInfo for Variable {
     }
 }
 
+impl Substitutable for Variable {
+    type Result = Rc<Exp>;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+        let Variable { span, idx, name, .. } = self;
+        match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
+            Some(exp) => exp,
+            None => Rc::new(Exp::Variable(Variable {
+                span: *span,
+                idx: *idx,
+                name: name.clone(),
+                inferred_type: None,
+            })),
+        }
+    }
+}
+
 // TypCtor
 //
 //
@@ -255,6 +289,14 @@ impl Occurs for TypCtor {
 impl HasTypeInfo for TypCtor {
     fn typ(&self) -> Option<Rc<Exp>> {
         Some(Rc::new(TypeUniv::new().into()))
+    }
+}
+
+impl Substitutable for TypCtor {
+    type Result = TypCtor;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        let TypCtor { span, name, args } = self;
+        TypCtor { span: *span, name: name.clone(), args: args.subst(ctx, by) }
     }
 }
 
@@ -331,6 +373,20 @@ impl Occurs for Call {
 impl HasTypeInfo for Call {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone()
+    }
+}
+
+impl Substitutable for Call {
+    type Result = Call;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+        let Call { span, name, args, kind, .. } = self;
+        Call {
+            span: *span,
+            kind: *kind,
+            name: name.clone(),
+            args: args.subst(ctx, by),
+            inferred_type: None,
+        }
     }
 }
 
@@ -412,6 +468,21 @@ impl HasTypeInfo for DotCall {
     }
 }
 
+impl Substitutable for DotCall {
+    type Result = DotCall;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+        let DotCall { span, kind, exp, name, args, .. } = self;
+        DotCall {
+            span: *span,
+            kind: *kind,
+            exp: exp.subst(ctx, by),
+            name: name.clone(),
+            args: args.subst(ctx, by),
+            inferred_type: None,
+        }
+    }
+}
+
 // Anno
 //
 //
@@ -471,6 +542,20 @@ impl HasTypeInfo for Anno {
     }
 }
 
+impl Substitutable for Anno {
+    type Result = Anno;
+
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+        let Anno { span, exp, typ, .. } = self;
+        Anno {
+            span: *span,
+            exp: exp.subst(ctx, by),
+            typ: typ.subst(ctx, by),
+            normalized_type: None,
+        }
+    }
+}
+
 // TypeUniv
 //
 //
@@ -527,6 +612,15 @@ impl Occurs for TypeUniv {
 impl HasTypeInfo for TypeUniv {
     fn typ(&self) -> Option<Rc<Exp>> {
         Some(Rc::new(TypeUniv::new().into()))
+    }
+}
+
+impl Substitutable for TypeUniv {
+    type Result = TypeUniv;
+
+    fn subst<S: Substitution>(&self, _ctx: &mut LevelCtx, _by: &S) -> Self::Result {
+        let TypeUniv { span } = self;
+        TypeUniv { span: *span }
     }
 }
 
@@ -592,6 +686,23 @@ impl HasTypeInfo for LocalMatch {
     }
 }
 
+impl Substitutable for LocalMatch {
+    type Result = LocalMatch;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+        let LocalMatch { span, name, on_exp, motive, ret_typ, body, .. } = self;
+        LocalMatch {
+            span: *span,
+            ctx: None,
+            name: name.clone(),
+            on_exp: on_exp.subst(ctx, by),
+            motive: motive.subst(ctx, by),
+            ret_typ: ret_typ.subst(ctx, by),
+            body: body.subst(ctx, by),
+            inferred_type: None,
+        }
+    }
+}
+
 // LocalComatch
 //
 //
@@ -646,6 +757,22 @@ impl Occurs for LocalComatch {
 impl HasTypeInfo for LocalComatch {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone().map(|x| Rc::new(x.into()))
+    }
+}
+
+impl Substitutable for LocalComatch {
+    type Result = LocalComatch;
+
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+        let LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
+        LocalComatch {
+            span: *span,
+            ctx: None,
+            name: name.clone(),
+            is_lambda_sugar: *is_lambda_sugar,
+            body: body.subst(ctx, by),
+            inferred_type: None,
+        }
     }
 }
 
@@ -718,6 +845,21 @@ impl HasTypeInfo for Hole {
     }
 }
 
+impl Substitutable for Hole {
+    type Result = Hole;
+
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+        let Hole { span, metavar, args, .. } = self;
+        Hole {
+            span: *span,
+            metavar: *metavar,
+            inferred_type: None,
+            inferred_ctx: None,
+            args: args.subst(ctx, by),
+        }
+    }
+}
+
 // Match
 //
 //
@@ -742,6 +884,18 @@ impl Occurs for Match {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Match { cases, .. } = self;
         cases.occurs(ctx, lvl)
+    }
+}
+
+impl Substitutable for Match {
+    type Result = Match;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        let Match { span, cases, omit_absurd } = self;
+        Match {
+            span: *span,
+            cases: cases.iter().map(|case| case.subst(ctx, by)).collect(),
+            omit_absurd: *omit_absurd,
+        }
     }
 }
 
@@ -776,6 +930,19 @@ impl Occurs for Case {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Case { params, body, .. } = self;
         ctx.bind_iter(params.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
+    }
+}
+
+impl Substitutable for Case {
+    type Result = Case;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        let Case { span, name, params, body } = self;
+        ctx.bind_iter(params.params.iter(), |ctx| Case {
+            span: *span,
+            name: name.clone(),
+            params: params.clone(),
+            body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
+        })
     }
 }
 
@@ -856,6 +1023,13 @@ impl Shift for Args {
     }
 }
 
+impl Substitutable for Args {
+    type Result = Args;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        Args { args: self.args.subst(ctx, by) }
+    }
+}
+
 // Motive
 //
 //
@@ -877,6 +1051,19 @@ impl Shift for Motive {
             span: *span,
             param: param.clone(),
             ret_typ: ret_typ.shift_in_range(range.shift(1), by),
+        }
+    }
+}
+
+impl Substitutable for Motive {
+    type Result = Motive;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        let Motive { span, param, ret_typ } = self;
+
+        Motive {
+            span: *span,
+            param: param.clone(),
+            ret_typ: ctx.bind_single((), |ctx| ret_typ.subst(ctx, &by.shift((1, 0)))),
         }
     }
 }

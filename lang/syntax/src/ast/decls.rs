@@ -7,9 +7,10 @@ use url::Url;
 use crate::common::*;
 use crate::ctx::LevelCtx;
 
+use super::exp::*;
 use super::ident::*;
 use super::lookup_table::{DeclKind, LookupTable};
-use super::{exp::*, Instantiate};
+use super::subst::{Substitutable, Substitution};
 
 #[derive(Debug, Clone)]
 pub struct DocComment {
@@ -330,9 +331,8 @@ impl Telescope {
     pub fn is_empty(&self) -> bool {
         self.params.is_empty()
     }
-}
-impl Instantiate for Telescope {
-    fn instantiate(&self) -> TelescopeInst {
+
+    pub fn instantiate(&self) -> TelescopeInst {
         let params = self
             .params
             .iter()
@@ -362,5 +362,13 @@ pub struct Param {
 impl Named for Param {
     fn name(&self) -> &Ident {
         &self.name
+    }
+}
+
+impl Substitutable for Param {
+    type Result = Param;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+        let Param { name, typ } = self;
+        Param { name: name.clone(), typ: typ.subst(ctx, by) }
     }
 }

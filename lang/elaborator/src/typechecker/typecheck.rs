@@ -15,7 +15,6 @@ use syntax::ctx::{BindContext, BindElem, LevelCtx};
 use tracer::trace;
 
 use super::ctx::*;
-use super::subst::{SubstInTelescope, SubstUnderCtx};
 use super::util::*;
 use crate::result::TypeError;
 
@@ -400,7 +399,8 @@ impl CheckInfer for LocalMatch {
                 // Ensure that the motive matches the expected type
                 let mut subst_ctx = ctx.levels().append(&vec![1].into());
                 let on_exp_shifted = on_exp.shift((1, 0));
-                let subst = Assign(Lvl { fst: subst_ctx.len() - 1, snd: 0 }, on_exp_shifted);
+                let subst =
+                    Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp_shifted };
                 let motive_t = ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0));
                 let motive_t_nf = motive_t.normalize(prg, &mut ctx.env())?;
                 convert(subst_ctx, &mut ctx.meta_vars, motive_t_nf, &t)?;
@@ -703,7 +703,7 @@ impl<'a> WithDestructee<'a> {
                         args: Args { args },
                         inferred_type: None,
                     }));
-                    let subst = Assign(Lvl { fst: 1, snd: 0 }, ctor);
+                    let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
                     let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
                     ret_typ_nf.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
                         prg,
@@ -769,7 +769,7 @@ fn check_case(
                 args: Args { args },
                 inferred_type: None,
             }));
-            let subst = Assign(Lvl { fst: curr_lvl, snd: 0 }, ctor);
+            let subst = Assign { lvl: Lvl { fst: curr_lvl, snd: 0 }, exp: ctor };
 
             // FIXME: Refactor this
             let t = t

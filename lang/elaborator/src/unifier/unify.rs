@@ -21,8 +21,9 @@ pub struct Eqn {
     pub rhs: Rc<Exp>,
 }
 
-impl Substitutable<Rc<Exp>> for Unificator {
-    fn subst<S: Substitution<Rc<Exp>>>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+impl Substitutable for Unificator {
+    type Result = Unificator;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let map = self
             .map
             .iter()
@@ -44,7 +45,7 @@ impl Shift for Unificator {
     }
 }
 
-impl Substitution<Rc<Exp>> for Unificator {
+impl Substitution for Unificator {
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
         self.map.get(&lvl).cloned()
     }
@@ -234,7 +235,7 @@ impl Ctx {
         }
         let insert_lvl = self.ctx.idx_to_lvl(idx);
         let exp = exp.subst(&mut self.ctx, &self.unif);
-        self.unif = self.unif.subst(&mut self.ctx, &Assign(insert_lvl, exp.clone()));
+        self.unif = self.unif.subst(&mut self.ctx, &Assign { lvl: insert_lvl, exp: exp.clone() });
         match self.unif.map.get(&insert_lvl) {
             Some(other_exp) => {
                 let eqn = Eqn { lhs: exp, rhs: other_exp.clone() };
