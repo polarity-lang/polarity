@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 mod run;
 
 pub fn exec() {
-    env_logger::builder().format_timestamp(None).format_target(false).init();
+    env_logger::builder().format_timestamp(None).format_level(false).format_target(false).init();
     use Command::*;
     let cli = Cli::parse();
     match cli.command {
