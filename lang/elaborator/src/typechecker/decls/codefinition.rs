@@ -9,7 +9,7 @@ use crate::normalizer::{env::ToEnv, normalize::Normalize};
 
 use crate::typechecker::{
     ctx::Ctx,
-    typecheck::{CheckInfer, InferTelescope, WithDestructee},
+    exprs::{CheckInfer, InferTelescope, WithDestructee},
     util::ExpectTypApp,
     TypeError,
 };

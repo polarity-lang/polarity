@@ -17,8 +17,8 @@ use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem, LevelCtx};
 
-use super::ctx::*;
-use super::util::*;
+use super::super::ctx::*;
+use super::super::util::*;
 use crate::result::TypeError;
 
 /// The CheckInfer trait for bidirectional type inference.

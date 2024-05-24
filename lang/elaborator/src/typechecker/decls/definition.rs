@@ -7,7 +7,7 @@ use super::CheckToplevel;
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
 use crate::typechecker::{
     ctx::Ctx,
-    typecheck::{CheckInfer, InferTelescope, WithScrutinee},
+    exprs::{CheckInfer, InferTelescope, WithScrutinee},
     util::ExpectTypApp,
     TypeError,
 };

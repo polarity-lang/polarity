@@ -8,7 +8,7 @@ use syntax::ast::*;
 
 use crate::typechecker::{
     ctx::Ctx,
-    typecheck::{CheckInfer, InferTelescope},
+    exprs::{CheckInfer, InferTelescope},
     TypeError,
 };
 
