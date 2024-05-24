@@ -5,9 +5,10 @@ use syntax::ast::*;
 
 use super::CheckToplevel;
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
+use crate::typechecker::exprs::local_match::WithScrutinee;
 use crate::typechecker::{
     ctx::Ctx,
-    exprs::{CheckInfer, InferTelescope, WithScrutinee},
+    exprs::{CheckInfer, InferTelescope},
     util::ExpectTypApp,
     TypeError,
 };

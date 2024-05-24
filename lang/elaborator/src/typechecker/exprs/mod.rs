@@ -2,6 +2,8 @@ pub mod anno;
 pub mod call;
 pub mod dot_call;
 pub mod hole;
+pub mod local_comatch;
+pub mod local_match;
 pub mod typ_ctor;
 pub mod type_univ;
 pub mod typecheck;

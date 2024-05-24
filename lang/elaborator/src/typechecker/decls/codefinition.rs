@@ -7,9 +7,10 @@ use syntax::ast::*;
 
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
 
+use crate::typechecker::exprs::local_comatch::WithDestructee;
 use crate::typechecker::{
     ctx::Ctx,
-    exprs::{CheckInfer, InferTelescope, WithDestructee},
+    exprs::{CheckInfer, InferTelescope},
     util::ExpectTypApp,
     TypeError,
 };
