@@ -2,25 +2,12 @@
 
 use std::rc::Rc;
 
-use askama::Template;
-use log::trace;
-
-use printer::PrintToString;
-
 use syntax::ast::*;
 
 use super::super::ctx::*;
 use super::super::util::*;
 use super::CheckInfer;
 use crate::result::TypeError;
-
-#[derive(Template)]
-#[template(path = "var_rule.txt")]
-struct VarRule<'a> {
-    ctx: &'a str,
-    var: &'a str,
-    typ: &'a str,
-}
 
 impl CheckInfer for Variable {
     /// The *checking* rule for variables is:
@@ -49,18 +36,6 @@ impl CheckInfer for Variable {
     fn infer(&self, _prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Variable { span, idx, name, .. } = self;
         let typ_nf = ctx.lookup(*idx);
-
-        trace!(
-            "{}",
-            VarRule {
-                ctx: &ctx.vars.print_to_colored_string(None),
-                var: name,
-                typ: &typ_nf.print_to_colored_string(None)
-            }
-            .render()
-            .unwrap()
-        );
-
         Ok(Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: Some(typ_nf) })
     }
 }
