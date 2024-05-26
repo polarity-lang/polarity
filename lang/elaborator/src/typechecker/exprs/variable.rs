@@ -53,9 +53,9 @@ impl CheckInfer for Variable {
         trace!(
             "{}",
             VarRule {
-                ctx: &ctx.vars.print_to_string(None),
+                ctx: &ctx.vars.print_to_colored_string(None),
                 var: name,
-                typ: &typ_nf.print_to_string(None)
+                typ: &typ_nf.print_to_colored_string(None)
             }
             .render()
             .unwrap()

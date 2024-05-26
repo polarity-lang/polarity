@@ -196,9 +196,9 @@ fn check_case(
 ) -> Result<Case, TypeError> {
     trace!(
         "{} |- {} <= {}",
-        ctx.print_to_string(None),
-        case.print_to_string(None),
-        t.print_to_string(None)
+        ctx.print_to_colored_string(None),
+        case.print_to_colored_string(None),
+        t.print_to_colored_string(None)
     );
     let Case { span, name, params: args, body } = case;
     let Ctor { name, params, .. } = prg.ctor(name, *span)?;

@@ -195,9 +195,9 @@ fn check_cocase(
 ) -> Result<Case, TypeError> {
     trace!(
         "{} |- {} <= {}",
-        ctx.print_to_string(None),
-        cocase.print_to_string(None),
-        t.print_to_string(None)
+        ctx.print_to_colored_string(None),
+        cocase.print_to_colored_string(None),
+        t.print_to_colored_string(None)
     );
     let Case { span, name, params: params_inst, body } = cocase;
     let Dtor { name, params, .. } = prg.dtor(name, *span)?;

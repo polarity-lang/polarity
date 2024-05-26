@@ -38,9 +38,9 @@ impl Eval for Exp {
         };
         trace!(
             "{} |- {} ▷ {}",
-            env.print_to_string(None),
-            self.print_to_string(None),
-            e.print_to_string(None)
+            env.print_to_colored_string(None),
+            self.print_to_colored_string(None),
+            e.print_to_colored_string(None)
         );
         e
     }
@@ -210,8 +210,8 @@ fn beta_match(
     trace!(
         "{}(...).match {} ▷β {}",
         ctor_name,
-        body.print_to_string(None),
-        body_res.print_to_string(None)
+        body.print_to_colored_string(None),
+        body_res.print_to_colored_string(None)
     );
     body_res
 }
@@ -227,9 +227,9 @@ fn beta_comatch(
     let body_res = body.clone().unwrap().apply(prg, args);
     trace!(
         "comatch {}.{}(...) ▷β {}",
-        body.print_to_string(None),
+        body.print_to_colored_string(None),
         dtor_name,
-        body_res.print_to_string(None)
+        body_res.print_to_colored_string(None)
     );
     body_res
 }

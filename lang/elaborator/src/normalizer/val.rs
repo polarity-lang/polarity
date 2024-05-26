@@ -106,7 +106,7 @@ impl ReadBack for Val {
             Val::LocalComatch(e) => e.read_back(prg)?.into(),
             Val::Neu(exp) => exp.read_back(prg)?,
         };
-        trace!("↓{} ~> {}", self.print_to_string(None), res.print_to_string(None));
+        trace!("↓{} ~> {}", self.print_to_colored_string(None), res.print_to_colored_string(None));
         Ok(res)
     }
 }

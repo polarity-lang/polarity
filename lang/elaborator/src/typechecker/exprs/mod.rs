@@ -67,9 +67,9 @@ impl CheckInfer for Exp {
     fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         trace!(
             "{} |- {} <= {}",
-            ctx.print_to_string(None),
-            self.print_to_string(None),
-            t.print_to_string(None)
+            ctx.print_to_colored_string(None),
+            self.print_to_colored_string(None),
+            t.print_to_colored_string(None)
         );
         match self {
             Exp::Variable(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
@@ -98,9 +98,9 @@ impl CheckInfer for Exp {
         };
         trace!(
             "{} |- {} => {}",
-            ctx.print_to_string(None),
-            self.print_to_string(None),
-            res.as_ref().map(|e| e.typ()).print_to_string(None)
+            ctx.print_to_colored_string(None),
+            self.print_to_colored_string(None),
+            res.as_ref().map(|e| e.typ()).print_to_colored_string(None)
         );
         res
     }

@@ -27,7 +27,7 @@ pub fn convert(
     this: Rc<Exp>,
     other: &Rc<Exp>,
 ) -> Result<(), TypeError> {
-    trace!("{} =? {}", this.print_to_string(None), other.print_to_string(None));
+    trace!("{} =? {}", this.print_to_colored_string(None), other.print_to_colored_string(None));
     // Convertibility is checked using the unification algorithm.
     let eqn: Eqn = Eqn { lhs: this.clone(), rhs: other.clone() };
     let eqns: Vec<Eqn> = vec![eqn];
