@@ -699,26 +699,20 @@ impl ReadBack for Case {
 pub struct OpaqueCall {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub kind: ast::CallKind,
     pub name: ast::Ident,
     pub args: Args,
 }
 
 impl Shift for OpaqueCall {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let OpaqueCall { span, kind, name, args } = self;
-        OpaqueCall {
-            span: *span,
-            kind: *kind,
-            name: name.clone(),
-            args: args.shift_in_range(range, by),
-        }
+        let OpaqueCall { span, name, args } = self;
+        OpaqueCall { span: *span, name: name.clone(), args: args.shift_in_range(range, by) }
     }
 }
 
 impl<'a> Print<'a> for OpaqueCall {
     fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let OpaqueCall { span: _, kind: _, name, args } = self;
+        let OpaqueCall { span: _, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
         alloc.ctor(name).append(psubst)
     }
@@ -734,10 +728,10 @@ impl ReadBack for OpaqueCall {
     type Nf = ast::Call;
 
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
-        let OpaqueCall { span, kind, name, args } = self;
+        let OpaqueCall { span, name, args } = self;
         Ok(ast::Call {
             span: *span,
-            kind: *kind,
+            kind: syntax::ast::CallKind::LetBound,
             name: name.clone(),
             args: ast::Args { args: args.read_back(prg)? },
             inferred_type: None,
