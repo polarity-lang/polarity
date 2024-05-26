@@ -1,7 +1,9 @@
 use std::rc::Rc;
 
+use log::trace;
+
+use printer::PrintToString;
 use syntax::{ast::*, common::HashMap, common::Lvl, ctx::LevelCtx};
-use tracer::trace;
 
 use crate::unifier::unify::{unify, Eqn};
 
@@ -19,13 +21,13 @@ pub fn uses_self(prg: &Module, codata: &Codata) -> Result<bool, TypeError> {
     Ok(false)
 }
 
-#[trace("{:P} =? {:P}", this, other)]
 pub fn convert(
     ctx: LevelCtx,
     meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     this: Rc<Exp>,
     other: &Rc<Exp>,
 ) -> Result<(), TypeError> {
+    trace!("{} =? {}", this.print_to_colored_string(None), other.print_to_colored_string(None));
     // Convertibility is checked using the unification algorithm.
     let eqn: Eqn = Eqn { lhs: this.clone(), rhs: other.clone() };
     let eqns: Vec<Eqn> = vec![eqn];

@@ -1,8 +1,10 @@
 use std::rc::Rc;
 
+use log::trace;
+
+use printer::PrintToString;
 use syntax::ast::*;
 use syntax::ctx::{BindContext, Context};
-use tracer::trace;
 
 use crate::normalizer::env::*;
 use crate::normalizer::val::{self, Closure, Val};
@@ -22,9 +24,8 @@ pub trait Apply {
 impl Eval for Exp {
     type Val = Rc<Val>;
 
-    #[trace("{:P} |- {:P} ▷ {return:P}", env, self, std::convert::identity)]
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
-        match self {
+        let e = match self {
             Exp::Variable(e) => e.eval(prg, env),
             Exp::TypCtor(e) => e.eval(prg, env),
             Exp::Call(e) => e.eval(prg, env),
@@ -34,7 +35,14 @@ impl Eval for Exp {
             Exp::LocalMatch(e) => e.eval(prg, env),
             Exp::LocalComatch(e) => e.eval(prg, env),
             Exp::Hole(e) => e.eval(prg, env),
-        }
+        };
+        trace!(
+            "{} |- {} ▷ {}",
+            env.print_to_colored_string(None),
+            self.print_to_colored_string(None),
+            e.print_to_colored_string(None)
+        );
+        e
     }
 }
 
@@ -190,7 +198,6 @@ impl Eval for Hole {
     }
 }
 
-#[trace("{}(...).match {:P} ▷β {return:P}", ctor_name, body, std::convert::identity)]
 fn beta_match(
     prg: &Module,
     body: val::Match,
@@ -199,11 +206,16 @@ fn beta_match(
 ) -> Result<Rc<Val>, TypeError> {
     let case = body.clone().cases.into_iter().find(|case| case.name == ctor_name).unwrap();
     let val::Case { body, .. } = case;
-    let body = body.unwrap();
-    body.apply(prg, args)
+    let body_res = body.clone().unwrap().apply(prg, args);
+    trace!(
+        "{}(...).match {} ▷β {}",
+        ctor_name,
+        body.print_to_colored_string(None),
+        body_res.print_to_colored_string(None)
+    );
+    body_res
 }
 
-#[trace("comatch {:P}.{}(...) ▷β {return:P}", body, dtor_name, std::convert::identity)]
 fn beta_comatch(
     prg: &Module,
     body: val::Match,
@@ -212,8 +224,14 @@ fn beta_comatch(
 ) -> Result<Rc<Val>, TypeError> {
     let cocase = body.clone().cases.into_iter().find(|cocase| cocase.name == dtor_name).unwrap();
     let val::Case { body, .. } = cocase;
-    let body = body.unwrap();
-    body.apply(prg, args)
+    let body_res = body.clone().unwrap().apply(prg, args);
+    trace!(
+        "comatch {}.{}(...) ▷β {}",
+        body.print_to_colored_string(None),
+        dtor_name,
+        body_res.print_to_colored_string(None)
+    );
+    body_res
 }
 
 impl Eval for Match {

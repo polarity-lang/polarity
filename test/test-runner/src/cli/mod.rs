@@ -3,9 +3,9 @@ use clap::{Parser, Subcommand};
 mod run;
 
 pub fn exec() {
+    env_logger::builder().format_timestamp(None).format_level(false).format_target(false).init();
     use Command::*;
     let cli = Cli::parse();
-    elaborator::typechecker::tracer::set_enabled(cli.trace);
     match cli.command {
         Run(args) => run::exec(args),
     }
@@ -16,9 +16,6 @@ pub fn exec() {
 struct Cli {
     #[clap(subcommand)]
     command: Command,
-    /// Enable internal debug output
-    #[clap(long, num_args = 0)]
-    trace: bool,
 }
 
 #[derive(Subcommand)]

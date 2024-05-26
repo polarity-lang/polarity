@@ -14,6 +14,8 @@ termsize = "0.1"
 # fancy error messages
 miette = { version = "5", features = ["fancy"] }
 thiserror = "1"
+# Logging infrastructure
+env_logger = "0.11.3"
 # lsp
 tokio = { version = "1", features = ["rt-multi-thread"] }
 futures = "0.3"

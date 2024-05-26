@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
 use derivative::Derivative;
+use log::trace;
+use printer::PrintToString;
 use syntax::ast::MetaVar;
 
 use crate::normalizer::env::*;
@@ -13,7 +15,6 @@ use printer::util::*;
 use syntax::ast;
 use syntax::common::*;
 use syntax::ctx::BindContext;
-use tracer::trace;
 
 use super::eval::Eval;
 use crate::result::*;
@@ -97,7 +98,6 @@ impl<'a> Print<'a> for Val {
 impl ReadBack for Val {
     type Nf = ast::Exp;
 
-    #[trace("↓{:P} ~> {return:P}", self, std::convert::identity)]
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
         let res = match self {
             Val::TypCtor(e) => e.read_back(prg)?.into(),
@@ -106,6 +106,7 @@ impl ReadBack for Val {
             Val::LocalComatch(e) => e.read_back(prg)?.into(),
             Val::Neu(exp) => exp.read_back(prg)?,
         };
+        trace!("↓{} ~> {}", self.print_to_colored_string(None), res.print_to_colored_string(None));
         Ok(res)
     }
 }

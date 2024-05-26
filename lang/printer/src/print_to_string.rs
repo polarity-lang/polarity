@@ -1,3 +1,5 @@
+use pretty::termcolor::Ansi;
+
 use crate::PrintCfg;
 use crate::PrintInCtx;
 
@@ -6,6 +8,7 @@ use super::PrintExt;
 
 pub trait PrintToString {
     fn print_to_string(&self, cfg: Option<&PrintCfg>) -> String;
+    fn print_to_colored_string(&self, cfg: Option<&PrintCfg>) -> String;
 }
 
 impl<T: for<'a> Print<'a>> PrintToString for T {
@@ -15,6 +18,15 @@ impl<T: for<'a> Print<'a>> PrintToString for T {
         let cfg = cfg.unwrap_or(&def);
         <T as PrintExt>::print(self, cfg, &mut buf).expect("Failed to print to string");
         unsafe { String::from_utf8_unchecked(buf) }
+    }
+
+    fn print_to_colored_string(&self, cfg: Option<&PrintCfg>) -> String {
+        let buf: Vec<u8> = Vec::new();
+        let mut ansi = Ansi::new(buf);
+        let def = PrintCfg::default();
+        let cfg = cfg.unwrap_or(&def);
+        <T as PrintExt>::print_colored(self, cfg, &mut ansi).expect("Failed to print to string");
+        unsafe { String::from_utf8_unchecked(ansi.into_inner()) }
     }
 }
 

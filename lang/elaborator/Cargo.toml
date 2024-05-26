@@ -11,8 +11,8 @@ codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "54232
 # ignoring fields when deriving traits (e.g. Eq, Hash)
 derivative = "2"
 pretty = { version = "0.11", features = ["termcolor"] }
+log = "0.4.21"
 # workspace members
-tracer = { path = "../../util/tracer" }
 syntax = { path = "../syntax" }
 printer = { path = "../printer" }
 miette_util = { path = "../../util/miette_util" }
