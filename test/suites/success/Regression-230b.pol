@@ -1,0 +1,15 @@
+data Nat { Z, S(n: Nat) }
+
+def Nat.add(m: Nat): Nat {
+    Z => m,
+    S(n) => S(n.add(m))
+}
+
+#[transparent]
+let two: Nat {S(S(Z))}
+
+data Eq(a: Type, x y: a) {
+    Refl(a: Type, x: a): Eq(a, x, x)
+}
+
+let foo : Eq(Nat, two.add(S(S(Z))), S(S(S(S(Z))))) { Refl(Nat, two.add(S(S(Z))))}

@@ -71,17 +71,37 @@ impl Eval for Call {
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Call { span, name, kind, args, .. } = self;
-        if matches!(kind, CallKind::LetBound) {
-            let Let { attr, body, .. } = prg.top_level_let(name, *span)?;
-            if attr.attrs.contains(&Attribute::Transparent) {
-                let args = args.eval(prg, env)?;
-                return env.bind_iter(args.iter(), |env| body.eval(prg, env));
+        match kind {
+            CallKind::LetBound => {
+                let Let { attr, body, .. } = prg.top_level_let(name, *span)?;
+                // We now have to distinguish two cases:
+                // If the let-bound definition is transparent, then we substitute the
+                // arguments for the body of the definition. If it is opaque, then
+                // the further computation is blocked so we return a neutral value.
+                if attr.attrs.contains(&Attribute::Transparent) {
+                    let args = args.eval(prg, env)?;
+                    return env.bind_iter(args.iter(), |env| body.eval(prg, env));
+                } else {
+                    Ok(Rc::new(Val::Neu(
+                        val::OpaqueCall {
+                            span: *span,
+                            name: name.clone(),
+                            args: args.eval(prg, env)?,
+                        }
+                        .into(),
+                    )))
+                }
             }
-        }
-        Ok(Rc::new(
-            val::Call { span: *span, kind: *kind, name: name.clone(), args: args.eval(prg, env)? }
+            CallKind::Constructor | CallKind::Codefinition => Ok(Rc::new(
+                val::Call {
+                    span: *span,
+                    kind: *kind,
+                    name: name.clone(),
+                    args: args.eval(prg, env)?,
+                }
                 .into(),
-        ))
+            )),
+        }
     }
 }
 
@@ -93,20 +113,25 @@ impl Eval for DotCall {
         let exp = exp.eval(prg, env)?;
         let args = args.eval(prg, env)?;
         match (*exp).clone() {
-            Val::Call(val::Call { name: ctor_name, kind: _, args: ctor_args, span }) => {
-                let type_decl = prg.type_decl_for_member(&ctor_name, span)?;
-                match type_decl {
-                    DataCodata::Data(_) => {
+            Val::Call(val::Call { name: ctor_name, kind, args: ctor_args, span: _ }) => {
+                match kind {
+                    CallKind::Constructor => {
                         let Def { body, .. } = prg.def(name, None)?;
                         let body =
                             Env::empty().bind_iter(args.iter(), |env| body.eval(prg, env))?;
                         beta_match(prg, body, &ctor_name, &ctor_args)
                     }
-                    DataCodata::Codata(_) => {
+                    CallKind::Codefinition => {
                         let Codef { body, .. } = prg.codef(&ctor_name, None)?;
                         let body =
                             Env::empty().bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
                         beta_comatch(prg, body, name, &args)
+                    }
+                    CallKind::LetBound => {
+                        // This case is unreachable because all let-bound calls have either already
+                        // been replaced by their body (if they are transparent), or they have been
+                        // turned into a neutral `OpaqueCall` if they are opaque.
+                        unreachable!()
                     }
                 }
             }

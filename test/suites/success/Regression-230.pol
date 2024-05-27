@@ -1,0 +1,15 @@
+data Nat { Z, S(n: Nat) }
+
+def Nat.add(m: Nat): Nat {
+    Z => m,
+    S(n) => S(n.add(m))
+}
+
+let two: Nat {S(S(Z))}
+
+data Eq(a: Type, x y: a) {
+    Refl(a: Type, x: a): Eq(a, x, x)
+}
+
+-- The "two" is opaque, so shouldn't be normalized, but the expressions should be equal nonetheless.
+let foo : Eq(Nat, two.add(S(S(Z))), two.add(S(S(Z)))) { Refl(Nat, two.add(S(S(Z))))}

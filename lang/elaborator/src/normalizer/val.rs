@@ -65,6 +65,7 @@ impl<T: ReadBack> ReadBack for Option<T> {
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Val {
     TypCtor(TypCtor),
+    // A call is only a value if it is a constructor or a codefinition.
     Call(Call),
     TypeUniv(TypeUniv),
     LocalComatch(LocalComatch),
@@ -318,6 +319,9 @@ pub enum Neu {
     DotCall(DotCall),
     LocalMatch(LocalMatch),
     Hole(Hole),
+    /// A call which corresponds to an opaque let-bound definition on the toplevel
+    /// cannot be inlined and must therefore block computation.
+    OpaqueCall(OpaqueCall),
 }
 
 impl Shift for Neu {
@@ -327,6 +331,7 @@ impl Shift for Neu {
             Neu::DotCall(e) => e.shift_in_range(range, by).into(),
             Neu::LocalMatch(e) => e.shift_in_range(range, by).into(),
             Neu::Hole(e) => e.shift_in_range(range, by).into(),
+            Neu::OpaqueCall(e) => e.shift_in_range(range, by).into(),
         }
     }
 }
@@ -338,6 +343,7 @@ impl<'a> Print<'a> for Neu {
             Neu::DotCall(e) => e.print(cfg, alloc),
             Neu::LocalMatch(e) => e.print(cfg, alloc),
             Neu::Hole(e) => e.print(cfg, alloc),
+            Neu::OpaqueCall(e) => e.print(cfg, alloc),
         }
     }
 }
@@ -357,6 +363,7 @@ impl ReadBack for Neu {
             Neu::DotCall(e) => e.read_back(prg)?.into(),
             Neu::LocalMatch(e) => e.read_back(prg)?.into(),
             Neu::Hole(e) => e.read_back(prg)?.into(),
+            Neu::OpaqueCall(e) => e.read_back(prg)?.into(),
         };
         Ok(res)
     }
@@ -680,6 +687,55 @@ impl ReadBack for Case {
             name: name.clone(),
             params: params.clone(),
             body: body.read_back(prg)?,
+        })
+    }
+}
+
+// OpaqueCall
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct OpaqueCall {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    pub name: ast::Ident,
+    pub args: Args,
+}
+
+impl Shift for OpaqueCall {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        let OpaqueCall { span, name, args } = self;
+        OpaqueCall { span: *span, name: name.clone(), args: args.shift_in_range(range, by) }
+    }
+}
+
+impl<'a> Print<'a> for OpaqueCall {
+    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let OpaqueCall { span: _, name, args } = self;
+        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
+        alloc.ctor(name).append(psubst)
+    }
+}
+
+impl From<OpaqueCall> for Neu {
+    fn from(value: OpaqueCall) -> Self {
+        Neu::OpaqueCall(value)
+    }
+}
+
+impl ReadBack for OpaqueCall {
+    type Nf = ast::Call;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        let OpaqueCall { span, name, args } = self;
+        Ok(ast::Call {
+            span: *span,
+            kind: syntax::ast::CallKind::LetBound,
+            name: name.clone(),
+            args: ast::Args { args: args.read_back(prg)? },
+            inferred_type: None,
         })
     }
 }
