@@ -1,10 +1,10 @@
 [workspace]
 members = [
-    "util/lsp",
-    "util/miette_util",
     "lang/syntax",
     "lang/parser",
     "lang/lowering",
+    "lang/lsp",
+    "lang/miette_util",
     "lang/printer",
     "lang/elaborator",
     "lang/query",

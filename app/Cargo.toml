@@ -26,7 +26,7 @@ query = { path = "../lang/query" }
 elaborator = { path = "../lang/elaborator" }
 syntax = { path = "../lang/syntax" }
 printer = { path = "../lang/printer" }
-lsp-server = { path = "../util/lsp" }
+lsp-server = { path = "../lang/lsp" }
 
 [dev-dependencies]
 # For testing the binary

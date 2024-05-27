@@ -16,4 +16,4 @@ num-bigint = "0.4"
 # workspace members
 parser = { path = "../parser" }
 syntax = { path = "../syntax" }
-miette_util = { path = "../../util/miette_util" }
+miette_util = { path = "../miette_util" }

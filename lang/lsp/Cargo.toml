@@ -14,7 +14,7 @@ codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "54232
 # fancy error messages
 miette = "5"
 # workspace members
-syntax = { path = "../../lang/syntax" }
-query = { path = "../../lang/query" }
-printer = { path = "../../lang/printer" }
+syntax = { path = "../syntax" }
+query = { path = "../query" }
+printer = { path = "../printer" }
 miette_util = { path = "../miette_util" }

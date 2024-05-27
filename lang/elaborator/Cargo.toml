@@ -15,4 +15,4 @@ log = "0.4.21"
 # workspace members
 syntax = { path = "../syntax" }
 printer = { path = "../printer" }
-miette_util = { path = "../../util/miette_util" }
+miette_util = { path = "../miette_util" }
