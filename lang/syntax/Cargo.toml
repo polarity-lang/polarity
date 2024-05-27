@@ -18,4 +18,4 @@ num-bigint = "0.4"
 # lazy static
 fxhash = "0.2.1"
 # workspace members
-miette_util = { path = "../../util/miette_util" }
+miette_util = { path = "../miette_util" }

@@ -12,7 +12,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 console_error_panic_hook = "0.1"
-lsp-server = { path = "../../../util/lsp" }
+lsp-server = { path = "../../../lang/lsp" }
 futures = "0.3"
 js-sys = "0.3"
 tower-lsp = { version = "0.17", default-features = false }
