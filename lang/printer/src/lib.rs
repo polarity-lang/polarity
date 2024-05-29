@@ -25,13 +25,13 @@ pub use types::*;
 pub const DEFAULT_WIDTH: usize = 100;
 
 pub trait PrintExt {
-    fn print<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()>;
+    fn print_io<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()>;
     fn print_colored<W: WriteColor>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()>;
     fn print_latex<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()>;
 }
 
 impl<T: for<'a> Print<'a>> PrintExt for T {
-    fn print<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
+    fn print_io<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
         let alloc = Alloc::new();
         let doc_builder = T::print(self, cfg, &alloc);
         doc_builder.1.render(cfg.width, out)

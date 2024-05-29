@@ -38,6 +38,6 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 }
 
 fn print_prg<W: io::Write>(prg: ast::Module, cfg: &PrintCfg, stream: &mut W) {
-    prg.print(cfg, stream).expect("Failed to print to stdout");
+    prg.print_io(cfg, stream).expect("Failed to print to stdout");
     println!();
 }
