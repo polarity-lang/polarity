@@ -5,7 +5,7 @@ pub trait PrintToStringInCtx<C> {
     fn print_to_string_in_ctx(&self, ctx: &C) -> String;
 }
 
-impl<C, T: for<'a> PrintInCtx<'a, Ctx = C>> PrintToStringInCtx<C> for T {
+impl<C, T: PrintInCtx<Ctx = C>> PrintToStringInCtx<C> for T {
     fn print_to_string_in_ctx(&self, ctx: &C) -> String {
         let alloc = super::Alloc::new();
         let mut buf = Vec::new();

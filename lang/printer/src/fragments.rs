@@ -7,10 +7,10 @@ pub struct Items {
     pub items: Vec<Decl>,
 }
 
-impl<'a> PrintInCtx<'a> for Items {
+impl PrintInCtx for Items {
     type Ctx = Module;
 
-    fn print_in_ctx(
+    fn print_in_ctx<'a>(
         &'a self,
         cfg: &PrintCfg,
         ctx: &'a Self::Ctx,

@@ -31,10 +31,10 @@ impl Print for Module {
     }
 }
 
-impl<'a> PrintInCtx<'a> for Decl {
+impl PrintInCtx for Decl {
     type Ctx = Module;
 
-    fn print_in_ctx(
+    fn print_in_ctx<'a>(
         &'a self,
         cfg: &PrintCfg,
         ctx: &'a Self::Ctx,
@@ -52,10 +52,10 @@ impl<'a> PrintInCtx<'a> for Decl {
     }
 }
 
-impl<'a> PrintInCtx<'a> for Item<'a> {
+impl<'b> PrintInCtx for Item<'b> {
     type Ctx = Module;
 
-    fn print_in_ctx(
+    fn print_in_ctx<'a>(
         &'a self,
         cfg: &PrintCfg,
         ctx: &'a Self::Ctx,
@@ -71,10 +71,10 @@ impl<'a> PrintInCtx<'a> for Item<'a> {
     }
 }
 
-impl<'a> PrintInCtx<'a> for Data {
+impl PrintInCtx for Data {
     type Ctx = Module;
 
-    fn print_in_ctx(
+    fn print_in_ctx<'a>(
         &'a self,
         cfg: &PrintCfg,
         ctx: &'a Self::Ctx,
@@ -116,10 +116,10 @@ impl<'a> PrintInCtx<'a> for Data {
     }
 }
 
-impl<'a> PrintInCtx<'a> for Codata {
+impl PrintInCtx for Codata {
     type Ctx = Module;
 
-    fn print_in_ctx(
+    fn print_in_ctx<'a>(
         &'a self,
         cfg: &PrintCfg,
         ctx: &'a Self::Ctx,

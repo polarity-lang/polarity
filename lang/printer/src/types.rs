@@ -85,10 +85,10 @@ impl Print for String {
     }
 }
 
-pub trait PrintInCtx<'a> {
+pub trait PrintInCtx {
     type Ctx;
 
-    fn print_in_ctx(
+    fn print_in_ctx<'a>(
         &'a self,
         cfg: &PrintCfg,
         ctx: &'a Self::Ctx,
@@ -100,7 +100,7 @@ pub trait PrintInCtx<'a> {
     /// Print with precedence information about the enclosing context.
     ///
     /// * `_prec` The precedence of the surrounding context.
-    fn print_in_ctx_prec(
+    fn print_in_ctx_prec<'a>(
         &'a self,
         cfg: &PrintCfg,
         ctx: &'a Self::Ctx,
