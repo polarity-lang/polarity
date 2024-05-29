@@ -15,8 +15,8 @@ fn is_visible(attr: &Attributes) -> bool {
     !attr.attrs.contains(&Attribute::OmitPrint)
 }
 
-impl<'a> Print<'a> for Module {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Module {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let items =
             self.iter().filter(|item| is_visible(item.attributes())).map(|item| match item {
                 Item::Data(data) => data.print_in_ctx(cfg, self, alloc),
@@ -161,8 +161,8 @@ impl<'a> PrintInCtx<'a> for Codata {
     }
 }
 
-impl<'a> Print<'a> for Def {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Def {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Def { span: _, doc, name, attr, params, self_param, ret_typ, body } = self;
         if !is_visible(attr) {
             return alloc.nil();
@@ -186,8 +186,8 @@ impl<'a> Print<'a> for Def {
     }
 }
 
-impl<'a> Print<'a> for Codef {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Codef {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Codef { span: _, doc, name, attr, params, typ, body } = self;
         if !is_visible(attr) {
             return alloc.nil();
@@ -213,8 +213,8 @@ impl<'a> Print<'a> for Codef {
     }
 }
 
-impl<'a> Print<'a> for Let {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Let {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Let { span: _, doc, name, attr, params, typ, body } = self;
         if !is_visible(attr) {
             return alloc.nil();
@@ -236,8 +236,8 @@ impl<'a> Print<'a> for Let {
     }
 }
 
-impl<'a> Print<'a> for Ctor {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Ctor {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Ctor { span: _, doc, name, params, typ } = self;
 
         let doc = doc.print(cfg, alloc);
@@ -252,8 +252,8 @@ impl<'a> Print<'a> for Ctor {
     }
 }
 
-impl<'a> Print<'a> for Dtor {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Dtor {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Dtor { span: _, doc, name, params, self_param, ret_typ } = self;
 
         let doc = doc.print(cfg, alloc);
@@ -271,8 +271,8 @@ impl<'a> Print<'a> for Dtor {
     }
 }
 
-impl<'a> Print<'a> for Match {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Match {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { span: _, cases, omit_absurd } = self;
         match cases.len() {
             0 => {
@@ -314,8 +314,8 @@ impl<'a> Print<'a> for Match {
     }
 }
 
-impl<'a> Print<'a> for Case {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Case {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Case { span: _, name, params, body } = self;
 
         let body = match body {
@@ -331,8 +331,8 @@ impl<'a> Print<'a> for Case {
     }
 }
 
-impl<'a> Print<'a> for Telescope {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Telescope {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Telescope { params } = self;
         let mut output = alloc.nil();
         if params.is_empty() {
@@ -375,8 +375,8 @@ impl<'a> Print<'a> for Telescope {
     }
 }
 
-impl<'a> Print<'a> for Args {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Args {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let mut doc = alloc.nil();
         let mut iter = self.args.iter().peekable();
         while let Some(arg) = iter.next() {
@@ -389,8 +389,8 @@ impl<'a> Print<'a> for Args {
     }
 }
 
-impl<'a> Print<'a> for TelescopeInst {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for TelescopeInst {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         if self.params.is_empty() {
             alloc.nil()
         } else {
@@ -399,22 +399,22 @@ impl<'a> Print<'a> for TelescopeInst {
     }
 }
 
-impl<'a> Print<'a> for Param {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Param {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Param { name, typ } = self;
         alloc.text(name).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
     }
 }
 
-impl<'a> Print<'a> for ParamInst {
-    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for ParamInst {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let ParamInst { span: _, info: _, name, typ: _ } = self;
         alloc.text(name)
     }
 }
 
-impl<'a> Print<'a> for SelfParam {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for SelfParam {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let SelfParam { info: _, name, typ } = self;
 
         match name {
@@ -429,8 +429,13 @@ impl<'a> Print<'a> for SelfParam {
     }
 }
 
-impl<'a> Print<'a> for Exp {
-    fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
+impl Print for Exp {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        prec: Precedence,
+    ) -> Builder<'a> {
         match self {
             Exp::Variable(e) => e.print_prec(cfg, alloc, prec),
             Exp::TypCtor(e) => e.print_prec(cfg, alloc, prec),
@@ -458,8 +463,8 @@ impl<'a> Print<'a> for Exp {
     }
 }
 
-impl<'a> Print<'a> for Variable {
-    fn print_prec(
+impl Print for Variable {
+    fn print_prec<'a>(
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
@@ -476,8 +481,13 @@ impl<'a> Print<'a> for Variable {
     }
 }
 
-impl<'a> Print<'a> for TypCtor {
-    fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
+impl Print for TypCtor {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        prec: Precedence,
+    ) -> Builder<'a> {
         let TypCtor { span: _, name, args } = self;
         if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
             let arg = args.args[0].print_prec(cfg, alloc, 1);
@@ -495,8 +505,8 @@ impl<'a> Print<'a> for TypCtor {
     }
 }
 
-impl<'a> Print<'a> for Call {
-    fn print_prec(
+impl Print for Call {
+    fn print_prec<'a>(
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
@@ -508,8 +518,8 @@ impl<'a> Print<'a> for Call {
     }
 }
 
-impl<'a> Print<'a> for syntax::ast::Anno {
-    fn print_prec(
+impl Print for syntax::ast::Anno {
+    fn print_prec<'a>(
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
@@ -520,8 +530,8 @@ impl<'a> Print<'a> for syntax::ast::Anno {
     }
 }
 
-impl<'a> Print<'a> for TypeUniv {
-    fn print_prec(
+impl Print for TypeUniv {
+    fn print_prec<'a>(
         &'a self,
         _cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
@@ -531,8 +541,8 @@ impl<'a> Print<'a> for TypeUniv {
     }
 }
 
-impl<'a> Print<'a> for Hole {
-    fn print_prec(
+impl Print for Hole {
+    fn print_prec<'a>(
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
@@ -546,8 +556,8 @@ impl<'a> Print<'a> for Hole {
     }
 }
 
-impl<'a> Print<'a> for LocalMatch {
-    fn print_prec(
+impl Print for LocalMatch {
+    fn print_prec<'a>(
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
@@ -568,8 +578,8 @@ impl<'a> Print<'a> for LocalMatch {
     }
 }
 
-impl<'a> Print<'a> for LocalComatch {
-    fn print_prec(
+impl Print for LocalComatch {
+    fn print_prec<'a>(
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
@@ -591,8 +601,8 @@ impl<'a> Print<'a> for LocalComatch {
     }
 }
 
-impl<'a> Print<'a> for Motive {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Motive {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Motive { span: _, param, ret_typ } = self;
 
         alloc
@@ -607,8 +617,8 @@ impl<'a> Print<'a> for Motive {
     }
 }
 
-impl<'a> Print<'a> for Attribute {
-    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Attribute {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Attribute::OmitPrint => alloc.text("omit_print"),
             Attribute::Opaque => alloc.text("opaque"),
@@ -617,8 +627,8 @@ impl<'a> Print<'a> for Attribute {
         }
     }
 }
-impl<'a> Print<'a> for Attributes {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Attributes {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         if self.attrs.is_empty() {
             alloc.nil()
         } else {
@@ -628,8 +638,8 @@ impl<'a> Print<'a> for Attributes {
     }
 }
 
-impl<'a> Print<'a> for DocComment {
-    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for DocComment {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let DocComment { docs } = self;
         let prefix = "-- | ";
         alloc.concat(
@@ -640,18 +650,23 @@ impl<'a> Print<'a> for DocComment {
     }
 }
 
-impl<'a, T: Print<'a>> Print<'a> for Rc<T> {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl<T: Print> Print for Rc<T> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         T::print(self, cfg, alloc)
     }
 
-    fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        prec: Precedence,
+    ) -> Builder<'a> {
         T::print_prec(self, cfg, alloc, prec)
     }
 }
 
-impl<'a, T: Print<'a>> Print<'a> for Option<T> {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl<T: Print> Print for Option<T> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Some(inner) => inner.print(cfg, alloc),
             None => alloc.nil(),
@@ -659,7 +674,7 @@ impl<'a, T: Print<'a>> Print<'a> for Option<T> {
     }
 }
 
-fn print_return_type<'a, T: Print<'a>>(
+fn print_return_type<'a, T: Print>(
     cfg: &PrintCfg,
     alloc: &'a Alloc<'a>,
     ret_typ: &'a T,
@@ -692,7 +707,7 @@ fn print_lambda_sugar<'a>(e: &'a Match, cfg: &PrintCfg, alloc: &'a Alloc<'a>) ->
         .append(body.print(cfg, alloc))
 }
 
-fn print_comma_separated<'a, T: Print<'a>>(
+fn print_comma_separated<'a, T: Print>(
     vec: &'a [T],
     cfg: &PrintCfg,
     alloc: &'a Alloc<'a>,
@@ -705,8 +720,8 @@ fn print_comma_separated<'a, T: Print<'a>>(
     }
 }
 
-impl<'a, T: Print<'a>> Print<'a> for Vec<T> {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl<T: Print> Print for Vec<T> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         print_comma_separated(self, cfg, alloc)
     }
 }

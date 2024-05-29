@@ -148,8 +148,8 @@ impl ToEnv for TypeCtx {
     }
 }
 
-impl<'a> Print<'a> for Env {
-    fn print(
+impl Print for Env {
+    fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,

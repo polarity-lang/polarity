@@ -92,8 +92,8 @@ impl Ctx {
     }
 }
 
-impl<'a> Print<'a> for Ctx {
-    fn print(
+impl Print for Ctx {
+    fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,

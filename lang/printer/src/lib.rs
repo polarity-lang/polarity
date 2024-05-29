@@ -30,7 +30,7 @@ pub trait PrintExt {
     fn print_latex<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()>;
 }
 
-impl<T: for<'a> Print<'a>> PrintExt for T {
+impl<T: Print> PrintExt for T {
     fn print_io<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
         let alloc = Alloc::new();
         let doc_builder = T::print(self, cfg, &alloc);

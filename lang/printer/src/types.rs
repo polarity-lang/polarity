@@ -21,15 +21,15 @@ pub type Builder<'a> = pretty::DocBuilder<'a, Alloc<'a>, Anno>;
 /// Operator precedences
 pub type Precedence = u32;
 
-pub trait Print<'a> {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+pub trait Print {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         Print::print_prec(self, cfg, alloc, 0)
     }
 
     /// Print with precedence information about the enclosing context.
     ///
     /// * `_prec` The precedence of the surrounding context.
-    fn print_prec(
+    fn print_prec<'a>(
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
@@ -39,8 +39,8 @@ pub trait Print<'a> {
     }
 }
 
-impl<'a> Print<'a> for String {
-    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for String {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.text(self)
     }
 }
@@ -71,25 +71,35 @@ pub trait PrintInCtx<'a> {
     }
 }
 
-impl<'a, T: Print<'a>> Print<'a> for &T {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl<T: Print> Print for &T {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         T::print(self, cfg, alloc)
     }
 
-    fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        prec: Precedence,
+    ) -> Builder<'a> {
         T::print_prec(self, cfg, alloc, prec)
     }
 }
 
-impl<'a, T: Print<'a>, E: Error> Print<'a> for Result<T, E> {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl<T: Print, E: Error> Print for Result<T, E> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Ok(x) => x.print(cfg, alloc),
             Err(err) => alloc.text(err.to_string()).annotate(Anno::Error),
         }
     }
 
-    fn print_prec(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>, prec: Precedence) -> Builder<'a> {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        prec: Precedence,
+    ) -> Builder<'a> {
         match self {
             Ok(x) => x.print_prec(cfg, alloc, prec),
             Err(err) => alloc.text(err.to_string()).annotate(Anno::Error),

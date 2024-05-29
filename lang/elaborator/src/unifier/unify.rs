@@ -258,8 +258,8 @@ impl Ctx {
     }
 }
 
-impl<'a> Print<'a> for Eqn {
-    fn print(
+impl Print for Eqn {
+    fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
@@ -268,8 +268,8 @@ impl<'a> Print<'a> for Eqn {
     }
 }
 
-impl<'a> Print<'a> for Unificator {
-    fn print(
+impl Print for Unificator {
+    fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,

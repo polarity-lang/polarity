@@ -11,7 +11,7 @@ pub trait PrintToString {
     fn print_to_colored_string(&self, cfg: Option<&PrintCfg>) -> String;
 }
 
-impl<T: for<'a> Print<'a>> PrintToString for T {
+impl<T: Print> PrintToString for T {
     fn print_to_string(&self, cfg: Option<&PrintCfg>) -> String {
         let mut buf = Vec::new();
         let def = PrintCfg::default();
