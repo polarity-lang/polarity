@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use derivative::Derivative;
 use log::trace;
-use printer::PrintToString;
+use printer::types::Print;
 use syntax::ast::MetaVar;
 
 use crate::normalizer::env::*;

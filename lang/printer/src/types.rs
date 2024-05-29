@@ -1,6 +1,11 @@
-use std::error::Error;
+use std::{error::Error, io};
 
-use pretty::DocAllocator;
+use pretty::{
+    termcolor::{Ansi, WriteColor},
+    DocAllocator,
+};
+
+use crate::render;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Anno {
@@ -36,6 +41,41 @@ pub trait Print {
         _prec: Precedence,
     ) -> Builder<'a> {
         Print::print(self, cfg, alloc)
+    }
+
+    fn print_io<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
+        let alloc = Alloc::new();
+        let doc_builder = self.print(cfg, &alloc);
+        doc_builder.1.render(cfg.width, out)
+    }
+
+    fn print_colored<W: WriteColor>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
+        let alloc = Alloc::new();
+        let doc_builder = self.print(cfg, &alloc);
+        doc_builder.render_raw(cfg.width, &mut render::RenderTermcolor::new(out))
+    }
+
+    fn print_latex<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
+        let alloc = Alloc::new();
+        let doc_builder = self.print(cfg, &alloc);
+        doc_builder.render_raw(cfg.width, &mut render::RenderLatex::new(out))
+    }
+
+    fn print_to_string(&self, cfg: Option<&PrintCfg>) -> String {
+        let mut buf = Vec::new();
+        let def = PrintCfg::default();
+        let cfg = cfg.unwrap_or(&def);
+        self.print_io(cfg, &mut buf).expect("Failed to print to string");
+        unsafe { String::from_utf8_unchecked(buf) }
+    }
+
+    fn print_to_colored_string(&self, cfg: Option<&PrintCfg>) -> String {
+        let buf: Vec<u8> = Vec::new();
+        let mut ansi = Ansi::new(buf);
+        let def = PrintCfg::default();
+        let cfg = cfg.unwrap_or(&def);
+        self.print_colored(cfg, &mut ansi).expect("Failed to print to string");
+        unsafe { String::from_utf8_unchecked(ansi.into_inner()) }
     }
 }
 

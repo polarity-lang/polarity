@@ -3,7 +3,7 @@ use std::rc::Rc;
 use codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
-use printer::{PrintCfg, PrintToString};
+use printer::{Print, PrintCfg};
 use syntax::ast::*;
 use syntax::common::HashMap;
 use url::Url;

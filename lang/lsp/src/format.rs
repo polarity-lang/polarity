@@ -3,7 +3,7 @@ use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 
 use super::server::*;
-use printer::{PrintCfg, PrintToString};
+use printer::{Print, PrintCfg};
 
 pub async fn formatting(
     server: &Server,

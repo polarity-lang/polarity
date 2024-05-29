@@ -3,7 +3,7 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-use printer::{PrintCfg, PrintExt};
+use printer::{Print, PrintCfg};
 use query::Database;
 use syntax::ast;
 

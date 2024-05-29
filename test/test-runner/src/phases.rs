@@ -4,7 +4,7 @@ use std::fmt;
 use url::Url;
 
 use parser::cst;
-use printer::PrintToString;
+
 use renaming::Rename;
 use syntax::ast::Module;
 
@@ -250,7 +250,7 @@ impl Phase for Print {
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        Ok((input.uri.clone(), input.rename().print_to_string(None)))
+        Ok((input.uri.clone(), printer::Print::print_to_string(&input.rename(), None)))
     }
 }
 
@@ -263,7 +263,7 @@ impl TestOutput for cst::decls::Module {
 
 impl TestOutput for Module {
     fn test_output(&self) -> String {
-        self.print_to_string(None)
+        printer::Print::print_to_string(&self, None)
     }
 }
 
