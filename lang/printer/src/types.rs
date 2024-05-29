@@ -109,6 +109,21 @@ pub trait PrintInCtx {
     ) -> Builder<'a> {
         PrintInCtx::print_in_ctx(self, cfg, ctx, alloc)
     }
+
+    fn print_to_string_in_ctx(&self, ctx: &Self::Ctx) -> String {
+        let alloc = super::Alloc::new();
+        let mut buf = Vec::new();
+        {
+            let cfg = PrintCfg::default();
+            let doc_builder = self.print_in_ctx(&cfg, ctx, &alloc);
+            doc_builder
+                .1
+                .render(super::DEFAULT_WIDTH, &mut buf)
+                .expect("Failed to print to string");
+            drop(doc_builder)
+        }
+        unsafe { String::from_utf8_unchecked(buf) }
+    }
 }
 
 impl<T: Print> Print for &T {

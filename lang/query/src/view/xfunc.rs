@@ -1,7 +1,7 @@
 use codespan::Span;
 use lifting::LiftResult;
 use printer::fragments::Items;
-use printer::PrintToStringInCtx;
+use printer::PrintInCtx;
 use renaming::Rename;
 
 use syntax::ast::*;
