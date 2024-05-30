@@ -26,6 +26,9 @@ pub type Builder<'a> = pretty::DocBuilder<'a, Alloc<'a>, Anno>;
 /// Operator precedences
 pub type Precedence = u32;
 
+/// We implement the `Print` trait for all types that we want to prettyprint.
+/// It is sufficient to implement either the `print` or the `print_prec` function, depending
+/// on whether you need information about operator precedences or not.
 pub trait Print {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         Print::print_prec(self, cfg, alloc, 0)
