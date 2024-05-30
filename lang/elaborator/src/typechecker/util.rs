@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use log::trace;
 
-use printer::PrintToString;
+use printer::types::Print;
 use syntax::{ast::*, common::HashMap, common::Lvl, ctx::LevelCtx};
 
 use crate::unifier::unify::{unify, Eqn};

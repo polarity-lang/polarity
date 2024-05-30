@@ -9,7 +9,7 @@ use std::rc::Rc;
 use syntax::ast::*;
 use syntax::common::*;
 
-use printer::PrintToString;
+use printer::types::Print;
 
 fn comma_separated<I: IntoIterator<Item = String>>(iter: I) -> String {
     separated(", ", iter)

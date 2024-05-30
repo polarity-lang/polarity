@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use miette::Diagnostic;
 use thiserror::Error;
 
-use printer::{ColorChoice, PrintExt, StandardStream};
+use printer::{ColorChoice, Print, StandardStream};
 use query::{Database, File};
 use syntax::ast;
 

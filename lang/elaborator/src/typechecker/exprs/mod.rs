@@ -15,7 +15,7 @@ use std::rc::Rc;
 
 use log::trace;
 
-use printer::PrintToString;
+use printer::types::Print;
 
 use syntax::{ast::*, ctx::LevelCtx};
 

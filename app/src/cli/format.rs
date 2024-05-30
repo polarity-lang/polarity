@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::path::PathBuf;
 
-use printer::{ColorChoice, PrintCfg, PrintExt, StandardStream, WriteColor};
+use printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
 use query::Database;
 use syntax::ast;
 

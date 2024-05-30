@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use derivative::Derivative;
 use log::trace;
-use printer::PrintToString;
+use printer::types::Print;
 use syntax::ast::MetaVar;
 
 use crate::normalizer::env::*;
@@ -84,8 +84,8 @@ impl Shift for Val {
     }
 }
 
-impl<'a> Print<'a> for Val {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Val {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Val::TypCtor(e) => e.print(cfg, alloc),
             Val::Call(e) => e.print(cfg, alloc),
@@ -132,8 +132,8 @@ impl Shift for TypCtor {
     }
 }
 
-impl<'a> Print<'a> for TypCtor {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for TypCtor {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypCtor { span: _, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
         alloc.typ(name).append(psubst)
@@ -180,8 +180,8 @@ impl Shift for Call {
     }
 }
 
-impl<'a> Print<'a> for Call {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Call {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Call { span: _, kind: _, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
         alloc.ctor(name).append(psubst)
@@ -226,8 +226,8 @@ impl Shift for TypeUniv {
     }
 }
 
-impl<'a> Print<'a> for TypeUniv {
-    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for TypeUniv {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.typ(TYPE)
     }
 }
@@ -274,8 +274,8 @@ impl Shift for LocalComatch {
     }
 }
 
-impl<'a> Print<'a> for LocalComatch {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for LocalComatch {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let LocalComatch { span: _, name, is_lambda_sugar: _, body } = self;
         alloc
             .keyword(COMATCH)
@@ -336,8 +336,8 @@ impl Shift for Neu {
     }
 }
 
-impl<'a> Print<'a> for Neu {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Neu {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Neu::Variable(e) => e.print(cfg, alloc),
             Neu::DotCall(e) => e.print(cfg, alloc),
@@ -390,8 +390,8 @@ impl Shift for Variable {
     }
 }
 
-impl<'a> Print<'a> for Variable {
-    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Variable {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Variable { span: _, name, idx } = self;
         alloc.text(format!("{name}@{idx}"))
     }
@@ -440,8 +440,8 @@ impl Shift for DotCall {
     }
 }
 
-impl<'a> Print<'a> for DotCall {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for DotCall {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let DotCall { span: _, kind: _, exp, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
         exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
@@ -497,8 +497,8 @@ impl Shift for LocalMatch {
     }
 }
 
-impl<'a> Print<'a> for LocalMatch {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for LocalMatch {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let LocalMatch { span: _, name, on_exp, body } = self;
         on_exp
             .print(cfg, alloc)
@@ -556,8 +556,8 @@ impl Shift for Hole {
     }
 }
 
-impl<'a> Print<'a> for Hole {
-    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Hole {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.keyword(HOLE)
     }
 }
@@ -604,8 +604,8 @@ impl Shift for Match {
     }
 }
 
-impl<'a> Print<'a> for Match {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Match {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Match { span: _, cases, omit_absurd } = self;
         let sep = alloc.text(COMMA).append(alloc.hardline());
         alloc
@@ -659,8 +659,8 @@ impl Shift for Case {
     }
 }
 
-impl<'a> Print<'a> for Case {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Case {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Case { span: _, name, params, body } = self;
 
         let body = match body {
@@ -711,8 +711,8 @@ impl Shift for OpaqueCall {
     }
 }
 
-impl<'a> Print<'a> for OpaqueCall {
-    fn print(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for OpaqueCall {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let OpaqueCall { span: _, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
         alloc.ctor(name).append(psubst)
@@ -766,8 +766,8 @@ impl Shift for Closure {
     }
 }
 
-impl<'a> Print<'a> for Closure {
-    fn print(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+impl Print for Closure {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.text("...")
     }
 }

@@ -2,7 +2,7 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-use printer::{PrintCfg, PrintExt};
+use printer::{Print, PrintCfg};
 use query::Database;
 use syntax::ast;
 
@@ -38,6 +38,6 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 }
 
 fn print_prg<W: io::Write>(prg: ast::Module, cfg: &PrintCfg, stream: &mut W) {
-    prg.print(cfg, stream).expect("Failed to print to stdout");
+    prg.print_io(cfg, stream).expect("Failed to print to stdout");
     println!();
 }

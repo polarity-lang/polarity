@@ -1,5 +1,5 @@
 use codespan::Span;
-use printer::PrintToString;
+use printer::Print;
 
 use syntax::{
     ast::CallKind,
