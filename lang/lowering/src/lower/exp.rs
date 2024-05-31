@@ -195,7 +195,8 @@ impl Lower for cst::exp::LocalMatch {
             on_exp: on_exp.lower(ctx)?,
             motive: motive.lower(ctx)?,
             ret_typ: None,
-            body: ast::Match { cases: cases.lower(ctx)?, omit_absurd: *omit_absurd },
+            cases: cases.lower(ctx)?,
+            omit_absurd: *omit_absurd,
             inferred_type: None,
         }
         .into())
@@ -212,7 +213,8 @@ impl Lower for cst::exp::LocalComatch {
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
             is_lambda_sugar: *is_lambda_sugar,
-            body: ast::Match { cases: cases.lower(ctx)?, omit_absurd: *omit_absurd },
+            cases: cases.lower(ctx)?,
+            omit_absurd: *omit_absurd,
             inferred_type: None,
         }
         .into())

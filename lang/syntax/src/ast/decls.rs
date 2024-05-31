@@ -217,7 +217,8 @@ pub struct Def {
     pub params: Telescope,
     pub self_param: SelfParam,
     pub ret_typ: Rc<Exp>,
-    pub body: Match,
+    pub cases: Vec<Case>,
+    pub omit_absurd: bool,
 }
 
 impl Def {
@@ -245,7 +246,8 @@ pub struct Codef {
     pub attr: Attributes,
     pub params: Telescope,
     pub typ: TypCtor,
-    pub body: Match,
+    pub cases: Vec<Case>,
+    pub omit_absurd: bool,
 }
 
 impl Codef {

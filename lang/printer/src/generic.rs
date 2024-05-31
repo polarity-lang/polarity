@@ -163,7 +163,8 @@ impl PrintInCtx for Codata {
 
 impl Print for Def {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { span: _, doc, name, attr, params, self_param, ret_typ, body } = self;
+        let Def { span: _, doc, name, attr, params, self_param, ret_typ, cases, omit_absurd } =
+            self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -180,7 +181,7 @@ impl Print for Def {
             .append(print_return_type(cfg, alloc, ret_typ))
             .group();
 
-        let body = body.print(cfg, alloc);
+        let body = print_cases(cases, omit_absurd, cfg, alloc);
 
         doc.append(head).append(alloc.space()).append(body)
     }
@@ -188,7 +189,7 @@ impl Print for Def {
 
 impl Print for Codef {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codef { span: _, doc, name, attr, params, typ, body } = self;
+        let Codef { span: _, doc, name, attr, params, typ, cases, omit_absurd } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -207,7 +208,7 @@ impl Print for Codef {
             ))
             .group();
 
-        let body = body.print(cfg, alloc);
+        let body = print_cases(cases, omit_absurd, cfg, alloc);
 
         doc.append(head).append(alloc.space()).append(body)
     }
@@ -271,45 +272,45 @@ impl Print for Dtor {
     }
 }
 
-impl Print for Match {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Match { cases, omit_absurd } = self;
-        match cases.len() {
-            0 => {
-                if *omit_absurd {
-                    alloc
-                        .space()
-                        .append(alloc.text(".."))
-                        .append(alloc.keyword(ABSURD))
-                        .append(alloc.space())
-                        .braces_anno()
-                } else {
-                    empty_braces(alloc)
-                }
-            }
-            1 if !omit_absurd => alloc
-                .line()
-                .append(cases[0].print(cfg, alloc))
-                .nest(cfg.indent)
-                .append(alloc.line())
-                .braces_anno()
-                .group(),
-            _ => {
-                let sep = alloc.text(COMMA).append(alloc.hardline());
+fn print_cases<'a>(
+    cases: &'a [Case],
+    omit_absurd: &bool,
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a> {
+    match cases.len() {
+        0 => {
+            if *omit_absurd {
                 alloc
-                    .hardline()
-                    .append(
-                        alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()),
-                    )
-                    .append(if *omit_absurd {
-                        sep.append(alloc.text("..")).append(alloc.keyword(ABSURD))
-                    } else {
-                        alloc.nil()
-                    })
-                    .nest(cfg.indent)
-                    .append(alloc.hardline())
+                    .space()
+                    .append(alloc.text(".."))
+                    .append(alloc.keyword(ABSURD))
+                    .append(alloc.space())
                     .braces_anno()
+            } else {
+                empty_braces(alloc)
             }
+        }
+        1 if !omit_absurd => alloc
+            .line()
+            .append(cases[0].print(cfg, alloc))
+            .nest(cfg.indent)
+            .append(alloc.line())
+            .braces_anno()
+            .group(),
+        _ => {
+            let sep = alloc.text(COMMA).append(alloc.hardline());
+            alloc
+                .hardline()
+                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .append(if *omit_absurd {
+                    sep.append(alloc.text("..")).append(alloc.keyword(ABSURD))
+                } else {
+                    alloc.nil()
+                })
+                .nest(cfg.indent)
+                .append(alloc.hardline())
+                .braces_anno()
         }
     }
 }
@@ -563,7 +564,7 @@ impl Print for LocalMatch {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let LocalMatch { name, on_exp, motive, body, .. } = self;
+        let LocalMatch { name, on_exp, motive, cases, omit_absurd, .. } = self;
         on_exp
             .print(cfg, alloc)
             .append(DOT)
@@ -574,7 +575,7 @@ impl Print for LocalMatch {
             })
             .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
             .append(alloc.space())
-            .append(body.print(cfg, alloc))
+            .append(print_cases(cases, omit_absurd, cfg, alloc))
     }
 }
 
@@ -585,9 +586,9 @@ impl Print for LocalComatch {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let LocalComatch { name, is_lambda_sugar, body, .. } = self;
+        let LocalComatch { name, is_lambda_sugar, cases, omit_absurd, .. } = self;
         if *is_lambda_sugar && cfg.print_lambda_sugar {
-            print_lambda_sugar(body, cfg, alloc)
+            print_lambda_sugar(cases, cfg, alloc)
         } else {
             alloc
                 .keyword(COMATCH)
@@ -596,7 +597,7 @@ impl Print for LocalComatch {
                     None => alloc.nil(),
                 })
                 .append(alloc.space())
-                .append(body.print(cfg, alloc))
+                .append(print_cases(cases, omit_absurd, cfg, alloc))
         }
     }
 }
@@ -691,8 +692,7 @@ fn print_return_type<'a, T: Print>(
 /// Only invoke this function if the comatch contains exactly
 /// one cocase "ap" with three arguments; the function will
 /// panic otherwise.
-fn print_lambda_sugar<'a>(e: &'a Match, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-    let Match { cases, .. } = e;
+fn print_lambda_sugar<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
     let Case { params, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
     let var_name = params
         .params

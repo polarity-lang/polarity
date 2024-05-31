@@ -258,7 +258,8 @@ impl Lower for cst::decls::Def {
                     params,
                     self_param,
                     ret_typ: ret_typ.lower(ctx)?,
-                    body: ast::Match { cases, omit_absurd: *omit_absurd },
+                    cases,
+                    omit_absurd: *omit_absurd,
                 })
             })
         })
@@ -279,7 +280,8 @@ impl Lower for cst::decls::Codef {
                 attr: attr.lower(ctx)?,
                 params,
                 typ: typ.lower(ctx)?,
-                body: ast::Match { cases: cases.lower(ctx)?, omit_absurd: *omit_absurd },
+                cases: cases.lower(ctx)?,
+                omit_absurd: *omit_absurd,
             })
         })
     }

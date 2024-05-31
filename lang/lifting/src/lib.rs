@@ -181,7 +181,7 @@ impl Lift for Def {
     type Target = Def;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Def { span, doc, name, attr, params, self_param, ret_typ, body } = self;
+        let Def { span, doc, name, attr, params, self_param, ret_typ, cases, omit_absurd } = self;
 
         params.lift_telescope(ctx, |ctx, params| {
             let (self_param, ret_typ) = self_param.lift_telescope(ctx, |ctx, self_param| {
@@ -197,7 +197,8 @@ impl Lift for Def {
                 params,
                 self_param,
                 ret_typ,
-                body: body.lift(ctx),
+                cases: cases.lift(ctx),
+                omit_absurd: *omit_absurd,
             }
         })
     }
@@ -207,7 +208,7 @@ impl Lift for Codef {
     type Target = Codef;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Codef { span, doc, name, attr, params, typ, body } = self;
+        let Codef { span, doc, name, attr, params, typ, cases, omit_absurd } = self;
 
         params.lift_telescope(ctx, |ctx, params| Codef {
             span: *span,
@@ -216,7 +217,8 @@ impl Lift for Codef {
             attr: attr.clone(),
             params,
             typ: typ.lift(ctx),
-            body: body.lift(ctx),
+            cases: cases.lift(ctx),
+            omit_absurd: *omit_absurd,
         })
     }
 }
@@ -236,16 +238,6 @@ impl Lift for Let {
             typ: typ.lift(ctx),
             body: body.lift(ctx),
         })
-    }
-}
-
-impl Lift for Match {
-    type Target = Match;
-
-    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Match { cases, omit_absurd } = self;
-
-        Match { cases: cases.lift(ctx), omit_absurd: *omit_absurd }
     }
 }
 
@@ -387,8 +379,17 @@ impl Lift for LocalMatch {
     type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let LocalMatch { span, ctx: type_ctx, name, on_exp, motive, ret_typ, body, inferred_type } =
-            self;
+        let LocalMatch {
+            span,
+            ctx: type_ctx,
+            name,
+            on_exp,
+            motive,
+            ret_typ,
+            cases,
+            omit_absurd,
+            inferred_type,
+        } = self;
         ctx.lift_match(
             span,
             &inferred_type.clone().unwrap(),
@@ -397,7 +398,8 @@ impl Lift for LocalMatch {
             on_exp,
             motive,
             ret_typ,
-            body,
+            cases,
+            omit_absurd,
         )
     }
 }
@@ -406,14 +408,23 @@ impl Lift for LocalComatch {
     type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let LocalComatch { span, ctx: type_ctx, name, is_lambda_sugar, body, inferred_type } = self;
+        let LocalComatch {
+            span,
+            ctx: type_ctx,
+            name,
+            is_lambda_sugar,
+            cases,
+            omit_absurd,
+            inferred_type,
+        } = self;
         ctx.lift_comatch(
             span,
             &inferred_type.clone().unwrap(),
             &type_ctx.clone().unwrap(),
             name,
             *is_lambda_sugar,
-            body,
+            cases,
+            omit_absurd,
         )
     }
 }
@@ -530,7 +541,8 @@ impl Ctx {
         on_exp: &Rc<Exp>,
         motive: &Option<Motive>,
         ret_typ: &Option<Rc<Exp>>,
-        body: &Match,
+        cases: &Vec<Case>,
+        omit_absurd: &bool,
     ) -> Exp {
         // Only lift local matches for the specified type
         if inferred_type.name != self.name {
@@ -542,7 +554,8 @@ impl Ctx {
                 on_exp: on_exp.lift(self),
                 motive: motive.lift(self),
                 ret_typ: None,
-                body: body.lift(self),
+                cases: cases.lift(self),
+                omit_absurd: *omit_absurd,
             });
         }
 
@@ -556,16 +569,16 @@ impl Ctx {
             .map(|m| free_vars(m, type_ctx))
             .unwrap_or_else(|| free_vars(ret_typ, type_ctx));
 
-        let body = body.lift(self);
+        let cases = cases.lift(self);
         let self_typ = inferred_type.lift(self);
 
-        let FreeVarsResult { telescope, subst, args } = free_vars(&body, type_ctx)
+        let FreeVarsResult { telescope, subst, args } = free_vars(&cases, type_ctx)
             .union(free_vars(&self_typ, type_ctx))
             .union(ret_fvs)
             .telescope(&self.ctx);
 
         // Substitute the new parameters for the free variables
-        let body = body.subst(&mut self.ctx, &subst.in_body());
+        let cases = cases.subst(&mut self.ctx, &subst.in_body());
         let self_typ = self_typ.subst(&mut self.ctx, &subst.in_body());
         let def_ret_typ = match &motive {
             Some(m) => m.lift(self).subst(&mut self.ctx, &subst.in_body()).ret_typ,
@@ -592,7 +605,8 @@ impl Ctx {
                 typ: self_typ,
             },
             ret_typ: def_ret_typ,
-            body,
+            cases,
+            omit_absurd: *omit_absurd,
         };
 
         self.new_decls.push(Decl::Def(def));
@@ -608,6 +622,7 @@ impl Ctx {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn lift_comatch(
         &mut self,
         span: &Option<Span>,
@@ -615,7 +630,8 @@ impl Ctx {
         type_ctx: &TypeCtx,
         name: &Label,
         is_lambda_sugar: bool,
-        body: &Match,
+        cases: &Vec<Case>,
+        omit_absurd: &bool,
     ) -> Exp {
         // Only lift local matches for the specified type
         if inferred_type.name != self.name {
@@ -624,23 +640,24 @@ impl Ctx {
                 ctx: None,
                 name: name.clone(),
                 is_lambda_sugar,
-                body: body.lift(self),
+                cases: cases.lift(self),
+                omit_absurd: *omit_absurd,
                 inferred_type: None,
             });
         }
 
         self.mark_modified();
 
-        let body = body.lift(self);
+        let cases = cases.lift(self);
         let typ = inferred_type.lift(self);
 
         // Collect the free variables in the comatch and the return type
         // Build a telescope of the types of the lifted variables
         let FreeVarsResult { telescope, subst, args } =
-            free_vars(&body, type_ctx).union(free_vars(&typ, type_ctx)).telescope(&self.ctx);
+            free_vars(&cases, type_ctx).union(free_vars(&typ, type_ctx)).telescope(&self.ctx);
 
         // Substitute the new parameters for the free variables
-        let body = body.subst(&mut self.ctx, &subst.in_body());
+        let cases = cases.subst(&mut self.ctx, &subst.in_body());
         let typ = typ.subst(&mut self.ctx, &subst.in_body());
 
         // Build the new top-level definition
@@ -653,7 +670,8 @@ impl Ctx {
             attr: Attributes::default(),
             params: telescope,
             typ,
-            body,
+            cases,
+            omit_absurd: *omit_absurd,
         };
 
         self.new_decls.push(Decl::Codef(codef));

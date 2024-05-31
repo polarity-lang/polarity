@@ -180,7 +180,7 @@ impl BuildMatrix for ast::Def {
         })?;
         xdata.dtors.insert(self.name.clone(), self.to_dtor());
 
-        let ast::Match { cases, .. } = &self.body;
+        let cases = &self.cases;
 
         for case in cases {
             let ast::Case { name, body, .. } = case;
@@ -200,7 +200,7 @@ impl BuildMatrix for ast::Codef {
         })?;
         xdata.ctors.insert(self.name.clone(), self.to_ctor());
 
-        let ast::Match { cases, .. } = &self.body;
+        let cases = &self.cases;
 
         for case in cases {
             let ast::Case { name, body, .. } = case;
@@ -263,7 +263,8 @@ impl XData {
                     params: dtor.params.clone(),
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
-                    body: ast::Match { cases, omit_absurd },
+                    cases,
+                    omit_absurd,
                 }
             })
             .collect();
@@ -322,7 +323,8 @@ impl XData {
                     attr: Attributes::default(),
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
-                    body: ast::Match { cases, omit_absurd },
+                    cases,
+                    omit_absurd,
                 }
             })
             .collect();

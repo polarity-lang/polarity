@@ -27,6 +27,14 @@ pub trait FV {
     fn visit_fv(&self, v: &mut USTVisitor);
 }
 
+impl FV for Vec<Case> {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        for case in self {
+            case.visit_fv(v)
+        }
+    }
+}
+
 impl FV for Exp {
     fn visit_fv(&self, v: &mut USTVisitor) {
         match self {
@@ -35,7 +43,11 @@ impl FV for Exp {
                 typ.visit_fv(v)
             }
             Exp::Variable(e) => e.visit_fv(v),
-            Exp::LocalComatch(LocalComatch { body, .. }) => body.visit_fv(v),
+            Exp::LocalComatch(LocalComatch { cases, .. }) => {
+                for case in cases {
+                    case.visit_fv(v)
+                }
+            }
             Exp::Call(Call { args, .. }) => args.visit_fv(v),
             Exp::DotCall(DotCall { exp, args, .. }) => {
                 exp.visit_fv(v);
@@ -44,10 +56,12 @@ impl FV for Exp {
             Exp::TypCtor(e) => e.visit_fv(v),
             Exp::Hole(e) => e.visit_fv(v),
             Exp::TypeUniv(TypeUniv { span: _ }) => {}
-            Exp::LocalMatch(LocalMatch { on_exp, motive, body, .. }) => {
+            Exp::LocalMatch(LocalMatch { on_exp, motive, cases, .. }) => {
+                for case in cases {
+                    case.visit_fv(v);
+                }
                 on_exp.visit_fv(v);
-                motive.visit_fv(v);
-                body.visit_fv(v)
+                motive.visit_fv(v)
             }
         }
     }
@@ -94,15 +108,6 @@ impl FV for Hole {
             for exp in subst {
                 exp.visit_fv(v);
             }
-        }
-    }
-}
-
-impl FV for Match {
-    fn visit_fv(&self, v: &mut USTVisitor) {
-        let Match { cases, omit_absurd: _ } = self;
-        for case in cases {
-            case.visit_fv(v)
         }
     }
 }

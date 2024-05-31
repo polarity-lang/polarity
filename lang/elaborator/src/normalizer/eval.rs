@@ -116,16 +116,16 @@ impl Eval for DotCall {
             Val::Call(val::Call { name: ctor_name, kind, args: ctor_args, span: _ }) => {
                 match kind {
                     CallKind::Constructor => {
-                        let Def { body, .. } = prg.def(name, None)?;
-                        let body =
-                            Env::empty().bind_iter(args.iter(), |env| body.eval(prg, env))?;
-                        beta_match(prg, body, &ctor_name, &ctor_args)
+                        let Def { cases, .. } = prg.def(name, None)?;
+                        let cases =
+                            Env::empty().bind_iter(args.iter(), |env| cases.eval(prg, env))?;
+                        beta_match(prg, cases, &ctor_name, &ctor_args)
                     }
                     CallKind::Codefinition => {
-                        let Codef { body, .. } = prg.codef(&ctor_name, None)?;
-                        let body =
-                            Env::empty().bind_iter(ctor_args.iter(), |env| body.eval(prg, env))?;
-                        beta_comatch(prg, body, name, &args)
+                        let Codef { cases, .. } = prg.codef(&ctor_name, None)?;
+                        let cases =
+                            Env::empty().bind_iter(ctor_args.iter(), |env| cases.eval(prg, env))?;
+                        beta_comatch(prg, cases, name, &args)
                     }
                     CallKind::LetBound => {
                         // This case is unreachable because all let-bound calls have either already
@@ -135,8 +135,8 @@ impl Eval for DotCall {
                     }
                 }
             }
-            Val::LocalComatch(val::LocalComatch { body, .. }) => {
-                beta_comatch(prg, body, name, &args)
+            Val::LocalComatch(val::LocalComatch { cases, .. }) => {
+                beta_comatch(prg, cases, name, &args)
             }
             Val::Neu(exp) => Ok(Rc::new(Val::Neu(
                 val::DotCall {
@@ -175,19 +175,20 @@ impl Eval for LocalMatch {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let LocalMatch { name: match_name, on_exp, body, .. } = self;
+        let LocalMatch { name: match_name, on_exp, cases, omit_absurd, .. } = self;
         let on_exp = on_exp.eval(prg, env)?;
-        let body = body.eval(prg, env)?;
+        let cases = cases.eval(prg, env)?;
         match (*on_exp).clone() {
             Val::Call(val::Call { name: ctor_name, args, .. }) => {
-                beta_match(prg, body, &ctor_name, &args)
+                beta_match(prg, cases, &ctor_name, &args)
             }
             Val::Neu(exp) => Ok(Rc::new(Val::Neu(
                 val::LocalMatch {
                     span: None,
                     name: match_name.to_owned(),
                     on_exp: Rc::new(exp),
-                    body,
+                    cases,
+                    omit_absurd: *omit_absurd,
                 }
                 .into(),
             ))),
@@ -200,13 +201,14 @@ impl Eval for LocalComatch {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
+        let LocalComatch { span, name, is_lambda_sugar, cases, omit_absurd, .. } = self;
         Ok(Rc::new(
             val::LocalComatch {
                 span: *span,
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
-                body: body.eval(prg, env)?,
+                cases: cases.eval(prg, env)?,
+                omit_absurd: *omit_absurd,
             }
             .into(),
         ))
@@ -225,11 +227,11 @@ impl Eval for Hole {
 
 fn beta_match(
     prg: &Module,
-    body: val::Match,
+    body: Vec<val::Case>,
     ctor_name: &str,
     args: &[Rc<Val>],
 ) -> Result<Rc<Val>, TypeError> {
-    let case = body.clone().cases.into_iter().find(|case| case.name == ctor_name).unwrap();
+    let case = body.clone().into_iter().find(|case| case.name == ctor_name).unwrap();
     let val::Case { body, .. } = case;
     let body_res = body.clone().unwrap().apply(prg, args);
     trace!(
@@ -243,11 +245,11 @@ fn beta_match(
 
 fn beta_comatch(
     prg: &Module,
-    body: val::Match,
+    body: Vec<val::Case>,
     dtor_name: &str,
     args: &[Rc<Val>],
 ) -> Result<Rc<Val>, TypeError> {
-    let cocase = body.clone().cases.into_iter().find(|cocase| cocase.name == dtor_name).unwrap();
+    let cocase = body.clone().into_iter().find(|cocase| cocase.name == dtor_name).unwrap();
     let val::Case { body, .. } = cocase;
     let body_res = body.clone().unwrap().apply(prg, args);
     trace!(
@@ -257,16 +259,6 @@ fn beta_comatch(
         body_res.print_to_colored_string(None)
     );
     body_res
-}
-
-impl Eval for Match {
-    type Val = val::Match;
-
-    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let Match { cases, omit_absurd } = self;
-
-        Ok(val::Match { cases: cases.eval(prg, env)?, omit_absurd: *omit_absurd })
-    }
 }
 
 impl Eval for Case {
