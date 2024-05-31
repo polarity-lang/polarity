@@ -134,7 +134,7 @@ Let: Let = <l: @L> <doc: DocComment?> <attr: OptAttributes> "let" <name: LowerId
   Let { span: span(l,r), doc, name, attr, params, typ, body };
 
 pub Match : Match = {
-    <l: @L> <cases: Comma<Case>> <omit_absurd: OmitAbsurd> <r: @R> => Match { span: span(l, r), cases, omit_absurd },
+    <cases: Comma<Case>> <omit_absurd: OmitAbsurd> => Match { cases, omit_absurd },
 }
 
 pub Case : Case = {

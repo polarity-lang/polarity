@@ -591,22 +591,20 @@ impl ReadBack for Hole {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Match {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub span: Option<Span>,
     pub cases: Vec<Case>,
     pub omit_absurd: bool,
 }
 
 impl Shift for Match {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Match { span, cases, omit_absurd } = self;
-        Match { span: *span, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
+        let Match { cases, omit_absurd } = self;
+        Match { cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
     }
 }
 
 impl Print for Match {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Match { span: _, cases, omit_absurd } = self;
+        let Match { cases, omit_absurd } = self;
         let sep = alloc.text(COMMA).append(alloc.hardline());
         alloc
             .hardline()
@@ -626,8 +624,8 @@ impl ReadBack for Match {
     type Nf = ast::Match;
 
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
-        let Match { span, cases, omit_absurd } = self;
-        Ok(ast::Match { span: *span, cases: cases.read_back(prg)?, omit_absurd: *omit_absurd })
+        let Match { cases, omit_absurd } = self;
+        Ok(ast::Match { cases: cases.read_back(prg)?, omit_absurd: *omit_absurd })
     }
 }
 

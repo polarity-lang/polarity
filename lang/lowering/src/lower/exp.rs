@@ -41,9 +41,9 @@ impl Lower for cst::exp::Match {
     type Target = ast::Match;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::Match { span, cases, omit_absurd } = self;
+        let cst::exp::Match { cases, omit_absurd } = self;
 
-        Ok(ast::Match { span: Some(*span), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
+        Ok(ast::Match { cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
     }
 }
 
@@ -294,7 +294,6 @@ impl Lower for cst::exp::Lam {
             name: None,
             is_lambda_sugar: true,
             body: cst::exp::Match {
-                span: *span,
                 cases: vec![cst::exp::Case {
                     span: *span,
                     name: Ident { id: "ap".to_owned() },

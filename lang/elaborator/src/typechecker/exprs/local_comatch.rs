@@ -69,10 +69,10 @@ pub struct WithDestructee<'a> {
 /// Infer a copattern match
 impl<'a> WithDestructee<'a> {
     pub fn infer_wd(&self, prg: &Module, ctx: &mut Ctx) -> Result<Match, TypeError> {
-        let Match { span, cases, omit_absurd } = &self.inner;
+        let Match { cases, omit_absurd } = &self.inner;
 
         // Check that this comatch is on a codata type
-        let codata = prg.codata(&self.destructee.name, *span)?;
+        let codata = prg.codata(&self.destructee.name, self.destructee.span())?;
 
         // Check exhaustiveness
         let dtors_expected: HashSet<_> = codata.dtors.iter().cloned().collect();
@@ -97,7 +97,7 @@ impl<'a> WithDestructee<'a> {
                 dtors_missing.cloned().collect(),
                 dtors_exessive.cloned().collect(),
                 dtors_duplicate,
-                span,
+                &self.destructee.span(),
             ));
         }
 
@@ -106,9 +106,14 @@ impl<'a> WithDestructee<'a> {
 
         if *omit_absurd {
             for name in dtors_missing.cloned() {
-                let Dtor { params, .. } = prg.dtor(&name, *span)?;
+                let Dtor { params, .. } = prg.dtor(&name, self.destructee.span)?;
 
-                let case = Case { span: *span, name, params: params.instantiate(), body: None };
+                let case = Case {
+                    span: self.destructee.span(),
+                    name,
+                    params: params.instantiate(),
+                    body: None,
+                };
                 cases.push((case, true));
             }
         }
@@ -181,7 +186,7 @@ impl<'a> WithDestructee<'a> {
             }
         }
 
-        Ok(Match { span: *span, cases: cases_out, omit_absurd: *omit_absurd })
+        Ok(Match { cases: cases_out, omit_absurd: *omit_absurd })
     }
 }
 

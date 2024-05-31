@@ -111,10 +111,10 @@ pub struct WithScrutinee<'a> {
 /// Check a pattern match
 impl<'a> WithScrutinee<'a> {
     pub fn check_ws(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Match, TypeError> {
-        let Match { span, cases, omit_absurd } = &self.inner;
+        let Match { cases, omit_absurd } = &self.inner;
 
         // Check that this match is on a data type
-        let data = prg.data(&self.scrutinee.name, *span)?;
+        let data = prg.data(&self.scrutinee.name, self.scrutinee.span())?;
 
         // Check exhaustiveness
         let ctors_expected: HashSet<_> = data.ctors.iter().cloned().collect();
@@ -138,7 +138,7 @@ impl<'a> WithScrutinee<'a> {
                 ctors_missing.cloned().collect(),
                 ctors_undeclared.cloned().collect(),
                 ctors_duplicate,
-                span,
+                &self.scrutinee.span(),
             ));
         }
 
@@ -147,9 +147,14 @@ impl<'a> WithScrutinee<'a> {
 
         if *omit_absurd {
             for name in ctors_missing.cloned() {
-                let Ctor { params, .. } = prg.ctor(&name, *span)?;
+                let Ctor { params, .. } = prg.ctor(&name, self.scrutinee.span())?;
 
-                let case = Case { span: *span, name, params: params.instantiate(), body: None };
+                let case = Case {
+                    span: self.scrutinee.span(),
+                    name,
+                    params: params.instantiate(),
+                    body: None,
+                };
                 cases.push((case, true));
             }
         }
@@ -182,7 +187,7 @@ impl<'a> WithScrutinee<'a> {
             }
         }
 
-        Ok(Match { span: *span, cases: cases_out, omit_absurd: *omit_absurd })
+        Ok(Match { cases: cases_out, omit_absurd: *omit_absurd })
     }
 }
 

@@ -243,9 +243,9 @@ impl Lift for Match {
     type Target = Match;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Match { span, cases, omit_absurd } = self;
+        let Match { cases, omit_absurd } = self;
 
-        Match { span: *span, cases: cases.lift(ctx), omit_absurd: *omit_absurd }
+        Match { cases: cases.lift(ctx), omit_absurd: *omit_absurd }
     }
 }
 

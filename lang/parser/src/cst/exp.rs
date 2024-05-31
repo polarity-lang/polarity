@@ -13,7 +13,6 @@ pub enum BindingSite {
 
 #[derive(Debug, Clone)]
 pub struct Match {
-    pub span: Span,
     pub cases: Vec<Case>,
     pub omit_absurd: bool,
 }

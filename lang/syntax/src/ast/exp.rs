@@ -867,16 +867,14 @@ impl Substitutable for Hole {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Match {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub span: Option<Span>,
     pub cases: Vec<Case>,
     pub omit_absurd: bool,
 }
 
 impl Shift for Match {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Match { span, cases, omit_absurd } = self;
-        Match { span: *span, cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
+        let Match { cases, omit_absurd } = self;
+        Match { cases: cases.shift_in_range(range, by), omit_absurd: *omit_absurd }
     }
 }
 
@@ -890,9 +888,8 @@ impl Occurs for Match {
 impl Substitutable for Match {
     type Result = Match;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Match { span, cases, omit_absurd } = self;
+        let Match { cases, omit_absurd } = self;
         Match {
-            span: *span,
             cases: cases.iter().map(|case| case.subst(ctx, by)).collect(),
             omit_absurd: *omit_absurd,
         }

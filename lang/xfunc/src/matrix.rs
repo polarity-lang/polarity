@@ -263,7 +263,7 @@ impl XData {
                     params: dtor.params.clone(),
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
-                    body: ast::Match { cases, span: None, omit_absurd },
+                    body: ast::Match { cases, omit_absurd },
                 }
             })
             .collect();
@@ -322,7 +322,7 @@ impl XData {
                     attr: Attributes::default(),
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
-                    body: ast::Match { cases, span: None, omit_absurd },
+                    body: ast::Match { cases, omit_absurd },
                 }
             })
             .collect();

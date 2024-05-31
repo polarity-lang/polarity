@@ -273,7 +273,7 @@ impl Print for Dtor {
 
 impl Print for Match {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Match { span: _, cases, omit_absurd } = self;
+        let Match { cases, omit_absurd } = self;
         match cases.len() {
             0 => {
                 if *omit_absurd {

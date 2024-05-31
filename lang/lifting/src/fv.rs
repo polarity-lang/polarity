@@ -100,7 +100,7 @@ impl FV for Hole {
 
 impl FV for Match {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let Match { span: _, cases, omit_absurd: _ } = self;
+        let Match { cases, omit_absurd: _ } = self;
         for case in cases {
             case.visit_fv(v)
         }

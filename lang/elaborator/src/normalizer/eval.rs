@@ -263,9 +263,9 @@ impl Eval for Match {
     type Val = val::Match;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let Match { span, cases, omit_absurd } = self;
+        let Match { cases, omit_absurd } = self;
 
-        Ok(val::Match { span: *span, cases: cases.eval(prg, env)?, omit_absurd: *omit_absurd })
+        Ok(val::Match { cases: cases.eval(prg, env)?, omit_absurd: *omit_absurd })
     }
 }
 

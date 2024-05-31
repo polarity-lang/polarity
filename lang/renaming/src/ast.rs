@@ -362,9 +362,9 @@ impl Rename for Anno {
 
 impl Rename for Match {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Match { span, cases, omit_absurd } = self;
+        let Match { cases, omit_absurd } = self;
 
-        Match { span, cases: cases.rename_in_ctx(ctx), omit_absurd }
+        Match { cases: cases.rename_in_ctx(ctx), omit_absurd }
     }
 }
 
