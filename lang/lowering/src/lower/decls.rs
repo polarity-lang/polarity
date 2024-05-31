@@ -233,13 +233,22 @@ impl Lower for cst::decls::Def {
     type Target = ast::Def;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::decls::Def { span, doc, name, attr, params, scrutinee, ret_typ, body } = self;
+        let cst::decls::Def {
+            span,
+            doc,
+            name,
+            attr,
+            params,
+            scrutinee,
+            ret_typ,
+            cases,
+            omit_absurd,
+        } = self;
 
         let self_param: cst::decls::SelfParam = scrutinee.clone().into();
 
         lower_telescope(params, ctx, |ctx, params| {
-            let body = body.lower(ctx)?;
-
+            let cases = cases.lower(ctx)?;
             lower_self_param(&self_param, ctx, |ctx, self_param| {
                 Ok(ast::Def {
                     span: Some(*span),
@@ -249,7 +258,7 @@ impl Lower for cst::decls::Def {
                     params,
                     self_param,
                     ret_typ: ret_typ.lower(ctx)?,
-                    body,
+                    body: ast::Match { cases, omit_absurd: *omit_absurd },
                 })
             })
         })
@@ -260,7 +269,7 @@ impl Lower for cst::decls::Codef {
     type Target = ast::Codef;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::decls::Codef { span, doc, name, attr, params, typ, body, .. } = self;
+        let cst::decls::Codef { span, doc, name, attr, params, typ, cases, omit_absurd, .. } = self;
 
         lower_telescope(params, ctx, |ctx, params| {
             Ok(ast::Codef {
@@ -270,7 +279,7 @@ impl Lower for cst::decls::Codef {
                 attr: attr.lower(ctx)?,
                 params,
                 typ: typ.lower(ctx)?,
-                body: body.lower(ctx)?,
+                body: ast::Match { cases: cases.lower(ctx)?, omit_absurd: *omit_absurd },
             })
         })
     }

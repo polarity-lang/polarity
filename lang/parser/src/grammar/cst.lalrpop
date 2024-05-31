@@ -123,18 +123,18 @@ Codata: Codata = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codata" <name
 
 // Toplevel definition
 Def: Def = <l: @L> <doc: DocComment?> <attr: OptAttributes> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> =>
-  Def { span: span(l, r), doc, name, attr, params, scrutinee, ret_typ, body };
+  Def { span: span(l, r), doc, name, attr, params, scrutinee, ret_typ, cases: body.0, omit_absurd: body.1 };
 
 // Toplevel codefinition
 Codef: Codef = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Match> "}" <r: @R> =>
-  Codef { span: span(l, r), doc, name, attr, params, typ, body };
+  Codef { span: span(l, r), doc, name, attr, params, typ, cases: body.0, omit_absurd: body.1 };
 
 // Toplevel let binding
 Let: Let = <l: @L> <doc: DocComment?> <attr: OptAttributes> "let" <name: LowerIdent><params: OptTelescope> ":" <typ: Exp> "{" <body: Exp> "}" <r: @R> =>
   Let { span: span(l,r), doc, name, attr, params, typ, body };
 
-pub Match : Match = {
-    <cases: Comma<Case>> <omit_absurd: OmitAbsurd> => Match { cases, omit_absurd },
+pub Match : (Vec<Case>, bool) = {
+    <cases: Comma<Case>> <omit_absurd: OmitAbsurd> => (cases, omit_absurd),
 }
 
 pub Case : Case = {
@@ -218,7 +218,7 @@ DotCall: DotCall = <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> 
   DotCall { span: span(l, r), exp, name, args };
 
 LocalMatch: LocalMatch = <l: @L> <on_exp: Ops> "." "match" <name: Ident?> <motive: Motive?> "{" <body: Match> "}" <r: @R> =>
-  LocalMatch { span: span(l, r), name, on_exp, motive, body };
+  LocalMatch { span: span(l, r), name, on_exp, motive, cases: body.0, omit_absurd: body.1 };
 
 CallWithArgs: Call = <l: @L> <name: Ident> <args: Args> <r: @R> =>
   Call { span: span(l, r), name, args };
@@ -227,7 +227,7 @@ CallWithoutArgs: Call = <l: @L> <name: Ident> <r: @R> =>
   Call { span: span(l, r), name, args: vec![] };
 
 LocalComatch: LocalComatch = <l: @L> "comatch" <name: Ident?> "{" <body: Match> "}" <r: @R> =>
-  LocalComatch { span: span(l, r), name, is_lambda_sugar: false, body };
+  LocalComatch { span: span(l, r), name, is_lambda_sugar: false, cases: body.0, omit_absurd: body.1 };
 
 TypeUniv: TypeUniv = <l: @L> "Type" <r: @R> =>
   TypeUniv { span: span(l, r) };
