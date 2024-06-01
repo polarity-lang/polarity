@@ -12,13 +12,6 @@ pub enum BindingSite {
 }
 
 #[derive(Debug, Clone)]
-pub struct Match {
-    pub span: Span,
-    pub cases: Vec<Case>,
-    pub omit_absurd: bool,
-}
-
-#[derive(Debug, Clone)]
 pub struct Case {
     pub span: Span,
     pub name: Ident,
@@ -74,7 +67,8 @@ pub struct LocalMatch {
     pub name: Option<Ident>,
     pub on_exp: Rc<Exp>,
     pub motive: Option<Motive>,
-    pub body: Match,
+    pub cases: Vec<Case>,
+    pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -82,7 +76,8 @@ pub struct LocalComatch {
     pub span: Span,
     pub name: Option<Ident>,
     pub is_lambda_sugar: bool,
-    pub body: Match,
+    pub cases: Vec<Case>,
+    pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone)]

@@ -37,16 +37,6 @@ impl Lower for cst::exp::Exp {
     }
 }
 
-impl Lower for cst::exp::Match {
-    type Target = ast::Match;
-
-    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::Match { span, cases, omit_absurd } = self;
-
-        Ok(ast::Match { span: Some(*span), cases: cases.lower(ctx)?, omit_absurd: *omit_absurd })
-    }
-}
-
 fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, LoweringError>>(
     tel_inst: &[cst::exp::BindingSite],
     ctx: &mut Ctx,
@@ -197,7 +187,7 @@ impl Lower for cst::exp::LocalMatch {
     type Target = ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::LocalMatch { span, name, on_exp, motive, body } = self;
+        let cst::exp::LocalMatch { span, name, on_exp, motive, cases, omit_absurd } = self;
         Ok(ast::LocalMatch {
             span: Some(*span),
             ctx: None,
@@ -205,7 +195,8 @@ impl Lower for cst::exp::LocalMatch {
             on_exp: on_exp.lower(ctx)?,
             motive: motive.lower(ctx)?,
             ret_typ: None,
-            body: body.lower(ctx)?,
+            cases: cases.lower(ctx)?,
+            omit_absurd: *omit_absurd,
             inferred_type: None,
         }
         .into())
@@ -216,13 +207,14 @@ impl Lower for cst::exp::LocalComatch {
     type Target = ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::LocalComatch { span, name, is_lambda_sugar, body } = self;
+        let cst::exp::LocalComatch { span, name, is_lambda_sugar, cases, omit_absurd } = self;
         Ok(ast::LocalComatch {
             span: Some(*span),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
             is_lambda_sugar: *is_lambda_sugar,
-            body: body.lower(ctx)?,
+            cases: cases.lower(ctx)?,
+            omit_absurd: *omit_absurd,
             inferred_type: None,
         }
         .into())
@@ -293,20 +285,17 @@ impl Lower for cst::exp::Lam {
             span: *span,
             name: None,
             is_lambda_sugar: true,
-            body: cst::exp::Match {
+            cases: vec![cst::exp::Case {
                 span: *span,
-                cases: vec![cst::exp::Case {
-                    span: *span,
-                    name: Ident { id: "ap".to_owned() },
-                    params: vec![
-                        cst::exp::BindingSite::Wildcard { span: Default::default() },
-                        cst::exp::BindingSite::Wildcard { span: Default::default() },
-                        var.clone(),
-                    ],
-                    body: Some(body.clone()),
-                }],
-                omit_absurd: false,
-            },
+                name: Ident { id: "ap".to_owned() },
+                params: vec![
+                    cst::exp::BindingSite::Wildcard { span: Default::default() },
+                    cst::exp::BindingSite::Wildcard { span: Default::default() },
+                    var.clone(),
+                ],
+                body: Some(body.clone()),
+            }],
+            omit_absurd: false,
         });
         comatch.lower(ctx)
     }

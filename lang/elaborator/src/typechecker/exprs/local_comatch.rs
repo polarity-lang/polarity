@@ -22,7 +22,7 @@ use crate::result::TypeError;
 
 impl CheckInfer for LocalComatch {
     fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        let LocalComatch { span, name, is_lambda_sugar, body, .. } = self;
+        let LocalComatch { span, name, is_lambda_sugar, cases, omit_absurd, .. } = self;
         let typ_app_nf = t.expect_typ_app()?;
         let typ_app = typ_app_nf.infer(prg, ctx)?;
 
@@ -36,19 +36,21 @@ impl CheckInfer for LocalComatch {
         }
 
         let wd = WithDestructee {
-            inner: body,
+            cases,
+            omit_absurd: *omit_absurd,
             label: None,
             n_label_args: 0,
             destructee: typ_app_nf.clone(),
         };
-        let body_out = wd.infer_wd(prg, ctx)?;
+        let (cases, omit_absurd) = wd.infer_wd(prg, ctx)?;
 
         Ok(LocalComatch {
             span: *span,
             ctx: Some(ctx.vars.clone()),
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
-            body: body_out,
+            cases,
+            omit_absurd,
             inferred_type: Some(typ_app),
         })
     }
@@ -59,7 +61,8 @@ impl CheckInfer for LocalComatch {
 }
 
 pub struct WithDestructee<'a> {
-    pub inner: &'a Match,
+    pub cases: &'a Vec<Case>,
+    pub omit_absurd: bool,
     /// Name of the global codefinition that gets substituted for the destructor's self parameters
     pub label: Option<Ident>,
     pub n_label_args: usize,
@@ -68,11 +71,11 @@ pub struct WithDestructee<'a> {
 
 /// Infer a copattern match
 impl<'a> WithDestructee<'a> {
-    pub fn infer_wd(&self, prg: &Module, ctx: &mut Ctx) -> Result<Match, TypeError> {
-        let Match { span, cases, omit_absurd } = &self.inner;
+    pub fn infer_wd(&self, prg: &Module, ctx: &mut Ctx) -> Result<(Vec<Case>, bool), TypeError> {
+        let WithDestructee { cases, omit_absurd, .. } = &self;
 
         // Check that this comatch is on a codata type
-        let codata = prg.codata(&self.destructee.name, *span)?;
+        let codata = prg.codata(&self.destructee.name, self.destructee.span())?;
 
         // Check exhaustiveness
         let dtors_expected: HashSet<_> = codata.dtors.iter().cloned().collect();
@@ -97,7 +100,7 @@ impl<'a> WithDestructee<'a> {
                 dtors_missing.cloned().collect(),
                 dtors_exessive.cloned().collect(),
                 dtors_duplicate,
-                span,
+                &self.destructee.span(),
             ));
         }
 
@@ -106,9 +109,14 @@ impl<'a> WithDestructee<'a> {
 
         if *omit_absurd {
             for name in dtors_missing.cloned() {
-                let Dtor { params, .. } = prg.dtor(&name, *span)?;
+                let Dtor { params, .. } = prg.dtor(&name, self.destructee.span)?;
 
-                let case = Case { span: *span, name, params: params.instantiate(), body: None };
+                let case = Case {
+                    span: self.destructee.span(),
+                    name,
+                    params: params.instantiate(),
+                    body: None,
+                };
                 cases.push((case, true));
             }
         }
@@ -181,7 +189,7 @@ impl<'a> WithDestructee<'a> {
             }
         }
 
-        Ok(Match { span: *span, cases: cases_out, omit_absurd: *omit_absurd })
+        Ok((cases_out, *omit_absurd))
     }
 }
 

@@ -149,7 +149,7 @@ impl CollectInfo for Codata {
 
 impl CollectInfo for Def {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Def { name, span, self_param, body, params, ret_typ, .. } = self;
+        let Def { name, span, self_param, cases, params, ret_typ, .. } = self;
         if let Some(span) = span {
             // Add Item
             let item = Item::Def { name: name.clone(), type_name: self_param.typ.name.clone() };
@@ -160,7 +160,7 @@ impl CollectInfo for Def {
         };
 
         self_param.collect_info(collector);
-        body.collect_info(collector);
+        cases.collect_info(collector);
         params.collect_info(collector);
         ret_typ.collect_info(collector);
     }
@@ -168,7 +168,7 @@ impl CollectInfo for Def {
 
 impl CollectInfo for Codef {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Codef { name, span, typ, body, params, .. } = self;
+        let Codef { name, span, typ, cases, params, .. } = self;
         if let Some(span) = span {
             // Add item
             let item = Item::Codef { name: name.clone(), type_name: typ.name.clone() };
@@ -178,7 +178,7 @@ impl CollectInfo for Codef {
             collector.add_info(*span, info);
         }
         typ.collect_info(collector);
-        body.collect_info(collector);
+        cases.collect_info(collector);
         params.collect_info(collector)
     }
 }
@@ -390,7 +390,7 @@ impl CollectInfo for Anno {
 
 impl CollectInfo for LocalMatch {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let LocalMatch { span, on_exp, ret_typ, body, inferred_type, .. } = self;
+        let LocalMatch { span, on_exp, ret_typ, cases, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             // Add info
             let info = LocalMatchInfo { typ: typ.print_to_string(None) };
@@ -398,28 +398,19 @@ impl CollectInfo for LocalMatch {
         }
         on_exp.collect_info(collector);
         ret_typ.collect_info(collector);
-        body.collect_info(collector)
+        cases.collect_info(collector)
     }
 }
 
 impl CollectInfo for LocalComatch {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let LocalComatch { span, body, inferred_type, .. } = self;
+        let LocalComatch { span, cases, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             // Add info
             let info = LocalComatchInfo { typ: typ.print_to_string(None) };
             collector.add_info(*span, info)
         }
-        body.collect_info(collector)
-    }
-}
-
-impl CollectInfo for Match {
-    fn collect_info(&self, collector: &mut InfoCollector) {
-        let Match { cases, .. } = self;
-        for case in cases.iter() {
-            case.collect_info(collector)
-        }
+        cases.collect_info(collector)
     }
 }
 

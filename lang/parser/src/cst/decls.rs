@@ -144,7 +144,8 @@ pub struct Def {
     pub params: Telescope,
     pub scrutinee: Scrutinee,
     pub ret_typ: Rc<exp::Exp>,
-    pub body: exp::Match,
+    pub cases: Vec<exp::Case>,
+    pub omit_absurd: bool,
 }
 
 /// Scrutinee within a toplevel definition
@@ -180,7 +181,8 @@ pub struct Codef {
     pub attr: Attributes,
     pub params: Telescope,
     pub typ: TypApp,
-    pub body: exp::Match,
+    pub cases: Vec<exp::Case>,
+    pub omit_absurd: bool,
 }
 
 /// Toplevel let-bound expression.

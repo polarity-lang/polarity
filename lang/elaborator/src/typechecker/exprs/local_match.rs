@@ -27,7 +27,7 @@ use crate::result::TypeError;
 
 impl CheckInfer for LocalMatch {
     fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        let LocalMatch { span, name, on_exp, motive, body, .. } = self;
+        let LocalMatch { span, name, on_exp, motive, cases, omit_absurd, .. } = self;
         let on_exp_out = on_exp.infer(prg, ctx)?;
         let typ_app_nf = on_exp_out
             .typ()
@@ -83,8 +83,9 @@ impl CheckInfer for LocalMatch {
             }
         };
 
-        let body_out = WithScrutinee { inner: body, scrutinee: typ_app_nf.clone() }
-            .check_ws(prg, ctx, body_t)?;
+        let (cases, omit_absurd) =
+            WithScrutinee { cases, omit_absurd: *omit_absurd, scrutinee: typ_app_nf.clone() }
+                .check_ws(prg, ctx, body_t)?;
 
         Ok(LocalMatch {
             span: *span,
@@ -93,7 +94,8 @@ impl CheckInfer for LocalMatch {
             on_exp: on_exp_out,
             motive: motive_out,
             ret_typ: ret_typ_out.into(),
-            body: body_out,
+            cases,
+            omit_absurd,
             inferred_type: Some(typ_app),
         })
     }
@@ -104,17 +106,23 @@ impl CheckInfer for LocalMatch {
 }
 
 pub struct WithScrutinee<'a> {
-    pub inner: &'a Match,
+    pub cases: &'a Vec<Case>,
+    pub omit_absurd: bool,
     pub scrutinee: TypCtor,
 }
 
 /// Check a pattern match
 impl<'a> WithScrutinee<'a> {
-    pub fn check_ws(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Match, TypeError> {
-        let Match { span, cases, omit_absurd } = &self.inner;
+    pub fn check_ws(
+        &self,
+        prg: &Module,
+        ctx: &mut Ctx,
+        t: Rc<Exp>,
+    ) -> Result<(Vec<Case>, bool), TypeError> {
+        let WithScrutinee { cases, omit_absurd, .. } = &self;
 
         // Check that this match is on a data type
-        let data = prg.data(&self.scrutinee.name, *span)?;
+        let data = prg.data(&self.scrutinee.name, self.scrutinee.span())?;
 
         // Check exhaustiveness
         let ctors_expected: HashSet<_> = data.ctors.iter().cloned().collect();
@@ -138,7 +146,7 @@ impl<'a> WithScrutinee<'a> {
                 ctors_missing.cloned().collect(),
                 ctors_undeclared.cloned().collect(),
                 ctors_duplicate,
-                span,
+                &self.scrutinee.span(),
             ));
         }
 
@@ -147,9 +155,14 @@ impl<'a> WithScrutinee<'a> {
 
         if *omit_absurd {
             for name in ctors_missing.cloned() {
-                let Ctor { params, .. } = prg.ctor(&name, *span)?;
+                let Ctor { params, .. } = prg.ctor(&name, self.scrutinee.span())?;
 
-                let case = Case { span: *span, name, params: params.instantiate(), body: None };
+                let case = Case {
+                    span: self.scrutinee.span(),
+                    name,
+                    params: params.instantiate(),
+                    body: None,
+                };
                 cases.push((case, true));
             }
         }
@@ -182,7 +195,7 @@ impl<'a> WithScrutinee<'a> {
             }
         }
 
-        Ok(Match { span: *span, cases: cases_out, omit_absurd: *omit_absurd })
+        Ok((cases_out, *omit_absurd))
     }
 }
 
