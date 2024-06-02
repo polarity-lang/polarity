@@ -1,6 +1,10 @@
+use std::fmt;
+
 use logos::Logos;
+use num_bigint::BigUint;
 
 #[derive(Logos, Debug, PartialEq)]
+#[logos(skip r"\s*")] // Ignore this regex pattern between tokens
 pub enum Token {
     // Keywords
     //
@@ -73,16 +77,16 @@ pub enum Token {
     // Names
     //
     //
-    #[regex(r"[A-ZΑ-Ω𝔹ℕ𝕍∃∀×][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*")]
-    UpperCaseName,
-    #[regex(r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*")]
-    LowerCaseName,
+    #[regex(r"[A-ZΑ-Ω𝔹ℕ𝕍∃∀×][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*", |lex| lex.slice().to_string())]
+    UpperCaseName(String),
+    #[regex(r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*", |lex| lex.slice().to_string())]
+    LowerCaseName(String),
 
     // Literals
     //
     //
-    #[regex(r"0|[1-9][0-9]*")]
-    NumLit,
+    #[regex(r"0|[1-9][0-9]*", |lex| BigUint::parse_bytes(lex.slice().as_ref(), 10).unwrap())]
+    NumLit(BigUint),
 
     // Comments and DocComments
     //
@@ -91,10 +95,10 @@ pub enum Token {
     Comment,
     #[regex(r"-- \|[^\n\r]*[\n\r]*")]
     DocComment,
+}
 
-    // Whitespace
-    //
-    //
-    #[regex(r"\s*")]
-    Whitespace,
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
