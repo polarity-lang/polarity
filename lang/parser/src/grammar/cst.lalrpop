@@ -5,6 +5,7 @@ use num_bigint::BigUint;
 use crate::cst::exp::*;
 use crate::cst::decls::*;
 use crate::cst::ident::*;
+use crate::lexer::{Token, LexicalError};
 
 use super::util::span;
 
@@ -12,26 +13,66 @@ use super::util::span;
 grammar;
 
 // Tokens
-match {
-    // Symbols
-    "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ".", "?",
-    "->", "\\", "#",
-    // Names
-    "_",
-    r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*",
-    r"[A-ZΑ-Ω𝔹ℕ𝕍∃∀×][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*",
-    // Literals
-    r"0|[1-9][0-9]*",
+extern {
+  type Location = usize;
+  type Error = LexicalError;
+
+  enum Token {
     // Keywords
-    "data", "codata",
-    "def", "codef", "let",
-    "match", "as", "comatch",
-    "absurd", "..absurd",
-    "Type",
-    // Comments and whitespace
-    r"\s*" => { }, // Skip whitespace
-    r"-- \|[^\n\r]*[\n\r]*", // Don't skip doc-comments
-    r"--(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*" => { }, // Skip `--` comments
+    //
+    //
+    "data" => Token::Data,
+    "codata" => Token::Codata,
+    "def" => Token::Def,
+    "codef" => Token::Codef,
+    "let" => Token::Let,
+    "match" => Token::Match,
+    "as" => Token::As,
+    "comatch" => Token::Comatch,
+    "absurd" => Token::Absurd,
+    "..absurd" => Token::DotsAbsurd,
+    "Type" => Token::Type,
+
+    // Parens, Braces and Brackets
+    //
+    //
+    "(" => Token::LParen,
+    ")" => Token::RParen,
+    "{" => Token::LBrace,
+    "}" => Token::RBrace,
+    "[" => Token::LBracket,
+    "]" => Token::RBracket,
+
+    // Symbols
+    //
+    //
+    ";" => Token::Semicolon,
+    ":=" => Token::ColonEq,
+    "=>" => Token::DoubleRightArrow,
+    "," => Token::Comma,
+    ":" => Token::Colon,
+    "." => Token::Dot,
+    "?" => Token::QuestionMark,
+    "->" => Token::RightArrow,
+    "\\" => Token::Backslash,
+    "#" => Token::Hash,
+    "_" => Token::Underscore,
+
+    // Names
+    //
+    //
+    "UpperCaseName" => Token::UpperCaseName(<String>),
+    "LowerCaseName" => Token::LowerCaseName(<String>),
+
+    // Literals
+    //
+    //
+    "NumLit" => Token::NumLit(<BigUint>),
+
+    // Comments and DocComments
+    "Comment" => Token::Comment,
+    "DocComment" => Token::DocComment(<String>),
+  }
 }
 
 // Utils
@@ -76,13 +117,13 @@ OptTelescopeInst: Vec<BindingSite> = <params: Parens<Comma<BindingSite>>?> => pa
 Args: Vec<Rc<Exp>> = ParenthesizedArgs<Exp>;
 OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
 
-Attr: String = <s:r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*"> => s.to_owned();
+Attr: String = <s:"LowerCaseName"> => s.to_owned();
 Attributes: Attributes = "#" <attrs: BracketedArgs<Attr>> => Attributes { attrs };
 OptAttributes: Attributes = <attr: Attributes? > => attr.unwrap_or_default();
 
 OmitAbsurd: bool = <absurd: "..absurd"?> => absurd.is_some();
 
-DocCommentHelper: String = <doc: r"-- \|[^\n\r]*[\n\r]*"> => doc.strip_prefix("-- |").unwrap().trim().to_owned();
+DocCommentHelper: String = <doc: "DocComment"> => doc.strip_prefix("-- |").unwrap().trim().to_owned();
 DocComment: DocComment = <docs: DocCommentHelper+> => DocComment { docs };
 
 // Modules
@@ -235,8 +276,8 @@ TypeUniv: TypeUniv = <l: @L> "Type" <r: @R> =>
 Hole: Hole = <l: @L> "?" <r: @R> =>
   Hole { span: span(l, r) };
 
-NatLit: NatLit = <l: @L> <s: r"0|[1-9][0-9]*"> <r: @R> =>
-  NatLit { span: span(l, r), val: BigUint::parse_bytes(s.as_ref(), 10).unwrap() };
+NatLit: NatLit = <l: @L> <n: "NumLit"> <r: @R> =>
+  NatLit { span: span(l, r), val: n };
 
 // Helpers
 //
@@ -257,5 +298,5 @@ Ident: Ident = {
     <s: LowerIdent> => s.to_owned(),
     <s: UpperIdent> => s.to_owned(),
 }
-LowerIdent: Ident = <s:r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*"> => Ident { id: s.to_owned() };
-UpperIdent: Ident = <s:r"[A-ZΑ-Ω𝔹ℕ𝕍∃∀×][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*"> => Ident { id: s.to_owned() };
+LowerIdent: Ident = <s: "LowerCaseName" > => Ident { id: s.to_owned() };
+UpperIdent: Ident = <s: "UpperCaseName"> => Ident { id: s.to_owned() };

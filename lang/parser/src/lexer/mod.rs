@@ -9,7 +9,13 @@ pub enum LexicalError {
     InvalidToken,
 }
 
-#[derive(Logos, Debug, PartialEq)]
+impl fmt::Display for LexicalError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Logos, Clone, Debug, PartialEq)]
 #[logos(skip r"\s*", error = LexicalError)]
 pub enum Token {
     // Keywords
@@ -99,8 +105,8 @@ pub enum Token {
     //
     #[regex(r"--(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*")]
     Comment,
-    #[regex(r"-- \|[^\n\r]*[\n\r]*")]
-    DocComment,
+    #[regex(r"-- \|[^\n\r]*[\n\r]*", |lex| lex.slice().to_string())]
+    DocComment(String),
 }
 
 impl fmt::Display for Token {
