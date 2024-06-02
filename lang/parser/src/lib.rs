@@ -1,5 +1,6 @@
 pub mod cst;
 mod grammar;
+mod lexer;
 mod result;
 
 use std::rc::Rc;
