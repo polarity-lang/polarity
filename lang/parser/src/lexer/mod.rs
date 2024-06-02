@@ -16,7 +16,7 @@ impl fmt::Display for LexicalError {
 }
 
 #[derive(Logos, Clone, Debug, PartialEq)]
-#[logos(skip r"\s*", error = LexicalError)]
+#[logos(skip r"\s*", skip r"--(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*", error = LexicalError)]
 pub enum Token {
     // Keywords
     //
@@ -100,11 +100,9 @@ pub enum Token {
     #[regex(r"0|[1-9][0-9]*", |lex| BigUint::parse_bytes(lex.slice().as_ref(), 10).unwrap())]
     NumLit(BigUint),
 
-    // Comments and DocComments
+    // DocComments
     //
     //
-    #[regex(r"--(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*")]
-    Comment,
     #[regex(r"-- \|[^\n\r]*[\n\r]*", |lex| lex.slice().to_string())]
     DocComment(String),
 }
