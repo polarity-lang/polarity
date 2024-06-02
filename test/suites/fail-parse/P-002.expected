@@ -1,1 +1,1 @@
-Unexpected end of file. Expected "}", r#"-- \\|[^\\n\\r]*[\\n\\r]*"#, r#"[A-ZΑ-Ω𝔹ℕ𝕍∃∀×][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*"#
+Unexpected end of file. Expected "DocComment", "UpperCaseName", "}"
