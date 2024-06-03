@@ -1,7 +1,7 @@
-use lalrpop_util::lexer::Token;
-
 use miette::{Diagnostic, SourceOffset, SourceSpan};
 use thiserror::Error;
+
+use crate::lexer::{LexicalError, Token};
 
 fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
     let vec: Vec<_> = iter.into_iter().collect();
@@ -51,11 +51,11 @@ pub enum ParseError {
     },
     #[error("{error}")]
     #[diagnostic(code("P-005"))]
-    User { error: String },
+    User { error: LexicalError },
 }
 
-impl From<lalrpop_util::ParseError<usize, Token<'_>, &'static str>> for ParseError {
-    fn from(err: lalrpop_util::ParseError<usize, Token<'_>, &'static str>) -> Self {
+impl From<lalrpop_util::ParseError<usize, Token, LexicalError>> for ParseError {
+    fn from(err: lalrpop_util::ParseError<usize, Token, LexicalError>) -> Self {
         use lalrpop_util::ParseError::*;
         match err {
             InvalidToken { location } => ParseError::InvalidToken { location: location.into() },
@@ -81,7 +81,7 @@ trait ToMietteExt {
     fn span(&self) -> SourceSpan;
 }
 
-impl ToMietteExt for (usize, Token<'_>, usize) {
+impl ToMietteExt for (usize, Token, usize) {
     fn span(&self) -> SourceSpan {
         (self.0, self.2 - self.0).into()
     }
