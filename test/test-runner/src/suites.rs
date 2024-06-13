@@ -7,19 +7,18 @@ use serde_derive::Deserialize;
 
 // Case
 //
-//
+// Individual testcases which are combined in a testsuite.
 
-pub fn load_case<'a, P: AsRef<Path> + 'a>(
-    suite: &'a str,
-    path: P,
-) -> impl Iterator<Item = Case> + 'a {
-    case_paths(path).map(|path| Case::new(suite.to_owned(), path))
-}
-
+/// One individual testcase within a testsuite.
+/// The testing semantics (i.e. whether the case should fail or succeed)
+/// is determined by the testsuite of which it is a part.
 #[derive(Clone)]
 pub struct Case {
+    /// The name of the testsuite to which this testcase belongs.
     pub suite: String,
+    /// The name of this testcase.
     pub name: String,
+    /// The path of the `<file>.pol` file.
     pub path: PathBuf,
 }
 
@@ -48,20 +47,9 @@ impl Case {
     }
 }
 
-fn case_paths<P: AsRef<Path>>(path: P) -> impl Iterator<Item = PathBuf> {
-    fs::read_dir(path).unwrap().filter_map(|entry| {
-        let path = entry.unwrap().path();
-        if path.is_file() && path.extension() == Some(OsStr::new("pol")) {
-            Some(path)
-        } else {
-            None
-        }
-    })
-}
-
 // Suites
 //
-//
+// A testsuite consisting of individual cases.
 
 pub fn load<P: AsRef<Path>>(path: P) -> impl Iterator<Item = Suite> {
     let suite_paths = fs::read_dir(path).unwrap().filter_map(|entry| {
@@ -103,6 +91,7 @@ impl Suite {
     pub fn new(path: PathBuf) -> Self {
         // Compute the name of the testsuite
         let name = path.file_name().unwrap().to_str().unwrap().to_owned();
+
         // Read in the configuration from the `suite.toml` file.
         let config_path = path.join("suite.toml");
         let config = if config_path.is_file() {
@@ -111,8 +100,20 @@ impl Suite {
         } else {
             Config::default()
         };
+
         // Read in the cases which belong to this testsuite.
-        let cases: Vec<Case> = load_case(&name, &path).collect();
+        // Every file in the path ending in `.pol` is a testcase.
+        let case_paths = {
+            fs::read_dir(&path).unwrap().filter_map(|entry| {
+                let path = entry.unwrap().path();
+                if path.is_file() && path.extension() == Some(OsStr::new("pol")) {
+                    Some(path)
+                } else {
+                    None
+                }
+            })
+        };
+        let cases: Vec<Case> = case_paths.map(|path| Case::new(name.to_owned(), path)).collect();
 
         Suite { name, path, config, cases }
     }
