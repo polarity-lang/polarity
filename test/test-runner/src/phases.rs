@@ -8,8 +8,6 @@ use parser::cst;
 use renaming::Rename;
 use syntax::ast::Module;
 
-use super::infallible::NoError;
-
 pub trait Phase {
     type In;
     type Out: TestOutput;
@@ -233,6 +231,17 @@ impl Phase for Check {
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
         elaborator::typechecker::check(&input)
+    }
+}
+
+#[derive(Debug)]
+pub enum NoError {}
+
+impl Error for NoError {}
+
+impl fmt::Display for NoError {
+    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        unreachable!()
     }
 }
 
