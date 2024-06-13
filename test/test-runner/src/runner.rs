@@ -31,7 +31,7 @@ impl Runner {
         let mut writer = index.writer();
 
         for suite in suites.values() {
-            for case in suite.cases() {
+            for case in &suite.cases {
                 let content = case.content().unwrap();
                 writer.add(&suite.name, &case, &content);
             }

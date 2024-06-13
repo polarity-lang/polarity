@@ -95,11 +95,15 @@ pub struct Suite {
     pub path: PathBuf,
     /// The parsed content of the `suite.toml` file.
     pub config: Config,
+    /// The individual cases which belong to this testsuite.
+    pub cases: Vec<Case>,
 }
 
 impl Suite {
     pub fn new(path: PathBuf) -> Self {
+        // Compute the name of the testsuite
         let name = path.file_name().unwrap().to_str().unwrap().to_owned();
+        // Read in the configuration from the `suite.toml` file.
         let config_path = path.join("suite.toml");
         let config = if config_path.is_file() {
             let text = fs::read_to_string(config_path).unwrap();
@@ -107,10 +111,9 @@ impl Suite {
         } else {
             Config::default()
         };
-        Suite { name, path, config }
-    }
+        // Read in the cases which belong to this testsuite.
+        let cases: Vec<Case> = load_case(&name, &path).collect();
 
-    pub fn cases(&self) -> impl Iterator<Item = Case> + '_ {
-        load_case(&self.name, &self.path)
+        Suite { name, path, config, cases }
     }
 }
