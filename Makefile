@@ -14,4 +14,4 @@ lint:
 .PHONY: test
 test:
 	@cargo test --all
-	@cargo run -p test-runner -- run
+	@cargo run -p test-runner
