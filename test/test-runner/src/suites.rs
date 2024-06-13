@@ -66,6 +66,7 @@ pub fn load<P: AsRef<Path>>(path: P) -> impl Iterator<Item = Suite> {
 /// Each testsuite is configured by a `suite.toml` file whose contents
 /// are described by this struct.
 #[derive(Default, Deserialize, Clone)]
+#[allow(dead_code)]
 pub struct Config {
     /// In which phase the cases of the testsuite are supposed to fail.
     /// If this is none, then the testcases should succeed.
@@ -79,8 +80,6 @@ pub struct Config {
 pub struct Suite {
     /// The name of the testsuite.
     pub name: String,
-    /// The directory in which the `suite.toml` for this testsuite is located.
-    pub path: PathBuf,
     /// The parsed content of the `suite.toml` file.
     pub config: Config,
     /// The individual cases which belong to this testsuite.
@@ -115,6 +114,6 @@ impl Suite {
         };
         let cases: Vec<Case> = case_paths.map(|path| Case::new(name.to_owned(), path)).collect();
 
-        Suite { name, path, config, cases }
+        Suite { name, config, cases }
     }
 }

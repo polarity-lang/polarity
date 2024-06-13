@@ -9,6 +9,9 @@ use super::suites::{self, Case, Suite};
 
 pub struct Runner {
     suites: HashMap<String, Suite>,
+    /// An index of all the testsuites.
+    /// This index is used for the `filter` commandline argument
+    /// which can be used to filter the testcases which should be run.
     index: Index,
 }
 
@@ -33,7 +36,7 @@ impl Runner {
         for suite in suites.values() {
             for case in &suite.cases {
                 let content = case.content().unwrap();
-                writer.add(&suite.name, &case, &content);
+                writer.add(&suite.name, case, &content);
             }
         }
 

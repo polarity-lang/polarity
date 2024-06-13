@@ -33,10 +33,6 @@ pub struct PhaseReport {
     pub output: String,
 }
 
-pub trait TestOutput {
-    fn test_output(&self) -> String;
-}
-
 impl<O> Phases<O>
 where
     O: TestOutput,
@@ -111,12 +107,6 @@ impl Report {
     }
 }
 
-impl TestOutput for String {
-    fn test_output(&self) -> String {
-        self.to_owned()
-    }
-}
-
 #[derive(Debug)]
 pub enum Failure {
     Mismatch {
@@ -165,17 +155,11 @@ impl<P: Phase> Expect<P> {
     }
 }
 
+// Parse Phase
+//
+// This phase transforms a string into a cst (concrete syntax tree).
+// We use this phase to test the implementation of the lexer and parser.
 pub struct Parse {
-    name: &'static str,
-}
-pub struct Lower {
-    name: &'static str,
-}
-pub struct Check {
-    name: &'static str,
-}
-
-pub struct Print {
     name: &'static str,
 }
 
@@ -198,6 +182,16 @@ impl Phase for Parse {
     }
 }
 
+/// Lower Phase
+///
+/// This phase lowers a module from its cst (concrete syntax tree) representation
+/// to its ast (abstract syntax tree) representation. We use this phase to test
+/// the implementation of lowering.
+
+pub struct Lower {
+    name: &'static str,
+}
+
 impl Phase for Lower {
     type In = cst::decls::Module;
     type Out = Module;
@@ -216,6 +210,16 @@ impl Phase for Lower {
     }
 }
 
+// Check Phase
+//
+// This phase elaborates a module which has not been typechecked and
+// generates a type-annotated module. We use this phase to test the
+// elaborator
+
+pub struct Check {
+    name: &'static str,
+}
+
 impl Phase for Check {
     type In = Module;
     type Out = Module;
@@ -232,6 +236,17 @@ impl Phase for Check {
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
         elaborator::typechecker::check(&input)
     }
+}
+
+// Print Phase
+//
+// This phase prettyprints a module to a string and cannot fail.
+// We use this phase to test whether the output of the print phase
+// can be parsed again by the parser. This ensures that the prettyprinter
+// is implemented correctly.
+
+pub struct Print {
+    name: &'static str,
 }
 
 #[derive(Debug)]
@@ -260,6 +275,20 @@ impl Phase for Print {
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
         Ok((input.uri.clone(), printer::Print::print_to_string(&input.rename(), None)))
+    }
+}
+
+// TestOutput
+//
+//
+
+pub trait TestOutput {
+    fn test_output(&self) -> String;
+}
+
+impl TestOutput for String {
+    fn test_output(&self) -> String {
+        self.to_owned()
     }
 }
 
