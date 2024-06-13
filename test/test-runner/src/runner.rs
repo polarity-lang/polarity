@@ -56,14 +56,14 @@ impl Runner {
         let mut suite_results = Vec::new();
         let mut case_results = Vec::new();
         let mut curr_suite = self.suites[&results.first().unwrap().suite].clone();
-        let mut curr_config = curr_suite.config();
+        let mut curr_config = curr_suite.config.clone();
 
         for case in results {
             if case.suite != curr_suite.name {
                 suite_results.push(SuiteResult { suite: curr_suite, results: case_results });
                 curr_suite = self.suites[&case.suite].clone();
                 case_results = Vec::new();
-                curr_config = curr_suite.config();
+                curr_config = curr_suite.config.clone();
             }
             let report = self.run_case(&curr_config, &case);
             if run_config.debug {

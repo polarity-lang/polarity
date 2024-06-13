@@ -1,1 +1,2 @@
+description = "Tests which fail during the lexing and parsing phase"
 fail = "parse"

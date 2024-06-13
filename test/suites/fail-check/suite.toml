@@ -1,1 +1,2 @@
+description = "Tests which fail during the typechecking phase"
 fail = "check"
