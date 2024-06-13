@@ -3,10 +3,9 @@ use std::path::Path;
 use syntax::common::HashMap;
 use url::Url;
 
-use super::cases::Case;
 use super::index::Index;
 use super::phases::*;
-use super::suites::{self, Suite};
+use super::suites::{self, Case, Suite};
 
 pub struct Runner {
     suites: HashMap<String, Suite>,
