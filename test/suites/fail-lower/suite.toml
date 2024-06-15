@@ -1,1 +1,2 @@
+description = "Tests which fail during the lowering phase"
 fail = "lower"

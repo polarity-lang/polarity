@@ -3,7 +3,7 @@ use tantivy::query::QueryParser;
 use tantivy::schema::*;
 use tantivy::{LeasedItem, ReloadPolicy};
 
-use super::cases::Case;
+use super::suites::Case;
 
 // 50 MB
 const INDEX_WRITER_MEM: usize = 50_000_000;

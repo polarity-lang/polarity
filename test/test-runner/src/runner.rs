@@ -3,13 +3,15 @@ use std::path::Path;
 use syntax::common::HashMap;
 use url::Url;
 
-use super::cases::Case;
 use super::index::Index;
 use super::phases::*;
-use super::suites::{self, Suite};
+use super::suites::{self, Case, Suite};
 
 pub struct Runner {
     suites: HashMap<String, Suite>,
+    /// An index of all the testsuites.
+    /// This index is used for the `filter` commandline argument
+    /// which can be used to filter the testcases which should be run.
     index: Index,
 }
 
@@ -32,9 +34,9 @@ impl Runner {
         let mut writer = index.writer();
 
         for suite in suites.values() {
-            for case in suite.cases() {
+            for case in &suite.cases {
                 let content = case.content().unwrap();
-                writer.add(&suite.name, &case, &content);
+                writer.add(&suite.name, case, &content);
             }
         }
 
@@ -57,14 +59,14 @@ impl Runner {
         let mut suite_results = Vec::new();
         let mut case_results = Vec::new();
         let mut curr_suite = self.suites[&results.first().unwrap().suite].clone();
-        let mut curr_config = curr_suite.config();
+        let mut curr_config = curr_suite.config.clone();
 
         for case in results {
             if case.suite != curr_suite.name {
                 suite_results.push(SuiteResult { suite: curr_suite, results: case_results });
                 curr_suite = self.suites[&case.suite].clone();
                 case_results = Vec::new();
-                curr_config = curr_suite.config();
+                curr_config = curr_suite.config.clone();
             }
             let report = self.run_case(&curr_config, &case);
             if run_config.debug {
