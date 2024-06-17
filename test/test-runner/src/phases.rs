@@ -20,8 +20,14 @@ pub trait Phase {
     fn run(input: Self::In) -> Result<Self::Out, Self::Err>;
 }
 
-pub struct Phases<O> {
+/// Represents a partially completed run of a testcase, where we have
+/// finished running a prefix of all the phases configured for this testcase.
+/// The struct is parameterized over the output type of the last phase that
+/// has been run.
+pub struct PartialRun<O> {
+    /// The result of the last run.
     result: Result<O, PhasesError>,
+    /// A textual report about all the previously run phases.
     report_phases: Vec<PhaseReport>,
 }
 
@@ -35,22 +41,27 @@ pub struct PhaseReport {
     pub output: String,
 }
 
-impl<O> Phases<O>
+impl<O> PartialRun<O>
 where
     O: TestOutput,
 {
-    pub fn start(input: O) -> Phases<O> {
-        Phases { result: Ok(input), report_phases: vec![] }
+    /// Start a new partial run for a testcase with the initial input.
+    pub fn start(input: O) -> PartialRun<O> {
+        PartialRun { result: Ok(input), report_phases: vec![] }
     }
 
-    pub fn then<O2, E, P>(mut self, config: &suites::Config, case: &Case, phase: P) -> Phases<O2>
+    /// Extend this partial run by running one additional phase.
+    pub fn then<O2, E, P>(mut self, config: &suites::Config, case: &Case, phase: P) -> PartialRun<O2>
     where
         O2: TestOutput,
         E: Error + 'static,
         P: Phase<In = O, Out = O2, Err = E>,
     {
+        // Whether we expect a success in this phase.
         let success = config.fail.as_ref().map(|fail| fail != phase.name()).unwrap_or(true);
 
+        // If we are in the phase that is expected to fail, we check
+        // whether there is an expected error output.
         let output = config.fail.as_ref().and_then(|fail| {
             if fail == phase.name() {
                 case.expected()
@@ -59,6 +70,7 @@ where
             }
         });
 
+        // Run the phase and handle the result
         let result = self.result.and_then(|out| match P::run(out) {
             Ok(out2) => {
                 self.report_phases
@@ -90,7 +102,7 @@ where
             }
         });
 
-        Phases { result, report_phases: self.report_phases }
+        PartialRun { result, report_phases: self.report_phases }
     }
 
     pub fn report(self) -> Report {

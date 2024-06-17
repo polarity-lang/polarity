@@ -94,7 +94,7 @@ impl Runner {
         let uri = Url::from_file_path(canonicalized_path).unwrap();
         let input = (uri, case.content().unwrap());
 
-        Phases::start(input)
+        PartialRun::start(input)
             .then(config, case, Parse::new("parse"))
             .then(config, case, Lower::new("lower"))
             .then(config, case, Check::new("check"))
