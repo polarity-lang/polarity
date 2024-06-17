@@ -12,7 +12,7 @@ use serde_derive::Deserialize;
 /// One individual testcase within a testsuite.
 /// The testing semantics (i.e. whether the case should fail or succeed)
 /// is determined by the testsuite of which it is a part.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Case {
     /// The name of the testsuite to which this testcase belongs.
     pub suite: String,

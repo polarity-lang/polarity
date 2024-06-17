@@ -3,6 +3,8 @@ use std::path::Path;
 use syntax::common::HashMap;
 use url::Url;
 
+use crate::Args;
+
 use super::index::Index;
 use super::phases::*;
 use super::suites::{self, Case, Suite};
@@ -15,9 +17,24 @@ pub struct Runner {
     index: Index,
 }
 
-pub struct Config {
-    pub filter: String,
-    pub debug: bool,
+/// The default search string which is used to filter out testcases if
+/// the `--filter` option was not passed on the command line.
+const ALL_GLOB: &str = "*";
+
+/// Create a search index for all the testsuites
+fn create_index(suites: &HashMap<String, Suite>) -> Index {
+    let mut index = Index::new();
+    let mut writer = index.writer();
+
+    for suite in suites.values() {
+        for case in &suite.cases {
+            let content = case.content().unwrap();
+            writer.add(&suite.name, case, &content);
+        }
+    }
+
+    writer.commit();
+    index
 }
 
 impl Runner {
@@ -30,98 +47,85 @@ impl Runner {
             suites::load(suites_path.as_ref()).map(|suite| (suite.name.clone(), suite)).collect();
         suites.insert("examples".to_owned(), Suite::new(examples_path.as_ref().into()));
 
-        let mut index = Index::new();
-        let mut writer = index.writer();
-
-        for suite in suites.values() {
-            for case in &suite.cases {
-                let content = case.content().unwrap();
-                writer.add(&suite.name, case, &content);
-            }
-        }
-
-        writer.commit();
+        let index = create_index(&suites);
 
         Self { suites, index }
     }
 
-    pub fn run(&self, run_config: &Config) -> RunResult {
-        let mut results: Vec<_> = self.index.searcher().search(&run_config.filter).collect();
-        results.sort_by(|a, b| a.suite.cmp(&b.suite).then(a.name.cmp(&b.name)));
+    /// Run all testsuites
+    pub fn run(&self, args: &Args) -> RunResult {
+        let mut results: Vec<SuiteResult> = vec![];
 
+        let mut cases_count = 0;
         let mut failure_count = 0;
-        let cases_count = results.len();
 
-        if results.is_empty() {
-            return RunResult { results: vec![], failure_count: 0, cases_count: 0 };
+        for suite in self.suites.values() {
+            let result = self.run_suite(args, suite);
+
+            let (cases, failed) = result.summary();
+            cases_count += cases;
+            failure_count += failed;
+
+            results.push(result);
         }
 
-        let mut suite_results = Vec::new();
-        let mut case_results = Vec::new();
-        let mut curr_suite = self.suites[&results.first().unwrap().suite].clone();
-        let mut curr_config = curr_suite.config.clone();
-
-        for case in results {
-            if case.suite != curr_suite.name {
-                suite_results.push(SuiteResult { suite: curr_suite, results: case_results });
-                curr_suite = self.suites[&case.suite].clone();
-                case_results = Vec::new();
-                curr_config = curr_suite.config.clone();
-            }
-            let report = self.run_case(&curr_config, &case);
-            if run_config.debug {
-                report.print();
-            }
-            let result = report.result;
-            if result.is_err() {
-                failure_count += 1;
-            }
-            case_results.push(CaseResult { result, case })
-        }
-
-        suite_results.push(SuiteResult { suite: curr_suite, results: case_results });
-
-        RunResult { results: suite_results, cases_count, failure_count }
+        RunResult { results, cases_count, failure_count }
     }
 
+    /// Run one individual testsuite
+    pub fn run_suite(&self, args: &Args, suite: &suites::Suite) -> SuiteResult {
+        // We first have to filter out those cases which should not be run.
+        let search_string = match &args.filter {
+            None => ALL_GLOB,
+            Some(str) => str,
+        };
+        let matching_cases: Vec<Case> = self.index.searcher().search(search_string).collect();
+
+        let mut results: Vec<CaseResult> = vec![];
+
+        for case in &suite.cases {
+            if !matching_cases.contains(case) {
+                continue;
+            }
+
+            let report = self.run_case(&suite.config, case);
+
+            if args.debug {
+                report.print();
+            }
+
+            let result = CaseResult { case: case.clone(), result: report.result };
+            results.push(result);
+        }
+        SuiteResult { suite: suite.clone(), results }
+    }
+
+    /// Run one individual testcase within a testsuite
     pub fn run_case(&self, config: &suites::Config, case: &Case) -> Report {
         let canonicalized_path = case.path.clone().canonicalize().unwrap();
         let uri = Url::from_file_path(canonicalized_path).unwrap();
         let input = (uri, case.content().unwrap());
 
-        Phases::start(input)
-            .then(expect(config, case, Parse::new("parse")))
-            .then(expect(config, case, Lower::new("lower")))
-            .then(expect(config, case, Check::new("check")))
-            .then(expect(config, case, Print::new("print")))
-            .then(expect(config, case, Parse::new("reparse")))
-            .then(expect(config, case, Lower::new("relower")))
-            .then(expect(config, case, Check::new("recheck")))
+        PartialRun::start(input)
+            .then(config, case, Parse::new("parse"))
+            .then(config, case, Lower::new("lower"))
+            .then(config, case, Check::new("check"))
+            .then(config, case, Print::new("print"))
+            .then(config, case, Parse::new("reparse"))
+            .then(config, case, Lower::new("relower"))
+            .then(config, case, Check::new("recheck"))
             .report()
     }
 }
 
-pub fn expect<P: Phase>(config: &suites::Config, case: &Case, p: P) -> Expect<P> {
-    let success = config.fail.as_ref().map(|fail| fail != p.name()).unwrap_or(true);
-    let output =
-        config.fail.as_ref().and_then(|fail| if fail == p.name() { case.expected() } else { None });
-    Expect::new(p, success, output)
-}
+// Run Result
+//
+//
 
 pub struct RunResult {
     results: Vec<SuiteResult>,
     failure_count: usize,
     cases_count: usize,
-}
-
-pub struct SuiteResult {
-    suite: Suite,
-    results: Vec<CaseResult>,
-}
-
-pub struct CaseResult {
-    case: Case,
-    result: Result<String, Failure>,
 }
 
 impl RunResult {
@@ -142,17 +146,8 @@ impl RunResult {
     }
 
     pub fn print(&self) {
-        for SuiteResult { suite, results } in &self.results {
-            println!("Suite \"{}\":", suite.name);
-            let mut success_count = 0;
-            for CaseResult { case, result } in results {
-                match result {
-                    Ok(_) => success_count += 1,
-                    Err(err) => println!("{}: {}", case.name, err),
-                }
-            }
-            println!("{}/{} successful", success_count, results.len());
-            println!();
+        for suite in &self.results {
+            suite.print()
         }
         println!(
             "In total: {}/{} successful",
@@ -160,4 +155,44 @@ impl RunResult {
             self.cases_count
         );
     }
+}
+
+// Suite Result
+//
+//
+
+pub struct SuiteResult {
+    suite: Suite,
+    results: Vec<CaseResult>,
+}
+
+impl SuiteResult {
+    pub fn print(&self) {
+        let SuiteResult { suite, results } = self;
+        println!("Suite \"{}\":", suite.name);
+        let mut success_count = 0;
+        for CaseResult { case, result } in results {
+            match result {
+                Ok(_) => success_count += 1,
+                Err(err) => println!("{}: {}", case.name, err),
+            }
+        }
+        println!("{}/{} successful", success_count, results.len());
+        println!();
+    }
+
+    /// Returns the number of total cases and the number of failures.
+    pub fn summary(&self) -> (usize, usize) {
+        let failures = self.results.iter().filter(|e| e.result.is_err()).count();
+        (self.results.len(), failures)
+    }
+}
+
+// Case Result
+//
+//
+
+pub struct CaseResult {
+    case: Case,
+    result: Result<String, Failure>,
 }

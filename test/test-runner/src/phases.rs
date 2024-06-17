@@ -8,6 +8,8 @@ use parser::cst;
 use renaming::Rename;
 use syntax::ast::Module;
 
+use crate::suites::{self, Case};
+
 pub trait Phase {
     type In;
     type Out: TestOutput;
@@ -18,8 +20,14 @@ pub trait Phase {
     fn run(input: Self::In) -> Result<Self::Out, Self::Err>;
 }
 
-pub struct Phases<O> {
+/// Represents a partially completed run of a testcase, where we have
+/// finished running a prefix of all the phases configured for this testcase.
+/// The struct is parameterized over the output type of the last phase that
+/// has been run.
+pub struct PartialRun<O> {
+    /// The result of the last run.
     result: Result<O, PhasesError>,
+    /// A textual report about all the previously run phases.
     report_phases: Vec<PhaseReport>,
 }
 
@@ -33,28 +41,49 @@ pub struct PhaseReport {
     pub output: String,
 }
 
-impl<O> Phases<O>
+impl<O> PartialRun<O>
 where
     O: TestOutput,
 {
-    pub fn start(input: O) -> Phases<O> {
-        Phases { result: Ok(input), report_phases: vec![] }
+    /// Start a new partial run for a testcase with the initial input.
+    pub fn start(input: O) -> PartialRun<O> {
+        PartialRun { result: Ok(input), report_phases: vec![] }
     }
 
-    pub fn then<O2, E, P>(mut self, expect: Expect<P>) -> Phases<O2>
+    /// Extend this partial run by running one additional phase.
+    pub fn then<O2, E, P>(
+        mut self,
+        config: &suites::Config,
+        case: &Case,
+        phase: P,
+    ) -> PartialRun<O2>
     where
         O2: TestOutput,
         E: Error + 'static,
         P: Phase<In = O, Out = O2, Err = E>,
     {
+        // Whether we expect a success in this phase.
+        let success = config.fail.as_ref().map(|fail| fail != phase.name()).unwrap_or(true);
+
+        // If we are in the phase that is expected to fail, we check
+        // whether there is an expected error output.
+        let output = config.fail.as_ref().and_then(|fail| {
+            if fail == phase.name() {
+                case.expected()
+            } else {
+                None
+            }
+        });
+
+        // Run the phase and handle the result
         let result = self.result.and_then(|out| match P::run(out) {
             Ok(out2) => {
                 self.report_phases
-                    .push(PhaseReport { name: expect.phase.name(), output: out2.test_output() });
-                if !expect.success {
+                    .push(PhaseReport { name: phase.name(), output: out2.test_output() });
+                if !success {
                     return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
                 }
-                if let Some(expected) = expect.output {
+                if let Some(expected) = output {
                     let actual = out2.test_output();
                     if actual != expected {
                         return Err(PhasesError::Mismatch { expected, actual });
@@ -64,11 +93,11 @@ where
             }
             Err(err) => {
                 self.report_phases
-                    .push(PhaseReport { name: expect.phase.name(), output: err.to_string() });
-                if expect.success {
+                    .push(PhaseReport { name: phase.name(), output: err.to_string() });
+                if success {
                     return Err(PhasesError::ExpectedSuccess { got: Box::new(err) });
                 }
-                if let Some(expected) = expect.output {
+                if let Some(expected) = output {
                     let actual = err.to_string();
                     if actual != expected {
                         return Err(PhasesError::Mismatch { expected, actual });
@@ -78,7 +107,7 @@ where
             }
         });
 
-        Phases { result, report_phases: self.report_phases }
+        PartialRun { result, report_phases: self.report_phases }
     }
 
     pub fn report(self) -> Report {
@@ -141,18 +170,6 @@ enum PhasesError {
     Mismatch { expected: String, actual: String },
     ExpectedFailure { got: String },
     ExpectedSuccess { got: Box<dyn Error> },
-}
-
-pub struct Expect<P: Phase> {
-    success: bool,
-    output: Option<String>,
-    phase: P,
-}
-
-impl<P: Phase> Expect<P> {
-    pub fn new(phase: P, success: bool, output: Option<String>) -> Self {
-        Self { success, output, phase }
-    }
 }
 
 // Parse Phase

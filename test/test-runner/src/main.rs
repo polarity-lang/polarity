@@ -24,9 +24,7 @@ fn main() {
     env_logger::builder().format_timestamp(None).format_level(false).format_target(false).init();
     let args = Args::parse();
     let runner = runner::Runner::load(crate::TEST_SUITES_PATH, crate::EXAMPLES_PATH);
-    let config =
-        runner::Config { filter: args.filter.unwrap_or_else(|| "*".to_owned()), debug: args.debug };
-    let res = runner.run(&config);
+    let res = runner.run(&args);
     if args.update_expected {
         res.update_expected();
         println!("Updated expected outputs.");
