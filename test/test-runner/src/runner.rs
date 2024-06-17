@@ -3,6 +3,8 @@ use std::path::Path;
 use syntax::common::HashMap;
 use url::Url;
 
+use crate::Args;
+
 use super::index::Index;
 use super::phases::*;
 use super::suites::{self, Case, Suite};
@@ -15,10 +17,7 @@ pub struct Runner {
     index: Index,
 }
 
-pub struct Config {
-    pub filter: String,
-    pub debug: bool,
-}
+const ALL_GLOB: &str = "*";
 
 impl Runner {
     pub fn load<P1, P2>(suites_path: P1, examples_path: P2) -> Self
@@ -45,8 +44,12 @@ impl Runner {
         Self { suites, index }
     }
 
-    pub fn run(&self, run_config: &Config) -> RunResult {
-        let mut results: Vec<_> = self.index.searcher().search(&run_config.filter).collect();
+    pub fn run(&self, run_config: &Args) -> RunResult {
+        let search_string = match &run_config.filter {
+            None => ALL_GLOB,
+            Some(str) => &str,
+        };
+        let mut results: Vec<_> = self.index.searcher().search(search_string).collect();
         results.sort_by(|a, b| a.suite.cmp(&b.suite).then(a.name.cmp(&b.name)));
 
         let mut failure_count = 0;
