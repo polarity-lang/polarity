@@ -21,6 +21,22 @@ pub struct Runner {
 /// the `--filter` option was not passed on the command line.
 const ALL_GLOB: &str = "*";
 
+/// Create a search index for all the testsuites
+fn create_index(suites: &HashMap<String, Suite>) -> Index {
+    let mut index = Index::new();
+    let mut writer = index.writer();
+
+    for suite in suites.values() {
+        for case in &suite.cases {
+            let content = case.content().unwrap();
+            writer.add(&suite.name, case, &content);
+        }
+    }
+
+    writer.commit();
+    index
+}
+
 impl Runner {
     pub fn load<P1, P2>(suites_path: P1, examples_path: P2) -> Self
     where
@@ -31,17 +47,7 @@ impl Runner {
             suites::load(suites_path.as_ref()).map(|suite| (suite.name.clone(), suite)).collect();
         suites.insert("examples".to_owned(), Suite::new(examples_path.as_ref().into()));
 
-        let mut index = Index::new();
-        let mut writer = index.writer();
-
-        for suite in suites.values() {
-            for case in &suite.cases {
-                let content = case.content().unwrap();
-                writer.add(&suite.name, case, &content);
-            }
-        }
-
-        writer.commit();
+        let index = create_index(&suites);
 
         Self { suites, index }
     }

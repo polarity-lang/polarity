@@ -51,7 +51,12 @@ where
     }
 
     /// Extend this partial run by running one additional phase.
-    pub fn then<O2, E, P>(mut self, config: &suites::Config, case: &Case, phase: P) -> PartialRun<O2>
+    pub fn then<O2, E, P>(
+        mut self,
+        config: &suites::Config,
+        case: &Case,
+        phase: P,
+    ) -> PartialRun<O2>
     where
         O2: TestOutput,
         E: Error + 'static,
