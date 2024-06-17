@@ -52,8 +52,8 @@ impl Runner {
         Self { suites, index }
     }
 
-    pub fn run(&self, run_config: &Args) -> RunResult {
-        let search_string = match &run_config.filter {
+    pub fn run(&self, args: &Args) -> RunResult {
+        let search_string = match &args.filter {
             None => ALL_GLOB,
             Some(str) => &str,
         };
@@ -80,7 +80,7 @@ impl Runner {
                 curr_config = curr_suite.config.clone();
             }
             let report = self.run_case(&curr_config, &case);
-            if run_config.debug {
+            if args.debug {
                 report.print();
             }
             let result = report.result;
@@ -93,6 +93,33 @@ impl Runner {
         suite_results.push(SuiteResult { suite: curr_suite, results: case_results });
 
         RunResult { results: suite_results, cases_count, failure_count }
+    }
+
+    pub fn run_suite(&self, args: &Args, suite: &suites::Suite) -> SuiteResult {
+        // We first have to filter out those cases which should not be run.
+        let search_string = match &args.filter {
+            None => ALL_GLOB,
+            Some(str) => &str,
+        };
+        let matching_cases: Vec<Case> = self.index.searcher().search(search_string).collect();
+
+        let mut results: Vec<CaseResult> = vec![];
+
+        for case in &suite.cases {
+            if !matching_cases.contains(&case) {
+                continue;
+            }
+
+            let report = self.run_case(&suite.config, case);
+
+            if args.debug {
+                report.print();
+            }
+
+            let result = CaseResult { case: case.clone(), result: report.result };
+            results.push(result);
+        }
+        SuiteResult { suite: suite.clone(), results }
     }
 
     pub fn run_case(&self, config: &suites::Config, case: &Case) -> Report {
