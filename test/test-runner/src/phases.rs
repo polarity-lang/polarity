@@ -8,6 +8,8 @@ use parser::cst;
 use renaming::Rename;
 use syntax::ast::Module;
 
+use crate::suites::{self, Case};
+
 pub trait Phase {
     type In;
     type Out: TestOutput;
@@ -41,20 +43,30 @@ where
         Phases { result: Ok(input), report_phases: vec![] }
     }
 
-    pub fn then<O2, E, P>(mut self, expect: Expect<P>) -> Phases<O2>
+    pub fn then<O2, E, P>(mut self, config: &suites::Config, case: &Case, phase: P) -> Phases<O2>
     where
         O2: TestOutput,
         E: Error + 'static,
         P: Phase<In = O, Out = O2, Err = E>,
     {
+        let success = config.fail.as_ref().map(|fail| fail != phase.name()).unwrap_or(true);
+
+        let output = config.fail.as_ref().and_then(|fail| {
+            if fail == phase.name() {
+                case.expected()
+            } else {
+                None
+            }
+        });
+
         let result = self.result.and_then(|out| match P::run(out) {
             Ok(out2) => {
                 self.report_phases
-                    .push(PhaseReport { name: expect.phase.name(), output: out2.test_output() });
-                if !expect.success {
+                    .push(PhaseReport { name: phase.name(), output: out2.test_output() });
+                if !success {
                     return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
                 }
-                if let Some(expected) = expect.output {
+                if let Some(expected) = output {
                     let actual = out2.test_output();
                     if actual != expected {
                         return Err(PhasesError::Mismatch { expected, actual });
@@ -64,11 +76,11 @@ where
             }
             Err(err) => {
                 self.report_phases
-                    .push(PhaseReport { name: expect.phase.name(), output: err.to_string() });
-                if expect.success {
+                    .push(PhaseReport { name: phase.name(), output: err.to_string() });
+                if success {
                     return Err(PhasesError::ExpectedSuccess { got: Box::new(err) });
                 }
-                if let Some(expected) = expect.output {
+                if let Some(expected) = output {
                     let actual = err.to_string();
                     if actual != expected {
                         return Err(PhasesError::Mismatch { expected, actual });
@@ -141,18 +153,6 @@ enum PhasesError {
     Mismatch { expected: String, actual: String },
     ExpectedFailure { got: String },
     ExpectedSuccess { got: Box<dyn Error> },
-}
-
-pub struct Expect<P: Phase> {
-    success: bool,
-    output: Option<String>,
-    phase: P,
-}
-
-impl<P: Phase> Expect<P> {
-    pub fn new(phase: P, success: bool, output: Option<String>) -> Self {
-        Self { success, output, phase }
-    }
 }
 
 // Parse Phase

@@ -17,6 +17,8 @@ pub struct Runner {
     index: Index,
 }
 
+/// The default search string which is used to filter out testcases if
+/// the `--filter` option was not passed on the command line.
 const ALL_GLOB: &str = "*";
 
 impl Runner {
@@ -93,22 +95,15 @@ impl Runner {
         let input = (uri, case.content().unwrap());
 
         Phases::start(input)
-            .then(expect(config, case, Parse::new("parse")))
-            .then(expect(config, case, Lower::new("lower")))
-            .then(expect(config, case, Check::new("check")))
-            .then(expect(config, case, Print::new("print")))
-            .then(expect(config, case, Parse::new("reparse")))
-            .then(expect(config, case, Lower::new("relower")))
-            .then(expect(config, case, Check::new("recheck")))
+            .then(config, case, Parse::new("parse"))
+            .then(config, case, Lower::new("lower"))
+            .then(config, case, Check::new("check"))
+            .then(config, case, Print::new("print"))
+            .then(config, case, Parse::new("reparse"))
+            .then(config, case, Lower::new("relower"))
+            .then(config, case, Check::new("recheck"))
             .report()
     }
-}
-
-pub fn expect<P: Phase>(config: &suites::Config, case: &Case, p: P) -> Expect<P> {
-    let success = config.fail.as_ref().map(|fail| fail != p.name()).unwrap_or(true);
-    let output =
-        config.fail.as_ref().and_then(|fail| if fail == p.name() { case.expected() } else { None });
-    Expect::new(p, success, output)
 }
 
 pub struct RunResult {
