@@ -52,61 +52,39 @@ impl Runner {
         Self { suites, index }
     }
 
+    /// Run all testsuites
     pub fn run(&self, args: &Args) -> RunResult {
-        let search_string = match &args.filter {
-            None => ALL_GLOB,
-            Some(str) => &str,
-        };
-        let mut results: Vec<_> = self.index.searcher().search(search_string).collect();
-        results.sort_by(|a, b| a.suite.cmp(&b.suite).then(a.name.cmp(&b.name)));
+        let mut results: Vec<SuiteResult> = vec![];
 
+        let mut cases_count = 0;
         let mut failure_count = 0;
-        let cases_count = results.len();
 
-        if results.is_empty() {
-            return RunResult { results: vec![], failure_count: 0, cases_count: 0 };
+        for suite in self.suites.values() {
+            let result = self.run_suite(args, suite);
+
+            let (cases, failed) = result.summary();
+            cases_count += cases;
+            failure_count += failed;
+
+            results.push(result);
         }
 
-        let mut suite_results = Vec::new();
-        let mut case_results = Vec::new();
-        let mut curr_suite = self.suites[&results.first().unwrap().suite].clone();
-        let mut curr_config = curr_suite.config.clone();
-
-        for case in results {
-            if case.suite != curr_suite.name {
-                suite_results.push(SuiteResult { suite: curr_suite, results: case_results });
-                curr_suite = self.suites[&case.suite].clone();
-                case_results = Vec::new();
-                curr_config = curr_suite.config.clone();
-            }
-            let report = self.run_case(&curr_config, &case);
-            if args.debug {
-                report.print();
-            }
-            let result = report.result;
-            if result.is_err() {
-                failure_count += 1;
-            }
-            case_results.push(CaseResult { result, case })
-        }
-
-        suite_results.push(SuiteResult { suite: curr_suite, results: case_results });
-
-        RunResult { results: suite_results, cases_count, failure_count }
+        RunResult { results, cases_count, failure_count }
     }
 
+    /// Run one individual testsuite
     pub fn run_suite(&self, args: &Args, suite: &suites::Suite) -> SuiteResult {
         // We first have to filter out those cases which should not be run.
         let search_string = match &args.filter {
             None => ALL_GLOB,
-            Some(str) => &str,
+            Some(str) => str,
         };
         let matching_cases: Vec<Case> = self.index.searcher().search(search_string).collect();
 
         let mut results: Vec<CaseResult> = vec![];
 
         for case in &suite.cases {
-            if !matching_cases.contains(&case) {
+            if !matching_cases.contains(case) {
                 continue;
             }
 
@@ -122,6 +100,7 @@ impl Runner {
         SuiteResult { suite: suite.clone(), results }
     }
 
+    /// Run one individual testcase within a testsuite
     pub fn run_case(&self, config: &suites::Config, case: &Case) -> Report {
         let canonicalized_path = case.path.clone().canonicalize().unwrap();
         let uri = Url::from_file_path(canonicalized_path).unwrap();
@@ -139,20 +118,14 @@ impl Runner {
     }
 }
 
+// Run Result
+//
+//
+
 pub struct RunResult {
     results: Vec<SuiteResult>,
     failure_count: usize,
     cases_count: usize,
-}
-
-pub struct SuiteResult {
-    suite: Suite,
-    results: Vec<CaseResult>,
-}
-
-pub struct CaseResult {
-    case: Case,
-    result: Result<String, Failure>,
 }
 
 impl RunResult {
@@ -173,17 +146,8 @@ impl RunResult {
     }
 
     pub fn print(&self) {
-        for SuiteResult { suite, results } in &self.results {
-            println!("Suite \"{}\":", suite.name);
-            let mut success_count = 0;
-            for CaseResult { case, result } in results {
-                match result {
-                    Ok(_) => success_count += 1,
-                    Err(err) => println!("{}: {}", case.name, err),
-                }
-            }
-            println!("{}/{} successful", success_count, results.len());
-            println!();
+        for suite in &self.results {
+            suite.print()
         }
         println!(
             "In total: {}/{} successful",
@@ -191,4 +155,44 @@ impl RunResult {
             self.cases_count
         );
     }
+}
+
+// Suite Result
+//
+//
+
+pub struct SuiteResult {
+    suite: Suite,
+    results: Vec<CaseResult>,
+}
+
+impl SuiteResult {
+    pub fn print(&self) {
+        let SuiteResult { suite, results } = self;
+        println!("Suite \"{}\":", suite.name);
+        let mut success_count = 0;
+        for CaseResult { case, result } in results {
+            match result {
+                Ok(_) => success_count += 1,
+                Err(err) => println!("{}: {}", case.name, err),
+            }
+        }
+        println!("{}/{} successful", success_count, results.len());
+        println!();
+    }
+
+    /// Returns the number of total cases and the number of failures.
+    pub fn summary(&self) -> (usize, usize) {
+        let failures = self.results.iter().filter(|e| e.result.is_err()).count();
+        (self.results.len(), failures)
+    }
+}
+
+// Case Result
+//
+//
+
+pub struct CaseResult {
+    case: Case,
+    result: Result<String, Failure>,
 }
