@@ -35,6 +35,7 @@ pub struct PartialRun<O> {
     report_phases: Vec<PhaseReport>,
 }
 
+#[allow(dead_code)]
 pub struct PhaseReport {
     pub name: &'static str,
     pub output: String,
@@ -50,12 +51,7 @@ where
     }
 
     /// Extend this partial run by running one additional phase.
-    pub fn then<O2, E, P>(
-        mut self,
-        config: &suites::Config,
-        case: &Case,
-        phase: P,
-    ) -> PartialRun<O2>
+    pub fn then<O2, E, P>(mut self, config: &suites::Config, phase: P) -> PartialRun<O2>
     where
         O2: TestOutput,
         E: Error + 'static,
@@ -68,7 +64,7 @@ where
         // whether there is an expected error output.
         let output = config.fail.as_ref().and_then(|fail| {
             if fail == phase.name() {
-                case.expected()
+                self.case.expected()
             } else {
                 None
             }

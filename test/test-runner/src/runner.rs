@@ -52,24 +52,20 @@ impl Runner {
         Self { suites, index }
     }
 
-    /// Run all testsuites
+    /// Run all the testsuites and compute the combined result.
     pub fn run(&self, args: &Args) -> RunResult {
+        let mut executed_cases: u32 = 0;
+        let mut failed_cases: u32 = 0;
         let mut results: Vec<SuiteResult> = vec![];
-
-        let mut cases_count = 0;
-        let mut failure_count = 0;
 
         for suite in self.suites.values() {
             let result = self.run_suite(args, suite);
 
-            let (cases, failed) = result.summary();
-            cases_count += cases;
-            failure_count += failed;
-
+            executed_cases += result.executed_cases;
+            failed_cases += result.failed_cases;
             results.push(result);
         }
-
-        RunResult { results, cases_count, failure_count }
+        RunResult { results, executed_cases, failed_cases }
     }
 
     /// Run one individual testsuite
@@ -81,6 +77,8 @@ impl Runner {
         };
         let matching_cases: Vec<Case> = self.index.searcher().search(search_string).collect();
 
+        let mut executed_cases: u32 = 0;
+        let mut failed_cases: u32 = 0;
         let mut results: Vec<CaseResult> = vec![];
 
         for case in &suite.cases {
@@ -88,12 +86,15 @@ impl Runner {
                 continue;
             }
 
-            let report = self.run_case(&suite.config, case);
+            let case_result = self.run_case(&suite.config, case);
 
-            let result = CaseResult { case: case.clone(), result: report.result };
-            results.push(result);
+            executed_cases += 1;
+            if case_result.result.is_err() {
+                failed_cases += 1;
+            }
+            results.push(case_result);
         }
-        SuiteResult { suite: suite.clone(), results }
+        SuiteResult { suite: suite.clone(), results, executed_cases, failed_cases }
     }
 
     /// Run one individual testcase within a testsuite
@@ -103,13 +104,13 @@ impl Runner {
         let input = (uri, case.content().unwrap());
 
         PartialRun::start(case.clone(), input)
-            .then(config, case, Parse::new("parse"))
-            .then(config, case, Lower::new("lower"))
-            .then(config, case, Check::new("check"))
-            .then(config, case, Print::new("print"))
-            .then(config, case, Parse::new("reparse"))
-            .then(config, case, Lower::new("relower"))
-            .then(config, case, Check::new("recheck"))
+            .then(config, Parse::new("parse"))
+            .then(config, Lower::new("lower"))
+            .then(config, Check::new("check"))
+            .then(config, Print::new("print"))
+            .then(config, Parse::new("reparse"))
+            .then(config, Lower::new("relower"))
+            .then(config, Check::new("recheck"))
             .report()
     }
 }
@@ -118,15 +119,19 @@ impl Runner {
 //
 //
 
+/// The result of running all testsuites.
 pub struct RunResult {
+    /// The results of the individual testsuites.
     results: Vec<SuiteResult>,
-    failure_count: usize,
-    cases_count: usize,
+    /// The number of cases that were executed for all testsuites combined.
+    executed_cases: u32,
+    /// The number of cases that failed in all testsuites combined.
+    failed_cases: u32,
 }
 
 impl RunResult {
     pub fn success(&self) -> bool {
-        self.failure_count == 0
+        self.failed_cases == 0
     }
 
     pub fn update_expected(&self) {
@@ -147,8 +152,8 @@ impl RunResult {
         }
         println!(
             "In total: {}/{} successful",
-            self.cases_count - self.failure_count,
-            self.cases_count
+            self.executed_cases - self.failed_cases,
+            self.executed_cases
         );
     }
 }
@@ -157,30 +162,25 @@ impl RunResult {
 //
 //
 
+/// The result of running one individual testsuite.
 pub struct SuiteResult {
+    /// The testsuite to which the result belongs.
     suite: Suite,
+    /// The results of the individual testcases.
     results: Vec<CaseResult>,
+    /// The number of cases that were executed for this testsuite.
+    executed_cases: u32,
+    /// The number of cases that failed in this testsuite.
+    failed_cases: u32,
 }
 
 impl SuiteResult {
     pub fn print(&self) {
-        let SuiteResult { suite, results } = self;
+        let SuiteResult { suite, results, executed_cases, failed_cases } = self;
         println!("Suite \"{}\":", suite.name);
-        let mut success_count = 0;
-        for CaseResult { case, result } in results {
-            match result {
-                Ok(_) => success_count += 1,
-                Err(err) => println!("{}: {}", case.name, err),
-            }
-        }
-        println!("{}/{} successful", success_count, results.len());
+        results.iter().for_each(|x| x.print());
+        println!("{}/{} successful", executed_cases - failed_cases, executed_cases);
         println!();
-    }
-
-    /// Returns the number of total cases and the number of failures.
-    pub fn summary(&self) -> (usize, usize) {
-        let failures = self.results.iter().filter(|e| e.result.is_err()).count();
-        (self.results.len(), failures)
     }
 }
 
@@ -191,4 +191,21 @@ impl SuiteResult {
 pub struct CaseResult {
     pub case: Case,
     pub result: Result<(), Failure>,
+}
+
+impl CaseResult {
+    pub fn print(&self) {
+        let CaseResult { case, result } = self;
+        match result {
+            Ok(_) => {
+                println!("    - {:40} ✓", case.name)
+            }
+            Err(err) => {
+                println!("    - {:40} ✗", case.name);
+                println!();
+                println!("    {}", err);
+                println!()
+            }
+        }
+    }
 }
