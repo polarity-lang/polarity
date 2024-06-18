@@ -43,6 +43,8 @@ pub enum Token {
     DotsAbsurd,
     #[token("Type")]
     Type,
+    #[token("implicit")]
+    Implicit,
 
     // Parens, Braces and Brackets
     //

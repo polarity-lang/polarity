@@ -349,11 +349,16 @@ fn desugar_telescope(tel: &cst::decls::Telescope) -> cst::decls::Telescope {
     cst::decls::Telescope(params)
 }
 fn desugar_param(param: &cst::decls::Param) -> Vec<cst::decls::Param> {
-    let cst::decls::Param { name, names, typ } = param;
-    let mut params: Vec<cst::decls::Param> =
-        vec![cst::decls::Param { name: name.clone(), names: vec![], typ: typ.clone() }];
+    let cst::decls::Param { implicit, name, names, typ } = param;
+    let mut params: Vec<cst::decls::Param> = vec![cst::decls::Param {
+        implicit: *implicit,
+        name: name.clone(),
+        names: vec![],
+        typ: typ.clone(),
+    }];
     for extra_name in names {
         params.push(cst::decls::Param {
+            implicit: *implicit,
             name: extra_name.clone(),
             names: vec![],
             typ: typ.clone(),
@@ -380,7 +385,7 @@ where
         Ok(vec![]),
         |ctx, params_out, param| {
             let mut params_out = params_out?;
-            let cst::decls::Param { name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
+            let cst::decls::Param { implicit, name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
             let typ_out = typ.lower(ctx)?;
             let name = match name {
                 BindingSite::Var { name, .. } => name.clone(),

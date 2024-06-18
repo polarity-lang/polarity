@@ -32,6 +32,7 @@ extern {
     "absurd" => Token::Absurd,
     "..absurd" => Token::DotsAbsurd,
     "Type" => Token::Type,
+    "implicit" => Token::Implicit,
 
     // Parens, Braces and Brackets
     //
@@ -102,7 +103,7 @@ OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_
 BracketedArgs<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
 OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
 
-Param: Param = <name: BindingSite> <names: BindingSite*> ":" <typ: Exp> => Param { name, names, typ } ;
+Param: Param = <implicit: "implicit"?> <name: BindingSite> <names: BindingSite*> ":" <typ: Exp> => Param { implicit: implicit.is_some(), name, names, typ } ;
 
 Params: Vec<Param> = ParenthesizedArgs<Param>;
 OptParams: Vec<Param> = OptParenthesizedArgs<Param>;
