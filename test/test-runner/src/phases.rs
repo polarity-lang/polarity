@@ -125,17 +125,6 @@ where
     }
 }
 
-impl Report {
-    pub fn print(&self) {
-        for PhaseReport { name, output } in &self.phases {
-            println!("phase {name}:");
-            println!();
-            println!("{output}");
-            println!();
-        }
-    }
-}
-
 #[derive(Debug)]
 pub enum Failure {
     Mismatch {

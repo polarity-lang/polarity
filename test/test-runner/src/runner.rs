@@ -90,10 +90,6 @@ impl Runner {
 
             let report = self.run_case(&suite.config, case);
 
-            if args.debug {
-                report.print();
-            }
-
             let result = CaseResult { case: case.clone(), result: report.result };
             results.push(result);
         }

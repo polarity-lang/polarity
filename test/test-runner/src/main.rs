@@ -15,8 +15,6 @@ pub struct Args {
     #[clap(long)]
     filter: Option<String>,
     #[clap(long, num_args = 0)]
-    debug: bool,
-    #[clap(long, num_args = 0)]
     update_expected: bool,
 }
 
