@@ -8,7 +8,10 @@ use parser::cst;
 use renaming::Rename;
 use syntax::ast::Module;
 
-use crate::suites::{self, Case};
+use crate::{
+    runner::CaseResult,
+    suites::{self, Case},
+};
 
 pub trait Phase {
     type In;
@@ -25,17 +28,14 @@ pub trait Phase {
 /// The struct is parameterized over the output type of the last phase that
 /// has been run.
 pub struct PartialRun<O> {
-    /// The result of the last run.
+    case: Case,
+    /// The result of the last run phase.
     result: Result<O, PhasesError>,
     /// A textual report about all the previously run phases.
     report_phases: Vec<PhaseReport>,
 }
 
-pub struct Report {
-    pub phases: Vec<PhaseReport>,
-    pub result: Result<String, Failure>,
-}
-
+#[allow(dead_code)]
 pub struct PhaseReport {
     pub name: &'static str,
     pub output: String,
@@ -46,17 +46,12 @@ where
     O: TestOutput,
 {
     /// Start a new partial run for a testcase with the initial input.
-    pub fn start(input: O) -> PartialRun<O> {
-        PartialRun { result: Ok(input), report_phases: vec![] }
+    pub fn start(case: Case, input: O) -> PartialRun<O> {
+        PartialRun { case, result: Ok(input), report_phases: vec![] }
     }
 
     /// Extend this partial run by running one additional phase.
-    pub fn then<O2, E, P>(
-        mut self,
-        config: &suites::Config,
-        case: &Case,
-        phase: P,
-    ) -> PartialRun<O2>
+    pub fn then<O2, E, P>(mut self, config: &suites::Config, phase: P) -> PartialRun<O2>
     where
         O2: TestOutput,
         E: Error + 'static,
@@ -69,7 +64,7 @@ where
         // whether there is an expected error output.
         let output = config.fail.as_ref().and_then(|fail| {
             if fail == phase.name() {
-                case.expected()
+                self.case.expected()
             } else {
                 None
             }
@@ -103,17 +98,17 @@ where
                         return Err(PhasesError::Mismatch { expected, actual });
                     }
                 }
-                Err(PhasesError::AsExpected { err: Box::new(err) })
+                Err(PhasesError::AsExpected)
             }
         });
 
-        PartialRun { result, report_phases: self.report_phases }
+        PartialRun { case: self.case, result, report_phases: self.report_phases }
     }
 
-    pub fn report(self) -> Report {
+    pub fn report(self) -> CaseResult {
         let result = match self.result {
-            Ok(out) => Ok(out.test_output()),
-            Err(PhasesError::AsExpected { err }) => Ok(format!("{err:?}")),
+            Ok(_) => Ok(()),
+            Err(PhasesError::AsExpected { .. }) => Ok(()),
             Err(PhasesError::Mismatch { expected, actual }) => {
                 Err(Failure::Mismatch { expected, actual })
             }
@@ -121,18 +116,7 @@ where
             Err(PhasesError::ExpectedSuccess { got }) => Err(Failure::ExpectedSuccess { got }),
         };
 
-        Report { result, phases: self.report_phases }
-    }
-}
-
-impl Report {
-    pub fn print(&self) {
-        for PhaseReport { name, output } in &self.phases {
-            println!("phase {name}:");
-            println!();
-            println!("{output}");
-            println!();
-        }
+        CaseResult { result, case: self.case }
     }
 }
 
@@ -166,7 +150,7 @@ impl fmt::Display for Failure {
 }
 
 enum PhasesError {
-    AsExpected { err: Box<dyn Error> },
+    AsExpected,
     Mismatch { expected: String, actual: String },
     ExpectedFailure { got: String },
     ExpectedSuccess { got: Box<dyn Error> },

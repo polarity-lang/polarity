@@ -15,8 +15,6 @@ pub struct Args {
     #[clap(long)]
     filter: Option<String>,
     #[clap(long, num_args = 0)]
-    debug: bool,
-    #[clap(long, num_args = 0)]
     update_expected: bool,
 }
 
@@ -24,7 +22,7 @@ fn main() {
     env_logger::builder().format_timestamp(None).format_level(false).format_target(false).init();
     let args = Args::parse();
     let runner = runner::Runner::load(crate::TEST_SUITES_PATH, crate::EXAMPLES_PATH);
-    let res = runner.run(&args);
+    let mut res = runner.run(&args);
     if args.update_expected {
         res.update_expected();
         println!("Updated expected outputs.");
