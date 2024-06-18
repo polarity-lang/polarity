@@ -97,12 +97,12 @@ impl Runner {
     }
 
     /// Run one individual testcase within a testsuite
-    pub fn run_case(&self, config: &suites::Config, case: &Case) -> Report {
+    pub fn run_case(&self, config: &suites::Config, case: &Case) -> CaseResult {
         let canonicalized_path = case.path.clone().canonicalize().unwrap();
         let uri = Url::from_file_path(canonicalized_path).unwrap();
         let input = (uri, case.content().unwrap());
 
-        PartialRun::start(input)
+        PartialRun::start(case.clone(), input)
             .then(config, case, Parse::new("parse"))
             .then(config, case, Lower::new("lower"))
             .then(config, case, Check::new("check"))
@@ -189,6 +189,6 @@ impl SuiteResult {
 //
 
 pub struct CaseResult {
-    case: Case,
-    result: Result<String, Failure>,
+    pub case: Case,
+    pub result: Result<(), Failure>,
 }
