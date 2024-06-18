@@ -146,8 +146,8 @@ impl RunResult {
         self.results.iter().flat_map(|suite_res| suite_res.results.iter())
     }
 
-    pub fn print(&self) {
-        for suite in &self.results {
+    pub fn print(&mut self) {
+        for suite in &mut self.results {
             suite.print()
         }
         println!(
@@ -175,11 +175,12 @@ pub struct SuiteResult {
 }
 
 impl SuiteResult {
-    pub fn print(&self) {
+    pub fn print(&mut self) {
         let SuiteResult { suite, results, executed_cases, failed_cases } = self;
         println!("Suite \"{}\":", suite.name);
+        results.sort_by(|x, y| x.case.name.cmp(&y.case.name));
         results.iter().for_each(|x| x.print());
-        println!("{}/{} successful", executed_cases - failed_cases, executed_cases);
+        println!("{}/{} successful", *executed_cases - *failed_cases, executed_cases);
         println!();
     }
 }
