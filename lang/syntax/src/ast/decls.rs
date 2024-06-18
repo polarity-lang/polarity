@@ -299,6 +299,7 @@ impl SelfParam {
     pub fn telescope(&self) -> Telescope {
         Telescope {
             params: vec![Param {
+                implicit: false,
                 name: self.name.clone().unwrap_or_default(),
                 typ: Rc::new(self.typ.to_exp()),
             }],
@@ -356,6 +357,7 @@ impl Telescope {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Param {
+    pub implicit: bool,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     pub typ: Rc<Exp>,
@@ -370,7 +372,7 @@ impl Named for Param {
 impl Substitutable for Param {
     type Result = Param;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Param { name, typ } = self;
-        Param { name: name.clone(), typ: typ.subst(ctx, by) }
+        let Param { implicit, name, typ } = self;
+        Param { implicit: *implicit, name: name.clone(), typ: typ.subst(ctx, by) }
     }
 }

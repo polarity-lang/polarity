@@ -201,12 +201,12 @@ impl Rename for Telescope {
 
 impl Rename for Param {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Param { name, typ } = self;
+        let Param { implicit, name, typ } = self;
 
         let new_typ = typ.rename_in_ctx(ctx);
         let new_name = ctx.disambiguate_name(name);
 
-        Param { name: new_name, typ: new_typ }
+        Param { implicit, name: new_name, typ: new_typ }
     }
 }
 
