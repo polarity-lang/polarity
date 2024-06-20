@@ -224,9 +224,12 @@ impl TypApp {
     }
 }
 
-/// A `Param` can either be a single parameter, like `x : T`, or a list of parameters, like `x, y, z : T`.
+/// A `Param` can either be a single parameter, like `x : T`, or a list of parameters, like `x y z: T`.
+/// The parameter list can be optionally prefixed with the "implicit" keyword: `implicit x : T` or `implicit x y z: T`
 #[derive(Debug, Clone)]
 pub struct Param {
+    /// Whether the "implicit" keyword was used.
+    pub implicit: bool,
     /// The obligatory parameter name.
     pub name: exp::BindingSite,
     /// A possible list of additional parameter names.

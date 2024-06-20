@@ -490,9 +490,9 @@ impl Lift for Param {
     type Target = Param;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Param { name, typ } = self;
+        let Param { implicit, name, typ } = self;
 
-        Param { name: name.clone(), typ: typ.lift(ctx) }
+        Param { implicit: *implicit, name: name.clone(), typ: typ.lift(ctx) }
     }
 }
 

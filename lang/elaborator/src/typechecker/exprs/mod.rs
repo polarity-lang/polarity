@@ -229,10 +229,10 @@ impl InferTelescope for Telescope {
             params.iter(),
             vec![],
             |ctx, mut params_out, param| {
-                let Param { typ, name } = param;
+                let Param { implicit, typ, name } = param;
                 let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
                 let typ_nf = typ.normalize(prg, &mut ctx.env())?;
-                let param_out = Param { name: name.clone(), typ: typ_out };
+                let param_out = Param { implicit: *implicit, name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
                 let elem = Binder { name: param.name.clone(), typ: typ_nf };
                 Result::<_, TypeError>::Ok(BindElem { elem, ret: params_out })

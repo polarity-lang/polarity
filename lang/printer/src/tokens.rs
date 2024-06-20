@@ -21,3 +21,4 @@ pub const AS: &str = "as";
 pub const COMATCH: &str = "comatch";
 pub const ABSURD: &str = "absurd";
 pub const TYPE: &str = "Type";
+pub const IMPLICIT: &str = "implicit";

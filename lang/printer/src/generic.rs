@@ -333,21 +333,36 @@ impl Print for Case {
 }
 
 impl Print for Telescope {
+    /// This function tries to "chunk" successive blocks of parameters which have the same type.
+    /// For example, instead of printing `x: Type, y: Type` we print `x y: Type`. We do this by
+    /// remembering in the `running` variable what the current type of the parameters is, and
+    /// whether we can append the current parameter to this list. There are two complications:
+    ///
+    /// 1) Due to de Bruijn indices we have to shift the types when we compare them. For example,
+    /// instead of printing `n: Nat, x: Vec(Bool,n), y: Vec(Bool,n)` we want to print
+    /// `n: Nat, x y: Vec(Bool,n)`. But in de Bruijn notation this list looks like
+    /// `_: Nat, _ : Vec(0), _: Vec(1)`.
+    ///
+    /// 2) We cannot chunk two parameters if one is implicit and the other isn't, even if they have
+    /// the same type. For example: `implicit a: Type, b: Type` cannot be chunked.
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Telescope { params } = self;
         let mut output = alloc.nil();
         if params.is_empty() {
             return output;
         };
-        let mut running_type: Option<&Rc<Exp>> = None;
-        for Param { name, typ } in params {
-            match running_type {
+        // Running stands for the type and implicitness of the current "chunk" we are building.
+        let mut running: Option<(&Rc<Exp>, bool)> = None;
+        for Param { implicit, name, typ } in params {
+            match running {
                 // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
-                Some(rtype) if &rtype.shift((0, 1)) == typ => {
+                Some((rtype, rimplicit))
+                    if &rtype.shift((0, 1)) == typ && rimplicit == *implicit =>
+                {
                     // We are adding another parameter of the same type.
                     output = output.append(alloc.space()).append(alloc.text(name));
                 }
-                Some(rtype) => {
+                Some((rtype, _)) => {
                     // We are adding another parameter with a different type,
                     // and have to close the previous list first.
                     output = output
@@ -356,23 +371,114 @@ impl Print for Telescope {
                         .append(rtype.print(cfg, alloc))
                         .append(COMMA)
                         .append(alloc.line());
-                    output = output.append(alloc.text(name));
+                    if *implicit {
+                        output =
+                            output.append(IMPLICIT).append(alloc.space()).append(alloc.text(name));
+                    } else {
+                        output = output.append(alloc.text(name));
+                    }
                 }
                 None => {
-                    // We are adding the very first parameter.
+                    // We are starting a new chunk and adding the very first parameter.
+                    // If we are starting a chunk of implicit parameters then we also have to
+                    // add the "implicit" keyword at this point.
+                    if *implicit {
+                        output = output.append(IMPLICIT).append(alloc.space())
+                    }
+
                     output = output.append(alloc.text(name));
                 }
             }
-            running_type = Some(typ);
+            running = Some((typ, *implicit));
         }
         // Close the last parameter
-        match running_type {
+        match running {
             None => {}
-            Some(rtype) => {
+            Some((rtype, _)) => {
                 output = output.append(COLON).append(alloc.space()).append(rtype.print(cfg, alloc));
             }
         }
         output.append(alloc.line_()).align().parens().group()
+    }
+}
+
+#[cfg(test)]
+mod print_telescope_tests {
+
+    use super::*;
+
+    #[test]
+    fn print_empty() {
+        let tele = Telescope { params: vec![] };
+        assert_eq!(tele.print_to_string(Default::default()), "")
+    }
+
+    #[test]
+    fn print_simple_chunk() {
+        let param1 =
+            Param { implicit: false, name: "x".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+        let param2 =
+            Param { implicit: false, name: "y".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+        let tele = Telescope { params: vec![param1, param2] };
+        assert_eq!(tele.print_to_string(Default::default()), "(x y: Type)")
+    }
+
+    #[test]
+    fn print_simple_implicit_chunk() {
+        let param1 =
+            Param { implicit: true, name: "x".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+        let param2 =
+            Param { implicit: true, name: "y".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+        let tele = Telescope { params: vec![param1, param2] };
+        assert_eq!(tele.print_to_string(Default::default()), "(implicit x y: Type)")
+    }
+
+    #[test]
+    fn print_mixed_implicit_chunk_1() {
+        let param1 =
+            Param { implicit: true, name: "x".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+        let param2 =
+            Param { implicit: false, name: "y".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+        let tele = Telescope { params: vec![param1, param2] };
+        assert_eq!(tele.print_to_string(Default::default()), "(implicit x: Type, y: Type)")
+    }
+
+    #[test]
+    fn print_mixed_implicit_chunk_2() {
+        let param1 =
+            Param { implicit: false, name: "x".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+        let param2 =
+            Param { implicit: true, name: "y".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+        let tele = Telescope { params: vec![param1, param2] };
+        assert_eq!(tele.print_to_string(Default::default()), "(x: Type, implicit y: Type)")
+    }
+
+    #[test]
+    fn print_shifting_example() {
+        let param1 =
+            Param { implicit: false, name: "a".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+        let param2 = Param {
+            implicit: false,
+            name: "x".to_owned(),
+            typ: Rc::new(Exp::Variable(Variable {
+                span: None,
+                idx: Idx { fst: 0, snd: 0 },
+                name: "a".to_owned(),
+                inferred_type: None,
+            })),
+        };
+        let param3 = Param {
+            implicit: false,
+            name: "y".to_owned(),
+            typ: Rc::new(Exp::Variable(Variable {
+                span: None,
+                idx: Idx { fst: 0, snd: 1 },
+                name: "a".to_owned(),
+                inferred_type: None,
+            })),
+        };
+        let tele = Telescope { params: vec![param1, param2, param3] };
+        assert_eq!(tele.print_to_string(Default::default()), "(a: Type, x y: a)")
     }
 }
 
@@ -402,8 +508,18 @@ impl Print for TelescopeInst {
 
 impl Print for Param {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Param { name, typ } = self;
-        alloc.text(name).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
+        let Param { implicit, name, typ } = self;
+        if *implicit {
+            alloc
+                .text(IMPLICIT)
+                .append(alloc.space())
+                .append(name)
+                .append(COLON)
+                .append(alloc.space())
+                .append(typ.print(cfg, alloc))
+        } else {
+            alloc.text(name).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
+        }
     }
 }
 
