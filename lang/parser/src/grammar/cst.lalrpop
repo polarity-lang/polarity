@@ -112,8 +112,8 @@ OptTelescope: Telescope = <params: OptParams> => Telescope(params);
 
 OptTelescopeInst: Vec<BindingSite> = <params: Parens<Comma<BindingSite>>?> => params.unwrap_or_default();
 
-Args: Vec<Rc<Exp>> = ParenthesizedArgs<Exp>;
-OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
+Args: Vec<Arg> = ParenthesizedArgs<Arg>;
+OptArgs: Vec<Arg> = OptParenthesizedArgs<Arg>;
 
 Attr: String = <s:"Identifier"> => s.to_owned();
 Attributes: Attributes = "#" <attrs: BracketedArgs<Attr>> => Attributes { attrs };
@@ -121,6 +121,11 @@ OptAttributes: Attributes = <attr: Attributes? > => attr.unwrap_or_default();
 
 DocCommentHelper: String = <doc: "DocComment"> => doc.strip_prefix("-- |").unwrap().trim().to_owned();
 DocComment: DocComment = <docs: DocCommentHelper+> => DocComment { docs };
+
+Arg: Arg = {
+  <e: Exp> => Arg::UnnamedArg(e),
+  <i: Ident> ":=" <e: Exp> => Arg::NamedArg(i,e),
+}
 
 // Modules
 //

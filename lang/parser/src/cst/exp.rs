@@ -31,6 +31,15 @@ pub struct Case<P> {
     pub body: Option<Rc<Exp>>,
 }
 
+/// Arguments in an argument list can either be unnamed or named.
+/// Example for named arguments: `f(x := 1, y := 2)`
+/// Example for unnamed arguments: `f(1, 2)``
+#[derive(Debug, Clone)]
+pub enum Arg {
+    UnnamedArg(Rc<Exp>),
+    NamedArg(Ident, Rc<Exp>),
+}
+
 #[derive(Debug, Clone)]
 pub enum Exp {
     Call(Call),
@@ -49,7 +58,7 @@ pub enum Exp {
 pub struct Call {
     pub span: Span,
     pub name: Ident,
-    pub args: Vec<Rc<Exp>>,
+    pub args: Vec<Arg>,
 }
 
 #[derive(Debug, Clone)]
@@ -57,7 +66,7 @@ pub struct DotCall {
     pub span: Span,
     pub exp: Rc<Exp>,
     pub name: Ident,
-    pub args: Vec<Rc<Exp>>,
+    pub args: Vec<Arg>,
 }
 
 #[derive(Debug, Clone)]

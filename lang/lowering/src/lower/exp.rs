@@ -57,6 +57,20 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
     )
 }
 
+impl Lower for cst::exp::Arg {
+    type Target = Rc<ast::Exp>;
+
+    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        match self {
+            cst::exp::Arg::UnnamedArg(e) => e.lower(ctx),
+            cst::exp::Arg::NamedArg(_, _) => Err(LoweringError::Impossible {
+                message: "Named arguments not yet implemented".to_owned(),
+                span: None,
+            }),
+        }
+    }
+}
+
 impl Lower for cst::exp::Case<cst::exp::Pattern> {
     type Target = ast::Case;
 
