@@ -108,24 +108,75 @@ impl Eval for Call {
 impl Eval for DotCall {
     type Val = Rc<Val>;
 
+    /// Evaluate a DotCall:
+    ///
+    /// ```text
+    /// e.d(e_1,...)
+    /// ┳ ┳ ━━━┳━━━
+    /// ┃ ┃    ┗━━━━━━━ args
+    /// ┃ ┗━━━━━━━━━━━━ name
+    /// ┗━━━━━━━━━━━━━━ exp
+    /// ```
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let DotCall { span, kind, exp, name, args, .. } = self;
+
+        // We first evaluate `exp` and then the arguments `args` to `d` from left to right.
         let exp = exp.eval(prg, env)?;
         let args = args.eval(prg, env)?;
+
         match (*exp).clone() {
-            Val::Call(val::Call { name: ctor_name, kind, args: ctor_args, span: _ }) => {
+            Val::Call(val::Call { name: call_name, kind, args: call_args, .. }) => {
                 match kind {
                     CallKind::Constructor => {
+                        // The specific instance of the DotCall we are evaluating is:
+                        //
+                        // ```text
+                        //  C(t_1,..).d(e_1,...)
+                        //  ┳ ━━┳━━━  ┳ ━━━┳━━━
+                        //  ┃   ┃     ┃    ┗━━━━ args
+                        //  ┃   ┃     ┗━━━━━━━━━ name
+                        //  ┃   ┗━━━━━━━━━━━━━━━ call_args
+                        //  ┗━━━━━━━━━━━━━━━━━━━ call_name
+                        // ```
+                        //
+                        // where `C` is the name of a constructor declared in a
+                        // data type, and `d` is the name of a toplevel definition.
+
+                        // First, we have to find the corresponding case in the toplevel definition `d`.
                         let Def { cases, .. } = prg.def(name, None)?;
                         let cases =
                             Env::empty().bind_iter(args.iter(), |env| cases.eval(prg, env))?;
-                        beta_match(prg, cases, &ctor_name, &ctor_args)
+                        let val::Case { body, .. } =
+                            cases.clone().into_iter().find(|case| case.name == call_name).unwrap();
+
+                        // Then we apply the body to the `call_args`.
+                        body.clone().unwrap().apply(prg, &call_args)
                     }
                     CallKind::Codefinition => {
-                        let Codef { cases, .. } = prg.codef(&ctor_name, None)?;
+                        // The specific instance of the DotCall we are evaluating is:
+                        //
+                        // ```text
+                        //  C(t_1,..).d(e_1,...)
+                        //  ┳ ━━┳━━━  ┳ ━━━┳━━━
+                        //  ┃   ┃     ┃    ┗━━━━ args
+                        //  ┃   ┃     ┗━━━━━━━━━ name
+                        //  ┃   ┗━━━━━━━━━━━━━━━ call_args
+                        //  ┗━━━━━━━━━━━━━━━━━━━ call_name
+                        // ```
+                        //
+                        // where `d` is the name of a destructor declared in a
+                        // data type, and `C` is the name of a toplevel codefinition.
+
+                        // First, we have to find the corresponding cocase in the toplevel
+                        // codefinition `C`.
+                        let Codef { cases, .. } = prg.codef(&call_name, None)?;
                         let cases =
-                            Env::empty().bind_iter(ctor_args.iter(), |env| cases.eval(prg, env))?;
-                        beta_comatch(prg, cases, name, &args)
+                            Env::empty().bind_iter(call_args.iter(), |env| cases.eval(prg, env))?;
+                        let val::Case { body, .. } =
+                            cases.clone().into_iter().find(|cocase| cocase.name == *name).unwrap();
+
+                        // Then we apply the body to the `args`.
+                        body.clone().unwrap().apply(prg, &args)
                     }
                     CallKind::LetBound => {
                         // This case is unreachable because all let-bound calls have either already
@@ -136,18 +187,48 @@ impl Eval for DotCall {
                 }
             }
             Val::LocalComatch(val::LocalComatch { cases, .. }) => {
-                beta_comatch(prg, cases, name, &args)
+                // The specific instance of the DotCall we are evaluating is:
+                //
+                // ```text
+                //  comatch { ... }.d(e_1,...)
+                //            ━┳━   ┳ ━━━┳━━━
+                //             ┃    ┃    ┗━━━━ args
+                //             ┃    ┗━━━━━━━━━ name
+                //             ┗━━━━━━━━━━━━━━ cases
+                // ```
+                //
+                // where `d` is the name of a destructor declared in a
+                // codata type.
+
+                // First, we have to select the correct case from the comatch.
+                let val::Case { body, .. } =
+                    cases.clone().into_iter().find(|cocase| cocase.name == *name).unwrap();
+
+                // Then we apply the body to the `args`.
+                body.clone().unwrap().apply(prg, &args)
             }
-            Val::Neu(exp) => Ok(Rc::new(Val::Neu(
-                val::DotCall {
-                    span: *span,
-                    kind: *kind,
-                    exp: Rc::new(exp),
-                    name: name.to_owned(),
-                    args,
-                }
-                .into(),
-            ))),
+            Val::Neu(exp) => {
+                // The specific instance of the DotCall we are evaluating is:
+                //
+                // ```text
+                // n.d(e_1,...)
+                // ┳ ┳ ━━━┳━━━
+                // ┃ ┃    ┗━━━━━━━ args
+                // ┃ ┗━━━━━━━━━━━━ name
+                // ┗━━━━━━━━━━━━━━ exp (Neutral value)
+                // ```
+                // Evaluation is blocked by the neutral value `n`.
+                Ok(Rc::new(Val::Neu(
+                    val::DotCall {
+                        span: *span,
+                        kind: *kind,
+                        exp: Rc::new(exp),
+                        name: name.to_owned(),
+                        args,
+                    }
+                    .into(),
+                )))
+            }
             _ => unreachable!(),
         }
     }
@@ -174,23 +255,61 @@ impl Eval for TypeUniv {
 impl Eval for LocalMatch {
     type Val = Rc<Val>;
 
+    /// Evaluate a LocalMatch:
+    ///
+    /// ```text
+    /// e.match { ... }
+    /// ┳        ━━┳━━
+    /// ┃          ┗━━━━ cases
+    /// ┗━━━━━━━━━━━━━━━ on_exp
+    /// ```
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let LocalMatch { name: match_name, on_exp, cases, .. } = self;
+        // We first evaluate `on_exp` and `cases`
         let on_exp = on_exp.eval(prg, env)?;
         let cases = cases.eval(prg, env)?;
+
         match (*on_exp).clone() {
             Val::Call(val::Call { name: ctor_name, args, .. }) => {
-                beta_match(prg, cases, &ctor_name, &args)
+                // The specific instance of the LocalMatch we are evaluating is:
+                //
+                // ```text
+                // C(e_1,...).match { ... }
+                // ┳ ━━━┳━━━         ━━┳━━
+                // ┃    ┃              ┗━━━━━ cases
+                // ┃    ┗━━━━━━━━━━━━━━━━━━━━ args
+                // ┗━━━━━━━━━━━━━━━━━━━━━━━━━ ctor__name
+                // ```
+                // where `C` is the name of a constructor declared in a data
+                // type declaration.
+
+                // We first look up the correct case.
+                let val::Case { body, .. } =
+                    cases.clone().into_iter().find(|case| case.name == ctor_name).unwrap();
+
+                // Then we substitute the `args` in the body.
+                body.clone().unwrap().apply(prg, &args)
             }
-            Val::Neu(exp) => Ok(Rc::new(Val::Neu(
-                val::LocalMatch {
-                    span: None,
-                    name: match_name.to_owned(),
-                    on_exp: Rc::new(exp),
-                    cases,
-                }
-                .into(),
-            ))),
+            Val::Neu(exp) => {
+                // The specific instance of the LocalMatch we are evaluating is:
+                //
+                // ```text
+                // n.match { ... }
+                // ┳        ━━┳━━
+                // ┃          ┗━━━━━ cases
+                // ┗━━━━━━━━━━━━━━━━ exp (Neutral value)
+                // ```
+                // Evaluation is blocked by the neutral value `n`.
+                Ok(Rc::new(Val::Neu(
+                    val::LocalMatch {
+                        span: None,
+                        name: match_name.to_owned(),
+                        on_exp: Rc::new(exp),
+                        cases,
+                    }
+                    .into(),
+                )))
+            }
             _ => unreachable!(),
         }
     }
@@ -221,42 +340,6 @@ impl Eval for Hole {
         let args = args.eval(prg, env)?;
         Ok(Rc::new(Val::Neu(val::Hole { span: *span, metavar: *metavar, args }.into())))
     }
-}
-
-fn beta_match(
-    prg: &Module,
-    body: Vec<val::Case>,
-    ctor_name: &str,
-    args: &[Rc<Val>],
-) -> Result<Rc<Val>, TypeError> {
-    let case = body.clone().into_iter().find(|case| case.name == ctor_name).unwrap();
-    let val::Case { body, .. } = case;
-    let body_res = body.clone().unwrap().apply(prg, args);
-    trace!(
-        "{}(...).match {} ▷β {}",
-        ctor_name,
-        body.print_to_colored_string(None),
-        body_res.print_to_colored_string(None)
-    );
-    body_res
-}
-
-fn beta_comatch(
-    prg: &Module,
-    body: Vec<val::Case>,
-    dtor_name: &str,
-    args: &[Rc<Val>],
-) -> Result<Rc<Val>, TypeError> {
-    let cocase = body.clone().into_iter().find(|cocase| cocase.name == dtor_name).unwrap();
-    let val::Case { body, .. } = cocase;
-    let body_res = body.clone().unwrap().apply(prg, args);
-    trace!(
-        "comatch {}.{}(...) ▷β {}",
-        body.print_to_colored_string(None),
-        dtor_name,
-        body_res.print_to_colored_string(None)
-    );
-    body_res
 }
 
 impl Eval for Case {
