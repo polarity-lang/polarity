@@ -9,5 +9,7 @@ data Foo(b: Bool) {
 
 def Foo(True).foo: Bool {
     Foo1 => True,
-    ..absurd
+    Foo2 absurd,
+    Foo3 absurd,
+    Foo4 absurd,
 }

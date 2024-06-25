@@ -163,8 +163,7 @@ impl PrintInCtx for Codata {
 
 impl Print for Def {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { span: _, doc, name, attr, params, self_param, ret_typ, cases, omit_absurd } =
-            self;
+        let Def { span: _, doc, name, attr, params, self_param, ret_typ, cases } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -181,7 +180,7 @@ impl Print for Def {
             .append(print_return_type(cfg, alloc, ret_typ))
             .group();
 
-        let body = print_cases(cases, omit_absurd, cfg, alloc);
+        let body = print_cases(cases, cfg, alloc);
 
         doc.append(head).append(alloc.space()).append(body)
     }
@@ -189,7 +188,7 @@ impl Print for Def {
 
 impl Print for Codef {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Codef { span: _, doc, name, attr, params, typ, cases, omit_absurd } = self;
+        let Codef { span: _, doc, name, attr, params, typ, cases } = self;
         if !is_visible(attr) {
             return alloc.nil();
         }
@@ -208,7 +207,7 @@ impl Print for Codef {
             ))
             .group();
 
-        let body = print_cases(cases, omit_absurd, cfg, alloc);
+        let body = print_cases(cases, cfg, alloc);
 
         doc.append(head).append(alloc.space()).append(body)
     }
@@ -272,26 +271,11 @@ impl Print for Dtor {
     }
 }
 
-fn print_cases<'a>(
-    cases: &'a [Case],
-    omit_absurd: &bool,
-    cfg: &PrintCfg,
-    alloc: &'a Alloc<'a>,
-) -> Builder<'a> {
+fn print_cases<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
     match cases.len() {
-        0 => {
-            if *omit_absurd {
-                alloc
-                    .space()
-                    .append(alloc.text(".."))
-                    .append(alloc.keyword(ABSURD))
-                    .append(alloc.space())
-                    .braces_anno()
-            } else {
-                empty_braces(alloc)
-            }
-        }
-        1 if !omit_absurd => alloc
+        0 => empty_braces(alloc),
+
+        1 => alloc
             .line()
             .append(cases[0].print(cfg, alloc))
             .nest(cfg.indent)
@@ -303,11 +287,6 @@ fn print_cases<'a>(
             alloc
                 .hardline()
                 .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
-                .append(if *omit_absurd {
-                    sep.append(alloc.text("..")).append(alloc.keyword(ABSURD))
-                } else {
-                    alloc.nil()
-                })
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()
@@ -680,7 +659,7 @@ impl Print for LocalMatch {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let LocalMatch { name, on_exp, motive, cases, omit_absurd, .. } = self;
+        let LocalMatch { name, on_exp, motive, cases, .. } = self;
         on_exp
             .print(cfg, alloc)
             .append(DOT)
@@ -691,7 +670,7 @@ impl Print for LocalMatch {
             })
             .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
             .append(alloc.space())
-            .append(print_cases(cases, omit_absurd, cfg, alloc))
+            .append(print_cases(cases, cfg, alloc))
     }
 }
 
@@ -702,7 +681,7 @@ impl Print for LocalComatch {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        let LocalComatch { name, is_lambda_sugar, cases, omit_absurd, .. } = self;
+        let LocalComatch { name, is_lambda_sugar, cases, .. } = self;
         if *is_lambda_sugar && cfg.print_lambda_sugar {
             print_lambda_sugar(cases, cfg, alloc)
         } else {
@@ -713,7 +692,7 @@ impl Print for LocalComatch {
                     None => alloc.nil(),
                 })
                 .append(alloc.space())
-                .append(print_cases(cases, omit_absurd, cfg, alloc))
+                .append(print_cases(cases, cfg, alloc))
         }
     }
 }

@@ -237,15 +237,11 @@ impl XData {
         let defs = dtors
             .values()
             .map(|dtor| {
-                let mut omit_absurd = false;
                 let cases = ctors
                     .values()
                     .flat_map(|ctor| {
                         let key = Key { dtor: dtor.name.clone(), ctor: ctor.name.clone() };
                         let body = exprs.get(&key).cloned();
-                        if body.is_none() {
-                            omit_absurd = true;
-                        }
                         body.map(|body| ast::Case {
                             span: None,
                             name: ctor.name.clone(),
@@ -264,7 +260,6 @@ impl XData {
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
                     cases,
-                    omit_absurd,
                 }
             })
             .collect();
@@ -289,7 +284,6 @@ impl XData {
         let codefs = ctors
             .values()
             .map(|ctor| {
-                let mut omit_absurd = false;
                 let cases = dtors
                     .values()
                     .flat_map(|dtor| {
@@ -304,9 +298,6 @@ impl XData {
                                 })
                             })
                         });
-                        if body.is_none() {
-                            omit_absurd = true;
-                        }
                         body.map(|body| ast::Case {
                             span: None,
                             name: dtor.name.clone(),
@@ -324,7 +315,6 @@ impl XData {
                     params: ctor.params.clone(),
                     typ: ctor.typ.clone(),
                     cases,
-                    omit_absurd,
                 }
             })
             .collect();

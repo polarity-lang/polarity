@@ -181,7 +181,7 @@ impl Lift for Def {
     type Target = Def;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Def { span, doc, name, attr, params, self_param, ret_typ, cases, omit_absurd } = self;
+        let Def { span, doc, name, attr, params, self_param, ret_typ, cases } = self;
 
         params.lift_telescope(ctx, |ctx, params| {
             let (self_param, ret_typ) = self_param.lift_telescope(ctx, |ctx, self_param| {
@@ -198,7 +198,6 @@ impl Lift for Def {
                 self_param,
                 ret_typ,
                 cases: cases.lift(ctx),
-                omit_absurd: *omit_absurd,
             }
         })
     }
@@ -208,7 +207,7 @@ impl Lift for Codef {
     type Target = Codef;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Codef { span, doc, name, attr, params, typ, cases, omit_absurd } = self;
+        let Codef { span, doc, name, attr, params, typ, cases } = self;
 
         params.lift_telescope(ctx, |ctx, params| Codef {
             span: *span,
@@ -218,7 +217,6 @@ impl Lift for Codef {
             params,
             typ: typ.lift(ctx),
             cases: cases.lift(ctx),
-            omit_absurd: *omit_absurd,
         })
     }
 }
@@ -379,17 +377,8 @@ impl Lift for LocalMatch {
     type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let LocalMatch {
-            span,
-            ctx: type_ctx,
-            name,
-            on_exp,
-            motive,
-            ret_typ,
-            cases,
-            omit_absurd,
-            inferred_type,
-        } = self;
+        let LocalMatch { span, ctx: type_ctx, name, on_exp, motive, ret_typ, cases, inferred_type } =
+            self;
         ctx.lift_match(
             span,
             &inferred_type.clone().unwrap(),
@@ -399,7 +388,6 @@ impl Lift for LocalMatch {
             motive,
             ret_typ,
             cases,
-            omit_absurd,
         )
     }
 }
@@ -408,15 +396,8 @@ impl Lift for LocalComatch {
     type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let LocalComatch {
-            span,
-            ctx: type_ctx,
-            name,
-            is_lambda_sugar,
-            cases,
-            omit_absurd,
-            inferred_type,
-        } = self;
+        let LocalComatch { span, ctx: type_ctx, name, is_lambda_sugar, cases, inferred_type } =
+            self;
         ctx.lift_comatch(
             span,
             &inferred_type.clone().unwrap(),
@@ -424,7 +405,6 @@ impl Lift for LocalComatch {
             name,
             *is_lambda_sugar,
             cases,
-            omit_absurd,
         )
     }
 }
@@ -542,7 +522,6 @@ impl Ctx {
         motive: &Option<Motive>,
         ret_typ: &Option<Rc<Exp>>,
         cases: &Vec<Case>,
-        omit_absurd: &bool,
     ) -> Exp {
         // Only lift local matches for the specified type
         if inferred_type.name != self.name {
@@ -555,7 +534,6 @@ impl Ctx {
                 motive: motive.lift(self),
                 ret_typ: None,
                 cases: cases.lift(self),
-                omit_absurd: *omit_absurd,
             });
         }
 
@@ -606,7 +584,6 @@ impl Ctx {
             },
             ret_typ: def_ret_typ,
             cases,
-            omit_absurd: *omit_absurd,
         };
 
         self.new_decls.push(Decl::Def(def));
@@ -631,7 +608,6 @@ impl Ctx {
         name: &Label,
         is_lambda_sugar: bool,
         cases: &Vec<Case>,
-        omit_absurd: &bool,
     ) -> Exp {
         // Only lift local matches for the specified type
         if inferred_type.name != self.name {
@@ -641,7 +617,6 @@ impl Ctx {
                 name: name.clone(),
                 is_lambda_sugar,
                 cases: cases.lift(self),
-                omit_absurd: *omit_absurd,
                 inferred_type: None,
             });
         }
@@ -671,7 +646,6 @@ impl Ctx {
             params: telescope,
             typ,
             cases,
-            omit_absurd: *omit_absurd,
         };
 
         self.new_decls.push(Decl::Codef(codef));

@@ -115,7 +115,7 @@ impl Rename for Dtor {
 
 impl Rename for Def {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Def { span, doc, name, attr, params, self_param, ret_typ, cases, omit_absurd } = self;
+        let Def { span, doc, name, attr, params, self_param, ret_typ, cases } = self;
 
         let new_params = params.rename_in_ctx(ctx);
         ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
@@ -133,7 +133,6 @@ impl Rename for Def {
                     self_param: new_self,
                     ret_typ: new_ret,
                     cases: new_cases,
-                    omit_absurd,
                 }
             })
         })
@@ -142,7 +141,7 @@ impl Rename for Def {
 
 impl Rename for Codef {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Codef { span, doc, name, attr, params, typ, cases, omit_absurd } = self;
+        let Codef { span, doc, name, attr, params, typ, cases } = self;
 
         let new_params = params.rename_in_ctx(ctx);
 
@@ -151,16 +150,7 @@ impl Rename for Codef {
 
             let new_cases = cases.rename_in_ctx(new_ctx);
 
-            Codef {
-                span,
-                doc,
-                name,
-                attr,
-                params: new_params,
-                typ: new_typ,
-                cases: new_cases,
-                omit_absurd,
-            }
+            Codef { span, doc, name, attr, params: new_params, typ: new_typ, cases: new_cases }
         })
     }
 }
@@ -311,14 +301,13 @@ impl Rename for Variable {
 
 impl Rename for LocalComatch {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let LocalComatch { span, name, is_lambda_sugar, cases, omit_absurd, .. } = self;
+        let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
         LocalComatch {
             span,
             ctx: None,
             name,
             is_lambda_sugar,
             cases: cases.rename_in_ctx(ctx),
-            omit_absurd,
             inferred_type: None,
         }
     }
@@ -338,7 +327,7 @@ impl Rename for Hole {
 }
 impl Rename for LocalMatch {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let LocalMatch { span, name, on_exp, motive, ret_typ, cases, omit_absurd, .. } = self;
+        let LocalMatch { span, name, on_exp, motive, ret_typ, cases, .. } = self;
         LocalMatch {
             span,
             ctx: None,
@@ -347,7 +336,6 @@ impl Rename for LocalMatch {
             motive: motive.rename_in_ctx(ctx),
             ret_typ: ret_typ.rename_in_ctx(ctx),
             cases: cases.rename_in_ctx(ctx),
-            omit_absurd,
             inferred_type: None,
         }
     }

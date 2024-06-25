@@ -18,7 +18,7 @@ impl CheckToplevel for Def {
     fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         trace!("Checking well-formedness of definition: {}", self.name);
 
-        let Def { span, doc, name, attr, params, self_param, ret_typ, cases, omit_absurd } = self;
+        let Def { span, doc, name, attr, params, self_param, ret_typ, cases } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let self_param_nf = self_param.typ.normalize(prg, &mut ctx.env())?;
@@ -30,12 +30,8 @@ impl CheckToplevel for Def {
                     Ok((ret_typ_out, ret_typ_nf, self_param_out))
                 })?;
 
-            let (cases, omit_absurd) = WithScrutinee {
-                cases,
-                omit_absurd: *omit_absurd,
-                scrutinee: self_param_nf.expect_typ_app()?,
-            }
-            .check_ws(prg, ctx, ret_typ_nf)?;
+            let cases = WithScrutinee { cases, scrutinee: self_param_nf.expect_typ_app()? }
+                .check_ws(prg, ctx, ret_typ_nf)?;
             Ok(Def {
                 span: *span,
                 doc: doc.clone(),
@@ -45,7 +41,6 @@ impl CheckToplevel for Def {
                 self_param: self_param_out,
                 ret_typ: ret_typ_out,
                 cases,
-                omit_absurd,
             })
         })
     }
