@@ -37,6 +37,8 @@ impl CheckInfer for LocalComatch {
 
         let wd =
             WithDestructee { cases, label: None, n_label_args: 0, destructee: typ_app_nf.clone() };
+
+        wd.check_exhaustiveness(prg)?;
         let cases = wd.infer_wd(prg, ctx)?;
 
         Ok(LocalComatch {
@@ -64,9 +66,10 @@ pub struct WithDestructee<'a> {
 
 /// Infer a copattern match
 impl<'a> WithDestructee<'a> {
-    pub fn infer_wd(&self, prg: &Module, ctx: &mut Ctx) -> Result<Vec<Case>, TypeError> {
+    /// Check whether the copattern match contains exactly one clause for every
+    /// destructor declared in the codata type declaration.
+    pub fn check_exhaustiveness(&self, prg: &Module) -> Result<(), TypeError> {
         let WithDestructee { cases, .. } = &self;
-
         // Check that this comatch is on a codata type
         let codata = prg.codata(&self.destructee.name, self.destructee.span())?;
 
@@ -96,9 +99,13 @@ impl<'a> WithDestructee<'a> {
                 &self.destructee.span(),
             ));
         }
+        Ok(())
+    }
 
-        // Add absurd cases for all omitted destructors
-        let cases: Vec<Case> = cases.iter().cloned().collect();
+    pub fn infer_wd(&self, prg: &Module, ctx: &mut Ctx) -> Result<Vec<Case>, TypeError> {
+        let WithDestructee { cases, .. } = &self;
+
+        let cases: Vec<Case> = cases.to_vec();
         let mut cases_out = Vec::new();
 
         for case in cases {

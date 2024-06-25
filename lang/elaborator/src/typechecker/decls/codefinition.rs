@@ -33,7 +33,10 @@ impl CheckToplevel for Codef {
                 n_label_args: params.len(),
                 destructee: typ_nf.expect_typ_app()?,
             };
+
+            wd.check_exhaustiveness(prg)?;
             let cases = wd.infer_wd(prg, ctx)?;
+
             Ok(Codef {
                 span: *span,
                 doc: doc.clone(),

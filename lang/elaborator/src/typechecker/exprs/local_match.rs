@@ -83,8 +83,9 @@ impl CheckInfer for LocalMatch {
             }
         };
 
-        let cases =
-            WithScrutinee { cases, scrutinee: typ_app_nf.clone() }.check_ws(prg, ctx, body_t)?;
+        let ws = WithScrutinee { cases, scrutinee: typ_app_nf.clone() };
+        ws.check_exhaustiveness(prg)?;
+        let cases = ws.check_ws(prg, ctx, body_t)?;
 
         Ok(LocalMatch {
             span: *span,
@@ -110,14 +111,10 @@ pub struct WithScrutinee<'a> {
 
 /// Check a pattern match
 impl<'a> WithScrutinee<'a> {
-    pub fn check_ws(
-        &self,
-        prg: &Module,
-        ctx: &mut Ctx,
-        t: Rc<Exp>,
-    ) -> Result<Vec<Case>, TypeError> {
+    /// Check whether the pattern match contains exactly one clause for every
+    /// constructor declared in the data type declaration.
+    pub fn check_exhaustiveness(&self, prg: &Module) -> Result<(), TypeError> {
         let WithScrutinee { cases, .. } = &self;
-
         // Check that this match is on a data type
         let data = prg.data(&self.scrutinee.name, self.scrutinee.span())?;
 
@@ -146,8 +143,18 @@ impl<'a> WithScrutinee<'a> {
                 &self.scrutinee.span(),
             ));
         }
+        Ok(())
+    }
 
-        let cases: Vec<_> = cases.iter().cloned().collect();
+    pub fn check_ws(
+        &self,
+        prg: &Module,
+        ctx: &mut Ctx,
+        t: Rc<Exp>,
+    ) -> Result<Vec<Case>, TypeError> {
+        let WithScrutinee { cases, .. } = &self;
+
+        let cases: Vec<_> = cases.to_vec();
         let mut cases_out = Vec::new();
 
         for case in cases {
