@@ -68,7 +68,6 @@ pub struct LocalMatch {
     pub on_exp: Rc<Exp>,
     pub motive: Option<Motive>,
     pub cases: Vec<Case>,
-    pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -77,7 +76,6 @@ pub struct LocalComatch {
     pub name: Option<Ident>,
     pub is_lambda_sugar: bool,
     pub cases: Vec<Case>,
-    pub omit_absurd: bool,
 }
 
 #[derive(Debug, Clone)]

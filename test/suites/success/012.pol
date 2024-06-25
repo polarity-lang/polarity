@@ -9,5 +9,7 @@ codata Foo(b: Bool) {
 
 codef MyFoo: Foo(True) {
     foo1 => True,
-    ..absurd
+    foo2 absurd,
+    foo3 absurd,
+    foo4 absurd
 }

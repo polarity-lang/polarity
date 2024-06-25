@@ -175,7 +175,7 @@ impl Eval for LocalMatch {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let LocalMatch { name: match_name, on_exp, cases, omit_absurd, .. } = self;
+        let LocalMatch { name: match_name, on_exp, cases, .. } = self;
         let on_exp = on_exp.eval(prg, env)?;
         let cases = cases.eval(prg, env)?;
         match (*on_exp).clone() {
@@ -188,7 +188,6 @@ impl Eval for LocalMatch {
                     name: match_name.to_owned(),
                     on_exp: Rc::new(exp),
                     cases,
-                    omit_absurd: *omit_absurd,
                 }
                 .into(),
             ))),
@@ -201,14 +200,13 @@ impl Eval for LocalComatch {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let LocalComatch { span, name, is_lambda_sugar, cases, omit_absurd, .. } = self;
+        let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
         Ok(Rc::new(
             val::LocalComatch {
                 span: *span,
                 name: name.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 cases: cases.eval(prg, env)?,
-                omit_absurd: *omit_absurd,
             }
             .into(),
         ))

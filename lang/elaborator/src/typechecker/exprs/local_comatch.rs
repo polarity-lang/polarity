@@ -22,7 +22,7 @@ use crate::result::TypeError;
 
 impl CheckInfer for LocalComatch {
     fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        let LocalComatch { span, name, is_lambda_sugar, cases, omit_absurd, .. } = self;
+        let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
         let typ_app_nf = t.expect_typ_app()?;
         let typ_app = typ_app_nf.infer(prg, ctx)?;
 
@@ -35,14 +35,11 @@ impl CheckInfer for LocalComatch {
             });
         }
 
-        let wd = WithDestructee {
-            cases,
-            omit_absurd: *omit_absurd,
-            label: None,
-            n_label_args: 0,
-            destructee: typ_app_nf.clone(),
-        };
-        let (cases, omit_absurd) = wd.infer_wd(prg, ctx)?;
+        let wd =
+            WithDestructee { cases, label: None, n_label_args: 0, destructee: typ_app_nf.clone() };
+
+        wd.check_exhaustiveness(prg)?;
+        let cases = wd.infer_wd(prg, ctx)?;
 
         Ok(LocalComatch {
             span: *span,
@@ -50,7 +47,6 @@ impl CheckInfer for LocalComatch {
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             cases,
-            omit_absurd,
             inferred_type: Some(typ_app),
         })
     }
@@ -62,7 +58,6 @@ impl CheckInfer for LocalComatch {
 
 pub struct WithDestructee<'a> {
     pub cases: &'a Vec<Case>,
-    pub omit_absurd: bool,
     /// Name of the global codefinition that gets substituted for the destructor's self parameters
     pub label: Option<Ident>,
     pub n_label_args: usize,
@@ -71,9 +66,10 @@ pub struct WithDestructee<'a> {
 
 /// Infer a copattern match
 impl<'a> WithDestructee<'a> {
-    pub fn infer_wd(&self, prg: &Module, ctx: &mut Ctx) -> Result<(Vec<Case>, bool), TypeError> {
-        let WithDestructee { cases, omit_absurd, .. } = &self;
-
+    /// Check whether the copattern match contains exactly one clause for every
+    /// destructor declared in the codata type declaration.
+    pub fn check_exhaustiveness(&self, prg: &Module) -> Result<(), TypeError> {
+        let WithDestructee { cases, .. } = &self;
         // Check that this comatch is on a codata type
         let codata = prg.codata(&self.destructee.name, self.destructee.span())?;
 
@@ -92,7 +88,7 @@ impl<'a> WithDestructee<'a> {
         let mut dtors_missing = dtors_expected.difference(&dtors_actual).peekable();
         let mut dtors_exessive = dtors_actual.difference(&dtors_expected).peekable();
 
-        if (!omit_absurd && dtors_missing.peek().is_some())
+        if (dtors_missing.peek().is_some())
             || dtors_exessive.peek().is_some()
             || !dtors_duplicate.is_empty()
         {
@@ -103,27 +99,16 @@ impl<'a> WithDestructee<'a> {
                 &self.destructee.span(),
             ));
         }
+        Ok(())
+    }
 
-        // Add absurd cases for all omitted destructors
-        let mut cases: Vec<_> = cases.iter().cloned().map(|case| (case, false)).collect();
+    pub fn infer_wd(&self, prg: &Module, ctx: &mut Ctx) -> Result<Vec<Case>, TypeError> {
+        let WithDestructee { cases, .. } = &self;
 
-        if *omit_absurd {
-            for name in dtors_missing.cloned() {
-                let Dtor { params, .. } = prg.dtor(&name, self.destructee.span)?;
-
-                let case = Case {
-                    span: self.destructee.span(),
-                    name,
-                    params: params.instantiate(),
-                    body: None,
-                };
-                cases.push((case, true));
-            }
-        }
-
+        let cases: Vec<Case> = cases.to_vec();
         let mut cases_out = Vec::new();
 
-        for (case, omit) in cases {
+        for case in cases {
             // Build equations for this case
             let Dtor {
                 self_param: SelfParam { typ: TypCtor { args: def_args, .. }, .. },
@@ -183,13 +168,10 @@ impl<'a> WithDestructee<'a> {
 
             // Check the case given the equations
             let case_out = check_cocase(eqns, &case, prg, ctx, ret_typ_nf)?;
-
-            if !omit {
-                cases_out.push(case_out);
-            }
+            cases_out.push(case_out);
         }
 
-        Ok((cases_out, *omit_absurd))
+        Ok(cases_out)
     }
 }
 

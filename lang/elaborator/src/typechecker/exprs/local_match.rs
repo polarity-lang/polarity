@@ -27,7 +27,7 @@ use crate::result::TypeError;
 
 impl CheckInfer for LocalMatch {
     fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        let LocalMatch { span, name, on_exp, motive, cases, omit_absurd, .. } = self;
+        let LocalMatch { span, name, on_exp, motive, cases, .. } = self;
         let on_exp_out = on_exp.infer(prg, ctx)?;
         let typ_app_nf = on_exp_out
             .typ()
@@ -83,9 +83,9 @@ impl CheckInfer for LocalMatch {
             }
         };
 
-        let (cases, omit_absurd) =
-            WithScrutinee { cases, omit_absurd: *omit_absurd, scrutinee: typ_app_nf.clone() }
-                .check_ws(prg, ctx, body_t)?;
+        let ws = WithScrutinee { cases, scrutinee: typ_app_nf.clone() };
+        ws.check_exhaustiveness(prg)?;
+        let cases = ws.check_ws(prg, ctx, body_t)?;
 
         Ok(LocalMatch {
             span: *span,
@@ -95,7 +95,6 @@ impl CheckInfer for LocalMatch {
             motive: motive_out,
             ret_typ: ret_typ_out.into(),
             cases,
-            omit_absurd,
             inferred_type: Some(typ_app),
         })
     }
@@ -107,20 +106,15 @@ impl CheckInfer for LocalMatch {
 
 pub struct WithScrutinee<'a> {
     pub cases: &'a Vec<Case>,
-    pub omit_absurd: bool,
     pub scrutinee: TypCtor,
 }
 
 /// Check a pattern match
 impl<'a> WithScrutinee<'a> {
-    pub fn check_ws(
-        &self,
-        prg: &Module,
-        ctx: &mut Ctx,
-        t: Rc<Exp>,
-    ) -> Result<(Vec<Case>, bool), TypeError> {
-        let WithScrutinee { cases, omit_absurd, .. } = &self;
-
+    /// Check whether the pattern match contains exactly one clause for every
+    /// constructor declared in the data type declaration.
+    pub fn check_exhaustiveness(&self, prg: &Module) -> Result<(), TypeError> {
+        let WithScrutinee { cases, .. } = &self;
         // Check that this match is on a data type
         let data = prg.data(&self.scrutinee.name, self.scrutinee.span())?;
 
@@ -138,7 +132,7 @@ impl<'a> WithScrutinee<'a> {
         let mut ctors_missing = ctors_expected.difference(&ctors_actual).peekable();
         let mut ctors_undeclared = ctors_actual.difference(&ctors_expected).peekable();
 
-        if (!omit_absurd && ctors_missing.peek().is_some())
+        if (ctors_missing.peek().is_some())
             || ctors_undeclared.peek().is_some()
             || !ctors_duplicate.is_empty()
         {
@@ -149,27 +143,21 @@ impl<'a> WithScrutinee<'a> {
                 &self.scrutinee.span(),
             ));
         }
+        Ok(())
+    }
 
-        // Add absurd cases for all omitted constructors
-        let mut cases: Vec<_> = cases.iter().cloned().map(|case| (case, false)).collect();
+    pub fn check_ws(
+        &self,
+        prg: &Module,
+        ctx: &mut Ctx,
+        t: Rc<Exp>,
+    ) -> Result<Vec<Case>, TypeError> {
+        let WithScrutinee { cases, .. } = &self;
 
-        if *omit_absurd {
-            for name in ctors_missing.cloned() {
-                let Ctor { params, .. } = prg.ctor(&name, self.scrutinee.span())?;
-
-                let case = Case {
-                    span: self.scrutinee.span(),
-                    name,
-                    params: params.instantiate(),
-                    body: None,
-                };
-                cases.push((case, true));
-            }
-        }
-
+        let cases: Vec<_> = cases.to_vec();
         let mut cases_out = Vec::new();
 
-        for (case, omit) in cases {
+        for case in cases {
             // Build equations for this case
             let Ctor { typ: TypCtor { args: def_args, .. }, params, .. } =
                 prg.ctor(&case.name, case.span)?;
@@ -189,13 +177,10 @@ impl<'a> WithScrutinee<'a> {
 
             // Check the case given the equations
             let case_out = check_case(eqns, &case, prg, ctx, t.clone())?;
-
-            if !omit {
-                cases_out.push(case_out);
-            }
+            cases_out.push(case_out);
         }
 
-        Ok((cases_out, *omit_absurd))
+        Ok(cases_out)
     }
 }
 

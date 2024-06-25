@@ -233,17 +233,7 @@ impl Lower for cst::decls::Def {
     type Target = ast::Def;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::decls::Def {
-            span,
-            doc,
-            name,
-            attr,
-            params,
-            scrutinee,
-            ret_typ,
-            cases,
-            omit_absurd,
-        } = self;
+        let cst::decls::Def { span, doc, name, attr, params, scrutinee, ret_typ, cases } = self;
 
         let self_param: cst::decls::SelfParam = scrutinee.clone().into();
 
@@ -259,7 +249,6 @@ impl Lower for cst::decls::Def {
                     self_param,
                     ret_typ: ret_typ.lower(ctx)?,
                     cases,
-                    omit_absurd: *omit_absurd,
                 })
             })
         })
@@ -270,7 +259,7 @@ impl Lower for cst::decls::Codef {
     type Target = ast::Codef;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::decls::Codef { span, doc, name, attr, params, typ, cases, omit_absurd, .. } = self;
+        let cst::decls::Codef { span, doc, name, attr, params, typ, cases, .. } = self;
 
         lower_telescope(params, ctx, |ctx, params| {
             Ok(ast::Codef {
@@ -281,7 +270,6 @@ impl Lower for cst::decls::Codef {
                 params,
                 typ: typ.lower(ctx)?,
                 cases: cases.lower(ctx)?,
-                omit_absurd: *omit_absurd,
             })
         })
     }

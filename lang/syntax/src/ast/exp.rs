@@ -641,7 +641,6 @@ pub struct LocalMatch {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ret_typ: Option<Rc<Exp>>,
     pub cases: Vec<Case>,
-    pub omit_absurd: bool,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<TypCtor>,
 }
@@ -660,7 +659,7 @@ impl From<LocalMatch> for Exp {
 
 impl Shift for LocalMatch {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let LocalMatch { span, name, on_exp, motive, cases, omit_absurd, .. } = self;
+        let LocalMatch { span, name, on_exp, motive, cases, .. } = self;
         LocalMatch {
             span: *span,
             ctx: None,
@@ -669,7 +668,6 @@ impl Shift for LocalMatch {
             motive: motive.shift_in_range(range.clone(), by),
             ret_typ: None,
             cases: cases.shift_in_range(range, by),
-            omit_absurd: *omit_absurd,
             inferred_type: None,
         }
     }
@@ -691,7 +689,7 @@ impl HasTypeInfo for LocalMatch {
 impl Substitutable for LocalMatch {
     type Result = LocalMatch;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
-        let LocalMatch { span, name, on_exp, motive, ret_typ, cases, omit_absurd, .. } = self;
+        let LocalMatch { span, name, on_exp, motive, ret_typ, cases, .. } = self;
         LocalMatch {
             span: *span,
             ctx: None,
@@ -700,7 +698,6 @@ impl Substitutable for LocalMatch {
             motive: motive.subst(ctx, by),
             ret_typ: ret_typ.subst(ctx, by),
             cases: cases.iter().map(|case| case.subst(ctx, by)).collect(),
-            omit_absurd: *omit_absurd,
             inferred_type: None,
         }
     }
@@ -720,7 +717,6 @@ pub struct LocalComatch {
     pub name: Label,
     pub is_lambda_sugar: bool,
     pub cases: Vec<Case>,
-    pub omit_absurd: bool,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<TypCtor>,
 }
@@ -739,14 +735,13 @@ impl From<LocalComatch> for Exp {
 
 impl Shift for LocalComatch {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let LocalComatch { span, name, is_lambda_sugar, cases, omit_absurd, .. } = self;
+        let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
         LocalComatch {
             span: *span,
             ctx: None,
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             cases: cases.shift_in_range(range, by),
-            omit_absurd: *omit_absurd,
             inferred_type: None,
         }
     }
@@ -769,14 +764,13 @@ impl Substitutable for LocalComatch {
     type Result = LocalComatch;
 
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
-        let LocalComatch { span, name, is_lambda_sugar, cases, omit_absurd, .. } = self;
+        let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
         LocalComatch {
             span: *span,
             ctx: None,
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             cases: cases.iter().map(|case| case.subst(ctx, by)).collect(),
-            omit_absurd: *omit_absurd,
             inferred_type: None,
         }
     }

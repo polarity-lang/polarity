@@ -22,19 +22,21 @@ impl CheckToplevel for Codef {
     fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
         trace!("Checking well-formedness of codefinition: {}", self.name);
 
-        let Codef { span, doc, name, attr, params, typ, cases, omit_absurd } = self;
+        let Codef { span, doc, name, attr, params, typ, cases } = self;
 
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
             let typ_nf = typ.normalize(prg, &mut ctx.env())?;
             let wd = WithDestructee {
                 cases,
-                omit_absurd: *omit_absurd,
                 label: Some(name.to_owned()),
                 n_label_args: params.len(),
                 destructee: typ_nf.expect_typ_app()?,
             };
-            let (cases, omit_absurd) = wd.infer_wd(prg, ctx)?;
+
+            wd.check_exhaustiveness(prg)?;
+            let cases = wd.infer_wd(prg, ctx)?;
+
             Ok(Codef {
                 span: *span,
                 doc: doc.clone(),
@@ -43,7 +45,6 @@ impl CheckToplevel for Codef {
                 params: params_out,
                 typ: typ_out,
                 cases,
-                omit_absurd,
             })
         })
     }

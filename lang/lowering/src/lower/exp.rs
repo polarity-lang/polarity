@@ -187,7 +187,7 @@ impl Lower for cst::exp::LocalMatch {
     type Target = ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::LocalMatch { span, name, on_exp, motive, cases, omit_absurd } = self;
+        let cst::exp::LocalMatch { span, name, on_exp, motive, cases } = self;
         Ok(ast::LocalMatch {
             span: Some(*span),
             ctx: None,
@@ -196,7 +196,6 @@ impl Lower for cst::exp::LocalMatch {
             motive: motive.lower(ctx)?,
             ret_typ: None,
             cases: cases.lower(ctx)?,
-            omit_absurd: *omit_absurd,
             inferred_type: None,
         }
         .into())
@@ -207,14 +206,13 @@ impl Lower for cst::exp::LocalComatch {
     type Target = ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::LocalComatch { span, name, is_lambda_sugar, cases, omit_absurd } = self;
+        let cst::exp::LocalComatch { span, name, is_lambda_sugar, cases } = self;
         Ok(ast::LocalComatch {
             span: Some(*span),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
             is_lambda_sugar: *is_lambda_sugar,
             cases: cases.lower(ctx)?,
-            omit_absurd: *omit_absurd,
             inferred_type: None,
         }
         .into())
@@ -295,7 +293,6 @@ impl Lower for cst::exp::Lam {
                 ],
                 body: Some(body.clone()),
             }],
-            omit_absurd: false,
         });
         comatch.lower(ctx)
     }

@@ -19,21 +19,11 @@ use syntax::ctx::BindContext;
 use super::eval::Eval;
 use crate::result::*;
 
-fn print_cases<'a>(
-    cases: &'a [Case],
-    omit_absurd: bool,
-    cfg: &PrintCfg,
-    alloc: &'a Alloc<'a>,
-) -> Builder<'a> {
+fn print_cases<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
     let sep = alloc.text(COMMA).append(alloc.hardline());
     alloc
         .hardline()
         .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
-        .append(if omit_absurd {
-            alloc.text(COMMA).append(alloc.text("..")).append(alloc.keyword(ABSURD))
-        } else {
-            alloc.nil()
-        })
         .nest(cfg.indent)
         .append(alloc.hardline())
         .braces_anno()
@@ -279,31 +269,29 @@ pub struct LocalComatch {
     pub name: ast::Label,
     pub is_lambda_sugar: bool,
     pub cases: Vec<Case>,
-    pub omit_absurd: bool,
 }
 
 impl Shift for LocalComatch {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let LocalComatch { span, name, is_lambda_sugar, cases, omit_absurd } = self;
+        let LocalComatch { span, name, is_lambda_sugar, cases } = self;
         LocalComatch {
             span: *span,
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             cases: cases.shift_in_range(range, by),
-            omit_absurd: *omit_absurd,
         }
     }
 }
 
 impl Print for LocalComatch {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let LocalComatch { span: _, name, is_lambda_sugar: _, cases, omit_absurd } = self;
+        let LocalComatch { span: _, name, is_lambda_sugar: _, cases } = self;
         alloc
             .keyword(COMATCH)
             .append(alloc.space())
             .append(alloc.text(name.to_string()))
             .append(alloc.space())
-            .append(print_cases(cases, *omit_absurd, cfg, alloc))
+            .append(print_cases(cases, cfg, alloc))
     }
 }
 
@@ -316,14 +304,13 @@ impl From<LocalComatch> for Val {
 impl ReadBack for LocalComatch {
     type Nf = ast::LocalComatch;
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
-        let LocalComatch { span, name, is_lambda_sugar, cases, omit_absurd } = self;
+        let LocalComatch { span, name, is_lambda_sugar, cases } = self;
         Ok(ast::LocalComatch {
             span: *span,
             ctx: None,
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             cases: cases.read_back(prg)?,
-            omit_absurd: *omit_absurd,
             inferred_type: None,
         })
     }
@@ -504,25 +491,23 @@ pub struct LocalMatch {
     pub name: ast::Label,
     pub on_exp: Rc<Neu>,
     pub cases: Vec<Case>,
-    pub omit_absurd: bool,
 }
 
 impl Shift for LocalMatch {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let LocalMatch { span, name, on_exp, cases, omit_absurd } = self;
+        let LocalMatch { span, name, on_exp, cases } = self;
         LocalMatch {
             span: *span,
             name: name.clone(),
             on_exp: on_exp.shift_in_range(range.clone(), by),
             cases: cases.shift_in_range(range, by),
-            omit_absurd: *omit_absurd,
         }
     }
 }
 
 impl Print for LocalMatch {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let LocalMatch { span: _, name, on_exp, cases, omit_absurd } = self;
+        let LocalMatch { span: _, name, on_exp, cases } = self;
         on_exp
             .print(cfg, alloc)
             .append(DOT)
@@ -530,7 +515,7 @@ impl Print for LocalMatch {
             .append(alloc.space())
             .append(alloc.text(name.to_string()))
             .append(alloc.space())
-            .append(print_cases(cases, *omit_absurd, cfg, alloc))
+            .append(print_cases(cases, cfg, alloc))
     }
 }
 
@@ -544,7 +529,7 @@ impl ReadBack for LocalMatch {
     type Nf = ast::LocalMatch;
 
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
-        let LocalMatch { span, name, on_exp, cases, omit_absurd } = self;
+        let LocalMatch { span, name, on_exp, cases } = self;
         Ok(ast::LocalMatch {
             span: *span,
             ctx: None,
@@ -553,7 +538,6 @@ impl ReadBack for LocalMatch {
             name: name.clone(),
             on_exp: on_exp.read_back(prg)?,
             cases: cases.read_back(prg)?,
-            omit_absurd: *omit_absurd,
             inferred_type: None,
         })
     }

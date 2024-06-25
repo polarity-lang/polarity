@@ -30,7 +30,6 @@ extern {
     "as" => Token::As,
     "comatch" => Token::Comatch,
     "absurd" => Token::Absurd,
-    "..absurd" => Token::DotsAbsurd,
     "Type" => Token::Type,
     "implicit" => Token::Implicit,
 
@@ -121,8 +120,6 @@ Attr: String = <s:"LowerCaseName"> => s.to_owned();
 Attributes: Attributes = "#" <attrs: BracketedArgs<Attr>> => Attributes { attrs };
 OptAttributes: Attributes = <attr: Attributes? > => attr.unwrap_or_default();
 
-OmitAbsurd: bool = <absurd: "..absurd"?> => absurd.is_some();
-
 DocCommentHelper: String = <doc: "DocComment"> => doc.strip_prefix("-- |").unwrap().trim().to_owned();
 DocComment: DocComment = <docs: DocCommentHelper+> => DocComment { docs };
 
@@ -163,20 +160,16 @@ Codata: Codata = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codata" <name
   Codata { span: span(l, r), doc, name, attr, params, dtors };
 
 // Toplevel definition
-Def: Def = <l: @L> <doc: DocComment?> <attr: OptAttributes> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <body: Match> "}" <r: @R> =>
-  Def { span: span(l, r), doc, name, attr, params, scrutinee, ret_typ, cases: body.0, omit_absurd: body.1 };
+Def: Def = <l: @L> <doc: DocComment?> <attr: OptAttributes> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <cases: Comma<Case>> "}" <r: @R> =>
+  Def { span: span(l, r), doc, name, attr, params, scrutinee, ret_typ, cases };
 
 // Toplevel codefinition
-Codef: Codef = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <body: Match> "}" <r: @R> =>
-  Codef { span: span(l, r), doc, name, attr, params, typ, cases: body.0, omit_absurd: body.1 };
+Codef: Codef = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <cases: Comma<Case>> "}" <r: @R> =>
+  Codef { span: span(l, r), doc, name, attr, params, typ, cases };
 
 // Toplevel let binding
 Let: Let = <l: @L> <doc: DocComment?> <attr: OptAttributes> "let" <name: LowerIdent><params: OptTelescope> ":" <typ: Exp> "{" <body: Exp> "}" <r: @R> =>
   Let { span: span(l,r), doc, name, attr, params, typ, body };
-
-pub Match : (Vec<Case>, bool) = {
-    <cases: Comma<Case>> <omit_absurd: OmitAbsurd> => (cases, omit_absurd),
-}
 
 pub Case : Case = {
     <l: @L> <name: Ident> <params: OptTelescopeInst> <body: AbsurdOrBody> <r: @R> => Case { span: span(l, r), name, params, body },
@@ -258,8 +251,8 @@ Lam: Lam = <l: @L> "\\" <var: BindingSite> "." <body: Exp> <r: @R> =>
 DotCall: DotCall = <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> =>
   DotCall { span: span(l, r), exp, name, args };
 
-LocalMatch: LocalMatch = <l: @L> <on_exp: Ops> "." "match" <name: Ident?> <motive: Motive?> "{" <body: Match> "}" <r: @R> =>
-  LocalMatch { span: span(l, r), name, on_exp, motive, cases: body.0, omit_absurd: body.1 };
+LocalMatch: LocalMatch = <l: @L> <on_exp: Ops> "." "match" <name: Ident?> <motive: Motive?> "{" <cases: Comma<Case>> "}" <r: @R> =>
+  LocalMatch { span: span(l, r), name, on_exp, motive, cases };
 
 CallWithArgs: Call = <l: @L> <name: Ident> <args: Args> <r: @R> =>
   Call { span: span(l, r), name, args };
@@ -267,8 +260,8 @@ CallWithArgs: Call = <l: @L> <name: Ident> <args: Args> <r: @R> =>
 CallWithoutArgs: Call = <l: @L> <name: Ident> <r: @R> =>
   Call { span: span(l, r), name, args: vec![] };
 
-LocalComatch: LocalComatch = <l: @L> "comatch" <name: Ident?> "{" <body: Match> "}" <r: @R> =>
-  LocalComatch { span: span(l, r), name, is_lambda_sugar: false, cases: body.0, omit_absurd: body.1 };
+LocalComatch: LocalComatch = <l: @L> "comatch" <name: Ident?> "{" <cases: Comma<Case>> "}" <r: @R> =>
+  LocalComatch { span: span(l, r), name, is_lambda_sugar: false, cases };
 
 TypeUniv: TypeUniv = <l: @L> "Type" <r: @R> =>
   TypeUniv { span: span(l, r) };
