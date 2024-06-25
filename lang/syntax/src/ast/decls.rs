@@ -8,6 +8,7 @@ use printer::theme::ThemeExt;
 use printer::tokens::CODATA;
 use printer::tokens::CODEF;
 use printer::tokens::COLON;
+use printer::tokens::COLONEQ;
 use printer::tokens::COMMA;
 use printer::tokens::DATA;
 use printer::tokens::DEF;
@@ -870,6 +871,15 @@ impl Print for Param {
                 .append(typ.print(cfg, alloc))
         } else {
             alloc.text(name).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
+        }
+    }
+}
+
+impl Print for Arg {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Arg::UnnamedArg(e) => e.print(cfg, alloc),
+            Arg::NamedArg(i, e) => alloc.text(i).append(COLONEQ).append(e.print(cfg, alloc)),
         }
     }
 }

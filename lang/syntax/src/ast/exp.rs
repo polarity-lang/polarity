@@ -105,7 +105,7 @@ impl Occurs for Arg {
     }
 }
 
-impl HasTypeInfo for Arg {
+impl HasType for Arg {
     fn typ(&self) -> Option<Rc<Exp>> {
         match self {
             Arg::UnnamedArg(e) => e.typ(),
