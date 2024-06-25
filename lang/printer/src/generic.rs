@@ -502,6 +502,15 @@ impl Print for Param {
     }
 }
 
+impl Print for Arg {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Arg::UnnamedArg(e) => e.print(cfg, alloc),
+            Arg::NamedArg(i, e) => alloc.text(i).append(COLONEQ).append(e.print(cfg, alloc)),
+        }
+    }
+}
+
 impl Print for ParamInst {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let ParamInst { span: _, info: _, name, typ: _ } = self;
