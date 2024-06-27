@@ -2,10 +2,6 @@
 
 use std::rc::Rc;
 
-use log::trace;
-
-use printer::types::Print;
-
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::typechecker::exprs::CheckTelescope;
@@ -103,28 +99,24 @@ impl<'a> WithDestructee<'a> {
     }
 
     pub fn infer_wd(&self, prg: &Module, ctx: &mut Ctx) -> Result<Vec<Case>, TypeError> {
-        let WithDestructee { cases, .. } = &self;
+        let WithDestructee { cases, destructee, n_label_args, label } = &self;
+        let TypCtor { args: on_args, .. } = destructee;
 
-        let cases: Vec<Case> = cases.to_vec();
+        let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
+
         let mut cases_out = Vec::new();
 
-        for case in cases {
+        for case in cases.iter().cloned() {
             // Build equations for this case
-            let Dtor {
-                self_param: SelfParam { typ: TypCtor { args: def_args, .. }, .. },
-                ret_typ,
-                params,
-                ..
-            } = prg.dtor(&case.name, case.span)?;
+            let Dtor { self_param, ret_typ, params, .. } = prg.dtor(&case.name, case.span)?;
+            let SelfParam { typ: TypCtor { args: def_args, .. }, .. } = self_param;
+            let Case { span, name, params: params_inst, body } = &case;
 
             let def_args_nf =
                 def_args.normalize(prg, &mut LevelCtx::from(vec![params.len()]).env())?;
 
             let ret_typ_nf =
                 ret_typ.normalize(prg, &mut LevelCtx::from(vec![params.len(), 1]).env())?;
-
-            let TypCtor { args: on_args, .. } = &self.destructee;
-            let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
             let eqns: Vec<_> = def_args_nf
                 .iter()
@@ -133,10 +125,10 @@ impl<'a> WithDestructee<'a> {
                 .map(|(lhs, rhs)| Eqn { lhs, rhs })
                 .collect();
 
-            let ret_typ_nf = match &self.label {
+            let ret_typ_nf = match label {
                 // Substitute the codef label for the self parameter
                 Some(label) => {
-                    let args = (0..self.n_label_args)
+                    let args = (0..*n_label_args)
                         .rev()
                         .map(|snd| {
                             Exp::Variable(Variable {
@@ -159,7 +151,7 @@ impl<'a> WithDestructee<'a> {
                     let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
                     ret_typ_nf.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
                         prg,
-                        &mut LevelCtx::from(vec![self.n_label_args, params.len()]).env(),
+                        &mut LevelCtx::from(vec![*n_label_args, params.len()]).env(),
                     )?
                 }
                 // TODO: Self parameter for local comatches
@@ -167,66 +159,51 @@ impl<'a> WithDestructee<'a> {
             };
 
             // Check the case given the equations
-            let case_out = {
-                trace!(
-                    "{} |- {} <= {}",
-                    ctx.print_to_colored_string(None),
-                    case.print_to_colored_string(None),
-                    ret_typ_nf.print_to_colored_string(None)
-                );
-                let Case { span, name, params: params_inst, body } = &case;
-                let Dtor { name, params, .. } = prg.dtor(name, *span)?;
-
-                params_inst.check_telescope(
-                    prg,
-                    name,
-                    ctx,
-                    params,
-                    |ctx, args_out| {
-                        let body_out = match body {
-                            Some(body) => {
-                                let unif =
-                                    unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
-                                        .map_no(|()| TypeError::PatternIsAbsurd {
-                                            name: name.clone(),
-                                            span: span.to_miette(),
-                                        })
-                                        .ok_yes()?;
-
-                                ctx.fork::<Result<_, TypeError>, _>(|ctx| {
-                                    ctx.subst(prg, &unif)?;
-                                    let body = body.subst(&mut ctx.levels(), &unif);
-
-                                    let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif);
-                                    let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
-
-                                    let body_out = body.check(prg, ctx, t_nf)?;
-
-                                    Ok(Some(body_out))
-                                })?
-                            }
-                            None => {
+            let case_out = params_inst.check_telescope(
+                prg,
+                name,
+                ctx,
+                params,
+                |ctx, args_out| {
+                    let body_out = match body {
+                        Some(body) => {
+                            let unif =
                                 unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
-                                    .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                                    .map_no(|()| TypeError::PatternIsAbsurd {
                                         name: name.clone(),
                                         span: span.to_miette(),
                                     })
-                                    .ok_no()?;
+                                    .ok_yes()?;
 
-                                None
-                            }
-                        };
+                            ctx.fork::<Result<_, TypeError>, _>(|ctx| {
+                                ctx.subst(prg, &unif)?;
+                                let body = body.subst(&mut ctx.levels(), &unif);
 
-                        Ok(Case {
-                            span: *span,
-                            name: name.clone(),
-                            params: args_out,
-                            body: body_out,
-                        })
-                    },
-                    *span,
-                )
-            }?;
+                                let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif);
+                                let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+
+                                let body_out = body.check(prg, ctx, t_nf)?;
+
+                                Ok(Some(body_out))
+                            })?
+                        }
+                        None => {
+                            unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
+                                .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                                    name: name.clone(),
+                                    span: span.to_miette(),
+                                })
+                                .ok_no()?;
+
+                            None
+                        }
+                    };
+
+                    Ok(Case { span: *span, name: name.clone(), params: args_out, body: body_out })
+                },
+                *span,
+            )?;
+
             cases_out.push(case_out);
         }
 
