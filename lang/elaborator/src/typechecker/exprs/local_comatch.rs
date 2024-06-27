@@ -152,68 +152,14 @@ impl<'a> WithDestructee<'a> {
                 .map(|(lhs, rhs)| Eqn { lhs, rhs })
                 .collect();
 
-            let ret_typ_nf = match label {
-                // Substitute the codef label for the self parameter
-                Some(label) => {
-                    let args = (0..*n_label_args)
-                        .rev()
-                        .map(|snd| {
-                            Exp::Variable(Variable {
-                                span: None,
-                                idx: Idx { fst: 2, snd },
-                                name: "".to_owned(),
-                                inferred_type: None,
-                            })
-                        })
-                        .map(Rc::new)
-                        .collect();
-                    let ctor = Rc::new(Exp::Call(Call {
-                        span: None,
-                        kind: CallKind::Codefinition,
-                        name: label.clone(),
-                        args: Args { args },
-                        inferred_type: None,
-                    }));
-                    let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
-                    let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
-                    ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
+            match body {
+                None => {
+                    let case_out = params_inst.check_telescope(
                         prg,
-                        &mut LevelCtx::from(vec![*n_label_args, params.len()]).env(),
-                    )?
-                }
-                // TODO: Self parameter for local comatches
-                None => ret_typ.shift((-1, 0)),
-            };
-
-            // Check the case given the equations
-            let case_out = params_inst.check_telescope(
-                prg,
-                name,
-                ctx,
-                params,
-                |ctx, args_out| {
-                    let body_out = match body {
-                        Some(body) => {
-                            let unif = unify(ctx.levels(), &mut ctx.meta_vars, eqns, false)?
-                                .map_no(|()| TypeError::PatternIsAbsurd {
-                                    name: name.clone(),
-                                    span: span.to_miette(),
-                                })
-                                .ok_yes()?;
-
-                            ctx.fork::<Result<_, TypeError>, _>(|ctx| {
-                                ctx.subst(prg, &unif)?;
-                                let body = body.subst(&mut ctx.levels(), &unif);
-
-                                let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif);
-                                let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
-
-                                let body_out = body.check(prg, ctx, t_nf)?;
-
-                                Ok(Some(body_out))
-                            })?
-                        }
-                        None => {
+                        name,
+                        ctx,
+                        params,
+                        |ctx, args_out| {
                             unify(ctx.levels(), &mut ctx.meta_vars, eqns, false)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                     name: name.clone(),
@@ -221,16 +167,99 @@ impl<'a> WithDestructee<'a> {
                                 })
                                 .ok_no()?;
 
-                            None
+                            Ok(Case {
+                                span: *span,
+                                name: name.clone(),
+                                params: args_out,
+                                body: None,
+                            })
+                        },
+                        *span,
+                    )?;
+
+                    cases_out.push(case_out);
+                }
+                Some(body) => {
+                    // TODO: Document what is happening here
+                    //
+                    //
+                    let ret_typ_nf = match label {
+                        // Substitute the codef label for the self parameter
+                        Some(label) => {
+                            let args = (0..*n_label_args)
+                                .rev()
+                                .map(|snd| {
+                                    Exp::Variable(Variable {
+                                        span: None,
+                                        idx: Idx { fst: 2, snd },
+                                        name: "".to_owned(),
+                                        inferred_type: None,
+                                    })
+                                })
+                                .map(Rc::new)
+                                .collect();
+                            let ctor = Rc::new(Exp::Call(Call {
+                                span: None,
+                                kind: CallKind::Codefinition,
+                                name: label.clone(),
+                                args: Args { args },
+                                inferred_type: None,
+                            }));
+                            let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
+                            let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
+                            ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
+                                prg,
+                                &mut LevelCtx::from(vec![*n_label_args, params.len()]).env(),
+                            )?
                         }
+                        // TODO: Self parameter for local comatches
+                        None => ret_typ.shift((-1, 0)),
                     };
 
-                    Ok(Case { span: *span, name: name.clone(), params: args_out, body: body_out })
-                },
-                *span,
-            )?;
+                    // TODO: Document what is happening here:
+                    //
+                    //
+                    // Check the case given the equations
+                    let case_out = params_inst.check_telescope(
+                        prg,
+                        name,
+                        ctx,
+                        params,
+                        |ctx, args_out| {
+                            let body_out = {
+                                let unif = unify(ctx.levels(), &mut ctx.meta_vars, eqns, false)?
+                                    .map_no(|()| TypeError::PatternIsAbsurd {
+                                        name: name.clone(),
+                                        span: span.to_miette(),
+                                    })
+                                    .ok_yes()?;
 
-            cases_out.push(case_out);
+                                ctx.fork::<Result<_, TypeError>, _>(|ctx| {
+                                    ctx.subst(prg, &unif)?;
+                                    let body = body.subst(&mut ctx.levels(), &unif);
+
+                                    let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif);
+                                    let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+
+                                    let body_out = body.check(prg, ctx, t_nf)?;
+
+                                    Ok(Some(body_out))
+                                })?
+                            };
+
+                            Ok(Case {
+                                span: *span,
+                                name: name.clone(),
+                                params: args_out,
+                                body: body_out,
+                            })
+                        },
+                        *span,
+                    )?;
+
+                    cases_out.push(case_out);
+                }
+            };
         }
 
         Ok(cases_out)
