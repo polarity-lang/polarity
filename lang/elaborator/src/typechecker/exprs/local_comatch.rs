@@ -107,18 +107,45 @@ impl<'a> WithDestructee<'a> {
         let mut cases_out = Vec::new();
 
         for case in cases.iter().cloned() {
-            // Build equations for this case
             let Dtor { self_param, ret_typ, params, .. } = prg.dtor(&case.name, case.span)?;
             let SelfParam { typ: TypCtor { args: def_args, .. }, .. } = self_param;
             let Case { span, name, params: params_inst, body } = &case;
+            // We are in the following situation:
+            //
+            // codata T(...) {  (self : T(.....)).d(...) : t, ...}
+            //                            ^^^^^   ^ ^^^    ^
+            //                              |     |  |     \------ ret_typ
+            //                              |     |  \------------ params
+            //                              |     \--------------- name
+            //                              \--------------------- def_args
+            //
+            // comatch { d(...) => e, ...}
+            //           ^ ^^^     ^
+            //           |  |      \------------------------------ body
+            //           |  \------------------------------------- params_inst
+            //           \---------------------------------------- name
+            //
+            // where T(...) is the expected type of the comatch.
+            //         ^^^
+            //          \----------------------------------------- on_args
 
-            let def_args_nf =
+            // Normalize the arguments of the return type and the arguments to the self-parameter
+            // of the destructor declaration.
+            // TODO: Why can't we do this once *before* we repeatedly look them up in the context?
+            let def_args =
                 def_args.normalize(prg, &mut LevelCtx::from(vec![params.len()]).env())?;
-
-            let ret_typ_nf =
+            let ret_typ =
                 ret_typ.normalize(prg, &mut LevelCtx::from(vec![params.len(), 1]).env())?;
 
-            let eqns: Vec<_> = def_args_nf
+            // We have to check whether we have an absurd case or an ordinary case.
+            // To do this we have solve the following unification problem:
+            //
+            //               T(...) =? T(...)
+            //                 ^^^       ^^^
+            //                  |         \----------------------- on_args
+            //                  \--------------------------------- def_args
+            //
+            let eqns: Vec<_> = def_args
                 .iter()
                 .cloned()
                 .zip(on_args.args.iter().cloned())
@@ -149,13 +176,13 @@ impl<'a> WithDestructee<'a> {
                     }));
                     let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
                     let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
-                    ret_typ_nf.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
+                    ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
                         prg,
                         &mut LevelCtx::from(vec![*n_label_args, params.len()]).env(),
                     )?
                 }
                 // TODO: Self parameter for local comatches
-                None => ret_typ_nf.shift((-1, 0)),
+                None => ret_typ.shift((-1, 0)),
             };
 
             // Check the case given the equations
