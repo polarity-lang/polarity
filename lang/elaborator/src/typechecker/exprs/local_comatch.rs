@@ -194,13 +194,12 @@ impl<'a> WithDestructee<'a> {
                 |ctx, args_out| {
                     let body_out = match body {
                         Some(body) => {
-                            let unif =
-                                unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
-                                    .map_no(|()| TypeError::PatternIsAbsurd {
-                                        name: name.clone(),
-                                        span: span.to_miette(),
-                                    })
-                                    .ok_yes()?;
+                            let unif = unify(ctx.levels(), &mut ctx.meta_vars, eqns, false)?
+                                .map_no(|()| TypeError::PatternIsAbsurd {
+                                    name: name.clone(),
+                                    span: span.to_miette(),
+                                })
+                                .ok_yes()?;
 
                             ctx.fork::<Result<_, TypeError>, _>(|ctx| {
                                 ctx.subst(prg, &unif)?;
@@ -215,7 +214,7 @@ impl<'a> WithDestructee<'a> {
                             })?
                         }
                         None => {
-                            unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
+                            unify(ctx.levels(), &mut ctx.meta_vars, eqns, false)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                     name: name.clone(),
                                     span: span.to_miette(),
