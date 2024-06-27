@@ -167,72 +167,69 @@ impl<'a> WithDestructee<'a> {
             };
 
             // Check the case given the equations
-            let case_out = check_cocase(eqns, &case, prg, ctx, ret_typ_nf)?;
+            let case_out = {
+                trace!(
+                    "{} |- {} <= {}",
+                    ctx.print_to_colored_string(None),
+                    case.print_to_colored_string(None),
+                    ret_typ_nf.print_to_colored_string(None)
+                );
+                let Case { span, name, params: params_inst, body } = &case;
+                let Dtor { name, params, .. } = prg.dtor(name, *span)?;
+
+                params_inst.check_telescope(
+                    prg,
+                    name,
+                    ctx,
+                    params,
+                    |ctx, args_out| {
+                        let body_out = match body {
+                            Some(body) => {
+                                let unif =
+                                    unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
+                                        .map_no(|()| TypeError::PatternIsAbsurd {
+                                            name: name.clone(),
+                                            span: span.to_miette(),
+                                        })
+                                        .ok_yes()?;
+
+                                ctx.fork::<Result<_, TypeError>, _>(|ctx| {
+                                    ctx.subst(prg, &unif)?;
+                                    let body = body.subst(&mut ctx.levels(), &unif);
+
+                                    let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif);
+                                    let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+
+                                    let body_out = body.check(prg, ctx, t_nf)?;
+
+                                    Ok(Some(body_out))
+                                })?
+                            }
+                            None => {
+                                unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
+                                    .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                                        name: name.clone(),
+                                        span: span.to_miette(),
+                                    })
+                                    .ok_no()?;
+
+                                None
+                            }
+                        };
+
+                        Ok(Case {
+                            span: *span,
+                            name: name.clone(),
+                            params: args_out,
+                            body: body_out,
+                        })
+                    },
+                    *span,
+                )
+            }?;
             cases_out.push(case_out);
         }
 
         Ok(cases_out)
     }
-}
-
-/// Infer a cocase in a co-pattern match
-fn check_cocase(
-    eqns: Vec<Eqn>,
-    cocase: &Case,
-    prg: &Module,
-    ctx: &mut Ctx,
-    t: Rc<Exp>,
-) -> Result<Case, TypeError> {
-    trace!(
-        "{} |- {} <= {}",
-        ctx.print_to_colored_string(None),
-        cocase.print_to_colored_string(None),
-        t.print_to_colored_string(None)
-    );
-    let Case { span, name, params: params_inst, body } = cocase;
-    let Dtor { name, params, .. } = prg.dtor(name, *span)?;
-
-    params_inst.check_telescope(
-        prg,
-        name,
-        ctx,
-        params,
-        |ctx, args_out| {
-            let body_out = match body {
-                Some(body) => {
-                    let unif = unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
-                        .map_no(|()| TypeError::PatternIsAbsurd {
-                            name: name.clone(),
-                            span: span.to_miette(),
-                        })
-                        .ok_yes()?;
-
-                    ctx.fork::<Result<_, TypeError>, _>(|ctx| {
-                        ctx.subst(prg, &unif)?;
-                        let body = body.subst(&mut ctx.levels(), &unif);
-
-                        let t_subst = t.subst(&mut ctx.levels(), &unif);
-                        let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
-
-                        let body_out = body.check(prg, ctx, t_nf)?;
-
-                        Ok(Some(body_out))
-                    })?
-                }
-                None => {
-                    unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
-                        .map_yes(|_| TypeError::PatternIsNotAbsurd {
-                            name: name.clone(),
-                            span: span.to_miette(),
-                        })
-                        .ok_no()?;
-
-                    None
-                }
-            };
-
-            Ok(Case { span: *span, name: name.clone(), params: args_out, body: body_out })
-        },
-        *span,
-    )
 }
