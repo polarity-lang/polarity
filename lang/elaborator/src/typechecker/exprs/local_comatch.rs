@@ -153,6 +153,9 @@ impl<'a> WithDestructee<'a> {
                 .collect();
 
             match body {
+                // The programmer wrote an absurd case. We therefore have to check whether
+                // this case is really absurd. To do this, we verify that the unification
+                // actually fails.
                 None => {
                     let case_out = params_inst.check_telescope(
                         prg,
@@ -180,9 +183,9 @@ impl<'a> WithDestructee<'a> {
                     cases_out.push(case_out);
                 }
                 Some(body) => {
-                    // TODO: Document what is happening here
-                    //
-                    //
+                    // The programmer wrote a non-absurd case. We therefore have to check
+                    // that the unification succeeds.
+
                     let ret_typ_nf = match label {
                         // Substitute the codef label for the self parameter
                         Some(label) => {
