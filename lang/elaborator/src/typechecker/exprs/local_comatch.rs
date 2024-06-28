@@ -19,11 +19,12 @@ use crate::result::TypeError;
 impl CheckInfer for LocalComatch {
     fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
-        let typ_app_nf = t.expect_typ_app()?;
-        let typ_app = typ_app_nf.infer(prg, ctx)?;
+        // The expected type that we check against should be a type constructor applied to
+        // arguments.
+        let expected_type_app: TypCtor = t.expect_typ_app()?.infer(prg, ctx)?;
 
         // Local comatches don't support self parameters, yet.
-        let codata = prg.codata(&typ_app.name, *span)?;
+        let codata = prg.codata(&expected_type_app.name, *span)?;
         if uses_self(prg, codata)? {
             return Err(TypeError::LocalComatchWithSelf {
                 type_name: codata.name.to_owned(),
@@ -31,8 +32,7 @@ impl CheckInfer for LocalComatch {
             });
         }
 
-        let wd =
-            WithDestructee { cases, label: None, n_label_args: 0, destructee: typ_app_nf.clone() };
+        let wd = WithExpectedType { cases, label: None, expected_type: expected_type_app.clone() };
 
         wd.check_exhaustiveness(prg)?;
         let cases = wd.infer_wd(prg, ctx)?;
@@ -43,31 +43,34 @@ impl CheckInfer for LocalComatch {
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             cases,
-            inferred_type: Some(typ_app),
+            inferred_type: Some(expected_type_app),
         })
     }
 
     fn infer(&self, _prg: &Module, _ctx: &mut Ctx) -> Result<Self, TypeError> {
+        // We cannot currently infer the type of a copattern match, only check against an expected type.
         Err(TypeError::CannotInferComatch { span: self.span().to_miette() })
     }
 }
 
-pub struct WithDestructee<'a> {
+/// This struct is used to share code between the typechecking of local and global comatches.
+pub struct WithExpectedType<'a> {
     pub cases: &'a Vec<Case>,
     /// Name of the global codefinition that gets substituted for the destructor's self parameters
-    pub label: Option<Ident>,
-    pub n_label_args: usize,
-    pub destructee: TypCtor,
+    /// This is `None` for a local comatch.
+    pub label: Option<(Ident, usize)>,
+    /// The expected type of the comatch, i.e. `Stream(Int)` for `comatch { hd => 1, tl => ... }`.
+    pub expected_type: TypCtor,
 }
 
 /// Infer a copattern match
-impl<'a> WithDestructee<'a> {
+impl<'a> WithExpectedType<'a> {
     /// Check whether the copattern match contains exactly one clause for every
     /// destructor declared in the codata type declaration.
     pub fn check_exhaustiveness(&self, prg: &Module) -> Result<(), TypeError> {
-        let WithDestructee { cases, .. } = &self;
+        let WithExpectedType { cases, .. } = &self;
         // Check that this comatch is on a codata type
-        let codata = prg.codata(&self.destructee.name, self.destructee.span())?;
+        let codata = prg.codata(&self.expected_type.name, self.expected_type.span())?;
 
         // Check exhaustiveness
         let dtors_expected: HashSet<_> = codata.dtors.iter().cloned().collect();
@@ -92,17 +95,20 @@ impl<'a> WithDestructee<'a> {
                 dtors_missing.cloned().collect(),
                 dtors_exessive.cloned().collect(),
                 dtors_duplicate,
-                &self.destructee.span(),
+                &self.expected_type.span(),
             ));
         }
         Ok(())
     }
 
     pub fn infer_wd(&self, prg: &Module, ctx: &mut Ctx) -> Result<Vec<Case>, TypeError> {
-        let WithDestructee { cases, destructee, n_label_args, label } = &self;
-        let TypCtor { args: on_args, .. } = destructee;
+        let WithExpectedType { cases, expected_type, label } = &self;
+        let TypCtor { args: on_args, .. } = expected_type;
 
-        let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
+        // We will compare `on_args` against `def_args`. But `def_args` are defined
+        // in the context `params`. Below, we extend the context using `params_inst.check_telescope(...)`.
+        // In this extended context we have to weaken on_args by shifting.
+        let on_args = on_args.shift((1, 0));
 
         let mut cases_out = Vec::new();
 
@@ -186,14 +192,36 @@ impl<'a> WithDestructee<'a> {
                     // The programmer wrote a non-absurd case. We therefore have to check
                     // that the unification succeeds.
 
+                    // We compute the return type for that specific cocase.
+                    // E.g. for the following comatch:
+                    // ```text
+                    // codef Ones : Stream(Nat) {
+                    //    hd => 1
+                    //    tl => Ones
+                    // }
+                    // ```
+                    // we compute the types `Nat` resp, `Stream(Nat)` for the respective
+                    // cocases.
                     let ret_typ_nf = match label {
-                        // Substitute the codef label for the self parameter
-                        Some(label) => {
+                        Some((label, n_label_args)) => {
+                            // We know that we are checking a *global* comatch which can use
+                            // the self parameter in its return type.
+                            // The term that we have to substitute for `self` is:
+                            // ```text
+                            // C(x, ... x_n)
+                            // ^          ^
+                            // |          \---- n_label_args
+                            // \--------------- label
+                            // 
+                            // ```
                             let args = (0..*n_label_args)
                                 .rev()
                                 .map(|snd| {
                                     Exp::Variable(Variable {
                                         span: None,
+                                        // The field `fst` has to be `2` because we have two surrounding telescopes:
+                                        // - The arguments to the toplevel codefinition
+                                        // - The arguments bound by the destructor copattern.
                                         idx: Idx { fst: 2, snd },
                                         name: "".to_owned(),
                                         inferred_type: None,
@@ -208,6 +236,8 @@ impl<'a> WithDestructee<'a> {
                                 args: Args { args },
                                 inferred_type: None,
                             }));
+
+                            // We perform the substitution [C(x1,...xn) / self]
                             let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
                             let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
                             ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
@@ -215,8 +245,11 @@ impl<'a> WithDestructee<'a> {
                                 &mut LevelCtx::from(vec![*n_label_args, params.len()]).env(),
                             )?
                         }
-                        // TODO: Self parameter for local comatches
-                        None => ret_typ.shift((-1, 0)),
+                        
+                        None => {
+                            // TODO: Self parameter for local comatches
+                            ret_typ.shift((-1, 0))
+                        }
                     };
 
                     // TODO: Document what is happening here:

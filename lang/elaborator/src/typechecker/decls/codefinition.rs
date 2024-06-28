@@ -7,7 +7,7 @@ use syntax::ast::*;
 
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
 
-use crate::typechecker::exprs::local_comatch::WithDestructee;
+use crate::typechecker::exprs::local_comatch::WithExpectedType;
 use crate::typechecker::{
     ctx::Ctx,
     exprs::{CheckInfer, InferTelescope},
@@ -27,11 +27,10 @@ impl CheckToplevel for Codef {
         params.infer_telescope(prg, ctx, |ctx, params_out| {
             let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
             let typ_nf = typ.normalize(prg, &mut ctx.env())?;
-            let wd = WithDestructee {
+            let wd = WithExpectedType {
                 cases,
-                label: Some(name.to_owned()),
-                n_label_args: params.len(),
-                destructee: typ_nf.expect_typ_app()?,
+                label: Some((name.to_owned(), params.len())),
+                expected_type: typ_nf.expect_typ_app()?,
             };
 
             wd.check_exhaustiveness(prg)?;
