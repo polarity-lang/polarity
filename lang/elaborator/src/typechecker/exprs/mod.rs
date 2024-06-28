@@ -38,7 +38,8 @@ pub trait CheckInfer: Sized {
     ///            P, Γ ⊢ e ⇐ τ
     /// ```
     /// - P: The program context of toplevel declarations.
-    /// - Γ: The context of locally bound variables.
+    /// - Γ: The context of locally bound variables
+    /// - τ: The type we check against, must be in normal form.
     fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError>;
     /// Tries to infer a type for the given expression. For inference we use the
     /// following syntax:
