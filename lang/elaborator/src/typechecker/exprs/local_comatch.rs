@@ -212,7 +212,7 @@ impl<'a> WithExpectedType<'a> {
                             // ^          ^
                             // |          \---- n_label_args
                             // \--------------- label
-                            // 
+                            //
                             // ```
                             let args = (0..*n_label_args)
                                 .rev()
@@ -237,7 +237,34 @@ impl<'a> WithExpectedType<'a> {
                                 inferred_type: None,
                             }));
 
-                            // We perform the substitution [C(x1,...xn) / self]
+                            // Recall that we are in the following situation:
+                            //
+                            // codata T(...) {  (self : T(  σ  )).d( Ξ ) : t, ...}
+                            //                            ^^^^^   ^ ^^^    ^
+                            //                              |     |  |     \------ ret_typ
+                            //                              |     |  \------------ params
+                            //                              |     \--------------- name
+                            //                              \--------------------- def_args
+                            //
+                            // codef C(Δ) { d( Ξ ) => e, ...}
+                            //              ^ ^^^     ^
+                            //              |  |      \------------------------------ body
+                            //              |  \------------------------------------- params_inst
+                            //              \---------------------------------------- name
+                            //
+                            // Note that t is tyed under the following context:
+                            // Ξ;self |- t : Type
+                            // We want to perform the following substitution:
+                            // Δ;Ξ |- [C id_Δ / self]t : Type
+                            // To represent id_Δ, we mentally extend the context by self as follows:
+                            // Δ;Ξ;self |- C id_Δ : Type
+                            // This is why id_Δ = [(2,n), (2, n-1), ..., (2, 0)]
+                            // Since t is defined under context Ξ;self, we
+                            // still substitute for level (1, 0) which corresponds to self under context Ξ;self.
+                            // The result is under context Δ;Ξ;self, which we shift by (-1, 0) to get rid of self
+                            // (which no longer occurs) in [C id_Δ / self]t.
+                            // So we finally have:
+                            // Δ;Ξ |- [C id_Δ / self]t : Type
                             let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
                             let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
                             ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
@@ -245,7 +272,7 @@ impl<'a> WithExpectedType<'a> {
                                 &mut LevelCtx::from(vec![*n_label_args, params.len()]).env(),
                             )?
                         }
-                        
+
                         None => {
                             // TODO: Self parameter for local comatches
                             ret_typ.shift((-1, 0))
