@@ -265,6 +265,7 @@ impl<'a> WithExpectedType<'a> {
                             // (which no longer occurs) in [C id_Δ / self]t.
                             // So we finally have:
                             // Δ;Ξ |- [C id_Δ / self]t : Type
+                            //
                             let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
                             let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
                             ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
