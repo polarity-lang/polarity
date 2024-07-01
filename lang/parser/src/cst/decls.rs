@@ -209,7 +209,7 @@ pub struct Let {
 pub struct TypApp {
     pub span: Span,
     pub name: Ident,
-    pub args: Vec<Rc<exp::Exp>>,
+    pub args: Vec<exp::Arg>,
 }
 
 impl TypApp {
