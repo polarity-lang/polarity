@@ -10,7 +10,7 @@ use crate::ctx::LevelCtx;
 use super::exp::*;
 use super::ident::*;
 use super::lookup_table::{DeclKind, LookupTable};
-use super::subst::{Substitutable, Substitution};
+use super::traits::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
 
 #[derive(Debug, Clone)]

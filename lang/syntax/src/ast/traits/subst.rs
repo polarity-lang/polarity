@@ -1,10 +1,9 @@
 use std::rc::Rc;
 
 use crate::ast::Variable;
+use crate::ast::*;
 use crate::common::*;
 use crate::ctx::*;
-
-use super::*;
 
 // Substitution
 //
