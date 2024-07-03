@@ -23,7 +23,6 @@ use super::ctx::*;
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
 use crate::result::TypeError;
 
-use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, BindElem};
 

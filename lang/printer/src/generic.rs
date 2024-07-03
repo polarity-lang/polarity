@@ -3,7 +3,6 @@ use std::rc::Rc;
 use pretty::DocAllocator;
 
 use syntax::ast::*;
-use syntax::common::*;
 
 use super::theme::ThemeExt;
 use super::tokens::*;
@@ -383,6 +382,8 @@ impl Print for Telescope {
 
 #[cfg(test)]
 mod print_telescope_tests {
+
+    use syntax::common::Idx;
 
     use super::*;
 

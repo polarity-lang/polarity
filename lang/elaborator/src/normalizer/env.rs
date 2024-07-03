@@ -3,6 +3,7 @@ use std::rc::Rc;
 use derivative::Derivative;
 
 use pretty::DocAllocator;
+use syntax::ast::{Shift, ShiftRange};
 
 use crate::normalizer::val::*;
 use printer::tokens::COMMA;

@@ -9,11 +9,11 @@ use crate::common::*;
 use crate::ctx::values::TypeCtx;
 use crate::ctx::{BindContext, LevelCtx};
 
-use super::ident::*;
 use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
 use super::traits::Occurs;
 use super::HasType;
+use super::{ident::*, Shift, ShiftRange, ShiftRangeExt};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]

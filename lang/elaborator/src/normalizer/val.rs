@@ -4,6 +4,9 @@ use derivative::Derivative;
 use log::trace;
 use printer::types::Print;
 use syntax::ast::MetaVar;
+use syntax::ast::Shift;
+use syntax::ast::ShiftRange;
+use syntax::ast::ShiftRangeExt;
 
 use crate::normalizer::env::*;
 use codespan::Span;
