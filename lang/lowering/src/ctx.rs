@@ -7,8 +7,8 @@ use parser::cst;
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
 use syntax::ast::lookup_table::DeclMeta;
-use syntax::ast::Named;
 use syntax::ast::{self, MetaVar, MetaVarState};
+use syntax::ast::{HasSpan, Named};
 use syntax::common::*;
 use syntax::ctx::{Context, ContextElem, LevelCtx};
 

@@ -11,6 +11,7 @@ use crate::ctx::{BindContext, LevelCtx};
 
 use super::ident::*;
 use super::subst::{Substitutable, Substitution};
+use super::traits::HasSpan;
 use super::traits::Occurs;
 use super::HasTypeInfo;
 
