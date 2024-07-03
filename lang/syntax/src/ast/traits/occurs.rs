@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::ast::exp::Exp;
-use crate::common::{Idx, Lvl};
+use crate::ast::{Idx, Lvl};
 use crate::ctx::LevelCtx;
 
 use super::Leveled;

@@ -1,4 +1,4 @@
-use crate::common::{Idx, Lvl, Var};
+use crate::ast::{Idx, Lvl, Var};
 
 /// Convert an De-Bruijn index to a De-Bruijn level
 ///

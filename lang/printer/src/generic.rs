@@ -383,8 +383,6 @@ impl Print for Telescope {
 #[cfg(test)]
 mod print_telescope_tests {
 
-    use syntax::common::Idx;
-
     use super::*;
 
     #[test]

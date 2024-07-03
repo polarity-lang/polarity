@@ -5,7 +5,6 @@ use std::rc::Rc;
 use codespan::Span;
 use derivative::Derivative;
 
-use crate::common::*;
 use crate::ctx::values::TypeCtx;
 use crate::ctx::{BindContext, LevelCtx};
 

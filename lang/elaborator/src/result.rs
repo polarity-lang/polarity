@@ -7,7 +7,6 @@ use syntax::ast::LookupError;
 use codespan::Span;
 use std::rc::Rc;
 use syntax::ast::*;
-use syntax::common::*;
 
 use printer::types::Print;
 

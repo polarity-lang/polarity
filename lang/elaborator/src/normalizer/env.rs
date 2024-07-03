@@ -8,7 +8,7 @@ use syntax::ast::{Leveled, Shift, ShiftRange};
 use crate::normalizer::val::*;
 use printer::tokens::COMMA;
 use printer::Print;
-use syntax::common::*;
+use syntax::ast::{Idx, Lvl, Var};
 use syntax::ctx::map_idx::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::{Context, ContextElem, LevelCtx};

@@ -9,7 +9,7 @@ fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
     vec.join(s)
 }
 
-use crate::{ast::Leveled, common::*};
+use crate::ast::*;
 
 use super::def::*;
 

@@ -3,7 +3,7 @@ use std::rc::Rc;
 use log::trace;
 
 use printer::types::Print;
-use syntax::{ast::*, common::Lvl, ctx::LevelCtx};
+use syntax::{ast::*, ctx::LevelCtx};
 
 use crate::unifier::unify::{unify, Eqn};
 

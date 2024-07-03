@@ -16,7 +16,7 @@ use printer::tokens::*;
 use printer::types::*;
 use printer::util::*;
 use syntax::ast;
-use syntax::common::*;
+use syntax::ast::Idx;
 use syntax::ctx::BindContext;
 
 use super::eval::Eval;
