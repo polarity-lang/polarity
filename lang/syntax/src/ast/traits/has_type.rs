@@ -7,7 +7,7 @@ use crate::ast::exp::Exp;
 /// The function  `typ()` itself should not perform any non-trivial computation.
 /// You should first run evaluation on an expression before you call `typ()` on it,
 /// otherwise the function is not guaranteed to return a result.
-pub trait HasTypeInfo {
+pub trait HasType {
     /// Return the type of the expression.
     fn typ(&self) -> Option<Rc<Exp>>;
 }
