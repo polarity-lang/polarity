@@ -10,3 +10,6 @@ pub use exp::*;
 pub use ident::*;
 pub use lookup::*;
 pub use traits::*;
+
+pub type HashMap<K, V> = std::collections::HashMap<K, V, fxhash::FxBuildHasher>;
+pub type HashSet<V> = fxhash::FxHashSet<V>;

@@ -5,7 +5,7 @@ use parser::cst;
 use parser::cst::ident::Ident;
 use syntax::ast::lookup_table;
 use syntax::ast::lookup_table::DeclMeta;
-use syntax::common::*;
+use syntax::ast::HashMap;
 
 use super::result::*;
 

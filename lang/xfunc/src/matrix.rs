@@ -1,8 +1,7 @@
 use std::rc::Rc;
 
-use syntax::ast::{self, SwapWithCtx};
+use syntax::ast::{self, HashMap, SwapWithCtx};
 use syntax::ast::{Attributes, DocComment, Named};
-use syntax::common::*;
 use syntax::ctx::{BindContext, LevelCtx};
 
 use crate::result::XfuncError;

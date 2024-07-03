@@ -4,7 +4,6 @@ use codespan::Span;
 use derivative::Derivative;
 use url::Url;
 
-use crate::common::*;
 use crate::ctx::LevelCtx;
 
 use super::exp::*;
@@ -12,6 +11,7 @@ use super::ident::*;
 use super::lookup_table::{DeclKind, LookupTable};
 use super::traits::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
+use super::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct DocComment {
