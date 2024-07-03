@@ -12,8 +12,8 @@ use crate::ctx::{BindContext, LevelCtx};
 use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
 use super::traits::Occurs;
-use super::HasType;
 use super::{ident::*, Shift, ShiftRange, ShiftRangeExt};
+use super::{HasType, Leveled};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
