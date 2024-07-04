@@ -129,7 +129,10 @@ impl Lower for cst::decls::Ctor {
         lower_telescope(params, ctx, |ctx, params| {
             // If the type constructor does not take any arguments, it can be left out
             let typ = match typ {
-                Some(typ) => typ.lower(ctx)?,
+                Some(typ) => typ
+                    .lower(ctx)?
+                    .to_typctor()
+                    .ok_or(LoweringError::ExpectedTypCtor { span: span.to_miette() })?,
                 None => {
                     if type_arity == 0 {
                         ast::TypCtor {
@@ -194,7 +197,7 @@ impl Lower for cst::decls::Dtor {
                 Some(on_typ) => on_typ.clone(),
                 None => {
                     if type_arity == 0 {
-                        cst::decls::TypApp {
+                        cst::exp::Call {
                             span: Default::default(),
                             name: parser::cst::ident::Ident { id: typ_name.clone() },
                             args: vec![],
@@ -262,13 +265,17 @@ impl Lower for cst::decls::Codef {
         let cst::decls::Codef { span, doc, name, attr, params, typ, cases, .. } = self;
 
         lower_telescope(params, ctx, |ctx, params| {
+            let typ = typ.lower(ctx)?;
+            let typ_ctor = typ
+                .to_typctor()
+                .ok_or(LoweringError::ExpectedTypCtor { span: span.to_miette() })?;
             Ok(ast::Codef {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
                 name: name.id.clone(),
                 attr: attr.lower(ctx)?,
                 params,
-                typ: typ.lower(ctx)?,
+                typ: typ_ctor,
                 cases: cases.lower(ctx)?,
             })
         })
@@ -295,20 +302,6 @@ impl Lower for cst::decls::Let {
     }
 }
 
-impl Lower for cst::decls::TypApp {
-    type Target = ast::TypCtor;
-
-    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::decls::TypApp { span, name, args } = self;
-
-        Ok(ast::TypCtor {
-            span: Some(*span),
-            name: name.id.clone(),
-            args: ast::Args { args: args.lower(ctx)? },
-        })
-    }
-}
-
 fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, LoweringError>>(
     self_param: &cst::decls::SelfParam,
     ctx: &mut Ctx,
@@ -316,6 +309,8 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, Lowering
 ) -> Result<T, LoweringError> {
     let cst::decls::SelfParam { span, name, typ } = self_param;
     let typ_out = typ.lower(ctx)?;
+    let typ_ctor =
+        typ_out.to_typctor().ok_or(LoweringError::ExpectedTypCtor { span: span.to_miette() })?;
     ctx.bind_single(
         name.clone().unwrap_or_else(|| parser::cst::ident::Ident { id: "".to_owned() }),
         |ctx| {
@@ -324,7 +319,7 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, Lowering
                 ast::SelfParam {
                     info: Some(*span),
                     name: name.clone().map(|name| name.id),
-                    typ: typ_out,
+                    typ: typ_ctor,
                 },
             )
         },

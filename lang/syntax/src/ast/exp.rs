@@ -70,6 +70,15 @@ pub enum Exp {
     Hole(Hole),
 }
 
+impl Exp {
+    pub fn to_typctor(self) -> Option<TypCtor> {
+        match self {
+            Exp::TypCtor(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
 impl HasSpan for Exp {
     fn span(&self) -> Option<Span> {
         match self {

@@ -86,7 +86,7 @@ pub struct Ctor {
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub params: Telescope,
-    pub typ: Option<TypApp>,
+    pub typ: Option<exp::Call>,
 }
 
 /// Declaration of a destructor within the context of a codata type declaration.
@@ -121,7 +121,7 @@ pub struct Dtor {
 pub struct Destructee {
     pub span: Span,
     pub name: Option<Ident>,
-    pub typ: Option<TypApp>,
+    pub typ: Option<exp::Call>,
 }
 
 /// Toplevel definition, i.e. a global pattern match.
@@ -159,7 +159,7 @@ pub struct Def {
 pub struct Scrutinee {
     pub span: Span,
     pub name: Option<Ident>,
-    pub typ: TypApp,
+    pub typ: exp::Call,
 }
 
 /// Toplevel codefinition, i.e. a global copattern match.
@@ -179,7 +179,7 @@ pub struct Codef {
     pub name: Ident,
     pub attr: Attributes,
     pub params: Telescope,
-    pub typ: TypApp,
+    pub typ: exp::Call,
     pub cases: Vec<exp::Case>,
 }
 
@@ -202,24 +202,6 @@ pub struct Let {
     pub params: Telescope,
     pub typ: Rc<exp::Exp>,
     pub body: Rc<exp::Exp>,
-}
-
-/// A typconstructor applied to arguments.
-#[derive(Debug, Clone)]
-pub struct TypApp {
-    pub span: Span,
-    pub name: Ident,
-    pub args: Vec<Rc<exp::Exp>>,
-}
-
-impl TypApp {
-    pub fn to_exp(&self) -> exp::Exp {
-        exp::Exp::Call(exp::Call {
-            span: self.span,
-            name: self.name.clone(),
-            args: self.args.clone(),
-        })
-    }
 }
 
 /// A `Param` can either be a single parameter, like `x : T`, or a list of parameters, like `x y z: T`.
@@ -258,7 +240,7 @@ pub type Params = Vec<Param>;
 pub struct SelfParam {
     pub span: Span,
     pub name: Option<Ident>,
-    pub typ: TypApp,
+    pub typ: exp::Call,
 }
 
 impl From<Scrutinee> for SelfParam {
