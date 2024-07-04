@@ -192,8 +192,8 @@ pub Scrutinee: Scrutinee = {
     <l: @L> <typ: TypApp> <r: @R> => Scrutinee { span: span(l, r), name: None, typ },
 }
 
-pub TypApp: TypApp = {
-    <l: @L> <name: UpperIdent> <args: OptArgs> <r: @R> => TypApp { span: span(l, r), name, args },
+pub TypApp: Call = {
+    <l: @L> <name: UpperIdent> <args: OptArgs> <r: @R> => Call { span: span(l, r), name, args },
 }
 
 // Expressions
