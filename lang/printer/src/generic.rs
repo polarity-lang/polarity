@@ -3,7 +3,6 @@ use std::rc::Rc;
 use pretty::DocAllocator;
 
 use syntax::ast::*;
-use syntax::common::*;
 
 use super::theme::ThemeExt;
 use super::tokens::*;

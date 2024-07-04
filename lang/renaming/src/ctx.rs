@@ -1,5 +1,4 @@
 use syntax::ast::*;
-use syntax::common::*;
 use syntax::ctx::{Context, ContextElem};
 
 use super::util::increment_name;

@@ -5,14 +5,14 @@ use std::rc::Rc;
 use codespan::Span;
 use derivative::Derivative;
 
-use crate::common::*;
 use crate::ctx::values::TypeCtx;
 use crate::ctx::{BindContext, LevelCtx};
 
-use super::ident::*;
 use super::subst::{Substitutable, Substitution};
+use super::traits::HasSpan;
 use super::traits::Occurs;
-use super::HasTypeInfo;
+use super::{ident::*, Shift, ShiftRange, ShiftRangeExt};
+use super::{HasType, Leveled};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -118,7 +118,7 @@ impl Occurs for Exp {
     }
 }
 
-impl HasTypeInfo for Exp {
+impl HasType for Exp {
     fn typ(&self) -> Option<Rc<Exp>> {
         match self {
             Exp::Variable(e) => e.typ(),
@@ -208,7 +208,7 @@ impl Occurs for Variable {
     }
 }
 
-impl HasTypeInfo for Variable {
+impl HasType for Variable {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone()
     }
@@ -286,7 +286,7 @@ impl Occurs for TypCtor {
     }
 }
 
-impl HasTypeInfo for TypCtor {
+impl HasType for TypCtor {
     fn typ(&self) -> Option<Rc<Exp>> {
         Some(Rc::new(TypeUniv::new().into()))
     }
@@ -370,7 +370,7 @@ impl Occurs for Call {
     }
 }
 
-impl HasTypeInfo for Call {
+impl HasType for Call {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone()
     }
@@ -462,7 +462,7 @@ impl Occurs for DotCall {
     }
 }
 
-impl HasTypeInfo for DotCall {
+impl HasType for DotCall {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone()
     }
@@ -536,7 +536,7 @@ impl Occurs for Anno {
     }
 }
 
-impl HasTypeInfo for Anno {
+impl HasType for Anno {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.normalized_type.clone()
     }
@@ -609,7 +609,7 @@ impl Occurs for TypeUniv {
     }
 }
 
-impl HasTypeInfo for TypeUniv {
+impl HasType for TypeUniv {
     fn typ(&self) -> Option<Rc<Exp>> {
         Some(Rc::new(TypeUniv::new().into()))
     }
@@ -680,7 +680,7 @@ impl Occurs for LocalMatch {
     }
 }
 
-impl HasTypeInfo for LocalMatch {
+impl HasType for LocalMatch {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone().map(|x| Rc::new(x.into()))
     }
@@ -754,7 +754,7 @@ impl Occurs for LocalComatch {
     }
 }
 
-impl HasTypeInfo for LocalComatch {
+impl HasType for LocalComatch {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone().map(|x| Rc::new(x.into()))
     }
@@ -839,7 +839,7 @@ impl Occurs for Hole {
     }
 }
 
-impl HasTypeInfo for Hole {
+impl HasType for Hole {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone()
     }

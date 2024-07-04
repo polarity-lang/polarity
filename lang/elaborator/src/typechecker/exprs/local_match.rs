@@ -12,7 +12,6 @@ use crate::typechecker::exprs::CheckTelescope;
 use crate::unifier::unify::*;
 use miette_util::ToMiette;
 use syntax::ast::*;
-use syntax::common::*;
 use syntax::ctx::values::Binder;
 use syntax::ctx::{BindContext, LevelCtx};
 

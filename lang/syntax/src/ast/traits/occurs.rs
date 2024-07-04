@@ -1,13 +1,10 @@
 use std::rc::Rc;
 
-use crate::common::{Idx, Leveled, Lvl};
+use crate::ast::exp::Exp;
+use crate::ast::{Idx, Lvl};
 use crate::ctx::LevelCtx;
 
-use super::exp::Exp;
-
-// Occurs
-//
-//
+use super::Leveled;
 
 pub trait Occurs {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool;
@@ -34,12 +31,4 @@ impl<T: Occurs> Occurs for Option<T> {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         self.as_ref().map(|inner| inner.occurs(ctx, lvl)).unwrap_or_default()
     }
-}
-
-// HasTypeInfo
-//
-//
-
-pub trait HasTypeInfo {
-    fn typ(&self) -> Option<Rc<Exp>>;
 }

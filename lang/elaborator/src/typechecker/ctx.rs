@@ -8,7 +8,6 @@ use crate::normalizer::env::{Env, ToEnv};
 use crate::normalizer::normalize::Normalize;
 use printer::Print;
 use syntax::ast::*;
-use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::{BindContext, Context, LevelCtx};
 

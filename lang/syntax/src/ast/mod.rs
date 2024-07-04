@@ -3,12 +3,13 @@ mod exp;
 mod ident;
 mod lookup;
 pub mod lookup_table;
-mod subst;
-mod traits;
+pub mod traits;
 
 pub use decls::*;
 pub use exp::*;
 pub use ident::*;
 pub use lookup::*;
-pub use subst::*;
 pub use traits::*;
+
+pub type HashMap<K, V> = std::collections::HashMap<K, V, fxhash::FxBuildHasher>;
+pub type HashSet<V> = fxhash::FxHashSet<V>;

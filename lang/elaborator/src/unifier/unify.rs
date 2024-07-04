@@ -8,7 +8,6 @@ use crate::result::TypeError;
 use crate::unifier::dec::{Dec, No, Yes};
 use printer::{DocAllocator, Print};
 use syntax::ast::*;
-use syntax::common::*;
 
 #[derive(Debug, Clone)]
 pub struct Unificator {

@@ -1,7 +1,6 @@
 use std::fmt;
 
-use super::ident::*;
-use crate::common::*;
+use super::{ident::*, HashMap, HashSet};
 
 #[derive(Clone, Copy, Debug)]
 pub enum DeclKind {
