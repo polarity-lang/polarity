@@ -24,8 +24,8 @@ pub struct MetaVar {
 // ```
 //
 // There are two ways to achieve this. We can either count in the context from the
-// right, this is called deBruijn indizes, or we can count from the left, this is called
-// deBruin levels. Indizes look like this:
+// right, this is called De Bruijn indices, or we can count from the left, this is called
+// De Bruijn levels. Indices look like this:
 //
 // ```text
 //  snd:                2 1 0
@@ -49,9 +49,9 @@ pub struct MetaVar {
 //        ^^^^^   ^^^   ^^^^^   ^   ^^^^^
 //  fst     0      1      2     3     4
 // ```
-// We didn't have to change the Level, and it still refers to the same element of the context.
+// We didn't have to change the level, and it still refers to the same element of the context.
 
-/// Two-dimensional De-Bruijn index
+/// Two-dimensional De Bruijn index
 ///
 /// The first component counts the number of binder lists in scope between the variable
 /// and the binder list it originated from.
