@@ -106,9 +106,11 @@ impl Print for Attributes {
     }
 }
 
-/// Checks whether the `#[omit_print]` attribute is present.
-fn is_visible(attr: &Attributes) -> bool {
-    !attr.attrs.contains(&Attribute::OmitPrint)
+impl Attributes {
+    /// Checks whether the `#[omit_print]` attribute is present.
+    fn is_visible(&self) -> bool {
+        !self.attrs.contains(&Attribute::OmitPrint)
+    }
 }
 
 // Module
@@ -161,7 +163,7 @@ impl Module {
 impl Print for Module {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let items =
-            self.iter().filter(|item| is_visible(item.attributes())).map(|item| match item {
+            self.iter().filter(|item| item.attributes().is_visible()).map(|item| match item {
                 Item::Data(data) => data.print_in_ctx(cfg, self, alloc),
                 Item::Codata(codata) => codata.print_in_ctx(cfg, self, alloc),
                 Item::Def(def) => def.print(cfg, alloc),
@@ -284,7 +286,7 @@ impl PrintInCtx for Data {
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
         let Data { span: _, doc, name, attr, typ, ctors } = self;
-        if !is_visible(attr) {
+        if !attr.is_visible() {
             return alloc.nil();
         }
 
@@ -343,7 +345,7 @@ impl PrintInCtx for Codata {
         alloc: &'a Alloc<'a>,
     ) -> Builder<'a> {
         let Codata { span: _, doc, name, attr, typ, dtors } = self;
-        if !is_visible(attr) {
+        if !attr.is_visible() {
             return alloc.nil();
         }
 
@@ -472,7 +474,7 @@ impl Def {
 impl Print for Def {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Def { span: _, doc, name, attr, params, self_param, ret_typ, cases } = self;
-        if !is_visible(attr) {
+        if !attr.is_visible() {
             return alloc.nil();
         }
 
@@ -524,7 +526,7 @@ impl Codef {
 impl Print for Codef {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Codef { span: _, doc, name, attr, params, typ, cases } = self;
-        if !is_visible(attr) {
+        if !attr.is_visible() {
             return alloc.nil();
         }
 
@@ -573,7 +575,7 @@ impl Let {
 impl Print for Let {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Let { span: _, doc, name, attr, params, typ, body } = self;
-        if !is_visible(attr) {
+        if !attr.is_visible() {
             return alloc.nil();
         }
 
