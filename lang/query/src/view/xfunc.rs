@@ -1,6 +1,5 @@
 use codespan::Span;
 use lifting::LiftResult;
-use printer::fragments::Items;
 use printer::PrintInCtx;
 use renaming::Rename;
 

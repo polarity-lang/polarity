@@ -17,5 +17,8 @@ derivative = "2"
 num-bigint = "0.4"
 # lazy static
 fxhash = "0.2.1"
+# prettyprinting
+pretty = { version = "0.11", features = ["termcolor"] }
 # workspace members
 miette_util = { path = "../miette_util" }
+printer = { path = "../printer" }
