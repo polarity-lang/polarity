@@ -4,6 +4,10 @@
 
 use std::rc::Rc;
 
+use pretty::DocAllocator;
+use printer::tokens::COMMA;
+use printer::{Alloc, Builder, Print, PrintCfg};
+
 use crate::ast::traits::Shift;
 use crate::ast::*;
 use crate::ctx::{Context, LevelCtx};
@@ -97,6 +101,17 @@ impl Leveled for TypeCtx {
         let fst = self.bound.len() - 1 - lvl.fst;
         let snd = self.bound[lvl.fst].len() - 1 - lvl.snd;
         Idx { fst, snd }
+    }
+}
+
+impl Print for TypeCtx {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let iter = self.iter().map(|ctx| {
+            alloc
+                .intersperse(ctx.iter().map(|b| b.typ.print(cfg, alloc)), alloc.text(COMMA))
+                .brackets()
+        });
+        alloc.intersperse(iter, alloc.text(COMMA)).brackets()
     }
 }
 

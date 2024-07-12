@@ -1859,7 +1859,6 @@ name = "printer"
 version = "0.1.0"
 dependencies = [
  "pretty",
- "syntax",
 ]
 
 [[package]]
@@ -2332,6 +2331,8 @@ dependencies = [
  "miette",
  "miette_util",
  "num-bigint",
+ "pretty",
+ "printer",
  "thiserror",
  "url",
 ]

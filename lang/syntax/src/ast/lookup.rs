@@ -2,6 +2,11 @@ use std::rc::Rc;
 
 use miette::{Diagnostic, SourceSpan};
 use miette_util::ToMiette;
+use printer::Alloc;
+use printer::Builder;
+use printer::Print;
+use printer::PrintCfg;
+use printer::PrintInCtx;
 use thiserror::Error;
 
 use super::decls::*;
@@ -221,6 +226,25 @@ pub enum Item<'a> {
     Def(&'a Def),
     Codef(&'a Codef),
     Let(&'a Let),
+}
+
+impl<'b> PrintInCtx for Item<'b> {
+    type Ctx = Module;
+
+    fn print_in_ctx<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        ctx: &'a Self::Ctx,
+        alloc: &'a Alloc<'a>,
+    ) -> Builder<'a> {
+        match self {
+            Item::Data(data) => data.print_in_ctx(cfg, ctx, alloc),
+            Item::Codata(codata) => codata.print_in_ctx(cfg, ctx, alloc),
+            Item::Def(def) => def.print(cfg, alloc),
+            Item::Codef(codef) => codef.print(cfg, alloc),
+            Item::Let(tl_let) => tl_let.print(cfg, alloc),
+        }
+    }
 }
 
 impl<'a> Item<'a> {

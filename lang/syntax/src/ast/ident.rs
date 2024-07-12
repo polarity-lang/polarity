@@ -1,6 +1,11 @@
 use std::fmt;
 
 use derivative::Derivative;
+use pretty::DocAllocator;
+use printer::{
+    tokens::{AT, DOT},
+    Alloc, Builder, Print, PrintCfg,
+};
 
 pub type Ident = String;
 
@@ -67,6 +72,13 @@ pub struct Idx {
 impl fmt::Display for Idx {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}.{}", self.fst, self.snd)
+    }
+}
+
+impl Print for Idx {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Idx { fst, snd } = self;
+        alloc.text(AT).append(format!("{fst}")).append(DOT).append(format!("{snd}"))
     }
 }
 
