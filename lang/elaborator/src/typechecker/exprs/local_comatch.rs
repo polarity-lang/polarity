@@ -142,27 +142,27 @@ impl<'a> WithExpectedType<'a> {
             let ret_typ =
                 ret_typ.normalize(prg, &mut LevelCtx::from(vec![params.len(), 1]).env())?;
 
-            // We have to check whether we have an absurd case or an ordinary case.
-            // To do this we have solve the following unification problem:
-            //
-            //               T(...) =? T(...)
-            //                 ^^^       ^^^
-            //                  |         \----------------------- on_args
-            //                  \--------------------------------- def_args
-            //
-            let eqns: Vec<_> = def_args
-                .iter()
-                .cloned()
-                .zip(on_args.args.iter().cloned())
-                .map(|(lhs, rhs)| Eqn { lhs, rhs })
-                .collect();
-
             params_inst.check_telescope(
                 prg,
                 name,
                 ctx,
                 params,
                 |ctx, args_out| {
+                    // We have to check whether we have an absurd case or an ordinary case.
+                    // To do this we have solve the following unification problem:
+                    //
+                    //               T(...) =? T(...)
+                    //                 ^^^       ^^^
+                    //                  |         \----------------------- on_args
+                    //                  \--------------------------------- def_args
+                    //
+                    let eqns: Vec<_> = def_args
+                        .iter()
+                        .cloned()
+                        .zip(on_args.args.iter().cloned())
+                        .map(|(lhs, rhs)| Eqn { lhs, rhs })
+                        .collect();
+
                     match body {
                         // The programmer wrote an absurd case. We therefore have to check whether
                         // this case is really absurd. To do this, we verify that the unification
