@@ -164,95 +164,94 @@ impl<'a> WithScrutinee<'a> {
             let TypCtor { args: on_args, .. } = &self.scrutinee;
             let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
 
-            let eqns: Vec<_> = def_args_nf
-                .iter()
-                .cloned()
-                .zip(on_args.args.iter().cloned())
-                .map(|(lhs, rhs)| Eqn { lhs, rhs })
-                .collect();
-
             // Check the case given the equations
-            let case_out = {
-                // FIXME: Refactor this
-                let mut subst_ctx_1 = ctx.levels().append(&vec![1, params.len()].into());
-                let mut subst_ctx_2 = ctx.levels().append(&vec![params.len(), 1].into());
-                let curr_lvl = subst_ctx_2.len() - 1;
+            // FIXME: Refactor this
+            let mut subst_ctx_1 = ctx.levels().append(&vec![1, params.len()].into());
+            let mut subst_ctx_2 = ctx.levels().append(&vec![params.len(), 1].into());
+            let curr_lvl = subst_ctx_2.len() - 1;
 
-                args.check_telescope(
-                    prg,
-                    name,
-                    ctx,
-                    params,
-                    |ctx, args_out| {
-                        // Substitute the constructor for the self parameter
-                        let args = (0..params.len())
-                            .rev()
-                            .map(|snd| {
-                                Exp::Variable(Variable {
-                                    span: None,
-                                    idx: Idx { fst: 1, snd },
-                                    name: "".to_owned(),
-                                    inferred_type: None,
-                                })
+            args.check_telescope(
+                prg,
+                name,
+                ctx,
+                params,
+                |ctx, args_out| {
+                    // Substitute the constructor for the self parameter
+                    let args = (0..params.len())
+                        .rev()
+                        .map(|snd| {
+                            Exp::Variable(Variable {
+                                span: None,
+                                idx: Idx { fst: 1, snd },
+                                name: "".to_owned(),
+                                inferred_type: None,
                             })
-                            .map(Rc::new)
-                            .collect();
-                        let ctor = Rc::new(Exp::Call(Call {
-                            span: None,
-                            kind: CallKind::Constructor,
-                            name: name.clone(),
-                            args: Args { args },
-                            inferred_type: None,
-                        }));
-                        let subst = Assign { lvl: Lvl { fst: curr_lvl, snd: 0 }, exp: ctor };
+                        })
+                        .map(Rc::new)
+                        .collect();
+                    let ctor = Rc::new(Exp::Call(Call {
+                        span: None,
+                        kind: CallKind::Constructor,
+                        name: name.clone(),
+                        args: Args { args },
+                        inferred_type: None,
+                    }));
+                    let subst = Assign { lvl: Lvl { fst: curr_lvl, snd: 0 }, exp: ctor };
 
-                        // FIXME: Refactor this
-                        let t = t
-                            .shift((1, 0))
-                            .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
-                            .subst(&mut subst_ctx_2, &subst)
-                            .shift((-1, 0));
+                    // FIXME: Refactor this
+                    let t = t
+                        .shift((1, 0))
+                        .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
+                        .subst(&mut subst_ctx_2, &subst)
+                        .shift((-1, 0));
 
-                        let body_out = match body {
-                            Some(body) => {
-                                let unif =
-                                    unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
-                                        .map_no(|()| TypeError::PatternIsAbsurd {
-                                            name: name.clone(),
-                                            span: span.to_miette(),
-                                        })
-                                        .ok_yes()?;
+                    let eqns: Vec<_> = def_args_nf
+                        .iter()
+                        .cloned()
+                        .zip(on_args.args.iter().cloned())
+                        .map(|(lhs, rhs)| Eqn { lhs, rhs })
+                        .collect();
 
-                                ctx.fork::<Result<_, TypeError>, _>(|ctx| {
-                                    ctx.subst(prg, &unif)?;
-                                    let body = body.subst(&mut ctx.levels(), &unif);
-
-                                    let t_subst = t.subst(&mut ctx.levels(), &unif);
-                                    let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
-
-                                    let body_out = body.check(prg, ctx, t_nf)?;
-
-                                    Ok(Some(body_out))
-                                })?
-                            }
-                            None => {
+                    let body_out = match body {
+                        Some(body) => {
+                            let unif =
                                 unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
-                                    .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                                    .map_no(|()| TypeError::PatternIsAbsurd {
                                         name: name.clone(),
                                         span: span.to_miette(),
                                     })
-                                    .ok_no()?;
+                                    .ok_yes()?;
 
-                                None
-                            }
-                        };
+                            ctx.fork::<Result<_, TypeError>, _>(|ctx| {
+                                ctx.subst(prg, &unif)?;
+                                let body = body.subst(&mut ctx.levels(), &unif);
 
-                        Ok(Case { span, name: name.clone(), params: args_out, body: body_out })
-                    },
-                    span,
-                )
-            }?;
-            cases_out.push(case_out);
+                                let t_subst = t.subst(&mut ctx.levels(), &unif);
+                                let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+
+                                let body_out = body.check(prg, ctx, t_nf)?;
+
+                                Ok(Some(body_out))
+                            })?
+                        }
+                        None => {
+                            unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
+                                .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                                    name: name.clone(),
+                                    span: span.to_miette(),
+                                })
+                                .ok_no()?;
+
+                            None
+                        }
+                    };
+                    let case_out =
+                        Case { span, name: name.clone(), params: args_out, body: body_out };
+                    cases_out.push(case_out);
+                    Ok(())
+                },
+                span,
+            )?;
         }
 
         Ok(cases_out)
