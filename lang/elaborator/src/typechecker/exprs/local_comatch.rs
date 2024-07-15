@@ -162,7 +162,7 @@ impl<'a> WithExpectedType<'a> {
                 // this case is really absurd. To do this, we verify that the unification
                 // actually fails.
                 None => {
-                    let case_out = params_inst.check_telescope(
+                    params_inst.check_telescope(
                         prg,
                         name,
                         ctx,
@@ -175,17 +175,19 @@ impl<'a> WithExpectedType<'a> {
                                 })
                                 .ok_no()?;
 
-                            Ok(Case {
+                            let case_out = Case {
                                 span: *span,
                                 name: name.clone(),
                                 params: args_out,
                                 body: None,
-                            })
+                            };
+
+                            cases_out.push(case_out);
+
+                            Ok(())
                         },
                         *span,
                     )?;
-
-                    cases_out.push(case_out);
                 }
                 Some(body) => {
                     // The programmer wrote a non-absurd case. We therefore have to check
@@ -283,7 +285,7 @@ impl<'a> WithExpectedType<'a> {
                     //
                     //
                     // Check the case given the equations
-                    let case_out = params_inst.check_telescope(
+                    params_inst.check_telescope(
                         prg,
                         name,
                         ctx,
@@ -310,17 +312,19 @@ impl<'a> WithExpectedType<'a> {
                                 })?
                             };
 
-                            Ok(Case {
+                            let case_out = Case {
                                 span: *span,
                                 name: name.clone(),
                                 params: args_out,
                                 body: body_out,
-                            })
+                            };
+
+                            cases_out.push(case_out);
+
+                            Ok(())
                         },
                         *span,
                     )?;
-
-                    cases_out.push(case_out);
                 }
             };
         }
