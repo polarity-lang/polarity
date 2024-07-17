@@ -142,32 +142,32 @@ impl<'a> WithExpectedType<'a> {
             let ret_typ =
                 ret_typ.normalize(prg, &mut LevelCtx::from(vec![params.len(), 1]).env())?;
 
-            // We have to check whether we have an absurd case or an ordinary case.
-            // To do this we have solve the following unification problem:
-            //
-            //               T(...) =? T(...)
-            //                 ^^^       ^^^
-            //                  |         \----------------------- on_args
-            //                  \--------------------------------- def_args
-            //
-            let eqns: Vec<_> = def_args
-                .iter()
-                .cloned()
-                .zip(on_args.args.iter().cloned())
-                .map(|(lhs, rhs)| Eqn { lhs, rhs })
-                .collect();
+            params_inst.check_telescope(
+                prg,
+                name,
+                ctx,
+                params,
+                |ctx, args_out| {
+                    // We have to check whether we have an absurd case or an ordinary case.
+                    // To do this we have solve the following unification problem:
+                    //
+                    //               T(...) =? T(...)
+                    //                 ^^^       ^^^
+                    //                  |         \----------------------- on_args
+                    //                  \--------------------------------- def_args
+                    //
+                    let eqns: Vec<_> = def_args
+                        .iter()
+                        .cloned()
+                        .zip(on_args.args.iter().cloned())
+                        .map(|(lhs, rhs)| Eqn { lhs, rhs })
+                        .collect();
 
-            match body {
-                // The programmer wrote an absurd case. We therefore have to check whether
-                // this case is really absurd. To do this, we verify that the unification
-                // actually fails.
-                None => {
-                    let case_out = params_inst.check_telescope(
-                        prg,
-                        name,
-                        ctx,
-                        params,
-                        |ctx, args_out| {
+                    match body {
+                        // The programmer wrote an absurd case. We therefore have to check whether
+                        // this case is really absurd. To do this, we verify that the unification
+                        // actually fails.
+                        None => {
                             unify(ctx.levels(), &mut ctx.meta_vars, eqns, false)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                     name: name.clone(),
@@ -175,120 +175,109 @@ impl<'a> WithExpectedType<'a> {
                                 })
                                 .ok_no()?;
 
-                            Ok(Case {
+                            let case_out = Case {
                                 span: *span,
                                 name: name.clone(),
                                 params: args_out,
                                 body: None,
-                            })
-                        },
-                        *span,
-                    )?;
+                            };
 
-                    cases_out.push(case_out);
-                }
-                Some(body) => {
-                    // The programmer wrote a non-absurd case. We therefore have to check
-                    // that the unification succeeds.
+                            cases_out.push(case_out);
 
-                    // We compute the return type for that specific cocase.
-                    // E.g. for the following comatch:
-                    // ```text
-                    // codef Ones : Stream(Nat) {
-                    //    hd => 1
-                    //    tl => Ones
-                    // }
-                    // ```
-                    // we compute the types `Nat` resp, `Stream(Nat)` for the respective
-                    // cocases.
-                    let ret_typ_nf = match label {
-                        Some((label, n_label_args)) => {
-                            // We know that we are checking a *global* comatch which can use
-                            // the self parameter in its return type.
-                            // The term that we have to substitute for `self` is:
+                            Ok(())
+                        }
+                        Some(body) => {
+                            // The programmer wrote a non-absurd case. We therefore have to check
+                            // that the unification succeeds.
+
+                            // We compute the return type for that specific cocase.
+                            // E.g. for the following comatch:
                             // ```text
-                            // C(x, ... x_n)
-                            // ^          ^
-                            // |          \---- n_label_args
-                            // \--------------- label
-                            //
+                            // codef Ones : Stream(Nat) {
+                            //    hd => 1
+                            //    tl => Ones
+                            // }
                             // ```
-                            let args = (0..*n_label_args)
-                                .rev()
-                                .map(|snd| {
-                                    Exp::Variable(Variable {
+                            // we compute the types `Nat` resp, `Stream(Nat)` for the respective
+                            // cocases.
+                            let ret_typ_nf = match label {
+                                Some((label, n_label_args)) => {
+                                    // We know that we are checking a *global* comatch which can use
+                                    // the self parameter in its return type.
+                                    // The term that we have to substitute for `self` is:
+                                    // ```text
+                                    // C(x, ... x_n)
+                                    // ^          ^
+                                    // |          \---- n_label_args
+                                    // \--------------- label
+                                    //
+                                    // ```
+                                    let args = (0..*n_label_args)
+                                        .rev()
+                                        .map(|snd| {
+                                            Exp::Variable(Variable {
+                                                span: None,
+                                                // The field `fst` has to be `2` because we have two surrounding telescopes:
+                                                // - The arguments to the toplevel codefinition
+                                                // - The arguments bound by the destructor copattern.
+                                                idx: Idx { fst: 2, snd },
+                                                name: "".to_owned(),
+                                                inferred_type: None,
+                                            })
+                                        })
+                                        .map(Rc::new)
+                                        .collect();
+                                    let ctor = Rc::new(Exp::Call(Call {
                                         span: None,
-                                        // The field `fst` has to be `2` because we have two surrounding telescopes:
-                                        // - The arguments to the toplevel codefinition
-                                        // - The arguments bound by the destructor copattern.
-                                        idx: Idx { fst: 2, snd },
-                                        name: "".to_owned(),
+                                        kind: CallKind::Codefinition,
+                                        name: label.clone(),
+                                        args: Args { args },
                                         inferred_type: None,
-                                    })
-                                })
-                                .map(Rc::new)
-                                .collect();
-                            let ctor = Rc::new(Exp::Call(Call {
-                                span: None,
-                                kind: CallKind::Codefinition,
-                                name: label.clone(),
-                                args: Args { args },
-                                inferred_type: None,
-                            }));
+                                    }));
 
-                            // Recall that we are in the following situation:
-                            //
-                            // codata T(...) {  (self : T(  σ  )).d( Ξ ) : t, ...}
-                            //                            ^^^^^   ^ ^^^    ^
-                            //                              |     |  |     \------ ret_typ
-                            //                              |     |  \------------ params
-                            //                              |     \--------------- name
-                            //                              \--------------------- def_args
-                            //
-                            // codef C(Δ) { d( Ξ ) => e, ...}
-                            //              ^ ^^^     ^
-                            //              |  |      \------------------------------ body
-                            //              |  \------------------------------------- params_inst
-                            //              \---------------------------------------- name
-                            //
-                            // Note that t is tyed under the following context:
-                            // Ξ;self |- t : Type
-                            // We want to perform the following substitution:
-                            // Δ;Ξ |- [C id_Δ / self]t : Type
-                            // To represent id_Δ, we mentally extend the context by self as follows:
-                            // Δ;Ξ;self |- C id_Δ : Type
-                            // This is why id_Δ = [(2,n), (2, n-1), ..., (2, 0)]
-                            // Since t is defined under context Ξ;self, we
-                            // still substitute for level (1, 0) which corresponds to self under context Ξ;self.
-                            // The result is under context Δ;Ξ;self, which we shift by (-1, 0) to get rid of self
-                            // (which no longer occurs) in [C id_Δ / self]t.
-                            // So we finally have:
-                            // Δ;Ξ |- [C id_Δ / self]t : Type
-                            //
-                            let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
-                            let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
-                            ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
-                                prg,
-                                &mut LevelCtx::from(vec![*n_label_args, params.len()]).env(),
-                            )?
-                        }
+                                    // Recall that we are in the following situation:
+                                    //
+                                    // codata T(...) {  (self : T(  σ  )).d( Ξ ) : t, ...}
+                                    //                            ^^^^^   ^ ^^^    ^
+                                    //                              |     |  |     \------ ret_typ
+                                    //                              |     |  \------------ params
+                                    //                              |     \--------------- name
+                                    //                              \--------------------- def_args
+                                    //
+                                    // codef C(Δ) { d( Ξ ) => e, ...}
+                                    //              ^ ^^^     ^
+                                    //              |  |      \------------------------------ body
+                                    //              |  \------------------------------------- params_inst
+                                    //              \---------------------------------------- name
+                                    //
+                                    // Note that t is tyed under the following context:
+                                    // Ξ;self |- t : Type
+                                    // We want to perform the following substitution:
+                                    // Δ;Ξ |- [C id_Δ / self]t : Type
+                                    // To represent id_Δ, we mentally extend the context by self as follows:
+                                    // Δ;Ξ;self |- C id_Δ : Type
+                                    // This is why id_Δ = [(2,n), (2, n-1), ..., (2, 0)]
+                                    // Since t is defined under context Ξ;self, we
+                                    // still substitute for level (1, 0) which corresponds to self under context Ξ;self.
+                                    // The result is under context Δ;Ξ;self, which we shift by (-1, 0) to get rid of self
+                                    // (which no longer occurs) in [C id_Δ / self]t.
+                                    // So we finally have:
+                                    // Δ;Ξ |- [C id_Δ / self]t : Type
+                                    //
+                                    let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
+                                    let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
+                                    ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
+                                        prg,
+                                        &mut LevelCtx::from(vec![*n_label_args, params.len()])
+                                            .env(),
+                                    )?
+                                }
 
-                        None => {
-                            // TODO: Self parameter for local comatches
-                            ret_typ.shift((-1, 0))
-                        }
-                    };
-
-                    // TODO: Document what is happening here:
-                    //
-                    //
-                    // Check the case given the equations
-                    let case_out = params_inst.check_telescope(
-                        prg,
-                        name,
-                        ctx,
-                        params,
-                        |ctx, args_out| {
+                                None => {
+                                    // TODO: Self parameter for local comatches
+                                    ret_typ.shift((-1, 0))
+                                }
+                            };
                             let body_out = {
                                 let unif = unify(ctx.levels(), &mut ctx.meta_vars, eqns, false)?
                                     .map_no(|()| TypeError::PatternIsAbsurd {
@@ -310,19 +299,21 @@ impl<'a> WithExpectedType<'a> {
                                 })?
                             };
 
-                            Ok(Case {
+                            let case_out = Case {
                                 span: *span,
                                 name: name.clone(),
                                 params: args_out,
                                 body: body_out,
-                            })
-                        },
-                        *span,
-                    )?;
+                            };
 
-                    cases_out.push(case_out);
-                }
-            };
+                            cases_out.push(case_out);
+
+                            Ok(())
+                        }
+                    }
+                },
+                *span,
+            )?;
         }
 
         Ok(cases_out)
