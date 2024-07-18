@@ -206,22 +206,17 @@ impl<'a> WithScrutinee<'a> {
                         .subst(&mut subst_ctx_2, &subst)
                         .shift((-1, 0));
 
-                    let eqns: Vec<_> = def_args_nf
-                        .iter()
-                        .cloned()
-                        .zip(on_args.args.iter().cloned())
-                        .map(|(lhs, rhs)| Constraint::Equality { lhs, rhs })
-                        .collect();
+                    let constraint =
+                        Constraint::EqualityArgs { lhs: Args { args: def_args_nf }, rhs: on_args };
 
                     let body_out = match body {
                         Some(body) => {
-                            let unif =
-                                unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
-                                    .map_no(|()| TypeError::PatternIsAbsurd {
-                                        name: name.clone(),
-                                        span: span.to_miette(),
-                                    })
-                                    .ok_yes()?;
+                            let unif = unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
+                                .map_no(|()| TypeError::PatternIsAbsurd {
+                                    name: name.clone(),
+                                    span: span.to_miette(),
+                                })
+                                .ok_yes()?;
 
                             ctx.fork::<Result<_, TypeError>, _>(|ctx| {
                                 ctx.subst(prg, &unif)?;
@@ -236,7 +231,7 @@ impl<'a> WithScrutinee<'a> {
                             })?
                         }
                         None => {
-                            unify(ctx.levels(), &mut ctx.meta_vars, eqns.clone(), false)?
+                            unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                     name: name.clone(),
                                     span: span.to_miette(),
