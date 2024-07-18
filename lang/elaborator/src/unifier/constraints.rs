@@ -1,12 +1,12 @@
+//! This module defines the language of constraints that can be solve by the constraint solver.
 use std::rc::Rc;
 
 use printer::Print;
 use syntax::ast::Exp;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Constraint {
-    pub lhs: Rc<Exp>,
-    pub rhs: Rc<Exp>,
+pub enum Constraint {
+    Equality { lhs: Rc<Exp>, rhs: Rc<Exp> },
 }
 
 impl Print for Constraint {
@@ -15,7 +15,10 @@ impl Print for Constraint {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        self.lhs.print(cfg, alloc).append(" = ").append(self.rhs.print(cfg, alloc))
+        match self {
+            Constraint::Equality { lhs, rhs } => {
+                lhs.print(cfg, alloc).append(" = ").append(rhs.print(cfg, alloc))
+            }
+        }
     }
 }
-

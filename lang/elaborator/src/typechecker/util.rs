@@ -29,7 +29,7 @@ pub fn convert(
 ) -> Result<(), TypeError> {
     trace!("{} =? {}", this.print_to_colored_string(None), other.print_to_colored_string(None));
     // Convertibility is checked using the unification algorithm.
-    let eqn: Constraint = Constraint { lhs: this.clone(), rhs: other.clone() };
+    let eqn: Constraint = Constraint::Equality { lhs: this.clone(), rhs: other.clone() };
     let eqns: Vec<Constraint> = vec![eqn];
     let res = unify(ctx, meta_vars, eqns, true)?;
     match res {

@@ -210,7 +210,7 @@ impl<'a> WithScrutinee<'a> {
                         .iter()
                         .cloned()
                         .zip(on_args.args.iter().cloned())
-                        .map(|(lhs, rhs)| Constraint { lhs, rhs })
+                        .map(|(lhs, rhs)| Constraint::Equality { lhs, rhs })
                         .collect();
 
                     let body_out = match body {
