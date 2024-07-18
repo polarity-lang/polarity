@@ -5,6 +5,7 @@ use std::rc::Rc;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::typechecker::exprs::CheckTelescope;
+use crate::unifier::constraints::Constraint;
 use crate::unifier::unify::*;
 use miette_util::ToMiette;
 use syntax::ast::*;
@@ -209,7 +210,7 @@ impl<'a> WithScrutinee<'a> {
                         .iter()
                         .cloned()
                         .zip(on_args.args.iter().cloned())
-                        .map(|(lhs, rhs)| Eqn { lhs, rhs })
+                        .map(|(lhs, rhs)| Constraint { lhs, rhs })
                         .collect();
 
                     let body_out = match body {

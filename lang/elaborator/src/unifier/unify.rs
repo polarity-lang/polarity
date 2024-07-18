@@ -9,15 +9,11 @@ use crate::unifier::dec::{Dec, No, Yes};
 use printer::{DocAllocator, Print};
 use syntax::ast::*;
 
+use super::constraints::Constraint;
+
 #[derive(Debug, Clone)]
 pub struct Unificator {
     map: HashMap<Lvl, Rc<Exp>>,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Eqn {
-    pub lhs: Rc<Exp>,
-    pub rhs: Rc<Exp>,
 }
 
 impl Substitutable for Unificator {
@@ -59,7 +55,7 @@ impl Unificator {
 pub fn unify(
     ctx: LevelCtx,
     meta_vars: &mut HashMap<MetaVar, MetaVarState>,
-    eqns: Vec<Eqn>,
+    eqns: Vec<Constraint>,
     vars_are_rigid: bool,
 ) -> Result<Dec<Unificator>, TypeError> {
     let mut ctx = Ctx::new(eqns.clone(), ctx.clone(), vars_are_rigid);
@@ -72,10 +68,10 @@ pub fn unify(
 
 struct Ctx {
     /// Constraints that have not yet been solved
-    eqns: Vec<Eqn>,
+    eqns: Vec<Constraint>,
     /// A cache of solved constraints. We can skip solving a constraint
     /// if we have seen it before
-    done: HashSet<Eqn>,
+    done: HashSet<Constraint>,
     ctx: LevelCtx,
     /// Partial solution that we have computed from solving previous constraints.
     unif: Unificator,
@@ -107,7 +103,7 @@ fn is_solvable(h: &Hole) -> bool {
 }
 
 impl Ctx {
-    fn new(eqns: Vec<Eqn>, ctx: LevelCtx, vars_are_rigid: bool) -> Self {
+    fn new(eqns: Vec<Constraint>, ctx: LevelCtx, vars_are_rigid: bool) -> Self {
         Self { eqns, done: HashSet::default(), ctx, unif: Unificator::empty(), vars_are_rigid }
     }
 
@@ -126,10 +122,10 @@ impl Ctx {
 
     fn unify_eqn(
         &mut self,
-        eqn: &Eqn,
+        eqn: &Constraint,
         meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     ) -> Result<Dec, TypeError> {
-        let Eqn { lhs, rhs, .. } = eqn;
+        let Constraint { lhs, rhs, .. } = eqn;
 
         match (&**lhs, &**rhs) {
             (Exp::Hole(h), e) | (e, Exp::Hole(h)) if self.vars_are_rigid => {
@@ -137,7 +133,7 @@ impl Ctx {
                 match metavar_state {
                     MetaVarState::Solved { ctx, solution } => {
                         let lhs = solution.clone().subst(&mut ctx.clone(), &h.args);
-                        self.add_equation(Eqn { lhs, rhs: Rc::new(e.clone()) })?;
+                        self.add_equation(Constraint { lhs, rhs: Rc::new(e.clone()) })?;
                     }
                     MetaVarState::Unsolved { ctx } => {
                         if is_solvable(h) {
@@ -207,7 +203,7 @@ impl Ctx {
                 Exp::DotCall(DotCall { exp, name, args, .. }),
                 Exp::DotCall(DotCall { exp: exp2, name: name2, args: args2, .. }),
             ) if name == name2 => {
-                self.add_equation(Eqn { lhs: exp.clone(), rhs: exp2.clone() })?;
+                self.add_equation(Constraint { lhs: exp.clone(), rhs: exp2.clone() })?;
                 self.unify_args(args, args2)
             }
             (Exp::TypeUniv(_), Exp::TypeUniv(_)) => Ok(Yes(())),
@@ -223,7 +219,7 @@ impl Ctx {
             .iter()
             .cloned()
             .zip(rhs.args.iter().cloned())
-            .map(|(lhs, rhs)| Eqn { lhs, rhs });
+            .map(|(lhs, rhs)| Constraint { lhs, rhs });
         self.add_equations(new_eqns)?;
         Ok(Yes(()))
     }
@@ -237,7 +233,7 @@ impl Ctx {
         self.unif = self.unif.subst(&mut self.ctx, &Assign { lvl: insert_lvl, exp: exp.clone() });
         match self.unif.map.get(&insert_lvl) {
             Some(other_exp) => {
-                let eqn = Eqn { lhs: exp, rhs: other_exp.clone() };
+                let eqn = Constraint { lhs: exp, rhs: other_exp.clone() };
                 self.add_equation(eqn)
             }
             None => {
@@ -247,25 +243,16 @@ impl Ctx {
         }
     }
 
-    fn add_equation(&mut self, eqn: Eqn) -> Result<Dec, TypeError> {
+    fn add_equation(&mut self, eqn: Constraint) -> Result<Dec, TypeError> {
         self.add_equations([eqn])
     }
 
-    fn add_equations<I: IntoIterator<Item = Eqn>>(&mut self, iter: I) -> Result<Dec, TypeError> {
+    fn add_equations<I: IntoIterator<Item = Constraint>>(&mut self, iter: I) -> Result<Dec, TypeError> {
         self.eqns.extend(iter.into_iter().filter(|eqn| !self.done.contains(eqn)));
         Ok(Yes(()))
     }
 }
 
-impl Print for Eqn {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        self.lhs.print(cfg, alloc).append(" = ").append(self.rhs.print(cfg, alloc))
-    }
-}
 
 impl Print for Unificator {
     fn print<'a>(
