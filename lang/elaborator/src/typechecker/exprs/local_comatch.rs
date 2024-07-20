@@ -5,6 +5,7 @@ use std::rc::Rc;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::typechecker::exprs::CheckTelescope;
+use crate::unifier::constraints::Constraint;
 use crate::unifier::unify::*;
 use miette_util::ToMiette;
 use syntax::ast::*;
@@ -156,19 +157,17 @@ impl<'a> WithExpectedType<'a> {
                     //                  |         \----------------------- on_args
                     //                  \--------------------------------- def_args
                     //
-                    let eqns: Vec<_> = def_args
-                        .iter()
-                        .cloned()
-                        .zip(on_args.args.iter().cloned())
-                        .map(|(lhs, rhs)| Eqn { lhs, rhs })
-                        .collect();
+                    let constraint = Constraint::EqualityArgs {
+                        lhs: Args { args: def_args },
+                        rhs: on_args.clone(),
+                    };
 
                     match body {
                         // The programmer wrote an absurd case. We therefore have to check whether
                         // this case is really absurd. To do this, we verify that the unification
                         // actually fails.
                         None => {
-                            unify(ctx.levels(), &mut ctx.meta_vars, eqns, false)?
+                            unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                     name: name.clone(),
                                     span: span.to_miette(),
@@ -279,12 +278,13 @@ impl<'a> WithExpectedType<'a> {
                                 }
                             };
                             let body_out = {
-                                let unif = unify(ctx.levels(), &mut ctx.meta_vars, eqns, false)?
-                                    .map_no(|()| TypeError::PatternIsAbsurd {
-                                        name: name.clone(),
-                                        span: span.to_miette(),
-                                    })
-                                    .ok_yes()?;
+                                let unif =
+                                    unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
+                                        .map_no(|()| TypeError::PatternIsAbsurd {
+                                            name: name.clone(),
+                                            span: span.to_miette(),
+                                        })
+                                        .ok_yes()?;
 
                                 ctx.fork::<Result<_, TypeError>, _>(|ctx| {
                                     ctx.subst(prg, &unif)?;

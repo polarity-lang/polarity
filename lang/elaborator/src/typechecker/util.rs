@@ -5,7 +5,7 @@ use log::trace;
 use printer::types::Print;
 use syntax::{ast::*, ctx::LevelCtx};
 
-use crate::unifier::unify::{unify, Eqn};
+use crate::unifier::{constraints::Constraint, unify::unify};
 
 use super::TypeError;
 
@@ -29,9 +29,8 @@ pub fn convert(
 ) -> Result<(), TypeError> {
     trace!("{} =? {}", this.print_to_colored_string(None), other.print_to_colored_string(None));
     // Convertibility is checked using the unification algorithm.
-    let eqn: Eqn = Eqn { lhs: this.clone(), rhs: other.clone() };
-    let eqns: Vec<Eqn> = vec![eqn];
-    let res = unify(ctx, meta_vars, eqns, true)?;
+    let constraint: Constraint = Constraint::Equality { lhs: this.clone(), rhs: other.clone() };
+    let res = unify(ctx, meta_vars, constraint, true)?;
     match res {
         crate::unifier::dec::Dec::Yes(_) => Ok(()),
         crate::unifier::dec::Dec::No(_) => Err(TypeError::not_eq(this.clone(), other.clone())),
