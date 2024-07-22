@@ -18,8 +18,8 @@ use crate::ctx::{BindContext, Context, LevelCtx};
 use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
 use super::traits::Occurs;
-use super::{ident::*, Shift, ShiftRange, ShiftRangeExt};
 use super::HasType;
+use super::{ident::*, Shift, ShiftRange, ShiftRangeExt};
 
 // Prints "{ }"
 pub fn empty_braces<'a>(alloc: &'a Alloc<'a>) -> Builder<'a> {

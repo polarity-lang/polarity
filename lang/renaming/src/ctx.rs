@@ -13,7 +13,7 @@ impl Context for Ctx {
 
     type ElemOut = Ident;
 
-    type Var = Idx;
+    type Var = Var;
 
     fn push_telescope(&mut self) {
         self.bound.push(vec![]);
@@ -33,13 +33,12 @@ impl Context for Ctx {
         self.bound.last_mut().expect(err).pop().expect(err);
     }
 
-    fn lookup<V: Into<Self::Var> + std::fmt::Debug>(&self, var: V) -> Self::ElemOut {
-        let dbg: String = format!("{var:?}");
-        let idx = var.into();
+    fn lookup<V: Into<Self::Var>>(&self, idx: V) -> Self::ElemOut {
+        let lvl = self.var_to_lvl(idx.into());
         self.bound
-            .get(self.bound.len() - 1 - idx.fst)
-            .and_then(|ctx| ctx.get(ctx.len() - 1 - idx.snd))
-            .unwrap_or_else(|| panic!("Unbound variable: {dbg}, idx: {idx}"))
+            .get(lvl.fst)
+            .and_then(|ctx| ctx.get(lvl.snd))
+            .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
             .clone()
     }
 

@@ -102,7 +102,6 @@ impl ContextElem<TypeCtx> for &Binder {
     }
 }
 
-
 impl Print for TypeCtx {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let iter = self.iter().map(|ctx| {
