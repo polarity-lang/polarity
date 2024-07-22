@@ -51,10 +51,7 @@ impl LevelCtx {
 }
 
 impl Context for LevelCtx {
-    type ElemIn = ();
-    type ElemOut = ();
-
-    type Var = Var;
+    type Elem = ();
 
     fn push_telescope(&mut self) {
         self.bound.push(0);
@@ -64,16 +61,16 @@ impl Context for LevelCtx {
         self.bound.pop().unwrap();
     }
 
-    fn push_binder(&mut self, _elem: Self::ElemIn) {
+    fn push_binder(&mut self, _elem: Self::Elem) {
         *self.bound.last_mut().expect("Cannot push without calling level_inc_fst first") += 1;
     }
 
-    fn pop_binder(&mut self, _elem: Self::ElemIn) {
+    fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
         *self.bound.last_mut().expect(err) -= 1;
     }
 
-    fn lookup<V: Into<Self::Var>>(&self, _idx: V) -> Self::ElemOut {
+    fn lookup<V: Into<Var>>(&self, _idx: V) -> Self::Elem {
         ()
     }
 
@@ -91,7 +88,7 @@ impl Context for LevelCtx {
 }
 
 impl<T> ContextElem<LevelCtx> for T {
-    fn as_element(&self) -> <LevelCtx as Context>::ElemIn {}
+    fn as_element(&self) -> <LevelCtx as Context>::Elem {}
 }
 
 impl From<Vec<usize>> for LevelCtx {

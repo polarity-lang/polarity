@@ -20,12 +20,9 @@ pub struct Env {
 }
 
 impl Context for Env {
-    type ElemIn = Rc<Val>;
-    type ElemOut = Rc<Val>;
+    type Elem = Rc<Val>;
 
-    type Var = Var;
-
-    fn lookup<V: Into<Self::Var>>(&self, idx: V) -> Self::ElemOut {
+    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
         let lvl = self.var_to_lvl(idx.into());
         self.bound
             .get(lvl.fst)
@@ -42,11 +39,11 @@ impl Context for Env {
         self.bound.pop().unwrap();
     }
 
-    fn push_binder(&mut self, elem: Self::ElemIn) {
+    fn push_binder(&mut self, elem: Self::Elem) {
         self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
     }
 
-    fn pop_binder(&mut self, _elem: Self::ElemIn) {
+    fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
         self.bound.last_mut().expect(err).pop().expect(err);
     }
@@ -65,7 +62,7 @@ impl Context for Env {
 }
 
 impl ContextElem<Env> for &Rc<Val> {
-    fn as_element(&self) -> <Env as Context>::ElemIn {
+    fn as_element(&self) -> <Env as Context>::Elem {
         (*self).clone()
     }
 }

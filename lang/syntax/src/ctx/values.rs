@@ -47,13 +47,9 @@ impl TypeCtx {
 }
 
 impl Context for TypeCtx {
-    type ElemIn = Binder;
+    type Elem = Binder;
 
-    type ElemOut = Binder;
-
-    type Var = Var;
-
-    fn lookup<V: Into<Self::Var>>(&self, idx: V) -> Self::ElemOut {
+    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
         let lvl = self.var_to_lvl(idx.into());
         self.bound
             .get(lvl.fst)
@@ -72,12 +68,12 @@ impl Context for TypeCtx {
         self.shift(0.., (-1, 0));
     }
 
-    fn push_binder(&mut self, elem: Self::ElemIn) {
+    fn push_binder(&mut self, elem: Self::Elem) {
         self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
         self.shift_at_lvl(0..1, self.bound.len() - 1, (0, 1));
     }
 
-    fn pop_binder(&mut self, _elem: Self::ElemIn) {
+    fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
         self.bound.last_mut().expect(err).pop().expect(err);
         self.shift_at_lvl(0..1, self.bound.len() - 1, (0, -1));
@@ -97,7 +93,7 @@ impl Context for TypeCtx {
 }
 
 impl ContextElem<TypeCtx> for &Binder {
-    fn as_element(&self) -> <TypeCtx as Context>::ElemIn {
+    fn as_element(&self) -> <TypeCtx as Context>::Elem {
         (*self).clone()
     }
 }

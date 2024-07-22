@@ -9,11 +9,7 @@ pub struct Ctx {
 }
 
 impl Context for Ctx {
-    type ElemIn = Ident;
-
-    type ElemOut = Ident;
-
-    type Var = Var;
+    type Elem = Ident;
 
     fn push_telescope(&mut self) {
         self.bound.push(vec![]);
@@ -23,17 +19,17 @@ impl Context for Ctx {
         self.bound.pop().unwrap();
     }
 
-    fn push_binder(&mut self, elem: Self::ElemIn) {
+    fn push_binder(&mut self, elem: Self::Elem) {
         assert!(elem == "_" || elem.is_empty() || !self.contains_name(&elem));
         self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
     }
 
-    fn pop_binder(&mut self, _elem: Self::ElemIn) {
+    fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
         self.bound.last_mut().expect(err).pop().expect(err);
     }
 
-    fn lookup<V: Into<Self::Var>>(&self, idx: V) -> Self::ElemOut {
+    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
         let lvl = self.var_to_lvl(idx.into());
         self.bound
             .get(lvl.fst)
@@ -81,19 +77,19 @@ impl Ctx {
 }
 
 impl ContextElem<Ctx> for Param {
-    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+    fn as_element(&self) -> <Ctx as Context>::Elem {
         self.name.to_owned()
     }
 }
 
 impl ContextElem<Ctx> for ParamInst {
-    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+    fn as_element(&self) -> <Ctx as Context>::Elem {
         self.name.to_owned()
     }
 }
 
 impl ContextElem<Ctx> for SelfParam {
-    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+    fn as_element(&self) -> <Ctx as Context>::Elem {
         self.name.to_owned().unwrap_or_default()
     }
 }
