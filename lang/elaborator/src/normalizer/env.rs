@@ -3,7 +3,7 @@ use std::rc::Rc;
 use derivative::Derivative;
 
 use pretty::DocAllocator;
-use syntax::ast::{Leveled, Shift, ShiftRange};
+use syntax::ast::{Shift, ShiftRange};
 
 use crate::normalizer::val::*;
 use printer::tokens::COMMA;
@@ -50,15 +50,7 @@ impl Context for Env {
         let err = "Cannot pop from empty context";
         self.bound.last_mut().expect(err).pop().expect(err);
     }
-}
 
-impl ContextElem<Env> for &Rc<Val> {
-    fn as_element(&self) -> <Env as Context>::ElemIn {
-        (*self).clone()
-    }
-}
-
-impl Leveled for Env {
     fn idx_to_lvl(&self, idx: Idx) -> Lvl {
         let fst = self.bound.len() - 1 - idx.fst;
         let snd = self.bound[fst].len() - 1 - idx.snd;
@@ -69,6 +61,12 @@ impl Leveled for Env {
         let fst = self.bound.len() - 1 - lvl.fst;
         let snd = self.bound[lvl.fst].len() - 1 - lvl.snd;
         Idx { fst, snd }
+    }
+}
+
+impl ContextElem<Env> for &Rc<Val> {
+    fn as_element(&self) -> <Env as Context>::ElemIn {
+        (*self).clone()
     }
 }
 

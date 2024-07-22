@@ -2,9 +2,8 @@ use std::rc::Rc;
 
 use crate::ast::exp::Exp;
 use crate::ast::{Idx, Lvl};
-use crate::ctx::LevelCtx;
+use crate::ctx::{Context, LevelCtx};
 
-use super::Leveled;
 
 pub trait Occurs {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool;

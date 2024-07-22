@@ -13,13 +13,13 @@ use printer::util::{BackslashExt, BracesExt, IsNilExt};
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::values::TypeCtx;
-use crate::ctx::{BindContext, LevelCtx};
+use crate::ctx::{BindContext, Context, LevelCtx};
 
 use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
 use super::traits::Occurs;
 use super::{ident::*, Shift, ShiftRange, ShiftRangeExt};
-use super::{HasType, Leveled};
+use super::HasType;
 
 // Prints "{ }"
 pub fn empty_braces<'a>(alloc: &'a Alloc<'a>) -> Builder<'a> {

@@ -1,5 +1,7 @@
 //! Generic definition of variable contexts
 
+use crate::ast::{Idx, Lvl, Var};
+
 /// Defines the interface of a variable context
 pub trait Context: Sized {
     /// The type of elements that can be bound to the context
@@ -25,6 +27,21 @@ pub trait Context: Sized {
 
     /// Pop a binder from the most-recently pushed telescope
     fn pop_binder(&mut self, elem: Self::ElemIn);
+
+    fn idx_to_lvl(&self, idx: Idx) -> Lvl;
+    fn lvl_to_idx(&self, lvl: Lvl) -> Idx;
+    fn var_to_lvl(&self, var: Var) -> Lvl {
+        match var {
+            Var::Lvl(lvl) => lvl,
+            Var::Idx(idx) => self.idx_to_lvl(idx),
+        }
+    }
+    fn var_to_idx(&self, var: Var) -> Idx {
+        match var {
+            Var::Lvl(lvl) => self.lvl_to_idx(lvl),
+            Var::Idx(idx) => idx,
+        }
+    }
 }
 
 /// Interface to bind variables to anything that has a `Context`

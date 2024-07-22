@@ -82,15 +82,7 @@ impl Context for TypeCtx {
         self.bound.last_mut().expect(err).pop().expect(err);
         self.shift_at_lvl(0..1, self.bound.len() - 1, (0, -1));
     }
-}
 
-impl ContextElem<TypeCtx> for &Binder {
-    fn as_element(&self) -> <TypeCtx as Context>::ElemIn {
-        (*self).clone()
-    }
-}
-
-impl Leveled for TypeCtx {
     fn idx_to_lvl(&self, idx: Idx) -> Lvl {
         let fst = self.bound.len() - 1 - idx.fst;
         let snd = self.bound[fst].len() - 1 - idx.snd;
@@ -103,6 +95,13 @@ impl Leveled for TypeCtx {
         Idx { fst, snd }
     }
 }
+
+impl ContextElem<TypeCtx> for &Binder {
+    fn as_element(&self) -> <TypeCtx as Context>::ElemIn {
+        (*self).clone()
+    }
+}
+
 
 impl Print for TypeCtx {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
