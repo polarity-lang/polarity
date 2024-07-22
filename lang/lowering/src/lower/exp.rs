@@ -80,46 +80,75 @@ impl Lower for cst::exp::Call {
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Call { span, name, args } = self;
-        match ctx.lookup(name, span)? {
-            Elem::Bound(lvl) => Ok(ast::Exp::Variable(Variable {
-                span: Some(*span),
-                idx: ctx.level_to_index(lvl),
-                name: name.id.clone(),
-                inferred_type: None,
-            })),
-            Elem::Decl(meta) => match meta.kind() {
-                DeclKind::Data | DeclKind::Codata => Ok(ast::Exp::TypCtor(ast::TypCtor {
+
+        // If we find the identifier in the local context then we have to lower
+        // it to a variable.
+        match ctx.lookup_local(name) {
+            Some(lvl) => {
+                return Ok(ast::Exp::Variable(Variable {
                     span: Some(*span),
-                    name: name.id.to_owned(),
-                    args: ast::Args { args: args.lower(ctx)? },
-                })),
-                DeclKind::Def | DeclKind::Dtor => Err(LoweringError::MustUseAsDtor {
-                    name: name.to_owned(),
-                    span: span.to_miette(),
-                }),
-                DeclKind::Ctor => Ok(ast::Exp::Call(ast::Call {
-                    span: Some(*span),
-                    kind: ast::CallKind::Constructor,
-                    name: name.id.to_owned(),
-                    args: ast::Args { args: args.lower(ctx)? },
+                    idx: ctx.level_to_index(lvl),
+                    name: name.id.clone(),
                     inferred_type: None,
-                })),
-                DeclKind::Codef => Ok(ast::Exp::Call(ast::Call {
-                    span: Some(*span),
-                    kind: ast::CallKind::Codefinition,
-                    name: name.id.to_owned(),
-                    args: ast::Args { args: args.lower(ctx)? },
-                    inferred_type: None,
-                })),
-                DeclKind::Let => Ok(ast::Exp::Call(ast::Call {
-                    span: Some(*span),
-                    kind: ast::CallKind::LetBound,
-                    name: name.id.to_owned(),
-                    args: ast::Args { args: args.lower(ctx)? },
-                    inferred_type: None,
-                })),
-            },
+                }))
+            }
+            None => (),
         }
+
+        // If we find the identifier in the global context then we have to lower
+        // it to a call or a type constructor.
+        match ctx.lookup_global(name) {
+            Some(meta) => match meta.kind() {
+                DeclKind::Data | DeclKind::Codata => {
+                    return Ok(ast::Exp::TypCtor(ast::TypCtor {
+                        span: Some(*span),
+                        name: name.id.to_owned(),
+                        args: ast::Args { args: args.lower(ctx)? },
+                    }))
+                }
+                DeclKind::Def | DeclKind::Dtor => {
+                    return Err(LoweringError::MustUseAsDtor {
+                        name: name.to_owned(),
+                        span: span.to_miette(),
+                    })
+                }
+                DeclKind::Ctor => {
+                    return Ok(ast::Exp::Call(ast::Call {
+                        span: Some(*span),
+                        kind: ast::CallKind::Constructor,
+                        name: name.id.to_owned(),
+                        args: ast::Args { args: args.lower(ctx)? },
+                        inferred_type: None,
+                    }))
+                }
+                DeclKind::Codef => {
+                    return Ok(ast::Exp::Call(ast::Call {
+                        span: Some(*span),
+                        kind: ast::CallKind::Codefinition,
+                        name: name.id.to_owned(),
+                        args: ast::Args { args: args.lower(ctx)? },
+                        inferred_type: None,
+                    }))
+                }
+                DeclKind::Let => {
+                    return Ok(ast::Exp::Call(ast::Call {
+                        span: Some(*span),
+                        kind: ast::CallKind::LetBound,
+                        name: name.id.to_owned(),
+                        args: ast::Args { args: args.lower(ctx)? },
+                        inferred_type: None,
+                    }))
+                }
+            },
+            None => (),
+        };
+
+        // If we find the identifier neither in the local nor the global context then we have
+        // to throw an error.
+        return Err(LoweringError::UndefinedIdent {
+            name: name.to_owned(),
+            span: span.to_miette(),
+        });
     }
 }
 
@@ -129,11 +158,8 @@ impl Lower for cst::exp::DotCall {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::DotCall { span, exp, name, args } = self;
 
-        match ctx.lookup(name, span)? {
-            Elem::Bound(_) => {
-                Err(LoweringError::CannotUseAsDtor { name: name.clone(), span: span.to_miette() })
-            }
-            Elem::Decl(meta) => match meta.kind() {
+        match ctx.lookup_global(name) {
+            Some(meta) => match meta.kind() {
                 DeclKind::Dtor => Ok(ast::Exp::DotCall(ast::DotCall {
                     span: Some(*span),
                     kind: ast::DotCallKind::Destructor,
@@ -155,6 +181,9 @@ impl Lower for cst::exp::DotCall {
                     span: span.to_miette(),
                 }),
             },
+            None => {
+                Err(LoweringError::UndefinedIdent { name: name.to_owned(), span: span.to_miette() })
+            }
         }
     }
 }

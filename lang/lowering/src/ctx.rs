@@ -54,11 +54,14 @@ impl Ctx {
         }
     }
 
-    pub fn lookup(&self, name: &Ident, info: &Span) -> Result<Elem, LoweringError> {
-        Context::lookup(self, name.to_owned()).ok_or_else(|| LoweringError::UndefinedIdent {
-            name: name.to_owned(),
-            span: info.to_miette(),
-        })
+    /// Lookup in the local variable context.
+    pub fn lookup_local(&self, name: &Ident) -> Option<Lvl> {
+        self.lookup(name.clone())
+    }
+
+    /// Lookup in the global context of declarations.
+    pub fn lookup_global(&self, name: &Ident) -> Option<&DeclMeta> {
+        self.top_level_map.get(name)
     }
 
     pub fn lookup_top_level_decl(
@@ -96,14 +99,17 @@ impl Ctx {
         info: &Span,
     ) -> Result<ast::Label, LoweringError> {
         if let Some(user_name) = &user_name {
-            match Context::lookup(self, user_name.clone()) {
-                Some(Elem::Decl(_)) => {
+            match self.lookup_global(user_name) {
+                Some(_) => {
                     return Err(LoweringError::LabelNotUnique {
                         name: user_name.id.to_owned(),
                         span: info.to_miette(),
                     })
                 }
-                Some(Elem::Bound(_)) => {
+                None => (),
+            }
+            match self.lookup_local(user_name) {
+                Some(_) => {
                     return Err(LoweringError::LabelShadowed {
                         name: user_name.id.to_owned(),
                         span: info.to_miette(),
@@ -191,7 +197,7 @@ impl Ctx {
 impl Context for Ctx {
     type ElemIn = Ident;
 
-    type ElemOut = Option<Elem>;
+    type ElemOut = Option<Lvl>;
 
     type Var = Ident;
 
@@ -218,10 +224,7 @@ impl Context for Ctx {
 
     fn lookup<V: Into<Self::Var>>(&self, var: V) -> Self::ElemOut {
         let name = var.into();
-        self.local_map
-            .get(&name)
-            .and_then(|stack| stack.last().cloned().map(Elem::Bound))
-            .or_else(|| self.top_level_map.get(&name).cloned().map(Elem::Decl))
+        self.local_map.get(&name).and_then(|stack| stack.last().cloned())
     }
 }
 
@@ -247,10 +250,4 @@ impl ContextElem<Ctx> for &cst::exp::BindingSite {
             BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
         }
     }
-}
-
-#[derive(Clone, Debug)]
-pub enum Elem {
-    Bound(Lvl),
-    Decl(DeclMeta),
 }
