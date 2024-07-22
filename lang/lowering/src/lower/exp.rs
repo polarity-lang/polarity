@@ -12,7 +12,6 @@ use syntax::ast::lookup_table::DeclKind;
 use syntax::ast::Hole;
 use syntax::ast::TypeUniv;
 use syntax::ast::Variable;
-use syntax::ctx::BindContext;
 
 use super::Lower;
 use crate::ctx::*;

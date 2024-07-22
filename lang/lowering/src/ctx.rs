@@ -11,7 +11,7 @@ use syntax::ast::{self, MetaVar, MetaVarState};
 use syntax::ast::{HasSpan, Named};
 use syntax::ast::{HashMap, HashSet};
 use syntax::ast::{Idx, Lvl};
-use syntax::ctx::{Context, ContextElem, LevelCtx};
+use syntax::ctx::LevelCtx;
 
 use super::result::LoweringError;
 
@@ -192,14 +192,8 @@ impl Ctx {
 
         args
     }
-}
 
-impl Context for Ctx {
-    type ElemIn = Ident;
-
-    type ElemOut = Option<Lvl>;
-
-    type Var = Ident;
+    // Methods from Ctx trait
 
     fn push_telescope(&mut self) {
         self.levels.push(0);
@@ -209,33 +203,154 @@ impl Context for Ctx {
         self.levels.pop().unwrap();
     }
 
-    fn push_binder(&mut self, elem: Self::ElemIn) {
+    fn push_binder(&mut self, elem: Ident) {
         let var = self.curr_lvl();
         *self.levels.last_mut().unwrap() += 1;
         let stack = self.local_map.entry(elem).or_default();
         stack.push(var);
     }
 
-    fn pop_binder(&mut self, elem: Self::ElemIn) {
+    fn pop_binder(&mut self, elem: Ident) {
         let stack = self.local_map.get_mut(&elem).expect("Tried to read unknown variable");
         stack.pop().unwrap();
         *self.levels.last_mut().unwrap() -= 1;
     }
 
-    fn lookup<V: Into<Self::Var>>(&self, var: V) -> Self::ElemOut {
+    fn lookup<V: Into<Ident>>(&self, var: V) -> Option<Lvl> {
         let name = var.into();
         self.local_map.get(&name).and_then(|stack| stack.last().cloned())
     }
+
+    // Methods from BindCtx trait
+
+    /// Bind a single element
+    pub fn bind_single<T, O, F>(&mut self, elem: T, f: F) -> O
+    where
+        T: ContextElem,
+        F: FnOnce(&mut Self) -> O,
+    {
+        self.bind_iter([elem].into_iter(), f)
+    }
+
+    /// Bind an iterator `iter` of binders
+    pub fn bind_iter<T, I, O, F>(&mut self, iter: I, f: F) -> O
+    where
+        T: ContextElem,
+        I: Iterator<Item = T>,
+        F: FnOnce(&mut Self) -> O,
+    {
+        self.bind_fold(iter, (), |_ctx, (), _x| (), |ctx, ()| f(ctx))
+    }
+
+    /// Bind an iterator `iter` of elements
+    ///
+    /// Fold the iterator and consume the result
+    /// under the inner context with all binders in scope.
+    ///
+    /// This is used for checking telescopes.
+    ///
+    /// * `iter` - An iterator of binders
+    /// * `acc` - Accumulator for folding the iterator
+    /// * `f_acc` - Accumulator function run for each binder
+    /// * `f_inner` - Inner function computing the final result under the context of all binders
+    pub fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
+        &mut self,
+        iter: I,
+        acc: O1,
+        f_acc: F1,
+        f_inner: F2,
+    ) -> O2
+    where
+        T: ContextElem,
+        F1: Fn(&mut Self, O1, T) -> O1,
+        F2: FnOnce(&mut Self, O1) -> O2,
+    {
+        self.bind_fold2(
+            iter,
+            acc,
+            |this, acc, x| BindElem { elem: x.as_element(), ret: f_acc(this, acc, x) },
+            f_inner,
+        )
+    }
+
+    pub fn bind_fold2<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
+        &mut self,
+        iter: I,
+        acc: O1,
+        f_acc: F1,
+        f_inner: F2,
+    ) -> O2
+    where
+        F1: Fn(&mut Self, O1, T) -> BindElem<O1>,
+        F2: FnOnce(&mut Self, O1) -> O2,
+    {
+        self.bind_fold_failable(
+            iter,
+            acc,
+            |this, acc, x| Result::<_, ()>::Ok(f_acc(this, acc, x)),
+            f_inner,
+        )
+        .unwrap()
+    }
+
+    pub fn bind_fold_failable<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
+        &mut self,
+        iter: I,
+        acc: O1,
+        f_acc: F1,
+        f_inner: F2,
+    ) -> Result<O2, E>
+    where
+        F1: Fn(&mut Self, O1, T) -> Result<BindElem<O1>, E>,
+        F2: FnOnce(&mut Self, O1) -> O2,
+    {
+        fn bind_inner<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
+            this: &mut Ctx,
+            mut iter: I,
+            acc: O1,
+            f_acc: F1,
+            f_inner: F2,
+        ) -> Result<O2, E>
+        where
+            F1: Fn(&mut Ctx, O1, T) -> Result<BindElem<O1>, E>,
+            F2: FnOnce(&mut Ctx, O1) -> O2,
+        {
+            match iter.next() {
+                Some(x) => {
+                    let BindElem { elem, ret: acc } = f_acc(this, acc, x)?;
+                    this.push_binder(elem.clone());
+                    let res = bind_inner(this, iter, acc, f_acc, f_inner);
+                    this.pop_binder(elem);
+                    res
+                }
+                None => Ok(f_inner(this, acc)),
+            }
+        }
+
+        self.push_telescope();
+        let res = bind_inner(self, iter, acc, f_acc, f_inner);
+        self.pop_telescope();
+        res
+    }
 }
 
-impl ContextElem<Ctx> for Ident {
-    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+pub struct BindElem<O> {
+    pub elem: Ident,
+    pub ret: O,
+}
+
+pub trait ContextElem {
+    fn as_element(&self) -> Ident;
+}
+
+impl ContextElem for Ident {
+    fn as_element(&self) -> Ident {
         self.to_owned()
     }
 }
 
-impl ContextElem<Ctx> for &cst::decls::Param {
-    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+impl ContextElem for &cst::decls::Param {
+    fn as_element(&self) -> Ident {
         match &self.name {
             BindingSite::Var { name, .. } => name.to_owned(),
             BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
@@ -243,8 +358,8 @@ impl ContextElem<Ctx> for &cst::decls::Param {
     }
 }
 
-impl ContextElem<Ctx> for &cst::exp::BindingSite {
-    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+impl ContextElem for &cst::exp::BindingSite {
+    fn as_element(&self) -> Ident {
         match self {
             BindingSite::Var { name, .. } => name.to_owned(),
             BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
