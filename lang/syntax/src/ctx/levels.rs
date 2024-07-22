@@ -52,9 +52,9 @@ impl LevelCtx {
 
 impl Context for LevelCtx {
     type ElemIn = ();
-    type ElemOut = usize;
+    type ElemOut = ();
 
-    type Var = usize;
+    type Var = Var;
 
     fn push_telescope(&mut self) {
         self.bound.push(0);
@@ -73,8 +73,8 @@ impl Context for LevelCtx {
         *self.bound.last_mut().expect(err) -= 1;
     }
 
-    fn lookup<V: Into<Self::Var>>(&self, idx: V) -> Self::ElemOut {
-        self.bound[idx.into()]
+    fn lookup<V: Into<Self::Var>>(&self, _idx: V) -> Self::ElemOut {
+        ()
     }
 
     fn idx_to_lvl(&self, idx: Idx) -> Lvl {
