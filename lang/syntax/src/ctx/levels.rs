@@ -70,9 +70,7 @@ impl Context for LevelCtx {
         *self.bound.last_mut().expect(err) -= 1;
     }
 
-    fn lookup<V: Into<Var>>(&self, _idx: V) -> Self::Elem {
-        ()
-    }
+    fn lookup<V: Into<Var>>(&self, _idx: V) -> Self::Elem {}
 
     fn idx_to_lvl(&self, idx: Idx) -> Lvl {
         let fst = self.bound.len() - 1 - idx.fst;

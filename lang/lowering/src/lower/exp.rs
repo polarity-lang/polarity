@@ -82,22 +82,19 @@ impl Lower for cst::exp::Call {
 
         // If we find the identifier in the local context then we have to lower
         // it to a variable.
-        match ctx.lookup_local(name) {
-            Some(lvl) => {
-                return Ok(ast::Exp::Variable(Variable {
-                    span: Some(*span),
-                    idx: ctx.level_to_index(lvl),
-                    name: name.id.clone(),
-                    inferred_type: None,
-                }))
-            }
-            None => (),
+        if let Some(lvl) = ctx.lookup_local(name) {
+            return Ok(ast::Exp::Variable(Variable {
+                span: Some(*span),
+                idx: ctx.level_to_index(lvl),
+                name: name.id.clone(),
+                inferred_type: None,
+            }));
         }
 
         // If we find the identifier in the global context then we have to lower
         // it to a call or a type constructor.
-        match ctx.lookup_global(name) {
-            Some(meta) => match meta.kind() {
+        if let Some(meta) = ctx.lookup_global(name) {
+            match meta.kind() {
                 DeclKind::Data | DeclKind::Codata => {
                     return Ok(ast::Exp::TypCtor(ast::TypCtor {
                         span: Some(*span),
@@ -138,16 +135,12 @@ impl Lower for cst::exp::Call {
                         inferred_type: None,
                     }))
                 }
-            },
-            None => (),
+            }
         };
 
         // If we find the identifier neither in the local nor the global context then we have
         // to throw an error.
-        return Err(LoweringError::UndefinedIdent {
-            name: name.to_owned(),
-            span: span.to_miette(),
-        });
+        Err(LoweringError::UndefinedIdent { name: name.to_owned(), span: span.to_miette() })
     }
 }
 

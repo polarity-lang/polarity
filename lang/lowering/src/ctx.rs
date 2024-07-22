@@ -99,24 +99,20 @@ impl Ctx {
         info: &Span,
     ) -> Result<ast::Label, LoweringError> {
         if let Some(user_name) = &user_name {
-            match self.lookup_global(user_name) {
-                Some(_) => {
-                    return Err(LoweringError::LabelNotUnique {
-                        name: user_name.id.to_owned(),
-                        span: info.to_miette(),
-                    })
-                }
-                None => (),
+            if self.lookup_global(user_name).is_some() {
+                return Err(LoweringError::LabelNotUnique {
+                    name: user_name.id.to_owned(),
+                    span: info.to_miette(),
+                });
             }
-            match self.lookup_local(user_name) {
-                Some(_) => {
-                    return Err(LoweringError::LabelShadowed {
-                        name: user_name.id.to_owned(),
-                        span: info.to_miette(),
-                    })
-                }
-                None => (),
+
+            if self.lookup_local(user_name).is_some() {
+                return Err(LoweringError::LabelShadowed {
+                    name: user_name.id.to_owned(),
+                    span: info.to_miette(),
+                });
             }
+
             if self.user_labels.contains(user_name) {
                 return Err(LoweringError::LabelNotUnique {
                     name: user_name.id.to_owned(),
