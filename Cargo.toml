@@ -26,3 +26,17 @@ license = "MIT OR Apache-2.0"
 homepage = "https://polarity-lang.github.io/"
 repository = "https://github.com/polarity/polarity"
 categories = ["compilers"]
+
+[workspace.dependencies]
+# fancy error messages
+miette = { version = "5" }
+thiserror = { version = "1" }
+# source code locations
+codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149" }
+# ignoring fields when deriving traits (e.g. Eq, Hash)
+derivative = { version = "2" }
+# big integers
+num-bigint = { version = "0.4" }
+# url (for file locations)
+url = { version = "2.5.0" }
+pretty = { version = "0.11", features = ["termcolor"] }

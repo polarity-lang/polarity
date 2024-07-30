@@ -11,13 +11,12 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-# source code locations
-codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149"}
-# fancy error messages
-miette = "5"
-thiserror = "1"
+miette = { workspace = true }
+thiserror = { workspace = true }
+codespan = { workspace = true }
 # big integers
-num-bigint = "0.4"
+num-bigint = { workspace = true }
+
 # workspace members
 parser = { path = "../parser" }
 syntax = { path = "../syntax" }

@@ -1,15 +1,18 @@
 [package]
 name = "xfunc"
-version = "0.1.0"
-edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+# Inherited from workspace Cargo.toml
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories.workspace = true
 
 [dependencies]
-# source code locations
-codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149"}
-# fancy error messages
-miette = "5"
-thiserror = "1"
+codespan = { workspace = true }
+miette = { workspace = true }
+thiserror = { workspace = true }
 # workspace members
 syntax = { path = "../syntax" }
