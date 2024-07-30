@@ -11,10 +11,8 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-# source code locations
-codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149"}
-# ignoring fields when deriving traits (e.g. Eq, Hash)
-derivative = "2"
+codespan = { workspace = true }
+derivative = { workspace = true }
 # workspace members
 syntax = { path = "../syntax" }
 renaming = { path = "../renaming" }

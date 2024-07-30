@@ -11,15 +11,13 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-# fancy error messages
-miette = "5"
-thiserror = "1"
-# source code locations
-codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149"}
-# ignoring fields when deriving traits (e.g. Eq, Hash)
-derivative = "2"
-pretty = { version = "0.11", features = ["termcolor"] }
+miette = { workspace = true }
+thiserror = { workspace = true }
+codespan = { workspace = true }
+derivative = { workspace = true}
+pretty = { workspace = true }
 log = "0.4.21"
+
 # workspace members
 syntax = { path = "../syntax" }
 printer = { path = "../printer" }

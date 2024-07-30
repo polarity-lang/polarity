@@ -17,9 +17,9 @@ tower-lsp = { version = "0.17", default-features = false, features = ["runtime-a
 # asynchronous locks
 async-lock = "2"
 # source code spans
-codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149"}
+codespan = { workspace = true }
 # fancy error messages
-miette = "5"
+miette = { workspace = true }
 # workspace members
 syntax = { path = "../syntax" }
 query = { path = "../query" }
