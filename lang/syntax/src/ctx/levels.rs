@@ -51,10 +51,7 @@ impl LevelCtx {
 }
 
 impl Context for LevelCtx {
-    type ElemIn = ();
-    type ElemOut = usize;
-
-    type Var = usize;
+    type Elem = ();
 
     fn push_telescope(&mut self) {
         self.bound.push(0);
@@ -64,31 +61,17 @@ impl Context for LevelCtx {
         self.bound.pop().unwrap();
     }
 
-    fn push_binder(&mut self, _elem: Self::ElemIn) {
+    fn push_binder(&mut self, _elem: Self::Elem) {
         *self.bound.last_mut().expect("Cannot push without calling level_inc_fst first") += 1;
     }
 
-    fn pop_binder(&mut self, _elem: Self::ElemIn) {
+    fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
         *self.bound.last_mut().expect(err) -= 1;
     }
 
-    fn lookup<V: Into<Self::Var>>(&self, idx: V) -> Self::ElemOut {
-        self.bound[idx.into()]
-    }
-}
+    fn lookup<V: Into<Var>>(&self, _idx: V) -> Self::Elem {}
 
-impl<T> ContextElem<LevelCtx> for T {
-    fn as_element(&self) -> <LevelCtx as Context>::ElemIn {}
-}
-
-impl From<Vec<usize>> for LevelCtx {
-    fn from(bound: Vec<usize>) -> Self {
-        Self { bound }
-    }
-}
-
-impl Leveled for LevelCtx {
     fn idx_to_lvl(&self, idx: Idx) -> Lvl {
         let fst = self.bound.len() - 1 - idx.fst;
         let snd = self.bound[fst] - 1 - idx.snd;
@@ -99,6 +82,16 @@ impl Leveled for LevelCtx {
         let fst = self.bound.len() - 1 - lvl.fst;
         let snd = self.bound[lvl.fst] - 1 - lvl.snd;
         Idx { fst, snd }
+    }
+}
+
+impl<T> ContextElem<LevelCtx> for T {
+    fn as_element(&self) -> <LevelCtx as Context>::Elem {}
+}
+
+impl From<Vec<usize>> for LevelCtx {
+    fn from(bound: Vec<usize>) -> Self {
+        Self { bound }
     }
 }
 

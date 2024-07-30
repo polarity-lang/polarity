@@ -6,7 +6,6 @@ use parser::cst::exp::BindingSite;
 use syntax::ast;
 use syntax::ast::lookup_table::DeclKind;
 use syntax::ast::lookup_table::DeclMeta;
-use syntax::ctx::BindContext;
 
 use super::*;
 
