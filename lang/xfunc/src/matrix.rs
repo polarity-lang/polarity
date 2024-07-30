@@ -30,6 +30,7 @@ pub struct XData {
 /// The binding order in the matrix cell is as follors:
 /// * dtor telescope
 /// * ctor telescope
+///
 /// This invariant needs to be handled when translating
 /// between the matrix and other representations
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

@@ -16,6 +16,7 @@ use crate::ast::*;
 /// - n.shift_in_range(range, by) = if (n ∈ range) then { n + by } else { n }
 /// - (λ_. e).shift_in_range(range, by) = λ_.(e.shift_in_range(range.left += 1, by))
 /// - (e1 e2).shift_in_range(range, by) = (e1.shift_in_range(range, by)) (e2.shift_in_range(range, by))
+///
 /// So whenever we traverse a binding occurrence we have to bump the left
 /// side of the range by one.
 ///

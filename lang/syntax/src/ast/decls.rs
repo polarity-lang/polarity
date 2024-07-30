@@ -684,12 +684,12 @@ impl Print for Telescope {
     /// whether we can append the current parameter to this list. There are two complications:
     ///
     /// 1) Due to de Bruijn indices we have to shift the types when we compare them. For example,
-    /// instead of printing `n: Nat, x: Vec(Bool,n), y: Vec(Bool,n)` we want to print
-    /// `n: Nat, x y: Vec(Bool,n)`. But in de Bruijn notation this list looks like
-    /// `_: Nat, _ : Vec(0), _: Vec(1)`.
+    ///    instead of printing `n: Nat, x: Vec(Bool,n), y: Vec(Bool,n)` we want to print
+    ///    `n: Nat, x y: Vec(Bool,n)`. But in de Bruijn notation this list looks like
+    ///    `_: Nat, _ : Vec(0), _: Vec(1)`.
     ///
     /// 2) We cannot chunk two parameters if one is implicit and the other isn't, even if they have
-    /// the same type. For example: `implicit a: Type, b: Type` cannot be chunked.
+    ///    the same type. For example: `implicit a: Type, b: Type` cannot be chunked.
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Telescope { params } = self;
         let mut output = alloc.nil();
