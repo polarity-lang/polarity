@@ -108,10 +108,10 @@ impl ToEnv for LevelCtx {
             .bound
             .iter()
             .enumerate()
-            .map(|(fst, len)| {
-                (0..*len)
+            .map(|(fst, v)| {
+                (0..v.len())
                     .map(|snd| {
-                        let idx = Idx { fst: self.bound.len() - 1 - fst, snd: len - 1 - snd };
+                        let idx = Idx { fst: self.bound.len() - 1 - fst, snd: v.len() - 1 - snd };
                         Rc::new(Val::Neu(Neu::Variable(Variable {
                             span: None,
                             name: String::new(),
