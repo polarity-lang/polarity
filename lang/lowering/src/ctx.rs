@@ -145,7 +145,7 @@ impl Ctx {
     /// also registered as unsolved.
     pub fn fresh_metavar(&mut self) -> MetaVar {
         let mv = MetaVar { id: self.next_meta_var };
-        let ctx = LevelCtx { bound: self.levels.clone() };
+        let ctx = LevelCtx::from(self.levels.clone());
         self.next_meta_var += 1;
         self.meta_vars.insert(mv, MetaVarState::Unsolved { ctx });
         mv

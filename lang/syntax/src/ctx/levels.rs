@@ -16,7 +16,7 @@ use super::def::*;
 #[derive(Clone, Debug, Default)]
 pub struct LevelCtx {
     /// Number of binders in the second dimension for each first dimension
-    pub bound: Vec<usize>,
+    pub bound: Vec<Vec<()>>,
 }
 
 impl LevelCtx {
@@ -54,7 +54,7 @@ impl Context for LevelCtx {
     type Elem = ();
 
     fn push_telescope(&mut self) {
-        self.bound.push(0);
+        self.bound.push(Vec::new());
     }
 
     fn pop_telescope(&mut self) {
@@ -62,25 +62,25 @@ impl Context for LevelCtx {
     }
 
     fn push_binder(&mut self, _elem: Self::Elem) {
-        *self.bound.last_mut().expect("Cannot push without calling level_inc_fst first") += 1;
+        self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(());
     }
 
     fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
-        *self.bound.last_mut().expect(err) -= 1;
+        self.bound.last_mut().expect(err).pop();
     }
 
     fn lookup<V: Into<Var>>(&self, _idx: V) -> Self::Elem {}
 
     fn idx_to_lvl(&self, idx: Idx) -> Lvl {
         let fst = self.bound.len() - 1 - idx.fst;
-        let snd = self.bound[fst] - 1 - idx.snd;
+        let snd = self.bound[fst].len() - 1 - idx.snd;
         Lvl { fst, snd }
     }
 
     fn lvl_to_idx(&self, lvl: Lvl) -> Idx {
         let fst = self.bound.len() - 1 - lvl.fst;
-        let snd = self.bound[lvl.fst] - 1 - lvl.snd;
+        let snd = self.bound[lvl.fst].len() - 1 - lvl.snd;
         Idx { fst, snd }
     }
 }
@@ -91,12 +91,12 @@ impl<T> ContextElem<LevelCtx> for T {
 
 impl From<Vec<usize>> for LevelCtx {
     fn from(bound: Vec<usize>) -> Self {
-        Self { bound }
+        Self { bound: bound.iter().map(|i| vec![(); *i]).collect() }
     }
 }
 
 impl fmt::Display for LevelCtx {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}]", comma_separated(self.bound.iter().map(ToString::to_string)))
+        write!(f, "[{}]", comma_separated(self.bound.iter().map(|v| v.len().to_string())))
     }
 }
