@@ -1,6 +1,45 @@
 //! Generic definition of variable contexts
 
+use derivative::Derivative;
+
 use crate::ast::{Idx, Lvl, Var};
+
+use super::LevelCtx;
+
+#[derive(Debug, Clone, Default, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct GenericCtx<T> {
+    pub bound: Vec<Vec<T>>,
+}
+
+impl<T> GenericCtx<T> {
+    pub fn len(&self) -> usize {
+        self.bound.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.bound.is_empty()
+    }
+
+    pub fn empty() -> Self {
+        Self { bound: vec![] }
+    }
+
+    pub fn levels(&self) -> LevelCtx {
+        let bound: Vec<_> = self.bound.iter().map(|inner| inner.len()).collect();
+        LevelCtx::from(bound)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &[T]> {
+        self.bound.iter().map(|inner| &inner[..])
+    }
+}
+
+impl<T> From<Vec<Vec<T>>> for GenericCtx<T> {
+    fn from(value: Vec<Vec<T>>) -> Self {
+        GenericCtx { bound: value }
+    }
+}
 
 /// Defines the interface of a variable context
 pub trait Context: Sized {

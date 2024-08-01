@@ -10,29 +10,13 @@ use printer::{Alloc, Builder, Print, PrintCfg};
 
 use crate::ast::traits::Shift;
 use crate::ast::*;
-use crate::ctx::{Context, LevelCtx};
+use crate::ctx::Context;
 
-use super::ContextElem;
+use super::{ContextElem, GenericCtx};
 
-#[derive(Debug, Clone)]
-pub struct TypeCtx {
-    pub bound: Vec<Vec<Binder>>,
-}
+pub type TypeCtx = GenericCtx<Binder>;
 
 impl TypeCtx {
-    pub fn empty() -> Self {
-        Self { bound: vec![] }
-    }
-
-    pub fn levels(&self) -> LevelCtx {
-        let bound: Vec<_> = self.bound.iter().map(|inner| inner.len()).collect();
-        LevelCtx::from(bound)
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &[Binder]> {
-        self.bound.iter().map(|inner| &inner[..])
-    }
-
     fn shift<R: ShiftRange>(&mut self, range: R, by: (isize, isize)) {
         for lvl in 0..self.bound.len() {
             self.shift_at_lvl(range.clone(), lvl, by)
@@ -43,6 +27,21 @@ impl TypeCtx {
         for i in 0..self.bound[lvl].len() {
             self.bound[lvl][i] = self.bound[lvl][i].shift_in_range(range.clone(), by);
         }
+    }
+
+    pub fn map_failable<E, F>(&self, f: F) -> Result<Self, E>
+    where
+        F: Fn(&Rc<Exp>) -> Result<Rc<Exp>, E>,
+    {
+        let bound: Result<_, _> = self
+            .bound
+            .iter()
+            .map(|stack| {
+                stack.iter().map(|b| Ok(Binder { name: b.name.clone(), typ: f(&b.typ)? })).collect()
+            })
+            .collect();
+
+        Ok(Self { bound: bound? })
     }
 }
 
@@ -106,31 +105,6 @@ impl Print for TypeCtx {
                 .brackets()
         });
         alloc.intersperse(iter, alloc.text(COMMA)).brackets()
-    }
-}
-
-impl TypeCtx {
-    pub fn len(&self) -> usize {
-        self.bound.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.bound.is_empty()
-    }
-
-    pub fn map_failable<E, F>(&self, f: F) -> Result<Self, E>
-    where
-        F: Fn(&Rc<Exp>) -> Result<Rc<Exp>, E>,
-    {
-        let bound: Result<_, _> = self
-            .bound
-            .iter()
-            .map(|stack| {
-                stack.iter().map(|b| Ok(Binder { name: b.name.clone(), typ: f(&b.typ)? })).collect()
-            })
-            .collect();
-
-        Ok(Self { bound: bound? })
     }
 }
 

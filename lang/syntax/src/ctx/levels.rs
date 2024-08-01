@@ -13,25 +13,9 @@ use crate::ast::*;
 
 use super::def::*;
 
-#[derive(Clone, Debug, Default)]
-pub struct LevelCtx {
-    /// Number of binders in the second dimension for each first dimension
-    pub bound: Vec<Vec<()>>,
-}
+pub type LevelCtx = GenericCtx<()>;
 
 impl LevelCtx {
-    pub fn empty() -> Self {
-        Self { bound: vec![] }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.bound.is_empty()
-    }
-
-    pub fn len(&self) -> usize {
-        self.bound.len()
-    }
-
     pub fn append(&self, other: &LevelCtx) -> Self {
         let mut bound = self.bound.clone();
         bound.extend(other.bound.iter().cloned());

@@ -1,37 +1,47 @@
 use syntax::ast::*;
-use syntax::ctx::{Context, ContextElem};
+use syntax::ctx::{Context, ContextElem, GenericCtx};
 
 use super::util::increment_name;
 
-#[derive(Debug, Clone)]
 pub struct Ctx {
-    bound: Vec<Vec<Ident>>,
+    ctx: GenericCtx<Ident>,
+}
+
+impl From<GenericCtx<Ident>> for Ctx {
+    fn from(value: GenericCtx<Ident>) -> Self {
+        Ctx { ctx: value }
+    }
 }
 
 impl Context for Ctx {
     type Elem = Ident;
 
     fn push_telescope(&mut self) {
-        self.bound.push(vec![]);
+        self.ctx.bound.push(vec![]);
     }
 
     fn pop_telescope(&mut self) {
-        self.bound.pop().unwrap();
+        self.ctx.bound.pop().unwrap();
     }
 
     fn push_binder(&mut self, elem: Self::Elem) {
         assert!(elem == "_" || elem.is_empty() || !self.contains_name(&elem));
-        self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
+        self.ctx
+            .bound
+            .last_mut()
+            .expect("Cannot push without calling level_inc_fst first")
+            .push(elem);
     }
 
     fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
-        self.bound.last_mut().expect(err).pop().expect(err);
+        self.ctx.bound.last_mut().expect(err).pop().expect(err);
     }
 
     fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
         let lvl = self.var_to_lvl(idx.into());
-        self.bound
+        self.ctx
+            .bound
             .get(lvl.fst)
             .and_then(|ctx| ctx.get(lvl.snd))
             .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
@@ -39,14 +49,14 @@ impl Context for Ctx {
     }
 
     fn idx_to_lvl(&self, idx: Idx) -> Lvl {
-        let fst = self.bound.len() - 1 - idx.fst;
-        let snd = self.bound[fst].len() - 1 - idx.snd;
+        let fst = self.ctx.bound.len() - 1 - idx.fst;
+        let snd = self.ctx.bound[fst].len() - 1 - idx.snd;
         Lvl { fst, snd }
     }
 
     fn lvl_to_idx(&self, lvl: Lvl) -> Idx {
-        let fst = self.bound.len() - 1 - lvl.fst;
-        let snd = self.bound[lvl.fst].len() - 1 - lvl.snd;
+        let fst = self.ctx.bound.len() - 1 - lvl.fst;
+        let snd = self.ctx.bound[lvl.fst].len() - 1 - lvl.snd;
         Idx { fst, snd }
     }
 }
@@ -62,12 +72,8 @@ impl Ctx {
         name
     }
 
-    pub fn empty() -> Self {
-        Self { bound: vec![] }
-    }
-
     fn contains_name(&self, name: &Ident) -> bool {
-        for telescope in &self.bound {
+        for telescope in &self.ctx.bound {
             if telescope.contains(name) {
                 return true;
             }

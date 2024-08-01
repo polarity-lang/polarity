@@ -4,7 +4,7 @@ use log::trace;
 
 use printer::types::Print;
 use syntax::ast::*;
-use syntax::ctx::{BindContext, Context};
+use syntax::ctx::{BindContext, Context, GenericCtx};
 
 use crate::normalizer::env::*;
 use crate::normalizer::val::{self, Closure, Val};
@@ -144,8 +144,8 @@ impl Eval for DotCall {
 
                         // First, we have to find the corresponding case in the toplevel definition `d`.
                         let Def { cases, .. } = prg.def(name, None)?;
-                        let cases =
-                            Env::empty().bind_iter(args.iter(), |env| cases.eval(prg, env))?;
+                        let mut env: Env = GenericCtx::empty().into();
+                        let cases = env.bind_iter(args.iter(), |env| cases.eval(prg, env))?;
                         let val::Case { body, .. } =
                             cases.clone().into_iter().find(|case| case.name == call_name).unwrap();
 
@@ -170,8 +170,8 @@ impl Eval for DotCall {
                         // First, we have to find the corresponding cocase in the toplevel
                         // codefinition `C`.
                         let Codef { cases, .. } = prg.codef(&call_name, None)?;
-                        let cases =
-                            Env::empty().bind_iter(call_args.iter(), |env| cases.eval(prg, env))?;
+                        let mut env: Env = GenericCtx::empty().into();
+                        let cases = env.bind_iter(call_args.iter(), |env| cases.eval(prg, env))?;
                         let val::Case { body, .. } =
                             cases.clone().into_iter().find(|cocase| cocase.name == *name).unwrap();
 
