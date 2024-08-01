@@ -39,25 +39,13 @@ impl Context for Ctx {
     }
 
     fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
-        let lvl = self.var_to_lvl(idx.into());
+        let lvl = self.ctx.var_to_lvl(idx.into());
         self.ctx
             .bound
             .get(lvl.fst)
             .and_then(|ctx| ctx.get(lvl.snd))
             .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
             .clone()
-    }
-
-    fn idx_to_lvl(&self, idx: Idx) -> Lvl {
-        let fst = self.ctx.bound.len() - 1 - idx.fst;
-        let snd = self.ctx.bound[fst].len() - 1 - idx.snd;
-        Lvl { fst, snd }
-    }
-
-    fn lvl_to_idx(&self, lvl: Lvl) -> Idx {
-        let fst = self.ctx.bound.len() - 1 - lvl.fst;
-        let snd = self.ctx.bound[lvl.fst].len() - 1 - lvl.snd;
-        Idx { fst, snd }
     }
 }
 

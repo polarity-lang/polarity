@@ -8,7 +8,7 @@ use syntax::ast::{Shift, ShiftRange};
 use crate::normalizer::val::*;
 use printer::tokens::COMMA;
 use printer::Print;
-use syntax::ast::{Idx, Lvl, Var};
+use syntax::ast::{Idx, Var};
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::{map_idx::*, GenericCtx};
 use syntax::ctx::{Context, ContextElem, LevelCtx};
@@ -29,7 +29,7 @@ impl Context for Env {
     type Elem = Rc<Val>;
 
     fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
-        let lvl = self.var_to_lvl(idx.into());
+        let lvl = self.ctx.var_to_lvl(idx.into());
         self.ctx
             .bound
             .get(lvl.fst)
@@ -57,18 +57,6 @@ impl Context for Env {
     fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
         self.ctx.bound.last_mut().expect(err).pop().expect(err);
-    }
-
-    fn idx_to_lvl(&self, idx: Idx) -> Lvl {
-        let fst = self.ctx.bound.len() - 1 - idx.fst;
-        let snd = self.ctx.bound[fst].len() - 1 - idx.snd;
-        Lvl { fst, snd }
-    }
-
-    fn lvl_to_idx(&self, lvl: Lvl) -> Idx {
-        let fst = self.ctx.bound.len() - 1 - lvl.fst;
-        let snd = self.ctx.bound[lvl.fst].len() - 1 - lvl.snd;
-        Idx { fst, snd }
     }
 }
 

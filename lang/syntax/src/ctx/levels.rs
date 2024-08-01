@@ -55,18 +55,6 @@ impl Context for LevelCtx {
     }
 
     fn lookup<V: Into<Var>>(&self, _idx: V) -> Self::Elem {}
-
-    fn idx_to_lvl(&self, idx: Idx) -> Lvl {
-        let fst = self.bound.len() - 1 - idx.fst;
-        let snd = self.bound[fst].len() - 1 - idx.snd;
-        Lvl { fst, snd }
-    }
-
-    fn lvl_to_idx(&self, lvl: Lvl) -> Idx {
-        let fst = self.bound.len() - 1 - lvl.fst;
-        let snd = self.bound[lvl.fst].len() - 1 - lvl.snd;
-        Idx { fst, snd }
-    }
 }
 
 impl<T> ContextElem<LevelCtx> for T {
