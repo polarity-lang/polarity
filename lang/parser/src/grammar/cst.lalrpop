@@ -139,7 +139,7 @@ pub Decl: Decl = {
     <d: Let> => Decl::Let(d),
 }
 
-// Toplevel declarations
+// Data Type Declarations
 //
 //
 
@@ -151,15 +151,31 @@ Ctor: Ctor = {
 Data: Data = <l: @L> <doc: DocComment?> <attr: OptAttributes> "data" <name: Ident> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> =>
   Data { span: span(l, r), doc, name, attr, params, ctors };
 
+
+// Codata Type Declarations
+//
+//
+
+pub Destructee: Destructee = {
+    <l: @L> <scrutinee: (<Scrutinee>)?> <r: @R> => match scrutinee {
+        Some(Scrutinee { span, name, typ }) => Destructee { span, name, typ: Some(typ) },
+        None => Destructee { span: span(l, r), name: None, typ: None },
+    }
+}
+
 Dtor: Dtor = {
-    <l: @L> <doc: DocComment?> <destructee: Destructee> <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> <r: @R> => Dtor { span: span(l, r), doc, name, params, destructee, ret_typ },
+    <l: @L> <doc: DocComment?> <destructee: Destructee> "." <name: Ident> <params: OptTelescope> ":" <ret_typ: Exp> <r: @R> =>
+      Dtor { span: span(l, r), doc, name, params, destructee, ret_typ },
 }
 
 // Toplevel codata type declaration
 Codata: Codata = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codata" <name: Ident> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> =>
   Codata { span: span(l, r), doc, name, attr, params, dtors };
 
+
 // Toplevel definition
+//
+//
 Def: Def = <l: @L> <doc: DocComment?> <attr: OptAttributes> "def" <scrutinee: Scrutinee> "." <name: Ident> <params: OptTelescope> ":" <ret_typ: Exp> "{" <cases: Comma<Case>> "}" <r: @R> =>
   Def { span: span(l, r), doc, name, attr, params, scrutinee, ret_typ, cases };
 
@@ -180,12 +196,6 @@ pub AbsurdOrBody: Option<Rc<Exp>> = {
     "=>" <body: Exp> => Some(body),
 }
 
-pub Destructee: Destructee = {
-    <l: @L> <scrutinee: (<Scrutinee> ".")?> <r: @R> => match scrutinee {
-        Some(Scrutinee { span, name, typ }) => Destructee { span, name, typ: Some(typ) },
-        None => Destructee { span: span(l, r), name: None, typ: None },
-    }
-}
 
 pub Scrutinee: Scrutinee = {
     <l: @L> "(" <name: BindingSite> ":" <typ: TypApp> ")" <r: @R> => Scrutinee { span: span(l, r), name: match name { BindingSite::Wildcard{..} => None, BindingSite::Var { name,.. } => Some(name) }, typ },
@@ -193,7 +203,7 @@ pub Scrutinee: Scrutinee = {
 }
 
 pub TypApp: Call = {
-    <l: @L> <name: UpperIdent> <args: OptArgs> <r: @R> => Call { span: span(l, r), name, args },
+    <l: @L> <name: Ident> <args: OptArgs> <r: @R> => Call { span: span(l, r), name, args },
 }
 
 // Expressions

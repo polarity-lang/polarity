@@ -4,8 +4,8 @@ data Eq (a: Type, x y: a) {
 
 codata Bool {
     (x: Bool).neg_inverse: Eq(Bool, x, x.not.not),
-    and(other: Bool): Bool,
-    not: Bool
+    .and(other: Bool): Bool,
+    .not: Bool
 }
 data Unit { Top }
 

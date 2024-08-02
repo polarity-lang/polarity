@@ -429,7 +429,7 @@ impl Print for Dtor {
 
         let doc = doc.print(cfg, alloc);
         let head = if self_param.is_simple() {
-            alloc.nil()
+            alloc.text(DOT)
         } else {
             self_param.print(&PrintCfg { print_function_sugar: false, ..*cfg }, alloc).append(DOT)
         };

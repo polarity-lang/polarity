@@ -19,8 +19,8 @@ def Bool.if_then_else(a: Type, then: a, else: a) : a {
 }
 
 codata Stream {
-    head : Nat,
-    tail : Stream,
+    .head : Nat,
+    .tail : Stream,
 }
 
 codef Zeroes() : Stream {

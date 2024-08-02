@@ -3,7 +3,7 @@ codata Fun(a b: Type) {
 }
 
 codata Setoid {
-   type : Type,
+   .type : Type,
    (self: Setoid).equality : Fun(self.type, Fun(self.type, Type))
 }
 

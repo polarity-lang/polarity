@@ -29,7 +29,7 @@ data Response {
 }
 
 codata User {
-    hasCredentials : Bool
+    .hasCredentials : Bool
 }
 
 codata State(loggedIn: Bool) {
@@ -43,7 +43,7 @@ codata State(loggedIn: Bool) {
 }
 
 codata Utils {
-    put_twice(n: Nat, route: Route, state: State(route.requiresLogin)): ×₋(State(route.requiresLogin), Response)
+    .put_twice(n: Nat, route: Route, state: State(route.requiresLogin)): ×₋(State(route.requiresLogin), Response)
 }
 
 codef MkUtils: Utils {
@@ -60,7 +60,7 @@ def Eq(t1, a, b).cong_pair(t1 t2: Type, a b: t1, c: t2): Eq(×₋(t1, t2), Pair(
 }
 
 codata Route {
-    requiresLogin: Bool,
+    .requiresLogin: Bool,
     (self: Route).get: State(self.requiresLogin) -> Response,
     (self: Route).post: State(self.requiresLogin) -> ×₋(State(self.requiresLogin),Response),
     (self: Route).put(n : Nat): State(self.requiresLogin) -> ×₋(State(self.requiresLogin),Response),
