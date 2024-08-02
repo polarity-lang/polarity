@@ -14,11 +14,11 @@ data Vec(n: Nat) {
 }
 
 codata Stream {
-    head : Nat,
-    tail : Stream
+    .head : Nat,
+    .tail : Stream
 }
 
 codata NatToNat {
-    ap(x: Nat) : Nat
+    .ap(x: Nat) : Nat
 }
 

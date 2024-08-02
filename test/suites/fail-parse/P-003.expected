@@ -1,1 +1,1 @@
-Unexpected "LowerCaseName("foo")", expected "UpperCaseName"
+Unexpected end of file. Expected "(", ")", ",", "->", ".", ":", "=>", "LowerCaseName", "UpperCaseName", "_", "absurd", "as", "{", "}"

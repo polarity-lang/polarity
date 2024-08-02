@@ -1,6 +1,6 @@
 data Bool { True, False }
 
-codata T { f : Bool }
+codata T { .f : Bool }
 
 def Bool.f : Bool {
     True => ?,

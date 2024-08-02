@@ -54,8 +54,8 @@ def Bool.if_then_else(a: Type, then: a, else: a) : a {
 }
 
 codata Stream {
-    sHead : Nat,
-    sTail : Stream,
+    .sHead : Nat,
+    .sTail : Stream,
 }
 
 codef Zeroes() : Stream {

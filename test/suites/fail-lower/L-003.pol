@@ -1,5 +1,5 @@
 data Bool { True, False }
-codata Foo { d : Bool }
+codata Foo { .d : Bool }
 
 data Unit { MkUnit }
 

@@ -1,6 +1,6 @@
 data Bool { True, False }
 
 codata Stream {
-    head: Bool,
-    tail: Stream,
+    .head : Bool,
+    .tail : Stream,
 }
