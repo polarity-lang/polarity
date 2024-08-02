@@ -29,7 +29,7 @@ impl Context for Ctx {
         self.ctx
             .bound
             .last_mut()
-            .expect("Cannot push without calling level_inc_fst first")
+            .expect("Cannot push without calling push_telescope first")
             .push(elem);
     }
 
