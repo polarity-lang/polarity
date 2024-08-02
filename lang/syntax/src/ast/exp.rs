@@ -13,7 +13,7 @@ use printer::util::{BackslashExt, BracesExt, IsNilExt};
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::values::TypeCtx;
-use crate::ctx::{BindContext, Context, LevelCtx};
+use crate::ctx::{BindContext, LevelCtx};
 
 use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;

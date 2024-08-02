@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 use syntax::ast::{occurs_in, Variable};
-use syntax::ctx::{Context, LevelCtx};
+use syntax::ctx::LevelCtx;
 
 use crate::result::TypeError;
 use crate::unifier::dec::{Dec, No, Yes};

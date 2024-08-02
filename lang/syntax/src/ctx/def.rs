@@ -1,6 +1,70 @@
 //! Generic definition of variable contexts
 
+use derivative::Derivative;
+
 use crate::ast::{Idx, Lvl, Var};
+
+use super::LevelCtx;
+
+#[derive(Debug, Clone, Default, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct GenericCtx<T> {
+    pub bound: Vec<Vec<T>>,
+}
+
+impl<T> GenericCtx<T> {
+    pub fn len(&self) -> usize {
+        self.bound.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.bound.is_empty()
+    }
+
+    pub fn empty() -> Self {
+        Self { bound: vec![] }
+    }
+
+    pub fn levels(&self) -> LevelCtx {
+        let bound: Vec<_> = self.bound.iter().map(|inner| inner.len()).collect();
+        LevelCtx::from(bound)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &[T]> {
+        self.bound.iter().map(|inner| &inner[..])
+    }
+
+    pub fn idx_to_lvl(&self, idx: Idx) -> Lvl {
+        let fst = self.bound.len() - 1 - idx.fst;
+        let snd = self.bound[fst].len() - 1 - idx.snd;
+        Lvl { fst, snd }
+    }
+
+    pub fn lvl_to_idx(&self, lvl: Lvl) -> Idx {
+        let fst = self.bound.len() - 1 - lvl.fst;
+        let snd = self.bound[lvl.fst].len() - 1 - lvl.snd;
+        Idx { fst, snd }
+    }
+
+    pub fn var_to_lvl(&self, var: Var) -> Lvl {
+        match var {
+            Var::Lvl(lvl) => lvl,
+            Var::Idx(idx) => self.idx_to_lvl(idx),
+        }
+    }
+    pub fn var_to_idx(&self, var: Var) -> Idx {
+        match var {
+            Var::Lvl(lvl) => self.lvl_to_idx(lvl),
+            Var::Idx(idx) => idx,
+        }
+    }
+}
+
+impl<T> From<Vec<Vec<T>>> for GenericCtx<T> {
+    fn from(value: Vec<Vec<T>>) -> Self {
+        GenericCtx { bound: value }
+    }
+}
 
 /// Defines the interface of a variable context
 pub trait Context: Sized {
@@ -23,21 +87,6 @@ pub trait Context: Sized {
 
     /// Pop a binder from the most-recently pushed telescope
     fn pop_binder(&mut self, elem: Self::Elem);
-
-    fn idx_to_lvl(&self, idx: Idx) -> Lvl;
-    fn lvl_to_idx(&self, lvl: Lvl) -> Idx;
-    fn var_to_lvl(&self, var: Var) -> Lvl {
-        match var {
-            Var::Lvl(lvl) => lvl,
-            Var::Idx(idx) => self.idx_to_lvl(idx),
-        }
-    }
-    fn var_to_idx(&self, var: Var) -> Idx {
-        match var {
-            Var::Lvl(lvl) => self.lvl_to_idx(lvl),
-            Var::Idx(idx) => idx,
-        }
-    }
 }
 
 /// Interface to bind variables to anything that has a `Context`
