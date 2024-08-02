@@ -144,11 +144,11 @@ pub Decl: Decl = {
 //
 
 Ctor: Ctor = {
-    <l: @L> <doc: DocComment?> <name: UpperIdent> <params: OptTelescope> <typ: (":" <TypApp>)?> <r: @R> => Ctor { span: span(l, r), doc, name, params, typ },
+    <l: @L> <doc: DocComment?> <name: Ident> <params: OptTelescope> <typ: (":" <TypApp>)?> <r: @R> => Ctor { span: span(l, r), doc, name, params, typ },
 }
 
 // Toplevel data type declaration
-Data: Data = <l: @L> <doc: DocComment?> <attr: OptAttributes> "data" <name: UpperIdent> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> =>
+Data: Data = <l: @L> <doc: DocComment?> <attr: OptAttributes> "data" <name: Ident> <params: OptTelescope> "{" <ctors: Comma<Ctor>> "}" <r: @R> =>
   Data { span: span(l, r), doc, name, attr, params, ctors };
 
 Dtor: Dtor = {
@@ -156,19 +156,19 @@ Dtor: Dtor = {
 }
 
 // Toplevel codata type declaration
-Codata: Codata = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codata" <name: UpperIdent> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> =>
+Codata: Codata = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codata" <name: Ident> <params: OptTelescope> "{" <dtors: Comma<Dtor>> "}" <r: @R> =>
   Codata { span: span(l, r), doc, name, attr, params, dtors };
 
 // Toplevel definition
-Def: Def = <l: @L> <doc: DocComment?> <attr: OptAttributes> "def" <scrutinee: Scrutinee> "." <name: LowerIdent> <params: OptTelescope> ":" <ret_typ: Exp> "{" <cases: Comma<Case>> "}" <r: @R> =>
+Def: Def = <l: @L> <doc: DocComment?> <attr: OptAttributes> "def" <scrutinee: Scrutinee> "." <name: Ident> <params: OptTelescope> ":" <ret_typ: Exp> "{" <cases: Comma<Case>> "}" <r: @R> =>
   Def { span: span(l, r), doc, name, attr, params, scrutinee, ret_typ, cases };
 
 // Toplevel codefinition
-Codef: Codef = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codef" <name: UpperIdent> <params: OptTelescope> ":" <typ: TypApp> "{" <cases: Comma<Case>> "}" <r: @R> =>
+Codef: Codef = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codef" <name: Ident> <params: OptTelescope> ":" <typ: TypApp> "{" <cases: Comma<Case>> "}" <r: @R> =>
   Codef { span: span(l, r), doc, name, attr, params, typ, cases };
 
 // Toplevel let binding
-Let: Let = <l: @L> <doc: DocComment?> <attr: OptAttributes> "let" <name: LowerIdent><params: OptTelescope> ":" <typ: Exp> "{" <body: Exp> "}" <r: @R> =>
+Let: Let = <l: @L> <doc: DocComment?> <attr: OptAttributes> "let" <name: Ident><params: OptTelescope> ":" <typ: Exp> "{" <body: Exp> "}" <r: @R> =>
   Let { span: span(l,r), doc, name, attr, params, typ, body };
 
 pub Case : Case = {
@@ -291,5 +291,6 @@ Ident: Ident = {
     <s: LowerIdent> => s.to_owned(),
     <s: UpperIdent> => s.to_owned(),
 }
+
 LowerIdent: Ident = <s: "LowerCaseName" > => Ident { id: s.to_owned() };
 UpperIdent: Ident = <s: "UpperCaseName"> => Ident { id: s.to_owned() };
