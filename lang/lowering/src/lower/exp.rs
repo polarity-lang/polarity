@@ -57,16 +57,33 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
     )
 }
 
-impl Lower for cst::exp::Case {
+impl Lower for cst::exp::Case<cst::exp::Pattern> {
     type Target = ast::Case;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::Case { span, name, params, body } = self;
+        let cst::exp::Case { span, pattern, body } = self;
 
-        lower_telescope_inst(params, ctx, |ctx, params| {
+        lower_telescope_inst(&pattern.params, ctx, |ctx, params| {
             Ok(ast::Case {
                 span: Some(*span),
-                name: name.id.clone(),
+                name: pattern.name.id.clone(),
+                params,
+                body: body.lower(ctx)?,
+            })
+        })
+    }
+}
+
+impl Lower for cst::exp::Case<cst::exp::Copattern> {
+    type Target = ast::Case;
+
+    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        let cst::exp::Case { span, pattern, body } = self;
+
+        lower_telescope_inst(&pattern.params, ctx, |ctx, params| {
+            Ok(ast::Case {
+                span: Some(*span),
+                name: pattern.name.id.clone(),
                 params,
                 body: body.lower(ctx)?,
             })
@@ -300,20 +317,24 @@ impl Lower for cst::exp::Lam {
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Lam { span, var, body } = self;
-        let comatch = cst::exp::Exp::LocalComatch(cst::exp::LocalComatch {
+
+        let case = cst::exp::Case {
             span: *span,
-            name: None,
-            is_lambda_sugar: true,
-            cases: vec![cst::exp::Case {
-                span: *span,
+            pattern: cst::exp::Copattern {
                 name: Ident { id: "ap".to_owned() },
                 params: vec![
                     cst::exp::BindingSite::Wildcard { span: Default::default() },
                     cst::exp::BindingSite::Wildcard { span: Default::default() },
                     var.clone(),
                 ],
-                body: Some(body.clone()),
-            }],
+            },
+            body: Some(body.clone()),
+        };
+        let comatch = cst::exp::Exp::LocalComatch(cst::exp::LocalComatch {
+            span: *span,
+            name: None,
+            is_lambda_sugar: true,
+            cases: vec![case],
         });
         comatch.lower(ctx)
     }
