@@ -29,6 +29,9 @@ pub const HOLE: &str = "?";
 /// The symbol `#`
 pub const HASH: &str = "#";
 
+/// The symbol `:=`
+pub const COLONEQ: &str = ":=";
+
 // Keywords
 //
 //

@@ -7,7 +7,7 @@ use derivative::Derivative;
 use pretty::DocAllocator;
 use printer::theme::ThemeExt;
 use printer::tokens::{
-    ABSURD, ARROW, AS, COLON, COMATCH, COMMA, DOT, FAT_ARROW, HOLE, MATCH, TYPE,
+    ABSURD, ARROW, AS, COLON, COLONEQ, COMATCH, COMMA, DOT, FAT_ARROW, HOLE, MATCH, TYPE,
 };
 use printer::util::{BackslashExt, BracesExt, IsNilExt};
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
@@ -61,6 +61,75 @@ where
 {
     fn name(&self) -> &Ident {
         T::name(self)
+    }
+}
+
+// Arg
+//
+//
+
+/// Arguments in an argument list can either be unnamed or named.
+/// Example for named arguments: `f(x := 1, y := 2)`
+/// Example for unnamed arguments: `f(1, 2)``
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub enum Arg {
+    UnnamedArg(Rc<Exp>),
+    NamedArg(Ident, Rc<Exp>),
+}
+
+impl HasSpan for Arg {
+    fn span(&self) -> Option<Span> {
+        match self {
+            Arg::UnnamedArg(e) => e.span(),
+            Arg::NamedArg(_, e) => e.span(),
+        }
+    }
+}
+
+impl Shift for Arg {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        match self {
+            Arg::UnnamedArg(e) => Arg::UnnamedArg(e.shift_in_range(range, by)),
+            Arg::NamedArg(i, e) => Arg::NamedArg(i.clone(), e.shift_in_range(range, by)),
+        }
+    }
+}
+
+impl Occurs for Arg {
+    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+        match self {
+            Arg::UnnamedArg(e) => e.occurs(ctx, lvl),
+            Arg::NamedArg(_, e) => e.occurs(ctx, lvl),
+        }
+    }
+}
+
+impl HasType for Arg {
+    fn typ(&self) -> Option<Rc<Exp>> {
+        match self {
+            Arg::UnnamedArg(e) => e.typ(),
+            Arg::NamedArg(_, e) => e.typ(),
+        }
+    }
+}
+
+impl Substitutable for Arg {
+    type Result = Arg;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+        match self {
+            Arg::UnnamedArg(e) => Arg::UnnamedArg(e.subst(ctx, by)),
+            Arg::NamedArg(i, e) => Arg::NamedArg(i.clone(), e.subst(ctx, by)),
+        }
+    }
+}
+
+impl Print for Arg {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Arg::UnnamedArg(e) => e.print(cfg, alloc),
+            Arg::NamedArg(i, e) => alloc.text(i).append(COLONEQ).append(e.print(cfg, alloc)),
+        }
     }
 }
 
