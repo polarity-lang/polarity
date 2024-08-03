@@ -199,10 +199,12 @@ impl CaseResult {
         let CaseResult { case, result } = self;
         match result {
             Ok(_) => {
-                println!("    - {:40} ✓", case.name)
+                let str = format!("{} ({:?})", case.name, case.path);
+                println!("    - {:70} ✓", str)
             }
             Err(err) => {
-                println!("    - {:40} ✗", case.name);
+                let str = format!("{} ({:?})", case.name, case.path);
+                println!("    - {:70} ✗", str);
                 println!();
                 println!("    {}", err);
                 println!()
