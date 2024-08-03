@@ -21,12 +21,12 @@ codata CoList(n: CoNat) {
 }
 
 codef CountUp(from: CoNat) : CoList(Omega) {
-    head(n, p) => from,
-    tail(n) => CountUp(S(from)),
+    .head(n, p) => from,
+    .tail(n) => CountUp(S(from)),
 }
 
 codef TakeN(n: CoNat, s: CoList(Omega)) : CoList(n) {
-    head(n', p) => s.head(Omega, OmegaNotZero),
-    tail(n') => TakeN(n.pred, s.tail(Omega)),
+    .head(n', p) => s.head(Omega, OmegaNotZero),
+    .tail(n') => TakeN(n.pred, s.tail(Omega)),
 }
 

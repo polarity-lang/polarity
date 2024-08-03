@@ -24,16 +24,16 @@ codata Stream {
 }
 
 codef Zeroes() : Stream {
-    head() => Z,
-    tail() => Zeroes()
+    .head() => Z,
+    .tail() => Zeroes()
 }
 
 codef Ones() : Stream {
-    head() => S(Z),
-    tail() => Ones()
+    .head() => S(Z),
+    .tail() => Ones()
 }
 
 codef Alternate(choose: Bool) : Stream {
-    head() => choose.if_then_else(Nat, S(Z), Z),
-    tail() => Alternate(choose.not())
+    .head() => choose.if_then_else(Nat, S(Z), Z),
+    .tail() => Alternate(choose.not())
 }

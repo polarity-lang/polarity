@@ -59,17 +59,17 @@ codata Stream {
 }
 
 codef Zeroes() : Stream {
-    sHead() => Z,
-    sTail() => Zeroes()
+    .sHead() => Z,
+    .sTail() => Zeroes()
 }
 
 codef Ones() : Stream {
-    sHead() => S(Z),
-    sTail() => ?
+    .sHead() => S(Z),
+    .sTail() => ?
 }
 
 codef Alternate(choose: Bool) : Stream {
-    sHead() => choose.if_then_else(Nat, S(?), Z),
-    sTail() => Alternate(choose.not())
+    .sHead() => choose.if_then_else(Nat, S(?), Z),
+    .sTail() => Alternate(choose.not())
 }
 

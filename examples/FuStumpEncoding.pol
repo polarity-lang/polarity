@@ -3,7 +3,7 @@ codata Fun(A B: Type) {
 }
 
 codef StepFun(P: Nat -> Type): Fun(Nat, Type) {
-    ap(_,_,x) => P.ap(Nat, Type, x) -> P.ap(Nat, Type, S(x))
+    .ap(_,_,x) => P.ap(Nat, Type, x) -> P.ap(Nat, Type, S(x))
 }
 
 codata Π(A: Type, T: Fun(A, Type)) {
@@ -18,10 +18,10 @@ codata Nat {
 }
 
 codef Z: Nat {
-    ind(P, base, step) => base
+    .ind(P, base, step) => base
 }
 
 codef S(m: Nat): Nat {
-    ind(P, base, step) => step.dap(Nat, StepFun(P), m)
+    .ind(P, base, step) => step.dap(Nat, StepFun(P), m)
         .ap(P.ap(Nat, Type, m), P.ap(Nat, Type, S(m)), m.ind(P, base, step))
 }

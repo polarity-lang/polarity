@@ -11,9 +11,9 @@ data Unit { Top }
 
 def Unit.example : Bool {
     Top => comatch {
-              neg_inverse => ?,
-              and(other) => ?,
-              not => ?
+              .neg_inverse => ?,
+              .and(other) => ?,
+              .not => ?
            }
 }
 

@@ -346,15 +346,21 @@ impl Eval for Case {
     type Val = val::Case;
 
     fn eval(&self, _prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let Case { span, name, params, body } = self;
+        let Case { span, pattern, body } = self;
 
         let body = body.as_ref().map(|body| Closure {
             body: body.clone(),
-            n_args: params.len(),
+            n_args: pattern.params.len(),
             env: env.clone(),
         });
 
-        Ok(val::Case { span: *span, name: name.clone(), params: params.clone(), body })
+        Ok(val::Case {
+            span: *span,
+            is_copattern: pattern.is_copattern,
+            name: pattern.name.clone(),
+            params: pattern.params.clone(),
+            body,
+        })
     }
 }
 

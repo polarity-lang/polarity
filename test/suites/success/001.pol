@@ -3,5 +3,5 @@ codata Fun(a: Type, b: Type) {
 }
 
 codef Id(a: Type): Fun(a, a) {
-    ap(a, b, x) => x
+    .ap(a, b, x) => x
 }

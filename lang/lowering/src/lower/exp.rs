@@ -66,8 +66,11 @@ impl Lower for cst::exp::Case<cst::exp::Pattern> {
         lower_telescope_inst(&pattern.params, ctx, |ctx, params| {
             Ok(ast::Case {
                 span: Some(*span),
-                name: pattern.name.id.clone(),
-                params,
+                pattern: ast::Pattern {
+                    is_copattern: false,
+                    name: pattern.name.id.clone(),
+                    params,
+                },
                 body: body.lower(ctx)?,
             })
         })
@@ -83,8 +86,7 @@ impl Lower for cst::exp::Case<cst::exp::Copattern> {
         lower_telescope_inst(&pattern.params, ctx, |ctx, params| {
             Ok(ast::Case {
                 span: Some(*span),
-                name: pattern.name.id.clone(),
-                params,
+                pattern: ast::Pattern { is_copattern: true, name: pattern.name.id.clone(), params },
                 body: body.lower(ctx)?,
             })
         })

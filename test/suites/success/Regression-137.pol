@@ -9,7 +9,7 @@ codata Pi(T: Fun(Bool, Type)) {
 data Bool { True, False }
 
 def Bool.ind( P: Fun(Bool,Type)
-                , step: Pi(comatch { ap(_,_,x) => P.ap(Bool,Type,x) -> P.ap(Bool,Type,x) })
+                , step: Pi(comatch { .ap(_,_,x) => P.ap(Bool,Type,x) -> P.ap(Bool,Type,x) })
                 ) : Bool {
   True => ?,
   False => ?

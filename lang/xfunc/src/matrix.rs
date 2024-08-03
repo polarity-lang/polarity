@@ -183,8 +183,8 @@ impl BuildMatrix for ast::Def {
         let cases = &self.cases;
 
         for case in cases {
-            let ast::Case { name, body, .. } = case;
-            let key = Key { dtor: self.name.clone(), ctor: name.clone() };
+            let ast::Case { pattern, body, .. } = case;
+            let key = Key { dtor: self.name.clone(), ctor: pattern.name.clone() };
             xdata.exprs.insert(key, body.clone());
         }
         Ok(())
@@ -203,14 +203,14 @@ impl BuildMatrix for ast::Codef {
         let cases = &self.cases;
 
         for case in cases {
-            let ast::Case { name, body, .. } = case;
-            let key = Key { ctor: self.name.clone(), dtor: name.clone() };
+            let ast::Case { pattern, body, .. } = case;
+            let key = Key { ctor: self.name.clone(), dtor: pattern.name.clone() };
             // Swap binding order to the order imposed by the matrix representation
             let body = body.as_ref().map(|body| {
                 let mut ctx = LevelCtx::empty();
                 // TODO: Reconsider where to swap this
                 ctx.bind_iter(self.params.params.iter().map(|_| ()), |ctx| {
-                    ctx.bind_iter(case.params.params.iter().map(|_| ()), |ctx| {
+                    ctx.bind_iter(case.pattern.params.params.iter().map(|_| ()), |ctx| {
                         body.swap_with_ctx(ctx, 0, 1)
                     })
                 })
@@ -244,8 +244,11 @@ impl XData {
                         let body = exprs.get(&key).cloned();
                         body.map(|body| ast::Case {
                             span: None,
-                            name: ctor.name.clone(),
-                            params: ctor.params.instantiate(),
+                            pattern: ast::Pattern {
+                                is_copattern: false,
+                                name: ctor.name.clone(),
+                                params: ctor.params.instantiate(),
+                            },
                             body,
                         })
                     })
@@ -300,8 +303,11 @@ impl XData {
                         });
                         body.map(|body| ast::Case {
                             span: None,
-                            name: dtor.name.clone(),
-                            params: dtor.params.instantiate(),
+                            pattern: ast::Pattern {
+                                is_copattern: true,
+                                name: dtor.name.clone(),
+                                params: dtor.params.instantiate(),
+                            },
                             body,
                         })
                     })

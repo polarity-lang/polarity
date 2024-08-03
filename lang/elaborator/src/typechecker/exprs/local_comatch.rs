@@ -77,7 +77,7 @@ impl<'a> WithExpectedType<'a> {
         let mut dtors_actual = HashSet::default();
         let mut dtors_duplicate = HashSet::default();
 
-        for name in cases.iter().map(|case| &case.name) {
+        for name in cases.iter().map(|case| &case.pattern.name) {
             if dtors_actual.contains(name) {
                 dtors_duplicate.insert(name.clone());
             }
@@ -113,9 +113,10 @@ impl<'a> WithExpectedType<'a> {
         let mut cases_out = Vec::new();
 
         for case in cases.iter().cloned() {
-            let Dtor { self_param, ret_typ, params, .. } = prg.dtor(&case.name, case.span)?;
+            let Dtor { self_param, ret_typ, params, .. } =
+                prg.dtor(&case.pattern.name, case.span)?;
             let SelfParam { typ: TypCtor { args: def_args, .. }, .. } = self_param;
-            let Case { span, name, params: params_inst, body } = &case;
+            let Case { span, pattern: Pattern { name, params: params_inst, .. }, body } = &case;
             // We are in the following situation:
             //
             // codata T(...) {  (self : T(.....)).d(...) : t, ...}
@@ -176,8 +177,11 @@ impl<'a> WithExpectedType<'a> {
 
                             let case_out = Case {
                                 span: *span,
-                                name: name.clone(),
-                                params: args_out,
+                                pattern: Pattern {
+                                    is_copattern: true,
+                                    name: name.clone(),
+                                    params: args_out,
+                                },
                                 body: None,
                             };
 
@@ -301,8 +305,11 @@ impl<'a> WithExpectedType<'a> {
 
                             let case_out = Case {
                                 span: *span,
-                                name: name.clone(),
-                                params: args_out,
+                                pattern: Pattern {
+                                    is_copattern: true,
+                                    name: name.clone(),
+                                    params: args_out,
+                                },
                                 body: body_out,
                             };
 

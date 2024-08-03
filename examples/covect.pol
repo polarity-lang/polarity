@@ -14,13 +14,13 @@ codata Vec(n: Nat) {
 }
 
 codef Nil() : Vec(Z) {
-    append(n, m, ys) => ys,
-    tail(n) absurd
+    .append(n, m, ys) => ys,
+    .tail(n) absurd
 }
 
 codef Cons(n': Nat, x: Nat, xs: Vec(n')): Vec(S(n')) {
-    tail(n) => xs,
-    append(n, m, ys) => Cons(n'.add(m), x, xs.append(n', m, ys))
+    .tail(n) => xs,
+    .append(n, m, ys) => Cons(n'.add(m), x, xs.append(n', m, ys))
 }
 
 data Top { Unit }

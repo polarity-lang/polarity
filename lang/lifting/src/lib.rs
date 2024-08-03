@@ -242,12 +242,15 @@ impl Lift for Case {
     type Target = Case;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Case { span, name, params, body } = self;
+        let Case { span, pattern, body } = self;
 
-        params.lift_telescope(ctx, |ctx, params| Case {
+        pattern.params.lift_telescope(ctx, |ctx, params| Case {
             span: *span,
-            name: name.clone(),
-            params,
+            pattern: Pattern {
+                is_copattern: pattern.is_copattern,
+                name: pattern.name.clone(),
+                params,
+            },
             body: body.lift(ctx),
         })
     }

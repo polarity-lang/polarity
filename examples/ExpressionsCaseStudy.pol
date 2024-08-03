@@ -18,21 +18,21 @@ codata Step(e1 e2: Tm) {
 }
 
 codef StIteT(e1 e2: Tm): Step(TmIte(TmTrue, e1, e2), e1) {
-    d_step3(e3) absurd,
-    d_step1(e3) absurd,
-    d_step5(e3, e4, e5, e5, ty, t1, t2, t3) => t2
+    .d_step3(e3) absurd,
+    .d_step1(e3) absurd,
+    .d_step5(e3, e4, e5, e5, ty, t1, t2, t3) => t2
 }
 
 codef StIteF(e1 e2: Tm): Step(TmIte(TmFalse, e1, e2), e2) {
-    d_step3(e3) absurd,
-    d_step1(e3) absurd,
-    d_step5(e3, e4, e5, e5, ty, t1, t2, t3) => t3
+    .d_step3(e3) absurd,
+    .d_step1(e3) absurd,
+    .d_step5(e3, e4, e5, e5, ty, t1, t2, t3) => t3
 }
 
 codef StIte(e1 e2 e3 e4: Tm, s: Step(e1,e2)) : Step(TmIte(e1,e3,e4),TmIte(e2,e3,e4)) {
-  d_step1(e5) absurd,
-  d_step3(e5) absurd,
-  d_step5(e1', e2', e3', e5', ty, t1, t2, t3) => TIte(e2, e3, e4, ty, t1.pres(e1, TyBool).preservationStep(e1,e2,TyBool, s), t2, t3)
+  .d_step1(e5) absurd,
+  .d_step3(e5) absurd,
+  .d_step5(e1', e2', e3', e5', ty, t1, t2, t3) => TIte(e2, e3, e4, ty, t1.pres(e1, TyBool).preservationStep(e1,e2,TyBool, s), t2, t3)
 }
 
 -- | The typing relation.
@@ -51,10 +51,10 @@ codata Preservation(e: Tm, ty: Ty) {
 }
 
 def Typing(e, ty).pres(e: Tm, ty: Ty): Preservation(e, ty) {
-    TTrue => comatch PreservationTrue { preservationStep(e1, e2, ty0, s) => s.d_step1(e2) },
-    TFalse => comatch PreservationFalse { preservationStep(e1, e2, ty0, s) => s.d_step3(e2) },
+    TTrue => comatch PreservationTrue { .preservationStep(e1, e2, ty0, s) => s.d_step1(e2) },
+    TFalse => comatch PreservationFalse { .preservationStep(e1, e2, ty0, s) => s.d_step3(e2) },
     TIte(e1, e2, e3, ty0, t1, t2, t3) =>
         comatch PreservationIte {
-            preservationStep(e4, e5, ty1, s) => s.d_step5(e1, e2, e3, e5, ty, t1, t2, t3)
+            .preservationStep(e4, e5, ty1, s) => s.d_step5(e1, e2, e3, e5, ty, t1, t2, t3)
         }
 }

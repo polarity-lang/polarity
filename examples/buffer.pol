@@ -30,12 +30,12 @@ codata Buffer(n: Nat) {
 }
 
 codef Empty: Buffer(Z) {
-    read(n) absurd,
+    .read(n) absurd,
 }
 
 codef FromVec(n: Nat, xs: Vec(n)): Buffer(n) {
-    read(n') => comatch {
-        proj1(_, _) => xs.head(n'),
-        proj2(_, _) => FromVec(n', xs.tail(n'))
+    .read(n') => comatch {
+        .proj1(_, _) => xs.head(n'),
+        .proj2(_, _) => FromVec(n', xs.tail(n'))
     }
 }

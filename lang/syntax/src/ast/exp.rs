@@ -959,8 +959,9 @@ impl Print for LocalComatch {
 /// one cocase "ap" with three arguments; the function will
 /// panic otherwise.
 fn print_lambda_sugar<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-    let Case { params, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
-    let var_name = params
+    let Case { pattern, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
+    let var_name = pattern
+        .params
         .params
         .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
         .expect("No parameter bound in comatch marked as lambda sugar")
@@ -1072,6 +1073,29 @@ impl Print for Hole {
     }
 }
 
+// Pattern
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Pattern {
+    pub is_copattern: bool,
+    pub name: Ident,
+    pub params: TelescopeInst,
+}
+
+impl Print for Pattern {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Pattern { is_copattern, name, params } = self;
+        if *is_copattern {
+            alloc.text(DOT).append(alloc.ctor(name)).append(params.print(cfg, alloc))
+        } else {
+            alloc.ctor(name).append(params.print(cfg, alloc))
+        }
+    }
+}
+
 // Case
 //
 //
@@ -1081,19 +1105,17 @@ impl Print for Hole {
 pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub name: Ident,
-    pub params: TelescopeInst,
+    pub pattern: Pattern,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp>>,
 }
 
 impl Shift for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Case { span, name, params, body } = self;
+        let Case { span, pattern, body } = self;
         Case {
             span: *span,
-            name: name.clone(),
-            params: params.clone(),
+            pattern: pattern.clone(),
             body: body.shift_in_range(range.shift(1), by),
         }
     }
@@ -1101,19 +1123,18 @@ impl Shift for Case {
 
 impl Occurs for Case {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
-        let Case { params, body, .. } = self;
-        ctx.bind_iter(params.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
+        let Case { pattern, body, .. } = self;
+        ctx.bind_iter(pattern.params.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
     }
 }
 
 impl Substitutable for Case {
     type Result = Case;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Case { span, name, params, body } = self;
-        ctx.bind_iter(params.params.iter(), |ctx| Case {
+        let Case { span, pattern, body } = self;
+        ctx.bind_iter(pattern.params.params.iter(), |ctx| Case {
             span: *span,
-            name: name.clone(),
-            params: params.clone(),
+            pattern: pattern.clone(),
             body: body.as_ref().map(|body| body.subst(ctx, &by.shift((1, 0)))),
         })
     }
@@ -1121,7 +1142,7 @@ impl Substitutable for Case {
 
 impl Print for Case {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Case { span: _, name, params, body } = self;
+        let Case { span: _, pattern, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -1132,7 +1153,7 @@ impl Print for Case {
                 .nest(cfg.indent),
         };
 
-        alloc.ctor(name).append(params.print(cfg, alloc)).append(alloc.space()).append(body).group()
+        pattern.print(cfg, alloc).append(alloc.space()).append(body).group()
     }
 }
 

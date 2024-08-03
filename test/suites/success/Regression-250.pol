@@ -14,6 +14,6 @@ codata Product₋(arity: ℕ) {
 }
 
 codef Unit₋: Product₋(0) {
-    typeAt₋(_, _) absurd,
-    dataAt₋(_, _) absurd,
+    .typeAt₋(_, _) absurd,
+    .dataAt₋(_, _) absurd,
 }

@@ -4,7 +4,7 @@ codata Fun(A B: Type) {
 
 codata Nat { .analyze(A: Type, z: A, s: Fun(Nat, Fun(A, A))): A }
 
-codef S(p: Nat): Nat { analyze(A, z, s) => s.ap(Nat, Fun(A, A), p).ap(A, A, p.analyze(A, z, s)) }
+codef S(p: Nat): Nat { .analyze(A, z, s) => s.ap(Nat, Fun(A, A), p).ap(A, A, p.analyze(A, z, s)) }
 
-codef Z: Nat { analyze(A, z, s) => z }
+codef Z: Nat { .analyze(A, z, s) => z }
 

@@ -119,7 +119,7 @@ impl<'a> WithScrutinee<'a> {
         let mut ctors_actual = HashSet::default();
         let mut ctors_duplicate = HashSet::default();
 
-        for name in cases.iter().map(|case| &case.name) {
+        for name in cases.iter().map(|case| &case.pattern.name) {
             if ctors_actual.contains(name) {
                 ctors_duplicate.insert(name.clone());
             }
@@ -154,7 +154,7 @@ impl<'a> WithScrutinee<'a> {
         let mut cases_out = Vec::new();
 
         for case in cases {
-            let Case { span, name, params: args, body } = case;
+            let Case { span, pattern: Pattern { name, params: args, .. }, body } = case;
             // Build equations for this case
             let Ctor { name, typ: TypCtor { args: def_args, .. }, params, .. } =
                 prg.ctor(&name, span)?;
@@ -241,8 +241,15 @@ impl<'a> WithScrutinee<'a> {
                             None
                         }
                     };
-                    let case_out =
-                        Case { span, name: name.clone(), params: args_out, body: body_out };
+                    let case_out = Case {
+                        span,
+                        pattern: Pattern {
+                            is_copattern: false,
+                            name: name.clone(),
+                            params: args_out,
+                        },
+                        body: body_out,
+                    };
                     cases_out.push(case_out);
                     Ok(())
                 },
