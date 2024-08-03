@@ -113,9 +113,9 @@ impl FV for Hole {
 
 impl FV for Case {
     fn visit_fv(&self, v: &mut USTVisitor) {
-        let Case { span: _, name: _, params, body } = self;
+        let Case { span: _, pattern, body } = self;
 
-        v.bind_iter(params.params.iter(), |v| {
+        v.bind_iter(pattern.params.params.iter(), |v| {
             body.visit_fv(v);
         })
     }

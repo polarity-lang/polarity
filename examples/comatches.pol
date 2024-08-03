@@ -8,18 +8,18 @@ codata Pi(a: Type, p: a->Type) {
 
 data Top { Unit }
 
-codef IdType: Fun(Type, Type) { ap(_, _, a) => a->a }
+codef IdType: Fun(Type, Type) { .ap(_, _, a) => a->a }
 
 def Top.id: Pi(Type, IdType) {
-    Unit => (comatch { pi_elim(_, _, a) => comatch { ap(_, _, x) => x } }):Pi(Type, IdType)
+    Unit => (comatch { .pi_elim(_, _, a) => comatch { .ap(_, _, x) => x } }):Pi(Type, IdType)
 }
 
-def Top.const: Pi(Type, comatch { ap(_, _, a) => Pi(Type, comatch { ap(_, _, b) => a->b->a }) }) {
+def Top.const: Pi(Type, comatch { .ap(_, _, a) => Pi(Type, comatch { .ap(_, _, b) => a->b->a }) }) {
     Unit =>
         comatch {
-            pi_elim(_, _, a) =>
+            .pi_elim(_, _, a) =>
                 comatch {
-                    pi_elim(_, _, b) => comatch { ap(_, _, x) => comatch { ap(_, _, y) => x } }
+                    .pi_elim(_, _, b) => comatch { .ap(_, _, x) => comatch { .ap(_, _, y) => x } }
                 }
         }
 }

@@ -3,5 +3,5 @@ codata Fun(a: Type, b: Type) {
 }
 
 codef ConvertAny(a: Type, b: Type): Fun(a, b) {
-    ap(a, b, x) => x
+    .ap(a, b, x) => x
 }

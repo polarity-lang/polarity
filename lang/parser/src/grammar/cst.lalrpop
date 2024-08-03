@@ -192,7 +192,7 @@ Pattern: Pattern = {
 }
 
 Copattern: Copattern = {
-  <name: Ident><params: OptTelescopeInst> => Copattern { name, params },
+  "." <name: Ident><params: OptTelescopeInst> => Copattern { name, params },
 }
 
 Case<P> : Case<P> = {

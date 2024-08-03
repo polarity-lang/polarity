@@ -604,6 +604,7 @@ impl ReadBack for Hole {
 pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
+    pub is_copattern: bool,
     pub name: ast::Ident,
     pub params: ast::TelescopeInst,
     /// Body being `None` represents an absurd pattern
@@ -612,10 +613,11 @@ pub struct Case {
 
 impl Shift for Case {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Case { span, name, params, body } = self;
+        let Case { span, is_copattern, name, params, body } = self;
 
         Case {
             span: *span,
+            is_copattern: *is_copattern,
             name: name.clone(),
             params: params.clone(),
             body: body.shift_in_range(range.shift(1), by),
@@ -625,7 +627,7 @@ impl Shift for Case {
 
 impl Print for Case {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Case { span: _, name, params, body } = self;
+        let Case { span: _, is_copattern: _, name, params, body } = self;
 
         let body = match body {
             None => alloc.keyword(ABSURD),
@@ -644,12 +646,15 @@ impl ReadBack for Case {
     type Nf = ast::Case;
 
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
-        let Case { span, name, params, body } = self;
+        let Case { span, is_copattern, name, params, body } = self;
 
         Ok(ast::Case {
             span: *span,
-            name: name.clone(),
-            params: params.clone(),
+            pattern: ast::Pattern {
+                is_copattern: *is_copattern,
+                name: name.clone(),
+                params: params.clone(),
+            },
             body: body.read_back(prg)?,
         })
     }

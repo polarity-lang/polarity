@@ -370,14 +370,18 @@ impl Rename for Args {
 
 impl Rename for Case {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Case { span, name, params, body } = self;
+        let Case { span, pattern, body } = self;
 
-        let new_params = params.rename_in_ctx(ctx);
+        let new_params = pattern.params.rename_in_ctx(ctx);
 
         ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
             let new_body = body.rename_in_ctx(new_ctx);
-
-            Case { span, name, params: new_params, body: new_body }
+            let pattern = Pattern {
+                is_copattern: pattern.is_copattern,
+                name: pattern.name,
+                params: new_params,
+            };
+            Case { span, pattern, body: new_body }
         })
     }
 }

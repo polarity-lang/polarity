@@ -8,7 +8,7 @@ codata Fun(a b: Type) {
 }
 
 codef Ignore(y: Bool): Fun(Bool, Bool) {
-    ap(a, b, x) => x
+    .ap(a, b, x) => x
 }
 
 data Top { Unit }
@@ -25,6 +25,6 @@ def Top.after : Fun(Bool, Bool) {
     Unit =>
         -- let y = Unit.diverge in
         comatch Ignore2 {
-            ap(a, b, x) => x
+            .ap(a, b, x) => x
         }
 }

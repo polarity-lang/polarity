@@ -19,8 +19,8 @@ codata ×₋(a b : Type) {
 }
 
 codef Pair(a b : Type, x : a, y : b) : ×₋(a,b) {
-    fst(a,b) => x,
-    snd(a,b) => y
+    .fst(a,b) => x,
+    .snd(a,b) => y
 }
 
 data Response {
@@ -47,7 +47,7 @@ codata Utils {
 }
 
 codef MkUtils: Utils {
-    put_twice(n, route, state) =>
+    .put_twice(n, route, state) =>
         route.put(n).ap(State(route.requiresLogin), ×₋(State(route.requiresLogin), Response), route.put(n).ap(State(route.requiresLogin), ×₋(State(route.requiresLogin), Response), state).fst(State(route.requiresLogin), Response))
 }
 
@@ -69,21 +69,21 @@ codata Route {
 }
 
 codef Index: Route {
-    requiresLogin => False,
-    post => \state. comatch { fst(a,b) => state, snd(a,b) => Forbidden },
-    get => \state. Return(state.counter(False)),
-    put(n) => \state. Pair(State(False), Response, state, Forbidden),
-    put_idempotent(n) => comatch {
-        dap(_, _, state) => Refl(×₋(State(False), Response), Pair(State(False), Response, state, Forbidden))
+    .requiresLogin => False,
+    .post => \state. comatch { .fst(a,b) => state, .snd(a,b) => Forbidden },
+    .get => \state. Return(state.counter(False)),
+    .put(n) => \state. Pair(State(False), Response, state, Forbidden),
+    .put_idempotent(n) => comatch {
+        .dap(_, _, state) => Refl(×₋(State(False), Response), Pair(State(False), Response, state, Forbidden))
     }
 }
 
 codef Admin: Route {
-    requiresLogin => True,
-    post => \state. comatch { fst(a,b) => state.increment, snd(a,b) => Return(state.increment.counter(True)) },
-    get => \state. Return(state.counter(True)),
-    put(n) => \state. Pair(State(True), Response, state.set(n), Return(n)),
-    put_idempotent(n) => comatch {
-        dap(_, _, state) => state.set_idempotent(True, n).cong_pair(State(True), Response, state.set(n), state.set(n).set(n), Return(n))
+    .requiresLogin => True,
+    .post => \state. comatch { .fst(a,b) => state.increment, .snd(a,b) => Return(state.increment.counter(True)) },
+    .get => \state. Return(state.counter(True)),
+    .put(n) => \state. Pair(State(True), Response, state.set(n), Return(n)),
+    .put_idempotent(n) => comatch {
+        .dap(_, _, state) => state.set_idempotent(True, n).cong_pair(State(True), Response, state.set(n), state.set(n).set(n), Return(n))
     }
 }

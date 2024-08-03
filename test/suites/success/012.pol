@@ -8,8 +8,8 @@ codata Foo(b: Bool) {
 }
 
 codef MyFoo: Foo(True) {
-    foo1 => True,
-    foo2 absurd,
-    foo3 absurd,
-    foo4 absurd
+    .foo1 => True,
+    .foo2 absurd,
+    .foo3 absurd,
+    .foo4 absurd
 }

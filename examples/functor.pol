@@ -7,11 +7,11 @@ data Eq (a: Type, x: a, y: a) {
 }
 
 codef Id(a: Type) : Fun(a, a) {
-    ap(_, _, x) => x,
+    .ap(_, _, x) => x,
 }
 
 codef Compose(a: Type, b: Type, c: Type, f: Fun(a, b), g: Fun(b, c)) : Fun(a, c) {
-    ap(_, _, x) => g.ap(b, c, f.ap(a, b, x))
+    .ap(_, _, x) => g.ap(b, c, f.ap(a, b, x))
 }
 
 codata Functor(f: Fun(Type, Type)) {
@@ -25,7 +25,7 @@ data Box(a: Type) {
 }
 
 codef BoxFun: Fun(Type, Type) {
-    ap(_, _, a) => Box(a),
+    .ap(_, _, a) => Box(a),
 }
 
 def Box(a).map_box(a b: Type, g: Fun(a, b)): Box(b) {
@@ -33,11 +33,11 @@ def Box(a).map_box(a b: Type, g: Fun(a, b)): Box(b) {
 }
 
 codef BoxFunctor: Functor(BoxFun) {
-    map(_, a, b, g, x) => x.map_box(a, b, g),
-    law_id(_, a, x) => x.match as x => Eq(Box(a), x.map_box(a, a, Id(a)), x) {
+    .map(_, a, b, g, x) => x.map_box(a, b, g),
+    .law_id(_, a, x) => x.match as x => Eq(Box(a), x.map_box(a, a, Id(a)), x) {
         MkBox(_, x) => Refl(Box(a), MkBox(a, x))
     },
-    law_compose(_, a, b, c, g, h, x) => x.match as x => Eq(Box(c), x.map_box(a, c, Compose(a, b, c, g, h)), x.map_box(a, b, g).map_box(b, c, h)) {
+    .law_compose(_, a, b, c, g, h, x) => x.match as x => Eq(Box(c), x.map_box(a, c, Compose(a, b, c, g, h)), x.map_box(a, b, g).map_box(b, c, h)) {
         MkBox(_, x) => Refl(Box(c), MkBox(c, h.ap(b, c, g.ap(a, b, x))))
     },
 }

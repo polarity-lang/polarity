@@ -4,6 +4,6 @@ codata Fun(A B: Type) {
 
 codata Nat { .case(A: Type, z: A, s: Fun(Nat, A)): A }
 
-codef S(p: Nat): Nat { case(A, z, s) => s.ap(Nat, A, p) }
+codef S(p: Nat): Nat { .case(A, z, s) => s.ap(Nat, A, p) }
 
-codef Z: Nat { case(A, z, s) => z }
+codef Z: Nat { .case(A, z, s) => z }

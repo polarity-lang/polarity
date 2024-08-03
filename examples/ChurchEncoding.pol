@@ -4,6 +4,6 @@ codata Fun(A B: Type) {
 
 codata Nat { .iter(A: Type, z: A, s: Fun(A, A)): A }
 
-codef S(p: Nat): Nat { iter(A, z, s) => s.ap(A, A, p.iter(A, z, s)) }
+codef S(p: Nat): Nat { .iter(A, z, s) => s.ap(A, A, p.iter(A, z, s)) }
 
-codef Z: Nat { iter(A, z, s) => z }
+codef Z: Nat { .iter(A, z, s) => z }

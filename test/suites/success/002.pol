@@ -3,5 +3,5 @@ codata Fun(a: Type, b: Type) {
 }
 
 codef Compose(a: Type, b: Type, c: Type, f: Fun(a, b), g: Fun(b, c)) : Fun(a, c) {
-    ap(a', c', x) => g.ap(b, c, f.ap(a, b, x: a') : b) : c'
+    .ap(a', c', x) => g.ap(b, c, f.ap(a, b, x: a') : b) : c'
 }

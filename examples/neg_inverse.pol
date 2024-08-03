@@ -9,13 +9,13 @@ codata Bool {
 }
 
 codef True: Bool {
-    neg_inverse => Refl(Bool, True),
-    and(other) => other,
-    not => False
+    .neg_inverse => Refl(Bool, True),
+    .and(other) => other,
+    .not => False
 }
 
 codef False: Bool {
-    neg_inverse => Refl(Bool, False),
-    and(other) => False,
-    not => True
+    .neg_inverse => Refl(Bool, False),
+    .and(other) => False,
+    .not => True
 }
