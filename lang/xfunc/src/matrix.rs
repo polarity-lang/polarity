@@ -1,8 +1,7 @@
 use std::rc::Rc;
 
-use syntax::ast::{self, SwapWithCtx};
+use syntax::ast::{self, HashMap, SwapWithCtx};
 use syntax::ast::{Attributes, DocComment, Named};
-use syntax::common::*;
 use syntax::ctx::{BindContext, LevelCtx};
 
 use crate::result::XfuncError;
@@ -31,6 +30,7 @@ pub struct XData {
 /// The binding order in the matrix cell is as follors:
 /// * dtor telescope
 /// * ctor telescope
+///
 /// This invariant needs to be handled when translating
 /// between the matrix and other representations
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

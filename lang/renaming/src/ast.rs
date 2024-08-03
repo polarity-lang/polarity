@@ -31,7 +31,7 @@ pub trait Rename: Sized {
     /// Assigns consistent names to all binding and bound variable occurrences.
     /// Should only be called on closed expressions or declarations.
     fn rename(self) -> Self {
-        let mut ctx = Ctx::empty();
+        let mut ctx = GenericCtx::empty().into();
         self.rename_in_ctx(&mut ctx)
     }
     /// Assigns consistent names to all binding and bound variable occurrences.

@@ -1,7 +1,14 @@
 [package]
 name = "lsp-server"
-version = "0.1.0"
-edition = "2021"
+
+# Inherited from workspace Cargo.toml
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories.workspace = true
 
 [dependencies]
 # lsp
@@ -10,9 +17,9 @@ tower-lsp = { version = "0.17", default-features = false, features = ["runtime-a
 # asynchronous locks
 async-lock = "2"
 # source code spans
-codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149"}
+codespan = { workspace = true }
 # fancy error messages
-miette = "5"
+miette = { workspace = true }
 # workspace members
 syntax = { path = "../syntax" }
 query = { path = "../query" }

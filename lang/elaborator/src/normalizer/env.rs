@@ -3,30 +3,35 @@ use std::rc::Rc;
 use derivative::Derivative;
 
 use pretty::DocAllocator;
+use syntax::ast::{Shift, ShiftRange};
 
 use crate::normalizer::val::*;
 use printer::tokens::COMMA;
 use printer::Print;
-use syntax::common::*;
-use syntax::ctx::map_idx::*;
+use syntax::ast::{Idx, Var};
 use syntax::ctx::values::TypeCtx;
+use syntax::ctx::{map_idx::*, GenericCtx};
 use syntax::ctx::{Context, ContextElem, LevelCtx};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Env {
-    bound: Vec<Vec<Rc<Val>>>,
+    ctx: GenericCtx<Rc<Val>>,
+}
+
+impl From<GenericCtx<Rc<Val>>> for Env {
+    fn from(value: GenericCtx<Rc<Val>>) -> Self {
+        Env { ctx: value }
+    }
 }
 
 impl Context for Env {
-    type ElemIn = Rc<Val>;
-    type ElemOut = Rc<Val>;
+    type Elem = Rc<Val>;
 
-    type Var = Var;
-
-    fn lookup<V: Into<Self::Var>>(&self, idx: V) -> Self::ElemOut {
-        let lvl = self.var_to_lvl(idx.into());
-        self.bound
+    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
+        let lvl = self.ctx.var_to_lvl(idx.into());
+        self.ctx
+            .bound
             .get(lvl.fst)
             .and_then(|ctx| ctx.get(lvl.snd))
             .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
@@ -34,64 +39,47 @@ impl Context for Env {
     }
 
     fn push_telescope(&mut self) {
-        self.bound.push(vec![]);
+        self.ctx.bound.push(vec![]);
     }
 
     fn pop_telescope(&mut self) {
-        self.bound.pop().unwrap();
+        self.ctx.bound.pop().unwrap();
     }
 
-    fn push_binder(&mut self, elem: Self::ElemIn) {
-        self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
+    fn push_binder(&mut self, elem: Self::Elem) {
+        self.ctx
+            .bound
+            .last_mut()
+            .expect("Cannot push without calling push_telescope first")
+            .push(elem);
     }
 
-    fn pop_binder(&mut self, _elem: Self::ElemIn) {
+    fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
-        self.bound.last_mut().expect(err).pop().expect(err);
+        self.ctx.bound.last_mut().expect(err).pop().expect(err);
     }
 }
 
 impl ContextElem<Env> for &Rc<Val> {
-    fn as_element(&self) -> <Env as Context>::ElemIn {
+    fn as_element(&self) -> <Env as Context>::Elem {
         (*self).clone()
     }
 }
 
-impl Leveled for Env {
-    fn idx_to_lvl(&self, idx: Idx) -> Lvl {
-        let fst = self.bound.len() - 1 - idx.fst;
-        let snd = self.bound[fst].len() - 1 - idx.snd;
-        Lvl { fst, snd }
-    }
-
-    fn lvl_to_idx(&self, lvl: Lvl) -> Idx {
-        let fst = self.bound.len() - 1 - lvl.fst;
-        let snd = self.bound[lvl.fst].len() - 1 - lvl.snd;
-        Idx { fst, snd }
-    }
-}
-
 impl Env {
-    pub fn empty() -> Self {
-        Self { bound: vec![] }
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &[Rc<Val>]> {
-        self.bound.iter().map(|inner| &inner[..])
-    }
-
     pub(super) fn map<F>(&self, f: F) -> Self
     where
         F: Fn(&Rc<Val>) -> Rc<Val>,
     {
-        let bound = self.bound.iter().map(|inner| inner.iter().map(&f).collect()).collect();
-        Self { bound }
+        let bound: Vec<Vec<Rc<Val>>> =
+            self.ctx.bound.iter().map(|inner| inner.iter().map(&f).collect()).collect();
+        Self { ctx: bound.into() }
     }
 }
 
 impl From<Vec<Vec<Rc<Val>>>> for Env {
     fn from(bound: Vec<Vec<Rc<Val>>>) -> Self {
-        Self { bound }
+        Self { ctx: bound.into() }
     }
 }
 
@@ -112,10 +100,10 @@ impl ToEnv for LevelCtx {
             .bound
             .iter()
             .enumerate()
-            .map(|(fst, len)| {
-                (0..*len)
+            .map(|(fst, v)| {
+                (0..v.len())
                     .map(|snd| {
-                        let idx = Idx { fst: self.bound.len() - 1 - fst, snd: len - 1 - snd };
+                        let idx = Idx { fst: self.bound.len() - 1 - fst, snd: v.len() - 1 - snd };
                         Rc::new(Val::Neu(Neu::Variable(Variable {
                             span: None,
                             name: String::new(),
@@ -154,7 +142,7 @@ impl Print for Env {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let iter = self.iter().map(|ctx| {
+        let iter = self.ctx.iter().map(|ctx| {
             alloc
                 .intersperse(ctx.iter().map(|typ| typ.print(cfg, alloc)), alloc.text(COMMA))
                 .brackets()

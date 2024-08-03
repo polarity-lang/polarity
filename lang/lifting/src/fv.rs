@@ -5,7 +5,6 @@ use derivative::Derivative;
 
 use syntax::ast::*;
 use syntax::ast::{Hole, Occurs, TypeUniv, Variable};
-use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::*;
 

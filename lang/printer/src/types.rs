@@ -1,11 +1,11 @@
-use std::{error::Error, io};
+use std::{error::Error, io, rc::Rc};
 
 use pretty::{
     termcolor::{Ansi, WriteColor},
     DocAllocator,
 };
 
-use crate::render;
+use crate::{render, tokens::COMMA};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Anno {
@@ -85,6 +85,49 @@ pub trait Print {
 impl Print for String {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.text(self)
+    }
+}
+
+impl<T: Print> Print for Vec<T> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        print_comma_separated(self, cfg, alloc)
+    }
+}
+
+pub fn print_comma_separated<'a, T: Print>(
+    vec: &'a [T],
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a> {
+    if vec.is_empty() {
+        alloc.nil()
+    } else {
+        let sep = alloc.text(COMMA).append(alloc.space());
+        alloc.intersperse(vec.iter().map(|x| x.print(cfg, alloc)), sep)
+    }
+}
+
+impl<T: Print> Print for Rc<T> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        T::print(self, cfg, alloc)
+    }
+
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        prec: Precedence,
+    ) -> Builder<'a> {
+        T::print_prec(self, cfg, alloc, prec)
+    }
+}
+
+impl<T: Print> Print for Option<T> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Some(inner) => inner.print(cfg, alloc),
+            None => alloc.nil(),
+        }
     }
 }
 

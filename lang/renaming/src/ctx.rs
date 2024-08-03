@@ -1,46 +1,50 @@
 use syntax::ast::*;
-use syntax::common::*;
-use syntax::ctx::{Context, ContextElem};
+use syntax::ctx::{Context, ContextElem, GenericCtx};
 
 use super::util::increment_name;
 
-#[derive(Debug, Clone)]
 pub struct Ctx {
-    bound: Vec<Vec<Ident>>,
+    ctx: GenericCtx<Ident>,
+}
+
+impl From<GenericCtx<Ident>> for Ctx {
+    fn from(value: GenericCtx<Ident>) -> Self {
+        Ctx { ctx: value }
+    }
 }
 
 impl Context for Ctx {
-    type ElemIn = Ident;
-
-    type ElemOut = Ident;
-
-    type Var = Idx;
+    type Elem = Ident;
 
     fn push_telescope(&mut self) {
-        self.bound.push(vec![]);
+        self.ctx.bound.push(vec![]);
     }
 
     fn pop_telescope(&mut self) {
-        self.bound.pop().unwrap();
+        self.ctx.bound.pop().unwrap();
     }
 
-    fn push_binder(&mut self, elem: Self::ElemIn) {
+    fn push_binder(&mut self, elem: Self::Elem) {
         assert!(elem == "_" || elem.is_empty() || !self.contains_name(&elem));
-        self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
+        self.ctx
+            .bound
+            .last_mut()
+            .expect("Cannot push without calling push_telescope first")
+            .push(elem);
     }
 
-    fn pop_binder(&mut self, _elem: Self::ElemIn) {
+    fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
-        self.bound.last_mut().expect(err).pop().expect(err);
+        self.ctx.bound.last_mut().expect(err).pop().expect(err);
     }
 
-    fn lookup<V: Into<Self::Var> + std::fmt::Debug>(&self, var: V) -> Self::ElemOut {
-        let dbg: String = format!("{var:?}");
-        let idx = var.into();
-        self.bound
-            .get(self.bound.len() - 1 - idx.fst)
-            .and_then(|ctx| ctx.get(ctx.len() - 1 - idx.snd))
-            .unwrap_or_else(|| panic!("Unbound variable: {dbg}, idx: {idx}"))
+    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
+        let lvl = self.ctx.var_to_lvl(idx.into());
+        self.ctx
+            .bound
+            .get(lvl.fst)
+            .and_then(|ctx| ctx.get(lvl.snd))
+            .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
             .clone()
     }
 }
@@ -56,12 +60,8 @@ impl Ctx {
         name
     }
 
-    pub fn empty() -> Self {
-        Self { bound: vec![] }
-    }
-
     fn contains_name(&self, name: &Ident) -> bool {
-        for telescope in &self.bound {
+        for telescope in &self.ctx.bound {
             if telescope.contains(name) {
                 return true;
             }
@@ -71,19 +71,19 @@ impl Ctx {
 }
 
 impl ContextElem<Ctx> for Param {
-    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+    fn as_element(&self) -> <Ctx as Context>::Elem {
         self.name.to_owned()
     }
 }
 
 impl ContextElem<Ctx> for ParamInst {
-    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+    fn as_element(&self) -> <Ctx as Context>::Elem {
         self.name.to_owned()
     }
 }
 
 impl ContextElem<Ctx> for SelfParam {
-    fn as_element(&self) -> <Ctx as Context>::ElemIn {
+    fn as_element(&self) -> <Ctx as Context>::Elem {
         self.name.to_owned().unwrap_or_default()
     }
 }

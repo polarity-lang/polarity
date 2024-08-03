@@ -3,7 +3,6 @@ use std::rc::Rc;
 use codespan::Span;
 use renaming::Rename;
 use syntax::ast::*;
-use syntax::common::*;
 use syntax::ctx::values::TypeCtx;
 use syntax::ctx::BindContext;
 use syntax::ctx::LevelCtx;

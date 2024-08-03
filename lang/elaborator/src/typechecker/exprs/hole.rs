@@ -4,7 +4,6 @@ use std::rc::Rc;
 
 use miette_util::ToMiette;
 use syntax::ast::*;
-use syntax::common::*;
 
 use super::super::ctx::*;
 use super::CheckInfer;

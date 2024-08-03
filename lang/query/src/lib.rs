@@ -5,7 +5,7 @@ use std::path::Path;
 use url::Url;
 
 use rust_lapper::Lapper;
-use syntax::common::*;
+use syntax::ast::HashMap;
 
 pub use result::Error;
 

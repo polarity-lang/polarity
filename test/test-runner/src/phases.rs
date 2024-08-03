@@ -1,5 +1,5 @@
-use std::error::Error;
 use std::fmt;
+use std::{error::Error, panic};
 
 use url::Url;
 
@@ -43,7 +43,7 @@ pub struct PhaseReport {
 
 impl<O> PartialRun<O>
 where
-    O: TestOutput,
+    O: TestOutput + std::panic::UnwindSafe,
 {
     /// Start a new partial run for a testcase with the initial input.
     pub fn start(case: Case, input: O) -> PartialRun<O> {
@@ -71,34 +71,42 @@ where
         });
 
         // Run the phase and handle the result
-        let result = self.result.and_then(|out| match P::run(out) {
-            Ok(out2) => {
-                self.report_phases
-                    .push(PhaseReport { name: phase.name(), output: out2.test_output() });
-                if !success {
-                    return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
-                }
-                if let Some(expected) = output {
-                    let actual = out2.test_output();
-                    if actual != expected {
-                        return Err(PhasesError::Mismatch { expected, actual });
+        let result = self.result.and_then(|out| {
+            // The implementation of the compilar might contain a bug which
+            // triggers a panic. We catch this panic here so that we can report the bug as a failing case.
+            let run_result = panic::catch_unwind(|| P::run(out));
+            match run_result {
+                Ok(Ok(out2)) => {
+                    // There was no panic and `run` returned with a result.
+                    self.report_phases
+                        .push(PhaseReport { name: phase.name(), output: out2.test_output() });
+                    if !success {
+                        return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
                     }
-                }
-                Ok(out2)
-            }
-            Err(err) => {
-                self.report_phases
-                    .push(PhaseReport { name: phase.name(), output: err.to_string() });
-                if success {
-                    return Err(PhasesError::ExpectedSuccess { got: Box::new(err) });
-                }
-                if let Some(expected) = output {
-                    let actual = err.to_string();
-                    if actual != expected {
-                        return Err(PhasesError::Mismatch { expected, actual });
+                    if let Some(expected) = output {
+                        let actual = out2.test_output();
+                        if actual != expected {
+                            return Err(PhasesError::Mismatch { expected, actual });
+                        }
                     }
+                    Ok(out2)
                 }
-                Err(PhasesError::AsExpected)
+                Ok(Err(err)) => {
+                    // There was no panic and `run` returned with an error.
+                    self.report_phases
+                        .push(PhaseReport { name: phase.name(), output: err.to_string() });
+                    if success {
+                        return Err(PhasesError::ExpectedSuccess { got: Box::new(err) });
+                    }
+                    if let Some(expected) = output {
+                        let actual = err.to_string();
+                        if actual != expected {
+                            return Err(PhasesError::Mismatch { expected, actual });
+                        }
+                    }
+                    Err(PhasesError::AsExpected)
+                }
+                Err(_) => Err(PhasesError::Panic),
             }
         });
 
@@ -114,6 +122,7 @@ where
             }
             Err(PhasesError::ExpectedFailure { got }) => Err(Failure::ExpectedFailure { got }),
             Err(PhasesError::ExpectedSuccess { got }) => Err(Failure::ExpectedSuccess { got }),
+            Err(PhasesError::Panic) => Err(Failure::Panic),
         };
 
         CaseResult { result, case: self.case }
@@ -133,6 +142,7 @@ pub enum Failure {
     ExpectedSuccess {
         got: Box<dyn Error>,
     },
+    Panic,
 }
 
 impl Error for Failure {}
@@ -145,12 +155,14 @@ impl fmt::Display for Failure {
             }
             Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
             Failure::ExpectedSuccess { got } => write!(f, "Expected success, got {got}"),
+            Failure::Panic => write!(f, "Code panicked during test execution"),
         }
     }
 }
 
 enum PhasesError {
     AsExpected,
+    Panic,
     Mismatch { expected: String, actual: String },
     ExpectedFailure { got: String },
     ExpectedSuccess { got: Box<dyn Error> },

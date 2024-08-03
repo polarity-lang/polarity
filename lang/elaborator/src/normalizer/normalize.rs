@@ -1,4 +1,5 @@
 use syntax::ast::*;
+use syntax::ctx::GenericCtx;
 
 use super::env::Env;
 use super::eval::*;
@@ -11,7 +12,7 @@ pub trait Normalize {
     fn normalize(&self, prg: &Module, env: &mut Env) -> Result<Self::Nf, TypeError>;
 
     fn normalize_in_empty_env(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
-        self.normalize(prg, &mut Env::empty())
+        self.normalize(prg, &mut GenericCtx::empty().into())
     }
 }
 

@@ -1,11 +1,9 @@
 use codespan::Span;
 use lifting::LiftResult;
-use printer::fragments::Items;
 use printer::PrintInCtx;
 use renaming::Rename;
 
 use syntax::ast::*;
-use syntax::common::*;
 use xfunc::matrix;
 use xfunc::result::XfuncError;
 

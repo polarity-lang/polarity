@@ -4,15 +4,27 @@ use std::rc::Rc;
 
 use codespan::Span;
 use derivative::Derivative;
+use pretty::DocAllocator;
+use printer::theme::ThemeExt;
+use printer::tokens::{
+    ABSURD, ARROW, AS, COLON, COLONEQ, COMATCH, COMMA, DOT, FAT_ARROW, HOLE, MATCH, TYPE,
+};
+use printer::util::{BackslashExt, BracesExt, IsNilExt};
+use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
-use crate::common::*;
 use crate::ctx::values::TypeCtx;
 use crate::ctx::{BindContext, LevelCtx};
 
-use super::ident::*;
 use super::subst::{Substitutable, Substitution};
+use super::traits::HasSpan;
 use super::traits::Occurs;
-use super::HasTypeInfo;
+use super::HasType;
+use super::{ident::*, Shift, ShiftRange, ShiftRangeExt};
+
+// Prints "{ }"
+pub fn empty_braces<'a>(alloc: &'a Alloc<'a>) -> Builder<'a> {
+    alloc.space().braces_anno()
+}
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -93,7 +105,7 @@ impl Occurs for Arg {
     }
 }
 
-impl HasTypeInfo for Arg {
+impl HasType for Arg {
     fn typ(&self) -> Option<Rc<Exp>> {
         match self {
             Arg::UnnamedArg(e) => e.typ(),
@@ -108,6 +120,15 @@ impl Substitutable for Arg {
         match self {
             Arg::UnnamedArg(e) => Arg::UnnamedArg(e.subst(ctx, by)),
             Arg::NamedArg(i, e) => Arg::NamedArg(i.clone(), e.subst(ctx, by)),
+        }
+    }
+}
+
+impl Print for Arg {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Arg::UnnamedArg(e) => e.print(cfg, alloc),
+            Arg::NamedArg(i, e) => alloc.text(i).append(COLONEQ).append(e.print(cfg, alloc)),
         }
     }
 }
@@ -128,6 +149,15 @@ pub enum Exp {
     LocalMatch(LocalMatch),
     LocalComatch(LocalComatch),
     Hole(Hole),
+}
+
+impl Exp {
+    pub fn to_typctor(self) -> Option<TypCtor> {
+        match self {
+            Exp::TypCtor(e) => Some(e),
+            _ => None,
+        }
+    }
 }
 
 impl HasSpan for Exp {
@@ -178,7 +208,7 @@ impl Occurs for Exp {
     }
 }
 
-impl HasTypeInfo for Exp {
+impl HasType for Exp {
     fn typ(&self) -> Option<Rc<Exp>> {
         match self {
             Exp::Variable(e) => e.typ(),
@@ -207,6 +237,40 @@ impl Substitutable for Rc<Exp> {
             Exp::LocalMatch(e) => Rc::new(e.subst(ctx, by).into()),
             Exp::LocalComatch(e) => Rc::new(e.subst(ctx, by).into()),
             Exp::Hole(e) => Rc::new(e.subst(ctx, by).into()),
+        }
+    }
+}
+
+impl Print for Exp {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        prec: Precedence,
+    ) -> Builder<'a> {
+        match self {
+            Exp::Variable(e) => e.print_prec(cfg, alloc, prec),
+            Exp::TypCtor(e) => e.print_prec(cfg, alloc, prec),
+            Exp::Call(e) => e.print_prec(cfg, alloc, prec),
+            mut dtor @ Exp::DotCall(DotCall { .. }) => {
+                // A series of destructors forms an aligned group
+                let mut dtors_group = alloc.nil();
+                while let Exp::DotCall(DotCall { exp, name, args, .. }) = &dtor {
+                    let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
+                    if !dtors_group.is_nil() {
+                        dtors_group = alloc.line_().append(dtors_group);
+                    }
+                    dtors_group =
+                        alloc.text(DOT).append(alloc.dtor(name)).append(psubst).append(dtors_group);
+                    dtor = exp;
+                }
+                dtor.print(cfg, alloc).append(dtors_group.align().group())
+            }
+            Exp::Anno(e) => e.print_prec(cfg, alloc, prec),
+            Exp::TypeUniv(e) => e.print_prec(cfg, alloc, prec),
+            Exp::LocalMatch(e) => e.print_prec(cfg, alloc, prec),
+            Exp::LocalComatch(e) => e.print_prec(cfg, alloc, prec),
+            Exp::Hole(e) => e.print_prec(cfg, alloc, prec),
         }
     }
 }
@@ -268,7 +332,7 @@ impl Occurs for Variable {
     }
 }
 
-impl HasTypeInfo for Variable {
+impl HasType for Variable {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone()
     }
@@ -286,6 +350,24 @@ impl Substitutable for Variable {
                 name: name.clone(),
                 inferred_type: None,
             })),
+        }
+    }
+}
+
+impl Print for Variable {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let Variable { name, idx, .. } = self;
+        if cfg.de_bruijn {
+            alloc.text(format!("{name}@{idx}"))
+        } else if name.is_empty() {
+            alloc.text(format!("@{idx}"))
+        } else {
+            alloc.text(name)
         }
     }
 }
@@ -346,7 +428,7 @@ impl Occurs for TypCtor {
     }
 }
 
-impl HasTypeInfo for TypCtor {
+impl HasType for TypCtor {
     fn typ(&self) -> Option<Rc<Exp>> {
         Some(Rc::new(TypeUniv::new().into()))
     }
@@ -357,6 +439,30 @@ impl Substitutable for TypCtor {
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
         let TypCtor { span, name, args } = self;
         TypCtor { span: *span, name: name.clone(), args: args.subst(ctx, by) }
+    }
+}
+
+impl Print for TypCtor {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        prec: Precedence,
+    ) -> Builder<'a> {
+        let TypCtor { span: _, name, args } = self;
+        if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
+            let arg = args.args[0].print_prec(cfg, alloc, 1);
+            let res = args.args[1].print_prec(cfg, alloc, 0);
+            let fun = arg.append(alloc.space()).append(ARROW).append(alloc.space()).append(res);
+            if prec == 0 {
+                fun
+            } else {
+                fun.parens()
+            }
+        } else {
+            let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
+            alloc.typ(name).append(psubst)
+        }
     }
 }
 
@@ -430,7 +536,7 @@ impl Occurs for Call {
     }
 }
 
-impl HasTypeInfo for Call {
+impl HasType for Call {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone()
     }
@@ -447,6 +553,19 @@ impl Substitutable for Call {
             args: args.subst(ctx, by),
             inferred_type: None,
         }
+    }
+}
+
+impl Print for Call {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let Call { name, args, .. } = self;
+        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
+        alloc.ctor(name).append(psubst)
     }
 }
 
@@ -522,7 +641,7 @@ impl Occurs for DotCall {
     }
 }
 
-impl HasTypeInfo for DotCall {
+impl HasType for DotCall {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone()
     }
@@ -596,7 +715,7 @@ impl Occurs for Anno {
     }
 }
 
-impl HasTypeInfo for Anno {
+impl HasType for Anno {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.normalized_type.clone()
     }
@@ -613,6 +732,18 @@ impl Substitutable for Anno {
             typ: typ.subst(ctx, by),
             normalized_type: None,
         }
+    }
+}
+
+impl Print for Anno {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let Anno { exp, typ, .. } = self;
+        exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
     }
 }
 
@@ -669,7 +800,7 @@ impl Occurs for TypeUniv {
     }
 }
 
-impl HasTypeInfo for TypeUniv {
+impl HasType for TypeUniv {
     fn typ(&self) -> Option<Rc<Exp>> {
         Some(Rc::new(TypeUniv::new().into()))
     }
@@ -681,6 +812,17 @@ impl Substitutable for TypeUniv {
     fn subst<S: Substitution>(&self, _ctx: &mut LevelCtx, _by: &S) -> Self::Result {
         let TypeUniv { span } = self;
         TypeUniv { span: *span }
+    }
+}
+
+impl Print for TypeUniv {
+    fn print_prec<'a>(
+        &'a self,
+        _cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        alloc.keyword(TYPE)
     }
 }
 
@@ -740,7 +882,7 @@ impl Occurs for LocalMatch {
     }
 }
 
-impl HasTypeInfo for LocalMatch {
+impl HasType for LocalMatch {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone().map(|x| Rc::new(x.into()))
     }
@@ -760,6 +902,28 @@ impl Substitutable for LocalMatch {
             cases: cases.iter().map(|case| case.subst(ctx, by)).collect(),
             inferred_type: None,
         }
+    }
+}
+
+impl Print for LocalMatch {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let LocalMatch { name, on_exp, motive, cases, .. } = self;
+        on_exp
+            .print(cfg, alloc)
+            .append(DOT)
+            .append(alloc.keyword(MATCH))
+            .append(match &name.user_name {
+                Some(name) => alloc.space().append(alloc.dtor(name)),
+                None => alloc.nil(),
+            })
+            .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
+            .append(alloc.space())
+            .append(print_cases(cases, cfg, alloc))
     }
 }
 
@@ -814,7 +978,7 @@ impl Occurs for LocalComatch {
     }
 }
 
-impl HasTypeInfo for LocalComatch {
+impl HasType for LocalComatch {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone().map(|x| Rc::new(x.into()))
     }
@@ -834,6 +998,48 @@ impl Substitutable for LocalComatch {
             inferred_type: None,
         }
     }
+}
+
+impl Print for LocalComatch {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let LocalComatch { name, is_lambda_sugar, cases, .. } = self;
+        if *is_lambda_sugar && cfg.print_lambda_sugar {
+            print_lambda_sugar(cases, cfg, alloc)
+        } else {
+            alloc
+                .keyword(COMATCH)
+                .append(match &name.user_name {
+                    Some(name) => alloc.space().append(alloc.ctor(name)),
+                    None => alloc.nil(),
+                })
+                .append(alloc.space())
+                .append(print_cases(cases, cfg, alloc))
+        }
+    }
+}
+
+/// Print the Comatch as a lambda abstraction.
+/// Only invoke this function if the comatch contains exactly
+/// one cocase "ap" with three arguments; the function will
+/// panic otherwise.
+fn print_lambda_sugar<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    let Case { params, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
+    let var_name = params
+        .params
+        .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
+        .expect("No parameter bound in comatch marked as lambda sugar")
+        .name();
+    alloc
+        .backslash_anno(cfg)
+        .append(var_name)
+        .append(DOT)
+        .append(alloc.space())
+        .append(body.print(cfg, alloc))
 }
 
 // Hole
@@ -899,7 +1105,7 @@ impl Occurs for Hole {
     }
 }
 
-impl HasTypeInfo for Hole {
+impl HasType for Hole {
     fn typ(&self) -> Option<Rc<Exp>> {
         self.inferred_type.clone()
     }
@@ -916,6 +1122,21 @@ impl Substitutable for Hole {
             inferred_type: None,
             inferred_ctx: None,
             args: args.subst(ctx, by),
+        }
+    }
+}
+
+impl Print for Hole {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        if cfg.print_metavar_ids {
+            alloc.text(format!("?{}", self.metavar.id))
+        } else {
+            alloc.keyword(HOLE)
         }
     }
 }
@@ -967,6 +1188,46 @@ impl Substitutable for Case {
     }
 }
 
+impl Print for Case {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Case { span: _, name, params, body } = self;
+
+        let body = match body {
+            None => alloc.keyword(ABSURD),
+            Some(body) => alloc
+                .text(FAT_ARROW)
+                .append(alloc.line())
+                .append(body.print(cfg, alloc))
+                .nest(cfg.indent),
+        };
+
+        alloc.ctor(name).append(params.print(cfg, alloc)).append(alloc.space()).append(body).group()
+    }
+}
+
+pub fn print_cases<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    match cases.len() {
+        0 => empty_braces(alloc),
+
+        1 => alloc
+            .line()
+            .append(cases[0].print(cfg, alloc))
+            .nest(cfg.indent)
+            .append(alloc.line())
+            .braces_anno()
+            .group(),
+        _ => {
+            let sep = alloc.text(COMMA).append(alloc.hardline());
+            alloc
+                .hardline()
+                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .nest(cfg.indent)
+                .append(alloc.hardline())
+                .braces_anno()
+        }
+    }
+}
+
 // Telescope Inst
 //
 //
@@ -985,6 +1246,16 @@ impl TelescopeInst {
 
     pub fn is_empty(&self) -> bool {
         self.params.is_empty()
+    }
+}
+
+impl Print for TelescopeInst {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        if self.params.is_empty() {
+            alloc.nil()
+        } else {
+            self.params.print(cfg, alloc).parens()
+        }
     }
 }
 
@@ -1009,6 +1280,13 @@ pub struct ParamInst {
 impl Named for ParamInst {
     fn name(&self) -> &Ident {
         &self.name
+    }
+}
+
+impl Print for ParamInst {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let ParamInst { span: _, info: _, name, typ: _ } = self;
+        alloc.text(name)
     }
 }
 
@@ -1051,6 +1329,20 @@ impl Substitutable for Args {
     }
 }
 
+impl Print for Args {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let mut doc = alloc.nil();
+        let mut iter = self.args.iter().peekable();
+        while let Some(arg) = iter.next() {
+            doc = doc.append(arg.print(cfg, alloc));
+            if iter.peek().is_some() {
+                doc = doc.append(COMMA).append(alloc.line())
+            }
+        }
+        doc.align().parens().group()
+    }
+}
+
 // Motive
 //
 //
@@ -1086,5 +1378,21 @@ impl Substitutable for Motive {
             param: param.clone(),
             ret_typ: ctx.bind_single((), |ctx| ret_typ.subst(ctx, &by.shift((1, 0)))),
         }
+    }
+}
+
+impl Print for Motive {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Motive { span: _, param, ret_typ } = self;
+
+        alloc
+            .space()
+            .append(alloc.keyword(AS))
+            .append(alloc.space())
+            .append(param.print(cfg, alloc))
+            .append(alloc.space())
+            .append(alloc.text(FAT_ARROW))
+            .append(alloc.space())
+            .append(ret_typ.print(cfg, alloc))
     }
 }

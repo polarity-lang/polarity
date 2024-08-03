@@ -58,6 +58,12 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
+    #[error("Expected a type constructor")]
+    #[diagnostic(code("L-009"))]
+    ExpectedTypCtor {
+        #[label]
+        span: SourceSpan,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("L-XXX"))]
     /// This error should not occur.

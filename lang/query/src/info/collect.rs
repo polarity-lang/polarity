@@ -5,7 +5,6 @@ use rust_lapper::{Interval, Lapper};
 
 use printer::{Print, PrintCfg};
 use syntax::ast::*;
-use syntax::common::HashMap;
 use url::Url;
 
 use crate::{
