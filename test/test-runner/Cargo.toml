@@ -18,6 +18,8 @@ env_logger = "0.11.3"
 serde = "1"
 serde_derive = "1"
 toml = "0.5"
+# Find files recursively
+walkdir = "2.5.0"
 # workspace members
 syntax = { path = "../../lang/syntax" }
 parser = { path = "../../lang/parser" }

@@ -1,0 +1,34 @@
+-- | The type of Peano natural numbers.
+data Nat {
+    -- | The constant zero.
+    Z,
+    -- | The successor of a Peano natural number.
+    S(pred: Nat)
+}
+
+-- | Addition of two natural numbers.
+def Nat.add(other: Nat) : Nat {
+    Z => other,
+    S(x) => S(x.add(other))
+}
+
+-- | Multiplication of two natural numbers.
+def Nat.mul(other: Nat) : Nat {
+    Z => Z,
+    S(x) => other.add(x.mul(other))
+}
+
+-- | A saturating version of subtraction.
+def Nat.monus(other: Nat): Nat {
+    Z => Z,
+    S(pred) => other.match {
+        Z => S(pred),
+        S(pred') => pred.monus(pred')
+    }
+}
+
+-- | The factorial of a natural number.
+def Nat.fact(): Nat {
+    Z => 1,
+    S(pred) => S(pred).mul(pred.fact)
+}

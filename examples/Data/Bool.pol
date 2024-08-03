@@ -1,0 +1,62 @@
+-- | The type of boolean values.
+data Bool {
+    -- | The boolean constant True.
+    T,
+    -- | The boolean constant False.
+    F
+}
+
+-- | Negation of a boolean value.
+def Bool.neg: Bool {
+    T => F,
+    F => T
+}
+
+-- | Conjunction of two boolean values.
+def Bool.and(other: Bool): Bool {
+    T => other,
+    F => F
+}
+
+-- | Inclusive disjunction of two boolean values.
+def Bool.or(other: Bool): Bool {
+    T => T,
+    F => other
+}
+
+-- | Exclusive disjunction of two boolean values.
+def Bool.xor(other: Bool): Bool {
+    T =>
+        other.match {
+            T => F,
+            F => T
+        },
+    F => other
+}
+
+-- | Boolean nor function, also called joint denial or Peirce's function.
+def Bool.nor(other: Bool): Bool {
+    T => F,
+    F =>
+        other.match {
+            T => F,
+            F => T
+        }
+}
+
+-- | Boolean nand function, also called alternative denial or Sheffer stroke.
+def Bool.nand(other: Bool): Bool {
+    T =>
+        other.match {
+            T => F,
+            F => T
+        },
+    F => T
+}
+
+-- | If-then-else combinator which returns the `then` argument if the boolean is true
+-- | and the `else` argument otherwise.
+def Bool.ite(a: Type, then else: a): a {
+    T => then,
+    F => else
+}

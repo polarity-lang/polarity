@@ -1,0 +1,2 @@
+-- | The trivially uninhabitated data type.
+data Void {}
