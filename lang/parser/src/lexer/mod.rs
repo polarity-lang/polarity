@@ -86,13 +86,11 @@ pub enum Token {
     #[token("_")]
     Underscore,
 
-    // Names
+    // Identifiers
     //
     //
-    #[regex(r"[A-ZΑ-Ω𝔹ℕ𝕍∃∀×][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*", |lex| lex.slice().to_string())]
-    UpperCaseName(String),
-    #[regex(r"[a-zα-ω][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*", |lex| lex.slice().to_string())]
-    LowerCaseName(String),
+    #[regex(r"[a-zα-ωA-ZΑ-Ω𝔹ℕ𝕍∃∀×][a-zα-ωA-ZΑ-Ω0-9_]*['⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*", |lex| lex.slice().to_string())]
+    Ident(String),
 
     // Literals
     //
