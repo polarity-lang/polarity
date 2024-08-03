@@ -3,7 +3,8 @@ use std::rc::Rc;
 use codespan::Span;
 use url::Url;
 
-use super::exp;
+use super::exp::Copattern;
+use super::exp::{self, Pattern};
 use super::ident::*;
 
 #[derive(Debug, Clone)]
@@ -144,7 +145,7 @@ pub struct Def {
     pub params: Telescope,
     pub scrutinee: Scrutinee,
     pub ret_typ: Rc<exp::Exp>,
-    pub cases: Vec<exp::Case>,
+    pub cases: Vec<exp::Case<Pattern>>,
 }
 
 /// Scrutinee within a toplevel definition
@@ -180,7 +181,7 @@ pub struct Codef {
     pub attr: Attributes,
     pub params: Telescope,
     pub typ: exp::Call,
-    pub cases: Vec<exp::Case>,
+    pub cases: Vec<exp::Case<Copattern>>,
 }
 
 /// Toplevel let-bound expression.

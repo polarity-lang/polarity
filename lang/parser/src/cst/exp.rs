@@ -12,10 +12,21 @@ pub enum BindingSite {
 }
 
 #[derive(Debug, Clone)]
-pub struct Case {
-    pub span: Span,
+pub struct Pattern {
     pub name: Ident,
     pub params: Vec<BindingSite>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Copattern {
+    pub name: Ident,
+    pub params: Vec<BindingSite>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Case<P> {
+    pub span: Span,
+    pub pattern: P,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Rc<Exp>>,
 }
@@ -67,7 +78,7 @@ pub struct LocalMatch {
     pub name: Option<Ident>,
     pub on_exp: Rc<Exp>,
     pub motive: Option<Motive>,
-    pub cases: Vec<Case>,
+    pub cases: Vec<Case<Pattern>>,
 }
 
 #[derive(Debug, Clone)]
@@ -75,7 +86,7 @@ pub struct LocalComatch {
     pub span: Span,
     pub name: Option<Ident>,
     pub is_lambda_sugar: bool,
-    pub cases: Vec<Case>,
+    pub cases: Vec<Case<Copattern>>,
 }
 
 #[derive(Debug, Clone)]
