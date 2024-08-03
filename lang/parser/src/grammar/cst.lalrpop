@@ -58,11 +58,10 @@ extern {
     "#" => Token::Hash,
     "_" => Token::Underscore,
 
-    // Names
+    // Identifiers
     //
     //
-    "UpperCaseName" => Token::UpperCaseName(<String>),
-    "LowerCaseName" => Token::LowerCaseName(<String>),
+    "Identifier" => Token::Ident(<String>),
 
     // Literals
     //
@@ -116,7 +115,7 @@ OptTelescopeInst: Vec<BindingSite> = <params: Parens<Comma<BindingSite>>?> => pa
 Args: Vec<Rc<Exp>> = ParenthesizedArgs<Exp>;
 OptArgs: Vec<Rc<Exp>> = OptParenthesizedArgs<Exp>;
 
-Attr: String = <s:"LowerCaseName"> => s.to_owned();
+Attr: String = <s:"Identifier"> => s.to_owned();
 Attributes: Attributes = "#" <attrs: BracketedArgs<Attr>> => Attributes { attrs };
 OptAttributes: Attributes = <attr: Attributes? > => attr.unwrap_or_default();
 
@@ -298,9 +297,5 @@ BindingSite: BindingSite = {
 }
 
 Ident: Ident = {
-    <s: LowerIdent> => s.to_owned(),
-    <s: UpperIdent> => s.to_owned(),
+    <i: "Identifier"> => Ident { id: i.to_owned() }
 }
-
-LowerIdent: Ident = <s: "LowerCaseName" > => Ident { id: s.to_owned() };
-UpperIdent: Ident = <s: "UpperCaseName"> => Ident { id: s.to_owned() };
