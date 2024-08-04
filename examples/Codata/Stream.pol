@@ -1,0 +1,13 @@
+-- | The codata type of infinite streams.
+codata Stream(a: Type)  {
+    -- | The head observation which yields the first element.
+    Stream(a).hd(a: Type) : a,
+    -- | The tail observation which yields the remainder of the stream.
+    Stream(a).tl(a: Type) : Stream(a),
+}
+
+-- | An infinite stream which repeats the argument.
+codef Repeat(a: Type, elem: a): Stream(a) {
+    .hd(_) => elem,
+    .tl(_) => Repeat(a, elem)
+}

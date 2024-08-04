@@ -2418,6 +2418,7 @@ dependencies = [
  "tantivy",
  "toml",
  "url",
+ "walkdir",
 ]
 
 [[package]]

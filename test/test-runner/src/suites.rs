@@ -3,6 +3,8 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use walkdir::WalkDir;
+
 use serde_derive::Deserialize;
 
 // Case
@@ -100,19 +102,16 @@ impl Suite {
             Config::default()
         };
 
+        let mut cases: Vec<Case> = Vec::new();
+
         // Read in the cases which belong to this testsuite.
         // Every file in the path ending in `.pol` is a testcase.
-        let case_paths = {
-            fs::read_dir(&path).unwrap().filter_map(|entry| {
-                let path = entry.unwrap().path();
-                if path.is_file() && path.extension() == Some(OsStr::new("pol")) {
-                    Some(path)
-                } else {
-                    None
-                }
-            })
-        };
-        let cases: Vec<Case> = case_paths.map(|path| Case::new(name.to_owned(), path)).collect();
+        for entry in WalkDir::new(&path).follow_links(false).into_iter().filter_map(|e| e.ok()) {
+            let path = entry.path();
+            if path.is_file() && path.extension() == Some(OsStr::new("pol")) {
+                cases.push(Case::new(name.to_owned(), path.to_path_buf()))
+            }
+        }
 
         Suite { name, config, cases }
     }
