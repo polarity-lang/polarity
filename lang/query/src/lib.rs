@@ -1,7 +1,3 @@
-use std::fs;
-use std::io;
-use std::path::Path;
-
 use url::Url;
 
 use rust_lapper::Lapper;
@@ -35,12 +31,13 @@ pub struct File {
 }
 
 impl File {
-    pub fn read(path: &Path) -> io::Result<Self> {
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn read(path: &std::path::Path) -> std::io::Result<Self> {
         let path = path.canonicalize()?;
         let url = Url::from_file_path(&path).map_err(|_| {
             std::io::Error::new(std::io::ErrorKind::Other, "Cannot convert filepath to url.")
         })?;
-        let file = fs::read_to_string(path)?;
+        let file = std::fs::read_to_string(path)?;
         Ok(Self { name: url, source: file })
     }
 }
