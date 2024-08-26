@@ -12,9 +12,7 @@ const fs = require("fs");
 
 const loadExamples = () => {
   const dir = fs.readdirSync("../../../examples");
-  const files = dir
-    .filter((filename) => filename.endsWith(".pol"))
-    .map((filename) => `../../../examples/${filename}`);
+  const files = dir.filter((filename) => filename.endsWith(".pol")).map((filename) => `../../../examples/${filename}`);
   let out = [];
   for (const filename of files) {
     out.push(path.basename(filename, ".pol"));

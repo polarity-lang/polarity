@@ -21,6 +21,7 @@ export default class StreamDemuxer extends Queue<Uint8Array> {
     let contentLength: number | null = null;
     let buffer = new Uint8Array();
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       if (contentLength === null || buffer.length < contentLength) {
         const bytes = await this.next();
@@ -54,9 +55,9 @@ export default class StreamDemuxer extends Queue<Uint8Array> {
     }
   }
 
-  private parseContentLength(buffer: Uint8Array): { buffer: Uint8Array, contentLength: number | null } {
+  private parseContentLength(buffer: Uint8Array): { buffer: Uint8Array; contentLength: number | null } {
     const match = Bytes.decode(buffer).match(/^Content-Length:\s*(\d+)\s*/);
-    if (match === null) return { buffer, contentLength: null };;
+    if (match === null) return { buffer, contentLength: null };
 
     const length = parseInt(match[1], 10);
     if (isNaN(length)) throw new Error("Invalid content length");
