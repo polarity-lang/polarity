@@ -1,0 +1,28 @@
+name: Deploy Web Demo
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          cd web/
+          make deps
+          make build
+      - run: |
+          cd web/packages/app/dist && zip -r ../../../../web-demo-latest.zip ./*
+      - uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          draft: false
+          prerelease: false
+          files: web-demo-latest.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

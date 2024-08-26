@@ -18,56 +18,61 @@ export default class StreamDemuxer extends Queue<Uint8Array> {
   }
 
   private async start(): Promise<void> {
-    let contentLength: null | number = null;
+    let contentLength: number | null = null;
     let buffer = new Uint8Array();
 
-    for await (const bytes of this) {
-      buffer = Bytes.append(Uint8Array, buffer, bytes);
-
-      // check if the content length is known
-      if (null == contentLength) {
-        // if not, try to match the prefixed headers
-        const match = Bytes.decode(buffer).match(/^Content-Length:\s*(\d+)\s*/);
-        if (null == match) continue;
-
-        // try to parse the content-length from the headers
-        const length = parseInt(match[1]);
-        if (isNaN(length)) throw new Error("invalid content length");
-
-        // slice the headers since we now have the content length
-        buffer = buffer.slice(match[0].length);
-
-        // set the content length
-        contentLength = length;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      if (contentLength === null || buffer.length < contentLength) {
+        const bytes = await this.next();
+        buffer = Bytes.append(Uint8Array, buffer, bytes.value);
       }
 
-      // if the buffer doesn't contain a full message; await another iteration
-      if (buffer.length < contentLength) continue;
+      if (contentLength === null) {
+        ({ contentLength, buffer } = this.parseContentLength(buffer));
+      }
 
-      // decode buffer to a string
-      const delimited = Bytes.decode(buffer);
+      if (contentLength === null) {
+        continue;
+      }
 
-      // reset the buffer
+      if (buffer.length < contentLength) {
+        continue;
+      }
+
+      const delimited = Bytes.decode(buffer.slice(0, contentLength));
+
       buffer = buffer.slice(contentLength);
-      // reset the contentLength
-      contentLength = null;
+      ({ contentLength, buffer } = this.parseContentLength(buffer));
 
-      const message = JSON.parse(delimited) as vsrpc.Message;
-      Tracer.server(message);
+      try {
+        const message = JSON.parse(delimited) as vsrpc.Message;
+        Tracer.server(message);
+        this.demuxMessage(message);
+      } catch (error) {
+        console.error("Failed to parse message", error);
+      }
+    }
+  }
 
-      // demux the message stream
-      if (vsrpc.Message.isResponse(message) && null != message.id) {
-        this.responses.set(message.id, message);
-        continue;
-      }
-      if (vsrpc.Message.isNotification(message)) {
-        this.notifications.enqueue(message);
-        continue;
-      }
-      if (vsrpc.Message.isRequest(message)) {
-        this.requests.enqueue(message);
-        continue;
-      }
+  private parseContentLength(buffer: Uint8Array): { buffer: Uint8Array; contentLength: number | null } {
+    const match = Bytes.decode(buffer).match(/^Content-Length:\s*(\d+)\s*/);
+    if (match === null) return { buffer, contentLength: null };
+
+    const length = parseInt(match[1], 10);
+    if (isNaN(length)) throw new Error("Invalid content length");
+
+    buffer = buffer.slice(match[0].length);
+    return { buffer, contentLength: length };
+  }
+
+  private demuxMessage(message: vsrpc.Message): void {
+    if (vsrpc.Message.isResponse(message) && message.id !== null) {
+      this.responses.set(message.id, message);
+    } else if (vsrpc.Message.isNotification(message)) {
+      this.notifications.enqueue(message);
+    } else if (vsrpc.Message.isRequest(message)) {
+      this.requests.enqueue(message);
     }
   }
 }

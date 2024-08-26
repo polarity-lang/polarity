@@ -78,7 +78,7 @@ export default class App {
     });
 
     async function handleHashChange() {
-      let filepath = location.hash.slice(1);
+      const filepath = location.hash.slice(1);
       if (filepath === "") {
         model.setValue("");
         return;
