@@ -1,0 +1,15 @@
+codata Nat { .add(m: Nat): Nat }
+
+codef S(n: Nat): Nat { .add(m) => n.add(S(m)) }
+
+codef Z: Nat { .add(m) => m }
+
+
+
+data Eq(a: Type, x y : a) {
+    Refl(a: Type, x: a) : Eq(a,x,x)
+}
+
+let test : Eq(Nat, 4, 2.add(2)) {
+    Refl(Nat, 4)
+}
