@@ -64,6 +64,12 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
+    #[error("Literal cannot be desugared because S/Z are not in program")]
+    #[diagnostic(code("L-010"))]
+    NatLiteralCannotBeDesugared {
+        #[label]
+        span: SourceSpan,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("L-XXX"))]
     /// This error should not occur.

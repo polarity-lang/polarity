@@ -274,11 +274,23 @@ impl Lower for cst::exp::Hole {
 impl Lower for cst::exp::NatLit {
     type Target = ast::Exp;
 
-    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::NatLit { span, val } = self;
+
+        // We have to check whether "Z" is declared as a constructor or codefinition.
+        // We assume that if Z exists, then S exists as well and is of the same kind.
+        let z_kind = ctx
+            .lookup_top_level_decl(&Ident { id: "Z".to_string() }, span)
+            .map_err(|_| LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() })?;
+        let call_kind = match z_kind {
+            ast::lookup_table::DeclMeta::Codef => ast::CallKind::Codefinition,
+            ast::lookup_table::DeclMeta::Ctor { .. } => ast::CallKind::Constructor,
+            _ => return Err(LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() }),
+        };
+
         let mut out = ast::Exp::Call(ast::Call {
             span: Some(*span),
-            kind: ast::CallKind::Constructor,
+            kind: call_kind,
             name: "Z".to_owned(),
             args: ast::Args { args: vec![] },
             inferred_type: None,
@@ -290,7 +302,7 @@ impl Lower for cst::exp::NatLit {
             i += 1usize;
             out = ast::Exp::Call(ast::Call {
                 span: Some(*span),
-                kind: ast::CallKind::Constructor,
+                kind: call_kind,
                 name: "S".to_owned(),
                 args: ast::Args { args: vec![Rc::new(out)] },
                 inferred_type: None,
