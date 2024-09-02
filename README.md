@@ -71,8 +71,5 @@ Please refer to the `README.md` files in the individual subprojects for further 
 
 ## Licenses
 
-Except for the code in the `web` directory, this project is distributed under the terms of both the MIT license and the Apache License 2.0.
+This project is distributed under the terms of both the MIT license and the Apache License 2.0.
 See [LICENSE-APACHE](LICENSE-APACHE) and [LICENSE-MIT](LICENSE-MIT) for details.
-
-The code contained in the `web` directory is based on [tower-lsp-web-demo](https://github.com/silvanshade/tower-lsp-web-demo/) by Darin Morrison.
-It is licensed under Apache-2.0 WITH LLVM-exception.
