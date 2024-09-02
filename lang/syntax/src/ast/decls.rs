@@ -628,14 +628,17 @@ impl Print for SelfParam {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let SelfParam { info: _, name, typ } = self;
 
+        let mut cfg = cfg.clone();
+        cfg.print_function_sugar = false;
+
         match name {
             Some(name) => alloc
                 .text(name)
                 .append(COLON)
                 .append(alloc.space())
-                .append(typ.print(cfg, alloc))
+                .append(typ.print(&cfg, alloc))
                 .parens(),
-            None => typ.print(cfg, alloc),
+            None => typ.print(&cfg, alloc),
         }
     }
 }

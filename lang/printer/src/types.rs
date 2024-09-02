@@ -208,6 +208,7 @@ impl<T: Print, E: Error> Print for Result<T, E> {
     }
 }
 
+#[derive(Clone)]
 pub struct PrintCfg {
     /// The width of the output terminal/device. Width is used for
     /// the insertion of linebreaks.
