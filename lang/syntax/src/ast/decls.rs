@@ -21,18 +21,15 @@ use printer::Alloc;
 use printer::Builder;
 use printer::Print;
 use printer::PrintCfg;
-use printer::PrintInCtx;
 use url::Url;
 
 use crate::ctx::LevelCtx;
 
 use super::exp::*;
 use super::ident::*;
-use super::lookup_table::{DeclKind, LookupTable};
 use super::traits::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
 use super::HashMap;
-use super::Item;
 use super::Shift;
 
 fn print_return_type<'a, T: Print>(
@@ -147,33 +144,133 @@ impl MetaVarState {
 #[derive(Debug, Clone)]
 pub struct Module {
     pub uri: Url,
-    /// Map from identifiers to declarations
-    pub map: HashMap<Ident, Decl>,
-    /// Metadata on declarations
-    pub lookup_table: LookupTable,
+    /// List of declarations in the module
+    pub decls: Vec<Decl>,
     pub meta_vars: HashMap<MetaVar, MetaVarState>,
 }
 
 impl Module {
+    pub fn xdefs_for_type(&self, type_name: &str) -> Vec<Ident> {
+        let mut out = vec![];
+
+        for decl in &self.decls {
+            match decl {
+                Decl::Def(def) => {
+                    if def.self_param.typ.name == type_name {
+                        out.push(def.name.clone());
+                    }
+                }
+                Decl::Codef(codef) => {
+                    if codef.typ.name == type_name {
+                        out.push(codef.name.clone());
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        out
+    }
+
+    pub fn xtors_for_type(&self, type_name: &str) -> Vec<Ident> {
+        let mut out = vec![];
+
+        for decl in &self.decls {
+            match decl {
+                Decl::Data(data) => {
+                    if data.name == type_name {
+                        for ctor in &data.ctors {
+                            out.push(ctor.name.clone());
+                        }
+                    }
+                }
+                Decl::Codata(codata) => {
+                    if codata.name == type_name {
+                        for dtor in &codata.dtors {
+                            out.push(dtor.name.clone());
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        out
+    }
+
+    pub fn lookup_decl(&self, name: &Ident) -> Option<&Decl> {
+        self.decls.iter().find(|decl| decl.name() == name)
+    }
+
+    pub fn lookup_let(&self, name: &Ident) -> Option<&Let> {
+        self.decls.iter().find_map(|decl| match decl {
+            Decl::Let(tl_let) if tl_let.name == *name => Some(tl_let),
+            _ => None,
+        })
+    }
+
+    pub fn lookup_def(&self, name: &Ident) -> Option<&Def> {
+        self.decls.iter().find_map(|decl| match decl {
+            Decl::Def(def) if def.name == *name => Some(def),
+            _ => None,
+        })
+    }
+
+    pub fn lookup_codef(&self, name: &Ident) -> Option<&Codef> {
+        self.decls.iter().find_map(|decl| match decl {
+            Decl::Codef(codef) if codef.name == *name => Some(codef),
+            _ => None,
+        })
+    }
+
+    pub fn lookup_data(&self, name: &Ident) -> Option<&Data> {
+        self.decls.iter().find_map(|decl| match decl {
+            Decl::Data(data) if data.name == *name => Some(data),
+            _ => None,
+        })
+    }
+
+    pub fn lookup_codata(&self, name: &Ident) -> Option<&Codata> {
+        self.decls.iter().find_map(|decl| match decl {
+            Decl::Codata(codata) if codata.name == *name => Some(codata),
+            _ => None,
+        })
+    }
+
+    pub fn lookup_ctor(&self, name: &Ident) -> Option<&Ctor> {
+        self.decls.iter().find_map(|decl| match decl {
+            Decl::Data(data) => data.ctors.iter().find(|ctor| &ctor.name == name),
+            _ => None,
+        })
+    }
+
+    pub fn lookup_dtor(&self, name: &Ident) -> Option<&Dtor> {
+        self.decls.iter().find_map(|decl| match decl {
+            Decl::Codata(codata) => codata.dtors.iter().find(|dtor| &dtor.name == name),
+            _ => None,
+        })
+    }
+
     pub fn find_main(&self) -> Option<Rc<Exp>> {
-        let main_candidate = self.map.get("main")?.get_main()?;
-        Some(main_candidate.body)
+        self.decls.iter().find_map(|decl| match decl {
+            Decl::Let(tl_let) if tl_let.is_main() => Some(tl_let.body.clone()),
+            _ => None,
+        })
     }
 }
 
 impl Print for Module {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let items =
-            self.iter().filter(|item| item.attributes().is_visible()).map(|item| match item {
-                Item::Data(data) => data.print_in_ctx(cfg, self, alloc),
-                Item::Codata(codata) => codata.print_in_ctx(cfg, self, alloc),
-                Item::Def(def) => def.print(cfg, alloc),
-                Item::Codef(codef) => codef.print(cfg, alloc),
-                Item::Let(tl_let) => tl_let.print(cfg, alloc),
-            });
+        let Module { decls, .. } = self;
 
         let sep = if cfg.omit_decl_sep { alloc.line() } else { alloc.line().append(alloc.line()) };
-        alloc.intersperse(items, sep)
+        alloc.intersperse(
+            decls
+                .iter()
+                .filter(|decl| decl.attributes().is_visible())
+                .map(|decl| decl.print(cfg, alloc)),
+            sep,
+        )
     }
 }
 
@@ -185,23 +282,49 @@ impl Print for Module {
 pub enum Decl {
     Data(Data),
     Codata(Codata),
-    Ctor(Ctor),
-    Dtor(Dtor),
     Def(Def),
     Codef(Codef),
     Let(Let),
 }
 
+impl From<Data> for Decl {
+    fn from(data: Data) -> Self {
+        Decl::Data(data)
+    }
+}
+
+impl From<Codata> for Decl {
+    fn from(codata: Codata) -> Self {
+        Decl::Codata(codata)
+    }
+}
+
+impl From<Def> for Decl {
+    fn from(def: Def) -> Self {
+        Decl::Def(def)
+    }
+}
+
+impl From<Codef> for Decl {
+    fn from(codef: Codef) -> Self {
+        Decl::Codef(codef)
+    }
+}
+
+impl From<Let> for Decl {
+    fn from(tl_let: Let) -> Self {
+        Decl::Let(tl_let)
+    }
+}
+
 impl Decl {
-    pub fn kind(&self) -> DeclKind {
+    pub fn attributes(&self) -> &Attributes {
         match self {
-            Decl::Data(_) => DeclKind::Data,
-            Decl::Codata(_) => DeclKind::Codata,
-            Decl::Ctor(_) => DeclKind::Ctor,
-            Decl::Dtor(_) => DeclKind::Dtor,
-            Decl::Def(_) => DeclKind::Def,
-            Decl::Codef(_) => DeclKind::Codef,
-            Decl::Let(_) => DeclKind::Let,
+            Decl::Data(Data { attr, .. }) => attr,
+            Decl::Codata(Codata { attr, .. }) => attr,
+            Decl::Def(Def { attr, .. }) => attr,
+            Decl::Codef(Codef { attr, .. }) => attr,
+            Decl::Let(Let { attr, .. }) => attr,
         }
     }
 
@@ -221,8 +344,6 @@ impl Named for Decl {
             Decl::Codata(Codata { name, .. }) => name,
             Decl::Def(Def { name, .. }) => name,
             Decl::Codef(Codef { name, .. }) => name,
-            Decl::Ctor(Ctor { name, .. }) => name,
-            Decl::Dtor(Dtor { name, .. }) => name,
             Decl::Let(Let { name, .. }) => name,
         }
     }
@@ -233,8 +354,6 @@ impl HasSpan for Decl {
         match self {
             Decl::Data(data) => data.span,
             Decl::Codata(codata) => codata.span,
-            Decl::Ctor(ctor) => ctor.span,
-            Decl::Dtor(dtor) => dtor.span,
             Decl::Def(def) => def.span,
             Decl::Codef(codef) => codef.span,
             Decl::Let(tl_let) => tl_let.span,
@@ -242,22 +361,13 @@ impl HasSpan for Decl {
     }
 }
 
-impl PrintInCtx for Decl {
-    type Ctx = Module;
-
-    fn print_in_ctx<'a>(
-        &'a self,
-        cfg: &PrintCfg,
-        ctx: &'a Self::Ctx,
-        alloc: &'a Alloc<'a>,
-    ) -> Builder<'a> {
+impl Print for Decl {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Decl::Data(data) => data.print_in_ctx(cfg, ctx, alloc),
-            Decl::Codata(codata) => codata.print_in_ctx(cfg, ctx, alloc),
+            Decl::Data(data) => data.print(cfg, alloc),
+            Decl::Codata(codata) => codata.print(cfg, alloc),
             Decl::Def(def) => def.print(cfg, alloc),
             Decl::Codef(codef) => codef.print(cfg, alloc),
-            Decl::Ctor(ctor) => ctor.print(cfg, alloc),
-            Decl::Dtor(dtor) => dtor.print(cfg, alloc),
             Decl::Let(tl_let) => tl_let.print(cfg, alloc),
         }
     }
@@ -274,18 +384,11 @@ pub struct Data {
     pub name: Ident,
     pub attr: Attributes,
     pub typ: Rc<Telescope>,
-    pub ctors: Vec<Ident>,
+    pub ctors: Vec<Ctor>,
 }
 
-impl PrintInCtx for Data {
-    type Ctx = Module;
-
-    fn print_in_ctx<'a>(
-        &'a self,
-        cfg: &PrintCfg,
-        ctx: &'a Self::Ctx,
-        alloc: &'a Alloc<'a>,
-    ) -> Builder<'a> {
+impl Print for Data {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Data { span: _, doc, name, attr, typ, ctors } = self;
         if !attr.is_visible() {
             return alloc.nil();
@@ -307,10 +410,7 @@ impl PrintInCtx for Data {
         } else {
             alloc
                 .line()
-                .append(alloc.intersperse(
-                    ctors.iter().map(|x| ctx.map[x].print_in_ctx(cfg, ctx, alloc)),
-                    sep,
-                ))
+                .append(alloc.intersperse(ctors.iter().map(|ctor| ctor.print(cfg, alloc)), sep))
                 .nest(cfg.indent)
                 .append(alloc.line())
                 .braces_anno()
@@ -333,18 +433,11 @@ pub struct Codata {
     pub name: Ident,
     pub attr: Attributes,
     pub typ: Rc<Telescope>,
-    pub dtors: Vec<Ident>,
+    pub dtors: Vec<Dtor>,
 }
 
-impl PrintInCtx for Codata {
-    type Ctx = Module;
-
-    fn print_in_ctx<'a>(
-        &'a self,
-        cfg: &PrintCfg,
-        ctx: &'a Self::Ctx,
-        alloc: &'a Alloc<'a>,
-    ) -> Builder<'a> {
+impl Print for Codata {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Codata { span: _, doc, name, attr, typ, dtors } = self;
         if !attr.is_visible() {
             return alloc.nil();
@@ -366,10 +459,7 @@ impl PrintInCtx for Codata {
         } else {
             alloc
                 .line()
-                .append(alloc.intersperse(
-                    dtors.iter().map(|x| ctx.map[x].print_in_ctx(cfg, ctx, alloc)),
-                    sep,
-                ))
+                .append(alloc.intersperse(dtors.iter().map(|dtor| dtor.print(cfg, alloc)), sep))
                 .nest(cfg.indent)
                 .append(alloc.line())
                 .braces_anno()
@@ -884,28 +974,5 @@ impl Print for Arg {
                 panic!("Inserted implicit arguments should not be printed")
             }
         }
-    }
-}
-
-// Items
-//
-//
-pub struct Items {
-    pub items: Vec<Decl>,
-}
-
-impl PrintInCtx for Items {
-    type Ctx = Module;
-
-    fn print_in_ctx<'a>(
-        &'a self,
-        cfg: &PrintCfg,
-        ctx: &'a Self::Ctx,
-        alloc: &'a Alloc<'a>,
-    ) -> Builder<'a> {
-        let Items { items } = self;
-
-        let sep = if cfg.omit_decl_sep { alloc.line() } else { alloc.line().append(alloc.line()) };
-        alloc.intersperse(items.iter().map(|item| item.print_in_ctx(cfg, ctx, alloc)), sep)
     }
 }

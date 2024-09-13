@@ -1,4 +1,5 @@
 use std::fmt;
+use std::rc::Rc;
 use std::{error::Error, panic};
 
 use url::Url;
@@ -247,7 +248,7 @@ impl Phase for Check {
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        elaborator::typechecker::check(&input)
+        elaborator::typechecker::check(Rc::new(input))
     }
 }
 

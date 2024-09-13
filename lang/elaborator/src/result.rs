@@ -2,8 +2,6 @@ use miette::{Diagnostic, SourceSpan};
 use miette_util::ToMiette;
 use thiserror::Error;
 
-use syntax::ast::LookupError;
-
 use codespan::Span;
 use std::rc::Rc;
 use syntax::ast::*;
@@ -149,9 +147,6 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[error(transparent)]
-    #[diagnostic(transparent)]
-    Lookup(#[from] LookupError),
 }
 
 impl TypeError {

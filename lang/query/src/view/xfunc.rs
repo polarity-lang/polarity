@@ -1,6 +1,6 @@
 use codespan::Span;
 use lifting::LiftResult;
-use printer::PrintInCtx;
+use printer::Print;
 use renaming::Rename;
 
 use syntax::ast::*;
@@ -19,7 +19,7 @@ impl<'a> DatabaseView<'a> {
         let prg = self.tst()?;
 
         let decl_spans =
-            prg.map.values().map(|decl| (decl.name().clone(), decl.span().unwrap())).collect();
+            prg.decls.iter().map(|decl| (decl.name().clone(), decl.span().unwrap())).collect();
 
         // xdefs and xtors before xfunc
         let xdefs = prg.xdefs_for_type(type_name);
@@ -62,28 +62,29 @@ struct Original {
 
 struct XfuncResult {
     title: String,
-    decls: Module,
+    module: Module,
     /// The new type (co)data definition as well as all associated (co)definitions
     new_decls: Vec<Decl>,
 }
 
 fn generate_edits(original: Original, dirty_decls: HashSet<Ident>, result: XfuncResult) -> Xfunc {
-    let XfuncResult { title, decls, new_decls } = result;
+    let XfuncResult { title, module, new_decls } = result;
 
     // Edits for the type that has been xfunctionalized
     // Here we rewrite the entire (co)data declaration and its associated (co)definitions
-    let new_items = Items { items: new_decls };
-    let type_text = new_items.print_to_string_in_ctx(&decls);
+    let new_items =
+        Module { uri: module.uri.clone(), decls: new_decls, meta_vars: module.meta_vars.clone() };
+    let type_text = new_items.print_to_string(None);
 
     let mut edits = vec![Edit { span: original.type_span, text: type_text }];
 
     // Edits for all other declarations that have been touched
     // Here we surgically rewrite only the declarations that have been changed
     for name in dirty_decls {
-        let decl = &decls.map[&name];
+        let decl = module.lookup_decl(&name).unwrap();
         let decl = decl.clone().rename();
         let span = original.decl_spans[&name];
-        let text = decl.print_to_string_in_ctx(&decls);
+        let text = decl.print_to_string(None);
         edits.push(Edit { span, text });
     }
 
@@ -97,50 +98,68 @@ fn generate_edits(original: Original, dirty_decls: HashSet<Ident>, result: Xfunc
 }
 
 fn refunctionalize(
-    prg: Module,
+    mut module: Module,
     mat: &matrix::Prg,
     type_name: &str,
 ) -> Result<XfuncResult, crate::Error> {
     let (codata, dtors, codefs) = xfunc::as_codata(mat, type_name)?;
 
-    let mut decls = prg;
-    let map = &mut decls.map;
-    map.insert(codata.name.clone(), Decl::Codata(codata.clone()));
-    map.extend(codefs.clone().into_iter().map(|def| (def.name.clone(), Decl::Codef(def))));
-    map.extend(dtors.into_iter().map(|dtor| (dtor.name.clone(), Decl::Dtor(dtor))));
-
-    let codata = codata.rename();
-    let decls = decls.rename();
-    let codefs = codefs.into_iter().map(Rename::rename);
+    replace_decl(&mut module, codata.clone().rename().into());
+    for dtor in dtors {
+        replace_dtor(&mut module, &codata.name, dtor.rename());
+    }
+    for codef in codefs.iter().cloned() {
+        replace_decl(&mut module, codef.rename().into());
+    }
 
     // FIXME: Unnecessary duplication
     let mut new_decls = vec![Decl::Codata(codata)];
-    new_decls.extend(codefs.map(Decl::Codef));
+    new_decls.extend(codefs.into_iter().map(Decl::Codef));
 
-    Ok(XfuncResult { title: format!("Refunctionalize {type_name}"), decls, new_decls })
+    Ok(XfuncResult { title: format!("Refunctionalize {type_name}"), module, new_decls })
 }
 
 fn defunctionalize(
-    prg: Module,
+    mut module: Module,
     mat: &matrix::Prg,
     type_name: &str,
 ) -> Result<XfuncResult, crate::Error> {
     let (data, ctors, defs) = xfunc::as_data(mat, type_name)?;
 
-    let mut decls = prg;
-    let map = &mut decls.map;
-
-    map.insert(data.name.clone(), Decl::Data(data.clone()));
-    map.extend(defs.clone().into_iter().map(|def| (def.name.clone(), Decl::Def(def))));
-    map.extend(ctors.into_iter().map(|ctor| (ctor.name.clone(), Decl::Ctor(ctor))));
-
-    let data = data.rename();
-    let decls = decls.rename();
-    let defs = defs.into_iter().map(Rename::rename);
+    replace_decl(&mut module, data.clone().rename().into());
+    for ctor in ctors {
+        replace_ctor(&mut module, &data.name, ctor.rename());
+    }
+    for def in defs.iter().cloned() {
+        replace_decl(&mut module, def.rename().into());
+    }
 
     // FIXME: Unnecessary duplication
     let mut new_decls = vec![Decl::Data(data)];
     new_decls.extend(defs.into_iter().map(Decl::Def));
 
-    Ok(XfuncResult { title: format!("Defunctionalize {type_name}"), decls, new_decls })
+    Ok(XfuncResult { title: format!("Defunctionalize {type_name}"), module, new_decls })
+}
+
+fn replace_decl(module: &mut Module, decl: Decl) {
+    let idx = module.decls.iter().position(|d| d.name() == decl.name()).unwrap();
+    module.decls[idx] = decl;
+}
+
+fn replace_ctor(module: &mut Module, data_name: &str, ctor: Ctor) {
+    let data_idx = module.decls.iter().position(|d| d.name() == data_name).unwrap();
+    let Decl::Data(data) = &mut module.decls[data_idx] else {
+        panic!("Expected data declaration for {data_name}");
+    };
+    let ctor_idx = data.ctors.iter().position(|c| c.name == ctor.name).unwrap();
+    data.ctors[ctor_idx] = ctor;
+}
+
+fn replace_dtor(module: &mut Module, codata_name: &str, dtor: Dtor) {
+    let codata_idx = module.decls.iter().position(|d| d.name() == codata_name).unwrap();
+    let Decl::Codata(codata) = &mut module.decls[codata_idx] else {
+        panic!("Expected codata declaration for {codata_name}");
+    };
+    let dtor_idx = codata.dtors.iter().position(|d| d.name == dtor.name).unwrap();
+    codata.dtors[dtor_idx] = dtor;
 }

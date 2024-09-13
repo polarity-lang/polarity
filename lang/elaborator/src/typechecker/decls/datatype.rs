@@ -16,12 +16,15 @@ use super::CheckToplevel;
 
 /// Check a data declaration
 impl CheckToplevel for Data {
-    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn check_wf(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         trace!("Checking well-formedness of data type: {}", self.name);
 
         let Data { span, doc, name, attr, typ, ctors } = self;
 
-        let typ_out = typ.infer_telescope(prg, ctx, |_, params_out| Ok(params_out))?;
+        let typ_out = typ.infer_telescope(ctx, |_, params_out| Ok(params_out))?;
+
+        let ctors =
+            ctors.iter().map(|ctor| check_ctor_wf(name, ctor, ctx)).collect::<Result<_, _>>()?;
 
         Ok(Data {
             span: *span,
@@ -29,39 +32,35 @@ impl CheckToplevel for Data {
             name: name.clone(),
             attr: attr.clone(),
             typ: Rc::new(typ_out),
-            ctors: ctors.clone(),
+            ctors,
         })
     }
 }
 
 /// Infer a constructor declaration
-impl CheckToplevel for Ctor {
-    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
-        trace!("Checking well-formedness of constructor: {}", self.name);
+fn check_ctor_wf(data_type_name: &Ident, ctor: &Ctor, ctx: &mut Ctx) -> Result<Ctor, TypeError> {
+    trace!("Checking well-formedness of constructor: {}", ctor.name);
 
-        let Ctor { span, doc, name, params, typ } = self;
+    let Ctor { span, doc, name, params, typ } = ctor;
 
-        // Check that the constructor lies in the data type it is defined in
-        let data_type = prg.data_for_ctor(name, *span)?;
-        let expected = &data_type.name;
-        if &typ.name != expected {
-            return Err(TypeError::NotInType {
-                expected: expected.clone(),
-                actual: typ.name.clone(),
-                span: typ.span.to_miette(),
-            });
-        }
-
-        params.infer_telescope(prg, ctx, |ctx, params_out| {
-            let typ_out = typ.infer(prg, ctx)?;
-
-            Ok(Ctor {
-                span: *span,
-                doc: doc.clone(),
-                name: name.clone(),
-                params: params_out,
-                typ: typ_out,
-            })
-        })
+    // Check that the constructor lies in the data type it is defined in
+    if &typ.name != data_type_name {
+        return Err(TypeError::NotInType {
+            expected: data_type_name.clone(),
+            actual: typ.name.clone(),
+            span: typ.span.to_miette(),
+        });
     }
+
+    params.infer_telescope(ctx, |ctx, params_out| {
+        let typ_out = typ.infer(ctx)?;
+
+        Ok(Ctor {
+            span: *span,
+            doc: doc.clone(),
+            name: name.clone(),
+            params: params_out,
+            typ: typ_out,
+        })
+    })
 }

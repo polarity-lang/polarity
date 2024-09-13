@@ -2,7 +2,7 @@ use miette::{Diagnostic, SourceSpan};
 use parser::cst::ident::Ident;
 use thiserror::Error;
 
-use crate::DeclKind;
+use crate::lookup_table::DeclKind;
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum LoweringError {

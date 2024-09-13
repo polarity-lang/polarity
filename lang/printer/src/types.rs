@@ -145,47 +145,6 @@ impl<T: Print> Print for Option<T> {
     }
 }
 
-pub trait PrintInCtx {
-    type Ctx;
-
-    fn print_in_ctx<'a>(
-        &'a self,
-        cfg: &PrintCfg,
-        ctx: &'a Self::Ctx,
-        alloc: &'a Alloc<'a>,
-    ) -> Builder<'a> {
-        PrintInCtx::print_in_ctx_prec(self, cfg, ctx, alloc, 0)
-    }
-
-    /// Print with precedence information about the enclosing context.
-    ///
-    /// * `_prec` The precedence of the surrounding context.
-    fn print_in_ctx_prec<'a>(
-        &'a self,
-        cfg: &PrintCfg,
-        ctx: &'a Self::Ctx,
-        alloc: &'a Alloc<'a>,
-        _prec: Precedence,
-    ) -> Builder<'a> {
-        PrintInCtx::print_in_ctx(self, cfg, ctx, alloc)
-    }
-
-    fn print_to_string_in_ctx(&self, ctx: &Self::Ctx) -> String {
-        let alloc = super::Alloc::new();
-        let mut buf = Vec::new();
-        {
-            let cfg = PrintCfg::default();
-            let doc_builder = self.print_in_ctx(&cfg, ctx, &alloc);
-            doc_builder
-                .1
-                .render(super::DEFAULT_WIDTH, &mut buf)
-                .expect("Failed to print to string");
-            drop(doc_builder)
-        }
-        unsafe { String::from_utf8_unchecked(buf) }
-    }
-}
-
 impl<T: Print> Print for &T {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         T::print(self, cfg, alloc)

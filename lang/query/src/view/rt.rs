@@ -26,7 +26,7 @@ impl<'a> DatabaseView<'a> {
 
     pub fn tst(&self) -> Result<Module, Error> {
         let ust = self.ust()?;
-        elaborator::typechecker::check(&ust).map_err(Error::Type)
+        elaborator::typechecker::check(Rc::new(ust)).map_err(Error::Type)
     }
 
     pub fn run(&self) -> Result<Option<Rc<Exp>>, Error> {

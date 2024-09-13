@@ -1,11 +1,9 @@
-use std::fmt;
 use std::rc::Rc;
 
 use codespan::Span;
 use miette_util::ToMiette;
 use parser::cst;
 
-use parser::cst::decls::Telescope;
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
 use syntax::ast::{self, MetaVar, MetaVarState};
@@ -13,6 +11,8 @@ use syntax::ast::{HasSpan, Named};
 use syntax::ast::{HashMap, HashSet};
 use syntax::ast::{Idx, Lvl};
 use syntax::ctx::LevelCtx;
+
+use crate::lookup_table::{DeclMeta, LookupTable};
 
 use super::result::LoweringError;
 
@@ -26,7 +26,7 @@ pub struct Ctx {
     /// Bound variables in this map are De-Bruijn levels rather than indices:
     local_map: HashMap<Ident, Vec<Lvl>>,
     /// Metadata for top-level names
-    top_level_map: HashMap<Ident, DeclMeta>,
+    lookup_table: LookupTable,
     /// Accumulates top-level declarations
     pub decls_map: HashMap<String, ast::Decl>,
     /// Counts the number of entries for each De-Bruijn level
@@ -42,10 +42,10 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    pub fn empty(top_level_map: HashMap<Ident, DeclMeta>) -> Self {
+    pub fn empty(lookup_table: LookupTable) -> Self {
         Self {
             local_map: HashMap::default(),
-            top_level_map,
+            lookup_table,
             decls_map: HashMap::default(),
             levels: Vec::new(),
             next_label_id: 0,
@@ -62,7 +62,7 @@ impl Ctx {
 
     /// Lookup in the global context of declarations.
     pub fn lookup_global(&self, name: &Ident) -> Option<DeclMeta> {
-        self.top_level_map.get(name).cloned()
+        self.lookup_table.lookup(name).cloned()
     }
 
     pub fn lookup_top_level_decl(
@@ -70,7 +70,7 @@ impl Ctx {
         name: &Ident,
         info: &Span,
     ) -> Result<DeclMeta, LoweringError> {
-        self.top_level_map.get(name).cloned().ok_or_else(|| LoweringError::UndefinedIdent {
+        self.lookup_global(name).ok_or_else(|| LoweringError::UndefinedIdent {
             name: name.to_owned(),
             span: info.to_miette(),
         })
@@ -361,56 +361,6 @@ impl ContextElem for &cst::exp::BindingSite {
         match self {
             BindingSite::Var { name, .. } => name.to_owned(),
             BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum DeclMeta {
-    Data { params: Telescope },
-    Codata { params: Telescope },
-    Def { params: Telescope },
-    Codef { params: Telescope },
-    Ctor { params: Telescope, ret_typ: Ident },
-    Dtor { params: Telescope, self_typ: Ident },
-    Let { params: Telescope },
-}
-
-impl DeclMeta {
-    pub fn kind(&self) -> DeclKind {
-        match self {
-            DeclMeta::Data { .. } => DeclKind::Data,
-            DeclMeta::Codata { .. } => DeclKind::Codata,
-            DeclMeta::Def { .. } => DeclKind::Def,
-            DeclMeta::Codef { .. } => DeclKind::Codef,
-            DeclMeta::Ctor { .. } => DeclKind::Ctor,
-            DeclMeta::Dtor { .. } => DeclKind::Dtor,
-            DeclMeta::Let { .. } => DeclKind::Let,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum DeclKind {
-    Data,
-    Codata,
-    Def,
-    Codef,
-    Ctor,
-    Dtor,
-    Let,
-}
-
-impl fmt::Display for DeclKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DeclKind::Data => write!(f, "data type"),
-            DeclKind::Codata => write!(f, "codata type"),
-            DeclKind::Def => write!(f, "definition"),
-            DeclKind::Codef => write!(f, "codefinition"),
-            DeclKind::Ctor => write!(f, "constructor"),
-            DeclKind::Dtor => write!(f, "destructor"),
-            DeclKind::Let => write!(f, "toplevel let"),
         }
     }
 }

@@ -20,7 +20,7 @@ impl CheckInfer for TypeUniv {
     ///           ──────────────────
     ///            P, Γ ⊢ Type ⇐ τ
     /// ```
-    fn check(&self, _prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
         convert(ctx.levels(), &mut ctx.meta_vars, Rc::new(TypeUniv::new().into()), &t)?;
         Ok(self.clone())
     }
@@ -32,7 +32,7 @@ impl CheckInfer for TypeUniv {
     /// ```
     /// Note: The type universe is impredicative and the theory
     /// therefore inconsistent.
-    fn infer(&self, _prg: &Module, _ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, _ctx: &mut Ctx) -> Result<Self, TypeError> {
         Ok(self.clone())
     }
 }

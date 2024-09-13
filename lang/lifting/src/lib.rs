@@ -74,22 +74,11 @@ impl Lift for Module {
     type Target = Module;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Module { uri, map, lookup_table, meta_vars } = self;
+        let Module { uri, decls, meta_vars } = self;
 
-        let mut map: HashMap<_, _> =
-            map.iter().map(|(name, decl)| (name.clone(), decl.lift(ctx))).collect();
-        let mut lookup_table = lookup_table.clone();
+        let decls = decls.iter().map(|decl| decl.lift(ctx)).collect();
 
-        // Add new top-level definitions to lookup tabble
-        for decl in &ctx.new_decls {
-            lookup_table.insert_def(ctx.name.clone(), decl.name().clone());
-        }
-
-        // Add new top-level definitions to program map
-        let decls_iter = ctx.new_decls.iter().map(|decl| (decl.name().clone(), decl.clone()));
-        map.extend(decls_iter);
-
-        Module { uri: uri.clone(), map, lookup_table, meta_vars: meta_vars.clone() }
+        Module { uri: uri.clone(), decls, meta_vars: meta_vars.clone() }
     }
 }
 
@@ -101,8 +90,6 @@ impl Lift for Decl {
         match self {
             Decl::Data(data) => Decl::Data(data.lift(ctx)),
             Decl::Codata(cotata) => Decl::Codata(cotata.lift(ctx)),
-            Decl::Ctor(ctor) => Decl::Ctor(ctor.lift(ctx)),
-            Decl::Dtor(tdor) => Decl::Dtor(tdor.lift(ctx)),
             Decl::Def(def) => Decl::Def(def.lift(ctx)),
             Decl::Codef(codef) => Decl::Codef(codef.lift(ctx)),
             Decl::Let(tl_let) => Decl::Let(tl_let.lift(ctx)),
@@ -116,13 +103,15 @@ impl Lift for Data {
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Data { span, doc, name, attr, typ, ctors } = self;
 
+        let ctors = ctors.iter().map(|ctor| ctor.lift(ctx)).collect();
+
         Data {
             span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
             typ: Rc::new(typ.lift_telescope(ctx, |_, params| params)),
-            ctors: ctors.clone(),
+            ctors,
         }
     }
 }
@@ -133,13 +122,15 @@ impl Lift for Codata {
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Codata { span, doc, name, attr, typ, dtors } = self;
 
+        let dtors = dtors.iter().map(|dtor| dtor.lift(ctx)).collect();
+
         Codata {
             span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
             typ: Rc::new(typ.lift_telescope(ctx, |_, params| params)),
-            dtors: dtors.clone(),
+            dtors,
         }
     }
 }

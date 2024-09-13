@@ -12,8 +12,8 @@ use super::CheckInfer;
 use crate::result::TypeError;
 
 impl CheckInfer for Anno {
-    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        let inferred_term = self.infer(prg, ctx)?;
+    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+        let inferred_term = self.infer(ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
             span: None,
@@ -30,11 +30,11 @@ impl CheckInfer for Anno {
     ///           ──────────────────────
     ///            P, Γ ⊢ (e : τ) ⇒ τ'
     /// ```
-    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Anno { span, exp, typ, .. } = self;
-        let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
-        let typ_nf = typ.normalize(prg, &mut ctx.env())?;
-        let exp_out = (**exp).check(prg, ctx, typ_nf.clone())?;
+        let typ_out = typ.check(ctx, Rc::new(TypeUniv::new().into()))?;
+        let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
+        let exp_out = (**exp).check(ctx, typ_nf.clone())?;
         Ok(Anno { span: *span, exp: Rc::new(exp_out), typ: typ_out, normalized_type: Some(typ_nf) })
     }
 }

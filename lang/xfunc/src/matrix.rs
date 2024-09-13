@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use syntax::ast::{self, HashMap, SwapWithCtx};
-use syntax::ast::{Attributes, DocComment, Named};
+use syntax::ast::{Attributes, DocComment};
 use syntax::ctx::{BindContext, LevelCtx};
 
 use crate::result::XfuncError;
@@ -69,25 +69,30 @@ impl Ctx {
 
 impl BuildMatrix for ast::Module {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ast::Module { map, .. } = self;
+        let ast::Module { decls, .. } = self;
 
-        for decl in map.values() {
+        for decl in decls {
             match decl {
-                ast::Decl::Data(data) => data.build_matrix(ctx, out),
-                ast::Decl::Codata(codata) => codata.build_matrix(ctx, out),
-                _ => Ok(()),
-            }?
-        }
-
-        for decl in map.values() {
-            match decl {
-                ast::Decl::Ctor(ctor) => ctor.build_matrix(ctx, out),
-                ast::Decl::Dtor(dtor) => dtor.build_matrix(ctx, out),
+                ast::Decl::Data(data) => {
+                    data.build_matrix(ctx, out)?;
+                    for ctor in &data.ctors {
+                        ctor.build_matrix(ctx, out)?;
+                    }
+                    Ok(())
+                }
+                ast::Decl::Codata(codata) => {
+                    codata.build_matrix(ctx, out)?;
+                    for dtor in &codata.dtors {
+                        dtor.build_matrix(ctx, out)?;
+                    }
+                    Ok(())
+                }
                 ast::Decl::Def(def) => def.build_matrix(ctx, out),
                 ast::Decl::Codef(codef) => codef.build_matrix(ctx, out),
                 _ => Ok(()),
             }?
         }
+
         Ok(())
     }
 }
@@ -108,7 +113,7 @@ impl BuildMatrix for ast::Data {
         };
 
         for ctor in ctors {
-            ctx.type_for_xtor.insert(ctor.name().clone(), name.clone());
+            ctx.type_for_xtor.insert(ctor.name.clone(), name.clone());
         }
 
         out.map.insert(name.clone(), xdata);
@@ -132,7 +137,7 @@ impl BuildMatrix for ast::Codata {
         };
 
         for dtor in dtors {
-            ctx.type_for_xtor.insert(dtor.name().clone(), name.clone());
+            ctx.type_for_xtor.insert(dtor.name.clone(), name.clone());
         }
 
         out.map.insert(name.clone(), xdata);
@@ -231,7 +236,7 @@ impl XData {
             name: name.clone(),
             attr: Attributes::default(),
             typ: typ.clone(),
-            ctors: ctors.keys().cloned().collect(),
+            ctors: ctors.values().cloned().collect(),
         };
 
         let defs = dtors
@@ -281,7 +286,7 @@ impl XData {
             name: name.clone(),
             attr: Attributes::default(),
             typ: typ.clone(),
-            dtors: dtors.keys().cloned().collect(),
+            dtors: dtors.values().cloned().collect(),
         };
 
         let codefs = ctors

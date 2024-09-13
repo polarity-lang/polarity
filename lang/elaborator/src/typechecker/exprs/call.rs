@@ -4,6 +4,8 @@ use std::rc::Rc;
 
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
+use crate::typechecker::lookup_table::CtorMeta;
+use crate::typechecker::lookup_table::LetMeta;
 use syntax::ast::*;
 
 use super::super::ctx::*;
@@ -19,8 +21,8 @@ impl CheckInfer for Call {
     ///           ──────────────────
     ///            P, Γ ⊢ Cσ ⇐ τ
     /// ```
-    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        let inferred_term = self.infer(prg, ctx)?;
+    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+        let inferred_term = self.infer(ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
             span: None,
@@ -34,17 +36,17 @@ impl CheckInfer for Call {
     ///           ──────────────────
     ///            P, Γ ⊢ Cσ ⇒ ...
     /// ```
-    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Call { span, kind, name, args, .. } = self;
 
         match kind {
             CallKind::Codefinition | CallKind::Constructor => {
-                let Ctor { name, params, typ, .. } = &prg.ctor_or_codef(name, *span)?;
-                let args_out = check_args(args, prg, name, ctx, params, *span)?;
+                let CtorMeta { params, typ, .. } = &ctx.lookup_table.lookup_ctor_or_codef(name)?;
+                let args_out = check_args(args, name, ctx, params, *span)?;
                 let typ_out = typ
                     .subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()])
                     .to_exp();
-                let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
+                let typ_nf = typ_out.normalize(&ctx.module, &mut ctx.env())?;
                 Ok(Call {
                     span: *span,
                     kind: *kind,
@@ -54,11 +56,13 @@ impl CheckInfer for Call {
                 })
             }
             CallKind::LetBound => {
-                let Let { name, params, typ, .. } = prg.top_level_let(name, *span)?;
-                let args_out = check_args(args, prg, name, ctx, params, *span)?;
+                let LetMeta { params, typ, .. } = ctx.lookup_table.lookup_let(name)?;
+                let params = params.clone();
+                let typ = typ.clone();
+                let args_out = check_args(args, name, ctx, &params, *span)?;
                 let typ_out =
                     typ.subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()]);
-                let typ_nf = typ_out.normalize(prg, &mut ctx.env())?;
+                let typ_nf = typ_out.normalize(&ctx.module, &mut ctx.env())?;
                 Ok(Call {
                     span: *span,
                     kind: *kind,
