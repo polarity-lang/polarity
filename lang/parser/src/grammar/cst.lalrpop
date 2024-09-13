@@ -67,6 +67,7 @@ extern {
     //
     //
     "NumLit" => Token::NumLit(<BigUint>),
+    "StringLit" => Token::StringLit(<String>),
 
     // DocComments
     "DocComment" => Token::DocComment(<String>),
