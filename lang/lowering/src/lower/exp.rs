@@ -5,10 +5,10 @@ use num_bigint::BigUint;
 
 use miette_util::ToMiette;
 use parser::cst;
+use parser::cst::decls::Telescope;
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
 use syntax::ast;
-use syntax::ast::lookup_table::DeclKind;
 use syntax::ast::Hole;
 use syntax::ast::TypeUniv;
 use syntax::ast::Variable;
@@ -57,18 +57,67 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
     )
 }
 
-impl Lower for cst::exp::Arg {
-    type Target = ast::Arg;
+/// Lists of arguments consist of a mix of named and unnamed arguments.
+/// When lowering such a list, we have to check that the named arguments use the correct names as
+/// present in the declaration.
+///
+/// Example:
+///
+/// ```text
+/// data Bool { True, False }
+///
+/// data List {
+///     Nil,
+///     Cons(head: Bool, tail: List)
+/// }
+///
+/// let example1 : List {
+///     Cons(x := True, xs := Nil)
+/// }
+/// ```
+///
+/// Here, we have to throw an error because the named arguments are not correct.
+fn lower_args(
+    args: &[cst::exp::Arg],
+    expected: Telescope,
+    ctx: &mut Ctx,
+) -> Result<ast::Args, LoweringError> {
+    let mut args_out = vec![];
 
-    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        match self {
-            cst::exp::Arg::UnnamedArg(e) => Ok(ast::Arg::UnnamedArg(e.lower(ctx)?)),
-            cst::exp::Arg::NamedArg(_, _) => Err(LoweringError::Impossible {
-                message: "Named arguments not yet implemented".to_owned(),
-                span: None,
-            }),
+    assert!(args.len() == expected.len());
+
+    fn iter_names(params: &Telescope) -> impl Iterator<Item = &BindingSite> {
+        params.0.iter().flat_map(|param| std::iter::once(&param.name).chain(param.names.iter()))
+    }
+
+    for (arg, expected_bs) in args.iter().zip(iter_names(&expected)) {
+        match arg {
+            cst::exp::Arg::UnnamedArg(exp) => {
+                args_out.push(ast::Arg::UnnamedArg(exp.lower(ctx)?));
+            }
+            cst::exp::Arg::NamedArg(name, exp) => {
+                let expected_name = match &expected_bs {
+                    BindingSite::Var { name, .. } => name,
+                    BindingSite::Wildcard { span } => {
+                        return Err(LoweringError::NamedArgForWildcard {
+                            given: name.clone(),
+                            span: span.to_miette(),
+                        })
+                    }
+                };
+                if name.id != expected_name.id {
+                    return Err(LoweringError::MismatchedNamedArgs {
+                        given: name.to_owned(),
+                        expected: expected_name.to_owned(),
+                        span: exp.span().to_miette(),
+                    });
+                }
+                args_out.push(ast::Arg::NamedArg(name.id.clone(), exp.lower(ctx)?));
+            }
         }
     }
+
+    Ok(ast::Args { args: args_out })
 }
 
 impl Lower for cst::exp::Case<cst::exp::Pattern> {
@@ -127,44 +176,44 @@ impl Lower for cst::exp::Call {
         // If we find the identifier in the global context then we have to lower
         // it to a call or a type constructor.
         if let Some(meta) = ctx.lookup_global(name) {
-            match meta.kind() {
-                DeclKind::Data | DeclKind::Codata => {
+            match meta {
+                DeclMeta::Data { params, .. } | DeclMeta::Codata { params, .. } => {
                     return Ok(ast::Exp::TypCtor(ast::TypCtor {
                         span: Some(*span),
                         name: name.id.to_owned(),
-                        args: ast::Args { args: args.lower(ctx)? },
+                        args: lower_args(args, params, ctx)?,
                     }))
                 }
-                DeclKind::Def | DeclKind::Dtor => {
+                DeclMeta::Def { .. } | DeclMeta::Dtor { .. } => {
                     return Err(LoweringError::MustUseAsDtor {
                         name: name.to_owned(),
                         span: span.to_miette(),
                     })
                 }
-                DeclKind::Ctor => {
+                DeclMeta::Ctor { params, .. } => {
                     return Ok(ast::Exp::Call(ast::Call {
                         span: Some(*span),
                         kind: ast::CallKind::Constructor,
                         name: name.id.to_owned(),
-                        args: ast::Args { args: args.lower(ctx)? },
+                        args: lower_args(args, params, ctx)?,
                         inferred_type: None,
                     }))
                 }
-                DeclKind::Codef => {
+                DeclMeta::Codef { params, .. } => {
                     return Ok(ast::Exp::Call(ast::Call {
                         span: Some(*span),
                         kind: ast::CallKind::Codefinition,
                         name: name.id.to_owned(),
-                        args: ast::Args { args: args.lower(ctx)? },
+                        args: lower_args(args, params, ctx)?,
                         inferred_type: None,
                     }))
                 }
-                DeclKind::Let => {
+                DeclMeta::Let { params, .. } => {
                     return Ok(ast::Exp::Call(ast::Call {
                         span: Some(*span),
                         kind: ast::CallKind::LetBound,
                         name: name.id.to_owned(),
-                        args: ast::Args { args: args.lower(ctx)? },
+                        args: lower_args(args, params, ctx)?,
                         inferred_type: None,
                     }))
                 }
@@ -184,21 +233,21 @@ impl Lower for cst::exp::DotCall {
         let cst::exp::DotCall { span, exp, name, args } = self;
 
         match ctx.lookup_global(name) {
-            Some(meta) => match meta.kind() {
-                DeclKind::Dtor => Ok(ast::Exp::DotCall(ast::DotCall {
+            Some(meta) => match meta {
+                DeclMeta::Dtor { params, .. } => Ok(ast::Exp::DotCall(ast::DotCall {
                     span: Some(*span),
                     kind: ast::DotCallKind::Destructor,
                     exp: exp.lower(ctx)?,
                     name: name.id.clone(),
-                    args: ast::Args { args: args.lower(ctx)? },
+                    args: lower_args(args, params, ctx)?,
                     inferred_type: None,
                 })),
-                DeclKind::Def => Ok(ast::Exp::DotCall(ast::DotCall {
+                DeclMeta::Def { params, .. } => Ok(ast::Exp::DotCall(ast::DotCall {
                     span: Some(*span),
                     kind: ast::DotCallKind::Definition,
                     exp: exp.lower(ctx)?,
                     name: name.id.clone(),
-                    args: ast::Args { args: args.lower(ctx)? },
+                    args: lower_args(args, params, ctx)?,
                     inferred_type: None,
                 })),
                 _ => Err(LoweringError::CannotUseAsDtor {
@@ -297,8 +346,8 @@ impl Lower for cst::exp::NatLit {
             .lookup_top_level_decl(&Ident { id: "Z".to_string() }, span)
             .map_err(|_| LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() })?;
         let call_kind = match z_kind {
-            ast::lookup_table::DeclMeta::Codef => ast::CallKind::Codefinition,
-            ast::lookup_table::DeclMeta::Ctor { .. } => ast::CallKind::Constructor,
+            DeclMeta::Codef { .. } => ast::CallKind::Codefinition,
+            DeclMeta::Ctor { .. } => ast::CallKind::Constructor,
             _ => return Err(LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() }),
         };
 

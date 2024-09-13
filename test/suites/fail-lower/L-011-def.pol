@@ -1,0 +1,8 @@
+data Bool { True, False }
+
+def Bool.and(other: Bool): Bool {
+    True => other,
+    False => False
+}
+
+let example: Bool { True.and(other_wrong := False) }

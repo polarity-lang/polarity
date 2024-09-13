@@ -5,6 +5,6 @@ data List {
     Cons(head: Bool, tail: List)
 }
 
-let example1 : List {
+let example1: List {
     Cons(x := True, xs := Nil)
 }

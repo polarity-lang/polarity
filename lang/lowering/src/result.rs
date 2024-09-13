@@ -1,7 +1,8 @@
 use miette::{Diagnostic, SourceSpan};
 use parser::cst::ident::Ident;
-use syntax::ast::lookup_table::DeclKind;
 use thiserror::Error;
+
+use crate::DeclKind;
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum LoweringError {
@@ -67,6 +68,21 @@ pub enum LoweringError {
     #[error("Literal cannot be desugared because S/Z are not in program")]
     #[diagnostic(code("L-010"))]
     NatLiteralCannotBeDesugared {
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("Mismatched named arguments: given {}, expected {}", given.id, expected.id)]
+    #[diagnostic(code("L-011"))]
+    MismatchedNamedArgs {
+        given: Ident,
+        expected: Ident,
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("Used named argument {} for wildcard parameter", given.id)]
+    #[diagnostic(code("L-012"))]
+    NamedArgForWildcard {
+        given: Ident,
         #[label]
         span: SourceSpan,
     },

@@ -43,11 +43,11 @@ impl DeclMeta {
         match self {
             DeclMeta::Data { .. } => DeclKind::Data,
             DeclMeta::Codata { .. } => DeclKind::Codata,
-            DeclMeta::Def => DeclKind::Def,
-            DeclMeta::Codef => DeclKind::Codef,
+            DeclMeta::Def { .. } => DeclKind::Def,
+            DeclMeta::Codef { .. } => DeclKind::Codef,
             DeclMeta::Ctor { .. } => DeclKind::Ctor,
             DeclMeta::Dtor { .. } => DeclKind::Dtor,
-            DeclMeta::Let => DeclKind::Let,
+            DeclMeta::Let { .. } => DeclKind::Let,
         }
     }
 }

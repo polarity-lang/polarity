@@ -54,6 +54,23 @@ pub enum Exp {
     Lam(Lam),
 }
 
+impl Exp {
+    pub fn span(&self) -> Span {
+        match self {
+            Exp::Call(call) => call.span,
+            Exp::DotCall(dot_call) => dot_call.span,
+            Exp::Anno(anno) => anno.span,
+            Exp::TypeUniv(type_univ) => type_univ.span,
+            Exp::LocalMatch(local_match) => local_match.span,
+            Exp::LocalComatch(local_comatch) => local_comatch.span,
+            Exp::Hole(hole) => hole.span,
+            Exp::NatLit(nat_lit) => nat_lit.span,
+            Exp::Fun(fun) => fun.span,
+            Exp::Lam(lam) => lam.span,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Call {
     pub span: Span,

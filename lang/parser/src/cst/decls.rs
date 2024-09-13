@@ -231,7 +231,7 @@ impl Telescope {
     }
 
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.0.iter().map(|param| param.names.len() + 1).sum()
     }
 }
 
