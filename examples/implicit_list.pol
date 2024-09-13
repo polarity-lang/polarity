@@ -1,11 +1,11 @@
 -- | The type of finite lists.
 data List(implicit a: Type) {
     -- | The canonical empty list.
-    Nil(a: Type): List(a:=a),
+    Nil(implicit a: Type): List(a:=a),
     -- | Appending one element to the front of a list.
     Cons(implicit a: Type, x: a, xs: List(a:=a)): List(a:=a)
 }
 
 data Top { Unit }
 
-let example: List {Cons(Unit, Nil(Top))}
+let example: List {Cons(Unit, Nil)}
