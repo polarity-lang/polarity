@@ -713,7 +713,93 @@ impl ReadBack for OpaqueCall {
 //
 //
 
-pub type Args = Vec<Rc<Val>>;
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Args(pub Vec<Arg>);
+
+impl Args {
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn to_vals(&self) -> Vec<Rc<Val>> {
+        self.0.iter().map(Arg::to_val).collect()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Arg> {
+        self.0.iter()
+    }
+}
+
+impl Shift for Args {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        Args(self.0.shift_in_range(range, by))
+    }
+}
+
+impl ReadBack for Args {
+    type Nf = Vec<ast::Arg>;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        self.0.read_back(prg)
+    }
+}
+
+impl Print for Args {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        self.0.print(cfg, alloc)
+    }
+}
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub enum Arg {
+    UnnamedArg(Rc<Val>),
+    NamedArg(ast::Ident, Rc<Val>),
+}
+
+impl Shift for Arg {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        match self {
+            Arg::UnnamedArg(val) => Arg::UnnamedArg(val.shift_in_range(range, by)),
+            Arg::NamedArg(name, val) => Arg::NamedArg(name.clone(), val.shift_in_range(range, by)),
+        }
+    }
+}
+
+impl ReadBack for Arg {
+    type Nf = ast::Arg;
+
+    fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
+        match self {
+            Arg::UnnamedArg(val) => Ok(ast::Arg::UnnamedArg(val.read_back(prg)?)),
+            Arg::NamedArg(name, val) => Ok(ast::Arg::NamedArg(name.clone(), val.read_back(prg)?)),
+        }
+    }
+}
+
+impl Print for Arg {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Arg::UnnamedArg(val) => val.print(cfg, alloc),
+            Arg::NamedArg(name, val) => alloc
+                .text(name.to_string())
+                .append(alloc.space())
+                .append(COLONEQ)
+                .append(alloc.space())
+                .append(val.print(cfg, alloc)),
+        }
+    }
+}
+
+impl Arg {
+    pub fn to_val(&self) -> Rc<Val> {
+        match self {
+            Arg::UnnamedArg(val) => val.clone(),
+            Arg::NamedArg(_, val) => val.clone(),
+        }
+    }
+}
 
 // Closure
 //

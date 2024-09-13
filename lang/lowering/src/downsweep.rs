@@ -4,9 +4,9 @@ use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::ident::Ident;
 use syntax::ast::lookup_table;
-use syntax::ast::lookup_table::DeclMeta;
 use syntax::ast::HashMap;
 
+use super::ctx::DeclMeta;
 use super::result::*;
 
 /// Build the structure tracking the declaration order in the source code
@@ -34,13 +34,13 @@ pub fn build_lookup_table(
                 add_top_level_decl(
                     &data.name,
                     &data.span,
-                    DeclMeta::Data { arity: data.params.len() },
+                    DeclMeta::Data { params: data.params.clone() },
                 )?;
                 for ctor in &data.ctors {
                     add_top_level_decl(
                         &ctor.name,
                         &ctor.span,
-                        DeclMeta::Ctor { ret_typ: data.name.id.clone() },
+                        DeclMeta::Ctor { params: ctor.params.clone(), ret_typ: data.name.clone() },
                     )?;
                 }
 
@@ -54,13 +54,16 @@ pub fn build_lookup_table(
                 add_top_level_decl(
                     &codata.name,
                     &codata.span,
-                    DeclMeta::Codata { arity: codata.params.len() },
+                    DeclMeta::Codata { params: codata.params.clone() },
                 )?;
                 for dtor in &codata.dtors {
                     add_top_level_decl(
                         &dtor.name,
                         &dtor.span,
-                        DeclMeta::Dtor { self_typ: codata.name.id.clone() },
+                        DeclMeta::Dtor {
+                            params: dtor.params.clone(),
+                            self_typ: codata.name.clone(),
+                        },
                     )?;
                 }
 
@@ -71,7 +74,11 @@ pub fn build_lookup_table(
             }
             cst::decls::Decl::Def(def) => {
                 // top_level_map
-                add_top_level_decl(&def.name, &def.span, DeclMeta::Def)?;
+                add_top_level_decl(
+                    &def.name,
+                    &def.span,
+                    DeclMeta::Def { params: def.params.clone() },
+                )?;
 
                 // lookup_table
                 let type_name = def.scrutinee.typ.name.clone();
@@ -79,7 +86,11 @@ pub fn build_lookup_table(
             }
             cst::decls::Decl::Codef(codef) => {
                 // top_level_map
-                add_top_level_decl(&codef.name, &codef.span, DeclMeta::Codef)?;
+                add_top_level_decl(
+                    &codef.name,
+                    &codef.span,
+                    DeclMeta::Codef { params: codef.params.clone() },
+                )?;
 
                 // lookup_table
                 let type_name = codef.typ.name.clone();
@@ -87,7 +98,11 @@ pub fn build_lookup_table(
             }
             cst::decls::Decl::Let(tl_let) => {
                 // top_level_map
-                add_top_level_decl(&tl_let.name, &tl_let.span, DeclMeta::Let)?;
+                add_top_level_decl(
+                    &tl_let.name,
+                    &tl_let.span,
+                    DeclMeta::Let { params: tl_let.params.clone() },
+                )?;
 
                 lookup_table.add_let(tl_let.name.id.clone());
             }

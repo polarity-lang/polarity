@@ -1,0 +1,8 @@
+data Bool { True, False }
+
+data Option(_: Type) {
+    None(elem: Type): Option(elem),
+    Some(elem: Type, x: elem): Option(elem),
+}
+
+let example2: Option(wrong := Bool) { None(Bool) }

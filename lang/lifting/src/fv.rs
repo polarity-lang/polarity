@@ -100,6 +100,15 @@ impl FV for Args {
     }
 }
 
+impl FV for Arg {
+    fn visit_fv(&self, v: &mut USTVisitor) {
+        match self {
+            Arg::UnnamedArg(exp) => exp.visit_fv(v),
+            Arg::NamedArg(_, exp) => exp.visit_fv(v),
+        }
+    }
+}
+
 impl FV for Hole {
     fn visit_fv(&self, v: &mut USTVisitor) {
         let Hole { args, .. } = self;
@@ -187,12 +196,12 @@ impl FreeVars {
             let typ = typ.subst(&mut ctx, &subst.in_param());
 
             let param = Param { implicit: false, name: name.clone(), typ: typ.clone() };
-            let arg = Rc::new(Exp::Variable(Variable {
+            let arg = Arg::UnnamedArg(Rc::new(Exp::Variable(Variable {
                 span: None,
                 idx: base_ctx.lvl_to_idx(fv.lvl),
                 name: name.clone(),
                 inferred_type: None,
-            }));
+            })));
             args.push(arg);
             params.push(param);
             subst.add(name, lvl);

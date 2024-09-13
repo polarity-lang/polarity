@@ -1,12 +1,13 @@
+use std::fmt;
 use std::rc::Rc;
 
 use codespan::Span;
 use miette_util::ToMiette;
 use parser::cst;
 
+use parser::cst::decls::Telescope;
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
-use syntax::ast::lookup_table::DeclMeta;
 use syntax::ast::{self, MetaVar, MetaVarState};
 use syntax::ast::{HasSpan, Named};
 use syntax::ast::{HashMap, HashSet};
@@ -60,8 +61,8 @@ impl Ctx {
     }
 
     /// Lookup in the global context of declarations.
-    pub fn lookup_global(&self, name: &Ident) -> Option<&DeclMeta> {
-        self.top_level_map.get(name)
+    pub fn lookup_global(&self, name: &Ident) -> Option<DeclMeta> {
+        self.top_level_map.get(name).cloned()
     }
 
     pub fn lookup_top_level_decl(
@@ -359,6 +360,56 @@ impl ContextElem for &cst::exp::BindingSite {
         match self {
             BindingSite::Var { name, .. } => name.to_owned(),
             BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum DeclMeta {
+    Data { params: Telescope },
+    Codata { params: Telescope },
+    Def { params: Telescope },
+    Codef { params: Telescope },
+    Ctor { params: Telescope, ret_typ: Ident },
+    Dtor { params: Telescope, self_typ: Ident },
+    Let { params: Telescope },
+}
+
+impl DeclMeta {
+    pub fn kind(&self) -> DeclKind {
+        match self {
+            DeclMeta::Data { .. } => DeclKind::Data,
+            DeclMeta::Codata { .. } => DeclKind::Codata,
+            DeclMeta::Def { .. } => DeclKind::Def,
+            DeclMeta::Codef { .. } => DeclKind::Codef,
+            DeclMeta::Ctor { .. } => DeclKind::Ctor,
+            DeclMeta::Dtor { .. } => DeclKind::Dtor,
+            DeclMeta::Let { .. } => DeclKind::Let,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum DeclKind {
+    Data,
+    Codata,
+    Def,
+    Codef,
+    Ctor,
+    Dtor,
+    Let,
+}
+
+impl fmt::Display for DeclKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DeclKind::Data => write!(f, "data type"),
+            DeclKind::Codata => write!(f, "codata type"),
+            DeclKind::Def => write!(f, "definition"),
+            DeclKind::Codef => write!(f, "codefinition"),
+            DeclKind::Ctor => write!(f, "constructor"),
+            DeclKind::Dtor => write!(f, "destructor"),
+            DeclKind::Let => write!(f, "toplevel let"),
         }
     }
 }

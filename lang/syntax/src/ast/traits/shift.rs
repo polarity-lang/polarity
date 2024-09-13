@@ -53,35 +53,6 @@ impl Shift for Idx {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn shift_fst() {
-        let result = Idx { fst: 0, snd: 0 }.shift((1, 0));
-        assert_eq!(result, Idx { fst: 1, snd: 0 });
-    }
-
-    #[test]
-    fn shift_snd() {
-        let result = Idx { fst: 0, snd: 0 }.shift((0, 1));
-        assert_eq!(result, Idx { fst: 0, snd: 1 });
-    }
-
-    #[test]
-    fn shift_in_range_fst() {
-        let result = Idx { fst: 0, snd: 0 }.shift_in_range(1.., (1, 0));
-        assert_eq!(result, Idx { fst: 0, snd: 0 });
-    }
-
-    #[test]
-    fn shift_in_range_snd() {
-        let result = Idx { fst: 0, snd: 0 }.shift_in_range(1.., (0, 1));
-        assert_eq!(result, Idx { fst: 0, snd: 0 });
-    }
-}
-
 pub trait ShiftRange: RangeBounds<usize> + Clone {}
 
 impl<T: RangeBounds<usize> + Clone> ShiftRange for T {}
@@ -127,5 +98,34 @@ impl<R: ShiftRange> ShiftRangeExt for R {
         }
 
         (shift_bound(self.start_bound(), by), shift_bound(self.end_bound(), by))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn shift_fst() {
+        let result = Idx { fst: 0, snd: 0 }.shift((1, 0));
+        assert_eq!(result, Idx { fst: 1, snd: 0 });
+    }
+
+    #[test]
+    fn shift_snd() {
+        let result = Idx { fst: 0, snd: 0 }.shift((0, 1));
+        assert_eq!(result, Idx { fst: 0, snd: 1 });
+    }
+
+    #[test]
+    fn shift_in_range_fst() {
+        let result = Idx { fst: 0, snd: 0 }.shift_in_range(1.., (1, 0));
+        assert_eq!(result, Idx { fst: 0, snd: 0 });
+    }
+
+    #[test]
+    fn shift_in_range_snd() {
+        let result = Idx { fst: 0, snd: 0 }.shift_in_range(1.., (0, 1));
+        assert_eq!(result, Idx { fst: 0, snd: 0 });
     }
 }

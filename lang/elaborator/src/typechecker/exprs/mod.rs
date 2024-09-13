@@ -106,6 +106,22 @@ impl CheckInfer for Exp {
     }
 }
 
+impl CheckInfer for Arg {
+    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+        match self {
+            Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.check(prg, ctx, t)?)),
+            Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.check(prg, ctx, t)?)),
+        }
+    }
+
+    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+        match self {
+            Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.infer(prg, ctx)?)),
+            Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.infer(prg, ctx)?)),
+        }
+    }
+}
+
 fn check_args(
     this: &Args,
     prg: &Module,

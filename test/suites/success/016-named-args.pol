@@ -1,0 +1,22 @@
+data Bool { True, False }
+
+def Bool.and(other: Bool): Bool {
+    True => other,
+    False => False
+}
+
+data List {
+    Nil,
+    Cons(head: Bool, tail: List)
+}
+
+data Option(elem: Type) {
+    None(elem: Type): Option(elem),
+    Some(elem: Type, x: elem): Option(elem),
+}
+
+let example1 : List {
+    Cons(head := True, tail := Nil)
+}
+let example2: Bool { True.and(other := False) }
+let example3: Option(elem := Bool) { None(Bool) }

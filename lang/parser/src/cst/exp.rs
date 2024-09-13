@@ -31,6 +31,15 @@ pub struct Case<P> {
     pub body: Option<Rc<Exp>>,
 }
 
+/// Arguments in an argument list can either be unnamed or named.
+/// Example for named arguments: `f(x := 1, y := 2)`
+/// Example for unnamed arguments: `f(1, 2)``
+#[derive(Debug, Clone)]
+pub enum Arg {
+    UnnamedArg(Rc<Exp>),
+    NamedArg(Ident, Rc<Exp>),
+}
+
 #[derive(Debug, Clone)]
 pub enum Exp {
     Call(Call),
@@ -45,11 +54,28 @@ pub enum Exp {
     Lam(Lam),
 }
 
+impl Exp {
+    pub fn span(&self) -> Span {
+        match self {
+            Exp::Call(call) => call.span,
+            Exp::DotCall(dot_call) => dot_call.span,
+            Exp::Anno(anno) => anno.span,
+            Exp::TypeUniv(type_univ) => type_univ.span,
+            Exp::LocalMatch(local_match) => local_match.span,
+            Exp::LocalComatch(local_comatch) => local_comatch.span,
+            Exp::Hole(hole) => hole.span,
+            Exp::NatLit(nat_lit) => nat_lit.span,
+            Exp::Fun(fun) => fun.span,
+            Exp::Lam(lam) => lam.span,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Call {
     pub span: Span,
     pub name: Ident,
-    pub args: Vec<Rc<Exp>>,
+    pub args: Vec<Arg>,
 }
 
 #[derive(Debug, Clone)]
@@ -57,7 +83,7 @@ pub struct DotCall {
     pub span: Span,
     pub exp: Rc<Exp>,
     pub name: Ident,
-    pub args: Vec<Rc<Exp>>,
+    pub args: Vec<Arg>,
 }
 
 #[derive(Debug, Clone)]
