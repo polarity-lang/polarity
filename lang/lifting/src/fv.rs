@@ -105,6 +105,7 @@ impl FV for Arg {
         match self {
             Arg::UnnamedArg(exp) => exp.visit_fv(v),
             Arg::NamedArg(_, exp) => exp.visit_fv(v),
+            Arg::InsertedImplicitArg(hole) => hole.visit_fv(v),
         }
     }
 }

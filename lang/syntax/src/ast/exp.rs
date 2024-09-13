@@ -70,19 +70,25 @@ where
 
 /// Arguments in an argument list can either be unnamed or named.
 /// Example for named arguments: `f(x := 1, y := 2)`
-/// Example for unnamed arguments: `f(1, 2)``
+/// Example for unnamed arguments: `f(1, 2)`
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Arg {
     UnnamedArg(Rc<Exp>),
     NamedArg(Ident, Rc<Exp>),
+    InsertedImplicitArg(Hole),
 }
 
 impl Arg {
-    pub fn exp(&self) -> &Rc<Exp> {
+    pub fn is_inserted_implicit(&self) -> bool {
+        matches!(self, Arg::InsertedImplicitArg(_))
+    }
+
+    pub fn exp(&self) -> Rc<Exp> {
         match self {
-            Arg::UnnamedArg(e) => e,
-            Arg::NamedArg(_, e) => e,
+            Arg::UnnamedArg(e) => e.clone(),
+            Arg::NamedArg(_, e) => e.clone(),
+            Arg::InsertedImplicitArg(hole) => Rc::new(hole.clone().into()),
         }
     }
 }
@@ -92,6 +98,7 @@ impl HasSpan for Arg {
         match self {
             Arg::UnnamedArg(e) => e.span(),
             Arg::NamedArg(_, e) => e.span(),
+            Arg::InsertedImplicitArg(hole) => hole.span(),
         }
     }
 }
@@ -101,6 +108,9 @@ impl Shift for Arg {
         match self {
             Arg::UnnamedArg(e) => Arg::UnnamedArg(e.shift_in_range(range, by)),
             Arg::NamedArg(i, e) => Arg::NamedArg(i.clone(), e.shift_in_range(range, by)),
+            Arg::InsertedImplicitArg(hole) => {
+                Arg::InsertedImplicitArg(hole.shift_in_range(range, by))
+            }
         }
     }
 }
@@ -110,6 +120,7 @@ impl Occurs for Arg {
         match self {
             Arg::UnnamedArg(e) => e.occurs(ctx, lvl),
             Arg::NamedArg(_, e) => e.occurs(ctx, lvl),
+            Arg::InsertedImplicitArg(hole) => hole.occurs(ctx, lvl),
         }
     }
 }
@@ -119,6 +130,7 @@ impl HasType for Arg {
         match self {
             Arg::UnnamedArg(e) => e.typ(),
             Arg::NamedArg(_, e) => e.typ(),
+            Arg::InsertedImplicitArg(hole) => hole.typ(),
         }
     }
 }
@@ -129,6 +141,7 @@ impl Substitutable for Arg {
         match self {
             Arg::UnnamedArg(e) => Arg::UnnamedArg(e.subst(ctx, by)),
             Arg::NamedArg(i, e) => Arg::NamedArg(i.clone(), e.subst(ctx, by)),
+            Arg::InsertedImplicitArg(hole) => Arg::InsertedImplicitArg(hole.subst(ctx, by)),
         }
     }
 }
@@ -1357,13 +1370,18 @@ impl Substitutable for Args {
 impl Print for Args {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let mut doc = alloc.nil();
-        let mut iter = self.args.iter().peekable();
-        while let Some(arg) = iter.next() {
-            doc = doc.append(arg.print(cfg, alloc));
-            if iter.peek().is_some() {
-                doc = doc.append(COMMA).append(alloc.line())
+        let mut first = true;
+
+        for arg in &self.args {
+            if !arg.is_inserted_implicit() {
+                if !first {
+                    doc = doc.append(COMMA).append(alloc.line());
+                }
+                doc = doc.append(arg.print(cfg, alloc));
+                first = false;
             }
         }
+
         doc.align().parens().group()
     }
 }

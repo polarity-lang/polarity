@@ -111,6 +111,9 @@ impl CheckInfer for Arg {
         match self {
             Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.check(prg, ctx, t)?)),
             Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.check(prg, ctx, t)?)),
+            Arg::InsertedImplicitArg(hole) => {
+                Ok(Arg::InsertedImplicitArg(hole.check(prg, ctx, t)?))
+            }
         }
     }
 
@@ -118,6 +121,7 @@ impl CheckInfer for Arg {
         match self {
             Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.infer(prg, ctx)?)),
             Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.infer(prg, ctx)?)),
+            Arg::InsertedImplicitArg(hole) => Ok(Arg::InsertedImplicitArg(hole.infer(prg, ctx)?)),
         }
     }
 }

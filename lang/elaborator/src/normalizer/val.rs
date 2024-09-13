@@ -747,7 +747,20 @@ impl ReadBack for Args {
 
 impl Print for Args {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.0.print(cfg, alloc)
+        let mut doc = alloc.nil();
+        let mut first = true;
+
+        for arg in &self.0 {
+            if !arg.is_inserted_implicit() {
+                if !first {
+                    doc = doc.append(COMMA).append(alloc.line());
+                }
+                doc = doc.append(arg.print(cfg, alloc));
+                first = false;
+            }
+        }
+
+        doc.align().parens().group()
     }
 }
 
@@ -756,6 +769,13 @@ impl Print for Args {
 pub enum Arg {
     UnnamedArg(Rc<Val>),
     NamedArg(ast::Ident, Rc<Val>),
+    InsertedImplicitArg(Rc<Val>),
+}
+
+impl Arg {
+    pub fn is_inserted_implicit(&self) -> bool {
+        matches!(self, Arg::InsertedImplicitArg(_))
+    }
 }
 
 impl Shift for Arg {
@@ -763,6 +783,9 @@ impl Shift for Arg {
         match self {
             Arg::UnnamedArg(val) => Arg::UnnamedArg(val.shift_in_range(range, by)),
             Arg::NamedArg(name, val) => Arg::NamedArg(name.clone(), val.shift_in_range(range, by)),
+            Arg::InsertedImplicitArg(val) => {
+                Arg::InsertedImplicitArg(val.shift_in_range(range, by))
+            }
         }
     }
 }
@@ -774,6 +797,7 @@ impl ReadBack for Arg {
         match self {
             Arg::UnnamedArg(val) => Ok(ast::Arg::UnnamedArg(val.read_back(prg)?)),
             Arg::NamedArg(name, val) => Ok(ast::Arg::NamedArg(name.clone(), val.read_back(prg)?)),
+            Arg::InsertedImplicitArg(val) => Ok(ast::Arg::UnnamedArg(val.read_back(prg)?)),
         }
     }
 }
@@ -788,6 +812,9 @@ impl Print for Arg {
                 .append(COLONEQ)
                 .append(alloc.space())
                 .append(val.print(cfg, alloc)),
+            Arg::InsertedImplicitArg(_) => {
+                panic!("Inserted implicit arguments should not be printed")
+            }
         }
     }
 }
@@ -797,6 +824,7 @@ impl Arg {
         match self {
             Arg::UnnamedArg(val) => val.clone(),
             Arg::NamedArg(_, val) => val.clone(),
+            Arg::InsertedImplicitArg(val) => val.clone(),
         }
     }
 }

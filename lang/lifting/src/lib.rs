@@ -475,6 +475,7 @@ impl Lift for Arg {
         match self {
             Arg::UnnamedArg(exp) => Arg::UnnamedArg(exp.lift(ctx)),
             Arg::NamedArg(name, exp) => Arg::NamedArg(name.clone(), exp.lift(ctx)),
+            Arg::InsertedImplicitArg(hole) => Arg::UnnamedArg(Rc::new(hole.lift(ctx))),
         }
     }
 }

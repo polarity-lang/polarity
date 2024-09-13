@@ -373,6 +373,7 @@ impl Rename for Arg {
         match self {
             Arg::UnnamedArg(exp) => Arg::UnnamedArg(exp.rename_in_ctx(ctx)),
             Arg::NamedArg(name, exp) => Arg::NamedArg(name, exp.rename_in_ctx(ctx)),
+            Arg::InsertedImplicitArg(hole) => Arg::InsertedImplicitArg(hole.rename_in_ctx(ctx)),
         }
     }
 }
