@@ -1310,6 +1310,7 @@ name = "lowering"
 version = "0.1.0"
 dependencies = [
  "codespan",
+ "log",
  "miette",
  "miette_util",
  "num-bigint",

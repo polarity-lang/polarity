@@ -120,7 +120,7 @@ impl ReadBack for Val {
             Val::LocalComatch(e) => e.read_back(prg)?.into(),
             Val::Neu(exp) => exp.read_back(prg)?,
         };
-        trace!("↓{} ~> {}", self.print_to_colored_string(None), res.print_to_colored_string(None));
+        trace!("↓{} ~> {}", self.print_trace(), res.print_trace());
         Ok(res)
     }
 }
@@ -568,8 +568,12 @@ impl Shift for Hole {
 }
 
 impl Print for Hole {
-    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        alloc.keyword(HOLE)
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        if cfg.print_metavar_ids {
+            alloc.text(format!("?{}", self.metavar.id))
+        } else {
+            alloc.keyword(HOLE)
+        }
     }
 }
 

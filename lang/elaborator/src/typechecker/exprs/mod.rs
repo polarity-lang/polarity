@@ -65,12 +65,7 @@ impl<T: CheckInfer> CheckInfer for Rc<T> {
 
 impl CheckInfer for Exp {
     fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        trace!(
-            "{} |- {} <= {}",
-            ctx.print_to_colored_string(None),
-            self.print_to_colored_string(None),
-            t.print_to_colored_string(None)
-        );
+        trace!("{} |- {} <= {}", ctx.print_trace(), self.print_trace(), t.print_trace());
         match self {
             Exp::Variable(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
             Exp::TypCtor(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
@@ -98,9 +93,9 @@ impl CheckInfer for Exp {
         };
         trace!(
             "{} |- {} => {}",
-            ctx.print_to_colored_string(None),
-            self.print_to_colored_string(None),
-            res.as_ref().map(|e| e.typ()).print_to_colored_string(None)
+            ctx.print_trace(),
+            self.print_trace(),
+            res.as_ref().map(|e| e.typ()).print_trace()
         );
         res
     }
