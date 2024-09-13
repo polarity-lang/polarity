@@ -165,6 +165,23 @@ fn lower_args(
     Ok(ast::Args { args: args_out })
 }
 
+#[cfg(test)]
+mod lower_args_tests {
+    use parser::cst::decls::Telescope;
+    use syntax::ast;
+
+    use super::{lower_args, Ctx};
+
+    #[test]
+    fn test_empty() {
+        let given = vec![];
+        let expected = Telescope(vec![]);
+        let mut ctx = Ctx::empty(Default::default());
+        let res = lower_args(&given, expected, &mut ctx);
+        assert_eq!(res.unwrap(), ast::Args { args: vec![] })
+    }
+}
+
 impl Lower for cst::exp::Case<cst::exp::Pattern> {
     type Target = ast::Case;
 
