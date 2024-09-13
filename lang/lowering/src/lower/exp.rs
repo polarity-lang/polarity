@@ -78,19 +78,29 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
 ///
 /// Here, we have to throw an error because the named arguments are not correct.
 fn lower_args(
-    args: &[cst::exp::Arg],
+    given: &[cst::exp::Arg],
     expected: Telescope,
     ctx: &mut Ctx,
 ) -> Result<ast::Args, LoweringError> {
     let mut args_out = vec![];
 
-    assert!(args.len() == expected.len());
+    // Some arguments might be implicit.
+    assert!(expected.len() >= given.len());
 
-    fn iter_names(params: &Telescope) -> impl Iterator<Item = &BindingSite> {
-        params.0.iter().flat_map(|param| std::iter::once(&param.name).chain(param.names.iter()))
-    }
+    let mut given_iter = given.iter().peekable();
 
-    for (arg, expected_bs) in args.iter().zip(iter_names(&expected)) {
+    fn pop_arg<'a>(
+        given: &mut impl Iterator<Item = &'a cst::exp::Arg>,
+        expected_bs: &BindingSite,
+        args_out: &mut Vec<ast::Arg>,
+        ctx: &mut Ctx,
+    ) -> Result<(), LoweringError> {
+        let Some(arg) = given.next() else {
+            return Err(LoweringError::MissingArgForParam {
+                expected: bs_to_name(expected_bs).to_owned(),
+                span: bs_to_span(expected_bs).to_miette(),
+            });
+        };
         match arg {
             cst::exp::Arg::UnnamedArg(exp) => {
                 args_out.push(ast::Arg::UnnamedArg(exp.lower(ctx)?));
@@ -113,6 +123,37 @@ fn lower_args(
                     });
                 }
                 args_out.push(ast::Arg::NamedArg(name.id.clone(), exp.lower(ctx)?));
+            }
+        }
+        Ok(())
+    }
+
+    for expected_param in expected.0.iter() {
+        let names_iter = std::iter::once(&expected_param.name).chain(expected_param.names.iter());
+        for expected_bs in names_iter {
+            if expected_param.implicit {
+                if let Some(cst::exp::Arg::NamedArg(given_name, exp)) = given_iter.peek() {
+                    let BindingSite::Var { name: expected_name, .. } = &expected_bs else {
+                        return Err(LoweringError::NamedArgForWildcard {
+                            given: given_name.clone(),
+                            span: exp.span().to_miette(),
+                        });
+                    };
+                    if expected_name == given_name {
+                        pop_arg(&mut given_iter, expected_bs, &mut args_out, ctx)?;
+                        continue;
+                    }
+                }
+
+                // Otherwise, we insert a hole for the implicit argument.
+                let mv = ctx.fresh_metavar();
+                let args = ctx.subst_from_ctx();
+                let hole =
+                    Hole { span: None, metavar: mv, inferred_type: None, inferred_ctx: None, args };
+
+                args_out.push(ast::Arg::InsertedImplicitArg(hole));
+            } else {
+                pop_arg(&mut given_iter, &expected_param.name, &mut args_out, ctx)?;
             }
         }
     }
