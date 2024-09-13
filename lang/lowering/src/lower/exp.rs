@@ -56,12 +56,35 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
         |ctx, params| f(ctx, params.map(|params| ast::TelescopeInst { params })?),
     )
 }
-
-/// Lists of arguments consist of a mix of named and unnamed arguments.
-/// When lowering such a list, we have to check that the named arguments use the correct names as
-/// present in the declaration.
+/// Lowers a list of arguments, ensuring that named arguments match the expected parameter names.
 ///
-/// Example:
+/// This function processes a mix of named and unnamed arguments provided by the user (`given`)
+/// and matches them against the expected parameters (`expected`). It handles implicit parameters
+/// by inserting fresh metavariables when necessary and ensures that named arguments correspond to the correct
+/// parameters as declared.
+///
+/// # Parameters
+///
+/// - `given`: A slice of `cst::exp::Arg` representing the arguments provided by the user.
+/// - `expected`: A `Telescope` containing the expected parameters.
+/// - `ctx`: A mutable reference to the current context (`Ctx`), used for tracking variables and generating fresh metavariables.
+///
+/// # Returns
+///
+/// - `Ok(ast::Args)`: The successfully lowered arguments.
+/// - `Err(LoweringError)`: An error indicating issues such as missing arguments, too many arguments,
+///   mismatched named arguments, or improper use of wildcards.
+///
+/// # Errors
+///
+/// This function may return a `LoweringError` in the following cases:
+///
+/// - **MissingArgForParam**: A required argument is missing for a parameter.
+/// - **TooManyArgs**: More arguments are provided than there are expected parameters.
+/// - **MismatchedNamedArgs**: A named argument does not match the expected parameter name.
+/// - **NamedArgForWildcard**: A named argument is provided for a wildcard parameter, which is not allowed.
+///
+/// # Example
 ///
 /// ```text
 /// data Bool { True, False }
@@ -76,21 +99,51 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
 /// }
 /// ```
 ///
-/// Here, we have to throw an error because the named arguments are not correct.
+/// In this example, an error is thrown because the named arguments `x` and `xs` do not match
+/// the expected parameter names `head` and `tail`.
 fn lower_args(
-    args: &[cst::exp::Arg],
+    given: &[cst::exp::Arg],
     expected: Telescope,
     ctx: &mut Ctx,
 ) -> Result<ast::Args, LoweringError> {
     let mut args_out = vec![];
 
-    assert!(args.len() == expected.len());
+    // Ensure that the number of given arguments does not exceed the number of expected parameters.
+    // Some expected parameters might be implicit and not require corresponding given arguments.
+    assert!(expected.len() >= given.len());
 
-    fn iter_names(params: &Telescope) -> impl Iterator<Item = &BindingSite> {
-        params.0.iter().flat_map(|param| std::iter::once(&param.name).chain(param.names.iter()))
-    }
+    // Create a peekable iterator over the given arguments to allow lookahead.
+    let mut given_iter = given.iter().peekable();
 
-    for (arg, expected_bs) in args.iter().zip(iter_names(&expected)) {
+    /// Processes a single argument, matching it against the expected parameter binding site.
+    ///
+    /// This function consumes one argument from the `given` iterator and attempts to match it with the
+    /// expected binding site (`expected_bs`). It handles both named and unnamed arguments and ensures
+    /// that named arguments match the expected parameter names.
+    ///
+    /// # Parameters
+    ///
+    /// - `given`: A mutable iterator over the given arguments.
+    /// - `expected_bs`: The binding site of the expected parameter.
+    /// - `args_out`: A mutable vector to collect the lowered arguments.
+    /// - `ctx`: A mutable reference to the current context.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(())`: The argument was successfully processed and added to `args_out`.
+    /// - `Err(LoweringError)`: An error occurred while processing the argument.
+    fn pop_arg<'a>(
+        given: &mut impl Iterator<Item = &'a cst::exp::Arg>,
+        expected_bs: &BindingSite,
+        args_out: &mut Vec<ast::Arg>,
+        ctx: &mut Ctx,
+    ) -> Result<(), LoweringError> {
+        let Some(arg) = given.next() else {
+            return Err(LoweringError::MissingArgForParam {
+                expected: bs_to_name(expected_bs).to_owned(),
+                span: bs_to_span(expected_bs).to_miette(),
+            });
+        };
         match arg {
             cst::exp::Arg::UnnamedArg(exp) => {
                 args_out.push(ast::Arg::UnnamedArg(exp.lower(ctx)?));
@@ -102,7 +155,7 @@ fn lower_args(
                         return Err(LoweringError::NamedArgForWildcard {
                             given: name.clone(),
                             span: span.to_miette(),
-                        })
+                        });
                     }
                 };
                 if name.id != expected_name.id {
@@ -115,9 +168,63 @@ fn lower_args(
                 args_out.push(ast::Arg::NamedArg(name.id.clone(), exp.lower(ctx)?));
             }
         }
+        Ok(())
     }
 
+    for expected_param in expected.0.iter() {
+        // Each parameter can have multiple names (e.g., aliases).
+        let names_iter = std::iter::once(&expected_param.name).chain(expected_param.names.iter());
+        for expected_bs in names_iter {
+            if expected_param.implicit {
+                if let Some(cst::exp::Arg::NamedArg(given_name, exp)) = given_iter.peek() {
+                    let BindingSite::Var { name: expected_name, .. } = &expected_bs else {
+                        return Err(LoweringError::NamedArgForWildcard {
+                            given: given_name.clone(),
+                            span: exp.span().to_miette(),
+                        });
+                    };
+                    if expected_name == given_name {
+                        pop_arg(&mut given_iter, expected_bs, &mut args_out, ctx)?;
+                        continue;
+                    }
+                }
+
+                let mv = ctx.fresh_metavar();
+                let args = ctx.subst_from_ctx();
+                let hole =
+                    Hole { span: None, metavar: mv, inferred_type: None, inferred_ctx: None, args };
+
+                args_out.push(ast::Arg::InsertedImplicitArg(hole));
+            } else {
+                pop_arg(&mut given_iter, expected_bs, &mut args_out, ctx)?;
+            }
+        }
+    }
+
+    // Check for any extra arguments that were not matched to parameters.
+    if let Some(extra_arg) = given_iter.next() {
+        return Err(LoweringError::TooManyArgs { span: extra_arg.span().to_miette() });
+    }
+
+    // All arguments have been successfully processed.
     Ok(ast::Args { args: args_out })
+}
+
+#[cfg(test)]
+mod lower_args_tests {
+    use parser::cst::decls::Telescope;
+    use syntax::ast;
+
+    use super::{lower_args, Ctx};
+
+    #[test]
+    fn test_empty() {
+        let given = vec![];
+        let expected = Telescope(vec![]);
+        let mut ctx = Ctx::empty(Default::default());
+        let res = lower_args(&given, expected, &mut ctx);
+        assert_eq!(res.unwrap(), ast::Args { args: vec![] })
+    }
 }
 
 impl Lower for cst::exp::Case<cst::exp::Pattern> {

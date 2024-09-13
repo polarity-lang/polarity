@@ -80,6 +80,20 @@ pub trait Print {
         self.print_colored(cfg, &mut ansi).expect("Failed to print to string");
         unsafe { String::from_utf8_unchecked(ansi.into_inner()) }
     }
+
+    fn print_trace(&self) -> String {
+        const TRACE_CFG: PrintCfg = PrintCfg {
+            width: 80,
+            latex: false,
+            omit_decl_sep: false,
+            de_bruijn: true,
+            indent: 4,
+            print_lambda_sugar: true,
+            print_function_sugar: true,
+            print_metavar_ids: true,
+        };
+        self.print_to_colored_string(Some(&TRACE_CFG))
+    }
 }
 
 impl Print for String {

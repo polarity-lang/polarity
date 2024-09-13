@@ -54,6 +54,7 @@ impl Lower for cst::decls::Data {
     type Target = ast::Data;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        log::trace!("Lowering data declaration: {}", self.name.id);
         let cst::decls::Data { span, doc, name, attr, params, ctors } = self;
 
         let ctor_decls = ctors.lower(ctx)?.into_iter().map(ast::Decl::Ctor);
@@ -77,6 +78,7 @@ impl Lower for cst::decls::Codata {
     type Target = ast::Codata;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        log::trace!("Lowering codata declaration: {}", self.name.id);
         let cst::decls::Codata { span, doc, name, attr, params, dtors } = self;
 
         let dtor_decls = dtors.lower(ctx)?.into_iter().map(ast::Decl::Dtor);
@@ -232,6 +234,8 @@ impl Lower for cst::decls::Def {
     type Target = ast::Def;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        log::trace!("Lowering definition: {}", self.name.id);
+
         let cst::decls::Def { span, doc, name, attr, params, scrutinee, ret_typ, cases } = self;
 
         let self_param: cst::decls::SelfParam = scrutinee.clone().into();
@@ -258,6 +262,8 @@ impl Lower for cst::decls::Codef {
     type Target = ast::Codef;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        log::trace!("Lowering codefinition: {}", self.name.id);
+
         let cst::decls::Codef { span, doc, name, attr, params, typ, cases, .. } = self;
 
         lower_telescope(params, ctx, |ctx, params| {
@@ -282,6 +288,8 @@ impl Lower for cst::decls::Let {
     type Target = ast::Let;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        log::trace!("Lowering top-level let: {}", self.name.id);
+
         let cst::decls::Let { span, doc, name, attr, params, typ, body } = self;
 
         lower_telescope(params, ctx, |ctx, params| {

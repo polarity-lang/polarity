@@ -16,6 +16,7 @@ thiserror = { workspace = true }
 codespan = { workspace = true }
 # big integers
 num-bigint = { workspace = true }
+log = { workspace = true }
 
 # workspace members
 parser = { path = "../parser" }

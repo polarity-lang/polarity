@@ -880,6 +880,9 @@ impl Print for Arg {
         match self {
             Arg::UnnamedArg(e) => e.print(cfg, alloc),
             Arg::NamedArg(i, e) => alloc.text(i).append(COLONEQ).append(e.print(cfg, alloc)),
+            Arg::InsertedImplicitArg(_) => {
+                panic!("Inserted implicit arguments should not be printed")
+            }
         }
     }
 }

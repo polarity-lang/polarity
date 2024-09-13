@@ -65,12 +65,7 @@ impl<T: CheckInfer> CheckInfer for Rc<T> {
 
 impl CheckInfer for Exp {
     fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        trace!(
-            "{} |- {} <= {}",
-            ctx.print_to_colored_string(None),
-            self.print_to_colored_string(None),
-            t.print_to_colored_string(None)
-        );
+        trace!("{} |- {} <= {}", ctx.print_trace(), self.print_trace(), t.print_trace());
         match self {
             Exp::Variable(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
             Exp::TypCtor(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
@@ -98,9 +93,9 @@ impl CheckInfer for Exp {
         };
         trace!(
             "{} |- {} => {}",
-            ctx.print_to_colored_string(None),
-            self.print_to_colored_string(None),
-            res.as_ref().map(|e| e.typ()).print_to_colored_string(None)
+            ctx.print_trace(),
+            self.print_trace(),
+            res.as_ref().map(|e| e.typ()).print_trace()
         );
         res
     }
@@ -111,6 +106,9 @@ impl CheckInfer for Arg {
         match self {
             Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.check(prg, ctx, t)?)),
             Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.check(prg, ctx, t)?)),
+            Arg::InsertedImplicitArg(hole) => {
+                Ok(Arg::InsertedImplicitArg(hole.check(prg, ctx, t)?))
+            }
         }
     }
 
@@ -118,6 +116,7 @@ impl CheckInfer for Arg {
         match self {
             Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.infer(prg, ctx)?)),
             Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.infer(prg, ctx)?)),
+            Arg::InsertedImplicitArg(hole) => Ok(Arg::InsertedImplicitArg(hole.infer(prg, ctx)?)),
         }
     }
 }

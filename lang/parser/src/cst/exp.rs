@@ -40,6 +40,15 @@ pub enum Arg {
     NamedArg(Ident, Rc<Exp>),
 }
 
+impl Arg {
+    pub fn span(&self) -> Span {
+        match self {
+            Arg::UnnamedArg(exp) => exp.span(),
+            Arg::NamedArg(_, exp) => exp.span(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Exp {
     Call(Call),

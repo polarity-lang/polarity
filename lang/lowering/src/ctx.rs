@@ -148,6 +148,7 @@ impl Ctx {
         let mv = MetaVar { id: self.next_meta_var };
         let ctx = LevelCtx::from(self.levels.clone());
         self.next_meta_var += 1;
+        log::trace!("Created fresh metavariable: {} in context: {:?}", mv.id, ctx.bound);
         self.meta_vars.insert(mv, MetaVarState::Unsolved { ctx });
         mv
     }

@@ -145,6 +145,11 @@ impl Ctx {
                         }
                         MetaVarState::Unsolved { ctx } => {
                             if is_solvable(h) {
+                                log::trace!(
+                                    "Solved metavariable: {} with solution: {}",
+                                    h.metavar.id,
+                                    e.print_trace()
+                                );
                                 meta_vars.insert(
                                     h.metavar,
                                     MetaVarState::Solved {

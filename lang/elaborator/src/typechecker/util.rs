@@ -27,7 +27,7 @@ pub fn convert(
     this: Rc<Exp>,
     other: &Rc<Exp>,
 ) -> Result<(), TypeError> {
-    trace!("{} =? {}", this.print_to_colored_string(None), other.print_to_colored_string(None));
+    trace!("{} =? {}", this.print_trace(), other.print_trace());
     // Convertibility is checked using the unification algorithm.
     let constraint: Constraint = Constraint::Equality { lhs: this.clone(), rhs: other.clone() };
     let res = unify(ctx, meta_vars, constraint, true)?;

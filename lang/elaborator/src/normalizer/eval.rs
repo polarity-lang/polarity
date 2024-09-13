@@ -381,6 +381,9 @@ impl Eval for Arg {
         match self {
             Arg::UnnamedArg(exp) => Ok(val::Arg::UnnamedArg(exp.eval(prg, env)?)),
             Arg::NamedArg(name, exp) => Ok(val::Arg::NamedArg(name.clone(), exp.eval(prg, env)?)),
+            Arg::InsertedImplicitArg(hole) => {
+                Ok(val::Arg::InsertedImplicitArg(hole.eval(prg, env)?))
+            }
         }
     }
 }

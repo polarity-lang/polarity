@@ -434,6 +434,7 @@ impl CollectInfo for Arg {
         match self {
             Arg::UnnamedArg(exp) => exp.collect_info(collector),
             Arg::NamedArg(_, exp) => exp.collect_info(collector),
+            Arg::InsertedImplicitArg(hole) => hole.collect_info(collector),
         }
     }
 }
