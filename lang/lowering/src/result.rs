@@ -93,6 +93,12 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
+    #[error("Too many arguments provided")]
+    #[diagnostic(code("L-014"))]
+    TooManyArgs {
+        #[label]
+        span: SourceSpan,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("L-XXX"))]
     /// This error should not occur.

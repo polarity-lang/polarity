@@ -153,9 +153,13 @@ fn lower_args(
 
                 args_out.push(ast::Arg::InsertedImplicitArg(hole));
             } else {
-                pop_arg(&mut given_iter, &expected_param.name, &mut args_out, ctx)?;
+                pop_arg(&mut given_iter, expected_bs, &mut args_out, ctx)?;
             }
         }
+    }
+
+    if let Some(extra_arg) = given_iter.next() {
+        return Err(LoweringError::TooManyArgs { span: extra_arg.span().to_miette() });
     }
 
     Ok(ast::Args { args: args_out })
