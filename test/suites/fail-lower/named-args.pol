@@ -1,0 +1,10 @@
+data Bool { True, False }
+
+data List {
+    Nil,
+    Cons(head: Bool, tail: List)
+}
+
+let example1 : List {
+    Cons(x := True, xs := Nil)
+}
