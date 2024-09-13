@@ -58,11 +58,11 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
 }
 
 impl Lower for cst::exp::Arg {
-    type Target = Rc<ast::Exp>;
+    type Target = ast::Arg;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         match self {
-            cst::exp::Arg::UnnamedArg(e) => e.lower(ctx),
+            cst::exp::Arg::UnnamedArg(e) => Ok(ast::Arg::UnnamedArg(e.lower(ctx)?)),
             cst::exp::Arg::NamedArg(_, _) => Err(LoweringError::Impossible {
                 message: "Named arguments not yet implemented".to_owned(),
                 span: None,
@@ -318,7 +318,7 @@ impl Lower for cst::exp::NatLit {
                 span: Some(*span),
                 kind: call_kind,
                 name: "S".to_owned(),
-                args: ast::Args { args: vec![Rc::new(out)] },
+                args: ast::Args { args: vec![ast::Arg::UnnamedArg(Rc::new(out))] },
                 inferred_type: None,
             });
         }
@@ -334,7 +334,12 @@ impl Lower for cst::exp::Fun {
         Ok(ast::TypCtor {
             span: Some(*span),
             name: "Fun".to_owned(),
-            args: ast::Args { args: vec![from.lower(ctx)?, to.lower(ctx)?] },
+            args: ast::Args {
+                args: vec![
+                    ast::Arg::UnnamedArg(from.lower(ctx)?),
+                    ast::Arg::UnnamedArg(to.lower(ctx)?),
+                ],
+            },
         }
         .into())
     }

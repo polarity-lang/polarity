@@ -218,7 +218,7 @@ impl<'a> WithExpectedType<'a> {
                                     let args = (0..*n_label_args)
                                         .rev()
                                         .map(|snd| {
-                                            Exp::Variable(Variable {
+                                            Arg::UnnamedArg(Rc::new(Exp::Variable(Variable {
                                                 span: None,
                                                 // The field `fst` has to be `2` because we have two surrounding telescopes:
                                                 // - The arguments to the toplevel codefinition
@@ -226,9 +226,8 @@ impl<'a> WithExpectedType<'a> {
                                                 idx: Idx { fst: 2, snd },
                                                 name: "".to_owned(),
                                                 inferred_type: None,
-                                            })
+                                            })))
                                         })
-                                        .map(Rc::new)
                                         .collect();
                                     let ctor = Rc::new(Exp::Call(Call {
                                         span: None,

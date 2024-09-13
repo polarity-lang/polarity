@@ -468,6 +468,17 @@ impl Lift for Args {
     }
 }
 
+impl Lift for Arg {
+    type Target = Arg;
+
+    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
+        match self {
+            Arg::UnnamedArg(exp) => Arg::UnnamedArg(exp.lift(ctx)),
+            Arg::NamedArg(name, exp) => Arg::NamedArg(name.clone(), exp.lift(ctx)),
+        }
+    }
+}
+
 impl Lift for Param {
     type Target = Param;
 

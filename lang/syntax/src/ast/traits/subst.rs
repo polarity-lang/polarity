@@ -24,6 +24,15 @@ impl Substitution for Vec<Vec<Rc<Exp>>> {
     }
 }
 
+impl Substitution for Vec<Vec<Arg>> {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
+        if lvl.fst >= self.len() {
+            return None;
+        }
+        Some(self[lvl.fst][lvl.snd].exp().clone())
+    }
+}
+
 // Assign
 //
 //

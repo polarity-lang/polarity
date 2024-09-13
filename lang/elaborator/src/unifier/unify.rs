@@ -233,12 +233,10 @@ impl Ctx {
                 (_, _) => Err(TypeError::cannot_decide(lhs.clone(), rhs.clone())),
             },
             Constraint::EqualityArgs { lhs, rhs } => {
-                let new_eqns = lhs
-                    .args
-                    .iter()
-                    .cloned()
-                    .zip(rhs.args.iter().cloned())
-                    .map(|(lhs, rhs)| Constraint::Equality { lhs, rhs });
+                let new_eqns =
+                    lhs.args.iter().cloned().zip(rhs.args.iter().cloned()).map(|(lhs, rhs)| {
+                        Constraint::Equality { lhs: lhs.exp().clone(), rhs: rhs.exp().clone() }
+                    });
                 self.add_constraints(new_eqns)?;
                 Ok(Yes(()))
             }

@@ -49,7 +49,7 @@ impl CheckInfer for DotCall {
 
         let exp_out = exp.check(prg, ctx, self_param_nf)?;
 
-        let subst = vec![args.args.clone(), vec![exp.clone()]];
+        let subst = vec![args.to_exps(), vec![exp.clone()]];
         let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &subst);
         let typ_out_nf = typ_out.normalize(prg, &mut ctx.env())?;
 

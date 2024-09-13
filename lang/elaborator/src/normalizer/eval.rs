@@ -80,7 +80,7 @@ impl Eval for Call {
                 // the further computation is blocked so we return a neutral value.
                 if attr.attrs.contains(&Attribute::Transparent) {
                     let args = args.eval(prg, env)?;
-                    return env.bind_iter(args.iter(), |env| body.eval(prg, env));
+                    return env.bind_iter(args.to_vals().iter(), |env| body.eval(prg, env));
                 } else {
                     Ok(Rc::new(Val::Neu(
                         val::OpaqueCall {
@@ -145,12 +145,13 @@ impl Eval for DotCall {
                         // First, we have to find the corresponding case in the toplevel definition `d`.
                         let Def { cases, .. } = prg.def(name, None)?;
                         let mut env: Env = GenericCtx::empty().into();
-                        let cases = env.bind_iter(args.iter(), |env| cases.eval(prg, env))?;
+                        let cases =
+                            env.bind_iter(args.to_vals().iter(), |env| cases.eval(prg, env))?;
                         let val::Case { body, .. } =
                             cases.clone().into_iter().find(|case| case.name == call_name).unwrap();
 
                         // Then we apply the body to the `call_args`.
-                        body.clone().unwrap().apply(prg, &call_args)
+                        body.clone().unwrap().apply(prg, &call_args.to_vals())
                     }
                     CallKind::Codefinition => {
                         // The specific instance of the DotCall we are evaluating is:
@@ -171,12 +172,13 @@ impl Eval for DotCall {
                         // codefinition `C`.
                         let Codef { cases, .. } = prg.codef(&call_name, None)?;
                         let mut env: Env = GenericCtx::empty().into();
-                        let cases = env.bind_iter(call_args.iter(), |env| cases.eval(prg, env))?;
+                        let cases =
+                            env.bind_iter(call_args.to_vals().iter(), |env| cases.eval(prg, env))?;
                         let val::Case { body, .. } =
                             cases.clone().into_iter().find(|cocase| cocase.name == *name).unwrap();
 
                         // Then we apply the body to the `args`.
-                        body.clone().unwrap().apply(prg, &args)
+                        body.clone().unwrap().apply(prg, &args.to_vals())
                     }
                     CallKind::LetBound => {
                         // This case is unreachable because all let-bound calls have either already
@@ -205,7 +207,7 @@ impl Eval for DotCall {
                     cases.clone().into_iter().find(|cocase| cocase.name == *name).unwrap();
 
                 // Then we apply the body to the `args`.
-                body.clone().unwrap().apply(prg, &args)
+                body.clone().unwrap().apply(prg, &args.to_vals())
             }
             Val::Neu(exp) => {
                 // The specific instance of the DotCall we are evaluating is:
@@ -288,7 +290,7 @@ impl Eval for LocalMatch {
                     cases.clone().into_iter().find(|case| case.name == ctor_name).unwrap();
 
                 // Then we substitute the `args` in the body.
-                body.clone().unwrap().apply(prg, &args)
+                body.clone().unwrap().apply(prg, &args.to_vals())
             }
             Val::Neu(exp) => {
                 // The specific instance of the LocalMatch we are evaluating is:
@@ -365,10 +367,21 @@ impl Eval for Case {
 }
 
 impl Eval for Args {
-    type Val = Vec<Rc<Val>>;
+    type Val = val::Args;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
-        self.args.eval(prg, env)
+        Ok(val::Args(self.args.eval(prg, env)?))
+    }
+}
+
+impl Eval for Arg {
+    type Val = val::Arg;
+
+    fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
+        match self {
+            Arg::UnnamedArg(exp) => Ok(val::Arg::UnnamedArg(exp.eval(prg, env)?)),
+            Arg::NamedArg(name, exp) => Ok(val::Arg::NamedArg(name.clone(), exp.eval(prg, env)?)),
+        }
     }
 }
 

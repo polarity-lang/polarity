@@ -429,6 +429,15 @@ impl CollectInfo for Args {
     }
 }
 
+impl CollectInfo for Arg {
+    fn collect_info(&self, collector: &mut InfoCollector) {
+        match self {
+            Arg::UnnamedArg(exp) => exp.collect_info(collector),
+            Arg::NamedArg(_, exp) => exp.collect_info(collector),
+        }
+    }
+}
+
 impl CollectInfo for Telescope {
     fn collect_info(&self, collector: &mut InfoCollector) {
         self.params.collect_info(collector)

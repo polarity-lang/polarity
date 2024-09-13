@@ -368,6 +368,15 @@ impl Rename for Args {
     }
 }
 
+impl Rename for Arg {
+    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+        match self {
+            Arg::UnnamedArg(exp) => Arg::UnnamedArg(exp.rename_in_ctx(ctx)),
+            Arg::NamedArg(name, exp) => Arg::NamedArg(name, exp.rename_in_ctx(ctx)),
+        }
+    }
+}
+
 impl Rename for Case {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Case { span, pattern, body } = self;

@@ -181,14 +181,13 @@ impl<'a> WithScrutinee<'a> {
                     let args = (0..params.len())
                         .rev()
                         .map(|snd| {
-                            Exp::Variable(Variable {
+                            Arg::UnnamedArg(Rc::new(Exp::Variable(Variable {
                                 span: None,
                                 idx: Idx { fst: 1, snd },
                                 name: "".to_owned(),
                                 inferred_type: None,
-                            })
+                            })))
                         })
-                        .map(Rc::new)
                         .collect();
                     let ctor = Rc::new(Exp::Call(Call {
                         span: None,

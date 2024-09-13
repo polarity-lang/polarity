@@ -78,6 +78,15 @@ pub enum Arg {
     NamedArg(Ident, Rc<Exp>),
 }
 
+impl Arg {
+    pub fn exp(&self) -> &Rc<Exp> {
+        match self {
+            Arg::UnnamedArg(e) => e,
+            Arg::NamedArg(_, e) => e,
+        }
+    }
+}
+
 impl HasSpan for Arg {
     fn span(&self) -> Option<Span> {
         match self {
@@ -1315,10 +1324,14 @@ impl Print for ParamInst {
 /// which are not necessarily part of a single argument list.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Args {
-    pub args: Vec<Rc<Exp>>,
+    pub args: Vec<Arg>,
 }
 
 impl Args {
+    pub fn to_exps(&self) -> Vec<Rc<Exp>> {
+        self.args.iter().map(|arg| arg.exp().clone()).collect()
+    }
+
     pub fn len(&self) -> usize {
         self.args.len()
     }
