@@ -27,7 +27,7 @@ impl<T: Lower> Lower for Vec<T> {
     }
 }
 
-impl<T: Lower> Lower for Rc<T> {
+impl<T: Lower> Lower for Box<T> {
     type Target = Rc<T::Target>;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {

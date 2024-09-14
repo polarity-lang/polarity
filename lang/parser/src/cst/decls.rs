@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use url::Url;
 
@@ -107,7 +105,7 @@ pub struct Dtor {
     pub name: Ident,
     pub params: Telescope,
     pub destructee: Destructee,
-    pub ret_typ: Rc<exp::Exp>,
+    pub ret_typ: Box<exp::Exp>,
 }
 
 /// Destructee within the context of a destructor declaration in a codata type.
@@ -144,7 +142,7 @@ pub struct Def {
     pub attr: Attributes,
     pub params: Telescope,
     pub scrutinee: Scrutinee,
-    pub ret_typ: Rc<exp::Exp>,
+    pub ret_typ: Box<exp::Exp>,
     pub cases: Vec<exp::Case<Pattern>>,
 }
 
@@ -201,8 +199,8 @@ pub struct Let {
     pub name: Ident,
     pub attr: Attributes,
     pub params: Telescope,
-    pub typ: Rc<exp::Exp>,
-    pub body: Rc<exp::Exp>,
+    pub typ: Box<exp::Exp>,
+    pub body: Box<exp::Exp>,
 }
 
 /// A `Param` can either be a single parameter, like `x : T`, or a list of parameters, like `x y z: T`.
@@ -216,7 +214,7 @@ pub struct Param {
     /// A possible list of additional parameter names.
     pub names: Vec<exp::BindingSite>,
     /// The type of the parameter(s).
-    pub typ: Rc<exp::Exp>,
+    pub typ: Box<exp::Exp>,
 }
 
 /// Wrapper type signifying the wrapped parameters have telescope
