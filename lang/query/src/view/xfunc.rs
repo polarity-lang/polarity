@@ -104,12 +104,16 @@ fn refunctionalize(
 ) -> Result<XfuncResult, crate::Error> {
     let (codata, dtors, codefs) = xfunc::as_codata(mat, type_name)?;
 
-    replace_decl(&mut module, codata.clone().rename().into());
+    let codata = codata.rename();
+    let dtors = dtors.into_iter().map(|dtor| dtor.rename()).collect::<Vec<_>>();
+    let codefs = codefs.into_iter().map(|codef| codef.rename()).collect::<Vec<_>>();
+
+    let codata_idx = replace_decl(&mut module, codata.clone().rename().into());
     for dtor in dtors {
-        replace_dtor(&mut module, &codata.name, dtor.rename());
+        remove_decl(&mut module, &dtor.name);
     }
     for codef in codefs.iter().cloned() {
-        replace_decl(&mut module, codef.rename().into());
+        insert_decl(&mut module, codata_idx, codef.rename().into());
     }
 
     // FIXME: Unnecessary duplication
@@ -126,12 +130,16 @@ fn defunctionalize(
 ) -> Result<XfuncResult, crate::Error> {
     let (data, ctors, defs) = xfunc::as_data(mat, type_name)?;
 
-    replace_decl(&mut module, data.clone().rename().into());
+    let data = data.rename();
+    let ctors = ctors.into_iter().map(|ctor| ctor.rename()).collect::<Vec<_>>();
+    let defs = defs.into_iter().map(|def| def.rename()).collect::<Vec<_>>();
+
+    let data_idx = replace_decl(&mut module, data.clone().rename().into());
     for ctor in ctors {
-        replace_ctor(&mut module, &data.name, ctor.rename());
+        remove_decl(&mut module, &ctor.name);
     }
     for def in defs.iter().cloned() {
-        replace_decl(&mut module, def.rename().into());
+        insert_decl(&mut module, data_idx, def.into());
     }
 
     // FIXME: Unnecessary duplication
@@ -141,25 +149,17 @@ fn defunctionalize(
     Ok(XfuncResult { title: format!("Defunctionalize {type_name}"), module, new_decls })
 }
 
-fn replace_decl(module: &mut Module, decl: Decl) {
+fn replace_decl(module: &mut Module, decl: Decl) -> usize {
     let idx = module.decls.iter().position(|d| d.name() == decl.name()).unwrap();
     module.decls[idx] = decl;
+    idx
 }
 
-fn replace_ctor(module: &mut Module, data_name: &str, ctor: Ctor) {
-    let data_idx = module.decls.iter().position(|d| d.name() == data_name).unwrap();
-    let Decl::Data(data) = &mut module.decls[data_idx] else {
-        panic!("Expected data declaration for {data_name}");
-    };
-    let ctor_idx = data.ctors.iter().position(|c| c.name == ctor.name).unwrap();
-    data.ctors[ctor_idx] = ctor;
+fn remove_decl(module: &mut Module, name: &str) {
+    let idx = module.decls.iter().position(|d| d.name() == name).unwrap();
+    module.decls.remove(idx);
 }
 
-fn replace_dtor(module: &mut Module, codata_name: &str, dtor: Dtor) {
-    let codata_idx = module.decls.iter().position(|d| d.name() == codata_name).unwrap();
-    let Decl::Codata(codata) = &mut module.decls[codata_idx] else {
-        panic!("Expected codata declaration for {codata_name}");
-    };
-    let dtor_idx = codata.dtors.iter().position(|d| d.name == dtor.name).unwrap();
-    codata.dtors[dtor_idx] = dtor;
+fn insert_decl(module: &mut Module, idx: usize, decl: Decl) {
+    module.decls.insert(idx, decl);
 }
