@@ -52,7 +52,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         query::File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
     let view = db.add(file).query();
 
-    let prg = view.ust().map_err(|err| view.pretty_error(err))?;
+    let prg = view.ast().map_err(|err| view.pretty_error(err))?;
 
     // Write to file or to stdout
     let mut stream: Box<dyn WriteColor> = compute_output_stream(&cmd);
@@ -68,12 +68,12 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         print_metavar_ids: false,
     };
 
-    print_prg(prg, &cfg, &mut stream);
+    print_prg(&prg, &cfg, &mut stream);
 
     Ok(())
 }
 
-fn print_prg<W: WriteColor>(prg: ast::Module, cfg: &PrintCfg, stream: &mut W) {
+fn print_prg<W: WriteColor>(prg: &ast::Module, cfg: &PrintCfg, stream: &mut W) {
     prg.print_colored(cfg, stream).expect("Failed to print to stdout");
     println!();
 }

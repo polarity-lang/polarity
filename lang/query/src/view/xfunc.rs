@@ -16,7 +16,7 @@ pub struct Xfunc {
 
 impl<'a> DatabaseView<'a> {
     pub fn xfunc(&self, type_name: &str) -> Result<Xfunc, crate::Error> {
-        let module = self.tst()?;
+        let module = self.ast()?;
 
         let decl_spans =
             module.decls.iter().map(|decl| (decl.name().clone(), decl.span().unwrap())).collect();

@@ -90,7 +90,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         query::File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
     let view = db.add(file).query();
 
-    let prg = view.ust().map_err(|err| view.pretty_error(err))?;
+    let prg = view.ast().map_err(|err| view.pretty_error(err))?;
 
     let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
 
@@ -106,12 +106,12 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     };
 
     stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
-    print_prg(prg, &cfg, &mut stream);
+    print_prg(&prg, &cfg, &mut stream);
     stream.write_all(LATEX_END.as_bytes()).unwrap();
     Ok(())
 }
 
-fn print_prg<W: io::Write>(prg: ast::Module, cfg: &PrintCfg, stream: &mut W) {
+fn print_prg<W: io::Write>(prg: &ast::Module, cfg: &PrintCfg, stream: &mut W) {
     prg.print_latex(cfg, stream).expect("Failed to print to stdout");
     println!();
 }

@@ -1,10 +1,7 @@
-use std::rc::Rc;
-
 use super::DatabaseView;
 
 use ast::{Exp, Module};
 use elaborator::normalizer::normalize::Normalize;
-use parser::cst;
 
 use crate::*;
 
@@ -14,29 +11,21 @@ impl<'a> DatabaseView<'a> {
         &database.files.get(url).unwrap().source
     }
 
-    pub fn cst(&self) -> Result<cst::decls::Module, Error> {
-        let source = self.source();
-        parser::parse_module(self.url.clone(), source).map_err(Error::Parser)
-    }
-
-    pub fn ust(&self) -> Result<Module, Error> {
-        let cst = self.cst()?;
-        lowering::lower_module(&cst).map_err(Error::Lowering)
-    }
-
-    pub fn tst(&self) -> Result<Module, Error> {
-        let ust = self.ust()?;
-        elaborator::typechecker::check(Rc::new(ust)).map_err(Error::Type)
+    pub fn ast(&self) -> Result<Arc<Module>, Error> {
+        match self.database.ast.get(&self.url).unwrap() {
+            Ok(ast) => Ok(ast.clone()),
+            Err(err) => Err(err.clone()),
+        }
     }
 
     pub fn run(&self) -> Result<Option<Box<Exp>>, Error> {
-        let tst = self.tst()?;
+        let ast = self.ast()?;
 
-        let main = tst.find_main();
+        let main = ast.find_main();
 
         match main {
             Some(exp) => {
-                let nf = exp.normalize_in_empty_env(&tst)?;
+                let nf = exp.normalize_in_empty_env(&ast)?;
                 Ok(Some(nf))
             }
             None => Ok(None),

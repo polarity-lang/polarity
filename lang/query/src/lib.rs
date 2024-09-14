@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use url::Url;
 
 use ast::HashMap;
@@ -18,6 +20,8 @@ pub use view_mut::*;
 #[derive(Default)]
 pub struct Database {
     files: HashMap<Url, codespan::File<String>>,
+    /// The AST of each file (once parsed and lowered, may be type-annotated)
+    ast: HashMap<Url, Result<Arc<ast::Module>, Error>>,
     info_by_id: HashMap<Url, Lapper<u32, Info>>,
     item_by_id: HashMap<Url, Lapper<u32, Item>>,
 }
@@ -46,7 +50,9 @@ impl Database {
     pub fn add(&mut self, file: File) -> DatabaseViewMut<'_> {
         let File { name, source } = file;
         self.files.insert(name.clone(), codespan::File::new(name.as_str().into(), source));
-        DatabaseViewMut { url: name, database: self }
+        let mut view = DatabaseViewMut { url: name, database: self };
+        let _ = view.load();
+        view
     }
 
     pub fn get(&self, name: &Url) -> Option<DatabaseView<'_>> {

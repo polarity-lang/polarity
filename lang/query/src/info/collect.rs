@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use codespan::Span;
 use rust_lapper::{Interval, Lapper};
@@ -18,7 +18,7 @@ use super::data::{
 use super::item::Item;
 
 /// Traverse the program and collect information for the LSP server.
-pub fn collect_info(module: Rc<Module>) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
+pub fn collect_info(module: Arc<Module>) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
     let mut collector = InfoCollector::new(module.clone());
 
     for decl in module.decls.iter() {
@@ -31,13 +31,13 @@ pub fn collect_info(module: Rc<Module>) -> (Lapper<u32, Info>, Lapper<u32, Item>
 }
 
 struct InfoCollector {
-    module: Rc<Module>,
+    module: Arc<Module>,
     info_spans: Vec<Interval<u32, Info>>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
 impl InfoCollector {
-    fn new(module: Rc<Module>) -> Self {
+    fn new(module: Arc<Module>) -> Self {
         InfoCollector { module, info_spans: vec![], item_spans: vec![] }
     }
 

@@ -14,7 +14,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::default();
     let file = File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
     let view = db.add(file).query();
-    let _ = view.tst().map_err(|err| view.pretty_error(err))?;
+    let _ = view.ast().map_err(|err| view.pretty_error(err))?;
     println!("{} typechecked successfully!", cmd.filepath.display());
     Ok(())
 }
