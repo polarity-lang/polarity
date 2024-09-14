@@ -108,12 +108,12 @@ fn refunctionalize(
     let dtors = dtors.into_iter().map(|dtor| dtor.rename()).collect::<Vec<_>>();
     let codefs = codefs.into_iter().map(|codef| codef.rename()).collect::<Vec<_>>();
 
-    let codata_idx = replace_decl(&mut module, codata.clone().rename().into());
+    let codata_idx = replace_decl(&mut module, codata.clone().into());
     for dtor in dtors {
         remove_decl(&mut module, &dtor.name);
     }
     for codef in codefs.iter().cloned() {
-        insert_decl(&mut module, codata_idx, codef.rename().into());
+        insert_decl(&mut module, codata_idx, codef.into());
     }
 
     // FIXME: Unnecessary duplication
@@ -134,7 +134,7 @@ fn defunctionalize(
     let ctors = ctors.into_iter().map(|ctor| ctor.rename()).collect::<Vec<_>>();
     let defs = defs.into_iter().map(|def| def.rename()).collect::<Vec<_>>();
 
-    let data_idx = replace_decl(&mut module, data.clone().rename().into());
+    let data_idx = replace_decl(&mut module, data.clone().into());
     for ctor in ctors {
         remove_decl(&mut module, &ctor.name);
     }
