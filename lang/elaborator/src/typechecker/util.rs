@@ -2,8 +2,9 @@ use std::rc::Rc;
 
 use log::trace;
 
+use ast::ctx::LevelCtx;
+use ast::*;
 use printer::types::Print;
-use syntax::{ast::*, ctx::LevelCtx};
 
 use crate::unifier::{constraints::Constraint, unify::unify};
 

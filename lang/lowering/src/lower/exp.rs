@@ -3,20 +3,20 @@ use std::rc::Rc;
 use codespan::Span;
 use num_bigint::BigUint;
 
+use ast::Hole;
+use ast::TypeUniv;
+use ast::Variable;
 use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::decls::Telescope;
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
-use syntax::ast;
-use syntax::ast::Hole;
-use syntax::ast::TypeUniv;
-use syntax::ast::Variable;
 
-use super::Lower;
 use crate::ctx::*;
 use crate::lookup_table::DeclMeta;
 use crate::result::*;
+
+use super::Lower;
 
 impl Lower for cst::exp::Exp {
     type Target = ast::Exp;
@@ -548,8 +548,8 @@ impl Lower for cst::exp::Motive {
 
 #[cfg(test)]
 mod lower_args_tests {
+    use ast;
     use parser::cst::decls::Telescope;
-    use syntax::ast;
 
     use crate::lookup_table::LookupTable;
 

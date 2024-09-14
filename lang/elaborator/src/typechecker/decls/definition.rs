@@ -1,7 +1,7 @@
 //! Checking the well-formedness of definitions
 use log::trace;
 
-use syntax::ast::*;
+use ast::*;
 
 use super::CheckToplevel;
 use crate::normalizer::{env::ToEnv, normalize::Normalize};

@@ -20,5 +20,5 @@ log = { workspace = true }
 
 # workspace members
 parser = { path = "../parser" }
-syntax = { path = "../syntax" }
+ast = { path = "../ast" }
 miette_util = { path = "../miette_util" }

@@ -1,7 +1,5 @@
 use lifting::LiftResult;
 
-use syntax::ast;
-
 use super::DatabaseView;
 
 impl<'a> DatabaseView<'a> {

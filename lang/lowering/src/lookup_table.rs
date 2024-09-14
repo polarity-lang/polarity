@@ -1,11 +1,11 @@
 use std::fmt;
 
+use ast::HashMap;
 use codespan::Span;
 use decls::*;
 use ident::Ident;
 use miette_util::ToMiette;
 use parser::cst::*;
-use syntax::ast::HashMap;
 
 use crate::LoweringError;
 

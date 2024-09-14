@@ -14,4 +14,4 @@ categories.workspace = true
 # source code locations
 codespan = { workspace = true }
 # workspace members
-syntax = { path = "../syntax" }
+ast = { path = "../ast" }

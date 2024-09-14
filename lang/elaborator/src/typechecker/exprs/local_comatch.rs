@@ -8,9 +8,9 @@ use crate::typechecker::exprs::CheckTelescope;
 use crate::typechecker::lookup_table::DtorMeta;
 use crate::unifier::constraints::Constraint;
 use crate::unifier::unify::*;
+use ast::ctx::LevelCtx;
+use ast::*;
 use miette_util::ToMiette;
-use syntax::ast::*;
-use syntax::ctx::LevelCtx;
 
 use super::super::ctx::*;
 use super::super::util::*;

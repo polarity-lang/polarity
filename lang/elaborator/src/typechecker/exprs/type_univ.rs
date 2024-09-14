@@ -2,7 +2,7 @@
 
 use std::rc::Rc;
 
-use syntax::ast::*;
+use ast::*;
 
 use super::super::ctx::*;
 use super::super::util::*;

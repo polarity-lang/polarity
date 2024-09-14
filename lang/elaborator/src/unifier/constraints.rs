@@ -1,8 +1,8 @@
 //! This module defines the language of constraints that can be solved by the constraint solver.
 use std::rc::Rc;
 
+use ast::{Args, Exp};
 use printer::Print;
-use syntax::ast::{Args, Exp};
 
 /// A constraint that can be solved by the constraint solver.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]

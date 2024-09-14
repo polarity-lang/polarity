@@ -1,11 +1,11 @@
 use std::rc::Rc;
 
+use ast::ctx::values::TypeCtx;
+use ast::ctx::BindContext;
+use ast::ctx::LevelCtx;
+use ast::*;
 use codespan::Span;
 use renaming::Rename;
-use syntax::ast::*;
-use syntax::ctx::values::TypeCtx;
-use syntax::ctx::BindContext;
-use syntax::ctx::LevelCtx;
 mod fv;
 
 use fv::*;

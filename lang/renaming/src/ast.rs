@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
+use ast::ctx::*;
+use ast::*;
 use codespan::Span;
-use syntax::ast::*;
-use syntax::ctx::*;
 
 use super::ctx::*;
 

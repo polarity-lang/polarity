@@ -6,7 +6,7 @@ mod datatype;
 mod definition;
 mod global_let;
 
-use syntax::ast::*;
+use ast::*;
 
 use super::{ctx::Ctx, lookup_table::build_lookup_table, TypeError};
 

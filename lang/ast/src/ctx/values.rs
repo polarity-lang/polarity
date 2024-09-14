@@ -8,9 +8,9 @@ use pretty::DocAllocator;
 use printer::tokens::COMMA;
 use printer::{Alloc, Builder, Print, PrintCfg};
 
-use crate::ast::traits::Shift;
-use crate::ast::*;
 use crate::ctx::Context;
+use crate::traits::Shift;
+use crate::*;
 
 use super::{ContextElem, GenericCtx};
 

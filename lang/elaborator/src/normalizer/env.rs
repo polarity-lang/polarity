@@ -2,16 +2,17 @@ use std::rc::Rc;
 
 use derivative::Derivative;
 
+use ast::{Shift, ShiftRange};
 use pretty::DocAllocator;
-use syntax::ast::{Shift, ShiftRange};
 
-use crate::normalizer::val::*;
+use ast::ctx::values::TypeCtx;
+use ast::ctx::{map_idx::*, GenericCtx};
+use ast::ctx::{Context, ContextElem, LevelCtx};
+use ast::{Idx, Var};
 use printer::tokens::COMMA;
 use printer::Print;
-use syntax::ast::{Idx, Var};
-use syntax::ctx::values::TypeCtx;
-use syntax::ctx::{map_idx::*, GenericCtx};
-use syntax::ctx::{Context, ContextElem, LevelCtx};
+
+use crate::normalizer::val::*;
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]

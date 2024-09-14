@@ -1,7 +1,7 @@
 use std::ops::{Bound, RangeBounds};
 use std::rc::Rc;
 
-use crate::ast::*;
+use crate::*;
 
 /// De-Bruijn shifting
 ///

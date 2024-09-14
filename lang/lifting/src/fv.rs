@@ -3,10 +3,10 @@ use std::rc::Rc;
 
 use derivative::Derivative;
 
-use syntax::ast::*;
-use syntax::ast::{Hole, Occurs, TypeUniv, Variable};
-use syntax::ctx::values::TypeCtx;
-use syntax::ctx::*;
+use ast::ctx::values::TypeCtx;
+use ast::ctx::*;
+use ast::*;
+use ast::{Hole, Occurs, TypeUniv, Variable};
 
 /// Find all free variables
 pub fn free_vars<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {

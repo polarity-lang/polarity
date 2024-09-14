@@ -3,7 +3,7 @@ use lifting::LiftResult;
 use printer::Print;
 use renaming::Rename;
 
-use syntax::ast::*;
+use ast::*;
 use xfunc::matrix;
 use xfunc::result::XfuncError;
 

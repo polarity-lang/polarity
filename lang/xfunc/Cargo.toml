@@ -15,4 +15,4 @@ codespan = { workspace = true }
 miette = { workspace = true }
 thiserror = { workspace = true }
 # workspace members
-syntax = { path = "../syntax" }
+ast = { path = "../ast" }

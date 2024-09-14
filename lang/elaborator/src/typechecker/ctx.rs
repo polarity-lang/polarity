@@ -6,10 +6,10 @@ use std::rc::Rc;
 
 use crate::normalizer::env::{Env, ToEnv};
 use crate::normalizer::normalize::Normalize;
+use ast::ctx::values::TypeCtx;
+use ast::ctx::{BindContext, Context, LevelCtx};
+use ast::*;
 use printer::Print;
-use syntax::ast::*;
-use syntax::ctx::values::TypeCtx;
-use syntax::ctx::{BindContext, Context, LevelCtx};
 
 use crate::result::TypeError;
 

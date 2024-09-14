@@ -17,14 +17,15 @@ use log::trace;
 
 use printer::types::Print;
 
-use syntax::{ast::*, ctx::LevelCtx};
+use ast::ctx::LevelCtx;
+use ast::*;
 
 use super::ctx::*;
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
 use crate::result::TypeError;
 
-use syntax::ctx::values::Binder;
-use syntax::ctx::{BindContext, BindElem};
+use ast::ctx::values::Binder;
+use ast::ctx::{BindContext, BindElem};
 
 /// The CheckInfer trait for bidirectional type inference.
 /// Expressions which implement this trait provide both a `check` function

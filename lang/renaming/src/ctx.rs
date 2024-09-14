@@ -1,5 +1,5 @@
-use syntax::ast::*;
-use syntax::ctx::{Context, ContextElem, GenericCtx};
+use ast::ctx::{Context, ContextElem, GenericCtx};
+use ast::*;
 
 use super::util::increment_name;
 

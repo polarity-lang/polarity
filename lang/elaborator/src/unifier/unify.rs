@@ -1,13 +1,13 @@
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use syntax::ast::{occurs_in, Variable};
-use syntax::ctx::LevelCtx;
+use ast::ctx::LevelCtx;
+use ast::{occurs_in, Variable};
 
 use crate::result::TypeError;
 use crate::unifier::dec::{Dec, No, Yes};
+use ast::*;
 use printer::{DocAllocator, Print};
-use syntax::ast::*;
 
 use super::constraints::Constraint;
 

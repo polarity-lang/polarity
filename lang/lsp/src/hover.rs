@@ -1,8 +1,8 @@
 //! Implementation of the type-on-hover functionality of the LSP server
 
+use ast::CallKind;
+use ast::DotCallKind;
 use query::*;
-use syntax::ast::CallKind;
-use syntax::ast::DotCallKind;
 use tower_lsp::{jsonrpc, lsp_types::*};
 
 use super::conversion::*;

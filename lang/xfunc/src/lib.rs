@@ -1,5 +1,3 @@
-use syntax::ast;
-
 pub mod matrix;
 pub mod result;
 

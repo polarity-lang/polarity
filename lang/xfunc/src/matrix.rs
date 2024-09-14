@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
-use syntax::ast::{self, HashMap, SwapWithCtx};
-use syntax::ast::{Attributes, DocComment};
-use syntax::ctx::{BindContext, LevelCtx};
+use ast::ctx::{BindContext, LevelCtx};
+use ast::{self, HashMap, SwapWithCtx};
+use ast::{Attributes, DocComment};
 
 use crate::result::XfuncError;
 use codespan::Span;

@@ -3,8 +3,8 @@ mod lookup_table;
 mod lower;
 mod result;
 
+use ast::{self, Decl};
 use parser::cst;
-use syntax::ast::{self, Decl};
 
 use crate::lookup_table::build_lookup_table;
 use crate::lower::Lower;

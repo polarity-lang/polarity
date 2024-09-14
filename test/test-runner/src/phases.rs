@@ -6,8 +6,8 @@ use url::Url;
 
 use parser::cst;
 
+use ast::Module;
 use renaming::Rename;
-use syntax::ast::Module;
 
 use crate::{
     runner::CaseResult,

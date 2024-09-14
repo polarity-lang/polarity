@@ -2,9 +2,9 @@ use miette::{Diagnostic, SourceSpan};
 use miette_util::ToMiette;
 use thiserror::Error;
 
+use ast::*;
 use codespan::Span;
 use std::rc::Rc;
-use syntax::ast::*;
 
 use printer::types::Print;
 

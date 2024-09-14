@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
-use crate::ast::Variable;
-use crate::ast::*;
 use crate::ctx::*;
+use crate::Variable;
+use crate::*;
 
 // Substitution
 //

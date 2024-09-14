@@ -4,7 +4,7 @@ use std::rc::Rc;
 use log::trace;
 use miette_util::ToMiette;
 
-use syntax::ast::*;
+use ast::*;
 
 use crate::typechecker::{
     ctx::Ctx,

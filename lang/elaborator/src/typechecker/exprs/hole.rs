@@ -2,8 +2,8 @@
 
 use std::rc::Rc;
 
+use ast::*;
 use miette_util::ToMiette;
-use syntax::ast::*;
 
 use super::super::ctx::*;
 use super::CheckInfer;

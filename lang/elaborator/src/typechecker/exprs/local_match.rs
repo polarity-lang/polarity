@@ -8,10 +8,10 @@ use crate::typechecker::exprs::CheckTelescope;
 use crate::typechecker::lookup_table::CtorMeta;
 use crate::unifier::constraints::Constraint;
 use crate::unifier::unify::*;
+use ast::ctx::values::Binder;
+use ast::ctx::{BindContext, LevelCtx};
+use ast::*;
 use miette_util::ToMiette;
-use syntax::ast::*;
-use syntax::ctx::values::Binder;
-use syntax::ctx::{BindContext, LevelCtx};
 
 use super::super::ctx::*;
 use super::super::util::*;

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::ast::exp::Exp;
+use crate::exp::Exp;
 
 /// Trait for expressions which have a type.
 ///

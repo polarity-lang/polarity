@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use log::trace;
 
-use syntax::ast::*;
+use ast::*;
 
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
 

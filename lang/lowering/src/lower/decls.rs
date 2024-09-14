@@ -3,7 +3,6 @@ use std::rc::Rc;
 use miette_util::ToMiette;
 use parser::cst::exp::BindingSite;
 use parser::cst::{self, ident::Ident};
-use syntax::ast;
 
 use super::*;
 

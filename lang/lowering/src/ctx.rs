@@ -4,13 +4,13 @@ use codespan::Span;
 use miette_util::ToMiette;
 use parser::cst;
 
+use ast::ctx::LevelCtx;
+use ast::{self, MetaVar, MetaVarState};
+use ast::{HasSpan, Named};
+use ast::{HashMap, HashSet};
+use ast::{Idx, Lvl};
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
-use syntax::ast::{self, MetaVar, MetaVarState};
-use syntax::ast::{HasSpan, Named};
-use syntax::ast::{HashMap, HashSet};
-use syntax::ast::{Idx, Lvl};
-use syntax::ctx::LevelCtx;
 
 use crate::lookup_table::{DeclMeta, LookupTable};
 

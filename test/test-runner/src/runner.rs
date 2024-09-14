@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use syntax::ast::HashMap;
+use ast::HashMap;
 use url::Url;
 
 use crate::Args;

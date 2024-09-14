@@ -5,7 +5,7 @@ use std::rc::Rc;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::typechecker::lookup_table::DtorMeta;
-use syntax::ast::*;
+use ast::*;
 
 use super::super::ctx::*;
 use super::super::util::*;

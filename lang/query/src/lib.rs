@@ -1,7 +1,7 @@
 use url::Url;
 
+use ast::HashMap;
 use rust_lapper::Lapper;
-use syntax::ast::HashMap;
 
 pub use result::Error;
 

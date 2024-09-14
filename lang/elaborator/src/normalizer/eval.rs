@@ -2,10 +2,10 @@ use std::rc::Rc;
 
 use log::trace;
 
+use ast::ctx::{BindContext, Context, GenericCtx};
+use ast::*;
 use miette_util::ToMiette;
 use printer::types::Print;
-use syntax::ast::*;
-use syntax::ctx::{BindContext, Context, GenericCtx};
 
 use crate::normalizer::env::*;
 use crate::normalizer::val::{self, Closure, Val};

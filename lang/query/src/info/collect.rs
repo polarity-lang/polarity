@@ -3,8 +3,8 @@ use std::rc::Rc;
 use codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
+use ast::*;
 use printer::{Print, PrintCfg};
-use syntax::ast::*;
 
 use crate::{
     CodataInfo, CodefInfo, CtorInfo, DataInfo, DefInfo, DtorInfo, LetInfo, LocalComatchInfo,

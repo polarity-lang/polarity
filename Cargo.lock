@@ -123,6 +123,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "ast"
+version = "0.1.0"
+dependencies = [
+ "codespan",
+ "derivative",
+ "fxhash",
+ "miette",
+ "miette_util",
+ "num-bigint",
+ "pretty",
+ "printer",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "async-channel"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -668,6 +684,7 @@ checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
 name = "elaborator"
 version = "0.1.0"
 dependencies = [
+ "ast",
  "codespan",
  "derivative",
  "log",
@@ -675,7 +692,6 @@ dependencies = [
  "miette_util",
  "pretty",
  "printer",
- "syntax",
  "thiserror",
 ]
 
@@ -1235,10 +1251,10 @@ dependencies = [
 name = "lifting"
 version = "0.1.0"
 dependencies = [
+ "ast",
  "codespan",
  "derivative",
  "renaming",
- "syntax",
 ]
 
 [[package]]
@@ -1309,13 +1325,13 @@ dependencies = [
 name = "lowering"
 version = "0.1.0"
 dependencies = [
+ "ast",
  "codespan",
  "log",
  "miette",
  "miette_util",
  "num-bigint",
  "parser",
- "syntax",
  "thiserror",
 ]
 
@@ -1347,6 +1363,7 @@ dependencies = [
 name = "lsp-server"
 version = "0.1.0"
 dependencies = [
+ "ast",
  "async-lock 2.8.0",
  "codespan",
  "lsp-types 0.93.2",
@@ -1354,7 +1371,6 @@ dependencies = [
  "miette_util",
  "printer",
  "query",
- "syntax",
  "tower-lsp",
 ]
 
@@ -1682,6 +1698,7 @@ name = "polarity"
 version = "0.1.0"
 dependencies = [
  "assert_cmd",
+ "ast",
  "async-std",
  "clap",
  "elaborator",
@@ -1691,7 +1708,6 @@ dependencies = [
  "miette",
  "printer",
  "query",
- "syntax",
  "termsize",
  "thiserror",
  "tokio",
@@ -1845,6 +1861,7 @@ dependencies = [
 name = "query"
 version = "0.1.0"
 dependencies = [
+ "ast",
  "codespan",
  "elaborator",
  "lifting",
@@ -1855,7 +1872,6 @@ dependencies = [
  "renaming",
  "ropey",
  "rust-lapper",
- "syntax",
  "thiserror",
  "url",
  "xfunc",
@@ -1985,8 +2001,8 @@ checksum = "7a66a03ae7c801facd77a29370b4faec201768915ac14a721ba36f20bc9c209b"
 name = "renaming"
 version = "0.1.0"
 dependencies = [
+ "ast",
  "codespan",
- "syntax",
 ]
 
 [[package]]
@@ -2240,22 +2256,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "syntax"
-version = "0.1.0"
-dependencies = [
- "codespan",
- "derivative",
- "fxhash",
- "miette",
- "miette_util",
- "num-bigint",
- "pretty",
- "printer",
- "thiserror",
- "url",
-]
-
-[[package]]
 name = "tantivy"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2406,6 +2406,7 @@ checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 name = "test-runner"
 version = "0.1.0"
 dependencies = [
+ "ast",
  "clap",
  "elaborator",
  "env_logger",
@@ -2415,7 +2416,6 @@ dependencies = [
  "renaming",
  "serde",
  "serde_derive",
- "syntax",
  "tantivy",
  "toml",
  "url",
@@ -2995,9 +2995,9 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 name = "xfunc"
 version = "0.1.0"
 dependencies = [
+ "ast",
  "codespan",
  "miette",
- "syntax",
  "thiserror",
 ]
 
