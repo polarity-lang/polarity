@@ -5,8 +5,6 @@ use std::path::PathBuf;
 use printer::{Print, PrintCfg};
 use query::Database;
 
-use crate::result::IOError;
-
 #[derive(clap::Args)]
 pub struct Args {
     #[clap(value_parser, value_name = "TYPE")]
@@ -18,10 +16,8 @@ pub struct Args {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let mut db = Database::default();
-    let file =
-        query::File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
-    let view = db.add(file).query();
+    let mut db = Database::from_path(&cmd.filepath);
+    let view = db.open_path(&cmd.filepath)?.query();
 
     let prg = view.lift(&cmd.r#type).map_err(miette::Report::msg)?;
 

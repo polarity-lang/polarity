@@ -21,14 +21,6 @@ impl<'a> DatabaseViewMut<'a> {
         module.map(|_| ())
     }
 
-    pub fn update(&mut self, source: String) -> Result<(), Error> {
-        let DatabaseViewMut { url, database } = self;
-        let mut file = database.files.remove(url).unwrap();
-        file.update(source);
-        database.files.insert(url.clone(), file);
-        self.load()
-    }
-
     pub fn query(self) -> DatabaseView<'a> {
         let DatabaseViewMut { url, database } = self;
         DatabaseView { url, database }
