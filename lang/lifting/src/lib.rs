@@ -10,8 +10,8 @@ mod fv;
 
 use fv::*;
 
-/// Lift local (co)matches for `name` in `prg` to top-level (co)definitions
-pub fn lift(prg: Module, name: &str) -> LiftResult {
+/// Lift local (co)matches for `name` in `module` to top-level (co)definitions
+pub fn lift(module: Module, name: &str) -> LiftResult {
     let mut ctx = Ctx {
         name: name.to_owned(),
         new_decls: vec![],
@@ -20,16 +20,16 @@ pub fn lift(prg: Module, name: &str) -> LiftResult {
         ctx: LevelCtx::default(),
     };
 
-    let prg = prg.lift(&mut ctx).rename();
+    let module = module.lift(&mut ctx).rename();
     let new_decls = HashSet::from_iter(ctx.new_decls.iter().map(|decl| decl.name().clone()));
 
-    LiftResult { prg, new_decls, modified_decls: ctx.modified_decls }
+    LiftResult { module, new_decls, modified_decls: ctx.modified_decls }
 }
 
 /// Result of lifting
 pub struct LiftResult {
     /// The resulting program
-    pub prg: Module,
+    pub module: Module,
     /// List of new top-level definitions
     pub new_decls: HashSet<Ident>,
     /// List of top-level declarations that have been modified in the lifting process

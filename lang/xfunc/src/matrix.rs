@@ -227,7 +227,7 @@ impl BuildMatrix for ast::Codef {
 }
 
 impl XData {
-    pub fn as_data(&self) -> (ast::Data, Vec<ast::Ctor>, Vec<ast::Def>) {
+    pub fn as_data(&self) -> (ast::Data, Vec<ast::Def>) {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let data = ast::Data {
@@ -272,12 +272,10 @@ impl XData {
             })
             .collect();
 
-        let ctors = ctors.values().cloned().collect();
-
-        (data, ctors, defs)
+        (data, defs)
     }
 
-    pub fn as_codata(&self) -> (ast::Codata, Vec<ast::Dtor>, Vec<ast::Codef>) {
+    pub fn as_codata(&self) -> (ast::Codata, Vec<ast::Codef>) {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let codata = ast::Codata {
@@ -330,8 +328,6 @@ impl XData {
             })
             .collect();
 
-        let dtors = dtors.values().cloned().collect();
-
-        (codata, dtors, codefs)
+        (codata, codefs)
     }
 }
