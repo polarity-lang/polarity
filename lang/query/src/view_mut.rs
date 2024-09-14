@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use crate::*;
+use elaborator::typechecker::lookup_table::LookupTable;
 use url::Url;
 
 /// Mutable view on a file in the database
@@ -10,25 +11,38 @@ pub struct DatabaseViewMut<'a> {
 }
 
 impl<'a> DatabaseViewMut<'a> {
-    pub fn load(&mut self) -> Result<(), Error> {
-        self.reset();
-        let module = load_module(&self.url, self.database).map(Arc::new);
-        self.database.ast.insert(self.url.clone(), module.clone());
-        if let Ok(module) = &module {
-            let (info_lapper, item_lapper) = collect_info(module.clone());
-            self.set(info_lapper, item_lapper);
+    pub fn load_cst(&mut self) -> Result<Arc<cst::decls::Module>, Error> {
+        if self.database.source.is_modified(&self.url)?
+            || !self.database.cst.contains_key(&self.url)
+        {
+            self.reset();
+            let module = load_cst(&self.url, self.database).map(Arc::new);
+            self.database.cst.insert(self.url.clone(), module.clone());
+            module
+        } else {
+            self.database.cst.get(&self.url).unwrap().clone()
         }
-        module.map(|_| ())
     }
 
-    pub fn query(self) -> DatabaseView<'a> {
-        let DatabaseViewMut { url, database } = self;
-        DatabaseView { url, database }
-    }
-
-    pub fn query_ref(&self) -> DatabaseView<'_> {
-        let DatabaseViewMut { url, database } = self;
-        DatabaseView { url: url.clone(), database }
+    pub fn load_ast(
+        &mut self,
+        cst_lookup_table: &mut lowering::LookupTable,
+        ast_lookup_table: &mut LookupTable,
+    ) -> Result<Arc<ast::Module>, Error> {
+        if self.database.source.is_modified(&self.url)?
+            || !self.database.ast.contains_key(&self.url)
+        {
+            let cst = self.load_cst()?;
+            let ast = load_ast(cst, cst_lookup_table, ast_lookup_table).map(Arc::new);
+            self.database.ast.insert(self.url.clone(), ast.clone());
+            if let Ok(module) = &ast {
+                let (info_lapper, item_lapper) = collect_info(module.clone());
+                self.set(info_lapper, item_lapper);
+            }
+            ast
+        } else {
+            self.database.ast.get(&self.url).unwrap().clone()
+        }
     }
 
     pub fn reset(&mut self) {
@@ -43,10 +57,20 @@ impl<'a> DatabaseViewMut<'a> {
     }
 }
 
-fn load_module(url: &Url, database: &Database) -> Result<ast::Module, Error> {
+fn load_cst(url: &Url, database: &Database) -> Result<cst::decls::Module, Error> {
+    log::debug!("Parsing module: {}", url);
     let source = database.files.get(url).unwrap().source();
-    let cst = parser::parse_module(url.clone(), source).map_err(Error::Parser)?;
-    let ust = lowering::lower_module(&cst).map_err(Error::Lowering)?;
-    let tst = elaborator::typechecker::check(Rc::new(ust)).map_err(Error::Type)?;
+    parser::parse_module(url.clone(), source).map_err(Error::Parser)
+}
+
+fn load_ast(
+    cst: Arc<cst::decls::Module>,
+    cst_lookup_table: &mut lowering::LookupTable,
+    ast_lookup_table: &mut LookupTable,
+) -> Result<ast::Module, Error> {
+    let ust = lowering::lower_module_with_lookup_table(&cst, cst_lookup_table)
+        .map_err(Error::Lowering)?;
+    let tst = elaborator::typechecker::check_with_lookup_table(Rc::new(ust), ast_lookup_table)
+        .map_err(Error::Type)?;
     Ok(tst)
 }

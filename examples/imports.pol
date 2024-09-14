@@ -1,3 +1,5 @@
 use "Data/Bool.pol"
 use "Data/Unit.pol"
 use "Data/Nat.pol"
+
+let example: Nat { 0 }

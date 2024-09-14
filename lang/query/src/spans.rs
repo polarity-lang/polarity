@@ -2,11 +2,11 @@ use codespan::{ByteIndex, Location, Span};
 use rust_lapper::Lapper;
 
 use super::info::{Info, Item};
-use super::DatabaseView;
+use super::DatabaseViewMut;
 
-impl<'a> DatabaseView<'a> {
+impl<'a> DatabaseViewMut<'a> {
     pub fn location_to_index(&self, location: Location) -> Option<ByteIndex> {
-        let DatabaseView { url, database } = self;
+        let DatabaseViewMut { url, database } = self;
         let file = database.files.get(url).unwrap();
         let line_span = file.line_span(location.line).ok()?;
         let index: usize = line_span.start().to_usize() + location.column.to_usize();
@@ -14,7 +14,7 @@ impl<'a> DatabaseView<'a> {
     }
 
     pub fn index_to_location(&self, idx: ByteIndex) -> Option<Location> {
-        let DatabaseView { url, database } = self;
+        let DatabaseViewMut { url, database } = self;
         let file = database.files.get(url).unwrap();
         file.location(idx).ok()
     }

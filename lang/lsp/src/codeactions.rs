@@ -19,8 +19,8 @@ pub async fn code_action(
         .log_message(MessageType::INFO, format!("Code action request: {}", text_document.uri))
         .await;
 
-    let db = server.database.read().await;
-    let index = db.get(&text_document.uri).unwrap();
+    let mut db = server.database.write().await;
+    let mut index = db.open_uri(&text_document.uri).unwrap();
     let span_start = index.location_to_index(range.start.from_lsp());
     let span_end = index.location_to_index(range.end.from_lsp());
     let span = span_start.and_then(|start| span_end.map(|end| codespan::Span::new(start, end)));

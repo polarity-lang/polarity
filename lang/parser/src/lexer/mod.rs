@@ -108,10 +108,10 @@ pub enum Token {
     /// The regexp is from `https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5`
     /// We do not allow multi line strings.
     #[regex(r###""([^"\\]|\\.)*""###, |lex| {
-      let slice = lex.slice();
-      // Remove the surrounding quotation marks
-      let inner = &slice[1..slice.len()-1];
-      inner.to_string()
+        let slice = lex.slice();
+        // Remove the surrounding quotation marks
+        let inner = &slice[1..slice.len()-1];
+        inner.to_string()
     })]
     StringLit(String),
 
@@ -152,7 +152,7 @@ impl<'input> Iterator for Lexer<'input> {
 
 #[cfg(test)]
 mod lexer_tests {
-    use crate::lexer::{Lexer, Token};
+    use super::{Lexer, Token};
 
     #[test]
     fn string_lit_simple() {

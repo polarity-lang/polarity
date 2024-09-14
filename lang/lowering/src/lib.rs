@@ -6,21 +6,29 @@ mod result;
 use ast::{self};
 use parser::cst;
 
-use crate::lookup_table::build_lookup_table;
 use crate::lower::Lower;
 
 pub use ctx::*;
+pub use lookup_table::{build_lookup_table, LookupTable};
 pub use result::*;
 
 pub fn lower_module(prg: &cst::decls::Module) -> Result<ast::Module, LoweringError> {
-    let cst::decls::Module { uri, use_decls, decls } = prg;
+    lower_module_with_lookup_table(prg, &mut LookupTable::default())
+}
 
-    let lookup_table = build_lookup_table(prg)?;
+pub fn lower_module_with_lookup_table(
+    prg: &cst::decls::Module,
+    lookup_table: &mut LookupTable,
+) -> Result<ast::Module, LoweringError> {
+    let mut combined_table = std::mem::take(lookup_table);
+    combined_table.append(build_lookup_table(prg)?);
 
-    let mut ctx = Ctx::empty(lookup_table);
+    let mut ctx = Ctx::empty(combined_table);
 
-    let use_decls = use_decls.lower(&mut ctx)?;
-    let decls = decls.lower(&mut ctx)?;
+    let use_decls = prg.use_decls.lower(&mut ctx)?;
+    let decls = prg.decls.lower(&mut ctx)?;
 
-    Ok(ast::Module { uri: uri.clone(), use_decls, decls, meta_vars: ctx.meta_vars })
+    *lookup_table = ctx.lookup_table;
+
+    Ok(ast::Module { uri: prg.uri.clone(), use_decls, decls, meta_vars: ctx.meta_vars })
 }

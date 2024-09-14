@@ -20,6 +20,8 @@ ropey = "1"
 # fancy error messages
 miette = { workspace = true }
 thiserror = { workspace = true }
+# logging
+log = { workspace = true }
 # workspace members
 ast = { path = "../ast" }
 lowering = { path = "../lowering" }

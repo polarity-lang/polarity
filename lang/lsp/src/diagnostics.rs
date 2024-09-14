@@ -4,7 +4,7 @@ use miette::SourceSpan;
 use tower_lsp::lsp_types;
 
 use miette_util::FromMiette;
-use query::DatabaseView;
+use query::DatabaseViewMut;
 use query::Error;
 
 use crate::conversion::ToLsp;
@@ -20,7 +20,7 @@ pub trait Diagnostics {
     fn error_diagnostics(&self, error: Error) -> Vec<lsp_types::Diagnostic>;
 }
 
-impl Diagnostics for DatabaseView<'_> {
+impl Diagnostics for DatabaseViewMut<'_> {
     fn error_diagnostics(&self, error: Error) -> Vec<lsp_types::Diagnostic> {
         // Compute the range where the error should be displayed.
         // The range is computed from the first available label, otherwise

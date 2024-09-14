@@ -16,9 +16,9 @@ pub async fn formatting(
         .log_message(MessageType::INFO, format!("Formatting request: {}", text_document.uri))
         .await;
 
-    let db = server.database.read().await;
-    let index = db.get(&text_document.uri).unwrap();
-    let prg = match index.ast() {
+    let mut db = server.database.write().await;
+    let mut index = db.open_uri(&text_document.uri).unwrap();
+    let prg = match index.load_module() {
         Ok(prg) => prg,
         Err(_) => return Ok(None),
     };

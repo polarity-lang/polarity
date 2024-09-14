@@ -1866,6 +1866,7 @@ dependencies = [
  "codespan",
  "elaborator",
  "lifting",
+ "log",
  "lowering",
  "miette",
  "parser",

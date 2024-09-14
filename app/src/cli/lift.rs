@@ -17,8 +17,7 @@ pub struct Args {
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
-    let view = db.open_path(&cmd.filepath)?.query();
-
+    let mut view = db.open_path(&cmd.filepath)?;
     let prg = view.lift(&cmd.r#type).map_err(miette::Report::msg)?;
 
     // Write to file or to stdout

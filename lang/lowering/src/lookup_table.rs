@@ -29,6 +29,10 @@ impl LookupTable {
         self.map.insert(name.clone(), decl_meta);
         Ok(())
     }
+
+    pub fn append(&mut self, other: LookupTable) {
+        self.map.extend(other.map);
+    }
 }
 
 #[derive(Clone, Debug)]

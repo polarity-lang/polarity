@@ -1,25 +1,11 @@
-use super::DatabaseView;
-
-use ast::{Exp, Module};
+use ast::Exp;
 use elaborator::normalizer::normalize::Normalize;
 
 use crate::*;
 
-impl<'a> DatabaseView<'a> {
-    pub fn source(&self) -> &'a str {
-        let DatabaseView { url, database } = self;
-        &database.files.get(url).unwrap().source
-    }
-
-    pub fn ast(&self) -> Result<Arc<Module>, Error> {
-        match self.database.ast.get(&self.url).unwrap() {
-            Ok(ast) => Ok(ast.clone()),
-            Err(err) => Err(err.clone()),
-        }
-    }
-
-    pub fn run(&self) -> Result<Option<Box<Exp>>, Error> {
-        let ast = self.ast()?;
+impl<'a> DatabaseViewMut<'a> {
+    pub fn run(&mut self) -> Result<Option<Box<Exp>>, Error> {
+        let ast = self.load_module()?;
 
         let main = ast.find_main();
 
@@ -30,6 +16,11 @@ impl<'a> DatabaseView<'a> {
             }
             None => Ok(None),
         }
+    }
+
+    pub fn source(&'a self) -> &'a str {
+        let DatabaseViewMut { url, database } = self;
+        &database.files.get(url).unwrap().source
     }
 
     pub fn pretty_error(&self, err: Error) -> miette::Report {

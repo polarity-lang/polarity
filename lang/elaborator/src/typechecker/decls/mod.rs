@@ -8,16 +8,33 @@ mod global_let;
 
 use ast::*;
 
-use super::{ctx::Ctx, lookup_table::build_lookup_table, TypeError};
+use super::{
+    ctx::Ctx,
+    lookup_table::{build_lookup_table, LookupTable},
+    TypeError,
+};
 
 pub fn check(prg: Rc<Module>) -> Result<Module, TypeError> {
-    let lookup_table = build_lookup_table(&prg);
-    let mut ctx = Ctx::new(prg.meta_vars.clone(), lookup_table, prg.clone());
+    let mut lookup_table = Default::default();
+    check_with_lookup_table(prg, &mut lookup_table)
+}
+
+pub fn check_with_lookup_table(
+    prg: Rc<Module>,
+    lookup_table: &mut LookupTable,
+) -> Result<Module, TypeError> {
+    log::debug!("Checking module: {}", prg.uri);
+
+    let mut combined_table = std::mem::take(lookup_table);
+    combined_table.append(build_lookup_table(&prg));
+    let mut ctx = Ctx::new(prg.meta_vars.clone(), combined_table, prg.clone());
 
     let decls =
         prg.decls.iter().map(|decl| decl.check_wf(&mut ctx)).collect::<Result<_, TypeError>>()?;
 
     ctx.check_metavars_solved()?;
+
+    *lookup_table = Rc::unwrap_or_clone(ctx.lookup_table);
 
     Ok(Module {
         uri: prg.uri.clone(),

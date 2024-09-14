@@ -17,6 +17,8 @@ pub enum Error {
 
 #[derive(Error, Debug, Diagnostic, Clone)]
 pub enum DriverError {
+    #[error("Import cycle detected for module {0:?}: {1:?}")]
+    ImportCycle(Url, Vec<Url>),
     #[error("Invalid URI: {0}")]
     InvalidUri(Url),
     #[error("IO error: {0}")]

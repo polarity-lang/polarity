@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use parser::cst;
 use url::Url;
 
 use ast::HashMap;
@@ -8,16 +9,22 @@ use rust_lapper::Lapper;
 pub use result::Error;
 
 mod asserts;
+mod edit;
 mod fs;
 mod info;
+mod lift;
+mod modules;
 mod result;
-mod view;
+mod rt;
+mod spans;
 mod view_mut;
+mod xfunc;
 
+pub use edit::*;
 pub use fs::*;
 pub use info::*;
-pub use view::*;
 pub use view_mut::*;
+pub use xfunc::*;
 
 /// A database tracking a set of source files
 pub struct Database {
@@ -25,6 +32,8 @@ pub struct Database {
     source: Box<dyn FileSource>,
     /// The source code text of each file
     files: HashMap<Url, codespan::File<String>>,
+    /// The CST of each file (once parsed)
+    cst: HashMap<Url, Result<Arc<cst::decls::Module>, Error>>,
     /// The AST of each file (once parsed and lowered, may be type-annotated)
     ast: HashMap<Url, Result<Arc<ast::Module>, Error>>,
     info_by_id: HashMap<Url, Lapper<u32, Info>>,
@@ -59,6 +68,7 @@ impl Database {
         Self {
             source: Box::new(source),
             files: HashMap::default(),
+            cst: HashMap::default(),
             ast: HashMap::default(),
             info_by_id: HashMap::default(),
             item_by_id: HashMap::default(),
@@ -83,34 +93,19 @@ impl Database {
     ) -> Result<DatabaseViewMut<'_>, Error> {
         let path = path.as_ref().canonicalize().expect("Could not canonicalize path");
         let uri = Url::from_file_path(path).expect("Could not convert path to URI");
-        self.open_url(&uri)
+        self.open_uri(&uri)
     }
 
-    /// Open a file by its URI and load it into the database
+    /// Open a file by its URI and load the source into the database
     ///
     /// Returns a mutable view on the file
-    pub fn open_url(&mut self, uri: &Url) -> Result<DatabaseViewMut<'_>, Error> {
+    pub fn open_uri(&mut self, uri: &Url) -> Result<DatabaseViewMut<'_>, Error> {
         if self.source.is_modified(uri)? {
             let source = self.source.read_to_string(uri)?;
             self.files.insert(uri.clone(), codespan::File::new(uri.as_str().into(), source));
-            let mut view = DatabaseViewMut { url: uri.clone(), database: self };
-            let _ = view.load();
-            Ok(view)
+            Ok(DatabaseViewMut { url: uri.clone(), database: self })
         } else {
             Ok(DatabaseViewMut { url: uri.clone(), database: self })
-        }
-    }
-
-    /// Get a read-only view on a file in the database
-    ///
-    /// Note that this does not reload the file from the source.
-    /// Only use this if you are sure the latest version is already loaded.
-    /// Otherwise, use `open_url`.
-    pub fn get(&self, name: &Url) -> Option<DatabaseView<'_>> {
-        if self.files.contains_key(name) {
-            Some(DatabaseView { url: name.clone(), database: self })
-        } else {
-            None
         }
     }
 }

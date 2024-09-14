@@ -3,7 +3,7 @@ use std::ops::Range;
 use codespan::Span;
 use ropey::Rope;
 
-use super::DatabaseView;
+use crate::DatabaseViewMut;
 
 #[derive(Ord, PartialOrd, Eq, PartialEq)]
 pub struct Edit {
@@ -11,7 +11,7 @@ pub struct Edit {
     pub text: String,
 }
 
-impl<'a> DatabaseView<'a> {
+impl<'a> DatabaseViewMut<'a> {
     pub fn edited(&self, mut edits: Vec<Edit>) -> Rope {
         let mut rope = Rope::from_str(self.source());
 

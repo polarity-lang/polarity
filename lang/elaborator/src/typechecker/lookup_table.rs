@@ -82,6 +82,15 @@ impl LookupTable {
             span: None,
         })
     }
+
+    pub fn append(&mut self, other: LookupTable) {
+        self.map_let.extend(other.map_let);
+        self.map_tyctor.extend(other.map_tyctor);
+        self.map_codef.extend(other.map_codef);
+        self.map_ctor.extend(other.map_ctor);
+        self.map_def.extend(other.map_def);
+        self.map_dtor.extend(other.map_dtor);
+    }
 }
 
 #[derive(Debug, Clone)]

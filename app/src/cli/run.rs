@@ -14,9 +14,9 @@ pub struct Args {
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
-    let view = db.open_path(&cmd.filepath)?.query();
-
+    let mut view = db.open_path(&cmd.filepath)?;
     let nf = view.run().map_err(|err| view.pretty_error(err))?;
+
     match nf {
         Some(nf) => print_nf(&nf),
         None => return Err(miette::Report::from(MainNotFound {})),

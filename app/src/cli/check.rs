@@ -10,8 +10,8 @@ pub struct Args {
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
-    let view = db.open_path(&cmd.filepath)?.query();
-    let _ = view.ast().map_err(|err| view.pretty_error(err))?;
+    let mut view = db.open_path(&cmd.filepath)?;
+    let _ = view.load_module().map_err(|err| view.pretty_error(err))?;
     println!("{} typechecked successfully!", cmd.filepath.display());
     Ok(())
 }
