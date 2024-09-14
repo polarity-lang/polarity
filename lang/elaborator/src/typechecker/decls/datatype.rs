@@ -1,6 +1,4 @@
 //! Checking the well-formedness of toplevel data type declarations
-use std::rc::Rc;
-
 use log::trace;
 use miette_util::ToMiette;
 
@@ -31,7 +29,7 @@ impl CheckToplevel for Data {
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
-            typ: Rc::new(typ_out),
+            typ: Box::new(typ_out),
             ctors,
         })
     }

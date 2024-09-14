@@ -415,7 +415,7 @@ impl<T: Eval> Eval for Vec<T> {
     }
 }
 
-impl Eval for Rc<Exp> {
+impl Eval for Box<Exp> {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {

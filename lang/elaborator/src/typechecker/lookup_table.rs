@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use ast::*;
 
 use super::TypeError;
@@ -89,12 +87,12 @@ impl LookupTable {
 #[derive(Debug)]
 pub struct LetMeta {
     pub params: Telescope,
-    pub typ: Rc<Exp>,
+    pub typ: Box<Exp>,
 }
 
 #[derive(Debug)]
 pub struct TyCtorMeta {
-    pub params: Rc<Telescope>,
+    pub params: Box<Telescope>,
 }
 
 #[derive(Debug)]
@@ -119,7 +117,7 @@ pub struct CtorMeta {
 pub struct DefMeta {
     pub params: Telescope,
     pub self_param: SelfParam,
-    pub ret_typ: Rc<Exp>,
+    pub ret_typ: Box<Exp>,
 }
 
 impl DefMeta {
@@ -136,7 +134,7 @@ impl DefMeta {
 pub struct DtorMeta {
     pub params: Telescope,
     pub self_param: SelfParam,
-    pub ret_typ: Rc<Exp>,
+    pub ret_typ: Box<Exp>,
 }
 
 pub fn build_lookup_table(module: &Module) -> LookupTable {

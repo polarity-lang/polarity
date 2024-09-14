@@ -1,7 +1,5 @@
 //! Bidirectional type checker
 
-use std::rc::Rc;
-
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::typechecker::exprs::CheckTelescope;
@@ -18,7 +16,7 @@ use super::CheckInfer;
 use crate::result::TypeError;
 
 impl CheckInfer for LocalComatch {
-    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
         let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
         // The expected type that we check against should be a type constructor applied to
         // arguments.
@@ -233,7 +231,7 @@ impl<'a> WithExpectedType<'a> {
                                     let args = (0..*n_label_args)
                                         .rev()
                                         .map(|snd| {
-                                            Arg::UnnamedArg(Rc::new(Exp::Variable(Variable {
+                                            Arg::UnnamedArg(Box::new(Exp::Variable(Variable {
                                                 span: None,
                                                 // The field `fst` has to be `2` because we have two surrounding telescopes:
                                                 // - The arguments to the toplevel codefinition
@@ -244,7 +242,7 @@ impl<'a> WithExpectedType<'a> {
                                             })))
                                         })
                                         .collect();
-                                    let ctor = Rc::new(Exp::Call(Call {
+                                    let ctor = Box::new(Exp::Call(Call {
                                         span: None,
                                         kind: CallKind::Codefinition,
                                         name: label.clone(),
@@ -311,7 +309,7 @@ impl<'a> WithExpectedType<'a> {
                                     let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif);
                                     let t_nf = t_subst.normalize(&module, &mut ctx.env())?;
 
-                                    let body_out = body.check(ctx, t_nf)?;
+                                    let body_out = body.check(ctx, &t_nf)?;
 
                                     Ok(Some(body_out))
                                 })?

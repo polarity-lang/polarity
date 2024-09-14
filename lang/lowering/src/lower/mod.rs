@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use super::ctx::*;
 use super::result::*;
 mod decls;
@@ -28,9 +26,9 @@ impl<T: Lower> Lower for Vec<T> {
 }
 
 impl<T: Lower> Lower for Box<T> {
-    type Target = Rc<T::Target>;
+    type Target = Box<T::Target>;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        Ok(Rc::new((**self).lower(ctx)?))
+        Ok(Box::new((**self).lower(ctx)?))
     }
 }

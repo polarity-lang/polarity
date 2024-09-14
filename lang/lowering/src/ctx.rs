@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use miette_util::ToMiette;
 use parser::cst;
@@ -157,7 +155,7 @@ impl Ctx {
     /// all variables in Γ. This function computes the substitution id_Γ.
     /// This substitution is needed when lowering typed holes since they stand for unknown terms which
     /// could potentially use all variables in the context.
-    pub fn subst_from_ctx(&self) -> Vec<Vec<Rc<ast::Exp>>> {
+    pub fn subst_from_ctx(&self) -> Vec<Vec<Box<ast::Exp>>> {
         let mut lvl_to_name: HashMap<Lvl, Ident> = HashMap::default();
 
         for (name, lvls) in self.local_map.iter() {
@@ -166,7 +164,7 @@ impl Ctx {
             }
         }
 
-        let mut args: Vec<Vec<Rc<ast::Exp>>> = Vec::new();
+        let mut args: Vec<Vec<Box<ast::Exp>>> = Vec::new();
         let mut curr_subst = Vec::new();
 
         for (fst, n) in self.levels.iter().cloned().enumerate() {
@@ -174,7 +172,7 @@ impl Ctx {
                 let lvl = Lvl { fst, snd };
                 let name =
                     lvl_to_name.get(&lvl).map(|ident| ident.id.to_owned()).unwrap_or_default();
-                curr_subst.push(Rc::new(
+                curr_subst.push(Box::new(
                     ast::Variable {
                         span: None,
                         idx: self.level_to_index(Lvl { fst, snd }),

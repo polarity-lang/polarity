@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use derivative::Derivative;
 use pretty::DocAllocator;
@@ -125,13 +123,13 @@ impl Attributes {
 #[derive(Debug, Clone)]
 pub enum MetaVarState {
     /// We know what the metavariable stands for.
-    Solved { ctx: LevelCtx, solution: Rc<Exp> },
+    Solved { ctx: LevelCtx, solution: Box<Exp> },
     /// We don't know yet what the metavariable stands for.
     Unsolved { ctx: LevelCtx },
 }
 
 impl MetaVarState {
-    pub fn solution(&self) -> Option<Rc<Exp>> {
+    pub fn solution(&self) -> Option<Box<Exp>> {
         match self {
             MetaVarState::Solved { solution, .. } => Some(solution.clone()),
             MetaVarState::Unsolved { .. } => None,
@@ -251,7 +249,7 @@ impl Module {
         })
     }
 
-    pub fn find_main(&self) -> Option<Rc<Exp>> {
+    pub fn find_main(&self) -> Option<Box<Exp>> {
         self.decls.iter().find_map(|decl| match decl {
             Decl::Let(tl_let) if tl_let.is_main() => Some(tl_let.body.clone()),
             _ => None,
@@ -383,7 +381,7 @@ pub struct Data {
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attributes,
-    pub typ: Rc<Telescope>,
+    pub typ: Box<Telescope>,
     pub ctors: Vec<Ctor>,
 }
 
@@ -432,7 +430,7 @@ pub struct Codata {
     pub doc: Option<DocComment>,
     pub name: Ident,
     pub attr: Attributes,
-    pub typ: Rc<Telescope>,
+    pub typ: Box<Telescope>,
     pub dtors: Vec<Dtor>,
 }
 
@@ -511,7 +509,7 @@ pub struct Dtor {
     pub name: Ident,
     pub params: Telescope,
     pub self_param: SelfParam,
-    pub ret_typ: Rc<Exp>,
+    pub ret_typ: Box<Exp>,
 }
 
 impl Print for Dtor {
@@ -545,7 +543,7 @@ pub struct Def {
     pub attr: Attributes,
     pub params: Telescope,
     pub self_param: SelfParam,
-    pub ret_typ: Rc<Exp>,
+    pub ret_typ: Box<Exp>,
     pub cases: Vec<Case>,
 }
 
@@ -652,8 +650,8 @@ pub struct Let {
     pub name: Ident,
     pub attr: Attributes,
     pub params: Telescope,
-    pub typ: Rc<Exp>,
-    pub body: Rc<Exp>,
+    pub typ: Box<Exp>,
+    pub body: Box<Exp>,
 }
 
 impl Let {
@@ -703,7 +701,7 @@ impl SelfParam {
             params: vec![Param {
                 implicit: false,
                 name: self.name.clone().unwrap_or_default(),
-                typ: Rc::new(self.typ.to_exp()),
+                typ: Box::new(self.typ.to_exp()),
             }],
         }
     }
@@ -791,12 +789,12 @@ impl Print for Telescope {
             return output;
         };
         // Running stands for the type and implicitness of the current "chunk" we are building.
-        let mut running: Option<(&Rc<Exp>, bool)> = None;
+        let mut running: Option<(&Exp, bool)> = None;
         for Param { implicit, name, typ } in params {
             match running {
                 // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
                 Some((rtype, rimplicit))
-                    if &rtype.shift((0, 1)) == typ && rimplicit == *implicit =>
+                    if rtype.shift((0, 1)) == **typ && rimplicit == *implicit =>
                 {
                     // We are adding another parameter of the same type.
                     output = output.append(alloc.space()).append(alloc.text(name));
@@ -855,9 +853,9 @@ mod print_telescope_tests {
     #[test]
     fn print_simple_chunk() {
         let param1 =
-            Param { implicit: false, name: "x".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+            Param { implicit: false, name: "x".to_owned(), typ: Box::new(TypeUniv::new().into()) };
         let param2 =
-            Param { implicit: false, name: "y".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+            Param { implicit: false, name: "y".to_owned(), typ: Box::new(TypeUniv::new().into()) };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(x y: Type)")
     }
@@ -865,9 +863,9 @@ mod print_telescope_tests {
     #[test]
     fn print_simple_implicit_chunk() {
         let param1 =
-            Param { implicit: true, name: "x".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+            Param { implicit: true, name: "x".to_owned(), typ: Box::new(TypeUniv::new().into()) };
         let param2 =
-            Param { implicit: true, name: "y".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+            Param { implicit: true, name: "y".to_owned(), typ: Box::new(TypeUniv::new().into()) };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(implicit x y: Type)")
     }
@@ -875,9 +873,9 @@ mod print_telescope_tests {
     #[test]
     fn print_mixed_implicit_chunk_1() {
         let param1 =
-            Param { implicit: true, name: "x".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+            Param { implicit: true, name: "x".to_owned(), typ: Box::new(TypeUniv::new().into()) };
         let param2 =
-            Param { implicit: false, name: "y".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+            Param { implicit: false, name: "y".to_owned(), typ: Box::new(TypeUniv::new().into()) };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(implicit x: Type, y: Type)")
     }
@@ -885,9 +883,9 @@ mod print_telescope_tests {
     #[test]
     fn print_mixed_implicit_chunk_2() {
         let param1 =
-            Param { implicit: false, name: "x".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+            Param { implicit: false, name: "x".to_owned(), typ: Box::new(TypeUniv::new().into()) };
         let param2 =
-            Param { implicit: true, name: "y".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+            Param { implicit: true, name: "y".to_owned(), typ: Box::new(TypeUniv::new().into()) };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(x: Type, implicit y: Type)")
     }
@@ -895,11 +893,11 @@ mod print_telescope_tests {
     #[test]
     fn print_shifting_example() {
         let param1 =
-            Param { implicit: false, name: "a".to_owned(), typ: Rc::new(TypeUniv::new().into()) };
+            Param { implicit: false, name: "a".to_owned(), typ: Box::new(TypeUniv::new().into()) };
         let param2 = Param {
             implicit: false,
             name: "x".to_owned(),
-            typ: Rc::new(Exp::Variable(Variable {
+            typ: Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: 0 },
                 name: "a".to_owned(),
@@ -909,7 +907,7 @@ mod print_telescope_tests {
         let param3 = Param {
             implicit: false,
             name: "y".to_owned(),
-            typ: Rc::new(Exp::Variable(Variable {
+            typ: Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: 1 },
                 name: "a".to_owned(),
@@ -931,7 +929,7 @@ pub struct Param {
     pub implicit: bool,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
-    pub typ: Rc<Exp>,
+    pub typ: Box<Exp>,
 }
 
 impl Named for Param {

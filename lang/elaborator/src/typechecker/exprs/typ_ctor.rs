@@ -1,7 +1,5 @@
 //! Bidirectional type checking for type constructors
 
-use std::rc::Rc;
-
 use ast::*;
 
 use super::super::ctx::*;
@@ -18,13 +16,13 @@ impl CheckInfer for TypCtor {
     ///           ──────────────────
     ///            P, Γ ⊢ Tσ ⇐ τ
     /// ```
-    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
         let inferred_term = self.infer(ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, &t)?;
+        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, t)?;
         Ok(inferred_term)
     }
 

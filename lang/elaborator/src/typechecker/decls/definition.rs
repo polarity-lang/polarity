@@ -32,7 +32,7 @@ impl CheckToplevel for Def {
 
             let ws = WithScrutinee { cases, scrutinee: self_param_nf.expect_typ_app()? };
             ws.check_exhaustiveness(&ctx.module)?;
-            let cases = ws.check_ws(ctx, ret_typ_nf)?;
+            let cases = ws.check_ws(ctx, &ret_typ_nf)?;
             Ok(Def {
                 span: *span,
                 doc: doc.clone(),

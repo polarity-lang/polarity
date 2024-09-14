@@ -1,7 +1,5 @@
 //! Bidirectional type checker
 
-use std::rc::Rc;
-
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::typechecker::lookup_table::DtorMeta;
@@ -20,13 +18,13 @@ impl CheckInfer for DotCall {
     ///           ──────────────────
     ///            P, Γ ⊢ e.Dσ ⇐ τ
     /// ```
-    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
         let inferred_term = self.infer(ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, &t)?;
+        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, t)?;
         Ok(inferred_term)
     }
 
@@ -49,7 +47,7 @@ impl CheckInfer for DotCall {
             .to_exp();
         let self_param_nf = self_param_out.normalize(&ctx.module, &mut ctx.env())?;
 
-        let exp_out = exp.check(ctx, self_param_nf)?;
+        let exp_out = exp.check(ctx, &self_param_nf)?;
 
         let subst = vec![args.to_exps(), vec![exp.clone()]];
         let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &subst);

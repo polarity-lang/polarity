@@ -76,7 +76,7 @@ impl Ctx {
         self.vars.is_empty()
     }
 
-    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<Exp> {
+    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Box<Exp> {
         self.vars.lookup(idx).typ
     }
 
@@ -86,7 +86,7 @@ impl Ctx {
 
     pub fn map_failable<E, F>(&mut self, f: F) -> Result<(), E>
     where
-        F: Fn(&Rc<Exp>) -> Result<Rc<Exp>, E>,
+        F: Fn(&Exp) -> Result<Box<Exp>, E>,
     {
         self.vars = self.vars.map_failable(f)?;
         Ok(())

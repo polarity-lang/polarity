@@ -67,6 +67,12 @@ impl<T: Shift> Shift for Rc<T> {
     }
 }
 
+impl<T: Shift> Shift for Box<T> {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        Box::new((**self).shift_in_range(range, by))
+    }
+}
+
 impl<T: Shift> Shift for Option<T> {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         self.as_ref().map(|inner| inner.shift_in_range(range, by))

@@ -1,5 +1,4 @@
 //! Checking the well-formedness of codefinitions
-use std::rc::Rc;
 
 use log::trace;
 
@@ -25,7 +24,7 @@ impl CheckToplevel for Codef {
         let Codef { span, doc, name, attr, params, typ, cases } = self;
 
         params.infer_telescope(ctx, |ctx, params_out| {
-            let typ_out = typ.check(ctx, Rc::new(TypeUniv::new().into()))?;
+            let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
             let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
             let wd = WithExpectedType {
                 cases,

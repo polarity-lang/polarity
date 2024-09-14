@@ -1,6 +1,5 @@
 use std::fmt;
 use std::hash::Hash;
-use std::rc::Rc;
 
 use codespan::Span;
 use derivative::Derivative;
@@ -74,8 +73,8 @@ where
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Arg {
-    UnnamedArg(Rc<Exp>),
-    NamedArg(Ident, Rc<Exp>),
+    UnnamedArg(Box<Exp>),
+    NamedArg(Ident, Box<Exp>),
     InsertedImplicitArg(Hole),
 }
 
@@ -84,11 +83,11 @@ impl Arg {
         matches!(self, Arg::InsertedImplicitArg(_))
     }
 
-    pub fn exp(&self) -> Rc<Exp> {
+    pub fn exp(&self) -> Box<Exp> {
         match self {
             Arg::UnnamedArg(e) => e.clone(),
             Arg::NamedArg(_, e) => e.clone(),
-            Arg::InsertedImplicitArg(hole) => Rc::new(hole.clone().into()),
+            Arg::InsertedImplicitArg(hole) => Box::new(hole.clone().into()),
         }
     }
 }
@@ -126,7 +125,7 @@ impl Occurs for Arg {
 }
 
 impl HasType for Arg {
-    fn typ(&self) -> Option<Rc<Exp>> {
+    fn typ(&self) -> Option<Box<Exp>> {
         match self {
             Arg::UnnamedArg(e) => e.typ(),
             Arg::NamedArg(_, e) => e.typ(),
@@ -222,7 +221,7 @@ impl Occurs for Exp {
 }
 
 impl HasType for Exp {
-    fn typ(&self) -> Option<Rc<Exp>> {
+    fn typ(&self) -> Option<Box<Exp>> {
         match self {
             Exp::Variable(e) => e.typ(),
             Exp::TypCtor(e) => e.typ(),
@@ -237,19 +236,19 @@ impl HasType for Exp {
     }
 }
 
-impl Substitutable for Rc<Exp> {
-    type Result = Rc<Exp>;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        match &**self {
-            Exp::Variable(e) => e.subst(ctx, by),
-            Exp::TypCtor(e) => Rc::new(e.subst(ctx, by).into()),
-            Exp::Call(e) => Rc::new(e.subst(ctx, by).into()),
-            Exp::DotCall(e) => Rc::new(e.subst(ctx, by).into()),
-            Exp::Anno(e) => Rc::new(e.subst(ctx, by).into()),
-            Exp::TypeUniv(e) => Rc::new(e.subst(ctx, by).into()),
-            Exp::LocalMatch(e) => Rc::new(e.subst(ctx, by).into()),
-            Exp::LocalComatch(e) => Rc::new(e.subst(ctx, by).into()),
-            Exp::Hole(e) => Rc::new(e.subst(ctx, by).into()),
+impl Substitutable for Exp {
+    type Result = Exp;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+        match self {
+            Exp::Variable(e) => *e.subst(ctx, by),
+            Exp::TypCtor(e) => e.subst(ctx, by).into(),
+            Exp::Call(e) => e.subst(ctx, by).into(),
+            Exp::DotCall(e) => e.subst(ctx, by).into(),
+            Exp::Anno(e) => e.subst(ctx, by).into(),
+            Exp::TypeUniv(e) => e.subst(ctx, by).into(),
+            Exp::LocalMatch(e) => e.subst(ctx, by).into(),
+            Exp::LocalComatch(e) => e.subst(ctx, by).into(),
+            Exp::Hole(e) => e.subst(ctx, by).into(),
         }
     }
 }
@@ -311,7 +310,7 @@ pub struct Variable {
     pub name: Ident,
     /// Inferred type annotated after elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub inferred_type: Option<Rc<Exp>>,
+    pub inferred_type: Option<Box<Exp>>,
 }
 
 impl HasSpan for Variable {
@@ -346,18 +345,18 @@ impl Occurs for Variable {
 }
 
 impl HasType for Variable {
-    fn typ(&self) -> Option<Rc<Exp>> {
+    fn typ(&self) -> Option<Box<Exp>> {
         self.inferred_type.clone()
     }
 }
 
 impl Substitutable for Variable {
-    type Result = Rc<Exp>;
+    type Result = Box<Exp>;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
         let Variable { span, idx, name, .. } = self;
         match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
             Some(exp) => exp,
-            None => Rc::new(Exp::Variable(Variable {
+            None => Box::new(Exp::Variable(Variable {
                 span: *span,
                 idx: *idx,
                 name: name.clone(),
@@ -442,8 +441,8 @@ impl Occurs for TypCtor {
 }
 
 impl HasType for TypCtor {
-    fn typ(&self) -> Option<Rc<Exp>> {
-        Some(Rc::new(TypeUniv::new().into()))
+    fn typ(&self) -> Option<Box<Exp>> {
+        Some(Box::new(TypeUniv::new().into()))
     }
 }
 
@@ -514,7 +513,7 @@ pub struct Call {
     /// The inferred result type of the call.
     /// This type is annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub inferred_type: Option<Rc<Exp>>,
+    pub inferred_type: Option<Box<Exp>>,
 }
 
 impl HasSpan for Call {
@@ -550,7 +549,7 @@ impl Occurs for Call {
 }
 
 impl HasType for Call {
-    fn typ(&self) -> Option<Rc<Exp>> {
+    fn typ(&self) -> Option<Box<Exp>> {
         self.inferred_type.clone()
     }
 }
@@ -608,7 +607,7 @@ pub struct DotCall {
     pub kind: DotCallKind,
     /// The expression to which the dotcall is applied.
     /// The `e` in `e.f(e1...en)`
-    pub exp: Rc<Exp>,
+    pub exp: Box<Exp>,
     /// The name of the dotcall.
     /// The `f` in `e.f(e1...en)`
     pub name: Ident,
@@ -618,7 +617,7 @@ pub struct DotCall {
     /// The inferred result type of the dotcall.
     /// This type is annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub inferred_type: Option<Rc<Exp>>,
+    pub inferred_type: Option<Box<Exp>>,
 }
 
 impl HasSpan for DotCall {
@@ -655,7 +654,7 @@ impl Occurs for DotCall {
 }
 
 impl HasType for DotCall {
-    fn typ(&self) -> Option<Rc<Exp>> {
+    fn typ(&self) -> Option<Box<Exp>> {
         self.inferred_type.clone()
     }
 }
@@ -687,14 +686,14 @@ pub struct Anno {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     /// The annotated term, i.e. `e` in `e : t`
-    pub exp: Rc<Exp>,
+    pub exp: Box<Exp>,
     /// The annotated type, i.e. `t` in `e : t`
-    pub typ: Rc<Exp>,
+    pub typ: Box<Exp>,
     /// The annotated type written by the user might not
     /// be in normal form. After elaboration we therefore
     /// annotate the normalized type.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub normalized_type: Option<Rc<Exp>>,
+    pub normalized_type: Option<Box<Exp>>,
 }
 
 impl HasSpan for Anno {
@@ -729,7 +728,7 @@ impl Occurs for Anno {
 }
 
 impl HasType for Anno {
-    fn typ(&self) -> Option<Rc<Exp>> {
+    fn typ(&self) -> Option<Box<Exp>> {
         self.normalized_type.clone()
     }
 }
@@ -814,8 +813,8 @@ impl Occurs for TypeUniv {
 }
 
 impl HasType for TypeUniv {
-    fn typ(&self) -> Option<Rc<Exp>> {
-        Some(Rc::new(TypeUniv::new().into()))
+    fn typ(&self) -> Option<Box<Exp>> {
+        Some(Box::new(TypeUniv::new().into()))
     }
 }
 
@@ -851,10 +850,10 @@ pub struct LocalMatch {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: Option<TypeCtx>,
     pub name: Label,
-    pub on_exp: Rc<Exp>,
+    pub on_exp: Box<Exp>,
     pub motive: Option<Motive>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub ret_typ: Option<Rc<Exp>>,
+    pub ret_typ: Option<Box<Exp>>,
     pub cases: Vec<Case>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<TypCtor>,
@@ -896,8 +895,8 @@ impl Occurs for LocalMatch {
 }
 
 impl HasType for LocalMatch {
-    fn typ(&self) -> Option<Rc<Exp>> {
-        self.inferred_type.clone().map(|x| Rc::new(x.into()))
+    fn typ(&self) -> Option<Box<Exp>> {
+        self.inferred_type.clone().map(|x| Box::new(x.into()))
     }
 }
 
@@ -992,8 +991,8 @@ impl Occurs for LocalComatch {
 }
 
 impl HasType for LocalComatch {
-    fn typ(&self) -> Option<Rc<Exp>> {
-        self.inferred_type.clone().map(|x| Rc::new(x.into()))
+    fn typ(&self) -> Option<Box<Exp>> {
+        self.inferred_type.clone().map(|x| Box::new(x.into()))
     }
 }
 
@@ -1069,7 +1068,7 @@ pub struct Hole {
     pub metavar: MetaVar,
     /// The inferred type of the hole annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub inferred_type: Option<Rc<Exp>>,
+    pub inferred_type: Option<Box<Exp>>,
     /// The type context in which the hole occurs.
     /// This context is annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
@@ -1084,7 +1083,7 @@ pub struct Hole {
     ///
     /// Example:
     /// [x, y][z][v, w] |- ?[x, y][z][v,w]
-    pub args: Vec<Vec<Rc<Exp>>>,
+    pub args: Vec<Vec<Box<Exp>>>,
 }
 
 impl HasSpan for Hole {
@@ -1120,7 +1119,7 @@ impl Occurs for Hole {
 }
 
 impl HasType for Hole {
-    fn typ(&self) -> Option<Rc<Exp>> {
+    fn typ(&self) -> Option<Box<Exp>> {
         self.inferred_type.clone()
     }
 }
@@ -1189,7 +1188,7 @@ pub struct Case {
     pub span: Option<Span>,
     pub pattern: Pattern,
     /// Body being `None` represents an absurd pattern
-    pub body: Option<Rc<Exp>>,
+    pub body: Option<Box<Exp>>,
 }
 
 impl Shift for Case {
@@ -1304,11 +1303,11 @@ pub struct ParamInst {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Rc<Exp>>,
+    pub info: Option<Box<Exp>>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: Ident,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub typ: Option<Rc<Exp>>,
+    pub typ: Option<Box<Exp>>,
 }
 
 impl Named for ParamInst {
@@ -1341,7 +1340,7 @@ pub struct Args {
 }
 
 impl Args {
-    pub fn to_exps(&self) -> Vec<Rc<Exp>> {
+    pub fn to_exps(&self) -> Vec<Box<Exp>> {
         self.args.iter().map(|arg| arg.exp().clone()).collect()
     }
 
@@ -1396,7 +1395,7 @@ pub struct Motive {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub param: ParamInst,
-    pub ret_typ: Rc<Exp>,
+    pub ret_typ: Box<Exp>,
 }
 
 impl Shift for Motive {

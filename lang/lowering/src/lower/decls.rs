@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use miette_util::ToMiette;
 use parser::cst::exp::BindingSite;
 use parser::cst::{self, ident::Ident};
@@ -61,7 +59,7 @@ impl Lower for cst::decls::Data {
             doc: doc.lower(ctx)?,
             name: name.id.clone(),
             attr: attr.lower(ctx)?,
-            typ: Rc::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
+            typ: Box::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
             ctors,
         }
         .into())
@@ -127,7 +125,7 @@ impl Lower for cst::decls::Codata {
             doc: doc.lower(ctx)?,
             name: name.id.clone(),
             attr: attr.lower(ctx)?,
-            typ: Rc::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
+            typ: Box::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
             dtors,
         }
         .into())

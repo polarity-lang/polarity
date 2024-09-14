@@ -1,7 +1,5 @@
 //! Bidirectional type checker
 
-use std::rc::Rc;
-
 use ast::*;
 
 use super::super::ctx::*;
@@ -20,8 +18,8 @@ impl CheckInfer for TypeUniv {
     ///           ──────────────────
     ///            P, Γ ⊢ Type ⇐ τ
     /// ```
-    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        convert(ctx.levels(), &mut ctx.meta_vars, Rc::new(TypeUniv::new().into()), &t)?;
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+        convert(ctx.levels(), &mut ctx.meta_vars, Box::new(TypeUniv::new().into()), t)?;
         Ok(self.clone())
     }
 

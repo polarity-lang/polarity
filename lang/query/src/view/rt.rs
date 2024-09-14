@@ -29,7 +29,7 @@ impl<'a> DatabaseView<'a> {
         elaborator::typechecker::check(Rc::new(ust)).map_err(Error::Type)
     }
 
-    pub fn run(&self) -> Result<Option<Rc<Exp>>, Error> {
+    pub fn run(&self) -> Result<Option<Box<Exp>>, Error> {
         let tst = self.tst()?;
 
         let main = tst.find_main();

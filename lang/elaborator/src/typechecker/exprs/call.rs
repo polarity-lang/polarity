@@ -1,7 +1,5 @@
 //! Bidirectional type checker
 
-use std::rc::Rc;
-
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::typechecker::lookup_table::CtorMeta;
@@ -21,13 +19,13 @@ impl CheckInfer for Call {
     ///           ──────────────────
     ///            P, Γ ⊢ Cσ ⇐ τ
     /// ```
-    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
         let inferred_term = self.infer(ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, &t)?;
+        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, t)?;
         Ok(inferred_term)
     }
     /// The *inference* rule for calls is:

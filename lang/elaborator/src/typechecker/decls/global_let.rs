@@ -21,7 +21,7 @@ impl CheckToplevel for Let {
         params.infer_telescope(ctx, |ctx, params_out| {
             let typ_out = typ.infer(ctx)?;
             let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
-            let body_out = body.check(ctx, typ_nf)?;
+            let body_out = body.check(ctx, &typ_nf)?;
 
             Ok(Let {
                 span: *span,

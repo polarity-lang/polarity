@@ -66,7 +66,7 @@ trait CollectInfo {
 //
 //
 
-impl<T: CollectInfo> CollectInfo for Rc<T> {
+impl<T: CollectInfo> CollectInfo for Box<T> {
     fn collect_info(&self, collector: &mut InfoCollector) {
         (**self).collect_info(collector)
     }

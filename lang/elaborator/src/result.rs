@@ -1,11 +1,9 @@
+use codespan::Span;
 use miette::{Diagnostic, SourceSpan};
 use miette_util::ToMiette;
 use thiserror::Error;
 
 use ast::*;
-use codespan::Span;
-use std::rc::Rc;
-
 use printer::types::Print;
 
 fn comma_separated<I: IntoIterator<Item = String>>(iter: I) -> String {
@@ -150,7 +148,7 @@ pub enum TypeError {
 }
 
 impl TypeError {
-    pub fn not_eq(lhs: Rc<Exp>, rhs: Rc<Exp>) -> Self {
+    pub fn not_eq(lhs: &Exp, rhs: &Exp) -> Self {
         Self::NotEq {
             lhs: lhs.print_to_string(None),
             rhs: rhs.print_to_string(None),
@@ -180,11 +178,11 @@ impl TypeError {
         Self::InvalidMatch { msg: separated("; ", msgs), span: info.to_miette() }
     }
 
-    pub fn expected_typ_app(got: Rc<Exp>) -> Self {
+    pub fn expected_typ_app(got: &Exp) -> Self {
         Self::ExpectedTypApp { got: got.print_to_string(None), span: got.span().to_miette() }
     }
 
-    pub fn occurs_check_failed(idx: Idx, exp: Rc<Exp>) -> Self {
+    pub fn occurs_check_failed(idx: Idx, exp: &Exp) -> Self {
         Self::OccursCheckFailed {
             idx,
             exp: exp.print_to_string(None),
@@ -192,11 +190,11 @@ impl TypeError {
         }
     }
 
-    pub fn unsupported_annotation(exp: Rc<Exp>) -> Self {
+    pub fn unsupported_annotation(exp: &Exp) -> Self {
         Self::UnsupportedAnnotation { exp: exp.print_to_string(None), span: exp.span().to_miette() }
     }
 
-    pub fn cannot_decide(lhs: Rc<Exp>, rhs: Rc<Exp>) -> Self {
+    pub fn cannot_decide(lhs: &Exp, rhs: &Exp) -> Self {
         Self::CannotDecide {
             lhs: lhs.print_to_string(None),
             rhs: rhs.print_to_string(None),

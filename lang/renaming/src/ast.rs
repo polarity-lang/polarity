@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use ast::ctx::*;
 use ast::*;
 use codespan::Span;
@@ -39,10 +37,10 @@ pub trait Rename: Sized {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self;
 }
 
-impl<R: Rename + Clone> Rename for Rc<R> {
+impl<R: Rename + Clone> Rename for Box<R> {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let x = (*self).clone();
-        Rc::new(x.rename_in_ctx(ctx))
+        Box::new(x.rename_in_ctx(ctx))
     }
 }
 

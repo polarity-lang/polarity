@@ -1,4 +1,5 @@
-use std::{error::Error, io, rc::Rc};
+use std::rc::Rc;
+use std::{error::Error, io};
 
 use pretty::{
     termcolor::{Ansi, WriteColor},
@@ -122,6 +123,21 @@ pub fn print_comma_separated<'a, T: Print>(
 }
 
 impl<T: Print> Print for Rc<T> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        T::print(self, cfg, alloc)
+    }
+
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        prec: Precedence,
+    ) -> Builder<'a> {
+        T::print_prec(self, cfg, alloc, prec)
+    }
+}
+
+impl<T: Print> Print for Box<T> {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         T::print(self, cfg, alloc)
     }

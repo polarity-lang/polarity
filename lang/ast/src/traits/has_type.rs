@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::exp::Exp;
 
 /// Trait for expressions which have a type.
@@ -9,5 +7,5 @@ use crate::exp::Exp;
 /// otherwise the function is not guaranteed to return a result.
 pub trait HasType {
     /// Return the type of the expression.
-    fn typ(&self) -> Option<Rc<Exp>>;
+    fn typ(&self) -> Option<Box<Exp>>;
 }

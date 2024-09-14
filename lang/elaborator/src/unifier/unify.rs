@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::rc::Rc;
 
 use ast::ctx::LevelCtx;
 use ast::{occurs_in, Variable};
@@ -13,7 +12,7 @@ use super::constraints::Constraint;
 
 #[derive(Debug, Clone)]
 pub struct Unificator {
-    map: HashMap<Lvl, Rc<Exp>>,
+    map: HashMap<Lvl, Box<Exp>>,
 }
 
 impl Substitutable for Unificator {
@@ -41,7 +40,7 @@ impl Shift for Unificator {
 }
 
 impl Substitution for Unificator {
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
         self.map.get(&lvl).cloned()
     }
 }
@@ -140,7 +139,7 @@ impl Ctx {
                             let lhs = solution.clone().subst(&mut ctx.clone(), &h.args);
                             self.add_constraint(Constraint::Equality {
                                 lhs,
-                                rhs: Rc::new(e.clone()),
+                                rhs: Box::new(e.clone()),
                             })?;
                         }
                         MetaVarState::Unsolved { ctx } => {
@@ -154,13 +153,13 @@ impl Ctx {
                                     h.metavar,
                                     MetaVarState::Solved {
                                         ctx: ctx.clone(),
-                                        solution: Rc::new(e.clone()),
+                                        solution: Box::new(e.clone()),
                                     },
                                 );
                             } else {
                                 return Err(TypeError::cannot_decide(
-                                    Rc::new(Exp::Hole(h.clone())),
-                                    Rc::new(e.clone()),
+                                    &Box::new(Exp::Hole(h.clone())),
+                                    &Box::new(e.clone()),
                                 ));
                             }
                         }
@@ -233,9 +232,9 @@ impl Ctx {
                     self.add_constraint(constraint)
                 }
                 (Exp::TypeUniv(_), Exp::TypeUniv(_)) => Ok(Yes(())),
-                (Exp::Anno(_), _) => Err(TypeError::unsupported_annotation(lhs.clone())),
-                (_, Exp::Anno(_)) => Err(TypeError::unsupported_annotation(rhs.clone())),
-                (_, _) => Err(TypeError::cannot_decide(lhs.clone(), rhs.clone())),
+                (Exp::Anno(_), _) => Err(TypeError::unsupported_annotation(lhs)),
+                (_, Exp::Anno(_)) => Err(TypeError::unsupported_annotation(rhs)),
+                (_, _) => Err(TypeError::cannot_decide(lhs, rhs)),
             },
             Constraint::EqualityArgs { lhs, rhs } => {
                 let new_eqns =
@@ -248,9 +247,9 @@ impl Ctx {
         }
     }
 
-    fn add_assignment(&mut self, idx: Idx, exp: Rc<Exp>) -> Result<Dec, TypeError> {
+    fn add_assignment(&mut self, idx: Idx, exp: Box<Exp>) -> Result<Dec, TypeError> {
         if occurs_in(&mut self.ctx, idx, &exp) {
-            return Err(TypeError::occurs_check_failed(idx, exp));
+            return Err(TypeError::occurs_check_failed(idx, &exp));
         }
         let insert_lvl = self.ctx.idx_to_lvl(idx);
         let exp = exp.subst(&mut self.ctx, &self.unif);

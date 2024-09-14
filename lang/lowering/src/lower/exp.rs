@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use num_bigint::BigUint;
 
@@ -458,7 +456,7 @@ impl Lower for cst::exp::NatLit {
                 span: Some(*span),
                 kind: call_kind,
                 name: "S".to_owned(),
-                args: ast::Args { args: vec![ast::Arg::UnnamedArg(Rc::new(out))] },
+                args: ast::Args { args: vec![ast::Arg::UnnamedArg(Box::new(out))] },
                 inferred_type: None,
             });
         }
@@ -548,7 +546,7 @@ impl Lower for cst::exp::Motive {
 
 #[cfg(test)]
 mod lower_args_tests {
-    use ast;
+
     use parser::cst::decls::Telescope;
 
     use crate::lookup_table::LookupTable;

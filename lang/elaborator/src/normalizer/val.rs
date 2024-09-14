@@ -54,10 +54,10 @@ impl<T: ReadBack> ReadBack for Vec<T> {
 }
 
 impl<T: ReadBack> ReadBack for Rc<T> {
-    type Nf = Rc<T::Nf>;
+    type Nf = Box<T::Nf>;
 
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
-        (**self).read_back(prg).map(Rc::new)
+        (**self).read_back(prg).map(Box::new)
     }
 }
 
@@ -842,7 +842,7 @@ impl Arg {
 pub struct Closure {
     pub env: Env,
     pub n_args: usize,
-    pub body: Rc<ast::Exp>,
+    pub body: Box<ast::Exp>,
 }
 
 impl Shift for Closure {
@@ -860,7 +860,7 @@ impl Print for Closure {
 }
 
 impl ReadBack for Closure {
-    type Nf = Rc<ast::Exp>;
+    type Nf = Box<ast::Exp>;
 
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
         let args: Vec<Rc<Val>> = (0..self.n_args)

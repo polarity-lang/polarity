@@ -11,8 +11,6 @@ pub mod variable;
 use codespan::Span;
 use miette_util::ToMiette;
 
-use std::rc::Rc;
-
 use log::trace;
 
 use printer::types::Print;
@@ -40,7 +38,7 @@ pub trait CheckInfer: Sized {
     /// - P: The program context of toplevel declarations.
     /// - Γ: The context of locally bound variables
     /// - τ: The type we check against, must be in normal form.
-    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError>;
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError>;
     /// Tries to infer a type for the given expression. For inference we use the
     /// following syntax:
     /// ```text
@@ -51,12 +49,12 @@ pub trait CheckInfer: Sized {
     fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError>;
 }
 
-impl<T: CheckInfer> CheckInfer for Rc<T> {
-    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        Ok(Rc::new((**self).check(ctx, t)?))
+impl<T: CheckInfer> CheckInfer for Box<T> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+        Ok(Box::new((**self).check(ctx, t)?))
     }
     fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
-        Ok(Rc::new((**self).infer(ctx)?))
+        Ok(Box::new((**self).infer(ctx)?))
     }
 }
 
@@ -65,18 +63,18 @@ impl<T: CheckInfer> CheckInfer for Rc<T> {
 //
 
 impl CheckInfer for Exp {
-    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
         trace!("{} |- {} <= {}", ctx.print_trace(), self.print_trace(), t.print_trace());
         match self {
-            Exp::Variable(e) => Ok(e.check(ctx, t.clone())?.into()),
-            Exp::TypCtor(e) => Ok(e.check(ctx, t.clone())?.into()),
-            Exp::Call(e) => Ok(e.check(ctx, t.clone())?.into()),
-            Exp::DotCall(e) => Ok(e.check(ctx, t.clone())?.into()),
-            Exp::Anno(e) => Ok(e.check(ctx, t.clone())?.into()),
-            Exp::TypeUniv(e) => Ok(e.check(ctx, t.clone())?.into()),
-            Exp::Hole(e) => Ok(e.check(ctx, t.clone())?.into()),
-            Exp::LocalMatch(e) => Ok(e.check(ctx, t.clone())?.into()),
-            Exp::LocalComatch(e) => Ok(e.check(ctx, t.clone())?.into()),
+            Exp::Variable(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::TypCtor(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::Call(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::DotCall(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::Anno(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::TypeUniv(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::Hole(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::LocalMatch(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::LocalComatch(e) => Ok(e.check(ctx, t)?.into()),
         }
     }
 
@@ -103,7 +101,7 @@ impl CheckInfer for Exp {
 }
 
 impl CheckInfer for Arg {
-    fn check(&self, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
         match self {
             Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.check(ctx, t)?)),
             Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.check(ctx, t)?)),
@@ -145,7 +143,7 @@ fn check_args(
         .zip(params)
         .map(|(exp, Param { typ, .. })| {
             let typ = typ.normalize(&ctx.module, &mut ctx.env())?;
-            exp.check(ctx, typ)
+            exp.check(ctx, &typ)
         })
         .collect::<Result<_, _>>()?;
 
@@ -206,7 +204,7 @@ impl CheckTelescope for TelescopeInst {
             |ctx, params_out, (param_actual, param_expected)| {
                 let ParamInst { span, name, .. } = param_actual;
                 let Param { typ, .. } = param_expected;
-                let typ_out = typ.check(ctx, Rc::new(TypeUniv::new().into()))?;
+                let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
                 let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
                 let mut params_out = params_out;
                 let param_out = ParamInst {
@@ -239,7 +237,7 @@ impl InferTelescope for Telescope {
             vec![],
             |ctx, mut params_out, param| {
                 let Param { implicit, typ, name } = param;
-                let typ_out = typ.check(ctx, Rc::new(TypeUniv::new().into()))?;
+                let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
                 let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
                 let param_out = Param { implicit: *implicit, name: name.clone(), typ: typ_out };
                 params_out.push(param_out);

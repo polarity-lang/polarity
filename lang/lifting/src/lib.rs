@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use ast::ctx::values::TypeCtx;
 use ast::ctx::BindContext;
 use ast::ctx::LevelCtx;
@@ -110,7 +108,7 @@ impl Lift for Data {
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
-            typ: Rc::new(typ.lift_telescope(ctx, |_, params| params)),
+            typ: Box::new(typ.lift_telescope(ctx, |_, params| params)),
             ctors,
         }
     }
@@ -129,7 +127,7 @@ impl Lift for Codata {
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
-            typ: Rc::new(typ.lift_telescope(ctx, |_, params| params)),
+            typ: Box::new(typ.lift_telescope(ctx, |_, params| params)),
             dtors,
         }
     }
@@ -466,7 +464,7 @@ impl Lift for Arg {
         match self {
             Arg::UnnamedArg(exp) => Arg::UnnamedArg(exp.lift(ctx)),
             Arg::NamedArg(name, exp) => Arg::NamedArg(name.clone(), exp.lift(ctx)),
-            Arg::InsertedImplicitArg(hole) => Arg::UnnamedArg(Rc::new(hole.lift(ctx))),
+            Arg::InsertedImplicitArg(hole) => Arg::UnnamedArg(Box::new(hole.lift(ctx))),
         }
     }
 }
@@ -491,11 +489,11 @@ impl Lift for ParamInst {
     }
 }
 
-impl<T: Lift> Lift for Rc<T> {
-    type Target = Rc<T::Target>;
+impl<T: Lift> Lift for Box<T> {
+    type Target = Box<T::Target>;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        Rc::new(T::lift(self, ctx))
+        Box::new(T::lift(self, ctx))
     }
 }
 
@@ -523,9 +521,9 @@ impl Ctx {
         inferred_type: &TypCtor,
         type_ctx: &TypeCtx,
         name: &Label,
-        on_exp: &Rc<Exp>,
+        on_exp: &Exp,
         motive: &Option<Motive>,
-        ret_typ: &Option<Rc<Exp>>,
+        ret_typ: &Option<Box<Exp>>,
         cases: &Vec<Case>,
     ) -> Exp {
         // Only lift local matches for the specified type
@@ -535,7 +533,7 @@ impl Ctx {
                 inferred_type: None,
                 ctx: None,
                 name: name.clone(),
-                on_exp: on_exp.lift(self),
+                on_exp: Box::new(on_exp.lift(self)),
                 motive: motive.lift(self),
                 ret_typ: None,
                 cases: cases.lift(self),
@@ -597,7 +595,7 @@ impl Ctx {
         Exp::DotCall(DotCall {
             span: None,
             kind: DotCallKind::Definition,
-            exp: on_exp.lift(self),
+            exp: Box::new(on_exp.lift(self)),
             name,
             args,
             inferred_type: None,

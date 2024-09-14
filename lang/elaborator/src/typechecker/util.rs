@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use log::trace;
 
 use ast::ctx::LevelCtx;
@@ -24,16 +22,17 @@ pub fn uses_self(codata: &Codata) -> Result<bool, TypeError> {
 pub fn convert(
     ctx: LevelCtx,
     meta_vars: &mut HashMap<MetaVar, MetaVarState>,
-    this: Rc<Exp>,
-    other: &Rc<Exp>,
+    this: Box<Exp>,
+    other: &Exp,
 ) -> Result<(), TypeError> {
     trace!("{} =? {}", this.print_trace(), other.print_trace());
     // Convertibility is checked using the unification algorithm.
-    let constraint: Constraint = Constraint::Equality { lhs: this.clone(), rhs: other.clone() };
+    let constraint: Constraint =
+        Constraint::Equality { lhs: this.clone(), rhs: Box::new(other.clone()) };
     let res = unify(ctx, meta_vars, constraint, true)?;
     match res {
         crate::unifier::dec::Dec::Yes(_) => Ok(()),
-        crate::unifier::dec::Dec::No(_) => Err(TypeError::not_eq(this.clone(), other.clone())),
+        crate::unifier::dec::Dec::No(_) => Err(TypeError::not_eq(&this, other)),
     }
 }
 
@@ -41,13 +40,13 @@ pub trait ExpectTypApp {
     fn expect_typ_app(&self) -> Result<TypCtor, TypeError>;
 }
 
-impl ExpectTypApp for Rc<Exp> {
+impl ExpectTypApp for Exp {
     fn expect_typ_app(&self) -> Result<TypCtor, TypeError> {
-        match &**self {
+        match self {
             Exp::TypCtor(TypCtor { span, name, args }) => {
                 Ok(TypCtor { span: *span, name: name.clone(), args: args.clone() })
             }
-            _ => Err(TypeError::expected_typ_app(self.clone())),
+            _ => Err(TypeError::expected_typ_app(self)),
         }
     }
 }

@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use ast::ctx::{BindContext, LevelCtx};
 use ast::{self, HashMap, SwapWithCtx};
 use ast::{Attributes, DocComment};
@@ -10,7 +8,7 @@ use codespan::Span;
 #[derive(Debug, Clone)]
 pub struct Prg {
     pub map: HashMap<ast::Ident, XData>,
-    pub exp: Option<Rc<ast::Exp>>,
+    pub exp: Option<Box<ast::Exp>>,
 }
 
 #[derive(Debug, Clone)]
@@ -19,10 +17,10 @@ pub struct XData {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: ast::Ident,
-    pub typ: Rc<ast::Telescope>,
+    pub typ: Box<ast::Telescope>,
     pub ctors: HashMap<ast::Ident, ast::Ctor>,
     pub dtors: HashMap<ast::Ident, ast::Dtor>,
-    pub exprs: HashMap<Key, Option<Rc<ast::Exp>>>,
+    pub exprs: HashMap<Key, Option<Box<ast::Exp>>>,
 }
 
 /// A key points to a matrix cell
