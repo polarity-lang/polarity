@@ -5,7 +5,6 @@ use parser::cst::exp::BindingSite;
 use parser::cst::{self, ident::Ident};
 use syntax::ast;
 
-
 use super::*;
 
 impl Lower for cst::decls::DocComment {
