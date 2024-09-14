@@ -21,7 +21,18 @@ pub struct Attributes {
 pub struct Module {
     /// The location of the module on disk
     pub uri: Url,
-    pub items: Vec<Decl>,
+    pub contents: ModuleContents,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModuleContents {
+    pub use_decls: Vec<UseDecl>,
+    pub decls: Vec<Decl>,
+}
+
+#[derive(Debug, Clone)]
+pub enum UseDecl {
+    String(String),
 }
 
 #[derive(Debug, Clone)]

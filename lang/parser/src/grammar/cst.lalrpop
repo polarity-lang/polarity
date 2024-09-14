@@ -30,6 +30,7 @@ extern {
     "absurd" => Token::Absurd,
     "Type" => Token::Type,
     "implicit" => Token::Implicit,
+    "use" => Token::Use,
 
     // Parens, Braces and Brackets
     //
@@ -129,6 +130,14 @@ Arg: Arg = {
 // Modules
 //
 //
+
+pub ModuleContents: ModuleContents = {
+    <use_decls: UseDecl*> <decls: Decls> => ModuleContents { use_decls, decls }
+}
+
+pub UseDecl: UseDecl = {
+  "use" <lit: "StringLit"> => UseDecl::String(lit),
+}
 
 pub Decls: Vec<Decl> = {
     <items: Decl*> => items,
