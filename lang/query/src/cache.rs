@@ -66,10 +66,6 @@ impl<T> CacheEntry<T> {
     pub fn value(&self) -> &T {
         &self.value
     }
-
-    pub fn last_modified(&self) -> time::Instant {
-        self.last_modified
-    }
 }
 
 impl<T> From<T> for CacheEntry<T> {
