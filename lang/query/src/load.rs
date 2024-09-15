@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use crate::*;
 use elaborator::LookupTable;
+use renaming::Rename;
 use url::Url;
 
 /// Mutable view on a file in the database
@@ -85,7 +86,8 @@ impl<'a> DatabaseViewMut<'a> {
     pub fn print_to_string(&mut self) -> Result<String, Error> {
         let module =
             self.load_ast(&mut lowering::LookupTable::default(), &mut LookupTable::default())?;
-        Ok(printer::Print::print_to_string(&*module, None))
+        let module = (*module).clone().rename();
+        Ok(printer::Print::print_to_string(&module, None))
     }
 
     pub fn reset(&mut self) {
