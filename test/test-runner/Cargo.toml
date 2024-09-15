@@ -28,3 +28,4 @@ lowering = { path = "../../lang/lowering" }
 elaborator = { path = "../../lang/elaborator" }
 renaming = { path = "../../lang/renaming" }
 printer = { path = "../../lang/printer" }
+query = { path = "../../lang/query" }

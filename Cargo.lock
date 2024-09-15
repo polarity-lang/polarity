@@ -2417,6 +2417,7 @@ dependencies = [
  "lowering",
  "parser",
  "printer",
+ "query",
  "renaming",
  "serde",
  "serde_derive",

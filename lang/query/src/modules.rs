@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-use elaborator::typechecker::lookup_table::LookupTable;
+use elaborator::LookupTable;
 use parser::cst::decls::UseDecl;
 use url::Url;
 
@@ -11,6 +11,15 @@ use crate::{result::DriverError, Database, Error};
 impl DatabaseViewMut<'_> {
     pub fn load_module(&mut self) -> Result<Arc<ast::Module>, Error> {
         self.database.load_module(&self.uri)
+    }
+
+    /// Load all imports for the current module without loading the module itself.
+    pub fn load_imports(
+        &mut self,
+        cst_lookup_table: &mut lowering::LookupTable,
+        ast_lookup_table: &mut LookupTable,
+    ) -> Result<(), Error> {
+        self.database.load_imports(&self.uri, cst_lookup_table, ast_lookup_table)
     }
 }
 
@@ -25,26 +34,24 @@ impl Database {
         print_dependency_tree(&deps);
         log::trace!("");
 
-        fn load_module_impl(
-            db: &mut Database,
-            deps: &HashMap<Url, Vec<Url>>,
-            cst_lookup_table: &mut lowering::LookupTable,
-            ast_lookup_table: &mut LookupTable,
-            module_url: &Url,
-        ) -> Result<Arc<ast::Module>, Error> {
-            let empty_vec = Vec::new();
-            let direct_dependencies = deps.get(module_url).unwrap_or(&empty_vec);
-
-            for dep_url in direct_dependencies {
-                load_module_impl(db, deps, cst_lookup_table, ast_lookup_table, dep_url)?;
-            }
-
-            db.open_uri(module_url)?.load_ast(cst_lookup_table, ast_lookup_table)
-        }
-
         let mut cst_lookup_table = lowering::LookupTable::default();
         let mut ast_lookup_table = LookupTable::default();
         load_module_impl(self, &deps, &mut cst_lookup_table, &mut ast_lookup_table, module_url)
+    }
+
+    fn load_imports(
+        &mut self,
+        module_url: &Url,
+        cst_lookup_table: &mut lowering::LookupTable,
+        ast_lookup_table: &mut LookupTable,
+    ) -> Result<(), Error> {
+        let deps = self.build_dependency_dag(module_url)?;
+        let empty_vec = Vec::new();
+        let direct_deps = deps.get(module_url).unwrap_or(&empty_vec);
+        for direct_dep in direct_deps {
+            load_module_impl(self, &deps, cst_lookup_table, ast_lookup_table, direct_dep)?;
+        }
+        Ok(())
     }
 
     /// Builds the dependency DAG for a given module and checks for cycles.
@@ -110,6 +117,23 @@ impl Database {
     fn resolve_module_name(&self, name: &str, current_module: &Url) -> Result<Url, Error> {
         current_module.join(name).map_err(|err| DriverError::Url(err).into())
     }
+}
+
+fn load_module_impl(
+    db: &mut Database,
+    deps: &HashMap<Url, Vec<Url>>,
+    cst_lookup_table: &mut lowering::LookupTable,
+    ast_lookup_table: &mut LookupTable,
+    module_url: &Url,
+) -> Result<Arc<ast::Module>, Error> {
+    let empty_vec = Vec::new();
+    let direct_dependencies = deps.get(module_url).unwrap_or(&empty_vec);
+
+    for dep_url in direct_dependencies {
+        load_module_impl(db, deps, cst_lookup_table, ast_lookup_table, dep_url)?;
+    }
+
+    db.open_uri(module_url)?.load_ast(cst_lookup_table, ast_lookup_table)
 }
 
 /// Prints the dependency graph as an indented tree.

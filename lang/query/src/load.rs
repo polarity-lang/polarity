@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::*;
-use elaborator::typechecker::lookup_table::LookupTable;
+use elaborator::LookupTable;
 use url::Url;
 
 /// Mutable view on a file in the database
@@ -28,8 +28,8 @@ impl<'a> DatabaseViewMut<'a> {
             }
             None => {
                 log::trace!("AST is stale, reloading");
-                let cst = self.load_cst()?;
-                let ast = load_ast(cst, cst_lookup_table, ast_lookup_table).map(Arc::new);
+                let ust = self.load_ust(cst_lookup_table);
+                let ast = ust.and_then(|ust| load_ast(ust, ast_lookup_table)).map(Arc::new);
                 self.database.ast.insert(self.uri.clone(), ast.clone());
                 self.database.ast_lookup_table.insert(self.uri.clone(), ast_lookup_table.clone());
                 self.database.cst_lookup_table.insert(self.uri.clone(), cst_lookup_table.clone());
@@ -40,6 +40,16 @@ impl<'a> DatabaseViewMut<'a> {
                 ast
             }
         }
+    }
+
+    pub fn load_ust(
+        &mut self,
+        cst_lookup_table: &mut lowering::LookupTable,
+    ) -> Result<ast::Module, Error> {
+        log::trace!("Loading UST: {}", self.uri);
+
+        let cst = self.load_cst()?;
+        load_ust(cst, cst_lookup_table)
     }
 
     pub fn load_cst(&mut self) -> Result<Arc<cst::decls::Module>, Error> {
@@ -67,6 +77,12 @@ impl<'a> DatabaseViewMut<'a> {
         }
     }
 
+    pub fn print_to_string(&mut self) -> Result<String, Error> {
+        let module =
+            self.load_ast(&mut lowering::LookupTable::default(), &mut LookupTable::default())?;
+        Ok(printer::Print::print_to_string(&*module, None))
+    }
+
     pub fn reset(&mut self) {
         self.database.info_by_id.insert(self.uri.clone(), Lapper::new(vec![]));
         self.database.item_by_id.insert(self.uri.clone(), Lapper::new(vec![]));
@@ -84,13 +100,15 @@ fn load_cst(url: &Url, source: &str) -> Result<cst::decls::Module, Error> {
     parser::parse_module(url.clone(), source).map_err(Error::Parser)
 }
 
-fn load_ast(
+fn load_ust(
     cst: Arc<cst::decls::Module>,
     cst_lookup_table: &mut lowering::LookupTable,
-    ast_lookup_table: &mut LookupTable,
 ) -> Result<ast::Module, Error> {
-    let ust = lowering::lower_module_with_lookup_table(&cst, cst_lookup_table)
-        .map_err(Error::Lowering)?;
+    log::debug!("Lowering module");
+    lowering::lower_module_with_lookup_table(&cst, cst_lookup_table).map_err(Error::Lowering)
+}
+
+fn load_ast(ust: ast::Module, ast_lookup_table: &mut LookupTable) -> Result<ast::Module, Error> {
     let tst = elaborator::typechecker::check_with_lookup_table(Rc::new(ust), ast_lookup_table)
         .map_err(Error::Type)?;
     Ok(tst)

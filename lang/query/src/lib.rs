@@ -42,7 +42,7 @@ pub struct Database {
     /// The AST of each file (once parsed and lowered, may be type-annotated)
     ast: Cache<Result<Arc<ast::Module>, Error>>,
     /// The symbol table constructed during typechecking
-    ast_lookup_table: Cache<elaborator::typechecker::lookup_table::LookupTable>,
+    ast_lookup_table: Cache<elaborator::LookupTable>,
     info_by_id: HashMap<Url, Lapper<u32, Info>>,
     item_by_id: HashMap<Url, Lapper<u32, Item>>,
 }
