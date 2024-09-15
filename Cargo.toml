@@ -40,4 +40,6 @@ num-bigint = { version = "0.4" }
 # url (for file locations)
 url = { version = "2.5.0" }
 pretty = { version = "0.11", features = ["termcolor"] }
+# logging infrastructure
 log = "0.4.21"
+env_logger = "0.11.3"

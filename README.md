@@ -25,12 +25,6 @@ From the root of this repository, run:
 pol run examples/example.pol
 ```
 
-Enable verbose tracing output:
-
-```sh
-RUST_LOG=trace pol run examples/example.pol
-```
-
 To pretty-print a file, run:
 
 ```sh
@@ -67,6 +61,21 @@ pol --help
 ```
 
 Please refer to the `README.md` files in the individual subprojects for further information.
+
+## Tracing Support
+
+The compiler uses the [log crate](https://crates.io/crates/log) to trace useful diagnostic information during its execution.
+The emitting of the logs is controlled via environment variables and the [env-logger crate](https://crates.io/crates/env_logger).
+The site for that crate contains a lot of information about all available options.
+The two flags `--trace` and `--debug` can also be used to configure the output.
+
+A simple invocation which writes trace information to the console is:
+
+```sh
+RUST_LOG=trace pol run examples/example.pol
+```
+
+The testsuite uses the same logging infrastructure as the main application, so any options used for the `pol` binary should also work for the `test-runner` binary.
 
 
 ## Licenses
