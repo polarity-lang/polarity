@@ -17,7 +17,12 @@ pub fn check(prg: Rc<Module>) -> Result<Module, TypeError> {
     let decls =
         prg.decls.iter().map(|decl| decl.check_wf(&mut ctx)).collect::<Result<_, TypeError>>()?;
 
-    Ok(Module { uri: prg.uri.clone(), decls, meta_vars: ctx.meta_vars.clone() })
+    Ok(Module {
+        uri: prg.uri.clone(),
+        use_decls: prg.use_decls.clone(),
+        decls,
+        meta_vars: ctx.meta_vars.clone(),
+    })
 }
 
 pub trait CheckToplevel: Sized {

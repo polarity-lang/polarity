@@ -21,7 +21,21 @@ pub struct Attributes {
 pub struct Module {
     /// The location of the module on disk
     pub uri: Url,
-    pub items: Vec<Decl>,
+    /// List of module imports at the top of a module.
+    pub use_decls: Vec<UseDecl>,
+    /// Declarations contained in the module other than imports.
+    pub decls: Vec<Decl>,
+}
+
+/// A use declaration
+///
+/// ```text
+/// use "Data/Bool.pol"
+/// ```
+#[derive(Debug, Clone)]
+pub struct UseDecl {
+    pub span: Span,
+    pub path: String,
 }
 
 #[derive(Debug, Clone)]

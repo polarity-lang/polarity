@@ -14,7 +14,9 @@ use printer::tokens::DOT;
 use printer::tokens::HASH;
 use printer::tokens::IMPLICIT;
 use printer::tokens::LET;
+use printer::tokens::USE;
 use printer::util::BracesExt;
+use printer::util::IsNilExt;
 use printer::Alloc;
 use printer::Builder;
 use printer::Print;
@@ -137,14 +139,37 @@ impl MetaVarState {
         }
     }
 }
+
+/// A use declaration
+///
+/// ```text
+/// use "Data/Bool.pol"
+/// ```
+#[derive(Debug, Clone)]
+pub struct UseDecl {
+    pub span: Span,
+    pub path: String,
+}
+
+impl Print for UseDecl {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let UseDecl { path, .. } = self;
+        alloc.text(USE).append(alloc.space()).append(path)
+    }
+}
+
 /// A module containing declarations
 ///
 /// There is a 1-1 correspondence between modules and files in our system.
 #[derive(Debug, Clone)]
 pub struct Module {
+    /// The location of the module on disk
     pub uri: Url,
-    /// List of declarations in the module
+    /// List of module imports at the top of a module.
+    pub use_decls: Vec<UseDecl>,
+    /// Declarations contained in the module other than imports.
     pub decls: Vec<Decl>,
+    /// Metavariables that were generated for this module during lowering.
     pub meta_vars: HashMap<MetaVar, MetaVarState>,
 }
 
@@ -260,16 +285,40 @@ impl Module {
 
 impl Print for Module {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Module { decls, .. } = self;
+        let Module { use_decls, decls, .. } = self;
 
+        // UseDecls
+        //
+        //
+
+        let use_decls =
+            alloc.intersperse(use_decls.iter().map(|decl| decl.print(cfg, alloc)), alloc.line());
+
+        // Decls
+        //
+        //
+
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep` option is set.
+        // This is useful for typesetting examples in papers which have to make economic use of vertical space.
         let sep = if cfg.omit_decl_sep { alloc.line() } else { alloc.line().append(alloc.line()) };
-        alloc.intersperse(
-            decls
-                .iter()
-                .filter(|decl| decl.attributes().is_visible())
-                .map(|decl| decl.print(cfg, alloc)),
-            sep,
-        )
+
+        let decls = decls
+            .iter()
+            .filter(|decl| decl.attributes().is_visible())
+            .map(|decl| decl.print(cfg, alloc));
+
+        // UseDecls + Decls
+        //
+        //
+
+        if use_decls.is_nil() {
+            alloc.intersperse(decls, sep)
+        } else {
+            use_decls
+                .append(alloc.line())
+                .append(alloc.line())
+                .append(alloc.intersperse(decls, sep))
+        }
     }
 }
 

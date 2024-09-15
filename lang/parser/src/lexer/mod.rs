@@ -43,6 +43,8 @@ pub enum Token {
     Type,
     #[token("implicit")]
     Implicit,
+    #[token("use")]
+    Use,
 
     // Parens, Braces and Brackets
     //

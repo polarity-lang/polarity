@@ -77,8 +77,12 @@ fn generate_edits(
 
     // Edits for the type that has been xfunctionalized
     // Here we rewrite the entire (co)data declaration and its associated (co)definitions
-    let new_items =
-        Module { uri: module.uri.clone(), decls: new_decls, meta_vars: module.meta_vars.clone() };
+    let new_items = Module {
+        uri: module.uri.clone(),
+        use_decls: module.use_decls.clone(),
+        decls: new_decls,
+        meta_vars: module.meta_vars.clone(),
+    };
     let type_text = new_items.print_to_string(None);
 
     let mut edits = vec![Edit { span: original.type_span, text: type_text }];
