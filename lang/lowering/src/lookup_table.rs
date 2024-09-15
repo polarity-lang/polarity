@@ -84,7 +84,7 @@ impl fmt::Display for DeclKind {
 pub fn build_lookup_table(module: &Module) -> Result<LookupTable, LoweringError> {
     let mut lookup_table = LookupTable { map: HashMap::default() };
 
-    let Module { contents: ModuleContents { decls, .. }, .. } = module;
+    let Module { decls, .. } = module;
 
     for decl in decls {
         match decl {

@@ -131,19 +131,19 @@ Arg: Arg = {
 //
 //
 
-pub ModuleContents: ModuleContents = {
-    <use_decls: UseDecl*> <decls: Decls> => ModuleContents { use_decls, decls }
+pub ModuleContents: (Vec<UseDecl>, Vec<Decl>) = {
+    <use_decls: UseDecl*> <decls: Decls> => (use_decls, decls)
 }
 
-pub UseDecl: UseDecl = {
-  "use" <lit: "StringLit"> => UseDecl::String(lit),
+UseDecl: UseDecl = {
+  <l: @L> "use" <path: "StringLit"> <r: @R> => UseDecl { span: span(l,r), path },
 }
 
-pub Decls: Vec<Decl> = {
+Decls: Vec<Decl> = {
     <items: Decl*> => items,
 }
 
-pub Decl: Decl = {
+Decl: Decl = {
     <d: Data> => Decl::Data(d),
     <d: Codata> => Decl::Codata(d),
     <d: Def> => Decl::Def(d),

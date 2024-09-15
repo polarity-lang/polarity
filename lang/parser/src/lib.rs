@@ -18,6 +18,6 @@ pub fn parse_exp(s: &str) -> Result<Box<cst::exp::Exp>, ParseError> {
 pub fn parse_module(uri: Url, s: &str) -> Result<cst::decls::Module, ParseError> {
     let lexer = Lexer::new(s);
     let parser = ModuleContentsParser::new();
-    let contents = parser.parse(lexer)?;
-    Ok(cst::decls::Module { uri, contents })
+    let (use_decls, decls) = parser.parse(lexer)?;
+    Ok(cst::decls::Module { uri, use_decls, decls })
 }
