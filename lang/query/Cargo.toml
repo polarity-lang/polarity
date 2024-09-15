@@ -31,3 +31,6 @@ parser = { path = "../parser" }
 renaming = { path = "../renaming" }
 xfunc = { path = "../xfunc" }
 lifting = { path = "../lifting" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-time = "1"

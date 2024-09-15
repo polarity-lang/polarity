@@ -19,12 +19,12 @@ impl<'a> DatabaseViewMut<'a> {
     }
 
     pub fn source(&'a self) -> &'a str {
-        let DatabaseViewMut { url, database } = self;
-        &database.files.get(url).unwrap().source
+        let DatabaseViewMut { uri: url, database } = self;
+        &database.files.get_even_if_stale(url).unwrap().source
     }
 
     pub fn pretty_error(&self, err: Error) -> miette::Report {
         let miette_error: miette::Error = err.into();
-        miette_error.with_source_code(miette::NamedSource::new(&self.url, self.source().to_owned()))
+        miette_error.with_source_code(miette::NamedSource::new(&self.uri, self.source().to_owned()))
     }
 }

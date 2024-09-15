@@ -1,5 +1,9 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+#[cfg(not(target_arch = "wasm32"))]
+use std::time;
+#[cfg(target_arch = "wasm32")]
+use web_time as time;
 
 use ast::HashMap;
 use url::Url;
@@ -21,6 +25,8 @@ pub trait FileSource: Send + Sync {
     fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError>;
     /// Check if a file with the given URI has been modified since the last time it was read
     fn is_modified(&self, uri: &Url) -> Result<bool, DriverError>;
+    /// Get the last time a file was read
+    fn last_retrieved(&self, uri: &Url) -> Option<time::Instant>;
     /// If a URI is requested that is not managed by this source, fall back to another source
     fn fallback_to<S: FileSource>(self, fallback: S) -> OverlaySource<Self, S>
     where
@@ -31,17 +37,20 @@ pub trait FileSource: Send + Sync {
 }
 
 /// A file source that reads from and writes to the file system
+#[cfg(not(target_arch = "wasm32"))]
 pub struct FileSystemSource {
     root: PathBuf,
-    last_retrieved: HashMap<Url, std::time::SystemTime>,
+    last_retrieved: HashMap<Url, time::SystemTime>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl FileSystemSource {
     pub fn new<P: AsRef<Path>>(root: P) -> Self {
         Self { root: root.as_ref().to_path_buf(), last_retrieved: HashMap::default() }
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl FileSource for FileSystemSource {
     fn manage(&mut self, uri: &Url) -> bool {
         self.root.join(uri.path()).exists()
@@ -79,6 +88,10 @@ impl FileSource for FileSystemSource {
                 .map_err(DriverError::Io)?,
         );
         Ok(())
+    }
+
+    fn last_retrieved(&self, uri: &Url) -> Option<time::Instant> {
+        self.last_retrieved.get(uri).and_then(system_time_to_instant)
     }
 
     fn is_modified(&self, uri: &Url) -> Result<bool, DriverError> {
@@ -138,6 +151,10 @@ impl FileSource for InMemorySource {
         Ok(())
     }
 
+    fn last_retrieved(&self, uri: &Url) -> Option<time::Instant> {
+        self.modified.get(uri).map(|_| time::Instant::now())
+    }
+
     fn is_modified(&self, uri: &Url) -> Result<bool, DriverError> {
         Ok(*self.modified.get(uri).unwrap_or(&true))
     }
@@ -184,11 +201,29 @@ where
         }
     }
 
+    fn last_retrieved(&self, uri: &Url) -> Option<time::Instant> {
+        if self.first.manages(uri) {
+            self.first.last_retrieved(uri)
+        } else {
+            self.second.last_retrieved(uri)
+        }
+    }
+
     fn is_modified(&self, uri: &Url) -> Result<bool, DriverError> {
         if self.first.manages(uri) {
             self.first.is_modified(uri)
         } else {
             self.second.is_modified(uri)
         }
+    }
+}
+
+fn system_time_to_instant(system_time: &time::SystemTime) -> Option<time::Instant> {
+    let now = time::Instant::now();
+    let system_now = time::SystemTime::now();
+
+    match system_time.duration_since(system_now) {
+        Ok(duration) => Some(now + duration),
+        Err(_) => None,
     }
 }

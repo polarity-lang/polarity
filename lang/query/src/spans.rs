@@ -6,16 +6,16 @@ use super::DatabaseViewMut;
 
 impl<'a> DatabaseViewMut<'a> {
     pub fn location_to_index(&self, location: Location) -> Option<ByteIndex> {
-        let DatabaseViewMut { url, database } = self;
-        let file = database.files.get(url).unwrap();
+        let DatabaseViewMut { uri: url, database } = self;
+        let file = database.files.get_even_if_stale(url).unwrap();
         let line_span = file.line_span(location.line).ok()?;
         let index: usize = line_span.start().to_usize() + location.column.to_usize();
         Some((index as u32).into())
     }
 
     pub fn index_to_location(&self, idx: ByteIndex) -> Option<Location> {
-        let DatabaseViewMut { url, database } = self;
-        let file = database.files.get(url).unwrap();
+        let DatabaseViewMut { uri: url, database } = self;
+        let file = database.files.get_even_if_stale(url).unwrap();
         file.location(idx).ok()
     }
 
@@ -46,10 +46,10 @@ impl<'a> DatabaseViewMut<'a> {
     }
 
     pub fn infos(&self) -> &Lapper<u32, Info> {
-        &self.database.info_by_id[&self.url]
+        &self.database.info_by_id[&self.uri]
     }
 
     pub fn items(&self) -> &Lapper<u32, Item> {
-        &self.database.item_by_id[&self.url]
+        &self.database.item_by_id[&self.uri]
     }
 }

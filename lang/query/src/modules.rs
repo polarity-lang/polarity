@@ -10,7 +10,7 @@ use crate::{result::DriverError, Database, Error};
 
 impl DatabaseViewMut<'_> {
     pub fn load_module(&mut self) -> Result<Arc<ast::Module>, Error> {
-        self.database.load_module(&self.url)
+        self.database.load_module(&self.uri)
     }
 }
 

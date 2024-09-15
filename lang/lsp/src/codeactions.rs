@@ -20,14 +20,18 @@ pub async fn code_action(
         .await;
 
     let mut db = server.database.write().await;
-    let mut index = db.open_uri(&text_document.uri).unwrap();
+    let Ok(mut index) = db.open_uri(&text_document.uri) else {
+        return Ok(None);
+    };
     let span_start = index.location_to_index(range.start.from_lsp());
     let span_end = index.location_to_index(range.end.from_lsp());
     let span = span_start.and_then(|start| span_end.map(|end| codespan::Span::new(start, end)));
     let item = span.and_then(|span| index.item_at_span(span));
 
     if let Some(item) = item {
-        let Xfunc { title, edits } = index.xfunc(item.type_name()).unwrap();
+        let Ok(Xfunc { title, edits }) = index.xfunc(item.type_name()) else {
+            return Ok(None);
+        };
         let edits = edits
             .into_iter()
             .map(|edit| TextEdit {

@@ -113,7 +113,7 @@ impl LanguageServer for Server {
 }
 
 impl Server {
-    async fn send_diagnostics(&self, url: Url, diags: Vec<Diagnostic>) {
+    pub(crate) async fn send_diagnostics(&self, url: Url, diags: Vec<Diagnostic>) {
         self.client.publish_diagnostics(url, diags, None).await;
     }
 }
