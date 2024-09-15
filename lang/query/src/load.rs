@@ -77,6 +77,11 @@ impl<'a> DatabaseViewMut<'a> {
         }
     }
 
+    pub fn write_source(&mut self, source: &str) -> Result<(), Error> {
+        self.reset();
+        self.database.source.write_string(&self.uri, source).map_err(|err| err.into())
+    }
+
     pub fn print_to_string(&mut self) -> Result<String, Error> {
         let module =
             self.load_ast(&mut lowering::LookupTable::default(), &mut LookupTable::default())?;
@@ -84,9 +89,12 @@ impl<'a> DatabaseViewMut<'a> {
     }
 
     pub fn reset(&mut self) {
+        self.database.ast.remove(&self.uri);
+        self.database.ast_lookup_table.remove(&self.uri);
+        self.database.cst.remove(&self.uri);
+        self.database.cst_lookup_table.remove(&self.uri);
         self.database.info_by_id.insert(self.uri.clone(), Lapper::new(vec![]));
         self.database.item_by_id.insert(self.uri.clone(), Lapper::new(vec![]));
-        self.database.ast.remove(&self.uri);
     }
 
     pub fn set(&mut self, info_index: Lapper<u32, Info>, item_index: Lapper<u32, Item>) {

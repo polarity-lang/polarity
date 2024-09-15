@@ -53,7 +53,7 @@ impl PartialRun<()> {
     pub fn start(case: Case) -> PartialRun<()> {
         let mut source = InMemorySource::new();
         source.insert(case.uri(), case.content().unwrap());
-        let source = FileSystemSource::new(&case.path).fallback_to(source);
+        let source = source.fallback_to(FileSystemSource::new(&case.path));
         let database = Database::from_source(source);
         let cst_lookup_table = RefCell::new(lowering::LookupTable::default());
         let ast_lookup_table = RefCell::new(elaborator::LookupTable::default());
@@ -358,10 +358,14 @@ impl Phase for Print {
 
     fn run(
         view: &mut DatabaseViewMut,
-        _: &mut lowering::LookupTable,
-        _: &mut elaborator::LookupTable,
+        cst_lookup_table: &mut lowering::LookupTable,
+        ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        view.print_to_string()
+        let output = view.print_to_string()?;
+        view.write_source(&output)?;
+        *cst_lookup_table = Default::default();
+        *ast_lookup_table = Default::default();
+        Ok(output)
     }
 }
 

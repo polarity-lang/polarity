@@ -105,6 +105,7 @@ impl Runner {
             .then(config, Check::new("check"))
             .then(config, Print::new("print"))
             .then(config, Parse::new("reparse"))
+            .then(config, Imports::new("reimports"))
             .then(config, Lower::new("relower"))
             .then(config, Check::new("recheck"))
             .report()
