@@ -33,7 +33,7 @@ impl Lower for cst::decls::UseDecl {
 
     fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::decls::UseDecl { span, path } = self;
-        Ok(ast::UseDecl { span: span.clone(), path: path.clone() })
+        Ok(ast::UseDecl { span: *span, path: path.clone() })
     }
 }
 

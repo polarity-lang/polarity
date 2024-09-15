@@ -28,6 +28,8 @@ pub const HOLE: &str = "?";
 
 /// The symbol `#`
 pub const HASH: &str = "#";
+
+/// The symbol `:=`
 pub const COLONEQ: &str = ":=";
 
 // Keywords
@@ -66,3 +68,6 @@ pub const TYPE: &str = "Type";
 
 /// The keyword `implicit`
 pub const IMPLICIT: &str = "implicit";
+
+/// The keyword `use`
+pub const USE: &str = "use";
