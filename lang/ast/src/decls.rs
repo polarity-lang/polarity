@@ -22,6 +22,7 @@ use printer::PrintCfg;
 use url::Url;
 
 use crate::ctx::LevelCtx;
+use crate::named::Named;
 
 use super::exp::*;
 use super::ident::*;

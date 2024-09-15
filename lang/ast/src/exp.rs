@@ -13,6 +13,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::values::TypeCtx;
 use crate::ctx::{BindContext, LevelCtx};
+use crate::named::Named;
 
 use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
@@ -41,25 +42,6 @@ impl fmt::Display for Label {
             None => Ok(()),
             Some(user_name) => user_name.fmt(f),
         }
-    }
-}
-
-pub trait Named {
-    fn name(&self) -> &Ident;
-}
-
-impl Named for Ident {
-    fn name(&self) -> &Ident {
-        self
-    }
-}
-
-impl<'a, T> Named for &'a T
-where
-    T: Named,
-{
-    fn name(&self) -> &Ident {
-        T::name(self)
     }
 }
 
