@@ -21,6 +21,8 @@ pub enum DriverError {
     ImportCycle(Url, Vec<Url>),
     #[error("Invalid URI: {0}")]
     InvalidUri(Url),
+    #[error("File not found: {0}")]
+    FileNotFound(Url),
     #[error("IO error: {0}")]
     Io(#[from] Arc<std::io::Error>),
     #[error("URL error: {0}")]

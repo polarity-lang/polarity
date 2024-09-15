@@ -124,8 +124,12 @@ impl FileSource for InMemorySource {
     }
 
     fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
-        self.modified.insert(uri.clone(), false);
-        Ok(self.files.get(uri).cloned().unwrap_or_default())
+        if self.manages(uri) {
+            self.modified.insert(uri.clone(), false);
+            Ok(self.files.get(uri).cloned().unwrap_or_default())
+        } else {
+            Err(DriverError::FileNotFound(uri.to_owned()))
+        }
     }
 
     fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
@@ -165,7 +169,11 @@ where
     }
 
     fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
-        self.first.read_to_string(uri).or_else(|_| self.second.read_to_string(uri))
+        match self.first.read_to_string(uri) {
+            Ok(source) => Ok(source),
+            Err(DriverError::FileNotFound(_)) => self.second.read_to_string(uri),
+            Err(err) => Err(err),
+        }
     }
 
     fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
