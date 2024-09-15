@@ -152,15 +152,15 @@ impl Substitution for SwapSubst {
     }
 }
 
-// SubstUndeBoxtx
+// SubstUnderCtx
 //
 //
 
-pub trait SubstUndeBoxtx: Substitutable {
+pub trait SubstUnderCtx: Substitutable {
     fn subst_under_ctx<S: Substitution>(&self, ctx: LevelCtx, s: &S) -> Self::Result;
 }
 
-impl<T: Substitutable + Clone> SubstUndeBoxtx for T {
+impl<T: Substitutable + Clone> SubstUnderCtx for T {
     fn subst_under_ctx<S: Substitution>(&self, mut ctx: LevelCtx, s: &S) -> Self::Result {
         self.subst(&mut ctx, s)
     }
