@@ -2,15 +2,13 @@
 //!
 //! Tracks locally bound variables
 
-use std::rc::Rc;
-
 use pretty::DocAllocator;
 use printer::tokens::COMMA;
 use printer::{Alloc, Builder, Print, PrintCfg};
 
-use crate::ast::traits::Shift;
-use crate::ast::*;
 use crate::ctx::Context;
+use crate::traits::Shift;
+use crate::*;
 
 use super::{ContextElem, GenericCtx};
 
@@ -31,7 +29,7 @@ impl TypeCtx {
 
     pub fn map_failable<E, F>(&self, f: F) -> Result<Self, E>
     where
-        F: Fn(&Rc<Exp>) -> Result<Rc<Exp>, E>,
+        F: Fn(&Exp) -> Result<Box<Exp>, E>,
     {
         let bound: Result<_, _> = self
             .bound
@@ -99,7 +97,7 @@ impl Print for TypeCtx {
 #[derive(Debug, Clone)]
 pub struct Binder {
     pub name: Ident,
-    pub typ: Rc<Exp>,
+    pub typ: Box<Exp>,
 }
 
 impl Shift for Binder {

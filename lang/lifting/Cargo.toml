@@ -14,5 +14,5 @@ categories.workspace = true
 codespan = { workspace = true }
 derivative = { workspace = true }
 # workspace members
-syntax = { path = "../syntax" }
+ast = { path = "../ast" }
 renaming = { path = "../renaming" }

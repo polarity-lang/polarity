@@ -1,5 +1,5 @@
 [package]
-name = "syntax"
+name = "ast"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true
@@ -17,7 +17,7 @@ thiserror = "1"
 # url (for file locations)
 url = "2.5.0"
 # source code locations
-codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149"}
+codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149" }
 # ignoring fields when deriving traits (e.g. Eq, Hash)
 derivative = "2"
 # big integers

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::*;
 use url::Url;
 
@@ -11,7 +13,7 @@ impl<'a> DatabaseViewMut<'a> {
     pub fn load(&mut self) -> Result<(), Error> {
         self.reset();
         let prg = self.query_ref().tst()?;
-        let (info_lapper, item_lapper) = collect_info(&prg);
+        let (info_lapper, item_lapper) = collect_info(Rc::new(prg));
         self.set(info_lapper, item_lapper);
         Ok(())
     }

@@ -1,26 +1,24 @@
 mod ctx;
-mod downsweep;
+mod lookup_table;
 mod lower;
 mod result;
 
+use ast::{self, Decl};
 use parser::cst;
-use syntax::ast;
 
-use crate::downsweep::build_lookup_table;
+use crate::lookup_table::build_lookup_table;
 use crate::lower::Lower;
+
 pub use ctx::*;
 pub use result::*;
 
 pub fn lower_module(prg: &cst::decls::Module) -> Result<ast::Module, LoweringError> {
     let cst::decls::Module { uri, items } = prg;
 
-    let (top_level_map, lookup_table) = build_lookup_table(items)?;
+    let lookup_table = build_lookup_table(prg)?;
 
-    let mut ctx = Ctx::empty(top_level_map);
-    // Lower definitions
-    for item in items {
-        item.lower(&mut ctx)?;
-    }
+    let mut ctx = Ctx::empty(lookup_table);
+    let decls = items.iter().map(|item| item.lower(&mut ctx)).collect::<Result<Vec<Decl>, _>>()?;
 
-    Ok(ast::Module { uri: uri.clone(), map: ctx.decls_map, lookup_table, meta_vars: ctx.meta_vars })
+    Ok(ast::Module { uri: uri.clone(), decls, meta_vars: ctx.meta_vars })
 }

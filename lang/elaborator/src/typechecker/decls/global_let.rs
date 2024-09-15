@@ -2,7 +2,7 @@
 
 use log::trace;
 
-use syntax::ast::*;
+use ast::*;
 
 use super::CheckToplevel;
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
@@ -13,15 +13,15 @@ use crate::typechecker::{
 };
 
 impl CheckToplevel for Let {
-    fn check_wf(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn check_wf(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         trace!("Checking well-formedness of global let: {}", self.name);
 
         let Let { span, doc, name, attr, params, typ, body } = self;
 
-        params.infer_telescope(prg, ctx, |ctx, params_out| {
-            let typ_out = typ.infer(prg, ctx)?;
-            let typ_nf = typ.normalize(prg, &mut ctx.env())?;
-            let body_out = body.check(prg, ctx, typ_nf)?;
+        params.infer_telescope(ctx, |ctx, params_out| {
+            let typ_out = typ.infer(ctx)?;
+            let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
+            let body_out = body.check(ctx, &typ_nf)?;
 
             Ok(Let {
                 span: *span,

@@ -2,9 +2,9 @@ use std::rc::Rc;
 
 use super::DatabaseView;
 
+use ast::{Exp, Module};
 use elaborator::normalizer::normalize::Normalize;
 use parser::cst;
-use syntax::{ast::Exp, ast::Module};
 
 use crate::*;
 
@@ -26,10 +26,10 @@ impl<'a> DatabaseView<'a> {
 
     pub fn tst(&self) -> Result<Module, Error> {
         let ust = self.ust()?;
-        elaborator::typechecker::check(&ust).map_err(Error::Type)
+        elaborator::typechecker::check(Rc::new(ust)).map_err(Error::Type)
     }
 
-    pub fn run(&self) -> Result<Option<Rc<Exp>>, Error> {
+    pub fn run(&self) -> Result<Option<Box<Exp>>, Error> {
         let tst = self.tst()?;
 
         let main = tst.find_main();

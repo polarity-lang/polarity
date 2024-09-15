@@ -21,7 +21,7 @@ toml = "0.5"
 # Find files recursively
 walkdir = "2.5.0"
 # workspace members
-syntax = { path = "../../lang/syntax" }
+ast = { path = "../../lang/ast" }
 parser = { path = "../../lang/parser" }
 lowering = { path = "../../lang/lowering" }
 elaborator = { path = "../../lang/elaborator" }

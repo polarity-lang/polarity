@@ -2,7 +2,7 @@
 
 use derivative::Derivative;
 
-use crate::ast::{Idx, Lvl, Var};
+use crate::{Idx, Lvl, Var};
 
 use super::LevelCtx;
 

@@ -1,8 +1,6 @@
 //! Bidirectional type checking for type constructors
 
-use std::rc::Rc;
-
-use syntax::ast::*;
+use ast::*;
 
 use super::super::ctx::*;
 use super::super::util::*;
@@ -18,13 +16,13 @@ impl CheckInfer for TypCtor {
     ///           ──────────────────
     ///            P, Γ ⊢ Tσ ⇐ τ
     /// ```
-    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        let inferred_term = self.infer(prg, ctx)?;
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+        let inferred_term = self.infer(ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, &t)?;
+        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, t)?;
         Ok(inferred_term)
     }
 
@@ -35,10 +33,10 @@ impl CheckInfer for TypCtor {
     ///           ─────────────────────────
     ///            P, Γ ⊢ Tσ ⇒ Type
     /// ```
-    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let TypCtor { span, name, args } = self;
-        let params = &*prg.typ(name, *span)?.typ();
-        let args_out = check_args(args, prg, name, ctx, params, *span)?;
+        let params = ctx.lookup_table.lookup_tyctor(name)?.params.clone();
+        let args_out = check_args(args, name, ctx, &params, *span)?;
 
         Ok(TypCtor { span: *span, name: name.clone(), args: args_out })
     }

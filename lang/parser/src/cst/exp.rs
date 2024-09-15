@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use num_bigint::BigUint;
 
@@ -28,7 +26,7 @@ pub struct Case<P> {
     pub span: Span,
     pub pattern: P,
     /// Body being `None` represents an absurd pattern
-    pub body: Option<Rc<Exp>>,
+    pub body: Option<Box<Exp>>,
 }
 
 /// Arguments in an argument list can either be unnamed or named.
@@ -36,8 +34,8 @@ pub struct Case<P> {
 /// Example for unnamed arguments: `f(1, 2)``
 #[derive(Debug, Clone)]
 pub enum Arg {
-    UnnamedArg(Rc<Exp>),
-    NamedArg(Ident, Rc<Exp>),
+    UnnamedArg(Box<Exp>),
+    NamedArg(Ident, Box<Exp>),
 }
 
 impl Arg {
@@ -90,7 +88,7 @@ pub struct Call {
 #[derive(Debug, Clone)]
 pub struct DotCall {
     pub span: Span,
-    pub exp: Rc<Exp>,
+    pub exp: Box<Exp>,
     pub name: Ident,
     pub args: Vec<Arg>,
 }
@@ -98,8 +96,8 @@ pub struct DotCall {
 #[derive(Debug, Clone)]
 pub struct Anno {
     pub span: Span,
-    pub exp: Rc<Exp>,
-    pub typ: Rc<Exp>,
+    pub exp: Box<Exp>,
+    pub typ: Box<Exp>,
 }
 
 #[derive(Debug, Clone)]
@@ -111,7 +109,7 @@ pub struct TypeUniv {
 pub struct LocalMatch {
     pub span: Span,
     pub name: Option<Ident>,
-    pub on_exp: Rc<Exp>,
+    pub on_exp: Box<Exp>,
     pub motive: Option<Motive>,
     pub cases: Vec<Case<Pattern>>,
 }
@@ -138,20 +136,20 @@ pub struct NatLit {
 #[derive(Debug, Clone)]
 pub struct Fun {
     pub span: Span,
-    pub from: Rc<Exp>,
-    pub to: Rc<Exp>,
+    pub from: Box<Exp>,
+    pub to: Box<Exp>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Lam {
     pub span: Span,
     pub var: BindingSite,
-    pub body: Rc<Exp>,
+    pub body: Box<Exp>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Motive {
     pub span: Span,
     pub param: BindingSite,
-    pub ret_typ: Rc<Exp>,
+    pub ret_typ: Box<Exp>,
 }

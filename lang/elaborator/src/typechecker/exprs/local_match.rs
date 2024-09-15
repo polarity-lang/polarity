@@ -1,30 +1,30 @@
 //! Bidirectional type checker
 
-use std::rc::Rc;
+use ast::ctx::values::Binder;
+use ast::ctx::{BindContext, LevelCtx};
+use ast::*;
+use miette_util::ToMiette;
 
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
+use crate::result::TypeError;
 use crate::typechecker::exprs::CheckTelescope;
+use crate::typechecker::lookup_table::CtorMeta;
 use crate::unifier::constraints::Constraint;
 use crate::unifier::unify::*;
-use miette_util::ToMiette;
-use syntax::ast::*;
-use syntax::ctx::values::Binder;
-use syntax::ctx::{BindContext, LevelCtx};
 
 use super::super::ctx::*;
 use super::super::util::*;
 use super::CheckInfer;
-use crate::result::TypeError;
 
 // LocalMatch
 //
 //
 
 impl CheckInfer for LocalMatch {
-    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
         let LocalMatch { span, name, on_exp, motive, cases, .. } = self;
-        let on_exp_out = on_exp.infer(prg, ctx)?;
+        let on_exp_out = on_exp.infer(ctx)?;
         let typ_app_nf = on_exp_out
             .typ()
             .ok_or(TypeError::Impossible {
@@ -32,8 +32,8 @@ impl CheckInfer for LocalMatch {
                 span: None,
             })?
             .expect_typ_app()?;
-        let typ_app = typ_app_nf.infer(prg, ctx)?;
-        let ret_typ_out = t.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
+        let typ_app = typ_app_nf.infer(ctx)?;
+        let ret_typ_out = t.check(ctx, &Box::new(TypeUniv::new().into()))?;
 
         let motive_out;
         let body_t;
@@ -42,12 +42,13 @@ impl CheckInfer for LocalMatch {
             // Pattern matching with motive
             Some(m) => {
                 let Motive { span: info, param, ret_typ } = m;
-                let self_t_nf = typ_app.to_exp().normalize(prg, &mut ctx.env())?.shift((1, 0));
+                let self_t_nf =
+                    typ_app.to_exp().normalize(&ctx.module, &mut ctx.env())?.shift((1, 0));
                 let self_binder = Binder { name: param.name.clone(), typ: self_t_nf.clone() };
 
                 // Typecheck the motive
                 let ret_typ_out = ctx.bind_single(&self_binder, |ctx| {
-                    ret_typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))
+                    ret_typ.check(ctx, &Box::new(TypeUniv::new().into()))
                 })?;
 
                 // Ensure that the motive matches the expected type
@@ -56,32 +57,33 @@ impl CheckInfer for LocalMatch {
                 let subst =
                     Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp_shifted };
                 let motive_t = ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0));
-                let motive_t_nf = motive_t.normalize(prg, &mut ctx.env())?;
-                convert(subst_ctx, &mut ctx.meta_vars, motive_t_nf, &t)?;
+                let motive_t_nf = motive_t.normalize(&ctx.module, &mut ctx.env())?;
+                convert(subst_ctx, &mut ctx.meta_vars, motive_t_nf, t)?;
 
-                body_t =
-                    ctx.bind_single(&self_binder, |ctx| ret_typ.normalize(prg, &mut ctx.env()))?;
+                body_t = ctx.bind_single(&self_binder, |ctx| {
+                    ret_typ.normalize(&ctx.module, &mut ctx.env())
+                })?;
                 motive_out = Some(Motive {
                     span: *info,
                     param: ParamInst {
                         span: *info,
                         info: Some(self_t_nf),
                         name: param.name.clone(),
-                        typ: Rc::new(typ_app.to_exp()).into(),
+                        typ: Box::new(typ_app.to_exp()).into(),
                     },
                     ret_typ: ret_typ_out,
                 });
             }
             // Pattern matching without motive
             None => {
-                body_t = t.shift((1, 0));
+                body_t = Box::new(t.shift((1, 0)));
                 motive_out = None;
             }
         };
 
         let ws = WithScrutinee { cases, scrutinee: typ_app_nf.clone() };
-        ws.check_exhaustiveness(prg)?;
-        let cases = ws.check_ws(prg, ctx, body_t)?;
+        ws.check_exhaustiveness(&ctx.module)?;
+        let cases = ws.check_ws(ctx, &body_t)?;
 
         Ok(LocalMatch {
             span: *span,
@@ -89,13 +91,13 @@ impl CheckInfer for LocalMatch {
             name: name.clone(),
             on_exp: on_exp_out,
             motive: motive_out,
-            ret_typ: ret_typ_out.into(),
+            ret_typ: Some(Box::new(ret_typ_out)),
             cases,
             inferred_type: Some(typ_app),
         })
     }
 
-    fn infer(&self, _prg: &Module, _ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, __ctx: &mut Ctx) -> Result<Self, TypeError> {
         Err(TypeError::CannotInferMatch { span: self.span().to_miette() })
     }
 }
@@ -109,13 +111,18 @@ pub struct WithScrutinee<'a> {
 impl<'a> WithScrutinee<'a> {
     /// Check whether the pattern match contains exactly one clause for every
     /// constructor declared in the data type declaration.
-    pub fn check_exhaustiveness(&self, prg: &Module) -> Result<(), TypeError> {
+    pub fn check_exhaustiveness(&self, module: &Module) -> Result<(), TypeError> {
         let WithScrutinee { cases, .. } = &self;
         // Check that this match is on a data type
-        let data = prg.data(&self.scrutinee.name, self.scrutinee.span())?;
+        let data =
+            module.lookup_data(&self.scrutinee.name).ok_or_else(|| TypeError::Impossible {
+                message: format!("Data type {} not found", self.scrutinee.name),
+                span: None,
+            })?;
 
         // Check exhaustiveness
-        let ctors_expected: HashSet<_> = data.ctors.iter().cloned().collect();
+        let ctors_expected: HashSet<_> =
+            data.ctors.iter().map(|ctor| ctor.name.to_owned()).collect();
         let mut ctors_actual = HashSet::default();
         let mut ctors_duplicate = HashSet::default();
 
@@ -142,12 +149,7 @@ impl<'a> WithScrutinee<'a> {
         Ok(())
     }
 
-    pub fn check_ws(
-        &self,
-        prg: &Module,
-        ctx: &mut Ctx,
-        t: Rc<Exp>,
-    ) -> Result<Vec<Case>, TypeError> {
+    pub fn check_ws(&self, ctx: &mut Ctx, t: &Exp) -> Result<Vec<Case>, TypeError> {
         let WithScrutinee { cases, .. } = &self;
 
         let cases: Vec<_> = cases.to_vec();
@@ -156,11 +158,12 @@ impl<'a> WithScrutinee<'a> {
         for case in cases {
             let Case { span, pattern: Pattern { name, params: args, .. }, body } = case;
             // Build equations for this case
-            let Ctor { name, typ: TypCtor { args: def_args, .. }, params, .. } =
-                prg.ctor(&name, span)?;
+            let CtorMeta { typ: TypCtor { args: def_args, .. }, params, .. } =
+                ctx.lookup_table.lookup_ctor(&name)?;
 
-            let def_args_nf = LevelCtx::empty()
-                .bind_iter(params.params.iter(), |ctx| def_args.normalize(prg, &mut ctx.env()))?;
+            let def_args_nf = LevelCtx::empty().bind_iter(params.params.iter(), |ctx_| {
+                def_args.normalize(&ctx.module, &mut ctx_.env())
+            })?;
 
             let TypCtor { args: on_args, .. } = &self.scrutinee;
             let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
@@ -171,17 +174,20 @@ impl<'a> WithScrutinee<'a> {
             let mut subst_ctx_2 = ctx.levels().append(&vec![params.len(), 1].into());
             let curr_lvl = subst_ctx_2.len() - 1;
 
+            let module = ctx.module.clone();
+            let name = name.clone();
+            let params = params.clone();
+
             args.check_telescope(
-                prg,
-                name,
+                &name,
                 ctx,
-                params,
+                &params,
                 |ctx, args_out| {
                     // Substitute the constructor for the self parameter
                     let args = (0..params.len())
                         .rev()
                         .map(|snd| {
-                            Arg::UnnamedArg(Rc::new(Exp::Variable(Variable {
+                            Arg::UnnamedArg(Box::new(Exp::Variable(Variable {
                                 span: None,
                                 idx: Idx { fst: 1, snd },
                                 name: "".to_owned(),
@@ -189,7 +195,7 @@ impl<'a> WithScrutinee<'a> {
                             })))
                         })
                         .collect();
-                    let ctor = Rc::new(Exp::Call(Call {
+                    let ctor = Box::new(Exp::Call(Call {
                         span: None,
                         kind: CallKind::Constructor,
                         name: name.clone(),
@@ -218,13 +224,13 @@ impl<'a> WithScrutinee<'a> {
                                 .ok_yes()?;
 
                             ctx.fork::<Result<_, TypeError>, _>(|ctx| {
-                                ctx.subst(prg, &unif)?;
+                                ctx.subst(&module, &unif)?;
                                 let body = body.subst(&mut ctx.levels(), &unif);
 
                                 let t_subst = t.subst(&mut ctx.levels(), &unif);
-                                let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+                                let t_nf = t_subst.normalize(&module, &mut ctx.env())?;
 
-                                let body_out = body.check(prg, ctx, t_nf)?;
+                                let body_out = body.check(ctx, &t_nf)?;
 
                                 Ok(Some(body_out))
                             })?

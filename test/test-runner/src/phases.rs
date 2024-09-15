@@ -1,12 +1,13 @@
 use std::fmt;
+use std::rc::Rc;
 use std::{error::Error, panic};
 
 use url::Url;
 
 use parser::cst;
 
+use ast::Module;
 use renaming::Rename;
-use syntax::ast::Module;
 
 use crate::{
     runner::CaseResult,
@@ -247,7 +248,7 @@ impl Phase for Check {
     }
 
     fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        elaborator::typechecker::check(&input)
+        elaborator::typechecker::check(Rc::new(input))
     }
 }
 

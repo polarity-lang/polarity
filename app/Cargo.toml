@@ -31,7 +31,7 @@ tower-lsp = { version = "0.17", default-features = false, features = ["runtime-a
 # workspace members
 query = { path = "../lang/query" }
 elaborator = { path = "../lang/elaborator" }
-syntax = { path = "../lang/syntax" }
+ast = { path = "../lang/ast" }
 printer = { path = "../lang/printer" }
 lsp-server = { path = "../lang/lsp" }
 

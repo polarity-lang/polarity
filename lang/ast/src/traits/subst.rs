@@ -1,8 +1,6 @@
-use std::rc::Rc;
-
-use crate::ast::Variable;
-use crate::ast::*;
 use crate::ctx::*;
+use crate::Variable;
+use crate::*;
 
 // Substitution
 //
@@ -12,11 +10,11 @@ use crate::ctx::*;
 /// In order to be used as a substitution an entity has to provide a method
 /// to query it for a result for a given deBruijn Level.
 pub trait Substitution: Shift {
-    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>>;
+    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>>;
 }
 
-impl Substitution for Vec<Vec<Rc<Exp>>> {
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
+impl Substitution for Vec<Vec<Box<Exp>>> {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
         if lvl.fst >= self.len() {
             return None;
         }
@@ -25,7 +23,7 @@ impl Substitution for Vec<Vec<Rc<Exp>>> {
 }
 
 impl Substitution for Vec<Vec<Arg>> {
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
         if lvl.fst >= self.len() {
             return None;
         }
@@ -41,7 +39,7 @@ impl Substitution for Vec<Vec<Arg>> {
 /// one mapping from a variable (represented by a DeBruijn Level) to an expression.
 pub struct Assign {
     pub lvl: Lvl,
-    pub exp: Rc<Exp>,
+    pub exp: Box<Exp>,
 }
 
 impl Shift for Assign {
@@ -52,7 +50,7 @@ impl Shift for Assign {
 }
 
 impl Substitution for Assign {
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
         if self.lvl == lvl {
             Some(self.exp.clone())
         } else {
@@ -85,6 +83,13 @@ impl<T: Substitutable> Substitutable for Vec<T> {
     type Result = Vec<T::Result>;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
         self.iter().map(|x| x.subst(ctx, by)).collect()
+    }
+}
+
+impl<T: Substitutable> Substitutable for Box<T> {
+    type Result = Box<T::Result>;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+        Box::new((**self).subst(ctx, by))
     }
 }
 
@@ -125,7 +130,7 @@ impl Shift for SwapSubst {
 }
 
 impl Substitution for SwapSubst {
-    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
+    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
         let new_lvl = if lvl.fst == self.fst1 {
             Some(Lvl { fst: self.fst2, snd: lvl.snd })
         } else if lvl.fst == self.fst2 {
@@ -137,7 +142,7 @@ impl Substitution for SwapSubst {
         let new_ctx = ctx.swap(self.fst1, self.fst2);
 
         new_lvl.map(|new_lvl| {
-            Rc::new(Exp::Variable(Variable {
+            Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: new_ctx.lvl_to_idx(new_lvl),
                 name: "".to_owned(),

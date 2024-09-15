@@ -1,8 +1,6 @@
-use std::rc::Rc;
-
-use syntax::ast::{self, HashMap, SwapWithCtx};
-use syntax::ast::{Attributes, DocComment, Named};
-use syntax::ctx::{BindContext, LevelCtx};
+use ast::ctx::{BindContext, LevelCtx};
+use ast::{self, HashMap, SwapWithCtx};
+use ast::{Attributes, DocComment};
 
 use crate::result::XfuncError;
 use codespan::Span;
@@ -10,7 +8,7 @@ use codespan::Span;
 #[derive(Debug, Clone)]
 pub struct Prg {
     pub map: HashMap<ast::Ident, XData>,
-    pub exp: Option<Rc<ast::Exp>>,
+    pub exp: Option<Box<ast::Exp>>,
 }
 
 #[derive(Debug, Clone)]
@@ -19,10 +17,10 @@ pub struct XData {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
     pub name: ast::Ident,
-    pub typ: Rc<ast::Telescope>,
+    pub typ: Box<ast::Telescope>,
     pub ctors: HashMap<ast::Ident, ast::Ctor>,
     pub dtors: HashMap<ast::Ident, ast::Dtor>,
-    pub exprs: HashMap<Key, Option<Rc<ast::Exp>>>,
+    pub exprs: HashMap<Key, Option<Box<ast::Exp>>>,
 }
 
 /// A key points to a matrix cell
@@ -69,25 +67,30 @@ impl Ctx {
 
 impl BuildMatrix for ast::Module {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let ast::Module { map, .. } = self;
+        let ast::Module { decls, .. } = self;
 
-        for decl in map.values() {
+        for decl in decls {
             match decl {
-                ast::Decl::Data(data) => data.build_matrix(ctx, out),
-                ast::Decl::Codata(codata) => codata.build_matrix(ctx, out),
-                _ => Ok(()),
-            }?
-        }
-
-        for decl in map.values() {
-            match decl {
-                ast::Decl::Ctor(ctor) => ctor.build_matrix(ctx, out),
-                ast::Decl::Dtor(dtor) => dtor.build_matrix(ctx, out),
+                ast::Decl::Data(data) => {
+                    data.build_matrix(ctx, out)?;
+                    for ctor in &data.ctors {
+                        ctor.build_matrix(ctx, out)?;
+                    }
+                    Ok(())
+                }
+                ast::Decl::Codata(codata) => {
+                    codata.build_matrix(ctx, out)?;
+                    for dtor in &codata.dtors {
+                        dtor.build_matrix(ctx, out)?;
+                    }
+                    Ok(())
+                }
                 ast::Decl::Def(def) => def.build_matrix(ctx, out),
                 ast::Decl::Codef(codef) => codef.build_matrix(ctx, out),
                 _ => Ok(()),
             }?
         }
+
         Ok(())
     }
 }
@@ -108,7 +111,7 @@ impl BuildMatrix for ast::Data {
         };
 
         for ctor in ctors {
-            ctx.type_for_xtor.insert(ctor.name().clone(), name.clone());
+            ctx.type_for_xtor.insert(ctor.name.clone(), name.clone());
         }
 
         out.map.insert(name.clone(), xdata);
@@ -132,7 +135,7 @@ impl BuildMatrix for ast::Codata {
         };
 
         for dtor in dtors {
-            ctx.type_for_xtor.insert(dtor.name().clone(), name.clone());
+            ctx.type_for_xtor.insert(dtor.name.clone(), name.clone());
         }
 
         out.map.insert(name.clone(), xdata);
@@ -222,7 +225,7 @@ impl BuildMatrix for ast::Codef {
 }
 
 impl XData {
-    pub fn as_data(&self) -> (ast::Data, Vec<ast::Ctor>, Vec<ast::Def>) {
+    pub fn as_data(&self) -> (ast::Data, Vec<ast::Def>) {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let data = ast::Data {
@@ -231,7 +234,7 @@ impl XData {
             name: name.clone(),
             attr: Attributes::default(),
             typ: typ.clone(),
-            ctors: ctors.keys().cloned().collect(),
+            ctors: ctors.values().cloned().collect(),
         };
 
         let defs = dtors
@@ -267,12 +270,10 @@ impl XData {
             })
             .collect();
 
-        let ctors = ctors.values().cloned().collect();
-
-        (data, ctors, defs)
+        (data, defs)
     }
 
-    pub fn as_codata(&self) -> (ast::Codata, Vec<ast::Dtor>, Vec<ast::Codef>) {
+    pub fn as_codata(&self) -> (ast::Codata, Vec<ast::Codef>) {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let codata = ast::Codata {
@@ -281,7 +282,7 @@ impl XData {
             name: name.clone(),
             attr: Attributes::default(),
             typ: typ.clone(),
-            dtors: dtors.keys().cloned().collect(),
+            dtors: dtors.values().cloned().collect(),
         };
 
         let codefs = ctors
@@ -325,8 +326,6 @@ impl XData {
             })
             .collect();
 
-        let dtors = dtors.values().cloned().collect();
-
-        (codata, dtors, codefs)
+        (codata, codefs)
     }
 }

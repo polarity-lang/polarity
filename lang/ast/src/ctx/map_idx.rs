@@ -1,4 +1,4 @@
-use crate::ast::*;
+use crate::*;
 
 pub trait MapIdxExt<T> {
     fn map_idx<U, F: Fn(Idx, &T) -> U>(&self, f: F) -> MapIdx<'_, T, U, F>;

@@ -3,15 +3,13 @@ mod grammar;
 mod lexer;
 mod result;
 
-use std::rc::Rc;
-
 use lexer::Lexer;
 use url::Url;
 
 use grammar::cst::{DeclsParser, ExpParser};
 pub use result::*;
 
-pub fn parse_exp(s: &str) -> Result<Rc<cst::exp::Exp>, ParseError> {
+pub fn parse_exp(s: &str) -> Result<Box<cst::exp::Exp>, ParseError> {
     let lexer = Lexer::new(s);
     let parser = ExpParser::new();
     parser.parse(lexer).map_err(From::from)

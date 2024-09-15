@@ -1,5 +1,9 @@
 use std::fmt;
 
+use crate::*;
+
+use super::def::*;
+
 // use data::string::comma_separated;
 fn comma_separated<I: IntoIterator<Item = String>>(iter: I) -> String {
     separated(", ", iter)
@@ -8,10 +12,6 @@ fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
     let vec: Vec<_> = iter.into_iter().collect();
     vec.join(s)
 }
-
-use crate::ast::*;
-
-use super::def::*;
 
 pub type LevelCtx = GenericCtx<()>;
 

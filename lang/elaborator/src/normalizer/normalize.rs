@@ -1,5 +1,5 @@
-use syntax::ast::*;
-use syntax::ctx::GenericCtx;
+use ast::ctx::GenericCtx;
+use ast::*;
 
 use super::env::Env;
 use super::eval::*;

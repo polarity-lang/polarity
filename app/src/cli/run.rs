@@ -5,7 +5,6 @@ use thiserror::Error;
 
 use printer::{ColorChoice, Print, StandardStream};
 use query::{Database, File};
-use syntax::ast;
 
 use crate::result::IOError;
 

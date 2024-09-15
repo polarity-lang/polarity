@@ -19,6 +19,6 @@ pretty = { workspace = true }
 log = { workspace = true }
 
 # workspace members
-syntax = { path = "../syntax" }
+ast = { path = "../ast" }
 printer = { path = "../printer" }
 miette_util = { path = "../miette_util" }

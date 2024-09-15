@@ -1,7 +1,7 @@
 use std::ops::{Bound, RangeBounds};
 use std::rc::Rc;
 
-use crate::ast::*;
+use crate::*;
 
 /// De-Bruijn shifting
 ///
@@ -64,6 +64,12 @@ impl Shift for () {
 impl<T: Shift> Shift for Rc<T> {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         Rc::new((**self).shift_in_range(range, by))
+    }
+}
+
+impl<T: Shift> Shift for Box<T> {
+    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+        Box::new((**self).shift_in_range(range, by))
     }
 }
 

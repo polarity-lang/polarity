@@ -1,5 +1,3 @@
-use syntax::ast;
-
 pub mod matrix;
 pub mod result;
 
@@ -20,7 +18,7 @@ pub fn repr(prg: &matrix::Prg, name: &str) -> Result<matrix::Repr, crate::result
 pub fn as_data(
     prg: &matrix::Prg,
     name: &str,
-) -> Result<(ast::Data, Vec<ast::Ctor>, Vec<ast::Def>), crate::result::XfuncError> {
+) -> Result<(ast::Data, Vec<ast::Def>), crate::result::XfuncError> {
     prg.map
         .get(name)
         .ok_or_else(|| crate::result::XfuncError::Impossible {
@@ -33,7 +31,7 @@ pub fn as_data(
 pub fn as_codata(
     prg: &matrix::Prg,
     name: &str,
-) -> Result<(ast::Codata, Vec<ast::Dtor>, Vec<ast::Codef>), crate::result::XfuncError> {
+) -> Result<(ast::Codata, Vec<ast::Codef>), crate::result::XfuncError> {
     prg.map
         .get(name)
         .ok_or_else(|| crate::result::XfuncError::Impossible {

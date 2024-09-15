@@ -1,14 +1,12 @@
 //! This module defines the language of constraints that can be solved by the constraint solver.
-use std::rc::Rc;
-
+use ast::{Args, Exp};
 use printer::Print;
-use syntax::ast::{Args, Exp};
 
 /// A constraint that can be solved by the constraint solver.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum Constraint {
     /// An equality constraint between two expressions.
-    Equality { lhs: Rc<Exp>, rhs: Rc<Exp> },
+    Equality { lhs: Box<Exp>, rhs: Box<Exp> },
     /// An equality constraint between two argument lists.
     EqualityArgs { lhs: Args, rhs: Args },
 }

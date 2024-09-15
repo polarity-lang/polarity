@@ -2,9 +2,10 @@ use std::rc::Rc;
 
 use log::trace;
 
+use ast::ctx::{BindContext, Context, GenericCtx};
+use ast::*;
+use miette_util::ToMiette;
 use printer::types::Print;
-use syntax::ast::*;
-use syntax::ctx::{BindContext, Context, GenericCtx};
 
 use crate::normalizer::env::*;
 use crate::normalizer::val::{self, Closure, Val};
@@ -73,7 +74,11 @@ impl Eval for Call {
         let Call { span, name, kind, args, .. } = self;
         match kind {
             CallKind::LetBound => {
-                let Let { attr, body, .. } = prg.top_level_let(name, *span)?;
+                let Let { attr, body, .. } =
+                    prg.lookup_let(name).ok_or_else(|| TypeError::Impossible {
+                        message: format!("Top-level let {name} not found"),
+                        span: span.to_miette(),
+                    })?;
                 // We now have to distinguish two cases:
                 // If the let-bound definition is transparent, then we substitute the
                 // arguments for the body of the definition. If it is opaque, then
@@ -143,7 +148,11 @@ impl Eval for DotCall {
                         // data type, and `d` is the name of a toplevel definition.
 
                         // First, we have to find the corresponding case in the toplevel definition `d`.
-                        let Def { cases, .. } = prg.def(name, None)?;
+                        let Def { cases, .. } =
+                            prg.lookup_def(name).ok_or_else(|| TypeError::Impossible {
+                                message: format!("Definition {name} not found"),
+                                span: None,
+                            })?;
                         let mut env: Env = GenericCtx::empty().into();
                         let cases =
                             env.bind_iter(args.to_vals().iter(), |env| cases.eval(prg, env))?;
@@ -170,7 +179,11 @@ impl Eval for DotCall {
 
                         // First, we have to find the corresponding cocase in the toplevel
                         // codefinition `C`.
-                        let Codef { cases, .. } = prg.codef(&call_name, None)?;
+                        let Codef { cases, .. } =
+                            prg.lookup_codef(&call_name).ok_or_else(|| TypeError::Impossible {
+                                message: format!("Codefinition {call_name} not found"),
+                                span: None,
+                            })?;
                         let mut env: Env = GenericCtx::empty().into();
                         let cases =
                             env.bind_iter(call_args.to_vals().iter(), |env| cases.eval(prg, env))?;
@@ -402,7 +415,7 @@ impl<T: Eval> Eval for Vec<T> {
     }
 }
 
-impl Eval for Rc<Exp> {
+impl Eval for Box<Exp> {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {

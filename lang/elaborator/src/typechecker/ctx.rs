@@ -6,12 +6,14 @@ use std::rc::Rc;
 
 use crate::normalizer::env::{Env, ToEnv};
 use crate::normalizer::normalize::Normalize;
+use ast::ctx::values::TypeCtx;
+use ast::ctx::{BindContext, Context, LevelCtx};
+use ast::*;
 use printer::Print;
-use syntax::ast::*;
-use syntax::ctx::values::TypeCtx;
-use syntax::ctx::{BindContext, Context, LevelCtx};
 
 use crate::result::TypeError;
+
+use super::lookup_table::LookupTable;
 
 #[derive(Debug, Clone)]
 pub struct Ctx {
@@ -19,11 +21,19 @@ pub struct Ctx {
     pub vars: TypeCtx,
     /// Global meta variables and their state
     pub meta_vars: HashMap<MetaVar, MetaVarState>,
+    /// Global lookup table for declarations
+    pub lookup_table: Rc<LookupTable>,
+    /// The program for looking up the expressions when evaluating
+    pub module: Rc<Module>,
 }
 
 impl Ctx {
-    pub fn new(meta_vars: HashMap<MetaVar, MetaVarState>) -> Self {
-        Self { vars: TypeCtx::empty(), meta_vars }
+    pub fn new(
+        meta_vars: HashMap<MetaVar, MetaVarState>,
+        lookup_table: LookupTable,
+        module: Rc<Module>,
+    ) -> Self {
+        Self { vars: TypeCtx::empty(), meta_vars, lookup_table: Rc::new(lookup_table), module }
     }
 }
 
@@ -66,7 +76,7 @@ impl Ctx {
         self.vars.is_empty()
     }
 
-    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Rc<Exp> {
+    pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Box<Exp> {
         self.vars.lookup(idx).typ
     }
 
@@ -76,7 +86,7 @@ impl Ctx {
 
     pub fn map_failable<E, F>(&mut self, f: F) -> Result<(), E>
     where
-        F: Fn(&Rc<Exp>) -> Result<Rc<Exp>, E>,
+        F: Fn(&Exp) -> Result<Box<Exp>, E>,
     {
         self.vars = self.vars.map_failable(f)?;
         Ok(())
@@ -84,7 +94,12 @@ impl Ctx {
 
     pub fn fork<T, F: FnOnce(&mut Ctx) -> T>(&mut self, f: F) -> T {
         let meta_vars = std::mem::take(&mut self.meta_vars);
-        let mut inner_ctx = Ctx { vars: self.vars.clone(), meta_vars };
+        let mut inner_ctx = Ctx {
+            vars: self.vars.clone(),
+            meta_vars,
+            lookup_table: self.lookup_table.clone(),
+            module: self.module.clone(),
+        };
         let res = f(&mut inner_ctx);
         self.meta_vars = inner_ctx.meta_vars;
         res

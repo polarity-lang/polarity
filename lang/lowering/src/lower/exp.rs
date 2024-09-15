@@ -1,21 +1,20 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use num_bigint::BigUint;
 
+use ast::Hole;
+use ast::TypeUniv;
+use ast::Variable;
 use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::decls::Telescope;
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
-use syntax::ast;
-use syntax::ast::Hole;
-use syntax::ast::TypeUniv;
-use syntax::ast::Variable;
+
+use crate::ctx::*;
+use crate::lookup_table::DeclMeta;
+use crate::result::*;
 
 use super::Lower;
-use crate::ctx::*;
-use crate::result::*;
 
 impl Lower for cst::exp::Exp {
     type Target = ast::Exp;
@@ -208,23 +207,6 @@ fn lower_args(
 
     // All arguments have been successfully processed.
     Ok(ast::Args { args: args_out })
-}
-
-#[cfg(test)]
-mod lower_args_tests {
-    use parser::cst::decls::Telescope;
-    use syntax::ast;
-
-    use super::{lower_args, Ctx};
-
-    #[test]
-    fn test_empty() {
-        let given = vec![];
-        let expected = Telescope(vec![]);
-        let mut ctx = Ctx::empty(Default::default());
-        let res = lower_args(&given, expected, &mut ctx);
-        assert_eq!(res.unwrap(), ast::Args { args: vec![] })
-    }
 }
 
 impl Lower for cst::exp::Case<cst::exp::Pattern> {
@@ -474,7 +456,7 @@ impl Lower for cst::exp::NatLit {
                 span: Some(*span),
                 kind: call_kind,
                 name: "S".to_owned(),
-                args: ast::Args { args: vec![ast::Arg::UnnamedArg(Rc::new(out))] },
+                args: ast::Args { args: vec![ast::Arg::UnnamedArg(Box::new(out))] },
                 inferred_type: None,
             });
         }
@@ -559,5 +541,24 @@ impl Lower for cst::exp::Motive {
             },
             ret_typ: ctx.bind_single(param, |ctx| ret_typ.lower(ctx))?,
         })
+    }
+}
+
+#[cfg(test)]
+mod lower_args_tests {
+
+    use parser::cst::decls::Telescope;
+
+    use crate::lookup_table::LookupTable;
+
+    use super::{lower_args, Ctx};
+
+    #[test]
+    fn test_empty() {
+        let given = vec![];
+        let expected = Telescope(vec![]);
+        let mut ctx = Ctx::empty(LookupTable::default());
+        let res = lower_args(&given, expected, &mut ctx);
+        assert_eq!(res.unwrap(), ast::Args { args: vec![] })
     }
 }

@@ -1,10 +1,9 @@
 use codespan::Span;
 use printer::Print;
 
-use syntax::{
-    ast::CallKind,
-    ast::DotCallKind,
+use ast::{
     ctx::values::{Binder as TypeCtxBinder, TypeCtx},
+    CallKind, DotCallKind,
 };
 use url::Url;
 

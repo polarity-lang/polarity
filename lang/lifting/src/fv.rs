@@ -1,12 +1,11 @@
 use std::cmp;
-use std::rc::Rc;
 
 use derivative::Derivative;
 
-use syntax::ast::*;
-use syntax::ast::{Hole, Occurs, TypeUniv, Variable};
-use syntax::ctx::values::TypeCtx;
-use syntax::ctx::*;
+use ast::ctx::values::TypeCtx;
+use ast::ctx::*;
+use ast::*;
+use ast::{Hole, Occurs, TypeUniv, Variable};
 
 /// Find all free variables
 pub fn free_vars<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
@@ -147,7 +146,7 @@ impl FV for ParamInst {
     }
 }
 
-impl<T: FV> FV for Rc<T> {
+impl<T: FV> FV for Box<T> {
     fn visit_fv(&self, v: &mut USTVisitor) {
         (**self).visit_fv(v)
     }
@@ -197,7 +196,7 @@ impl FreeVars {
             let typ = typ.subst(&mut ctx, &subst.in_param());
 
             let param = Param { implicit: false, name: name.clone(), typ: typ.clone() };
-            let arg = Arg::UnnamedArg(Rc::new(Exp::Variable(Variable {
+            let arg = Arg::UnnamedArg(Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: base_ctx.lvl_to_idx(fv.lvl),
                 name: name.clone(),
@@ -271,7 +270,7 @@ pub struct FreeVar {
     pub lvl: Lvl,
     /// Type of the free variable
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub typ: Rc<Exp>,
+    pub typ: Box<Exp>,
     /// Context under which the type is closed
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: LevelCtx,
@@ -312,7 +311,7 @@ pub struct USTVisitor<'a> {
 
 impl<'a> USTVisitor<'a> {
     /// Add a free variable as well as all free variables its type
-    fn add_fv(&mut self, name: Ident, lvl: Lvl, typ: Rc<Exp>, ctx: LevelCtx) {
+    fn add_fv(&mut self, name: Ident, lvl: Lvl, typ: Box<Exp>, ctx: LevelCtx) {
         // Add the free variable
         let fv = FreeVar { name, lvl, typ: typ.clone(), ctx };
         if self.fvs.insert(fv) {
@@ -399,7 +398,7 @@ impl<'a> Shift for FVParamSubst<'a> {
 }
 
 impl<'a> Substitution for FVBodySubst<'a> {
-    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
+    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
         // Let Γ be the original context, let Δ be the context according to which the new De-Bruijn index should be calculated
         //
         // Γ = [[x], [y], [z]]
@@ -412,7 +411,7 @@ impl<'a> Substitution for FVBodySubst<'a> {
         let new_ctx =
             LevelCtx::from(vec![self.inner.subst.len()]).append(&ctx.tail(self.inner.cutoff));
         self.inner.subst.get(&lvl).map(|fv| {
-            Rc::new(Exp::Variable(Variable {
+            Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: new_ctx.lvl_to_idx(fv.lvl),
                 name: fv.name.clone(),
@@ -423,9 +422,9 @@ impl<'a> Substitution for FVBodySubst<'a> {
 }
 
 impl<'a> Substitution for FVParamSubst<'a> {
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Rc<Exp>> {
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
         self.inner.subst.get(&lvl).map(|fv| {
-            Rc::new(Exp::Variable(Variable {
+            Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: self.inner.subst.len() - 1 - fv.lvl.snd },
                 name: fv.name.clone(),

@@ -21,7 +21,7 @@ ropey = "1"
 miette = { workspace = true }
 thiserror = { workspace = true }
 # workspace members
-syntax = { path = "../syntax" }
+ast = { path = "../ast" }
 lowering = { path = "../lowering" }
 elaborator = { path = "../elaborator" }
 printer = { path = "../printer" }

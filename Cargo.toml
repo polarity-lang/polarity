@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "lang/syntax",
+    "lang/ast",
     "lang/parser",
     "lang/lowering",
     "lang/lsp",

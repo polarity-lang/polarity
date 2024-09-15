@@ -1,8 +1,6 @@
-use std::rc::Rc;
-
+use ast::ctx::*;
+use ast::*;
 use codespan::Span;
-use syntax::ast::*;
-use syntax::ctx::*;
 
 use super::ctx::*;
 
@@ -39,21 +37,20 @@ pub trait Rename: Sized {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self;
 }
 
-impl<R: Rename + Clone> Rename for Rc<R> {
+impl<R: Rename + Clone> Rename for Box<R> {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let x = (*self).clone();
-        Rc::new(x.rename_in_ctx(ctx))
+        Box::new(x.rename_in_ctx(ctx))
     }
 }
 
 impl Rename for Module {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        Module {
-            uri: self.uri,
-            map: self.map.into_iter().map(|(name, decl)| (name, decl.rename_in_ctx(ctx))).collect(),
-            lookup_table: self.lookup_table,
-            meta_vars: self.meta_vars,
-        }
+        let Module { uri, decls, meta_vars } = self;
+
+        let decls = decls.rename_in_ctx(ctx);
+
+        Module { uri, decls, meta_vars }
     }
 }
 
@@ -62,8 +59,6 @@ impl Rename for Decl {
         match self {
             Decl::Data(data) => Decl::Data(data.rename_in_ctx(ctx)),
             Decl::Codata(codata) => Decl::Codata(codata.rename_in_ctx(ctx)),
-            Decl::Ctor(ctor) => Decl::Ctor(ctor.rename_in_ctx(ctx)),
-            Decl::Dtor(dtor) => Decl::Dtor(dtor.rename_in_ctx(ctx)),
             Decl::Def(def) => Decl::Def(def.rename_in_ctx(ctx)),
             Decl::Codef(codef) => Decl::Codef(codef.rename_in_ctx(ctx)),
             Decl::Let(lets) => Decl::Let(lets.rename_in_ctx(ctx)),
@@ -74,6 +69,7 @@ impl Rename for Decl {
 impl Rename for Data {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Data { span, doc, name, attr, typ, ctors } = self;
+        let ctors = ctors.rename_in_ctx(ctx);
         Data { span, doc, name, attr, typ: typ.rename_in_ctx(ctx), ctors }
     }
 }
@@ -81,7 +77,7 @@ impl Rename for Data {
 impl Rename for Codata {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
         let Codata { span, doc, name, attr, typ, dtors } = self;
-
+        let dtors = dtors.rename_in_ctx(ctx);
         Codata { span, doc, name, attr, typ: typ.rename_in_ctx(ctx), dtors }
     }
 }

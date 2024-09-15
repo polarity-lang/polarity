@@ -13,7 +13,9 @@ categories.workspace = true
 [dependencies]
 # lsp
 lsp = { version = "0.93", package = "lsp-types" }
-tower-lsp = { version = "0.17", default-features = false, features = ["runtime-agnostic"] }
+tower-lsp = { version = "0.17", default-features = false, features = [
+    "runtime-agnostic",
+] }
 # asynchronous locks
 async-lock = "2"
 # source code spans
@@ -21,7 +23,7 @@ codespan = { workspace = true }
 # fancy error messages
 miette = { workspace = true }
 # workspace members
-syntax = { path = "../syntax" }
+ast = { path = "../ast" }
 query = { path = "../query" }
 printer = { path = "../printer" }
 miette_util = { path = "../miette_util" }

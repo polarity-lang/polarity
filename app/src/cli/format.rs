@@ -3,7 +3,6 @@ use std::path::PathBuf;
 
 use printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
 use query::Database;
-use syntax::ast;
 
 use crate::result::IOError;
 

@@ -1,17 +1,15 @@
-use std::rc::Rc;
-
+use ast::ctx::values::TypeCtx;
+use ast::ctx::BindContext;
+use ast::ctx::LevelCtx;
+use ast::*;
 use codespan::Span;
 use renaming::Rename;
-use syntax::ast::*;
-use syntax::ctx::values::TypeCtx;
-use syntax::ctx::BindContext;
-use syntax::ctx::LevelCtx;
 mod fv;
 
 use fv::*;
 
-/// Lift local (co)matches for `name` in `prg` to top-level (co)definitions
-pub fn lift(prg: Module, name: &str) -> LiftResult {
+/// Lift local (co)matches for `name` in `module` to top-level (co)definitions
+pub fn lift(module: Module, name: &str) -> LiftResult {
     let mut ctx = Ctx {
         name: name.to_owned(),
         new_decls: vec![],
@@ -20,16 +18,16 @@ pub fn lift(prg: Module, name: &str) -> LiftResult {
         ctx: LevelCtx::default(),
     };
 
-    let prg = prg.lift(&mut ctx).rename();
+    let module = module.lift(&mut ctx).rename();
     let new_decls = HashSet::from_iter(ctx.new_decls.iter().map(|decl| decl.name().clone()));
 
-    LiftResult { prg, new_decls, modified_decls: ctx.modified_decls }
+    LiftResult { module, new_decls, modified_decls: ctx.modified_decls }
 }
 
 /// Result of lifting
 pub struct LiftResult {
     /// The resulting program
-    pub prg: Module,
+    pub module: Module,
     /// List of new top-level definitions
     pub new_decls: HashSet<Ident>,
     /// List of top-level declarations that have been modified in the lifting process
@@ -74,22 +72,11 @@ impl Lift for Module {
     type Target = Module;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Module { uri, map, lookup_table, meta_vars } = self;
+        let Module { uri, decls, meta_vars } = self;
 
-        let mut map: HashMap<_, _> =
-            map.iter().map(|(name, decl)| (name.clone(), decl.lift(ctx))).collect();
-        let mut lookup_table = lookup_table.clone();
+        let decls = decls.iter().map(|decl| decl.lift(ctx)).collect();
 
-        // Add new top-level definitions to lookup tabble
-        for decl in &ctx.new_decls {
-            lookup_table.insert_def(ctx.name.clone(), decl.name().clone());
-        }
-
-        // Add new top-level definitions to program map
-        let decls_iter = ctx.new_decls.iter().map(|decl| (decl.name().clone(), decl.clone()));
-        map.extend(decls_iter);
-
-        Module { uri: uri.clone(), map, lookup_table, meta_vars: meta_vars.clone() }
+        Module { uri: uri.clone(), decls, meta_vars: meta_vars.clone() }
     }
 }
 
@@ -101,8 +88,6 @@ impl Lift for Decl {
         match self {
             Decl::Data(data) => Decl::Data(data.lift(ctx)),
             Decl::Codata(cotata) => Decl::Codata(cotata.lift(ctx)),
-            Decl::Ctor(ctor) => Decl::Ctor(ctor.lift(ctx)),
-            Decl::Dtor(tdor) => Decl::Dtor(tdor.lift(ctx)),
             Decl::Def(def) => Decl::Def(def.lift(ctx)),
             Decl::Codef(codef) => Decl::Codef(codef.lift(ctx)),
             Decl::Let(tl_let) => Decl::Let(tl_let.lift(ctx)),
@@ -116,13 +101,15 @@ impl Lift for Data {
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Data { span, doc, name, attr, typ, ctors } = self;
 
+        let ctors = ctors.iter().map(|ctor| ctor.lift(ctx)).collect();
+
         Data {
             span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
-            typ: Rc::new(typ.lift_telescope(ctx, |_, params| params)),
-            ctors: ctors.clone(),
+            typ: Box::new(typ.lift_telescope(ctx, |_, params| params)),
+            ctors,
         }
     }
 }
@@ -133,13 +120,15 @@ impl Lift for Codata {
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Codata { span, doc, name, attr, typ, dtors } = self;
 
+        let dtors = dtors.iter().map(|dtor| dtor.lift(ctx)).collect();
+
         Codata {
             span: *span,
             doc: doc.clone(),
             name: name.clone(),
             attr: attr.clone(),
-            typ: Rc::new(typ.lift_telescope(ctx, |_, params| params)),
-            dtors: dtors.clone(),
+            typ: Box::new(typ.lift_telescope(ctx, |_, params| params)),
+            dtors,
         }
     }
 }
@@ -475,7 +464,7 @@ impl Lift for Arg {
         match self {
             Arg::UnnamedArg(exp) => Arg::UnnamedArg(exp.lift(ctx)),
             Arg::NamedArg(name, exp) => Arg::NamedArg(name.clone(), exp.lift(ctx)),
-            Arg::InsertedImplicitArg(hole) => Arg::UnnamedArg(Rc::new(hole.lift(ctx))),
+            Arg::InsertedImplicitArg(hole) => Arg::UnnamedArg(Box::new(hole.lift(ctx))),
         }
     }
 }
@@ -500,11 +489,11 @@ impl Lift for ParamInst {
     }
 }
 
-impl<T: Lift> Lift for Rc<T> {
-    type Target = Rc<T::Target>;
+impl<T: Lift> Lift for Box<T> {
+    type Target = Box<T::Target>;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        Rc::new(T::lift(self, ctx))
+        Box::new(T::lift(self, ctx))
     }
 }
 
@@ -532,9 +521,9 @@ impl Ctx {
         inferred_type: &TypCtor,
         type_ctx: &TypeCtx,
         name: &Label,
-        on_exp: &Rc<Exp>,
+        on_exp: &Exp,
         motive: &Option<Motive>,
-        ret_typ: &Option<Rc<Exp>>,
+        ret_typ: &Option<Box<Exp>>,
         cases: &Vec<Case>,
     ) -> Exp {
         // Only lift local matches for the specified type
@@ -544,7 +533,7 @@ impl Ctx {
                 inferred_type: None,
                 ctx: None,
                 name: name.clone(),
-                on_exp: on_exp.lift(self),
+                on_exp: Box::new(on_exp.lift(self)),
                 motive: motive.lift(self),
                 ret_typ: None,
                 cases: cases.lift(self),
@@ -606,7 +595,7 @@ impl Ctx {
         Exp::DotCall(DotCall {
             span: None,
             kind: DotCallKind::Definition,
-            exp: on_exp.lift(self),
+            exp: Box::new(on_exp.lift(self)),
             name,
             args,
             inferred_type: None,

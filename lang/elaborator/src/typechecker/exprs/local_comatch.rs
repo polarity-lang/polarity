@@ -1,15 +1,14 @@
 //! Bidirectional type checker
 
-use std::rc::Rc;
-
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::typechecker::exprs::CheckTelescope;
+use crate::typechecker::lookup_table::DtorMeta;
 use crate::unifier::constraints::Constraint;
 use crate::unifier::unify::*;
+use ast::ctx::LevelCtx;
+use ast::*;
 use miette_util::ToMiette;
-use syntax::ast::*;
-use syntax::ctx::LevelCtx;
 
 use super::super::ctx::*;
 use super::super::util::*;
@@ -17,15 +16,20 @@ use super::CheckInfer;
 use crate::result::TypeError;
 
 impl CheckInfer for LocalComatch {
-    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
         let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
         // The expected type that we check against should be a type constructor applied to
         // arguments.
-        let expected_type_app: TypCtor = t.expect_typ_app()?.infer(prg, ctx)?;
+        let expected_type_app: TypCtor = t.expect_typ_app()?.infer(ctx)?;
 
         // Local comatches don't support self parameters, yet.
-        let codata = prg.codata(&expected_type_app.name, *span)?;
-        if uses_self(prg, codata)? {
+        let codata = ctx.module.lookup_codata(&expected_type_app.name).ok_or_else(|| {
+            TypeError::Impossible {
+                message: format!("Codata type {name} not found"),
+                span: span.to_miette(),
+            }
+        })?;
+        if uses_self(codata)? {
             return Err(TypeError::LocalComatchWithSelf {
                 type_name: codata.name.to_owned(),
                 span: span.to_miette(),
@@ -34,8 +38,8 @@ impl CheckInfer for LocalComatch {
 
         let wd = WithExpectedType { cases, label: None, expected_type: expected_type_app.clone() };
 
-        wd.check_exhaustiveness(prg)?;
-        let cases = wd.infer_wd(prg, ctx)?;
+        wd.check_exhaustiveness(&ctx.module)?;
+        let cases = wd.infer_wd(ctx)?;
 
         Ok(LocalComatch {
             span: *span,
@@ -47,7 +51,7 @@ impl CheckInfer for LocalComatch {
         })
     }
 
-    fn infer(&self, _prg: &Module, _ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, __ctx: &mut Ctx) -> Result<Self, TypeError> {
         // We cannot currently infer the type of a copattern match, only check against an expected type.
         Err(TypeError::CannotInferComatch { span: self.span().to_miette() })
     }
@@ -67,13 +71,19 @@ pub struct WithExpectedType<'a> {
 impl<'a> WithExpectedType<'a> {
     /// Check whether the copattern match contains exactly one clause for every
     /// destructor declared in the codata type declaration.
-    pub fn check_exhaustiveness(&self, prg: &Module) -> Result<(), TypeError> {
+    pub fn check_exhaustiveness(&self, module: &Module) -> Result<(), TypeError> {
         let WithExpectedType { cases, .. } = &self;
         // Check that this comatch is on a codata type
-        let codata = prg.codata(&self.expected_type.name, self.expected_type.span())?;
+        let codata = module.lookup_codata(&self.expected_type.name).ok_or_else(|| {
+            TypeError::Impossible {
+                message: format!("Codata type {} not found", self.expected_type.name),
+                span: None,
+            }
+        })?;
 
         // Check exhaustiveness
-        let dtors_expected: HashSet<_> = codata.dtors.iter().cloned().collect();
+        let dtors_expected: HashSet<_> =
+            codata.dtors.iter().map(|dtor| dtor.name.to_owned()).collect();
         let mut dtors_actual = HashSet::default();
         let mut dtors_duplicate = HashSet::default();
 
@@ -101,7 +111,7 @@ impl<'a> WithExpectedType<'a> {
         Ok(())
     }
 
-    pub fn infer_wd(&self, prg: &Module, ctx: &mut Ctx) -> Result<Vec<Case>, TypeError> {
+    pub fn infer_wd(&self, ctx: &mut Ctx) -> Result<Vec<Case>, TypeError> {
         let WithExpectedType { cases, expected_type, label } = &self;
         let TypCtor { args: on_args, .. } = expected_type;
 
@@ -113,8 +123,8 @@ impl<'a> WithExpectedType<'a> {
         let mut cases_out = Vec::new();
 
         for case in cases.iter().cloned() {
-            let Dtor { self_param, ret_typ, params, .. } =
-                prg.dtor(&case.pattern.name, case.span)?;
+            let DtorMeta { self_param, ret_typ, params, .. } =
+                ctx.lookup_table.lookup_dtor(&case.pattern.name)?;
             let SelfParam { typ: TypCtor { args: def_args, .. }, .. } = self_param;
             let Case { span, pattern: Pattern { name, params: params_inst, .. }, body } = &case;
             // We are in the following situation:
@@ -140,15 +150,18 @@ impl<'a> WithExpectedType<'a> {
             // of the destructor declaration.
             // TODO: Why can't we do this once *before* we repeatedly look them up in the context?
             let def_args =
-                def_args.normalize(prg, &mut LevelCtx::from(vec![params.len()]).env())?;
+                def_args.normalize(&ctx.module, &mut LevelCtx::from(vec![params.len()]).env())?;
             let ret_typ =
-                ret_typ.normalize(prg, &mut LevelCtx::from(vec![params.len(), 1]).env())?;
+                ret_typ.normalize(&ctx.module, &mut LevelCtx::from(vec![params.len(), 1]).env())?;
+
+            let name = name.clone();
+            let params = params.clone();
+            let module = ctx.module.clone();
 
             params_inst.check_telescope(
-                prg,
-                name,
+                &name,
                 ctx,
-                params,
+                &params,
                 |ctx, args_out| {
                     // We have to check whether we have an absurd case or an ordinary case.
                     // To do this we have solve the following unification problem:
@@ -218,7 +231,7 @@ impl<'a> WithExpectedType<'a> {
                                     let args = (0..*n_label_args)
                                         .rev()
                                         .map(|snd| {
-                                            Arg::UnnamedArg(Rc::new(Exp::Variable(Variable {
+                                            Arg::UnnamedArg(Box::new(Exp::Variable(Variable {
                                                 span: None,
                                                 // The field `fst` has to be `2` because we have two surrounding telescopes:
                                                 // - The arguments to the toplevel codefinition
@@ -229,7 +242,7 @@ impl<'a> WithExpectedType<'a> {
                                             })))
                                         })
                                         .collect();
-                                    let ctor = Rc::new(Exp::Call(Call {
+                                    let ctor = Box::new(Exp::Call(Call {
                                         span: None,
                                         kind: CallKind::Codefinition,
                                         name: label.clone(),
@@ -269,7 +282,7 @@ impl<'a> WithExpectedType<'a> {
                                     let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
                                     let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
                                     ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
-                                        prg,
+                                        &ctx.module,
                                         &mut LevelCtx::from(vec![*n_label_args, params.len()])
                                             .env(),
                                     )?
@@ -290,13 +303,13 @@ impl<'a> WithExpectedType<'a> {
                                         .ok_yes()?;
 
                                 ctx.fork::<Result<_, TypeError>, _>(|ctx| {
-                                    ctx.subst(prg, &unif)?;
+                                    ctx.subst(&module, &unif)?;
                                     let body = body.subst(&mut ctx.levels(), &unif);
 
                                     let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif);
-                                    let t_nf = t_subst.normalize(prg, &mut ctx.env())?;
+                                    let t_nf = t_subst.normalize(&module, &mut ctx.env())?;
 
-                                    let body_out = body.check(prg, ctx, t_nf)?;
+                                    let body_out = body.check(ctx, &t_nf)?;
 
                                     Ok(Some(body_out))
                                 })?

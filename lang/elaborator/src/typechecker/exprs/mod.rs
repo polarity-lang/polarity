@@ -11,20 +11,19 @@ pub mod variable;
 use codespan::Span;
 use miette_util::ToMiette;
 
-use std::rc::Rc;
-
 use log::trace;
 
 use printer::types::Print;
 
-use syntax::{ast::*, ctx::LevelCtx};
+use ast::ctx::LevelCtx;
+use ast::*;
 
 use super::ctx::*;
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
 use crate::result::TypeError;
 
-use syntax::ctx::values::Binder;
-use syntax::ctx::{BindContext, BindElem};
+use ast::ctx::values::Binder;
+use ast::ctx::{BindContext, BindElem};
 
 /// The CheckInfer trait for bidirectional type inference.
 /// Expressions which implement this trait provide both a `check` function
@@ -39,7 +38,7 @@ pub trait CheckInfer: Sized {
     /// - P: The program context of toplevel declarations.
     /// - Γ: The context of locally bound variables
     /// - τ: The type we check against, must be in normal form.
-    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError>;
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError>;
     /// Tries to infer a type for the given expression. For inference we use the
     /// following syntax:
     /// ```text
@@ -47,15 +46,15 @@ pub trait CheckInfer: Sized {
     /// ```
     ///  - P: The program context of toplevel declarations.
     ///  - Γ: The context of locally bound variables.
-    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError>;
+    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError>;
 }
 
-impl<T: CheckInfer> CheckInfer for Rc<T> {
-    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
-        Ok(Rc::new((**self).check(prg, ctx, t)?))
+impl<T: CheckInfer> CheckInfer for Box<T> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+        Ok(Box::new((**self).check(ctx, t)?))
     }
-    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
-        Ok(Rc::new((**self).infer(prg, ctx)?))
+    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
+        Ok(Box::new((**self).infer(ctx)?))
     }
 }
 
@@ -64,32 +63,32 @@ impl<T: CheckInfer> CheckInfer for Rc<T> {
 //
 
 impl CheckInfer for Exp {
-    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
         trace!("{} |- {} <= {}", ctx.print_trace(), self.print_trace(), t.print_trace());
         match self {
-            Exp::Variable(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
-            Exp::TypCtor(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
-            Exp::Call(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
-            Exp::DotCall(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
-            Exp::Anno(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
-            Exp::TypeUniv(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
-            Exp::Hole(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
-            Exp::LocalMatch(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
-            Exp::LocalComatch(e) => Ok(e.check(prg, ctx, t.clone())?.into()),
+            Exp::Variable(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::TypCtor(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::Call(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::DotCall(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::Anno(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::TypeUniv(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::Hole(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::LocalMatch(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::LocalComatch(e) => Ok(e.check(ctx, t)?.into()),
         }
     }
 
-    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let res: Result<Exp, TypeError> = match self {
-            Exp::Variable(e) => Ok(e.infer(prg, ctx)?.into()),
-            Exp::TypCtor(e) => Ok(e.infer(prg, ctx)?.into()),
-            Exp::Call(e) => Ok(e.infer(prg, ctx)?.into()),
-            Exp::DotCall(e) => Ok(e.infer(prg, ctx)?.into()),
-            Exp::Anno(e) => Ok(e.infer(prg, ctx)?.into()),
-            Exp::TypeUniv(e) => Ok(e.infer(prg, ctx)?.into()),
-            Exp::Hole(e) => Ok(e.infer(prg, ctx)?.into()),
-            Exp::LocalMatch(e) => Ok(e.infer(prg, ctx)?.into()),
-            Exp::LocalComatch(e) => Ok(e.infer(prg, ctx)?.into()),
+            Exp::Variable(e) => Ok(e.infer(ctx)?.into()),
+            Exp::TypCtor(e) => Ok(e.infer(ctx)?.into()),
+            Exp::Call(e) => Ok(e.infer(ctx)?.into()),
+            Exp::DotCall(e) => Ok(e.infer(ctx)?.into()),
+            Exp::Anno(e) => Ok(e.infer(ctx)?.into()),
+            Exp::TypeUniv(e) => Ok(e.infer(ctx)?.into()),
+            Exp::Hole(e) => Ok(e.infer(ctx)?.into()),
+            Exp::LocalMatch(e) => Ok(e.infer(ctx)?.into()),
+            Exp::LocalComatch(e) => Ok(e.infer(ctx)?.into()),
         };
         trace!(
             "{} |- {} => {}",
@@ -102,28 +101,25 @@ impl CheckInfer for Exp {
 }
 
 impl CheckInfer for Arg {
-    fn check(&self, prg: &Module, ctx: &mut Ctx, t: Rc<Exp>) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
         match self {
-            Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.check(prg, ctx, t)?)),
-            Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.check(prg, ctx, t)?)),
-            Arg::InsertedImplicitArg(hole) => {
-                Ok(Arg::InsertedImplicitArg(hole.check(prg, ctx, t)?))
-            }
+            Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.check(ctx, t)?)),
+            Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.check(ctx, t)?)),
+            Arg::InsertedImplicitArg(hole) => Ok(Arg::InsertedImplicitArg(hole.check(ctx, t)?)),
         }
     }
 
-    fn infer(&self, prg: &Module, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         match self {
-            Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.infer(prg, ctx)?)),
-            Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.infer(prg, ctx)?)),
-            Arg::InsertedImplicitArg(hole) => Ok(Arg::InsertedImplicitArg(hole.infer(prg, ctx)?)),
+            Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.infer(ctx)?)),
+            Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.infer(ctx)?)),
+            Arg::InsertedImplicitArg(hole) => Ok(Arg::InsertedImplicitArg(hole.infer(ctx)?)),
         }
     }
 }
 
 fn check_args(
     this: &Args,
-    prg: &Module,
     name: &str,
     ctx: &mut Ctx,
     params: &Telescope,
@@ -146,8 +142,8 @@ fn check_args(
         .iter()
         .zip(params)
         .map(|(exp, Param { typ, .. })| {
-            let typ = typ.normalize(prg, &mut ctx.env())?;
-            exp.check(prg, ctx, typ)
+            let typ = typ.normalize(&ctx.module, &mut ctx.env())?;
+            exp.check(ctx, &typ)
         })
         .collect::<Result<_, _>>()?;
 
@@ -159,7 +155,6 @@ pub trait CheckTelescope {
 
     fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
-        prg: &Module,
         name: &str,
         ctx: &mut Ctx,
         params: &Telescope,
@@ -173,7 +168,6 @@ pub trait InferTelescope {
 
     fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
-        prg: &Module,
         ctx: &mut Ctx,
         f: F,
     ) -> Result<T, TypeError>;
@@ -184,7 +178,6 @@ impl CheckTelescope for TelescopeInst {
 
     fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
-        prg: &Module,
         name: &str,
         ctx: &mut Ctx,
         param_types: &Telescope,
@@ -211,8 +204,8 @@ impl CheckTelescope for TelescopeInst {
             |ctx, params_out, (param_actual, param_expected)| {
                 let ParamInst { span, name, .. } = param_actual;
                 let Param { typ, .. } = param_expected;
-                let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
-                let typ_nf = typ.normalize(prg, &mut ctx.env())?;
+                let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
+                let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
                 let mut params_out = params_out;
                 let param_out = ParamInst {
                     span: *span,
@@ -234,7 +227,6 @@ impl InferTelescope for Telescope {
 
     fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
-        prg: &Module,
         ctx: &mut Ctx,
         f: F,
     ) -> Result<T, TypeError> {
@@ -245,8 +237,8 @@ impl InferTelescope for Telescope {
             vec![],
             |ctx, mut params_out, param| {
                 let Param { implicit, typ, name } = param;
-                let typ_out = typ.check(prg, ctx, Rc::new(TypeUniv::new().into()))?;
-                let typ_nf = typ.normalize(prg, &mut ctx.env())?;
+                let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
+                let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
                 let param_out = Param { implicit: *implicit, name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
                 let elem = Binder { name: param.name.clone(), typ: typ_nf };
@@ -262,14 +254,13 @@ impl InferTelescope for SelfParam {
 
     fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
         &self,
-        prg: &Module,
         ctx: &mut Ctx,
         f: F,
     ) -> Result<T, TypeError> {
         let SelfParam { info, name, typ } = self;
 
-        let typ_nf = typ.to_exp().normalize(prg, &mut ctx.env())?;
-        let typ_out = typ.infer(prg, ctx)?;
+        let typ_nf = typ.to_exp().normalize(&ctx.module, &mut ctx.env())?;
+        let typ_out = typ.infer(ctx)?;
         let param_out = SelfParam { info: *info, name: name.clone(), typ: typ_out };
         let elem = Binder { name: name.clone().unwrap_or_default(), typ: typ_nf };
 

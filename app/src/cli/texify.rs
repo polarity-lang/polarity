@@ -5,7 +5,6 @@ use std::path::PathBuf;
 
 use printer::{Print, PrintCfg};
 use query::Database;
-use syntax::ast;
 
 use crate::result::IOError;
 
