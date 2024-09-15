@@ -23,6 +23,7 @@ miette = { workspace = true, features = ["fancy"] }
 thiserror = { workspace = true }
 # Logging infrastructure
 env_logger = "0.11.3"
+log = { workspace = true }
 # lsp
 tokio = { version = "1", features = ["rt-multi-thread"] }
 futures = "0.3"
