@@ -2411,6 +2411,7 @@ dependencies = [
  "clap",
  "elaborator",
  "env_logger",
+ "log",
  "lowering",
  "parser",
  "printer",
