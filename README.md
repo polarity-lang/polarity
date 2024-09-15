@@ -49,16 +49,16 @@ pol --help
 ├── app                     CLI application
 ├── examples                Example code in the object language
 ├── lang                    Language implementation
+│   ├── ast                 Definition of the abstract syntax tree (untyped and typed)
 │   ├── elaborator          Elaborating an untyped syntax tree into a typed syntax tree.
 │   ├── lifting             Lift local (co)matches to top-level definitions
 │   ├── lowering            Lowering concrete to (untyped) abstract syntax tree
 │   ├── lsp                 LSP language server implementation
 │   ├── miette_util         Convert source code spans
-│   ├── parser              Parse text to concrete syntax tree
+│   ├── parser              Concrete syntax tree (cst), lexer and parser
 │   ├── printer             Print abstract syntax tree to text
 │   ├── query               Index data structures for annotated source code files and spans
 │   ├── renaming            Rename abstract syntax tree s.t. it can be reparsed
-│   ├── syntax              Syntax tree definitions
 │   └── xfunc               De-/Refunctionalization implementation
 ├── test                    Integration tests
 │   ├── suites              Test cases
