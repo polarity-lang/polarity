@@ -46,11 +46,11 @@ impl<R: Rename + Clone> Rename for Box<R> {
 
 impl Rename for Module {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Module { uri, decls, meta_vars } = self;
+        let Module { uri, use_decls, decls, meta_vars } = self;
 
         let decls = decls.rename_in_ctx(ctx);
 
-        Module { uri, decls, meta_vars }
+        Module { uri, use_decls, decls, meta_vars }
     }
 }
 

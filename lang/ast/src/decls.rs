@@ -136,14 +136,30 @@ impl MetaVarState {
         }
     }
 }
+
+/// A use declaration
+///
+/// ```text
+/// use "Data/Bool.pol"
+/// ```
+#[derive(Debug, Clone)]
+pub struct UseDecl {
+    pub span: Span,
+    pub path: String,
+}
+
 /// A module containing declarations
 ///
 /// There is a 1-1 correspondence between modules and files in our system.
 #[derive(Debug, Clone)]
 pub struct Module {
+    /// The location of the module on disk
     pub uri: Url,
-    /// List of declarations in the module
+    /// List of module imports at the top of a module.
+    pub use_decls: Vec<UseDecl>,
+    /// Declarations contained in the module other than imports.
     pub decls: Vec<Decl>,
+    /// Metavariables that were generated for this module during lowering.
     pub meta_vars: HashMap<MetaVar, MetaVarState>,
 }
 

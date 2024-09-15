@@ -72,11 +72,16 @@ impl Lift for Module {
     type Target = Module;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Module { uri, decls, meta_vars } = self;
+        let Module { uri, use_decls, decls, meta_vars } = self;
 
         let decls = decls.iter().map(|decl| decl.lift(ctx)).collect();
 
-        Module { uri: uri.clone(), decls, meta_vars: meta_vars.clone() }
+        Module {
+            uri: uri.clone(),
+            use_decls: use_decls.clone(),
+            decls,
+            meta_vars: meta_vars.clone(),
+        }
     }
 }
 
