@@ -154,7 +154,7 @@ pub struct UseDecl {
 impl Print for UseDecl {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let UseDecl { path, .. } = self;
-        alloc.text(USE).append(alloc.space()).append(path)
+        alloc.text(USE).append(alloc.space()).append(alloc.text(path).double_quotes())
     }
 }
 
