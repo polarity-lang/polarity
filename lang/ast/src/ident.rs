@@ -9,12 +9,38 @@ use printer::{
 
 pub type Ident = String;
 
+/// Whether the metavariable corresponds to a typed hole written by the user
+/// or whether it was inserted during lowering for an implicit argument.
+#[derive(Debug, Clone, Copy, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub enum MetaVarKind {
+    /// A metavariable which was generated for a typed hole written by the user.
+    User,
+    /// A metavariable which was inserted during lowering for an implicit argument.
+    Inserted,
+}
+
 /// A metavariable which stands for unknown terms which
 /// have to be determined during elaboration.
 #[derive(Debug, Clone, Copy, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct MetaVar {
+    pub kind: MetaVarKind,
     pub id: u64,
+}
+
+impl MetaVar {
+    /// Check whether this metavariable was inserted during lowering for
+    /// an implicit argument.
+    pub fn is_inserted(&self) -> bool {
+        self.kind == MetaVarKind::Inserted
+    }
+
+    /// Check whether this metavariable corresponds to a typed hole written
+    /// by the programmer.
+    pub fn is_user(&self) -> bool {
+        self.kind == MetaVarKind::User
+    }
 }
 
 // Difference between two-level deBruijn indizes and levels

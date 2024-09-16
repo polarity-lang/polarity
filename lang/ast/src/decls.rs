@@ -132,10 +132,19 @@ pub enum MetaVarState {
 }
 
 impl MetaVarState {
+    /// Returns the found solution for the metavariable, if it exists.
     pub fn solution(&self) -> Option<Box<Exp>> {
         match self {
             MetaVarState::Solved { solution, .. } => Some(solution.clone()),
             MetaVarState::Unsolved { .. } => None,
+        }
+    }
+
+    /// Returns true if the metavariable is solved.
+    pub fn is_solved(&self) -> bool {
+        match self {
+            MetaVarState::Solved { .. } => true,
+            MetaVarState::Unsolved { .. } => false,
         }
     }
 }
