@@ -15,7 +15,7 @@ fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
     vec.join(s)
 }
 
-#[derive(Error, Diagnostic, Debug)]
+#[derive(Error, Diagnostic, Debug, Clone)]
 pub enum TypeError {
     #[error("Wrong number of arguments to {name} provided: got {actual}, expected {expected}")]
     #[diagnostic(code("T-001"))]

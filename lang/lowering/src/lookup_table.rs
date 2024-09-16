@@ -9,7 +9,7 @@ use parser::cst::*;
 
 use crate::LoweringError;
 
-#[derive(Default)]
+#[derive(Debug, Default, Clone)]
 pub struct LookupTable {
     map: HashMap<Ident, DeclMeta>,
 }
