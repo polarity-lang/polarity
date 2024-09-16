@@ -90,8 +90,14 @@ pub enum Token {
 
     // Identifiers
     //
-    //
-    #[regex(r"[a-zα-ωA-ZΑ-Ω𝔹ℕ𝕍∃∀×][a-zα-ωA-ZΑ-Ω𝔹ℕ𝕍∃∀×0-9_'⁺⁻₀₁₂₃₄₅₆₇₈₉₊₋]*", |lex| lex.slice().to_string())]
+    // We use the following unicode categories:
+    // Ll = lowercase letter
+    // Lu = uppercase letter
+    // Sm = math symbol
+    // No = other numbers (includes subscripts and superscript numerals)
+    // ' is contained in the category Po (Punctuation other)
+    // _ is contained in the category Pc (Punctuation connector)
+    #[regex(r"[\p{Ll}\p{Lu}\p{Sm}][\p{Ll}\p{Lu}\p{Sm}\p{No}0-9_']*", |lex| lex.slice().to_string())]
     Ident(String),
 
     // Literals
