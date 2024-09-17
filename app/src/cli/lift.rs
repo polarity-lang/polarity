@@ -26,12 +26,12 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         None => Box::new(io::stdout()),
     };
 
-    print_prg(prg, &PrintCfg::default(), &mut stream);
+    print_prg(&prg, &PrintCfg::default(), &mut stream);
 
     Ok(())
 }
 
-fn print_prg<W: io::Write>(prg: ast::Module, cfg: &PrintCfg, stream: &mut W) {
+fn print_prg<W: io::Write>(prg: &ast::Module, cfg: &PrintCfg, stream: &mut W) {
     prg.print_io(cfg, stream).expect("Failed to print to stdout");
     println!();
 }
