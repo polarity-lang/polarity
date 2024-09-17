@@ -123,8 +123,15 @@ pub struct LocalComatch {
 }
 
 #[derive(Debug, Clone)]
+pub enum HoleKind {
+    MustSolve,
+    CanSolve,
+}
+
+#[derive(Debug, Clone)]
 pub struct Hole {
     pub span: Span,
+    pub kind: HoleKind,
 }
 
 #[derive(Debug, Clone)]

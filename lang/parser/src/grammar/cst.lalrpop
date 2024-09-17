@@ -297,8 +297,10 @@ LocalComatch: LocalComatch = <l: @L> "comatch" <name: Ident?> "{" <cases: Comma<
 TypeUniv: TypeUniv = <l: @L> "Type" <r: @R> =>
   TypeUniv { span: span(l, r) };
 
-Hole: Hole = <l: @L> "?" <r: @R> =>
-  Hole { span: span(l, r) };
+Hole: Hole = {
+  <l: @L> "_" <r: @R> => Hole { span: span(l, r), kind: HoleKind::MustSolve },
+  <l: @L> "?" <r: @R> => Hole { span: span(l, r), kind: HoleKind::CanSolve },
+}
 
 NatLit: NatLit = <l: @L> <n: "NumLit"> <r: @R> =>
   NatLit { span: span(l, r), val: n };
