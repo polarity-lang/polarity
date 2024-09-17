@@ -15,7 +15,7 @@ const UPPER_IDENT = {
 const pol: Language = {
   case_insensitive: false,
   keywords: {
-    keyword: ["data", "codata", "impl", "def", "codef", "match", "comatch", "absurd"],
+    keyword: ["data", "codata", "def", "codef", "let", "match", "comatch", "implicit", "use"],
     built_in: ["Type"],
   },
   contains: [COMMENT, PUNCTUATION, UPPER_IDENT],
