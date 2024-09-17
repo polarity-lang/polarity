@@ -1,3 +1,4 @@
+use ast::MetaVarKind;
 use codespan::Span;
 use num_bigint::BigUint;
 
@@ -188,7 +189,7 @@ fn lower_args(
                     }
                 }
 
-                let mv = ctx.fresh_metavar();
+                let mv = ctx.fresh_metavar(MetaVarKind::Inserted);
                 let args = ctx.subst_from_ctx();
                 let hole =
                     Hole { span: None, metavar: mv, inferred_type: None, inferred_ctx: None, args };
@@ -416,7 +417,7 @@ impl Lower for cst::exp::Hole {
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Hole { span } = self;
-        let mv = ctx.fresh_metavar();
+        let mv = ctx.fresh_metavar(MetaVarKind::User);
         let args = ctx.subst_from_ctx();
         Ok(Hole { span: Some(*span), metavar: mv, inferred_type: None, inferred_ctx: None, args }
             .into())

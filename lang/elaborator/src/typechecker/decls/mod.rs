@@ -17,6 +17,8 @@ pub fn check(prg: Rc<Module>) -> Result<Module, TypeError> {
     let decls =
         prg.decls.iter().map(|decl| decl.check_wf(&mut ctx)).collect::<Result<_, TypeError>>()?;
 
+    ctx.check_metavars_solved()?;
+
     Ok(Module {
         uri: prg.uri.clone(),
         use_decls: prg.use_decls.clone(),

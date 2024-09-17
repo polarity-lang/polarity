@@ -136,6 +136,9 @@ pub enum TypeError {
         #[label]
         rhs_span: Option<SourceSpan>,
     },
+    #[error("The following metavariables were not solved: {message}")]
+    #[diagnostic(code("T-017"))]
+    UnresolvedMetas { message: String },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("T-XXX"))]
     /// This error should not occur.

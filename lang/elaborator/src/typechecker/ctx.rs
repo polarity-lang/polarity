@@ -35,6 +35,25 @@ impl Ctx {
     ) -> Self {
         Self { vars: TypeCtx::empty(), meta_vars, lookup_table: Rc::new(lookup_table), module }
     }
+
+    /// Check that there are no unresolved metavariables that remain after typechecking.
+    pub fn check_metavars_solved(&self) -> Result<(), TypeError> {
+        let mut unsolved: HashSet<MetaVar> = HashSet::default();
+        for (var, state) in self.meta_vars.iter() {
+            // We only have to throw an error for unsolved inserted metavars.
+            // Unsolved metavariables that correspond to typed holes do not lead
+            // to an error.
+            if !state.is_solved() && var.is_inserted() {
+                unsolved.insert(*var);
+            }
+        }
+
+        if !unsolved.is_empty() {
+            Err(TypeError::UnresolvedMetas { message: format!("{:?}", unsolved) })
+        } else {
+            Ok(())
+        }
+    }
 }
 
 pub trait ContextSubstExt: Sized {

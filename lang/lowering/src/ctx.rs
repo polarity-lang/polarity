@@ -3,7 +3,7 @@ use miette_util::ToMiette;
 use parser::cst;
 
 use ast::ctx::LevelCtx;
-use ast::{self, MetaVar, MetaVarState};
+use ast::{self, MetaVar, MetaVarKind, MetaVarState};
 use ast::{HasSpan, Named};
 use ast::{HashMap, HashSet};
 use ast::{Idx, Lvl};
@@ -142,8 +142,8 @@ impl Ctx {
     /// Create a fresh MetaVar which stands for an unkown term that
     /// we have to elaborate later. The generated fresh variable is
     /// also registered as unsolved.
-    pub fn fresh_metavar(&mut self) -> MetaVar {
-        let mv = MetaVar { id: self.next_meta_var };
+    pub fn fresh_metavar(&mut self, kind: MetaVarKind) -> MetaVar {
+        let mv = MetaVar { id: self.next_meta_var, kind };
         let ctx = LevelCtx::from(self.levels.clone());
         self.next_meta_var += 1;
         log::trace!("Created fresh metavariable: {} in context: {:?}", mv.id, ctx.bound);
