@@ -17,7 +17,9 @@ pub async fn formatting(
         .await;
 
     let mut db = server.database.write().await;
-    let mut index = db.open_uri(&text_document.uri).unwrap();
+    let Ok(mut index) = db.open_uri(&text_document.uri) else {
+        return Ok(None);
+    };
     let prg = match index.load_module() {
         Ok(prg) => prg,
         Err(_) => return Ok(None),

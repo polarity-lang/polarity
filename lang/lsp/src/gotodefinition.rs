@@ -21,7 +21,9 @@ pub async fn goto_definition(
 
     let pos = pos_params.position;
     let mut db = server.database.write().await;
-    let index = db.open_uri(&text_document.uri).unwrap();
+    let Ok(index) = db.open_uri(&text_document.uri) else {
+        return Ok(None);
+    };
     let info =
         index.location_to_index(pos.from_lsp()).and_then(|idx| index.hoverinfo_at_index(idx));
     let res = info.and_then(|info| info_to_jump(&index, info));
