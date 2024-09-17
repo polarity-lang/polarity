@@ -555,6 +555,7 @@ impl ReadBack for LocalMatch {
 pub struct Hole {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
+    pub kind: ast::HoleKind,
     pub metavar: MetaVar,
     /// Explicit substitution of the context, compare documentation of ast::Hole
     pub args: Vec<Vec<Rc<Val>>>,
@@ -562,8 +563,13 @@ pub struct Hole {
 
 impl Shift for Hole {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Hole { span, metavar, args } = self;
-        Hole { span: *span, metavar: *metavar, args: args.shift_in_range(range, by) }
+        let Hole { span, kind, metavar, args } = self;
+        Hole {
+            span: *span,
+            kind: kind.clone(),
+            metavar: *metavar,
+            args: args.shift_in_range(range, by),
+        }
     }
 }
 
@@ -572,7 +578,7 @@ impl Print for Hole {
         if cfg.print_metavar_ids {
             alloc.text(format!("?{}", self.metavar.id))
         } else {
-            alloc.keyword(HOLE)
+            alloc.keyword(QUESTIONMARK)
         }
     }
 }
@@ -587,10 +593,11 @@ impl ReadBack for Hole {
     type Nf = ast::Hole;
 
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
-        let Hole { span, metavar, args } = self;
+        let Hole { span, kind, metavar, args } = self;
         let args = args.read_back(prg)?;
         Ok(ast::Hole {
             span: *span,
+            kind: kind.clone(),
             metavar: *metavar,
             inferred_type: None,
             inferred_ctx: None,

@@ -191,8 +191,14 @@ fn lower_args(
 
                 let mv = ctx.fresh_metavar(MetaVarKind::Inserted);
                 let args = ctx.subst_from_ctx();
-                let hole =
-                    Hole { span: None, metavar: mv, inferred_type: None, inferred_ctx: None, args };
+                let hole = Hole {
+                    span: None,
+                    kind: ast::HoleKind::Inserted,
+                    metavar: mv,
+                    inferred_type: None,
+                    inferred_ctx: None,
+                    args,
+                };
 
                 args_out.push(ast::Arg::InsertedImplicitArg(hole));
             } else {
@@ -412,15 +418,33 @@ impl Lower for cst::exp::LocalComatch {
     }
 }
 
+impl Lower for cst::exp::HoleKind {
+    type Target = ast::HoleKind;
+
+    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        match self {
+            cst::exp::HoleKind::MustSolve => Ok(ast::HoleKind::MustSolve),
+            cst::exp::HoleKind::CanSolve => Ok(ast::HoleKind::CanSolve),
+        }
+    }
+}
+
 impl Lower for cst::exp::Hole {
     type Target = ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::Hole { span, .. } = self;
+        let cst::exp::Hole { span, kind, .. } = self;
         let mv = ctx.fresh_metavar(MetaVarKind::User);
         let args = ctx.subst_from_ctx();
-        Ok(Hole { span: Some(*span), metavar: mv, inferred_type: None, inferred_ctx: None, args }
-            .into())
+        Ok(Hole {
+            span: Some(*span),
+            kind: kind.lower(ctx)?,
+            metavar: mv,
+            inferred_type: None,
+            inferred_ctx: None,
+            args,
+        }
+        .into())
     }
 }
 

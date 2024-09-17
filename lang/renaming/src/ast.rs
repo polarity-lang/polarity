@@ -311,9 +311,10 @@ impl Rename for LocalComatch {
 
 impl Rename for Hole {
     fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Hole { span, metavar, inferred_type, inferred_ctx: _, args } = self;
+        let Hole { span, kind, metavar, inferred_type, inferred_ctx: _, args } = self;
         Hole {
             span,
+            kind,
             metavar,
             inferred_type: inferred_type.rename_in_ctx(ctx),
             inferred_ctx: None, // TODO: Rename TypeCtx!

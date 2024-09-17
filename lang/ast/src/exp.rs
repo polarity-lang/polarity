@@ -6,7 +6,7 @@ use derivative::Derivative;
 use pretty::DocAllocator;
 use printer::theme::ThemeExt;
 use printer::tokens::{
-    ABSURD, ARROW, AS, COLON, COMATCH, COMMA, DOT, FAT_ARROW, HOLE, MATCH, TYPE,
+    ABSURD, ARROW, AS, COLON, COMATCH, COMMA, DOT, FAT_ARROW, MATCH, QUESTIONMARK, TYPE,
 };
 use printer::util::{BackslashExt, BracesExt, IsNilExt};
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
@@ -1043,9 +1043,25 @@ fn print_lambda_sugar<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
+pub enum HoleKind {
+    /// A typed hole written `_` that must be solved during type inference.
+    /// If type inference doesn't find a unique solution, an error is thrown.
+    MustSolve,
+    /// A typed hole written `?` that stands for an incomplete program.
+    /// This hole can be solved during type checking, but we do not throw an error
+    /// if it isn't solved.
+    CanSolve,
+    /// Inserted during lowering for implicit argument.
+    Inserted,
+}
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
 pub struct Hole {
     /// Source code location
     pub span: Option<Span>,
+    /// Whether the hole must be solved during typechecking or not.
+    pub kind: HoleKind,
     /// The metavariable that we want to solve for that hole
     pub metavar: MetaVar,
     /// The inferred type of the hole annotated during elaboration.
@@ -1082,10 +1098,11 @@ impl From<Hole> for Exp {
 
 impl Shift for Hole {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Hole { span, metavar, args, .. } = self;
+        let Hole { span, kind, metavar, args, .. } = self;
         let new_args = args.shift_in_range(range, by);
         Hole {
             span: *span,
+            kind: kind.clone(),
             metavar: *metavar,
             inferred_type: None,
             inferred_ctx: None,
@@ -1110,9 +1127,10 @@ impl Substitutable for Hole {
     type Result = Hole;
 
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
-        let Hole { span, metavar, args, .. } = self;
+        let Hole { span, kind, metavar, args, .. } = self;
         Hole {
             span: *span,
+            kind: kind.clone(),
             metavar: *metavar,
             inferred_type: None,
             inferred_ctx: None,
@@ -1131,7 +1149,7 @@ impl Print for Hole {
         if cfg.print_metavar_ids {
             alloc.text(format!("?{}", self.metavar.id))
         } else {
-            alloc.keyword(HOLE)
+            alloc.keyword(QUESTIONMARK)
         }
     }
 }

@@ -24,13 +24,16 @@ pub const DOT: &str = ".";
 pub const AT: &str = "@";
 
 /// The symbol `?`
-pub const HOLE: &str = "?";
+pub const QUESTIONMARK: &str = "?";
 
 /// The symbol `#`
 pub const HASH: &str = "#";
 
 /// The symbol `:=`
 pub const COLONEQ: &str = ":=";
+
+/// The symbol `_`
+pub const UNDERSCORE: &str = "_";
 
 // Keywords
 //
