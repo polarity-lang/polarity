@@ -48,28 +48,9 @@ pub struct Database {
 }
 
 impl Database {
-    /// Create a new database tracking the folder at the given path
-    /// If the path is a file, the parent directory is tracked
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn from_path<P: AsRef<std::path::Path>>(path: P) -> Self {
-        let path = path.as_ref();
-        let path = if path.is_dir() {
-            path
-        } else {
-            path.parent().expect("Could not get parent directory")
-        };
-        Self::from_source(FileSystemSource::new(path))
-    }
-
     /// Create a new database that only keeps files in memory
     pub fn in_memory() -> Self {
         Self::from_source(InMemorySource::new())
-    }
-
-    /// Create a new database tracking the current working directory
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn from_cwd() -> Self {
-        Self::from_path(std::env::current_dir().expect("Could not get current directory"))
     }
 
     /// Create a new database with the given source
@@ -111,17 +92,6 @@ impl Database {
         &mut self.source
     }
 
-    /// Open a file by its path and load it into the database
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn open_path<P: AsRef<std::path::Path>>(
-        &mut self,
-        path: P,
-    ) -> Result<DatabaseViewMut<'_>, Error> {
-        let path = path.as_ref().canonicalize().expect("Could not canonicalize path");
-        let uri = Url::from_file_path(path).expect("Could not convert path to URI");
-        self.open_uri(&uri)
-    }
-
     /// Open a file by its URI and load the source into the database
     ///
     /// Returns a mutable view on the file
@@ -132,6 +102,40 @@ impl Database {
             Ok(DatabaseViewMut { uri: uri.clone(), database: self })
         } else {
             Ok(DatabaseViewMut { uri: uri.clone(), database: self })
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+mod path_support {
+    use super::*;
+
+    impl Database {
+        /// Create a new database tracking the folder at the given path
+        /// If the path is a file, the parent directory is tracked
+        pub fn from_path<P: AsRef<std::path::Path>>(path: P) -> Self {
+            let path = path.as_ref();
+            let path = if path.is_dir() {
+                path
+            } else {
+                path.parent().expect("Could not get parent directory")
+            };
+            Self::from_source(FileSystemSource::new(path))
+        }
+
+        /// Create a new database tracking the current working directory
+        pub fn from_cwd() -> Self {
+            Self::from_path(std::env::current_dir().expect("Could not get current directory"))
+        }
+
+        /// Open a file by its path and load it into the database
+        pub fn open_path<P: AsRef<std::path::Path>>(
+            &mut self,
+            path: P,
+        ) -> Result<DatabaseViewMut<'_>, Error> {
+            let path = path.as_ref().canonicalize().expect("Could not canonicalize path");
+            let uri = Url::from_file_path(path).expect("Could not convert path to URI");
+            self.open_uri(&uri)
         }
     }
 }

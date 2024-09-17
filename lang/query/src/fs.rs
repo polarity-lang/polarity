@@ -1,9 +1,10 @@
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
 #[cfg(not(target_arch = "wasm32"))]
 use std::time;
 #[cfg(target_arch = "wasm32")]
 use web_time as time;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub use file_system::FileSystemSource;
 
 use ast::HashMap;
 use url::Url;
@@ -36,69 +37,85 @@ pub trait FileSource: Send + Sync {
     }
 }
 
-/// A file source that reads from and writes to the file system
 #[cfg(not(target_arch = "wasm32"))]
-pub struct FileSystemSource {
-    root: PathBuf,
-    last_retrieved: HashMap<Url, time::SystemTime>,
-}
+mod file_system {
+    use std::path::{Path, PathBuf};
+    use std::sync::Arc;
 
-#[cfg(not(target_arch = "wasm32"))]
-impl FileSystemSource {
-    pub fn new<P: AsRef<Path>>(root: P) -> Self {
-        Self { root: root.as_ref().to_path_buf(), last_retrieved: HashMap::default() }
-    }
-}
+    use super::*;
 
-#[cfg(not(target_arch = "wasm32"))]
-impl FileSource for FileSystemSource {
-    fn manage(&mut self, uri: &Url) -> bool {
-        self.root.join(uri.path()).exists()
+    /// A file source that reads from and writes to the file system
+    pub struct FileSystemSource {
+        root: PathBuf,
+        last_retrieved: HashMap<Url, time::SystemTime>,
     }
 
-    fn manages(&self, uri: &Url) -> bool {
-        self.root.join(uri.path()).exists()
+    impl FileSystemSource {
+        pub fn new<P: AsRef<Path>>(root: P) -> Self {
+            Self { root: root.as_ref().to_path_buf(), last_retrieved: HashMap::default() }
+        }
     }
 
-    fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
-        let path = self.root.join(uri.path());
-        let source = std::fs::read_to_string(&path).map_err(Arc::new).map_err(DriverError::Io)?;
-        self.last_retrieved.insert(
-            uri.clone(),
-            std::fs::metadata(&path)
-                .map_err(Arc::new)
-                .map_err(DriverError::Io)?
-                .modified()
-                .map_err(Arc::new)
-                .map_err(DriverError::Io)?,
-        );
-        Ok(source)
+    impl FileSource for FileSystemSource {
+        fn manage(&mut self, uri: &Url) -> bool {
+            self.root.join(uri.path()).exists()
+        }
+
+        fn manages(&self, uri: &Url) -> bool {
+            self.root.join(uri.path()).exists()
+        }
+
+        fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
+            let path = self.root.join(uri.path());
+            let source =
+                std::fs::read_to_string(&path).map_err(Arc::new).map_err(DriverError::Io)?;
+            self.last_retrieved.insert(
+                uri.clone(),
+                std::fs::metadata(&path)
+                    .map_err(Arc::new)
+                    .map_err(DriverError::Io)?
+                    .modified()
+                    .map_err(Arc::new)
+                    .map_err(DriverError::Io)?,
+            );
+            Ok(source)
+        }
+
+        fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
+            let path = self.root.join(uri.path());
+            std::fs::write(&path, source).map_err(Arc::new).map_err(DriverError::Io)?;
+            self.last_retrieved.insert(
+                uri.clone(),
+                std::fs::metadata(&path)
+                    .map_err(Arc::new)
+                    .map_err(DriverError::Io)?
+                    .modified()
+                    .map_err(Arc::new)
+                    .map_err(DriverError::Io)?,
+            );
+            Ok(())
+        }
+
+        fn last_retrieved(&self, uri: &Url) -> Option<time::Instant> {
+            self.last_retrieved.get(uri).and_then(system_time_to_instant)
+        }
+
+        fn is_modified(&self, uri: &Url) -> Result<bool, DriverError> {
+            let path = self.root.join(uri.path());
+            let metadata = std::fs::metadata(&path).map_err(Arc::new).map_err(DriverError::Io)?;
+            let time = metadata.modified().map_err(Arc::new).map_err(DriverError::Io)?;
+            Ok(self.last_retrieved.get(uri).map_or(true, |last| time > *last))
+        }
     }
 
-    fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
-        let path = self.root.join(uri.path());
-        std::fs::write(&path, source).map_err(Arc::new).map_err(DriverError::Io)?;
-        self.last_retrieved.insert(
-            uri.clone(),
-            std::fs::metadata(&path)
-                .map_err(Arc::new)
-                .map_err(DriverError::Io)?
-                .modified()
-                .map_err(Arc::new)
-                .map_err(DriverError::Io)?,
-        );
-        Ok(())
-    }
+    fn system_time_to_instant(system_time: &time::SystemTime) -> Option<time::Instant> {
+        let now = time::Instant::now();
+        let system_now = time::SystemTime::now();
 
-    fn last_retrieved(&self, uri: &Url) -> Option<time::Instant> {
-        self.last_retrieved.get(uri).and_then(system_time_to_instant)
-    }
-
-    fn is_modified(&self, uri: &Url) -> Result<bool, DriverError> {
-        let path = self.root.join(uri.path());
-        let metadata = std::fs::metadata(&path).map_err(Arc::new).map_err(DriverError::Io)?;
-        let time = metadata.modified().map_err(Arc::new).map_err(DriverError::Io)?;
-        Ok(self.last_retrieved.get(uri).map_or(true, |last| time > *last))
+        match system_time.duration_since(system_now) {
+            Ok(duration) => Some(now + duration),
+            Err(_) => None,
+        }
     }
 }
 
@@ -215,15 +232,5 @@ where
         } else {
             self.second.is_modified(uri)
         }
-    }
-}
-
-fn system_time_to_instant(system_time: &time::SystemTime) -> Option<time::Instant> {
-    let now = time::Instant::now();
-    let system_now = time::SystemTime::now();
-
-    match system_time.duration_since(system_now) {
-        Ok(duration) => Some(now + duration),
-        Err(_) => None,
     }
 }
