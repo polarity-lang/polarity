@@ -101,7 +101,12 @@ pub enum Token {
     NumLit(BigUint),
     /// The regexp is from `https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5`
     /// We do not allow multi line strings.
-    #[regex(r###""([^"\\]|\\.)*""###, |lex| lex.slice().to_string())]
+    #[regex(r###""([^"\\]|\\.)*""###, |lex| {
+      let slice = lex.slice();
+      // Remove the surrounding quotation marks
+      let inner = &slice[1..slice.len()-1];
+      inner.to_string()
+    })]
     StringLit(String),
 
     // DocComments
@@ -147,20 +152,20 @@ mod lexer_tests {
     fn string_lit_simple() {
         let str = r###""hi""###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit(str.to_string()))
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("hi".to_string()))
     }
 
     #[test]
     fn string_lit_newline() {
         let str = r###""h\ni""###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit(str.to_string()))
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("h\\ni".to_string()))
     }
 
     #[test]
     fn string_lit_escaped_quote() {
         let str = r###""h\"i""###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit(str.to_string()))
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("h\\\"i".to_string()))
     }
 }

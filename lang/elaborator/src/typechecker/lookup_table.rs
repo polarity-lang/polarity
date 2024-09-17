@@ -2,7 +2,7 @@ use ast::*;
 
 use super::TypeError;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct LookupTable {
     // Calls
     //
@@ -84,18 +84,18 @@ impl LookupTable {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LetMeta {
     pub params: Telescope,
     pub typ: Box<Exp>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TyCtorMeta {
     pub params: Box<Telescope>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CodefMeta {
     pub params: Telescope,
     pub typ: TypCtor,
@@ -113,7 +113,7 @@ pub struct CtorMeta {
     pub typ: TypCtor,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DefMeta {
     pub params: Telescope,
     pub self_param: SelfParam,
@@ -138,14 +138,7 @@ pub struct DtorMeta {
 }
 
 pub fn build_lookup_table(module: &Module) -> LookupTable {
-    let mut lookup_table = LookupTable {
-        map_let: HashMap::default(),
-        map_tyctor: HashMap::default(),
-        map_codef: HashMap::default(),
-        map_ctor: HashMap::default(),
-        map_def: HashMap::default(),
-        map_dtor: HashMap::default(),
-    };
+    let mut lookup_table = LookupTable::default();
 
     let Module { decls, .. } = module;
 

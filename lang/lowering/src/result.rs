@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::lookup_table::DeclKind;
 
-#[derive(Error, Diagnostic, Debug)]
+#[derive(Error, Diagnostic, Debug, Clone)]
 pub enum LoweringError {
     #[error("Undefined identifier {}", name.id)]
     #[diagnostic(code("L-001"))]
