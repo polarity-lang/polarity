@@ -14,11 +14,6 @@ use super::{
     TypeError,
 };
 
-pub fn check(prg: Rc<Module>) -> Result<Module, TypeError> {
-    let mut lookup_table = Default::default();
-    check_with_lookup_table(prg, &mut lookup_table)
-}
-
 pub fn check_with_lookup_table(
     prg: Rc<Module>,
     lookup_table: &mut LookupTable,

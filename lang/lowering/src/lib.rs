@@ -12,10 +12,6 @@ pub use ctx::*;
 pub use lookup_table::{build_lookup_table, LookupTable};
 pub use result::*;
 
-pub fn lower_module(prg: &cst::decls::Module) -> Result<ast::Module, LoweringError> {
-    lower_module_with_lookup_table(prg, &mut LookupTable::default())
-}
-
 pub fn lower_module_with_lookup_table(
     prg: &cst::decls::Module,
     lookup_table: &mut LookupTable,
