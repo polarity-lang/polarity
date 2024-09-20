@@ -35,10 +35,6 @@ impl<T> Cache<T> {
         self.entries.insert(uri, CacheEntry::from(value));
     }
 
-    pub fn remove(&mut self, uri: &Url) {
-        self.entries.remove(uri);
-    }
-
     pub fn is_stale(&self, uri: &Url) -> bool {
         self.entries.get(uri).map(|entry| entry.stale).unwrap_or(true)
     }
