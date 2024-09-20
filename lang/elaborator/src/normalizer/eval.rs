@@ -354,7 +354,7 @@ impl Eval for Hole {
         let Hole { span, kind, metavar, args, .. } = self;
         let args = args.eval(prg, env)?;
         Ok(Rc::new(Val::Neu(
-            val::Hole { span: *span, kind: kind.clone(), metavar: *metavar, args }.into(),
+            val::Hole { span: *span, kind: *kind, metavar: *metavar, args }.into(),
         )))
     }
 }

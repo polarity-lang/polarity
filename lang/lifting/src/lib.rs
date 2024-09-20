@@ -362,7 +362,7 @@ impl Lift for Hole {
         let Hole { span, kind, metavar, args, .. } = self;
         Hole {
             span: *span,
-            kind: kind.clone(),
+            kind: *kind,
             metavar: *metavar,
             inferred_type: None,
             inferred_ctx: None,

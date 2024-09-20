@@ -14,8 +14,13 @@ pub type Ident = String;
 #[derive(Debug, Clone, Copy, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum MetaVarKind {
-    /// A metavariable which was generated for a typed hole written by the user.
-    User,
+    /// A typed hole written `_` that must be solved during type inference.
+    /// If type inference doesn't find a unique solution, an error is thrown.
+    MustSolve,
+    /// A typed hole written `?` that stands for an incomplete program.
+    /// This hole can be solved during type checking, but we do not throw an error
+    /// if it isn't solved.
+    CanSolve,
     /// A metavariable which was inserted during lowering for an implicit argument.
     Inserted,
 }
@@ -39,7 +44,7 @@ impl MetaVar {
     /// Check whether this metavariable corresponds to a typed hole written
     /// by the programmer.
     pub fn is_user(&self) -> bool {
-        self.kind == MetaVarKind::User
+        self.kind == MetaVarKind::MustSolve || self.kind == MetaVarKind::CanSolve
     }
 }
 

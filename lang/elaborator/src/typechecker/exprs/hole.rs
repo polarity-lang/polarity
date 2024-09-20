@@ -20,7 +20,7 @@ impl CheckInfer for Hole {
             .collect::<Result<_, _>>()?;
         Ok(Hole {
             span: *span,
-            kind: kind.clone(),
+            kind: *kind,
             metavar: *metavar,
             inferred_type: Some(Box::new(t.clone())),
             inferred_ctx: Some(ctx.vars.clone()),

@@ -555,7 +555,7 @@ impl ReadBack for LocalMatch {
 pub struct Hole {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub kind: ast::HoleKind,
+    pub kind: ast::MetaVarKind,
     pub metavar: MetaVar,
     /// Explicit substitution of the context, compare documentation of ast::Hole
     pub args: Vec<Vec<Rc<Val>>>,
@@ -564,12 +564,7 @@ pub struct Hole {
 impl Shift for Hole {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
         let Hole { span, kind, metavar, args } = self;
-        Hole {
-            span: *span,
-            kind: kind.clone(),
-            metavar: *metavar,
-            args: args.shift_in_range(range, by),
-        }
+        Hole { span: *span, kind: *kind, metavar: *metavar, args: args.shift_in_range(range, by) }
     }
 }
 
@@ -597,7 +592,7 @@ impl ReadBack for Hole {
         let args = args.read_back(prg)?;
         Ok(ast::Hole {
             span: *span,
-            kind: kind.clone(),
+            kind: *kind,
             metavar: *metavar,
             inferred_type: None,
             inferred_ctx: None,
