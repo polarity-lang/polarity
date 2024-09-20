@@ -243,7 +243,7 @@ impl Phase for Parse {
         _: &mut lowering::LookupTable,
         _: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        view.load_cst()
+        view.load_cst(&view.uri.clone())
     }
 }
 
@@ -298,7 +298,7 @@ impl Phase for Lower {
         cst_lookup_table: &mut lowering::LookupTable,
         _: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        view.load_ust(cst_lookup_table)
+        view.load_ust(&view.uri.clone(), cst_lookup_table)
     }
 }
 
@@ -329,7 +329,7 @@ impl Phase for Check {
         cst_lookup_table: &mut lowering::LookupTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        view.load_ast(cst_lookup_table, ast_lookup_table)
+        view.load_ast(&view.uri.clone(), cst_lookup_table, ast_lookup_table)
     }
 }
 
@@ -361,8 +361,8 @@ impl Phase for Print {
         cst_lookup_table: &mut lowering::LookupTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        let output = view.print_to_string()?;
-        view.write_source(&output)?;
+        let output = view.print_to_string(&view.uri.clone())?;
+        view.write_source(&view.uri.clone(), &output)?;
         *cst_lookup_table = Default::default();
         *ast_lookup_table = Default::default();
         Ok(output)

@@ -92,7 +92,7 @@ impl Database {
         visited.insert(module_url.clone());
         stack.push(module_url.clone());
 
-        let module = self.open_uri(module_url)?.load_cst()?;
+        let module = self.open_uri(module_url)?.load_cst(module_url)?;
 
         // Collect dependencies from `use` declarations
         let mut dependencies = Vec::new();
@@ -133,7 +133,7 @@ fn load_module_impl(
         load_module_impl(db, deps, cst_lookup_table, ast_lookup_table, dep_url)?;
     }
 
-    db.open_uri(module_url)?.load_ast(cst_lookup_table, ast_lookup_table)
+    db.open_uri(module_url)?.load_ast(module_url, cst_lookup_table, ast_lookup_table)
 }
 
 /// Prints the dependency graph as an indented tree.
