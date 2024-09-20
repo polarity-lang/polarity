@@ -46,6 +46,15 @@ impl MetaVar {
     pub fn is_user(&self) -> bool {
         self.kind == MetaVarKind::MustSolve || self.kind == MetaVarKind::CanSolve
     }
+
+    /// Metavariables which must be solved during type inference.
+    pub fn must_be_solved(&self) -> bool {
+        match self.kind {
+            MetaVarKind::MustSolve => true,
+            MetaVarKind::CanSolve => false,
+            MetaVarKind::Inserted => true,
+        }
+    }
 }
 
 // Difference between two-level deBruijn indizes and levels

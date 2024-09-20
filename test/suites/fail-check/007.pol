@@ -1,0 +1,6 @@
+data Option(a: Type) {
+    None(a: Type) : Option(a),
+    Some(a:Type, x: a) : Option(a)
+}
+
+let example : Option(_) { None(_) }
