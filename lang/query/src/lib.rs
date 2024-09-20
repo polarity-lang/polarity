@@ -81,19 +81,6 @@ impl Database {
         &mut self.source
     }
 
-    /// Open a file by its URI and load the source into the database
-    ///
-    /// Returns a mutable view on the file
-    pub fn open_uri(&mut self, uri: &Url) -> Result<(), Error> {
-        if self.files.is_stale(uri) {
-            let source = self.source.read_to_string(uri)?;
-            self.files.insert(uri.clone(), codespan::File::new(uri.as_str().into(), source));
-            Ok(())
-        } else {
-            Ok(())
-        }
-    }
-
     /// Invalidate the file behind the given URI and all its reverse dependencies
     pub fn invalidate(&mut self, uri: &Url) -> Result<(), Error> {
         self.deps.invalidate(uri);

@@ -76,7 +76,6 @@ impl Database {
     }
 
     pub fn load_source(&mut self, uri: &Url) -> Result<String, Error> {
-        self.open_uri(uri)?;
         match self.files.get_unless_stale(uri) {
             Some(file) => Ok(file.source().to_string()),
             None => {
