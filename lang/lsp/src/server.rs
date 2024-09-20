@@ -60,10 +60,8 @@ impl LanguageServer for Server {
         assert!(source_mut.manage(&text_document.uri));
         source_mut.write_string(&text_document.uri, &text_document.text).unwrap();
 
-        let mut view = db.open_uri(&text_document.uri).expect("Failed to open document");
-
-        let res = view.load_module().map(|_| ());
-        let diags = view.diagnostics(res);
+        let res = db.load_module(&text_document.uri).map(|_| ());
+        let diags = db.diagnostics(&text_document.uri, res);
         self.send_diagnostics(text_document.uri, diags).await;
     }
 
@@ -82,10 +80,8 @@ impl LanguageServer for Server {
         assert!(source_mut.manage(&text_document.uri));
         source_mut.write_string(&text_document.uri, &text).unwrap();
 
-        let mut view = db.open_uri(&text_document.uri).expect("Failed to open document");
-
-        let res = view.load_module().map(|_| ());
-        let diags = view.diagnostics(res);
+        let res = db.load_module(&text_document.uri).map(|_| ());
+        let diags = db.diagnostics(&text_document.uri, res);
         self.send_diagnostics(text_document.uri, diags).await;
     }
 

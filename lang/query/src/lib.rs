@@ -25,7 +25,6 @@ use cache::*;
 pub use edit::*;
 pub use fs::*;
 pub use info::*;
-pub use load::*;
 pub use xfunc::*;
 
 /// A database tracking a set of source files
@@ -94,13 +93,13 @@ impl Database {
     /// Open a file by its URI and load the source into the database
     ///
     /// Returns a mutable view on the file
-    pub fn open_uri(&mut self, uri: &Url) -> Result<DatabaseViewMut<'_>, Error> {
+    pub fn open_uri(&mut self, uri: &Url) -> Result<(), Error> {
         if self.source.is_modified(uri)? {
             let source = self.source.read_to_string(uri)?;
             self.files.insert(uri.clone(), codespan::File::new(uri.as_str().into(), source));
-            Ok(DatabaseViewMut { uri: uri.clone(), database: self })
+            Ok(())
         } else {
-            Ok(DatabaseViewMut { uri: uri.clone(), database: self })
+            Ok(())
         }
     }
 }
@@ -128,13 +127,9 @@ mod path_support {
         }
 
         /// Open a file by its path and load it into the database
-        pub fn open_path<P: AsRef<std::path::Path>>(
-            &mut self,
-            path: P,
-        ) -> Result<DatabaseViewMut<'_>, Error> {
+        pub fn resolve_path<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<Url, Error> {
             let path = path.as_ref().canonicalize().expect("Could not canonicalize path");
-            let uri = Url::from_file_path(path).expect("Could not convert path to URI");
-            self.open_uri(&uri)
+            Ok(Url::from_file_path(path).expect("Could not convert path to URI"))
         }
     }
 }

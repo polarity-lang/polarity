@@ -14,8 +14,8 @@ pub struct Args {
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
-    let mut view = db.open_path(&cmd.filepath)?;
-    let nf = view.run().map_err(|err| view.pretty_error(err))?;
+    let uri = db.resolve_path(&cmd.filepath)?;
+    let nf = db.run(&uri).map_err(|err| db.pretty_error(&uri, err))?;
 
     match nf {
         Some(nf) => print_nf(&nf),

@@ -2,8 +2,9 @@ use std::ops::Range;
 
 use codespan::Span;
 use ropey::Rope;
+use url::Url;
 
-use crate::DatabaseViewMut;
+use crate::Database;
 
 #[derive(Ord, PartialOrd, Eq, PartialEq)]
 pub struct Edit {
@@ -11,9 +12,11 @@ pub struct Edit {
     pub text: String,
 }
 
-impl<'a> DatabaseViewMut<'a> {
-    pub fn edited(&self, mut edits: Vec<Edit>) -> Rope {
-        let mut rope = Rope::from_str(self.source());
+impl Database {
+    pub fn edited(&self, uri: &Url, mut edits: Vec<Edit>) -> Rope {
+        let source = &self.files.get_even_if_stale(uri).unwrap().source;
+
+        let mut rope = Rope::from_str(source);
 
         edits.sort();
 

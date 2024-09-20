@@ -16,10 +16,10 @@ pub struct Args {
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
-    let mut view = db.open_path(&cmd.filepath)?;
-    let Xfunc { edits, .. } = view.xfunc(&cmd.r#type).map_err(miette::Report::msg)?;
+    let uri = db.resolve_path(&cmd.filepath)?;
+    let Xfunc { edits, .. } = db.xfunc(&uri, &cmd.r#type).map_err(miette::Report::msg)?;
 
-    let output = view.edited(edits);
+    let output = db.edited(&uri, edits);
 
     // Write to file or to stdout
     let stream: Box<dyn io::Write> = match cmd.output {

@@ -5,13 +5,7 @@ use elaborator::LookupTable;
 use renaming::Rename;
 use url::Url;
 
-/// Mutable view on a file in the database
-pub struct DatabaseViewMut<'a> {
-    pub uri: Url,
-    pub(crate) database: &'a mut Database,
-}
-
-impl<'a> DatabaseViewMut<'a> {
+impl Database {
     pub fn load_ast(
         &mut self,
         uri: &Url,
@@ -20,12 +14,10 @@ impl<'a> DatabaseViewMut<'a> {
     ) -> Result<Arc<ast::Module>, Error> {
         log::trace!("Loading AST: {}", uri);
 
-        match self.database.ast.get_unless_stale(self.database, &uri) {
+        match self.ast.get_unless_stale(self, uri) {
             Some(ast) => {
-                *cst_lookup_table =
-                    self.database.cst_lookup_table.get_even_if_stale(&uri).unwrap().clone();
-                *ast_lookup_table =
-                    self.database.ast_lookup_table.get_even_if_stale(&uri).unwrap().clone();
+                *cst_lookup_table = self.cst_lookup_table.get_even_if_stale(uri).unwrap().clone();
+                *ast_lookup_table = self.ast_lookup_table.get_even_if_stale(uri).unwrap().clone();
                 ast.clone()
             }
             None => {
@@ -41,13 +33,13 @@ impl<'a> DatabaseViewMut<'a> {
                         Ok(tst)
                     })
                     .map(Arc::new);
-                self.database.ast.insert(uri.clone(), ast.clone());
-                self.database.ast_lookup_table.insert(uri.clone(), ast_lookup_table.clone());
-                self.database.cst_lookup_table.insert(uri.clone(), cst_lookup_table.clone());
+                self.ast.insert(uri.clone(), ast.clone());
+                self.ast_lookup_table.insert(uri.clone(), ast_lookup_table.clone());
+                self.cst_lookup_table.insert(uri.clone(), cst_lookup_table.clone());
                 if let Ok(module) = &ast {
                     let (info_lapper, item_lapper) = collect_info(module.clone());
-                    self.database.info_by_id.insert(uri.clone(), info_lapper);
-                    self.database.item_by_id.insert(uri.clone(), item_lapper);
+                    self.info_by_id.insert(uri.clone(), info_lapper);
+                    self.item_by_id.insert(uri.clone(), item_lapper);
                 }
                 ast
             }
@@ -67,7 +59,7 @@ impl<'a> DatabaseViewMut<'a> {
     }
 
     pub fn load_cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
-        match self.database.cst.get_unless_stale(self.database, uri) {
+        match self.cst.get_unless_stale(self, uri) {
             Some(cst) => cst.clone(),
             None => {
                 let source = self.load_source(uri)?;
@@ -77,19 +69,20 @@ impl<'a> DatabaseViewMut<'a> {
                     parser::parse_module(uri.clone(), source).map_err(Error::Parser)
                 }
                 .map(Arc::new);
-                self.database.cst.insert(uri.clone(), module.clone());
+                self.cst.insert(uri.clone(), module.clone());
                 module
             }
         }
     }
 
     pub fn load_source(&mut self, uri: &Url) -> Result<String, Error> {
-        match self.database.files.get_unless_stale(self.database, uri) {
+        self.open_uri(uri)?;
+        match self.files.get_unless_stale(self, uri) {
             Some(file) => Ok(file.source().to_string()),
             None => {
-                let source = self.database.source.read_to_string(&uri)?;
+                let source = self.source.read_to_string(uri)?;
                 let file = codespan::File::new(uri.as_str().into(), source.clone());
-                self.database.files.insert(uri.clone(), file);
+                self.files.insert(uri.clone(), file);
                 Ok(source)
             }
         }
@@ -97,7 +90,7 @@ impl<'a> DatabaseViewMut<'a> {
 
     pub fn write_source(&mut self, uri: &Url, source: &str) -> Result<(), Error> {
         self.reset(uri);
-        self.database.source.write_string(&uri, source).map_err(|err| err.into())
+        self.source.write_string(uri, source).map_err(|err| err.into())
     }
 
     pub fn print_to_string(&mut self, uri: &Url) -> Result<String, Error> {
@@ -108,11 +101,11 @@ impl<'a> DatabaseViewMut<'a> {
     }
 
     pub fn reset(&mut self, uri: &Url) {
-        self.database.ast.remove(uri);
-        self.database.ast_lookup_table.remove(uri);
-        self.database.cst.remove(uri);
-        self.database.cst_lookup_table.remove(uri);
-        self.database.info_by_id.insert(uri.clone(), Lapper::new(vec![]));
-        self.database.item_by_id.insert(uri.clone(), Lapper::new(vec![]));
+        self.ast.remove(uri);
+        self.ast_lookup_table.remove(uri);
+        self.cst.remove(uri);
+        self.cst_lookup_table.remove(uri);
+        self.info_by_id.insert(uri.clone(), Lapper::new(vec![]));
+        self.item_by_id.insert(uri.clone(), Lapper::new(vec![]));
     }
 }

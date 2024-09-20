@@ -22,6 +22,8 @@ async-lock = "2"
 codespan = { workspace = true }
 # fancy error messages
 miette = { workspace = true }
+# URLs
+url = { workspace = true }
 # workspace members
 ast = { path = "../ast" }
 query = { path = "../query" }

@@ -4,7 +4,7 @@ use std::fmt;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 
-use query::{Database, DatabaseViewMut, FileSource, FileSystemSource, InMemorySource};
+use query::{Database, FileSource, FileSystemSource, InMemorySource};
 use url::Url;
 
 use parser::cst;
@@ -21,7 +21,8 @@ pub trait Phase {
     fn new(name: &'static str) -> Self;
     fn name(&self) -> &'static str;
     fn run(
-        view: &mut DatabaseViewMut,
+        db: &mut Database,
+        uri: &Url,
         cst_lookup_table: &mut lowering::LookupTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err>;
@@ -96,19 +97,22 @@ where
         let result = self.result.and_then(|_| {
             // The implementation of the compiler might contain a bug which
             // triggers a panic. We catch this panic here so that we can report the bug as a failing case.
-            let view = self.database.open_uri(&self.case.uri()).unwrap();
-            let view = RefCell::new(view);
+
             let cst_lookup_table = &self.cst_lookup_table;
             let ast_lookup_table = &self.ast_lookup_table;
 
             // Run the phase and catch any panics that might occur.
             // We need to use `AssertUnwindSafe` because the compiler can not automatically
-            // guarantee that passing RefCell's across a catch_unwind boundary is safe.
+            // guarantee that passing mutable references across a catch_unwind boundary is safe.
             let run_result = catch_unwind(AssertUnwindSafe(|| {
-                let mut view = view.borrow_mut();
                 let mut cst_lookup_table = cst_lookup_table.borrow_mut();
                 let mut ast_lookup_table = ast_lookup_table.borrow_mut();
-                P::run(&mut view, &mut cst_lookup_table, &mut ast_lookup_table)
+                P::run(
+                    &mut self.database,
+                    &self.case.uri(),
+                    &mut cst_lookup_table,
+                    &mut ast_lookup_table,
+                )
             }));
 
             match run_result {
@@ -239,11 +243,12 @@ impl Phase for Parse {
     }
 
     fn run(
-        view: &mut DatabaseViewMut,
+        db: &mut Database,
+        uri: &Url,
         _: &mut lowering::LookupTable,
         _: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        view.load_cst(&view.uri.clone())
+        db.load_cst(uri)
     }
 }
 
@@ -264,11 +269,12 @@ impl Phase for Imports {
     }
 
     fn run(
-        view: &mut DatabaseViewMut,
+        db: &mut Database,
+        uri: &Url,
         cst_lookup_table: &mut lowering::LookupTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        view.load_imports(cst_lookup_table, ast_lookup_table)
+        db.load_imports(uri, cst_lookup_table, ast_lookup_table)
     }
 }
 
@@ -294,11 +300,12 @@ impl Phase for Lower {
     }
 
     fn run(
-        view: &mut DatabaseViewMut,
+        db: &mut Database,
+        uri: &Url,
         cst_lookup_table: &mut lowering::LookupTable,
         _: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        view.load_ust(&view.uri.clone(), cst_lookup_table)
+        db.load_ust(uri, cst_lookup_table)
     }
 }
 
@@ -325,11 +332,12 @@ impl Phase for Check {
     }
 
     fn run(
-        view: &mut DatabaseViewMut,
+        db: &mut Database,
+        uri: &Url,
         cst_lookup_table: &mut lowering::LookupTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        view.load_ast(&view.uri.clone(), cst_lookup_table, ast_lookup_table)
+        db.load_ast(uri, cst_lookup_table, ast_lookup_table)
     }
 }
 
@@ -357,12 +365,13 @@ impl Phase for Print {
     }
 
     fn run(
-        view: &mut DatabaseViewMut,
+        db: &mut Database,
+        uri: &Url,
         cst_lookup_table: &mut lowering::LookupTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        let output = view.print_to_string(&view.uri.clone())?;
-        view.write_source(&view.uri.clone(), &output)?;
+        let output = db.print_to_string(uri)?;
+        db.write_source(uri, &output)?;
         *cst_lookup_table = Default::default();
         *ast_lookup_table = Default::default();
         Ok(output)
