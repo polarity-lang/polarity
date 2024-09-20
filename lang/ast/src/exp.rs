@@ -6,7 +6,7 @@ use derivative::Derivative;
 use pretty::DocAllocator;
 use printer::theme::ThemeExt;
 use printer::tokens::{
-    ABSURD, ARROW, AS, COLON, COMATCH, COMMA, DOT, FAT_ARROW, MATCH, QUESTIONMARK, TYPE,
+    ABSURD, ARROW, AS, COLON, COMATCH, COMMA, DOT, FAT_ARROW, MATCH, QUESTIONMARK, TYPE, UNDERSCORE,
 };
 use printer::util::{BackslashExt, BracesExt, IsNilExt};
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
@@ -1146,10 +1146,22 @@ impl Print for Hole {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        if cfg.print_metavar_ids {
-            alloc.text(format!("?{}", self.metavar.id))
-        } else {
-            alloc.keyword(QUESTIONMARK)
+        match self.kind {
+            HoleKind::MustSolve => {
+                if cfg.print_metavar_ids {
+                    alloc.text(format!("_{}", self.metavar.id))
+                } else {
+                    alloc.keyword(UNDERSCORE)
+                }
+            }
+            HoleKind::CanSolve => {
+                if cfg.print_metavar_ids {
+                    alloc.text(format!("?{}", self.metavar.id))
+                } else {
+                    alloc.keyword(QUESTIONMARK)
+                }
+            }
+            HoleKind::Inserted => alloc.text(format!("<Inserted>{}", self.metavar.id)),
         }
     }
 }
