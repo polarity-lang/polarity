@@ -4,19 +4,22 @@ use printer::Print;
 use renaming::Rename;
 
 use ast::*;
+use url::Url;
 use xfunc::matrix;
 use xfunc::result::XfuncError;
 
-use super::{DatabaseViewMut, Edit};
+use crate::Database;
+
+use super::Edit;
 
 pub struct Xfunc {
     pub title: String,
     pub edits: Vec<Edit>,
 }
 
-impl<'a> DatabaseViewMut<'a> {
-    pub fn xfunc(&mut self, type_name: &str) -> Result<Xfunc, crate::Error> {
-        let module = self.load_module()?;
+impl Database {
+    pub fn xfunc(&mut self, uri: &Url, type_name: &str) -> Result<Xfunc, crate::Error> {
+        let module = self.load_module(uri)?;
 
         let decl_spans =
             module.decls.iter().map(|decl| (decl.name().clone(), decl.span().unwrap())).collect();

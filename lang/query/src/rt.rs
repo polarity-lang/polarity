@@ -3,9 +3,9 @@ use elaborator::normalizer::normalize::Normalize;
 
 use crate::*;
 
-impl<'a> DatabaseViewMut<'a> {
-    pub fn run(&mut self) -> Result<Option<Box<Exp>>, Error> {
-        let ast = self.load_module()?;
+impl Database {
+    pub fn run(&mut self, uri: &Url) -> Result<Option<Box<Exp>>, Error> {
+        let ast = self.load_module(uri)?;
 
         let main = ast.find_main();
 
@@ -18,13 +18,9 @@ impl<'a> DatabaseViewMut<'a> {
         }
     }
 
-    pub fn source(&'a self) -> &'a str {
-        let DatabaseViewMut { uri: url, database } = self;
-        &database.files.get_even_if_stale(url).unwrap().source
-    }
-
-    pub fn pretty_error(&self, err: Error) -> miette::Report {
+    pub fn pretty_error(&self, uri: &Url, err: Error) -> miette::Report {
         let miette_error: miette::Error = err.into();
-        miette_error.with_source_code(miette::NamedSource::new(&self.uri, self.source().to_owned()))
+        let source = &self.files.get_even_if_stale(uri).unwrap().source;
+        miette_error.with_source_code(miette::NamedSource::new(uri, source.to_owned()))
     }
 }

@@ -17,8 +17,8 @@ pub struct Args {
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
-    let mut view = db.open_path(&cmd.filepath)?;
-    let prg = view.lift(&cmd.r#type).map_err(miette::Report::msg)?;
+    let uri = db.resolve_path(&cmd.filepath)?;
+    let prg = db.lift(&uri, &cmd.r#type).map_err(miette::Report::msg)?;
 
     // Write to file or to stdout
     let mut stream: Box<dyn io::Write> = match cmd.output {

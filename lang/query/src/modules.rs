@@ -5,26 +5,10 @@ use elaborator::LookupTable;
 use parser::cst::decls::UseDecl;
 use url::Url;
 
-use crate::DatabaseViewMut;
 use crate::{result::DriverError, Database, Error};
 
-impl DatabaseViewMut<'_> {
-    pub fn load_module(&mut self) -> Result<Arc<ast::Module>, Error> {
-        self.database.load_module(&self.uri)
-    }
-
-    /// Load all imports for the current module without loading the module itself.
-    pub fn load_imports(
-        &mut self,
-        cst_lookup_table: &mut lowering::LookupTable,
-        ast_lookup_table: &mut LookupTable,
-    ) -> Result<(), Error> {
-        self.database.load_imports(&self.uri, cst_lookup_table, ast_lookup_table)
-    }
-}
-
 impl Database {
-    fn load_module(&mut self, module_url: &Url) -> Result<Arc<ast::Module>, Error> {
+    pub fn load_module(&mut self, module_url: &Url) -> Result<Arc<ast::Module>, Error> {
         log::debug!("Loading module: {}", module_url);
         let deps = self.build_dependency_dag(module_url)?;
 
@@ -39,7 +23,7 @@ impl Database {
         load_module_impl(self, &deps, &mut cst_lookup_table, &mut ast_lookup_table, module_url)
     }
 
-    fn load_imports(
+    pub fn load_imports(
         &mut self,
         module_url: &Url,
         cst_lookup_table: &mut lowering::LookupTable,
@@ -92,7 +76,7 @@ impl Database {
         visited.insert(module_url.clone());
         stack.push(module_url.clone());
 
-        let module = self.open_uri(module_url)?.load_cst()?;
+        let module = self.load_cst(module_url)?;
 
         // Collect dependencies from `use` declarations
         let mut dependencies = Vec::new();
@@ -133,7 +117,7 @@ fn load_module_impl(
         load_module_impl(db, deps, cst_lookup_table, ast_lookup_table, dep_url)?;
     }
 
-    db.open_uri(module_url)?.load_ast(cst_lookup_table, ast_lookup_table)
+    db.load_ast(module_url, cst_lookup_table, ast_lookup_table)
 }
 
 /// Prints the dependency graph as an indented tree.

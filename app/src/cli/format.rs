@@ -46,8 +46,8 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn WriteColor> {
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
-    let mut view = db.open_path(&cmd.filepath)?;
-    let prg = view.load_module().map_err(|err| view.pretty_error(err))?;
+    let uri = db.resolve_path(&cmd.filepath)?;
+    let prg = db.load_module(&uri).map_err(|err| db.pretty_error(&uri, err))?;
 
     // Write to file or to stdout
     let mut stream: Box<dyn WriteColor> = compute_output_stream(&cmd);

@@ -1,10 +1,11 @@
 use lifting::LiftResult;
+use url::Url;
 
-use crate::DatabaseViewMut;
+use crate::Database;
 
-impl<'a> DatabaseViewMut<'a> {
-    pub fn lift(&mut self, type_name: &str) -> Result<ast::Module, crate::Error> {
-        let prg = self.load_module()?;
+impl Database {
+    pub fn lift(&mut self, uri: &Url, type_name: &str) -> Result<ast::Module, crate::Error> {
+        let prg = self.load_module(uri)?;
 
         let LiftResult { module: prg, .. } = lifting::lift(prg, type_name);
 

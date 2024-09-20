@@ -20,25 +20,23 @@ pub async fn goto_definition(
         .await;
 
     let pos = pos_params.position;
-    let mut db = server.database.write().await;
-    let Ok(index) = db.open_uri(&text_document.uri) else {
-        return Ok(None);
-    };
-    let info =
-        index.location_to_index(pos.from_lsp()).and_then(|idx| index.hoverinfo_at_index(idx));
-    let res = info.and_then(|info| info_to_jump(&index, info));
+    let db = server.database.write().await;
+    let info = db
+        .location_to_index(&text_document.uri, pos.from_lsp())
+        .and_then(|idx| db.hoverinfo_at_index(&text_document.uri, idx));
+    let res = info.and_then(|info| info_to_jump(&db, info));
     Ok(res)
 }
 
-fn info_to_jump(index: &DatabaseViewMut, info: Info) -> Option<GotoDefinitionResponse> {
+fn info_to_jump(db: &Database, info: Info) -> Option<GotoDefinitionResponse> {
     let (uri, span) = info.content.to_jump_target()?;
-    let jump_location = span_to_location(&span, uri, index)?;
+    let jump_location = span_to_location(&span, &uri, db)?;
     Some(GotoDefinitionResponse::Scalar(jump_location))
 }
 
-fn span_to_location(span: &Span, uri: Url, index: &DatabaseViewMut) -> Option<Location> {
-    let range = index.span_to_locations(*span).map(ToLsp::to_lsp)?;
-    Some(Location { uri, range })
+fn span_to_location(span: &Span, uri: &Url, db: &Database) -> Option<Location> {
+    let range = db.span_to_locations(uri, *span).map(ToLsp::to_lsp)?;
+    Some(Location { uri: uri.clone(), range })
 }
 trait ToJumpTarget {
     fn to_jump_target(&self) -> Option<(Url, Span)>;

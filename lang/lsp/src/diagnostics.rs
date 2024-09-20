@@ -2,33 +2,34 @@ use lsp_types::NumberOrString;
 use miette::Diagnostic;
 use miette::SourceSpan;
 use tower_lsp::lsp_types;
+use url::Url;
 
 use miette_util::FromMiette;
-use query::DatabaseViewMut;
+use query::Database;
 use query::Error;
 
 use crate::conversion::ToLsp;
 
 pub trait Diagnostics {
-    fn diagnostics(&self, result: Result<(), Error>) -> Vec<lsp_types::Diagnostic> {
+    fn diagnostics(&self, uri: &Url, result: Result<(), Error>) -> Vec<lsp_types::Diagnostic> {
         match result {
             Ok(()) => vec![],
-            Err(err) => self.error_diagnostics(err),
+            Err(err) => self.error_diagnostics(uri, err),
         }
     }
 
-    fn error_diagnostics(&self, error: Error) -> Vec<lsp_types::Diagnostic>;
+    fn error_diagnostics(&self, uri: &Url, error: Error) -> Vec<lsp_types::Diagnostic>;
 }
 
-impl Diagnostics for DatabaseViewMut<'_> {
-    fn error_diagnostics(&self, error: Error) -> Vec<lsp_types::Diagnostic> {
+impl Diagnostics for Database {
+    fn error_diagnostics(&self, uri: &Url, error: Error) -> Vec<lsp_types::Diagnostic> {
         // Compute the range where the error should be displayed.
         // The range is computed from the first available label, otherwise
         // the default range is used, which corresponds to the beginning of the
         // file.
         let span = get_span(&error);
         let range = span
-            .and_then(|x| self.span_to_locations(x.from_miette()))
+            .and_then(|x| self.span_to_locations(uri, x.from_miette()))
             .map(ToLsp::to_lsp)
             .unwrap_or_default();
 
