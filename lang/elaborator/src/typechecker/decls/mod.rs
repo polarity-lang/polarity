@@ -14,6 +14,10 @@ use super::{
     TypeError,
 };
 
+/// Check a module
+///
+/// The caller of this function needs to resolve module dependencies, check all dependencies, and provide a lookup table with all symbols from these dependencies.
+/// The symbols from the current module will be appended to the lookup table.
 pub fn check_with_lookup_table(
     prg: Rc<Module>,
     lookup_table: &mut LookupTable,

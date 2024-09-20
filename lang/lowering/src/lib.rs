@@ -12,6 +12,10 @@ pub use ctx::*;
 pub use lookup_table::{build_lookup_table, LookupTable};
 pub use result::*;
 
+/// Lower a module
+///
+/// The caller of this function needs to resolve module dependencies, lower all dependencies, and provide a lookup table with all symbols from these dependencies.
+/// The symbols from the current module will be appended to the lookup table.
 pub fn lower_module_with_lookup_table(
     prg: &cst::decls::Module,
     lookup_table: &mut LookupTable,
