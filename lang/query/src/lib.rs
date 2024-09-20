@@ -34,10 +34,10 @@ pub use xfunc::*;
 pub struct Database {
     /// The source provider of the files (file system or in-memory)
     source: Box<dyn FileSource>,
+    /// Dependency graph for each module
+    deps: DependencyGraph,
     /// The source code text of each file
     files: Cache<codespan::File<String>>,
-    /// Dependency graph for each module
-    deps: Cache<Arc<DependencyGraph>>,
     /// The CST of each file (once parsed)
     cst: Cache<Result<Arc<cst::decls::Module>, Error>>,
     /// The symbol table constructed during lowering
@@ -63,7 +63,7 @@ impl Database {
         Self {
             source: Box::new(source),
             files: Cache::default(),
-            deps: Cache::default(),
+            deps: DependencyGraph::default(),
             cst: Cache::default(),
             cst_lookup_table: Cache::default(),
             ast: Cache::default(),
@@ -85,8 +85,9 @@ impl Database {
 
     /// Invalidate the file behind the given URI and all its reverse dependencies
     pub fn invalidate(&mut self, uri: &Url) -> Result<(), Error> {
-        self.deps.invalidate(uri);
-        let mut rev_deps = self.reverse_dependencies(uri)?;
+        self.build_dependency_dag()?;
+        let mut rev_deps: HashSet<Url> =
+            self.deps.reverse_dependencies(uri).into_iter().cloned().collect();
         log::debug!(
             "Invalidating {} and its reverse dependencies: {:?}",
             uri,
@@ -95,7 +96,6 @@ impl Database {
         rev_deps.insert(uri.clone());
         for rev_dep in &rev_deps {
             self.files.invalidate(rev_dep);
-            self.deps.invalidate(rev_dep);
             self.cst.invalidate(rev_dep);
             self.cst_lookup_table.invalidate(rev_dep);
             self.ast.invalidate(rev_dep);
@@ -104,19 +104,6 @@ impl Database {
             self.item_by_id.invalidate(rev_dep);
         }
         Ok(())
-    }
-
-    pub fn reverse_dependencies(&mut self, uri: &Url) -> Result<HashSet<Url>, Error> {
-        let mut affected_uris = HashSet::default();
-
-        let uris = self.deps.keys().cloned().collect::<Vec<_>>();
-
-        for other_uri in uris {
-            let dep_graph = self.load_dependency_dag(&other_uri)?;
-            affected_uris.extend(dep_graph.reverse_dependencies(uri).into_iter().cloned())
-        }
-
-        Ok(affected_uris)
     }
 }
 

@@ -10,17 +10,17 @@ use crate::{dependency_graph::DependencyGraph, result::DriverError, Database, Er
 impl Database {
     pub fn load_module(&mut self, module_uri: &Url) -> Result<Arc<ast::Module>, Error> {
         log::debug!("Loading module: {}", module_uri);
-        let deps = self.load_dependency_dag(module_uri)?;
+        self.build_dependency_dag()?;
 
         log::trace!("");
         log::trace!("Dependency graph:");
         log::trace!("");
-        deps.print_dependency_tree();
+        self.deps.print_dependency_tree();
         log::trace!("");
 
         let mut cst_lookup_table = lowering::LookupTable::default();
         let mut ast_lookup_table = LookupTable::default();
-        load_module_impl(self, &deps, &mut cst_lookup_table, &mut ast_lookup_table, module_uri)
+        load_module_impl(self, &mut cst_lookup_table, &mut ast_lookup_table, module_uri)
     }
 
     pub fn load_imports(
@@ -29,11 +29,11 @@ impl Database {
         cst_lookup_table: &mut lowering::LookupTable,
         ast_lookup_table: &mut LookupTable,
     ) -> Result<(), Error> {
-        let deps = self.load_dependency_dag(module_uri)?;
+        self.build_dependency_dag()?;
         let empty_vec = Vec::new();
-        let direct_deps = deps.get(module_uri).unwrap_or(&empty_vec);
+        let direct_deps = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
         for direct_dep in direct_deps {
-            load_module_impl(self, &deps, cst_lookup_table, ast_lookup_table, direct_dep)?;
+            load_module_impl(self, cst_lookup_table, ast_lookup_table, &direct_dep)?;
         }
         Ok(())
     }
@@ -46,17 +46,16 @@ impl Database {
     /// # Errors
     ///
     /// Returns an error if a cycle is detected or if a module cannot be found or loaded.
-    pub fn load_dependency_dag(&mut self, module_uri: &Url) -> Result<Arc<DependencyGraph>, Error> {
-        if let Some(deps) = self.deps.get_unless_stale(module_uri) {
-            return Ok(deps.clone());
-        }
+    pub fn build_dependency_dag(&mut self) -> Result<(), Error> {
         let mut visited = HashSet::default();
         let mut stack = Vec::new();
         let mut graph = DependencyGraph::default();
-        self.visit_module(module_uri, &mut visited, &mut stack, &mut graph)?;
-
-        self.deps.insert(module_uri.clone(), Arc::new(graph));
-        Ok(self.deps.get_even_if_stale(module_uri).unwrap().clone())
+        let modules: Vec<Url> = self.files.keys().cloned().collect();
+        for module_uri in modules {
+            self.visit_module(&module_uri, &mut visited, &mut stack, &mut graph)?;
+        }
+        self.deps = graph;
+        Ok(())
     }
 
     /// Recursively visits a module, adds its dependencies to the graph, and checks for cycles.
@@ -110,16 +109,15 @@ impl Database {
 
 fn load_module_impl(
     db: &mut Database,
-    deps: &DependencyGraph,
     cst_lookup_table: &mut lowering::LookupTable,
     ast_lookup_table: &mut LookupTable,
     module_uri: &Url,
 ) -> Result<Arc<ast::Module>, Error> {
     let empty_vec = Vec::new();
-    let direct_dependencies = deps.get(module_uri).unwrap_or(&empty_vec);
+    let direct_dependencies = db.deps.get(module_uri).unwrap_or(&empty_vec).clone();
 
     for dep_url in direct_dependencies {
-        load_module_impl(db, deps, cst_lookup_table, ast_lookup_table, dep_url)?;
+        load_module_impl(db, cst_lookup_table, ast_lookup_table, &dep_url)?;
     }
 
     db.load_ast(module_uri, cst_lookup_table, ast_lookup_table)
