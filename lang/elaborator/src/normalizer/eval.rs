@@ -351,9 +351,11 @@ impl Eval for Hole {
     type Val = Rc<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let Hole { span, metavar, args, .. } = self;
+        let Hole { span, kind, metavar, args, .. } = self;
         let args = args.eval(prg, env)?;
-        Ok(Rc::new(Val::Neu(val::Hole { span: *span, metavar: *metavar, args }.into())))
+        Ok(Rc::new(Val::Neu(
+            val::Hole { span: *span, kind: *kind, metavar: *metavar, args }.into(),
+        )))
     }
 }
 

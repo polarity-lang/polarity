@@ -123,8 +123,17 @@ pub struct LocalComatch {
 }
 
 #[derive(Debug, Clone)]
+pub enum HoleKind {
+    /// A hole `_` that must be solved by the constraint solver.
+    MustSolve,
+    /// A hole `?` that the programmer needs help with.
+    CanSolve,
+}
+
+#[derive(Debug, Clone)]
 pub struct Hole {
     pub span: Span,
+    pub kind: HoleKind,
 }
 
 #[derive(Debug, Clone)]

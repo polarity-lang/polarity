@@ -6,7 +6,8 @@ use derivative::Derivative;
 use pretty::DocAllocator;
 use printer::theme::ThemeExt;
 use printer::tokens::{
-    ABSURD, ARROW, AS, COLON, COMATCH, COMMA, DOT, FAT_ARROW, HOLE, MATCH, TYPE,
+    ABSURD, ARROW, AS, COLON, COMATCH, COMMA, DOT, FAT_ARROW, MATCH, QUESTION_MARK, TYPE,
+    UNDERSCORE,
 };
 use printer::util::{BackslashExt, BracesExt, IsNilExt};
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
@@ -1046,6 +1047,8 @@ fn print_lambda_sugar<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a
 pub struct Hole {
     /// Source code location
     pub span: Option<Span>,
+    /// Whether the hole must be solved during typechecking or not.
+    pub kind: MetaVarKind,
     /// The metavariable that we want to solve for that hole
     pub metavar: MetaVar,
     /// The inferred type of the hole annotated during elaboration.
@@ -1082,10 +1085,11 @@ impl From<Hole> for Exp {
 
 impl Shift for Hole {
     fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Hole { span, metavar, args, .. } = self;
+        let Hole { span, kind, metavar, args, .. } = self;
         let new_args = args.shift_in_range(range, by);
         Hole {
             span: *span,
+            kind: *kind,
             metavar: *metavar,
             inferred_type: None,
             inferred_ctx: None,
@@ -1110,9 +1114,10 @@ impl Substitutable for Hole {
     type Result = Hole;
 
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
-        let Hole { span, metavar, args, .. } = self;
+        let Hole { span, kind, metavar, args, .. } = self;
         Hole {
             span: *span,
+            kind: *kind,
             metavar: *metavar,
             inferred_type: None,
             inferred_ctx: None,
@@ -1128,10 +1133,22 @@ impl Print for Hole {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        if cfg.print_metavar_ids {
-            alloc.text(format!("?{}", self.metavar.id))
-        } else {
-            alloc.keyword(HOLE)
+        match self.kind {
+            MetaVarKind::MustSolve => {
+                if cfg.print_metavar_ids {
+                    alloc.text(format!("_{}", self.metavar.id))
+                } else {
+                    alloc.keyword(UNDERSCORE)
+                }
+            }
+            MetaVarKind::CanSolve => {
+                if cfg.print_metavar_ids {
+                    alloc.text(format!("?{}", self.metavar.id))
+                } else {
+                    alloc.keyword(QUESTION_MARK)
+                }
+            }
+            MetaVarKind::Inserted => alloc.text(format!("<Inserted>{}", self.metavar.id)),
         }
     }
 }

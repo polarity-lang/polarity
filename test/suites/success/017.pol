@@ -1,0 +1,8 @@
+data Pair(a b: Type) {
+    MkPair(a b: Type,x: a, y: b) : Pair(a,b)
+}
+data Bool { True, False }
+
+let example1: Pair(Bool,Bool) {
+    MkPair(_,_, True, False)
+}

@@ -13,13 +13,14 @@ use crate::result::TypeError;
 
 impl CheckInfer for Hole {
     fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
-        let Hole { span, metavar, args, .. } = self;
+        let Hole { span, kind, metavar, args, .. } = self;
         let args: Vec<Vec<Box<Exp>>> = args
             .iter()
             .map(|subst| subst.iter().map(|exp| exp.infer(ctx)).collect::<Result<Vec<_>, _>>())
             .collect::<Result<_, _>>()?;
         Ok(Hole {
             span: *span,
+            kind: *kind,
             metavar: *metavar,
             inferred_type: Some(Box::new(t.clone())),
             inferred_ctx: Some(ctx.vars.clone()),
