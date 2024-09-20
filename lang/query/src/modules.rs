@@ -1,16 +1,35 @@
-use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
+use ast::{HashMap, HashSet};
 use elaborator::LookupTable;
 use parser::cst::decls::UseDecl;
 use url::Url;
 
 use crate::{result::DriverError, Database, Error};
 
+#[derive(Default)]
+pub struct DependencyGraph {
+    graph: HashMap<Url, Vec<Url>>,
+}
+
+impl DependencyGraph {
+    fn get(&self, url: &Url) -> Option<&Vec<Url>> {
+        self.graph.get(url)
+    }
+
+    fn insert(&mut self, url: Url, deps: Vec<Url>) {
+        self.graph.insert(url, deps);
+    }
+
+    fn keys(&self) -> impl Iterator<Item = &Url> {
+        self.graph.keys()
+    }
+}
+
 impl Database {
-    pub fn load_module(&mut self, module_url: &Url) -> Result<Arc<ast::Module>, Error> {
-        log::debug!("Loading module: {}", module_url);
-        let deps = self.build_dependency_dag(module_url)?;
+    pub fn load_module(&mut self, module_uri: &Url) -> Result<Arc<ast::Module>, Error> {
+        log::debug!("Loading module: {}", module_uri);
+        let deps = self.load_dependency_dag(module_uri)?;
 
         log::trace!("");
         log::trace!("Dependency graph:");
@@ -20,18 +39,18 @@ impl Database {
 
         let mut cst_lookup_table = lowering::LookupTable::default();
         let mut ast_lookup_table = LookupTable::default();
-        load_module_impl(self, &deps, &mut cst_lookup_table, &mut ast_lookup_table, module_url)
+        load_module_impl(self, &deps, &mut cst_lookup_table, &mut ast_lookup_table, module_uri)
     }
 
     pub fn load_imports(
         &mut self,
-        module_url: &Url,
+        module_uri: &Url,
         cst_lookup_table: &mut lowering::LookupTable,
         ast_lookup_table: &mut LookupTable,
     ) -> Result<(), Error> {
-        let deps = self.build_dependency_dag(module_url)?;
+        let deps = self.load_dependency_dag(module_uri)?;
         let empty_vec = Vec::new();
-        let direct_deps = deps.get(module_url).unwrap_or(&empty_vec);
+        let direct_deps = deps.get(module_uri).unwrap_or(&empty_vec);
         for direct_dep in direct_deps {
             load_module_impl(self, &deps, cst_lookup_table, ast_lookup_table, direct_dep)?;
         }
@@ -46,44 +65,49 @@ impl Database {
     /// # Errors
     ///
     /// Returns an error if a cycle is detected or if a module cannot be found or loaded.
-    fn build_dependency_dag(&mut self, module_url: &Url) -> Result<HashMap<Url, Vec<Url>>, Error> {
-        let mut visited = HashSet::new();
+    fn load_dependency_dag(&mut self, module_uri: &Url) -> Result<Arc<DependencyGraph>, Error> {
+        if let Some(deps) = self.deps.get_unless_stale(self, module_uri) {
+            return Ok(deps.clone());
+        }
+        let mut visited = HashSet::default();
         let mut stack = Vec::new();
-        let mut graph = HashMap::new();
-        self.visit_module(module_url, &mut visited, &mut stack, &mut graph)?;
-        Ok(graph)
+        let mut graph = DependencyGraph::default();
+        self.visit_module(module_uri, &mut visited, &mut stack, &mut graph)?;
+
+        self.deps.insert(module_uri.clone(), Arc::new(graph));
+        Ok(self.deps.get_even_if_stale(module_uri).unwrap().clone())
     }
 
     /// Recursively visits a module, adds its dependencies to the graph, and checks for cycles.
     fn visit_module(
         &mut self,
-        module_url: &Url,
+        module_uri: &Url,
         visited: &mut HashSet<Url>,
         stack: &mut Vec<Url>,
-        graph: &mut HashMap<Url, Vec<Url>>,
+        graph: &mut DependencyGraph,
     ) -> Result<(), Error> {
-        if stack.contains(module_url) {
+        if stack.contains(module_uri) {
             // Cycle detected
             let cycle = stack.to_vec();
-            return Err(DriverError::ImportCycle(module_url.clone(), cycle).into());
+            return Err(DriverError::ImportCycle(module_uri.clone(), cycle).into());
         }
 
-        if visited.contains(module_url) {
+        if visited.contains(module_uri) {
             // Module already processed
             return Ok(());
         }
 
-        visited.insert(module_url.clone());
-        stack.push(module_url.clone());
+        visited.insert(module_uri.clone());
+        stack.push(module_uri.clone());
 
-        let module = self.load_cst(module_url)?;
+        let module = self.load_cst(module_uri)?;
 
         // Collect dependencies from `use` declarations
         let mut dependencies = Vec::new();
         for use_decl in &module.use_decls {
             let UseDecl { path, .. } = use_decl;
             // Resolve the module name to a `Url`
-            let dep_url = self.resolve_module_name(path, module_url)?;
+            let dep_url = self.resolve_module_name(path, module_uri)?;
             dependencies.push(dep_url.clone());
 
             // Recursively visit the dependency
@@ -91,7 +115,7 @@ impl Database {
         }
 
         // Add the module and its dependencies to the graph
-        graph.insert(module_url.clone(), dependencies);
+        graph.insert(module_uri.clone(), dependencies);
 
         stack.pop();
         Ok(())
@@ -105,19 +129,19 @@ impl Database {
 
 fn load_module_impl(
     db: &mut Database,
-    deps: &HashMap<Url, Vec<Url>>,
+    deps: &DependencyGraph,
     cst_lookup_table: &mut lowering::LookupTable,
     ast_lookup_table: &mut LookupTable,
-    module_url: &Url,
+    module_uri: &Url,
 ) -> Result<Arc<ast::Module>, Error> {
     let empty_vec = Vec::new();
-    let direct_dependencies = deps.get(module_url).unwrap_or(&empty_vec);
+    let direct_dependencies = deps.get(module_uri).unwrap_or(&empty_vec);
 
     for dep_url in direct_dependencies {
         load_module_impl(db, deps, cst_lookup_table, ast_lookup_table, dep_url)?;
     }
 
-    db.load_ast(module_url, cst_lookup_table, ast_lookup_table)
+    db.load_ast(module_uri, cst_lookup_table, ast_lookup_table)
 }
 
 /// Prints the dependency graph as an indented tree.
@@ -127,11 +151,11 @@ fn load_module_impl(
 ///
 /// # Arguments
 ///
-/// * `graph` - A reference to the dependency graph represented as a `HashMap<Url, Vec<Url>>`.
-pub fn print_dependency_tree(graph: &HashMap<Url, Vec<Url>>) {
-    let mut visited = HashSet::new();
-    for module_url in graph.keys() {
-        print_module_dependencies(module_url, graph, &mut visited, 0);
+/// * `graph` - A reference to the dependency graph represented as a `DependencyGraph`.
+pub fn print_dependency_tree(graph: &DependencyGraph) {
+    let mut visited = HashSet::default();
+    for module_uri in graph.keys() {
+        print_module_dependencies(module_uri, graph, &mut visited, 0);
     }
 }
 
@@ -139,13 +163,13 @@ pub fn print_dependency_tree(graph: &HashMap<Url, Vec<Url>>) {
 ///
 /// # Arguments
 ///
-/// * `module_url` - The URL of the current module being printed.
+/// * `module_uri` - The URL of the current module being printed.
 /// * `graph` - A reference to the dependency graph.
 /// * `visited` - A mutable reference to a `HashSet` tracking visited modules to detect cycles.
 /// * `depth` - The current depth in the dependency tree, used for indentation.
 fn print_module_dependencies(
-    module_url: &Url,
-    graph: &HashMap<Url, Vec<Url>>,
+    module_uri: &Url,
+    graph: &DependencyGraph,
     visited: &mut HashSet<Url>,
     depth: usize,
 ) {
@@ -153,21 +177,21 @@ fn print_module_dependencies(
     let indent = "  ".repeat(depth);
 
     // Check for cycles
-    if !visited.insert(module_url.clone()) {
-        log::trace!("{}{} (already visited)", indent, url_to_label(module_url));
+    if !visited.insert(module_uri.clone()) {
+        log::trace!("{}{} (already visited)", indent, url_to_label(module_uri));
         return;
     }
 
-    log::trace!("{}{}", indent, url_to_label(module_url));
+    log::trace!("{}{}", indent, url_to_label(module_uri));
 
-    if let Some(dependencies) = graph.get(module_url) {
+    if let Some(dependencies) = graph.get(module_uri) {
         for dep_url in dependencies {
             print_module_dependencies(dep_url, graph, visited, depth + 1);
         }
     }
 
     // Remove the module from the visited set when unwinding the recursion
-    visited.remove(module_url);
+    visited.remove(module_uri);
 }
 
 /// Helper function to convert a `Url` to a label suitable for display.

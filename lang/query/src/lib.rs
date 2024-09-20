@@ -33,6 +33,8 @@ pub struct Database {
     source: Box<dyn FileSource>,
     /// The source code text of each file
     files: Cache<codespan::File<String>>,
+    /// Dependency graph for each module
+    deps: Cache<Arc<modules::DependencyGraph>>,
     /// The CST of each file (once parsed)
     cst: Cache<Result<Arc<cst::decls::Module>, Error>>,
     /// The symbol table constructed during lowering
@@ -41,7 +43,9 @@ pub struct Database {
     ast: Cache<Result<Arc<ast::Module>, Error>>,
     /// The symbol table constructed during typechecking
     ast_lookup_table: Cache<elaborator::LookupTable>,
+    /// Hover information for spans
     info_by_id: Cache<Lapper<u32, Info>>,
+    /// Spans of top-level items
     item_by_id: Cache<Lapper<u32, Item>>,
 }
 
@@ -61,6 +65,7 @@ impl Database {
                 };
                 source_time > cache_time
             }),
+            deps: Cache::new(|db, uri, _| db.files.is_stale(db, uri)),
             cst: Cache::new(|db, uri, cache_time| {
                 let Some(file_time) = db.files.last_modified(uri) else {
                     return true;
