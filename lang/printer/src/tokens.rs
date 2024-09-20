@@ -24,7 +24,7 @@ pub const DOT: &str = ".";
 pub const AT: &str = "@";
 
 /// The symbol `?`
-pub const QUESTIONMARK: &str = "?";
+pub const QUESTION_MARK: &str = "?";
 
 /// The symbol `#`
 pub const HASH: &str = "#";

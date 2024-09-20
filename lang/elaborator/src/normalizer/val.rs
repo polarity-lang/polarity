@@ -573,7 +573,7 @@ impl Print for Hole {
         if cfg.print_metavar_ids {
             alloc.text(format!("?{}", self.metavar.id))
         } else {
-            alloc.keyword(QUESTIONMARK)
+            alloc.keyword(QUESTION_MARK)
         }
     }
 }
