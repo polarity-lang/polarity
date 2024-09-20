@@ -1,9 +1,4 @@
 #[cfg(not(target_arch = "wasm32"))]
-use std::time;
-#[cfg(target_arch = "wasm32")]
-use web_time as time;
-
-#[cfg(not(target_arch = "wasm32"))]
 pub use file_system::FileSystemSource;
 
 use ast::HashMap;
@@ -24,10 +19,6 @@ pub trait FileSource: Send + Sync {
     ///
     /// Depending on the source, this may write to disk or to memory
     fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError>;
-    /// Check if a file with the given URI has been modified since the last time it was read
-    fn is_modified(&self, uri: &Url) -> Result<bool, DriverError>;
-    /// Get the last time a file was read
-    fn last_retrieved(&self, uri: &Url) -> Option<time::Instant>;
     /// If a URI is requested that is not managed by this source, fall back to another source
     fn fallback_to<S: FileSource>(self, fallback: S) -> OverlaySource<Self, S>
     where
@@ -47,12 +38,11 @@ mod file_system {
     /// A file source that reads from and writes to the file system
     pub struct FileSystemSource {
         root: PathBuf,
-        last_retrieved: HashMap<Url, time::SystemTime>,
     }
 
     impl FileSystemSource {
         pub fn new<P: AsRef<Path>>(root: P) -> Self {
-            Self { root: root.as_ref().to_path_buf(), last_retrieved: HashMap::default() }
+            Self { root: root.as_ref().to_path_buf() }
         }
     }
 
@@ -69,52 +59,13 @@ mod file_system {
             let path = self.root.join(uri.path());
             let source =
                 std::fs::read_to_string(&path).map_err(Arc::new).map_err(DriverError::Io)?;
-            self.last_retrieved.insert(
-                uri.clone(),
-                std::fs::metadata(&path)
-                    .map_err(Arc::new)
-                    .map_err(DriverError::Io)?
-                    .modified()
-                    .map_err(Arc::new)
-                    .map_err(DriverError::Io)?,
-            );
             Ok(source)
         }
 
         fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
             let path = self.root.join(uri.path());
             std::fs::write(&path, source).map_err(Arc::new).map_err(DriverError::Io)?;
-            self.last_retrieved.insert(
-                uri.clone(),
-                std::fs::metadata(&path)
-                    .map_err(Arc::new)
-                    .map_err(DriverError::Io)?
-                    .modified()
-                    .map_err(Arc::new)
-                    .map_err(DriverError::Io)?,
-            );
             Ok(())
-        }
-
-        fn last_retrieved(&self, uri: &Url) -> Option<time::Instant> {
-            self.last_retrieved.get(uri).and_then(system_time_to_instant)
-        }
-
-        fn is_modified(&self, uri: &Url) -> Result<bool, DriverError> {
-            let path = self.root.join(uri.path());
-            let metadata = std::fs::metadata(&path).map_err(Arc::new).map_err(DriverError::Io)?;
-            let time = metadata.modified().map_err(Arc::new).map_err(DriverError::Io)?;
-            Ok(self.last_retrieved.get(uri).map_or(true, |last| time > *last))
-        }
-    }
-
-    fn system_time_to_instant(system_time: &time::SystemTime) -> Option<time::Instant> {
-        let now = time::Instant::now();
-        let system_now = time::SystemTime::now();
-
-        match system_time.duration_since(system_now) {
-            Ok(duration) => Some(now + duration),
-            Err(_) => None,
         }
     }
 }
@@ -167,14 +118,6 @@ impl FileSource for InMemorySource {
         self.modified.insert(uri.clone(), true);
         Ok(())
     }
-
-    fn last_retrieved(&self, uri: &Url) -> Option<time::Instant> {
-        self.modified.get(uri).map(|_| time::Instant::now())
-    }
-
-    fn is_modified(&self, uri: &Url) -> Result<bool, DriverError> {
-        Ok(*self.modified.get(uri).unwrap_or(&true))
-    }
 }
 
 /// A source that first tries to access files from the first source, and falls back to the second
@@ -215,22 +158,6 @@ where
             self.first.write_string(uri, source)
         } else {
             self.second.write_string(uri, source)
-        }
-    }
-
-    fn last_retrieved(&self, uri: &Url) -> Option<time::Instant> {
-        if self.first.manages(uri) {
-            self.first.last_retrieved(uri)
-        } else {
-            self.second.last_retrieved(uri)
-        }
-    }
-
-    fn is_modified(&self, uri: &Url) -> Result<bool, DriverError> {
-        if self.first.manages(uri) {
-            self.first.is_modified(uri)
-        } else {
-            self.second.is_modified(uri)
         }
     }
 }

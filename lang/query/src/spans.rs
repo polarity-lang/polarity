@@ -1,3 +1,5 @@
+use std::sync::LazyLock;
+
 use codespan::{ByteIndex, Location, Span};
 use rust_lapper::Lapper;
 use url::Url;
@@ -46,10 +48,14 @@ impl Database {
     }
 
     pub fn infos(&self, uri: &Url) -> &Lapper<u32, Info> {
-        self.info_by_id.get_even_if_stale(uri).unwrap()
+        static EMPTY_INFO_LAPPER: LazyLock<Lapper<u32, Info>> =
+            LazyLock::new(|| Lapper::new(vec![]));
+        self.info_by_id.get_even_if_stale(uri).unwrap_or(&*EMPTY_INFO_LAPPER)
     }
 
     pub fn items(&self, uri: &Url) -> &Lapper<u32, Item> {
-        self.item_by_id.get_even_if_stale(uri).unwrap()
+        static EMPTY_ITEM_LAPPER: LazyLock<Lapper<u32, Item>> =
+            LazyLock::new(|| Lapper::new(vec![]));
+        self.item_by_id.get_even_if_stale(uri).unwrap_or(&*EMPTY_ITEM_LAPPER)
     }
 }

@@ -24,6 +24,27 @@ impl DependencyGraph {
     fn keys(&self) -> impl Iterator<Item = &Url> {
         self.graph.keys()
     }
+
+    pub fn reverse_dependencies<'a>(&'a self, uri: &'a Url) -> Vec<&'a Url> {
+        if !self.graph.contains_key(uri) {
+            return Vec::new();
+        }
+        let mut closure = Vec::new();
+        let mut stack = vec![uri];
+        let mut visited = HashSet::default();
+        while let Some(url) = stack.pop() {
+            if visited.insert(url.clone()) {
+                closure.push(url);
+                let rev_deps = self
+                    .graph
+                    .iter()
+                    .filter_map(|(rev_dep, v)| if v.contains(url) { Some(rev_dep) } else { None })
+                    .collect::<Vec<_>>();
+                stack.extend(rev_deps);
+            }
+        }
+        closure
+    }
 }
 
 impl Database {
@@ -65,8 +86,8 @@ impl Database {
     /// # Errors
     ///
     /// Returns an error if a cycle is detected or if a module cannot be found or loaded.
-    fn load_dependency_dag(&mut self, module_uri: &Url) -> Result<Arc<DependencyGraph>, Error> {
-        if let Some(deps) = self.deps.get_unless_stale(self, module_uri) {
+    pub fn load_dependency_dag(&mut self, module_uri: &Url) -> Result<Arc<DependencyGraph>, Error> {
+        if let Some(deps) = self.deps.get_unless_stale(module_uri) {
             return Ok(deps.clone());
         }
         let mut visited = HashSet::default();

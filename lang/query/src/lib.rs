@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use ast::HashSet;
 use parser::cst;
 use url::Url;
 
@@ -59,29 +60,14 @@ impl Database {
     pub fn from_source(source: impl FileSource + 'static) -> Self {
         Self {
             source: Box::new(source),
-            files: Cache::new(|db, uri, cache_time| {
-                let Some(source_time) = db.source.last_retrieved(uri) else {
-                    return true;
-                };
-                source_time > cache_time
-            }),
-            deps: Cache::new(|db, uri, _| db.files.is_stale(db, uri)),
-            cst: Cache::new(|db, uri, cache_time| {
-                let Some(file_time) = db.files.last_modified(uri) else {
-                    return true;
-                };
-                file_time > cache_time
-            }),
-            cst_lookup_table: Cache::new(|db, uri, _| db.cst.is_stale(db, uri)),
-            ast: Cache::new(|db, uri, cache_time| {
-                let Some(cst_time) = db.cst.last_modified(uri) else {
-                    return true;
-                };
-                cst_time > cache_time
-            }),
-            ast_lookup_table: Cache::new(|db, uri, _| db.ast.is_stale(db, uri)),
-            info_by_id: Cache::new(|db, uri, _| db.ast.is_stale(db, uri)),
-            item_by_id: Cache::new(|db, uri, _| db.ast.is_stale(db, uri)),
+            files: Cache::default(),
+            deps: Cache::default(),
+            cst: Cache::default(),
+            cst_lookup_table: Cache::default(),
+            ast: Cache::default(),
+            ast_lookup_table: Cache::default(),
+            info_by_id: Cache::default(),
+            item_by_id: Cache::default(),
         }
     }
 
@@ -99,13 +85,49 @@ impl Database {
     ///
     /// Returns a mutable view on the file
     pub fn open_uri(&mut self, uri: &Url) -> Result<(), Error> {
-        if self.source.is_modified(uri)? {
+        if self.files.is_stale(uri) {
             let source = self.source.read_to_string(uri)?;
             self.files.insert(uri.clone(), codespan::File::new(uri.as_str().into(), source));
             Ok(())
         } else {
             Ok(())
         }
+    }
+
+    /// Invalidate the file behind the given URI and all its reverse dependencies
+    pub fn invalidate(&mut self, uri: &Url) -> Result<(), Error> {
+        self.deps.invalidate(uri);
+        let mut rev_deps = self.reverse_dependencies(uri)?;
+        log::debug!(
+            "Invalidating {} and its reverse dependencies: {:?}",
+            uri,
+            rev_deps.iter().map(ToString::to_string).collect::<Vec<_>>()
+        );
+        rev_deps.insert(uri.clone());
+        for rev_dep in &rev_deps {
+            self.files.invalidate(rev_dep);
+            self.deps.invalidate(rev_dep);
+            self.cst.invalidate(rev_dep);
+            self.cst_lookup_table.invalidate(rev_dep);
+            self.ast.invalidate(rev_dep);
+            self.ast_lookup_table.invalidate(rev_dep);
+            self.info_by_id.invalidate(rev_dep);
+            self.item_by_id.invalidate(rev_dep);
+        }
+        Ok(())
+    }
+
+    pub fn reverse_dependencies(&mut self, uri: &Url) -> Result<HashSet<Url>, Error> {
+        let mut affected_uris = HashSet::default();
+
+        let uris = self.deps.keys().cloned().collect::<Vec<_>>();
+
+        for other_uri in uris {
+            let dep_graph = self.load_dependency_dag(&other_uri)?;
+            affected_uris.extend(dep_graph.reverse_dependencies(uri).into_iter().cloned())
+        }
+
+        Ok(affected_uris)
     }
 }
 
