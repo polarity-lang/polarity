@@ -30,7 +30,16 @@ impl<'a> DatabaseViewMut<'a> {
             None => {
                 log::trace!("AST is stale, reloading");
                 let ust = self.load_ust(cst_lookup_table);
-                let ast = ust.and_then(|ust| load_ast(ust, ast_lookup_table)).map(Arc::new);
+                let ast = ust
+                    .and_then(|ust| {
+                        let tst = elaborator::typechecker::check_with_lookup_table(
+                            Rc::new(ust),
+                            ast_lookup_table,
+                        )
+                        .map_err(Error::Type)?;
+                        Ok(tst)
+                    })
+                    .map(Arc::new);
                 self.database.ast.insert(self.uri.clone(), ast.clone());
                 self.database.ast_lookup_table.insert(self.uri.clone(), ast_lookup_table.clone());
                 self.database.cst_lookup_table.insert(self.uri.clone(), cst_lookup_table.clone());
@@ -50,7 +59,8 @@ impl<'a> DatabaseViewMut<'a> {
         log::trace!("Loading UST: {}", self.uri);
 
         let cst = self.load_cst()?;
-        load_ust(cst, cst_lookup_table)
+        log::debug!("Lowering module");
+        lowering::lower_module_with_lookup_table(&cst, cst_lookup_table).map_err(Error::Lowering)
     }
 
     pub fn load_cst(&mut self) -> Result<Arc<cst::decls::Module>, Error> {
@@ -58,7 +68,13 @@ impl<'a> DatabaseViewMut<'a> {
             Some(cst) => cst.clone(),
             None => {
                 let source = self.load_source()?;
-                let module = load_cst(&self.uri, &source).map(Arc::new);
+                let module = {
+                    let url: &Url = &self.uri;
+                    let source: &str = &source;
+                    log::debug!("Parsing module: {}", url);
+                    parser::parse_module(url.clone(), source).map_err(Error::Parser)
+                }
+                .map(Arc::new);
                 self.database.cst.insert(self.uri.clone(), module.clone());
                 module
             }
@@ -103,23 +119,4 @@ impl<'a> DatabaseViewMut<'a> {
         self.database.info_by_id.insert(self.uri.clone(), info_index);
         self.database.item_by_id.insert(self.uri.clone(), item_index);
     }
-}
-
-fn load_cst(url: &Url, source: &str) -> Result<cst::decls::Module, Error> {
-    log::debug!("Parsing module: {}", url);
-    parser::parse_module(url.clone(), source).map_err(Error::Parser)
-}
-
-fn load_ust(
-    cst: Arc<cst::decls::Module>,
-    cst_lookup_table: &mut lowering::LookupTable,
-) -> Result<ast::Module, Error> {
-    log::debug!("Lowering module");
-    lowering::lower_module_with_lookup_table(&cst, cst_lookup_table).map_err(Error::Lowering)
-}
-
-fn load_ast(ust: ast::Module, ast_lookup_table: &mut LookupTable) -> Result<ast::Module, Error> {
-    let tst = elaborator::typechecker::check_with_lookup_table(Rc::new(ust), ast_lookup_table)
-        .map_err(Error::Type)?;
-    Ok(tst)
 }
