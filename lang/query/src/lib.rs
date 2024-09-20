@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use ast::HashSet;
+use dependency_graph::DependencyGraph;
 use parser::cst;
 use url::Url;
 
@@ -10,6 +11,7 @@ pub use result::Error;
 
 mod asserts;
 mod cache;
+mod dependency_graph;
 mod edit;
 mod fs;
 mod info;
@@ -35,7 +37,7 @@ pub struct Database {
     /// The source code text of each file
     files: Cache<codespan::File<String>>,
     /// Dependency graph for each module
-    deps: Cache<Arc<modules::DependencyGraph>>,
+    deps: Cache<Arc<DependencyGraph>>,
     /// The CST of each file (once parsed)
     cst: Cache<Result<Arc<cst::decls::Module>, Error>>,
     /// The symbol table constructed during lowering
