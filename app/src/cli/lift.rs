@@ -5,8 +5,6 @@ use std::path::PathBuf;
 use printer::{Print, PrintCfg};
 use query::Database;
 
-use crate::result::IOError;
-
 #[derive(clap::Args)]
 pub struct Args {
     #[clap(value_parser, value_name = "TYPE")]
@@ -18,11 +16,8 @@ pub struct Args {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let mut db = Database::default();
-    let file =
-        query::File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
-    let view = db.add(file).query();
-
+    let mut db = Database::from_path(&cmd.filepath);
+    let mut view = db.open_path(&cmd.filepath)?;
     let prg = view.lift(&cmd.r#type).map_err(miette::Report::msg)?;
 
     // Write to file or to stdout
@@ -31,12 +26,12 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         None => Box::new(io::stdout()),
     };
 
-    print_prg(prg, &PrintCfg::default(), &mut stream);
+    print_prg(&prg, &PrintCfg::default(), &mut stream);
 
     Ok(())
 }
 
-fn print_prg<W: io::Write>(prg: ast::Module, cfg: &PrintCfg, stream: &mut W) {
+fn print_prg<W: io::Write>(prg: &ast::Module, cfg: &PrintCfg, stream: &mut W) {
     prg.print_io(cfg, stream).expect("Failed to print to stdout");
     println!();
 }

@@ -2,7 +2,9 @@ use async_lock::RwLock;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
-use query::{Database, File};
+use query::Database;
+#[cfg(not(target_arch = "wasm32"))]
+use query::{FileSource, FileSystemSource, InMemorySource};
 
 use super::capabilities::*;
 use super::diagnostics::*;
@@ -14,14 +16,26 @@ pub struct Server {
 
 impl Server {
     pub fn new(client: tower_lsp::Client) -> Self {
-        Server { client, database: RwLock::new(Database::default()) }
+        let database = Database::in_memory();
+        Server { client, database: RwLock::new(database) }
     }
 }
 
 #[tower_lsp::async_trait]
 impl LanguageServer for Server {
-    async fn initialize(&self, _: InitializeParams) -> jsonrpc::Result<InitializeResult> {
+    async fn initialize(&self, params: InitializeParams) -> jsonrpc::Result<InitializeResult> {
         let capabilities = capabilities();
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(root_uri) = params.root_uri {
+            let root_path =
+                root_uri.to_file_path().map_err(|_| jsonrpc::Error::internal_error())?;
+            let source = InMemorySource::new().fallback_to(FileSystemSource::new(root_path));
+            let mut database = self.database.write().await;
+            let source_mut = database.source_mut();
+            *source_mut = Box::new(source);
+        }
+        // prevent unused variable warning when compiled for wasm
+        let _ = params;
         Ok(InitializeResult { capabilities, ..InitializeResult::default() })
     }
 
@@ -42,11 +56,14 @@ impl LanguageServer for Server {
             .log_message(MessageType::INFO, format!("Opened file: {}", text_document.uri))
             .await;
 
-        let file = File { name: text_document.uri.clone(), source: text_document.text };
-        let mut view = db.add(file);
+        let source_mut = db.source_mut();
+        assert!(source_mut.manage(&text_document.uri));
+        source_mut.write_string(&text_document.uri, &text_document.text).unwrap();
 
-        let res = view.load();
-        let diags = view.query().diagnostics(res);
+        let mut view = db.open_uri(&text_document.uri).expect("Failed to open document");
+
+        let res = view.load_module().map(|_| ());
+        let diags = view.diagnostics(res);
         self.send_diagnostics(text_document.uri, diags).await;
     }
 
@@ -61,10 +78,14 @@ impl LanguageServer for Server {
         let mut db = self.database.write().await;
         let text = content_changes.drain(0..).next().unwrap().text;
 
-        let mut view = db.get_mut(&text_document.uri).unwrap();
+        let source_mut = db.source_mut();
+        assert!(source_mut.manage(&text_document.uri));
+        source_mut.write_string(&text_document.uri, &text).unwrap();
 
-        let res = view.update(text);
-        let diags = view.query().diagnostics(res);
+        let mut view = db.open_uri(&text_document.uri).expect("Failed to open document");
+
+        let res = view.load_module().map(|_| ());
+        let diags = view.diagnostics(res);
         self.send_diagnostics(text_document.uri, diags).await;
     }
 
@@ -92,7 +113,7 @@ impl LanguageServer for Server {
 }
 
 impl Server {
-    async fn send_diagnostics(&self, url: Url, diags: Vec<Diagnostic>) {
+    pub(crate) async fn send_diagnostics(&self, url: Url, diags: Vec<Diagnostic>) {
         self.client.publish_diagnostics(url, diags, None).await;
     }
 }

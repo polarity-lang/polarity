@@ -20,6 +20,8 @@ ropey = "1"
 # fancy error messages
 miette = { workspace = true }
 thiserror = { workspace = true }
+# logging
+log = { workspace = true }
 # workspace members
 ast = { path = "../ast" }
 lowering = { path = "../lowering" }
@@ -29,3 +31,6 @@ parser = { path = "../parser" }
 renaming = { path = "../renaming" }
 xfunc = { path = "../xfunc" }
 lifting = { path = "../lifting" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-time = "1"

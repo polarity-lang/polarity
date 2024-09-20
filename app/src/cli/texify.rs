@@ -6,8 +6,6 @@ use std::path::PathBuf;
 use printer::{Print, PrintCfg};
 use query::Database;
 
-use crate::result::IOError;
-
 const LATEX_END: &str = r"\end{alltt}
 ";
 
@@ -85,12 +83,9 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let mut db = Database::default();
-    let file =
-        query::File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
-    let view = db.add(file).query();
-
-    let prg = view.ust().map_err(|err| view.pretty_error(err))?;
+    let mut db = Database::from_path(&cmd.filepath);
+    let mut view = db.open_path(&cmd.filepath)?;
+    let prg = view.load_module().map_err(|err| view.pretty_error(err))?;
 
     let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
 
@@ -106,12 +101,12 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     };
 
     stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
-    print_prg(prg, &cfg, &mut stream);
+    print_prg(&prg, &cfg, &mut stream);
     stream.write_all(LATEX_END.as_bytes()).unwrap();
     Ok(())
 }
 
-fn print_prg<W: io::Write>(prg: ast::Module, cfg: &PrintCfg, stream: &mut W) {
+fn print_prg<W: io::Write>(prg: &ast::Module, cfg: &PrintCfg, stream: &mut W) {
     prg.print_latex(cfg, stream).expect("Failed to print to stdout");
     println!();
 }

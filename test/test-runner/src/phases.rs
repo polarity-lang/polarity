@@ -1,13 +1,13 @@
+use std::cell::RefCell;
+use std::error::Error;
 use std::fmt;
-use std::rc::Rc;
-use std::{error::Error, panic};
+use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::sync::Arc;
 
+use query::{Database, DatabaseViewMut, FileSource, FileSystemSource, InMemorySource};
 use url::Url;
 
 use parser::cst;
-
-use ast::Module;
-use renaming::Rename;
 
 use crate::{
     runner::CaseResult,
@@ -15,13 +15,16 @@ use crate::{
 };
 
 pub trait Phase {
-    type In;
     type Out: TestOutput;
     type Err;
 
     fn new(name: &'static str) -> Self;
     fn name(&self) -> &'static str;
-    fn run(input: Self::In) -> Result<Self::Out, Self::Err>;
+    fn run(
+        view: &mut DatabaseViewMut,
+        cst_lookup_table: &mut lowering::LookupTable,
+        ast_lookup_table: &mut elaborator::LookupTable,
+    ) -> Result<Self::Out, Self::Err>;
 }
 
 /// Represents a partially completed run of a testcase, where we have
@@ -30,6 +33,9 @@ pub trait Phase {
 /// has been run.
 pub struct PartialRun<O> {
     case: Case,
+    database: Database,
+    cst_lookup_table: RefCell<lowering::LookupTable>,
+    ast_lookup_table: RefCell<elaborator::LookupTable>,
     /// The result of the last run phase.
     result: Result<O, PhasesError>,
     /// A textual report about all the previously run phases.
@@ -42,24 +48,39 @@ pub struct PhaseReport {
     pub output: String,
 }
 
+impl PartialRun<()> {
+    /// Start a new partial run for a testcase with the initial input.
+    pub fn start(case: Case) -> PartialRun<()> {
+        let mut source = InMemorySource::new();
+        source.insert(case.uri(), case.content().unwrap());
+        let source = source.fallback_to(FileSystemSource::new(&case.path));
+        let database = Database::from_source(source);
+        let cst_lookup_table = RefCell::new(lowering::LookupTable::default());
+        let ast_lookup_table = RefCell::new(elaborator::LookupTable::default());
+        PartialRun {
+            case,
+            database,
+            cst_lookup_table,
+            ast_lookup_table,
+            result: Ok(()),
+            report_phases: vec![],
+        }
+    }
+}
+
 impl<O> PartialRun<O>
 where
     O: TestOutput + std::panic::UnwindSafe,
 {
-    /// Start a new partial run for a testcase with the initial input.
-    pub fn start(case: Case, input: O) -> PartialRun<O> {
-        PartialRun { case, result: Ok(input), report_phases: vec![] }
-    }
-
     /// Extend this partial run by running one additional phase.
     pub fn then<O2, E, P>(mut self, config: &suites::Config, phase: P) -> PartialRun<O2>
     where
         O2: TestOutput,
         E: Error + 'static,
-        P: Phase<In = O, Out = O2, Err = E>,
+        P: Phase<Out = O2, Err = E>,
     {
         // Whether we expect a success in this phase.
-        let success = config.fail.as_ref().map(|fail| fail != phase.name()).unwrap_or(true);
+        let expect_success = config.fail.as_ref().map(|fail| fail != phase.name()).unwrap_or(true);
 
         // If we are in the phase that is expected to fail, we check
         // whether there is an expected error output.
@@ -72,16 +93,30 @@ where
         });
 
         // Run the phase and handle the result
-        let result = self.result.and_then(|out| {
-            // The implementation of the compilar might contain a bug which
+        let result = self.result.and_then(|_| {
+            // The implementation of the compiler might contain a bug which
             // triggers a panic. We catch this panic here so that we can report the bug as a failing case.
-            let run_result = panic::catch_unwind(|| P::run(out));
+            let view = self.database.open_uri(&self.case.uri()).unwrap();
+            let view = RefCell::new(view);
+            let cst_lookup_table = &self.cst_lookup_table;
+            let ast_lookup_table = &self.ast_lookup_table;
+
+            // Run the phase and catch any panics that might occur.
+            // We need to use `AssertUnwindSafe` because the compiler can not automatically
+            // guarantee that passing RefCell's across a catch_unwind boundary is safe.
+            let run_result = catch_unwind(AssertUnwindSafe(|| {
+                let mut view = view.borrow_mut();
+                let mut cst_lookup_table = cst_lookup_table.borrow_mut();
+                let mut ast_lookup_table = ast_lookup_table.borrow_mut();
+                P::run(&mut view, &mut cst_lookup_table, &mut ast_lookup_table)
+            }));
+
             match run_result {
                 Ok(Ok(out2)) => {
                     // There was no panic and `run` returned with a result.
                     self.report_phases
                         .push(PhaseReport { name: phase.name(), output: out2.test_output() });
-                    if !success {
+                    if !expect_success {
                         return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
                     }
                     if let Some(expected) = output {
@@ -96,7 +131,7 @@ where
                     // There was no panic and `run` returned with an error.
                     self.report_phases
                         .push(PhaseReport { name: phase.name(), output: err.to_string() });
-                    if success {
+                    if expect_success {
                         return Err(PhasesError::ExpectedSuccess { got: Box::new(err) });
                     }
                     if let Some(expected) = output {
@@ -107,11 +142,25 @@ where
                     }
                     Err(PhasesError::AsExpected)
                 }
-                Err(_) => Err(PhasesError::Panic),
+                Err(_) => {
+                    // There was a panic
+                    self.report_phases.push(PhaseReport {
+                        name: phase.name(),
+                        output: "Panic occurred".to_string(),
+                    });
+                    Err(PhasesError::Panic)
+                }
             }
         });
 
-        PartialRun { case: self.case, result, report_phases: self.report_phases }
+        PartialRun {
+            database: self.database,
+            case: self.case,
+            cst_lookup_table: self.cst_lookup_table,
+            ast_lookup_table: self.ast_lookup_table,
+            result,
+            report_phases: self.report_phases,
+        }
     }
 
     pub fn report(self) -> CaseResult {
@@ -178,9 +227,8 @@ pub struct Parse {
 }
 
 impl Phase for Parse {
-    type In = (Url, String);
-    type Out = cst::decls::Module;
-    type Err = parser::ParseError;
+    type Out = Arc<cst::decls::Module>;
+    type Err = query::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -190,9 +238,37 @@ impl Phase for Parse {
         self.name
     }
 
-    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        let (uri, input) = &input;
-        parser::parse_module(uri.clone(), input)
+    fn run(
+        view: &mut DatabaseViewMut,
+        _: &mut lowering::LookupTable,
+        _: &mut elaborator::LookupTable,
+    ) -> Result<Self::Out, Self::Err> {
+        view.load_cst()
+    }
+}
+
+pub struct Imports {
+    name: &'static str,
+}
+
+impl Phase for Imports {
+    type Out = ();
+    type Err = query::Error;
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    fn run(
+        view: &mut DatabaseViewMut,
+        cst_lookup_table: &mut lowering::LookupTable,
+        ast_lookup_table: &mut elaborator::LookupTable,
+    ) -> Result<Self::Out, Self::Err> {
+        view.load_imports(cst_lookup_table, ast_lookup_table)
     }
 }
 
@@ -201,15 +277,13 @@ impl Phase for Parse {
 /// This phase lowers a module from its cst (concrete syntax tree) representation
 /// to its ast (abstract syntax tree) representation. We use this phase to test
 /// the implementation of lowering.
-
 pub struct Lower {
     name: &'static str,
 }
 
 impl Phase for Lower {
-    type In = cst::decls::Module;
-    type Out = Module;
-    type Err = lowering::LoweringError;
+    type Out = ast::Module;
+    type Err = query::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -219,8 +293,12 @@ impl Phase for Lower {
         self.name
     }
 
-    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        lowering::lower_module(&input)
+    fn run(
+        view: &mut DatabaseViewMut,
+        cst_lookup_table: &mut lowering::LookupTable,
+        _: &mut elaborator::LookupTable,
+    ) -> Result<Self::Out, Self::Err> {
+        view.load_ust(cst_lookup_table)
     }
 }
 
@@ -235,9 +313,8 @@ pub struct Check {
 }
 
 impl Phase for Check {
-    type In = Module;
-    type Out = Module;
-    type Err = elaborator::result::TypeError;
+    type Out = Arc<ast::Module>;
+    type Err = query::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -247,8 +324,12 @@ impl Phase for Check {
         self.name
     }
 
-    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        elaborator::typechecker::check(Rc::new(input))
+    fn run(
+        view: &mut DatabaseViewMut,
+        cst_lookup_table: &mut lowering::LookupTable,
+        ast_lookup_table: &mut elaborator::LookupTable,
+    ) -> Result<Self::Out, Self::Err> {
+        view.load_ast(cst_lookup_table, ast_lookup_table)
     }
 }
 
@@ -263,21 +344,9 @@ pub struct Print {
     name: &'static str,
 }
 
-#[derive(Debug)]
-pub enum NoError {}
-
-impl Error for NoError {}
-
-impl fmt::Display for NoError {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        unreachable!()
-    }
-}
-
 impl Phase for Print {
-    type In = Module;
-    type Out = (Url, String);
-    type Err = NoError;
+    type Out = String;
+    type Err = query::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -287,17 +356,29 @@ impl Phase for Print {
         self.name
     }
 
-    fn run(input: Self::In) -> Result<Self::Out, Self::Err> {
-        Ok((input.uri.clone(), printer::Print::print_to_string(&input.rename(), None)))
+    fn run(
+        view: &mut DatabaseViewMut,
+        cst_lookup_table: &mut lowering::LookupTable,
+        ast_lookup_table: &mut elaborator::LookupTable,
+    ) -> Result<Self::Out, Self::Err> {
+        let output = view.print_to_string()?;
+        view.write_source(&output)?;
+        *cst_lookup_table = Default::default();
+        *ast_lookup_table = Default::default();
+        Ok(output)
     }
 }
 
 // TestOutput
-//
-//
 
 pub trait TestOutput {
     fn test_output(&self) -> String;
+}
+
+impl TestOutput for () {
+    fn test_output(&self) -> String {
+        "".to_owned()
+    }
 }
 
 impl TestOutput for String {
@@ -313,7 +394,7 @@ impl TestOutput for cst::decls::Module {
     }
 }
 
-impl TestOutput for Module {
+impl TestOutput for ast::Module {
     fn test_output(&self) -> String {
         printer::Print::print_to_string(&self, None)
     }
@@ -322,6 +403,12 @@ impl TestOutput for Module {
 impl TestOutput for Url {
     fn test_output(&self) -> String {
         self.to_string()
+    }
+}
+
+impl<T: TestOutput> TestOutput for Arc<T> {
+    fn test_output(&self) -> String {
+        self.as_ref().test_output()
     }
 }
 

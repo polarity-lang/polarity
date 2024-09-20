@@ -19,15 +19,17 @@ pub async fn hover(server: &Server, params: HoverParams) -> jsonrpc::Result<Opti
         .await;
 
     let pos = pos_params.position;
-    let db = server.database.read().await;
-    let index = db.get(&text_document.uri).unwrap();
+    let mut db = server.database.write().await;
+    let Ok(index) = db.open_uri(&text_document.uri) else {
+        return Ok(None);
+    };
     let info =
         index.location_to_index(pos.from_lsp()).and_then(|idx| index.hoverinfo_at_index(idx));
     let res = info.map(|info| info_to_hover(&index, info));
     Ok(res)
 }
 
-fn info_to_hover(index: &DatabaseView, info: Info) -> Hover {
+fn info_to_hover(index: &DatabaseViewMut, info: Info) -> Hover {
     let range = index.span_to_locations(info.span).map(ToLsp::to_lsp);
     let contents = info.content.to_hover_content();
     Hover { contents, range }

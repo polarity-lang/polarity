@@ -1,3 +1,6 @@
-use "Data/Bool.pol"
-use "Data/Unit.pol"
 use "Data/Nat.pol"
+use "Data/Bool.pol"
+
+let one: Nat { 1 }
+
+let true: Bool { T }

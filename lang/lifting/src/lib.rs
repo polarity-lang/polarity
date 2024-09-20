@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use ast::ctx::values::TypeCtx;
 use ast::ctx::BindContext;
 use ast::ctx::LevelCtx;
@@ -9,7 +11,7 @@ mod fv;
 use fv::*;
 
 /// Lift local (co)matches for `name` in `module` to top-level (co)definitions
-pub fn lift(module: Module, name: &str) -> LiftResult {
+pub fn lift(module: Arc<Module>, name: &str) -> LiftResult {
     let mut ctx = Ctx {
         name: name.to_owned(),
         new_decls: vec![],

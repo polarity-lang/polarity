@@ -1,7 +1,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-#[derive(Error, Diagnostic, Debug)]
+#[derive(Error, Diagnostic, Debug, Clone)]
 pub enum XfuncError {
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("E-XXX"))]

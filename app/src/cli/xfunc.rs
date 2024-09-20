@@ -4,8 +4,6 @@ use std::path::PathBuf;
 
 use query::{Database, Xfunc};
 
-use crate::result::IOError;
-
 #[derive(clap::Args)]
 pub struct Args {
     #[clap(value_parser, value_name = "TYPE")]
@@ -17,11 +15,8 @@ pub struct Args {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let mut db = Database::default();
-    let file =
-        query::File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
-    let view = db.add(file).query();
-
+    let mut db = Database::from_path(&cmd.filepath);
+    let mut view = db.open_path(&cmd.filepath)?;
     let Xfunc { edits, .. } = view.xfunc(&cmd.r#type).map_err(miette::Report::msg)?;
 
     let output = view.edited(edits);

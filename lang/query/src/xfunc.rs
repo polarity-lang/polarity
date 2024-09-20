@@ -7,16 +7,16 @@ use ast::*;
 use xfunc::matrix;
 use xfunc::result::XfuncError;
 
-use super::{DatabaseView, Edit};
+use super::{DatabaseViewMut, Edit};
 
 pub struct Xfunc {
     pub title: String,
     pub edits: Vec<Edit>,
 }
 
-impl<'a> DatabaseView<'a> {
-    pub fn xfunc(&self, type_name: &str) -> Result<Xfunc, crate::Error> {
-        let module = self.tst()?;
+impl<'a> DatabaseViewMut<'a> {
+    pub fn xfunc(&mut self, type_name: &str) -> Result<Xfunc, crate::Error> {
+        let module = self.load_module()?;
 
         let decl_spans =
             module.decls.iter().map(|decl| (decl.name().clone(), decl.span().unwrap())).collect();

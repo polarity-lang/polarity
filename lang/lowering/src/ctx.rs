@@ -24,7 +24,7 @@ pub struct Ctx {
     /// Bound variables in this map are De-Bruijn levels rather than indices:
     local_map: HashMap<Ident, Vec<Lvl>>,
     /// Metadata for top-level names
-    lookup_table: LookupTable,
+    pub lookup_table: LookupTable,
     /// Accumulates top-level declarations
     pub decls_map: HashMap<String, ast::Decl>,
     /// Counts the number of entries for each De-Bruijn level

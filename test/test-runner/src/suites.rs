@@ -3,6 +3,7 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use url::Url;
 use walkdir::WalkDir;
 
 use serde_derive::Deserialize;
@@ -33,6 +34,12 @@ impl Case {
 
     pub fn content(&self) -> io::Result<String> {
         fs::read_to_string(&self.path)
+    }
+
+    pub fn uri(&self) -> Url {
+        let canonicalized_path = self.path.clone().canonicalize().unwrap();
+
+        Url::from_file_path(canonicalized_path).unwrap()
     }
 
     pub fn expected(&self) -> Option<String> {

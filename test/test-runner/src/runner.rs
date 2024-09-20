@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use ast::HashMap;
-use url::Url;
 
 use crate::Args;
 
@@ -99,16 +98,14 @@ impl Runner {
 
     /// Run one individual testcase within a testsuite
     pub fn run_case(&self, config: &suites::Config, case: &Case) -> CaseResult {
-        let canonicalized_path = case.path.clone().canonicalize().unwrap();
-        let uri = Url::from_file_path(canonicalized_path).unwrap();
-        let input = (uri, case.content().unwrap());
-
-        PartialRun::start(case.clone(), input)
+        PartialRun::start(case.clone())
             .then(config, Parse::new("parse"))
+            .then(config, Imports::new("imports"))
             .then(config, Lower::new("lower"))
             .then(config, Check::new("check"))
             .then(config, Print::new("print"))
             .then(config, Parse::new("reparse"))
+            .then(config, Imports::new("reimports"))
             .then(config, Lower::new("relower"))
             .then(config, Check::new("recheck"))
             .report()

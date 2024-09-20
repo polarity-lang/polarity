@@ -20,21 +20,23 @@ pub async fn goto_definition(
         .await;
 
     let pos = pos_params.position;
-    let db = server.database.read().await;
-    let index = db.get(&text_document.uri).unwrap();
+    let mut db = server.database.write().await;
+    let Ok(index) = db.open_uri(&text_document.uri) else {
+        return Ok(None);
+    };
     let info =
         index.location_to_index(pos.from_lsp()).and_then(|idx| index.hoverinfo_at_index(idx));
     let res = info.and_then(|info| info_to_jump(&index, info));
     Ok(res)
 }
 
-fn info_to_jump(index: &DatabaseView, info: Info) -> Option<GotoDefinitionResponse> {
+fn info_to_jump(index: &DatabaseViewMut, info: Info) -> Option<GotoDefinitionResponse> {
     let (uri, span) = info.content.to_jump_target()?;
     let jump_location = span_to_location(&span, uri, index)?;
     Some(GotoDefinitionResponse::Scalar(jump_location))
 }
 
-fn span_to_location(span: &Span, uri: Url, index: &DatabaseView) -> Option<Location> {
+fn span_to_location(span: &Span, uri: Url, index: &DatabaseViewMut) -> Option<Location> {
     let range = index.span_to_locations(*span).map(ToLsp::to_lsp)?;
     Some(Location { uri, range })
 }

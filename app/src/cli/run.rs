@@ -4,9 +4,7 @@ use miette::Diagnostic;
 use thiserror::Error;
 
 use printer::{ColorChoice, Print, StandardStream};
-use query::{Database, File};
-
-use crate::result::IOError;
+use query::Database;
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -15,11 +13,10 @@ pub struct Args {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let mut db = Database::default();
-    let file = File::read(&cmd.filepath).map_err(IOError::from).map_err(miette::Report::from)?;
-    let view = db.add(file).query();
-
+    let mut db = Database::from_path(&cmd.filepath);
+    let mut view = db.open_path(&cmd.filepath)?;
     let nf = view.run().map_err(|err| view.pretty_error(err))?;
+
     match nf {
         Some(nf) => print_nf(&nf),
         None => return Err(miette::Report::from(MainNotFound {})),
