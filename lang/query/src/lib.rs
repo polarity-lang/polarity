@@ -8,7 +8,6 @@ mod edit;
 mod fs;
 mod info;
 mod lift;
-mod modules;
 mod result;
 mod spans;
 mod xfunc;
