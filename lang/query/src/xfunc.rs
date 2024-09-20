@@ -8,7 +8,7 @@ use url::Url;
 use xfunc::matrix;
 use xfunc::result::XfuncError;
 
-use crate::Database;
+use crate::database::Database;
 
 use super::Edit;
 

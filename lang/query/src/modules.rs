@@ -5,7 +5,8 @@ use elaborator::LookupTable;
 use parser::cst::decls::UseDecl;
 use url::Url;
 
-use crate::{dependency_graph::DependencyGraph, result::DriverError, Database, Error};
+use crate::database::Database;
+use crate::{dependency_graph::DependencyGraph, result::DriverError, Error};
 
 impl Database {
     pub fn load_module(&mut self, module_uri: &Url) -> Result<Arc<ast::Module>, Error> {

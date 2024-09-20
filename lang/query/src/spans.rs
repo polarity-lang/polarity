@@ -4,7 +4,7 @@ use codespan::{ByteIndex, Location, Span};
 use rust_lapper::Lapper;
 use url::Url;
 
-use crate::Database;
+use crate::database::Database;
 
 use super::info::{Info, Item};
 
