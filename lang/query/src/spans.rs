@@ -46,10 +46,10 @@ impl<'a> DatabaseViewMut<'a> {
     }
 
     pub fn infos(&self) -> &Lapper<u32, Info> {
-        &self.database.info_by_id[&self.uri]
+        self.database.info_by_id.get_even_if_stale(&self.uri).unwrap()
     }
 
     pub fn items(&self) -> &Lapper<u32, Item> {
-        &self.database.item_by_id[&self.uri]
+        self.database.item_by_id.get_even_if_stale(&self.uri).unwrap()
     }
 }

@@ -3,7 +3,6 @@ use std::sync::Arc;
 use parser::cst;
 use url::Url;
 
-use ast::HashMap;
 use rust_lapper::Lapper;
 
 pub use result::Error;
@@ -43,8 +42,8 @@ pub struct Database {
     ast: Cache<Result<Arc<ast::Module>, Error>>,
     /// The symbol table constructed during typechecking
     ast_lookup_table: Cache<elaborator::LookupTable>,
-    info_by_id: HashMap<Url, Lapper<u32, Info>>,
-    item_by_id: HashMap<Url, Lapper<u32, Item>>,
+    info_by_id: Cache<Lapper<u32, Info>>,
+    item_by_id: Cache<Lapper<u32, Item>>,
 }
 
 impl Database {
@@ -77,8 +76,8 @@ impl Database {
                 cst_time > cache_time
             }),
             ast_lookup_table: Cache::new(|db, uri, _| db.ast.is_stale(db, uri)),
-            info_by_id: HashMap::default(),
-            item_by_id: HashMap::default(),
+            info_by_id: Cache::new(|db, uri, _| db.ast.is_stale(db, uri)),
+            item_by_id: Cache::new(|db, uri, _| db.ast.is_stale(db, uri)),
         }
     }
 
