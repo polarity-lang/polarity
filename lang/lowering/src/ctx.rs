@@ -82,13 +82,13 @@ impl Ctx {
     }
 
     pub fn add_decl(&mut self, decl: ast::Decl) -> Result<(), LoweringError> {
-        if self.decls_map.contains_key(&decl.name().clone()) {
+        if self.decls_map.contains_key(&decl.name().clone().id) {
             return Err(LoweringError::AlreadyDefined {
-                name: Ident { id: decl.name().clone() },
+                name: Ident { id: decl.name().clone().id },
                 span: decl.span().to_miette(),
             });
         }
-        self.decls_map.insert(decl.name().clone(), decl);
+        self.decls_map.insert(decl.name().clone().id, decl);
         Ok(())
     }
 
@@ -122,7 +122,7 @@ impl Ctx {
         }
         let id = self.next_label_id;
         self.next_label_id += 1;
-        Ok(ast::Label { id, user_name: user_name.map(|name| name.id) })
+        Ok(ast::Label { id, user_name: user_name.map(|name| ast::Ident { id: name.id }) })
     }
 
     /// Next De Bruijn level to be assigned
@@ -176,7 +176,7 @@ impl Ctx {
                     ast::Variable {
                         span: None,
                         idx: self.level_to_index(Lvl { fst, snd }),
-                        name: name.to_owned(),
+                        name: ast::Ident { id: name.to_owned() },
                         inferred_type: None,
                     }
                     .into(),

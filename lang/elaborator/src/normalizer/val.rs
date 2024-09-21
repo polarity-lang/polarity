@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use ast;
 use ast::ctx::BindContext;
+use ast::Ident;
 use ast::Idx;
 use ast::MetaVar;
 use ast::Shift;
@@ -149,7 +150,7 @@ impl Print for TypCtor {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let TypCtor { span: _, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
-        alloc.typ(name).append(psubst)
+        alloc.typ(&name.id).append(psubst)
     }
 }
 
@@ -197,7 +198,7 @@ impl Print for Call {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Call { span: _, kind: _, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
-        alloc.ctor(name).append(psubst)
+        alloc.ctor(&name.id).append(psubst)
     }
 }
 
@@ -456,7 +457,7 @@ impl Print for DotCall {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let DotCall { span: _, kind: _, exp, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
-        exp.print(cfg, alloc).append(DOT).append(alloc.dtor(name)).append(psubst)
+        exp.print(cfg, alloc).append(DOT).append(alloc.dtor(&name.id)).append(psubst)
     }
 }
 
@@ -644,7 +645,12 @@ impl Print for Case {
                 .nest(cfg.indent),
         };
 
-        alloc.ctor(name).append(params.print(cfg, alloc)).append(alloc.space()).append(body).group()
+        alloc
+            .ctor(&name.id)
+            .append(params.print(cfg, alloc))
+            .append(alloc.space())
+            .append(body)
+            .group()
     }
 }
 
@@ -690,7 +696,7 @@ impl Print for OpaqueCall {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let OpaqueCall { span: _, name, args } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
-        alloc.ctor(name).append(psubst)
+        alloc.ctor(&name.id).append(psubst)
     }
 }
 
@@ -870,7 +876,7 @@ impl ReadBack for Closure {
             .map(|snd| {
                 Val::Neu(Neu::Variable(Variable {
                     span: None,
-                    name: "".to_owned(),
+                    name: Ident { id: "".to_owned() },
                     idx: Idx { fst: 0, snd },
                 }))
             })

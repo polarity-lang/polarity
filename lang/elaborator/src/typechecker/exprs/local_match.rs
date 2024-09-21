@@ -140,9 +140,9 @@ impl<'a> WithScrutinee<'a> {
             || !ctors_duplicate.is_empty()
         {
             return Err(TypeError::invalid_match(
-                ctors_missing.cloned().collect(),
-                ctors_undeclared.cloned().collect(),
-                ctors_duplicate,
+                ctors_missing.map(|i| &i.id).cloned().collect(),
+                ctors_undeclared.map(|i| &i.id).cloned().collect(),
+                ctors_duplicate.into_iter().map(|i| i.id).collect(),
                 &self.scrutinee.span(),
             ));
         }
@@ -179,7 +179,7 @@ impl<'a> WithScrutinee<'a> {
             let params = params.clone();
 
             args.check_telescope(
-                &name,
+                &name.id,
                 ctx,
                 &params,
                 |ctx, args_out| {
@@ -190,7 +190,7 @@ impl<'a> WithScrutinee<'a> {
                             Arg::UnnamedArg(Box::new(Exp::Variable(Variable {
                                 span: None,
                                 idx: Idx { fst: 1, snd },
-                                name: "".to_owned(),
+                                name: Ident { id: "".to_owned() },
                                 inferred_type: None,
                             })))
                         })

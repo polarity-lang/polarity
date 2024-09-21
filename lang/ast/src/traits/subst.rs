@@ -145,7 +145,7 @@ impl Substitution for SwapSubst {
             Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: new_ctx.lvl_to_idx(new_lvl),
-                name: "".to_owned(),
+                name: Ident { id: "".to_owned() },
                 inferred_type: None,
             }))
         })

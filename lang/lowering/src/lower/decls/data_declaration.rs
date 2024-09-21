@@ -20,7 +20,7 @@ impl Lower for cst::decls::Data {
         Ok(ast::Data {
             span: Some(*span),
             doc: doc.lower(ctx)?,
-            name: name.id.clone(),
+            name: ast::Ident { id: name.id.clone() },
             attr: attr.lower(ctx)?,
             typ: Box::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
             ctors,
@@ -48,7 +48,7 @@ fn lower_constructor(
                 if type_arity == 0 {
                     ast::TypCtor {
                         span: None,
-                        name: typ_name.id.clone(),
+                        name: ast::Ident { id: typ_name.id.clone() },
                         args: ast::Args { args: vec![] },
                     }
                 } else {
@@ -64,7 +64,7 @@ fn lower_constructor(
         Ok(ast::Ctor {
             span: Some(*span),
             doc: doc.lower(ctx)?,
-            name: name.id.clone(),
+            name: ast::Ident { id: name.id.clone() },
             params,
             typ,
         })

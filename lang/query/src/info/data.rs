@@ -293,6 +293,6 @@ impl From<TypeCtx> for Ctx {
 
 impl From<TypeCtxBinder> for Binder {
     fn from(binder: TypeCtxBinder) -> Self {
-        Binder { name: binder.name, typ: binder.typ.print_to_string(None) }
+        Binder { name: binder.name.id, typ: binder.typ.print_to_string(None) }
     }
 }

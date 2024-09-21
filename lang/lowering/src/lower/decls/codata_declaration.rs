@@ -21,7 +21,7 @@ impl Lower for cst::decls::Codata {
         Ok(ast::Codata {
             span: Some(*span),
             doc: doc.lower(ctx)?,
-            name: name.id.clone(),
+            name: ast::Ident { id: name.id.clone() },
             attr: attr.lower(ctx)?,
             typ: Box::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
             dtors,
@@ -69,7 +69,7 @@ fn lower_destructor(
             Ok(ast::Dtor {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
-                name: name.id.clone(),
+                name: ast::Ident { id: name.id.clone() },
                 params,
                 self_param,
                 ret_typ: ret_typ.lower(ctx)?,

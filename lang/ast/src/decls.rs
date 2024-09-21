@@ -189,12 +189,12 @@ impl Module {
         for decl in &self.decls {
             match decl {
                 Decl::Def(def) => {
-                    if def.self_param.typ.name == type_name {
+                    if def.self_param.typ.name.id == type_name {
                         out.push(def.name.clone());
                     }
                 }
                 Decl::Codef(codef) => {
-                    if codef.typ.name == type_name {
+                    if codef.typ.name.id == type_name {
                         out.push(codef.name.clone());
                     }
                 }
@@ -211,14 +211,14 @@ impl Module {
         for decl in &self.decls {
             match decl {
                 Decl::Data(data) => {
-                    if data.name == type_name {
+                    if data.name.id == type_name {
                         for ctor in &data.ctors {
                             out.push(ctor.name.clone());
                         }
                     }
                 }
                 Decl::Codata(codata) => {
-                    if codata.name == type_name {
+                    if codata.name.id == type_name {
                         for dtor in &codata.dtors {
                             out.push(dtor.name.clone());
                         }
@@ -456,7 +456,7 @@ impl Print for Data {
             .append(attr.print(cfg, alloc))
             .append(alloc.keyword(DATA))
             .append(alloc.space())
-            .append(alloc.typ(name))
+            .append(alloc.typ(&name.id))
             .append(typ.print(cfg, alloc))
             .append(alloc.space());
 
@@ -505,7 +505,7 @@ impl Print for Codata {
             .append(attr.print(cfg, alloc))
             .append(alloc.keyword(CODATA))
             .append(alloc.space())
-            .append(alloc.typ(name))
+            .append(alloc.typ(&name.id))
             .append(typ.print(cfg, alloc))
             .append(alloc.space());
 
@@ -546,7 +546,7 @@ impl Print for Ctor {
         let Ctor { span: _, doc, name, params, typ } = self;
 
         let doc = doc.print(cfg, alloc);
-        let head = alloc.ctor(name).append(params.print(cfg, alloc));
+        let head = alloc.ctor(&name.id).append(params.print(cfg, alloc));
 
         let head = if typ.is_simple() {
             head
@@ -582,7 +582,7 @@ impl Print for Dtor {
             self_param.print(&PrintCfg { print_function_sugar: false, ..*cfg }, alloc).append(DOT)
         };
         let head = head
-            .append(alloc.dtor(name))
+            .append(alloc.dtor(&name.id))
             .append(params.print(cfg, alloc))
             .append(print_return_type(cfg, alloc, ret_typ))
             .group();
@@ -633,7 +633,7 @@ impl Print for Def {
             .append(alloc.space())
             .append(self_param.print(cfg, alloc))
             .append(DOT)
-            .append(alloc.dtor(name))
+            .append(alloc.dtor(&name.id))
             .append(params.print(cfg, alloc))
             .append(print_return_type(cfg, alloc, ret_typ))
             .group();
@@ -683,7 +683,7 @@ impl Print for Codef {
         let head = alloc
             .keyword(CODEF)
             .append(alloc.space())
-            .append(alloc.ctor(name))
+            .append(alloc.ctor(&name.id))
             .append(params.print(cfg, alloc))
             .append(print_return_type(
                 &PrintCfg { print_function_sugar: false, ..*cfg },
@@ -716,7 +716,7 @@ pub struct Let {
 impl Let {
     /// Returns whether the declaration is the "main" expression of the module.
     pub fn is_main(&self) -> bool {
-        self.name == "main" && self.params.is_empty()
+        self.name.id == "main" && self.params.is_empty()
     }
 }
 
@@ -732,7 +732,7 @@ impl Print for Let {
         let head = alloc
             .keyword(LET)
             .append(alloc.space())
-            .append(name)
+            .append(&name.id)
             .append(params.print(cfg, alloc))
             .append(print_return_type(cfg, alloc, typ))
             .group();
@@ -759,7 +759,7 @@ impl SelfParam {
         Telescope {
             params: vec![Param {
                 implicit: false,
-                name: self.name.clone().unwrap_or_default(),
+                name: self.name.clone().unwrap_or_else(|| Ident { id: "".to_string() }),
                 typ: Box::new(self.typ.to_exp()),
             }],
         }
@@ -781,7 +781,7 @@ impl Print for SelfParam {
 
         match name {
             Some(name) => alloc
-                .text(name)
+                .text(&name.id)
                 .append(COLON)
                 .append(alloc.space())
                 .append(typ.print(&cfg, alloc))
@@ -856,7 +856,7 @@ impl Print for Telescope {
                     if rtype.shift((0, 1)) == **typ && rimplicit == *implicit =>
                 {
                     // We are adding another parameter of the same type.
-                    output = output.append(alloc.space()).append(alloc.text(name));
+                    output = output.append(alloc.space()).append(alloc.text(&name.id));
                 }
                 Some((rtype, _)) => {
                     // We are adding another parameter with a different type,
@@ -868,10 +868,12 @@ impl Print for Telescope {
                         .append(COMMA)
                         .append(alloc.line());
                     if *implicit {
-                        output =
-                            output.append(IMPLICIT).append(alloc.space()).append(alloc.text(name));
+                        output = output
+                            .append(IMPLICIT)
+                            .append(alloc.space())
+                            .append(alloc.text(&name.id));
                     } else {
-                        output = output.append(alloc.text(name));
+                        output = output.append(alloc.text(&name.id));
                     }
                 }
                 None => {
@@ -882,7 +884,7 @@ impl Print for Telescope {
                         output = output.append(IMPLICIT).append(alloc.space())
                     }
 
-                    output = output.append(alloc.text(name));
+                    output = output.append(alloc.text(&name.id));
                 }
             }
             running = Some((typ, *implicit));
@@ -911,65 +913,92 @@ mod print_telescope_tests {
 
     #[test]
     fn print_simple_chunk() {
-        let param1 =
-            Param { implicit: false, name: "x".to_owned(), typ: Box::new(TypeUniv::new().into()) };
-        let param2 =
-            Param { implicit: false, name: "y".to_owned(), typ: Box::new(TypeUniv::new().into()) };
+        let param1 = Param {
+            implicit: false,
+            name: Ident { id: "x".to_owned() },
+            typ: Box::new(TypeUniv::new().into()),
+        };
+        let param2 = Param {
+            implicit: false,
+            name: Ident { id: "y".to_owned() },
+            typ: Box::new(TypeUniv::new().into()),
+        };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(x y: Type)")
     }
 
     #[test]
     fn print_simple_implicit_chunk() {
-        let param1 =
-            Param { implicit: true, name: "x".to_owned(), typ: Box::new(TypeUniv::new().into()) };
-        let param2 =
-            Param { implicit: true, name: "y".to_owned(), typ: Box::new(TypeUniv::new().into()) };
+        let param1 = Param {
+            implicit: true,
+            name: Ident { id: "x".to_owned() },
+            typ: Box::new(TypeUniv::new().into()),
+        };
+        let param2 = Param {
+            implicit: true,
+            name: Ident { id: "y".to_owned() },
+            typ: Box::new(TypeUniv::new().into()),
+        };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(implicit x y: Type)")
     }
 
     #[test]
     fn print_mixed_implicit_chunk_1() {
-        let param1 =
-            Param { implicit: true, name: "x".to_owned(), typ: Box::new(TypeUniv::new().into()) };
-        let param2 =
-            Param { implicit: false, name: "y".to_owned(), typ: Box::new(TypeUniv::new().into()) };
+        let param1 = Param {
+            implicit: true,
+            name: Ident { id: "x".to_owned() },
+            typ: Box::new(TypeUniv::new().into()),
+        };
+        let param2 = Param {
+            implicit: false,
+            name: Ident { id: "y".to_owned() },
+            typ: Box::new(TypeUniv::new().into()),
+        };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(implicit x: Type, y: Type)")
     }
 
     #[test]
     fn print_mixed_implicit_chunk_2() {
-        let param1 =
-            Param { implicit: false, name: "x".to_owned(), typ: Box::new(TypeUniv::new().into()) };
-        let param2 =
-            Param { implicit: true, name: "y".to_owned(), typ: Box::new(TypeUniv::new().into()) };
+        let param1 = Param {
+            implicit: false,
+            name: Ident { id: "x".to_owned() },
+            typ: Box::new(TypeUniv::new().into()),
+        };
+        let param2 = Param {
+            implicit: true,
+            name: Ident { id: "y".to_owned() },
+            typ: Box::new(TypeUniv::new().into()),
+        };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(x: Type, implicit y: Type)")
     }
 
     #[test]
     fn print_shifting_example() {
-        let param1 =
-            Param { implicit: false, name: "a".to_owned(), typ: Box::new(TypeUniv::new().into()) };
+        let param1 = Param {
+            implicit: false,
+            name: Ident { id: "a".to_owned() },
+            typ: Box::new(TypeUniv::new().into()),
+        };
         let param2 = Param {
             implicit: false,
-            name: "x".to_owned(),
+            name: Ident { id: "x".to_owned() },
             typ: Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: 0 },
-                name: "a".to_owned(),
+                name: Ident { id: "a".to_owned() },
                 inferred_type: None,
             })),
         };
         let param3 = Param {
             implicit: false,
-            name: "y".to_owned(),
+            name: Ident { id: "y".to_owned() },
             typ: Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: 1 },
-                name: "a".to_owned(),
+                name: Ident { id: "a".to_owned() },
                 inferred_type: None,
             })),
         };
@@ -1012,12 +1041,12 @@ impl Print for Param {
             alloc
                 .text(IMPLICIT)
                 .append(alloc.space())
-                .append(name)
+                .append(&name.id)
                 .append(COLON)
                 .append(alloc.space())
                 .append(typ.print(cfg, alloc))
         } else {
-            alloc.text(name).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
+            alloc.text(&name.id).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
         }
     }
 }
@@ -1026,7 +1055,7 @@ impl Print for Arg {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Arg::UnnamedArg(e) => e.print(cfg, alloc),
-            Arg::NamedArg(i, e) => alloc.text(i).append(COLONEQ).append(e.print(cfg, alloc)),
+            Arg::NamedArg(i, e) => alloc.text(&i.id).append(COLONEQ).append(e.print(cfg, alloc)),
             Arg::InsertedImplicitArg(_) => {
                 panic!("Inserted implicit arguments should not be printed")
             }
