@@ -73,25 +73,29 @@ impl Database {
 
     /// Invalidate the file behind the given URI and all its reverse dependencies
     pub fn invalidate(&mut self, uri: &Url) -> Result<(), Error> {
+        self.invalidate_impl(uri);
         self.build_dependency_dag()?;
-        let mut rev_deps: HashSet<Url> =
+        let rev_deps: HashSet<Url> =
             self.deps.reverse_dependencies(uri).into_iter().cloned().collect();
         log::debug!(
             "Invalidating {} and its reverse dependencies: {:?}",
             uri,
             rev_deps.iter().map(ToString::to_string).collect::<Vec<_>>()
         );
-        rev_deps.insert(uri.clone());
         for rev_dep in &rev_deps {
-            self.files.invalidate(rev_dep);
-            self.cst.invalidate(rev_dep);
-            self.cst_lookup_table.invalidate(rev_dep);
-            self.ast.invalidate(rev_dep);
-            self.ast_lookup_table.invalidate(rev_dep);
-            self.info_by_id.invalidate(rev_dep);
-            self.item_by_id.invalidate(rev_dep);
+            self.invalidate_impl(rev_dep);
         }
         Ok(())
+    }
+
+    fn invalidate_impl(&mut self, uri: &Url) {
+        self.files.invalidate(uri);
+        self.cst.invalidate(uri);
+        self.cst_lookup_table.invalidate(uri);
+        self.ast.invalidate(uri);
+        self.ast_lookup_table.invalidate(uri);
+        self.info_by_id.invalidate(uri);
+        self.item_by_id.invalidate(uri);
     }
 
     pub fn run(&mut self, uri: &Url) -> Result<Option<Box<Exp>>, Error> {
