@@ -127,8 +127,10 @@ impl Database {
 
         match self.ast.get_unless_stale(uri) {
             Some(ast) => {
-                *cst_lookup_table = self.cst_lookup_table.get_even_if_stale(uri).unwrap().clone();
-                *ast_lookup_table = self.ast_lookup_table.get_even_if_stale(uri).unwrap().clone();
+                cst_lookup_table
+                    .append(self.cst_lookup_table.get_even_if_stale(uri).unwrap().clone());
+                ast_lookup_table
+                    .append(self.ast_lookup_table.get_even_if_stale(uri).unwrap().clone());
                 ast.clone()
             }
             None => {
@@ -318,7 +320,11 @@ impl Database {
         let direct_dependencies = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
 
         for dep_url in direct_dependencies {
-            self.load_module_impl(cst_lookup_table, ast_lookup_table, &dep_url)?;
+            let mut dep_cst_lookup_table = lowering::LookupTable::default();
+            let mut dep_ast_lookup_table = LookupTable::default();
+            self.load_module_impl(&mut dep_cst_lookup_table, &mut dep_ast_lookup_table, &dep_url)?;
+            cst_lookup_table.append(dep_cst_lookup_table);
+            ast_lookup_table.append(dep_ast_lookup_table);
         }
 
         self.load_ast(module_uri, cst_lookup_table, ast_lookup_table)
