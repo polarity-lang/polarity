@@ -7,7 +7,17 @@ use printer::{
     Alloc, Builder, Print, PrintCfg,
 };
 
-pub type Ident = String;
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct Ident {
+    pub id: String,
+}
+
+impl fmt::Display for Ident {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.id)
+    }
+}
 
 /// Whether the metavariable corresponds to a typed hole written by the user
 /// or whether it was inserted during lowering for an implicit argument.

@@ -1,12 +1,14 @@
-pub fn increment_name(mut name: String) -> String {
-    if name.ends_with('\'') {
-        name.push('\'');
+use ast::Ident;
+
+pub fn increment_name(mut name: Ident) -> Ident {
+    if name.id.ends_with('\'') {
+        name.id.push('\'');
         return name;
     }
-    let (s, digits) = split_trailing_digits(&name);
+    let (s, digits) = split_trailing_digits(&name.id);
     match digits {
-        None => format!("{s}0"),
-        Some(n) => format!("{s}{}", n + 1),
+        None => Ident { id: format!("{s}0") },
+        Some(n) => Ident { id: format!("{s}{}", n + 1) },
     }
 }
 

@@ -15,7 +15,7 @@ pub fn lift(module: Arc<Module>, name: &str) -> LiftResult {
     let mut ctx = Ctx {
         name: name.to_owned(),
         new_decls: vec![],
-        curr_decl: "".to_owned(),
+        curr_decl: Ident { id: "".to_owned() },
         modified_decls: HashSet::default(),
         ctx: LevelCtx::default(),
     };
@@ -535,7 +535,7 @@ impl Ctx {
         cases: &Vec<Case>,
     ) -> Exp {
         // Only lift local matches for the specified type
-        if inferred_type.name != self.name {
+        if inferred_type.name.id != self.name {
             return Exp::LocalMatch(LocalMatch {
                 span: *span,
                 inferred_type: None,
@@ -580,7 +580,7 @@ impl Ctx {
         };
 
         // Build the new top-level definition
-        let name = self.unique_def_name(name, &inferred_type.name);
+        let name = self.unique_def_name(name, &inferred_type.name.id);
 
         let def = Def {
             span: None,
@@ -621,7 +621,7 @@ impl Ctx {
         cases: &Vec<Case>,
     ) -> Exp {
         // Only lift local matches for the specified type
-        if inferred_type.name != self.name {
+        if inferred_type.name.id != self.name {
             return Exp::LocalComatch(LocalComatch {
                 span: *span,
                 ctx: None,
@@ -647,7 +647,7 @@ impl Ctx {
         let typ = typ.subst(&mut self.ctx, &subst.in_body());
 
         // Build the new top-level definition
-        let name = self.unique_codef_name(name, &inferred_type.name);
+        let name = self.unique_codef_name(name, &inferred_type.name.id);
 
         let codef = Codef {
             span: None,
@@ -686,7 +686,7 @@ impl Ctx {
         label.user_name.clone().unwrap_or_else(|| {
             let lowered = type_name.to_lowercase();
             let id = label.id;
-            format!("d_{lowered}{id}")
+            Ident { id: format!("d_{lowered}{id}") }
         })
     }
 
@@ -694,7 +694,7 @@ impl Ctx {
     fn unique_codef_name(&self, label: &Label, type_name: &str) -> Ident {
         label.user_name.clone().unwrap_or_else(|| {
             let id = label.id;
-            format!("Mk{type_name}{id}")
+            Ident { id: format!("Mk{type_name}{id}") }
         })
     }
 }

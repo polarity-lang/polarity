@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use derivative::Derivative;
 
-use ast::{Shift, ShiftRange};
+use ast::{Ident, Shift, ShiftRange};
 use pretty::DocAllocator;
 
 use ast::ctx::values::TypeCtx;
@@ -107,7 +107,7 @@ impl ToEnv for LevelCtx {
                         let idx = Idx { fst: self.bound.len() - 1 - fst, snd: v.len() - 1 - snd };
                         Rc::new(Val::Neu(Neu::Variable(Variable {
                             span: None,
-                            name: String::new(),
+                            name: Ident { id: String::new() },
                             idx,
                         })))
                     })

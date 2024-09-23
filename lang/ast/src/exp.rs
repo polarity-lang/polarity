@@ -255,8 +255,11 @@ impl Print for Exp {
                     if !dtors_group.is_nil() {
                         dtors_group = alloc.line_().append(dtors_group);
                     }
-                    dtors_group =
-                        alloc.text(DOT).append(alloc.dtor(name)).append(psubst).append(dtors_group);
+                    dtors_group = alloc
+                        .text(DOT)
+                        .append(alloc.dtor(&name.id))
+                        .append(psubst)
+                        .append(dtors_group);
                     dtor = exp;
                 }
                 dtor.print(cfg, alloc).append(dtors_group.align().group())
@@ -359,10 +362,10 @@ impl Print for Variable {
         let Variable { name, idx, .. } = self;
         if cfg.de_bruijn {
             alloc.text(format!("{name}@{idx}"))
-        } else if name.is_empty() {
+        } else if name.id.is_empty() {
             alloc.text(format!("@{idx}"))
         } else {
-            alloc.text(name)
+            alloc.text(&name.id)
         }
     }
 }
@@ -445,7 +448,7 @@ impl Print for TypCtor {
         prec: Precedence,
     ) -> Builder<'a> {
         let TypCtor { span: _, name, args } = self;
-        if name == "Fun" && args.len() == 2 && cfg.print_function_sugar {
+        if name.id == "Fun" && args.len() == 2 && cfg.print_function_sugar {
             let arg = args.args[0].print_prec(cfg, alloc, 1);
             let res = args.args[1].print_prec(cfg, alloc, 0);
             let fun = arg.append(alloc.space()).append(ARROW).append(alloc.space()).append(res);
@@ -456,7 +459,7 @@ impl Print for TypCtor {
             }
         } else {
             let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-            alloc.typ(name).append(psubst)
+            alloc.typ(&name.id).append(psubst)
         }
     }
 }
@@ -560,7 +563,7 @@ impl Print for Call {
     ) -> Builder<'a> {
         let Call { name, args, .. } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-        alloc.ctor(name).append(psubst)
+        alloc.ctor(&name.id).append(psubst)
     }
 }
 
@@ -913,7 +916,7 @@ impl Print for LocalMatch {
             .append(DOT)
             .append(alloc.keyword(MATCH))
             .append(match &name.user_name {
-                Some(name) => alloc.space().append(alloc.dtor(name)),
+                Some(name) => alloc.space().append(alloc.dtor(&name.id)),
                 None => alloc.nil(),
             })
             .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
@@ -1009,7 +1012,7 @@ impl Print for LocalComatch {
             alloc
                 .keyword(COMATCH)
                 .append(match &name.user_name {
-                    Some(name) => alloc.space().append(alloc.ctor(name)),
+                    Some(name) => alloc.space().append(alloc.ctor(&name.id)),
                     None => alloc.nil(),
                 })
                 .append(alloc.space())
@@ -1032,7 +1035,7 @@ fn print_lambda_sugar<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a
         .name();
     alloc
         .backslash_anno(cfg)
-        .append(var_name)
+        .append(&var_name.id)
         .append(DOT)
         .append(alloc.space())
         .append(body.print(cfg, alloc))
@@ -1169,9 +1172,9 @@ impl Print for Pattern {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Pattern { is_copattern, name, params } = self;
         if *is_copattern {
-            alloc.text(DOT).append(alloc.ctor(name)).append(params.print(cfg, alloc))
+            alloc.text(DOT).append(alloc.ctor(&name.id)).append(params.print(cfg, alloc))
         } else {
-            alloc.ctor(name).append(params.print(cfg, alloc))
+            alloc.ctor(&name.id).append(params.print(cfg, alloc))
         }
     }
 }
@@ -1318,7 +1321,7 @@ impl Named for ParamInst {
 impl Print for ParamInst {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let ParamInst { span: _, info: _, name, typ: _ } = self;
-        alloc.text(name)
+        alloc.text(&name.id)
     }
 }
 

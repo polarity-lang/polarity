@@ -31,7 +31,7 @@ impl CheckInfer for LocalComatch {
         })?;
         if uses_self(codata)? {
             return Err(TypeError::LocalComatchWithSelf {
-                type_name: codata.name.to_owned(),
+                type_name: codata.name.to_owned().id,
                 span: span.to_miette(),
             });
         }
@@ -102,9 +102,9 @@ impl<'a> WithExpectedType<'a> {
             || !dtors_duplicate.is_empty()
         {
             return Err(TypeError::invalid_match(
-                dtors_missing.cloned().collect(),
-                dtors_exessive.cloned().collect(),
-                dtors_duplicate,
+                dtors_missing.map(|i| &i.id).cloned().collect(),
+                dtors_exessive.map(|i| &i.id).cloned().collect(),
+                dtors_duplicate.into_iter().map(|i| i.id).collect(),
                 &self.expected_type.span(),
             ));
         }
@@ -159,7 +159,7 @@ impl<'a> WithExpectedType<'a> {
             let module = ctx.module.clone();
 
             params_inst.check_telescope(
-                &name,
+                &name.id,
                 ctx,
                 &params,
                 |ctx, args_out| {
@@ -237,7 +237,7 @@ impl<'a> WithExpectedType<'a> {
                                                 // - The arguments to the toplevel codefinition
                                                 // - The arguments bound by the destructor copattern.
                                                 idx: Idx { fst: 2, snd },
-                                                name: "".to_owned(),
+                                                name: Ident { id: "".to_owned() },
                                                 inferred_type: None,
                                             })))
                                         })

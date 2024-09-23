@@ -110,12 +110,12 @@ impl CollectInfo for Data {
         let Data { name, span, doc, typ, ctors, .. } = self;
         if let Some(span) = span {
             // Add item
-            let item = Item::Data(name.clone());
+            let item = Item::Data(name.clone().id);
             collector.add_item(*span, item);
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
             let info =
-                DataInfo { name: name.clone(), doc, params: typ.params.print_to_string(None) };
+                DataInfo { name: name.clone().id, doc, params: typ.params.print_to_string(None) };
             collector.add_info(*span, info)
         }
 
@@ -132,12 +132,12 @@ impl CollectInfo for Codata {
         let Codata { name, doc, typ, span, dtors, .. } = self;
         if let Some(span) = span {
             // Add item
-            let item = Item::Codata(name.clone());
+            let item = Item::Codata(name.clone().id);
             collector.add_item(*span, item);
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
             let info =
-                CodataInfo { name: name.clone(), doc, params: typ.params.print_to_string(None) };
+                CodataInfo { name: name.clone().id, doc, params: typ.params.print_to_string(None) };
             collector.add_info(*span, info);
         }
 
@@ -154,7 +154,8 @@ impl CollectInfo for Def {
         let Def { name, span, self_param, cases, params, ret_typ, .. } = self;
         if let Some(span) = span {
             // Add Item
-            let item = Item::Def { name: name.clone(), type_name: self_param.typ.name.clone() };
+            let item =
+                Item::Def { name: name.clone().id, type_name: self_param.typ.name.clone().id };
             collector.add_item(*span, item);
             // Add Info
             let info = DefInfo {};
@@ -173,7 +174,7 @@ impl CollectInfo for Codef {
         let Codef { name, span, typ, cases, params, .. } = self;
         if let Some(span) = span {
             // Add item
-            let item = Item::Codef { name: name.clone(), type_name: typ.name.clone() };
+            let item = Item::Codef { name: name.clone().id, type_name: typ.name.clone().id };
             collector.add_item(*span, item);
             // Add info
             let info = CodefInfo {};
@@ -191,7 +192,7 @@ impl CollectInfo for Ctor {
         if let Some(span) = span {
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
-            let info = CtorInfo { name: name.clone(), doc };
+            let info = CtorInfo { name: name.clone().id, doc };
             collector.add_info(*span, info);
         }
         params.collect_info(collector);
@@ -205,7 +206,7 @@ impl CollectInfo for Dtor {
         if let Some(span) = span {
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
-            let info = DtorInfo { name: name.clone(), doc };
+            let info = DtorInfo { name: name.clone().id, doc };
             collector.add_info(*span, info);
         }
         self_param.collect_info(collector);
@@ -252,7 +253,7 @@ impl CollectInfo for Variable {
     fn collect_info(&self, collector: &mut InfoCollector) {
         let Variable { span, inferred_type, name, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let info = VariableInfo { typ: typ.print_to_string(None), name: name.clone() };
+            let info = VariableInfo { typ: typ.print_to_string(None), name: name.clone().id };
             collector.add_info(*span, info)
         }
     }
@@ -273,7 +274,7 @@ impl CollectInfo for TypCtor {
                 Some(Decl::Codata(d)) => d.doc.clone().map(|doc| doc.docs),
                 _ => None,
             };
-            let info = TypeCtorInfo { name: name.clone(), definition_site, doc };
+            let info = TypeCtorInfo { name: name.clone().id, definition_site, doc };
             collector.add_info(*span, info)
         }
         args.collect_info(collector)
@@ -324,7 +325,7 @@ impl CollectInfo for Call {
                 kind: *kind,
                 doc,
                 typ: typ.print_to_string(None),
-                name: name.clone(),
+                name: name.clone().id,
                 definition_site,
             };
             collector.add_info(*span, info)
@@ -363,7 +364,7 @@ impl CollectInfo for DotCall {
             let info = DotCallInfo {
                 kind: *kind,
                 doc,
-                name: name.clone(),
+                name: name.clone().id,
                 typ: typ.print_to_string(None),
                 definition_site,
             };
