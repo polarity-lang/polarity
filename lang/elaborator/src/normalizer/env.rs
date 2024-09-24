@@ -107,7 +107,7 @@ impl ToEnv for LevelCtx {
                         let idx = Idx { fst: self.bound.len() - 1 - fst, snd: v.len() - 1 - snd };
                         Rc::new(Val::Neu(Neu::Variable(Variable {
                             span: None,
-                            name: Ident { id: String::new() },
+                            name: Ident::from_string(""),
                             idx,
                         })))
                     })

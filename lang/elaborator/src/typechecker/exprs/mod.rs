@@ -262,10 +262,8 @@ impl InferTelescope for SelfParam {
         let typ_nf = typ.to_exp().normalize(&ctx.module, &mut ctx.env())?;
         let typ_out = typ.infer(ctx)?;
         let param_out = SelfParam { info: *info, name: name.clone(), typ: typ_out };
-        let elem = Binder {
-            name: name.clone().unwrap_or_else(|| Ident { id: "".to_owned() }),
-            typ: typ_nf,
-        };
+        let elem =
+            Binder { name: name.clone().unwrap_or_else(|| Ident::from_string("")), typ: typ_nf };
 
         // We need to shift the self parameter type here because we treat it as a 1-element telescope
         ctx.bind_single(&elem.shift((1, 0)), |ctx| f(ctx, param_out))

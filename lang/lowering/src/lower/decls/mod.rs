@@ -97,7 +97,7 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, Lowering
                 ctx,
                 ast::SelfParam {
                     info: Some(*span),
-                    name: name.clone().map(|name| ast::Ident { id: name.id }),
+                    name: name.clone().map(|name| ast::Ident { span: None, id: name.id }),
                     typ: typ_ctor,
                 },
             )
@@ -159,8 +159,8 @@ where
                     parser::cst::ident::Ident { span: *span, id: "_".to_owned() }
                 }
             };
-            let param_out =
-                ast::Param { implicit: *implicit, name: ast::Ident { id: name.id }, typ: typ_out };
+            let name = name.lower(ctx)?;
+            let param_out = ast::Param { implicit: *implicit, name, typ: typ_out };
             params_out.push(param_out);
             Ok(params_out)
         },

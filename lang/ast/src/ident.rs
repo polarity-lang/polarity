@@ -1,5 +1,6 @@
 use std::fmt;
 
+use codespan::Span;
 use derivative::Derivative;
 use pretty::DocAllocator;
 use printer::{
@@ -7,15 +8,31 @@ use printer::{
     Alloc, Builder, Print, PrintCfg,
 };
 
+use crate::HasSpan;
+
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Ident {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
     pub id: String,
+}
+
+impl Ident {
+    pub fn from_string(id: &str) -> Self {
+        Ident { span: None, id: id.to_owned() }
+    }
 }
 
 impl fmt::Display for Ident {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.id)
+    }
+}
+
+impl HasSpan for Ident {
+    fn span(&self) -> Option<Span> {
+        self.span
     }
 }
 

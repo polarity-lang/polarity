@@ -237,7 +237,7 @@ impl<'a> WithExpectedType<'a> {
                                                 // - The arguments to the toplevel codefinition
                                                 // - The arguments bound by the destructor copattern.
                                                 idx: Idx { fst: 2, snd },
-                                                name: Ident { id: "".to_owned() },
+                                                name: Ident::from_string(""),
                                                 inferred_type: None,
                                             })))
                                         })

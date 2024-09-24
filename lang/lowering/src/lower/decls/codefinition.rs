@@ -20,7 +20,7 @@ impl Lower for cst::decls::Codef {
             Ok(ast::Codef {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
-                name: ast::Ident { id: name.id.clone() },
+                name: name.lower(ctx)?,
                 attr: attr.lower(ctx)?,
                 params,
                 typ: typ_ctor,

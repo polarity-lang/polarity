@@ -122,7 +122,10 @@ impl Ctx {
         }
         let id = self.next_label_id;
         self.next_label_id += 1;
-        Ok(ast::Label { id, user_name: user_name.map(|name| ast::Ident { id: name.id }) })
+        Ok(ast::Label {
+            id,
+            user_name: user_name.map(|name| ast::Ident { span: Some(name.span), id: name.id }),
+        })
     }
 
     /// Next De Bruijn level to be assigned
@@ -176,7 +179,7 @@ impl Ctx {
                     ast::Variable {
                         span: None,
                         idx: self.level_to_index(Lvl { fst, snd }),
-                        name: ast::Ident { id: name.to_owned() },
+                        name: ast::Ident { span: None, id: name.to_owned() },
                         inferred_type: None,
                     }
                     .into(),

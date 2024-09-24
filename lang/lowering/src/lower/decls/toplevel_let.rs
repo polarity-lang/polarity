@@ -15,7 +15,7 @@ impl Lower for cst::decls::Let {
             Ok(ast::Let {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
-                name: ast::Ident { id: name.id.clone() },
+                name: name.lower(ctx)?,
                 attr: attr.lower(ctx)?,
                 params,
                 typ: typ.lower(ctx)?,

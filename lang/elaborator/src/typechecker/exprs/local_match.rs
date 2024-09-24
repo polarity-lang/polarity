@@ -190,7 +190,7 @@ impl<'a> WithScrutinee<'a> {
                             Arg::UnnamedArg(Box::new(Exp::Variable(Variable {
                                 span: None,
                                 idx: Idx { fst: 1, snd },
-                                name: Ident { id: "".to_owned() },
+                                name: Ident::from_string(""),
                                 inferred_type: None,
                             })))
                         })
