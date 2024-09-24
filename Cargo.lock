@@ -2422,6 +2422,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "tantivy",
+ "termcolor",
  "toml",
  "url",
  "walkdir",
