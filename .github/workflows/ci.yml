@@ -18,6 +18,29 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  build-msrv:
+    name: Build with Minimum Supported Rust Version (MSRV)
+    runs-on: ubuntu-latest
+    outputs:
+      msrv: ${{ steps.extract_rust_version.outputs.msrv }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract Rust Version
+        id: extract_rust_version
+        run: |
+          rust_version=$(awk -F '"' '/rust-version/ {print $2; exit}' Cargo.toml)
+          if [ -z "$rust_version" ]; then
+            echo "Error: rust-version not found in Cargo.toml"
+            exit 1
+          fi
+          echo "msrv=$rust_version" >> "$GITHUB_OUTPUT"
+      - name: Set Up Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ steps.extract_rust_version.outputs.msrv }}
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --all
+
   check:
     name: Check
     runs-on: ubuntu-latest
