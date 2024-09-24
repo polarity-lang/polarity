@@ -1,6 +1,8 @@
+use std::io::Write;
 use std::path::Path;
 
 use ast::HashMap;
+use printer::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 use crate::Args;
 
@@ -194,14 +196,21 @@ pub struct CaseResult {
 impl CaseResult {
     pub fn print(&self) {
         let CaseResult { case, result } = self;
+        let mut stdout = StandardStream::stdout(ColorChoice::Auto);
         match result {
             Ok(_) => {
                 let str = format!("{} ({:?})", case.name, case.path);
-                println!("    - {:70} ✓", str)
+                write!(&mut stdout, "    - {:70} ", str).unwrap();
+                stdout.set_color(ColorSpec::new().set_fg(Some(Color::Green))).unwrap();
+                writeln!(&mut stdout, "✓").unwrap();
+                stdout.set_color(ColorSpec::new().set_fg(Some(Color::White))).unwrap();
             }
             Err(err) => {
                 let str = format!("{} ({:?})", case.name, case.path);
-                println!("    - {:70} ✗", str);
+                write!(&mut stdout, "    - {:70} ", str).unwrap();
+                stdout.set_color(ColorSpec::new().set_fg(Some(Color::Red))).unwrap();
+                writeln!(&mut stdout, "✗").unwrap();
+                stdout.set_color(ColorSpec::new().set_fg(Some(Color::White))).unwrap();
                 println!();
                 println!("    {}", err);
                 println!()

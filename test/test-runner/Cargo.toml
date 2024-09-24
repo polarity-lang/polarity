@@ -19,6 +19,8 @@ log = { workspace = true }
 serde = "1"
 serde_derive = "1"
 toml = "0.5"
+# Colored output
+termcolor = { version = "1.4.1" }
 # Find files recursively
 walkdir = "2.5.0"
 # workspace members
