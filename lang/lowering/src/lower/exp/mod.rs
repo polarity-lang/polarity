@@ -467,7 +467,7 @@ impl Lower for cst::exp::NatLit {
         // We have to check whether "Z" is declared as a constructor or codefinition.
         // We assume that if Z exists, then S exists as well and is of the same kind.
         let z_kind = ctx
-            .lookup_top_level_decl(&Ident { id: "Z".to_string() }, span)
+            .lookup_top_level_decl(&Ident { span: Default::default(), id: "Z".to_string() }, span)
             .map_err(|_| LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() })?;
         let call_kind = match z_kind {
             DeclMeta::Codef { .. } => ast::CallKind::Codefinition,
@@ -527,7 +527,7 @@ impl Lower for cst::exp::Lam {
         let case = cst::exp::Case {
             span: *span,
             pattern: cst::exp::Copattern {
-                name: Ident { id: "ap".to_owned() },
+                name: Ident { span: *span, id: "ap".to_owned() },
                 params: vec![
                     cst::exp::BindingSite::Wildcard { span: Default::default() },
                     cst::exp::BindingSite::Wildcard { span: Default::default() },
@@ -549,7 +549,7 @@ impl Lower for cst::exp::Lam {
 fn bs_to_name(bs: &cst::exp::BindingSite) -> Ident {
     match bs {
         BindingSite::Var { name, .. } => name.clone(),
-        BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
+        BindingSite::Wildcard { span } => Ident { span: *span, id: "_".to_owned() },
     }
 }
 

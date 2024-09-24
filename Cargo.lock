@@ -1610,6 +1610,7 @@ name = "parser"
 version = "0.1.0"
 dependencies = [
  "codespan",
+ "derivative",
  "lalrpop 0.19.12",
  "lalrpop 0.20.2",
  "lalrpop-util 0.20.2",

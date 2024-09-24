@@ -321,5 +321,5 @@ BindingSite: BindingSite = {
 }
 
 Ident: Ident = {
-    <i: "Identifier"> => Ident { id: i.to_owned() }
+   <l: @L> <i: "Identifier"> <r: @R> => Ident { span: span(l,r), id: i.to_owned() }
 }

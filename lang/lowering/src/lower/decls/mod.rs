@@ -88,7 +88,10 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, Lowering
     let typ_ctor =
         typ_out.to_typctor().ok_or(LoweringError::ExpectedTypCtor { span: span.to_miette() })?;
     ctx.bind_single(
-        name.clone().unwrap_or_else(|| parser::cst::ident::Ident { id: "".to_owned() }),
+        name.clone().unwrap_or_else(|| parser::cst::ident::Ident {
+            span: Default::default(),
+            id: "".to_owned(),
+        }),
         |ctx| {
             f(
                 ctx,
@@ -152,7 +155,9 @@ where
             let typ_out = typ.lower(ctx)?;
             let name = match name {
                 BindingSite::Var { name, .. } => name.clone(),
-                BindingSite::Wildcard { .. } => parser::cst::ident::Ident { id: "_".to_owned() },
+                BindingSite::Wildcard { span } => {
+                    parser::cst::ident::Ident { span: *span, id: "_".to_owned() }
+                }
             };
             let param_out =
                 ast::Param { implicit: *implicit, name: ast::Ident { id: name.id }, typ: typ_out };

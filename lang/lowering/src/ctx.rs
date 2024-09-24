@@ -84,7 +84,7 @@ impl Ctx {
     pub fn add_decl(&mut self, decl: ast::Decl) -> Result<(), LoweringError> {
         if self.decls_map.contains_key(&decl.name().clone().id) {
             return Err(LoweringError::AlreadyDefined {
-                name: Ident { id: decl.name().clone().id },
+                name: Ident { span: Default::default(), id: decl.name().clone().id },
                 span: decl.span().to_miette(),
             });
         }
@@ -349,7 +349,7 @@ impl ContextElem for &cst::decls::Param {
     fn as_element(&self) -> Ident {
         match &self.name {
             BindingSite::Var { name, .. } => name.to_owned(),
-            BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
+            BindingSite::Wildcard { span } => Ident { span: *span, id: "_".to_owned() },
         }
     }
 }
@@ -358,7 +358,7 @@ impl ContextElem for &cst::exp::BindingSite {
     fn as_element(&self) -> Ident {
         match self {
             BindingSite::Var { name, .. } => name.to_owned(),
-            BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
+            BindingSite::Wildcard { span } => Ident { span: *span, id: "_".to_owned() },
         }
     }
 }
