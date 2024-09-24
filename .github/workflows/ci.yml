@@ -33,7 +33,7 @@ jobs:
             echo "Error: rust-version not found in Cargo.toml"
             exit 1
           fi
-          echo "::set-output name=msrv::$rust_version"
+          echo "msrv=$rust_version" >> $GITHUB_OUTPUT
       - name: Set Up Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
