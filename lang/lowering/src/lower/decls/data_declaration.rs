@@ -48,7 +48,7 @@ fn lower_constructor(
                 if type_arity == 0 {
                     ast::TypCtor {
                         span: None,
-                        name: name.lower(ctx)?,
+                        name: typ_name.lower(ctx)?,
                         args: ast::Args { args: vec![] },
                     }
                 } else {
