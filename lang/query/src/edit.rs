@@ -4,7 +4,7 @@ use codespan::Span;
 use ropey::Rope;
 use url::Url;
 
-use crate::Database;
+use crate::database::Database;
 
 #[derive(Ord, PartialOrd, Eq, PartialEq)]
 pub struct Edit {

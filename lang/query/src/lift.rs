@@ -1,7 +1,7 @@
 use lifting::LiftResult;
 use url::Url;
 
-use crate::Database;
+use crate::database::Database;
 
 impl Database {
     pub fn lift(&mut self, uri: &Url, type_name: &str) -> Result<ast::Module, crate::Error> {

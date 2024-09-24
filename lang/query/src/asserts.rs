@@ -1,4 +1,4 @@
-use super::Database;
+use crate::database::Database;
 
 const _: () = {
     fn assert_send<T: Send>() {}

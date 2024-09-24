@@ -1,26 +1,20 @@
-#[cfg(not(target_arch = "wasm32"))]
-use std::time;
-#[cfg(target_arch = "wasm32")]
-use web_time as time;
-
 use url::Url;
 
 use ast::HashMap;
 
-use crate::Database;
-
-type IsStaleFn = dyn Fn(&Database, &Url, time::Instant) -> bool + Send + Sync;
-
 pub struct Cache<T> {
     entries: HashMap<Url, CacheEntry<T>>,
-    is_stale: Box<IsStaleFn>,
+}
+
+impl<T> Default for Cache<T> {
+    fn default() -> Self {
+        Self { entries: HashMap::default() }
+    }
 }
 
 impl<T> Cache<T> {
-    pub fn new(
-        is_stale: impl Fn(&Database, &Url, time::Instant) -> bool + 'static + Send + Sync,
-    ) -> Self {
-        Self { entries: HashMap::default(), is_stale: Box::new(is_stale) }
+    pub fn keys(&self) -> impl Iterator<Item = &Url> {
+        self.entries.keys()
     }
 
     /// Get the value associated with a URI regardless of staleness
@@ -29,8 +23,8 @@ impl<T> Cache<T> {
     }
 
     /// Get the value associated with a URI if it is not stale
-    pub fn get_unless_stale(&self, db: &Database, uri: &Url) -> Option<&T> {
-        if self.is_stale(db, uri) {
+    pub fn get_unless_stale(&self, uri: &Url) -> Option<&T> {
+        if self.is_stale(uri) {
             None
         } else {
             self.get_even_if_stale(uri)
@@ -41,25 +35,18 @@ impl<T> Cache<T> {
         self.entries.insert(uri, CacheEntry::from(value));
     }
 
-    pub fn remove(&mut self, uri: &Url) {
-        self.entries.remove(uri);
+    pub fn is_stale(&self, uri: &Url) -> bool {
+        self.entries.get(uri).map(|entry| entry.stale).unwrap_or(true)
     }
 
-    pub fn is_stale(&self, db: &Database, uri: &Url) -> bool {
-        let Some(entry) = self.entries.get(uri) else {
-            return true;
-        };
-        (self.is_stale)(db, uri, entry.last_modified)
-    }
-
-    pub fn last_modified(&self, uri: &Url) -> Option<time::Instant> {
-        self.entries.get(uri).map(|entry| entry.last_modified)
+    pub fn invalidate(&mut self, uri: &Url) {
+        self.entries.entry(uri.clone()).and_modify(|entry| entry.stale = true);
     }
 }
 
 pub struct CacheEntry<T> {
     value: T,
-    last_modified: time::Instant,
+    stale: bool,
 }
 
 impl<T> CacheEntry<T> {
@@ -70,6 +57,6 @@ impl<T> CacheEntry<T> {
 
 impl<T> From<T> for CacheEntry<T> {
     fn from(value: T) -> Self {
-        Self { value, last_modified: time::Instant::now() }
+        Self { value, stale: false }
     }
 }
