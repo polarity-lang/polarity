@@ -7,8 +7,8 @@ pub fn increment_name(mut name: Ident) -> Ident {
     }
     let (s, digits) = split_trailing_digits(&name.id);
     match digits {
-        None => Ident { id: format!("{s}0") },
-        Some(n) => Ident { id: format!("{s}{}", n + 1) },
+        None => Ident::from_string(&format!("{s}0")),
+        Some(n) => Ident::from_string(&format!("{s}{}", n + 1)),
     }
 }
 

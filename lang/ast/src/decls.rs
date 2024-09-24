@@ -759,7 +759,7 @@ impl SelfParam {
         Telescope {
             params: vec![Param {
                 implicit: false,
-                name: self.name.clone().unwrap_or_else(|| Ident { id: "".to_string() }),
+                name: self.name.clone().unwrap_or_else(|| Ident::from_string("")),
                 typ: Box::new(self.typ.to_exp()),
             }],
         }
@@ -915,12 +915,12 @@ mod print_telescope_tests {
     fn print_simple_chunk() {
         let param1 = Param {
             implicit: false,
-            name: Ident { id: "x".to_owned() },
+            name: Ident::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let param2 = Param {
             implicit: false,
-            name: Ident { id: "y".to_owned() },
+            name: Ident::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let tele = Telescope { params: vec![param1, param2] };
@@ -931,12 +931,12 @@ mod print_telescope_tests {
     fn print_simple_implicit_chunk() {
         let param1 = Param {
             implicit: true,
-            name: Ident { id: "x".to_owned() },
+            name: Ident::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let param2 = Param {
             implicit: true,
-            name: Ident { id: "y".to_owned() },
+            name: Ident::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let tele = Telescope { params: vec![param1, param2] };
@@ -947,12 +947,12 @@ mod print_telescope_tests {
     fn print_mixed_implicit_chunk_1() {
         let param1 = Param {
             implicit: true,
-            name: Ident { id: "x".to_owned() },
+            name: Ident::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let param2 = Param {
             implicit: false,
-            name: Ident { id: "y".to_owned() },
+            name: Ident::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let tele = Telescope { params: vec![param1, param2] };
@@ -963,12 +963,12 @@ mod print_telescope_tests {
     fn print_mixed_implicit_chunk_2() {
         let param1 = Param {
             implicit: false,
-            name: Ident { id: "x".to_owned() },
+            name: Ident::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let param2 = Param {
             implicit: true,
-            name: Ident { id: "y".to_owned() },
+            name: Ident::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let tele = Telescope { params: vec![param1, param2] };
@@ -979,26 +979,26 @@ mod print_telescope_tests {
     fn print_shifting_example() {
         let param1 = Param {
             implicit: false,
-            name: Ident { id: "a".to_owned() },
+            name: Ident::from_string("a"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let param2 = Param {
             implicit: false,
-            name: Ident { id: "x".to_owned() },
+            name: Ident::from_string("x"),
             typ: Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: 0 },
-                name: Ident { id: "a".to_owned() },
+                name: Ident::from_string("a"),
                 inferred_type: None,
             })),
         };
         let param3 = Param {
             implicit: false,
-            name: Ident { id: "y".to_owned() },
+            name: Ident::from_string("y"),
             typ: Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: 1 },
-                name: Ident { id: "a".to_owned() },
+                name: Ident::from_string("a"),
                 inferred_type: None,
             })),
         };

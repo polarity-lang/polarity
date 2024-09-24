@@ -84,6 +84,6 @@ impl ContextElem<Ctx> for ParamInst {
 
 impl ContextElem<Ctx> for SelfParam {
     fn as_element(&self) -> <Ctx as Context>::Elem {
-        self.name.to_owned().unwrap_or_else(|| Ident { id: "".to_string() })
+        self.name.to_owned().unwrap_or_else(|| Ident::from_string(""))
     }
 }

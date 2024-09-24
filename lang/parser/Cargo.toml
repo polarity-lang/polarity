@@ -13,6 +13,8 @@ categories.workspace = true
 [dependencies]
 # lexer generator
 logos = "0.14.0"
+# Deriving
+derivative = { workspace = true }
 # parser generator
 lalrpop = "0.20"
 lalrpop-util = "0.20"

@@ -84,7 +84,7 @@ impl Ctx {
     pub fn add_decl(&mut self, decl: ast::Decl) -> Result<(), LoweringError> {
         if self.decls_map.contains_key(&decl.name().clone().id) {
             return Err(LoweringError::AlreadyDefined {
-                name: Ident { id: decl.name().clone().id },
+                name: Ident { span: Default::default(), id: decl.name().clone().id },
                 span: decl.span().to_miette(),
             });
         }
@@ -122,7 +122,10 @@ impl Ctx {
         }
         let id = self.next_label_id;
         self.next_label_id += 1;
-        Ok(ast::Label { id, user_name: user_name.map(|name| ast::Ident { id: name.id }) })
+        Ok(ast::Label {
+            id,
+            user_name: user_name.map(|name| ast::Ident { span: Some(name.span), id: name.id }),
+        })
     }
 
     /// Next De Bruijn level to be assigned
@@ -176,7 +179,7 @@ impl Ctx {
                     ast::Variable {
                         span: None,
                         idx: self.level_to_index(Lvl { fst, snd }),
-                        name: ast::Ident { id: name.to_owned() },
+                        name: ast::Ident { span: None, id: name.to_owned() },
                         inferred_type: None,
                     }
                     .into(),
@@ -349,7 +352,7 @@ impl ContextElem for &cst::decls::Param {
     fn as_element(&self) -> Ident {
         match &self.name {
             BindingSite::Var { name, .. } => name.to_owned(),
-            BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
+            BindingSite::Wildcard { span } => Ident { span: *span, id: "_".to_owned() },
         }
     }
 }
@@ -358,7 +361,7 @@ impl ContextElem for &cst::exp::BindingSite {
     fn as_element(&self) -> Ident {
         match self {
             BindingSite::Var { name, .. } => name.to_owned(),
-            BindingSite::Wildcard { .. } => Ident { id: "_".to_owned() },
+            BindingSite::Wildcard { span } => Ident { span: *span, id: "_".to_owned() },
         }
     }
 }

@@ -15,7 +15,7 @@ pub fn lift(module: Arc<Module>, name: &str) -> LiftResult {
     let mut ctx = Ctx {
         name: name.to_owned(),
         new_decls: vec![],
-        curr_decl: Ident { id: "".to_owned() },
+        curr_decl: Ident::from_string(""),
         modified_decls: HashSet::default(),
         ctx: LevelCtx::default(),
     };
@@ -686,7 +686,7 @@ impl Ctx {
         label.user_name.clone().unwrap_or_else(|| {
             let lowered = type_name.to_lowercase();
             let id = label.id;
-            Ident { id: format!("d_{lowered}{id}") }
+            Ident::from_string(&format!("d_{lowered}{id}"))
         })
     }
 
@@ -694,7 +694,7 @@ impl Ctx {
     fn unique_codef_name(&self, label: &Label, type_name: &str) -> Ident {
         label.user_name.clone().unwrap_or_else(|| {
             let id = label.id;
-            Ident { id: format!("Mk{type_name}{id}") }
+            Ident::from_string(&format!("Mk{type_name}{id}"))
         })
     }
 }

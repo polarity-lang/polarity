@@ -39,17 +39,16 @@ impl Database {
 
         let mat = xfunc::as_matrix(&module)?;
 
-        let type_span =
-            mat.map.get(&Ident { id: type_name.to_string() }).and_then(|x| x.span).ok_or(
-                XfuncError::Impossible {
-                    message: format!("Could not resolve {type_name}"),
-                    span: None,
-                },
-            )?;
+        let type_span = mat.map.get(&Ident::from_string(type_name)).and_then(|x| x.span).ok_or(
+            XfuncError::Impossible {
+                message: format!("Could not resolve {type_name}"),
+                span: None,
+            },
+        )?;
 
         let original = Original { type_span, decl_spans, xdefs };
 
-        let repr = xfunc::repr(&mat, &Ident { id: type_name.to_string() })?;
+        let repr = xfunc::repr(&mat, &Ident::from_string(type_name))?;
 
         let result = match repr {
             xfunc::matrix::Repr::Data => refunctionalize(&mat, type_name),
@@ -112,7 +111,7 @@ fn generate_edits(
 }
 
 fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
-    let (codata, codefs) = xfunc::as_codata(mat, &Ident { id: type_name.to_string() })?;
+    let (codata, codefs) = xfunc::as_codata(mat, &Ident::from_string(type_name))?;
 
     let codata = codata.rename();
     let codefs = codefs.into_iter().map(|codef| codef.rename()).collect::<Vec<_>>();
@@ -124,7 +123,7 @@ fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, cr
 }
 
 fn defunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
-    let (data, defs) = xfunc::as_data(mat, &Ident { id: type_name.to_string() })?;
+    let (data, defs) = xfunc::as_data(mat, &Ident::from_string(type_name))?;
 
     let data = data.rename();
     let defs = defs.into_iter().map(|def| def.rename()).collect::<Vec<_>>();

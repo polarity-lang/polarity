@@ -876,7 +876,7 @@ impl ReadBack for Closure {
             .map(|snd| {
                 Val::Neu(Neu::Variable(Variable {
                     span: None,
-                    name: Ident { id: "".to_owned() },
+                    name: Ident::from_string(""),
                     idx: Idx { fst: 0, snd },
                 }))
             })

@@ -20,7 +20,7 @@ impl Lower for cst::decls::Def {
                 Ok(ast::Def {
                     span: Some(*span),
                     doc: doc.lower(ctx)?,
-                    name: ast::Ident { id: name.id.clone() },
+                    name: name.lower(ctx)?,
                     attr: attr.lower(ctx)?,
                     params,
                     self_param,
