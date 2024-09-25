@@ -284,58 +284,53 @@ impl Lower for cst::exp::Call {
 
         // If we find the identifier in the global context then we have to lower
         // it to a call or a type constructor.
-        if let Some(meta) = ctx.lookup_table.lookup(name).cloned() {
-            match meta {
-                DeclMeta::Data { params, .. } | DeclMeta::Codata { params, .. } => {
-                    let name = name.lower(ctx)?;
-                    return Ok(ast::Exp::TypCtor(ast::TypCtor {
-                        span: Some(*span),
-                        name,
-                        args: lower_args(args, params, ctx)?,
-                    }));
-                }
-                DeclMeta::Def { .. } | DeclMeta::Dtor { .. } => {
-                    return Err(LoweringError::MustUseAsDtor {
-                        name: name.clone(),
-                        span: span.to_miette(),
-                    })
-                }
-                DeclMeta::Ctor { params, .. } => {
-                    let name = name.lower(ctx)?;
-                    return Ok(ast::Exp::Call(ast::Call {
-                        span: Some(*span),
-                        kind: ast::CallKind::Constructor,
-                        name,
-                        args: lower_args(args, params, ctx)?,
-                        inferred_type: None,
-                    }));
-                }
-                DeclMeta::Codef { params, .. } => {
-                    let name = name.lower(ctx)?;
-                    return Ok(ast::Exp::Call(ast::Call {
-                        span: Some(*span),
-                        kind: ast::CallKind::Codefinition,
-                        name,
-                        args: lower_args(args, params, ctx)?,
-                        inferred_type: None,
-                    }));
-                }
-                DeclMeta::Let { params, .. } => {
-                    let name = name.lower(ctx)?;
-                    return Ok(ast::Exp::Call(ast::Call {
-                        span: Some(*span),
-                        kind: ast::CallKind::LetBound,
-                        name,
-                        args: lower_args(args, params, ctx)?,
-                        inferred_type: None,
-                    }));
-                }
+        let meta = ctx.lookup_table.lookup(name).cloned()?;
+        match meta {
+            DeclMeta::Data { params, .. } | DeclMeta::Codata { params, .. } => {
+                let name = name.lower(ctx)?;
+                return Ok(ast::Exp::TypCtor(ast::TypCtor {
+                    span: Some(*span),
+                    name,
+                    args: lower_args(args, params, ctx)?,
+                }));
+            }
+            DeclMeta::Def { .. } | DeclMeta::Dtor { .. } => {
+                return Err(LoweringError::MustUseAsDtor {
+                    name: name.clone(),
+                    span: span.to_miette(),
+                })
+            }
+            DeclMeta::Ctor { params, .. } => {
+                let name = name.lower(ctx)?;
+                return Ok(ast::Exp::Call(ast::Call {
+                    span: Some(*span),
+                    kind: ast::CallKind::Constructor,
+                    name,
+                    args: lower_args(args, params, ctx)?,
+                    inferred_type: None,
+                }));
+            }
+            DeclMeta::Codef { params, .. } => {
+                let name = name.lower(ctx)?;
+                return Ok(ast::Exp::Call(ast::Call {
+                    span: Some(*span),
+                    kind: ast::CallKind::Codefinition,
+                    name,
+                    args: lower_args(args, params, ctx)?,
+                    inferred_type: None,
+                }));
+            }
+            DeclMeta::Let { params, .. } => {
+                let name = name.lower(ctx)?;
+                return Ok(ast::Exp::Call(ast::Call {
+                    span: Some(*span),
+                    kind: ast::CallKind::LetBound,
+                    name,
+                    args: lower_args(args, params, ctx)?,
+                    inferred_type: None,
+                }));
             }
         };
-
-        // If we find the identifier neither in the local nor the global context then we have
-        // to throw an error.
-        Err(LoweringError::UndefinedIdent { name: name.to_owned(), span: span.to_miette() })
     }
 }
 
@@ -345,32 +340,26 @@ impl Lower for cst::exp::DotCall {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::DotCall { span, exp, name, args } = self;
 
-        match ctx.lookup_table.lookup(name).cloned() {
-            Some(meta) => match meta {
-                DeclMeta::Dtor { params, .. } => Ok(ast::Exp::DotCall(ast::DotCall {
-                    span: Some(*span),
-                    kind: ast::DotCallKind::Destructor,
-                    exp: exp.lower(ctx)?,
-                    name: name.lower(ctx)?,
-                    args: lower_args(args, params, ctx)?,
-                    inferred_type: None,
-                })),
-                DeclMeta::Def { params, .. } => Ok(ast::Exp::DotCall(ast::DotCall {
-                    span: Some(*span),
-                    kind: ast::DotCallKind::Definition,
-                    exp: exp.lower(ctx)?,
-                    name: name.lower(ctx)?,
-                    args: lower_args(args, params, ctx)?,
-                    inferred_type: None,
-                })),
-                _ => Err(LoweringError::CannotUseAsDtor {
-                    name: name.clone(),
-                    span: span.to_miette(),
-                }),
-            },
-            None => {
-                Err(LoweringError::UndefinedIdent { name: name.to_owned(), span: span.to_miette() })
-            }
+        let meta = ctx.lookup_table.lookup(name).cloned()?;
+
+        match meta {
+            DeclMeta::Dtor { params, .. } => Ok(ast::Exp::DotCall(ast::DotCall {
+                span: Some(*span),
+                kind: ast::DotCallKind::Destructor,
+                exp: exp.lower(ctx)?,
+                name: name.lower(ctx)?,
+                args: lower_args(args, params, ctx)?,
+                inferred_type: None,
+            })),
+            DeclMeta::Def { params, .. } => Ok(ast::Exp::DotCall(ast::DotCall {
+                span: Some(*span),
+                kind: ast::DotCallKind::Definition,
+                exp: exp.lower(ctx)?,
+                name: name.lower(ctx)?,
+                args: lower_args(args, params, ctx)?,
+                inferred_type: None,
+            })),
+            _ => Err(LoweringError::CannotUseAsDtor { name: name.clone(), span: span.to_miette() }),
         }
     }
 }
@@ -477,7 +466,7 @@ impl Lower for cst::exp::NatLit {
         let z_kind = ctx
             .lookup_table
             .lookup(&Ident { span: *span, id: "Z".to_string() })
-            .ok_or_else(|| LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() })?;
+            .map_err(|_| LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() })?;
         let call_kind = match z_kind {
             DeclMeta::Codef { .. } => ast::CallKind::Codefinition,
             DeclMeta::Ctor { .. } => ast::CallKind::Constructor,
