@@ -4,6 +4,7 @@ use ident::Ident;
 use parser::cst::*;
 
 pub mod build;
+pub mod lookup;
 
 #[derive(Debug, Default, Clone)]
 pub struct LookupTable {
@@ -11,10 +12,6 @@ pub struct LookupTable {
 }
 
 impl LookupTable {
-    pub fn lookup(&self, name: &Ident) -> Option<&DeclMeta> {
-        self.map.get(name)
-    }
-
     pub fn append(&mut self, other: LookupTable) {
         self.map.extend(other.map);
     }
