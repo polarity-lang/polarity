@@ -29,7 +29,7 @@ pub struct Database {
     /// The CST of each file (once parsed)
     pub cst: Cache<Result<Arc<cst::decls::Module>, Error>>,
     /// The symbol table constructed during lowering
-    pub cst_lookup_table: Cache<lowering::LookupTable>,
+    pub cst_lookup_table: Cache<lowering::SymbolTable>,
     /// The AST of each file (once parsed and lowered, may be type-annotated)
     pub ast: Cache<Result<Arc<ast::Module>, Error>>,
     /// The symbol table constructed during typechecking
@@ -125,7 +125,7 @@ impl Database {
 
     pub fn print_to_string(&mut self, uri: &Url) -> Result<String, Error> {
         let module =
-            self.load_ast(uri, &mut lowering::LookupTable::default(), &mut LookupTable::default())?;
+            self.load_ast(uri, &mut lowering::SymbolTable::default(), &mut LookupTable::default())?;
         let module = (*module).clone().rename();
         Ok(printer::Print::print_to_string(&module, None))
     }
@@ -141,7 +141,7 @@ impl Database {
         self.deps.print_dependency_tree();
         log::trace!("");
 
-        let mut cst_lookup_table = lowering::LookupTable::default();
+        let mut cst_lookup_table = lowering::SymbolTable::default();
         let mut ast_lookup_table = LookupTable::default();
         self.load_module_impl(&mut cst_lookup_table, &mut ast_lookup_table, module_uri)
     }
@@ -149,7 +149,7 @@ impl Database {
     pub fn load_imports(
         &mut self,
         module_uri: &Url,
-        cst_lookup_table: &mut lowering::LookupTable,
+        cst_lookup_table: &mut lowering::SymbolTable,
         ast_lookup_table: &mut LookupTable,
     ) -> Result<(), Error> {
         self.build_dependency_dag()?;
@@ -231,7 +231,7 @@ impl Database {
 
     fn load_module_impl(
         &mut self,
-        cst_lookup_table: &mut lowering::LookupTable,
+        cst_lookup_table: &mut lowering::SymbolTable,
         ast_lookup_table: &mut LookupTable,
         module_uri: &Url,
     ) -> Result<Arc<ast::Module>, Error> {
@@ -239,7 +239,7 @@ impl Database {
         let direct_dependencies = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
 
         for dep_url in direct_dependencies {
-            let mut dep_cst_lookup_table = lowering::LookupTable::default();
+            let mut dep_cst_lookup_table = lowering::SymbolTable::default();
             let mut dep_ast_lookup_table = LookupTable::default();
             self.load_module_impl(&mut dep_cst_lookup_table, &mut dep_ast_lookup_table, &dep_url)?;
             cst_lookup_table.append(dep_cst_lookup_table);
@@ -252,7 +252,7 @@ impl Database {
     pub fn load_ast(
         &mut self,
         uri: &Url,
-        cst_lookup_table: &mut lowering::LookupTable,
+        cst_lookup_table: &mut lowering::SymbolTable,
         ast_lookup_table: &mut LookupTable,
     ) -> Result<Arc<ast::Module>, Error> {
         log::trace!("Loading AST: {}", uri);
@@ -294,15 +294,15 @@ impl Database {
     pub fn load_ust(
         &mut self,
         uri: &Url,
-        cst_lookup_table: &mut lowering::LookupTable,
+        cst_lookup_table: &mut lowering::SymbolTable,
     ) -> Result<ast::Module, Error> {
         log::trace!("Loading UST: {}", uri);
 
         let cst = self.load_cst(uri)?;
         log::debug!("Lowering module");
-        let new_lookup_table = lowering::build_lookup_table(&cst)?;
-        cst_lookup_table.append(new_lookup_table);
-        lowering::lower_module_with_lookup_table(&cst, cst_lookup_table).map_err(Error::Lowering)
+        let new_lookup_table = lowering::build_symbol_table(&cst)?;
+        cst_lookup_table.insert(uri.clone(), new_lookup_table);
+        lowering::lower_module_with_symbol_table(&cst, cst_lookup_table).map_err(Error::Lowering)
     }
 
     pub fn load_cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {

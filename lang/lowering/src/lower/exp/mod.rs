@@ -12,8 +12,8 @@ use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
 
 use crate::ctx::*;
-use crate::lookup_table::DeclMeta;
 use crate::result::*;
+use crate::symbol_table::DeclMeta;
 
 use super::Lower;
 
@@ -284,7 +284,7 @@ impl Lower for cst::exp::Call {
 
         // If we find the identifier in the global context then we have to lower
         // it to a call or a type constructor.
-        let meta = ctx.lookup_table.lookup(name).cloned()?;
+        let meta = ctx.symbol_table.lookup(name).cloned()?;
         match meta {
             DeclMeta::Data { params, .. } | DeclMeta::Codata { params, .. } => {
                 let name = name.lower(ctx)?;
@@ -337,7 +337,7 @@ impl Lower for cst::exp::DotCall {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::DotCall { span, exp, name, args } = self;
 
-        let meta = ctx.lookup_table.lookup(name).cloned()?;
+        let meta = ctx.symbol_table.lookup(name).cloned()?;
 
         match meta {
             DeclMeta::Dtor { params, .. } => Ok(ast::Exp::DotCall(ast::DotCall {
@@ -464,7 +464,7 @@ impl Lower for cst::exp::NatLit {
         // We have to check whether "Z" is declared as a constructor or codefinition.
         // We assume that if Z exists, then S exists as well and is of the same kind.
         let z_kind = ctx
-            .lookup_table
+            .symbol_table
             .lookup(&Ident { span: *span, id: "Z".to_string() })
             .map_err(|_| LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() })?;
         let call_kind = match z_kind {
@@ -582,7 +582,7 @@ mod lower_args_tests {
 
     use parser::cst::decls::Telescope;
 
-    use crate::lookup_table::LookupTable;
+    use crate::symbol_table::SymbolTable;
 
     use super::{lower_args, Ctx};
 
@@ -590,7 +590,7 @@ mod lower_args_tests {
     fn test_empty() {
         let given = vec![];
         let expected = Telescope(vec![]);
-        let mut ctx = Ctx::empty(LookupTable::default());
+        let mut ctx = Ctx::empty(SymbolTable::default());
         let res = lower_args(&given, expected, &mut ctx);
         assert_eq!(res.unwrap(), ast::Args { args: vec![] })
     }

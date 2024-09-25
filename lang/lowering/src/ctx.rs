@@ -9,7 +9,7 @@ use ast::{Idx, Lvl};
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
 
-use crate::lookup_table::LookupTable;
+use crate::symbol_table::SymbolTable;
 
 use super::result::LoweringError;
 
@@ -23,7 +23,7 @@ pub struct Ctx {
     /// Bound variables in this map are De-Bruijn levels rather than indices:
     local_map: HashMap<Ident, Vec<Lvl>>,
     /// Metadata for top-level names
-    pub lookup_table: LookupTable,
+    pub symbol_table: SymbolTable,
     /// Counts the number of entries for each De-Bruijn level
     levels: Vec<usize>,
     /// Counter for unique label ids
@@ -37,10 +37,10 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    pub fn empty(lookup_table: LookupTable) -> Self {
+    pub fn empty(symbol_table: SymbolTable) -> Self {
         Self {
             local_map: HashMap::default(),
-            lookup_table,
+            symbol_table,
             levels: Vec::new(),
             next_label_id: 0,
             user_labels: HashSet::default(),
@@ -60,7 +60,7 @@ impl Ctx {
         info: &Span,
     ) -> Result<ast::Label, LoweringError> {
         if let Some(user_name) = &user_name {
-            if self.lookup_table.lookup_exists(user_name) {
+            if self.symbol_table.lookup_exists(user_name) {
                 return Err(LoweringError::LabelNotUnique {
                     name: user_name.id.to_owned(),
                     span: info.to_miette(),

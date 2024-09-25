@@ -18,6 +18,7 @@ codespan = { workspace = true }
 # big integers
 num-bigint = { workspace = true }
 log = { workspace = true }
+url = { workspace = true }
 
 # workspace members
 parser = { path = "../parser" }
