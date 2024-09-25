@@ -475,8 +475,8 @@ impl Lower for cst::exp::NatLit {
         // We have to check whether "Z" is declared as a constructor or codefinition.
         // We assume that if Z exists, then S exists as well and is of the same kind.
         let z_kind = ctx
-            .lookup_top_level_decl(&Ident { span: Default::default(), id: "Z".to_string() }, span)
-            .map_err(|_| LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() })?;
+            .lookup_global(&Ident { span: *span, id: "Z".to_string() })
+            .ok_or_else(|| LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() })?;
         let call_kind = match z_kind {
             DeclMeta::Codef { .. } => ast::CallKind::Codefinition,
             DeclMeta::Ctor { .. } => ast::CallKind::Constructor,

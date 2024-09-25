@@ -59,17 +59,6 @@ impl Ctx {
         self.lookup_table.lookup(name).cloned()
     }
 
-    pub fn lookup_top_level_decl(
-        &self,
-        name: &Ident,
-        info: &Span,
-    ) -> Result<DeclMeta, LoweringError> {
-        self.lookup_global(name).ok_or_else(|| LoweringError::UndefinedIdent {
-            name: name.to_owned(),
-            span: info.to_miette(),
-        })
-    }
-
     pub fn unique_label(
         &mut self,
         user_name: Option<Ident>,
