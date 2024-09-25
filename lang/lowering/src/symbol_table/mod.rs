@@ -7,21 +7,21 @@ use url::Url;
 pub mod build;
 pub mod lookup;
 
-/// The lookup table for a single module.
-pub type ModuleLookupTable = HashMap<Ident, DeclMeta>;
+/// The symbol table for a single module.
+pub type ModuleSymbolTable = HashMap<Ident, DeclMeta>;
 
-/// The lookup table for a module and all of its imported modules.
+/// The symbol table for a module and all of its imported modules.
 #[derive(Debug, Default, Clone)]
-pub struct LookupTable {
+pub struct SymbolTable {
     // Maps modules to their respective symbol tables.
-    map: HashMap<Url, ModuleLookupTable>,
+    map: HashMap<Url, ModuleSymbolTable>,
 }
 
-impl LookupTable {
-    pub fn insert(&mut self, url: Url, other: ModuleLookupTable) {
+impl SymbolTable {
+    pub fn insert(&mut self, url: Url, other: ModuleSymbolTable) {
         self.map.insert(url, other);
     }
-    pub fn append(&mut self, other: LookupTable) {
+    pub fn append(&mut self, other: SymbolTable) {
         self.map.extend(other.map);
     }
 }

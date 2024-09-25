@@ -5,40 +5,40 @@ use parser::cst::*;
 
 use crate::LoweringError;
 
-use super::{DeclMeta, ModuleLookupTable};
+use super::{DeclMeta, ModuleSymbolTable};
 
-pub fn build_lookup_table(module: &Module) -> Result<ModuleLookupTable, LoweringError> {
-    let mut lookup_table = HashMap::default();
+pub fn build_symbol_table(module: &Module) -> Result<ModuleSymbolTable, LoweringError> {
+    let mut symbol_table = HashMap::default();
 
     let Module { decls, .. } = module;
 
     for decl in decls {
-        decl.build(&mut lookup_table)?;
+        decl.build(&mut symbol_table)?;
     }
 
-    Ok(lookup_table)
+    Ok(symbol_table)
 }
 
-trait BuildLookupTable {
-    fn build(&self, lookup_table: &mut ModuleLookupTable) -> Result<(), LoweringError>;
+trait BuildSymbolTable {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError>;
 }
 
-impl BuildLookupTable for Decl {
-    fn build(&self, lookup_table: &mut ModuleLookupTable) -> Result<(), LoweringError> {
+impl BuildSymbolTable for Decl {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         match self {
-            Decl::Data(data) => data.build(lookup_table),
-            Decl::Codata(codata) => codata.build(lookup_table),
-            Decl::Def(def) => def.build(lookup_table),
-            Decl::Codef(codef) => codef.build(lookup_table),
-            Decl::Let(tl_let) => tl_let.build(lookup_table),
+            Decl::Data(data) => data.build(symbol_table),
+            Decl::Codata(codata) => codata.build(symbol_table),
+            Decl::Def(def) => def.build(symbol_table),
+            Decl::Codef(codef) => codef.build(symbol_table),
+            Decl::Let(tl_let) => tl_let.build(symbol_table),
         }
     }
 }
 
-impl BuildLookupTable for Data {
-    fn build(&self, lookup_table: &mut ModuleLookupTable) -> Result<(), LoweringError> {
+impl BuildSymbolTable for Data {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Data { span, name, params, ctors, .. } = self;
-        match lookup_table.get(name) {
+        match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {
                     name: name.to_owned(),
@@ -47,20 +47,20 @@ impl BuildLookupTable for Data {
             }
             None => {
                 let meta = DeclMeta::Data { params: params.clone() };
-                lookup_table.insert(name.clone(), meta);
+                symbol_table.insert(name.clone(), meta);
             }
         }
         for ctor in ctors {
-            ctor.build(lookup_table)?;
+            ctor.build(symbol_table)?;
         }
         Ok(())
     }
 }
 
-impl BuildLookupTable for Ctor {
-    fn build(&self, lookup_table: &mut ModuleLookupTable) -> Result<(), LoweringError> {
+impl BuildSymbolTable for Ctor {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Ctor { span, name, params, .. } = self;
-        match lookup_table.get(name) {
+        match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {
                     name: name.to_owned(),
@@ -69,17 +69,17 @@ impl BuildLookupTable for Ctor {
             }
             None => {
                 let meta = DeclMeta::Ctor { params: params.clone() };
-                lookup_table.insert(name.clone(), meta);
+                symbol_table.insert(name.clone(), meta);
             }
         }
         Ok(())
     }
 }
 
-impl BuildLookupTable for Codata {
-    fn build(&self, lookup_table: &mut ModuleLookupTable) -> Result<(), LoweringError> {
+impl BuildSymbolTable for Codata {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Codata { span, name, params, dtors, .. } = self;
-        match lookup_table.get(name) {
+        match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {
                     name: name.to_owned(),
@@ -88,20 +88,20 @@ impl BuildLookupTable for Codata {
             }
             None => {
                 let meta = DeclMeta::Codata { params: params.clone() };
-                lookup_table.insert(name.clone(), meta);
+                symbol_table.insert(name.clone(), meta);
             }
         }
         for dtor in dtors {
-            dtor.build(lookup_table)?;
+            dtor.build(symbol_table)?;
         }
         Ok(())
     }
 }
 
-impl BuildLookupTable for Dtor {
-    fn build(&self, lookup_table: &mut ModuleLookupTable) -> Result<(), LoweringError> {
+impl BuildSymbolTable for Dtor {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Dtor { span, name, params, .. } = self;
-        match lookup_table.get(name) {
+        match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {
                     name: name.to_owned(),
@@ -110,18 +110,18 @@ impl BuildLookupTable for Dtor {
             }
             None => {
                 let meta = DeclMeta::Dtor { params: params.clone() };
-                lookup_table.insert(name.clone(), meta);
+                symbol_table.insert(name.clone(), meta);
             }
         }
         Ok(())
     }
 }
 
-impl BuildLookupTable for Def {
-    fn build(&self, lookup_table: &mut ModuleLookupTable) -> Result<(), LoweringError> {
+impl BuildSymbolTable for Def {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Def { span, name, params, .. } = self;
 
-        match lookup_table.get(name) {
+        match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {
                     name: name.to_owned(),
@@ -130,18 +130,18 @@ impl BuildLookupTable for Def {
             }
             None => {
                 let meta = DeclMeta::Def { params: params.clone() };
-                lookup_table.insert(name.clone(), meta);
+                symbol_table.insert(name.clone(), meta);
             }
         }
         Ok(())
     }
 }
 
-impl BuildLookupTable for Codef {
-    fn build(&self, lookup_table: &mut ModuleLookupTable) -> Result<(), LoweringError> {
+impl BuildSymbolTable for Codef {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Codef { span, name, params, .. } = self;
 
-        match lookup_table.get(name) {
+        match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {
                     name: name.to_owned(),
@@ -150,17 +150,17 @@ impl BuildLookupTable for Codef {
             }
             None => {
                 let meta = DeclMeta::Codef { params: params.clone() };
-                lookup_table.insert(name.clone(), meta);
+                symbol_table.insert(name.clone(), meta);
             }
         }
         Ok(())
     }
 }
 
-impl BuildLookupTable for Let {
-    fn build(&self, lookup_table: &mut ModuleLookupTable) -> Result<(), LoweringError> {
+impl BuildSymbolTable for Let {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Let { span, name, params, .. } = self;
-        match lookup_table.get(name) {
+        match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {
                     name: name.to_owned(),
@@ -169,7 +169,7 @@ impl BuildLookupTable for Let {
             }
             None => {
                 let meta = DeclMeta::Let { params: params.clone() };
-                lookup_table.insert(name.clone(), meta);
+                symbol_table.insert(name.clone(), meta);
             }
         }
         Ok(())

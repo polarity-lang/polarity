@@ -3,9 +3,9 @@ use parser::cst::ident::Ident;
 
 use crate::LoweringError;
 
-use super::{DeclMeta, LookupTable};
+use super::{DeclMeta, SymbolTable};
 
-impl LookupTable {
+impl SymbolTable {
     /// Check whether the identifier already exists in any of the symbol tables.
     pub fn lookup_exists(&self, name: &Ident) -> bool {
         for symbol_table in self.map.values() {

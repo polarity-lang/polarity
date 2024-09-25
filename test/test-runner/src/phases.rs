@@ -23,7 +23,7 @@ pub trait Phase {
     fn run(
         db: &mut Database,
         uri: &Url,
-        cst_lookup_table: &mut lowering::LookupTable,
+        cst_lookup_table: &mut lowering::SymbolTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err>;
 }
@@ -35,7 +35,7 @@ pub trait Phase {
 pub struct PartialRun<O> {
     case: Case,
     database: Database,
-    cst_lookup_table: RefCell<lowering::LookupTable>,
+    cst_lookup_table: RefCell<lowering::SymbolTable>,
     ast_lookup_table: RefCell<elaborator::LookupTable>,
     /// The result of the last run phase.
     result: Result<O, PhasesError>,
@@ -56,7 +56,7 @@ impl PartialRun<()> {
         source.insert(case.uri(), case.content().unwrap());
         let source = source.fallback_to(FileSystemSource::new(&case.path));
         let database = Database::from_source(source);
-        let cst_lookup_table = RefCell::new(lowering::LookupTable::default());
+        let cst_lookup_table = RefCell::new(lowering::SymbolTable::default());
         let ast_lookup_table = RefCell::new(elaborator::LookupTable::default());
         PartialRun {
             case,
@@ -245,7 +245,7 @@ impl Phase for Parse {
     fn run(
         db: &mut Database,
         uri: &Url,
-        _: &mut lowering::LookupTable,
+        _: &mut lowering::SymbolTable,
         _: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
         db.load_cst(uri)
@@ -271,7 +271,7 @@ impl Phase for Imports {
     fn run(
         db: &mut Database,
         uri: &Url,
-        cst_lookup_table: &mut lowering::LookupTable,
+        cst_lookup_table: &mut lowering::SymbolTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
         db.load_imports(uri, cst_lookup_table, ast_lookup_table)
@@ -302,7 +302,7 @@ impl Phase for Lower {
     fn run(
         db: &mut Database,
         uri: &Url,
-        cst_lookup_table: &mut lowering::LookupTable,
+        cst_lookup_table: &mut lowering::SymbolTable,
         _: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
         db.load_ust(uri, cst_lookup_table)
@@ -334,7 +334,7 @@ impl Phase for Check {
     fn run(
         db: &mut Database,
         uri: &Url,
-        cst_lookup_table: &mut lowering::LookupTable,
+        cst_lookup_table: &mut lowering::SymbolTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
         db.load_ast(uri, cst_lookup_table, ast_lookup_table)
@@ -367,7 +367,7 @@ impl Phase for Print {
     fn run(
         db: &mut Database,
         uri: &Url,
-        cst_lookup_table: &mut lowering::LookupTable,
+        cst_lookup_table: &mut lowering::SymbolTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
         let output = db.print_to_string(uri)?;
