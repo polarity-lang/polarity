@@ -16,7 +16,7 @@ pub enum LoweringError {
     AlreadyDefined {
         name: Ident,
         #[label]
-        span: Option<SourceSpan>,
+        span: SourceSpan,
     },
     #[error("{} must be used as destructor", name.id)]
     #[diagnostic(code("L-003"))]

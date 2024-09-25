@@ -21,7 +21,7 @@ impl LookupTable {
         if self.map.contains_key(name) {
             return Err(LoweringError::AlreadyDefined {
                 name: name.to_owned(),
-                span: Some(span.to_miette()),
+                span: span.to_miette(),
             });
         }
         self.map.insert(name.clone(), decl_meta);
