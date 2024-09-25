@@ -9,7 +9,8 @@ use parser::cst;
 use crate::lower::Lower;
 
 pub use ctx::*;
-pub use lookup_table::{build_lookup_table, LookupTable};
+pub use lookup_table::build::build_lookup_table;
+pub use lookup_table::LookupTable;
 pub use result::*;
 
 /// Lower a module
