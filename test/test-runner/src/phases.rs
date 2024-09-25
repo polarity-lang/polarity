@@ -4,7 +4,7 @@ use std::fmt;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 
-use query::{Database, FileSource, FileSystemSource, InMemorySource};
+use driver::{Database, FileSource, FileSystemSource, InMemorySource};
 use url::Url;
 
 use parser::cst;
@@ -232,7 +232,7 @@ pub struct Parse {
 
 impl Phase for Parse {
     type Out = Arc<cst::decls::Module>;
-    type Err = query::Error;
+    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -258,7 +258,7 @@ pub struct Imports {
 
 impl Phase for Imports {
     type Out = ();
-    type Err = query::Error;
+    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -289,7 +289,7 @@ pub struct Lower {
 
 impl Phase for Lower {
     type Out = ast::Module;
-    type Err = query::Error;
+    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -321,7 +321,7 @@ pub struct Check {
 
 impl Phase for Check {
     type Out = Arc<ast::Module>;
-    type Err = query::Error;
+    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -354,7 +354,7 @@ pub struct Print {
 
 impl Phase for Print {
     type Out = String;
-    type Err = query::Error;
+    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }

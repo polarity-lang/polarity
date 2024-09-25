@@ -2,8 +2,8 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
+use driver::Database;
 use printer::{Print, PrintCfg};
-use query::Database;
 
 #[derive(clap::Args)]
 pub struct Args {

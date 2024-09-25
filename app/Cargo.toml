@@ -31,7 +31,7 @@ futures = "0.3"
 async-std = "1"
 tower-lsp = { version = "0.17", default-features = false, features = ["runtime-agnostic"] }
 # workspace members
-query = { path = "../lang/query" }
+driver = { path = "../lang/driver" }
 elaborator = { path = "../lang/elaborator" }
 ast = { path = "../lang/ast" }
 printer = { path = "../lang/printer" }

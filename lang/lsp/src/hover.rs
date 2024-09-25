@@ -2,7 +2,7 @@
 
 use ast::CallKind;
 use ast::DotCallKind;
-use query::*;
+use driver::*;
 use tower_lsp::{jsonrpc, lsp_types::*};
 
 use super::conversion::*;

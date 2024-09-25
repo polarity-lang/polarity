@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::path::PathBuf;
 
+use driver::Database;
 use printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
-use query::Database;
 
 use super::ignore_colors::IgnoreColors;
 

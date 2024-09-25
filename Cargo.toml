@@ -7,7 +7,7 @@ members = [
     "lang/miette_util",
     "lang/printer",
     "lang/elaborator",
-    "lang/query",
+    "lang/driver",
     "lang/renaming",
     "lang/lifting",
     "lang/xfunc",

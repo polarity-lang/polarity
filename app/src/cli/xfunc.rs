@@ -2,7 +2,7 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-use query::{Database, Xfunc};
+use driver::{Database, Xfunc};
 
 #[derive(clap::Args)]
 pub struct Args {

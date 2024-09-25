@@ -2,9 +2,9 @@ use async_lock::RwLock;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
 
-use query::Database;
+use driver::Database;
 #[cfg(not(target_arch = "wasm32"))]
-use query::{FileSource, FileSystemSource, InMemorySource};
+use driver::{FileSource, FileSystemSource, InMemorySource};
 
 use super::capabilities::*;
 use super::diagnostics::*;

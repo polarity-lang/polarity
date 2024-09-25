@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use miette::Diagnostic;
 use thiserror::Error;
 
+use driver::Database;
 use printer::{ColorChoice, Print, StandardStream};
-use query::Database;
 
 #[derive(clap::Args)]
 pub struct Args {

@@ -2,7 +2,7 @@
 use std::collections::HashMap;
 use tower_lsp::{jsonrpc, lsp_types::*};
 
-use query::Xfunc;
+use driver::Xfunc;
 
 use super::conversion::*;
 use super::server::*;
