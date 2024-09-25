@@ -20,14 +20,14 @@ pub enum LoweringError {
     },
     #[error("{} must be used as destructor", name.id)]
     #[diagnostic(code("L-003"))]
-    MustUseAsDtor {
+    MustUseAsDotCall {
         name: Ident,
         #[label]
         span: SourceSpan,
     },
     #[error("{} cannot be used as a destructor", name.id)]
     #[diagnostic(code("L-004"))]
-    CannotUseAsDtor {
+    CannotUseAsDotCall {
         name: Ident,
         #[label]
         span: SourceSpan,
