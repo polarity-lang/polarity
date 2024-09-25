@@ -295,7 +295,7 @@ impl Lower for cst::exp::Call {
                 }))
             }
             DeclMeta::Def { .. } | DeclMeta::Dtor { .. } => {
-                Err(LoweringError::MustUseAsDtor { name: name.clone(), span: span.to_miette() })
+                Err(LoweringError::MustUseAsDotCall { name: name.clone(), span: span.to_miette() })
             }
             DeclMeta::Ctor { params, .. } => {
                 let name = name.lower(ctx)?;
@@ -356,7 +356,10 @@ impl Lower for cst::exp::DotCall {
                 args: lower_args(args, params, ctx)?,
                 inferred_type: None,
             })),
-            _ => Err(LoweringError::CannotUseAsDtor { name: name.clone(), span: span.to_miette() }),
+            _ => Err(LoweringError::CannotUseAsDotCall {
+                name: name.clone(),
+                span: span.to_miette(),
+            }),
         }
     }
 }
