@@ -60,7 +60,7 @@ impl Ctx {
         info: &Span,
     ) -> Result<ast::Label, LoweringError> {
         if let Some(user_name) = &user_name {
-            if self.lookup_table.lookup(user_name).is_some() {
+            if self.lookup_table.lookup_exists(user_name) {
                 return Err(LoweringError::LabelNotUnique {
                     name: user_name.id.to_owned(),
                     span: info.to_miette(),
