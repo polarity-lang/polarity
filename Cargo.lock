@@ -1333,6 +1333,7 @@ dependencies = [
  "num-bigint",
  "parser",
  "thiserror",
+ "url",
 ]
 
 [[package]]

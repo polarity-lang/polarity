@@ -301,7 +301,7 @@ impl Database {
         let cst = self.load_cst(uri)?;
         log::debug!("Lowering module");
         let new_lookup_table = lowering::build_lookup_table(&cst)?;
-        cst_lookup_table.append(new_lookup_table);
+        cst_lookup_table.insert(uri.clone(), new_lookup_table);
         lowering::lower_module_with_lookup_table(&cst, cst_lookup_table).map_err(Error::Lowering)
     }
 
