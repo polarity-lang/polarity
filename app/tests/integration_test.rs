@@ -19,6 +19,14 @@ fn check_command() {
     assert.success().stdout("../examples/absurd.pol typechecked successfully!\n");
 }
 
+/// Check that "pol check" works correctly
+#[test]
+fn check_command_2() {
+    let mut cmd = Command::cargo_bin(BINARY).unwrap();
+    let assert = cmd.args(vec!["check", "../examples/imports.pol"]).assert();
+    assert.success().stdout("../examples/imports.pol typechecked successfully!\n");
+}
+
 /// Check that "pol run" works correctly
 #[test]
 fn run_command() {
