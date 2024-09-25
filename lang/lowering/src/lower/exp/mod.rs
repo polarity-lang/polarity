@@ -288,49 +288,46 @@ impl Lower for cst::exp::Call {
         match meta {
             DeclMeta::Data { params, .. } | DeclMeta::Codata { params, .. } => {
                 let name = name.lower(ctx)?;
-                return Ok(ast::Exp::TypCtor(ast::TypCtor {
+                Ok(ast::Exp::TypCtor(ast::TypCtor {
                     span: Some(*span),
                     name,
                     args: lower_args(args, params, ctx)?,
-                }));
+                }))
             }
             DeclMeta::Def { .. } | DeclMeta::Dtor { .. } => {
-                return Err(LoweringError::MustUseAsDtor {
-                    name: name.clone(),
-                    span: span.to_miette(),
-                })
+                Err(LoweringError::MustUseAsDtor { name: name.clone(), span: span.to_miette() })
             }
             DeclMeta::Ctor { params, .. } => {
                 let name = name.lower(ctx)?;
-                return Ok(ast::Exp::Call(ast::Call {
+                Ok(ast::Exp::Call(ast::Call {
                     span: Some(*span),
                     kind: ast::CallKind::Constructor,
                     name,
                     args: lower_args(args, params, ctx)?,
                     inferred_type: None,
-                }));
+                }))
             }
             DeclMeta::Codef { params, .. } => {
                 let name = name.lower(ctx)?;
-                return Ok(ast::Exp::Call(ast::Call {
+                Ok(ast::Exp::Call(ast::Call {
                     span: Some(*span),
                     kind: ast::CallKind::Codefinition,
                     name,
                     args: lower_args(args, params, ctx)?,
                     inferred_type: None,
-                }));
+                }))
             }
             DeclMeta::Let { params, .. } => {
                 let name = name.lower(ctx)?;
-                return Ok(ast::Exp::Call(ast::Call {
+                Ok(ast::Exp::Call(ast::Call {
                     span: Some(*span),
                     kind: ast::CallKind::LetBound,
                     name,
                     args: lower_args(args, params, ctx)?,
                     inferred_type: None,
-                }));
+                }))
             }
-        };
+        }
     }
 }
 
