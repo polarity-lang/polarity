@@ -132,6 +132,7 @@ impl Database {
 
     pub fn load_module(&mut self, module_uri: &Url) -> Result<Arc<ast::Module>, Error> {
         log::debug!("Loading module: {}", module_uri);
+        self.load_source(module_uri)?;
         self.build_dependency_dag()?;
 
         log::trace!("");
