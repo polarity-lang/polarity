@@ -4,7 +4,6 @@ use parser::cst;
 
 use ast::ctx::LevelCtx;
 use ast::{self, MetaVar, MetaVarKind, MetaVarState};
-use ast::{HasSpan, Named};
 use ast::{HashMap, HashSet};
 use ast::{Idx, Lvl};
 use parser::cst::exp::BindingSite;
@@ -25,8 +24,6 @@ pub struct Ctx {
     local_map: HashMap<Ident, Vec<Lvl>>,
     /// Metadata for top-level names
     pub lookup_table: LookupTable,
-    /// Accumulates top-level declarations
-    pub decls_map: HashMap<String, ast::Decl>,
     /// Counts the number of entries for each De-Bruijn level
     levels: Vec<usize>,
     /// Counter for unique label ids
@@ -44,7 +41,6 @@ impl Ctx {
         Self {
             local_map: HashMap::default(),
             lookup_table,
-            decls_map: HashMap::default(),
             levels: Vec::new(),
             next_label_id: 0,
             user_labels: HashSet::default(),
@@ -72,24 +68,6 @@ impl Ctx {
             name: name.to_owned(),
             span: info.to_miette(),
         })
-    }
-
-    pub fn add_decls<I>(&mut self, decls: I) -> Result<(), LoweringError>
-    where
-        I: IntoIterator<Item = ast::Decl>,
-    {
-        decls.into_iter().try_for_each(|decl| self.add_decl(decl))
-    }
-
-    pub fn add_decl(&mut self, decl: ast::Decl) -> Result<(), LoweringError> {
-        if self.decls_map.contains_key(&decl.name().clone().id) {
-            return Err(LoweringError::AlreadyDefined {
-                name: Ident { span: Default::default(), id: decl.name().clone().id },
-                span: decl.span().to_miette(),
-            });
-        }
-        self.decls_map.insert(decl.name().clone().id, decl);
-        Ok(())
     }
 
     pub fn unique_label(

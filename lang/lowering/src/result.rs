@@ -2,8 +2,6 @@ use miette::{Diagnostic, SourceSpan};
 use parser::cst::ident::Ident;
 use thiserror::Error;
 
-use crate::lookup_table::DeclKind;
-
 #[derive(Error, Diagnostic, Debug, Clone)]
 pub enum LoweringError {
     #[error("Undefined identifier {}", name.id)]
@@ -18,7 +16,7 @@ pub enum LoweringError {
     AlreadyDefined {
         name: Ident,
         #[label]
-        span: Option<SourceSpan>,
+        span: SourceSpan,
     },
     #[error("{} must be used as destructor", name.id)]
     #[diagnostic(code("L-003"))]
@@ -42,9 +40,6 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
-    #[error("Expected {name} to be a {expected}, but it is a {actual}")]
-    #[diagnostic(code("L-006"))]
-    InvalidDeclarationKind { name: String, expected: DeclKind, actual: DeclKind },
     #[error("The annotated label {name} is shadowed by a local variable")]
     #[diagnostic(code("L-007"))]
     LabelShadowed {
