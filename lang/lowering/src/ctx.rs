@@ -9,7 +9,7 @@ use ast::{Idx, Lvl};
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
 
-use crate::lookup_table::{DeclMeta, LookupTable};
+use crate::lookup_table::LookupTable;
 
 use super::result::LoweringError;
 
@@ -54,18 +54,13 @@ impl Ctx {
         self.lookup(name.clone())
     }
 
-    /// Lookup in the global context of declarations.
-    pub fn lookup_global(&self, name: &Ident) -> Option<DeclMeta> {
-        self.lookup_table.lookup(name).cloned()
-    }
-
     pub fn unique_label(
         &mut self,
         user_name: Option<Ident>,
         info: &Span,
     ) -> Result<ast::Label, LoweringError> {
         if let Some(user_name) = &user_name {
-            if self.lookup_global(user_name).is_some() {
+            if self.lookup_table.lookup(user_name).is_some() {
                 return Err(LoweringError::LabelNotUnique {
                     name: user_name.id.to_owned(),
                     span: info.to_miette(),

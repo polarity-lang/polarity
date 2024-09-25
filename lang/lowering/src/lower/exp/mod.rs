@@ -284,7 +284,7 @@ impl Lower for cst::exp::Call {
 
         // If we find the identifier in the global context then we have to lower
         // it to a call or a type constructor.
-        if let Some(meta) = ctx.lookup_global(name) {
+        if let Some(meta) = ctx.lookup_table.lookup(name).cloned() {
             match meta {
                 DeclMeta::Data { params, .. } | DeclMeta::Codata { params, .. } => {
                     let name = name.lower(ctx)?;
@@ -345,7 +345,7 @@ impl Lower for cst::exp::DotCall {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::DotCall { span, exp, name, args } = self;
 
-        match ctx.lookup_global(name) {
+        match ctx.lookup_table.lookup(name).cloned() {
             Some(meta) => match meta {
                 DeclMeta::Dtor { params, .. } => Ok(ast::Exp::DotCall(ast::DotCall {
                     span: Some(*span),
@@ -475,7 +475,8 @@ impl Lower for cst::exp::NatLit {
         // We have to check whether "Z" is declared as a constructor or codefinition.
         // We assume that if Z exists, then S exists as well and is of the same kind.
         let z_kind = ctx
-            .lookup_global(&Ident { span: *span, id: "Z".to_string() })
+            .lookup_table
+            .lookup(&Ident { span: *span, id: "Z".to_string() })
             .ok_or_else(|| LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() })?;
         let call_kind = match z_kind {
             DeclMeta::Codef { .. } => ast::CallKind::Codefinition,
