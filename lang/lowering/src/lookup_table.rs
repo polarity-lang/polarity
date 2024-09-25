@@ -1,5 +1,3 @@
-use std::fmt;
-
 use ast::HashMap;
 use codespan::Span;
 use decls::*;
@@ -44,45 +42,6 @@ pub enum DeclMeta {
     Ctor { params: Telescope },
     Dtor { params: Telescope },
     Let { params: Telescope },
-}
-
-impl DeclMeta {
-    pub fn kind(&self) -> DeclKind {
-        match self {
-            DeclMeta::Data { .. } => DeclKind::Data,
-            DeclMeta::Codata { .. } => DeclKind::Codata,
-            DeclMeta::Def { .. } => DeclKind::Def,
-            DeclMeta::Codef { .. } => DeclKind::Codef,
-            DeclMeta::Ctor { .. } => DeclKind::Ctor,
-            DeclMeta::Dtor { .. } => DeclKind::Dtor,
-            DeclMeta::Let { .. } => DeclKind::Let,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum DeclKind {
-    Data,
-    Codata,
-    Def,
-    Codef,
-    Ctor,
-    Dtor,
-    Let,
-}
-
-impl fmt::Display for DeclKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DeclKind::Data => write!(f, "data type"),
-            DeclKind::Codata => write!(f, "codata type"),
-            DeclKind::Def => write!(f, "definition"),
-            DeclKind::Codef => write!(f, "codefinition"),
-            DeclKind::Ctor => write!(f, "constructor"),
-            DeclKind::Dtor => write!(f, "destructor"),
-            DeclKind::Let => write!(f, "toplevel let"),
-        }
-    }
 }
 
 pub fn build_lookup_table(module: &Module) -> Result<LookupTable, LoweringError> {
