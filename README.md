@@ -44,6 +44,7 @@ pol --help
 ├── examples                Example code in the object language
 ├── lang                    Language implementation
 │   ├── ast                 Definition of the abstract syntax tree (untyped and typed)
+│   ├── driver              Demand-driven compiler driver used by the binary, LSP and test-runner
 │   ├── elaborator          Elaborating an untyped syntax tree into a typed syntax tree.
 │   ├── lifting             Lift local (co)matches to top-level definitions
 │   ├── lowering            Lowering concrete to (untyped) abstract syntax tree
@@ -51,7 +52,6 @@ pol --help
 │   ├── miette_util         Convert source code spans
 │   ├── parser              Concrete syntax tree (cst), lexer and parser
 │   ├── printer             Print abstract syntax tree to text
-│   ├── query               Index data structures for annotated source code files and spans
 │   ├── renaming            Rename abstract syntax tree s.t. it can be reparsed
 │   └── xfunc               De-/Refunctionalization implementation
 ├── test                    Integration tests

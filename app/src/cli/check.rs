@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use query::Database;
+use driver::Database;
 
 #[derive(clap::Args)]
 pub struct Args {

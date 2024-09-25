@@ -27,6 +27,6 @@ miette = { workspace = true }
 url = { workspace = true }
 # workspace members
 ast = { path = "../ast" }
-query = { path = "../query" }
+driver = { path = "../driver" }
 printer = { path = "../printer" }
 miette_util = { path = "../miette_util" }

@@ -4,9 +4,9 @@ use miette::SourceSpan;
 use tower_lsp::lsp_types;
 use url::Url;
 
+use driver::Database;
+use driver::Error;
 use miette_util::FromMiette;
-use query::Database;
-use query::Error;
 
 use crate::conversion::ToLsp;
 

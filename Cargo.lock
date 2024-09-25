@@ -675,6 +675,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 
 [[package]]
+name = "driver"
+version = "0.1.0"
+dependencies = [
+ "ast",
+ "codespan",
+ "elaborator",
+ "lifting",
+ "log",
+ "lowering",
+ "miette",
+ "parser",
+ "printer",
+ "renaming",
+ "ropey",
+ "rust-lapper",
+ "thiserror",
+ "url",
+ "xfunc",
+]
+
+[[package]]
 name = "either"
 version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1367,11 +1388,11 @@ dependencies = [
  "ast",
  "async-lock 2.8.0",
  "codespan",
+ "driver",
  "lsp-types 0.93.2",
  "miette",
  "miette_util",
  "printer",
- "query",
  "tower-lsp",
  "url",
 ]
@@ -1704,6 +1725,7 @@ dependencies = [
  "ast",
  "async-std",
  "clap",
+ "driver",
  "elaborator",
  "env_logger",
  "futures",
@@ -1711,7 +1733,6 @@ dependencies = [
  "lsp-server",
  "miette",
  "printer",
- "query",
  "termsize",
  "thiserror",
  "tokio",
@@ -1859,27 +1880,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e719e8df665df0d1c8fbfd238015744736151d4445ec0836b8e628aae103b77"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "query"
-version = "0.1.0"
-dependencies = [
- "ast",
- "codespan",
- "elaborator",
- "lifting",
- "log",
- "lowering",
- "miette",
- "parser",
- "printer",
- "renaming",
- "ropey",
- "rust-lapper",
- "thiserror",
- "url",
- "xfunc",
 ]
 
 [[package]]
@@ -2413,13 +2413,13 @@ version = "0.1.0"
 dependencies = [
  "ast",
  "clap",
+ "driver",
  "elaborator",
  "env_logger",
  "log",
  "lowering",
  "parser",
  "printer",
- "query",
  "renaming",
  "serde",
  "serde_derive",

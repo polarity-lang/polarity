@@ -1,5 +1,5 @@
 [package]
-name = "query"
+name = "driver"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true

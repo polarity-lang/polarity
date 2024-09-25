@@ -3,8 +3,8 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
+use driver::Database;
 use printer::{Print, PrintCfg};
-use query::Database;
 
 const LATEX_END: &str = r"\end{alltt}
 ";

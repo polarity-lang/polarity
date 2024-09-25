@@ -5,7 +5,7 @@ use tower_lsp::{jsonrpc, lsp_types::*};
 
 use super::conversion::*;
 use super::server::*;
-use query::*;
+use driver::*;
 
 pub async fn goto_definition(
     server: &Server,
