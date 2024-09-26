@@ -7,6 +7,8 @@ use crate::dependency_graph::DependencyGraph;
 use ast::Exp;
 use ast::HashSet;
 use elaborator::normalizer::normalize::Normalize;
+use elaborator::typechecker::type_info_table::build::build_type_info_table;
+use elaborator::typechecker::type_info_table::TypeInfoTable;
 use elaborator::ModuleTypeInfoTable;
 use lowering::{ModuleSymbolTable, SymbolTable};
 use parser::cst;
@@ -164,13 +166,31 @@ impl Database {
         ust
     }
 
+    // Core API: TypeInfoTable
+    //
+    //
+
+    pub fn type_info_table(&mut self, uri: &Url) -> Result<ModuleTypeInfoTable, Error> {
+        match self.type_info_table.get_unless_stale(uri) {
+            Some(table) => Ok(table.clone()),
+            None => self.recompute_type_info_table(uri),
+        }
+    }
+
+    pub fn recompute_type_info_table(&mut self, uri: &Url) -> Result<ModuleTypeInfoTable, Error> {
+        let ust = self.ust(uri)?;
+        let info_table = build_type_info_table(&ust);
+        self.type_info_table.insert(uri.clone(), info_table.clone());
+        Ok(info_table)
+    }
+
     // Core API: AST
     //
     //
 
-    pub fn load_module(&mut self, module_uri: &Url) -> Result<Arc<ast::Module>, Error> {
-        log::debug!("Loading module: {}", module_uri);
-        self.source(module_uri)?;
+    pub fn load_module(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+        log::debug!("Loading module: {}", uri);
+        self.source(uri)?;
         self.build_dependency_dag()?;
 
         log::trace!("");
@@ -179,55 +199,36 @@ impl Database {
         self.deps.print_dependency_tree();
         log::trace!("");
 
-        let mut ast_lookup_table = ModuleTypeInfoTable::default();
-        self.load_module_impl(&mut ast_lookup_table, module_uri)
+        self.load_ast(uri)
     }
 
-    fn load_module_impl(
-        &mut self,
-        ast_lookup_table: &mut ModuleTypeInfoTable,
-        module_uri: &Url,
-    ) -> Result<Arc<ast::Module>, Error> {
-        let empty_vec = Vec::new();
-        let direct_dependencies = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
-
-        for dep_url in direct_dependencies {
-            let mut dep_ast_lookup_table = ModuleTypeInfoTable::default();
-            self.load_module_impl(&mut dep_ast_lookup_table, &dep_url)?;
-            ast_lookup_table.append(dep_ast_lookup_table);
-        }
-
-        self.load_ast(module_uri, ast_lookup_table)
-    }
-
-    pub fn load_ast(
-        &mut self,
-        uri: &Url,
-        ast_lookup_table: &mut ModuleTypeInfoTable,
-    ) -> Result<Arc<ast::Module>, Error> {
+    pub fn load_ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
         log::trace!("Loading AST: {}", uri);
 
         match self.ast.get_unless_stale(uri) {
-            Some(ast) => {
-                ast_lookup_table
-                    .append(self.type_info_table.get_even_if_stale(uri).unwrap().clone());
-                ast.clone()
-            }
+            Some(ast) => ast.clone(),
             None => {
                 log::trace!("AST is stale, reloading");
-                let ust = self.ust(uri).map(|x| (*x).clone());
-                let ast = ust
-                    .and_then(|ust| {
-                        let tst = elaborator::typechecker::check_with_lookup_table(
-                            Rc::new(ust),
-                            ast_lookup_table,
-                        )
-                        .map_err(Error::Type)?;
-                        Ok(tst)
-                    })
-                    .map(Arc::new);
+                let ust = self.ust(uri).map(|x| (*x).clone())?;
+
+                // Compute the dependencies
+                let empty_vec = Vec::new();
+                let direct_dependencies = self.deps.get(uri).unwrap_or(&empty_vec).clone();
+
+                // Compute the type info table
+                let mut info_table = TypeInfoTable::default();
+                let mod_info_table = self.type_info_table(uri)?;
+                info_table.insert(uri.clone(), mod_info_table);
+                for dep_url in direct_dependencies {
+                    let mod_info_table = self.type_info_table(&dep_url)?;
+                    info_table.insert(dep_url.clone(), mod_info_table);
+                }
+                let ast =
+                    elaborator::typechecker::check_with_lookup_table(Rc::new(ust), &info_table)
+                        .map(Arc::new)
+                        .map_err(Error::Type);
+
                 self.ast.insert(uri.clone(), ast.clone());
-                self.type_info_table.insert(uri.clone(), ast_lookup_table.clone());
                 if let Ok(module) = &ast {
                     let (info_lapper, item_lapper) = collect_info(module.clone());
                     self.info_by_id.insert(uri.clone(), info_lapper);
@@ -331,21 +332,17 @@ impl Database {
     }
 
     pub fn print_to_string(&mut self, uri: &Url) -> Result<String, Error> {
-        let module = self.load_ast(uri, &mut ModuleTypeInfoTable::default())?;
+        let module = self.load_ast(uri)?;
         let module = (*module).clone().rename();
         Ok(printer::Print::print_to_string(&module, None))
     }
 
-    pub fn load_imports(
-        &mut self,
-        module_uri: &Url,
-        ast_lookup_table: &mut ModuleTypeInfoTable,
-    ) -> Result<(), Error> {
+    pub fn load_imports(&mut self, module_uri: &Url) -> Result<(), Error> {
         self.build_dependency_dag()?;
         let empty_vec = Vec::new();
         let direct_deps = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
         for direct_dep in direct_deps {
-            self.load_module_impl(ast_lookup_table, &direct_dep)?;
+            self.load_ast(&direct_dep)?;
         }
         Ok(())
     }

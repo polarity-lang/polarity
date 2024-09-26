@@ -18,6 +18,7 @@ codespan = { workspace = true }
 derivative = { workspace = true }
 pretty = { workspace = true }
 log = { workspace = true }
+url = { workspace = true }
 
 # workspace members
 ast = { path = "../ast" }

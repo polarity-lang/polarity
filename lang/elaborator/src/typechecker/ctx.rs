@@ -13,7 +13,7 @@ use printer::Print;
 
 use crate::result::TypeError;
 
-use super::type_info_table::ModuleTypeInfoTable;
+use super::type_info_table::TypeInfoTable;
 
 #[derive(Debug, Clone)]
 pub struct Ctx {
@@ -22,7 +22,7 @@ pub struct Ctx {
     /// Global meta variables and their state
     pub meta_vars: HashMap<MetaVar, MetaVarState>,
     /// Global lookup table for declarations
-    pub type_info_table: Rc<ModuleTypeInfoTable>,
+    pub type_info_table: Rc<TypeInfoTable>,
     /// The program for looking up the expressions when evaluating
     pub module: Rc<Module>,
 }
@@ -30,7 +30,7 @@ pub struct Ctx {
 impl Ctx {
     pub fn new(
         meta_vars: HashMap<MetaVar, MetaVarState>,
-        type_info_table: ModuleTypeInfoTable,
+        type_info_table: TypeInfoTable,
         module: Rc<Module>,
     ) -> Self {
         Self {

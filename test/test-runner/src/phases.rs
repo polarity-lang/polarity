@@ -272,9 +272,9 @@ impl Phase for Imports {
         db: &mut Database,
         uri: &Url,
         _: &mut lowering::SymbolTable,
-        ast_lookup_table: &mut elaborator::ModuleTypeInfoTable,
+        _: &mut elaborator::ModuleTypeInfoTable,
     ) -> Result<Self::Out, Self::Err> {
-        db.load_imports(uri, ast_lookup_table)
+        db.load_imports(uri)
     }
 }
 
@@ -335,9 +335,9 @@ impl Phase for Check {
         db: &mut Database,
         uri: &Url,
         _: &mut lowering::SymbolTable,
-        ast_lookup_table: &mut elaborator::ModuleTypeInfoTable,
+        _: &mut elaborator::ModuleTypeInfoTable,
     ) -> Result<Self::Out, Self::Err> {
-        db.load_ast(uri, ast_lookup_table)
+        db.load_ast(uri)
     }
 }
 

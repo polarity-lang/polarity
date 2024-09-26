@@ -1,9 +1,21 @@
 use ast::*;
+use url::Url;
 
 use super::TypeError;
 
 pub mod build;
 pub mod lookup;
+
+#[derive(Debug, Clone, Default)]
+pub struct TypeInfoTable {
+    map: HashMap<Url, ModuleTypeInfoTable>,
+}
+
+impl TypeInfoTable {
+    pub fn insert(&mut self, uri: Url, info_table: ModuleTypeInfoTable) {
+        self.map.insert(uri, info_table);
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct ModuleTypeInfoTable {
@@ -19,17 +31,6 @@ pub struct ModuleTypeInfoTable {
     //
     map_def: HashMap<Ident, DefMeta>,
     map_dtor: HashMap<Ident, DtorMeta>,
-}
-
-impl ModuleTypeInfoTable {
-    pub fn append(&mut self, other: ModuleTypeInfoTable) {
-        self.map_let.extend(other.map_let);
-        self.map_tyctor.extend(other.map_tyctor);
-        self.map_codef.extend(other.map_codef);
-        self.map_ctor.extend(other.map_ctor);
-        self.map_def.extend(other.map_def);
-        self.map_dtor.extend(other.map_dtor);
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -84,4 +85,3 @@ pub struct DtorMeta {
     pub self_param: SelfParam,
     pub ret_typ: Box<Exp>,
 }
-

@@ -1,6 +1,6 @@
 use ast::*;
 
-use super::{CodefMeta, CtorMeta, DefMeta, DtorMeta, LetMeta, TyCtorMeta, ModuleTypeInfoTable};
+use super::{CodefMeta, CtorMeta, DefMeta, DtorMeta, LetMeta, ModuleTypeInfoTable, TyCtorMeta};
 
 pub fn build_type_info_table(module: &Module) -> ModuleTypeInfoTable {
     let mut info_table = ModuleTypeInfoTable::default();
