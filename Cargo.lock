@@ -714,6 +714,7 @@ dependencies = [
  "pretty",
  "printer",
  "thiserror",
+ "url",
 ]
 
 [[package]]

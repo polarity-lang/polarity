@@ -24,7 +24,7 @@ pub trait Phase {
         db: &mut Database,
         uri: &Url,
         cst_lookup_table: &mut lowering::SymbolTable,
-        ast_lookup_table: &mut elaborator::TypeInfoTable,
+        ast_lookup_table: &mut elaborator::ModuleTypeInfoTable,
     ) -> Result<Self::Out, Self::Err>;
 }
 
@@ -36,7 +36,7 @@ pub struct PartialRun<O> {
     case: Case,
     database: Database,
     cst_lookup_table: RefCell<lowering::SymbolTable>,
-    ast_lookup_table: RefCell<elaborator::TypeInfoTable>,
+    ast_lookup_table: RefCell<elaborator::ModuleTypeInfoTable>,
     /// The result of the last run phase.
     result: Result<O, PhasesError>,
     /// A textual report about all the previously run phases.
@@ -57,7 +57,7 @@ impl PartialRun<()> {
         let source = source.fallback_to(FileSystemSource::new(&case.path));
         let database = Database::from_source(source);
         let cst_lookup_table = RefCell::new(lowering::SymbolTable::default());
-        let ast_lookup_table = RefCell::new(elaborator::TypeInfoTable::default());
+        let ast_lookup_table = RefCell::new(elaborator::ModuleTypeInfoTable::default());
         PartialRun {
             case,
             database,
@@ -246,7 +246,7 @@ impl Phase for Parse {
         db: &mut Database,
         uri: &Url,
         _: &mut lowering::SymbolTable,
-        _: &mut elaborator::TypeInfoTable,
+        _: &mut elaborator::ModuleTypeInfoTable,
     ) -> Result<Self::Out, Self::Err> {
         db.cst(uri)
     }
@@ -272,9 +272,9 @@ impl Phase for Imports {
         db: &mut Database,
         uri: &Url,
         _: &mut lowering::SymbolTable,
-        ast_lookup_table: &mut elaborator::TypeInfoTable,
+        _: &mut elaborator::ModuleTypeInfoTable,
     ) -> Result<Self::Out, Self::Err> {
-        db.load_imports(uri, ast_lookup_table)
+        db.load_imports(uri)
     }
 }
 
@@ -303,7 +303,7 @@ impl Phase for Lower {
         db: &mut Database,
         uri: &Url,
         _: &mut lowering::SymbolTable,
-        _: &mut elaborator::TypeInfoTable,
+        _: &mut elaborator::ModuleTypeInfoTable,
     ) -> Result<Self::Out, Self::Err> {
         db.ust(uri).map(|x| (*x).clone())
     }
@@ -335,9 +335,9 @@ impl Phase for Check {
         db: &mut Database,
         uri: &Url,
         _: &mut lowering::SymbolTable,
-        ast_lookup_table: &mut elaborator::TypeInfoTable,
+        _: &mut elaborator::ModuleTypeInfoTable,
     ) -> Result<Self::Out, Self::Err> {
-        db.load_ast(uri, ast_lookup_table)
+        db.load_ast(uri)
     }
 }
 
@@ -368,7 +368,7 @@ impl Phase for Print {
         db: &mut Database,
         uri: &Url,
         cst_lookup_table: &mut lowering::SymbolTable,
-        ast_lookup_table: &mut elaborator::TypeInfoTable,
+        ast_lookup_table: &mut elaborator::ModuleTypeInfoTable,
     ) -> Result<Self::Out, Self::Err> {
         let output = db.print_to_string(uri)?;
         db.write_source(uri, &output)?;

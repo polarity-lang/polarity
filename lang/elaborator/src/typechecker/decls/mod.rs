@@ -8,32 +8,23 @@ mod global_let;
 
 use ast::*;
 
-use super::{
-    ctx::Ctx,
-    type_info_table::{build_type_info_table, TypeInfoTable},
-    TypeError,
-};
+use super::{ctx::Ctx, type_info_table::TypeInfoTable, TypeError};
 
 /// Check a module
 ///
-/// The caller of this function needs to resolve module dependencies, check all dependencies, and provide a lookup table with all symbols from these dependencies.
-/// The symbols from the current module will be appended to the lookup table.
+/// The caller of this function needs to resolve module dependencies, check all dependencies, and provide a info table with all symbols from these dependencies.
 pub fn check_with_lookup_table(
     prg: Rc<Module>,
-    lookup_table: &mut TypeInfoTable,
+    info_table: &TypeInfoTable,
 ) -> Result<Module, TypeError> {
     log::debug!("Checking module: {}", prg.uri);
 
-    let mut combined_table = std::mem::take(lookup_table);
-    combined_table.append(build_type_info_table(&prg));
-    let mut ctx = Ctx::new(prg.meta_vars.clone(), combined_table, prg.clone());
+    let mut ctx = Ctx::new(prg.meta_vars.clone(), info_table.clone(), prg.clone());
 
     let decls =
         prg.decls.iter().map(|decl| decl.check_wf(&mut ctx)).collect::<Result<_, TypeError>>()?;
 
     ctx.check_metavars_solved()?;
-
-    *lookup_table = Rc::unwrap_or_clone(ctx.type_info_table);
 
     Ok(Module {
         uri: prg.uri.clone(),
