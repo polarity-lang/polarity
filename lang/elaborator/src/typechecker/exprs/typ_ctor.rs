@@ -35,7 +35,7 @@ impl CheckInfer for TypCtor {
     /// ```
     fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let TypCtor { span, name, args } = self;
-        let params = ctx.lookup_table.lookup_tyctor(name)?.params.clone();
+        let params = ctx.type_info_table.lookup_tyctor(name)?.params.clone();
         let args_out = check_args(args, name, ctx, &params, *span)?;
 
         Ok(TypCtor { span: *span, name: name.clone(), args: args_out })

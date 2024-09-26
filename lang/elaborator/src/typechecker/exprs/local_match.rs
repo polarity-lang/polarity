@@ -9,7 +9,7 @@ use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::result::TypeError;
 use crate::typechecker::exprs::CheckTelescope;
-use crate::typechecker::lookup_table::CtorMeta;
+use crate::typechecker::type_info_table::CtorMeta;
 use crate::unifier::constraints::Constraint;
 use crate::unifier::unify::*;
 
@@ -159,7 +159,7 @@ impl<'a> WithScrutinee<'a> {
             let Case { span, pattern: Pattern { name, params: args, .. }, body } = case;
             // Build equations for this case
             let CtorMeta { typ: TypCtor { args: def_args, .. }, params, .. } =
-                ctx.lookup_table.lookup_ctor(&name)?;
+                ctx.type_info_table.lookup_ctor(&name)?;
 
             let def_args_nf = LevelCtx::empty().bind_iter(params.params.iter(), |ctx_| {
                 def_args.normalize(&ctx.module, &mut ctx_.env())

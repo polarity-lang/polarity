@@ -3,7 +3,7 @@
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::typechecker::exprs::CheckTelescope;
-use crate::typechecker::lookup_table::DtorMeta;
+use crate::typechecker::type_info_table::DtorMeta;
 use crate::unifier::constraints::Constraint;
 use crate::unifier::unify::*;
 use ast::ctx::LevelCtx;
@@ -124,7 +124,7 @@ impl<'a> WithExpectedType<'a> {
 
         for case in cases.iter().cloned() {
             let DtorMeta { self_param, ret_typ, params, .. } =
-                ctx.lookup_table.lookup_dtor(&case.pattern.name)?;
+                ctx.type_info_table.lookup_dtor(&case.pattern.name)?;
             let SelfParam { typ: TypCtor { args: def_args, .. }, .. } = self_param;
             let Case { span, pattern: Pattern { name, params: params_inst, .. }, body } = &case;
             // We are in the following situation:

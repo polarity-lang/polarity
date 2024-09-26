@@ -10,7 +10,7 @@ use ast::*;
 
 use super::{
     ctx::Ctx,
-    lookup_table::{build_lookup_table, LookupTable},
+    type_info_table::{build_type_info_table, TypeInfoTable},
     TypeError,
 };
 
@@ -20,12 +20,12 @@ use super::{
 /// The symbols from the current module will be appended to the lookup table.
 pub fn check_with_lookup_table(
     prg: Rc<Module>,
-    lookup_table: &mut LookupTable,
+    lookup_table: &mut TypeInfoTable,
 ) -> Result<Module, TypeError> {
     log::debug!("Checking module: {}", prg.uri);
 
     let mut combined_table = std::mem::take(lookup_table);
-    combined_table.append(build_lookup_table(&prg));
+    combined_table.append(build_type_info_table(&prg));
     let mut ctx = Ctx::new(prg.meta_vars.clone(), combined_table, prg.clone());
 
     let decls =
@@ -33,7 +33,7 @@ pub fn check_with_lookup_table(
 
     ctx.check_metavars_solved()?;
 
-    *lookup_table = Rc::unwrap_or_clone(ctx.lookup_table);
+    *lookup_table = Rc::unwrap_or_clone(ctx.type_info_table);
 
     Ok(Module {
         uri: prg.uri.clone(),

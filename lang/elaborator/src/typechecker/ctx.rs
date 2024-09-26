@@ -13,7 +13,7 @@ use printer::Print;
 
 use crate::result::TypeError;
 
-use super::lookup_table::LookupTable;
+use super::type_info_table::TypeInfoTable;
 
 #[derive(Debug, Clone)]
 pub struct Ctx {
@@ -22,7 +22,7 @@ pub struct Ctx {
     /// Global meta variables and their state
     pub meta_vars: HashMap<MetaVar, MetaVarState>,
     /// Global lookup table for declarations
-    pub lookup_table: Rc<LookupTable>,
+    pub type_info_table: Rc<TypeInfoTable>,
     /// The program for looking up the expressions when evaluating
     pub module: Rc<Module>,
 }
@@ -30,10 +30,15 @@ pub struct Ctx {
 impl Ctx {
     pub fn new(
         meta_vars: HashMap<MetaVar, MetaVarState>,
-        lookup_table: LookupTable,
+        type_info_table: TypeInfoTable,
         module: Rc<Module>,
     ) -> Self {
-        Self { vars: TypeCtx::empty(), meta_vars, lookup_table: Rc::new(lookup_table), module }
+        Self {
+            vars: TypeCtx::empty(),
+            meta_vars,
+            type_info_table: Rc::new(type_info_table),
+            module,
+        }
     }
 
     /// Check that there are no unresolved metavariables that remain after typechecking.
@@ -117,7 +122,7 @@ impl Ctx {
         let mut inner_ctx = Ctx {
             vars: self.vars.clone(),
             meta_vars,
-            lookup_table: self.lookup_table.clone(),
+            type_info_table: self.type_info_table.clone(),
             module: self.module.clone(),
         };
         let res = f(&mut inner_ctx);

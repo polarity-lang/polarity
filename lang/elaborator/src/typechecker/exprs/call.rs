@@ -2,8 +2,8 @@
 
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
-use crate::typechecker::lookup_table::CtorMeta;
-use crate::typechecker::lookup_table::LetMeta;
+use crate::typechecker::type_info_table::CtorMeta;
+use crate::typechecker::type_info_table::LetMeta;
 use ast::*;
 
 use super::super::ctx::*;
@@ -39,7 +39,8 @@ impl CheckInfer for Call {
 
         match kind {
             CallKind::Codefinition | CallKind::Constructor => {
-                let CtorMeta { params, typ, .. } = &ctx.lookup_table.lookup_ctor_or_codef(name)?;
+                let CtorMeta { params, typ, .. } =
+                    &ctx.type_info_table.lookup_ctor_or_codef(name)?;
                 let args_out = check_args(args, name, ctx, params, *span)?;
                 let typ_out = typ
                     .subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()])
@@ -54,7 +55,7 @@ impl CheckInfer for Call {
                 })
             }
             CallKind::LetBound => {
-                let LetMeta { params, typ, .. } = ctx.lookup_table.lookup_let(name)?;
+                let LetMeta { params, typ, .. } = ctx.type_info_table.lookup_let(name)?;
                 let params = params.clone();
                 let typ = typ.clone();
                 let args_out = check_args(args, name, ctx, &params, *span)?;

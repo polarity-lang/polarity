@@ -2,7 +2,7 @@
 
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
-use crate::typechecker::lookup_table::DtorMeta;
+use crate::typechecker::type_info_table::DtorMeta;
 use ast::*;
 
 use super::super::ctx::*;
@@ -37,7 +37,7 @@ impl CheckInfer for DotCall {
     fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let DotCall { span, kind, exp, name, args, .. } = self;
         let DtorMeta { params, self_param, ret_typ, .. } =
-            &ctx.lookup_table.lookup_dtor_or_def(name)?;
+            &ctx.type_info_table.lookup_dtor_or_def(name)?;
 
         let args_out = check_args(args, name, ctx, params, *span)?;
 
