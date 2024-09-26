@@ -153,7 +153,7 @@ impl Database {
         symbol_table.insert(uri.clone(), module_symbol_table);
         for dep in deps {
             let module_symbol_table = self.symbol_table(&dep)?;
-            symbol_table.insert(uri.clone(), module_symbol_table);
+            symbol_table.insert(dep.clone(), module_symbol_table);
         }
 
         let ust = lowering::lower_module_with_symbol_table(&cst, &symbol_table)
