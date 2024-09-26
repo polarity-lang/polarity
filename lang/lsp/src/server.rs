@@ -31,7 +31,7 @@ impl LanguageServer for Server {
                 root_uri.to_file_path().map_err(|_| jsonrpc::Error::internal_error())?;
             let source = InMemorySource::new().fallback_to(FileSystemSource::new(root_path));
             let mut database = self.database.write().await;
-            let source_mut = database.source_mut();
+            let source_mut = database.file_source_mut();
             *source_mut = Box::new(source);
         }
         // prevent unused variable warning when compiled for wasm
@@ -56,7 +56,7 @@ impl LanguageServer for Server {
             .log_message(MessageType::INFO, format!("Opened file: {}", text_document.uri))
             .await;
 
-        let source_mut = db.source_mut();
+        let source_mut = db.file_source_mut();
         assert!(source_mut.manage(&text_document.uri));
         source_mut.write_string(&text_document.uri, &text_document.text).unwrap();
 
@@ -76,7 +76,7 @@ impl LanguageServer for Server {
         let mut db = self.database.write().await;
         let text = content_changes.drain(0..).next().unwrap().text;
 
-        let source_mut = db.source_mut();
+        let source_mut = db.file_source_mut();
         assert!(source_mut.manage(&text_document.uri));
         source_mut.write_string(&text_document.uri, &text).unwrap();
 

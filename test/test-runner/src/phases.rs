@@ -248,7 +248,7 @@ impl Phase for Parse {
         _: &mut lowering::SymbolTable,
         _: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        db.load_cst(uri)
+        db.cst(uri)
     }
 }
 
