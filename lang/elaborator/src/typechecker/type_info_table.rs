@@ -3,7 +3,7 @@ use ast::*;
 use super::TypeError;
 
 #[derive(Debug, Clone, Default)]
-pub struct LookupTable {
+pub struct TypeInfoTable {
     // Calls
     //
     //
@@ -18,7 +18,7 @@ pub struct LookupTable {
     map_dtor: HashMap<Ident, DtorMeta>,
 }
 
-impl LookupTable {
+impl TypeInfoTable {
     pub fn lookup_ctor_or_codef(&self, name: &Ident) -> Result<CtorMeta, TypeError> {
         self.map_ctor
             .get(name)
@@ -83,7 +83,7 @@ impl LookupTable {
         })
     }
 
-    pub fn append(&mut self, other: LookupTable) {
+    pub fn append(&mut self, other: TypeInfoTable) {
         self.map_let.extend(other.map_let);
         self.map_tyctor.extend(other.map_tyctor);
         self.map_codef.extend(other.map_codef);
@@ -146,8 +146,8 @@ pub struct DtorMeta {
     pub ret_typ: Box<Exp>,
 }
 
-pub fn build_lookup_table(module: &Module) -> LookupTable {
-    let mut lookup_table = LookupTable::default();
+pub fn build_type_info_table(module: &Module) -> TypeInfoTable {
+    let mut lookup_table = TypeInfoTable::default();
 
     let Module { decls, .. } = module;
 
@@ -164,7 +164,7 @@ pub fn build_lookup_table(module: &Module) -> LookupTable {
     lookup_table
 }
 
-fn build_data(lookup_table: &mut LookupTable, data: &Data) {
+fn build_data(lookup_table: &mut TypeInfoTable, data: &Data) {
     let Data { name, typ, ctors, .. } = data;
     lookup_table.map_tyctor.insert(name.clone(), TyCtorMeta { params: typ.clone() });
     for ctor in ctors {
@@ -172,14 +172,14 @@ fn build_data(lookup_table: &mut LookupTable, data: &Data) {
     }
 }
 
-fn build_ctor(lookup_table: &mut LookupTable, ctor: &Ctor) {
+fn build_ctor(lookup_table: &mut TypeInfoTable, ctor: &Ctor) {
     let Ctor { name, params, typ, .. } = ctor;
     lookup_table
         .map_ctor
         .insert(name.clone(), CtorMeta { params: params.clone(), typ: typ.clone() });
 }
 
-fn build_codata(lookup_table: &mut LookupTable, codata: &Codata) {
+fn build_codata(lookup_table: &mut TypeInfoTable, codata: &Codata) {
     let Codata { name, typ, dtors, .. } = codata;
     lookup_table.map_tyctor.insert(name.clone(), TyCtorMeta { params: typ.clone() });
     for dtor in dtors {
@@ -187,7 +187,7 @@ fn build_codata(lookup_table: &mut LookupTable, codata: &Codata) {
     }
 }
 
-fn build_dtor(lookup_table: &mut LookupTable, dtor: &Dtor) {
+fn build_dtor(lookup_table: &mut TypeInfoTable, dtor: &Dtor) {
     let Dtor { name, params, self_param, ret_typ, .. } = dtor;
     lookup_table.map_dtor.insert(
         name.clone(),
@@ -199,7 +199,7 @@ fn build_dtor(lookup_table: &mut LookupTable, dtor: &Dtor) {
     );
 }
 
-fn build_def(lookup_table: &mut LookupTable, def: &Def) {
+fn build_def(lookup_table: &mut TypeInfoTable, def: &Def) {
     let Def { name, params, self_param, ret_typ, .. } = def;
     lookup_table.map_def.insert(
         name.clone(),
@@ -211,14 +211,14 @@ fn build_def(lookup_table: &mut LookupTable, def: &Def) {
     );
 }
 
-fn build_codef(lookup_table: &mut LookupTable, codef: &Codef) {
+fn build_codef(lookup_table: &mut TypeInfoTable, codef: &Codef) {
     let Codef { name, params, typ, .. } = codef;
     lookup_table
         .map_codef
         .insert(name.clone(), CodefMeta { params: params.clone(), typ: typ.clone() });
 }
 
-fn build_let(lookup_table: &mut LookupTable, tl_let: &Let) {
+fn build_let(lookup_table: &mut TypeInfoTable, tl_let: &Let) {
     let Let { name, params, typ, .. } = tl_let;
     lookup_table.map_let.insert(name.clone(), LetMeta { params: params.clone(), typ: typ.clone() });
 }
