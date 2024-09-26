@@ -271,10 +271,10 @@ impl Phase for Imports {
     fn run(
         db: &mut Database,
         uri: &Url,
-        cst_lookup_table: &mut lowering::SymbolTable,
+        _: &mut lowering::SymbolTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        db.load_imports(uri, cst_lookup_table, ast_lookup_table)
+        db.load_imports(uri, ast_lookup_table)
     }
 }
 
@@ -302,10 +302,10 @@ impl Phase for Lower {
     fn run(
         db: &mut Database,
         uri: &Url,
-        cst_lookup_table: &mut lowering::SymbolTable,
+        _: &mut lowering::SymbolTable,
         _: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        db.load_ust(uri, cst_lookup_table)
+        db.ust(uri).map(|x| (*x).clone())
     }
 }
 
@@ -334,10 +334,10 @@ impl Phase for Check {
     fn run(
         db: &mut Database,
         uri: &Url,
-        cst_lookup_table: &mut lowering::SymbolTable,
+        _: &mut lowering::SymbolTable,
         ast_lookup_table: &mut elaborator::LookupTable,
     ) -> Result<Self::Out, Self::Err> {
-        db.load_ast(uri, cst_lookup_table, ast_lookup_table)
+        db.load_ast(uri, ast_lookup_table)
     }
 }
 

@@ -8,7 +8,7 @@ use ast::Exp;
 use ast::HashSet;
 use elaborator::normalizer::normalize::Normalize;
 use elaborator::LookupTable;
-use lowering::SymbolTable;
+use lowering::{ModuleSymbolTable, SymbolTable};
 use parser::cst;
 use parser::cst::decls::UseDecl;
 use renaming::Rename;
@@ -30,7 +30,7 @@ pub struct Database {
     /// The CST of each file (once parsed)
     pub cst: Cache<Result<Arc<cst::decls::Module>, Error>>,
     /// The symbol table constructed during lowering
-    pub symbol_table: Cache<lowering::SymbolTable>,
+    pub symbol_table: Cache<lowering::ModuleSymbolTable>,
     /// The lowered, but not yet typechecked, UST
     pub ust: Cache<Result<Arc<ast::Module>, Error>>,
     /// The typechecked AST of a module
@@ -112,20 +112,18 @@ impl Database {
     //
     //
 
-    pub fn symbol_table(&mut self, uri: &Url) -> Result<SymbolTable, Error> {
+    pub fn symbol_table(&mut self, uri: &Url) -> Result<ModuleSymbolTable, Error> {
         match self.symbol_table.get_unless_stale(uri) {
             Some(symbol_table) => Ok(symbol_table.clone()),
             None => self.recompute_symbol_table(uri),
         }
     }
 
-    fn recompute_symbol_table(&mut self, uri: &Url) -> Result<SymbolTable, Error> {
+    fn recompute_symbol_table(&mut self, uri: &Url) -> Result<ModuleSymbolTable, Error> {
         let cst = self.cst(uri)?;
         let module_symbol_table = lowering::build_symbol_table(&cst)?;
-        let mut symbol_table: SymbolTable = SymbolTable::default();
-        symbol_table.insert(uri.clone(), module_symbol_table);
-        self.symbol_table.insert(uri.clone(), symbol_table.clone());
-        Ok(symbol_table)
+        self.symbol_table.insert(uri.clone(), module_symbol_table.clone());
+        Ok(module_symbol_table)
     }
 
     // Core API: UST
@@ -148,11 +146,14 @@ impl Database {
             .cloned()?;
 
         // Compute the SymbolTable consisting of all the
-        // ModuleSymbolTables of all direct dependencies.
+        // ModuleSymbolTables of all direct dependencies
+        // and the SymbolTable from the module itself.
         let mut symbol_table = SymbolTable::default();
+        let module_symbol_table = self.symbol_table(&uri)?;
+        symbol_table.insert(uri.clone(), module_symbol_table);
         for dep in deps {
             let module_symbol_table = self.symbol_table(&dep)?;
-            symbol_table.append(module_symbol_table);
+            symbol_table.insert(uri.clone(), module_symbol_table);
         }
 
         let ust = lowering::lower_module_with_symbol_table(&cst, &symbol_table)
@@ -161,21 +162,6 @@ impl Database {
 
         self.ust.insert(uri.clone(), ust.clone());
         ust
-    }
-
-    /// Deprecated!
-    pub fn load_ust(
-        &mut self,
-        uri: &Url,
-        cst_lookup_table: &mut lowering::SymbolTable,
-    ) -> Result<ast::Module, Error> {
-        log::trace!("Loading UST: {}", uri);
-
-        let cst = self.cst(uri)?;
-        log::debug!("Lowering module");
-        let new_lookup_table = lowering::build_symbol_table(&cst)?;
-        cst_lookup_table.insert(uri.clone(), new_lookup_table);
-        lowering::lower_module_with_symbol_table(&cst, cst_lookup_table).map_err(Error::Lowering)
     }
 
     // Core API: AST
@@ -193,14 +179,12 @@ impl Database {
         self.deps.print_dependency_tree();
         log::trace!("");
 
-        let mut cst_lookup_table = lowering::SymbolTable::default();
         let mut ast_lookup_table = LookupTable::default();
-        self.load_module_impl(&mut cst_lookup_table, &mut ast_lookup_table, module_uri)
+        self.load_module_impl(&mut ast_lookup_table, module_uri)
     }
 
     fn load_module_impl(
         &mut self,
-        cst_lookup_table: &mut lowering::SymbolTable,
         ast_lookup_table: &mut LookupTable,
         module_uri: &Url,
     ) -> Result<Arc<ast::Module>, Error> {
@@ -208,34 +192,30 @@ impl Database {
         let direct_dependencies = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
 
         for dep_url in direct_dependencies {
-            let mut dep_cst_lookup_table = lowering::SymbolTable::default();
             let mut dep_ast_lookup_table = LookupTable::default();
-            self.load_module_impl(&mut dep_cst_lookup_table, &mut dep_ast_lookup_table, &dep_url)?;
-            cst_lookup_table.append(dep_cst_lookup_table);
+            self.load_module_impl(&mut dep_ast_lookup_table, &dep_url)?;
             ast_lookup_table.append(dep_ast_lookup_table);
         }
 
-        self.load_ast(module_uri, cst_lookup_table, ast_lookup_table)
+        self.load_ast(module_uri, ast_lookup_table)
     }
 
     pub fn load_ast(
         &mut self,
         uri: &Url,
-        cst_lookup_table: &mut lowering::SymbolTable,
         ast_lookup_table: &mut LookupTable,
     ) -> Result<Arc<ast::Module>, Error> {
         log::trace!("Loading AST: {}", uri);
 
         match self.ast.get_unless_stale(uri) {
             Some(ast) => {
-                cst_lookup_table.append(self.symbol_table.get_even_if_stale(uri).unwrap().clone());
                 ast_lookup_table
                     .append(self.ast_lookup_table.get_even_if_stale(uri).unwrap().clone());
                 ast.clone()
             }
             None => {
                 log::trace!("AST is stale, reloading");
-                let ust = self.load_ust(uri, cst_lookup_table);
+                let ust = self.ust(uri).map(|x| (*x).clone());
                 let ast = ust
                     .and_then(|ust| {
                         let tst = elaborator::typechecker::check_with_lookup_table(
@@ -248,7 +228,6 @@ impl Database {
                     .map(Arc::new);
                 self.ast.insert(uri.clone(), ast.clone());
                 self.ast_lookup_table.insert(uri.clone(), ast_lookup_table.clone());
-                self.symbol_table.insert(uri.clone(), cst_lookup_table.clone());
                 if let Ok(module) = &ast {
                     let (info_lapper, item_lapper) = collect_info(module.clone());
                     self.info_by_id.insert(uri.clone(), info_lapper);
@@ -348,8 +327,7 @@ impl Database {
     }
 
     pub fn print_to_string(&mut self, uri: &Url) -> Result<String, Error> {
-        let module =
-            self.load_ast(uri, &mut lowering::SymbolTable::default(), &mut LookupTable::default())?;
+        let module = self.load_ast(uri, &mut LookupTable::default())?;
         let module = (*module).clone().rename();
         Ok(printer::Print::print_to_string(&module, None))
     }
@@ -357,14 +335,13 @@ impl Database {
     pub fn load_imports(
         &mut self,
         module_uri: &Url,
-        cst_lookup_table: &mut lowering::SymbolTable,
         ast_lookup_table: &mut LookupTable,
     ) -> Result<(), Error> {
         self.build_dependency_dag()?;
         let empty_vec = Vec::new();
         let direct_deps = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
         for direct_dep in direct_deps {
-            self.load_module_impl(cst_lookup_table, ast_lookup_table, &direct_dep)?;
+            self.load_module_impl(ast_lookup_table, &direct_dep)?;
         }
         Ok(())
     }
