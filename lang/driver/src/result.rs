@@ -27,4 +27,6 @@ pub enum DriverError {
     Io(#[from] Arc<std::io::Error>),
     #[error("URL error: {0}")]
     Url(#[from] url::ParseError),
+    #[error("Impossible: {0}")]
+    Impossible(String),
 }

@@ -31,7 +31,9 @@ pub struct Database {
     pub cst: Cache<Result<Arc<cst::decls::Module>, Error>>,
     /// The symbol table constructed during lowering
     pub symbol_table: Cache<lowering::SymbolTable>,
-    /// The AST of each file (once parsed and lowered, may be type-annotated)
+    /// The lowered, but not yet typechecked, UST
+    pub ust: Cache<Result<Arc<ast::Module>, Error>>,
+    /// The typechecked AST of a module
     pub ast: Cache<Result<Arc<ast::Module>, Error>>,
     /// The symbol table constructed during typechecking
     pub ast_lookup_table: Cache<elaborator::LookupTable>,
@@ -128,8 +130,40 @@ impl Database {
 
     // Core API: UST
     //
-    // TODO
+    //
 
+    pub fn ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+        match self.ust.get_unless_stale(uri) {
+            Some(ust) => ust.clone(),
+            None => self.recompute_ust(uri),
+        }
+    }
+
+    pub fn recompute_ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+        let cst = self.cst(uri)?;
+        let deps = self
+            .deps
+            .get(uri)
+            .ok_or(Error::Driver(DriverError::Impossible(format!("Did not find deps for {}", uri))))
+            .cloned()?;
+
+        // Compute the SymbolTable consisting of all the
+        // ModuleSymbolTables of all direct dependencies.
+        let mut symbol_table = SymbolTable::default();
+        for dep in deps {
+            let module_symbol_table = self.symbol_table(&dep)?;
+            symbol_table.append(module_symbol_table);
+        }
+
+        let ust = lowering::lower_module_with_symbol_table(&cst, &symbol_table)
+            .map_err(Error::Lowering)
+            .map(Arc::new);
+
+        self.ust.insert(uri.clone(), ust.clone());
+        ust
+    }
+
+    /// Deprecated!
     pub fn load_ust(
         &mut self,
         uri: &Url,
@@ -242,6 +276,7 @@ impl Database {
             deps: DependencyGraph::default(),
             cst: Cache::default(),
             symbol_table: Cache::default(),
+            ust: Cache::default(),
             ast: Cache::default(),
             ast_lookup_table: Cache::default(),
             info_by_id: Cache::default(),
@@ -280,6 +315,7 @@ impl Database {
         self.files.invalidate(uri);
         self.cst.invalidate(uri);
         self.symbol_table.invalidate(uri);
+        self.ust.invalidate(uri);
         self.ast.invalidate(uri);
         self.ast_lookup_table.invalidate(uri);
         self.info_by_id.invalidate(uri);
