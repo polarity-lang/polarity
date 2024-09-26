@@ -8,6 +8,7 @@ use ast::Exp;
 use ast::HashSet;
 use elaborator::normalizer::normalize::Normalize;
 use elaborator::LookupTable;
+use lowering::{ModuleSymbolTable, SymbolTable};
 use parser::cst;
 use parser::cst::decls::UseDecl;
 use renaming::Rename;
@@ -29,8 +30,10 @@ pub struct Database {
     /// The CST of each file (once parsed)
     pub cst: Cache<Result<Arc<cst::decls::Module>, Error>>,
     /// The symbol table constructed during lowering
-    pub cst_lookup_table: Cache<lowering::SymbolTable>,
-    /// The AST of each file (once parsed and lowered, may be type-annotated)
+    pub symbol_table: Cache<Arc<lowering::ModuleSymbolTable>>,
+    /// The lowered, but not yet typechecked, UST
+    pub ust: Cache<Result<Arc<ast::Module>, Error>>,
+    /// The typechecked AST of a module
     pub ast: Cache<Result<Arc<ast::Module>, Error>>,
     /// The symbol table constructed during typechecking
     pub ast_lookup_table: Cache<elaborator::LookupTable>,
@@ -41,6 +44,204 @@ pub struct Database {
 }
 
 impl Database {
+    // Core API
+    //
+    // The core API of the Database consists of functions which have the following forms:
+    //
+    // ```text
+    // pub fn xxx(&mut self, uri: Url) -> Result<xxx, Error>
+    // fn recompute_xxx(&mut self, uri: Url) -> Result<(), Error>
+    // ```
+    // where `xxx` can be the cst, ust, ast, or any other sort of information about a module.
+    // These functions are all implemented in a similar way.
+    //
+    // The function `xxx(&mut self, uri: Url)` checks whether the desired object is already in the
+    // cache. If it is in the cache and isn't marked as stale we immediately return the object.
+    // Otherwise we call `recompute_xxx` which contains the logic to compute the object anew
+    // and put it back in the cache.
+    //
+    // The function `recompute_xxx(&mut self, uri: Url)` generally proceeds in the following way:
+    //
+    // 1. We look into the dependency graph to find out what the direct dependencies
+    //    of the module are.
+    // 2. For each of the direct dependencies we use the `xxx(...)` functions to obtain the
+    //    information that is required to recompute the object. For example, we obtain the
+    //    symbol tables for renaming or the lookup tables for typechecking a module.
+    //    These calls can trigger further computations if the information is not in one of the
+    //    caches.
+
+    // Core API: Source
+    //
+    //
+
+    pub fn source(&mut self, uri: &Url) -> Result<String, Error> {
+        match self.files.get_unless_stale(uri) {
+            Some(file) => Ok(file.source().to_string()),
+            None => self.recompute_source(uri),
+        }
+    }
+
+    fn recompute_source(&mut self, uri: &Url) -> Result<String, Error> {
+        let source = self.source.read_to_string(uri)?;
+        let file = codespan::File::new(uri.as_str().into(), source.clone());
+        self.files.insert(uri.clone(), file);
+        Ok(source)
+    }
+
+    // Core API: CST (Concrete Syntax Tree)
+    //
+    //
+
+    pub fn cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
+        match self.cst.get_unless_stale(uri) {
+            Some(cst) => cst.clone(),
+            None => self.recompute_cst(uri),
+        }
+    }
+
+    fn recompute_cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
+        let source = self.source(uri)?;
+        log::debug!("Parsing module: {}", uri);
+        let module =
+            parser::parse_module(uri.clone(), &source).map_err(Error::Parser).map(Arc::new);
+        self.cst.insert(uri.clone(), module.clone());
+        module
+    }
+
+    // Core API: SymbolTable
+    //
+    //
+
+    pub fn symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
+        match self.symbol_table.get_unless_stale(uri) {
+            Some(symbol_table) => Ok(symbol_table.clone()),
+            None => self.recompute_symbol_table(uri),
+        }
+    }
+
+    fn recompute_symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
+        let cst = self.cst(uri)?;
+        let module_symbol_table = lowering::build_symbol_table(&cst).map(Arc::new)?;
+        self.symbol_table.insert(uri.clone(), module_symbol_table.clone());
+        Ok(module_symbol_table)
+    }
+
+    // Core API: UST
+    //
+    //
+
+    pub fn ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+        match self.ust.get_unless_stale(uri) {
+            Some(ust) => ust.clone(),
+            None => self.recompute_ust(uri),
+        }
+    }
+
+    pub fn recompute_ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+        let cst = self.cst(uri)?;
+        let deps = self
+            .deps
+            .get(uri)
+            .ok_or(Error::Driver(DriverError::Impossible(format!("Did not find deps for {}", uri))))
+            .cloned()?;
+
+        // Compute the SymbolTable consisting of all the
+        // ModuleSymbolTables of all direct dependencies
+        // and the SymbolTable from the module itself.
+        let mut symbol_table = SymbolTable::default();
+        let module_symbol_table = self.symbol_table(uri)?;
+        symbol_table.insert(uri.clone(), module_symbol_table);
+        for dep in deps {
+            let module_symbol_table = self.symbol_table(&dep)?;
+            symbol_table.insert(dep.clone(), module_symbol_table);
+        }
+
+        let ust = lowering::lower_module_with_symbol_table(&cst, &symbol_table)
+            .map_err(Error::Lowering)
+            .map(Arc::new);
+
+        self.ust.insert(uri.clone(), ust.clone());
+        ust
+    }
+
+    // Core API: AST
+    //
+    //
+
+    pub fn load_module(&mut self, module_uri: &Url) -> Result<Arc<ast::Module>, Error> {
+        log::debug!("Loading module: {}", module_uri);
+        self.source(module_uri)?;
+        self.build_dependency_dag()?;
+
+        log::trace!("");
+        log::trace!("Dependency graph:");
+        log::trace!("");
+        self.deps.print_dependency_tree();
+        log::trace!("");
+
+        let mut ast_lookup_table = LookupTable::default();
+        self.load_module_impl(&mut ast_lookup_table, module_uri)
+    }
+
+    fn load_module_impl(
+        &mut self,
+        ast_lookup_table: &mut LookupTable,
+        module_uri: &Url,
+    ) -> Result<Arc<ast::Module>, Error> {
+        let empty_vec = Vec::new();
+        let direct_dependencies = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
+
+        for dep_url in direct_dependencies {
+            let mut dep_ast_lookup_table = LookupTable::default();
+            self.load_module_impl(&mut dep_ast_lookup_table, &dep_url)?;
+            ast_lookup_table.append(dep_ast_lookup_table);
+        }
+
+        self.load_ast(module_uri, ast_lookup_table)
+    }
+
+    pub fn load_ast(
+        &mut self,
+        uri: &Url,
+        ast_lookup_table: &mut LookupTable,
+    ) -> Result<Arc<ast::Module>, Error> {
+        log::trace!("Loading AST: {}", uri);
+
+        match self.ast.get_unless_stale(uri) {
+            Some(ast) => {
+                ast_lookup_table
+                    .append(self.ast_lookup_table.get_even_if_stale(uri).unwrap().clone());
+                ast.clone()
+            }
+            None => {
+                log::trace!("AST is stale, reloading");
+                let ust = self.ust(uri).map(|x| (*x).clone());
+                let ast = ust
+                    .and_then(|ust| {
+                        let tst = elaborator::typechecker::check_with_lookup_table(
+                            Rc::new(ust),
+                            ast_lookup_table,
+                        )
+                        .map_err(Error::Type)?;
+                        Ok(tst)
+                    })
+                    .map(Arc::new);
+                self.ast.insert(uri.clone(), ast.clone());
+                self.ast_lookup_table.insert(uri.clone(), ast_lookup_table.clone());
+                if let Ok(module) = &ast {
+                    let (info_lapper, item_lapper) = collect_info(module.clone());
+                    self.info_by_id.insert(uri.clone(), info_lapper);
+                    self.item_by_id.insert(uri.clone(), item_lapper);
+                }
+                ast
+            }
+        }
+    }
+
+    // Creation
+    //
+    // The following methods provide various means to construct a driver instance.
+
     /// Create a new database that only keeps files in memory
     pub fn in_memory() -> Self {
         Self::from_source(InMemorySource::new())
@@ -53,7 +254,8 @@ impl Database {
             files: Cache::default(),
             deps: DependencyGraph::default(),
             cst: Cache::default(),
-            cst_lookup_table: Cache::default(),
+            symbol_table: Cache::default(),
+            ust: Cache::default(),
             ast: Cache::default(),
             ast_lookup_table: Cache::default(),
             info_by_id: Cache::default(),
@@ -61,13 +263,17 @@ impl Database {
         }
     }
 
+    // Utility Functions
+    //
+    // The following utility functions do not belong to the core API described above.
+
     /// Get the source of the files
-    pub fn source(&self) -> &dyn FileSource {
+    pub fn file_source(&self) -> &dyn FileSource {
         &*self.source
     }
 
     /// Get a mutable reference to the source of the files
-    pub fn source_mut(&mut self) -> &mut Box<dyn FileSource> {
+    pub fn file_source_mut(&mut self) -> &mut Box<dyn FileSource> {
         &mut self.source
     }
 
@@ -91,7 +297,8 @@ impl Database {
     fn invalidate_impl(&mut self, uri: &Url) {
         self.files.invalidate(uri);
         self.cst.invalidate(uri);
-        self.cst_lookup_table.invalidate(uri);
+        self.symbol_table.invalidate(uri);
+        self.ust.invalidate(uri);
         self.ast.invalidate(uri);
         self.ast_lookup_table.invalidate(uri);
         self.info_by_id.invalidate(uri);
@@ -124,39 +331,21 @@ impl Database {
     }
 
     pub fn print_to_string(&mut self, uri: &Url) -> Result<String, Error> {
-        let module =
-            self.load_ast(uri, &mut lowering::SymbolTable::default(), &mut LookupTable::default())?;
+        let module = self.load_ast(uri, &mut LookupTable::default())?;
         let module = (*module).clone().rename();
         Ok(printer::Print::print_to_string(&module, None))
-    }
-
-    pub fn load_module(&mut self, module_uri: &Url) -> Result<Arc<ast::Module>, Error> {
-        log::debug!("Loading module: {}", module_uri);
-        self.load_source(module_uri)?;
-        self.build_dependency_dag()?;
-
-        log::trace!("");
-        log::trace!("Dependency graph:");
-        log::trace!("");
-        self.deps.print_dependency_tree();
-        log::trace!("");
-
-        let mut cst_lookup_table = lowering::SymbolTable::default();
-        let mut ast_lookup_table = LookupTable::default();
-        self.load_module_impl(&mut cst_lookup_table, &mut ast_lookup_table, module_uri)
     }
 
     pub fn load_imports(
         &mut self,
         module_uri: &Url,
-        cst_lookup_table: &mut lowering::SymbolTable,
         ast_lookup_table: &mut LookupTable,
     ) -> Result<(), Error> {
         self.build_dependency_dag()?;
         let empty_vec = Vec::new();
         let direct_deps = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
         for direct_dep in direct_deps {
-            self.load_module_impl(cst_lookup_table, ast_lookup_table, &direct_dep)?;
+            self.load_module_impl(ast_lookup_table, &direct_dep)?;
         }
         Ok(())
     }
@@ -203,7 +392,7 @@ impl Database {
         visited.insert(module_uri.clone());
         stack.push(module_uri.clone());
 
-        let module = self.load_cst(module_uri)?;
+        let module = self.cst(module_uri)?;
 
         // Collect dependencies from `use` declarations
         let mut dependencies = Vec::new();
@@ -227,111 +416,6 @@ impl Database {
     /// Resolves a module name to a `Url` relative to the current module.
     fn resolve_module_name(&self, name: &str, current_module: &Url) -> Result<Url, Error> {
         current_module.join(name).map_err(|err| DriverError::Url(err).into())
-    }
-
-    fn load_module_impl(
-        &mut self,
-        cst_lookup_table: &mut lowering::SymbolTable,
-        ast_lookup_table: &mut LookupTable,
-        module_uri: &Url,
-    ) -> Result<Arc<ast::Module>, Error> {
-        let empty_vec = Vec::new();
-        let direct_dependencies = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
-
-        for dep_url in direct_dependencies {
-            let mut dep_cst_lookup_table = lowering::SymbolTable::default();
-            let mut dep_ast_lookup_table = LookupTable::default();
-            self.load_module_impl(&mut dep_cst_lookup_table, &mut dep_ast_lookup_table, &dep_url)?;
-            cst_lookup_table.append(dep_cst_lookup_table);
-            ast_lookup_table.append(dep_ast_lookup_table);
-        }
-
-        self.load_ast(module_uri, cst_lookup_table, ast_lookup_table)
-    }
-
-    pub fn load_ast(
-        &mut self,
-        uri: &Url,
-        cst_lookup_table: &mut lowering::SymbolTable,
-        ast_lookup_table: &mut LookupTable,
-    ) -> Result<Arc<ast::Module>, Error> {
-        log::trace!("Loading AST: {}", uri);
-
-        match self.ast.get_unless_stale(uri) {
-            Some(ast) => {
-                cst_lookup_table
-                    .append(self.cst_lookup_table.get_even_if_stale(uri).unwrap().clone());
-                ast_lookup_table
-                    .append(self.ast_lookup_table.get_even_if_stale(uri).unwrap().clone());
-                ast.clone()
-            }
-            None => {
-                log::trace!("AST is stale, reloading");
-                let ust = self.load_ust(uri, cst_lookup_table);
-                let ast = ust
-                    .and_then(|ust| {
-                        let tst = elaborator::typechecker::check_with_lookup_table(
-                            Rc::new(ust),
-                            ast_lookup_table,
-                        )
-                        .map_err(Error::Type)?;
-                        Ok(tst)
-                    })
-                    .map(Arc::new);
-                self.ast.insert(uri.clone(), ast.clone());
-                self.ast_lookup_table.insert(uri.clone(), ast_lookup_table.clone());
-                self.cst_lookup_table.insert(uri.clone(), cst_lookup_table.clone());
-                if let Ok(module) = &ast {
-                    let (info_lapper, item_lapper) = collect_info(module.clone());
-                    self.info_by_id.insert(uri.clone(), info_lapper);
-                    self.item_by_id.insert(uri.clone(), item_lapper);
-                }
-                ast
-            }
-        }
-    }
-
-    pub fn load_ust(
-        &mut self,
-        uri: &Url,
-        cst_lookup_table: &mut lowering::SymbolTable,
-    ) -> Result<ast::Module, Error> {
-        log::trace!("Loading UST: {}", uri);
-
-        let cst = self.load_cst(uri)?;
-        log::debug!("Lowering module");
-        let new_lookup_table = lowering::build_symbol_table(&cst)?;
-        cst_lookup_table.insert(uri.clone(), new_lookup_table);
-        lowering::lower_module_with_symbol_table(&cst, cst_lookup_table).map_err(Error::Lowering)
-    }
-
-    pub fn load_cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
-        match self.cst.get_unless_stale(uri) {
-            Some(cst) => cst.clone(),
-            None => {
-                let source = self.load_source(uri)?;
-                let module = {
-                    let source: &str = &source;
-                    log::debug!("Parsing module: {}", uri);
-                    parser::parse_module(uri.clone(), source).map_err(Error::Parser)
-                }
-                .map(Arc::new);
-                self.cst.insert(uri.clone(), module.clone());
-                module
-            }
-        }
-    }
-
-    pub fn load_source(&mut self, uri: &Url) -> Result<String, Error> {
-        match self.files.get_unless_stale(uri) {
-            Some(file) => Ok(file.source().to_string()),
-            None => {
-                let source = self.source.read_to_string(uri)?;
-                let file = codespan::File::new(uri.as_str().into(), source.clone());
-                self.files.insert(uri.clone(), file);
-                Ok(source)
-            }
-        }
     }
 }
 

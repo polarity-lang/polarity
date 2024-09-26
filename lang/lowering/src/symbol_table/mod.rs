@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use ast::HashMap;
 use decls::*;
 use ident::Ident;
@@ -14,15 +16,12 @@ pub type ModuleSymbolTable = HashMap<Ident, DeclMeta>;
 #[derive(Debug, Default, Clone)]
 pub struct SymbolTable {
     // Maps modules to their respective symbol tables.
-    map: HashMap<Url, ModuleSymbolTable>,
+    map: HashMap<Url, Arc<ModuleSymbolTable>>,
 }
 
 impl SymbolTable {
-    pub fn insert(&mut self, url: Url, other: ModuleSymbolTable) {
+    pub fn insert(&mut self, url: Url, other: Arc<ModuleSymbolTable>) {
         self.map.insert(url, other);
-    }
-    pub fn append(&mut self, other: SymbolTable) {
-        self.map.extend(other.map);
     }
 }
 
