@@ -30,7 +30,7 @@ pub struct Database {
     /// The CST of each file (once parsed)
     pub cst: Cache<Result<Arc<cst::decls::Module>, Error>>,
     /// The symbol table constructed during lowering
-    pub symbol_table: Cache<lowering::ModuleSymbolTable>,
+    pub symbol_table: Cache<Arc<lowering::ModuleSymbolTable>>,
     /// The lowered, but not yet typechecked, UST
     pub ust: Cache<Result<Arc<ast::Module>, Error>>,
     /// The typechecked AST of a module
@@ -112,16 +112,16 @@ impl Database {
     //
     //
 
-    pub fn symbol_table(&mut self, uri: &Url) -> Result<ModuleSymbolTable, Error> {
+    pub fn symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
         match self.symbol_table.get_unless_stale(uri) {
             Some(symbol_table) => Ok(symbol_table.clone()),
             None => self.recompute_symbol_table(uri),
         }
     }
 
-    fn recompute_symbol_table(&mut self, uri: &Url) -> Result<ModuleSymbolTable, Error> {
+    fn recompute_symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
         let cst = self.cst(uri)?;
-        let module_symbol_table = lowering::build_symbol_table(&cst)?;
+        let module_symbol_table = lowering::build_symbol_table(&cst).map(Arc::new)?;
         self.symbol_table.insert(uri.clone(), module_symbol_table.clone());
         Ok(module_symbol_table)
     }
@@ -150,10 +150,10 @@ impl Database {
         // and the SymbolTable from the module itself.
         let mut symbol_table = SymbolTable::default();
         let module_symbol_table = self.symbol_table(uri)?;
-        symbol_table.insert(uri.clone(), module_symbol_table);
+        symbol_table.insert(uri.clone(), (*module_symbol_table).clone());
         for dep in deps {
             let module_symbol_table = self.symbol_table(&dep)?;
-            symbol_table.insert(dep.clone(), module_symbol_table);
+            symbol_table.insert(dep.clone(), (*module_symbol_table).clone());
         }
 
         let ust = lowering::lower_module_with_symbol_table(&cst, &symbol_table)
@@ -166,7 +166,7 @@ impl Database {
 
     // Core API: AST
     //
-    // TODO
+    //
 
     pub fn load_module(&mut self, module_uri: &Url) -> Result<Arc<ast::Module>, Error> {
         log::debug!("Loading module: {}", module_uri);
@@ -238,9 +238,9 @@ impl Database {
         }
     }
 
-    // Utility Functions
+    // Creation
     //
-    // The following utility functions do not belong to the core API described above.
+    // The following methods provide various means to construct a driver instance.
 
     /// Create a new database that only keeps files in memory
     pub fn in_memory() -> Self {
@@ -262,6 +262,10 @@ impl Database {
             item_by_id: Cache::default(),
         }
     }
+
+    // Utility Functions
+    //
+    // The following utility functions do not belong to the core API described above.
 
     /// Get the source of the files
     pub fn file_source(&self) -> &dyn FileSource {
