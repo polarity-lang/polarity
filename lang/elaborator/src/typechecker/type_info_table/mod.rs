@@ -2,6 +2,8 @@ use ast::*;
 
 use super::TypeError;
 
+pub mod build;
+
 #[derive(Debug, Clone, Default)]
 pub struct TypeInfoTable {
     // Calls
