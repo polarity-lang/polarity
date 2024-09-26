@@ -10,7 +10,7 @@ use ast::*;
 
 use super::{
     ctx::Ctx,
-    type_info_table::{build_type_info_table, TypeInfoTable},
+    type_info_table::{build::build_type_info_table, ModuleTypeInfoTable},
     TypeError,
 };
 
@@ -20,7 +20,7 @@ use super::{
 /// The symbols from the current module will be appended to the lookup table.
 pub fn check_with_lookup_table(
     prg: Rc<Module>,
-    lookup_table: &mut TypeInfoTable,
+    lookup_table: &mut ModuleTypeInfoTable,
 ) -> Result<Module, TypeError> {
     log::debug!("Checking module: {}", prg.uri);
 

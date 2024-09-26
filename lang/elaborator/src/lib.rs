@@ -3,4 +3,4 @@ pub mod result;
 pub mod typechecker;
 pub mod unifier;
 
-pub use typechecker::type_info_table::TypeInfoTable;
+pub use typechecker::type_info_table::ModuleTypeInfoTable;
