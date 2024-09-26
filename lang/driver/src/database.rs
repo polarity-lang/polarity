@@ -149,7 +149,7 @@ impl Database {
         // ModuleSymbolTables of all direct dependencies
         // and the SymbolTable from the module itself.
         let mut symbol_table = SymbolTable::default();
-        let module_symbol_table = self.symbol_table(&uri)?;
+        let module_symbol_table = self.symbol_table(uri)?;
         symbol_table.insert(uri.clone(), module_symbol_table);
         for dep in deps {
             let module_symbol_table = self.symbol_table(&dep)?;
