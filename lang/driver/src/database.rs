@@ -150,10 +150,10 @@ impl Database {
         // and the SymbolTable from the module itself.
         let mut symbol_table = SymbolTable::default();
         let module_symbol_table = self.symbol_table(uri)?;
-        symbol_table.insert(uri.clone(), (*module_symbol_table).clone());
+        symbol_table.insert(uri.clone(), module_symbol_table);
         for dep in deps {
             let module_symbol_table = self.symbol_table(&dep)?;
-            symbol_table.insert(dep.clone(), (*module_symbol_table).clone());
+            symbol_table.insert(dep.clone(), module_symbol_table);
         }
 
         let ust = lowering::lower_module_with_symbol_table(&cst, &symbol_table)
