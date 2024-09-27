@@ -266,6 +266,6 @@ impl InferTelescope for SelfParam {
             Binder { name: name.clone().unwrap_or_else(|| Ident::from_string("")), typ: typ_nf };
 
         // We need to shift the self parameter type here because we treat it as a 1-element telescope
-        ctx.bind_single(&elem.shift((1, 0)), |ctx| f(ctx, param_out))
+        ctx.bind_single(&shift_and_clone(&elem, (1, 0)), |ctx| f(ctx, param_out))
     }
 }

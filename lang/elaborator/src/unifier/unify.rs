@@ -28,14 +28,8 @@ impl Substitutable for Unificator {
 }
 
 impl Shift for Unificator {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        Self {
-            map: self
-                .map
-                .iter()
-                .map(|(lvl, exp)| (*lvl, exp.shift_in_range(range.clone(), by)))
-                .collect(),
-        }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.map.iter_mut().for_each(|(_, exp)| exp.shift_in_range(range, by));
     }
 }
 
