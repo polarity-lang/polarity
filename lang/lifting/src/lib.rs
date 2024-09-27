@@ -573,12 +573,10 @@ impl Ctx {
         let self_typ = self_typ.subst(&mut self.ctx, &subst.in_body());
         let def_ret_typ = match &motive {
             Some(m) => m.lift(self).subst(&mut self.ctx, &subst.in_body()).ret_typ,
-            None => ret_typ
-                .clone()
-                .unwrap()
-                .lift(self)
-                .subst(&mut self.ctx, &subst.in_body())
-                .shift((1, 0)),
+            None => shift_and_clone(
+                &ret_typ.clone().unwrap().lift(self).subst(&mut self.ctx, &subst.in_body()),
+                (1, 0),
+            ),
         };
 
         // Build the new top-level definition

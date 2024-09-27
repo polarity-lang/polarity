@@ -9,7 +9,7 @@ use crate::*;
 /// Trait for entities which can be used as a substitution.
 /// In order to be used as a substitution an entity has to provide a method
 /// to query it for a result for a given deBruijn Level.
-pub trait Substitution: Shift {
+pub trait Substitution: Shift + Clone {
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>>;
 }
 
@@ -37,15 +37,15 @@ impl Substitution for Vec<Vec<Arg>> {
 
 /// An assignment is the simplest form of a substitution which provides just
 /// one mapping from a variable (represented by a DeBruijn Level) to an expression.
+#[derive(Clone)]
 pub struct Assign {
     pub lvl: Lvl,
     pub exp: Box<Exp>,
 }
 
 impl Shift for Assign {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Assign { lvl, exp } = self;
-        Assign { lvl: *lvl, exp: exp.shift_in_range(range, by) }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.exp.shift_in_range(range, by);
     }
 }
 
@@ -123,9 +123,9 @@ struct SwapSubst {
 }
 
 impl Shift for SwapSubst {
-    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since SwapSubst works with levels, it is shift-invariant
-        self.clone()
+        ()
     }
 }
 
