@@ -125,7 +125,6 @@ struct SwapSubst {
 impl Shift for SwapSubst {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since SwapSubst works with levels, it is shift-invariant
-        ()
     }
 }
 

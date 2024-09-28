@@ -68,13 +68,15 @@ impl ContextElem<Env> for &Rc<Val> {
 }
 
 impl Env {
-    pub(super) fn for_each<F>(&self, f: F) -> Self
+    pub(super) fn for_each<F>(&mut self, f: F)
     where
-        F: Fn(&Rc<Val>) -> Rc<Val>,
+        F: Fn(&mut Rc<Val>),
     {
-        let bound: Vec<Vec<Rc<Val>>> =
-            self.ctx.bound.iter().map(|inner| inner.iter().map(&f).collect()).collect();
-        Self { ctx: bound.into() }
+        for outer in self.ctx.bound.iter_mut() {
+            for inner in outer {
+                f(inner)
+            }
+        }
     }
 }
 
@@ -86,7 +88,7 @@ impl From<Vec<Vec<Rc<Val>>>> for Env {
 
 impl Shift for Env {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        self.for_each(|val| val.shift_in_range(range.clone(), by))
+        self.for_each(|val| val.shift_in_range(range, by))
     }
 }
 
