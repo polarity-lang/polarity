@@ -1,4 +1,7 @@
-use std::ops::{Bound, RangeBounds};
+use std::{
+    ops::{Bound, RangeBounds},
+    rc::Rc,
+};
 
 use crate::*;
 
@@ -62,6 +65,12 @@ impl Shift for () {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {}
 }
 
+impl<T: Shift + Clone> Shift for Rc<T> {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        Rc::unwrap_or_clone(self.clone()).shift_in_range(range, by)
+    }
+}
+
 impl<T: Shift> Shift for Box<T> {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         (**self).shift_in_range(range, by)
@@ -70,7 +79,9 @@ impl<T: Shift> Shift for Box<T> {
 
 impl<T: Shift> Shift for Option<T> {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        self.as_mut().map(|inner| inner.shift_in_range(range, by));
+        if let Some(inner) = self.as_mut() {
+            inner.shift_in_range(range, by)
+        }
     }
 }
 

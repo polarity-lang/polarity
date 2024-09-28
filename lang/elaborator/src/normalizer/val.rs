@@ -425,7 +425,7 @@ pub struct DotCall {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub kind: ast::DotCallKind,
-    pub exp: Box<Neu>,
+    pub exp: Rc<Neu>,
     pub name: ast::Ident,
     pub args: Args,
 }
@@ -459,7 +459,7 @@ impl ReadBack for DotCall {
         Ok(ast::DotCall {
             span: *span,
             kind: *kind,
-            exp: Box::new(exp.read_back(prg)?),
+            exp: exp.read_back(prg)?,
             name: name.clone(),
             args: ast::Args { args: args.read_back(prg)? },
             inferred_type: None,
@@ -482,14 +482,9 @@ pub struct LocalMatch {
 }
 
 impl Shift for LocalMatch {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let LocalMatch { span, name, on_exp, cases } = self;
-        LocalMatch {
-            span: *span,
-            name: name.clone(),
-            on_exp: on_exp.shift_in_range(range.clone(), by),
-            cases: cases.shift_in_range(range, by),
-        }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.on_exp.shift_in_range(range, by);
+        self.cases.shift_in_range(range, by);
     }
 }
 
@@ -754,9 +749,9 @@ impl Print for Args {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Arg {
-    UnnamedArg(Box<Val>),
-    NamedArg(ast::Ident, Box<Val>),
-    InsertedImplicitArg(Box<Val>),
+    UnnamedArg(Rc<Val>),
+    NamedArg(ast::Ident, Rc<Val>),
+    InsertedImplicitArg(Rc<Val>),
 }
 
 impl Arg {
@@ -780,13 +775,9 @@ impl ReadBack for Arg {
 
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
         match self {
-            Arg::UnnamedArg(val) => Ok(ast::Arg::UnnamedArg(Box::new(val.read_back(prg)?))),
-            Arg::NamedArg(name, val) => {
-                Ok(ast::Arg::NamedArg(name.clone(), Box::new(val.read_back(prg)?)))
-            }
-            Arg::InsertedImplicitArg(val) => {
-                Ok(ast::Arg::UnnamedArg(Box::new(val.read_back(prg)?)))
-            }
+            Arg::UnnamedArg(val) => Ok(ast::Arg::UnnamedArg(val.read_back(prg)?)),
+            Arg::NamedArg(name, val) => Ok(ast::Arg::NamedArg(name.clone(), val.read_back(prg)?)),
+            Arg::InsertedImplicitArg(val) => Ok(ast::Arg::UnnamedArg(val.read_back(prg)?)),
         }
     }
 }
@@ -811,9 +802,9 @@ impl Print for Arg {
 impl Arg {
     pub fn to_val(&self) -> Rc<Val> {
         match self {
-            Arg::UnnamedArg(val) => val.clone().into(),
-            Arg::NamedArg(_, val) => val.clone().into(),
-            Arg::InsertedImplicitArg(val) => val.clone().into(),
+            Arg::UnnamedArg(val) => val.clone(),
+            Arg::NamedArg(_, val) => val.clone(),
+            Arg::InsertedImplicitArg(val) => val.clone(),
         }
     }
 }

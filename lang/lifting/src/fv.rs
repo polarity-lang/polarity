@@ -380,21 +380,18 @@ impl FVSubst {
 impl Shift for FVSubst {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since FVSubst works with levels, it is shift-invariant
-        ()
     }
 }
 
 impl<'a> Shift for FVBodySubst<'a> {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since FVSubst works with levels, it is shift-invariant
-        ()
     }
 }
 
 impl<'a> Shift for FVParamSubst<'a> {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since FVSubst works with levels, it is shift-invariant
-        ()
     }
 }
 
