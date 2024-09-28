@@ -20,12 +20,7 @@ pub trait Phase {
 
     fn new(name: &'static str) -> Self;
     fn name(&self) -> &'static str;
-    fn run(
-        db: &mut Database,
-        uri: &Url,
-        cst_lookup_table: &mut lowering::SymbolTable,
-        ast_lookup_table: &mut elaborator::ModuleTypeInfoTable,
-    ) -> Result<Self::Out, Self::Err>;
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err>;
 }
 
 /// Represents a partially completed run of a testcase, where we have
@@ -98,22 +93,11 @@ where
             // The implementation of the compiler might contain a bug which
             // triggers a panic. We catch this panic here so that we can report the bug as a failing case.
 
-            let cst_lookup_table = &self.cst_lookup_table;
-            let ast_lookup_table = &self.ast_lookup_table;
-
             // Run the phase and catch any panics that might occur.
             // We need to use `AssertUnwindSafe` because the compiler can not automatically
             // guarantee that passing mutable references across a catch_unwind boundary is safe.
-            let run_result = catch_unwind(AssertUnwindSafe(|| {
-                let mut cst_lookup_table = cst_lookup_table.borrow_mut();
-                let mut ast_lookup_table = ast_lookup_table.borrow_mut();
-                P::run(
-                    &mut self.database,
-                    &self.case.uri(),
-                    &mut cst_lookup_table,
-                    &mut ast_lookup_table,
-                )
-            }));
+            let run_result =
+                catch_unwind(AssertUnwindSafe(|| P::run(&mut self.database, &self.case.uri())));
 
             match run_result {
                 Ok(Ok(out2)) => {
@@ -242,12 +226,7 @@ impl Phase for Parse {
         self.name
     }
 
-    fn run(
-        db: &mut Database,
-        uri: &Url,
-        _: &mut lowering::SymbolTable,
-        _: &mut elaborator::ModuleTypeInfoTable,
-    ) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
         db.cst(uri)
     }
 }
@@ -268,12 +247,7 @@ impl Phase for Imports {
         self.name
     }
 
-    fn run(
-        db: &mut Database,
-        uri: &Url,
-        _: &mut lowering::SymbolTable,
-        _: &mut elaborator::ModuleTypeInfoTable,
-    ) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
         db.load_imports(uri)
     }
 }
@@ -299,12 +273,7 @@ impl Phase for Lower {
         self.name
     }
 
-    fn run(
-        db: &mut Database,
-        uri: &Url,
-        _: &mut lowering::SymbolTable,
-        _: &mut elaborator::ModuleTypeInfoTable,
-    ) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
         db.ust(uri).map(|x| (*x).clone())
     }
 }
@@ -331,12 +300,7 @@ impl Phase for Check {
         self.name
     }
 
-    fn run(
-        db: &mut Database,
-        uri: &Url,
-        _: &mut lowering::SymbolTable,
-        _: &mut elaborator::ModuleTypeInfoTable,
-    ) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
         db.load_ast(uri)
     }
 }
@@ -364,16 +328,9 @@ impl Phase for Print {
         self.name
     }
 
-    fn run(
-        db: &mut Database,
-        uri: &Url,
-        cst_lookup_table: &mut lowering::SymbolTable,
-        ast_lookup_table: &mut elaborator::ModuleTypeInfoTable,
-    ) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
         let output = db.print_to_string(uri)?;
         db.write_source(uri, &output)?;
-        *cst_lookup_table = Default::default();
-        *ast_lookup_table = Default::default();
         Ok(output)
     }
 }
