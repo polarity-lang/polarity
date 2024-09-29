@@ -49,18 +49,18 @@ impl Database {
     // The core API of the Database consists of functions which have the following forms:
     //
     // ```text
-    // pub fn xxx(&mut self, uri: Url) -> Result<xxx, Error>
-    // fn recompute_xxx(&mut self, uri: Url) -> Result<(), Error>
+    // pub fn xxx(&mut self, uri: &Url) -> Result<xxx, Error>
+    // fn recompute_xxx(&mut self, uri: &Url) -> Result<(xxx, Error>
     // ```
     // where `xxx` can be the cst, ust, ast, or any other sort of information about a module.
     // These functions are all implemented in a similar way.
     //
-    // The function `xxx(&mut self, uri: Url)` checks whether the desired object is already in the
+    // The function `xxx(&mut self, uri: &Url)` checks whether the desired object is already in the
     // cache. If it is in the cache and isn't marked as stale we immediately return the object.
     // Otherwise we call `recompute_xxx` which contains the logic to compute the object anew
     // and put it back in the cache.
     //
-    // The function `recompute_xxx(&mut self, uri: Url)` generally proceeds in the following way:
+    // The function `recompute_xxx(&mut self, uri: &Url)` generally proceeds in the following way:
     //
     // 1. We look into the dependency graph to find out what the direct dependencies
     //    of the module are.
@@ -235,6 +235,42 @@ impl Database {
                 ast
             }
         }
+    }
+
+    // Core API: info_by_id
+    //
+    //
+
+    pub fn info_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Info>, Error> {
+        match self.info_by_id.get_unless_stale(uri) {
+            Some(infos) => Ok(infos.clone()),
+            None => self.recompute_info_by_id(uri),
+        }
+    }
+
+    fn recompute_info_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Info>, Error> {
+        let ast = self.load_ast(uri)?;
+        let (info_lapper, _item_lapper) = collect_info(ast.clone());
+        self.info_by_id.insert(uri.clone(), info_lapper.clone());
+        Ok(info_lapper)
+    }
+
+    // Core API: item_by_id
+    //
+    //
+
+    pub fn item_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Item>, Error> {
+        match self.item_by_id.get_unless_stale(uri) {
+            Some(items) => Ok(items.clone()),
+            None => self.recompute_item_by_id(uri),
+        }
+    }
+
+    fn recompute_item_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Item>, Error> {
+        let ast = self.load_ast(uri)?;
+        let (_info_lapper, item_lapper) = collect_info(ast.clone());
+        self.item_by_id.insert(uri.clone(), item_lapper.clone());
+        Ok(item_lapper)
     }
 
     // Creation
