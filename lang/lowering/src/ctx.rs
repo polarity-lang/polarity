@@ -50,8 +50,9 @@ impl Ctx {
     }
 
     /// Lookup in the local variable context.
-    pub fn lookup_local(&self, name: &Ident) -> Option<Lvl> {
-        self.local_map.get(&name).and_then(|stack| stack.last().cloned())
+    pub fn lookup_local(&self, name: &Ident) -> Option<Idx> {
+        let lvl = self.local_map.get(name).and_then(|stack| stack.last().cloned())?;
+        Some(self.level_to_index(lvl))
     }
 
     pub fn unique_label(
@@ -91,7 +92,7 @@ impl Ctx {
     }
 
     /// Convert the given De-Bruijn level to a De-Bruijn index
-    pub fn level_to_index(&self, lvl: Lvl) -> Idx {
+    fn level_to_index(&self, lvl: Lvl) -> Idx {
         let fst = self.levels.len() - 1 - lvl.fst;
         let snd = self.levels[lvl.fst] - 1 - lvl.snd;
         Idx { fst, snd }
