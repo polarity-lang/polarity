@@ -321,6 +321,49 @@ impl Phase for Print {
     }
 }
 
+// Xfunc Phase
+//
+// This phase runs xfunctionalization on each type in the module, and tests
+// whether the resulting output still typechecks.
+
+pub struct Xfunc {
+    name: &'static str,
+}
+
+impl Phase for Xfunc {
+    type Out = ();
+    type Err = driver::Error;
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+        let type_names = db.all_type_names(uri)?;
+
+        let new_uri = Url::parse("inmemory:///scratch.pol").unwrap();
+        db.source.manage(&new_uri);
+
+        for type_name in type_names.iter().map(|tn| &tn.id) {
+            let xfunc_out = db.xfunc(uri, type_name)?;
+            let new_source = db.edited(uri, xfunc_out.edits);
+            db.write_source(&new_uri, &new_source.to_string())?;
+            db.load_module(&new_uri).map_err(|err| {
+                driver::Error::Type(elaborator::result::TypeError::Impossible {
+                    message: format!("Failed to xfunc {type_name}: {err}"),
+                    span: None,
+                })
+            })?;
+        }
+
+        Ok(())
+    }
+}
+
 // TestOutput
 
 pub trait TestOutput {

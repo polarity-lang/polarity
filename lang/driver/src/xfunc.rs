@@ -4,6 +4,8 @@ use printer::Print;
 use renaming::Rename;
 
 use ast::*;
+use lowering::DeclMeta;
+use parser::cst;
 use url::Url;
 use xfunc::matrix;
 use xfunc::result::XfuncError;
@@ -18,6 +20,17 @@ pub struct Xfunc {
 }
 
 impl Database {
+    pub fn all_type_names(&mut self, uri: &Url) -> Result<Vec<cst::Ident>, crate::Error> {
+        let symbol_table = self.symbol_table(uri)?;
+        Ok(symbol_table
+            .iter()
+            .filter(|(_, decl_meta)| {
+                matches!(decl_meta, DeclMeta::Data { .. } | DeclMeta::Codata { .. })
+            })
+            .map(|(name, _)| name.clone())
+            .collect())
+    }
+
     pub fn xfunc(&mut self, uri: &Url, type_name: &str) -> Result<Xfunc, crate::Error> {
         let module = self.load_module(uri)?;
 
