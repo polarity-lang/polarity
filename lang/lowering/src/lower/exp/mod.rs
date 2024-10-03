@@ -123,7 +123,11 @@ fn lower_args(
 
     // Ensure that the number of given arguments does not exceed the number of expected parameters.
     // Some expected parameters might be implicit and not require corresponding given arguments.
-    assert!(expected.len() >= given.len());
+    if given.len() > expected.len() {
+        // The unwrap is safe because in this branch there must be at least one given.
+        let err = LoweringError::TooManyArgs { span: given.first().unwrap().span().to_miette() };
+        return Err(err);
+    }
 
     // Create a peekable iterator over the given arguments to allow lookahead.
     let mut given_iter = given.iter().peekable();
