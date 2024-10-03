@@ -51,7 +51,7 @@ impl Ctx {
 
     /// Lookup in the local variable context.
     pub fn lookup_local(&self, name: &Ident) -> Option<Lvl> {
-        self.lookup(name.clone())
+        self.local_map.get(&name).and_then(|stack| stack.last().cloned())
     }
 
     pub fn unique_label(
@@ -88,13 +88,6 @@ impl Ctx {
             id,
             user_name: user_name.map(|name| ast::Ident { span: Some(name.span), id: name.id }),
         })
-    }
-
-    /// Next De Bruijn level to be assigned
-    fn curr_lvl(&self) -> Lvl {
-        let fst = self.levels.len() - 1;
-        let snd = *self.levels.last().unwrap_or(&0);
-        Lvl { fst, snd }
     }
 
     /// Convert the given De-Bruijn level to a De-Bruijn index
@@ -165,7 +158,10 @@ impl Ctx {
     }
 
     fn push_binder(&mut self, elem: Ident) {
-        let var = self.curr_lvl();
+        // Next De Bruijn level to be assigned
+        let fst = self.levels.len() - 1;
+        let snd = *self.levels.last().unwrap_or(&0);
+        let var = Lvl { fst, snd };
         *self.levels.last_mut().unwrap() += 1;
         let stack = self.local_map.entry(elem).or_default();
         stack.push(var);
@@ -175,11 +171,6 @@ impl Ctx {
         let stack = self.local_map.get_mut(&elem).expect("Tried to read unknown variable");
         stack.pop().unwrap();
         *self.levels.last_mut().unwrap() -= 1;
-    }
-
-    fn lookup<V: Into<Ident>>(&self, var: V) -> Option<Lvl> {
-        let name = var.into();
-        self.local_map.get(&name).and_then(|stack| stack.last().cloned())
     }
 
     // Methods from BindCtx trait
