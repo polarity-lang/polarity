@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::error::Error;
 use std::fmt;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -30,8 +29,6 @@ pub trait Phase {
 pub struct PartialRun<O> {
     case: Case,
     database: Database,
-    cst_lookup_table: RefCell<lowering::SymbolTable>,
-    ast_lookup_table: RefCell<elaborator::ModuleTypeInfoTable>,
     /// The result of the last run phase.
     result: Result<O, PhasesError>,
     /// A textual report about all the previously run phases.
@@ -51,16 +48,7 @@ impl PartialRun<()> {
         source.insert(case.uri(), case.content().unwrap());
         let source = source.fallback_to(FileSystemSource::new(&case.path));
         let database = Database::from_source(source);
-        let cst_lookup_table = RefCell::new(lowering::SymbolTable::default());
-        let ast_lookup_table = RefCell::new(elaborator::ModuleTypeInfoTable::default());
-        PartialRun {
-            case,
-            database,
-            cst_lookup_table,
-            ast_lookup_table,
-            result: Ok(()),
-            report_phases: vec![],
-        }
+        PartialRun { case, database, result: Ok(()), report_phases: vec![] }
     }
 }
 
@@ -144,8 +132,6 @@ where
         PartialRun {
             database: self.database,
             case: self.case,
-            cst_lookup_table: self.cst_lookup_table,
-            ast_lookup_table: self.ast_lookup_table,
             result,
             report_phases: self.report_phases,
         }
