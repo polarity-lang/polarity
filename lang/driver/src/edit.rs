@@ -22,7 +22,8 @@ impl Database {
 
         for edit in edits.iter().rev() {
             let remove_range = edit.span.as_range();
-            let char_range = rope.byte_to_char(remove_range.start)..rope.byte_to_char(remove_range.end);
+            let char_range =
+                rope.byte_to_char(remove_range.start)..rope.byte_to_char(remove_range.end);
             rope.remove(char_range);
             let char_idx = rope.byte_to_char(edit.span.start().into());
             rope.insert(char_idx, &edit.text);

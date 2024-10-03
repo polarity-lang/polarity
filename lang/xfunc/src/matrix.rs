@@ -85,6 +85,12 @@ impl BuildMatrix for ast::Module {
                     }
                     Ok(())
                 }
+                _ => Ok(()),
+            }?
+        }
+
+        for decl in decls {
+            match decl {
                 ast::Decl::Def(def) => def.build_matrix(ctx, out),
                 ast::Decl::Codef(codef) => codef.build_matrix(ctx, out),
                 _ => Ok(()),
