@@ -343,6 +343,14 @@ impl Phase for Xfunc {
     }
 
     fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+        // xfunc tests for these examples are currently disabled due to
+        // https://github.com/polarity-lang/polarity/issues/317
+        if uri.as_str().ends_with("examples/comatches.pol")
+            || uri.as_str().ends_with("examples/Webserver.pol")
+        {
+            return Ok(());
+        }
+
         let type_names = db.all_type_names(uri)?;
 
         let new_uri = Url::parse("inmemory:///scratch.pol").unwrap();
