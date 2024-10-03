@@ -272,11 +272,11 @@ impl Lower for cst::exp::Call {
 
         // If we find the identifier in the local context then we have to lower
         // it to a variable.
-        if let Some(lvl) = ctx.lookup_local(name) {
+        if let Some(idx) = ctx.lookup_local(name) {
             let name = name.lower(ctx)?;
             return Ok(ast::Exp::Variable(Variable {
                 span: Some(*span),
-                idx: ctx.level_to_index(lvl),
+                idx,
                 name,
                 inferred_type: None,
             }));
