@@ -1,0 +1,11 @@
+data Option(a: Type) {
+    None(a: Type): Option(a),
+    Some(a: Type, x: a): Option(a)
+}
+
+data Top { Unit }
+
+data Foo(foo: Option(Foo(None(?)))) {
+    C: Foo(None(?)),
+    D: Foo(Some(Foo(None(?)), C))
+}

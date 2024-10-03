@@ -1,0 +1,11 @@
+data Foo {
+    A,
+    B(y: C(A).type),
+    C(x: B(A).type)
+}
+
+def Foo.type: Type {
+    A => Foo,
+    B(_) => Foo,
+    C(_) => Foo,
+}
