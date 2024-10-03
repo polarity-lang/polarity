@@ -110,6 +110,7 @@ impl Runner {
             .then(config, Imports::new("reimports"))
             .then(config, Lower::new("relower"))
             .then(config, Check::new("recheck"))
+            .then(config, Xfunc::new("xfunc"))
             .report()
     }
 }

@@ -551,7 +551,9 @@ impl Print for Ctor {
         let head = if typ.is_simple() {
             head
         } else {
-            head.append(print_return_type(cfg, alloc, typ)).group()
+            let mut cfg = cfg.clone();
+            cfg.print_function_sugar = false;
+            head.append(print_return_type(&cfg, alloc, typ)).group()
         };
         doc.append(head)
     }

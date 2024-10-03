@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::error::Error;
 use std::fmt;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -30,8 +29,6 @@ pub trait Phase {
 pub struct PartialRun<O> {
     case: Case,
     database: Database,
-    cst_lookup_table: RefCell<lowering::SymbolTable>,
-    ast_lookup_table: RefCell<elaborator::ModuleTypeInfoTable>,
     /// The result of the last run phase.
     result: Result<O, PhasesError>,
     /// A textual report about all the previously run phases.
@@ -51,16 +48,7 @@ impl PartialRun<()> {
         source.insert(case.uri(), case.content().unwrap());
         let source = source.fallback_to(FileSystemSource::new(&case.path));
         let database = Database::from_source(source);
-        let cst_lookup_table = RefCell::new(lowering::SymbolTable::default());
-        let ast_lookup_table = RefCell::new(elaborator::ModuleTypeInfoTable::default());
-        PartialRun {
-            case,
-            database,
-            cst_lookup_table,
-            ast_lookup_table,
-            result: Ok(()),
-            report_phases: vec![],
-        }
+        PartialRun { case, database, result: Ok(()), report_phases: vec![] }
     }
 }
 
@@ -144,8 +132,6 @@ where
         PartialRun {
             database: self.database,
             case: self.case,
-            cst_lookup_table: self.cst_lookup_table,
-            ast_lookup_table: self.ast_lookup_table,
             result,
             report_phases: self.report_phases,
         }
@@ -332,6 +318,57 @@ impl Phase for Print {
         let output = db.print_to_string(uri)?;
         db.write_source(uri, &output)?;
         Ok(output)
+    }
+}
+
+// Xfunc Phase
+//
+// This phase runs xfunctionalization on each type in the module, and tests
+// whether the resulting output still typechecks.
+
+pub struct Xfunc {
+    name: &'static str,
+}
+
+impl Phase for Xfunc {
+    type Out = ();
+    type Err = driver::Error;
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+        // xfunc tests for these examples are currently disabled due to
+        // https://github.com/polarity-lang/polarity/issues/317
+        if uri.as_str().ends_with("examples/comatches.pol")
+            || uri.as_str().ends_with("examples/Webserver.pol")
+        {
+            return Ok(());
+        }
+
+        let type_names = db.all_type_names(uri)?;
+
+        let new_uri = Url::parse("inmemory:///scratch.pol").unwrap();
+        db.source.manage(&new_uri);
+
+        for type_name in type_names.iter().map(|tn| &tn.id) {
+            let xfunc_out = db.xfunc(uri, type_name)?;
+            let new_source = db.edited(uri, xfunc_out.edits);
+            db.write_source(&new_uri, &new_source.to_string())?;
+            db.load_module(&new_uri).map_err(|err| {
+                driver::Error::Type(elaborator::result::TypeError::Impossible {
+                    message: format!("Failed to xfunc {type_name}: {err}"),
+                    span: None,
+                })
+            })?;
+        }
+
+        Ok(())
     }
 }
 
