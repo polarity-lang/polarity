@@ -81,7 +81,7 @@ impl BuildMatrix for ast::Data {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let ast::Data { span, doc, name, attr: _, typ, ctors } = self;
 
-        let xdata = XData {
+        let mut xdata = XData {
             repr: Repr::Data,
             span: *span,
             doc: doc.clone(),
@@ -91,16 +91,11 @@ impl BuildMatrix for ast::Data {
             dtors: HashMap::default(),
             exprs: HashMap::default(),
         };
-
-        out.map.insert(name.clone(), xdata);
-
         for ctor in ctors {
-            let xdata = out.map.get_mut(name).ok_or(XfuncError::Impossible {
-                message: format!("Could not resolve {}", self.name),
-                span: None,
-            })?;
             xdata.ctors.insert(ctor.name.clone(), ctor.clone());
         }
+
+        out.map.insert(name.clone(), xdata);
         Ok(())
     }
 }
@@ -108,7 +103,7 @@ impl BuildMatrix for ast::Codata {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let ast::Codata { span, doc, name, attr: _, typ, dtors } = self;
 
-        let xdata = XData {
+        let mut xdata = XData {
             repr: Repr::Codata,
             span: *span,
             doc: doc.clone(),
@@ -119,16 +114,11 @@ impl BuildMatrix for ast::Codata {
             exprs: HashMap::default(),
         };
 
-        out.map.insert(name.clone(), xdata);
-
         for dtor in dtors {
-            let xdata = out.map.get_mut(name).ok_or(XfuncError::Impossible {
-                message: format!("Could not resolve {}", name),
-                span: None,
-            })?;
             xdata.dtors.insert(dtor.name.clone(), dtor.clone());
         }
 
+        out.map.insert(name.clone(), xdata);
         Ok(())
     }
 }
