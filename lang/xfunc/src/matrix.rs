@@ -45,41 +45,30 @@ pub enum Repr {
 /// Take the red pill
 pub fn build(prg: &ast::Module) -> Result<Prg, XfuncError> {
     let mut out = Prg { map: HashMap::default() };
-    let mut ctx = Ctx::empty();
-    prg.build_matrix(&mut ctx, &mut out)?;
+    prg.build_matrix(&mut out)?;
     Ok(out)
 }
 
 pub trait BuildMatrix {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError>;
-}
-
-pub struct Ctx {
-    type_for_xtor: HashMap<ast::Ident, ast::Ident>,
-}
-
-impl Ctx {
-    pub fn empty() -> Self {
-        Self { type_for_xtor: HashMap::default() }
-    }
+    fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError>;
 }
 
 impl BuildMatrix for ast::Module {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
+    fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let ast::Module { decls, .. } = self;
 
         for decl in decls {
             match decl {
-                ast::Decl::Data(data) => data.build_matrix(ctx, out),
-                ast::Decl::Codata(codata) => codata.build_matrix(ctx, out),
+                ast::Decl::Data(data) => data.build_matrix(out),
+                ast::Decl::Codata(codata) => codata.build_matrix(out),
                 _ => Ok(()),
             }?
         }
 
         for decl in decls {
             match decl {
-                ast::Decl::Def(def) => def.build_matrix(ctx, out),
-                ast::Decl::Codef(codef) => codef.build_matrix(ctx, out),
+                ast::Decl::Def(def) => def.build_matrix(out),
+                ast::Decl::Codef(codef) => codef.build_matrix(out),
                 _ => Ok(()),
             }?
         }
@@ -89,7 +78,7 @@ impl BuildMatrix for ast::Module {
 }
 
 impl BuildMatrix for ast::Data {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
+    fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let ast::Data { span, doc, name, attr: _, typ, ctors } = self;
 
         let xdata = XData {
@@ -102,10 +91,6 @@ impl BuildMatrix for ast::Data {
             dtors: HashMap::default(),
             exprs: HashMap::default(),
         };
-
-        for ctor in ctors {
-            ctx.type_for_xtor.insert(ctor.name.clone(), name.clone());
-        }
 
         out.map.insert(name.clone(), xdata);
 
@@ -120,7 +105,7 @@ impl BuildMatrix for ast::Data {
     }
 }
 impl BuildMatrix for ast::Codata {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
+    fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let ast::Codata { span, doc, name, attr: _, typ, dtors } = self;
 
         let xdata = XData {
@@ -133,10 +118,6 @@ impl BuildMatrix for ast::Codata {
             dtors: HashMap::default(),
             exprs: HashMap::default(),
         };
-
-        for dtor in dtors {
-            ctx.type_for_xtor.insert(dtor.name.clone(), name.clone());
-        }
 
         out.map.insert(name.clone(), xdata);
 
@@ -153,7 +134,7 @@ impl BuildMatrix for ast::Codata {
 }
 
 impl BuildMatrix for ast::Def {
-    fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
+    fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.self_param.typ.name;
         let xdata = out.map.get_mut(type_name).ok_or(XfuncError::Impossible {
             message: format!("Could not resolve {type_name}"),
@@ -173,7 +154,7 @@ impl BuildMatrix for ast::Def {
 }
 
 impl BuildMatrix for ast::Codef {
-    fn build_matrix(&self, _ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
+    fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.typ.name;
         let xdata = out.map.get_mut(type_name).ok_or(XfuncError::Impossible {
             message: format!("Could not resolve {type_name}"),
