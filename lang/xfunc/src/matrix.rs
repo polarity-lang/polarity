@@ -110,12 +110,15 @@ impl BuildMatrix for ast::Data {
         out.map.insert(name.clone(), xdata);
 
         for ctor in ctors {
-            ctor.build_matrix(ctx, out)?;
+            let xdata = out.map.get_mut(name).ok_or(XfuncError::Impossible {
+                message: format!("Could not resolve {}", self.name),
+                span: None,
+            })?;
+            xdata.ctors.insert(ctor.name.clone(), ctor.clone());
         }
         Ok(())
     }
 }
-
 impl BuildMatrix for ast::Codata {
     fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
         let ast::Codata { span, doc, name, attr: _, typ, dtors } = self;
@@ -138,39 +141,13 @@ impl BuildMatrix for ast::Codata {
         out.map.insert(name.clone(), xdata);
 
         for dtor in dtors {
-            dtor.build_matrix(ctx, out)?;
+            let xdata = out.map.get_mut(name).ok_or(XfuncError::Impossible {
+                message: format!("Could not resolve {}", name),
+                span: None,
+            })?;
+            xdata.dtors.insert(dtor.name.clone(), dtor.clone());
         }
 
-        Ok(())
-    }
-}
-
-impl BuildMatrix for ast::Ctor {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let type_name = &ctx.type_for_xtor.get(&self.name).ok_or(XfuncError::Impossible {
-            message: format!("Could not resolve {}", self.name),
-            span: None,
-        })?;
-        let xdata = out.map.get_mut(*type_name).ok_or(XfuncError::Impossible {
-            message: format!("Could not resolve {}", self.name),
-            span: None,
-        })?;
-        xdata.ctors.insert(self.name.clone(), self.clone());
-        Ok(())
-    }
-}
-
-impl BuildMatrix for ast::Dtor {
-    fn build_matrix(&self, ctx: &mut Ctx, out: &mut Prg) -> Result<(), XfuncError> {
-        let type_name = &ctx.type_for_xtor.get(&self.name).ok_or(XfuncError::Impossible {
-            message: format!("Could not resolve {}", self.name),
-            span: None,
-        })?;
-        let xdata = out.map.get_mut(*type_name).ok_or(XfuncError::Impossible {
-            message: format!("Could not resolve {}", type_name),
-            span: None,
-        })?;
-        xdata.dtors.insert(self.name.clone(), self.clone());
         Ok(())
     }
 }
