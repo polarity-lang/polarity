@@ -8,7 +8,6 @@ use codespan::Span;
 #[derive(Debug, Clone)]
 pub struct Prg {
     pub map: HashMap<ast::Ident, XData>,
-    pub exp: Option<Box<ast::Exp>>,
 }
 
 #[derive(Debug, Clone)]
@@ -45,7 +44,7 @@ pub enum Repr {
 
 /// Take the red pill
 pub fn build(prg: &ast::Module) -> Result<Prg, XfuncError> {
-    let mut out = Prg { map: HashMap::default(), exp: None };
+    let mut out = Prg { map: HashMap::default() };
     let mut ctx = Ctx::empty();
     prg.build_matrix(&mut ctx, &mut out)?;
     Ok(out)
@@ -71,20 +70,8 @@ impl BuildMatrix for ast::Module {
 
         for decl in decls {
             match decl {
-                ast::Decl::Data(data) => {
-                    data.build_matrix(ctx, out)?;
-                    for ctor in &data.ctors {
-                        ctor.build_matrix(ctx, out)?;
-                    }
-                    Ok(())
-                }
-                ast::Decl::Codata(codata) => {
-                    codata.build_matrix(ctx, out)?;
-                    for dtor in &codata.dtors {
-                        dtor.build_matrix(ctx, out)?;
-                    }
-                    Ok(())
-                }
+                ast::Decl::Data(data) => data.build_matrix(ctx, out),
+                ast::Decl::Codata(codata) => codata.build_matrix(ctx, out),
                 _ => Ok(()),
             }?
         }
@@ -121,6 +108,10 @@ impl BuildMatrix for ast::Data {
         }
 
         out.map.insert(name.clone(), xdata);
+
+        for ctor in ctors {
+            ctor.build_matrix(ctx, out)?;
+        }
         Ok(())
     }
 }
@@ -145,6 +136,10 @@ impl BuildMatrix for ast::Codata {
         }
 
         out.map.insert(name.clone(), xdata);
+
+        for dtor in dtors {
+            dtor.build_matrix(ctx, out)?;
+        }
 
         Ok(())
     }
