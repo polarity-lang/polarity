@@ -118,7 +118,7 @@ impl<'a> WithExpectedType<'a> {
         // We will compare `on_args` against `def_args`. But `def_args` are defined
         // in the context `params`. Below, we extend the context using `params_inst.check_telescope(...)`.
         // In this extended context we have to weaken on_args by shifting.
-        let on_args = on_args.shift((1, 0));
+        let on_args = shift_and_clone(on_args, (1, 0));
 
         let mut cases_out = Vec::new();
 
@@ -281,7 +281,9 @@ impl<'a> WithExpectedType<'a> {
                                     //
                                     let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
                                     let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
-                                    ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0)).normalize(
+                                    let mut ret_typ = ret_typ.subst(&mut subst_ctx, &subst);
+                                    ret_typ.shift((-1, 0));
+                                    ret_typ.normalize(
                                         &ctx.module,
                                         &mut LevelCtx::from(vec![*n_label_args, params.len()])
                                             .env(),
@@ -290,7 +292,7 @@ impl<'a> WithExpectedType<'a> {
 
                                 None => {
                                     // TODO: Self parameter for local comatches
-                                    ret_typ.shift((-1, 0))
+                                    shift_and_clone(&ret_typ, (-1, 0))
                                 }
                             };
                             let body_out = {

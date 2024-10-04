@@ -25,13 +25,13 @@ use url::Url;
 
 use crate::ctx::LevelCtx;
 use crate::named::Named;
+use crate::shift_and_clone;
 
 use super::exp::*;
 use super::ident::*;
 use super::traits::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
 use super::HashMap;
-use super::Shift;
 
 fn print_return_type<'a, T: Print>(
     cfg: &PrintCfg,
@@ -855,7 +855,7 @@ impl Print for Telescope {
             match running {
                 // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
                 Some((rtype, rimplicit))
-                    if rtype.shift((0, 1)) == **typ && rimplicit == *implicit =>
+                    if shift_and_clone(rtype, (0, 1)) == **typ && rimplicit == *implicit =>
                 {
                     // We are adding another parameter of the same type.
                     output = output.append(alloc.space()).append(alloc.text(&name.id));

@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use ast;
 use ast::ctx::BindContext;
+use ast::shift_and_clone;
 use ast::Ident;
 use ast::Idx;
 use ast::MetaVar;
@@ -87,13 +88,13 @@ pub enum Val {
 }
 
 impl Shift for Val {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         match self {
-            Val::TypCtor(e) => e.shift_in_range(range, by).into(),
-            Val::Call(e) => e.shift_in_range(range, by).into(),
-            Val::TypeUniv(e) => e.shift_in_range(range, by).into(),
-            Val::LocalComatch(e) => e.shift_in_range(range, by).into(),
-            Val::Neu(exp) => exp.shift_in_range(range, by).into(),
+            Val::TypCtor(e) => e.shift_in_range(range, by),
+            Val::Call(e) => e.shift_in_range(range, by),
+            Val::TypeUniv(e) => e.shift_in_range(range, by),
+            Val::LocalComatch(e) => e.shift_in_range(range, by),
+            Val::Neu(exp) => exp.shift_in_range(range, by),
         }
     }
 }
@@ -140,9 +141,8 @@ pub struct TypCtor {
 }
 
 impl Shift for TypCtor {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let TypCtor { span, name, args } = self;
-        TypCtor { span: *span, name: name.clone(), args: args.shift_in_range(range, by) }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.args.shift_in_range(range, by);
     }
 }
 
@@ -188,9 +188,8 @@ pub struct Call {
 }
 
 impl Shift for Call {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Call { span, kind, name, args } = self;
-        Call { span: *span, kind: *kind, name: name.clone(), args: args.shift_in_range(range, by) }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.args.shift_in_range(range, by);
     }
 }
 
@@ -235,9 +234,7 @@ pub struct TypeUniv {
 }
 
 impl Shift for TypeUniv {
-    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
-        self.clone()
-    }
+    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {}
 }
 
 impl Print for TypeUniv {
@@ -276,14 +273,8 @@ pub struct LocalComatch {
 }
 
 impl Shift for LocalComatch {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let LocalComatch { span, name, is_lambda_sugar, cases } = self;
-        LocalComatch {
-            span: *span,
-            name: name.clone(),
-            is_lambda_sugar: *is_lambda_sugar,
-            cases: cases.shift_in_range(range, by),
-        }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.cases.shift_in_range(range, by);
     }
 }
 
@@ -338,13 +329,13 @@ pub enum Neu {
 }
 
 impl Shift for Neu {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         match self {
-            Neu::Variable(e) => e.shift_in_range(range, by).into(),
-            Neu::DotCall(e) => e.shift_in_range(range, by).into(),
-            Neu::LocalMatch(e) => e.shift_in_range(range, by).into(),
-            Neu::Hole(e) => e.shift_in_range(range, by).into(),
-            Neu::OpaqueCall(e) => e.shift_in_range(range, by).into(),
+            Neu::Variable(e) => e.shift_in_range(range, by),
+            Neu::DotCall(e) => e.shift_in_range(range, by),
+            Neu::LocalMatch(e) => e.shift_in_range(range, by),
+            Neu::Hole(e) => e.shift_in_range(range, by),
+            Neu::OpaqueCall(e) => e.shift_in_range(range, by),
         }
     }
 }
@@ -397,9 +388,8 @@ pub struct Variable {
 }
 
 impl Shift for Variable {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Variable { span, name, idx } = self;
-        Variable { span: *span, name: name.clone(), idx: idx.shift_in_range(range, by) }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.idx.shift_in_range(range, by);
     }
 }
 
@@ -441,15 +431,9 @@ pub struct DotCall {
 }
 
 impl Shift for DotCall {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let DotCall { span, kind, exp, name, args } = self;
-        DotCall {
-            span: *span,
-            kind: *kind,
-            exp: exp.shift_in_range(range.clone(), by),
-            name: name.clone(),
-            args: args.shift_in_range(range, by),
-        }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.exp.shift_in_range(range, by);
+        self.args.shift_in_range(range, by);
     }
 }
 
@@ -498,14 +482,9 @@ pub struct LocalMatch {
 }
 
 impl Shift for LocalMatch {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let LocalMatch { span, name, on_exp, cases } = self;
-        LocalMatch {
-            span: *span,
-            name: name.clone(),
-            on_exp: on_exp.shift_in_range(range.clone(), by),
-            cases: cases.shift_in_range(range, by),
-        }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.on_exp.shift_in_range(range, by);
+        self.cases.shift_in_range(range, by);
     }
 }
 
@@ -563,9 +542,8 @@ pub struct Hole {
 }
 
 impl Shift for Hole {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Hole { span, kind, metavar, args } = self;
-        Hole { span: *span, kind: *kind, metavar: *metavar, args: args.shift_in_range(range, by) }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.args.shift_in_range(range, by);
     }
 }
 
@@ -619,16 +597,9 @@ pub struct Case {
 }
 
 impl Shift for Case {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Case { span, is_copattern, name, params, body } = self;
-
-        Case {
-            span: *span,
-            is_copattern: *is_copattern,
-            name: name.clone(),
-            params: params.clone(),
-            body: body.shift_in_range(range.shift(1), by),
-        }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        let range = (*range).clone();
+        self.body.shift_in_range(&range.shift(1), by);
     }
 }
 
@@ -686,9 +657,8 @@ pub struct OpaqueCall {
 }
 
 impl Shift for OpaqueCall {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let OpaqueCall { span, name, args } = self;
-        OpaqueCall { span: *span, name: name.clone(), args: args.shift_in_range(range, by) }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.args.shift_in_range(range, by);
     }
 }
 
@@ -744,8 +714,8 @@ impl Args {
 }
 
 impl Shift for Args {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        Args(self.0.shift_in_range(range, by))
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.0.shift_in_range(range, by)
     }
 }
 
@@ -791,13 +761,11 @@ impl Arg {
 }
 
 impl Shift for Arg {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         match self {
-            Arg::UnnamedArg(val) => Arg::UnnamedArg(val.shift_in_range(range, by)),
-            Arg::NamedArg(name, val) => Arg::NamedArg(name.clone(), val.shift_in_range(range, by)),
-            Arg::InsertedImplicitArg(val) => {
-                Arg::InsertedImplicitArg(val.shift_in_range(range, by))
-            }
+            Arg::UnnamedArg(val) => val.shift_in_range(range, by),
+            Arg::NamedArg(_, val) => val.shift_in_range(range, by),
+            Arg::InsertedImplicitArg(val) => val.shift_in_range(range, by),
         }
     }
 }
@@ -854,10 +822,8 @@ pub struct Closure {
 }
 
 impl Shift for Closure {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        let Closure { env, n_args, body } = self;
-
-        Closure { env: env.shift_in_range(range, by), n_args: *n_args, body: body.clone() }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.env.shift_in_range(range, by);
     }
 }
 
@@ -882,9 +848,7 @@ impl ReadBack for Closure {
             })
             .map(Rc::new)
             .collect();
-        self.env
-            .shift((1, 0))
-            .bind_iter(args.iter(), |env| self.body.eval(prg, env))?
-            .read_back(prg)
+        let mut shifted_env = shift_and_clone(&self.env, (1, 0));
+        shifted_env.bind_iter(args.iter(), |env| self.body.eval(prg, env))?.read_back(prg)
     }
 }
