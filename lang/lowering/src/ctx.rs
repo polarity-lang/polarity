@@ -182,16 +182,7 @@ impl Ctx {
         T: ContextElem,
         F: FnOnce(&mut Self) -> O,
     {
-        self.bind_iter([elem].into_iter(), f)
-    }
-
-    /// Bind an iterator `iter` of binders
-    pub fn bind_iter<T, I, O, F>(&mut self, iter: I, f: F) -> O
-    where
-        T: ContextElem,
-        I: Iterator<Item = T>,
-        F: FnOnce(&mut Self) -> O,
-    {
+        let iter = [elem].into_iter();
         self.bind_fold(iter, (), |_ctx, (), _x| (), |ctx, ()| f(ctx))
     }
 
@@ -218,35 +209,21 @@ impl Ctx {
         F1: Fn(&mut Self, O1, T) -> O1,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
-        self.bind_fold2(
-            iter,
-            acc,
-            |this, acc, x| BindElem { elem: x.as_element(), ret: f_acc(this, acc, x) },
-            f_inner,
-        )
-    }
-
-    pub fn bind_fold2<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
-        &mut self,
-        iter: I,
-        acc: O1,
-        f_acc: F1,
-        f_inner: F2,
-    ) -> O2
-    where
-        F1: Fn(&mut Self, O1, T) -> BindElem<O1>,
-        F2: FnOnce(&mut Self, O1) -> O2,
-    {
         self.bind_fold_failable(
             iter,
             acc,
-            |this, acc, x| Result::<_, ()>::Ok(f_acc(this, acc, x)),
+            |this, acc, x| {
+                Result::<_, ()>::Ok((|this, acc, x: T| BindElem {
+                    elem: x.as_element(),
+                    ret: f_acc(this, acc, x),
+                })(this, acc, x))
+            },
             f_inner,
         )
         .unwrap()
     }
 
-    pub fn bind_fold_failable<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
+    fn bind_fold_failable<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
         &mut self,
         iter: I,
         acc: O1,
