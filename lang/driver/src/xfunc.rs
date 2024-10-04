@@ -108,7 +108,8 @@ fn generate_edits(
     // Here we surgically rewrite only the declarations that have been changed
     for name in dirty_decls {
         let decl = module.lookup_decl(&name).unwrap();
-        let decl = decl.clone().rename();
+        let mut decl = decl.clone();
+        decl.rename();
         let span = original.decl_spans[&name];
         let text = decl.print_to_string(None);
         edits.push(Edit { span, text });
@@ -124,10 +125,10 @@ fn generate_edits(
 }
 
 fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
-    let (codata, codefs) = xfunc::as_codata(mat, &Ident::from_string(type_name))?;
+    let (mut codata, mut codefs) = xfunc::as_codata(mat, &Ident::from_string(type_name))?;
 
-    let codata = codata.rename();
-    let codefs = codefs.into_iter().map(|codef| codef.rename()).collect::<Vec<_>>();
+    codata.rename();
+    codefs.iter_mut().for_each(|codef| codef.rename());
 
     let mut new_decls = vec![Decl::Codata(codata)];
     new_decls.extend(codefs.into_iter().map(Decl::Codef));
@@ -136,10 +137,10 @@ fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, cr
 }
 
 fn defunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
-    let (data, defs) = xfunc::as_data(mat, &Ident::from_string(type_name))?;
+    let (mut data, mut defs) = xfunc::as_data(mat, &Ident::from_string(type_name))?;
 
-    let data = data.rename();
-    let defs = defs.into_iter().map(|def| def.rename()).collect::<Vec<_>>();
+    data.rename();
+    defs.iter_mut().for_each(|def| def.rename());
 
     let mut new_decls = vec![Decl::Data(data)];
     new_decls.extend(defs.into_iter().map(Decl::Def));

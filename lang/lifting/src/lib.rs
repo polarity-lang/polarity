@@ -23,7 +23,7 @@ pub fn lift(module: Arc<Module>, name: &str) -> LiftResult {
     let mut module = module.lift(&mut ctx);
     let new_decl_names = HashSet::from_iter(ctx.new_decls.iter().map(|decl| decl.name().clone()));
     module.decls.extend(ctx.new_decls);
-    let module = module.rename();
+    module.rename();
 
     LiftResult { module, new_decls: new_decl_names, modified_decls: ctx.modified_decls }
 }
