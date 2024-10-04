@@ -213,10 +213,7 @@ impl Ctx {
             iter,
             acc,
             |this, acc, x| {
-                Result::<_, ()>::Ok((|this, acc, x: T| BindElem {
-                    elem: x.as_element(),
-                    ret: f_acc(this, acc, x),
-                })(this, acc, x))
+                Result::<_, ()>::Ok(BindElem { elem: x.as_element(), ret: f_acc(this, acc, x) })
             },
             f_inner,
         )
