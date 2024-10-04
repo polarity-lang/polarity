@@ -209,55 +209,41 @@ impl Ctx {
         F1: Fn(&mut Self, O1, T) -> O1,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
-        self.bind_fold_failable(
+        self.push_telescope();
+        let res = Self::bind_inner(
+            self,
             iter,
             acc,
-            |this, acc, x| {
+            |this, acc, x: T| {
                 Result::<_, ()>::Ok(BindElem { elem: x.as_element(), ret: f_acc(this, acc, x) })
             },
             f_inner,
-        )
-        .unwrap()
+        );
+        self.pop_telescope();
+        res.unwrap()
     }
 
-    fn bind_fold_failable<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
-        &mut self,
-        iter: I,
+    fn bind_inner<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
+        this: &mut Ctx,
+        mut iter: I,
         acc: O1,
         f_acc: F1,
         f_inner: F2,
     ) -> Result<O2, E>
     where
-        F1: Fn(&mut Self, O1, T) -> Result<BindElem<O1>, E>,
-        F2: FnOnce(&mut Self, O1) -> O2,
+        F1: Fn(&mut Ctx, O1, T) -> Result<BindElem<O1>, E>,
+        F2: FnOnce(&mut Ctx, O1) -> O2,
     {
-        fn bind_inner<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
-            this: &mut Ctx,
-            mut iter: I,
-            acc: O1,
-            f_acc: F1,
-            f_inner: F2,
-        ) -> Result<O2, E>
-        where
-            F1: Fn(&mut Ctx, O1, T) -> Result<BindElem<O1>, E>,
-            F2: FnOnce(&mut Ctx, O1) -> O2,
-        {
-            match iter.next() {
-                Some(x) => {
-                    let BindElem { elem, ret: acc } = f_acc(this, acc, x)?;
-                    this.push_binder(elem.clone());
-                    let res = bind_inner(this, iter, acc, f_acc, f_inner);
-                    this.pop_binder(elem);
-                    res
-                }
-                None => Ok(f_inner(this, acc)),
+        match iter.next() {
+            Some(x) => {
+                let BindElem { elem, ret: acc } = f_acc(this, acc, x)?;
+                this.push_binder(elem.clone());
+                let res = Self::bind_inner(this, iter, acc, f_acc, f_inner);
+                this.pop_binder(elem);
+                res
             }
+            None => Ok(f_inner(this, acc)),
         }
-
-        self.push_telescope();
-        let res = bind_inner(self, iter, acc, f_acc, f_inner);
-        self.pop_telescope();
-        res
     }
 }
 
