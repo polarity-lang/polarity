@@ -15,3 +15,7 @@ lint:
 test:
 	@cargo test --all
 	@cargo run -p test-runner
+
+.PHONY: update-expected
+update-expected:
+	@cargo run -p test-runner -- --update-expected

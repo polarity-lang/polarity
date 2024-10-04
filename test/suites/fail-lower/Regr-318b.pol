@@ -1,0 +1,3 @@
+data Foo(a: Type) {}
+
+let foo: Foo(Type, Type) { ? }
