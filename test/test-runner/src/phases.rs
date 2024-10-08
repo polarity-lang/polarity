@@ -118,13 +118,13 @@ where
                     }
                     Err(PhasesError::AsExpected)
                 }
-                Err(_) => {
+                Err(err) => {
                     // There was a panic
                     self.report_phases.push(PhaseReport {
                         name: phase.name(),
                         output: "Panic occurred".to_string(),
                     });
-                    Err(PhasesError::Panic)
+                    Err(PhasesError::Panic { msg: err.downcast::<&str>().unwrap().to_string() })
                 }
             }
         });
@@ -146,7 +146,7 @@ where
             }
             Err(PhasesError::ExpectedFailure { got }) => Err(Failure::ExpectedFailure { got }),
             Err(PhasesError::ExpectedSuccess { got }) => Err(Failure::ExpectedSuccess { got }),
-            Err(PhasesError::Panic) => Err(Failure::Panic),
+            Err(PhasesError::Panic { msg }) => Err(Failure::Panic { msg }),
         };
 
         CaseResult { result, case: self.case }
@@ -166,7 +166,9 @@ pub enum Failure {
     ExpectedSuccess {
         got: Box<dyn Error>,
     },
-    Panic,
+    Panic {
+        msg: String,
+    },
 }
 
 impl Error for Failure {}
@@ -179,14 +181,14 @@ impl fmt::Display for Failure {
             }
             Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
             Failure::ExpectedSuccess { got } => write!(f, "Expected success, got {got}"),
-            Failure::Panic => write!(f, "Code panicked during test execution"),
+            Failure::Panic { msg } => write!(f, "Code panicked during test execution\n {msg}"),
         }
     }
 }
 
 enum PhasesError {
     AsExpected,
-    Panic,
+    Panic { msg: String },
     Mismatch { expected: String, actual: String },
     ExpectedFailure { got: String },
     ExpectedSuccess { got: Box<dyn Error> },
