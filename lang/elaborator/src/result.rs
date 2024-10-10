@@ -139,6 +139,12 @@ pub enum TypeError {
     #[error("The following metavariables were not solved: {message}")]
     #[diagnostic(code("T-017"))]
     UnresolvedMetas { message: String },
+    #[error("A case for constructor {name} was missing during evaluation.")]
+    #[diagnostic(code("T-018"))]
+    MissingCase { name: String },
+    #[error("A case for destructor {name} was missing during evaluation.")]
+    #[diagnostic(code("T-019"))]
+    MissingCocase { name: String },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("T-XXX"))]
     /// This error should not occur.

@@ -156,8 +156,11 @@ impl Eval for DotCall {
                         let mut env: Env = GenericCtx::empty().into();
                         let cases =
                             env.bind_iter(args.to_vals().iter(), |env| cases.eval(prg, env))?;
-                        let val::Case { body, .. } =
-                            cases.clone().into_iter().find(|case| case.name == call_name).unwrap();
+                        let val::Case { body, .. } = cases
+                            .clone()
+                            .into_iter()
+                            .find(|case| case.name == call_name)
+                            .ok_or_else(|| TypeError::MissingCase { name: call_name.id.clone() })?;
 
                         // Then we apply the body to the `call_args`.
                         body.clone().unwrap().apply(prg, &call_args.to_vals())
@@ -187,8 +190,11 @@ impl Eval for DotCall {
                         let mut env: Env = GenericCtx::empty().into();
                         let cases =
                             env.bind_iter(call_args.to_vals().iter(), |env| cases.eval(prg, env))?;
-                        let val::Case { body, .. } =
-                            cases.clone().into_iter().find(|cocase| cocase.name == *name).unwrap();
+                        let val::Case { body, .. } = cases
+                            .clone()
+                            .into_iter()
+                            .find(|cocase| cocase.name == *name)
+                            .ok_or_else(|| TypeError::MissingCocase { name: name.id.clone() })?;
 
                         // Then we apply the body to the `args`.
                         body.clone().unwrap().apply(prg, &args.to_vals())
@@ -216,8 +222,11 @@ impl Eval for DotCall {
                 // codata type.
 
                 // First, we have to select the correct case from the comatch.
-                let val::Case { body, .. } =
-                    cases.clone().into_iter().find(|cocase| cocase.name == *name).unwrap();
+                let val::Case { body, .. } = cases
+                    .clone()
+                    .into_iter()
+                    .find(|cocase| cocase.name == *name)
+                    .ok_or_else(|| TypeError::MissingCocase { name: name.id.clone() })?;
 
                 // Then we apply the body to the `args`.
                 body.clone().unwrap().apply(prg, &args.to_vals())
@@ -299,8 +308,11 @@ impl Eval for LocalMatch {
                 // type declaration.
 
                 // We first look up the correct case.
-                let val::Case { body, .. } =
-                    cases.clone().into_iter().find(|case| case.name == ctor_name).unwrap();
+                let val::Case { body, .. } = cases
+                    .clone()
+                    .into_iter()
+                    .find(|case| case.name == ctor_name)
+                    .ok_or_else(|| TypeError::MissingCase { name: ctor_name.id.clone() })?;
 
                 // Then we substitute the `args` in the body.
                 body.clone().unwrap().apply(prg, &args.to_vals())
