@@ -28,402 +28,302 @@ use super::ctx::*;
 pub trait Rename: Sized {
     /// Assigns consistent names to all binding and bound variable occurrences.
     /// Should only be called on closed expressions or declarations.
-    fn rename(self) -> Self {
+    fn rename(&mut self) {
         let mut ctx = GenericCtx::empty().into();
         self.rename_in_ctx(&mut ctx)
     }
     /// Assigns consistent names to all binding and bound variable occurrences.
     /// The provided `ctx` must contain names for all free variables of `self`.
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self;
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx);
 }
 
 impl<R: Rename + Clone> Rename for Box<R> {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let x = (*self).clone();
-        Box::new(x.rename_in_ctx(ctx))
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        (**self).rename_in_ctx(ctx);
     }
 }
 
 impl Rename for Module {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Module { uri, use_decls, decls, meta_vars } = self;
-
-        let decls = decls.rename_in_ctx(ctx);
-
-        Module { uri, use_decls, decls, meta_vars }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.decls.rename_in_ctx(ctx);
     }
 }
 
 impl Rename for Decl {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         match self {
-            Decl::Data(data) => Decl::Data(data.rename_in_ctx(ctx)),
-            Decl::Codata(codata) => Decl::Codata(codata.rename_in_ctx(ctx)),
-            Decl::Def(def) => Decl::Def(def.rename_in_ctx(ctx)),
-            Decl::Codef(codef) => Decl::Codef(codef.rename_in_ctx(ctx)),
-            Decl::Let(lets) => Decl::Let(lets.rename_in_ctx(ctx)),
+            Decl::Data(data) => data.rename_in_ctx(ctx),
+            Decl::Codata(codata) => codata.rename_in_ctx(ctx),
+            Decl::Def(def) => def.rename_in_ctx(ctx),
+            Decl::Codef(codef) => codef.rename_in_ctx(ctx),
+            Decl::Let(lets) => lets.rename_in_ctx(ctx),
         }
     }
 }
 
 impl Rename for Data {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Data { span, doc, name, attr, typ, ctors } = self;
-        let ctors = ctors.rename_in_ctx(ctx);
-        Data { span, doc, name, attr, typ: typ.rename_in_ctx(ctx), ctors }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.ctors.rename_in_ctx(ctx);
+        self.typ.rename_in_ctx(ctx);
     }
 }
 
 impl Rename for Codata {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Codata { span, doc, name, attr, typ, dtors } = self;
-        let dtors = dtors.rename_in_ctx(ctx);
-        Codata { span, doc, name, attr, typ: typ.rename_in_ctx(ctx), dtors }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.dtors.rename_in_ctx(ctx);
+        self.typ.rename_in_ctx(ctx);
     }
 }
 
 impl Rename for Ctor {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Ctor { span, doc, name, params, typ } = self;
-        let new_params = params.rename_in_ctx(ctx);
-        let new_typ = ctx
-            .bind_iter(new_params.params.clone().into_iter(), |new_ctx| typ.rename_in_ctx(new_ctx));
-
-        Ctor { span, doc, name, params: new_params, typ: new_typ }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.params.rename_in_ctx(ctx);
+        ctx.bind_iter(self.params.params.clone().into_iter(), |new_ctx| {
+            self.typ.rename_in_ctx(new_ctx)
+        });
     }
 }
 
 impl Rename for Dtor {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Dtor { span, doc, name, params, self_param, ret_typ } = self;
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.params.rename_in_ctx(ctx);
+        ctx.bind_iter(self.params.params.clone().into_iter(), |new_ctx| {
+            self.self_param.rename_in_ctx(new_ctx);
 
-        let new_params = params.rename_in_ctx(ctx);
-        ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
-            let new_self = self_param.rename_in_ctx(new_ctx);
-
-            new_ctx.bind_single(new_self.clone(), |new_ctx| {
-                let new_ret = ret_typ.rename_in_ctx(new_ctx);
-                Dtor { span, doc, name, params: new_params, self_param: new_self, ret_typ: new_ret }
+            new_ctx.bind_single(self.self_param.clone(), |new_ctx| {
+                self.ret_typ.rename_in_ctx(new_ctx);
             })
         })
     }
 }
 
 impl Rename for Def {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Def { span, doc, name, attr, params, self_param, ret_typ, cases } = self;
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.params.rename_in_ctx(ctx);
+        ctx.bind_iter(self.params.params.clone().into_iter(), |new_ctx| {
+            self.self_param.rename_in_ctx(new_ctx);
+            self.cases.rename_in_ctx(new_ctx);
 
-        let new_params = params.rename_in_ctx(ctx);
-        ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
-            let new_self = self_param.rename_in_ctx(new_ctx);
-            let new_cases = cases.rename_in_ctx(new_ctx);
-
-            new_ctx.bind_single(new_self.clone(), |new_ctx| {
-                let new_ret = ret_typ.rename_in_ctx(new_ctx);
-                Def {
-                    span,
-                    doc,
-                    name,
-                    attr,
-                    params: new_params,
-                    self_param: new_self,
-                    ret_typ: new_ret,
-                    cases: new_cases,
-                }
-            })
+            new_ctx
+                .bind_single(self.self_param.clone(), |new_ctx| self.ret_typ.rename_in_ctx(new_ctx))
         })
     }
 }
 
 impl Rename for Codef {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Codef { span, doc, name, attr, params, typ, cases } = self;
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.params.rename_in_ctx(ctx);
 
-        let new_params = params.rename_in_ctx(ctx);
-
-        ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
-            let new_typ = typ.rename_in_ctx(new_ctx);
-
-            let new_cases = cases.rename_in_ctx(new_ctx);
-
-            Codef { span, doc, name, attr, params: new_params, typ: new_typ, cases: new_cases }
+        ctx.bind_iter(self.params.params.clone().into_iter(), |new_ctx| {
+            self.typ.rename_in_ctx(new_ctx);
+            self.cases.rename_in_ctx(new_ctx);
         })
     }
 }
 
 impl Rename for Let {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Let { span, doc, name, attr, params, typ, body } = self;
-
-        let new_params = params.rename_in_ctx(ctx);
-
-        ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
-            let new_typ = typ.rename_in_ctx(new_ctx);
-
-            let new_body = body.rename_in_ctx(new_ctx);
-
-            Let { span, doc, name, attr, params: new_params, typ: new_typ, body: new_body }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.params.rename_in_ctx(ctx);
+        ctx.bind_iter(self.params.params.clone().into_iter(), |new_ctx| {
+            self.typ.rename_in_ctx(new_ctx);
+            self.body.rename_in_ctx(new_ctx);
         })
     }
 }
 
 impl Rename for Telescope {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         let Telescope { params } = self;
-
         ctx.bind_fold2(
-            params.into_iter(),
+            params.iter_mut(),
             vec![],
-            |ctx, mut acc, mut param| {
-                param = param.rename_in_ctx(ctx);
+            |ctx, mut acc, param| {
+                param.rename_in_ctx(ctx);
                 let new_name = param.name.clone();
                 acc.push(param);
                 BindElem { elem: new_name, ret: acc }
             },
-            |_ctx, params| Telescope { params },
+            |_ctx, _params| (),
         )
     }
 }
 
 impl Rename for Param {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Param { implicit, name, typ } = self;
-
-        let new_typ = typ.rename_in_ctx(ctx);
-        let new_name = ctx.disambiguate_name(name);
-
-        Param { implicit, name: new_name, typ: new_typ }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.typ.rename_in_ctx(ctx);
+        self.name = ctx.disambiguate_name(self.name.clone());
     }
 }
 
 impl Rename for TelescopeInst {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         let TelescopeInst { params } = self;
 
         ctx.bind_fold2(
-            params.into_iter(),
+            params.iter_mut(),
             vec![],
-            |ctx, mut acc, mut param| {
-                param = param.rename_in_ctx(ctx);
+            |ctx, mut acc, param| {
+                param.rename_in_ctx(ctx);
                 let new_name = param.name.clone();
                 acc.push(param);
                 BindElem { elem: new_name, ret: acc }
             },
-            |_ctx, params| TelescopeInst { params },
+            |_ctx, _params| (),
         )
     }
 }
 
 impl Rename for ParamInst {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let ParamInst { span, name, typ, .. } = self;
-
-        let new_typ = typ.rename_in_ctx(ctx);
-        let new_name = ctx.disambiguate_name(name);
-
-        ParamInst { span, name: new_name, typ: new_typ, info: None }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.info = None;
+        self.typ.rename_in_ctx(ctx);
+        self.name = ctx.disambiguate_name(self.name.clone());
     }
 }
 
 impl Rename for SelfParam {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let SelfParam { info, name, typ } = self;
-
-        let new_name = name.map(|name| ctx.disambiguate_name(name));
-
-        SelfParam { info, name: new_name, typ: typ.rename_in_ctx(ctx) }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        let new_name = self.name.as_ref().map(|name| ctx.disambiguate_name(name.clone()));
+        self.name = new_name;
+        self.typ.rename_in_ctx(ctx);
     }
 }
 
 impl Rename for Exp {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         match self {
-            Exp::Variable(e) => e.rename_in_ctx(ctx).into(),
-            Exp::LocalComatch(e) => e.rename_in_ctx(ctx).into(),
-            Exp::Anno(e) => e.rename_in_ctx(ctx).into(),
-            Exp::TypCtor(e) => e.rename_in_ctx(ctx).into(),
-            Exp::Hole(e) => e.rename_in_ctx(ctx).into(),
-            Exp::TypeUniv(e) => e.rename_in_ctx(ctx).into(),
-            Exp::Call(e) => e.rename_in_ctx(ctx).into(),
-            Exp::LocalMatch(e) => e.rename_in_ctx(ctx).into(),
-            Exp::DotCall(e) => e.rename_in_ctx(ctx).into(),
+            Exp::Variable(e) => e.rename_in_ctx(ctx),
+            Exp::LocalComatch(e) => e.rename_in_ctx(ctx),
+            Exp::Anno(e) => e.rename_in_ctx(ctx),
+            Exp::TypCtor(e) => e.rename_in_ctx(ctx),
+            Exp::Hole(e) => e.rename_in_ctx(ctx),
+            Exp::TypeUniv(e) => e.rename_in_ctx(ctx),
+            Exp::Call(e) => e.rename_in_ctx(ctx),
+            Exp::LocalMatch(e) => e.rename_in_ctx(ctx),
+            Exp::DotCall(e) => e.rename_in_ctx(ctx),
         }
     }
 }
 
 impl Rename for TypeUniv {
-    fn rename_in_ctx(self, _ctx: &mut Ctx) -> Self {
-        self
-    }
+    fn rename_in_ctx(&mut self, _ctx: &mut Ctx) {}
 }
 
 impl Rename for Call {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Call { span, name, args, inferred_type, kind } = self;
-        Call {
-            span,
-            kind,
-            name,
-            args: args.rename_in_ctx(ctx),
-            inferred_type: inferred_type.rename_in_ctx(ctx),
-        }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.args.rename_in_ctx(ctx);
+        self.inferred_type.rename_in_ctx(ctx);
     }
 }
 
 impl Rename for DotCall {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let DotCall { span, kind, exp, name, args, inferred_type } = self;
-        DotCall {
-            span,
-            kind,
-            name,
-            exp: exp.rename_in_ctx(ctx),
-            args: args.rename_in_ctx(ctx),
-            inferred_type: inferred_type.rename_in_ctx(ctx),
-        }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.exp.rename_in_ctx(ctx);
+        self.args.rename_in_ctx(ctx);
+        self.inferred_type.rename_in_ctx(ctx);
     }
 }
 impl Rename for Variable {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Variable { span, idx, inferred_type, .. } = self;
-        Variable {
-            span,
-            idx,
-            name: ctx.lookup(idx),
-            inferred_type: inferred_type.rename_in_ctx(ctx),
-        }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.name = ctx.lookup(self.idx);
+        self.inferred_type.rename_in_ctx(ctx);
     }
 }
 
 impl Rename for LocalComatch {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
-        LocalComatch {
-            span,
-            ctx: None,
-            name,
-            is_lambda_sugar,
-            cases: cases.rename_in_ctx(ctx),
-            inferred_type: None,
-        }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.ctx = None;
+        self.inferred_type = None;
+        self.cases.rename_in_ctx(ctx);
     }
 }
 
 impl Rename for Hole {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Hole { span, kind, metavar, inferred_type, inferred_ctx: _, args } = self;
-        Hole {
-            span,
-            kind,
-            metavar,
-            inferred_type: inferred_type.rename_in_ctx(ctx),
-            inferred_ctx: None, // TODO: Rename TypeCtx!
-            args: args.rename_in_ctx(ctx),
-        }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.inferred_ctx = None;
+        self.inferred_type.rename_in_ctx(ctx);
+        self.args.rename_in_ctx(ctx);
     }
 }
 impl Rename for LocalMatch {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let LocalMatch { span, name, on_exp, motive, ret_typ, cases, .. } = self;
-        LocalMatch {
-            span,
-            ctx: None,
-            name,
-            on_exp: on_exp.rename_in_ctx(ctx),
-            motive: motive.rename_in_ctx(ctx),
-            ret_typ: ret_typ.rename_in_ctx(ctx),
-            cases: cases.rename_in_ctx(ctx),
-            inferred_type: None,
-        }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.ctx = None;
+        self.inferred_type = None;
+        self.on_exp.rename_in_ctx(ctx);
+        self.motive.rename_in_ctx(ctx);
+        self.ret_typ.rename_in_ctx(ctx);
+        self.cases.rename_in_ctx(ctx);
     }
 }
 
 impl Rename for TypCtor {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let TypCtor { span, name, args } = self;
-        TypCtor { span, name, args: args.rename_in_ctx(ctx) }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.args.rename_in_ctx(ctx);
     }
 }
 
 impl Rename for Anno {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Anno { span, exp, typ, normalized_type } = self;
-        Anno {
-            span,
-            exp: exp.rename_in_ctx(ctx),
-            typ: typ.rename_in_ctx(ctx),
-            normalized_type: normalized_type.map(|e| e.rename_in_ctx(ctx)),
-        }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.exp.rename_in_ctx(ctx);
+        self.typ.rename_in_ctx(ctx);
+        self.normalized_type.rename_in_ctx(ctx);
     }
 }
 
 impl Rename for Args {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Args { args } = self;
-
-        Args { args: args.rename_in_ctx(ctx) }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.args.rename_in_ctx(ctx);
     }
 }
 
 impl Rename for Arg {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         match self {
-            Arg::UnnamedArg(exp) => Arg::UnnamedArg(exp.rename_in_ctx(ctx)),
-            Arg::NamedArg(name, exp) => Arg::NamedArg(name, exp.rename_in_ctx(ctx)),
-            Arg::InsertedImplicitArg(hole) => Arg::InsertedImplicitArg(hole.rename_in_ctx(ctx)),
+            Arg::UnnamedArg(exp) => exp.rename_in_ctx(ctx),
+            Arg::NamedArg(_name, exp) => exp.rename_in_ctx(ctx),
+            Arg::InsertedImplicitArg(hole) => hole.rename_in_ctx(ctx),
         }
     }
 }
 
 impl Rename for Case {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Case { span, pattern, body } = self;
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.pattern.params.rename_in_ctx(ctx);
 
-        let new_params = pattern.params.rename_in_ctx(ctx);
-
-        ctx.bind_iter(new_params.params.clone().into_iter(), |new_ctx| {
-            let new_body = body.rename_in_ctx(new_ctx);
-            let pattern = Pattern {
-                is_copattern: pattern.is_copattern,
-                name: pattern.name,
-                params: new_params,
-            };
-            Case { span, pattern, body: new_body }
+        ctx.bind_iter(self.pattern.params.params.clone().into_iter(), |new_ctx| {
+            self.body.rename_in_ctx(new_ctx);
         })
     }
 }
 
 impl Rename for Motive {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        let Motive { span, param, ret_typ } = self;
-
-        let new_param = param.rename_in_ctx(ctx);
-        ctx.bind_single(new_param.clone(), |new_ctx| {
-            let new_ret_typ = ret_typ.rename_in_ctx(new_ctx);
-
-            Motive { span, param: new_param, ret_typ: new_ret_typ }
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.param.rename_in_ctx(ctx);
+        ctx.bind_single(self.param.clone(), |new_ctx| {
+            self.ret_typ.rename_in_ctx(new_ctx);
         })
     }
 }
 
 impl Rename for Option<Span> {
-    fn rename_in_ctx(self, _ctx: &mut crate::Ctx) -> Self {
-        self
-    }
+    fn rename_in_ctx(&mut self, _ctx: &mut crate::Ctx) {}
 }
 
 impl<T: Rename> Rename for Option<T> {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        self.map(|x| x.rename_in_ctx(ctx))
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        match self {
+            None => (),
+            Some(x) => x.rename_in_ctx(ctx),
+        }
     }
 }
 
 impl<T: Rename> Rename for Vec<T> {
-    fn rename_in_ctx(self, ctx: &mut Ctx) -> Self {
-        self.into_iter().map(|x| x.rename_in_ctx(ctx)).collect()
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        self.iter_mut().for_each(|x| x.rename_in_ctx(ctx))
     }
 }
 
 impl Rename for () {
-    fn rename_in_ctx(self, _ctx: &mut Ctx) -> Self {}
+    fn rename_in_ctx(&mut self, _ctx: &mut Ctx) {}
 }
