@@ -1,6 +1,6 @@
 deps:
 	@rustup target add wasm32-unknown-unknown
-	@cargo install wasm-bindgen-cli
+	@cargo install -f wasm-bindgen-cli --version 0.2.93
 	@npm install
 
 build: build-server build-app
