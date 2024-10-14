@@ -356,7 +356,7 @@ impl Database {
     }
 
     pub fn print_to_string(&mut self, uri: &Url) -> Result<String, Error> {
-        let module = self.ast(uri)?;
+        let module = self.ust(uri)?;
         let mut module = (*module).clone();
         module.rename();
         Ok(printer::Print::print_to_string(&module, None))
