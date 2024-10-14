@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
+use crate::Rename;
 use ast::ctx::values::TypeCtx;
 use ast::ctx::BindContext;
 use ast::ctx::LevelCtx;
 use ast::*;
 use codespan::Span;
-use renaming::Rename;
 mod fv;
 
 use fv::*;

@@ -1,5 +1,5 @@
 [package]
-name = "lifting"
+name = "transformations"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true
@@ -12,8 +12,10 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
+# source code locations
 codespan = { workspace = true }
+miette = { workspace = true }
+thiserror = { workspace = true }
 derivative = { workspace = true }
 # workspace members
 ast = { path = "../ast" }
-renaming = { path = "../renaming" }
