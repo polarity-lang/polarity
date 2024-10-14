@@ -190,10 +190,6 @@ impl Database {
     }
 
     pub fn recompute_ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
-        // TODO: Delete these lines!
-        self.source(uri)?;
-        self.build_dependency_dag()?;
-
         let deps = self.deps(uri)?;
 
         // Compute the type info table
@@ -255,12 +251,16 @@ impl Database {
     //
 
     pub fn deps(&mut self, uri: &Url) -> Result<Vec<Url>, Error> {
-        let deps = self
-            .deps
-            .get(uri)
-            .ok_or(Error::Driver(DriverError::Impossible(format!("Did not find deps for {}", uri))))
-            .cloned()?;
-        Ok(deps)
+        match self.deps.get(uri) {
+            Some(deps) => Ok(deps.clone()),
+            None => self.recompute_deps(uri),
+        }
+    }
+
+    pub fn recompute_deps(&mut self, uri: &Url) -> Result<Vec<Url>, Error> {
+        self.source(uri)?;
+        self.build_dependency_dag()?;
+        self.deps(uri)
     }
 
     // Creation
