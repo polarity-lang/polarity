@@ -32,7 +32,7 @@ impl Database {
     }
 
     pub fn xfunc(&mut self, uri: &Url, type_name: &str) -> Result<Xfunc, crate::Error> {
-        let module = self.load_module(uri)?;
+        let module = self.ast(uri)?;
 
         let decl_spans =
             module.decls.iter().map(|decl| (decl.name().clone(), decl.span().unwrap())).collect();

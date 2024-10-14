@@ -19,7 +19,7 @@ pub async fn hover(server: &Server, params: HoverParams) -> jsonrpc::Result<Opti
         .await;
 
     let pos = pos_params.position;
-    let db = server.database.write().await;
+    let mut db = server.database.write().await;
     let info = db
         .location_to_index(&text_document.uri, pos.from_lsp())
         .and_then(|idx| db.hoverinfo_at_index(&text_document.uri, idx));
