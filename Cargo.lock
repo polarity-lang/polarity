@@ -2398,7 +2398,6 @@ dependencies = [
  "elaborator",
  "env_logger",
  "log",
- "lowering",
  "parser",
  "printer",
  "serde",
@@ -2406,7 +2405,6 @@ dependencies = [
  "tantivy",
  "termcolor",
  "toml",
- "transformations",
  "url",
  "walkdir",
 ]
