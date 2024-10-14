@@ -85,7 +85,7 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
     let uri = db.resolve_path(&cmd.filepath)?;
-    let prg = db.load_module(&uri).map_err(|err| db.pretty_error(&uri, err))?;
+    let prg = db.ast(&uri).map_err(|err| db.pretty_error(&uri, err))?;
 
     let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
 

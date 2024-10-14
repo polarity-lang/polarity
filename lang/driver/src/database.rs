@@ -186,56 +186,88 @@ impl Database {
     //
     //
 
-    pub fn load_module(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
-        log::debug!("Loading module: {}", uri);
-        self.source(uri)?;
-        self.build_dependency_dag()?;
-
-        log::trace!("");
-        log::trace!("Dependency graph:");
-        log::trace!("");
-        self.deps.print_dependency_tree();
-        log::trace!("");
-
-        self.load_ast(uri)
-    }
-
-    pub fn load_ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
-        log::trace!("Loading AST: {}", uri);
-
+    pub fn ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
         match self.ast.get_unless_stale(uri) {
             Some(ast) => ast.clone(),
-            None => {
-                log::trace!("AST is stale, reloading");
-                let ust = self.ust(uri).map(|x| (*x).clone())?;
-
-                // Compute the dependencies
-                let empty_vec = Vec::new();
-                let direct_dependencies = self.deps.get(uri).unwrap_or(&empty_vec).clone();
-
-                // Compute the type info table
-                let mut info_table = TypeInfoTable::default();
-                let mod_info_table = self.type_info_table(uri)?;
-                info_table.insert(uri.clone(), mod_info_table);
-                for dep_url in direct_dependencies {
-                    let mod_info_table = self.type_info_table(&dep_url)?;
-                    info_table.insert(dep_url.clone(), mod_info_table);
-                }
-                let ast =
-                    elaborator::typechecker::check_with_lookup_table(Rc::new(ust), &info_table)
-                        .map(Arc::new)
-                        .map_err(Error::Type);
-
-                self.ast.insert(uri.clone(), ast.clone());
-                if let Ok(module) = &ast {
-                    let (info_lapper, item_lapper) = collect_info(module.clone());
-                    self.info_by_id.insert(uri.clone(), info_lapper);
-                    self.item_by_id.insert(uri.clone(), item_lapper);
-                }
-                ast
-            }
+            None => self.recompute_ast(uri),
         }
     }
+
+    pub fn recompute_ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+        let deps = self
+            .deps
+            .get(uri)
+            .ok_or(Error::Driver(DriverError::Impossible(format!("Did not find deps for {}", uri))))
+            .cloned()?;
+
+        // Compute the type info table
+        let mut info_table = TypeInfoTable::default();
+        let mod_info_table = self.type_info_table(uri)?;
+        info_table.insert(uri.clone(), mod_info_table);
+        for dep_url in deps {
+            let mod_info_table = self.type_info_table(&dep_url)?;
+            info_table.insert(dep_url.clone(), mod_info_table);
+        }
+
+        // Typecheck module
+        let ust = self.ust(uri).map(|x| (*x).clone())?;
+        let ast = elaborator::typechecker::check_with_lookup_table(Rc::new(ust), &info_table)
+            .map(Arc::new)
+            .map_err(Error::Type);
+        self.ast.insert(uri.clone(), ast.clone());
+        ast
+    }
+
+    // pub fn load_module(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+    //     log::debug!("Loading module: {}", uri);
+    //     self.source(uri)?;
+    //     self.build_dependency_dag()?;
+
+    //     log::trace!("");
+    //     log::trace!("Dependency graph:");
+    //     log::trace!("");
+    //     self.deps.print_dependency_tree();
+    //     log::trace!("");
+
+    //     self.load_ast(uri)
+    // }
+
+    // pub fn load_ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+    //     log::trace!("Loading AST: {}", uri);
+
+    //     match self.ast.get_unless_stale(uri) {
+    //         Some(ast) => ast.clone(),
+    //         None => {
+    //             log::trace!("AST is stale, reloading");
+    //             let ust = self.ust(uri).map(|x| (*x).clone())?;
+
+    //             // Compute the dependencies
+    //             let empty_vec = Vec::new();
+    //             let direct_dependencies = self.deps.get(uri).unwrap_or(&empty_vec).clone();
+
+    //             // Compute the type info table
+    //             let mut info_table = TypeInfoTable::default();
+    //             let mod_info_table = self.type_info_table(uri)?;
+    //             info_table.insert(uri.clone(), mod_info_table);
+    //             for dep_url in direct_dependencies {
+    //                 let mod_info_table = self.type_info_table(&dep_url)?;
+    //                 info_table.insert(dep_url.clone(), mod_info_table);
+    //             }
+    //             let ast =
+    //                 elaborator::typechecker::check_with_lookup_table(Rc::new(ust), &info_table)
+    //                     .map(Arc::new)
+    //                     .map_err(Error::Type);
+
+    //             self.ast.insert(uri.clone(), ast.clone());
+    //             if let Ok(module) = &ast {
+    //                 let (info_lapper, item_lapper) = collect_info(module.clone());
+    //                 self.info_by_id.insert(uri.clone(), info_lapper);
+    //                 self.item_by_id.insert(uri.clone(), item_lapper);
+    //             }
+    //             ast
+    //         }
+    //     }
+    // }
 
     // Core API: info_by_id
     //
@@ -249,7 +281,7 @@ impl Database {
     }
 
     fn recompute_info_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Info>, Error> {
-        let ast = self.load_ast(uri)?;
+        let ast = self.ast(uri)?;
         let (info_lapper, _item_lapper) = collect_info(ast.clone());
         self.info_by_id.insert(uri.clone(), info_lapper.clone());
         Ok(info_lapper)
@@ -267,7 +299,7 @@ impl Database {
     }
 
     fn recompute_item_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Item>, Error> {
-        let ast = self.load_ast(uri)?;
+        let ast = self.ast(uri)?;
         let (_info_lapper, item_lapper) = collect_info(ast.clone());
         self.item_by_id.insert(uri.clone(), item_lapper.clone());
         Ok(item_lapper)
@@ -341,7 +373,7 @@ impl Database {
     }
 
     pub fn run(&mut self, uri: &Url) -> Result<Option<Box<Exp>>, Error> {
-        let ast = self.load_module(uri)?;
+        let ast = self.ast(uri)?;
 
         let main = ast.find_main();
 
@@ -366,7 +398,7 @@ impl Database {
     }
 
     pub fn print_to_string(&mut self, uri: &Url) -> Result<String, Error> {
-        let module = self.load_ast(uri)?;
+        let module = self.ast(uri)?;
         let mut module = (*module).clone();
         module.rename();
         Ok(printer::Print::print_to_string(&module, None))
@@ -377,7 +409,7 @@ impl Database {
         let empty_vec = Vec::new();
         let direct_deps = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
         for direct_dep in direct_deps {
-            self.load_ast(&direct_dep)?;
+            self.ast(&direct_dep)?;
         }
         Ok(())
     }

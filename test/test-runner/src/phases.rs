@@ -289,7 +289,7 @@ impl Phase for Check {
     }
 
     fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
-        db.load_ast(uri)
+        db.ast(uri)
     }
 }
 
@@ -362,7 +362,7 @@ impl Phase for Xfunc {
             let xfunc_out = db.xfunc(uri, type_name)?;
             let new_source = db.edited(uri, xfunc_out.edits);
             db.write_source(&new_uri, &new_source.to_string())?;
-            db.load_module(&new_uri).map_err(|err| {
+            db.ast(&new_uri).map_err(|err| {
                 driver::Error::Type(elaborator::result::TypeError::Impossible {
                     message: format!("Failed to xfunc {type_name}: {err}"),
                     span: None,
