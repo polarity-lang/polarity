@@ -681,18 +681,16 @@ dependencies = [
  "ast",
  "codespan",
  "elaborator",
- "lifting",
  "log",
  "lowering",
  "miette",
  "parser",
  "printer",
- "renaming",
  "ropey",
  "rust-lapper",
  "thiserror",
+ "transformations",
  "url",
- "xfunc",
 ]
 
 [[package]]
@@ -1267,16 +1265,6 @@ checksum = "c0ff37bd590ca25063e35af745c343cb7a0271906fb7b37e4813e8f79f00268d"
 dependencies = [
  "bitflags 2.6.0",
  "libc",
-]
-
-[[package]]
-name = "lifting"
-version = "0.1.0"
-dependencies = [
- "ast",
- "codespan",
- "derivative",
- "renaming",
 ]
 
 [[package]]
@@ -2004,14 +1992,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a66a03ae7c801facd77a29370b4faec201768915ac14a721ba36f20bc9c209b"
 
 [[package]]
-name = "renaming"
-version = "0.1.0"
-dependencies = [
- "ast",
- "codespan",
-]
-
-[[package]]
 name = "ropey"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2418,10 +2398,8 @@ dependencies = [
  "elaborator",
  "env_logger",
  "log",
- "lowering",
  "parser",
  "printer",
- "renaming",
  "serde",
  "serde_derive",
  "tantivy",
@@ -2610,6 +2588,17 @@ name = "tracing-core"
 version = "0.1.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c06d3da6113f116aaee68e4d601191614c9053067f9ab7f6edbcb161237daa54"
+
+[[package]]
+name = "transformations"
+version = "0.1.0"
+dependencies = [
+ "ast",
+ "codespan",
+ "derivative",
+ "miette",
+ "thiserror",
+]
 
 [[package]]
 name = "typed-arena"
@@ -2999,16 +2988,6 @@ name = "windows_x86_64_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
-
-[[package]]
-name = "xfunc"
-version = "0.1.0"
-dependencies = [
- "ast",
- "codespan",
- "miette",
- "thiserror",
-]
 
 [[package]]
 name = "yansi"

@@ -29,6 +29,4 @@ lowering = { path = "../lowering" }
 elaborator = { path = "../elaborator" }
 printer = { path = "../printer" }
 parser = { path = "../parser" }
-renaming = { path = "../renaming" }
-xfunc = { path = "../xfunc" }
-lifting = { path = "../lifting" }
+transformations = { path = "../transformations" }

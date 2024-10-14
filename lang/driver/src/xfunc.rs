@@ -1,14 +1,14 @@
 use codespan::Span;
-use lifting::LiftResult;
 use printer::Print;
-use renaming::Rename;
+use transformations::LiftResult;
+use transformations::Rename;
 
 use ast::*;
 use lowering::DeclMeta;
 use parser::cst;
+use transformations::matrix;
+use transformations::result::XfuncError;
 use url::Url;
-use xfunc::matrix;
-use xfunc::result::XfuncError;
 
 use crate::database::Database;
 
@@ -47,10 +47,10 @@ impl Database {
         filter_out.extend(xtors);
 
         let LiftResult { module, modified_decls: mut dirty_decls, .. } =
-            lifting::lift(module, type_name);
+            transformations::lift(module, type_name);
         dirty_decls.retain(|name| !filter_out.contains(name));
 
-        let mat = xfunc::as_matrix(&module)?;
+        let mat = transformations::as_matrix(&module)?;
 
         let type_span = mat.map.get(&Ident::from_string(type_name)).and_then(|x| x.span).ok_or(
             XfuncError::Impossible {
@@ -61,11 +61,11 @@ impl Database {
 
         let original = Original { type_span, decl_spans, xdefs };
 
-        let repr = xfunc::repr(&mat, &Ident::from_string(type_name))?;
+        let repr = transformations::repr(&mat, &Ident::from_string(type_name))?;
 
         let result = match repr {
-            xfunc::matrix::Repr::Data => refunctionalize(&mat, type_name),
-            xfunc::matrix::Repr::Codata => defunctionalize(&mat, type_name),
+            transformations::matrix::Repr::Data => refunctionalize(&mat, type_name),
+            transformations::matrix::Repr::Codata => defunctionalize(&mat, type_name),
         }?;
 
         Ok(generate_edits(&module, original, dirty_decls, result))
@@ -125,7 +125,7 @@ fn generate_edits(
 }
 
 fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
-    let (mut codata, mut codefs) = xfunc::as_codata(mat, &Ident::from_string(type_name))?;
+    let (mut codata, mut codefs) = transformations::as_codata(mat, &Ident::from_string(type_name))?;
 
     codata.rename();
     codefs.iter_mut().for_each(|codef| codef.rename());
@@ -137,7 +137,7 @@ fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, cr
 }
 
 fn defunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
-    let (mut data, mut defs) = xfunc::as_data(mat, &Ident::from_string(type_name))?;
+    let (mut data, mut defs) = transformations::as_data(mat, &Ident::from_string(type_name))?;
 
     data.rename();
     defs.iter_mut().for_each(|def| def.rename());

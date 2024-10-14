@@ -46,14 +46,13 @@ pol --help
 │   ├── ast                 Definition of the abstract syntax tree (untyped and typed)
 │   ├── driver              Demand-driven compiler driver used by the binary, LSP and test-runner
 │   ├── elaborator          Elaborating an untyped syntax tree into a typed syntax tree.
-│   ├── lifting             Lift local (co)matches to top-level definitions
 │   ├── lowering            Lowering concrete to (untyped) abstract syntax tree
 │   ├── lsp                 LSP language server implementation
 │   ├── miette_util         Convert source code spans
 │   ├── parser              Concrete syntax tree (cst), lexer and parser
 │   ├── printer             Print abstract syntax tree to text
-│   ├── renaming            Rename abstract syntax tree s.t. it can be reparsed
-│   └── xfunc               De-/Refunctionalization implementation
+│   └── transformations     Source-to-Source transformations available as code actions.
+│                           (E.g. lifting and de- and refunctionalization.)
 ├── test                    Integration tests
 │   ├── suites              Test cases
 │   └── test-runner         Test runner

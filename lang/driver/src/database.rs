@@ -11,7 +11,7 @@ use elaborator::{build_type_info_table, ModuleTypeInfoTable, TypeInfoTable};
 use lowering::{ModuleSymbolTable, SymbolTable};
 use parser::cst;
 use parser::cst::decls::UseDecl;
-use renaming::Rename;
+use transformations::Rename;
 use url::Url;
 
 use crate::fs::*;

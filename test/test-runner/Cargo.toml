@@ -26,8 +26,7 @@ walkdir = "2.5.0"
 # workspace members
 ast = { path = "../../lang/ast" }
 parser = { path = "../../lang/parser" }
-lowering = { path = "../../lang/lowering" }
 elaborator = { path = "../../lang/elaborator" }
-renaming = { path = "../../lang/renaming" }
 printer = { path = "../../lang/printer" }
 driver = { path = "../../lang/driver" }
+
