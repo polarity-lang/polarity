@@ -250,7 +250,7 @@ impl Database {
     fn recompute_info_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Info>, Error> {
         log::debug!("Recomputing info_by_id for: {}", uri);
         let ast = self.ast(uri)?;
-        let (info_lapper, _item_lapper) = collect_info(ast.clone());
+        let (info_lapper, _item_lapper) = collect_info(self, ast.clone());
         self.info_by_id.insert(uri.clone(), info_lapper.clone());
         Ok(info_lapper)
     }
@@ -272,7 +272,7 @@ impl Database {
     fn recompute_item_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Item>, Error> {
         log::debug!("Recomputing item_by_id for: {}", uri);
         let ast = self.ast(uri)?;
-        let (_info_lapper, item_lapper) = collect_info(ast.clone());
+        let (_info_lapper, item_lapper) = collect_info(self, ast.clone());
         self.item_by_id.insert(uri.clone(), item_lapper.clone());
         Ok(item_lapper)
     }
