@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
@@ -17,6 +15,7 @@ use super::data::{
     VariableInfo,
 };
 use super::item::Item;
+use super::lookup::{lookup_codef, lookup_ctor, lookup_decl, lookup_def, lookup_dtor, lookup_let};
 
 /// Traverse the program and collect information for the LSP server.
 #[allow(clippy::type_complexity)]
@@ -25,8 +24,7 @@ pub fn collect_info(
     uri: &Url,
 ) -> Result<(Lapper<u32, Info>, Lapper<u32, Item>), Error> {
     let module = db.ast(uri)?;
-
-    let mut collector = InfoCollector::new(module.clone());
+    let mut collector = InfoCollector::new(module.meta_vars.clone());
 
     for decl in module.decls.iter() {
         decl.collect_info(db, &mut collector)
@@ -38,14 +36,14 @@ pub fn collect_info(
 }
 
 struct InfoCollector {
-    module: Arc<Module>,
+    meta_vars: HashMap<MetaVar, MetaVarState>,
     info_spans: Vec<Interval<u32, Info>>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
 impl InfoCollector {
-    fn new(module: Arc<Module>) -> Self {
-        InfoCollector { module, info_spans: vec![], item_spans: vec![] }
+    fn new(meta_vars: HashMap<MetaVar, MetaVarState>) -> Self {
+        InfoCollector { meta_vars, info_spans: vec![], item_spans: vec![] }
     }
 
     fn add_info<T: Into<InfoContent>>(&mut self, span: Span, info: T) {
@@ -270,16 +268,19 @@ impl CollectInfo for TypCtor {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let TypCtor { span, args, name } = self;
         if let Some(span) = span {
-            let decl = collector.module.lookup_decl(name);
-            let definition_site = match decl {
-                Some(Decl::Data(d)) => d.span.map(|span| (collector.module.uri.clone(), span)),
-                Some(Decl::Codata(d)) => d.span.map(|span| (collector.module.uri.clone(), span)),
-                _ => None,
-            };
-            let doc = match decl {
-                Some(Decl::Data(d)) => d.doc.clone().map(|doc| doc.docs),
-                Some(Decl::Codata(d)) => d.doc.clone().map(|doc| doc.docs),
-                _ => None,
+            let decl = lookup_decl(db, name);
+            let (definition_site, doc) = match decl {
+                Some((uri, Decl::Data(d))) => {
+                    let definition_site = d.span.clone().map(|span| (uri.clone(), span));
+                    let doc = d.doc.clone().map(|doc| doc.docs);
+                    (definition_site, doc)
+                }
+                Some((uri, Decl::Codata(d))) => {
+                    let definition_site = d.span.clone().map(|span| (uri.clone(), span));
+                    let doc = d.doc.clone().map(|doc| doc.docs);
+                    (definition_site, doc)
+                }
+                _ => (None, None),
             };
             let info = TypeCtorInfo { name: name.clone().id, definition_site, doc };
             collector.add_info(*span, info)
@@ -293,39 +294,30 @@ impl CollectInfo for Call {
         let Call { span, kind, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             let (definition_site, doc) = match kind {
-                CallKind::Constructor => {
-                    let ctor = collector.module.lookup_ctor(name);
-
-                    let uri_span = ctor.and_then(|ctor| {
-                        ctor.span.map(|span| (collector.module.uri.clone(), span))
-                    });
-
-                    let doc = ctor.and_then(|ctor| ctor.doc.clone().map(|doc| doc.docs));
-
-                    (uri_span, doc)
-                }
-                CallKind::Codefinition => {
-                    let codef = collector.module.lookup_codef(name);
-
-                    let uri_span = codef.and_then(|codef| {
-                        codef.span.map(|span| (collector.module.uri.clone(), span))
-                    });
-
-                    let doc = codef.and_then(|codef| codef.doc.clone().map(|doc| doc.docs));
-
-                    (uri_span, doc)
-                }
-                CallKind::LetBound => {
-                    let let_ = collector.module.lookup_let(name);
-
-                    let uri_span = let_.and_then(|let_| {
-                        let_.span.map(|span| (collector.module.uri.clone(), span))
-                    });
-
-                    let doc = let_.and_then(|let_| let_.doc.clone().map(|doc| doc.docs));
-
-                    (uri_span, doc)
-                }
+                CallKind::Constructor => match lookup_ctor(db, name) {
+                    Some((uri, ctor)) => {
+                        let uri_span = ctor.span.map(|span| (uri.clone(), span));
+                        let doc = ctor.doc.clone().map(|doc| doc.docs);
+                        (uri_span, doc)
+                    }
+                    None => (None, None),
+                },
+                CallKind::Codefinition => match lookup_codef(db, name) {
+                    Some((uri, codef)) => {
+                        let uri_span = codef.span.map(|span| (uri.clone(), span));
+                        let doc = codef.doc.clone().map(|doc| doc.docs);
+                        (uri_span, doc)
+                    }
+                    None => (None, None),
+                },
+                CallKind::LetBound => match lookup_let(db, name) {
+                    Some((uri, let_)) => {
+                        let uri_span = let_.span.map(|span| (uri.clone(), span));
+                        let doc = let_.doc.clone().map(|doc| doc.docs);
+                        (uri_span, doc)
+                    }
+                    None => (None, None),
+                },
             };
 
             let info = CallInfo {
@@ -346,27 +338,22 @@ impl CollectInfo for DotCall {
         let DotCall { span, kind, exp, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             let (definition_site, doc) = match kind {
-                DotCallKind::Destructor => {
-                    let dtor = collector.module.lookup_dtor(name);
-
-                    let uri_span = dtor.and_then(|dtor| {
-                        dtor.span.map(|span| (collector.module.uri.clone(), span))
-                    });
-
-                    let doc = dtor.and_then(|dtor| dtor.doc.clone().map(|doc| doc.docs));
-
-                    (uri_span, doc)
-                }
-                DotCallKind::Definition => {
-                    let def = collector.module.lookup_def(name);
-
-                    let uri_span = def
-                        .and_then(|def| def.span.map(|span| (collector.module.uri.clone(), span)));
-
-                    let doc = def.and_then(|def| def.doc.clone().map(|doc| doc.docs));
-
-                    (uri_span, doc)
-                }
+                DotCallKind::Destructor => match lookup_dtor(db, name) {
+                    Some((uri, dtor)) => {
+                        let uri_span = dtor.span.map(|span| (uri.clone(), span));
+                        let doc = dtor.doc.clone().map(|doc| doc.docs);
+                        (uri_span, doc)
+                    }
+                    None => (None, None),
+                },
+                DotCallKind::Definition => match lookup_def(db, name) {
+                    Some((uri, def)) => {
+                        let uri_span = def.span.map(|span| (uri.clone(), span));
+                        let doc = def.doc.clone().map(|doc| doc.docs);
+                        (uri_span, doc)
+                    }
+                    None => (None, None),
+                },
             };
             let info = DotCallInfo {
                 kind: *kind,
@@ -387,7 +374,6 @@ impl CollectInfo for Hole {
         let Hole { span, kind: _, metavar, inferred_type, inferred_ctx, args, solution: _ } = self;
         if let Some(span) = span {
             let metavar_state = collector
-                .module
                 .meta_vars
                 .get(metavar)
                 .unwrap_or_else(|| panic!("Metavar {:?} not found", metavar));
