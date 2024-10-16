@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use derivative::Derivative;
 
 use ast::{Ident, Shift, ShiftRange};
@@ -17,17 +15,17 @@ use crate::normalizer::val::*;
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Env {
-    ctx: GenericCtx<Rc<Val>>,
+    ctx: GenericCtx<Box<Val>>,
 }
 
-impl From<GenericCtx<Rc<Val>>> for Env {
-    fn from(value: GenericCtx<Rc<Val>>) -> Self {
+impl From<GenericCtx<Box<Val>>> for Env {
+    fn from(value: GenericCtx<Box<Val>>) -> Self {
         Env { ctx: value }
     }
 }
 
 impl Context for Env {
-    type Elem = Rc<Val>;
+    type Elem = Box<Val>;
 
     fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
         let lvl = self.ctx.var_to_lvl(idx.into());
@@ -61,32 +59,34 @@ impl Context for Env {
     }
 }
 
-impl ContextElem<Env> for &Rc<Val> {
+impl ContextElem<Env> for &Box<Val> {
     fn as_element(&self) -> <Env as Context>::Elem {
         (*self).clone()
     }
 }
 
 impl Env {
-    pub(super) fn map<F>(&self, f: F) -> Self
+    pub(super) fn for_each<F>(&mut self, f: F)
     where
-        F: Fn(&Rc<Val>) -> Rc<Val>,
+        F: Fn(&mut Box<Val>),
     {
-        let bound: Vec<Vec<Rc<Val>>> =
-            self.ctx.bound.iter().map(|inner| inner.iter().map(&f).collect()).collect();
-        Self { ctx: bound.into() }
+        for outer in self.ctx.bound.iter_mut() {
+            for inner in outer {
+                f(inner)
+            }
+        }
     }
 }
 
-impl From<Vec<Vec<Rc<Val>>>> for Env {
-    fn from(bound: Vec<Vec<Rc<Val>>>) -> Self {
+impl From<Vec<Vec<Box<Val>>>> for Env {
+    fn from(bound: Vec<Vec<Box<Val>>>) -> Self {
         Self { ctx: bound.into() }
     }
 }
 
 impl Shift for Env {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        self.map(|val| val.shift_in_range(range.clone(), by))
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.for_each(|val| val.shift_in_range(range, by))
     }
 }
 
@@ -105,7 +105,7 @@ impl ToEnv for LevelCtx {
                 (0..v.len())
                     .map(|snd| {
                         let idx = Idx { fst: self.bound.len() - 1 - fst, snd: v.len() - 1 - snd };
-                        Rc::new(Val::Neu(Neu::Variable(Variable {
+                        Box::new(Val::Neu(Neu::Variable(Variable {
                             span: None,
                             name: Ident::from_string(""),
                             idx,
@@ -124,7 +124,7 @@ impl ToEnv for TypeCtx {
         let bound = self
             .bound
             .map_idx(|idx, binder| {
-                Rc::new(Val::Neu(Neu::Variable(Variable {
+                Box::new(Val::Neu(Neu::Variable(Variable {
                     // FIXME: handle info
                     span: None,
                     name: binder.name.clone(),

@@ -15,15 +15,15 @@ use super::{ContextElem, GenericCtx};
 pub type TypeCtx = GenericCtx<Binder>;
 
 impl TypeCtx {
-    fn shift<R: ShiftRange>(&mut self, range: R, by: (isize, isize)) {
+    fn shift<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         for lvl in 0..self.bound.len() {
-            self.shift_at_lvl(range.clone(), lvl, by)
+            self.shift_at_lvl(range, lvl, by)
         }
     }
 
-    fn shift_at_lvl<R: ShiftRange>(&mut self, range: R, lvl: usize, by: (isize, isize)) {
+    fn shift_at_lvl<R: ShiftRange>(&mut self, range: &R, lvl: usize, by: (isize, isize)) {
         for i in 0..self.bound[lvl].len() {
-            self.bound[lvl][i] = self.bound[lvl][i].shift_in_range(range.clone(), by);
+            self.bound[lvl][i].shift_in_range(range, by);
         }
     }
 
@@ -56,24 +56,24 @@ impl Context for TypeCtx {
     }
 
     fn push_telescope(&mut self) {
-        self.shift(0.., (1, 0));
+        self.shift(&(0..), (1, 0));
         self.bound.push(vec![]);
     }
 
     fn pop_telescope(&mut self) {
         self.bound.pop().unwrap();
-        self.shift(0.., (-1, 0));
+        self.shift(&(0..), (-1, 0));
     }
 
     fn push_binder(&mut self, elem: Self::Elem) {
         self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
-        self.shift_at_lvl(0..1, self.bound.len() - 1, (0, 1));
+        self.shift_at_lvl(&(0..1), self.bound.len() - 1, (0, 1));
     }
 
     fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
         self.bound.last_mut().expect(err).pop().expect(err);
-        self.shift_at_lvl(0..1, self.bound.len() - 1, (0, -1));
+        self.shift_at_lvl(&(0..1), self.bound.len() - 1, (0, -1));
     }
 }
 
@@ -101,7 +101,7 @@ pub struct Binder {
 }
 
 impl Shift for Binder {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        Self { name: self.name.clone(), typ: self.typ.shift_in_range(range, by) }
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.typ.shift_in_range(range, by);
     }
 }

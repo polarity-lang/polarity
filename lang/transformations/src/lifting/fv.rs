@@ -73,11 +73,10 @@ impl FV for Variable {
         // If the variable is considered free (based on the cutoff), we look up its type in the typing context
         // The typing context contains the types for all free variables where lvl < cutoff
         if lvl.fst < v.cutoff {
-            let typ = v
-                .type_ctx
-                .lookup(lvl)
-                .typ
-                .shift(((v.lvl_ctx.len() - v.type_ctx.len()) as isize, 0));
+            let typ = shift_and_clone(
+                &v.type_ctx.lookup(lvl).typ,
+                ((v.lvl_ctx.len() - v.type_ctx.len()) as isize, 0),
+            );
             v.add_fv(name.clone(), lvl, typ, v.lvl_ctx.clone())
         }
     }
@@ -349,11 +348,13 @@ struct NewVar {
 }
 
 /// Substitution in the body of the new definition
+#[derive(Clone)]
 pub struct FVBodySubst<'a> {
     inner: &'a FVSubst,
 }
 
 /// Substitution in the type parameters of the new definition
+#[derive(Clone)]
 pub struct FVParamSubst<'a> {
     inner: &'a FVSubst,
 }
@@ -377,23 +378,20 @@ impl FVSubst {
 }
 
 impl Shift for FVSubst {
-    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since FVSubst works with levels, it is shift-invariant
-        self.clone()
     }
 }
 
 impl<'a> Shift for FVBodySubst<'a> {
-    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> FVBodySubst<'a> {
+    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since FVSubst works with levels, it is shift-invariant
-        FVBodySubst { inner: self.inner }
     }
 }
 
 impl<'a> Shift for FVParamSubst<'a> {
-    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> FVParamSubst<'a> {
+    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since FVSubst works with levels, it is shift-invariant
-        FVParamSubst { inner: self.inner }
     }
 }
 

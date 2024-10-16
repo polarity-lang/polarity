@@ -42,8 +42,8 @@ impl CheckInfer for LocalMatch {
             // Pattern matching with motive
             Some(m) => {
                 let Motive { span: info, param, ret_typ } = m;
-                let self_t_nf =
-                    typ_app.to_exp().normalize(&ctx.module, &mut ctx.env())?.shift((1, 0));
+                let mut self_t_nf = typ_app.to_exp().normalize(&ctx.module, &mut ctx.env())?;
+                self_t_nf.shift((1, 0));
                 let self_binder = Binder { name: param.name.clone(), typ: self_t_nf.clone() };
 
                 // Typecheck the motive
@@ -53,10 +53,10 @@ impl CheckInfer for LocalMatch {
 
                 // Ensure that the motive matches the expected type
                 let mut subst_ctx = ctx.levels().append(&vec![1].into());
-                let on_exp_shifted = on_exp.shift((1, 0));
-                let subst =
-                    Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp_shifted };
-                let motive_t = ret_typ.subst(&mut subst_ctx, &subst).shift((-1, 0));
+                let on_exp = shift_and_clone(on_exp, (1, 0));
+                let subst = Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp };
+                let mut motive_t = ret_typ.subst(&mut subst_ctx, &subst);
+                motive_t.shift((-1, 0));
                 let motive_t_nf = motive_t.normalize(&ctx.module, &mut ctx.env())?;
                 convert(subst_ctx, &mut ctx.meta_vars, motive_t_nf, t)?;
 
@@ -76,7 +76,7 @@ impl CheckInfer for LocalMatch {
             }
             // Pattern matching without motive
             None => {
-                body_t = Box::new(t.shift((1, 0)));
+                body_t = Box::new(shift_and_clone(t, (1, 0)));
                 motive_out = None;
             }
         };
@@ -166,7 +166,7 @@ impl<'a> WithScrutinee<'a> {
             })?;
 
             let TypCtor { args: on_args, .. } = &self.scrutinee;
-            let on_args = on_args.shift((1, 0)); // FIXME: where to shift this
+            let on_args = shift_and_clone(on_args, (1, 0)); // FIXME: where to shift this
 
             // Check the case given the equations
             // FIXME: Refactor this
@@ -205,11 +205,12 @@ impl<'a> WithScrutinee<'a> {
                     let subst = Assign { lvl: Lvl { fst: curr_lvl, snd: 0 }, exp: ctor };
 
                     // FIXME: Refactor this
-                    let t = t
-                        .shift((1, 0))
+                    let mut t = t.clone();
+                    t.shift((1, 0));
+                    let mut t = t
                         .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
-                        .subst(&mut subst_ctx_2, &subst)
-                        .shift((-1, 0));
+                        .subst(&mut subst_ctx_2, &subst);
+                    t.shift((-1, 0));
 
                     let constraint =
                         Constraint::EqualityArgs { lhs: Args { args: def_args_nf }, rhs: on_args };

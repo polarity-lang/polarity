@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use log::trace;
 
 use ast::ctx::{BindContext, Context, GenericCtx};
@@ -19,11 +17,11 @@ pub trait Eval {
 }
 
 pub trait Apply {
-    fn apply(self, prg: &Module, args: &[Rc<Val>]) -> Result<Rc<Val>, TypeError>;
+    fn apply(self, prg: &Module, args: &[Box<Val>]) -> Result<Box<Val>, TypeError>;
 }
 
 impl Eval for Exp {
-    type Val = Rc<Val>;
+    type Val = Box<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let e = match self {
@@ -48,7 +46,7 @@ impl Eval for Exp {
 }
 
 impl Eval for Variable {
-    type Val = Rc<Val>;
+    type Val = Box<Val>;
 
     fn eval(&self, _prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Variable { idx, .. } = self;
@@ -57,18 +55,18 @@ impl Eval for Variable {
 }
 
 impl Eval for TypCtor {
-    type Val = Rc<Val>;
+    type Val = Box<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let TypCtor { span, name, args } = self;
-        Ok(Rc::new(
+        Ok(Box::new(
             val::TypCtor { span: *span, name: name.clone(), args: args.eval(prg, env)? }.into(),
         ))
     }
 }
 
 impl Eval for Call {
-    type Val = Rc<Val>;
+    type Val = Box<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Call { span, name, kind, args, .. } = self;
@@ -87,7 +85,7 @@ impl Eval for Call {
                     let args = args.eval(prg, env)?;
                     return env.bind_iter(args.to_vals().iter(), |env| body.eval(prg, env));
                 } else {
-                    Ok(Rc::new(Val::Neu(
+                    Ok(Box::new(Val::Neu(
                         val::OpaqueCall {
                             span: *span,
                             name: name.clone(),
@@ -97,7 +95,7 @@ impl Eval for Call {
                     )))
                 }
             }
-            CallKind::Constructor | CallKind::Codefinition => Ok(Rc::new(
+            CallKind::Constructor | CallKind::Codefinition => Ok(Box::new(
                 val::Call {
                     span: *span,
                     kind: *kind,
@@ -111,7 +109,7 @@ impl Eval for Call {
 }
 
 impl Eval for DotCall {
-    type Val = Rc<Val>;
+    type Val = Box<Val>;
 
     /// Evaluate a DotCall:
     ///
@@ -242,11 +240,11 @@ impl Eval for DotCall {
                 // ┗━━━━━━━━━━━━━━ exp (Neutral value)
                 // ```
                 // Evaluation is blocked by the neutral value `n`.
-                Ok(Rc::new(Val::Neu(
+                Ok(Box::new(Val::Neu(
                     val::DotCall {
                         span: *span,
                         kind: *kind,
-                        exp: Rc::new(exp),
+                        exp: Box::new(exp),
                         name: name.to_owned(),
                         args,
                     }
@@ -259,7 +257,7 @@ impl Eval for DotCall {
 }
 
 impl Eval for Anno {
-    type Val = Rc<Val>;
+    type Val = Box<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Anno { exp, .. } = self;
@@ -268,16 +266,16 @@ impl Eval for Anno {
 }
 
 impl Eval for TypeUniv {
-    type Val = Rc<Val>;
+    type Val = Box<Val>;
 
     fn eval(&self, _prg: &Module, _env: &mut Env) -> Result<Self::Val, TypeError> {
         let TypeUniv { span } = self;
-        Ok(Rc::new(val::TypeUniv { span: *span }.into()))
+        Ok(Box::new(val::TypeUniv { span: *span }.into()))
     }
 }
 
 impl Eval for LocalMatch {
-    type Val = Rc<Val>;
+    type Val = Box<Val>;
 
     /// Evaluate a LocalMatch:
     ///
@@ -327,11 +325,11 @@ impl Eval for LocalMatch {
                 // ┗━━━━━━━━━━━━━━━━ exp (Neutral value)
                 // ```
                 // Evaluation is blocked by the neutral value `n`.
-                Ok(Rc::new(Val::Neu(
+                Ok(Box::new(Val::Neu(
                     val::LocalMatch {
                         span: None,
                         name: match_name.to_owned(),
-                        on_exp: Rc::new(exp),
+                        on_exp: Box::new(exp),
                         cases,
                     }
                     .into(),
@@ -343,11 +341,11 @@ impl Eval for LocalMatch {
 }
 
 impl Eval for LocalComatch {
-    type Val = Rc<Val>;
+    type Val = Box<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
-        Ok(Rc::new(
+        Ok(Box::new(
             val::LocalComatch {
                 span: *span,
                 name: name.clone(),
@@ -360,12 +358,12 @@ impl Eval for LocalComatch {
 }
 
 impl Eval for Hole {
-    type Val = Rc<Val>;
+    type Val = Box<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         let Hole { span, kind, metavar, args, .. } = self;
         let args = args.eval(prg, env)?;
-        Ok(Rc::new(Val::Neu(
+        Ok(Box::new(Val::Neu(
             val::Hole { span: *span, kind: *kind, metavar: *metavar, args }.into(),
         )))
     }
@@ -416,7 +414,7 @@ impl Eval for Arg {
 }
 
 impl Apply for Closure {
-    fn apply(mut self, prg: &Module, args: &[Rc<Val>]) -> Result<Rc<Val>, TypeError> {
+    fn apply(mut self, prg: &Module, args: &[Box<Val>]) -> Result<Box<Val>, TypeError> {
         self.env.bind_iter(args.iter(), |env| self.body.eval(prg, env))
     }
 }
@@ -430,7 +428,7 @@ impl<T: Eval> Eval for Vec<T> {
 }
 
 impl Eval for Box<Exp> {
-    type Val = Rc<Val>;
+    type Val = Box<Val>;
 
     fn eval(&self, prg: &Module, env: &mut Env) -> Result<Self::Val, TypeError> {
         (**self).eval(prg, env)

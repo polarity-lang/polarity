@@ -1,5 +1,4 @@
 use std::ops::{Bound, RangeBounds};
-use std::rc::Rc;
 
 use crate::*;
 
@@ -27,8 +26,8 @@ use crate::*;
 pub trait Shift: Sized {
     /// Shift all open variables in `self` by the the value indicated with the
     /// `by` argument.
-    fn shift(&self, by: (isize, isize)) -> Self {
-        self.shift_in_range(0.., by)
+    fn shift(&mut self, by: (isize, isize)) {
+        self.shift_in_range(&(0..), by)
     }
 
     /// Shift every de Bruijn index contained in `self` by the value indicated
@@ -37,18 +36,20 @@ pub trait Shift: Sized {
     ///
     /// In order to implement `shift_in_range` correctly you have to increase the
     /// left endpoint of `range` by 1 whenever you go recursively under a binder.
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self;
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize));
+}
+
+pub fn shift_and_clone<T: Shift + Clone>(arg: &T, by: (isize, isize)) -> T {
+    let mut cloned = arg.clone();
+    cloned.shift(by);
+    cloned
 }
 
 impl Shift for Idx {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         if range.contains(&self.fst) {
-            Self {
-                fst: (self.fst as isize + by.0) as usize,
-                snd: (self.snd as isize + by.1) as usize,
-            }
-        } else {
-            *self
+            self.fst = (self.fst as isize + by.0) as usize;
+            self.snd = (self.snd as isize + by.1) as usize;
         }
     }
 }
@@ -58,30 +59,26 @@ pub trait ShiftRange: RangeBounds<usize> + Clone {}
 impl<T: RangeBounds<usize> + Clone> ShiftRange for T {}
 
 impl Shift for () {
-    fn shift_in_range<R: ShiftRange>(&self, _range: R, _by: (isize, isize)) -> Self {}
-}
-
-impl<T: Shift> Shift for Rc<T> {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        Rc::new((**self).shift_in_range(range, by))
-    }
+    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {}
 }
 
 impl<T: Shift> Shift for Box<T> {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        Box::new((**self).shift_in_range(range, by))
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        (**self).shift_in_range(range, by)
     }
 }
 
 impl<T: Shift> Shift for Option<T> {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        self.as_ref().map(|inner| inner.shift_in_range(range, by))
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        if let Some(inner) = self.as_mut() {
+            inner.shift_in_range(range, by)
+        }
     }
 }
 
 impl<T: Shift> Shift for Vec<T> {
-    fn shift_in_range<R: ShiftRange>(&self, range: R, by: (isize, isize)) -> Self {
-        self.iter().map(|x| x.shift_in_range(range.clone(), by)).collect()
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.iter_mut().for_each(|x| x.shift_in_range(range, by))
     }
 }
 
@@ -113,25 +110,29 @@ mod tests {
 
     #[test]
     fn shift_fst() {
-        let result = Idx { fst: 0, snd: 0 }.shift((1, 0));
+        let mut result = Idx { fst: 0, snd: 0 };
+        result.shift((1, 0));
         assert_eq!(result, Idx { fst: 1, snd: 0 });
     }
 
     #[test]
     fn shift_snd() {
-        let result = Idx { fst: 0, snd: 0 }.shift((0, 1));
+        let mut result = Idx { fst: 0, snd: 0 };
+        result.shift((0, 1));
         assert_eq!(result, Idx { fst: 0, snd: 1 });
     }
 
     #[test]
     fn shift_in_range_fst() {
-        let result = Idx { fst: 0, snd: 0 }.shift_in_range(1.., (1, 0));
+        let mut result = Idx { fst: 0, snd: 0 };
+        result.shift_in_range(&(1..), (1, 0));
         assert_eq!(result, Idx { fst: 0, snd: 0 });
     }
 
     #[test]
     fn shift_in_range_snd() {
-        let result = Idx { fst: 0, snd: 0 }.shift_in_range(1.., (0, 1));
+        let mut result = Idx { fst: 0, snd: 0 };
+        result.shift_in_range(&(1..), (0, 1));
         assert_eq!(result, Idx { fst: 0, snd: 0 });
     }
 }
