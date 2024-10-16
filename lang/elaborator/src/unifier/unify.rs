@@ -144,7 +144,7 @@ impl Ctx {
                                     h.metavar,
                                     ctx.clone(),
                                     Box::new(e.clone()),
-                                );
+                                )?;
                             } else {
                                 return Err(TypeError::cannot_decide(
                                     &Box::new(Exp::Hole(h.clone())),
@@ -272,14 +272,32 @@ impl Ctx {
         meta_vars: &mut HashMap<MetaVar, MetaVarState>,
         metavar: MetaVar,
         ctx: GenericCtx<()>,
-        solution: Box<Exp>,
-    ) {
+        mut solution: Box<Exp>,
+    ) -> Result<(), TypeError> {
         log::trace!(
             "Solved metavariable: {} with solution: {}",
             metavar.id,
             solution.print_trace()
         );
+        solution
+            .zonk(meta_vars)
+            .map_err(|err| TypeError::Impossible { message: err.to_string(), span: None })?;
         meta_vars.insert(metavar, MetaVarState::Solved { ctx: ctx.clone(), solution });
+        let meta_vars_snapshot = meta_vars.clone();
+        for (_, state) in meta_vars.iter_mut() {
+            match state {
+                MetaVarState::Solved { ctx: _, solution } => {
+                    solution.zonk(&meta_vars_snapshot).map_err(|err| TypeError::Impossible {
+                        message: err.to_string(),
+                        span: None,
+                    })?;
+                }
+                MetaVarState::Unsolved { ctx: _ } => {
+                    // Nothing to do for unsolved metavariables
+                }
+            }
+        }
+        Ok(())
     }
 }
 
