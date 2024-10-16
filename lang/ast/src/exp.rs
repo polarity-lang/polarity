@@ -1246,24 +1246,54 @@ impl Print for Hole {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: Precedence,
+        prec: Precedence,
     ) -> Builder<'a> {
         match self.kind {
             MetaVarKind::MustSolve => {
+                let mut doc = alloc.keyword(UNDERSCORE);
+
                 if cfg.print_metavar_ids {
-                    alloc.text(format!("_{}", self.metavar.id))
-                } else {
-                    alloc.keyword(UNDERSCORE)
+                    doc = doc.append(self.metavar.id.to_string());
                 }
+
+                if let Some(solution) = &self.solution {
+                    doc = doc.append("<").append(solution.print_prec(cfg, alloc, prec)).append(">")
+                }
+
+                doc
             }
             MetaVarKind::CanSolve => {
+                let mut doc = alloc.keyword(QUESTION_MARK);
+
                 if cfg.print_metavar_ids {
-                    alloc.text(format!("?{}", self.metavar.id))
-                } else {
-                    alloc.keyword(QUESTION_MARK)
+                    doc = doc.append(self.metavar.id.to_string());
                 }
+
+                if let Some(solution) = &self.solution {
+                    doc = doc.append("<").append(solution.print_prec(cfg, alloc, prec)).append(">")
+                }
+
+                doc
             }
-            MetaVarKind::Inserted => alloc.text(format!("<Inserted>{}", self.metavar.id)),
+            MetaVarKind::Inserted => {
+                let mut doc = alloc.nil();
+
+                if cfg.print_metavar_ids {
+                    doc = doc.append(self.metavar.id.to_string());
+                }
+
+                match &self.solution {
+                    Some(solution) => {
+                        doc = doc
+                            .append("<")
+                            .append(solution.print_prec(cfg, alloc, prec))
+                            .append(">")
+                    }
+                    None => doc = doc.append("<Inserted>"),
+                }
+
+                doc
+            }
         }
     }
 }
