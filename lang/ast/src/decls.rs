@@ -331,16 +331,6 @@ impl Print for Module {
     }
 }
 
-impl Zonk for Module {
-    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
-        // TODO: zonk meta_vars
-        for decl in self.decls.iter_mut() {
-            decl.zonk(meta_vars)?;
-        }
-        Ok(())
-    }
-}
-
 // Decl
 //
 //
