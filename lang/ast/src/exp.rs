@@ -1191,9 +1191,13 @@ impl From<Hole> for Exp {
 
 impl Shift for Hole {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        self.args.shift_in_range(range, by);
-        self.inferred_ctx = None;
-        self.inferred_type = None;
+        let Hole { span: _, kind: _, metavar: _, inferred_type, inferred_ctx, args, solution } =
+            self;
+
+        *inferred_type = None;
+        *inferred_ctx = None;
+        args.shift_in_range(range, by);
+        solution.shift_in_range(range, by);
     }
 }
 
@@ -1221,7 +1225,7 @@ impl Substitutable for Hole {
             inferred_type: None,
             inferred_ctx: None,
             args: args.subst(ctx, by),
-            solution: self.solution.clone(),
+            solution: self.solution.subst(ctx, by),
         }
     }
 }
