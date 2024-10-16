@@ -1,14 +1,13 @@
-use std::sync::Arc;
-
 use codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
 use ast::*;
 use printer::{Print, PrintCfg};
+use url::Url;
 
 use crate::{
-    CodataInfo, CodefInfo, CtorInfo, DataInfo, DefInfo, DtorInfo, LetInfo, LocalComatchInfo,
-    LocalMatchInfo,
+    CodataInfo, CodefInfo, CtorInfo, DataInfo, Database, DefInfo, DtorInfo, Error, LetInfo,
+    LocalComatchInfo, LocalMatchInfo,
 };
 
 use super::data::{
@@ -16,29 +15,35 @@ use super::data::{
     VariableInfo,
 };
 use super::item::Item;
+use super::lookup::{lookup_codef, lookup_ctor, lookup_decl, lookup_def, lookup_dtor, lookup_let};
 
 /// Traverse the program and collect information for the LSP server.
-pub fn collect_info(module: Arc<Module>) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
-    let mut collector = InfoCollector::new(module.clone());
+#[allow(clippy::type_complexity)]
+pub fn collect_info(
+    db: &mut Database,
+    uri: &Url,
+) -> Result<(Lapper<u32, Info>, Lapper<u32, Item>), Error> {
+    let module = db.ast(uri)?;
+    let mut collector = InfoCollector::new(module.meta_vars.clone());
 
     for decl in module.decls.iter() {
-        decl.collect_info(&mut collector)
+        decl.collect_info(db, &mut collector)
     }
 
     let info_lapper = Lapper::new(collector.info_spans);
     let item_lapper = Lapper::new(collector.item_spans);
-    (info_lapper, item_lapper)
+    Ok((info_lapper, item_lapper))
 }
 
 struct InfoCollector {
-    module: Arc<Module>,
+    meta_vars: HashMap<MetaVar, MetaVarState>,
     info_spans: Vec<Interval<u32, Info>>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
 impl InfoCollector {
-    fn new(module: Arc<Module>) -> Self {
-        InfoCollector { module, info_spans: vec![], item_spans: vec![] }
+    fn new(meta_vars: HashMap<MetaVar, MetaVarState>) -> Self {
+        InfoCollector { meta_vars, info_spans: vec![], item_spans: vec![] }
     }
 
     fn add_info<T: Into<InfoContent>>(&mut self, span: Span, info: T) {
@@ -59,7 +64,7 @@ impl InfoCollector {
 /// Every syntax node which implements this trait can be traversed and
 /// make source-code indexed information available for the LSP server.
 trait CollectInfo {
-    fn collect_info(&self, _collector: &mut InfoCollector) {}
+    fn collect_info(&self, _db: &Database, _collector: &mut InfoCollector);
 }
 
 // Generic implementations
@@ -67,24 +72,24 @@ trait CollectInfo {
 //
 
 impl<T: CollectInfo> CollectInfo for Box<T> {
-    fn collect_info(&self, collector: &mut InfoCollector) {
-        (**self).collect_info(collector)
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+        (**self).collect_info(db, collector)
     }
 }
 
 impl<T: CollectInfo> CollectInfo for Option<T> {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         match self {
             None => (),
-            Some(x) => x.collect_info(collector),
+            Some(x) => x.collect_info(db, collector),
         }
     }
 }
 
 impl<T: CollectInfo> CollectInfo for Vec<T> {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         for i in self {
-            i.collect_info(collector)
+            i.collect_info(db, collector)
         }
     }
 }
@@ -94,19 +99,19 @@ impl<T: CollectInfo> CollectInfo for Vec<T> {
 //
 
 impl CollectInfo for Decl {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         match self {
-            Decl::Data(data) => data.collect_info(collector),
-            Decl::Codata(codata) => codata.collect_info(collector),
-            Decl::Def(def) => def.collect_info(collector),
-            Decl::Codef(codef) => codef.collect_info(collector),
-            Decl::Let(lets) => lets.collect_info(collector),
+            Decl::Data(data) => data.collect_info(db, collector),
+            Decl::Codata(codata) => codata.collect_info(db, collector),
+            Decl::Def(def) => def.collect_info(db, collector),
+            Decl::Codef(codef) => codef.collect_info(db, collector),
+            Decl::Let(lets) => lets.collect_info(db, collector),
         }
     }
 }
 
 impl CollectInfo for Data {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Data { name, span, doc, typ, ctors, .. } = self;
         if let Some(span) = span {
             // Add item
@@ -120,15 +125,15 @@ impl CollectInfo for Data {
         }
 
         for ctor in ctors {
-            ctor.collect_info(collector)
+            ctor.collect_info(db, collector)
         }
 
-        typ.collect_info(collector)
+        typ.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for Codata {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Codata { name, doc, typ, span, dtors, .. } = self;
         if let Some(span) = span {
             // Add item
@@ -142,15 +147,15 @@ impl CollectInfo for Codata {
         }
 
         for dtor in dtors {
-            dtor.collect_info(collector)
+            dtor.collect_info(db, collector)
         }
 
-        typ.collect_info(collector)
+        typ.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for Def {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Def { name, span, self_param, cases, params, ret_typ, .. } = self;
         if let Some(span) = span {
             // Add Item
@@ -162,15 +167,15 @@ impl CollectInfo for Def {
             collector.add_info(*span, info);
         };
 
-        self_param.collect_info(collector);
-        cases.collect_info(collector);
-        params.collect_info(collector);
-        ret_typ.collect_info(collector);
+        self_param.collect_info(db, collector);
+        cases.collect_info(db, collector);
+        params.collect_info(db, collector);
+        ret_typ.collect_info(db, collector);
     }
 }
 
 impl CollectInfo for Codef {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Codef { name, span, typ, cases, params, .. } = self;
         if let Some(span) = span {
             // Add item
@@ -180,14 +185,14 @@ impl CollectInfo for Codef {
             let info = CodefInfo {};
             collector.add_info(*span, info);
         }
-        typ.collect_info(collector);
-        cases.collect_info(collector);
-        params.collect_info(collector)
+        typ.collect_info(db, collector);
+        cases.collect_info(db, collector);
+        params.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for Ctor {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Ctor { span, name, doc, typ, params } = self;
         if let Some(span) = span {
             // Add info
@@ -195,13 +200,13 @@ impl CollectInfo for Ctor {
             let info = CtorInfo { name: name.clone().id, doc };
             collector.add_info(*span, info);
         }
-        params.collect_info(collector);
-        typ.collect_info(collector);
+        params.collect_info(db, collector);
+        typ.collect_info(db, collector);
     }
 }
 
 impl CollectInfo for Dtor {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Dtor { span, name, doc, self_param, params, ret_typ } = self;
         if let Some(span) = span {
             // Add info
@@ -209,23 +214,23 @@ impl CollectInfo for Dtor {
             let info = DtorInfo { name: name.clone().id, doc };
             collector.add_info(*span, info);
         }
-        self_param.collect_info(collector);
-        params.collect_info(collector);
-        ret_typ.collect_info(collector);
+        self_param.collect_info(db, collector);
+        params.collect_info(db, collector);
+        ret_typ.collect_info(db, collector);
     }
 }
 
 impl CollectInfo for Let {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Let { span, typ, body, params, .. } = self;
         if let Some(span) = span {
             // Add info
             let info = LetInfo {};
             collector.add_info(*span, info);
         }
-        typ.collect_info(collector);
-        body.collect_info(collector);
-        params.collect_info(collector)
+        typ.collect_info(db, collector);
+        body.collect_info(db, collector);
+        params.collect_info(db, collector)
     }
 }
 
@@ -234,23 +239,23 @@ impl CollectInfo for Let {
 //
 
 impl CollectInfo for Exp {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         match self {
-            Exp::Variable(e) => e.collect_info(collector),
-            Exp::TypCtor(e) => e.collect_info(collector),
-            Exp::Call(e) => e.collect_info(collector),
-            Exp::DotCall(e) => e.collect_info(collector),
-            Exp::Hole(e) => e.collect_info(collector),
-            Exp::TypeUniv(e) => e.collect_info(collector),
-            Exp::Anno(e) => e.collect_info(collector),
-            Exp::LocalMatch(e) => e.collect_info(collector),
-            Exp::LocalComatch(e) => e.collect_info(collector),
+            Exp::Variable(e) => e.collect_info(db, collector),
+            Exp::TypCtor(e) => e.collect_info(db, collector),
+            Exp::Call(e) => e.collect_info(db, collector),
+            Exp::DotCall(e) => e.collect_info(db, collector),
+            Exp::Hole(e) => e.collect_info(db, collector),
+            Exp::TypeUniv(e) => e.collect_info(db, collector),
+            Exp::Anno(e) => e.collect_info(db, collector),
+            Exp::LocalMatch(e) => e.collect_info(db, collector),
+            Exp::LocalComatch(e) => e.collect_info(db, collector),
         }
     }
 }
 
 impl CollectInfo for Variable {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
         let Variable { span, inferred_type, name, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             let info = VariableInfo { typ: typ.print_to_string(None), name: name.clone().id };
@@ -260,65 +265,59 @@ impl CollectInfo for Variable {
 }
 
 impl CollectInfo for TypCtor {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let TypCtor { span, args, name } = self;
         if let Some(span) = span {
-            let decl = collector.module.lookup_decl(name);
-            let definition_site = match decl {
-                Some(Decl::Data(d)) => d.span.map(|span| (collector.module.uri.clone(), span)),
-                Some(Decl::Codata(d)) => d.span.map(|span| (collector.module.uri.clone(), span)),
-                _ => None,
-            };
-            let doc = match decl {
-                Some(Decl::Data(d)) => d.doc.clone().map(|doc| doc.docs),
-                Some(Decl::Codata(d)) => d.doc.clone().map(|doc| doc.docs),
-                _ => None,
+            let decl = lookup_decl(db, name);
+            let (definition_site, doc) = match decl {
+                Some((uri, Decl::Data(d))) => {
+                    let definition_site = d.span.map(|span| (uri.clone(), span));
+                    let doc = d.doc.clone().map(|doc| doc.docs);
+                    (definition_site, doc)
+                }
+                Some((uri, Decl::Codata(d))) => {
+                    let definition_site = d.span.map(|span| (uri.clone(), span));
+                    let doc = d.doc.clone().map(|doc| doc.docs);
+                    (definition_site, doc)
+                }
+                _ => (None, None),
             };
             let info = TypeCtorInfo { name: name.clone().id, definition_site, doc };
             collector.add_info(*span, info)
         }
-        args.collect_info(collector)
+        args.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for Call {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Call { span, kind, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             let (definition_site, doc) = match kind {
-                CallKind::Constructor => {
-                    let ctor = collector.module.lookup_ctor(name);
-
-                    let uri_span = ctor.and_then(|ctor| {
-                        ctor.span.map(|span| (collector.module.uri.clone(), span))
-                    });
-
-                    let doc = ctor.and_then(|ctor| ctor.doc.clone().map(|doc| doc.docs));
-
-                    (uri_span, doc)
-                }
-                CallKind::Codefinition => {
-                    let codef = collector.module.lookup_codef(name);
-
-                    let uri_span = codef.and_then(|codef| {
-                        codef.span.map(|span| (collector.module.uri.clone(), span))
-                    });
-
-                    let doc = codef.and_then(|codef| codef.doc.clone().map(|doc| doc.docs));
-
-                    (uri_span, doc)
-                }
-                CallKind::LetBound => {
-                    let let_ = collector.module.lookup_let(name);
-
-                    let uri_span = let_.and_then(|let_| {
-                        let_.span.map(|span| (collector.module.uri.clone(), span))
-                    });
-
-                    let doc = let_.and_then(|let_| let_.doc.clone().map(|doc| doc.docs));
-
-                    (uri_span, doc)
-                }
+                CallKind::Constructor => match lookup_ctor(db, name) {
+                    Some((uri, ctor)) => {
+                        let uri_span = ctor.span.map(|span| (uri.clone(), span));
+                        let doc = ctor.doc.clone().map(|doc| doc.docs);
+                        (uri_span, doc)
+                    }
+                    None => (None, None),
+                },
+                CallKind::Codefinition => match lookup_codef(db, name) {
+                    Some((uri, codef)) => {
+                        let uri_span = codef.span.map(|span| (uri.clone(), span));
+                        let doc = codef.doc.clone().map(|doc| doc.docs);
+                        (uri_span, doc)
+                    }
+                    None => (None, None),
+                },
+                CallKind::LetBound => match lookup_let(db, name) {
+                    Some((uri, let_)) => {
+                        let uri_span = let_.span.map(|span| (uri.clone(), span));
+                        let doc = let_.doc.clone().map(|doc| doc.docs);
+                        (uri_span, doc)
+                    }
+                    None => (None, None),
+                },
             };
 
             let info = CallInfo {
@@ -330,36 +329,31 @@ impl CollectInfo for Call {
             };
             collector.add_info(*span, info)
         }
-        args.collect_info(collector)
+        args.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for DotCall {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let DotCall { span, kind, exp, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             let (definition_site, doc) = match kind {
-                DotCallKind::Destructor => {
-                    let dtor = collector.module.lookup_dtor(name);
-
-                    let uri_span = dtor.and_then(|dtor| {
-                        dtor.span.map(|span| (collector.module.uri.clone(), span))
-                    });
-
-                    let doc = dtor.and_then(|dtor| dtor.doc.clone().map(|doc| doc.docs));
-
-                    (uri_span, doc)
-                }
-                DotCallKind::Definition => {
-                    let def = collector.module.lookup_def(name);
-
-                    let uri_span = def
-                        .and_then(|def| def.span.map(|span| (collector.module.uri.clone(), span)));
-
-                    let doc = def.and_then(|def| def.doc.clone().map(|doc| doc.docs));
-
-                    (uri_span, doc)
-                }
+                DotCallKind::Destructor => match lookup_dtor(db, name) {
+                    Some((uri, dtor)) => {
+                        let uri_span = dtor.span.map(|span| (uri.clone(), span));
+                        let doc = dtor.doc.clone().map(|doc| doc.docs);
+                        (uri_span, doc)
+                    }
+                    None => (None, None),
+                },
+                DotCallKind::Definition => match lookup_def(db, name) {
+                    Some((uri, def)) => {
+                        let uri_span = def.span.map(|span| (uri.clone(), span));
+                        let doc = def.doc.clone().map(|doc| doc.docs);
+                        (uri_span, doc)
+                    }
+                    None => (None, None),
+                },
             };
             let info = DotCallInfo {
                 kind: *kind,
@@ -370,17 +364,16 @@ impl CollectInfo for DotCall {
             };
             collector.add_info(*span, info)
         }
-        exp.collect_info(collector);
-        args.collect_info(collector)
+        exp.collect_info(db, collector);
+        args.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for Hole {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
         let Hole { span, kind: _, metavar, inferred_type, inferred_ctx, args, solution: _ } = self;
         if let Some(span) = span {
             let metavar_state = collector
-                .module
                 .meta_vars
                 .get(metavar)
                 .unwrap_or_else(|| panic!("Metavar {:?} not found", metavar));
@@ -405,7 +398,7 @@ impl CollectInfo for Hole {
 }
 
 impl CollectInfo for TypeUniv {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
         let TypeUniv { span } = self;
         if let Some(span) = span {
             let info = TypeUnivInfo {};
@@ -415,85 +408,85 @@ impl CollectInfo for TypeUniv {
 }
 
 impl CollectInfo for Anno {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Anno { span, exp, typ, normalized_type } = self;
         if let (Some(span), Some(typ)) = (span, normalized_type) {
             let info = AnnoInfo { typ: typ.print_to_string(None) };
             collector.add_info(*span, info)
         }
-        exp.collect_info(collector);
-        typ.collect_info(collector)
+        exp.collect_info(db, collector);
+        typ.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for LocalMatch {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let LocalMatch { span, on_exp, ret_typ, cases, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             // Add info
             let info = LocalMatchInfo { typ: typ.print_to_string(None) };
             collector.add_info(*span, info)
         }
-        on_exp.collect_info(collector);
-        ret_typ.collect_info(collector);
-        cases.collect_info(collector)
+        on_exp.collect_info(db, collector);
+        ret_typ.collect_info(db, collector);
+        cases.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for LocalComatch {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let LocalComatch { span, cases, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             // Add info
             let info = LocalComatchInfo { typ: typ.print_to_string(None) };
             collector.add_info(*span, info)
         }
-        cases.collect_info(collector)
+        cases.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for Case {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Case { body, .. } = self;
-        body.collect_info(collector)
+        body.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for Args {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Args { args } = self;
         for arg in args.iter() {
-            arg.collect_info(collector)
+            arg.collect_info(db, collector)
         }
     }
 }
 
 impl CollectInfo for Arg {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         match self {
-            Arg::UnnamedArg(exp) => exp.collect_info(collector),
-            Arg::NamedArg(_, exp) => exp.collect_info(collector),
-            Arg::InsertedImplicitArg(hole) => hole.collect_info(collector),
+            Arg::UnnamedArg(exp) => exp.collect_info(db, collector),
+            Arg::NamedArg(_, exp) => exp.collect_info(db, collector),
+            Arg::InsertedImplicitArg(hole) => hole.collect_info(db, collector),
         }
     }
 }
 
 impl CollectInfo for Telescope {
-    fn collect_info(&self, collector: &mut InfoCollector) {
-        self.params.collect_info(collector)
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+        self.params.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for Param {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Param { typ, .. } = self;
-        typ.collect_info(collector)
+        typ.collect_info(db, collector)
     }
 }
 
 impl CollectInfo for SelfParam {
-    fn collect_info(&self, collector: &mut InfoCollector) {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let SelfParam { typ, .. } = self;
-        typ.collect_info(collector);
+        typ.collect_info(db, collector);
     }
 }

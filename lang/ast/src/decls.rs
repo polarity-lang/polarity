@@ -270,20 +270,6 @@ impl Module {
         })
     }
 
-    pub fn lookup_ctor(&self, name: &Ident) -> Option<&Ctor> {
-        self.decls.iter().find_map(|decl| match decl {
-            Decl::Data(data) => data.ctors.iter().find(|ctor| &ctor.name == name),
-            _ => None,
-        })
-    }
-
-    pub fn lookup_dtor(&self, name: &Ident) -> Option<&Dtor> {
-        self.decls.iter().find_map(|decl| match decl {
-            Decl::Codata(codata) => codata.dtors.iter().find(|dtor| &dtor.name == name),
-            _ => None,
-        })
-    }
-
     pub fn find_main(&self) -> Option<Box<Exp>> {
         self.decls.iter().find_map(|decl| match decl {
             Decl::Let(tl_let) if tl_let.is_main() => Some(tl_let.body.clone()),

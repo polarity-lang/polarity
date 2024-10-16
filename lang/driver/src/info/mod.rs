@@ -4,6 +4,7 @@
 mod collect;
 mod data;
 mod item;
+mod lookup;
 
 pub use collect::*;
 pub use data::*;
