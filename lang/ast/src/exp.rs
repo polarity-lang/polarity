@@ -413,9 +413,7 @@ impl Zonk for Variable {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        if let Some(ref mut inferred_type) = self.inferred_type {
-            inferred_type.zonk(meta_vars)?;
-        }
+        self.inferred_type.zonk(meta_vars)?;
         Ok(())
     }
 }
@@ -626,9 +624,7 @@ impl Zonk for Call {
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
         self.args.zonk(meta_vars)?;
-        if let Some(ref mut inferred_type) = self.inferred_type {
-            inferred_type.zonk(meta_vars)?;
-        }
+        self.inferred_type.zonk(meta_vars)?;
         Ok(())
     }
 }
@@ -727,9 +723,7 @@ impl Zonk for DotCall {
     ) -> Result<(), ZonkError> {
         self.exp.zonk(meta_vars)?;
         self.args.zonk(meta_vars)?;
-        if let Some(ref mut inferred_type) = self.inferred_type {
-            inferred_type.zonk(meta_vars)?;
-        }
+        self.inferred_type.zonk(meta_vars)?;
         Ok(())
     }
 }
@@ -822,9 +816,7 @@ impl Zonk for Anno {
     ) -> Result<(), ZonkError> {
         self.exp.zonk(meta_vars)?;
         self.typ.zonk(meta_vars)?;
-        if let Some(ref mut normalized_type) = self.normalized_type {
-            normalized_type.zonk(meta_vars)?;
-        }
+        self.normalized_type.zonk(meta_vars)?;
         Ok(())
     }
 }
@@ -1019,12 +1011,8 @@ impl Zonk for LocalMatch {
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
         self.on_exp.zonk(meta_vars)?;
-        if let Some(ref mut motive) = self.motive {
-            motive.zonk(meta_vars)?;
-        }
-        if let Some(ref mut ret_typ) = self.ret_typ {
-            ret_typ.zonk(meta_vars)?;
-        }
+        self.motive.zonk(meta_vars)?;
+        self.ret_typ.zonk(meta_vars)?;
         for case in &mut self.cases {
             case.zonk(meta_vars)?;
         }
@@ -1384,9 +1372,7 @@ impl Zonk for Case {
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
         self.pattern.zonk(meta_vars)?;
-        if let Some(ref mut body) = self.body {
-            body.zonk(meta_vars)?;
-        }
+        self.body.zonk(meta_vars)?;
         Ok(())
     }
 }
@@ -1493,9 +1479,7 @@ impl Zonk for ParamInst {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        if let Some(ref mut typ) = self.typ {
-            typ.zonk(meta_vars)?;
-        }
+        self.typ.zonk(meta_vars)?;
         Ok(())
     }
 }
