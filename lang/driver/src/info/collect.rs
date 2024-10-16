@@ -5,9 +5,10 @@ use rust_lapper::{Interval, Lapper};
 
 use ast::*;
 use printer::{Print, PrintCfg};
+use url::Url;
 
 use crate::{
-    CodataInfo, CodefInfo, CtorInfo, DataInfo, Database, DefInfo, DtorInfo, LetInfo,
+    CodataInfo, CodefInfo, CtorInfo, DataInfo, Database, DefInfo, DtorInfo, Error, LetInfo,
     LocalComatchInfo, LocalMatchInfo,
 };
 
@@ -18,7 +19,13 @@ use super::data::{
 use super::item::Item;
 
 /// Traverse the program and collect information for the LSP server.
-pub fn collect_info(db: &Database, module: Arc<Module>) -> (Lapper<u32, Info>, Lapper<u32, Item>) {
+#[allow(clippy::type_complexity)]
+pub fn collect_info(
+    db: &mut Database,
+    uri: &Url,
+) -> Result<(Lapper<u32, Info>, Lapper<u32, Item>), Error> {
+    let module = db.ast(uri)?;
+
     let mut collector = InfoCollector::new(module.clone());
 
     for decl in module.decls.iter() {
@@ -27,7 +34,7 @@ pub fn collect_info(db: &Database, module: Arc<Module>) -> (Lapper<u32, Info>, L
 
     let info_lapper = Lapper::new(collector.info_spans);
     let item_lapper = Lapper::new(collector.item_spans);
-    (info_lapper, item_lapper)
+    Ok((info_lapper, item_lapper))
 }
 
 struct InfoCollector {
