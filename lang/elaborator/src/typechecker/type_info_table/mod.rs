@@ -19,6 +19,11 @@ impl TypeInfoTable {
 
 #[derive(Debug, Clone, Default)]
 pub struct ModuleTypeInfoTable {
+    // Data and Codata Types
+    //
+    //
+    map_data: HashMap<Ident, Data>,
+    map_codata: HashMap<Ident, Codata>,
     // Calls
     //
     //

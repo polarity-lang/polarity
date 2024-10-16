@@ -23,12 +23,7 @@ impl CheckInfer for LocalComatch {
         let expected_type_app: TypCtor = t.expect_typ_app()?.infer(ctx)?;
 
         // Local comatches don't support self parameters, yet.
-        let codata = ctx.module.lookup_codata(&expected_type_app.name).ok_or_else(|| {
-            TypeError::Impossible {
-                message: format!("Codata type {name} not found"),
-                span: span.to_miette(),
-            }
-        })?;
+        let codata = ctx.type_info_table.lookup_codata(&expected_type_app.name)?;
         if uses_self(codata)? {
             return Err(TypeError::LocalComatchWithSelf {
                 type_name: codata.name.to_owned().id,
@@ -38,7 +33,7 @@ impl CheckInfer for LocalComatch {
 
         let wd = WithExpectedType { cases, label: None, expected_type: expected_type_app.clone() };
 
-        wd.check_exhaustiveness(&ctx.module)?;
+        wd.check_exhaustiveness(ctx)?;
         let cases = wd.infer_wd(ctx)?;
 
         Ok(LocalComatch {
@@ -71,15 +66,10 @@ pub struct WithExpectedType<'a> {
 impl<'a> WithExpectedType<'a> {
     /// Check whether the copattern match contains exactly one clause for every
     /// destructor declared in the codata type declaration.
-    pub fn check_exhaustiveness(&self, module: &Module) -> Result<(), TypeError> {
+    pub fn check_exhaustiveness(&self, ctx: &mut Ctx) -> Result<(), TypeError> {
         let WithExpectedType { cases, .. } = &self;
         // Check that this comatch is on a codata type
-        let codata = module.lookup_codata(&self.expected_type.name).ok_or_else(|| {
-            TypeError::Impossible {
-                message: format!("Codata type {} not found", self.expected_type.name),
-                span: None,
-            }
-        })?;
+        let codata = ctx.type_info_table.lookup_codata(&self.expected_type.name)?;
 
         // Check exhaustiveness
         let dtors_expected: HashSet<_> =

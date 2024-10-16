@@ -32,7 +32,7 @@ impl CheckToplevel for Codef {
                 expected_type: typ_nf.expect_typ_app()?,
             };
 
-            wd.check_exhaustiveness(&ctx.module)?;
+            wd.check_exhaustiveness(ctx)?;
             let cases = wd.infer_wd(ctx)?;
 
             Ok(Codef {
