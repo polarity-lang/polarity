@@ -271,12 +271,12 @@ impl CollectInfo for TypCtor {
             let decl = lookup_decl(db, name);
             let (definition_site, doc) = match decl {
                 Some((uri, Decl::Data(d))) => {
-                    let definition_site = d.span.clone().map(|span| (uri.clone(), span));
+                    let definition_site = d.span.map(|span| (uri.clone(), span));
                     let doc = d.doc.clone().map(|doc| doc.docs);
                     (definition_site, doc)
                 }
                 Some((uri, Decl::Codata(d))) => {
-                    let definition_site = d.span.clone().map(|span| (uri.clone(), span));
+                    let definition_site = d.span.map(|span| (uri.clone(), span));
                     let doc = d.doc.clone().map(|doc| doc.docs);
                     (definition_site, doc)
                 }
