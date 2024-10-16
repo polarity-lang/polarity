@@ -377,7 +377,7 @@ impl CollectInfo for DotCall {
 
 impl CollectInfo for Hole {
     fn collect_info(&self, collector: &mut InfoCollector) {
-        let Hole { span, kind: _, metavar, inferred_type, inferred_ctx, args } = self;
+        let Hole { span, kind: _, metavar, inferred_type, inferred_ctx, args, solution: _ } = self;
         if let Some(span) = span {
             let metavar_state = collector
                 .module

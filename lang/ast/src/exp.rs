@@ -6,7 +6,7 @@ use derivative::Derivative;
 use pretty::DocAllocator;
 use printer::theme::ThemeExt;
 use printer::tokens::{
-    ABSURD, ARROW, AS, COLON, COMATCH, COMMA, DOT, FAT_ARROW, MATCH, QUESTION_MARK, TYPE,
+    ABSURD, ARROW, AS, COLON, COLONEQ, COMATCH, COMMA, DOT, FAT_ARROW, MATCH, QUESTION_MARK, TYPE,
     UNDERSCORE,
 };
 use printer::util::{BackslashExt, BracesExt, IsNilExt};
@@ -15,6 +15,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 use crate::ctx::values::TypeCtx;
 use crate::ctx::{BindContext, LevelCtx};
 use crate::named::Named;
+use crate::{SubstUnderCtx, Zonk, ZonkError};
 
 use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
@@ -122,6 +123,31 @@ impl Substitutable for Arg {
             Arg::UnnamedArg(e) => Arg::UnnamedArg(e.subst(ctx, by)),
             Arg::NamedArg(i, e) => Arg::NamedArg(i.clone(), e.subst(ctx, by)),
             Arg::InsertedImplicitArg(hole) => Arg::InsertedImplicitArg(hole.subst(ctx, by)),
+        }
+    }
+}
+
+impl Print for Arg {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            Arg::UnnamedArg(e) => e.print(cfg, alloc),
+            Arg::NamedArg(i, e) => alloc.text(&i.id).append(COLONEQ).append(e.print(cfg, alloc)),
+            Arg::InsertedImplicitArg(_) => {
+                panic!("Inserted implicit arguments should not be printed")
+            }
+        }
+    }
+}
+
+impl Zonk for Arg {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        match self {
+            Arg::UnnamedArg(e) => e.zonk(meta_vars),
+            Arg::NamedArg(_, e) => e.zonk(meta_vars),
+            Arg::InsertedImplicitArg(hole) => hole.zonk(meta_vars),
         }
     }
 }
@@ -271,6 +297,25 @@ impl Print for Exp {
     }
 }
 
+impl Zonk for Exp {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        match self {
+            Exp::Variable(e) => e.zonk(meta_vars),
+            Exp::TypCtor(e) => e.zonk(meta_vars),
+            Exp::Call(e) => e.zonk(meta_vars),
+            Exp::DotCall(e) => e.zonk(meta_vars),
+            Exp::Anno(e) => e.zonk(meta_vars),
+            Exp::TypeUniv(e) => e.zonk(meta_vars),
+            Exp::LocalMatch(e) => e.zonk(meta_vars),
+            Exp::LocalComatch(e) => e.zonk(meta_vars),
+            Exp::Hole(e) => e.zonk(meta_vars),
+        }
+    }
+}
+
 // Variable
 //
 //
@@ -360,6 +405,18 @@ impl Print for Variable {
         } else {
             alloc.text(&name.id)
         }
+    }
+}
+
+impl Zonk for Variable {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        if let Some(ref mut inferred_type) = self.inferred_type {
+            inferred_type.zonk(meta_vars)?;
+        }
+        Ok(())
     }
 }
 
@@ -453,6 +510,16 @@ impl Print for TypCtor {
             let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
             alloc.typ(&name.id).append(psubst)
         }
+    }
+}
+
+/// Implement Zonk for TypCtor
+impl Zonk for TypCtor {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        self.args.zonk(meta_vars)
     }
 }
 
@@ -553,6 +620,19 @@ impl Print for Call {
     }
 }
 
+impl Zonk for Call {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        self.args.zonk(meta_vars)?;
+        if let Some(ref mut inferred_type) = self.inferred_type {
+            inferred_type.zonk(meta_vars)?;
+        }
+        Ok(())
+    }
+}
+
 // DotCall
 //
 //
@@ -640,6 +720,33 @@ impl Substitutable for DotCall {
     }
 }
 
+impl Print for DotCall {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let DotCall { name, args, .. } = self;
+        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
+        alloc.ctor(&name.id).append(psubst)
+    }
+}
+
+impl Zonk for DotCall {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        self.exp.zonk(meta_vars)?;
+        self.args.zonk(meta_vars)?;
+        if let Some(ref mut inferred_type) = self.inferred_type {
+            inferred_type.zonk(meta_vars)?;
+        }
+        Ok(())
+    }
+}
+
 // Anno
 //
 //
@@ -721,6 +828,20 @@ impl Print for Anno {
     }
 }
 
+impl Zonk for Anno {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        self.exp.zonk(meta_vars)?;
+        self.typ.zonk(meta_vars)?;
+        if let Some(ref mut normalized_type) = self.normalized_type {
+            normalized_type.zonk(meta_vars)?;
+        }
+        Ok(())
+    }
+}
+
 // TypeUniv
 //
 //
@@ -795,6 +916,17 @@ impl Print for TypeUniv {
         _prec: Precedence,
     ) -> Builder<'a> {
         alloc.keyword(TYPE)
+    }
+}
+
+/// Implement Zonk for TypeUniv
+impl Zonk for TypeUniv {
+    fn zonk(
+        &mut self,
+        _meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        // TypeUniv has no fields that require zonking
+        Ok(())
     }
 }
 
@@ -894,6 +1026,25 @@ impl Print for LocalMatch {
     }
 }
 
+impl Zonk for LocalMatch {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        self.on_exp.zonk(meta_vars)?;
+        if let Some(ref mut motive) = self.motive {
+            motive.zonk(meta_vars)?;
+        }
+        if let Some(ref mut ret_typ) = self.ret_typ {
+            ret_typ.zonk(meta_vars)?;
+        }
+        for case in &mut self.cases {
+            case.zonk(meta_vars)?;
+        }
+        Ok(())
+    }
+}
+
 // LocalComatch
 //
 //
@@ -984,6 +1135,18 @@ impl Print for LocalComatch {
     }
 }
 
+impl Zonk for LocalComatch {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        for case in &mut self.cases {
+            case.zonk(meta_vars)?;
+        }
+        Ok(())
+    }
+}
+
 /// Print the Comatch as a lambda abstraction.
 /// Only invoke this function if the comatch contains exactly
 /// one cocase "ap" with three arguments; the function will
@@ -1035,6 +1198,8 @@ pub struct Hole {
     /// Example:
     /// [x, y][z][v, w] |- ?[x, y][z][v,w]
     pub args: Vec<Vec<Box<Exp>>>,
+    /// The solution found by unification. It is propagated during zonking.
+    pub solution: Option<Box<Exp>>,
 }
 
 impl HasSpan for Hole {
@@ -1081,6 +1246,7 @@ impl Substitutable for Hole {
             inferred_type: None,
             inferred_ctx: None,
             args: args.subst(ctx, by),
+            solution: self.solution.clone(),
         }
     }
 }
@@ -1112,6 +1278,27 @@ impl Print for Hole {
     }
 }
 
+impl Zonk for Hole {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        match meta_vars.get(&self.metavar) {
+            Some(crate::MetaVarState::Solved { ctx, solution }) => {
+                self.solution = Some(solution.subst_under_ctx(ctx.levels(), &self.args));
+            }
+            Some(crate::MetaVarState::Unsolved { .. }) => {
+                // Nothing to do, the hole remains unsolved
+            }
+            None => {
+                return Err(ZonkError::UnboundMetaVar(self.metavar));
+            }
+        }
+
+        Ok(())
+    }
+}
+
 // Pattern
 //
 //
@@ -1132,6 +1319,15 @@ impl Print for Pattern {
         } else {
             alloc.ctor(&name.id).append(params.print(cfg, alloc))
         }
+    }
+}
+
+impl Zonk for Pattern {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        self.params.zonk(meta_vars)
     }
 }
 
@@ -1195,6 +1391,19 @@ impl Print for Case {
     }
 }
 
+impl Zonk for Case {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        self.pattern.zonk(meta_vars)?;
+        if let Some(ref mut body) = self.body {
+            body.zonk(meta_vars)?;
+        }
+        Ok(())
+    }
+}
+
 pub fn print_cases<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
     match cases.len() {
         0 => empty_braces(alloc),
@@ -1249,6 +1458,18 @@ impl Print for TelescopeInst {
     }
 }
 
+impl Zonk for TelescopeInst {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        for param in &mut self.params {
+            param.zonk(meta_vars)?;
+        }
+        Ok(())
+    }
+}
+
 // ParamInst
 //
 //
@@ -1277,6 +1498,18 @@ impl Print for ParamInst {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let ParamInst { span: _, info: _, name, typ: _ } = self;
         alloc.text(&name.id)
+    }
+}
+
+impl Zonk for ParamInst {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        if let Some(ref mut typ) = self.typ {
+            typ.zonk(meta_vars)?;
+        }
+        Ok(())
     }
 }
 
@@ -1342,6 +1575,18 @@ impl Print for Args {
     }
 }
 
+impl Zonk for Args {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        for arg in &mut self.args {
+            arg.zonk(meta_vars)?;
+        }
+        Ok(())
+    }
+}
+
 // Motive
 //
 //
@@ -1363,7 +1608,7 @@ impl Shift for Motive {
 
 impl Substitutable for Motive {
     type Result = Motive;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
         let Motive { span, param, ret_typ } = self;
 
         Motive {
@@ -1391,5 +1636,16 @@ impl Print for Motive {
             .append(alloc.text(FAT_ARROW))
             .append(alloc.space())
             .append(ret_typ.print(cfg, alloc))
+    }
+}
+
+impl Zonk for Motive {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
+        self.param.zonk(meta_vars)?;
+        self.ret_typ.zonk(meta_vars)?;
+        Ok(())
     }
 }
