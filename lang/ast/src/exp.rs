@@ -720,19 +720,6 @@ impl Substitutable for DotCall {
     }
 }
 
-impl Print for DotCall {
-    fn print_prec<'a>(
-        &'a self,
-        cfg: &PrintCfg,
-        alloc: &'a Alloc<'a>,
-        _prec: Precedence,
-    ) -> Builder<'a> {
-        let DotCall { name, args, .. } = self;
-        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-        alloc.ctor(&name.id).append(psubst)
-    }
-}
-
 impl Zonk for DotCall {
     fn zonk(
         &mut self,
