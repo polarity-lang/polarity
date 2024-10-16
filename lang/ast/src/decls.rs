@@ -256,20 +256,6 @@ impl Module {
         })
     }
 
-    pub fn lookup_data(&self, name: &Ident) -> Option<&Data> {
-        self.decls.iter().find_map(|decl| match decl {
-            Decl::Data(data) if data.name == *name => Some(data),
-            _ => None,
-        })
-    }
-
-    pub fn lookup_codata(&self, name: &Ident) -> Option<&Codata> {
-        self.decls.iter().find_map(|decl| match decl {
-            Decl::Codata(codata) if codata.name == *name => Some(codata),
-            _ => None,
-        })
-    }
-
     pub fn find_main(&self) -> Option<Box<Exp>> {
         self.decls.iter().find_map(|decl| match decl {
             Decl::Let(tl_let) if tl_let.is_main() => Some(tl_let.body.clone()),
