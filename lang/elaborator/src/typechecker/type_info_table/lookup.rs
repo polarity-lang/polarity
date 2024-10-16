@@ -5,6 +5,30 @@ use super::{
 };
 
 impl TypeInfoTable {
+    pub fn lookup_data(&self, name: &Ident) -> Result<&Data, TypeError> {
+        for map in self.map.values() {
+            if let Some(data) = map.map_data.get(name) {
+                return Ok(data);
+            }
+        }
+        Err(TypeError::Impossible {
+            message: format!("Top-level data type {name} not found"),
+            span: None,
+        })
+    }
+
+    pub fn lookup_codata(&self, name: &Ident) -> Result<&Codata, TypeError> {
+        for map in self.map.values() {
+            if let Some(codata) = map.map_codata.get(name) {
+                return Ok(codata);
+            }
+        }
+        Err(TypeError::Impossible {
+            message: format!("Top-level codata type {name} not found"),
+            span: None,
+        })
+    }
+
     pub fn lookup_ctor_or_codef(&self, name: &Ident) -> Result<CtorMeta, TypeError> {
         for map in self.map.values() {
             if let Some(meta) = map.map_ctor.get(name) {

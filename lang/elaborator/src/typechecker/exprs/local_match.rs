@@ -82,7 +82,7 @@ impl CheckInfer for LocalMatch {
         };
 
         let ws = WithScrutinee { cases, scrutinee: typ_app_nf.clone() };
-        ws.check_exhaustiveness(&ctx.module)?;
+        ws.check_exhaustiveness(ctx)?;
         let cases = ws.check_ws(ctx, &body_t)?;
 
         Ok(LocalMatch {
@@ -111,14 +111,10 @@ pub struct WithScrutinee<'a> {
 impl<'a> WithScrutinee<'a> {
     /// Check whether the pattern match contains exactly one clause for every
     /// constructor declared in the data type declaration.
-    pub fn check_exhaustiveness(&self, module: &Module) -> Result<(), TypeError> {
+    pub fn check_exhaustiveness(&self, ctx: &mut Ctx) -> Result<(), TypeError> {
         let WithScrutinee { cases, .. } = &self;
         // Check that this match is on a data type
-        let data =
-            module.lookup_data(&self.scrutinee.name).ok_or_else(|| TypeError::Impossible {
-                message: format!("Data type {} not found", self.scrutinee.name),
-                span: None,
-            })?;
+        let data = ctx.type_info_table.lookup_data(&self.scrutinee.name)?;
 
         // Check exhaustiveness
         let ctors_expected: HashSet<_> =

@@ -30,6 +30,7 @@ impl BuildTypeInfoTable for Decl {
 
 impl BuildTypeInfoTable for Data {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
+        info_table.map_data.insert(self.name.clone(), self.clone());
         let Data { name, typ, ctors, .. } = self;
         info_table.map_tyctor.insert(name.clone(), TyCtorMeta { params: typ.clone() });
         for ctor in ctors {
@@ -49,6 +50,7 @@ impl BuildTypeInfoTable for Ctor {
 
 impl BuildTypeInfoTable for Codata {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
+        info_table.map_codata.insert(self.name.clone(), self.clone());
         let Codata { name, typ, dtors, .. } = self;
         info_table.map_tyctor.insert(name.clone(), TyCtorMeta { params: typ.clone() });
         for dtor in dtors {
