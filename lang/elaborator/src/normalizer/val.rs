@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use ast;
 use ast::ctx::BindContext;
 use ast::shift_and_clone;
@@ -55,7 +53,7 @@ impl<T: ReadBack> ReadBack for Vec<T> {
     }
 }
 
-impl<T: ReadBack> ReadBack for Rc<T> {
+impl<T: ReadBack> ReadBack for Box<T> {
     type Nf = Box<T::Nf>;
 
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
@@ -425,7 +423,7 @@ pub struct DotCall {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub kind: ast::DotCallKind,
-    pub exp: Rc<Neu>,
+    pub exp: Box<Neu>,
     pub name: ast::Ident,
     pub args: Args,
 }
@@ -477,7 +475,7 @@ pub struct LocalMatch {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub name: ast::Label,
-    pub on_exp: Rc<Neu>,
+    pub on_exp: Box<Neu>,
     pub cases: Vec<Case>,
 }
 
@@ -538,7 +536,7 @@ pub struct Hole {
     pub kind: ast::MetaVarKind,
     pub metavar: MetaVar,
     /// Explicit substitution of the context, compare documentation of ast::Hole
-    pub args: Vec<Vec<Rc<Val>>>,
+    pub args: Vec<Vec<Box<Val>>>,
 }
 
 impl Shift for Hole {
@@ -704,7 +702,7 @@ impl Args {
         self.0.is_empty()
     }
 
-    pub fn to_vals(&self) -> Vec<Rc<Val>> {
+    pub fn to_vals(&self) -> Vec<Box<Val>> {
         self.0.iter().map(Arg::to_val).collect()
     }
 
@@ -749,9 +747,9 @@ impl Print for Args {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Arg {
-    UnnamedArg(Rc<Val>),
-    NamedArg(ast::Ident, Rc<Val>),
-    InsertedImplicitArg(Rc<Val>),
+    UnnamedArg(Box<Val>),
+    NamedArg(ast::Ident, Box<Val>),
+    InsertedImplicitArg(Box<Val>),
 }
 
 impl Arg {
@@ -800,7 +798,7 @@ impl Print for Arg {
 }
 
 impl Arg {
-    pub fn to_val(&self) -> Rc<Val> {
+    pub fn to_val(&self) -> Box<Val> {
         match self {
             Arg::UnnamedArg(val) => val.clone(),
             Arg::NamedArg(_, val) => val.clone(),
@@ -837,7 +835,7 @@ impl ReadBack for Closure {
     type Nf = Box<ast::Exp>;
 
     fn read_back(&self, prg: &ast::Module) -> Result<Self::Nf, TypeError> {
-        let args: Vec<Rc<Val>> = (0..self.n_args)
+        let args: Vec<Box<Val>> = (0..self.n_args)
             .rev()
             .map(|snd| {
                 Val::Neu(Neu::Variable(Variable {
@@ -846,7 +844,7 @@ impl ReadBack for Closure {
                     idx: Idx { fst: 0, snd },
                 }))
             })
-            .map(Rc::new)
+            .map(Box::new)
             .collect();
         let mut shifted_env = shift_and_clone(&self.env, (1, 0));
         shifted_env.bind_iter(args.iter(), |env| self.body.eval(prg, env))?.read_back(prg)

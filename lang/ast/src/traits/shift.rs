@@ -1,7 +1,4 @@
-use std::{
-    ops::{Bound, RangeBounds},
-    rc::Rc,
-};
+use std::ops::{Bound, RangeBounds};
 
 use crate::*;
 
@@ -63,14 +60,6 @@ impl<T: RangeBounds<usize> + Clone> ShiftRange for T {}
 
 impl Shift for () {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {}
-}
-
-impl<T: Shift + Clone> Shift for Rc<T> {
-    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        let mut inner = (**self).clone();
-        inner.shift_in_range(range, by);
-        *self = Rc::new(inner);
-    }
 }
 
 impl<T: Shift> Shift for Box<T> {
