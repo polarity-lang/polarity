@@ -67,7 +67,9 @@ impl Shift for () {
 
 impl<T: Shift + Clone> Shift for Rc<T> {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        Rc::unwrap_or_clone(self.clone()).shift_in_range(range, by)
+        let mut inner = (**self).clone();
+        inner.shift_in_range(range, by);
+        *self = Rc::new(inner);
     }
 }
 
