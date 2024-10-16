@@ -1,9 +1,20 @@
-use ast::{Codef, Ctor, Decl, Def, Dtor, Ident, Let};
+use ast::{Codef, Ctor, Decl, Def, Dtor, Ident, Let, Named};
 use url::Url;
 
 use crate::Database;
 
-pub fn lookup_decl<'a>(_db: &'a Database, _name: &Ident) -> Option<(Url, &'a Decl)> {
+pub fn lookup_decl<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Decl)> {
+    for uri in db.ust.keys() {
+        match db.ust.get_unless_stale(uri) {
+            Some(Ok(module)) => {
+                if let Some(decl) = module.decls.iter().find(|decl| decl.name() == name) {
+                    return Some((uri.clone(), decl));
+                }
+                continue;
+            }
+            _ => continue,
+        }
+    }
     None
 }
 
