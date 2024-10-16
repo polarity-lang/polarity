@@ -216,6 +216,7 @@ fn lower_args(
                     inferred_type: None,
                     inferred_ctx: None,
                     args,
+                    solution: None,
                 };
 
                 args_out.push(ast::Arg::InsertedImplicitArg(hole));
@@ -454,6 +455,7 @@ impl Lower for cst::exp::Hole {
             inferred_type: None,
             inferred_ctx: None,
             args,
+            solution: None,
         }
         .into())
     }

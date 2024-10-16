@@ -25,6 +25,7 @@ impl CheckInfer for Hole {
             inferred_type: Some(Box::new(t.clone())),
             inferred_ctx: Some(ctx.vars.clone()),
             args,
+            solution: None,
         })
     }
 

@@ -369,6 +369,7 @@ impl Lift for Hole {
             inferred_type: None,
             inferred_ctx: None,
             args: args.clone(),
+            solution: None,
         }
         .into()
     }

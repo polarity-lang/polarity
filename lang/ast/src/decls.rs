@@ -6,7 +6,6 @@ use printer::theme::ThemeExt;
 use printer::tokens::CODATA;
 use printer::tokens::CODEF;
 use printer::tokens::COLON;
-use printer::tokens::COLONEQ;
 use printer::tokens::COMMA;
 use printer::tokens::DATA;
 use printer::tokens::DEF;
@@ -26,6 +25,7 @@ use url::Url;
 use crate::ctx::LevelCtx;
 use crate::named::Named;
 use crate::shift_and_clone;
+use crate::Zonk;
 
 use super::exp::*;
 use super::ident::*;
@@ -430,6 +430,18 @@ impl Print for Decl {
     }
 }
 
+impl Zonk for Decl {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        match self {
+            Decl::Data(data) => data.zonk(meta_vars),
+            Decl::Codata(codata) => codata.zonk(meta_vars),
+            Decl::Def(def) => def.zonk(meta_vars),
+            Decl::Codef(codef) => codef.zonk(meta_vars),
+            Decl::Let(tl_let) => tl_let.zonk(meta_vars),
+        }
+    }
+}
+
 // Data
 //
 //
@@ -476,6 +488,17 @@ impl Print for Data {
         let body = if typ.params.is_empty() { body.group() } else { body };
 
         head.append(body)
+    }
+}
+
+impl Zonk for Data {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        let Data { span: _, doc: _, name: _, attr: _, typ, ctors } = self;
+        typ.zonk(meta_vars)?;
+        for ctor in ctors {
+            ctor.zonk(meta_vars)?;
+        }
+        Ok(())
     }
 }
 
@@ -528,6 +551,17 @@ impl Print for Codata {
     }
 }
 
+impl Zonk for Codata {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        let Codata { span: _, doc: _, name: _, attr: _, typ, dtors } = self;
+        typ.zonk(meta_vars)?;
+        for dtor in dtors {
+            dtor.zonk(meta_vars)?;
+        }
+        Ok(())
+    }
+}
+
 // Ctor
 //
 //
@@ -556,6 +590,15 @@ impl Print for Ctor {
             head.append(print_return_type(&cfg, alloc, typ)).group()
         };
         doc.append(head)
+    }
+}
+
+impl Zonk for Ctor {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        let Ctor { span: _, doc: _, name: _, params, typ } = self;
+        params.zonk(meta_vars)?;
+        typ.zonk(meta_vars)?;
+        Ok(())
     }
 }
 
@@ -589,6 +632,16 @@ impl Print for Dtor {
             .append(print_return_type(cfg, alloc, ret_typ))
             .group();
         doc.append(head)
+    }
+}
+
+impl Zonk for Dtor {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        let Dtor { span: _, doc: _, name: _, params, self_param, ret_typ } = self;
+        params.zonk(meta_vars)?;
+        self_param.zonk(meta_vars)?;
+        ret_typ.zonk(meta_vars)?;
+        Ok(())
     }
 }
 
@@ -646,6 +699,19 @@ impl Print for Def {
     }
 }
 
+impl Zonk for Def {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        let Def { span: _, doc: _, name: _, attr: _, params, self_param, ret_typ, cases } = self;
+        params.zonk(meta_vars)?;
+        self_param.zonk(meta_vars)?;
+        ret_typ.zonk(meta_vars)?;
+        for case in cases {
+            case.zonk(meta_vars)?;
+        }
+        Ok(())
+    }
+}
+
 // Codef
 //
 //
@@ -700,6 +766,18 @@ impl Print for Codef {
     }
 }
 
+impl Zonk for Codef {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        let Codef { span: _, doc: _, name: _, attr: _, params, typ, cases } = self;
+        params.zonk(meta_vars)?;
+        typ.zonk(meta_vars)?;
+        for case in cases {
+            case.zonk(meta_vars)?;
+        }
+        Ok(())
+    }
+}
+
 // Let
 //
 //
@@ -742,6 +820,16 @@ impl Print for Let {
         let body = body.print(cfg, alloc).braces_anno();
 
         doc.append(head).append(alloc.space()).append(body)
+    }
+}
+
+impl Zonk for Let {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        let Let { span: _, doc: _, name: _, attr: _, params, typ, body } = self;
+        params.zonk(meta_vars)?;
+        typ.zonk(meta_vars)?;
+        body.zonk(meta_vars)?;
+        Ok(())
     }
 }
 
@@ -790,6 +878,14 @@ impl Print for SelfParam {
                 .parens(),
             None => typ.print(&cfg, alloc),
         }
+    }
+}
+
+impl Zonk for SelfParam {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        let SelfParam { info: _, name: _, typ } = self;
+        typ.zonk(meta_vars)?;
+        Ok(())
     }
 }
 
@@ -899,6 +995,15 @@ impl Print for Telescope {
             }
         }
         output.append(alloc.line_()).align().parens().group()
+    }
+}
+
+impl Zonk for Telescope {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        for param in &mut self.params {
+            param.zonk(meta_vars)?;
+        }
+        Ok(())
     }
 }
 
@@ -1053,14 +1158,8 @@ impl Print for Param {
     }
 }
 
-impl Print for Arg {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        match self {
-            Arg::UnnamedArg(e) => e.print(cfg, alloc),
-            Arg::NamedArg(i, e) => alloc.text(&i.id).append(COLONEQ).append(e.print(cfg, alloc)),
-            Arg::InsertedImplicitArg(_) => {
-                panic!("Inserted implicit arguments should not be printed")
-            }
-        }
+impl Zonk for Param {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        self.typ.zonk(meta_vars)
     }
 }

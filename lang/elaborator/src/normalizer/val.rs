@@ -574,6 +574,7 @@ impl ReadBack for Hole {
             inferred_type: None,
             inferred_ctx: None,
             args,
+            solution: None,
         })
     }
 }
