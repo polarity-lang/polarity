@@ -1,0 +1,11 @@
+codata Fun(implicit a b: Type) {
+    Fun(a:=a,b:=b).ap(implicit a b: Type, x: a): b
+}
+
+codef Id(implicit a: Type) : Fun(a:=a, b:=a) {
+    .ap(_,_,x) => x
+}
+
+data Top { Unit }
+
+let example: Top { Id.ap(Unit) }

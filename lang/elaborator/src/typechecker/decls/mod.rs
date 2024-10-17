@@ -21,8 +21,15 @@ pub fn check_with_lookup_table(
 
     let mut ctx = Ctx::new(prg.meta_vars.clone(), info_table.clone(), prg.clone());
 
-    let decls =
-        prg.decls.iter().map(|decl| decl.check_wf(&mut ctx)).collect::<Result<_, TypeError>>()?;
+    let mut decls = prg
+        .decls
+        .iter()
+        .map(|decl| decl.check_wf(&mut ctx))
+        .collect::<Result<Vec<_>, TypeError>>()?;
+
+    decls
+        .zonk(&ctx.meta_vars)
+        .map_err(|err| TypeError::Impossible { message: err.to_string(), span: None })?;
 
     ctx.check_metavars_solved()?;
 

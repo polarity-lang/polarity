@@ -1132,6 +1132,7 @@ impl Print for Param {
 
 impl Zonk for Param {
     fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
-        self.typ.zonk(meta_vars)
+        let Param { implicit: _, name: _, typ } = self;
+        typ.zonk(meta_vars)
     }
 }
