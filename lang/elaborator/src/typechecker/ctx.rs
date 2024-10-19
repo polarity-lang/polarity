@@ -40,45 +40,7 @@ impl Ctx {
             module,
         }
     }
-
-    /// Check that there are no unresolved metavariables that remain after typechecking.
-    pub fn check_metavars_solved(&self) -> Result<(), TypeError> {
-        let mut unsolved: HashSet<MetaVar> = HashSet::default();
-        for (var, state) in self.meta_vars.iter() {
-            // We only have to throw an error for unsolved metavars which were either
-            // inserted or are holes `_` which must be solved
-            // Unsolved metavariables that correspond to typed holes `?` do not lead
-            // to an error.
-            if !state.is_solved() && var.must_be_solved() {
-                unsolved.insert(*var);
-            }
-        }
-
-        if !unsolved.is_empty() {
-            Err(TypeError::UnresolvedMetas { message: format!("{:?}", unsolved) })
-        } else {
-            Ok(())
-        }
-    }
-
-    /// Check that there are no must-solve metavariables whose solution references
-    /// other metavariables.
-    pub fn check_metavars_resolved(&self) -> Result<(), TypeError> {
-        for (var, state) in self.meta_vars.iter() {
-            if var.must_be_solved() {
-                let solution = state.solution().unwrap();
-                if solution.contains_metavars() {
-                    return Err(TypeError::Impossible { message:
-                        format!("Metavariable {} must be solved, but its solution references other metavariables", var.id),
-                        span: None,
-                    });
-                }
-            }
-        }
-        Ok(())
-    }
 }
-
 pub trait ContextSubstExt: Sized {
     fn subst<S: Substitution>(&mut self, prg: &Module, s: &S) -> Result<(), TypeError>;
 }

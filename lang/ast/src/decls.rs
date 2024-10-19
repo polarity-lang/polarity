@@ -25,6 +25,7 @@ use url::Url;
 use crate::ctx::LevelCtx;
 use crate::named::Named;
 use crate::shift_and_clone;
+use crate::ContainsMetaVars;
 use crate::Zonk;
 
 use super::exp::*;
@@ -442,6 +443,18 @@ impl Zonk for Decl {
     }
 }
 
+impl ContainsMetaVars for Decl {
+    fn contains_metavars(&self) -> bool {
+        match self {
+            Decl::Data(data) => data.contains_metavars(),
+            Decl::Codata(codata) => codata.contains_metavars(),
+            Decl::Def(def) => def.contains_metavars(),
+            Decl::Codef(codef) => codef.contains_metavars(),
+            Decl::Let(tl_let) => tl_let.contains_metavars(),
+        }
+    }
+}
+
 // Data
 //
 //
@@ -499,6 +512,14 @@ impl Zonk for Data {
             ctor.zonk(meta_vars)?;
         }
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for Data {
+    fn contains_metavars(&self) -> bool {
+        let Data { span: _, doc: _, name: _, attr: _, typ, ctors } = self;
+
+        typ.contains_metavars() || ctors.contains_metavars()
     }
 }
 
@@ -562,6 +583,14 @@ impl Zonk for Codata {
     }
 }
 
+impl ContainsMetaVars for Codata {
+    fn contains_metavars(&self) -> bool {
+        let Codata { span: _, doc: _, name: _, attr: _, typ, dtors } = self;
+
+        typ.contains_metavars() || dtors.contains_metavars()
+    }
+}
+
 // Ctor
 //
 //
@@ -599,6 +628,14 @@ impl Zonk for Ctor {
         params.zonk(meta_vars)?;
         typ.zonk(meta_vars)?;
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for Ctor {
+    fn contains_metavars(&self) -> bool {
+        let Ctor { span: _, doc: _, name: _, params, typ } = self;
+
+        params.contains_metavars() || typ.contains_metavars()
     }
 }
 
@@ -642,6 +679,14 @@ impl Zonk for Dtor {
         self_param.zonk(meta_vars)?;
         ret_typ.zonk(meta_vars)?;
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for Dtor {
+    fn contains_metavars(&self) -> bool {
+        let Dtor { span: _, doc: _, name: _, params, self_param, ret_typ } = self;
+
+        params.contains_metavars() || self_param.contains_metavars() || ret_typ.contains_metavars()
     }
 }
 
@@ -712,6 +757,17 @@ impl Zonk for Def {
     }
 }
 
+impl ContainsMetaVars for Def {
+    fn contains_metavars(&self) -> bool {
+        let Def { span: _, doc: _, name: _, attr: _, params, self_param, ret_typ, cases } = self;
+
+        params.contains_metavars()
+            || self_param.contains_metavars()
+            || ret_typ.contains_metavars()
+            || cases.contains_metavars()
+    }
+}
+
 // Codef
 //
 //
@@ -778,6 +834,14 @@ impl Zonk for Codef {
     }
 }
 
+impl ContainsMetaVars for Codef {
+    fn contains_metavars(&self) -> bool {
+        let Codef { span: _, doc: _, name: _, attr: _, params, typ, cases } = self;
+
+        params.contains_metavars() || typ.contains_metavars() || cases.contains_metavars()
+    }
+}
+
 // Let
 //
 //
@@ -830,6 +894,14 @@ impl Zonk for Let {
         typ.zonk(meta_vars)?;
         body.zonk(meta_vars)?;
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for Let {
+    fn contains_metavars(&self) -> bool {
+        let Let { span: _, doc: _, name: _, attr: _, params, typ, body } = self;
+
+        params.contains_metavars() || typ.contains_metavars() || body.contains_metavars()
     }
 }
 
@@ -886,6 +958,15 @@ impl Zonk for SelfParam {
         let SelfParam { info: _, name: _, typ } = self;
         typ.zonk(meta_vars)?;
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for SelfParam {
+    fn contains_metavars(&self) -> bool {
+        // Info is just a span here
+        let SelfParam { info: _, name: _, typ } = self;
+
+        typ.contains_metavars()
     }
 }
 
@@ -1004,6 +1085,14 @@ impl Zonk for Telescope {
             param.zonk(meta_vars)?;
         }
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for Telescope {
+    fn contains_metavars(&self) -> bool {
+        let Telescope { params } = self;
+
+        params.contains_metavars()
     }
 }
 
@@ -1162,5 +1251,13 @@ impl Zonk for Param {
     fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
         let Param { implicit: _, name: _, typ } = self;
         typ.zonk(meta_vars)
+    }
+}
+
+impl ContainsMetaVars for Param {
+    fn contains_metavars(&self) -> bool {
+        let Param { implicit: _, name: _, typ } = self;
+
+        typ.contains_metavars()
     }
 }
