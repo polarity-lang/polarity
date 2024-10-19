@@ -32,6 +32,7 @@ pub fn check_with_lookup_table(
         .map_err(|err| TypeError::Impossible { message: err.to_string(), span: None })?;
 
     ctx.check_metavars_solved()?;
+    ctx.check_metavars_resolved()?;
 
     Ok(Module {
         uri: prg.uri.clone(),

@@ -60,6 +60,23 @@ impl Ctx {
             Ok(())
         }
     }
+
+    /// Check that there are no must-solve metavariables whose solution references
+    /// other metavariables.
+    pub fn check_metavars_resolved(&self) -> Result<(), TypeError> {
+        for (var, state) in self.meta_vars.iter() {
+            if var.must_be_solved() {
+                let solution = state.solution().unwrap();
+                if solution.contains_metavars() {
+                    return Err(TypeError::Impossible { message:
+                        format!("Metavariable {} must be solved, but its solution references other metavariables", var.id),
+                        span: None,
+                    });
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 pub trait ContextSubstExt: Sized {
