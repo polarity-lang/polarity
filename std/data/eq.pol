@@ -5,9 +5,9 @@ data Eq(implicit a: Type, x y: a) {
 }
 
 -- | Proof of symmetry of equality.
-def Eq(x, y).sym(implicit a: Type, x y: a): Eq(y, x) { Refl(a, x) => Refl(a:=a, x) }
+def Eq(x, y).sym(implicit a: Type, x y: a): Eq(a:=a, y, x) { Refl(a, x) => Refl(a:=a, x) }
 
 -- | Proof of transitivity of equality.
-def Eq(x, y).trans(implicit a: Type, x y z: a, h: Eq(y, z)): Eq(x, z) {
+def Eq(x, y).trans(implicit a: Type, x y z: a, h: Eq(a:=a, y, z)): Eq(a:=a, x, z) {
     Refl(a, x) => h
 }
