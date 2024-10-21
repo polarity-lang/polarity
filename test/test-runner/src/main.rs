@@ -7,6 +7,7 @@ use clap::Parser;
 
 pub const TEST_SUITES_PATH: &str = "test/suites";
 pub const EXAMPLES_PATH: &str = "examples";
+pub const STDLIB_PATH: &str = "std";
 
 /// Polarity Testsuite Runner
 #[derive(Parser)]
@@ -41,7 +42,8 @@ fn main() {
 
     builder.init();
 
-    let runner = runner::Runner::load(crate::TEST_SUITES_PATH, crate::EXAMPLES_PATH);
+    let runner =
+        runner::Runner::load(crate::TEST_SUITES_PATH, crate::EXAMPLES_PATH, crate::STDLIB_PATH);
     let mut res = runner.run(&args);
     if args.update_expected {
         res.update_expected();
