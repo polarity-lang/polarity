@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use ast::ctx::LevelCtx;
 use ast::{occurs_in, Variable};
+use ctx::GenericCtx;
 
 use crate::result::TypeError;
 use crate::unifier::dec::{Dec, No, Yes};
@@ -138,18 +139,12 @@ impl Ctx {
                         }
                         MetaVarState::Unsolved { ctx } => {
                             if is_solvable(h) {
-                                log::trace!(
-                                    "Solved metavariable: {} with solution: {}",
-                                    h.metavar.id,
-                                    e.print_trace()
-                                );
-                                meta_vars.insert(
+                                self.solve_meta_var(
+                                    meta_vars,
                                     h.metavar,
-                                    MetaVarState::Solved {
-                                        ctx: ctx.clone(),
-                                        solution: Box::new(e.clone()),
-                                    },
-                                );
+                                    ctx.clone(),
+                                    Box::new(e.clone()),
+                                )?;
                             } else {
                                 return Err(TypeError::cannot_decide(
                                     &Box::new(Exp::Hole(h.clone())),
@@ -270,6 +265,39 @@ impl Ctx {
     ) -> Result<Dec, TypeError> {
         self.constraints.extend(iter.into_iter().filter(|eqn| !self.done.contains(eqn)));
         Ok(Yes(()))
+    }
+
+    fn solve_meta_var(
+        &mut self,
+        meta_vars: &mut HashMap<MetaVar, MetaVarState>,
+        metavar: MetaVar,
+        ctx: GenericCtx<()>,
+        mut solution: Box<Exp>,
+    ) -> Result<(), TypeError> {
+        log::trace!(
+            "Solved metavariable: {} with solution: {}",
+            metavar.id,
+            solution.print_trace()
+        );
+        solution
+            .zonk(meta_vars)
+            .map_err(|err| TypeError::Impossible { message: err.to_string(), span: None })?;
+        meta_vars.insert(metavar, MetaVarState::Solved { ctx: ctx.clone(), solution });
+        let meta_vars_snapshot = meta_vars.clone();
+        for (_, state) in meta_vars.iter_mut() {
+            match state {
+                MetaVarState::Solved { ctx: _, solution } => {
+                    solution.zonk(&meta_vars_snapshot).map_err(|err| TypeError::Impossible {
+                        message: err.to_string(),
+                        span: None,
+                    })?;
+                }
+                MetaVarState::Unsolved { ctx: _ } => {
+                    // Nothing to do for unsolved metavariables
+                }
+            }
+        }
+        Ok(())
     }
 }
 

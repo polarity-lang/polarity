@@ -15,7 +15,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 use crate::ctx::values::TypeCtx;
 use crate::ctx::{BindContext, LevelCtx};
 use crate::named::Named;
-use crate::{SubstUnderCtx, Zonk, ZonkError};
+use crate::{ContainsMetaVars, SubstUnderCtx, Zonk, ZonkError};
 
 use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
@@ -148,6 +148,16 @@ impl Zonk for Arg {
             Arg::UnnamedArg(e) => e.zonk(meta_vars),
             Arg::NamedArg(_, e) => e.zonk(meta_vars),
             Arg::InsertedImplicitArg(hole) => hole.zonk(meta_vars),
+        }
+    }
+}
+
+impl ContainsMetaVars for Arg {
+    fn contains_metavars(&self) -> bool {
+        match self {
+            Arg::UnnamedArg(e) => e.contains_metavars(),
+            Arg::NamedArg(_, e) => e.contains_metavars(),
+            Arg::InsertedImplicitArg(hole) => hole.contains_metavars(),
         }
     }
 }
@@ -316,6 +326,22 @@ impl Zonk for Exp {
     }
 }
 
+impl ContainsMetaVars for Exp {
+    fn contains_metavars(&self) -> bool {
+        match self {
+            Exp::Variable(variable) => variable.contains_metavars(),
+            Exp::TypCtor(typ_ctor) => typ_ctor.contains_metavars(),
+            Exp::Call(call) => call.contains_metavars(),
+            Exp::DotCall(dot_call) => dot_call.contains_metavars(),
+            Exp::Anno(anno) => anno.contains_metavars(),
+            Exp::TypeUniv(type_univ) => type_univ.contains_metavars(),
+            Exp::LocalMatch(local_match) => local_match.contains_metavars(),
+            Exp::LocalComatch(local_comatch) => local_comatch.contains_metavars(),
+            Exp::Hole(hole) => hole.contains_metavars(),
+        }
+    }
+}
+
 // Variable
 //
 //
@@ -413,8 +439,17 @@ impl Zonk for Variable {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        self.inferred_type.zonk(meta_vars)?;
+        let Variable { span: _, idx: _, name: _, inferred_type } = self;
+        inferred_type.zonk(meta_vars)?;
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for Variable {
+    fn contains_metavars(&self) -> bool {
+        let Variable { span: _, idx: _, name: _, inferred_type } = self;
+
+        inferred_type.contains_metavars()
     }
 }
 
@@ -517,7 +552,16 @@ impl Zonk for TypCtor {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        self.args.zonk(meta_vars)
+        let TypCtor { span: _, name: _, args } = self;
+        args.zonk(meta_vars)
+    }
+}
+
+impl ContainsMetaVars for TypCtor {
+    fn contains_metavars(&self) -> bool {
+        let TypCtor { span: _, name: _, args } = self;
+
+        args.contains_metavars()
     }
 }
 
@@ -623,9 +667,18 @@ impl Zonk for Call {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        self.args.zonk(meta_vars)?;
-        self.inferred_type.zonk(meta_vars)?;
+        let Call { span: _, kind: _, name: _, args, inferred_type } = self;
+        args.zonk(meta_vars)?;
+        inferred_type.zonk(meta_vars)?;
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for Call {
+    fn contains_metavars(&self) -> bool {
+        let Call { span: _, kind: _, name: _, args, inferred_type } = self;
+
+        args.contains_metavars() || inferred_type.contains_metavars()
     }
 }
 
@@ -721,10 +774,19 @@ impl Zonk for DotCall {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        self.exp.zonk(meta_vars)?;
-        self.args.zonk(meta_vars)?;
-        self.inferred_type.zonk(meta_vars)?;
+        let DotCall { span: _, kind: _, exp, name: _, args, inferred_type } = self;
+        exp.zonk(meta_vars)?;
+        args.zonk(meta_vars)?;
+        inferred_type.zonk(meta_vars)?;
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for DotCall {
+    fn contains_metavars(&self) -> bool {
+        let DotCall { span: _, kind: _, exp, name: _, args, inferred_type } = self;
+
+        exp.contains_metavars() || args.contains_metavars() || inferred_type.contains_metavars()
     }
 }
 
@@ -814,10 +876,19 @@ impl Zonk for Anno {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        self.exp.zonk(meta_vars)?;
-        self.typ.zonk(meta_vars)?;
-        self.normalized_type.zonk(meta_vars)?;
+        let Anno { span: _, exp, typ, normalized_type } = self;
+        exp.zonk(meta_vars)?;
+        typ.zonk(meta_vars)?;
+        normalized_type.zonk(meta_vars)?;
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for Anno {
+    fn contains_metavars(&self) -> bool {
+        let Anno { span: _, exp, typ, normalized_type } = self;
+
+        exp.contains_metavars() || typ.contains_metavars() || normalized_type.contains_metavars()
     }
 }
 
@@ -906,6 +977,12 @@ impl Zonk for TypeUniv {
     ) -> Result<(), ZonkError> {
         // TypeUniv has no fields that require zonking
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for TypeUniv {
+    fn contains_metavars(&self) -> bool {
+        false
     }
 }
 
@@ -1010,13 +1087,29 @@ impl Zonk for LocalMatch {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        self.on_exp.zonk(meta_vars)?;
-        self.motive.zonk(meta_vars)?;
-        self.ret_typ.zonk(meta_vars)?;
-        for case in &mut self.cases {
+        let LocalMatch { span: _, ctx: _, name: _, on_exp, motive, ret_typ, cases, inferred_type } =
+            self;
+        on_exp.zonk(meta_vars)?;
+        motive.zonk(meta_vars)?;
+        ret_typ.zonk(meta_vars)?;
+        inferred_type.zonk(meta_vars)?;
+        for case in cases {
             case.zonk(meta_vars)?;
         }
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for LocalMatch {
+    fn contains_metavars(&self) -> bool {
+        let LocalMatch { span: _, ctx: _, name: _, on_exp, motive, ret_typ, cases, inferred_type } =
+            self;
+
+        on_exp.contains_metavars()
+            || motive.contains_metavars()
+            || ret_typ.contains_metavars()
+            || cases.contains_metavars()
+            || inferred_type.contains_metavars()
     }
 }
 
@@ -1115,10 +1208,22 @@ impl Zonk for LocalComatch {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        for case in &mut self.cases {
+        let LocalComatch { span: _, ctx: _, name: _, is_lambda_sugar: _, cases, inferred_type } =
+            self;
+        inferred_type.zonk(meta_vars)?;
+        for case in cases {
             case.zonk(meta_vars)?;
         }
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for LocalComatch {
+    fn contains_metavars(&self) -> bool {
+        let LocalComatch { span: _, ctx: _, name: _, is_lambda_sugar: _, cases, inferred_type } =
+            self;
+
+        cases.contains_metavars() || inferred_type.contains_metavars()
     }
 }
 
@@ -1235,24 +1340,54 @@ impl Print for Hole {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: Precedence,
+        prec: Precedence,
     ) -> Builder<'a> {
         match self.kind {
             MetaVarKind::MustSolve => {
+                let mut doc = alloc.keyword(UNDERSCORE);
+
                 if cfg.print_metavar_ids {
-                    alloc.text(format!("_{}", self.metavar.id))
-                } else {
-                    alloc.keyword(UNDERSCORE)
+                    doc = doc.append(self.metavar.id.to_string());
                 }
+
+                if let Some(solution) = &self.solution {
+                    doc = doc.append("<").append(solution.print_prec(cfg, alloc, prec)).append(">")
+                }
+
+                doc
             }
             MetaVarKind::CanSolve => {
+                let mut doc = alloc.keyword(QUESTION_MARK);
+
                 if cfg.print_metavar_ids {
-                    alloc.text(format!("?{}", self.metavar.id))
-                } else {
-                    alloc.keyword(QUESTION_MARK)
+                    doc = doc.append(self.metavar.id.to_string());
                 }
+
+                if let Some(solution) = &self.solution {
+                    doc = doc.append("<").append(solution.print_prec(cfg, alloc, prec)).append(">")
+                }
+
+                doc
             }
-            MetaVarKind::Inserted => alloc.text(format!("<Inserted>{}", self.metavar.id)),
+            MetaVarKind::Inserted => {
+                let mut doc = alloc.nil();
+
+                if cfg.print_metavar_ids {
+                    doc = doc.append(self.metavar.id.to_string());
+                }
+
+                match &self.solution {
+                    Some(solution) => {
+                        doc = doc
+                            .append("<")
+                            .append(solution.print_prec(cfg, alloc, prec))
+                            .append(">")
+                    }
+                    None => doc = doc.append("<Inserted>"),
+                }
+
+                doc
+            }
         }
     }
 }
@@ -1275,6 +1410,18 @@ impl Zonk for Hole {
         }
 
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for Hole {
+    fn contains_metavars(&self) -> bool {
+        let Hole { span: _, kind: _, metavar, inferred_type, inferred_ctx: _, args, solution } =
+            self;
+
+        inferred_type.contains_metavars()
+            || args.contains_metavars()
+            || solution.contains_metavars()
+            || metavar.must_be_solved() && solution.is_none()
     }
 }
 
@@ -1306,7 +1453,8 @@ impl Zonk for Pattern {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        self.params.zonk(meta_vars)
+        let Pattern { is_copattern: _, name: _, params } = self;
+        params.zonk(meta_vars)
     }
 }
 
@@ -1375,8 +1523,9 @@ impl Zonk for Case {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        self.pattern.zonk(meta_vars)?;
-        self.body.zonk(meta_vars)?;
+        let Case { span: _, pattern, body } = self;
+        pattern.zonk(meta_vars)?;
+        body.zonk(meta_vars)?;
         Ok(())
     }
 }
@@ -1401,6 +1550,14 @@ pub fn print_cases<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) 
                 .append(alloc.hardline())
                 .braces_anno()
         }
+    }
+}
+
+impl ContainsMetaVars for Case {
+    fn contains_metavars(&self) -> bool {
+        let Case { span: _, pattern: _, body } = self;
+
+        body.contains_metavars()
     }
 }
 
@@ -1440,10 +1597,20 @@ impl Zonk for TelescopeInst {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        for param in &mut self.params {
+        let TelescopeInst { params } = self;
+
+        for param in params {
             param.zonk(meta_vars)?;
         }
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for TelescopeInst {
+    fn contains_metavars(&self) -> bool {
+        let TelescopeInst { params } = self;
+
+        params.contains_metavars()
     }
 }
 
@@ -1483,8 +1650,19 @@ impl Zonk for ParamInst {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        self.typ.zonk(meta_vars)?;
+        let ParamInst { span: _, info, name: _, typ } = self;
+
+        info.zonk(meta_vars)?;
+        typ.zonk(meta_vars)?;
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for ParamInst {
+    fn contains_metavars(&self) -> bool {
+        let ParamInst { span: _, info, name: _, typ } = self;
+
+        info.contains_metavars() || typ.contains_metavars()
     }
 }
 
@@ -1555,10 +1733,20 @@ impl Zonk for Args {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        for arg in &mut self.args {
+        let Args { args } = self;
+
+        for arg in args {
             arg.zonk(meta_vars)?;
         }
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for Args {
+    fn contains_metavars(&self) -> bool {
+        let Args { args } = self;
+
+        args.contains_metavars()
     }
 }
 
@@ -1619,8 +1807,17 @@ impl Zonk for Motive {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        self.param.zonk(meta_vars)?;
-        self.ret_typ.zonk(meta_vars)?;
+        let Motive { span: _, param, ret_typ } = self;
+        param.zonk(meta_vars)?;
+        ret_typ.zonk(meta_vars)?;
         Ok(())
+    }
+}
+
+impl ContainsMetaVars for Motive {
+    fn contains_metavars(&self) -> bool {
+        let Motive { span: _, param, ret_typ } = self;
+
+        param.contains_metavars() || ret_typ.contains_metavars()
     }
 }
