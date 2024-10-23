@@ -9,7 +9,7 @@ use printer::tokens::{
     ABSURD, ARROW, AS, COLON, COLONEQ, COMATCH, COMMA, DOT, FAT_ARROW, MATCH, QUESTION_MARK, TYPE,
     UNDERSCORE,
 };
-use printer::util::{BackslashExt, BracesExt, IsNilExt};
+use printer::util::{BackslashExt, BracesExt};
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::values::TypeCtx;
@@ -793,9 +793,7 @@ impl Print for DotCall {
         let mut dtor: &Exp = &self.exp;
         while let Exp::DotCall(DotCall { exp, name, args, .. }) = &dtor {
             let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-            if !dtors_group.is_nil() {
-                dtors_group = alloc.line_().append(dtors_group);
-            }
+            dtors_group = alloc.line_().append(dtors_group);
             dtors_group =
                 alloc.text(DOT).append(alloc.dtor(&name.id)).append(psubst).append(dtors_group);
             dtor = exp;
