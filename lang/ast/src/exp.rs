@@ -9,7 +9,7 @@ use printer::tokens::{
     ABSURD, ARROW, AS, COLON, COLONEQ, COMATCH, COMMA, DOT, FAT_ARROW, MATCH, QUESTION_MARK, TYPE,
     UNDERSCORE,
 };
-use printer::util::{BackslashExt, BracesExt, IsNilExt};
+use printer::util::{BackslashExt, BracesExt};
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::values::TypeCtx;
@@ -281,23 +281,7 @@ impl Print for Exp {
             Exp::Variable(e) => e.print_prec(cfg, alloc, prec),
             Exp::TypCtor(e) => e.print_prec(cfg, alloc, prec),
             Exp::Call(e) => e.print_prec(cfg, alloc, prec),
-            mut dtor @ Exp::DotCall(DotCall { .. }) => {
-                // A series of destructors forms an aligned group
-                let mut dtors_group = alloc.nil();
-                while let Exp::DotCall(DotCall { exp, name, args, .. }) = &dtor {
-                    let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-                    if !dtors_group.is_nil() {
-                        dtors_group = alloc.line_().append(dtors_group);
-                    }
-                    dtors_group = alloc
-                        .text(DOT)
-                        .append(alloc.dtor(&name.id))
-                        .append(psubst)
-                        .append(dtors_group);
-                    dtor = exp;
-                }
-                dtor.print(cfg, alloc).append(dtors_group.align().group())
-            }
+            Exp::DotCall(e) => e.print_prec(cfg, alloc, prec),
             Exp::Anno(e) => e.print_prec(cfg, alloc, prec),
             Exp::TypeUniv(e) => e.print_prec(cfg, alloc, prec),
             Exp::LocalMatch(e) => e.print_prec(cfg, alloc, prec),
@@ -790,6 +774,33 @@ impl ContainsMetaVars for DotCall {
     }
 }
 
+impl Print for DotCall {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        // A series of destructors forms an aligned group
+        let mut dtors_group = alloc.nil();
+
+        // First DotCall
+        let psubst = if self.args.is_empty() { alloc.nil() } else { self.args.print(cfg, alloc) };
+        dtors_group =
+            alloc.text(DOT).append(alloc.dtor(&self.name.id)).append(psubst).append(dtors_group);
+
+        // Remaining DotCalls
+        let mut dtor: &Exp = &self.exp;
+        while let Exp::DotCall(DotCall { exp, name, args, .. }) = &dtor {
+            let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
+            dtors_group = alloc.line_().append(dtors_group);
+            dtors_group =
+                alloc.text(DOT).append(alloc.dtor(&name.id)).append(psubst).append(dtors_group);
+            dtor = exp;
+        }
+        dtor.print(cfg, alloc).append(dtors_group.align().group())
+    }
+}
 // Anno
 //
 //
