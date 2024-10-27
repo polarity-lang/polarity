@@ -25,7 +25,7 @@ The CST therefore does not have separate constructors for variables and function
 Lowering is the process of taking the *concrete syntax tree* that is the result from parsing and turning it into an *abstract syntax tree* (defined in `lang/ast/`) that is used in all later stages of the compiler.
 Here is what happens during lowering:
 
-- The binding structure is recorded using DeBruijn indices instead of a named representation. We do not, however, forget the original names that were written by the programmer, because these names are important when we generate error messages.
+- The binding structure is recorded using De Bruijn indices instead of a named representation. We do not, however, forget the original names that were written by the programmer, because these names are important when we generate error messages.
 - The concrete syntax tree cannot distinguish whether `F(e1,e2,e3)` refers to a constructor, a codefinition or a let-bound definition. In the abstract syntax tree we can distinguish these three different cases and annotate the syntax nodes accordingly.
 - We record whether a symbol is defined in the local module, or whether it is imported from another module.
 - We throw errors if a symbol is declared multiple times in the same module, or if the number of arguments to a a call is not consistent with the arity of that call.
@@ -33,7 +33,7 @@ Here is what happens during lowering:
 
 In order to make the lowering transformation possible we first have to generate symbol tables for the module we are lowering and for all imported modules.
 The symbol table for a module contains information about all names that are defined on the toplevel of that module.
-These names include typeconstructors, constructors and destructors introduced in data and codata declarations, as well as toplevel definitions, codefinitions and let-bound definitions.
+These names include type constructors, constructors and destructors introduced in data and codata declarations, as well as toplevel definitions, codefinitions and let-bound definitions.
 With each such name we record its arity: The arity consists in the number of required arguments, as well as the presence of implicit arguments.
 All the code which concerns symbol tables is contained in the `lang/lowering/src/symbol_table` subdirectory.
 The driver is responsible for computing the symbol tables of the module and all imported modules and to make them available during lowering.
