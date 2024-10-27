@@ -25,7 +25,7 @@ The CST therefore does not have separate constructors for variables and function
 Lowering is the process of taking the *concrete syntax tree* that is the result from parsing and turning it into an *abstract syntax tree* (defined in `lang/ast/`) that is used in all later stages of the compiler.
 Here is what happens during lowering:
 
-- The binding structure is recorded using DeBruijn indizes instead of a named representation. We do not, however, forget the original names that were written by the programmer, because these names are important when we generate error messages.
+- The binding structure is recorded using DeBruijn indices instead of a named representation. We do not, however, forget the original names that were written by the programmer, because these names are important when we generate error messages.
 - The concrete syntax tree cannot distinguish whether `F(e1,e2,e3)` refers to a constructor, a codefinition or a let-bound definition. In the abstract syntax tree we can distinguish these three different cases and annotate the syntax nodes accordingly.
 - We record whether a symbol is defined in the local module, or whether it is imported from another module.
 - We throw errors if a symbol is declared multiple times in the same module, or if the number of arguments to a a call is not consistent with the arity of that call.
@@ -57,7 +57,7 @@ Again, it is the responsibility of the driver to first compute the type info tab
 
 The compiler driver, defined in `lang/driver`, contains the logic for orchestrating the interplay between parsing, lowering and typechecking, and is also responsible for making code actions available that can then be served by the LSP server to clients.
 Because we implement such a language server which gives live feedback to the programmer we cannot use the architecture of a batch compiler for our implementation.
-Instead, we use the architecture of a demand-driven build system, where we have "build recipes" for building different artefacts (such as the lowered ast, typechecked ast, symbol table, type info table, etc) for each module. These recipes can then invoke other recipes to build the artifacts that they depend on.
+Instead, we use the architecture of a demand-driven build tool, where we have "build recipes" for building different artifacts (such as the lowered ast, typechecked ast, symbol table, type info table, etc) for each module. These recipes can then invoke other recipes to build the artifacts that they depend on.
 For example, the recipe for lowering a module will invoke the recipe for computing the symbol table.
 Artifacts are then cached inside an in-memory database and only invalidated if the file itself or one of its dependencies changes.
 
@@ -75,6 +75,6 @@ We have chosen this architecture to keep the design more modular.
 
 There are three binaries which use the logic defined in the `lang/` subdirectory.
 
-- The `pol` CLI which allows to use the language on the command line is defined in the `app` directory. That directory contains all the logic for parsing command line arguments and executing the desired actions. This binary should not contain complicated logic involving compilation; this logic should be implemented in `lang/driver` instead.
+- The `pol` CLI which allows to use the language on the command-line is defined in the `app` directory. That directory contains all the logic for parsing command-line arguments and executing the desired actions. This binary should not contain complicated logic involving compilation; this logic should be implemented in `lang/driver` instead.
 - The testsuite runner defined in the `test/test-runner` directory. This testsuite runner directly instantiates a driver session and uses this session to test various stages of the compiler separately.
 - The webdemo defined in the `web` directory which is served on [polarity-lang.github.io](polarity-lang.github.io). The webdemo is built by compiling the core logic to web assembly using the Rust web assembly backend. The webdemo then runs entirely in the browser of the client.
