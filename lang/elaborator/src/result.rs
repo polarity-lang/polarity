@@ -35,6 +35,8 @@ pub enum TypeError {
         lhs_span: Option<SourceSpan>,
         #[label("Source of (2)")]
         rhs_span: Option<SourceSpan>,
+        #[label("While elaborating")]
+        reason_span: Option<SourceSpan>,
     },
     #[error("Cannot match on codata type {name}")]
     #[diagnostic(code("T-003"))]
@@ -135,6 +137,8 @@ pub enum TypeError {
         lhs_span: Option<SourceSpan>,
         #[label]
         rhs_span: Option<SourceSpan>,
+        #[label("While elaborating")]
+        reason_span: Option<SourceSpan>,
     },
     #[error("The following metavariables were not solved: {message}")]
     #[diagnostic(code("T-017"))]
@@ -157,12 +161,13 @@ pub enum TypeError {
 }
 
 impl TypeError {
-    pub fn not_eq(lhs: &Exp, rhs: &Exp) -> Self {
+    pub fn not_eq(reason: &Option<Span>, lhs: &Exp, rhs: &Exp) -> Self {
         Self::NotEq {
             lhs: lhs.print_to_string(None),
             rhs: rhs.print_to_string(None),
             lhs_span: lhs.span().to_miette(),
             rhs_span: rhs.span().to_miette(),
+            reason_span: reason.to_miette(),
         }
     }
 
@@ -203,12 +208,13 @@ impl TypeError {
         Self::UnsupportedAnnotation { exp: exp.print_to_string(None), span: exp.span().to_miette() }
     }
 
-    pub fn cannot_decide(lhs: &Exp, rhs: &Exp) -> Self {
+    pub fn cannot_decide(lhs: &Exp, rhs: &Exp, reason: &Option<Span>) -> Self {
         Self::CannotDecide {
             lhs: lhs.print_to_string(None),
             rhs: rhs.print_to_string(None),
             lhs_span: lhs.span().to_miette(),
             rhs_span: rhs.span().to_miette(),
+            reason_span: reason.to_miette(),
         }
     }
 }

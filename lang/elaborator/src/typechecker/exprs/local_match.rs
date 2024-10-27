@@ -5,6 +5,7 @@ use std::collections::HashSet;
 use ast::ctx::values::Binder;
 use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
+use codespan::Span;
 use miette_util::ToMiette;
 
 use crate::normalizer::env::ToEnv;
@@ -61,7 +62,7 @@ impl CheckInfer for LocalMatch {
                 let mut motive_t = ret_typ.subst(&mut subst_ctx, &subst);
                 motive_t.shift((-1, 0));
                 let motive_t_nf = motive_t.normalize(&ctx.type_info_table, &mut ctx.env())?;
-                convert(subst_ctx, &mut ctx.meta_vars, motive_t_nf, t)?;
+                convert(subst_ctx, &mut ctx.meta_vars, motive_t_nf, t, span)?;
 
                 body_t = ctx.bind_single(&self_binder, |ctx| {
                     ret_typ.normalize(&ctx.type_info_table, &mut ctx.env())
@@ -86,7 +87,7 @@ impl CheckInfer for LocalMatch {
 
         let ws = WithScrutinee { cases, scrutinee: typ_app_nf.clone() };
         ws.check_exhaustiveness(ctx)?;
-        let cases = ws.check_ws(ctx, &body_t)?;
+        let cases = ws.check_ws(ctx, &body_t, span)?;
 
         Ok(LocalMatch {
             span: *span,
@@ -148,7 +149,12 @@ impl<'a> WithScrutinee<'a> {
         Ok(())
     }
 
-    pub fn check_ws(&self, ctx: &mut Ctx, t: &Exp) -> Result<Vec<Case>, TypeError> {
+    pub fn check_ws(
+        &self,
+        ctx: &mut Ctx,
+        t: &Exp,
+        reason: &Option<Span>,
+    ) -> Result<Vec<Case>, TypeError> {
         let WithScrutinee { cases, .. } = &self;
 
         let cases: Vec<_> = cases.to_vec();
@@ -215,12 +221,13 @@ impl<'a> WithScrutinee<'a> {
 
                     let body_out = match body {
                         Some(body) => {
-                            let unif = unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
-                                .map_no(|()| TypeError::PatternIsAbsurd {
-                                    name: Box::new(name.clone()),
-                                    span: span.to_miette(),
-                                })
-                                .ok_yes()?;
+                            let unif =
+                                unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, reason)?
+                                    .map_no(|()| TypeError::PatternIsAbsurd {
+                                        name: Box::new(name.clone()),
+                                        span: span.to_miette(),
+                                    })
+                                    .ok_yes()?;
 
                             ctx.fork::<Result<_, TypeError>, _>(|ctx| {
                                 let type_info_table = ctx.type_info_table.clone();
@@ -237,7 +244,7 @@ impl<'a> WithScrutinee<'a> {
                             })?
                         }
                         None => {
-                            unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
+                            unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, reason)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                     name: Box::new(name.clone()),
                                     span: span.to_miette(),

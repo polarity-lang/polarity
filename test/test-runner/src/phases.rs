@@ -364,10 +364,10 @@ impl Phase for Xfunc {
             let new_source = db.edited(uri, xfunc_out.edits);
             db.write_source(&new_uri, &new_source.to_string())?;
             db.ast(&new_uri).map_err(|err| {
-                driver::Error::Type(elaborator::result::TypeError::Impossible {
+                driver::Error::Type(Box::new(elaborator::result::TypeError::Impossible {
                     message: format!("Failed to xfunc {type_name}: {err}"),
                     span: None,
-                })
+                }))
             })?;
         }
 

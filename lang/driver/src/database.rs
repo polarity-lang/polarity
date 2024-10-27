@@ -236,7 +236,7 @@ impl Database {
         let ust = self.ust(uri).map(|x| (*x).clone())?;
         let ast = elaborator::typechecker::check_with_lookup_table(Rc::new(ust), &info_table)
             .map(Arc::new)
-            .map_err(Error::Type);
+            .map_err(|arg| Error::Type(Box::new(arg)));
         self.ast.insert(uri.clone(), ast.clone());
         ast
     }
@@ -379,8 +379,8 @@ impl Database {
 
         match main {
             Some(exp) => {
-                let nf = exp.normalize_in_empty_env(&Rc::new(info_table))?;
-                Ok(Some(nf))
+                let nf = exp.normalize_in_empty_env(&Rc::new(info_table));
+                nf.map(Some).map_err(|type_err| Error::Type(Box::new(type_err)))
             }
             None => Ok(None),
         }
