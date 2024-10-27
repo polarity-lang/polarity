@@ -79,6 +79,7 @@ impl Exp {
 }
 
 #[derive(Debug, Clone)]
+/// Either a constructor or call of a toplevel let or a variable
 pub struct Call {
     pub span: Span,
     pub name: Ident,
@@ -86,6 +87,7 @@ pub struct Call {
 }
 
 #[derive(Debug, Clone)]
+/// Something of the form a.b or a.b(c, ..)
 pub struct DotCall {
     pub span: Span,
     pub exp: Box<Exp>,
@@ -94,6 +96,7 @@ pub struct DotCall {
 }
 
 #[derive(Debug, Clone)]
+/// Type annotations like e : e
 pub struct Anno {
     pub span: Span,
     pub exp: Box<Exp>,
@@ -101,11 +104,13 @@ pub struct Anno {
 }
 
 #[derive(Debug, Clone)]
+/// The Type universe (Type in Type)
 pub struct TypeUniv {
     pub span: Span,
 }
 
 #[derive(Debug, Clone)]
+/// Pattern match, e.g. expr.match { A => .., ..}
 pub struct LocalMatch {
     pub span: Span,
     pub name: Option<Ident>,
@@ -115,6 +120,7 @@ pub struct LocalMatch {
 }
 
 #[derive(Debug, Clone)]
+/// Copattern match, e.g. comatch { .x(a, ..) => .. }
 pub struct LocalComatch {
     pub span: Span,
     pub name: Option<Ident>,
@@ -137,12 +143,14 @@ pub struct Hole {
 }
 
 #[derive(Debug, Clone)]
+/// Literal for a natural number
 pub struct NatLit {
     pub span: Span,
     pub val: BigUint,
 }
 
 #[derive(Debug, Clone)]
+/// Function arrow in syntax
 pub struct Fun {
     pub span: Span,
     pub from: Box<Exp>,
@@ -150,6 +158,7 @@ pub struct Fun {
 }
 
 #[derive(Debug, Clone)]
+/// Lambda abstractions \x. e
 pub struct Lam {
     pub span: Span,
     pub var: BindingSite,
