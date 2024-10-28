@@ -11,7 +11,7 @@ The core logic of the compiler, that is, all the relevant compiler intermediate 
 
 The syntax of polarity is not whitespace sensitive and is analyzed using a generated lexer and parser.
 All code related to lexing and parsing, as well as the datatypes used to represent a parsed syntax tree, live in the `lang/parser` subdirectory as part of the `parser` crate.
-The lexer is generated with the help from the [logos](https://docs.rs/logos/latest/logos/) crate, and the specification of Tokens and the lexer lives in `lang/parser/src/lexer/mod.rs`.
+The lexer is generated with the help of the [logos](https://docs.rs/logos/latest/logos/) crate, and the specification of tokens and the lexer lives in `lang/parser/src/lexer/mod.rs`.
 The parser is generated using the [lalrpop](https://lalrpop.github.io/lalrpop/) parser generator, and specified in `lang/parser/src/grammar/cst.lalrpop`.
 The generated parser annotates (almost) all syntax nodes with information about the source span, since this information is needed for error messages and the LSP implementation.
 
@@ -32,7 +32,7 @@ Here is what happens during lowering:
 - We generate fresh unsolved metavariables for every occurrence of a typed hole `_` or `?`, and for every implicit argument that is not passed explicitly.
 
 In order to make the lowering transformation possible we first have to generate symbol tables for the module we are lowering and for all imported modules.
-The symbol table for a module contains information about all names that are defined on the toplevel of that module.
+The symbol table for a module contains information about all names that are defined at the toplevel of that module.
 These names include type constructors, constructors and destructors introduced in data and codata declarations, as well as toplevel definitions, codefinitions and let-bound definitions.
 With each such name we record its arity: The arity consists in the number of required arguments, as well as the presence of implicit arguments.
 All the code which concerns symbol tables is contained in the `lang/lowering/src/symbol_table` subdirectory.
