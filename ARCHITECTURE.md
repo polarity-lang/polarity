@@ -26,7 +26,7 @@ Lowering is the process of taking the *concrete syntax tree* that is the result 
 Here is what happens during lowering:
 
 - The binding structure is recorded using De Bruijn indices instead of a named representation. We do not, however, forget the original names that were written by the programmer, because these names are important when we generate error messages.
-- The concrete syntax tree cannot distinguish whether `F(e1,e2,e3)` refers to a constructor, a codefinition or a let-bound definition. In the abstract syntax tree we can distinguish these three different cases and annotate the syntax nodes accordingly.
+- While we cannot distinguish whether `F(e1,e2,e3)` refers to a constructor, a codefinition or a let-bound definition in the concrete syntax tree, we do distinguish these three different cases in the abstract syntax tree and annotate the syntax nodes accordingly.
 - We record whether a symbol is defined in the local module, or whether it is imported from another module.
 - We throw errors if a symbol is declared multiple times in the same module, or if the number of arguments to a a call is not consistent with the arity of that call.
 - We generate fresh unsolved metavariables for every occurrence of a typed hole `_` or `?`, and for every implicit argument that is not passed explicitly.
