@@ -173,7 +173,7 @@ impl Substitutable for Args {
 
 impl Print for Args {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        if self.args.is_empty() {
+        if self.args.iter().filter(|x| !x.is_inserted_implicit()).peekable().peek().is_none() {
             return alloc.nil();
         }
 
@@ -220,7 +220,7 @@ impl ContainsMetaVars for Args {
 mod args_tests {
     use printer::Print;
 
-    use crate::{Arg, Call, CallKind, Ident};
+    use crate::{Arg, Call, CallKind, Exp, Hole, Ident, MetaVarKind};
 
     use super::Args;
 
@@ -232,18 +232,44 @@ mod args_tests {
 
     #[test]
     fn print_unnamed_args() {
-        let args = Args {
-            args: vec![Arg::UnnamedArg(Box::new(
-                Call {
-                    span: None,
-                    kind: CallKind::Constructor,
-                    name: Ident::from_string("T"),
-                    args: Args { args: vec![] },
-                    inferred_type: None,
-                }
-                .into(),
-            ))],
+        let ctor: Box<Exp> = Box::new(
+            Call {
+                span: None,
+                kind: CallKind::Constructor,
+                name: Ident::from_string("T"),
+                args: Args { args: vec![] },
+                inferred_type: None,
+            }
+            .into(),
+        );
+
+        assert_eq!(
+            Args { args: vec![Arg::UnnamedArg(ctor.clone())] }.print_to_string(Default::default()),
+            "(T)".to_string()
+        );
+
+        assert_eq!(
+            Args { args: vec![Arg::UnnamedArg(ctor.clone()), Arg::UnnamedArg(ctor)] }
+                .print_to_string(Default::default()),
+            "(T, T)".to_string()
+        )
+    }
+
+    #[test]
+    fn print_implicit_inserted_args() {
+        let hole: Hole = Hole {
+            span: None,
+            kind: MetaVarKind::Inserted,
+            metavar: crate::MetaVar { kind: crate::MetaVarKind::Inserted, id: 42 },
+            inferred_type: None,
+            inferred_ctx: None,
+            args: vec![],
+            solution: None,
         };
-        assert_eq!(args.print_to_string(Default::default()), "(T)".to_string())
+
+        assert_eq!(
+            Args { args: vec![Arg::InsertedImplicitArg(hole)] }.print_to_string(Default::default()),
+            "".to_string()
+        )
     }
 }
