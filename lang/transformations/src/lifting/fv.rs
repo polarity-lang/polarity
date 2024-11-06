@@ -348,13 +348,13 @@ struct NewVar {
 }
 
 /// Substitution in the body of the new definition
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FVBodySubst<'a> {
     inner: &'a FVSubst,
 }
 
 /// Substitution in the type parameters of the new definition
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FVParamSubst<'a> {
     inner: &'a FVSubst,
 }
