@@ -1,9 +1,9 @@
 -- | The codata type of infinite streams.
-codata Stream(a: Type)  {
+codata Stream(a: Type) {
     -- | The head observation which yields the first element.
-    Stream(a).hd(a: Type) : a,
+    Stream(a).hd(a: Type): a,
     -- | The tail observation which yields the remainder of the stream.
-    Stream(a).tl(a: Type) : Stream(a),
+    Stream(a).tl(a: Type): Stream(a)
 }
 
 -- | An infinite stream which repeats the argument.

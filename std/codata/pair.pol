@@ -1,13 +1,13 @@
 -- | The codata type of pairs defined by a first and second projection.
 codata Pair(a b: Type) {
     -- | First projection on a pair.
-    Pair(a,b).fst(a b: Type) : a,
+    Pair(a, b).fst(a b: Type): a,
     -- | Second projection on a pair.
-    Pair(a,b).snd(a b: Type) : b,
+    Pair(a, b).snd(a b: Type): b
 }
 
 -- | Constructing an element of the pair type.
-codef MkPair(a b: Type, x: a, y: b) : Pair(a,b) {
-    .fst(_,_) => x,
-    .snd(_,_) => y,
+codef MkPair(a b: Type, x: a, y: b): Pair(a, b) {
+    .fst(_, _) => x,
+    .snd(_, _) => y
 }

@@ -1,19 +1,16 @@
-data Nat {
-    Z,
-    S(n: Nat)
-}
+data Nat { Z, S(n: Nat) }
 
 data Option(a: Type) {
-    None(a: Type) : Option(a),
-    Some(a: Type, x: a) : Option(a)
+    None(a: Type): Option(a),
+    Some(a: Type, x: a): Option(a)
 }
 
 data List(a: Type) {
-    Nil(a: Type) : List(a),
-    Cons(a: Type, x: a, xs: List(a)) : List(a)
+    Nil(a: Type): List(a),
+    Cons(a: Type, x: a, xs: List(a)): List(a)
 }
 
-def List(a).head(a: Type) : Option(a) {
+def List(a).head(a: Type): Option(a) {
     Nil(a) => None(a),
     Cons(a, x, xs) => Some(a, x)
 }

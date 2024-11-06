@@ -1,39 +1,30 @@
-data Nat {
-    Z,
-    S(n: Nat)
+data Nat { Z, S(n: Nat) }
+
+data Bool { T, F }
+
+def Bool.not: Bool {
+    T => F,
+    F => T
 }
 
-data Bool {
-    True,
-    False
+def Bool.if_then_else(a: Type, then else: a): a {
+    T => then,
+    F => else
 }
 
-def Bool.not() : Bool {
-    True => False,
-    False => True
+codata Stream { .head: Nat, .tail: Stream }
+
+codef Zeroes: Stream {
+    .head => Z,
+    .tail => Zeroes
 }
 
-def Bool.if_then_else(a: Type, then: a, else: a) : a {
-    True => then,
-    False => else
+codef Ones: Stream {
+    .head => S(Z),
+    .tail => Ones
 }
 
-codata Stream {
-    .head : Nat,
-    .tail : Stream,
-}
-
-codef Zeroes() : Stream {
-    .head() => Z,
-    .tail() => Zeroes()
-}
-
-codef Ones() : Stream {
-    .head() => S(Z),
-    .tail() => Ones()
-}
-
-codef Alternate(choose: Bool) : Stream {
-    .head() => choose.if_then_else(Nat, S(Z), Z),
-    .tail() => Alternate(choose.not())
+codef Alternate(choose: Bool): Stream {
+    .head => choose.if_then_else(Nat, S(Z), Z),
+    .tail => Alternate(choose.not)
 }

@@ -1,41 +1,37 @@
-data Nat {
-    Z,
-    S(n: Nat),
-}
+data Nat { Z, S(n: Nat) }
 
-data Bool { True, False }
+data Bool { T, F }
 
-codata Pair(a: Type, b: Type) {
-    Pair(a,b).proj1(a : Type, b : Type) : a,
-    Pair(a,b).proj2(a : Type, b : Type) : b
+codata Pair(a b: Type) {
+    Pair(a, b).proj1(a b: Type): a,
+    Pair(a, b).proj2(a b: Type): b
 }
 
 data Vec(n: Nat) {
-    Nil : Vec(Z),
-    Cons(n: Nat, x: Bool, xs: Vec(n)) : Vec(S(n)),
+    Nil: Vec(Z),
+    Cons(n: Nat, x: Bool, xs: Vec(n)): Vec(S(n))
 }
 
-def Vec(S(n)).head(n: Nat) : Bool {
+def Vec(S(n)).head(n: Nat): Bool {
     Cons(n', x, xs) => x,
-    Nil absurd,
+    Nil absurd
 }
 
-def Vec(S(n)).tail(n: Nat) : Vec(n) {
+def Vec(S(n)).tail(n: Nat): Vec(n) {
     Cons(n', x, xs) => xs,
-    Nil absurd,
+    Nil absurd
 }
 
 codata Buffer(n: Nat) {
     Buffer(S(n)).read(n: Nat): Pair(Bool, Buffer(n))
 }
 
-codef Empty: Buffer(Z) {
-    .read(n) absurd,
-}
+codef Empty: Buffer(Z) { .read(n) absurd }
 
 codef FromVec(n: Nat, xs: Vec(n)): Buffer(n) {
-    .read(n') => comatch {
-        .proj1(_, _) => xs.head(n'),
-        .proj2(_, _) => FromVec(n', xs.tail(n'))
-    }
+    .read(n') =>
+        comatch {
+            .proj1(_, _) => xs.head(n'),
+            .proj2(_, _) => FromVec(n', xs.tail(n'))
+        }
 }

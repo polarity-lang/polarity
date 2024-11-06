@@ -1,43 +1,51 @@
 codata Fun(a b: Type) {
-    Fun(a, b).ap(a: Type, b: Type, x: a) : b
+    Fun(a, b).ap(a b: Type, x: a): b
 }
 
-data Eq (a: Type, x: a, y: a) {
-    Refl(a: Type, x: a) : Eq(a, x, x)
+data Eq(a: Type, x y: a) {
+    Refl(a: Type, x: a): Eq(a, x, x)
 }
 
-codef Id(a: Type) : Fun(a, a) {
-    .ap(_, _, x) => x,
-}
+codef Id(a: Type): Fun(a, a) { .ap(_, _, x) => x }
 
-codef Compose(a: Type, b: Type, c: Type, f: Fun(a, b), g: Fun(b, c)) : Fun(a, c) {
+codef Compose(a b c: Type, f: a -> b, g: b -> c): Fun(a, c) {
     .ap(_, _, x) => g.ap(b, c, f.ap(a, b, x))
 }
 
-codata Functor(f: Fun(Type, Type)) {
-    Functor(t).map(t: Fun(Type, Type), a b: Type, g: Fun(a, b), x: t.ap(Type, Type, a)): t.ap(Type, Type, b),
-    (f: Functor(t)).law_id(t: Fun(Type, Type), a: Type, x: t.ap(Type, Type, a)): Eq(t.ap(Type, Type, a), f.map(t, a, a, Id(a), x), x),
-    (f: Functor(t)).law_compose(t: Fun(Type, Type), a b c: Type, g: Fun(a, b), h: Fun(b, c), x: t.ap(Type, Type, a)): Eq(t.ap(Type, Type, c), f.map(t, a, c, Compose(a, b, c, g, h), x), f.map(t, b, c, h, f.map(t, a, b, g, x)))
+codata Functor(f: Type -> Type) {
+    Functor(t).map(t: Type -> Type, a b: Type, g: a -> b, x: t.ap(Type, Type, a))
+        : t.ap(Type, Type, b),
+    (f: Functor(t)).law_id(t: Type -> Type, a: Type, x: t.ap(Type, Type, a))
+        : Eq(t.ap(Type, Type, a), f.map(t, a, a, Id(a), x), x),
+    (f: Functor(t)).law_compose(t: Type -> Type,
+                                a b c: Type,
+                                g: a -> b,
+                                h: b -> c,
+                                x: t.ap(Type, Type, a)
+                                )
+        : Eq(t.ap(Type, Type, c),
+             f.map(t, a, c, Compose(a, b, c, g, h), x),
+             f.map(t, b, c, h, f.map(t, a, b, g, x)))
 }
 
 data Box(a: Type) {
-    MkBox(a: Type, x: a): Box(a),
+    MkBox(a: Type, x: a): Box(a)
 }
 
-codef BoxFun: Fun(Type, Type) {
-    .ap(_, _, a) => Box(a),
-}
+codef BoxFun: Fun(Type, Type) { .ap(_, _, a) => Box(a) }
 
-def Box(a).map_box(a b: Type, g: Fun(a, b)): Box(b) {
-    MkBox(_, x) => MkBox(b, g.ap(a, b, x))
-}
+def Box(a).map_box(a b: Type, g: a -> b): Box(b) { MkBox(_, x) => MkBox(b, g.ap(a, b, x)) }
 
 codef BoxFunctor: Functor(BoxFun) {
     .map(_, a, b, g, x) => x.map_box(a, b, g),
-    .law_id(_, a, x) => x.match as x => Eq(Box(a), x.map_box(a, a, Id(a)), x) {
-        MkBox(_, x) => Refl(Box(a), MkBox(a, x))
-    },
-    .law_compose(_, a, b, c, g, h, x) => x.match as x => Eq(Box(c), x.map_box(a, c, Compose(a, b, c, g, h)), x.map_box(a, b, g).map_box(b, c, h)) {
-        MkBox(_, x) => Refl(Box(c), MkBox(c, h.ap(b, c, g.ap(a, b, x))))
-    },
+    .law_id(_, a, x) =>
+        x.match as x => Eq(Box(a), x.map_box(a, a, Id(a)), x) {
+            MkBox(_, x) => Refl(Box(a), MkBox(a, x))
+        },
+    .law_compose(_, a, b, c, g, h, x) =>
+        x.match as x => Eq(Box(c),
+                           x.map_box(a, c, Compose(a, b, c, g, h)),
+                           x.map_box(a, b, g).map_box(b, c, h)) {
+            MkBox(_, x) => Refl(Box(c), MkBox(c, h.ap(b, c, g.ap(a, b, x))))
+        }
 }

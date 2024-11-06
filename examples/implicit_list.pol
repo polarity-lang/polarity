@@ -8,4 +8,4 @@ data List(implicit a: Type) {
 
 data Top { Unit }
 
-let example: List {Cons(Unit, Nil)}
+let example: List() {Cons(Unit, Nil())}

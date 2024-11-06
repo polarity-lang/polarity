@@ -1,15 +1,11 @@
 -- | The data type of pairs defined by a constructor.
 data Pair(a b: Type) {
     -- | Constructing an element of the pair type.
-    MkPair(a b: Type, x: a, y: b) : Pair(a,b)
+    MkPair(a b: Type, x: a, y: b): Pair(a, b)
 }
 
 -- | Projection on the first element of a pair.
-def Pair(a,b).fst(a b: Type) : a {
-    MkPair(_,_,x,_) => x
-}
+def Pair(a, b).fst(a b: Type): a { MkPair(_, _, x, _) => x }
 
 -- | Projection on the second element of a pair.
-def Pair(a,b).snd(a b: Type) : b {
-    MkPair(_,_,_,y) => y
-}
+def Pair(a, b).snd(a b: Type): b { MkPair(_, _, _, y) => y }

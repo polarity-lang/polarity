@@ -4,8 +4,8 @@ data Nat {
 }
 
 data Bool {
-    True,
-    False
+    T,
+    F
 }
 
 codata Fun(a b: Type) {
@@ -18,8 +18,8 @@ data Top {
 
 def Top.top_is_zero(n: Nat): Bool {
     Unit => n.match is_zero {
-        Z => True,
-        S(n) => False,
+        Z => T,
+        S(n) => F,
     }
 }
 

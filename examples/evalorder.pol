@@ -1,6 +1,6 @@
 data Bool {
-    True,
-    False
+    T,
+    F
 }
 
 codata Fun(a b: Type) {
