@@ -22,7 +22,7 @@ codef Cons(n' x: Nat, xs: Vec(n')): Vec(S(n')) {
 
 data Top { Unit }
 
-def Top.example1: Vec(S(S(Z))) { Unit => Cons(S(Z), Z, Cons(Z, Z, Nil)) }
+def Top.example1: Vec(2) { Unit => Cons(1, 0, Cons(0, 0, Nil)) }
 
 def Top.example2: Vec(4) {
     Unit => Unit.example1.append(2, 2, Unit.example1)
