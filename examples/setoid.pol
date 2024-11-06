@@ -1,15 +1,14 @@
 codata Fun(a b: Type) {
-   Fun(a,b).ap(a : Type, b : Type, x : a) : b
+    Fun(a, b).ap(a b: Type, x: a): b
 }
 
-codata Setoid {
-   .type : Type,
-   (self: Setoid).equality : Fun(self.type, Fun(self.type, Type))
-}
+codata Setoid { .type: Type, (self: Setoid).equality: self.type -> self.type -> Type }
 
-codata SetoidFun(a b : Setoid) {
-  (self : SetoidFun(a,b)).s_ap(a b : Setoid, x : a.type) : b.type,
-  (self : SetoidFun(a,b)).s_ap_eq(a b : Setoid, x y : a.type,
-    p : a.equality.ap(a.type, Fun(a.type, Type), x).ap(a.type, Type, y))
-      : self.s_ap(a, b, x),
+codata SetoidFun(a b: Setoid) {
+    (self: SetoidFun(a, b)).s_ap(a b: Setoid, x: a.type): b.type,
+    (self: SetoidFun(a, b)).s_ap_eq(a b: Setoid,
+                                    x y: a.type,
+                                    p: a.equality.ap(a.type, a.type -> Type, x).ap(a.type, Type, y)
+                                    )
+        : self.s_ap(a, b, x)
 }

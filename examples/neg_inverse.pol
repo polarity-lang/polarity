@@ -1,12 +1,8 @@
-data Eq (a: Type, x y: a) {
-    Refl(a: Type, x: a) : Eq(a, x, x)
+data Eq(a: Type, x y: a) {
+    Refl(a: Type, x: a): Eq(a, x, x)
 }
 
-codata Bool {
-    (x: Bool).neg_inverse: Eq(Bool, x, x.not.not),
-    .and(other: Bool): Bool,
-    .not: Bool
-}
+codata Bool { (x: Bool).neg_inverse: Eq(Bool, x, x.not.not), .and(other: Bool): Bool, .not: Bool }
 
 codef True: Bool {
     .neg_inverse => Refl(Bool, True),

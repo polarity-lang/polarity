@@ -1,42 +1,33 @@
--- Embedding of classical logic into intuitionistic logic using double negation
-
-data False {}
+data False { }
 
 codata Not(a: Type) {
-    Not(a).ret(a: Type, x: a): False,
+    Not(a).ret(a: Type, x: a): False
 }
 
 codata DN(a: Type) {
-    DN(a).given(a: Type, x: Not(a)): False,
+    DN(a).given(a: Type, x: Not(a)): False
 }
 
 data Or(a b: Type) {
-    Left(a: Type, b: Type, x: a) : Or(a, b),
-    Right(a: Type, b: Type, x: b) : Or(a, b),
+    Left(a b: Type, x: a): Or(a, b),
+    Right(a b: Type, x: b): Or(a, b)
 }
 
-data Top {
-    Unit,
-}
+data Top { Unit }
 
-def Top.contra(a: Type, prf: a, ref: Not(a)) : False {
-    Unit => ref.ret(a, prf)
-}
+def Top.contra(a: Type, prf: a, ref: Not(a)): False { Unit => ref.ret(a, prf) }
 
 def Top.lem(a: Type): DN(Or(a, Not(a))) {
-    Unit => comatch C1 {
-        .given(_, k) =>
-            Unit.contra(
-                Or(a, Not(a)),
-                Right(a, Not(a), comatch C2 {
-                    .ret(_, x) =>
-                        Unit.contra(
-                            Or(a, Not(a)),
-                            Left(a, Not(a), x),
-                            k
-                        )
-                }),
-                k
-            )
-    }
+    Unit =>
+        comatch C1 {
+            .given(_, k) =>
+                Unit.contra(Or(a, Not(a)),
+                            Right(a,
+                                  Not(a),
+                                  comatch C2 {
+                                      .ret(_, x) =>
+                                          Unit.contra(Or(a, Not(a)), Left(a, Not(a), x), k)
+                                  }),
+                            k)
+        }
 }

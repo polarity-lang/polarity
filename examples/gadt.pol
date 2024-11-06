@@ -1,17 +1,13 @@
-data Foo {
-    MkFoo
-}
+data Foo { MkFoo }
 
-data Bar {
-    MkBar
-}
+data Bar { MkBar }
 
 data GADT(a: Type) {
-    WrapFoo(x: Foo) : GADT(Foo),
-    WrapBar(x: Bar) : GADT(Bar),
+    WrapFoo(x: Foo): GADT(Foo),
+    WrapBar(x: Bar): GADT(Bar)
 }
 
-def GADT(a).unwrap(a: Type) : a {
+def GADT(a).unwrap(a: Type): a {
     WrapFoo(x) => x,
-    WrapBar(x) => x,
+    WrapBar(x) => x
 }

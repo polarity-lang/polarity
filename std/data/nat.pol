@@ -7,13 +7,13 @@ data Nat {
 }
 
 -- | Addition of two natural numbers.
-def Nat.add(other: Nat) : Nat {
+def Nat.add(other: Nat): Nat {
     Z => other,
     S(x) => S(x.add(other))
 }
 
 -- | Multiplication of two natural numbers.
-def Nat.mul(other: Nat) : Nat {
+def Nat.mul(other: Nat): Nat {
     Z => Z,
     S(x) => other.add(x.mul(other))
 }
@@ -21,14 +21,15 @@ def Nat.mul(other: Nat) : Nat {
 -- | A saturating version of subtraction.
 def Nat.monus(other: Nat): Nat {
     Z => Z,
-    S(pred) => other.match {
-        Z => S(pred),
-        S(pred') => pred.monus(pred')
-    }
+    S(pred) =>
+        other.match {
+            Z => S(pred),
+            S(pred') => pred.monus(pred')
+        }
 }
 
 -- | The factorial of a natural number.
-def Nat.fact(): Nat {
+def Nat.fact: Nat {
     Z => 1,
     S(pred) => S(pred).mul(pred.fact)
 }

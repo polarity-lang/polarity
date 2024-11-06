@@ -1,24 +1,19 @@
-data Nat {
-    Z,
-    S(n: Nat)
-}
+data Nat { Z, S(n: Nat) }
 
 data NotZero(n: Nat) {
-    SNotZero(n: Nat) : NotZero(S(n))
+    SNotZero(n: Nat): NotZero(S(n))
 }
 
-def NotZero(Z).elim_zero(a: Type) : a {
-    SNotZero(n) absurd
-}
+def NotZero(Z).elim_zero(a: Type): a { SNotZero(n) absurd }
 
 data Bot { }
 
 data Foo(a: Type) {
-    Ok(a: Type, x: a) : Foo(a),
-    Absurd(x: NotZero(Z)) : Foo(Bot)
+    Ok(a: Type, x: a): Foo(a),
+    Absurd(x: NotZero(Z)): Foo(Bot)
 }
 
-def Foo(a).elim(a: Type) : a {
+def Foo(a).elim(a: Type): a {
     Ok(a, x) => x,
     Absurd(x) => x.elim_zero(Bot)
 }

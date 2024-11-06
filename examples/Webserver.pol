@@ -3,7 +3,7 @@ data Nat {
     S(n: Nat),
 }
 
-data Bool { True, False }
+data Bool { T, F }
 
 codata Fun(a b: Type) {
     Fun(a, b).ap(a: Type, b: Type, x: a) : b,
@@ -33,12 +33,12 @@ codata User {
 }
 
 codata State(loggedIn: Bool) {
-    State(False).login(u : User) : State(u.hasCredentials),
-    State(True).logout : State(False),
-    State(True).increment : State(True),
-    State(True).set(n : Nat) : State(True),
-    (self: State(True)).set_idempotent(b : Bool, n : Nat) : Eq(State(True), self.set(n), self.set(n).set(n)),
-    (self: State(True)).setResult(b : Bool, n : Nat) : Eq(Nat, n, self.set(n).counter(True)),
+    State(F).login(u : User) : State(u.hasCredentials),
+    State(T).logout : State(F),
+    State(T).increment : State(T),
+    State(T).set(n : Nat) : State(T),
+    (self: State(T)).set_idempotent(b : Bool, n : Nat) : Eq(State(T), self.set(n), self.set(n).set(n)),
+    (self: State(T)).setResult(b : Bool, n : Nat) : Eq(Nat, n, self.set(n).counter(T)),
     State(b).counter(b : Bool) : Nat
 }
 
@@ -69,21 +69,21 @@ codata Route {
 }
 
 codef Index: Route {
-    .requiresLogin => False,
+    .requiresLogin => F,
     .post => \state. comatch { .fst(a,b) => state, .snd(a,b) => Forbidden },
-    .get => \state. Return(state.counter(False)),
-    .put(n) => \state. Pair(State(False), Response, state, Forbidden),
+    .get => \state. Return(state.counter(F)),
+    .put(n) => \state. Pair(State(F), Response, state, Forbidden),
     .put_idempotent(n) => comatch {
-        .dap(_, _, state) => Refl(×₋(State(False), Response), Pair(State(False), Response, state, Forbidden))
+        .dap(_, _, state) => Refl(×₋(State(F), Response), Pair(State(F), Response, state, Forbidden))
     }
 }
 
 codef Admin: Route {
-    .requiresLogin => True,
-    .post => \state. comatch { .fst(a,b) => state.increment, .snd(a,b) => Return(state.increment.counter(True)) },
-    .get => \state. Return(state.counter(True)),
-    .put(n) => \state. Pair(State(True), Response, state.set(n), Return(n)),
+    .requiresLogin => T,
+    .post => \state. comatch { .fst(a,b) => state.increment, .snd(a,b) => Return(state.increment.counter(T)) },
+    .get => \state. Return(state.counter(T)),
+    .put(n) => \state. Pair(State(T), Response, state.set(n), Return(n)),
     .put_idempotent(n) => comatch {
-        .dap(_, _, state) => state.set_idempotent(True, n).cong_pair(State(True), Response, state.set(n), state.set(n).set(n), Return(n))
+        .dap(_, _, state) => state.set_idempotent(T, n).cong_pair(State(T), Response, state.set(n), state.set(n).set(n), Return(n))
     }
 }

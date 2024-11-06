@@ -1,71 +1,61 @@
-data Nat {
-    Z,
-    S(n: Nat)
-}
+data Nat { Z, S(n: Nat) }
 
-def Nat.add(y: Nat) : Nat {
+def Nat.add(y: Nat): Nat {
     Z => y,
     S(x') => S(x'.add(y))
 }
 
-data Bool {
-    True,
-    False
-}
+data Bool { T, F }
 
-def Bool.and(y: Bool) : Bool {
-    True => y,
-    False => False
+def Bool.and(y: Bool): Bool {
+    T => y,
+    F => F
 }
 
 #[opaque]
-let example : Exp { And(IsZero(Add(Num(Z), Num(Z))), Boo(True)) }
+let example: Exp {And(IsZero(Add(Num(Z), Num(Z))), Boo(T))}
 
 #[opaque]
-let example_has_type : HasType(And(IsZero(Add(Num(Z()), Num(Z()))), Boo(True())), BooT) {
-    TAnd(IsZero(Add(Num(Z), Num(Z))), Boo(True),
-        TIsZero(Add(Num(Z), Num(Z)), TAdd(Num(Z), Num(Z), TNum(Z), TNum(Z))),
-        TBoo(True)
-    )
-}
+let example_has_type
+    : HasType(And(IsZero(Add(Num(Z), Num(Z))), Boo(T)), BooT) {TAnd(IsZero(Add(Num(Z), Num(Z))),
+                                                                    Boo(T),
+                                                                    TIsZero(Add(Num(Z), Num(Z)),
+                                                                            TAdd(Num(Z),
+                                                                                 Num(Z),
+                                                                                 TNum(Z),
+                                                                                 TNum(Z))),
+                                                                    TBoo(T))}
 
-data Exp {
-    Num(n: Nat),
-    Boo(b: Bool),
-    Add(lhs rhs : Exp),
-    IsZero(e: Exp),
-    And(lhs rhs: Exp),
-}
+data Exp { Num(n: Nat), Boo(b: Bool), Add(lhs rhs: Exp), IsZero(e: Exp), And(lhs rhs: Exp) }
 
-data Typ {
-    NumT,
-    BooT,
-}
+data Typ { NumT, BooT }
 
 data HasType(e: Exp, t: Typ) {
-    TNum(n: Nat) : HasType(Num(n), NumT),
-    TBoo(b: Bool) : HasType(Boo(b), BooT),
-    TAdd(lhs rhs: Exp, h_lhs: HasType(lhs, NumT), h_rhs: HasType(rhs, NumT)) : HasType(Add(lhs, rhs), NumT),
-    TIsZero(e: Exp, h: HasType(e, NumT)) : HasType(IsZero(e), BooT),
-    TAnd(lhs rhs: Exp, h_lhs: HasType(lhs, BooT), h_rhs: HasType(rhs, BooT)) : HasType(And(lhs, rhs), BooT),
+    TNum(n: Nat): HasType(Num(n), NumT),
+    TBoo(b: Bool): HasType(Boo(b), BooT),
+    TAdd(lhs rhs: Exp, h_lhs: HasType(lhs, NumT), h_rhs: HasType(rhs, NumT))
+        : HasType(Add(lhs, rhs), NumT),
+    TIsZero(e: Exp, h: HasType(e, NumT)): HasType(IsZero(e), BooT),
+    TAnd(lhs rhs: Exp, h_lhs: HasType(lhs, BooT), h_rhs: HasType(rhs, BooT))
+        : HasType(And(lhs, rhs), BooT)
 }
 
 data IsVal(e: Exp) {
-    VNum(n: Nat) : IsVal(Num(n)),
-    VBoo(b: Bool) : IsVal(Boo(b)),
+    VNum(n: Nat): IsVal(Num(n)),
+    VBoo(b: Bool): IsVal(Boo(b))
 }
 
-data Eval(e1: Exp, e2: Exp) {
+data Eval(e1 e2: Exp) {
     EAddCongL(lhs lhs' rhs: Exp, h_lhs: Eval(lhs, lhs')): Eval(Add(lhs, rhs), Add(lhs', rhs)),
     EAddCongR(lhs rhs rhs': Exp, h_rhs: Eval(rhs, rhs')): Eval(Add(lhs, rhs), Add(lhs, rhs')),
-    EAddRed(n1 n2 : Nat): Eval(Add(Num(n1), Num(n2)), Num(n1.add(n2))),
-    EIsZeroCong(e e': Exp, h_e: Eval(e, e')) : Eval(IsZero(e), IsZero(e')),
+    EAddRed(n1 n2: Nat): Eval(Add(Num(n1), Num(n2)), Num(n1.add(n2))),
+    EIsZeroCong(e e': Exp, h_e: Eval(e, e')): Eval(IsZero(e), IsZero(e')),
     EAndCongL(lhs lhs' rhs: Exp, h_lhs: Eval(lhs, lhs')): Eval(And(lhs, rhs), And(lhs', rhs)),
     EAndCongR(lhs rhs rhs': Exp, h_rhs: Eval(rhs, rhs')): Eval(And(lhs, rhs), And(lhs, rhs')),
-    EAndRed(b1 b2: Bool): Eval(And(Boo(b1), Boo(b2)), Boo(b1.and(b2))),
+    EAndRed(b1 b2: Bool): Eval(And(Boo(b1), Boo(b2)), Boo(b1.and(b2)))
 }
 
-def Eval(e1, e2).preserves(e1: Exp, e2: Exp, t: Typ, h1: HasType(e1, t)) : HasType(e2, t) {
+def Eval(e1, e2).preserves(e1 e2: Exp, t: Typ, h1: HasType(e1, t)): HasType(e2, t) {
     EAddCongL(lhs, lhs', rhs, h_lhs) => ?,
     EAddCongR(lhs, rhs, rhs', h_rhs) => ?,
     EAddRed(n1, n2) => ?,
