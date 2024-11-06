@@ -24,6 +24,9 @@ pub struct Args {
     output: Option<PathBuf>,
     #[clap(long, num_args = 0)]
     de_bruijn: bool,
+    /// Print the typechecked instead of renamed syntax tree
+    #[clap(long, num_args = 0)]
+    checked: bool,
 }
 
 /// Compute the output stream for the "fmt" subcommand.
@@ -47,7 +50,8 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn WriteColor> {
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
     let uri = db.resolve_path(&cmd.filepath)?;
-    let prg = db.ust(&uri).map_err(|err| db.pretty_error(&uri, err))?;
+    let prg = if cmd.checked { db.ast(&uri) } else { db.ust(&uri) }
+        .map_err(|err| db.pretty_error(&uri, err))?;
 
     // Write to file or to stdout
     let mut stream: Box<dyn WriteColor> = compute_output_stream(&cmd);
