@@ -32,7 +32,6 @@ module.exports = (env, argv) => {
     mode: "production",
     target: "web",
     entry: {
-      tutorial: "./src/tutorial/index.ts",
       editor: "./src/editor/index.ts",
       "editor.worker": "monaco-editor-core/esm/vs/editor/editor.worker.js",
     },
@@ -110,20 +109,10 @@ module.exports = (env, argv) => {
         DEBUG: !prod,
       }),
       new HtmlWebpackPlugin({
-        template: "assets/demo.html",
-        filename: "index.html",
-        chunks: ["tutorial"],
-        scriptLoading: "defer",
-      }),
-      new HtmlWebpackPlugin({
         template: "assets/editor.html",
         filename: "editor/index.html",
         chunks: ["editor", "editor.worker"],
         scriptLoading: "defer",
-      }),
-      // Watch all files in tutorial folder for changes
-      new WebpackWatchFilesPlugin({
-        files: ["./assets/tutorial/*"],
       }),
     ],
     optimization: {
