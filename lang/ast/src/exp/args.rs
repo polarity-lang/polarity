@@ -173,7 +173,7 @@ impl Substitutable for Args {
 
 impl Print for Args {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        if self.args.iter().filter(|x| !x.is_inserted_implicit()).peekable().peek().is_none() {
+        if self.args.iter().filter(|x| !x.is_inserted_implicit()).next().is_none() {
             return alloc.nil();
         }
 
