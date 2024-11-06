@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::ctx::*;
 use crate::Variable;
 use crate::*;
@@ -9,7 +11,7 @@ use crate::*;
 /// Trait for entities which can be used as a substitution.
 /// In order to be used as a substitution an entity has to provide a method
 /// to query it for a result for a given deBruijn Level.
-pub trait Substitution: Shift + Clone {
+pub trait Substitution: Shift + Clone + Debug {
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>>;
 }
 
@@ -37,7 +39,7 @@ impl Substitution for Vec<Vec<Arg>> {
 
 /// An assignment is the simplest form of a substitution which provides just
 /// one mapping from a variable (represented by a DeBruijn Level) to an expression.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Assign {
     pub lvl: Lvl,
     pub exp: Box<Exp>,
@@ -116,7 +118,7 @@ impl<T: Substitutable> SwapWithCtx for T {
 //
 //
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct SwapSubst {
     fst1: usize,
     fst2: usize,
