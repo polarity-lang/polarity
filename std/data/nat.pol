@@ -30,6 +30,6 @@ def Nat.monus(other: Nat): Nat {
 
 -- | The factorial of a natural number.
 def Nat.fact: Nat {
-    Z => S(Z),
+    Z => 1,
     S(pred) => S(pred).mul(pred.fact)
 }

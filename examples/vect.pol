@@ -27,6 +27,6 @@ def Vec(n).append(n m: Nat, ys: Vec(m)): Vec(n.add(m)) {
 
 data Top { Unit }
 
-def Top.example1: Vec(S(S(Z))) { Unit => Cons(S(Z), Z, Cons(Z, Z, Nil)) }
+def Top.example1: Vec(2) { Unit => Cons(1, 0, Cons(0, 0, Nil)) }
 
-let main: Vec(S(S(S(S(Z))))) {Unit.example1.append(S(S(Z)), S(S(Z)), Unit.example1)}
+let main: Vec(4) {Unit.example1.append(2, 2, Unit.example1)}
