@@ -1,6 +1,5 @@
 use codespan::Span;
 use derivative::Derivative;
-use pretty::DocAllocator;
 use printer::{theme::ThemeExt, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
@@ -98,8 +97,7 @@ impl Print for Call {
         _prec: Precedence,
     ) -> Builder<'a> {
         let Call { name, args, .. } = self;
-        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-        alloc.ctor(&name.id).append(psubst)
+        alloc.ctor(&name.id).append(args.print(cfg, alloc))
     }
 }
 

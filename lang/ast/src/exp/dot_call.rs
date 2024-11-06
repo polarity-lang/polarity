@@ -125,9 +125,11 @@ impl Print for DotCall {
         let mut dtors_group = alloc.nil();
 
         // First DotCall
-        let psubst = if self.args.is_empty() { alloc.nil() } else { self.args.print(cfg, alloc) };
-        dtors_group =
-            alloc.text(DOT).append(alloc.dtor(&self.name.id)).append(psubst).append(dtors_group);
+        dtors_group = alloc
+            .text(DOT)
+            .append(alloc.dtor(&self.name.id))
+            .append(self.args.print(cfg, alloc))
+            .append(dtors_group);
 
         // Remaining DotCalls
         let mut dtor: &Exp = &self.exp;

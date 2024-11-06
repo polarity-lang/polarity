@@ -93,8 +93,7 @@ impl Print for TypCtor {
                 fun.parens()
             }
         } else {
-            let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
-            alloc.typ(&name.id).append(psubst)
+            alloc.typ(&name.id).append(args.print(cfg, alloc))
         }
     }
 }

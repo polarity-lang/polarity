@@ -173,6 +173,10 @@ impl Substitutable for Args {
 
 impl Print for Args {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        if self.args.is_empty() {
+            return alloc.nil();
+        }
+
         let mut doc = alloc.nil();
         let mut first = true;
 
@@ -209,5 +213,37 @@ impl ContainsMetaVars for Args {
         let Args { args } = self;
 
         args.contains_metavars()
+    }
+}
+
+#[cfg(test)]
+mod args_tests {
+    use printer::Print;
+
+    use crate::{Arg, Call, CallKind, Ident};
+
+    use super::Args;
+
+    #[test]
+    fn print_empty_args() {
+        let args = Args { args: vec![] };
+        assert_eq!(args.print_to_string(Default::default()), "".to_string())
+    }
+
+    #[test]
+    fn print_unnamed_args() {
+        let args = Args {
+            args: vec![Arg::UnnamedArg(Box::new(
+                Call {
+                    span: None,
+                    kind: CallKind::Constructor,
+                    name: Ident::from_string("T"),
+                    args: Args { args: vec![] },
+                    inferred_type: None,
+                }
+                .into(),
+            ))],
+        };
+        assert_eq!(args.print_to_string(Default::default()), "(T)".to_string())
     }
 }
