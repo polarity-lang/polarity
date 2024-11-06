@@ -16,9 +16,13 @@ make build
 
 ## Run
 
+To run the web demo, execute the following command:
+
 ```sh
 make run
 ```
+
+Then, navigate to [http://localhost:9000/editor#example.pol](http://localhost:9000/editor#example.pol), where `example.pol` can be any file in the `examples` directory.
 
 ## License
 
