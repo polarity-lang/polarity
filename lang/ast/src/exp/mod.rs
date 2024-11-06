@@ -9,7 +9,6 @@ use printer::util::BracesExt;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::{BindContext, LevelCtx};
-use crate::named::Named;
 use crate::{ContainsMetaVars, Zonk, ZonkError};
 
 use super::subst::{Substitutable, Substitution};
@@ -25,6 +24,7 @@ mod dot_call;
 mod hole;
 mod local_comatch;
 mod local_match;
+mod telescope_inst;
 mod typ_ctor;
 mod type_univ;
 mod variable;
@@ -35,6 +35,7 @@ pub use dot_call::*;
 pub use hole::*;
 pub use local_comatch::*;
 pub use local_match::*;
+pub use telescope_inst::*;
 pub use typ_ctor::*;
 pub use type_univ::*;
 pub use variable::*;
@@ -360,111 +361,6 @@ impl ContainsMetaVars for Case {
         let Case { span: _, pattern: _, body } = self;
 
         body.contains_metavars()
-    }
-}
-
-// Telescope Inst
-//
-//
-
-/// Instantiation of a previously declared telescope
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
-pub struct TelescopeInst {
-    pub params: Vec<ParamInst>,
-}
-
-impl TelescopeInst {
-    pub fn len(&self) -> usize {
-        self.params.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.params.is_empty()
-    }
-}
-
-impl Print for TelescopeInst {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        if self.params.is_empty() {
-            alloc.nil()
-        } else {
-            self.params.print(cfg, alloc).parens()
-        }
-    }
-}
-
-impl Zonk for TelescopeInst {
-    fn zonk(
-        &mut self,
-        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
-    ) -> Result<(), ZonkError> {
-        let TelescopeInst { params } = self;
-
-        for param in params {
-            param.zonk(meta_vars)?;
-        }
-        Ok(())
-    }
-}
-
-impl ContainsMetaVars for TelescopeInst {
-    fn contains_metavars(&self) -> bool {
-        let TelescopeInst { params } = self;
-
-        params.contains_metavars()
-    }
-}
-
-// ParamInst
-//
-//
-
-/// Instantiation of a previously declared parameter
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
-pub struct ParamInst {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Box<Exp>>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub name: Ident,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub typ: Option<Box<Exp>>,
-}
-
-impl Named for ParamInst {
-    fn name(&self) -> &Ident {
-        &self.name
-    }
-}
-
-impl Print for ParamInst {
-    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let ParamInst { span: _, info: _, name, typ: _ } = self;
-        alloc.text(&name.id)
-    }
-}
-
-impl Zonk for ParamInst {
-    fn zonk(
-        &mut self,
-        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
-    ) -> Result<(), ZonkError> {
-        let ParamInst { span: _, info, name: _, typ } = self;
-
-        info.zonk(meta_vars)?;
-        typ.zonk(meta_vars)?;
-        Ok(())
-    }
-}
-
-impl ContainsMetaVars for ParamInst {
-    fn contains_metavars(&self) -> bool {
-        let ParamInst { span: _, info, name: _, typ } = self;
-
-        info.contains_metavars() || typ.contains_metavars()
     }
 }
 
