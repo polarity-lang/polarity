@@ -1,3 +1,4 @@
+use ast::IdBind;
 use miette_util::ToMiette;
 use parser::cst::{self};
 
@@ -20,7 +21,7 @@ impl Lower for cst::decls::Codef {
             Ok(ast::Codef {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
-                name: name.lower(ctx)?,
+                name: IdBind { span: Some(name.span), id: name.id.clone() },
                 attr: attr.lower(ctx)?,
                 params,
                 typ: typ_ctor,

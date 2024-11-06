@@ -77,7 +77,7 @@ impl FV for Variable {
                 &v.type_ctx.lookup(lvl).typ,
                 ((v.lvl_ctx.len() - v.type_ctx.len()) as isize, 0),
             );
-            v.add_fv(name.clone(), lvl, typ, v.lvl_ctx.clone())
+            v.add_fv(name.id.clone(), lvl, typ, v.lvl_ctx.clone())
         }
     }
 }
@@ -194,11 +194,12 @@ impl FreeVars {
 
             let typ = typ.subst(&mut ctx, &subst.in_param());
 
-            let param = Param { implicit: false, name: name.clone(), typ: typ.clone() };
+            let param =
+                Param { implicit: false, name: VarBind::from_string(&name), typ: typ.clone() };
             let arg = Arg::UnnamedArg(Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: base_ctx.lvl_to_idx(fv.lvl),
-                name: name.clone(),
+                name: VarBound::from_string(&name),
                 inferred_type: None,
             })));
             args.push(arg);
@@ -264,7 +265,7 @@ impl FreeVars {
 pub struct FreeVar {
     /// Name of the free variable
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub name: Ident,
+    pub name: String,
     /// The original De-Bruijn level
     pub lvl: Lvl,
     /// Type of the free variable
@@ -310,7 +311,7 @@ pub struct USTVisitor<'a> {
 
 impl<'a> USTVisitor<'a> {
     /// Add a free variable as well as all free variables its type
-    fn add_fv(&mut self, name: Ident, lvl: Lvl, typ: Box<Exp>, ctx: LevelCtx) {
+    fn add_fv(&mut self, name: String, lvl: Lvl, typ: Box<Exp>, ctx: LevelCtx) {
         // Add the free variable
         let fv = FreeVar { name, lvl, typ: typ.clone(), ctx };
         if self.fvs.insert(fv) {
@@ -342,7 +343,7 @@ pub struct FVSubst {
 #[derive(Clone, Debug)]
 struct NewVar {
     /// Name of the free variable
-    name: Ident,
+    name: String,
     /// New De-Bruijn level
     lvl: Lvl,
 }
@@ -364,7 +365,7 @@ impl FVSubst {
         Self { subst: Default::default(), cutoff }
     }
 
-    fn add(&mut self, name: Ident, lvl: Lvl) {
+    fn add(&mut self, name: String, lvl: Lvl) {
         self.subst.insert(lvl, NewVar { name, lvl: Lvl { fst: 0, snd: self.subst.len() } });
     }
 
@@ -412,7 +413,7 @@ impl<'a> Substitution for FVBodySubst<'a> {
             Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: new_ctx.lvl_to_idx(fv.lvl),
-                name: fv.name.clone(),
+                name: VarBound::from_string(&fv.name),
                 inferred_type: None,
             }))
         })
@@ -425,7 +426,7 @@ impl<'a> Substitution for FVParamSubst<'a> {
             Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: self.inner.subst.len() - 1 - fv.lvl.snd },
-                name: fv.name.clone(),
+                name: VarBound::from_string(&fv.name),
                 inferred_type: None,
             }))
         })

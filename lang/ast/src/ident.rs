@@ -10,29 +10,153 @@ use printer::{
 
 use crate::HasSpan;
 
+// Local variables (binding site)
+//
+//
+
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub struct Ident {
+pub struct VarBind {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub id: String,
 }
 
-impl Ident {
+impl VarBind {
     pub fn from_string(id: &str) -> Self {
-        Ident { span: None, id: id.to_owned() }
+        VarBind { span: None, id: id.to_owned() }
     }
 }
 
-impl fmt::Display for Ident {
+impl fmt::Display for VarBind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.id)
     }
 }
 
-impl HasSpan for Ident {
+impl HasSpan for VarBind {
     fn span(&self) -> Option<Span> {
         self.span
+    }
+}
+
+// Local variables (bound occurence)
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct VarBound {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    pub id: String,
+}
+
+impl VarBound {
+    pub fn from_string(id: &str) -> Self {
+        VarBound { span: None, id: id.to_owned() }
+    }
+}
+
+impl fmt::Display for VarBound {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.id)
+    }
+}
+
+impl HasSpan for VarBound {
+    fn span(&self) -> Option<Span> {
+        self.span
+    }
+}
+
+impl From<VarBind> for VarBound {
+    fn from(var: VarBind) -> Self {
+        VarBound { span: var.span, id: var.id }
+    }
+}
+
+// Global identifiers (binding site)
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct IdBind {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    pub id: String,
+}
+
+impl IdBind {
+    pub fn from_string(id: &str) -> Self {
+        IdBind { span: None, id: id.to_owned() }
+    }
+}
+
+impl fmt::Display for IdBind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.id)
+    }
+}
+
+impl HasSpan for IdBind {
+    fn span(&self) -> Option<Span> {
+        self.span
+    }
+}
+
+impl From<IdBound> for IdBind {
+    fn from(id: IdBound) -> Self {
+        IdBind { span: id.span, id: id.id }
+    }
+}
+
+impl PartialEq<IdBound> for IdBind {
+    fn eq(&self, other: &IdBound) -> bool {
+        self.id == other.id
+    }
+}
+
+impl PartialEq<IdBind> for IdBound {
+    fn eq(&self, other: &IdBind) -> bool {
+        self.id == other.id
+    }
+}
+
+// Global identifiers (bound occurence)
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub struct IdBound {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Option<Span>,
+    pub id: String,
+}
+
+impl IdBound {
+    pub fn from_string(id: &str) -> Self {
+        IdBound { span: None, id: id.to_owned() }
+    }
+}
+
+impl fmt::Display for IdBound {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.id)
+    }
+}
+
+impl HasSpan for IdBound {
+    fn span(&self) -> Option<Span> {
+        self.span
+    }
+}
+
+impl From<IdBind> for IdBound {
+    fn from(id: IdBind) -> Self {
+        IdBound { span: id.span, id: id.id }
     }
 }
 

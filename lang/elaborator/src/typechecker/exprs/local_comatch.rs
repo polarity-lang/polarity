@@ -57,7 +57,7 @@ pub struct WithExpectedType<'a> {
     pub cases: &'a Vec<Case>,
     /// Name of the global codefinition that gets substituted for the destructor's self parameters
     /// This is `None` for a local comatch.
-    pub label: Option<(Ident, usize)>,
+    pub label: Option<(IdBind, usize)>,
     /// The expected type of the comatch, i.e. `Stream(Int)` for `comatch { hd => 1, tl => ... }`.
     pub expected_type: TypCtor,
 }
@@ -74,14 +74,14 @@ impl<'a> WithExpectedType<'a> {
         // Check exhaustiveness
         let dtors_expected: HashSet<_> =
             codata.dtors.iter().map(|dtor| dtor.name.to_owned()).collect();
-        let mut dtors_actual = HashSet::default();
-        let mut dtors_duplicate = HashSet::default();
+        let mut dtors_actual = HashSet::<IdBind>::default();
+        let mut dtors_duplicate = HashSet::<IdBind>::default();
 
         for name in cases.iter().map(|case| &case.pattern.name) {
-            if dtors_actual.contains(name) {
-                dtors_duplicate.insert(name.clone());
+            if dtors_actual.contains(&name.clone().into()) {
+                dtors_duplicate.insert(name.clone().into());
             }
-            dtors_actual.insert(name.clone());
+            dtors_actual.insert(name.clone().into());
         }
 
         let mut dtors_missing = dtors_expected.difference(&dtors_actual).peekable();
@@ -227,7 +227,7 @@ impl<'a> WithExpectedType<'a> {
                                                 // - The arguments to the toplevel codefinition
                                                 // - The arguments bound by the destructor copattern.
                                                 idx: Idx { fst: 2, snd },
-                                                name: Ident::from_string(""),
+                                                name: VarBound::from_string(""),
                                                 inferred_type: None,
                                             })))
                                         })
@@ -235,7 +235,7 @@ impl<'a> WithExpectedType<'a> {
                                     let ctor = Box::new(Exp::Call(Call {
                                         span: None,
                                         kind: CallKind::Codefinition,
-                                        name: label.clone(),
+                                        name: label.clone().into(),
                                         args: Args { args },
                                         inferred_type: None,
                                     }));

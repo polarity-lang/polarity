@@ -4,17 +4,17 @@ use ast::*;
 use super::util::increment_name;
 
 pub struct Ctx {
-    ctx: GenericCtx<Ident>,
+    ctx: GenericCtx<VarBind>,
 }
 
-impl From<GenericCtx<Ident>> for Ctx {
-    fn from(value: GenericCtx<Ident>) -> Self {
+impl From<GenericCtx<VarBind>> for Ctx {
+    fn from(value: GenericCtx<VarBind>) -> Self {
         Ctx { ctx: value }
     }
 }
 
 impl Context for Ctx {
-    type Elem = Ident;
+    type Elem = VarBind;
 
     fn push_telescope(&mut self) {
         self.ctx.bound.push(vec![]);
@@ -50,7 +50,7 @@ impl Context for Ctx {
 }
 
 impl Ctx {
-    pub(super) fn disambiguate_name(&self, mut name: Ident) -> Ident {
+    pub(super) fn disambiguate_name(&self, mut name: VarBind) -> VarBind {
         if name.id == "_" || name.id.is_empty() {
             "x".clone_into(&mut name.id);
         }
@@ -60,7 +60,7 @@ impl Ctx {
         name
     }
 
-    fn contains_name(&self, name: &Ident) -> bool {
+    fn contains_name(&self, name: &VarBind) -> bool {
         for telescope in &self.ctx.bound {
             if telescope.contains(name) {
                 return true;
@@ -84,6 +84,6 @@ impl ContextElem<Ctx> for ParamInst {
 
 impl ContextElem<Ctx> for SelfParam {
     fn as_element(&self) -> <Ctx as Context>::Elem {
-        self.name.to_owned().unwrap_or_else(|| Ident::from_string(""))
+        self.name.to_owned().unwrap_or_else(|| VarBind::from_string(""))
     }
 }

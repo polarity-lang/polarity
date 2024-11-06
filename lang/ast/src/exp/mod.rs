@@ -48,7 +48,7 @@ pub struct Label {
     pub id: usize,
     /// A user-annotated name
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub user_name: Option<Ident>,
+    pub user_name: Option<IdBind>,
 }
 
 impl fmt::Display for Label {

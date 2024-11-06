@@ -36,7 +36,7 @@ impl CheckToplevel for Codata {
 }
 
 /// Infer a destructor declaration
-fn check_dtor_wf(codata_name: &Ident, dtor: &Dtor, ctx: &mut Ctx) -> Result<Dtor, TypeError> {
+fn check_dtor_wf(codata_name: &IdBind, dtor: &Dtor, ctx: &mut Ctx) -> Result<Dtor, TypeError> {
     trace!("Checking well-formedness of destructor: {}", dtor.name);
 
     let Dtor { span, doc, name, params, self_param, ret_typ } = dtor;

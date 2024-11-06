@@ -39,14 +39,14 @@ pub enum TypeError {
     #[error("Cannot match on codata type {name}")]
     #[diagnostic(code("T-003"))]
     MatchOnCodata {
-        name: Ident,
+        name: IdBound,
         #[label]
         span: Option<SourceSpan>,
     },
     #[error("Cannot comatch on data type {name}")]
     #[diagnostic(code("T-004"))]
     ComatchOnData {
-        name: Ident,
+        name: IdBound,
         #[label]
         span: Option<SourceSpan>,
     },
@@ -60,22 +60,22 @@ pub enum TypeError {
     #[error("Got {actual}, which is not in type {expected}")]
     #[diagnostic(code("T-006"))]
     NotInType {
-        expected: Ident,
-        actual: Ident,
+        expected: IdBind,
+        actual: IdBound,
         #[label]
         span: Option<SourceSpan>,
     },
     #[error("Pattern for {name} is marked as absurd but that could not be proven")]
     #[diagnostic(code("T-007"))]
     PatternIsNotAbsurd {
-        name: Ident,
+        name: IdBound,
         #[label]
         span: Option<SourceSpan>,
     },
     #[error("Pattern for {name} is absurd and must be marked accordingly")]
     #[diagnostic(code("T-008"))]
     PatternIsAbsurd {
-        name: Ident,
+        name: IdBound,
         #[label]
         span: Option<SourceSpan>,
     },

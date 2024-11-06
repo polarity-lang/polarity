@@ -96,7 +96,7 @@ impl Print for TypeCtx {
 
 #[derive(Debug, Clone)]
 pub struct Binder {
-    pub name: Ident,
+    pub name: VarBind,
     pub typ: Box<Exp>,
 }
 

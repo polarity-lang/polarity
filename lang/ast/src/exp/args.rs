@@ -11,7 +11,7 @@ use crate::{
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Exp, Hole, Ident, Lvl, MetaVar};
+use super::{Exp, Hole, Lvl, MetaVar, VarBound};
 
 // Arg
 //
@@ -24,7 +24,7 @@ use super::{Exp, Hole, Ident, Lvl, MetaVar};
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Arg {
     UnnamedArg(Box<Exp>),
-    NamedArg(Ident, Box<Exp>),
+    NamedArg(VarBound, Box<Exp>),
     InsertedImplicitArg(Hole),
 }
 
@@ -220,7 +220,7 @@ impl ContainsMetaVars for Args {
 mod args_tests {
     use printer::Print;
 
-    use crate::{Arg, Call, CallKind, Exp, Hole, Ident, MetaVarKind};
+    use crate::{Arg, Call, CallKind, Exp, Hole, IdBound, MetaVarKind};
 
     use super::Args;
 
@@ -236,7 +236,7 @@ mod args_tests {
             Call {
                 span: None,
                 kind: CallKind::Constructor,
-                name: Ident::from_string("T"),
+                name: IdBound::from_string("T"),
                 args: Args { args: vec![] },
                 inferred_type: None,
             }

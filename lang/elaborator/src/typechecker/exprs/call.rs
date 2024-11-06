@@ -40,8 +40,8 @@ impl CheckInfer for Call {
         match kind {
             CallKind::Codefinition | CallKind::Constructor => {
                 let CtorMeta { params, typ, .. } =
-                    &ctx.type_info_table.lookup_ctor_or_codef(name)?;
-                let args_out = check_args(args, name, ctx, params, *span)?;
+                    &ctx.type_info_table.lookup_ctor_or_codef(&name.clone())?;
+                let args_out = check_args(args, &name.clone(), ctx, params, *span)?;
                 let typ_out = typ
                     .subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()])
                     .to_exp();
@@ -55,10 +55,10 @@ impl CheckInfer for Call {
                 })
             }
             CallKind::LetBound => {
-                let LetMeta { params, typ, .. } = ctx.type_info_table.lookup_let(name)?;
+                let LetMeta { params, typ, .. } = ctx.type_info_table.lookup_let(&name.clone())?;
                 let params = params.clone();
                 let typ = typ.clone();
-                let args_out = check_args(args, name, ctx, &params, *span)?;
+                let args_out = check_args(args, &name.clone(), ctx, &params, *span)?;
                 let typ_out =
                     typ.subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()]);
                 let typ_nf = typ_out.normalize(&ctx.module, &mut ctx.env())?;

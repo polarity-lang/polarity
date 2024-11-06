@@ -37,9 +37,9 @@ impl CheckInfer for DotCall {
     fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let DotCall { span, kind, exp, name, args, .. } = self;
         let DtorMeta { params, self_param, ret_typ, .. } =
-            &ctx.type_info_table.lookup_dtor_or_def(name)?;
+            &ctx.type_info_table.lookup_dtor_or_def(&name.clone())?;
 
-        let args_out = check_args(args, name, ctx, params, *span)?;
+        let args_out = check_args(args, &name.clone(), ctx, params, *span)?;
 
         let self_param_out = self_param
             .typ

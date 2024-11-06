@@ -15,13 +15,13 @@ pub fn lift(module: Arc<Module>, name: &str) -> LiftResult {
     let mut ctx = Ctx {
         name: name.to_owned(),
         new_decls: vec![],
-        curr_decl: Ident::from_string(""),
+        curr_decl: IdBind::from_string(""),
         modified_decls: HashSet::default(),
         ctx: LevelCtx::default(),
     };
 
     let mut module = module.lift(&mut ctx);
-    let new_decl_names = HashSet::from_iter(ctx.new_decls.iter().map(|decl| decl.name().clone()));
+    let new_decl_names = HashSet::from_iter(ctx.new_decls.iter().map(|decl| decl.ident().clone()));
     module.decls.extend(ctx.new_decls);
     module.rename();
 
@@ -33,9 +33,9 @@ pub struct LiftResult {
     /// The resulting program
     pub module: Module,
     /// List of new top-level definitions
-    pub new_decls: HashSet<Ident>,
+    pub new_decls: HashSet<IdBind>,
     /// List of top-level declarations that have been modified in the lifting process
-    pub modified_decls: HashSet<Ident>,
+    pub modified_decls: HashSet<IdBind>,
 }
 
 #[derive(Debug)]
@@ -45,9 +45,9 @@ struct Ctx {
     /// List of new top-level declarations that got created in the lifting process
     new_decls: Vec<Decl>,
     /// Current declaration being visited for lifting
-    curr_decl: Ident,
+    curr_decl: IdBind,
     /// List of declarations that got modified in the lifting process
-    modified_decls: HashSet<Ident>,
+    modified_decls: HashSet<IdBind>,
     /// Tracks the current binders in scope
     ctx: LevelCtx,
 }
@@ -93,7 +93,7 @@ impl Lift for Decl {
     type Target = Decl;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        ctx.set_curr_decl(self.name().clone());
+        ctx.set_curr_decl(self.ident().clone());
         match self {
             Decl::Data(data) => Decl::Data(data.lift(ctx)),
             Decl::Codata(cotata) => Decl::Codata(cotata.lift(ctx)),
@@ -604,7 +604,7 @@ impl Ctx {
             span: None,
             kind: DotCallKind::Definition,
             exp: Box::new(on_exp.lift(self)),
-            name,
+            name: name.clone().into(),
             args,
             inferred_type: None,
         })
@@ -665,14 +665,14 @@ impl Ctx {
         Exp::Call(Call {
             span: None,
             kind: CallKind::Codefinition,
-            name,
+            name: name.clone().into(),
             args,
             inferred_type: None,
         })
     }
 
     /// Set the current declaration
-    fn set_curr_decl(&mut self, name: Ident) {
+    fn set_curr_decl(&mut self, name: IdBind) {
         self.curr_decl = name;
     }
 
@@ -682,19 +682,19 @@ impl Ctx {
     }
 
     /// Generate a definition name based on the label and type information
-    fn unique_def_name(&self, label: &Label, type_name: &str) -> Ident {
+    fn unique_def_name(&self, label: &Label, type_name: &str) -> IdBind {
         label.user_name.clone().unwrap_or_else(|| {
             let lowered = type_name.to_lowercase();
             let id = label.id;
-            Ident::from_string(&format!("d_{lowered}{id}"))
+            IdBind::from_string(&format!("d_{lowered}{id}"))
         })
     }
 
     /// Generate a codefinition name based on the label and type information
-    fn unique_codef_name(&self, label: &Label, type_name: &str) -> Ident {
+    fn unique_codef_name(&self, label: &Label, type_name: &str) -> IdBind {
         label.user_name.clone().unwrap_or_else(|| {
             let id = label.id;
-            Ident::from_string(&format!("Mk{type_name}{id}"))
+            IdBind::from_string(&format!("Mk{type_name}{id}"))
         })
     }
 }

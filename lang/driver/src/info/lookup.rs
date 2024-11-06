@@ -1,13 +1,13 @@
-use ast::{Codef, Ctor, Decl, Def, Dtor, Ident, Let, Named};
+use ast::{Codef, Ctor, Decl, Def, Dtor, GloballyIdentifiable, IdBound, Let};
 use url::Url;
 
 use crate::Database;
 
-pub fn lookup_decl<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Decl)> {
+pub fn lookup_decl<'a>(db: &'a Database, name: &IdBound) -> Option<(Url, &'a Decl)> {
     for uri in db.ust.keys() {
         match db.ust.get_unless_stale(uri) {
             Some(Ok(module)) => {
-                if let Some(decl) = module.decls.iter().find(|decl| decl.name() == name) {
+                if let Some(decl) = module.decls.iter().find(|decl| decl.ident() == name) {
                     return Some((uri.clone(), decl));
                 }
                 continue;
@@ -18,7 +18,7 @@ pub fn lookup_decl<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Decl)
     None
 }
 
-pub fn lookup_ctor<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Ctor)> {
+pub fn lookup_ctor<'a>(db: &'a Database, name: &IdBound) -> Option<(Url, &'a Ctor)> {
     for uri in db.ust.keys() {
         match db.ust.get_unless_stale(uri) {
             Some(Ok(module)) => {
@@ -35,7 +35,7 @@ pub fn lookup_ctor<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Ctor)
     None
 }
 
-pub fn lookup_codef<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Codef)> {
+pub fn lookup_codef<'a>(db: &'a Database, name: &IdBound) -> Option<(Url, &'a Codef)> {
     for uri in db.ust.keys() {
         match db.ust.get_unless_stale(uri) {
             Some(Ok(module)) => {
@@ -52,7 +52,7 @@ pub fn lookup_codef<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Code
     None
 }
 
-pub fn lookup_let<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Let)> {
+pub fn lookup_let<'a>(db: &'a Database, name: &IdBound) -> Option<(Url, &'a Let)> {
     for uri in db.ust.keys() {
         match db.ust.get_unless_stale(uri) {
             Some(Ok(module)) => {
@@ -69,7 +69,7 @@ pub fn lookup_let<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Let)> 
     None
 }
 
-pub fn lookup_dtor<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Dtor)> {
+pub fn lookup_dtor<'a>(db: &'a Database, name: &IdBound) -> Option<(Url, &'a Dtor)> {
     for uri in db.ust.keys() {
         match db.ust.get_unless_stale(uri) {
             Some(Ok(module)) => {
@@ -86,7 +86,7 @@ pub fn lookup_dtor<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Dtor)
     None
 }
 
-pub fn lookup_def<'a>(db: &'a Database, name: &Ident) -> Option<(Url, &'a Def)> {
+pub fn lookup_def<'a>(db: &'a Database, name: &IdBound) -> Option<(Url, &'a Def)> {
     for uri in db.ust.keys() {
         match db.ust.get_unless_stale(uri) {
             Some(Ok(module)) => {

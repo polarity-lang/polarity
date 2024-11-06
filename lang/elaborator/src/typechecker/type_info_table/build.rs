@@ -30,9 +30,9 @@ impl BuildTypeInfoTable for Decl {
 
 impl BuildTypeInfoTable for Data {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
-        info_table.map_data.insert(self.name.clone(), self.clone());
+        info_table.map_data.insert(self.name.id.clone(), self.clone());
         let Data { name, typ, ctors, .. } = self;
-        info_table.map_tyctor.insert(name.clone(), TyCtorMeta { params: typ.clone() });
+        info_table.map_tyctor.insert(name.id.clone(), TyCtorMeta { params: typ.clone() });
         for ctor in ctors {
             ctor.build(info_table);
         }
@@ -44,15 +44,15 @@ impl BuildTypeInfoTable for Ctor {
         let Ctor { name, params, typ, .. } = self;
         info_table
             .map_ctor
-            .insert(name.clone(), CtorMeta { params: params.clone(), typ: typ.clone() });
+            .insert(name.id.clone(), CtorMeta { params: params.clone(), typ: typ.clone() });
     }
 }
 
 impl BuildTypeInfoTable for Codata {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
-        info_table.map_codata.insert(self.name.clone(), self.clone());
+        info_table.map_codata.insert(self.name.id.clone(), self.clone());
         let Codata { name, typ, dtors, .. } = self;
-        info_table.map_tyctor.insert(name.clone(), TyCtorMeta { params: typ.clone() });
+        info_table.map_tyctor.insert(name.id.clone(), TyCtorMeta { params: typ.clone() });
         for dtor in dtors {
             dtor.build(info_table);
         }
@@ -63,7 +63,7 @@ impl BuildTypeInfoTable for Dtor {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
         let Dtor { name, params, self_param, ret_typ, .. } = self;
         info_table.map_dtor.insert(
-            name.clone(),
+            name.id.clone(),
             DtorMeta {
                 params: params.clone(),
                 self_param: self_param.clone(),
@@ -77,7 +77,7 @@ impl BuildTypeInfoTable for Def {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
         let Def { name, params, self_param, ret_typ, .. } = self;
         info_table.map_def.insert(
-            name.clone(),
+            name.id.clone(),
             DefMeta {
                 params: params.clone(),
                 self_param: self_param.clone(),
@@ -92,7 +92,7 @@ impl BuildTypeInfoTable for Codef {
         let Codef { name, params, typ, .. } = self;
         info_table
             .map_codef
-            .insert(name.clone(), CodefMeta { params: params.clone(), typ: typ.clone() });
+            .insert(name.id.clone(), CodefMeta { params: params.clone(), typ: typ.clone() });
     }
 }
 
@@ -101,6 +101,6 @@ impl BuildTypeInfoTable for Let {
         let Let { name, params, typ, .. } = self;
         info_table
             .map_let
-            .insert(name.clone(), LetMeta { params: params.clone(), typ: typ.clone() });
+            .insert(name.id.clone(), LetMeta { params: params.clone(), typ: typ.clone() });
     }
 }

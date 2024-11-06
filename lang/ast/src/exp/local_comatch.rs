@@ -10,8 +10,8 @@ use printer::{
 
 use crate::{
     ctx::{values::TypeCtx, LevelCtx},
-    ContainsMetaVars, HasSpan, HasType, Named, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
+    Zonk, ZonkError,
 };
 
 use super::{print_cases, Case, Exp, Label, Lvl, MetaVar, TypCtor};
@@ -85,12 +85,12 @@ impl Substitutable for LocalComatch {
 /// panic otherwise.
 fn print_lambda_sugar<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
     let Case { pattern, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
-    let var_name = pattern
+    let var_name = &pattern
         .params
         .params
         .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
         .expect("No parameter bound in comatch marked as lambda sugar")
-        .name();
+        .name;
     alloc
         .backslash_anno(cfg)
         .append(&var_name.id)

@@ -1,3 +1,4 @@
+use ast::IdBind;
 use parser::cst::{self};
 
 use super::super::*;
@@ -15,7 +16,7 @@ impl Lower for cst::decls::Let {
             Ok(ast::Let {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
-                name: name.lower(ctx)?,
+                name: IdBind { span: Some(name.span), id: name.id.clone() },
                 attr: attr.lower(ctx)?,
                 params,
                 typ: typ.lower(ctx)?,

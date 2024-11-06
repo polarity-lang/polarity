@@ -5,9 +5,9 @@ use super::{
 };
 
 impl TypeInfoTable {
-    pub fn lookup_data(&self, name: &Ident) -> Result<&Data, TypeError> {
+    pub fn lookup_data(&self, name: &IdBound) -> Result<&Data, TypeError> {
         for map in self.map.values() {
-            if let Some(data) = map.map_data.get(name) {
+            if let Some(data) = map.map_data.get(&name.id) {
                 return Ok(data);
             }
         }
@@ -17,9 +17,9 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_codata(&self, name: &Ident) -> Result<&Codata, TypeError> {
+    pub fn lookup_codata(&self, name: &IdBound) -> Result<&Codata, TypeError> {
         for map in self.map.values() {
-            if let Some(codata) = map.map_codata.get(name) {
+            if let Some(codata) = map.map_codata.get(&name.id) {
                 return Ok(codata);
             }
         }
@@ -29,12 +29,12 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_ctor_or_codef(&self, name: &Ident) -> Result<CtorMeta, TypeError> {
+    pub fn lookup_ctor_or_codef(&self, name: &IdBound) -> Result<CtorMeta, TypeError> {
         for map in self.map.values() {
-            if let Some(meta) = map.map_ctor.get(name) {
+            if let Some(meta) = map.map_ctor.get(&name.id) {
                 return Ok(meta.clone());
             }
-            if let Some(meta) = map.map_codef.get(name) {
+            if let Some(meta) = map.map_codef.get(&name.id) {
                 return Ok(meta.to_ctor().clone());
             }
         }
@@ -44,12 +44,12 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_dtor_or_def(&self, name: &Ident) -> Result<DtorMeta, TypeError> {
+    pub fn lookup_dtor_or_def(&self, name: &IdBound) -> Result<DtorMeta, TypeError> {
         for map in self.map.values() {
-            if let Some(meta) = map.map_dtor.get(name) {
+            if let Some(meta) = map.map_dtor.get(&name.id) {
                 return Ok(meta.clone());
             }
-            if let Some(meta) = map.map_def.get(name) {
+            if let Some(meta) = map.map_def.get(&name.id) {
                 return Ok(meta.to_dtor().clone());
             }
         }
@@ -59,9 +59,9 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_let(&self, name: &Ident) -> Result<&LetMeta, TypeError> {
+    pub fn lookup_let(&self, name: &IdBound) -> Result<&LetMeta, TypeError> {
         for map in self.map.values() {
-            if let Some(meta) = map.map_let.get(name) {
+            if let Some(meta) = map.map_let.get(&name.id) {
                 return Ok(meta);
             }
         }
@@ -71,9 +71,9 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_tyctor(&self, name: &Ident) -> Result<&TyCtorMeta, TypeError> {
+    pub fn lookup_tyctor(&self, name: &IdBound) -> Result<&TyCtorMeta, TypeError> {
         for map in self.map.values() {
-            if let Some(meta) = map.map_tyctor.get(name) {
+            if let Some(meta) = map.map_tyctor.get(&name.id) {
                 return Ok(meta);
             }
         }
@@ -83,9 +83,9 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_codef(&self, name: &Ident) -> Result<&CodefMeta, TypeError> {
+    pub fn lookup_codef(&self, name: &IdBound) -> Result<&CodefMeta, TypeError> {
         for map in self.map.values() {
-            if let Some(meta) = map.map_codef.get(name) {
+            if let Some(meta) = map.map_codef.get(&name.id) {
                 return Ok(meta);
             }
         }
@@ -95,9 +95,9 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_ctor(&self, name: &Ident) -> Result<&CtorMeta, TypeError> {
+    pub fn lookup_ctor(&self, name: &IdBound) -> Result<&CtorMeta, TypeError> {
         for map in self.map.values() {
-            if let Some(meta) = map.map_ctor.get(name) {
+            if let Some(meta) = map.map_ctor.get(&name.id) {
                 return Ok(meta);
             }
         }
@@ -107,9 +107,9 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_def(&self, name: &Ident) -> Result<&DefMeta, TypeError> {
+    pub fn lookup_def(&self, name: &IdBound) -> Result<&DefMeta, TypeError> {
         for map in self.map.values() {
-            if let Some(meta) = map.map_def.get(name) {
+            if let Some(meta) = map.map_def.get(&name.id) {
                 return Ok(meta);
             }
         }
@@ -119,9 +119,9 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_dtor(&self, name: &Ident) -> Result<&DtorMeta, TypeError> {
+    pub fn lookup_dtor(&self, name: &IdBound) -> Result<&DtorMeta, TypeError> {
         for map in self.map.values() {
-            if let Some(meta) = map.map_dtor.get(name) {
+            if let Some(meta) = map.map_dtor.get(&name.id) {
                 return Ok(meta);
             }
         }

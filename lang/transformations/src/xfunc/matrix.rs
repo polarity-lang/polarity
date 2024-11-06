@@ -7,7 +7,7 @@ use codespan::Span;
 
 #[derive(Debug, Clone)]
 pub struct Prg {
-    pub map: HashMap<ast::Ident, XData>,
+    pub map: HashMap<String, XData>,
 }
 
 #[derive(Debug, Clone)]
@@ -15,10 +15,10 @@ pub struct XData {
     pub repr: Repr,
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
-    pub name: ast::Ident,
+    pub name: ast::IdBind,
     pub typ: Box<ast::Telescope>,
-    pub ctors: HashMap<ast::Ident, ast::Ctor>,
-    pub dtors: HashMap<ast::Ident, ast::Dtor>,
+    pub ctors: HashMap<String, ast::Ctor>,
+    pub dtors: HashMap<String, ast::Dtor>,
     pub exprs: HashMap<Key, Option<Box<ast::Exp>>>,
 }
 
@@ -32,8 +32,8 @@ pub struct XData {
 /// between the matrix and other representations
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Key {
-    pub ctor: ast::Ident,
-    pub dtor: ast::Ident,
+    pub ctor: String,
+    pub dtor: String,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -92,10 +92,10 @@ impl BuildMatrix for ast::Data {
             exprs: HashMap::default(),
         };
         for ctor in ctors {
-            xdata.ctors.insert(ctor.name.clone(), ctor.clone());
+            xdata.ctors.insert(ctor.name.id.clone(), ctor.clone());
         }
 
-        out.map.insert(name.clone(), xdata);
+        out.map.insert(name.id.clone(), xdata);
         Ok(())
     }
 }
@@ -115,10 +115,10 @@ impl BuildMatrix for ast::Codata {
         };
 
         for dtor in dtors {
-            xdata.dtors.insert(dtor.name.clone(), dtor.clone());
+            xdata.dtors.insert(dtor.name.id.clone(), dtor.clone());
         }
 
-        out.map.insert(name.clone(), xdata);
+        out.map.insert(name.id.clone(), xdata);
         Ok(())
     }
 }
@@ -126,17 +126,17 @@ impl BuildMatrix for ast::Codata {
 impl BuildMatrix for ast::Def {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.self_param.typ.name;
-        let xdata = out.map.get_mut(type_name).ok_or(XfuncError::Impossible {
+        let xdata = out.map.get_mut(&type_name.id).ok_or(XfuncError::Impossible {
             message: format!("Could not resolve {type_name}"),
             span: None,
         })?;
-        xdata.dtors.insert(self.name.clone(), self.to_dtor());
+        xdata.dtors.insert(self.name.id.clone(), self.to_dtor());
 
         let cases = &self.cases;
 
         for case in cases {
             let ast::Case { pattern, body, .. } = case;
-            let key = Key { dtor: self.name.clone(), ctor: pattern.name.clone() };
+            let key = Key { dtor: self.name.id.clone(), ctor: pattern.name.id.clone() };
             xdata.exprs.insert(key, body.clone());
         }
         Ok(())
@@ -146,17 +146,17 @@ impl BuildMatrix for ast::Def {
 impl BuildMatrix for ast::Codef {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.typ.name;
-        let xdata = out.map.get_mut(type_name).ok_or(XfuncError::Impossible {
+        let xdata = out.map.get_mut(&type_name.id).ok_or(XfuncError::Impossible {
             message: format!("Could not resolve {type_name}"),
             span: None,
         })?;
-        xdata.ctors.insert(self.name.clone(), self.to_ctor());
+        xdata.ctors.insert(self.name.id.clone(), self.to_ctor());
 
         let cases = &self.cases;
 
         for case in cases {
             let ast::Case { pattern, body, .. } = case;
-            let key = Key { ctor: self.name.clone(), dtor: pattern.name.clone() };
+            let key = Key { ctor: self.name.id.clone(), dtor: pattern.name.id.clone() };
             // Swap binding order to the order imposed by the matrix representation
             let body = body.as_ref().map(|body| {
                 let mut ctx = LevelCtx::empty();
@@ -192,13 +192,13 @@ impl XData {
                 let cases = ctors
                     .values()
                     .flat_map(|ctor| {
-                        let key = Key { dtor: dtor.name.clone(), ctor: ctor.name.clone() };
+                        let key = Key { dtor: dtor.name.id.clone(), ctor: ctor.name.id.clone() };
                         let body = exprs.get(&key).cloned();
                         body.map(|body| ast::Case {
                             span: None,
                             pattern: ast::Pattern {
                                 is_copattern: false,
-                                name: ctor.name.clone(),
+                                name: ctor.name.clone().into(),
                                 params: ctor.params.instantiate(),
                             },
                             body,
@@ -240,7 +240,7 @@ impl XData {
                 let cases = dtors
                     .values()
                     .flat_map(|dtor| {
-                        let key = Key { dtor: dtor.name.clone(), ctor: ctor.name.clone() };
+                        let key = Key { dtor: dtor.name.id.clone(), ctor: ctor.name.id.clone() };
                         let body = &exprs.get(&key);
                         // Swap binding order (which is different in the matrix representation)
                         let body = body.as_ref().map(|body| {
@@ -255,7 +255,7 @@ impl XData {
                             span: None,
                             pattern: ast::Pattern {
                                 is_copattern: true,
-                                name: dtor.name.clone(),
+                                name: dtor.name.clone().into(),
                                 params: dtor.params.instantiate(),
                             },
                             body,

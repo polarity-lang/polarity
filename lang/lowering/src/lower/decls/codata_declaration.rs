@@ -1,3 +1,4 @@
+use ast::IdBind;
 use miette_util::ToMiette;
 use parser::cst::ident::Ident;
 use parser::cst::{self};
@@ -21,7 +22,7 @@ impl Lower for cst::decls::Codata {
         Ok(ast::Codata {
             span: Some(*span),
             doc: doc.lower(ctx)?,
-            name: name.lower(ctx)?,
+            name: IdBind { span: Some(name.span), id: name.id.clone() },
             attr: attr.lower(ctx)?,
             typ: Box::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
             dtors,
@@ -69,7 +70,7 @@ fn lower_destructor(
             Ok(ast::Dtor {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
-                name: name.lower(ctx)?,
+                name: IdBind { span: Some(name.span), id: name.id.clone() },
                 params,
                 self_param,
                 ret_typ: ret_typ.lower(ctx)?,

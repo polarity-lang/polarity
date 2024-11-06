@@ -36,7 +36,7 @@ impl CheckToplevel for Data {
 }
 
 /// Infer a constructor declaration
-fn check_ctor_wf(data_type_name: &Ident, ctor: &Ctor, ctx: &mut Ctx) -> Result<Ctor, TypeError> {
+fn check_ctor_wf(data_type_name: &IdBind, ctor: &Ctor, ctx: &mut Ctx) -> Result<Ctor, TypeError> {
     trace!("Checking well-formedness of constructor: {}", ctor.name);
 
     let Ctor { span, doc, name, params, typ } = ctor;
