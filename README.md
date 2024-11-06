@@ -53,6 +53,7 @@ pol --help
 │   ├── printer             Print abstract syntax tree to text
 │   └── transformations     Source-to-Source transformations available as code actions.
 │                           (E.g. lifting and de- and refunctionalization.)
+├── std                     The Polarity Standard Library
 ├── test                    Integration tests
 │   ├── suites              Test cases
 │   └── test-runner         Test runner

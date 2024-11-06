@@ -39,14 +39,16 @@ fn create_index(suites: &HashMap<String, Suite>) -> Index {
 }
 
 impl Runner {
-    pub fn load<P1, P2>(suites_path: P1, examples_path: P2) -> Self
+    pub fn load<P1, P2, P3>(suites_path: P1, examples_path: P2, stdlib_path: P3) -> Self
     where
         P1: AsRef<Path>,
         P2: AsRef<Path>,
+        P3: AsRef<Path>,
     {
         let mut suites: HashMap<_, _> =
             suites::load(suites_path.as_ref()).map(|suite| (suite.name.clone(), suite)).collect();
         suites.insert("examples".to_owned(), Suite::new(examples_path.as_ref().into()));
+        suites.insert("stdlib".to_owned(), Suite::new(stdlib_path.as_ref().into()));
 
         let index = create_index(&suites);
 

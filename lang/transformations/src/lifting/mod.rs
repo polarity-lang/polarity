@@ -278,7 +278,7 @@ impl Lift for Exp {
             Exp::DotCall(e) => e.lift(ctx),
             Exp::Anno(e) => e.lift(ctx),
             Exp::TypeUniv(e) => e.lift(ctx),
-            Exp::Hole(e) => e.lift(ctx),
+            Exp::Hole(e) => e.lift(ctx).into(),
             Exp::LocalMatch(e) => e.lift(ctx),
             Exp::LocalComatch(e) => e.lift(ctx),
         }
@@ -358,7 +358,7 @@ impl Lift for TypeUniv {
 }
 
 impl Lift for Hole {
-    type Target = Exp;
+    type Target = Hole;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
         let Hole { span, kind, metavar, args, .. } = self;
@@ -371,7 +371,6 @@ impl Lift for Hole {
             args: args.clone(),
             solution: None,
         }
-        .into()
     }
 }
 
@@ -475,7 +474,7 @@ impl Lift for Arg {
         match self {
             Arg::UnnamedArg(exp) => Arg::UnnamedArg(exp.lift(ctx)),
             Arg::NamedArg(name, exp) => Arg::NamedArg(name.clone(), exp.lift(ctx)),
-            Arg::InsertedImplicitArg(hole) => Arg::UnnamedArg(Box::new(hole.lift(ctx))),
+            Arg::InsertedImplicitArg(hole) => Arg::InsertedImplicitArg(hole.lift(ctx)),
         }
     }
 }
