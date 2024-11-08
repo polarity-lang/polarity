@@ -14,6 +14,9 @@ use crate::HasSpan;
 //
 //
 
+/// A local variable binding
+///
+/// E.g. on the left-hand side of a pattern or in a parameter list
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct VarBind {
@@ -44,6 +47,7 @@ impl HasSpan for VarBind {
 //
 //
 
+/// A bound occurence of a local variable
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct VarBound {
@@ -80,6 +84,9 @@ impl From<VarBind> for VarBound {
 //
 //
 
+/// A global identifier binding
+///
+/// E.g. the names for (co)data type declarations, (co)def declarations, and top-level let bindings
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct IdBind {
@@ -128,6 +135,9 @@ impl PartialEq<IdBind> for IdBound {
 //
 //
 
+/// A bound occurence of a global identifier
+///
+/// E.g. the name in a (type) constructor or destructor call, or in a call to a top-level let binding
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct IdBound {
