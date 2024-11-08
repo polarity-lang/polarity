@@ -1,5 +1,7 @@
 //! Bidirectional type checker
 
+use std::collections::HashSet;
+
 use ast::ctx::values::Binder;
 use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
@@ -119,14 +121,14 @@ impl<'a> WithScrutinee<'a> {
         // Check exhaustiveness
         let ctors_expected: HashSet<_> =
             data.ctors.iter().map(|ctor| ctor.name.to_owned()).collect();
-        let mut ctors_actual = HashSet::default();
-        let mut ctors_duplicate = HashSet::default();
+        let mut ctors_actual: HashSet<IdBind> = HashSet::default();
+        let mut ctors_duplicate: HashSet<IdBind> = HashSet::default();
 
         for name in cases.iter().map(|case| &case.pattern.name) {
-            if ctors_actual.contains(name) {
-                ctors_duplicate.insert(name.clone());
+            if ctors_actual.contains(&name.clone().into()) {
+                ctors_duplicate.insert(name.clone().into());
             }
-            ctors_actual.insert(name.clone());
+            ctors_actual.insert(name.clone().into());
         }
         let mut ctors_missing = ctors_expected.difference(&ctors_actual).peekable();
         let mut ctors_undeclared = ctors_actual.difference(&ctors_expected).peekable();
@@ -186,7 +188,7 @@ impl<'a> WithScrutinee<'a> {
                             Arg::UnnamedArg(Box::new(Exp::Variable(Variable {
                                 span: None,
                                 idx: Idx { fst: 1, snd },
-                                name: Ident::from_string(""),
+                                name: VarBound::from_string(""),
                                 inferred_type: None,
                             })))
                         })

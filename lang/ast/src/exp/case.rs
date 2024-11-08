@@ -14,7 +14,7 @@ use crate::{
     ZonkError,
 };
 
-use super::{Exp, Ident, Lvl, MetaVar, TelescopeInst};
+use super::{Exp, IdBound, Lvl, MetaVar, TelescopeInst};
 
 // Pattern
 //
@@ -24,7 +24,7 @@ use super::{Exp, Ident, Lvl, MetaVar, TelescopeInst};
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Pattern {
     pub is_copattern: bool,
-    pub name: Ident,
+    pub name: IdBound,
     pub params: TelescopeInst,
 }
 

@@ -73,7 +73,7 @@ impl Eval for Call {
         match kind {
             CallKind::LetBound => {
                 let Let { attr, body, .. } =
-                    prg.lookup_let(name).ok_or_else(|| TypeError::Impossible {
+                    prg.lookup_let(&name.clone().into()).ok_or_else(|| TypeError::Impossible {
                         message: format!("Top-level let {name} not found"),
                         span: span.to_miette(),
                     })?;
@@ -147,9 +147,11 @@ impl Eval for DotCall {
 
                         // First, we have to find the corresponding case in the toplevel definition `d`.
                         let Def { cases, .. } =
-                            prg.lookup_def(name).ok_or_else(|| TypeError::Impossible {
-                                message: format!("Definition {name} not found"),
-                                span: None,
+                            prg.lookup_def(&name.clone().into()).ok_or_else(|| {
+                                TypeError::Impossible {
+                                    message: format!("Definition {name} not found"),
+                                    span: None,
+                                }
                             })?;
                         let mut env: Env = GenericCtx::empty().into();
                         let cases =
@@ -180,8 +182,9 @@ impl Eval for DotCall {
 
                         // First, we have to find the corresponding cocase in the toplevel
                         // codefinition `C`.
-                        let Codef { cases, .. } =
-                            prg.lookup_codef(&call_name).ok_or_else(|| TypeError::Impossible {
+                        let Codef { cases, .. } = prg
+                            .lookup_codef(&call_name.clone().into())
+                            .ok_or_else(|| TypeError::Impossible {
                                 message: format!("Codefinition {call_name} not found"),
                                 span: None,
                             })?;

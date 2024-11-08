@@ -120,7 +120,7 @@ impl CheckInfer for Arg {
 
 fn check_args(
     this: &Args,
-    name: &Ident,
+    name: &IdBound,
     ctx: &mut Ctx,
     params: &Telescope,
     span: Option<Span>,
@@ -263,7 +263,7 @@ impl InferTelescope for SelfParam {
         let typ_out = typ.infer(ctx)?;
         let param_out = SelfParam { info: *info, name: name.clone(), typ: typ_out };
         let elem =
-            Binder { name: name.clone().unwrap_or_else(|| Ident::from_string("")), typ: typ_nf };
+            Binder { name: name.clone().unwrap_or_else(|| VarBind::from_string("")), typ: typ_nf };
 
         // We need to shift the self parameter type here because we treat it as a 1-element telescope
         ctx.bind_single(&shift_and_clone(&elem, (1, 0)), |ctx| f(ctx, param_out))

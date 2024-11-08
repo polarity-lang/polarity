@@ -1,4 +1,7 @@
+use ast::IdBound;
 use ast::MetaVarKind;
+use ast::VarBind;
+use ast::VarBound;
 use codespan::Span;
 use num_bigint::BigUint;
 
@@ -16,15 +19,6 @@ use crate::result::*;
 use crate::symbol_table::DeclMeta;
 
 use super::Lower;
-
-impl Lower for cst::ident::Ident {
-    type Target = ast::Ident;
-
-    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let Ident { span, id } = self;
-        Ok(ast::Ident { span: Some(*span), id: id.clone() })
-    }
-}
 
 impl Lower for cst::exp::Exp {
     type Target = ast::Exp;
@@ -60,7 +54,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
             let param_out = ast::ParamInst {
                 span: Some(span),
                 info: None,
-                name: ast::Ident { span: Some(span), id: name.id.clone() },
+                name: VarBind { span: Some(span), id: name.id.clone() },
                 typ: None,
             };
             params_out.push(param_out);
@@ -182,7 +176,7 @@ fn lower_args(
                         span: exp.span().to_miette(),
                     });
                 }
-                let name = name.lower(ctx)?;
+                let name = VarBound { span: Some(name.span), id: name.id.clone() };
                 args_out.push(ast::Arg::NamedArg(name, exp.lower(ctx)?));
             }
         }
@@ -242,7 +236,7 @@ impl Lower for cst::exp::Case<cst::exp::Pattern> {
         let cst::exp::Case { span, pattern, body } = self;
 
         lower_telescope_inst(&pattern.params, ctx, |ctx, params| {
-            let name = pattern.name.lower(ctx)?;
+            let name = IdBound { span: Some(pattern.name.span), id: pattern.name.id.clone() };
             Ok(ast::Case {
                 span: Some(*span),
                 pattern: ast::Pattern { is_copattern: false, name, params },
@@ -259,7 +253,7 @@ impl Lower for cst::exp::Case<cst::exp::Copattern> {
         let cst::exp::Case { span, pattern, body } = self;
 
         lower_telescope_inst(&pattern.params, ctx, |ctx, params| {
-            let name = pattern.name.lower(ctx)?;
+            let name = ast::IdBound { span: Some(pattern.name.span), id: pattern.name.id.clone() };
             Ok(ast::Case {
                 span: Some(*span),
                 pattern: ast::Pattern { is_copattern: true, name, params },
@@ -278,7 +272,7 @@ impl Lower for cst::exp::Call {
         // If we find the identifier in the local context then we have to lower
         // it to a variable.
         if let Some(idx) = ctx.lookup_local(name) {
-            let name = name.lower(ctx)?;
+            let name = VarBound { span: Some(name.span), id: name.id.clone() };
             return Ok(ast::Exp::Variable(Variable {
                 span: Some(*span),
                 idx,
@@ -292,7 +286,7 @@ impl Lower for cst::exp::Call {
         let meta = ctx.symbol_table.lookup(name).cloned()?;
         match meta {
             DeclMeta::Data { params, .. } | DeclMeta::Codata { params, .. } => {
-                let name = name.lower(ctx)?;
+                let name = IdBound { span: Some(name.span), id: name.id.clone() };
                 Ok(ast::Exp::TypCtor(ast::TypCtor {
                     span: Some(*span),
                     name,
@@ -303,7 +297,7 @@ impl Lower for cst::exp::Call {
                 Err(LoweringError::MustUseAsDotCall { name: name.clone(), span: span.to_miette() })
             }
             DeclMeta::Ctor { params, .. } => {
-                let name = name.lower(ctx)?;
+                let name = IdBound { span: Some(name.span), id: name.id.clone() };
                 Ok(ast::Exp::Call(ast::Call {
                     span: Some(*span),
                     kind: ast::CallKind::Constructor,
@@ -313,7 +307,7 @@ impl Lower for cst::exp::Call {
                 }))
             }
             DeclMeta::Codef { params, .. } => {
-                let name = name.lower(ctx)?;
+                let name = IdBound { span: Some(name.span), id: name.id.clone() };
                 Ok(ast::Exp::Call(ast::Call {
                     span: Some(*span),
                     kind: ast::CallKind::Codefinition,
@@ -323,7 +317,7 @@ impl Lower for cst::exp::Call {
                 }))
             }
             DeclMeta::Let { params, .. } => {
-                let name = name.lower(ctx)?;
+                let name = IdBound { span: Some(name.span), id: name.id.clone() };
                 Ok(ast::Exp::Call(ast::Call {
                     span: Some(*span),
                     kind: ast::CallKind::LetBound,
@@ -349,7 +343,7 @@ impl Lower for cst::exp::DotCall {
                 span: Some(*span),
                 kind: ast::DotCallKind::Destructor,
                 exp: exp.lower(ctx)?,
-                name: name.lower(ctx)?,
+                name: IdBound { span: Some(name.span), id: name.id.clone() },
                 args: lower_args(args, params, ctx)?,
                 inferred_type: None,
             })),
@@ -357,7 +351,7 @@ impl Lower for cst::exp::DotCall {
                 span: Some(*span),
                 kind: ast::DotCallKind::Definition,
                 exp: exp.lower(ctx)?,
-                name: name.lower(ctx)?,
+                name: IdBound { span: Some(name.span), id: name.id.clone() },
                 args: lower_args(args, params, ctx)?,
                 inferred_type: None,
             })),
@@ -482,7 +476,7 @@ impl Lower for cst::exp::NatLit {
         let mut out = ast::Exp::Call(ast::Call {
             span: Some(*span),
             kind: call_kind,
-            name: ast::Ident::from_string("Z"),
+            name: ast::IdBound::from_string("Z"),
             args: ast::Args { args: vec![] },
             inferred_type: None,
         });
@@ -494,7 +488,7 @@ impl Lower for cst::exp::NatLit {
             out = ast::Exp::Call(ast::Call {
                 span: Some(*span),
                 kind: call_kind,
-                name: ast::Ident::from_string("S"),
+                name: ast::IdBound::from_string("S"),
                 args: ast::Args { args: vec![ast::Arg::UnnamedArg(Box::new(out))] },
                 inferred_type: None,
             });
@@ -510,7 +504,7 @@ impl Lower for cst::exp::Fun {
         let cst::exp::Fun { span, from, to } = self;
         Ok(ast::TypCtor {
             span: Some(*span),
-            name: ast::Ident::from_string("Fun"),
+            name: ast::IdBound::from_string("Fun"),
             args: ast::Args {
                 args: vec![
                     ast::Arg::UnnamedArg(from.lower(ctx)?),
@@ -575,7 +569,7 @@ impl Lower for cst::exp::Motive {
             param: ast::ParamInst {
                 span: Some(bs_to_span(param)),
                 info: None,
-                name: ast::Ident { span: Some(bs_to_span(param)), id: bs_to_name(param).id },
+                name: ast::VarBind { span: Some(bs_to_span(param)), id: bs_to_name(param).id },
                 typ: None,
             },
             ret_typ: ctx.bind_single(param, |ctx| ret_typ.lower(ctx))?,

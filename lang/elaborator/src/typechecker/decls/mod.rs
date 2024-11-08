@@ -84,7 +84,7 @@ fn check_metavars_resolved(
     for decl in decls {
         if decl.contains_metavars() {
             return Err(TypeError::Impossible {
-                message: format!("Declaration {} contains unresolved metavariables", decl.name()),
+                message: format!("Declaration {} contains unresolved metavariables", decl.ident()),
                 span: None,
             });
         }

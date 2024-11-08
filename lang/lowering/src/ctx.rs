@@ -87,7 +87,7 @@ impl Ctx {
         self.next_label_id += 1;
         Ok(ast::Label {
             id,
-            user_name: user_name.map(|name| ast::Ident { span: Some(name.span), id: name.id }),
+            user_name: user_name.map(|name| ast::IdBind { span: Some(name.span), id: name.id }),
         })
     }
 
@@ -135,7 +135,7 @@ impl Ctx {
                     ast::Variable {
                         span: None,
                         idx: self.level_to_index(Lvl { fst, snd }),
-                        name: ast::Ident { span: None, id: name.to_owned() },
+                        name: ast::VarBound { span: None, id: name.to_owned() },
                         inferred_type: None,
                     }
                     .into(),

@@ -1,6 +1,6 @@
 use derivative::Derivative;
 
-use ast::{Ident, Shift, ShiftRange};
+use ast::{Shift, ShiftRange, VarBound};
 use pretty::DocAllocator;
 
 use ast::ctx::values::TypeCtx;
@@ -107,7 +107,7 @@ impl ToEnv for LevelCtx {
                         let idx = Idx { fst: self.bound.len() - 1 - fst, snd: v.len() - 1 - snd };
                         Box::new(Val::Neu(Neu::Variable(Variable {
                             span: None,
-                            name: Ident::from_string(""),
+                            name: VarBound::from_string(""),
                             idx,
                         })))
                     })
@@ -127,7 +127,7 @@ impl ToEnv for TypeCtx {
                 Box::new(Val::Neu(Neu::Variable(Variable {
                     // FIXME: handle info
                     span: None,
-                    name: binder.name.clone(),
+                    name: binder.name.clone().into(),
                     idx,
                 })))
             })

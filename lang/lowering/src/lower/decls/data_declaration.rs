@@ -1,3 +1,4 @@
+use ast::{IdBind, IdBound};
 use miette_util::ToMiette;
 use parser::cst::ident::Ident;
 use parser::cst::{self};
@@ -20,7 +21,7 @@ impl Lower for cst::decls::Data {
         Ok(ast::Data {
             span: Some(*span),
             doc: doc.lower(ctx)?,
-            name: name.lower(ctx)?,
+            name: IdBind { span: Some(name.span), id: name.id.clone() },
             attr: attr.lower(ctx)?,
             typ: Box::new(lower_telescope(params, ctx, |_, out| Ok(out))?),
             ctors,
@@ -48,7 +49,7 @@ fn lower_constructor(
                 if type_arity == 0 {
                     ast::TypCtor {
                         span: None,
-                        name: typ_name.lower(ctx)?,
+                        name: IdBound { span: Some(typ_name.span), id: typ_name.id.clone() },
                         args: ast::Args { args: vec![] },
                     }
                 } else {
@@ -64,7 +65,7 @@ fn lower_constructor(
         Ok(ast::Ctor {
             span: Some(*span),
             doc: doc.lower(ctx)?,
-            name: name.lower(ctx)?,
+            name: IdBind { span: Some(name.span), id: name.id.clone() },
             params,
             typ,
         })

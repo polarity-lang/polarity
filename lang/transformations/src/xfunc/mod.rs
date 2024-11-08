@@ -1,4 +1,4 @@
-use ast::Ident;
+use ast::IdBound;
 
 pub mod matrix;
 pub mod result;
@@ -7,9 +7,9 @@ pub fn as_matrix(prg: &ast::Module) -> Result<matrix::Prg, crate::result::XfuncE
     matrix::build(prg)
 }
 
-pub fn repr(prg: &matrix::Prg, name: &Ident) -> Result<matrix::Repr, crate::result::XfuncError> {
+pub fn repr(prg: &matrix::Prg, name: &IdBound) -> Result<matrix::Repr, crate::result::XfuncError> {
     prg.map
-        .get(name)
+        .get(&name.id)
         .ok_or_else(|| crate::result::XfuncError::Impossible {
             message: format!("Could not resolve {name}"),
             span: None,
@@ -19,10 +19,10 @@ pub fn repr(prg: &matrix::Prg, name: &Ident) -> Result<matrix::Repr, crate::resu
 
 pub fn as_data(
     prg: &matrix::Prg,
-    name: &Ident,
+    name: &IdBound,
 ) -> Result<(ast::Data, Vec<ast::Def>), crate::result::XfuncError> {
     prg.map
-        .get(name)
+        .get(&name.id)
         .ok_or_else(|| crate::result::XfuncError::Impossible {
             message: format!("Could not resolve {name}"),
             span: None,
@@ -32,10 +32,10 @@ pub fn as_data(
 
 pub fn as_codata(
     prg: &matrix::Prg,
-    name: &Ident,
+    name: &IdBound,
 ) -> Result<(ast::Codata, Vec<ast::Codef>), crate::result::XfuncError> {
     prg.map
-        .get(name)
+        .get(&name.id)
         .ok_or_else(|| crate::result::XfuncError::Impossible {
             message: format!("Could not resolve {name}"),
             span: None,

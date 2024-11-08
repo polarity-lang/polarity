@@ -7,7 +7,7 @@ use crate::{
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Args, Exp, Ident, Lvl, MetaVar};
+use super::{Args, Exp, IdBound, Lvl, MetaVar};
 
 /// A Call expression can be one of three different kinds:
 /// - A constructor introduced by a data type declaration
@@ -33,7 +33,7 @@ pub struct Call {
     pub kind: CallKind,
     /// The name of the call.
     /// The `f` in `f(e1...en)`
-    pub name: Ident,
+    pub name: IdBound,
     /// The arguments to the call.
     /// The `(e1...en)` in `f(e1...en)`
     pub args: Args,

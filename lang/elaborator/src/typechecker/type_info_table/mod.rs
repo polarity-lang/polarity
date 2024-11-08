@@ -22,20 +22,20 @@ pub struct ModuleTypeInfoTable {
     // Data and Codata Types
     //
     //
-    map_data: HashMap<Ident, Data>,
-    map_codata: HashMap<Ident, Codata>,
+    map_data: HashMap<String, Data>,
+    map_codata: HashMap<String, Codata>,
     // Calls
     //
     //
-    map_let: HashMap<Ident, LetMeta>,
-    map_tyctor: HashMap<Ident, TyCtorMeta>,
-    map_codef: HashMap<Ident, CodefMeta>,
-    map_ctor: HashMap<Ident, CtorMeta>,
+    map_let: HashMap<String, LetMeta>,
+    map_tyctor: HashMap<String, TyCtorMeta>,
+    map_codef: HashMap<String, CodefMeta>,
+    map_ctor: HashMap<String, CtorMeta>,
     // DotCalls
     //
     //
-    map_def: HashMap<Ident, DefMeta>,
-    map_dtor: HashMap<Ident, DtorMeta>,
+    map_def: HashMap<String, DefMeta>,
+    map_dtor: HashMap<String, DtorMeta>,
 }
 
 #[derive(Debug, Clone)]

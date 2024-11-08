@@ -8,7 +8,7 @@ use crate::{
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Exp, Ident, Idx, Lvl, MetaVar};
+use super::{Exp, Idx, Lvl, MetaVar, VarBound};
 
 /// A bound variable occurrence. The variable is represented
 /// using a de-Bruijn index, but we keep the information
@@ -26,7 +26,7 @@ pub struct Variable {
     /// We do not use this information for tracking the binding
     /// structure, but only for prettyprinting code.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub name: Ident,
+    pub name: VarBound,
     /// Inferred type annotated after elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<Box<Exp>>,

@@ -3,9 +3,9 @@ use derivative::Derivative;
 use pretty::DocAllocator;
 use printer::{Alloc, Builder, Print, PrintCfg};
 
-use crate::{ContainsMetaVars, Named, Zonk, ZonkError};
+use crate::{ContainsMetaVars, Zonk, ZonkError};
 
-use super::{Exp, Ident, MetaVar};
+use super::{Exp, MetaVar, VarBind};
 // Telescope Inst
 //
 //
@@ -72,15 +72,9 @@ pub struct ParamInst {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub info: Option<Box<Exp>>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub name: Ident,
+    pub name: VarBind,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub typ: Option<Box<Exp>>,
-}
-
-impl Named for ParamInst {
-    fn name(&self) -> &Ident {
-        &self.name
-    }
 }
 
 impl Print for ParamInst {

@@ -23,7 +23,6 @@ use printer::PrintCfg;
 use url::Url;
 
 use crate::ctx::LevelCtx;
-use crate::named::Named;
 use crate::shift_and_clone;
 use crate::ContainsMetaVars;
 use crate::Zonk;
@@ -184,7 +183,7 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn xdefs_for_type(&self, type_name: &str) -> Vec<Ident> {
+    pub fn xdefs_for_type(&self, type_name: &str) -> Vec<IdBind> {
         let mut out = vec![];
 
         for decl in &self.decls {
@@ -206,7 +205,7 @@ impl Module {
         out
     }
 
-    pub fn xtors_for_type(&self, type_name: &str) -> Vec<Ident> {
+    pub fn xtors_for_type(&self, type_name: &str) -> Vec<IdBind> {
         let mut out = vec![];
 
         for decl in &self.decls {
@@ -232,25 +231,25 @@ impl Module {
         out
     }
 
-    pub fn lookup_decl(&self, name: &Ident) -> Option<&Decl> {
-        self.decls.iter().find(|decl| decl.name() == name)
+    pub fn lookup_decl(&self, name: &IdBind) -> Option<&Decl> {
+        self.decls.iter().find(|decl| decl.ident() == name)
     }
 
-    pub fn lookup_let(&self, name: &Ident) -> Option<&Let> {
+    pub fn lookup_let(&self, name: &IdBind) -> Option<&Let> {
         self.decls.iter().find_map(|decl| match decl {
             Decl::Let(tl_let) if tl_let.name == *name => Some(tl_let),
             _ => None,
         })
     }
 
-    pub fn lookup_def(&self, name: &Ident) -> Option<&Def> {
+    pub fn lookup_def(&self, name: &IdBind) -> Option<&Def> {
         self.decls.iter().find_map(|decl| match decl {
             Decl::Def(def) if def.name == *name => Some(def),
             _ => None,
         })
     }
 
-    pub fn lookup_codef(&self, name: &Ident) -> Option<&Codef> {
+    pub fn lookup_codef(&self, name: &IdBind) -> Option<&Codef> {
         self.decls.iter().find_map(|decl| match decl {
             Decl::Codef(codef) if codef.name == *name => Some(codef),
             _ => None,
@@ -348,6 +347,7 @@ impl From<Let> for Decl {
 }
 
 impl Decl {
+    /// A list of all attributes attached to the declaration.
     pub fn attributes(&self) -> &Attributes {
         match self {
             Decl::Data(Data { attr, .. }) => attr,
@@ -365,10 +365,9 @@ impl Decl {
             _ => None,
         }
     }
-}
 
-impl Named for Decl {
-    fn name(&self) -> &Ident {
+    /// The identifier of the declaration.
+    pub fn ident(&self) -> &IdBind {
         match self {
             Decl::Data(Data { name, .. }) => name,
             Decl::Codata(Codata { name, .. }) => name,
@@ -435,7 +434,7 @@ impl ContainsMetaVars for Decl {
 pub struct Data {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: IdBind,
     pub attr: Attributes,
     pub typ: Box<Telescope>,
     pub ctors: Vec<Ctor>,
@@ -503,7 +502,7 @@ impl ContainsMetaVars for Data {
 pub struct Codata {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: IdBind,
     pub attr: Attributes,
     pub typ: Box<Telescope>,
     pub dtors: Vec<Dtor>,
@@ -571,7 +570,7 @@ impl ContainsMetaVars for Codata {
 pub struct Ctor {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: IdBind,
     pub params: Telescope,
     pub typ: TypCtor,
 }
@@ -619,7 +618,7 @@ impl ContainsMetaVars for Ctor {
 pub struct Dtor {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: IdBind,
     pub params: Telescope,
     pub self_param: SelfParam,
     pub ret_typ: Box<Exp>,
@@ -670,7 +669,7 @@ impl ContainsMetaVars for Dtor {
 pub struct Def {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: IdBind,
     pub attr: Attributes,
     pub params: Telescope,
     pub self_param: SelfParam,
@@ -748,7 +747,7 @@ impl ContainsMetaVars for Def {
 pub struct Codef {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: IdBind,
     pub attr: Attributes,
     pub params: Telescope,
     pub typ: TypCtor,
@@ -822,7 +821,7 @@ impl ContainsMetaVars for Codef {
 pub struct Let {
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
-    pub name: Ident,
+    pub name: IdBind,
     pub attr: Attributes,
     pub params: Telescope,
     pub typ: Box<Exp>,
@@ -884,7 +883,7 @@ impl ContainsMetaVars for Let {
 #[derive(Debug, Clone)]
 pub struct SelfParam {
     pub info: Option<Span>,
-    pub name: Option<Ident>,
+    pub name: Option<VarBind>,
     pub typ: TypCtor,
 }
 
@@ -893,7 +892,7 @@ impl SelfParam {
         Telescope {
             params: vec![Param {
                 implicit: false,
-                name: self.name.clone().unwrap_or_else(|| Ident::from_string("")),
+                name: self.name.clone().unwrap_or_else(|| VarBind::from_string("")),
                 typ: Box::new(self.typ.to_exp()),
             }],
         }
@@ -1083,12 +1082,12 @@ mod print_telescope_tests {
     fn print_simple_chunk() {
         let param1 = Param {
             implicit: false,
-            name: Ident::from_string("x"),
+            name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let param2 = Param {
             implicit: false,
-            name: Ident::from_string("y"),
+            name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let tele = Telescope { params: vec![param1, param2] };
@@ -1099,12 +1098,12 @@ mod print_telescope_tests {
     fn print_simple_implicit_chunk() {
         let param1 = Param {
             implicit: true,
-            name: Ident::from_string("x"),
+            name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let param2 = Param {
             implicit: true,
-            name: Ident::from_string("y"),
+            name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let tele = Telescope { params: vec![param1, param2] };
@@ -1115,12 +1114,12 @@ mod print_telescope_tests {
     fn print_mixed_implicit_chunk_1() {
         let param1 = Param {
             implicit: true,
-            name: Ident::from_string("x"),
+            name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let param2 = Param {
             implicit: false,
-            name: Ident::from_string("y"),
+            name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let tele = Telescope { params: vec![param1, param2] };
@@ -1131,12 +1130,12 @@ mod print_telescope_tests {
     fn print_mixed_implicit_chunk_2() {
         let param1 = Param {
             implicit: false,
-            name: Ident::from_string("x"),
+            name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let param2 = Param {
             implicit: true,
-            name: Ident::from_string("y"),
+            name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let tele = Telescope { params: vec![param1, param2] };
@@ -1147,26 +1146,26 @@ mod print_telescope_tests {
     fn print_shifting_example() {
         let param1 = Param {
             implicit: false,
-            name: Ident::from_string("a"),
+            name: VarBind::from_string("a"),
             typ: Box::new(TypeUniv::new().into()),
         };
         let param2 = Param {
             implicit: false,
-            name: Ident::from_string("x"),
+            name: VarBind::from_string("x"),
             typ: Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: 0 },
-                name: Ident::from_string("a"),
+                name: VarBound::from_string("a"),
                 inferred_type: None,
             })),
         };
         let param3 = Param {
             implicit: false,
-            name: Ident::from_string("y"),
+            name: VarBind::from_string("y"),
             typ: Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: 1 },
-                name: Ident::from_string("a"),
+                name: VarBound::from_string("a"),
                 inferred_type: None,
             })),
         };
@@ -1184,14 +1183,8 @@ mod print_telescope_tests {
 pub struct Param {
     pub implicit: bool,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub name: Ident,
+    pub name: VarBind,
     pub typ: Box<Exp>,
-}
-
-impl Named for Param {
-    fn name(&self) -> &Ident {
-        &self.name
-    }
 }
 
 impl Substitutable for Param {

@@ -8,7 +8,7 @@ use crate::{
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Args, Exp, Ident, Lvl, MetaVar, TypeUniv};
+use super::{Args, Exp, IdBound, Lvl, MetaVar, TypeUniv};
 
 /// A type constructor applied to arguments. The type of `TypCtor`
 /// is always the type universe `Type`.
@@ -20,7 +20,7 @@ pub struct TypCtor {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     /// Name of the type constructor
-    pub name: Ident,
+    pub name: IdBound,
     /// Arguments to the type constructor
     pub args: Args,
 }

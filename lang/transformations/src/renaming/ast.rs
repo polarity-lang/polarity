@@ -225,7 +225,7 @@ impl Rename for DotCall {
 }
 impl Rename for Variable {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
-        self.name = ctx.lookup(self.idx);
+        self.name = ctx.lookup(self.idx).into();
         self.inferred_type.rename_in_ctx(ctx);
     }
 }

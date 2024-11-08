@@ -146,7 +146,7 @@ impl Substitution for SwapSubst {
             Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: new_ctx.lvl_to_idx(new_lvl),
-                name: Ident::from_string(""),
+                name: VarBound::from_string(""),
                 inferred_type: None,
             }))
         })

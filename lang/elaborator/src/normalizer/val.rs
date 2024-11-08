@@ -1,12 +1,12 @@
 use ast;
 use ast::ctx::BindContext;
 use ast::shift_and_clone;
-use ast::Ident;
 use ast::Idx;
 use ast::MetaVar;
 use ast::Shift;
 use ast::ShiftRange;
 use ast::ShiftRangeExt;
+use ast::VarBound;
 use codespan::Span;
 use derivative::Derivative;
 use log::trace;
@@ -134,7 +134,7 @@ impl ReadBack for Val {
 pub struct TypCtor {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub name: ast::Ident,
+    pub name: ast::IdBound,
     pub args: Args,
 }
 
@@ -181,7 +181,7 @@ pub struct Call {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub kind: ast::CallKind,
-    pub name: ast::Ident,
+    pub name: ast::IdBound,
     pub args: Args,
 }
 
@@ -381,7 +381,7 @@ pub struct Variable {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub name: ast::Ident,
+    pub name: ast::VarBound,
     pub idx: Idx,
 }
 
@@ -424,7 +424,7 @@ pub struct DotCall {
     pub span: Option<Span>,
     pub kind: ast::DotCallKind,
     pub exp: Box<Neu>,
-    pub name: ast::Ident,
+    pub name: ast::IdBound,
     pub args: Args,
 }
 
@@ -589,7 +589,7 @@ pub struct Case {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub is_copattern: bool,
-    pub name: ast::Ident,
+    pub name: ast::IdBound,
     pub params: ast::TelescopeInst,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Closure>,
@@ -651,7 +651,7 @@ impl ReadBack for Case {
 pub struct OpaqueCall {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    pub name: ast::Ident,
+    pub name: ast::IdBound,
     pub args: Args,
 }
 
@@ -749,7 +749,7 @@ impl Print for Args {
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Arg {
     UnnamedArg(Box<Val>),
-    NamedArg(ast::Ident, Box<Val>),
+    NamedArg(ast::VarBound, Box<Val>),
     InsertedImplicitArg(Box<Val>),
 }
 
@@ -841,7 +841,7 @@ impl ReadBack for Closure {
             .map(|snd| {
                 Val::Neu(Neu::Variable(Variable {
                     span: None,
-                    name: Ident::from_string(""),
+                    name: VarBound::from_string(""),
                     idx: Idx { fst: 0, snd },
                 }))
             })

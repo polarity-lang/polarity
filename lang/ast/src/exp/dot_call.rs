@@ -8,7 +8,7 @@ use crate::{
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Args, Exp, Ident, Lvl, MetaVar};
+use super::{Args, Exp, IdBound, Lvl, MetaVar};
 
 /// A DotCall expression can be one of two different kinds:
 /// - A destructor introduced by a codata type declaration
@@ -35,7 +35,7 @@ pub struct DotCall {
     pub exp: Box<Exp>,
     /// The name of the dotcall.
     /// The `f` in `e.f(e1...en)`
-    pub name: Ident,
+    pub name: IdBound,
     /// The arguments of the dotcall.
     /// The `(e1...en)` in `e.f(e1...en)`
     pub args: Args,
