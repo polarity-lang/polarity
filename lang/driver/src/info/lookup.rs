@@ -1,4 +1,4 @@
-use ast::{Codef, Ctor, Decl, Def, Dtor, GloballyIdentifiable, IdBound, Let};
+use ast::{Codef, Ctor, Decl, Def, Dtor, IdBound, Let};
 use url::Url;
 
 use crate::Database;

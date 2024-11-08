@@ -23,7 +23,6 @@ use printer::PrintCfg;
 use url::Url;
 
 use crate::ctx::LevelCtx;
-use crate::identifiable::GloballyIdentifiable;
 use crate::shift_and_clone;
 use crate::ContainsMetaVars;
 use crate::Zonk;
@@ -348,6 +347,7 @@ impl From<Let> for Decl {
 }
 
 impl Decl {
+    /// A list of all attributes attached to the declaration.
     pub fn attributes(&self) -> &Attributes {
         match self {
             Decl::Data(Data { attr, .. }) => attr,
@@ -365,10 +365,9 @@ impl Decl {
             _ => None,
         }
     }
-}
 
-impl GloballyIdentifiable for Decl {
-    fn ident(&self) -> &IdBind {
+    /// The identifier of the declaration.
+    pub fn ident(&self) -> &IdBind {
         match self {
             Decl::Data(Data { name, .. }) => name,
             Decl::Codata(Codata { name, .. }) => name,
