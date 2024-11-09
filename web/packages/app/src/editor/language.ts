@@ -111,7 +111,7 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
           return [];
         }
 
-        const result: monaco.languages.ProviderResult<monaco.languages.TextEdit[]> = protocolToMonaco.asTextEdits(response);
+        const result: monaco.languages.TextEdit[] = protocolToMonaco.asTextEdits(response);
         return result;
       },
     });
