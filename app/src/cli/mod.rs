@@ -63,6 +63,7 @@ enum Command {
     /// De-/Refunctionalize a type in a code file
     Xfunc(xfunc::Args),
     /// Start an LSP server
+    #[clap(hide(true))]
     Lsp(lsp::Args),
     /// Lift local (co)matches of a type to the top-level
     Lift(lift::Args),
