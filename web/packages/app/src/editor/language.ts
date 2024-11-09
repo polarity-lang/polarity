@@ -95,6 +95,24 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
         return result;
       },
     });
+
+    monaco.languages.registerDocumentFormattingEditProvider(this.id, {
+      async provideDocumentFormattingEdits(model, options, token) {
+        void token;
+
+        const result: monaco.languages.ProviderResult<monaco.languages.TextEdit[]> = [{
+          range: {
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: 1,
+            endColumn: 1
+          },
+          text: "",
+        }];
+
+        return result;
+      },
+    });
   }
 
   private static syntaxDefinition(): monaco.languages.IMonarchLanguage {
