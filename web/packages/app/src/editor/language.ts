@@ -1,5 +1,5 @@
 // import * as jsrpc from "json-rpc-2.0";
-import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from "monaco-languageclient";
+import { MonacoToProtocolConverter, ProtocolToMonacoConverter, TextDocument } from "monaco-languageclient";
 import * as monaco from "monaco-editor-core";
 import * as proto from "vscode-languageserver-protocol";
 
@@ -99,17 +99,19 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
     monaco.languages.registerDocumentFormattingEditProvider(this.id, {
       async provideDocumentFormattingEdits(model, options, token) {
         void token;
-
-        const result: monaco.languages.ProviderResult<monaco.languages.TextEdit[]> = [{
-          range: {
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: 1,
-            endColumn: 1
+        const response = await (client.request(proto.DocumentFormattingRequest.type.method, {
+          textDocument: {
+            version: 0,
+            uri: model.uri.toString(),
           },
-          text: "",
-        }];
+          options: { tabSize: options.tabSize, insertSpaces: options.insertSpaces },
+        } as proto.DocumentFormattingParams) as Promise<proto.TextEdit[]>);
 
+        if (response === null) {
+          return [];
+        }
+
+        const result: monaco.languages.ProviderResult<monaco.languages.TextEdit[]> = protocolToMonaco.asTextEdits(response);
         return result;
       },
     });
