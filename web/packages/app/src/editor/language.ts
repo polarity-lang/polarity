@@ -1,5 +1,5 @@
 // import * as jsrpc from "json-rpc-2.0";
-import { MonacoToProtocolConverter, ProtocolToMonacoConverter, TextDocument } from "monaco-languageclient";
+import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from "monaco-languageclient";
 import * as monaco from "monaco-editor-core";
 import * as proto from "vscode-languageserver-protocol";
 
