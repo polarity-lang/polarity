@@ -3,6 +3,10 @@
 A programming language with dependent data and codata types.
 Installation instructions and the language documentation is available at [polarity-lang.github.io](https://polarity-lang.github.io/).
 
+## Community
+
+Feel welcome to join our [Discord server](https://discord.gg/NWjGr9qNhR).
+
 ## Requirements
 
 Install Rust (e.g. via [rustup.rs](https://rustup.rs/)).
