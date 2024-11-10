@@ -95,6 +95,26 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
         return result;
       },
     });
+
+    monaco.languages.registerDocumentFormattingEditProvider(this.id, {
+      async provideDocumentFormattingEdits(model, options, token) {
+        void token;
+        const response = await (client.request(proto.DocumentFormattingRequest.type.method, {
+          textDocument: {
+            version: 0,
+            uri: model.uri.toString(),
+          },
+          options: { tabSize: options.tabSize, insertSpaces: options.insertSpaces },
+        } as proto.DocumentFormattingParams) as Promise<proto.TextEdit[]>);
+
+        if (response === null) {
+          return [];
+        }
+
+        const result: monaco.languages.TextEdit[] = protocolToMonaco.asTextEdits(response);
+        return result;
+      },
+    });
   }
 
   private static syntaxDefinition(): monaco.languages.IMonarchLanguage {
