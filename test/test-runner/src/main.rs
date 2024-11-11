@@ -5,9 +5,9 @@ mod suites;
 
 use clap::Parser;
 
-pub const TEST_SUITES_PATH: &str = "test/suites";
-pub const EXAMPLES_PATH: &str = "examples";
-pub const STDLIB_PATH: &str = "std";
+pub const TEST_SUITES_PATH: &str = "../suites";
+pub const EXAMPLES_PATH: &str = "../../examples";
+pub const STDLIB_PATH: &str = "../../std";
 
 /// Polarity Testsuite Runner
 #[derive(Parser)]
