@@ -3,6 +3,8 @@ name = "test-runner"
 version = "0.1.0"
 edition = "2021"
 
+autobins = false
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -30,3 +32,7 @@ elaborator = { path = "../../lang/elaborator" }
 printer = { path = "../../lang/printer" }
 driver = { path = "../../lang/driver" }
 
+[[test]]
+name = "integration"
+path = "src/main.rs"
+harness = false
