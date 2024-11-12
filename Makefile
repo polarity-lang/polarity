@@ -15,6 +15,15 @@ lint:
 test:
 	@cargo test --all
 
+
 .PHONY: update-expected
 update-expected:
 	@cargo test -p test-runner -- --update-expected
+
+
+.PHONY: coverage
+coverage:
+	@echo "Make sure to install via cargo install cargo-llvm-cov first"
+	@cargo llvm-cov --workspace --html
+	@cargo llvm-cov --workspace --open
+
