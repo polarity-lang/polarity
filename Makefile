@@ -17,4 +17,4 @@ test:
 
 .PHONY: update-expected
 update-expected:
-	@cargo run -p test-runner -- --update-expected
+	@cargo test -p test-runner -- --update-expected
