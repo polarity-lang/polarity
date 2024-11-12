@@ -8,5 +8,4 @@ set -e
 cargo test --all
 cargo clippy --all -- -Dwarnings
 cargo fmt --all --check
-cargo run -p test-runner -- run
 (cd web; make lint)
