@@ -48,22 +48,26 @@ mod file_system {
 
     impl FileSource for FileSystemSource {
         fn manage(&mut self, uri: &Url) -> bool {
-            self.root.join(uri.path()).exists()
+            let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
+            self.root.join(filepath).exists()
         }
 
         fn manages(&self, uri: &Url) -> bool {
-            self.root.join(uri.path()).exists()
+            let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
+            self.root.join(filepath).exists()
         }
 
         fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
-            let path = self.root.join(uri.path());
+            let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
+            let path = self.root.join(filepath);
             let source =
                 std::fs::read_to_string(&path).map_err(Arc::new).map_err(DriverError::Io)?;
             Ok(source)
         }
 
         fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
-            let path = self.root.join(uri.path());
+            let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
+            let path = self.root.join(filepath);
             std::fs::write(&path, source).map_err(Arc::new).map_err(DriverError::Io)?;
             Ok(())
         }

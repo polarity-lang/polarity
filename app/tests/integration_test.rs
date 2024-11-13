@@ -1,11 +1,12 @@
 use assert_cmd::Command;
 
 /// The name of the CLI binary
-const BINARY: &str = env!("CARGO_BIN_EXE_pol");
+const BINARY: &str = "pol";
 
 /// Check that "pol --version" works correctly
 #[test]
 fn version_command() {
+    println!("{:?}", BINARY);
     let mut cmd = Command::cargo_bin(BINARY).unwrap();
     let assert = cmd.arg("--version").assert();
     assert.success().stdout("polarity 0.1.0\n");

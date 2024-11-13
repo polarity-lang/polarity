@@ -18,8 +18,9 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Ensure Minimum Supported Rust Version (MSRV)
   build-msrv:
-    name: Build with Minimum Supported Rust Version (MSRV)
+    name: Build with MSRV
     runs-on: ubuntu-latest
     outputs:
       msrv: ${{ steps.extract_rust_version.outputs.msrv }}
@@ -50,9 +51,12 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all
 
-  unit-tests:
-    name: Unit tests
-    runs-on: ubuntu-latest
+  tests:
+    name: Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -78,3 +82,21 @@ jobs:
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all -- -D warnings
+
+  line-endings:
+    name: Check line endings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for CRLF line endings
+        run: |
+          echo "Checking for files with CRLF line endings ..."
+          files_with_crlf=$(git ls-files -z | xargs -0 grep -IlI $'\r$' || true)
+          if [ -n "$files_with_crlf" ]; then
+            echo "Error: The following files have CRLF line endings:"
+            echo "$files_with_crlf"
+            echo "Please change these files to use LF line endings."
+            exit 1
+          else
+            echo "No files with CRLF line endings found."
+          fi
