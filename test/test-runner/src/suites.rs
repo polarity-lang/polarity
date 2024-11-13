@@ -44,7 +44,9 @@ impl Case {
 
     pub fn expected(&self) -> Option<String> {
         let path = self.expected_path();
-        path.is_file().then(|| fs::read_to_string(path).unwrap())
+        // Depending on how git is configured on Windows, it may check-out Unix line endings (\n) as Windows line endings (\r\n).
+        // If this is the case, we need to replace these by Unix line endings for comparision.
+        path.is_file().then(|| fs::read_to_string(path).unwrap().replace("\r\n", "\n"))
     }
 
     pub fn set_expected(&self, s: &str) {
