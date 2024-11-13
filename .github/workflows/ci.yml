@@ -50,8 +50,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all
 
-  unit-tests:
-    name: Unit tests
+  tests:
+    name: Tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
