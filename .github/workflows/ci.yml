@@ -91,7 +91,7 @@ jobs:
       - name: Check for CRLF line endings
         run: |
           echo "Checking for files with CRLF line endings ..."
-          files_with_crlf=$(git ls-files -z | xargs -0 grep -IlI $'\r$')
+          files_with_crlf=$(git ls-files -z | xargs -0 grep -IlI $'\r$' || true)
           if [ -n "$files_with_crlf" ]; then
             echo "Error: The following files have CRLF line endings:"
             echo "$files_with_crlf"
