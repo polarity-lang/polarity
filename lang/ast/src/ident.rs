@@ -146,7 +146,6 @@ pub struct IdBound {
     pub span: Option<Span>,
     pub id: String,
     /// The URI of the module where the identifier was defined
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub uri: Url,
 }
 
