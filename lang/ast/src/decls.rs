@@ -231,29 +231,8 @@ impl Module {
         out
     }
 
-    pub fn lookup_decl(&self, name: &IdBind) -> Option<&Decl> {
+    pub fn lookup_decl(&self, name: &IdBound) -> Option<&Decl> {
         self.decls.iter().find(|decl| decl.ident() == name)
-    }
-
-    pub fn lookup_let(&self, name: &IdBind) -> Option<&Let> {
-        self.decls.iter().find_map(|decl| match decl {
-            Decl::Let(tl_let) if tl_let.name == *name => Some(tl_let),
-            _ => None,
-        })
-    }
-
-    pub fn lookup_def(&self, name: &IdBind) -> Option<&Def> {
-        self.decls.iter().find_map(|decl| match decl {
-            Decl::Def(def) if def.name == *name => Some(def),
-            _ => None,
-        })
-    }
-
-    pub fn lookup_codef(&self, name: &IdBind) -> Option<&Codef> {
-        self.decls.iter().find_map(|decl| match decl {
-            Decl::Codef(codef) if codef.name == *name => Some(codef),
-            _ => None,
-        })
     }
 
     pub fn find_main(&self) -> Option<Box<Exp>> {

@@ -139,14 +139,15 @@ impl<'a> WithExpectedType<'a> {
             // Normalize the arguments of the return type and the arguments to the self-parameter
             // of the destructor declaration.
             // TODO: Why can't we do this once *before* we repeatedly look them up in the context?
-            let def_args =
-                def_args.normalize(&ctx.module, &mut LevelCtx::from(vec![params.len()]).env())?;
-            let ret_typ =
-                ret_typ.normalize(&ctx.module, &mut LevelCtx::from(vec![params.len(), 1]).env())?;
+            let def_args = def_args
+                .normalize(&ctx.type_info_table, &mut LevelCtx::from(vec![params.len()]).env())?;
+            let ret_typ = ret_typ.normalize(
+                &ctx.type_info_table,
+                &mut LevelCtx::from(vec![params.len(), 1]).env(),
+            )?;
 
             let name = name.clone();
             let params = params.clone();
-            let module = ctx.module.clone();
 
             params_inst.check_telescope(
                 &name.id,
@@ -274,7 +275,7 @@ impl<'a> WithExpectedType<'a> {
                                     let mut ret_typ = ret_typ.subst(&mut subst_ctx, &subst);
                                     ret_typ.shift((-1, 0));
                                     ret_typ.normalize(
-                                        &ctx.module,
+                                        &ctx.type_info_table,
                                         &mut LevelCtx::from(vec![*n_label_args, params.len()])
                                             .env(),
                                     )?
@@ -295,11 +296,13 @@ impl<'a> WithExpectedType<'a> {
                                         .ok_yes()?;
 
                                 ctx.fork::<Result<_, TypeError>, _>(|ctx| {
-                                    ctx.subst(&module, &unif)?;
+                                    let type_info_table = ctx.type_info_table.clone();
+                                    ctx.subst(&type_info_table, &unif)?;
                                     let body = body.subst(&mut ctx.levels(), &unif);
 
                                     let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif);
-                                    let t_nf = t_subst.normalize(&module, &mut ctx.env())?;
+                                    let t_nf =
+                                        t_subst.normalize(&ctx.type_info_table, &mut ctx.env())?;
 
                                     let body_out = body.check(ctx, &t_nf)?;
 

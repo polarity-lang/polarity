@@ -36,7 +36,7 @@ pub struct Database {
     /// The typechecked AST of a module
     pub ast: Cache<Result<Arc<ast::Module>, Error>>,
     /// The type info table constructed during typechecking
-    pub type_info_table: Cache<elaborator::ModuleTypeInfoTable>,
+    pub module_type_info_table: Cache<elaborator::ModuleTypeInfoTable>,
     /// Hover information for spans
     pub info_by_id: Cache<Lapper<u32, Info>>,
     /// Spans of top-level items
@@ -179,8 +179,23 @@ impl Database {
     //
     //
 
-    pub fn type_info_table(&mut self, uri: &Url) -> Result<ModuleTypeInfoTable, Error> {
-        match self.type_info_table.get_unless_stale(uri) {
+    pub fn type_info_table(&mut self, uri: &Url) -> Result<TypeInfoTable, Error> {
+        let deps = self.deps(uri)?;
+
+        // Compute the type info table
+        let mut info_table = TypeInfoTable::default();
+        let mod_info_table = self.module_type_info_table(uri)?;
+        info_table.insert(uri.clone(), mod_info_table);
+        for dep_url in deps {
+            let mod_info_table = self.module_type_info_table(&dep_url)?;
+            info_table.insert(dep_url.clone(), mod_info_table);
+        }
+
+        Ok(info_table)
+    }
+
+    pub fn module_type_info_table(&mut self, uri: &Url) -> Result<ModuleTypeInfoTable, Error> {
+        match self.module_type_info_table.get_unless_stale(uri) {
             Some(table) => {
                 log::debug!("Found type info table in cache: {}", uri);
                 Ok(table.clone())
@@ -193,7 +208,7 @@ impl Database {
         log::debug!("Recomputing type info table for: {}", uri);
         let ust = self.ust(uri)?;
         let info_table = build_type_info_table(&ust);
-        self.type_info_table.insert(uri.clone(), info_table.clone());
+        self.module_type_info_table.insert(uri.clone(), info_table.clone());
         Ok(info_table)
     }
 
@@ -213,16 +228,9 @@ impl Database {
 
     pub fn recompute_ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
         log::debug!("Recomputing ast for: {}", uri);
-        let deps = self.deps(uri)?;
 
         // Compute the type info table
-        let mut info_table = TypeInfoTable::default();
-        let mod_info_table = self.type_info_table(uri)?;
-        info_table.insert(uri.clone(), mod_info_table);
-        for dep_url in deps {
-            let mod_info_table = self.type_info_table(&dep_url)?;
-            info_table.insert(dep_url.clone(), mod_info_table);
-        }
+        let info_table = self.type_info_table(uri)?;
 
         // Typecheck module
         let ust = self.ust(uri).map(|x| (*x).clone())?;
@@ -315,7 +323,7 @@ impl Database {
             symbol_table: Cache::default(),
             ust: Cache::default(),
             ast: Cache::default(),
-            type_info_table: Cache::default(),
+            module_type_info_table: Cache::default(),
             info_by_id: Cache::default(),
             item_by_id: Cache::default(),
         }
@@ -358,7 +366,7 @@ impl Database {
         self.symbol_table.invalidate(uri);
         self.ust.invalidate(uri);
         self.ast.invalidate(uri);
-        self.type_info_table.invalidate(uri);
+        self.module_type_info_table.invalidate(uri);
         self.info_by_id.invalidate(uri);
         self.item_by_id.invalidate(uri);
     }
@@ -367,10 +375,11 @@ impl Database {
         let ast = self.ast(uri)?;
 
         let main = ast.find_main();
+        let info_table = self.type_info_table(uri)?;
 
         match main {
             Some(exp) => {
-                let nf = exp.normalize_in_empty_env(&ast)?;
+                let nf = exp.normalize_in_empty_env(&Rc::new(info_table))?;
                 Ok(Some(nf))
             }
             None => Ok(None),

@@ -4,7 +4,8 @@ use log::trace;
 
 use ast::*;
 
-use crate::normalizer::{env::ToEnv, normalize::Normalize};
+use crate::normalizer::env::ToEnv;
+use crate::normalizer::normalize::Normalize;
 
 use crate::typechecker::exprs::local_comatch::WithExpectedType;
 use crate::typechecker::{
@@ -27,7 +28,7 @@ impl CheckToplevel for Codef {
 
         params.infer_telescope(ctx, |ctx, params_out| {
             let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
-            let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
+            let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
             let wd = WithExpectedType {
                 cases,
                 label: Some((label, params.len())),

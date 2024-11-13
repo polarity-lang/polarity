@@ -1,6 +1,6 @@
 use ast::*;
 
-use super::{CodefMeta, CtorMeta, DefMeta, DtorMeta, LetMeta, ModuleTypeInfoTable, TyCtorMeta};
+use super::{CtorMeta, DtorMeta, ModuleTypeInfoTable, TyCtorMeta};
 
 pub fn build_type_info_table(module: &Module) -> ModuleTypeInfoTable {
     let mut info_table = ModuleTypeInfoTable::default();
@@ -75,32 +75,18 @@ impl BuildTypeInfoTable for Dtor {
 
 impl BuildTypeInfoTable for Def {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
-        let Def { name, params, self_param, ret_typ, .. } = self;
-        info_table.map_def.insert(
-            name.id.clone(),
-            DefMeta {
-                params: params.clone(),
-                self_param: self_param.clone(),
-                ret_typ: ret_typ.clone(),
-            },
-        );
+        info_table.map_def.insert(self.name.id.clone(), self.clone());
     }
 }
 
 impl BuildTypeInfoTable for Codef {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
-        let Codef { name, params, typ, .. } = self;
-        info_table
-            .map_codef
-            .insert(name.id.clone(), CodefMeta { params: params.clone(), typ: typ.clone() });
+        info_table.map_codef.insert(self.name.id.clone(), self.clone());
     }
 }
 
 impl BuildTypeInfoTable for Let {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
-        let Let { name, params, typ, .. } = self;
-        info_table
-            .map_let
-            .insert(name.id.clone(), LetMeta { params: params.clone(), typ: typ.clone() });
+        info_table.map_let.insert(self.name.id.clone(), self.clone());
     }
 }

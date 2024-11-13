@@ -4,7 +4,6 @@ use transformations::LiftResult;
 use transformations::Rename;
 
 use ast::*;
-use lowering::DeclMeta;
 use parser::cst;
 use transformations::matrix;
 use transformations::result::XfuncError;
@@ -20,14 +19,16 @@ pub struct Xfunc {
 }
 
 impl Database {
-    pub fn all_type_names(&mut self, uri: &Url) -> Result<Vec<cst::Ident>, crate::Error> {
-        let symbol_table = self.symbol_table(uri)?;
-        Ok(symbol_table
+    pub fn all_declared_type_names(&mut self, uri: &Url) -> Result<Vec<cst::Ident>, crate::Error> {
+        let ust = self.cst(uri)?;
+        Ok(ust
+            .decls
             .iter()
-            .filter(|(_, decl_meta)| {
-                matches!(decl_meta, DeclMeta::Data { .. } | DeclMeta::Codata { .. })
+            .filter_map(|decl| match decl {
+                cst::decls::Decl::Data(data) => Some(data.name.clone()),
+                cst::decls::Decl::Codata(codata) => Some(codata.name.clone()),
+                _ => None,
             })
-            .map(|(name, _)| name.clone())
             .collect())
     }
 
@@ -95,7 +96,8 @@ fn generate_edits(
     // Here we rewrite the entire (co)data declaration and its associated (co)definitions
     let new_items = Module {
         uri: module.uri.clone(),
-        use_decls: module.use_decls.clone(),
+        // Use declarations don't change, and we are only printing an excerpt of the module
+        use_decls: vec![],
         decls: new_decls,
         meta_vars: module.meta_vars.clone(),
     };
@@ -106,7 +108,9 @@ fn generate_edits(
     // Edits for all other declarations that have been touched
     // Here we surgically rewrite only the declarations that have been changed
     for name in dirty_decls {
-        let decl = module.lookup_decl(&name).unwrap();
+        let decl = module
+            .lookup_decl(&IdBound { span: None, id: name.id.clone(), uri: module.uri.clone() })
+            .unwrap();
         let mut decl = decl.clone();
         decl.rename();
         let span = original.decl_spans[&name];

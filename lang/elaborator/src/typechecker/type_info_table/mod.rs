@@ -27,21 +27,15 @@ pub struct ModuleTypeInfoTable {
     // Calls
     //
     //
-    map_let: HashMap<String, LetMeta>,
+    map_let: HashMap<String, Let>,
     map_tyctor: HashMap<String, TyCtorMeta>,
-    map_codef: HashMap<String, CodefMeta>,
+    map_codef: HashMap<String, Codef>,
     map_ctor: HashMap<String, CtorMeta>,
     // DotCalls
     //
     //
-    map_def: HashMap<String, DefMeta>,
+    map_def: HashMap<String, Def>,
     map_dtor: HashMap<String, DtorMeta>,
-}
-
-#[derive(Debug, Clone)]
-pub struct LetMeta {
-    pub params: Telescope,
-    pub typ: Box<Exp>,
 }
 
 #[derive(Debug, Clone)]
@@ -50,37 +44,14 @@ pub struct TyCtorMeta {
 }
 
 #[derive(Debug, Clone)]
-pub struct CodefMeta {
-    pub params: Telescope,
-    pub typ: TypCtor,
-}
-
-impl CodefMeta {
-    pub fn to_ctor(&self) -> CtorMeta {
-        CtorMeta { params: self.params.clone(), typ: self.typ.clone() }
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct CtorMeta {
     pub params: Telescope,
     pub typ: TypCtor,
 }
 
-#[derive(Debug, Clone)]
-pub struct DefMeta {
-    pub params: Telescope,
-    pub self_param: SelfParam,
-    pub ret_typ: Box<Exp>,
-}
-
-impl DefMeta {
-    fn to_dtor(&self) -> DtorMeta {
-        DtorMeta {
-            params: self.params.clone(),
-            self_param: self.self_param.clone(),
-            ret_typ: self.ret_typ.clone(),
-        }
+impl From<Ctor> for CtorMeta {
+    fn from(ctor: Ctor) -> Self {
+        CtorMeta { params: ctor.params, typ: ctor.typ }
     }
 }
 
@@ -89,4 +60,10 @@ pub struct DtorMeta {
     pub params: Telescope,
     pub self_param: SelfParam,
     pub ret_typ: Box<Exp>,
+}
+
+impl From<Dtor> for DtorMeta {
+    fn from(dtor: Dtor) -> Self {
+        DtorMeta { params: dtor.params, self_param: dtor.self_param, ret_typ: dtor.ret_typ }
+    }
 }

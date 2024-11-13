@@ -15,21 +15,16 @@ use crate::normalizer::val::*;
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Env {
-    ctx: GenericCtx<Box<Val>>,
-}
-
-impl From<GenericCtx<Box<Val>>> for Env {
-    fn from(value: GenericCtx<Box<Val>>) -> Self {
-        Env { ctx: value }
-    }
+    /// Environment for locally bound variables
+    bound_vars: GenericCtx<Box<Val>>,
 }
 
 impl Context for Env {
     type Elem = Box<Val>;
 
     fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
-        let lvl = self.ctx.var_to_lvl(idx.into());
-        self.ctx
+        let lvl = self.bound_vars.var_to_lvl(idx.into());
+        self.bound_vars
             .bound
             .get(lvl.fst)
             .and_then(|ctx| ctx.get(lvl.snd))
@@ -38,15 +33,15 @@ impl Context for Env {
     }
 
     fn push_telescope(&mut self) {
-        self.ctx.bound.push(vec![]);
+        self.bound_vars.bound.push(vec![]);
     }
 
     fn pop_telescope(&mut self) {
-        self.ctx.bound.pop().unwrap();
+        self.bound_vars.bound.pop().unwrap();
     }
 
     fn push_binder(&mut self, elem: Self::Elem) {
-        self.ctx
+        self.bound_vars
             .bound
             .last_mut()
             .expect("Cannot push without calling push_telescope first")
@@ -55,7 +50,7 @@ impl Context for Env {
 
     fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
-        self.ctx.bound.last_mut().expect(err).pop().expect(err);
+        self.bound_vars.bound.last_mut().expect(err).pop().expect(err);
     }
 }
 
@@ -66,21 +61,23 @@ impl ContextElem<Env> for &Box<Val> {
 }
 
 impl Env {
+    pub fn empty() -> Self {
+        Self { bound_vars: GenericCtx::empty() }
+    }
+
+    pub fn from_vec(bound: Vec<Vec<Box<Val>>>) -> Self {
+        Self { bound_vars: GenericCtx::from(bound) }
+    }
+
     pub(super) fn for_each<F>(&mut self, f: F)
     where
         F: Fn(&mut Box<Val>),
     {
-        for outer in self.ctx.bound.iter_mut() {
+        for outer in self.bound_vars.bound.iter_mut() {
             for inner in outer {
                 f(inner)
             }
         }
-    }
-}
-
-impl From<Vec<Vec<Box<Val>>>> for Env {
-    fn from(bound: Vec<Vec<Box<Val>>>) -> Self {
-        Self { ctx: bound.into() }
     }
 }
 
@@ -115,7 +112,7 @@ impl ToEnv for LevelCtx {
             })
             .collect();
 
-        Env::from(bound)
+        Env::from_vec(bound)
     }
 }
 
@@ -133,7 +130,7 @@ impl ToEnv for TypeCtx {
             })
             .collect();
 
-        Env::from(bound)
+        Env::from_vec(bound)
     }
 }
 
@@ -143,7 +140,7 @@ impl Print for Env {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let iter = self.ctx.iter().map(|ctx| {
+        let iter = self.bound_vars.iter().map(|ctx| {
             alloc
                 .intersperse(ctx.iter().map(|typ| typ.print(cfg, alloc)), alloc.text(COMMA))
                 .brackets()
