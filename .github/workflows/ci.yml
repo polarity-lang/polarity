@@ -52,7 +52,10 @@ jobs:
 
   unit-tests:
     name: Unit tests
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -78,3 +81,21 @@ jobs:
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all -- -D warnings
+
+  line-endings:
+    name: Check line endings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for CRLF line endings
+        run: |
+          echo "Checking for files with CRLF line endings ..."
+          files_with_crlf=$(git ls-files -z | xargs -0 grep -IlI $'\r$')
+          if [ -n "$files_with_crlf" ]; then
+            echo "Error: The following files have CRLF line endings:"
+            echo "$files_with_crlf"
+            echo "Please change these files to use LF line endings."
+            exit 1
+          else
+            echo "No files with CRLF line endings found."
+          fi
