@@ -1,5 +1,6 @@
 use miette_util::ToMiette;
 use parser::cst::ident::Ident;
+use url::Url;
 
 use crate::LoweringError;
 
@@ -16,10 +17,10 @@ impl SymbolTable {
         false
     }
 
-    pub fn lookup(&self, name: &Ident) -> Result<&DeclMeta, LoweringError> {
-        for symbol_table in self.map.values() {
+    pub fn lookup(&self, name: &Ident) -> Result<(&DeclMeta, &Url), LoweringError> {
+        for (module_uri, symbol_table) in self.map.iter() {
             match symbol_table.get(name) {
-                Some(meta) => return Ok(meta),
+                Some(meta) => return Ok((meta, module_uri)),
                 None => continue,
             }
         }

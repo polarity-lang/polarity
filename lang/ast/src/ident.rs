@@ -7,6 +7,7 @@ use printer::{
     tokens::{AT, DOT},
     Alloc, Builder, Print, PrintCfg,
 };
+use url::Url;
 
 use crate::HasSpan;
 
@@ -144,12 +145,8 @@ pub struct IdBound {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub id: String,
-}
-
-impl IdBound {
-    pub fn from_string(id: &str) -> Self {
-        IdBound { span: None, id: id.to_owned() }
-    }
+    /// The URI of the module where the identifier was defined
+    pub uri: Url,
 }
 
 impl fmt::Display for IdBound {
@@ -161,12 +158,6 @@ impl fmt::Display for IdBound {
 impl HasSpan for IdBound {
     fn span(&self) -> Option<Span> {
         self.span
-    }
-}
-
-impl From<IdBind> for IdBound {
-    fn from(id: IdBind) -> Self {
-        IdBound { span: id.span, id: id.id }
     }
 }
 

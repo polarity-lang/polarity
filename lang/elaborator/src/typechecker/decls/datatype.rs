@@ -44,8 +44,8 @@ fn check_ctor_wf(data_type_name: &IdBind, ctor: &Ctor, ctx: &mut Ctx) -> Result<
     // Check that the constructor lies in the data type it is defined in
     if &typ.name != data_type_name {
         return Err(TypeError::NotInType {
-            expected: data_type_name.clone(),
-            actual: typ.name.clone(),
+            expected: Box::new(data_type_name.clone()),
+            actual: Box::new(typ.name.clone()),
             span: typ.span.to_miette(),
         });
     }

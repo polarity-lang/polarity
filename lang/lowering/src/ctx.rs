@@ -8,6 +8,7 @@ use ast::{HashMap, HashSet};
 use ast::{Idx, Lvl};
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
+use url::Url;
 
 use crate::symbol_table::SymbolTable;
 
@@ -34,10 +35,12 @@ pub struct Ctx {
     next_meta_var: u64,
     /// Meta variables
     pub meta_vars: HashMap<MetaVar, MetaVarState>,
+    /// URI of the current module
+    pub uri: Url,
 }
 
 impl Ctx {
-    pub fn empty(symbol_table: SymbolTable) -> Self {
+    pub fn empty(uri: Url, symbol_table: SymbolTable) -> Self {
         Self {
             local_map: HashMap::default(),
             symbol_table,
@@ -46,6 +49,7 @@ impl Ctx {
             user_labels: HashSet::default(),
             next_meta_var: 0,
             meta_vars: HashMap::default(),
+            uri,
         }
     }
 

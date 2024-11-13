@@ -23,12 +23,14 @@ impl CheckToplevel for Codef {
 
         let Codef { span, doc, name, attr, params, typ, cases } = self;
 
+        let label = IdBound { span: name.span, id: name.id.clone(), uri: ctx.module.uri.clone() };
+
         params.infer_telescope(ctx, |ctx, params_out| {
             let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
             let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
             let wd = WithExpectedType {
                 cases,
-                label: Some((name.to_owned(), params.len())),
+                label: Some((label, params.len())),
                 expected_type: typ_nf.expect_typ_app()?,
             };
 

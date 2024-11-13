@@ -217,7 +217,7 @@ impl<'a> WithScrutinee<'a> {
                         Some(body) => {
                             let unif = unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
                                 .map_no(|()| TypeError::PatternIsAbsurd {
-                                    name: name.clone(),
+                                    name: Box::new(name.clone()),
                                     span: span.to_miette(),
                                 })
                                 .ok_yes()?;
@@ -237,7 +237,7 @@ impl<'a> WithScrutinee<'a> {
                         None => {
                             unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
-                                    name: name.clone(),
+                                    name: Box::new(name.clone()),
                                     span: span.to_miette(),
                                 })
                                 .ok_no()?;

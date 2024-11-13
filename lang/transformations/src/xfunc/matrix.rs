@@ -1,13 +1,16 @@
+use codespan::Span;
+use url::Url;
+
 use ast::ctx::{BindContext, LevelCtx};
-use ast::{self, HashMap, SwapWithCtx};
+use ast::{self, HashMap, IdBound, SwapWithCtx};
 use ast::{Attributes, DocComment};
 
 use crate::result::XfuncError;
-use codespan::Span;
 
 #[derive(Debug, Clone)]
 pub struct Prg {
     pub map: HashMap<String, XData>,
+    pub uri: Url,
 }
 
 #[derive(Debug, Clone)]
@@ -44,7 +47,7 @@ pub enum Repr {
 
 /// Take the red pill
 pub fn build(prg: &ast::Module) -> Result<Prg, XfuncError> {
-    let mut out = Prg { map: HashMap::default() };
+    let mut out = Prg { map: HashMap::default(), uri: prg.uri.clone() };
     prg.build_matrix(&mut out)?;
     Ok(out)
 }
@@ -174,7 +177,7 @@ impl BuildMatrix for ast::Codef {
 }
 
 impl XData {
-    pub fn as_data(&self) -> (ast::Data, Vec<ast::Def>) {
+    pub fn as_data(&self, uri: &Url) -> (ast::Data, Vec<ast::Def>) {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let data = ast::Data {
@@ -198,7 +201,11 @@ impl XData {
                             span: None,
                             pattern: ast::Pattern {
                                 is_copattern: false,
-                                name: ctor.name.clone().into(),
+                                name: IdBound {
+                                    span: None,
+                                    id: ctor.name.id.clone(),
+                                    uri: uri.clone(),
+                                },
                                 params: ctor.params.instantiate(),
                             },
                             body,
@@ -222,7 +229,7 @@ impl XData {
         (data, defs)
     }
 
-    pub fn as_codata(&self) -> (ast::Codata, Vec<ast::Codef>) {
+    pub fn as_codata(&self, uri: &Url) -> (ast::Codata, Vec<ast::Codef>) {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
         let codata = ast::Codata {
@@ -255,7 +262,11 @@ impl XData {
                             span: None,
                             pattern: ast::Pattern {
                                 is_copattern: true,
-                                name: dtor.name.clone().into(),
+                                name: IdBound {
+                                    span: None,
+                                    id: dtor.name.id.clone(),
+                                    uri: uri.clone(),
+                                },
                                 params: dtor.params.instantiate(),
                             },
                             body,

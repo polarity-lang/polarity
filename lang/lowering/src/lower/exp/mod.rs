@@ -236,7 +236,12 @@ impl Lower for cst::exp::Case<cst::exp::Pattern> {
         let cst::exp::Case { span, pattern, body } = self;
 
         lower_telescope_inst(&pattern.params, ctx, |ctx, params| {
-            let name = IdBound { span: Some(pattern.name.span), id: pattern.name.id.clone() };
+            let (_, uri) = ctx.symbol_table.lookup(&pattern.name)?;
+            let name = IdBound {
+                span: Some(pattern.name.span),
+                id: pattern.name.id.clone(),
+                uri: uri.clone(),
+            };
             Ok(ast::Case {
                 span: Some(*span),
                 pattern: ast::Pattern { is_copattern: false, name, params },
@@ -253,7 +258,12 @@ impl Lower for cst::exp::Case<cst::exp::Copattern> {
         let cst::exp::Case { span, pattern, body } = self;
 
         lower_telescope_inst(&pattern.params, ctx, |ctx, params| {
-            let name = ast::IdBound { span: Some(pattern.name.span), id: pattern.name.id.clone() };
+            let (_, uri) = ctx.symbol_table.lookup(&pattern.name)?;
+            let name = ast::IdBound {
+                span: Some(pattern.name.span),
+                id: pattern.name.id.clone(),
+                uri: uri.clone(),
+            };
             Ok(ast::Case {
                 span: Some(*span),
                 pattern: ast::Pattern { is_copattern: true, name, params },
@@ -283,46 +293,46 @@ impl Lower for cst::exp::Call {
 
         // If we find the identifier in the global context then we have to lower
         // it to a call or a type constructor.
-        let meta = ctx.symbol_table.lookup(name).cloned()?;
+        let (meta, uri) = ctx.symbol_table.lookup(name)?;
         match meta {
             DeclMeta::Data { params, .. } | DeclMeta::Codata { params, .. } => {
-                let name = IdBound { span: Some(name.span), id: name.id.clone() };
+                let name = IdBound { span: Some(name.span), id: name.id.clone(), uri: uri.clone() };
                 Ok(ast::Exp::TypCtor(ast::TypCtor {
                     span: Some(*span),
                     name,
-                    args: lower_args(args, params, ctx)?,
+                    args: lower_args(args, params.clone(), ctx)?,
                 }))
             }
             DeclMeta::Def { .. } | DeclMeta::Dtor { .. } => {
                 Err(LoweringError::MustUseAsDotCall { name: name.clone(), span: span.to_miette() })
             }
             DeclMeta::Ctor { params, .. } => {
-                let name = IdBound { span: Some(name.span), id: name.id.clone() };
+                let name = IdBound { span: Some(name.span), id: name.id.clone(), uri: uri.clone() };
                 Ok(ast::Exp::Call(ast::Call {
                     span: Some(*span),
                     kind: ast::CallKind::Constructor,
                     name,
-                    args: lower_args(args, params, ctx)?,
+                    args: lower_args(args, params.clone(), ctx)?,
                     inferred_type: None,
                 }))
             }
             DeclMeta::Codef { params, .. } => {
-                let name = IdBound { span: Some(name.span), id: name.id.clone() };
+                let name = IdBound { span: Some(name.span), id: name.id.clone(), uri: uri.clone() };
                 Ok(ast::Exp::Call(ast::Call {
                     span: Some(*span),
                     kind: ast::CallKind::Codefinition,
                     name,
-                    args: lower_args(args, params, ctx)?,
+                    args: lower_args(args, params.clone(), ctx)?,
                     inferred_type: None,
                 }))
             }
             DeclMeta::Let { params, .. } => {
-                let name = IdBound { span: Some(name.span), id: name.id.clone() };
+                let name = IdBound { span: Some(name.span), id: name.id.clone(), uri: uri.clone() };
                 Ok(ast::Exp::Call(ast::Call {
                     span: Some(*span),
                     kind: ast::CallKind::LetBound,
                     name,
-                    args: lower_args(args, params, ctx)?,
+                    args: lower_args(args, params.clone(), ctx)?,
                     inferred_type: None,
                 }))
             }
@@ -336,14 +346,15 @@ impl Lower for cst::exp::DotCall {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::DotCall { span, exp, name, args } = self;
 
-        let meta = ctx.symbol_table.lookup(name).cloned()?;
+        let (meta, uri) = ctx.symbol_table.lookup(name)?;
+        let (meta, uri) = (meta.clone(), uri.clone());
 
         match meta {
             DeclMeta::Dtor { params, .. } => Ok(ast::Exp::DotCall(ast::DotCall {
                 span: Some(*span),
                 kind: ast::DotCallKind::Destructor,
                 exp: exp.lower(ctx)?,
-                name: IdBound { span: Some(name.span), id: name.id.clone() },
+                name: IdBound { span: Some(name.span), id: name.id.clone(), uri },
                 args: lower_args(args, params, ctx)?,
                 inferred_type: None,
             })),
@@ -351,7 +362,7 @@ impl Lower for cst::exp::DotCall {
                 span: Some(*span),
                 kind: ast::DotCallKind::Definition,
                 exp: exp.lower(ctx)?,
-                name: IdBound { span: Some(name.span), id: name.id.clone() },
+                name: IdBound { span: Some(name.span), id: name.id.clone(), uri },
                 args: lower_args(args, params, ctx)?,
                 inferred_type: None,
             })),
@@ -463,7 +474,7 @@ impl Lower for cst::exp::NatLit {
 
         // We have to check whether "Z" is declared as a constructor or codefinition.
         // We assume that if Z exists, then S exists as well and is of the same kind.
-        let z_kind = ctx
+        let (z_kind, uri) = ctx
             .symbol_table
             .lookup(&Ident { span: *span, id: "Z".to_string() })
             .map_err(|_| LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() })?;
@@ -476,7 +487,7 @@ impl Lower for cst::exp::NatLit {
         let mut out = ast::Exp::Call(ast::Call {
             span: Some(*span),
             kind: call_kind,
-            name: ast::IdBound::from_string("Z"),
+            name: ast::IdBound { span: Some(*span), id: "Z".to_owned(), uri: uri.clone() },
             args: ast::Args { args: vec![] },
             inferred_type: None,
         });
@@ -488,7 +499,7 @@ impl Lower for cst::exp::NatLit {
             out = ast::Exp::Call(ast::Call {
                 span: Some(*span),
                 kind: call_kind,
-                name: ast::IdBound::from_string("S"),
+                name: ast::IdBound { span: Some(*span), id: "S".to_owned(), uri: uri.clone() },
                 args: ast::Args { args: vec![ast::Arg::UnnamedArg(Box::new(out))] },
                 inferred_type: None,
             });
@@ -502,9 +513,10 @@ impl Lower for cst::exp::Fun {
     type Target = ast::Exp;
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Fun { span, from, to } = self;
+        let (_, uri) = ctx.symbol_table.lookup(&Ident { span: *span, id: "Fun".to_owned() })?;
         Ok(ast::TypCtor {
             span: Some(*span),
-            name: ast::IdBound::from_string("Fun"),
+            name: ast::IdBound { span: Some(*span), id: "Fun".to_owned(), uri: uri.clone() },
             args: ast::Args {
                 args: vec![
                     ast::Arg::UnnamedArg(from.lower(ctx)?),
@@ -579,18 +591,20 @@ impl Lower for cst::exp::Motive {
 
 #[cfg(test)]
 mod lower_args_tests {
+    use url::Url;
 
     use parser::cst::decls::Telescope;
 
     use crate::symbol_table::SymbolTable;
 
-    use super::{lower_args, Ctx};
+    use super::*;
 
     #[test]
     fn test_empty() {
         let given = vec![];
         let expected = Telescope(vec![]);
-        let mut ctx = Ctx::empty(SymbolTable::default());
+        let mut ctx =
+            Ctx::empty(Url::parse("inmemory:///scratch.pol").unwrap(), SymbolTable::default());
         let res = lower_args(&given, expected, &mut ctx);
         assert_eq!(res.unwrap(), ast::Args { args: vec![] })
     }

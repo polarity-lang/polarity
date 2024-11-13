@@ -44,8 +44,8 @@ fn check_dtor_wf(codata_name: &IdBind, dtor: &Dtor, ctx: &mut Ctx) -> Result<Dto
     // Check that the destructor lies in the codata type it is defined in
     if &self_param.typ.name != codata_name {
         return Err(TypeError::NotInType {
-            expected: codata_name.clone(),
-            actual: self_param.typ.name.clone(),
+            expected: Box::new(codata_name.clone()),
+            actual: Box::new(self_param.typ.name.clone()),
             span: self_param.typ.span.to_miette(),
         });
     }

@@ -219,6 +219,7 @@ impl ContainsMetaVars for Args {
 #[cfg(test)]
 mod args_tests {
     use printer::Print;
+    use url::Url;
 
     use crate::{Arg, Call, CallKind, Exp, Hole, IdBound, MetaVarKind};
 
@@ -236,7 +237,11 @@ mod args_tests {
             Call {
                 span: None,
                 kind: CallKind::Constructor,
-                name: IdBound::from_string("T"),
+                name: IdBound {
+                    span: None,
+                    id: "T".to_owned(),
+                    uri: Url::parse("inmemory:///scratch.pol").unwrap(),
+                },
                 args: Args { args: vec![] },
                 inferred_type: None,
             }
