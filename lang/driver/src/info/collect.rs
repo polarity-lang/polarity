@@ -12,7 +12,7 @@ use crate::{
 
 use super::data::{
     AnnoInfo, CallInfo, DotCallInfo, HoleInfo, Info, InfoContent, TypeCtorInfo, TypeUnivInfo,
-    VariableInfo,
+    UseInfo, VariableInfo,
 };
 use super::item::Item;
 use super::lookup::{lookup_codef, lookup_ctor, lookup_decl, lookup_def, lookup_dtor, lookup_let};
@@ -25,6 +25,19 @@ pub fn collect_info(
 ) -> Result<(Lapper<u32, Info>, Lapper<u32, Item>), Error> {
     let module = db.ast(uri)?;
     let mut collector = InfoCollector::new(module.meta_vars.clone());
+
+    for use_decl in module.use_decls.iter() {
+        let dep_uri = db.resolve_module_name(&use_decl.path, uri)?;
+        let info = Info {
+            span: use_decl.span,
+            content: InfoContent::UseInfo(UseInfo { uri: dep_uri, path: use_decl.path.clone() }),
+        };
+        collector.info_spans.push(Interval {
+            start: use_decl.span.start().into(),
+            stop: use_decl.span.end().into(),
+            val: info,
+        })
+    }
 
     for decl in module.decls.iter() {
         decl.collect_info(db, &mut collector)

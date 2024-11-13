@@ -96,6 +96,7 @@ impl ToHoverContent for InfoContent {
             InfoContent::DefInfo(i) => i.to_hover_content(),
             InfoContent::CodefInfo(i) => i.to_hover_content(),
             InfoContent::LetInfo(i) => i.to_hover_content(),
+            InfoContent::UseInfo(i) => i.to_hover_content(),
         }
     }
 }
@@ -292,6 +293,18 @@ impl ToHoverContent for LetInfo {
     fn to_hover_content(self) -> HoverContents {
         let header = MarkedString::String("Let-binding".to_owned());
         HoverContents::Scalar(header)
+    }
+}
+
+// Modules
+//
+//
+
+impl ToHoverContent for UseInfo {
+    fn to_hover_content(self) -> HoverContents {
+        let UseInfo { path, .. } = self;
+        let content = MarkedString::String(format!("Import module `{}`", path));
+        HoverContents::Scalar(content)
     }
 }
 

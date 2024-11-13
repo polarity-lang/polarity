@@ -41,6 +41,21 @@ pub enum InfoContent {
     DefInfo(DefInfo),
     CodefInfo(CodefInfo),
     LetInfo(LetInfo),
+    // Modules
+    UseInfo(UseInfo),
+}
+
+// Info structs for modules
+//
+//
+
+/// Information for `use` statements
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UseInfo {
+    /// The path as it appears in the source code
+    pub path: String,
+    /// The URI of the module that is being used
+    pub uri: Url,
 }
 
 // Info structs for toplevel declarations
