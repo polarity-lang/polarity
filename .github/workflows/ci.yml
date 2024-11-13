@@ -18,8 +18,9 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Ensure Minimum Supported Rust Version (MSRV)
   build-msrv:
-    name: Build with Minimum Supported Rust Version (MSRV)
+    name: Build with MSRV
     runs-on: ubuntu-latest
     outputs:
       msrv: ${{ steps.extract_rust_version.outputs.msrv }}
