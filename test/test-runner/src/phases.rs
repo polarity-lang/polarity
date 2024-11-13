@@ -353,9 +353,9 @@ impl Phase for Xfunc {
             return Ok(());
         }
 
-        let type_names = db.all_type_names(uri)?;
+        let type_names = db.all_declared_type_names(uri)?;
 
-        let new_uri = Url::parse("inmemory:///scratch.pol").unwrap();
+        let new_uri = Url::parse(&format!("inmemory:///{}", uri.path())).unwrap();
         db.source.manage(&new_uri);
 
         for type_name in type_names.iter().map(|tn| &tn.id) {

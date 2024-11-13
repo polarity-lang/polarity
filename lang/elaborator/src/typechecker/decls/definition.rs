@@ -4,7 +4,8 @@ use log::trace;
 use ast::*;
 
 use super::CheckToplevel;
-use crate::normalizer::{env::ToEnv, normalize::Normalize};
+use crate::normalizer::env::ToEnv;
+use crate::normalizer::normalize::Normalize;
 use crate::typechecker::exprs::local_match::WithScrutinee;
 use crate::typechecker::{
     ctx::Ctx,
@@ -21,12 +22,12 @@ impl CheckToplevel for Def {
         let Def { span, doc, name, attr, params, self_param, ret_typ, cases } = self;
 
         params.infer_telescope(ctx, |ctx, params_out| {
-            let self_param_nf = self_param.typ.normalize(&ctx.module, &mut ctx.env())?;
+            let self_param_nf = self_param.typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
 
             let (ret_typ_out, ret_typ_nf, self_param_out) =
                 self_param.infer_telescope(ctx, |ctx, self_param_out| {
                     let ret_typ_out = ret_typ.infer(ctx)?;
-                    let ret_typ_nf = ret_typ.normalize(&ctx.module, &mut ctx.env())?;
+                    let ret_typ_nf = ret_typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
                     Ok((ret_typ_out, ret_typ_nf, self_param_out))
                 })?;
 

@@ -1,18 +1,25 @@
-use ast::ctx::GenericCtx;
-use ast::*;
+use std::rc::Rc;
+
+use crate::normalizer::val::ReadBack;
+use crate::{result::*, TypeInfoTable};
 
 use super::env::Env;
 use super::eval::*;
-use crate::normalizer::val::ReadBack;
-use crate::result::*;
 
 pub trait Normalize {
     type Nf;
 
-    fn normalize(&self, prg: &Module, env: &mut Env) -> Result<Self::Nf, TypeError>;
+    fn normalize(
+        &self,
+        info_table: &Rc<TypeInfoTable>,
+        env: &mut Env,
+    ) -> Result<Self::Nf, TypeError>;
 
-    fn normalize_in_empty_env(&self, prg: &Module) -> Result<Self::Nf, TypeError> {
-        self.normalize(prg, &mut GenericCtx::empty().into())
+    fn normalize_in_empty_env(
+        &self,
+        info_table: &Rc<TypeInfoTable>,
+    ) -> Result<Self::Nf, TypeError> {
+        self.normalize(info_table, &mut Env::empty())
     }
 }
 
@@ -23,8 +30,12 @@ where
 {
     type Nf = <<T as Eval>::Val as ReadBack>::Nf;
 
-    fn normalize(&self, prg: &Module, env: &mut Env) -> Result<Self::Nf, TypeError> {
-        let val = self.eval(prg, env)?;
-        val.read_back(prg)
+    fn normalize(
+        &self,
+        info_table: &Rc<TypeInfoTable>,
+        env: &mut Env,
+    ) -> Result<Self::Nf, TypeError> {
+        let val = self.eval(info_table, env)?;
+        val.read_back(info_table)
     }
 }

@@ -31,7 +31,7 @@ impl CheckInfer for Anno {
     fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         let Anno { span, exp, typ, .. } = self;
         let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
-        let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
+        let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
         let exp_out = (**exp).check(ctx, &typ_nf)?;
         Ok(Anno {
             span: *span,

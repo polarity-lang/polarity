@@ -42,16 +42,24 @@ impl Ctx {
     }
 }
 pub trait ContextSubstExt: Sized {
-    fn subst<S: Substitution>(&mut self, prg: &Module, s: &S) -> Result<(), TypeError>;
+    fn subst<S: Substitution>(
+        &mut self,
+        type_info_table: &Rc<TypeInfoTable>,
+        s: &S,
+    ) -> Result<(), TypeError>;
 }
 
 impl ContextSubstExt for Ctx {
-    fn subst<S: Substitution>(&mut self, prg: &Module, s: &S) -> Result<(), TypeError> {
+    fn subst<S: Substitution>(
+        &mut self,
+        type_info_table: &Rc<TypeInfoTable>,
+        s: &S,
+    ) -> Result<(), TypeError> {
         let env = self.vars.env();
         let levels = self.vars.levels();
         self.map_failable(|nf| {
             let exp = nf.subst(&mut levels.clone(), s);
-            let nf = exp.normalize(prg, &mut env.clone())?;
+            let nf = exp.normalize(type_info_table, &mut env.clone())?;
             Ok(nf)
         })
     }

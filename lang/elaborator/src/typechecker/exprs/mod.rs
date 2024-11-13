@@ -142,7 +142,7 @@ fn check_args(
         .iter()
         .zip(params)
         .map(|(exp, Param { typ, .. })| {
-            let typ = typ.normalize(&ctx.module, &mut ctx.env())?;
+            let typ = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
             exp.check(ctx, &typ)
         })
         .collect::<Result<_, _>>()?;
@@ -205,7 +205,7 @@ impl CheckTelescope for TelescopeInst {
                 let ParamInst { span, name, .. } = param_actual;
                 let Param { typ, .. } = param_expected;
                 let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
-                let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
+                let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
                 let mut params_out = params_out;
                 let param_out = ParamInst {
                     span: *span,
@@ -238,7 +238,7 @@ impl InferTelescope for Telescope {
             |ctx, mut params_out, param| {
                 let Param { implicit, typ, name } = param;
                 let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
-                let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
+                let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
                 let param_out = Param { implicit: *implicit, name: name.clone(), typ: typ_out };
                 params_out.push(param_out);
                 let elem = Binder { name: param.name.clone(), typ: typ_nf };
@@ -259,7 +259,7 @@ impl InferTelescope for SelfParam {
     ) -> Result<T, TypeError> {
         let SelfParam { info, name, typ } = self;
 
-        let typ_nf = typ.to_exp().normalize(&ctx.module, &mut ctx.env())?;
+        let typ_nf = typ.to_exp().normalize(&ctx.type_info_table, &mut ctx.env())?;
         let typ_out = typ.infer(ctx)?;
         let param_out = SelfParam { info: *info, name: name.clone(), typ: typ_out };
         let elem =

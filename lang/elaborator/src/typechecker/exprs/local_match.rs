@@ -44,7 +44,8 @@ impl CheckInfer for LocalMatch {
             // Pattern matching with motive
             Some(m) => {
                 let Motive { span: info, param, ret_typ } = m;
-                let mut self_t_nf = typ_app.to_exp().normalize(&ctx.module, &mut ctx.env())?;
+                let mut self_t_nf =
+                    typ_app.to_exp().normalize(&ctx.type_info_table, &mut ctx.env())?;
                 self_t_nf.shift((1, 0));
                 let self_binder = Binder { name: param.name.clone(), typ: self_t_nf.clone() };
 
@@ -59,11 +60,11 @@ impl CheckInfer for LocalMatch {
                 let subst = Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp };
                 let mut motive_t = ret_typ.subst(&mut subst_ctx, &subst);
                 motive_t.shift((-1, 0));
-                let motive_t_nf = motive_t.normalize(&ctx.module, &mut ctx.env())?;
+                let motive_t_nf = motive_t.normalize(&ctx.type_info_table, &mut ctx.env())?;
                 convert(subst_ctx, &mut ctx.meta_vars, motive_t_nf, t)?;
 
                 body_t = ctx.bind_single(&self_binder, |ctx| {
-                    ret_typ.normalize(&ctx.module, &mut ctx.env())
+                    ret_typ.normalize(&ctx.type_info_table, &mut ctx.env())
                 })?;
                 motive_out = Some(Motive {
                     span: *info,
@@ -160,7 +161,7 @@ impl<'a> WithScrutinee<'a> {
                 ctx.type_info_table.lookup_ctor(&name)?;
 
             let def_args_nf = LevelCtx::empty().bind_iter(params.params.iter(), |ctx_| {
-                def_args.normalize(&ctx.module, &mut ctx_.env())
+                def_args.normalize(&ctx.type_info_table, &mut ctx_.env())
             })?;
 
             let TypCtor { args: on_args, .. } = &self.scrutinee;
@@ -172,7 +173,6 @@ impl<'a> WithScrutinee<'a> {
             let mut subst_ctx_2 = ctx.levels().append(&vec![params.len(), 1].into());
             let curr_lvl = subst_ctx_2.len() - 1;
 
-            let module = ctx.module.clone();
             let name = name.clone();
             let params = params.clone();
 
@@ -223,11 +223,13 @@ impl<'a> WithScrutinee<'a> {
                                 .ok_yes()?;
 
                             ctx.fork::<Result<_, TypeError>, _>(|ctx| {
-                                ctx.subst(&module, &unif)?;
+                                let type_info_table = ctx.type_info_table.clone();
+                                ctx.subst(&type_info_table, &unif)?;
                                 let body = body.subst(&mut ctx.levels(), &unif);
 
                                 let t_subst = t.subst(&mut ctx.levels(), &unif);
-                                let t_nf = t_subst.normalize(&module, &mut ctx.env())?;
+                                let t_nf =
+                                    t_subst.normalize(&ctx.type_info_table, &mut ctx.env())?;
 
                                 let body_out = body.check(ctx, &t_nf)?;
 

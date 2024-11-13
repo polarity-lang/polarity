@@ -91,7 +91,7 @@ pub trait Context: Sized {
 
 /// Interface to bind variables to anything that has a `Context`
 ///
-/// There are two use cases for this trait.
+/// There are two ways to use this trait.
 ///
 /// Case 1: You have a type that implements `Context`.
 /// Then, a blanket impl ensures that this type also implements `BindContext`.

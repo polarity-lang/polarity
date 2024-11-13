@@ -5,7 +5,8 @@ use log::trace;
 use ast::*;
 
 use super::CheckToplevel;
-use crate::normalizer::{env::ToEnv, normalize::Normalize};
+use crate::normalizer::env::ToEnv;
+use crate::normalizer::normalize::Normalize;
 use crate::typechecker::{
     ctx::Ctx,
     exprs::{CheckInfer, InferTelescope},
@@ -20,7 +21,7 @@ impl CheckToplevel for Let {
 
         params.infer_telescope(ctx, |ctx, params_out| {
             let typ_out = typ.infer(ctx)?;
-            let typ_nf = typ.normalize(&ctx.module, &mut ctx.env())?;
+            let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
             let body_out = body.check(ctx, &typ_nf)?;
 
             Ok(Let {

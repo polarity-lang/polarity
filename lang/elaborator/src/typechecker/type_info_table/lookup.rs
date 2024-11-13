@@ -1,8 +1,6 @@
 use ast::*;
 
-use super::{
-    CodefMeta, CtorMeta, DefMeta, DtorMeta, LetMeta, TyCtorMeta, TypeError, TypeInfoTable,
-};
+use super::{CtorMeta, DtorMeta, TyCtorMeta, TypeError, TypeInfoTable};
 
 impl TypeInfoTable {
     pub fn lookup_data(&self, name: &IdBound) -> Result<&Data, TypeError> {
@@ -41,7 +39,7 @@ impl TypeInfoTable {
             return Ok(meta.clone());
         }
         if let Some(meta) = map.map_codef.get(&name.id) {
-            return Ok(meta.to_ctor().clone());
+            return Ok(meta.to_ctor().into());
         }
         Err(TypeError::Impossible {
             message: format!("Top-level ctor or codef {name} not found"),
@@ -58,7 +56,7 @@ impl TypeInfoTable {
             return Ok(meta.clone());
         }
         if let Some(meta) = map.map_def.get(&name.id) {
-            return Ok(meta.to_dtor().clone());
+            return Ok(meta.to_dtor().into());
         }
         Err(TypeError::Impossible {
             message: format!("Top-level dtor or def {name} not found"),
@@ -66,7 +64,7 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_let(&self, name: &IdBound) -> Result<&LetMeta, TypeError> {
+    pub fn lookup_let(&self, name: &IdBound) -> Result<&Let, TypeError> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,
@@ -94,7 +92,7 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_codef(&self, name: &IdBound) -> Result<&CodefMeta, TypeError> {
+    pub fn lookup_codef(&self, name: &IdBound) -> Result<&Codef, TypeError> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,
@@ -122,7 +120,7 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_def(&self, name: &IdBound) -> Result<&DefMeta, TypeError> {
+    pub fn lookup_def(&self, name: &IdBound) -> Result<&Def, TypeError> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,

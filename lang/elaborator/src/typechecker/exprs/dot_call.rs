@@ -45,13 +45,13 @@ impl CheckInfer for DotCall {
             .typ
             .subst_under_ctx(vec![params.len()].into(), &vec![args.args.clone()])
             .to_exp();
-        let self_param_nf = self_param_out.normalize(&ctx.module, &mut ctx.env())?;
+        let self_param_nf = self_param_out.normalize(&ctx.type_info_table, &mut ctx.env())?;
 
         let exp_out = exp.check(ctx, &self_param_nf)?;
 
         let subst = vec![args.to_exps(), vec![exp.clone()]];
         let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &subst);
-        let typ_out_nf = typ_out.normalize(&ctx.module, &mut ctx.env())?;
+        let typ_out_nf = typ_out.normalize(&ctx.type_info_table, &mut ctx.env())?;
 
         Ok(DotCall {
             span: *span,
