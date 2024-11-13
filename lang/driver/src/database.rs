@@ -469,7 +469,7 @@ impl Database {
     }
 
     /// Resolves a module name to a `Url` relative to the current module.
-    fn resolve_module_name(&self, name: &str, current_module: &Url) -> Result<Url, Error> {
+    pub fn resolve_module_name(&self, name: &str, current_module: &Url) -> Result<Url, Error> {
         current_module.join(name).map_err(|err| DriverError::Url(err).into())
     }
 }

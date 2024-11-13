@@ -38,6 +38,7 @@ fn span_to_location(span: &Span, uri: &Url, db: &Database) -> Option<Location> {
     let range = db.span_to_locations(uri, *span).map(ToLsp::to_lsp)?;
     Some(Location { uri: uri.clone(), range })
 }
+
 trait ToJumpTarget {
     fn to_jump_target(&self) -> Option<(Url, Span)>;
 }
@@ -48,8 +49,15 @@ impl ToJumpTarget for InfoContent {
             InfoContent::TypeCtorInfo(i) => i.to_jump_target(),
             InfoContent::CallInfo(i) => i.to_jump_target(),
             InfoContent::DotCallInfo(i) => i.to_jump_target(),
+            InfoContent::UseInfo(i) => i.to_jump_target(),
             _ => None,
         }
+    }
+}
+
+impl ToJumpTarget for UseInfo {
+    fn to_jump_target(&self) -> Option<(Url, Span)> {
+        Some((self.uri.clone(), Span::default()))
     }
 }
 
