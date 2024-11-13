@@ -355,7 +355,8 @@ impl Phase for Xfunc {
 
         let type_names = db.all_declared_type_names(uri)?;
 
-        let new_uri = Url::parse(&format!("inmemory:///{}", uri.path())).unwrap();
+        let new_uri =
+            uri.to_string().replacen("file", "inmemory", 1).parse().expect("Failed to parse URI");
         db.source.manage(&new_uri);
 
         for type_name in type_names.iter().map(|tn| &tn.id) {
