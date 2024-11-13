@@ -604,7 +604,7 @@ mod lower_args_tests {
         let given = vec![];
         let expected = Telescope(vec![]);
         let mut ctx =
-            Ctx::empty(Url::parse("inmemory:///test.pol").unwrap(), SymbolTable::default());
+            Ctx::empty(Url::parse("inmemory:///scratch.pol").unwrap(), SymbolTable::default());
         let res = lower_args(&given, expected, &mut ctx);
         assert_eq!(res.unwrap(), ast::Args { args: vec![] })
     }

@@ -240,7 +240,7 @@ mod args_tests {
                 name: IdBound {
                     span: None,
                     id: "T".to_owned(),
-                    uri: Url::parse("inmemory:///example.pol").unwrap(),
+                    uri: Url::parse("inmemory:///scratch.pol").unwrap(),
                 },
                 args: Args { args: vec![] },
                 inferred_type: None,
