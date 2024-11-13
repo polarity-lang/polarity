@@ -1,11 +1,15 @@
 use std::sync::Arc;
 
-use crate::Rename;
+use codespan::Span;
+use url::Url;
+
 use ast::ctx::values::TypeCtx;
 use ast::ctx::BindContext;
 use ast::ctx::LevelCtx;
 use ast::*;
-use codespan::Span;
+
+use crate::Rename;
+
 mod fv;
 
 use fv::*;
@@ -18,6 +22,7 @@ pub fn lift(module: Arc<Module>, name: &str) -> LiftResult {
         curr_decl: IdBind::from_string(""),
         modified_decls: HashSet::default(),
         ctx: LevelCtx::default(),
+        uri: module.uri.clone(),
     };
 
     let mut module = module.lift(&mut ctx);
@@ -50,6 +55,8 @@ struct Ctx {
     modified_decls: HashSet<IdBind>,
     /// Tracks the current binders in scope
     ctx: LevelCtx,
+    /// URI of the current module
+    uri: Url,
 }
 
 impl BindContext for Ctx {
@@ -604,7 +611,7 @@ impl Ctx {
             span: None,
             kind: DotCallKind::Definition,
             exp: Box::new(on_exp.lift(self)),
-            name: name.clone().into(),
+            name: IdBound { span: None, id: name.id.clone(), uri: self.uri.clone() },
             args,
             inferred_type: None,
         })
@@ -665,7 +672,7 @@ impl Ctx {
         Exp::Call(Call {
             span: None,
             kind: CallKind::Codefinition,
-            name: name.clone().into(),
+            name: IdBound { span: None, id: name.id.clone(), uri: self.uri.clone() },
             args,
             inferred_type: None,
         })

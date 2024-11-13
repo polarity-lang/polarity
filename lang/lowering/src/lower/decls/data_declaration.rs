@@ -49,7 +49,11 @@ fn lower_constructor(
                 if type_arity == 0 {
                     ast::TypCtor {
                         span: None,
-                        name: IdBound { span: Some(typ_name.span), id: typ_name.id.clone() },
+                        name: IdBound {
+                            span: Some(typ_name.span),
+                            id: typ_name.id.clone(),
+                            uri: ctx.uri.clone(),
+                        },
                         args: ast::Args { args: vec![] },
                     }
                 } else {

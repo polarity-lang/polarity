@@ -60,7 +60,7 @@ impl Database {
 
         let original = Original { type_span, decl_spans, xdefs };
 
-        let repr = transformations::repr(&mat, &IdBound::from_string(type_name))?;
+        let repr = transformations::repr(&mat, type_name)?;
 
         let result = match repr {
             transformations::matrix::Repr::Data => refunctionalize(&mat, type_name),
@@ -124,8 +124,7 @@ fn generate_edits(
 }
 
 fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
-    let (mut codata, mut codefs) =
-        transformations::as_codata(mat, &IdBound::from_string(type_name))?;
+    let (mut codata, mut codefs) = transformations::as_codata(mat, type_name)?;
 
     codata.rename();
     codefs.iter_mut().for_each(|codef| codef.rename());
@@ -137,7 +136,7 @@ fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, cr
 }
 
 fn defunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
-    let (mut data, mut defs) = transformations::as_data(mat, &IdBound::from_string(type_name))?;
+    let (mut data, mut defs) = transformations::as_data(mat, type_name)?;
 
     data.rename();
     defs.iter_mut().for_each(|def| def.rename());

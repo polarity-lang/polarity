@@ -57,7 +57,7 @@ pub struct WithExpectedType<'a> {
     pub cases: &'a Vec<Case>,
     /// Name of the global codefinition that gets substituted for the destructor's self parameters
     /// This is `None` for a local comatch.
-    pub label: Option<(IdBind, usize)>,
+    pub label: Option<(IdBound, usize)>,
     /// The expected type of the comatch, i.e. `Stream(Int)` for `comatch { hd => 1, tl => ... }`.
     pub expected_type: TypCtor,
 }
@@ -173,7 +173,7 @@ impl<'a> WithExpectedType<'a> {
                         None => {
                             unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
-                                    name: name.clone(),
+                                    name: Box::new(name.clone()),
                                     span: span.to_miette(),
                                 })
                                 .ok_no()?;
@@ -235,7 +235,7 @@ impl<'a> WithExpectedType<'a> {
                                     let ctor = Box::new(Exp::Call(Call {
                                         span: None,
                                         kind: CallKind::Codefinition,
-                                        name: label.clone().into(),
+                                        name: label.clone(),
                                         args: Args { args },
                                         inferred_type: None,
                                     }));
@@ -289,7 +289,7 @@ impl<'a> WithExpectedType<'a> {
                                 let unif =
                                     unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
                                         .map_no(|()| TypeError::PatternIsAbsurd {
-                                            name: name.clone(),
+                                            name: Box::new(name.clone()),
                                             span: span.to_miette(),
                                         })
                                         .ok_yes()?;

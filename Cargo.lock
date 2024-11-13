@@ -2598,6 +2598,7 @@ dependencies = [
  "derivative",
  "miette",
  "thiserror",
+ "url",
 ]
 
 [[package]]
