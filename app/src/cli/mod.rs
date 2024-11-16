@@ -2,7 +2,6 @@ use clap::{Parser, Subcommand};
 
 mod check;
 mod format;
-mod ignore_colors;
 mod lift;
 mod lsp;
 mod run;

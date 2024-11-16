@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use driver::Database;
 use printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
 
-use super::ignore_colors::IgnoreColors;
+use crate::utils::ignore_colors::IgnoreColors;
 
 #[derive(clap::Args)]
 pub struct Args {
