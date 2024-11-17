@@ -10,10 +10,7 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-opener = "0.5"
-
-# workspace members
-ast = { path = "../ast" }
-printer = { path = "../printer" }
-driver = { path = "../driver" }
+clap = { version = "4", features = ["derive"] }
+# fancy error messages
+miette = { workspace = true, features = ["fancy"] }
 
