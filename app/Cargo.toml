@@ -36,6 +36,7 @@ elaborator = { path = "../lang/elaborator" }
 ast = { path = "../lang/ast" }
 printer = { path = "../lang/printer" }
 lsp-server = { path = "../lang/lsp" }
+docs = { path = "../lang/docs" }
 
 [dev-dependencies]
 # For testing the binary
