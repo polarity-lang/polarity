@@ -57,4 +57,4 @@ Before opening a merge request with changes to the nix code, please check the fo
 - your changes use existing nixpkgs infrastructure where possible
 - your changes do not break any of the existing workflows and everything works as normal for non-nix users
 - your changes do not require changes in regular non-nix development workflows
-- your changes do not introduce any unnecessary IFD
+- your changes do not introduce any unnecessary IFD (see [the nix manual for an explanation of what IFD is](https://nix.dev/manual/nix/latest/language/import-from-derivation))

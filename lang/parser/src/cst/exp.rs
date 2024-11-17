@@ -150,7 +150,7 @@ pub struct NatLit {
 }
 
 #[derive(Debug, Clone)]
-/// Function arrow in syntax
+/// Function arrow (syntactic sugar), e.g. a -> b
 pub struct Fun {
     pub span: Span,
     pub from: Box<Exp>,
@@ -158,7 +158,7 @@ pub struct Fun {
 }
 
 #[derive(Debug, Clone)]
-/// Lambda abstractions \x. e
+/// Lambda abstractions (syntactic sugar), e.g. \x. e
 pub struct Lam {
     pub span: Span,
     pub var: BindingSite,

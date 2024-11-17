@@ -8,7 +8,6 @@ use crate::unifier::constraints::Constraint;
 use crate::unifier::unify::*;
 use ast::ctx::LevelCtx;
 use ast::*;
-use codespan::Span;
 use miette_util::ToMiette;
 
 use super::super::ctx::*;
@@ -35,7 +34,7 @@ impl CheckInfer for LocalComatch {
         let wd = WithExpectedType { cases, label: None, expected_type: expected_type_app.clone() };
 
         wd.check_exhaustiveness(ctx)?;
-        let cases = wd.infer_wd(ctx, span)?;
+        let cases = wd.infer_wd(ctx)?;
 
         Ok(LocalComatch {
             span: *span,
@@ -102,7 +101,7 @@ impl<'a> WithExpectedType<'a> {
         Ok(())
     }
 
-    pub fn infer_wd(&self, ctx: &mut Ctx, reason: &Option<Span>) -> Result<Vec<Case>, TypeError> {
+    pub fn infer_wd(&self, ctx: &mut Ctx) -> Result<Vec<Case>, TypeError> {
         let WithExpectedType { cases, expected_type, label } = &self;
         let TypCtor { args: on_args, .. } = expected_type;
 
@@ -173,7 +172,7 @@ impl<'a> WithExpectedType<'a> {
                         // this case is really absurd. To do this, we verify that the unification
                         // actually fails.
                         None => {
-                            unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, reason)?
+                            unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, span)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                     name: Box::new(name.clone()),
                                     span: span.to_miette(),
@@ -293,7 +292,7 @@ impl<'a> WithExpectedType<'a> {
                                     &mut ctx.meta_vars,
                                     constraint,
                                     false,
-                                    reason,
+                                    span,
                                 )?
                                 .map_no(|()| TypeError::PatternIsAbsurd {
                                     name: Box::new(name.clone()),

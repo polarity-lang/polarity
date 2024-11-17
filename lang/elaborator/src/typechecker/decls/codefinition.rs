@@ -36,7 +36,7 @@ impl CheckToplevel for Codef {
             };
 
             wd.check_exhaustiveness(ctx)?;
-            let cases = wd.infer_wd(ctx, span)?;
+            let cases = wd.infer_wd(ctx)?;
 
             Ok(Codef {
                 span: *span,

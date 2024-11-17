@@ -5,7 +5,6 @@ use std::collections::HashSet;
 use ast::ctx::values::Binder;
 use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
-use codespan::Span;
 use miette_util::ToMiette;
 
 use crate::normalizer::env::ToEnv;
@@ -87,7 +86,7 @@ impl CheckInfer for LocalMatch {
 
         let ws = WithScrutinee { cases, scrutinee: typ_app_nf.clone() };
         ws.check_exhaustiveness(ctx)?;
-        let cases = ws.check_ws(ctx, &body_t, span)?;
+        let cases = ws.check_ws(ctx, &body_t)?;
 
         Ok(LocalMatch {
             span: *span,
@@ -149,12 +148,7 @@ impl<'a> WithScrutinee<'a> {
         Ok(())
     }
 
-    pub fn check_ws(
-        &self,
-        ctx: &mut Ctx,
-        t: &Exp,
-        reason: &Option<Span>,
-    ) -> Result<Vec<Case>, TypeError> {
+    pub fn check_ws(&self, ctx: &mut Ctx, t: &Exp) -> Result<Vec<Case>, TypeError> {
         let WithScrutinee { cases, .. } = &self;
 
         let cases: Vec<_> = cases.to_vec();
@@ -222,7 +216,7 @@ impl<'a> WithScrutinee<'a> {
                     let body_out = match body {
                         Some(body) => {
                             let unif =
-                                unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, reason)?
+                                unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, &span)?
                                     .map_no(|()| TypeError::PatternIsAbsurd {
                                         name: Box::new(name.clone()),
                                         span: span.to_miette(),
@@ -244,7 +238,7 @@ impl<'a> WithScrutinee<'a> {
                             })?
                         }
                         None => {
-                            unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, reason)?
+                            unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, &span)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                     name: Box::new(name.clone()),
                                     span: span.to_miette(),
