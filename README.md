@@ -1,7 +1,25 @@
-# Polarity
+<a href="https://polarity-lang.github.io/">
+    <p align="center">
+        <img alt="The polarity logo" src="https://raw.githubusercontent.com/polarity-lang/artwork/88e3b8f9e4c87a0baf6a0a61f0a7e5e9f1d757a2/logo_transparent.svg" width=30%>
+    </p>
+</a>
 
-A programming language with dependent data and codata types.
-Installation instructions and the language documentation is available at [polarity-lang.github.io](https://polarity-lang.github.io/).
+<h1 align="center">Polarity</h1>
+<p align="center"><strong>A programming language with dependent data and codata types.</strong></p>
+
+<p align="center">
+    <a href="https://polarity-lang.github.io/">
+        <img src="https://img.shields.io/website-up-down-green-red/http/polarity-lang.github.io" alt="Website">
+    </a>
+    <a href="https://github.com/polarity-lang/polarity/actions/workflows/ci.yml">
+        <img src="https://github.com/polarity-lang/polarity/actions/workflows/ci.yml/badge.svg" alt="Rust CI">
+    </a>
+    <a href="https://app.codecov.io/gh/polarity-lang/polarity">
+        <img src="https://codecov.io/gh/polarity-lang/polarity/branch/main/graph/badge.svg" alt="Codecov Coverage">
+    </a>
+</p>
+
+<br>
 
 ## Community
 
@@ -12,6 +30,8 @@ Feel welcome to join our [Discord server](https://discord.gg/NWjGr9qNhR).
 Install Rust (e.g. via [rustup.rs](https://rustup.rs/)).
 
 ## Installation
+
+Installation instructions and the language documentation is available at [polarity-lang.github.io](https://polarity-lang.github.io/).
 
 To locally install the executable, run:
 
