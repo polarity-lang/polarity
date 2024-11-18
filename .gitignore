@@ -1,6 +1,12 @@
 # Rust
 target
 # direnv
+.envrc
 .direnv
+
 *.zip
 target_pol/docs*
+
+# nix 
+result
+result-

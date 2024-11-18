@@ -1,0 +1,5 @@
+data A {a}
+data B {b} -- annotate the type of b explicitly
+data C (a : A) {}
+
+let f : C (b) {b}

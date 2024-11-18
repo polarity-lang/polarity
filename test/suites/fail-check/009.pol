@@ -1,0 +1,3 @@
+data Foo { }
+codata Bar(n: Foo) { }
+codef Baz(n : Type, l1:Bar(n)) : Bar(n) { }

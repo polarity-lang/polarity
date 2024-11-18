@@ -1,3 +1,4 @@
+use codespan::Span;
 use log::trace;
 
 use ast::ctx::LevelCtx;
@@ -24,15 +25,18 @@ pub fn convert(
     meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     this: Box<Exp>,
     other: &Exp,
+    while_elaborating_span: &Option<Span>,
 ) -> Result<(), TypeError> {
     trace!("{} =? {}", this.print_trace(), other.print_trace());
     // Convertibility is checked using the unification algorithm.
     let constraint: Constraint =
         Constraint::Equality { lhs: this.clone(), rhs: Box::new(other.clone()) };
-    let res = unify(ctx, meta_vars, constraint, true)?;
+    let res = unify(ctx, meta_vars, constraint, true, while_elaborating_span)?;
     match res {
         crate::unifier::dec::Dec::Yes(_) => Ok(()),
-        crate::unifier::dec::Dec::No(_) => Err(TypeError::not_eq(&this, other)),
+        crate::unifier::dec::Dec::No(_) => {
+            Err(TypeError::not_eq(&this, other, while_elaborating_span))
+        }
     }
 }
 

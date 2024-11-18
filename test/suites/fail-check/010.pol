@@ -1,0 +1,11 @@
+data Bool { T, F }
+
+data Foo(a: Bool) {
+    Bar: Foo(T),
+    Baz: Foo(F)
+}
+
+def Foo(?).foo: Foo(F) {
+    Bar => ?,
+    Baz => ?
+}
