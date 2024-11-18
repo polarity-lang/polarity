@@ -3,3 +3,4 @@ target
 # direnv
 .direnv
 *.zip
+target_pol/docs*
