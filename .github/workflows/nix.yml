@@ -1,3 +1,4 @@
+name: Check nix code
 on:
   workflow_dispatch:
   push:
