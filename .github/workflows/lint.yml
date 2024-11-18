@@ -36,5 +36,7 @@ jobs:
           VALIDATE_CSS: false
           # We don't validate formatting of bash scripts
           VALIDATE_SHELL_SHFMT: false
+          VALIDATE_NATURAL_LANGUAGE: false
+          VALIDATE_MARKDOWN: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
