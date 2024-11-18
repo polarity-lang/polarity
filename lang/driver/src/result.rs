@@ -10,7 +10,7 @@ use url::Url;
 pub enum Error {
     Parser(#[from] parser::ParseError),
     Lowering(#[from] lowering::LoweringError),
-    Type(#[from] elaborator::result::TypeError),
+    Type(#[from] Box<elaborator::result::TypeError>),
     Xfunc(#[from] transformations::result::XfuncError),
     Driver(#[from] DriverError),
 }

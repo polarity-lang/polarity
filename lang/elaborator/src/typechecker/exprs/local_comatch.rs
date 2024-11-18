@@ -172,7 +172,7 @@ impl<'a> WithExpectedType<'a> {
                         // this case is really absurd. To do this, we verify that the unification
                         // actually fails.
                         None => {
-                            unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
+                            unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, span)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                     name: Box::new(name.clone()),
                                     span: span.to_miette(),
@@ -287,13 +287,18 @@ impl<'a> WithExpectedType<'a> {
                                 }
                             };
                             let body_out = {
-                                let unif =
-                                    unify(ctx.levels(), &mut ctx.meta_vars, constraint, false)?
-                                        .map_no(|()| TypeError::PatternIsAbsurd {
-                                            name: Box::new(name.clone()),
-                                            span: span.to_miette(),
-                                        })
-                                        .ok_yes()?;
+                                let unif = unify(
+                                    ctx.levels(),
+                                    &mut ctx.meta_vars,
+                                    constraint,
+                                    false,
+                                    span,
+                                )?
+                                .map_no(|()| TypeError::PatternIsAbsurd {
+                                    name: Box::new(name.clone()),
+                                    span: span.to_miette(),
+                                })
+                                .ok_yes()?;
 
                                 ctx.fork::<Result<_, TypeError>, _>(|ctx| {
                                     let type_info_table = ctx.type_info_table.clone();

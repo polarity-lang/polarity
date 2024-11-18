@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use ast::ctx::LevelCtx;
 use ast::{occurs_in, Variable};
+use codespan::Span;
 use ctx::GenericCtx;
 
 use crate::result::TypeError;
@@ -51,9 +52,10 @@ pub fn unify(
     meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     constraint: Constraint,
     vars_are_rigid: bool,
+    while_elaborating_span: &Option<Span>,
 ) -> Result<Dec<Unificator>, TypeError> {
     let mut ctx = Ctx::new(vec![constraint], ctx.clone(), vars_are_rigid);
-    let res = match ctx.unify(meta_vars)? {
+    let res = match ctx.unify(meta_vars, while_elaborating_span)? {
         Yes(_) => Yes(ctx.unif),
         No(()) => No(()),
     };
@@ -107,9 +109,13 @@ impl Ctx {
         }
     }
 
-    fn unify(&mut self, meta_vars: &mut HashMap<MetaVar, MetaVarState>) -> Result<Dec, TypeError> {
+    fn unify(
+        &mut self,
+        meta_vars: &mut HashMap<MetaVar, MetaVarState>,
+        while_elaborating_span: &Option<Span>,
+    ) -> Result<Dec, TypeError> {
         while let Some(constraint) = self.constraints.pop() {
-            match self.unify_eqn(&constraint, meta_vars)? {
+            match self.unify_eqn(&constraint, meta_vars, while_elaborating_span)? {
                 Yes(_) => {
                     self.done.insert(constraint);
                 }
@@ -124,6 +130,7 @@ impl Ctx {
         &mut self,
         eqn: &Constraint,
         meta_vars: &mut HashMap<MetaVar, MetaVarState>,
+        while_elaborating_span: &Option<Span>,
     ) -> Result<Dec, TypeError> {
         match eqn {
             Constraint::Equality { lhs, rhs, .. } => match (&**lhs, &**rhs) {
@@ -149,6 +156,7 @@ impl Ctx {
                                 return Err(TypeError::cannot_decide(
                                     &Box::new(Exp::Hole(h.clone())),
                                     &Box::new(e.clone()),
+                                    while_elaborating_span,
                                 ));
                             }
                         }
@@ -223,7 +231,7 @@ impl Ctx {
                 (Exp::TypeUniv(_), Exp::TypeUniv(_)) => Ok(Yes(())),
                 (Exp::Anno(_), _) => Err(TypeError::unsupported_annotation(lhs)),
                 (_, Exp::Anno(_)) => Err(TypeError::unsupported_annotation(rhs)),
-                (_, _) => Err(TypeError::cannot_decide(lhs, rhs)),
+                (_, _) => Err(TypeError::cannot_decide(lhs, rhs, while_elaborating_span)),
             },
             Constraint::EqualityArgs { lhs, rhs } => {
                 let new_eqns =

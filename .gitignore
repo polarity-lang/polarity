@@ -1,5 +1,11 @@
 # Rust
 target
 # direnv
+.envrc
 .direnv
+
 *.zip
+
+# nix 
+result
+result-
