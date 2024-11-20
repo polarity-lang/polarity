@@ -5,7 +5,4 @@ target
 .direnv
 
 *.zip
-
-# nix 
-result
-result-
+target_pol/docs*
