@@ -27,7 +27,7 @@ Feel welcome to join our [Discord server](https://discord.gg/NWjGr9qNhR).
 
 ## Quickstart
 
-Before installing anything on your machine you can try out polarity in the browser on [polarity-lang.github.io](https://polarity-lang.github.io/). The website also contains complete installation instructions, language documentation and a guide on how to configure editor support using our language server.
+Before installing anything on your machine you can try out polarity in the browser on [polarity-lang.github.io](https://polarity-lang.github.io/). The website also contains [complete installation instructions](https://polarity-lang.github.io/install/), [language documentation](https://polarity-lang.github.io/docs/#language-reference) and a [guide](https://polarity-lang.github.io/install/#editor-support) on how to configure editor support using our language server.
 If you want to install polarity locally on your system you can follow these steps:
 
 - Install a Rust toolchain using [rustup.rs](https://rustup.rs/).
