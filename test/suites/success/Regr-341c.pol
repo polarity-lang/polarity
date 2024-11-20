@@ -1,0 +1,26 @@
+data Bool { T, F }
+
+data Eq(x y: Bool) {
+    Refl(x: Bool): Eq(x, x)
+}
+
+codata Fun {
+    .ap(x: Bool): Bool
+}
+
+def Bool.neg: Bool {
+    T => F,
+    F => T,
+}
+
+-- | Annotations can occur in neutral expressions
+#[transparent]
+let foo: Fun {
+    comatch {
+        .ap(x) =>(x: Bool).neg
+    }
+}
+
+let bar: Eq(foo.ap(T), F) {
+    Refl(F)
+}
