@@ -105,8 +105,8 @@ impl Ctx {
     /// Create a fresh MetaVar which stands for an unkown term that
     /// we have to elaborate later. The generated fresh variable is
     /// also registered as unsolved.
-    pub fn fresh_metavar(&mut self, kind: MetaVarKind) -> MetaVar {
-        let mv = MetaVar { id: self.next_meta_var, kind };
+    pub fn fresh_metavar(&mut self, span: Option<Span>, kind: MetaVarKind) -> MetaVar {
+        let mv = MetaVar { span, id: self.next_meta_var, kind };
         let ctx = LevelCtx::from(self.levels.clone());
         self.next_meta_var += 1;
         log::trace!("Created fresh metavariable: {} in context: {:?}", mv.id, ctx.bound);

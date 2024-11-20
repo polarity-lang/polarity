@@ -7,6 +7,7 @@ mod definition;
 mod global_let;
 
 use ast::*;
+use miette_util::ToMiette;
 use printer::Print;
 
 use super::{ctx::Ctx, type_info_table::TypeInfoTable, TypeError};
@@ -59,8 +60,11 @@ pub fn check_metavars_solved(meta_vars: &HashMap<MetaVar, MetaVarState>) -> Resu
     // We are only throwing one error for the first unresolved metavariable in the hashset.
     // Ideally we want to throw multiple errors here, but this functionality is
     // not yet implemented.
-    if let Some(x) = unsolved.iter().next() {
-        let err = TypeError::UnresolvedMeta { span: None, message: x.print_to_string(None) };
+    if let Some(mv) = unsolved.iter().next() {
+        let err = TypeError::UnresolvedMeta {
+            span: mv.span.to_miette(),
+            message: mv.print_to_string(None),
+        };
         return Err(err);
     }
     Ok(())

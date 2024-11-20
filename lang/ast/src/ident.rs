@@ -183,6 +183,7 @@ pub enum MetaVarKind {
 #[derive(Debug, Clone, Copy, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct MetaVar {
+    pub span: Option<Span>,
     pub kind: MetaVarKind,
     pub id: u64,
 }
@@ -212,7 +213,7 @@ impl MetaVar {
 
 impl Print for MetaVar {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let MetaVar { kind, id } = self;
+        let MetaVar { kind, id, span: _ } = self;
         let id = alloc.text(format!("{}", id)).braces_anno();
         match kind {
             MetaVarKind::MustSolve => alloc.text(UNDERSCORE).append(id),
