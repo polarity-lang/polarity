@@ -133,7 +133,7 @@ impl Eval for DotCall {
         let args = args.eval(info_table, env)?;
 
         // If possible, strip away all annotations from the expression.
-        // Otherwise, a neutral value is returned.
+        // For example, we need to strip away the annotation around `T` in  `(T : Bool).match { T => F, F => T }` before we can evaluate further.
         let exp = strip_annotations(&exp);
 
         match exp {
@@ -272,6 +272,8 @@ impl Eval for DotCall {
 
 /// Given a value, strip away all the annotations and return the inner value.
 /// Unless the inner value is neutral, in which case all annotations become neutral.
+/// For example, stripping the annotations from `((T : Bool): Bool)` would yield `T` because `T` is not neutral.
+/// Stripping the annotations from `((x: Bool): Bool)` would yield `((x: Bool): Bool)` because `x` is neutral.
 fn strip_annotations(val: &Val) -> Val {
     match val {
         Val::Anno(anno) => match strip_annotations(&anno.exp) {
