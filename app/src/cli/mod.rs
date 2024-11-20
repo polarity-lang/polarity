@@ -8,6 +8,7 @@ mod lsp;
 mod run;
 mod texify;
 mod xfunc;
+mod doc;
 
 pub fn exec() -> miette::Result<()> {
     let cli = Cli::parse();
