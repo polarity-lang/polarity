@@ -102,14 +102,15 @@ where
                     Ok(out2)
                 }
                 Ok(Err(err)) => {
+                    let report = pretty_error(&mut self.database, &self.case.uri(), err);
                     // There was no panic and `run` returned with an error.
                     self.report_phases
-                        .push(PhaseReport { name: phase.name(), output: err.to_string() });
+                        .push(PhaseReport { name: phase.name(), output: report.to_string() });
                     if expect_success {
-                        return Err(PhasesError::ExpectedSuccess { got: err });
+                        return Err(PhasesError::ExpectedSuccess { got: report });
                     }
                     if let Some(expected) = output {
-                        let actual = err.to_string();
+                        let actual = render_report(&report, false);
                         if actual != expected {
                             return Err(PhasesError::Mismatch { expected, actual });
                         }
@@ -162,7 +163,7 @@ pub enum Failure {
         got: String,
     },
     ExpectedSuccess {
-        got: driver::Error,
+        got: miette::Report,
     },
     Panic {
         msg: String,
@@ -178,7 +179,11 @@ impl fmt::Display for Failure {
                 write!(f, "\n  Expected : {expected}\n  Got      : {actual}")
             }
             Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
-            Failure::ExpectedSuccess { got } => write!(f, "Expected success, got {got}"),
+            Failure::ExpectedSuccess { got } => {
+                write!(f, "Expected success, got:\n\n")?;
+                let report_str = render_report(got, true);
+                write!(f, "{report_str}")
+            }
             Failure::Panic { msg } => write!(f, "Code panicked during test execution\n {msg}"),
         }
     }
@@ -189,7 +194,7 @@ enum PhasesError {
     Panic { msg: String },
     Mismatch { expected: String, actual: String },
     ExpectedFailure { got: String },
-    ExpectedSuccess { got: driver::Error },
+    ExpectedSuccess { got: miette::Report },
 }
 
 // Parse Phase
@@ -415,4 +420,32 @@ impl<S: TestOutput, T: TestOutput> TestOutput for (S, T) {
         let (x, y) = self;
         format!("({},{})", x.test_output(), y.test_output())
     }
+}
+
+/// Associate error with the relevant source code for pretty-printing.
+/// This function differs from `Database::pretty_error` in that it does not display the full URI but only the filename.
+/// This is necessary to have reproducible test output (e.g. the `*.expected` files).
+fn pretty_error(db: &mut Database, uri: &Url, err: driver::Error) -> miette::Report {
+    let miette_error: miette::Error = err.into();
+    let source = db.source(uri).expect("Failed to get source");
+    let filepath = uri.to_file_path().expect("Failed to convert URI to file path");
+
+    let filename = filepath
+        .file_name()
+        .expect("Failed to get file name")
+        .to_str()
+        .expect("Failed to convert file name to string");
+    miette_error.with_source_code(miette::NamedSource::new(filename, source.to_owned()))
+}
+
+fn render_report(report: &miette::Report, colorize: bool) -> String {
+    let theme = if colorize {
+        miette::GraphicalTheme::unicode()
+    } else {
+        miette::GraphicalTheme::unicode_nocolor()
+    };
+    let handler = miette::GraphicalReportHandler::new_themed(theme);
+    let mut output = String::new();
+    handler.render_report(&mut output, report.as_ref()).expect("Failed to render report");
+    output
 }

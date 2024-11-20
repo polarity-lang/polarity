@@ -17,6 +17,8 @@ url = { workspace = true }
 # Logging infrastructure
 env_logger = { workspace = true }
 log = { workspace = true }
+# error handling
+miette = { workspace = true, features = ["fancy"]}
 # config
 serde = "1"
 serde_derive = "1"
