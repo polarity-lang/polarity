@@ -28,7 +28,7 @@ Feel welcome to join our [Discord server](https://discord.gg/NWjGr9qNhR).
 ## Quickstart
 
 Before installing anything on your machine you can try out polarity in the browser on [polarity-lang.github.io](https://polarity-lang.github.io/). The website also contains [complete installation instructions](https://polarity-lang.github.io/install/), [language documentation](https://polarity-lang.github.io/docs/#language-reference) and a [guide](https://polarity-lang.github.io/install/#editor-support) on how to configure editor support using our language server.
-If you want to install polarity locally on your system then you can use the nix setup documented [here](./contrib/nix/README.md), or follow the these steps:
+If you want to install polarity locally on your system then you can use the nix setup documented [here](./contrib/nix/README.md), or follow these steps:
 
 - Install a Rust toolchain using [rustup.rs](https://rustup.rs/).
 - Clone the repository on your machine:
@@ -42,7 +42,7 @@ If you want to install polarity locally on your system then you can use the nix 
   The binary `pol` gets installed to `~/.cargo/bin/pol`; make sure that this directory is in your `$PATH`.
 - From the root of this repository, run:
   ```console
-  $ pol run examples/example.pol 
+  $ pol run examples/example.pol
   S(S(S(S(S(Z)))))
   ```
 - For more information about available subcommands, run:
