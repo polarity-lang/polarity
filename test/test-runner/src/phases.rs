@@ -106,7 +106,7 @@ where
                     self.report_phases
                         .push(PhaseReport { name: phase.name(), output: err.to_string() });
                     if expect_success {
-                        return Err(PhasesError::ExpectedSuccess { got: Box::new(err) });
+                        return Err(PhasesError::ExpectedSuccess { got: err });
                     }
                     if let Some(expected) = output {
                         let actual = err.to_string();
@@ -162,7 +162,7 @@ pub enum Failure {
         got: String,
     },
     ExpectedSuccess {
-        got: Box<dyn Error>,
+        got: driver::Error,
     },
     Panic {
         msg: String,
@@ -189,7 +189,7 @@ enum PhasesError {
     Panic { msg: String },
     Mismatch { expected: String, actual: String },
     ExpectedFailure { got: String },
-    ExpectedSuccess { got: Box<dyn Error> },
+    ExpectedSuccess { got: driver::Error },
 }
 
 // Parse Phase
