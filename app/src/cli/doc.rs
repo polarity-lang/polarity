@@ -11,12 +11,6 @@ pub struct Args {
     #[clap(long, default_value_t = 80)]
     width: usize,
     #[clap(long, num_args = 0)]
-    omit_lambda_sugar: bool,
-    #[clap(long, num_args = 0)]
-    omit_function_sugar: bool,
-    #[clap(long, default_value_t = 4)]
-    indent: isize,
-    #[clap(long, num_args = 0)]
     open: bool,
 }
 
