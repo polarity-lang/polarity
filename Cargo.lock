@@ -674,7 +674,6 @@ version = "0.1.0"
 dependencies = [
  "ast",
  "driver",
- "miette",
  "opener",
  "printer",
 ]
