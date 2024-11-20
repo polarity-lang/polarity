@@ -1736,7 +1736,6 @@ dependencies = [
  "async-std",
  "clap",
  "docs",
- "docs",
  "driver",
  "elaborator",
  "env_logger",
