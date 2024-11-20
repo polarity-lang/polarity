@@ -78,7 +78,7 @@ We do monitor the code coverage provided by our testsuite in order to diagnose w
 You can inspect the current coverage of the main branch through the web interface of codecov using [this link](https://app.codecov.io/gh/polarity-lang/polarity).
 
 > [!TIP]
-> You can also compute code coverage locally. To do this, first install the llvm-cov subcommand for cargo using `cargo install cargo-llvm-cov`. You can then run `make coverage` to get a html report of the parts of the code that are covered by tests.
+> You can also compute code coverage locally. To do this, first install the `llvm-cov` subcommand for cargo using `cargo install cargo-llvm-cov`. You can then run `make coverage` to get a html report of the parts of the code that are covered by tests.
 
 ## Debugging
 
@@ -102,7 +102,7 @@ The testsuite uses the same logging infrastructure as the main application, so a
 
 We provide a web editor which can typecheck and de/refunctionalize examples on [polarity-lang.github.io](https://polarity-lang.github.io/) which is implemented in the `web/` directory.
 The web editor works by compiling polarity using the WebAssembly backend of the Rust compiler.
-The resulting web assembly code is combined with the [Monaco editor](https://microsoft.github.io/monaco-editor/); most of this glue code is written in TypeScript, HTML, CSS and Javascript.
+The resulting web assembly code is combined with the [Monaco editor](https://microsoft.github.io/monaco-editor/); most of this glue code is written in TypeScript, HTML, CSS and JavaScript.
 The respective [README](web/README.md) provides more detailed information on how to work on the web demo.
 
 ## Linters and Formatters

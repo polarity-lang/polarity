@@ -33,7 +33,7 @@ If you want to install polarity locally on your system you can follow these step
 - Install a Rust toolchain using [rustup.rs](https://rustup.rs/).
 - Clone the repository on your machine:
   ```console
-  git clone git@github.com:polarity-lang/polarity.git
+  git clone https://github.com/polarity-lang/polarity.git
   ```
 - To locally install the executable, run:
   ```console
