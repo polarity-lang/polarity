@@ -13,3 +13,5 @@ data Vec(n: Nat) {
 codata Stream { .head: Nat, .tail: Stream }
 
 codata NatToNat { .ap(x: Nat): Nat }
+
+let main: Nat { 5.add(7) }

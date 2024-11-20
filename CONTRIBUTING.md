@@ -1,13 +1,42 @@
-# Contributing Guidelines
+# Developer and Contributer Information
 
-Pull requests, bug reports and feature requests are highly welcomed and encouraged!
+You can find a high-level overview of the architecture of the compiler in [ARCHITECTURE.md](ARCHITECTURE.md).
+This document contains information about the developer workflow, including our git conventions, information about how to use the testsuite effectively, and a guide to using the debugging infrastructure.
 
 ## Contents
 
-- [Pull Request Workflow](#pull-request-workflow)
-- [Release Workflow](#release-workflow)
+- [Project Structure](#project-structure)
+- [Pull Requests](#pull-request-workflow)
+- [Testsuite](#testsuite)
+- [Debugging](#debugging)
+- [Releases](#releases)
 
-## Pull request workflow
+## Project structure
+
+```text
+├── app                     CLI application
+├── examples                Example code in the object language
+├── lang                    Language implementation
+│   ├── ast                 Definition of the abstract syntax tree (untyped and typed)
+│   ├── driver              Demand-driven compiler driver used by the binary, LSP and test-runner
+│   ├── elaborator          Elaborating an untyped syntax tree into a typed syntax tree.
+│   ├── lowering            Lowering concrete to (untyped) abstract syntax tree
+│   ├── lsp                 LSP language server implementation
+│   ├── miette_util         Convert source code spans
+│   ├── parser              Concrete syntax tree (cst), lexer and parser
+│   ├── printer             Print abstract syntax tree to text
+│   └── transformations     Source-to-Source transformations available as code actions.
+│                           (E.g. lifting and de- and refunctionalization.)
+├── std                     The Polarity Standard Library
+├── test                    Integration tests
+│   ├── suites              Test cases
+│   └── test-runner         Test runner
+└── web                     Web demo application
+```
+
+Please refer to the `README.md` files in the individual subprojects for further information.
+
+## Pull Requests
 
 All changes to the codebase should go through pull-requests.
 We do not allow commits directly on the `main` branch of the repository.
@@ -18,7 +47,29 @@ Please check that you observe the following guidelines:
 - Every PR needs to have at least 1 approval before it can be merged.
 - We enforce a linear history on the `main` branch, so every PR must either be rebased or rebased and squashed before it is merged into `main`.
 
-## Release workflow
+## Testsuite
+
+TODO
+
+## Debugging
+
+The compiler uses the [log crate](https://crates.io/crates/log) to trace useful diagnostic information during its execution.
+The emitting of the logs is controlled via environment variables and the [env-logger crate](https://crates.io/crates/env_logger).
+The site for that crate contains a lot of information about all available options.
+The two flags `--trace` and `--debug` can also be used to configure the output.
+
+A simple invocation which writes trace information to the console is:
+
+```sh
+RUST_LOG=trace pol run examples/example.pol
+```
+
+The testsuite uses the same logging infrastructure as the main application, so any options used for the `pol` binary should also work for the `test-runner` binary.
+
+## Releases
+
+> [!CAUTION]
+> We do not provide versioned releases yet, so this section can be ignored for now.
 
 We use the following workflow for generating a new release for version `x.x.x`:
 
