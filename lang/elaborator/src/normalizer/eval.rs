@@ -4,12 +4,15 @@ use log::trace;
 
 use ast::ctx::{BindContext, Context};
 use ast::*;
+use miette_util::ToMiette;
 use printer::types::Print;
 
 use crate::normalizer::env::*;
 use crate::normalizer::val::{self, Closure, Val};
 
 use crate::{result::*, TypeInfoTable};
+
+use super::val::AnnoNeu;
 
 pub trait Eval {
     type Val;
@@ -129,7 +132,11 @@ impl Eval for DotCall {
         let exp = exp.eval(info_table, env)?;
         let args = args.eval(info_table, env)?;
 
-        match (*exp).clone() {
+        // If possible, strip away all annotations from the expression.
+        // Otherwise, a neutral value is returned.
+        let exp = strip_annotations(&exp);
+
+        match exp {
             Val::Call(val::Call { name: call_name, kind, args: call_args, .. }) => {
                 match kind {
                     CallKind::Constructor => {
@@ -224,6 +231,7 @@ impl Eval for DotCall {
                 // Then we apply the body to the `args`.
                 body.clone().unwrap().apply(info_table, &args.to_vals())
             }
+
             Val::Neu(exp) => {
                 // The specific instance of the DotCall we are evaluating is:
                 //
@@ -246,8 +254,33 @@ impl Eval for DotCall {
                     .into(),
                 )))
             }
-            _ => unreachable!(),
+            Val::Anno(_) => Err(TypeError::Impossible {
+                message: "Type annotation was not stripped when evaluating DotCall".to_owned(),
+                span: span.to_miette(),
+            }),
+            Val::TypCtor(_) => Err(TypeError::Impossible {
+                message: "Cannot apply DotCall to type constructor".to_owned(),
+                span: span.to_miette(),
+            }),
+            Val::TypeUniv(_) => Err(TypeError::Impossible {
+                message: "Cannot apply DotCall to type universe".to_owned(),
+                span: span.to_miette(),
+            }),
         }
+    }
+}
+
+/// Given a value, strip away all the annotations and return the inner value.
+/// Unless the inner value is neutral, in which case all annotations become neutral.
+fn strip_annotations(val: &Val) -> Val {
+    match val {
+        Val::Anno(anno) => match strip_annotations(&anno.exp) {
+            Val::Neu(neu) => Val::Neu(
+                AnnoNeu { span: anno.span, exp: Box::new(neu), typ: anno.typ.clone() }.into(),
+            ),
+            val => val,
+        },
+        val => val.clone(),
     }
 }
 
@@ -258,7 +291,7 @@ impl Eval for Anno {
         let Anno { span, exp, typ, normalized_type: _ } = self;
         let exp = exp.eval(info_table, env)?;
         let typ = typ.eval(info_table, env)?;
-        Ok(Box::new(val::Anno { span: *span, exp, typ }.into()))
+        Ok(Box::new(val::AnnoVal { span: *span, exp, typ }.into()))
     }
 }
 
@@ -292,7 +325,9 @@ impl Eval for LocalMatch {
         let on_exp = on_exp.eval(info_table, env)?;
         let cases = cases.eval(info_table, env)?;
 
-        match (*on_exp).clone() {
+        let on_exp = strip_annotations(&on_exp);
+
+        match on_exp {
             Val::Call(val::Call { name: ctor_name, args, .. }) => {
                 // The specific instance of the LocalMatch we are evaluating is:
                 //
@@ -336,7 +371,22 @@ impl Eval for LocalMatch {
                     .into(),
                 )))
             }
-            _ => unreachable!(),
+            Val::TypCtor(typ_ctor) => Err(TypeError::Impossible {
+                message: "Cannot match on a type constructor".to_owned(),
+                span: typ_ctor.span.to_miette(),
+            }),
+            Val::TypeUniv(type_univ) => Err(TypeError::Impossible {
+                message: "Cannot match on a type universe".to_owned(),
+                span: type_univ.span.to_miette(),
+            }),
+            Val::LocalComatch(local_comatch) => Err(TypeError::Impossible {
+                message: "Cannot match on a local comatch".to_owned(),
+                span: local_comatch.span.to_miette(),
+            }),
+            Val::Anno(anno_val) => Err(TypeError::Impossible {
+                message: "Type annotation was not stripped when evaluating local match".to_owned(),
+                span: anno_val.span.to_miette(),
+            }),
         }
     }
 }

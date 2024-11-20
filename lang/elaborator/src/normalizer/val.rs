@@ -83,7 +83,7 @@ pub enum Val {
     Call(Call),
     TypeUniv(TypeUniv),
     LocalComatch(LocalComatch),
-    Anno(Anno),
+    Anno(AnnoVal),
     Neu(Neu),
 }
 
@@ -311,37 +311,37 @@ impl ReadBack for LocalComatch {
 //
 
 #[derive(Debug, Clone)]
-pub struct Anno {
+pub struct AnnoVal {
     pub span: Option<Span>,
     pub exp: Box<Val>,
     pub typ: Box<Val>,
 }
 
-impl Shift for Anno {
+impl Shift for AnnoVal {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         self.exp.shift_in_range(range, by);
         self.typ.shift_in_range(range, by);
     }
 }
 
-impl Print for Anno {
+impl Print for AnnoVal {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Anno { span: _, exp, typ } = self;
-        exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
+        let AnnoVal { span: _, exp, typ } = self;
+        exp.print(cfg, alloc).append(COLON).append(typ.print(cfg, alloc)).parens()
     }
 }
 
-impl From<Anno> for Val {
-    fn from(value: Anno) -> Self {
+impl From<AnnoVal> for Val {
+    fn from(value: AnnoVal) -> Self {
         Val::Anno(value)
     }
 }
 
-impl ReadBack for Anno {
+impl ReadBack for AnnoVal {
     type Nf = ast::Anno;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
-        let Anno { span, exp, typ } = self;
+        let AnnoVal { span, exp, typ } = self;
         let typ_nf = typ.read_back(info_table)?;
         Ok(ast::Anno {
             span: *span,
@@ -366,6 +366,7 @@ pub enum Neu {
     /// A call which corresponds to an opaque let-bound definition on the toplevel
     /// cannot be inlined and must therefore block computation.
     OpaqueCall(OpaqueCall),
+    AnnoNeu(AnnoNeu),
 }
 
 impl Shift for Neu {
@@ -376,6 +377,7 @@ impl Shift for Neu {
             Neu::LocalMatch(e) => e.shift_in_range(range, by),
             Neu::Hole(e) => e.shift_in_range(range, by),
             Neu::OpaqueCall(e) => e.shift_in_range(range, by),
+            Neu::AnnoNeu(e) => e.shift_in_range(range, by),
         }
     }
 }
@@ -388,6 +390,7 @@ impl Print for Neu {
             Neu::LocalMatch(e) => e.print(cfg, alloc),
             Neu::Hole(e) => e.print(cfg, alloc),
             Neu::OpaqueCall(e) => e.print(cfg, alloc),
+            Neu::AnnoNeu(e) => e.print(cfg, alloc),
         }
     }
 }
@@ -408,6 +411,7 @@ impl ReadBack for Neu {
             Neu::LocalMatch(e) => e.read_back(info_table)?.into(),
             Neu::Hole(e) => e.read_back(info_table)?.into(),
             Neu::OpaqueCall(e) => e.read_back(info_table)?.into(),
+            Neu::AnnoNeu(e) => e.read_back(info_table)?.into(),
         };
         Ok(res)
     }
@@ -715,6 +719,50 @@ impl ReadBack for OpaqueCall {
             name: name.clone(),
             args: ast::Args { args: args.read_back(info_table)? },
             inferred_type: None,
+        })
+    }
+}
+
+// AnnoNeu
+
+#[derive(Debug, Clone)]
+pub struct AnnoNeu {
+    pub span: Option<Span>,
+    pub exp: Box<Neu>,
+    pub typ: Box<Val>,
+}
+
+impl Shift for AnnoNeu {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.exp.shift_in_range(range, by);
+        self.typ.shift_in_range(range, by);
+    }
+}
+
+impl Print for AnnoNeu {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let AnnoNeu { span: _, exp, typ } = self;
+        exp.print(cfg, alloc).append(COLON).append(typ.print(cfg, alloc)).parens()
+    }
+}
+
+impl From<AnnoNeu> for Neu {
+    fn from(value: AnnoNeu) -> Self {
+        Neu::AnnoNeu(value)
+    }
+}
+
+impl ReadBack for AnnoNeu {
+    type Nf = ast::Anno;
+
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+        let AnnoNeu { span, exp, typ } = self;
+        let typ_nf = typ.read_back(info_table)?;
+        Ok(ast::Anno {
+            span: *span,
+            exp: exp.read_back(info_table)?,
+            typ: typ_nf.clone(),
+            normalized_type: Some(typ_nf),
         })
     }
 }
