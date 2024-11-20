@@ -1,1 +1,8 @@
-Too many arguments provided
+L-014
+
+  × Too many arguments provided
+   ╭─[Regr-318a.pol:3:1]
+ 3 │ 
+ 4 │ let foo: T { K(True)}
+   ·                ────
+   ╰────

@@ -2398,6 +2398,7 @@ dependencies = [
  "elaborator",
  "env_logger",
  "log",
+ "miette",
  "parser",
  "printer",
  "serde",

@@ -1,3 +1,16 @@
-The following terms are not equal:
-  1: B
-  2: A
+T-002
+
+  × The following terms are not equal:
+  │   1: B
+  │   2: A
+  │ 
+   ╭─[008.pol:2:1]
+ 2 │ data B {b} -- annotate the type of b explicitly
+ 3 │ data C (a : A) {}
+   ·             ┬
+   ·             ╰── Source of (2)
+ 4 │ 
+ 5 │ let f : C (b) {b}
+   ·            ┬
+   ·            ╰── While elaborating
+   ╰────

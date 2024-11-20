@@ -1,1 +1,8 @@
-Duplicate definition of T
+L-002
+
+  × Duplicate definition of T
+   ╭─[L-002-02.pol:1:1]
+ 1 │ data T {}
+ 2 │ data T {}
+   · ─────────
+   ╰────

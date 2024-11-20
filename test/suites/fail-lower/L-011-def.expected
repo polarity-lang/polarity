@@ -1,1 +1,8 @@
-Mismatched named arguments: given other_wrong, expected other
+L-011
+
+  × Mismatched named arguments: given other_wrong, expected other
+   ╭─[L-011-def.pol:7:1]
+ 7 │ 
+ 8 │ let example: Bool { True.and(other_wrong := False) }
+   ·                                             ─────
+   ╰────

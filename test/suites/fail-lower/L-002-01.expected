@@ -1,1 +1,7 @@
-Duplicate definition of True
+L-002
+
+  × Duplicate definition of True
+   ╭─[L-002-01.pol:1:1]
+ 1 │ data Bool { True, True }
+   ·                   ─────
+   ╰────

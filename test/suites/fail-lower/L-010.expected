@@ -1,1 +1,8 @@
-Literal cannot be desugared because S/Z are not in program
+L-010
+
+  × Literal cannot be desugared because S/Z are not in program
+   ╭─[L-010.pol:2:1]
+ 2 │ 
+ 3 │ let foo : Nat { 5 }
+   ·                 ─
+   ╰────

@@ -1,1 +1,9 @@
-Undefined identifier MkUnit
+L-001
+
+  × Undefined identifier MkUnit
+   ╭─[L-001.pol:1:1]
+ 1 │ def Unit.bar() : Unit {
+ 2 │     MkUnit => Foo
+   ·     ──────
+ 3 │ }
+   ╰────

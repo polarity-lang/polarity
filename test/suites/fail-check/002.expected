@@ -1,3 +1,28 @@
-The following terms are not equal:
-  1: Foo(False)
-  2: Foo(True)
+T-002
+
+  × The following terms are not equal:
+  │   1: Foo(False)
+  │   2: Foo(True)
+  │ 
+    ╭─[002.pol:9:1]
+  9 │     Bar : Foo(True),
+ 10 │     Baz : Foo(False),
+    ·           ─────┬────
+    ·                ╰── Source of (1)
+ 11 │ }
+ 12 │ 
+ 13 │ def Foo(True).foo() : Nat {
+    ·     ────┬────
+    ·         ╰── Source of (2)
+ 14 │     Bar() => Z,
+ 15 │     Baz() absurd,
+ 16 │ }
+ 17 │ 
+ 18 │ data Unit { Top }
+ 19 │ 
+ 20 │ def Unit.example : Nat {
+ 21 │     Top => Baz.foo
+    ·            ─┬─
+    ·             ╰── While elaborating
+ 22 │ }
+    ╰────
