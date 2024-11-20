@@ -9,7 +9,7 @@ This document contains information about the developer workflow, including our g
 - [Testsuite](#testsuite)
 - [Code Coverage](#code-coverage)
 - [Debugging](#debugging)
-- [Web Demo](#web-demo)
+- [Web Editor](#web-editor)
 - [Linters and Formatters](#linters-and-formatters)
 - [Pull Requests](#pull-requests)
 - [Releases](#releases)
@@ -53,8 +53,8 @@ They are executed using the custom test runner that is implemented in the `test/
 There are two different kinds of integration tests: tests which verify that certain files successfully typecheck, and tests which verify that certain files fail to typecheck.
 
 We have three different testsuites which verify that polarity files typecheck.
-For each of those files we first verify that they typecheck, then we verify that they can still be parsed after they have been prettyprinted, and then we check whether the result of de-/refunctionalizing any of the contained data and codata types still typecheck.
-The testsuites are:
+For each of those files we first verify that they typecheck, then we verify that they can still be parsed after they have been prettyprinted, and then we check whether the result of de-/refunctionalizing any of the contained data and codata types still typechecks.
+The examples come from three different directories:
 
 - All examples in the `example/` directory are tested.
 - All files in the standard library in the `std/` directory are tested.
@@ -70,11 +70,11 @@ In order to guarantee that we don't have regressions in the quality of our error
 Each such file, if it is present, contains the textual error message that we expect the compiler to emit.
 
 > [!TIP]
-> If you change the text of an error message that is emitted then you have to update the `.expected` files. You can do that manually or use the `make update-expected` target we provide.
+> If you change the text of an error message that is emitted then you also have to update the `.expected` files. You can do that manually or use the `make update-expected` target we provide.
 
 ## Code Coverage
 
-We do monitor the code coverage provided by our testsuite in order to diagnose which parts of the codebas are not tested sufficiently, but we do not implement coverage thresholds that a pull request needs to fulfil in order to be merged.
+We do monitor the code coverage provided by our testsuite in order to diagnose which parts of the codebase are not tested sufficiently, but we do not implement coverage thresholds that a pull request needs to fulfil in order to be merged.
 You can inspect the current coverage of the main branch through the web interface of codecov using [this link](https://app.codecov.io/gh/polarity-lang/polarity).
 
 > [!TIP]
@@ -98,9 +98,12 @@ The two flags `--trace` and `--debug` can also be used to configure the output.
 
 The testsuite uses the same logging infrastructure as the main application, so any options used for the `pol` binary should also work for the `test-runner` binary.
 
-## Web Demo
+## Web Editor
 
-xxx
+We provide a web editor which can typecheck and de/refunctionalize examples on [polarity-lang.github.io](https://polarity-lang.github.io/) which is implemented in the `web/` directory.
+The web editor works by compiling polarity using the WebAssembly backend of the Rust compiler.
+The resulting web assembly code is combined with the [Monaco editor](https://microsoft.github.io/monaco-editor/); most of this glue code is written in TypeScript, HTML, CSS and Javascript.
+The respective [README](web/README.md) provides more detailed information on how to work on the web demo.
 
 ## Linters and Formatters
 
