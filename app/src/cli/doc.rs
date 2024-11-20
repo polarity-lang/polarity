@@ -1,2 +1,38 @@
-pub use docs::doc::exec;
-pub use docs::doc::Args;
+use docs::open;
+use docs::write_html;
+use std::path::PathBuf;
+
+const DOCS_PATH: &str = "target_pol/docs/";
+
+#[derive(clap::Args)]
+pub struct Args {
+    #[clap(value_parser, value_name = "FILE")]
+    filepath: PathBuf,
+    #[clap(long, default_value_t = 80)]
+    width: usize,
+    #[clap(long, num_args = 0)]
+    omit_lambda_sugar: bool,
+    #[clap(long, num_args = 0)]
+    omit_function_sugar: bool,
+    #[clap(long, default_value_t = 4)]
+    indent: isize,
+    #[clap(long, num_args = 0)]
+    open: bool,
+}
+
+pub fn exec(cmd: Args) -> miette::Result<()> {
+    let htmlpath = get_path(&cmd);
+    let filepath = &cmd.filepath;
+    write_html(filepath, &htmlpath);
+    if cmd.open {
+        open(&htmlpath);
+    }
+    Ok(())
+}
+
+fn get_path(cmd: &Args) -> PathBuf {
+    let path = format!("{}{}", DOCS_PATH, cmd.filepath.file_name().unwrap().to_string_lossy());
+    let mut fp = PathBuf::from(path);
+    fp.set_extension("html");
+    fp
+}
