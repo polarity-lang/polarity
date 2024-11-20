@@ -1,8 +1,7 @@
 use docs::open;
 use docs::write_html;
+use driver::paths::DOCS_PATH;
 use std::path::PathBuf;
-
-const DOCS_PATH: &str = "target_pol/docs/";
 
 #[derive(clap::Args)]
 pub struct Args {
