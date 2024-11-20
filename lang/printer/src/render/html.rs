@@ -44,9 +44,9 @@ where
             Anno::Dtor => "<span class=\"dtor\">",
             Anno::Type => "<span class=\"type\">",
             Anno::Comment => "<span class=\"comment\">",
-            Anno::Backslash => "",
-            Anno::BraceOpen => "",
-            Anno::BraceClose => "",
+            Anno::Backslash => "<span class=\"backslash\">",
+            Anno::BraceOpen => "<span class=\"brace-open\">",
+            Anno::BraceClose => "<span class=\"brace-close\">",
             Anno::Error => "<span class=\"error\">",
         };
         self.upstream.write_all(out.as_bytes())
@@ -54,7 +54,7 @@ where
 
     fn pop_annotation(&mut self) -> Result<(), Self::Error> {
         let res = match self.anno_stack.last() {
-            Some(Anno::Backslash) | Some(Anno::BraceOpen) | Some(Anno::BraceClose) => Ok(()),
+            Some(Anno::BraceOpen) | Some(Anno::BraceClose) => Ok(()),
             _ => self.upstream.write_all("</span>".as_bytes()),
         };
         self.anno_stack.pop();
