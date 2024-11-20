@@ -50,6 +50,27 @@ They are executed using the custom test runner that is implemented in the `test/
 > [!TIP]
 > You can run *all* unit and integration tests using the `make test` target of the Makefile, or manually using `cargo test --workspace`.
 
+There are two different kinds of integration tests: tests which verify that certain files successfully typecheck, and tests which verify that certain files fail to typecheck.
+
+We have three different testsuites which verify that polarity files typecheck.
+For each of those files we first verify that they typecheck, then we verify that they can still be parsed after they have been prettyprinted, and then we check whether the result of de-/refunctionalizing any of the contained data and codata types still typecheck.
+The testsuites are:
+
+- All examples in the `example/` directory are tested.
+- All files in the standard library in the `std/` directory are tested.
+- All files in the `test/suites/success` directory are tested.
+
+In order to verify that incorrect files are rejected by the compiler we have three different testsuites:
+
+- All examples in `test/suites/fail-parse` must be rejected by the compiler during the parsing stage.
+- All examples in `test/suites/fail-lower` must be rejected during the lowering phase.
+- All examples in `test/suites/fail-check` must be rejected during the elaboration phase.
+
+In order to guarantee that we don't have regressions in the quality of our error messages we use `foo.expected` files for every `foo.pol` example in the failing test suites.
+Each such file, if it is present, contains the textual error message that we expect the compiler to emit.
+
+> [!TIP]
+> If you change the text of an error message that is emitted then you have to update the `.expected` files. You can do that manually or use the `make update-expected` target we provide.
 
 ## Code Coverage
 
@@ -57,7 +78,7 @@ We do monitor the code coverage provided by our testsuite in order to diagnose w
 You can inspect the current coverage of the main branch through the web interface of codecov using [this link](https://app.codecov.io/gh/polarity-lang/polarity).
 
 > [!TIP]
-> You can also compute code coverage locally. To do this, first install the llvm-cov subcommand for cargo using ` cargo install cargo-llvm-cov`. You can then run `make coverage` to get a html report of the parts of the code that are covered by tests.
+> You can also compute code coverage locally. To do this, first install the llvm-cov subcommand for cargo using `cargo install cargo-llvm-cov`. You can then run `make coverage` to get a html report of the parts of the code that are covered by tests.
 
 ## Debugging
 
