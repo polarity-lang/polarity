@@ -82,7 +82,7 @@ impl Print for Anno {
         _prec: Precedence,
     ) -> Builder<'a> {
         let Anno { exp, typ, .. } = self;
-        exp.print(cfg, alloc).parens().append(COLON).append(typ.print(cfg, alloc))
+        exp.print(cfg, alloc).append(COLON).append(typ.print(cfg, alloc)).parens()
     }
 }
 
