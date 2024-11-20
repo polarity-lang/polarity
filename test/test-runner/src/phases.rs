@@ -15,11 +15,10 @@ use crate::{
 
 pub trait Phase {
     type Out: TestOutput;
-    type Err;
 
     fn new(name: &'static str) -> Self;
     fn name(&self) -> &'static str;
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err>;
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error>;
 }
 
 /// Represents a partially completed run of a testcase, where we have
@@ -57,11 +56,10 @@ where
     O: TestOutput + std::panic::UnwindSafe,
 {
     /// Extend this partial run by running one additional phase.
-    pub fn then<O2, E, P>(mut self, config: &suites::Config, phase: P) -> PartialRun<O2>
+    pub fn then<O2, P>(mut self, config: &suites::Config, phase: P) -> PartialRun<O2>
     where
         O2: TestOutput,
-        E: Error + 'static,
-        P: Phase<Out = O2, Err = E>,
+        P: Phase<Out = O2>,
     {
         // Whether we expect a success in this phase.
         let expect_success = config.fail.as_ref().map(|fail| fail != phase.name()).unwrap_or(true);
@@ -204,7 +202,6 @@ pub struct Parse {
 
 impl Phase for Parse {
     type Out = Arc<cst::decls::Module>;
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -214,7 +211,7 @@ impl Phase for Parse {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         db.cst(uri)
     }
 }
@@ -225,7 +222,6 @@ pub struct Imports {
 
 impl Phase for Imports {
     type Out = ();
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -235,7 +231,7 @@ impl Phase for Imports {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         db.load_imports(uri)
     }
 }
@@ -251,7 +247,6 @@ pub struct Lower {
 
 impl Phase for Lower {
     type Out = ast::Module;
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -261,7 +256,7 @@ impl Phase for Lower {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         db.ust(uri).map(|x| (*x).clone())
     }
 }
@@ -278,7 +273,6 @@ pub struct Check {
 
 impl Phase for Check {
     type Out = Arc<ast::Module>;
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -288,7 +282,7 @@ impl Phase for Check {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         db.ast(uri)
     }
 }
@@ -306,7 +300,6 @@ pub struct Print {
 
 impl Phase for Print {
     type Out = String;
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -316,7 +309,7 @@ impl Phase for Print {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         let output = db.print_to_string(uri)?;
         db.write_source(uri, &output)?;
         Ok(output)
@@ -334,7 +327,6 @@ pub struct Xfunc {
 
 impl Phase for Xfunc {
     type Out = ();
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -344,7 +336,7 @@ impl Phase for Xfunc {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         // xfunc tests for these examples are currently disabled due to
         // https://github.com/polarity-lang/polarity/issues/317
         if uri.as_str().ends_with("examples/comatches.pol")
