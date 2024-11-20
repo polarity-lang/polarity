@@ -5,12 +5,13 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::path::PathBuf;
 
+use driver::paths::CSS_PATH;
 use driver::Database;
 use printer::{Print, PrintCfg};
 
 const HTML_END: &str = " </code></pre>
     </div></body></html>";
-const CSS_PATH: &str = "target_pol/docs/style.css";
+
 fn html_start(filepath: &Path) -> String {
     format!(
         "<!DOCTYPE html>
