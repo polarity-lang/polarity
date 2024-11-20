@@ -1,8 +1,8 @@
+use opener;
 use std::fs;
 use std::io;
-use std::path::PathBuf;
 use std::io::prelude::*;
-use opener;
+use std::path::PathBuf;
 
 use driver::Database;
 use printer::{Print, PrintCfg};
@@ -12,7 +12,8 @@ const HTML_END: &str = " </code></pre>
 const DOCS_PATH: &str = "target_pol/docs/";
 
 fn html_start(cmd: &Args) -> String {
-    let html = format!("<!DOCTYPE html>
+    format!(
+        "<!DOCTYPE html>
 <html lang=\"en\">
 <head>
     <meta charset=\"UTF-8\">
@@ -23,9 +24,10 @@ fn html_start(cmd: &Args) -> String {
 <body>
 <div>
         <h1>{filename}</h1>
-        <pre><code>", filename = cmd.filepath.file_name().unwrap().to_string_lossy()).to_string();
-    html
-} 
+        <pre><code>",
+        filename = cmd.filepath.file_name().unwrap().to_string_lossy()
+    )
+}
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -44,8 +46,8 @@ pub struct Args {
 }
 
 fn compute_output_stream(path: &PathBuf) -> Box<dyn io::Write> {
-        Box::new(fs::File::create(path).expect("Failed to create file"))
-    }
+    Box::new(fs::File::create(path).expect("Failed to create file"))
+}
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
@@ -74,22 +76,20 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     Ok(())
 }
 
-
 fn get_output_path(cmd: &Args) -> PathBuf {
-            let path = format!("{}{}", DOCS_PATH, cmd.filepath.file_name().unwrap().to_string_lossy());
-            let mut fp = PathBuf::from(path);
-            fp.set_extension("html");
-            fp
-        }
-    
+    let path = format!("{}{}", DOCS_PATH, cmd.filepath.file_name().unwrap().to_string_lossy());
+    let mut fp = PathBuf::from(path);
+    fp.set_extension("html");
+    fp
+}
+
 fn print_prg<W: io::Write>(prg: &ast::Module, cfg: &PrintCfg, stream: &mut W) {
     prg.print_html(cfg, stream).expect("Failed to print to stdout");
     println!();
 }
 
-fn open(cmd: &Args){
+fn open(cmd: &Args) {
     let path = get_output_path(cmd);
     let absolute_path = fs::canonicalize(&path).expect("Failed to get absolute path");
     opener::open(&absolute_path).unwrap();
 }
-
