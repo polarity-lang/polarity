@@ -13,7 +13,7 @@ lint:
 
 .PHONY: test
 test:
-	@cargo test --all
+	@cargo test --workspace
 
 
 .PHONY: update-expected

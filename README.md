@@ -43,7 +43,7 @@ If you want to install polarity locally on your system you can follow these step
 - From the root of this repository, run:
   ```console
   $ pol run examples/example.pol 
-  S(S(S(S(S(S(S(S(S(S(S(S(Z))))))))))))
+  S(S(S(S(S(Z)))))
   ```
 - For more information about available subcommands, run:
   ```console
