@@ -121,13 +121,6 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[error("Cannot unify annotated expression {exp}")]
-    #[diagnostic(code("T-015"))]
-    UnsupportedAnnotation {
-        exp: String,
-        #[label]
-        span: Option<SourceSpan>,
-    },
     #[error("Cannot automatically decide whether {lhs} and {rhs} unify")]
     #[diagnostic(code("T-016"))]
     CannotDecide {
@@ -206,10 +199,6 @@ impl TypeError {
             exp: exp.print_to_string(None),
             span: exp.span().to_miette(),
         }
-    }
-
-    pub fn unsupported_annotation(exp: &Exp) -> Self {
-        Self::UnsupportedAnnotation { exp: exp.print_to_string(None), span: exp.span().to_miette() }
     }
 
     pub fn cannot_decide(lhs: &Exp, rhs: &Exp, while_elaborating_span: &Option<Span>) -> Self {

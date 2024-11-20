@@ -1,5 +1,3 @@
-use derivative::Derivative;
-
 use ast::{Shift, ShiftRange, VarBound};
 use pretty::DocAllocator;
 
@@ -12,8 +10,7 @@ use printer::Print;
 
 use crate::normalizer::val::*;
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct Env {
     /// Environment for locally bound variables
     bound_vars: GenericCtx<Box<Val>>,

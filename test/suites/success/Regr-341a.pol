@@ -5,7 +5,7 @@ codata Fun(a b: Type) {
 }
 
 codef F: Fun(Type, Type) {
-    .ap(_,_,x) => ?
+    .ap(_,_,x) => Type
 }
 
 let foo(t: Type, x: Fun(t, Type)): Type {

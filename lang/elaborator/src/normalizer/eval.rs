@@ -255,8 +255,10 @@ impl Eval for Anno {
     type Val = Box<Val>;
 
     fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
-        let Anno { exp, .. } = self;
-        exp.eval(info_table, env)
+        let Anno { span, exp, typ, normalized_type: _ } = self;
+        let exp = exp.eval(info_table, env)?;
+        let typ = typ.eval(info_table, env)?;
+        Ok(Box::new(val::Anno { span: *span, exp, typ }.into()))
     }
 }
 
