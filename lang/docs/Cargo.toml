@@ -10,8 +10,6 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-# fancy error messages
-miette = { workspace = true, features = ["fancy"] }
 opener = "0.5"
 
 # workspace members
