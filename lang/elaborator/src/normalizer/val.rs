@@ -10,7 +10,6 @@ use ast::ShiftRange;
 use ast::ShiftRangeExt;
 use ast::VarBound;
 use codespan::Span;
-use derivative::Derivative;
 use log::trace;
 use pretty::DocAllocator;
 use printer::theme::ThemeExt;
@@ -77,14 +76,14 @@ impl<T: ReadBack> ReadBack for Option<T> {
 //
 
 /// The result of evaluation
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub enum Val {
     TypCtor(TypCtor),
     // A call is only a value if it is a constructor or a codefinition.
     Call(Call),
     TypeUniv(TypeUniv),
     LocalComatch(LocalComatch),
+    Anno(AnnoVal),
     Neu(Neu),
 }
 
@@ -95,6 +94,7 @@ impl Shift for Val {
             Val::Call(e) => e.shift_in_range(range, by),
             Val::TypeUniv(e) => e.shift_in_range(range, by),
             Val::LocalComatch(e) => e.shift_in_range(range, by),
+            Val::Anno(e) => e.shift_in_range(range, by),
             Val::Neu(exp) => exp.shift_in_range(range, by),
         }
     }
@@ -107,6 +107,7 @@ impl Print for Val {
             Val::Call(e) => e.print(cfg, alloc),
             Val::TypeUniv(e) => e.print(cfg, alloc),
             Val::LocalComatch(e) => e.print(cfg, alloc),
+            Val::Anno(e) => e.print(cfg, alloc),
             Val::Neu(exp) => exp.print(cfg, alloc),
         }
     }
@@ -121,6 +122,7 @@ impl ReadBack for Val {
             Val::Call(e) => e.read_back(info_table)?.into(),
             Val::TypeUniv(e) => e.read_back(info_table)?.into(),
             Val::LocalComatch(e) => e.read_back(info_table)?.into(),
+            Val::Anno(e) => e.read_back(info_table)?.into(),
             Val::Neu(exp) => exp.read_back(info_table)?,
         };
         trace!("↓{} ~> {}", self.print_trace(), res.print_trace());
@@ -132,10 +134,8 @@ impl ReadBack for Val {
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct TypCtor {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub name: ast::IdBound,
     pub args: Args,
@@ -178,10 +178,8 @@ impl ReadBack for TypCtor {
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct Call {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub kind: ast::CallKind,
     pub name: ast::IdBound,
@@ -227,10 +225,8 @@ impl ReadBack for Call {
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct TypeUniv {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
 }
 
@@ -263,10 +259,8 @@ impl ReadBack for TypeUniv {
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct LocalComatch {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub name: ast::Label,
     pub is_lambda_sugar: bool,
@@ -312,13 +306,58 @@ impl ReadBack for LocalComatch {
     }
 }
 
+// Anno
+//
+//
+
+#[derive(Debug, Clone)]
+pub struct AnnoVal {
+    pub span: Option<Span>,
+    pub exp: Box<Val>,
+    pub typ: Box<Val>,
+}
+
+impl Shift for AnnoVal {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.exp.shift_in_range(range, by);
+        self.typ.shift_in_range(range, by);
+    }
+}
+
+impl Print for AnnoVal {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let AnnoVal { span: _, exp, typ } = self;
+        exp.print(cfg, alloc).append(COLON).append(typ.print(cfg, alloc)).parens()
+    }
+}
+
+impl From<AnnoVal> for Val {
+    fn from(value: AnnoVal) -> Self {
+        Val::Anno(value)
+    }
+}
+
+impl ReadBack for AnnoVal {
+    type Nf = ast::Anno;
+
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+        let AnnoVal { span, exp, typ } = self;
+        let typ_nf = typ.read_back(info_table)?;
+        Ok(ast::Anno {
+            span: *span,
+            exp: exp.read_back(info_table)?,
+            typ: typ_nf.clone(),
+            normalized_type: Some(typ_nf),
+        })
+    }
+}
+
 // Neu
 //
 //
 
 /// A term whose evaluation is blocked
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub enum Neu {
     Variable(Variable),
     DotCall(DotCall),
@@ -327,6 +366,7 @@ pub enum Neu {
     /// A call which corresponds to an opaque let-bound definition on the toplevel
     /// cannot be inlined and must therefore block computation.
     OpaqueCall(OpaqueCall),
+    AnnoNeu(AnnoNeu),
 }
 
 impl Shift for Neu {
@@ -337,6 +377,7 @@ impl Shift for Neu {
             Neu::LocalMatch(e) => e.shift_in_range(range, by),
             Neu::Hole(e) => e.shift_in_range(range, by),
             Neu::OpaqueCall(e) => e.shift_in_range(range, by),
+            Neu::AnnoNeu(e) => e.shift_in_range(range, by),
         }
     }
 }
@@ -349,6 +390,7 @@ impl Print for Neu {
             Neu::LocalMatch(e) => e.print(cfg, alloc),
             Neu::Hole(e) => e.print(cfg, alloc),
             Neu::OpaqueCall(e) => e.print(cfg, alloc),
+            Neu::AnnoNeu(e) => e.print(cfg, alloc),
         }
     }
 }
@@ -369,6 +411,7 @@ impl ReadBack for Neu {
             Neu::LocalMatch(e) => e.read_back(info_table)?.into(),
             Neu::Hole(e) => e.read_back(info_table)?.into(),
             Neu::OpaqueCall(e) => e.read_back(info_table)?.into(),
+            Neu::AnnoNeu(e) => e.read_back(info_table)?.into(),
         };
         Ok(res)
     }
@@ -378,12 +421,9 @@ impl ReadBack for Neu {
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct Variable {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: ast::VarBound,
     pub idx: Idx,
 }
@@ -420,10 +460,8 @@ impl ReadBack for Variable {
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct DotCall {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub kind: ast::DotCallKind,
     pub exp: Box<Neu>,
@@ -472,10 +510,8 @@ impl ReadBack for DotCall {
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct LocalMatch {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub name: ast::Label,
     pub on_exp: Box<Neu>,
@@ -531,10 +567,8 @@ impl ReadBack for LocalMatch {
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct Hole {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub kind: ast::MetaVarKind,
     pub metavar: MetaVar,
@@ -586,10 +620,8 @@ impl ReadBack for Hole {
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct Case {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub is_copattern: bool,
     pub name: ast::IdBound,
@@ -649,10 +681,8 @@ impl ReadBack for Case {
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct OpaqueCall {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     pub name: ast::IdBound,
     pub args: Args,
@@ -693,12 +723,55 @@ impl ReadBack for OpaqueCall {
     }
 }
 
+// AnnoNeu
+
+#[derive(Debug, Clone)]
+pub struct AnnoNeu {
+    pub span: Option<Span>,
+    pub exp: Box<Neu>,
+    pub typ: Box<Val>,
+}
+
+impl Shift for AnnoNeu {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        self.exp.shift_in_range(range, by);
+        self.typ.shift_in_range(range, by);
+    }
+}
+
+impl Print for AnnoNeu {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let AnnoNeu { span: _, exp, typ } = self;
+        exp.print(cfg, alloc).append(COLON).append(typ.print(cfg, alloc)).parens()
+    }
+}
+
+impl From<AnnoNeu> for Neu {
+    fn from(value: AnnoNeu) -> Self {
+        Neu::AnnoNeu(value)
+    }
+}
+
+impl ReadBack for AnnoNeu {
+    type Nf = ast::Anno;
+
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+        let AnnoNeu { span, exp, typ } = self;
+        let typ_nf = typ.read_back(info_table)?;
+        Ok(ast::Anno {
+            span: *span,
+            exp: exp.read_back(info_table)?,
+            typ: typ_nf.clone(),
+            normalized_type: Some(typ_nf),
+        })
+    }
+}
+
 // Args
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct Args(pub Vec<Arg>);
 
 impl Args {
@@ -748,8 +821,7 @@ impl Print for Args {
     }
 }
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub enum Arg {
     UnnamedArg(Box<Val>),
     NamedArg(ast::VarBound, Box<Val>),
@@ -817,8 +889,7 @@ impl Arg {
 //
 //
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct Closure {
     pub env: Env,
     pub n_args: usize,

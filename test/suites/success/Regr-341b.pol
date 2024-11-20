@@ -1,0 +1,12 @@
+data Bool { T, F }
+
+data Foo(b: Bool) {
+    Bar: Foo(T),
+    Baz: Foo(F)
+}
+
+-- | Ensure unification with type annotations works
+def Foo((T):Bool).foo: Bool {
+    Bar => T,
+    Baz absurd
+}

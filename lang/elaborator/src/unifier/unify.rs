@@ -229,8 +229,14 @@ impl Ctx {
                     self.add_constraint(constraint)
                 }
                 (Exp::TypeUniv(_), Exp::TypeUniv(_)) => Ok(Yes(())),
-                (Exp::Anno(_), _) => Err(TypeError::unsupported_annotation(lhs)),
-                (_, Exp::Anno(_)) => Err(TypeError::unsupported_annotation(rhs)),
+                (Exp::Anno(Anno { exp, .. }), rhs) => self.add_constraint(Constraint::Equality {
+                    lhs: exp.clone(),
+                    rhs: Box::new(rhs.clone()),
+                }),
+                (lhs, Exp::Anno(Anno { exp, .. })) => self.add_constraint(Constraint::Equality {
+                    lhs: Box::new(lhs.clone()),
+                    rhs: exp.clone(),
+                }),
                 (_, _) => Err(TypeError::cannot_decide(lhs, rhs, while_elaborating_span)),
             },
             Constraint::EqualityArgs { lhs, rhs } => {

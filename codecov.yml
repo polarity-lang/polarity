@@ -3,3 +3,6 @@ coverage:
     project:
       default:   # default is the status check's name, not default settings
         informational: true
+    patch:
+      default:
+        informational: true
