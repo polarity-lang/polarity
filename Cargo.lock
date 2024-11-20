@@ -672,12 +672,8 @@ checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 name = "docs"
 version = "0.1.0"
 dependencies = [
- "ast",
  "clap",
- "driver",
  "miette",
- "opener",
- "printer",
 ]
 
 [[package]]
@@ -1736,6 +1732,7 @@ dependencies = [
  "ast",
  "async-std",
  "clap",
+ "docs",
  "docs",
  "driver",
  "elaborator",
