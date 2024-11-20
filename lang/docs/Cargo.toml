@@ -13,4 +13,5 @@ categories.workspace = true
 clap = { version = "4", features = ["derive"] }
 # fancy error messages
 miette = { workspace = true, features = ["fancy"] }
+opener = "0.5"
 
