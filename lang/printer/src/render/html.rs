@@ -44,9 +44,9 @@ where
             Anno::Dtor => "<span class=\"dtor\">",
             Anno::Type => "<span class=\"type\">",
             Anno::Comment => "<span class=\"comment\">",
-            Anno::Backslash => "<span class=\"backslash\">",
-            Anno::BraceOpen => "<span class=\"brace-open\">",
-            Anno::BraceClose => "<span class=\"brace-close\">",
+            Anno::Backslash => "",
+            Anno::BraceOpen => "",
+            Anno::BraceClose => "",
             Anno::Error => "<span class=\"error\">",
         };
         self.upstream.write_all(out.as_bytes())
