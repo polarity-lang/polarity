@@ -5,7 +5,6 @@ use derivative::Derivative;
 use pretty::DocAllocator;
 use printer::{
     tokens::{AT, DOT, QUESTION_MARK, UNDERSCORE},
-    util::BracesExt,
     Alloc, Builder, Print, PrintCfg,
 };
 use url::Url;
@@ -214,7 +213,7 @@ impl MetaVar {
 impl Print for MetaVar {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let MetaVar { kind, id, span: _ } = self;
-        let id = alloc.text(format!("{}", id)).braces_anno();
+        let id = alloc.text(format!("{}", id));
         match kind {
             MetaVarKind::MustSolve => alloc.text(UNDERSCORE).append(id),
             MetaVarKind::CanSolve => alloc.text(QUESTION_MARK).append(id),
