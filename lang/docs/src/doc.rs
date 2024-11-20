@@ -4,53 +4,28 @@ use std::path::PathBuf;
 use std::io::prelude::*;
 use opener;
 
-const HTML_END: &str = "</body></html>";
+use driver::Database;
+use printer::{Print, PrintCfg};
+
+const HTML_END: &str = " </code></pre>
+    </div></body></html>";
 const DOCS_PATH: &str = "target_pol/docs/";
 
-fn html_start() -> String {
-    "<!DOCTYPE html>
+fn html_start(cmd: &Args) -> String {
+    let html = format!("<!DOCTYPE html>
 <html lang=\"en\">
 <head>
     <meta charset=\"UTF-8\">
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-    <title>Code Display</title>
+    <title>{filename}</title>
     <link rel=\"stylesheet\" href=\"style.css\">
 </head>
-<body>".to_string()
-}
-
-fn generate_html(cmd: &Args) -> String {
-    let html = format!("
-    <div>
-        <h1>{}</h1>
-        <pre><code>
-<span class=\"keyword\">data</span> Nat {{ Z, S(n: Nat) }}
-
-<span class=\"keyword\">data</span> NotZero(n: Nat) {{
-    SNotZero(n: Nat): NotZero(S(n))
-}}
-
-<span class=\"keyword\">def</span> NotZero(Z).elim_zero(a: Type): a {{ SNotZero(n) absurd }}
-
-<span class=\"keyword\">data</span> Bot {{ }}
-
-<span class=\"keyword\">data</span> Foo(a: Type) {{
-    Ok(a: Type, x: a): Foo(a),
-    Absurd(x: NotZero(Z)): Foo(Bot)
-}}
-
-<span class=\"keyword\">def</span> Foo(a).elim(a: Type): a {{
-    Ok(a, x) =&gt; x,
-    Absurd(x) =&gt; x.elim_zero(Bot)
-}}
-        </code></pre>
-    </div>
-</body>
-</html>
-    ", cmd.filepath.to_string_lossy());
-    html.to_string()
-}
-   
+<body>
+<div>
+        <h1>{filename}</h1>
+        <pre><code>", filename = cmd.filepath.file_name().unwrap().to_string_lossy()).to_string();
+    html
+} 
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -59,24 +34,42 @@ pub struct Args {
     #[clap(long, default_value_t = 80)]
     width: usize,
     #[clap(long, num_args = 0)]
+    omit_lambda_sugar: bool,
+    #[clap(long, num_args = 0)]
+    omit_function_sugar: bool,
+    #[clap(long, default_value_t = 4)]
+    indent: isize,
+    #[clap(long, num_args = 0)]
     open: bool,
 }
 
 fn compute_output_stream(path: &PathBuf) -> Box<dyn io::Write> {
-    
-            Box::new(fs::File::create(path).expect("Failed to create file"))
-        }
+        Box::new(fs::File::create(path).expect("Failed to create file"))
+    }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let output = get_output_path(&cmd);
-    let mut stream: Box<dyn io::Write> = compute_output_stream(&output);
+    let mut db = Database::from_path(&cmd.filepath);
+    let uri = db.resolve_path(&cmd.filepath)?;
+    let prg = db.ust(&uri).map_err(|err| db.pretty_error(&uri, err))?;
 
-    stream.write_all(html_start().as_bytes()).unwrap();
-    stream.write_all(generate_html(&cmd).as_bytes()).unwrap();
+    let mut stream: Box<dyn io::Write> = compute_output_stream(&get_output_path(&cmd));
+
+    let cfg = PrintCfg {
+        width: cmd.width,
+        latex: false,
+        omit_decl_sep: true,
+        de_bruijn: false,
+        indent: cmd.indent,
+        print_lambda_sugar: !cmd.omit_lambda_sugar,
+        print_function_sugar: !cmd.omit_function_sugar,
+        print_metavar_ids: false,
+    };
+
+    stream.write_all(html_start(&cmd).as_bytes()).unwrap();
+    print_prg(&prg, &cfg, &mut stream);
     stream.write_all(HTML_END.as_bytes()).unwrap();
     if cmd.open {
-        let absolute_path = fs::canonicalize(&output).expect("Failed to get absolute path");
-        opener::open(&absolute_path).unwrap();
+        open(&cmd);
     }
     Ok(())
 }
@@ -89,3 +82,14 @@ fn get_output_path(cmd: &Args) -> PathBuf {
             fp
         }
     
+fn print_prg<W: io::Write>(prg: &ast::Module, cfg: &PrintCfg, stream: &mut W) {
+    prg.print_html(cfg, stream).expect("Failed to print to stdout");
+    println!();
+}
+
+fn open(cmd: &Args){
+    let path = get_output_path(cmd);
+    let absolute_path = fs::canonicalize(&path).expect("Failed to get absolute path");
+    opener::open(&absolute_path).unwrap();
+}
+
