@@ -8,8 +8,6 @@ const DOCS_PATH: &str = "target_pol/docs/";
 pub struct Args {
     #[clap(value_parser, value_name = "FILE")]
     filepath: PathBuf,
-    #[clap(long, default_value_t = 80)]
-    width: usize,
     #[clap(long, num_args = 0)]
     open: bool,
 }
