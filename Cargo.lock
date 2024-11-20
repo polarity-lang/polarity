@@ -673,7 +673,6 @@ name = "docs"
 version = "0.1.0"
 dependencies = [
  "ast",
- "clap",
  "driver",
  "miette",
  "opener",
