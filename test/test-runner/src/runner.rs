@@ -215,7 +215,7 @@ impl CaseResult {
                 writeln!(&mut stdout, "✗").unwrap();
                 stdout.set_color(ColorSpec::new().set_fg(Some(Color::White))).unwrap();
                 println!();
-                println!("    {}", err);
+                println!("{}", err);
                 println!()
             }
         }

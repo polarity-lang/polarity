@@ -1,1 +1,17 @@
-Cannot automatically decide whether T and ? unify
+T-016
+
+  × Cannot automatically decide whether T and ? unify
+    ╭─[010.pol:3:1]
+  3 │ data Foo(a: Bool) {
+  4 │     Bar: Foo(T),
+    ·              ─
+  5 │     Baz: Foo(F)
+  6 │ }
+  7 │ 
+  8 │ def Foo(?).foo: Foo(F) {
+    ·         ─
+  9 │     Bar => ?,
+    ·     ────┬───
+    ·         ╰── While elaborating
+ 10 │     Baz => ?
+    ╰────

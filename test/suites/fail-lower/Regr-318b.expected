@@ -1,1 +1,8 @@
-Too many arguments provided
+L-014
+
+  × Too many arguments provided
+   ╭─[Regr-318b.pol:2:1]
+ 2 │ 
+ 3 │ let foo: Foo(Type, Type) { ? }
+   ·              ────
+   ╰────

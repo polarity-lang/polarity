@@ -1,1 +1,9 @@
-Expected a type constructor
+L-009
+
+  × Expected a type constructor
+   ╭─[Regr-86.pol:6:1]
+ 6 │ 
+ 7 │ def MkUnit.test : Unit -> Unit {
+   ·     ──────
+ 8 │     MkUnit => ?
+   ╰────

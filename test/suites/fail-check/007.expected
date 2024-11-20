@@ -1,1 +1,8 @@
-The metavariable _0 could not be solved
+T-017
+
+  × The metavariable _0 could not be solved
+   ╭─[007.pol:5:1]
+ 5 │ 
+ 6 │ let example : Option(_) { None(_) }
+   ·                      ─
+   ╰────

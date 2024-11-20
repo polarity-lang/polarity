@@ -1,3 +1,13 @@
-The following terms are not equal:
-  1: a
-  2: b
+T-002
+
+  × The following terms are not equal:
+  │   1: a
+  │   2: b
+  │ 
+   ╭─[001.pol:5:1]
+ 5 │ codef ConvertAny(a: Type, b: Type): Fun(a, b) {
+ 6 │     .ap(a, b, x) => x
+   ·                     ┬
+   ·                     ╰── While elaborating
+ 7 │ }
+   ╰────

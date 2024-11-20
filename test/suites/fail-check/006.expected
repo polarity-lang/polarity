@@ -1,1 +1,9 @@
-The metavariable <Inserted>0 could not be solved
+T-017
+
+  × The metavariable <Inserted>0 could not be solved
+   ╭─[006.pol:2:1]
+ 2 │ data List(implicit a: Type) {
+ 3 │     Nil(a: Type) : List
+   ·                    ─────
+ 4 │ }
+   ╰────

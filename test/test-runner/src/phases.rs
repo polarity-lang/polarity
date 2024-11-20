@@ -15,11 +15,10 @@ use crate::{
 
 pub trait Phase {
     type Out: TestOutput;
-    type Err;
 
     fn new(name: &'static str) -> Self;
     fn name(&self) -> &'static str;
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err>;
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error>;
 }
 
 /// Represents a partially completed run of a testcase, where we have
@@ -57,11 +56,10 @@ where
     O: TestOutput + std::panic::UnwindSafe,
 {
     /// Extend this partial run by running one additional phase.
-    pub fn then<O2, E, P>(mut self, config: &suites::Config, phase: P) -> PartialRun<O2>
+    pub fn then<O2, P>(mut self, config: &suites::Config, phase: P) -> PartialRun<O2>
     where
         O2: TestOutput,
-        E: Error + 'static,
-        P: Phase<Out = O2, Err = E>,
+        P: Phase<Out = O2>,
     {
         // Whether we expect a success in this phase.
         let expect_success = config.fail.as_ref().map(|fail| fail != phase.name()).unwrap_or(true);
@@ -104,14 +102,15 @@ where
                     Ok(out2)
                 }
                 Ok(Err(err)) => {
+                    let report = pretty_error(&mut self.database, &self.case.uri(), err);
                     // There was no panic and `run` returned with an error.
                     self.report_phases
-                        .push(PhaseReport { name: phase.name(), output: err.to_string() });
+                        .push(PhaseReport { name: phase.name(), output: report.to_string() });
                     if expect_success {
-                        return Err(PhasesError::ExpectedSuccess { got: Box::new(err) });
+                        return Err(PhasesError::ExpectedSuccess { got: report });
                     }
                     if let Some(expected) = output {
-                        let actual = err.to_string();
+                        let actual = render_report(&report, false);
                         if actual != expected {
                             return Err(PhasesError::Mismatch { expected, actual });
                         }
@@ -164,7 +163,7 @@ pub enum Failure {
         got: String,
     },
     ExpectedSuccess {
-        got: Box<dyn Error>,
+        got: miette::Report,
     },
     Panic {
         msg: String,
@@ -180,7 +179,11 @@ impl fmt::Display for Failure {
                 write!(f, "\n  Expected : {expected}\n  Got      : {actual}")
             }
             Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
-            Failure::ExpectedSuccess { got } => write!(f, "Expected success, got {got}"),
+            Failure::ExpectedSuccess { got } => {
+                write!(f, "Expected success, got:\n\n")?;
+                let report_str = render_report(got, true);
+                write!(f, "{report_str}")
+            }
             Failure::Panic { msg } => write!(f, "Code panicked during test execution\n {msg}"),
         }
     }
@@ -191,7 +194,7 @@ enum PhasesError {
     Panic { msg: String },
     Mismatch { expected: String, actual: String },
     ExpectedFailure { got: String },
-    ExpectedSuccess { got: Box<dyn Error> },
+    ExpectedSuccess { got: miette::Report },
 }
 
 // Parse Phase
@@ -204,7 +207,6 @@ pub struct Parse {
 
 impl Phase for Parse {
     type Out = Arc<cst::decls::Module>;
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -214,7 +216,7 @@ impl Phase for Parse {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         db.cst(uri)
     }
 }
@@ -225,7 +227,6 @@ pub struct Imports {
 
 impl Phase for Imports {
     type Out = ();
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -235,7 +236,7 @@ impl Phase for Imports {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         db.load_imports(uri)
     }
 }
@@ -251,7 +252,6 @@ pub struct Lower {
 
 impl Phase for Lower {
     type Out = ast::Module;
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -261,7 +261,7 @@ impl Phase for Lower {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         db.ust(uri).map(|x| (*x).clone())
     }
 }
@@ -278,7 +278,6 @@ pub struct Check {
 
 impl Phase for Check {
     type Out = Arc<ast::Module>;
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -288,7 +287,7 @@ impl Phase for Check {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         db.ast(uri)
     }
 }
@@ -306,7 +305,6 @@ pub struct Print {
 
 impl Phase for Print {
     type Out = String;
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -316,7 +314,7 @@ impl Phase for Print {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         let output = db.print_to_string(uri)?;
         db.write_source(uri, &output)?;
         Ok(output)
@@ -334,7 +332,6 @@ pub struct Xfunc {
 
 impl Phase for Xfunc {
     type Out = ();
-    type Err = driver::Error;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -344,7 +341,7 @@ impl Phase for Xfunc {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, Self::Err> {
+    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         // xfunc tests for these examples are currently disabled due to
         // https://github.com/polarity-lang/polarity/issues/317
         if uri.as_str().ends_with("examples/comatches.pol")
@@ -423,4 +420,32 @@ impl<S: TestOutput, T: TestOutput> TestOutput for (S, T) {
         let (x, y) = self;
         format!("({},{})", x.test_output(), y.test_output())
     }
+}
+
+/// Associate error with the relevant source code for pretty-printing.
+/// This function differs from `Database::pretty_error` in that it does not display the full URI but only the filename.
+/// This is necessary to have reproducible test output (e.g. the `*.expected` files).
+fn pretty_error(db: &mut Database, uri: &Url, err: driver::Error) -> miette::Report {
+    let miette_error: miette::Error = err.into();
+    let source = db.source(uri).expect("Failed to get source");
+    let filepath = uri.to_file_path().expect("Failed to convert URI to file path");
+
+    let filename = filepath
+        .file_name()
+        .expect("Failed to get file name")
+        .to_str()
+        .expect("Failed to convert file name to string");
+    miette_error.with_source_code(miette::NamedSource::new(filename, source.to_owned()))
+}
+
+fn render_report(report: &miette::Report, colorize: bool) -> String {
+    let theme = if colorize {
+        miette::GraphicalTheme::unicode()
+    } else {
+        miette::GraphicalTheme::unicode_nocolor()
+    };
+    let handler = miette::GraphicalReportHandler::new_themed(theme);
+    let mut output = String::new();
+    handler.render_report(&mut output, report.as_ref()).expect("Failed to render report");
+    output
 }
