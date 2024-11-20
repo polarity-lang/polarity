@@ -57,7 +57,7 @@ We do monitor the code coverage provided by our testsuite in order to diagnose w
 You can inspect the current coverage of the main branch through the web interface of codecov using [this link](https://app.codecov.io/gh/polarity-lang/polarity).
 
 > [!TIP]
-> You can also compute the code coverage locally. To do this, first install the llvm-cov subcommand for cargo using ` cargo install cargo-llvm-cov`. You can then run `make coverage` to see which parts of the code are covered.
+> You can also compute code coverage locally. To do this, first install the llvm-cov subcommand for cargo using ` cargo install cargo-llvm-cov`. You can then run `make coverage` to get a html report of the parts of the code that are covered by tests.
 
 ## Debugging
 
@@ -83,7 +83,10 @@ xxx
 
 ## Linters and Formatters
 
-xxx
+Every pull request must adhere to the code formatting standard implemented by `cargo fmt`, and must not produce warnings when linted with `cargo clippy`.
+
+> [!TIP]
+> You can run the formatter and all linters using `make lint`, or use the git pre-commit hook provided in `scripts/git-hooks/pre-commit`.
 
 ## Pull Requests
 
