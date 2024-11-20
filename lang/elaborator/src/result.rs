@@ -140,9 +140,13 @@ pub enum TypeError {
         #[label("While elaborating")]
         while_elaborating_span: Option<SourceSpan>,
     },
-    #[error("The following metavariables were not solved: {message}")]
+    #[error("The metavariable {message} could not be solved")]
     #[diagnostic(code("T-017"))]
-    UnresolvedMetas { message: String },
+    UnresolvedMeta {
+        #[label]
+        span: Option<SourceSpan>,
+        message: String,
+    },
     #[error("A case for constructor {name} was missing during evaluation.")]
     #[diagnostic(code("T-018"))]
     MissingCase { name: String },

@@ -4,7 +4,7 @@ use codespan::Span;
 use derivative::Derivative;
 use pretty::DocAllocator;
 use printer::{
-    tokens::{AT, DOT},
+    tokens::{AT, DOT, QUESTION_MARK, UNDERSCORE},
     Alloc, Builder, Print, PrintCfg,
 };
 use url::Url;
@@ -182,6 +182,7 @@ pub enum MetaVarKind {
 #[derive(Debug, Clone, Copy, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct MetaVar {
+    pub span: Option<Span>,
     pub kind: MetaVarKind,
     pub id: u64,
 }
@@ -205,6 +206,18 @@ impl MetaVar {
             MetaVarKind::MustSolve => true,
             MetaVarKind::CanSolve => false,
             MetaVarKind::Inserted => true,
+        }
+    }
+}
+
+impl Print for MetaVar {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let MetaVar { kind, id, span: _ } = self;
+        let id = alloc.text(format!("{}", id));
+        match kind {
+            MetaVarKind::MustSolve => alloc.text(UNDERSCORE).append(id),
+            MetaVarKind::CanSolve => alloc.text(QUESTION_MARK).append(id),
+            MetaVarKind::Inserted => alloc.text("<Inserted>").append(id),
         }
     }
 }

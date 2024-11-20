@@ -109,6 +109,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
 /// In this example, an error is thrown because the named arguments `x` and `xs` do not match
 /// the expected parameter names `head` and `tail`.
 fn lower_args(
+    span: Span,
     given: &[cst::exp::Arg],
     expected: Telescope,
     ctx: &mut Ctx,
@@ -201,7 +202,7 @@ fn lower_args(
                     }
                 }
 
-                let mv = ctx.fresh_metavar(MetaVarKind::Inserted);
+                let mv = ctx.fresh_metavar(Some(span), MetaVarKind::Inserted);
                 let args = ctx.subst_from_ctx();
                 let hole = Hole {
                     span: None,
@@ -300,7 +301,7 @@ impl Lower for cst::exp::Call {
                 Ok(ast::Exp::TypCtor(ast::TypCtor {
                     span: Some(*span),
                     name,
-                    args: lower_args(args, params.clone(), ctx)?,
+                    args: lower_args(*span, args, params.clone(), ctx)?,
                 }))
             }
             DeclMeta::Def { .. } | DeclMeta::Dtor { .. } => {
@@ -312,7 +313,7 @@ impl Lower for cst::exp::Call {
                     span: Some(*span),
                     kind: ast::CallKind::Constructor,
                     name,
-                    args: lower_args(args, params.clone(), ctx)?,
+                    args: lower_args(*span, args, params.clone(), ctx)?,
                     inferred_type: None,
                 }))
             }
@@ -322,7 +323,7 @@ impl Lower for cst::exp::Call {
                     span: Some(*span),
                     kind: ast::CallKind::Codefinition,
                     name,
-                    args: lower_args(args, params.clone(), ctx)?,
+                    args: lower_args(*span, args, params.clone(), ctx)?,
                     inferred_type: None,
                 }))
             }
@@ -332,7 +333,7 @@ impl Lower for cst::exp::Call {
                     span: Some(*span),
                     kind: ast::CallKind::LetBound,
                     name,
-                    args: lower_args(args, params.clone(), ctx)?,
+                    args: lower_args(*span, args, params.clone(), ctx)?,
                     inferred_type: None,
                 }))
             }
@@ -355,7 +356,7 @@ impl Lower for cst::exp::DotCall {
                 kind: ast::DotCallKind::Destructor,
                 exp: exp.lower(ctx)?,
                 name: IdBound { span: Some(name.span), id: name.id.clone(), uri },
-                args: lower_args(args, params, ctx)?,
+                args: lower_args(*span, args, params, ctx)?,
                 inferred_type: None,
             })),
             DeclMeta::Def { params, .. } => Ok(ast::Exp::DotCall(ast::DotCall {
@@ -363,7 +364,7 @@ impl Lower for cst::exp::DotCall {
                 kind: ast::DotCallKind::Definition,
                 exp: exp.lower(ctx)?,
                 name: IdBound { span: Some(name.span), id: name.id.clone(), uri },
-                args: lower_args(args, params, ctx)?,
+                args: lower_args(*span, args, params, ctx)?,
                 inferred_type: None,
             })),
             _ => Err(LoweringError::CannotUseAsDotCall {
@@ -451,7 +452,7 @@ impl Lower for cst::exp::Hole {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Hole { span, kind, .. } = self;
         let kind = kind.lower(ctx)?;
-        let mv = ctx.fresh_metavar(kind);
+        let mv = ctx.fresh_metavar(Some(*span), kind);
         let args = ctx.subst_from_ctx();
         Ok(Hole {
             span: Some(*span),
@@ -605,7 +606,7 @@ mod lower_args_tests {
         let expected = Telescope(vec![]);
         let mut ctx =
             Ctx::empty(Url::parse("inmemory:///scratch.pol").unwrap(), SymbolTable::default());
-        let res = lower_args(&given, expected, &mut ctx);
+        let res = lower_args(Span::default(), &given, expected, &mut ctx);
         assert_eq!(res.unwrap(), ast::Args { args: vec![] })
     }
 }

@@ -265,7 +265,7 @@ mod args_tests {
         let hole: Hole = Hole {
             span: None,
             kind: MetaVarKind::Inserted,
-            metavar: crate::MetaVar { kind: crate::MetaVarKind::Inserted, id: 42 },
+            metavar: crate::MetaVar { span: None, kind: crate::MetaVarKind::Inserted, id: 42 },
             inferred_type: None,
             inferred_ctx: None,
             args: vec![],
