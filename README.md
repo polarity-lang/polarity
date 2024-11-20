@@ -25,82 +25,35 @@
 
 Feel welcome to join our [Discord server](https://discord.gg/NWjGr9qNhR).
 
-## Requirements
-
-Install Rust (e.g. via [rustup.rs](https://rustup.rs/)).
-
-## Installation
-
-Installation instructions and the language documentation is available at [polarity-lang.github.io](https://polarity-lang.github.io/).
-
-To locally install the executable, run:
-
-```sh
-make install
-```
-
-By default, it gets installed to `~/.cargo/bin/pol`.
-
 ## Quickstart
 
-From the root of this repository, run:
+Before installing anything on your machine you can try out polarity in the browser on [polarity-lang.github.io](https://polarity-lang.github.io/). The website also contains [complete installation instructions](https://polarity-lang.github.io/install/), [language documentation](https://polarity-lang.github.io/docs/#language-reference) and a [guide](https://polarity-lang.github.io/install/#editor-support) on how to configure editor support using our language server.
+If you want to install polarity locally on your system then you can use the nix setup documented [here](./contrib/nix/README.md), or follow these steps:
 
-```sh
-pol run examples/example.pol
-```
+- Install a Rust toolchain using [rustup.rs](https://rustup.rs/).
+- Clone the repository on your machine:
+  ```console
+  git clone https://github.com/polarity-lang/polarity.git
+  ```
+- To locally install the executable, run:
+  ```console
+  make install
+  ```
+  The binary `pol` gets installed to `~/.cargo/bin/pol`; make sure that this directory is in your `$PATH`.
+- From the root of this repository, run:
+  ```console
+  $ pol run examples/example.pol
+  S(S(S(S(S(Z)))))
+  ```
+- For more information about available subcommands, run:
+  ```console
+  pol --help
+  ```
 
-To pretty-print a file, run:
+## Contributing
 
-```sh
-pol fmt examples/example.pol
-```
-
-For more information about the CLI, run:
-
-```sh
-pol --help
-```
-
-## Project overview
-
-```text
-├── app                     CLI application
-├── examples                Example code in the object language
-├── lang                    Language implementation
-│   ├── ast                 Definition of the abstract syntax tree (untyped and typed)
-│   ├── driver              Demand-driven compiler driver used by the binary, LSP and test-runner
-│   ├── elaborator          Elaborating an untyped syntax tree into a typed syntax tree.
-│   ├── lowering            Lowering concrete to (untyped) abstract syntax tree
-│   ├── lsp                 LSP language server implementation
-│   ├── miette_util         Convert source code spans
-│   ├── parser              Concrete syntax tree (cst), lexer and parser
-│   ├── printer             Print abstract syntax tree to text
-│   └── transformations     Source-to-Source transformations available as code actions.
-│                           (E.g. lifting and de- and refunctionalization.)
-├── std                     The Polarity Standard Library
-├── test                    Integration tests
-│   ├── suites              Test cases
-│   └── test-runner         Test runner
-└── web                     Web demo application
-```
-
-Please refer to the `README.md` files in the individual subprojects for further information.
-
-## Tracing Support
-
-The compiler uses the [log crate](https://crates.io/crates/log) to trace useful diagnostic information during its execution.
-The emitting of the logs is controlled via environment variables and the [env-logger crate](https://crates.io/crates/env_logger).
-The site for that crate contains a lot of information about all available options.
-The two flags `--trace` and `--debug` can also be used to configure the output.
-
-A simple invocation which writes trace information to the console is:
-
-```sh
-RUST_LOG=trace pol run examples/example.pol
-```
-
-The testsuite uses the same logging infrastructure as the main application, so any options used for the `pol` binary should also work for the `test-runner` binary.
-
+Pull requests, bug reports and feature requests are highly welcomed and encouraged!
+If you want to contribute yourself, understand the code, or run the testsuite, then you can find more developer-focused documentation in the [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licenses
 
