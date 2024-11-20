@@ -1,0 +1,17 @@
+data Top { Unit }
+
+codata Fun(a b: Type) {
+    Fun(a,b).ap(a b: Type, x: a) : b
+}
+
+codef F: Fun(Type, Type) {
+    .ap(_,_,x) => ?
+}
+
+let foo(t: Type, x: Fun(t, Type)): Type {
+    ?
+}
+
+let T : Type {
+    foo(F.ap(Type, Type, (? : Type)), \x. F.ap(Type, Type, x))
+}
