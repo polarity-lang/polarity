@@ -1,32 +1,26 @@
 use std::fs;
 use std::io;
 use std::path::PathBuf;
+use std::io::prelude::*;
+use opener;
 
 const HTML_END: &str = "</body></html>";
+const DOCS_PATH: &str = "target_pol/docs/";
 
 fn html_start() -> String {
     "<!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset=\"UTF-8\">
-        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-        <title>Document</title>
-    </head>
-    <body>".to_string()
-}
-
-fn generate_html(cmd: Args) -> String {
-    let html = format!("
-<!DOCTYPE html>
 <html lang=\"en\">
 <head>
     <meta charset=\"UTF-8\">
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
     <title>Code Display</title>
-    <!-- Verlinke die externe CSS-Datei -->
     <link rel=\"stylesheet\" href=\"style.css\">
 </head>
-<body>
+<body>".to_string()
+}
+
+fn generate_html(cmd: &Args) -> String {
+    let html = format!("
     <div>
         <h1>{}</h1>
         <pre><code>
@@ -64,27 +58,34 @@ pub struct Args {
     filepath: PathBuf,
     #[clap(long, default_value_t = 80)]
     width: usize,
-    #[clap(short, long, value_name = "FILE")]
-    output: Option<PathBuf>,
+    #[clap(long, num_args = 0)]
+    open: bool,
 }
 
-fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
-    match &cmd.output {
-        Some(path) => Box::new(fs::File::create(path).expect("Failed to create file")),
-        None => {
-            let path = format!("target_pol/docs/{}", cmd.filepath.file_name().unwrap().to_string_lossy());
-            let mut fp = PathBuf::from(path);
-            fp.set_extension("html");
-            Box::new(fs::File::create(fp).expect("Failed to create file"))
+fn compute_output_stream(path: &PathBuf) -> Box<dyn io::Write> {
+    
+            Box::new(fs::File::create(path).expect("Failed to create file"))
         }
-    }
-}
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
+    let output = get_output_path(&cmd);
+    let mut stream: Box<dyn io::Write> = compute_output_stream(&output);
 
     stream.write_all(html_start().as_bytes()).unwrap();
-    stream.write_all(generate_html(cmd).as_bytes()).unwrap();
+    stream.write_all(generate_html(&cmd).as_bytes()).unwrap();
     stream.write_all(HTML_END.as_bytes()).unwrap();
+    if cmd.open {
+        let absolute_path = fs::canonicalize(&output).expect("Failed to get absolute path");
+        opener::open(&absolute_path).unwrap();
+    }
     Ok(())
 }
+
+
+fn get_output_path(cmd: &Args) -> PathBuf {
+            let path = format!("{}{}", DOCS_PATH, cmd.filepath.file_name().unwrap().to_string_lossy());
+            let mut fp = PathBuf::from(path);
+            fp.set_extension("html");
+            fp
+        }
+    
