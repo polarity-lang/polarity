@@ -103,8 +103,12 @@ pub fn write_css() {
         color: #8be9fd;
     }
 
-    .function {
-        color: #50fa7b;
+    .dtor {
+        color: #ff5555;
+    }
+
+    .ctor {
+        color: #ff79c6;
     }
 
     .string {
