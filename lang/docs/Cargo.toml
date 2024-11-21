@@ -1,0 +1,19 @@
+[package]
+name = "docs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories.workspace = true
+
+[dependencies]
+opener = "0.5"
+
+# workspace members
+ast = { path = "../ast" }
+printer = { path = "../printer" }
+driver = { path = "../driver" }
+

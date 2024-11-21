@@ -5,6 +5,7 @@ target
 .direnv
 
 *.zip
+target_pol*
 
 # nix 
 result
