@@ -72,6 +72,6 @@ enum Command {
     Lift(lift::Args),
     /// Generate documentation for a file
     Doc(doc::Args),
-    /// Clean target_pol directory
+    /// Remove all generated files
     Clean,
 }
