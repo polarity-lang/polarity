@@ -21,6 +21,7 @@ This document contains information about the developer workflow, including our g
 ├── examples                Example code in the object language
 ├── lang                    Language implementation
 │   ├── ast                 Definition of the abstract syntax tree (untyped and typed)
+│   ├── docs                Generate HTML documentation
 │   ├── driver              Demand-driven compiler driver used by the binary, LSP and test-runner
 │   ├── elaborator          Elaborating an untyped syntax tree into a typed syntax tree.
 │   ├── lowering            Lowering concrete to (untyped) abstract syntax tree
