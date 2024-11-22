@@ -1,9 +1,10 @@
-use opener;
 use std::fs;
 use std::io;
 use std::io::prelude::*;
 use std::path::Path;
 use std::path::PathBuf;
+
+use opener;
 
 use driver::paths::CSS_PATH;
 use driver::Database;
