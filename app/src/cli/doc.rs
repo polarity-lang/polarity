@@ -1,6 +1,7 @@
 use docs::open;
 use docs::write_html;
 use driver::paths::DOCS_PATH;
+use std::path::Path;
 use std::path::PathBuf;
 
 #[derive(clap::Args)]
@@ -22,8 +23,8 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 }
 
 fn get_path(cmd: &Args) -> PathBuf {
-    let path = format!("{}{}", DOCS_PATH, cmd.filepath.file_name().unwrap().to_string_lossy());
-    let mut fp = PathBuf::from(path);
-    fp.set_extension("html");
-    fp
+    let mut path =
+        Path::new(DOCS_PATH).join(cmd.filepath.file_name().unwrap().to_string_lossy().as_ref());
+    path.set_extension("html");
+    path
 }
