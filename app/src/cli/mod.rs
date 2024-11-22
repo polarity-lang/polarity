@@ -1,6 +1,8 @@
 use clap::{Parser, Subcommand};
 
 mod check;
+mod clean;
+mod doc;
 mod format;
 mod lift;
 mod lsp;
@@ -33,6 +35,8 @@ pub fn exec() -> miette::Result<()> {
         Xfunc(args) => xfunc::exec(args),
         Lsp(args) => lsp::exec(args),
         Lift(args) => lift::exec(args),
+        Doc(args) => doc::exec(args),
+        Clean => clean::exec(),
     }
 }
 
@@ -66,4 +70,8 @@ enum Command {
     Lsp(lsp::Args),
     /// Lift local (co)matches of a type to the top-level
     Lift(lift::Args),
+    /// Generate documentation for a file
+    Doc(doc::Args),
+    /// Clean target_pol directory
+    Clean,
 }
