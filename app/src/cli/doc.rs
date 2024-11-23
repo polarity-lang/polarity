@@ -1,8 +1,9 @@
+use std::path::Path;
+use std::path::PathBuf;
+
 use docs::open;
 use docs::write_html;
 use driver::paths::DOCS_PATH;
-use std::path::Path;
-use std::path::PathBuf;
 
 #[derive(clap::Args)]
 pub struct Args {
