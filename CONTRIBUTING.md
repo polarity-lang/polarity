@@ -11,6 +11,7 @@ This document contains information about the developer workflow, including our g
 - [Debugging](#debugging)
 - [Web Editor](#web-editor)
 - [Linters and Formatters](#linters-and-formatters)
+- [Conventions](#conventions)
 - [Pull Requests](#pull-requests)
 - [Releases](#releases)
 
@@ -112,6 +113,29 @@ Every pull request must adhere to the code formatting standard implemented by `c
 
 > [!TIP]
 > You can run the formatter and all linters using `make lint`, or use the git pre-commit hook provided in `scripts/git-hooks/pre-commit`.
+
+## Conventions
+
+As a convention, we order Rust `use` statements in the following order:
+
+1. `std` imports
+2. Imports from external crates (except workspace crates)
+3. Imports from workspace crates
+4. Imports from the current crate
+
+Example:
+
+```rust
+use std::rc::Rc;    // Import from std
+
+use url::Url;       // Import from external crate
+
+use parser::cst;    // Import from workspace crate
+
+use crate::info;    // Import from current crate
+```
+
+Currently, this is not statically enforced because [rustfmt doesn't support it](https://github.com/rust-lang/rustfmt/issues/5083).
 
 ## Pull Requests
 
