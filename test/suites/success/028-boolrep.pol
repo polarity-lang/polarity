@@ -1,4 +1,4 @@
-use "../std/data/bool.pol"
+use "../../../std/data/bool.pol"
 
 data BoolRep(x: Bool) {
     TrueRep: BoolRep(T),

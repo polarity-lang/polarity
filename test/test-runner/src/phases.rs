@@ -350,8 +350,8 @@ impl Phase for Xfunc {
     async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         // xfunc tests for these examples are currently disabled due to
         // https://github.com/polarity-lang/polarity/issues/317
-        if uri.as_str().ends_with("examples/comatches.pol")
-            || uri.as_str().ends_with("examples/Webserver.pol")
+        if uri.as_str().ends_with("suites/success/023-comatches.pol")
+            || uri.as_str().ends_with("suites/success/036-webserver.pol")
         {
             return Ok(());
         }
