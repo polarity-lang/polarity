@@ -23,10 +23,12 @@ pub async fn code_action(
     let span_start = db.location_to_index(&text_document.uri, range.start.from_lsp());
     let span_end = db.location_to_index(&text_document.uri, range.end.from_lsp());
     let span = span_start.and_then(|start| span_end.map(|end| codespan::Span::new(start, end)));
-    let item = span.and_then(|span| db.item_at_span(&text_document.uri, span));
+    let item =
+        if let Some(span) = span { db.item_at_span(&text_document.uri, span).await } else { None };
 
     if let Some(item) = item {
-        let Ok(Xfunc { title, edits }) = db.xfunc(&text_document.uri, item.type_name()) else {
+        let Ok(Xfunc { title, edits }) = db.xfunc(&text_document.uri, item.type_name()).await
+        else {
             return Ok(None);
         };
         let edits = edits

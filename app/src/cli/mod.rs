@@ -27,17 +27,21 @@ pub fn exec() -> miette::Result<()> {
     builder.init();
 
     use Command::*;
-    match cli.command {
-        Run(args) => run::exec(args),
-        Check(args) => check::exec(args),
-        Fmt(args) => format::exec(args),
-        Texify(args) => texify::exec(args),
-        Xfunc(args) => xfunc::exec(args),
-        Lsp(args) => lsp::exec(args),
-        Lift(args) => lift::exec(args),
-        Doc(args) => doc::exec(args),
-        Clean => clean::exec(),
-    }
+    let fut = async {
+        match cli.command {
+            Run(args) => run::exec(args).await,
+            Check(args) => check::exec(args).await,
+            Fmt(args) => format::exec(args).await,
+            Texify(args) => texify::exec(args).await,
+            Xfunc(args) => xfunc::exec(args).await,
+            Lsp(args) => lsp::exec(args).await,
+            Lift(args) => lift::exec(args).await,
+            Doc(args) => doc::exec(args).await,
+            Clean => clean::exec().await,
+        }
+    };
+
+    tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap().block_on(fut)
 }
 
 #[derive(Parser)]

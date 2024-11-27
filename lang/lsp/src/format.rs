@@ -18,7 +18,7 @@ pub async fn formatting(
 
     let mut db = server.database.write().await;
 
-    let prg = match db.ust(&text_document.uri) {
+    let prg = match db.ust(&text_document.uri).await {
         Ok(prg) => prg,
         Err(_) => return Ok(None),
     };

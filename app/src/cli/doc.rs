@@ -13,10 +13,10 @@ pub struct Args {
     open: bool,
 }
 
-pub fn exec(cmd: Args) -> miette::Result<()> {
+pub async fn exec(cmd: Args) -> miette::Result<()> {
     let htmlpath = get_path(&cmd);
     let filepath = &cmd.filepath;
-    write_html(filepath, &htmlpath);
+    write_html(filepath, &htmlpath).await;
     if cmd.open {
         open(&htmlpath);
     }

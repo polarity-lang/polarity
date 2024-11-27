@@ -58,9 +58,9 @@ impl LanguageServer for Server {
 
         let source_mut = db.file_source_mut();
         assert!(source_mut.manage(&text_document.uri));
-        source_mut.write_string(&text_document.uri, &text_document.text).unwrap();
+        source_mut.write_string(&text_document.uri, &text_document.text).await.unwrap();
 
-        let res = db.ast(&text_document.uri).map(|_| ());
+        let res = db.ast(&text_document.uri).await.map(|_| ());
         let diags = db.diagnostics(&text_document.uri, res);
         self.send_diagnostics(text_document.uri, diags).await;
     }
@@ -78,10 +78,15 @@ impl LanguageServer for Server {
 
         let source_mut = db.file_source_mut();
         assert!(source_mut.manage(&text_document.uri));
-        source_mut.write_string(&text_document.uri, &text).unwrap();
+        source_mut.write_string(&text_document.uri, &text).await.unwrap();
 
-        let res = db.invalidate(&text_document.uri);
-        let res = res.and_then(|()| db.ast(&text_document.uri).map(|_| ()));
+        let res = db.invalidate(&text_document.uri).await;
+
+        let res = match res {
+            Ok(()) => db.ast(&text_document.uri).await.map(|_| ()),
+            Err(_) => Ok(()),
+        };
+
         let diags = db.diagnostics(&text_document.uri, res);
         self.send_diagnostics(text_document.uri, diags).await;
     }
