@@ -1,3 +1,4 @@
+use futures::executor::block_on;
 use std::error::Error;
 use std::fmt;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -18,7 +19,7 @@ pub trait Phase {
 
     fn new(name: &'static str) -> Self;
     fn name(&self) -> &'static str;
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error>;
+    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error>;
 }
 
 /// Represents a partially completed run of a testcase, where we have
@@ -82,8 +83,9 @@ where
             // Run the phase and catch any panics that might occur.
             // We need to use `AssertUnwindSafe` because the compiler can not automatically
             // guarantee that passing mutable references across a catch_unwind boundary is safe.
-            let run_result =
-                catch_unwind(AssertUnwindSafe(|| P::run(&mut self.database, &self.case.uri())));
+            let run_result = catch_unwind(AssertUnwindSafe(|| {
+                block_on(P::run(&mut self.database, &self.case.uri()))
+            }));
 
             match run_result {
                 Ok(Ok(out2)) => {
@@ -102,7 +104,7 @@ where
                     Ok(out2)
                 }
                 Ok(Err(err)) => {
-                    let report = pretty_error(&mut self.database, &self.case.uri(), err);
+                    let report = block_on(pretty_error(&mut self.database, &self.case.uri(), err));
                     // There was no panic and `run` returned with an error.
                     self.report_phases
                         .push(PhaseReport { name: phase.name(), output: report.to_string() });
@@ -216,8 +218,8 @@ impl Phase for Parse {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
-        db.cst(uri)
+    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
+        db.cst(uri).await
     }
 }
 
@@ -236,8 +238,8 @@ impl Phase for Imports {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
-        db.load_imports(uri)
+    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
+        db.load_imports(uri).await
     }
 }
 
@@ -261,8 +263,8 @@ impl Phase for Lower {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
-        db.ust(uri).map(|x| (*x).clone())
+    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
+        db.ust(uri).await.map(|x| (*x).clone())
     }
 }
 
@@ -287,8 +289,8 @@ impl Phase for Check {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
-        db.ast(uri)
+    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
+        db.ast(uri).await
     }
 }
 
@@ -314,9 +316,9 @@ impl Phase for Print {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
-        let output = db.print_to_string(uri)?;
-        db.write_source(uri, &output)?;
+    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
+        let output = db.print_to_string(uri).await?;
+        db.write_source(uri, &output).await?;
         Ok(output)
     }
 }
@@ -341,7 +343,7 @@ impl Phase for Xfunc {
         self.name
     }
 
-    fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
+    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
         // xfunc tests for these examples are currently disabled due to
         // https://github.com/polarity-lang/polarity/issues/317
         if uri.as_str().ends_with("examples/comatches.pol")
@@ -350,17 +352,17 @@ impl Phase for Xfunc {
             return Ok(());
         }
 
-        let type_names = db.all_declared_type_names(uri)?;
+        let type_names = db.all_declared_type_names(uri).await?;
 
         let new_uri =
             uri.to_string().replacen("file", "inmemory", 1).parse().expect("Failed to parse URI");
         db.source.manage(&new_uri);
 
         for type_name in type_names.iter().map(|tn| &tn.id) {
-            let xfunc_out = db.xfunc(uri, type_name)?;
+            let xfunc_out = db.xfunc(uri, type_name).await?;
             let new_source = db.edited(uri, xfunc_out.edits);
-            db.write_source(&new_uri, &new_source.to_string())?;
-            db.ast(&new_uri).map_err(|err| {
+            db.write_source(&new_uri, &new_source.to_string()).await?;
+            db.ast(&new_uri).await.map_err(|err| {
                 driver::Error::Type(Box::new(elaborator::result::TypeError::Impossible {
                     message: format!("Failed to xfunc {type_name}: {err}"),
                     span: None,
@@ -425,9 +427,9 @@ impl<S: TestOutput, T: TestOutput> TestOutput for (S, T) {
 /// Associate error with the relevant source code for pretty-printing.
 /// This function differs from `Database::pretty_error` in that it does not display the full URI but only the filename.
 /// This is necessary to have reproducible test output (e.g. the `*.expected` files).
-fn pretty_error(db: &mut Database, uri: &Url, err: driver::Error) -> miette::Report {
+async fn pretty_error(db: &mut Database, uri: &Url, err: driver::Error) -> miette::Report {
     let miette_error: miette::Error = err.into();
-    let source = db.source(uri).expect("Failed to get source");
+    let source = db.source(uri).await.expect("Failed to get source");
     let filepath = uri.to_file_path().expect("Failed to convert URI to file path");
 
     let filename = filepath

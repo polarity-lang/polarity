@@ -31,10 +31,10 @@ fn html_start(filepath: &Path) -> String {
     )
 }
 
-pub fn write_html(filepath: &PathBuf, htmlpath: &PathBuf) {
+pub async fn write_html(filepath: &PathBuf, htmlpath: &PathBuf) {
     let mut db = Database::from_path(filepath);
     let uri = db.resolve_path(filepath).expect("Failed to resolve path");
-    let prg = db.ust(&uri).expect("Failed to get UST");
+    let prg = db.ust(&uri).await.expect("Failed to get UST");
     let cfg = PrintCfg::default();
 
     if !Path::new(CSS_PATH).exists() {

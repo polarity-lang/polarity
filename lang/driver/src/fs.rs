@@ -1,3 +1,5 @@
+use async_trait::async_trait;
+
 #[cfg(not(target_arch = "wasm32"))]
 pub use file_system::FileSystemSource;
 
@@ -6,6 +8,7 @@ use url::Url;
 
 use crate::result::DriverError;
 
+#[async_trait]
 pub trait FileSource: Send + Sync {
     /// Instruct the source to manage a file with the given URI
     ///
@@ -14,11 +17,11 @@ pub trait FileSource: Send + Sync {
     /// Check if the source manages a file with the given URI
     fn manages(&self, uri: &Url) -> bool;
     /// Read the contents of a file with the given URI
-    fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError>;
+    async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError>;
     /// Write the contents of a file with the given URI
     ///
     /// Depending on the source, this may write to disk or to memory
-    fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError>;
+    async fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError>;
     /// If a URI is requested that is not managed by this source, fall back to another source
     fn fallback_to<S: FileSource>(self, fallback: S) -> OverlaySource<Self, S>
     where
@@ -46,6 +49,7 @@ mod file_system {
         }
     }
 
+    #[async_trait]
     impl FileSource for FileSystemSource {
         fn manage(&mut self, uri: &Url) -> bool {
             let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
@@ -57,7 +61,7 @@ mod file_system {
             self.root.join(filepath).exists()
         }
 
-        fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
+        async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
             let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
             let path = self.root.join(filepath);
             let source =
@@ -65,7 +69,7 @@ mod file_system {
             Ok(source)
         }
 
-        fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
+        async fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
             let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
             let path = self.root.join(filepath);
             std::fs::write(&path, source).map_err(Arc::new).map_err(DriverError::Io)?;
@@ -97,6 +101,7 @@ impl InMemorySource {
     }
 }
 
+#[async_trait]
 impl FileSource for InMemorySource {
     fn manage(&mut self, uri: &Url) -> bool {
         self.files.insert(uri.clone(), String::default());
@@ -108,7 +113,7 @@ impl FileSource for InMemorySource {
         self.files.contains_key(uri)
     }
 
-    fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
+    async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
         if self.manages(uri) {
             self.modified.insert(uri.clone(), false);
             Ok(self.files.get(uri).cloned().unwrap_or_default())
@@ -117,7 +122,7 @@ impl FileSource for InMemorySource {
         }
     }
 
-    fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
+    async fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
         self.files.insert(uri.clone(), source.to_string());
         self.modified.insert(uri.clone(), true);
         Ok(())
@@ -136,6 +141,7 @@ impl<S1, S2> OverlaySource<S1, S2> {
     }
 }
 
+#[async_trait]
 impl<S1, S2> FileSource for OverlaySource<S1, S2>
 where
     S1: FileSource,
@@ -149,19 +155,19 @@ where
         self.first.manages(uri) || self.second.manages(uri)
     }
 
-    fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
-        match self.first.read_to_string(uri) {
+    async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
+        match self.first.read_to_string(uri).await {
             Ok(source) => Ok(source),
-            Err(DriverError::FileNotFound(_)) => self.second.read_to_string(uri),
+            Err(DriverError::FileNotFound(_)) => self.second.read_to_string(uri).await,
             Err(err) => Err(err),
         }
     }
 
-    fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
+    async fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
         if self.first.manages(uri) {
-            self.first.write_string(uri, source)
+            self.first.write_string(uri, source).await
         } else {
-            self.second.write_string(uri, source)
+            self.second.write_string(uri, source).await
         }
     }
 }

@@ -12,10 +12,10 @@ pub struct Args {
     filepath: PathBuf,
 }
 
-pub fn exec(cmd: Args) -> miette::Result<()> {
+pub async fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
     let uri = db.resolve_path(&cmd.filepath)?;
-    let nf = db.run(&uri).map_err(|err| db.pretty_error(&uri, err))?;
+    let nf = db.run(&uri).await.map_err(|err| db.pretty_error(&uri, err))?;
 
     match nf {
         Some(nf) => print_nf(&nf),

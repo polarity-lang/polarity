@@ -689,6 +689,7 @@ name = "driver"
 version = "0.1.0"
 dependencies = [
  "ast",
+ "async-trait",
  "codespan",
  "elaborator",
  "log",
@@ -2418,6 +2419,7 @@ dependencies = [
  "driver",
  "elaborator",
  "env_logger",
+ "futures",
  "log",
  "miette",
  "parser",
