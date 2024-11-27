@@ -19,4 +19,5 @@ pub use edit::*;
 pub use fs::*;
 pub use info::*;
 pub use paths::*;
+pub use result::DriverError;
 pub use xfunc::*;

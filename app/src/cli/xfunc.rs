@@ -14,10 +14,10 @@ pub struct Args {
     output: Option<PathBuf>,
 }
 
-pub fn exec(cmd: Args) -> miette::Result<()> {
+pub async fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
     let uri = db.resolve_path(&cmd.filepath)?;
-    let Xfunc { edits, .. } = db.xfunc(&uri, &cmd.r#type).map_err(miette::Report::msg)?;
+    let Xfunc { edits, .. } = db.xfunc(&uri, &cmd.r#type).await.map_err(miette::Report::msg)?;
 
     let output = db.edited(&uri, edits);
 

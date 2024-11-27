@@ -47,10 +47,10 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn WriteColor> {
     }
 }
 
-pub fn exec(cmd: Args) -> miette::Result<()> {
+pub async fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
     let uri = db.resolve_path(&cmd.filepath)?;
-    let prg = if cmd.checked { db.ast(&uri) } else { db.ust(&uri) }
+    let prg = if cmd.checked { db.ast(&uri).await } else { db.ust(&uri).await }
         .map_err(|err| db.pretty_error(&uri, err))?;
 
     // Write to file or to stdout

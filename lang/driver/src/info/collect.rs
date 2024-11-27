@@ -19,11 +19,11 @@ use super::lookup::{lookup_codef, lookup_ctor, lookup_decl, lookup_def, lookup_d
 
 /// Traverse the program and collect information for the LSP server.
 #[allow(clippy::type_complexity)]
-pub fn collect_info(
+pub async fn collect_info(
     db: &mut Database,
     uri: &Url,
 ) -> Result<(Lapper<u32, Info>, Lapper<u32, Item>), Error> {
-    let module = db.ast(uri)?;
+    let module = db.ast(uri).await?;
     let mut collector = InfoCollector::new(module.meta_vars.clone());
 
     for use_decl in module.use_decls.iter() {

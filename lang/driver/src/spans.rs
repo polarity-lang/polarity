@@ -24,20 +24,20 @@ impl Database {
         Some((start, end))
     }
 
-    pub fn hoverinfo_at_index(&mut self, uri: &Url, idx: ByteIndex) -> Option<Info> {
-        self.hoverinfo_at_span(uri, Span::new(idx, ByteIndex(u32::from(idx) + 1)))
+    pub async fn hoverinfo_at_index(&mut self, uri: &Url, idx: ByteIndex) -> Option<Info> {
+        self.hoverinfo_at_span(uri, Span::new(idx, ByteIndex(u32::from(idx) + 1))).await
     }
 
-    pub fn hoverinfo_at_span(&mut self, uri: &Url, span: Span) -> Option<Info> {
-        let lapper = self.info_by_id(uri).ok()?;
+    pub async fn hoverinfo_at_span(&mut self, uri: &Url, span: Span) -> Option<Info> {
+        let lapper = self.info_by_id(uri).await.ok()?;
         let intervals = lapper.find(span.start().into(), span.end().into());
         let smallest_interval =
             intervals.min_by(|i1, i2| (i1.stop - i1.start).cmp(&(i2.stop - i2.start)));
         smallest_interval.map(|interval| interval.val.clone())
     }
 
-    pub fn item_at_span(&mut self, uri: &Url, span: Span) -> Option<Item> {
-        let lapper = self.item_by_id(uri).ok()?;
+    pub async fn item_at_span(&mut self, uri: &Url, span: Span) -> Option<Item> {
+        let lapper = self.item_by_id(uri).await.ok()?;
         let intervals = lapper.find(span.start().into(), span.end().into());
         let largest_interval =
             intervals.max_by(|i1, i2| (i1.stop - i1.start).cmp(&(i2.stop - i1.start)));

@@ -12,6 +12,9 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
+# async
+async-trait = "0.1"
+# adressing symbols
 url = { workspace = true }
 codespan = { workspace = true }
 # index of source code intervals

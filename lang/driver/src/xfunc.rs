@@ -19,8 +19,11 @@ pub struct Xfunc {
 }
 
 impl Database {
-    pub fn all_declared_type_names(&mut self, uri: &Url) -> Result<Vec<cst::Ident>, crate::Error> {
-        let ust = self.cst(uri)?;
+    pub async fn all_declared_type_names(
+        &mut self,
+        uri: &Url,
+    ) -> Result<Vec<cst::Ident>, crate::Error> {
+        let ust = self.cst(uri).await?;
         Ok(ust
             .decls
             .iter()
@@ -32,8 +35,8 @@ impl Database {
             .collect())
     }
 
-    pub fn xfunc(&mut self, uri: &Url, type_name: &str) -> Result<Xfunc, crate::Error> {
-        let module = self.ast(uri)?;
+    pub async fn xfunc(&mut self, uri: &Url, type_name: &str) -> Result<Xfunc, crate::Error> {
+        let module = self.ast(uri).await?;
 
         let decl_spans =
             module.decls.iter().map(|decl| (decl.ident().clone(), decl.span().unwrap())).collect();

@@ -74,19 +74,19 @@ impl Database {
     //
     //
 
-    pub fn source(&mut self, uri: &Url) -> Result<String, Error> {
+    pub async fn source(&mut self, uri: &Url) -> Result<String, Error> {
         match self.files.get_unless_stale(uri) {
             Some(file) => {
                 log::debug!("Found source in cache: {}", uri);
                 Ok(file.source().to_string())
             }
-            None => self.recompute_source(uri),
+            None => self.recompute_source(uri).await,
         }
     }
 
-    fn recompute_source(&mut self, uri: &Url) -> Result<String, Error> {
+    async fn recompute_source(&mut self, uri: &Url) -> Result<String, Error> {
         log::debug!("Recomputing source for: {}", uri);
-        let source = self.source.read_to_string(uri)?;
+        let source = self.source.read_to_string(uri).await?;
         let file = codespan::File::new(uri.as_str().into(), source.clone());
         self.files.insert(uri.clone(), file);
         Ok(source)
@@ -96,19 +96,19 @@ impl Database {
     //
     //
 
-    pub fn cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
+    pub async fn cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
         match self.cst.get_unless_stale(uri) {
             Some(cst) => {
                 log::debug!("Found cst in cache: {}", uri);
                 cst.clone()
             }
-            None => self.recompute_cst(uri),
+            None => self.recompute_cst(uri).await,
         }
     }
 
-    fn recompute_cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
+    async fn recompute_cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
         log::debug!("Recomputing cst for: {}", uri);
-        let source = self.source(uri)?;
+        let source = self.source(uri).await?;
         let module =
             parser::parse_module(uri.clone(), &source).map_err(Error::Parser).map(Arc::new);
         self.cst.insert(uri.clone(), module.clone());
@@ -119,19 +119,19 @@ impl Database {
     //
     //
 
-    pub fn symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
+    pub async fn symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
         match self.symbol_table.get_unless_stale(uri) {
             Some(symbol_table) => {
                 log::debug!("Found symbol table in cache: {}", uri);
                 Ok(symbol_table.clone())
             }
-            None => self.recompute_symbol_table(uri),
+            None => self.recompute_symbol_table(uri).await,
         }
     }
 
-    fn recompute_symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
+    async fn recompute_symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
         log::debug!("Recomputing symbol table for: {}", uri);
-        let cst = self.cst(uri)?;
+        let cst = self.cst(uri).await?;
         let module_symbol_table = lowering::build_symbol_table(&cst).map(Arc::new)?;
         self.symbol_table.insert(uri.clone(), module_symbol_table.clone());
         Ok(module_symbol_table)
@@ -141,29 +141,29 @@ impl Database {
     //
     //
 
-    pub fn ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+    pub async fn ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
         match self.ust.get_unless_stale(uri) {
             Some(ust) => {
                 log::debug!("Found ust in cache: {}", uri);
                 ust.clone()
             }
-            None => self.recompute_ust(uri),
+            None => self.recompute_ust(uri).await,
         }
     }
 
-    pub fn recompute_ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+    pub async fn recompute_ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
         log::debug!("Recomputing ust for: {}", uri);
-        let cst = self.cst(uri)?;
-        let deps = self.deps(uri)?;
+        let cst = self.cst(uri).await?;
+        let deps = self.deps(uri).await?;
 
         // Compute the SymbolTable consisting of all the
         // ModuleSymbolTables of all direct dependencies
         // and the SymbolTable from the module itself.
         let mut symbol_table = SymbolTable::default();
-        let module_symbol_table = self.symbol_table(uri)?;
+        let module_symbol_table = self.symbol_table(uri).await?;
         symbol_table.insert(uri.clone(), module_symbol_table);
         for dep in deps {
-            let module_symbol_table = self.symbol_table(&dep)?;
+            let module_symbol_table = self.symbol_table(&dep).await?;
             symbol_table.insert(dep.clone(), module_symbol_table);
         }
 
@@ -179,34 +179,40 @@ impl Database {
     //
     //
 
-    pub fn type_info_table(&mut self, uri: &Url) -> Result<TypeInfoTable, Error> {
-        let deps = self.deps(uri)?;
+    pub async fn type_info_table(&mut self, uri: &Url) -> Result<TypeInfoTable, Error> {
+        let deps = self.deps(uri).await?;
 
         // Compute the type info table
         let mut info_table = TypeInfoTable::default();
-        let mod_info_table = self.module_type_info_table(uri)?;
+        let mod_info_table = self.module_type_info_table(uri).await?;
         info_table.insert(uri.clone(), mod_info_table);
         for dep_url in deps {
-            let mod_info_table = self.module_type_info_table(&dep_url)?;
+            let mod_info_table = self.module_type_info_table(&dep_url).await?;
             info_table.insert(dep_url.clone(), mod_info_table);
         }
 
         Ok(info_table)
     }
 
-    pub fn module_type_info_table(&mut self, uri: &Url) -> Result<ModuleTypeInfoTable, Error> {
+    pub async fn module_type_info_table(
+        &mut self,
+        uri: &Url,
+    ) -> Result<ModuleTypeInfoTable, Error> {
         match self.module_type_info_table.get_unless_stale(uri) {
             Some(table) => {
                 log::debug!("Found type info table in cache: {}", uri);
                 Ok(table.clone())
             }
-            None => self.recompute_type_info_table(uri),
+            None => self.recompute_type_info_table(uri).await,
         }
     }
 
-    pub fn recompute_type_info_table(&mut self, uri: &Url) -> Result<ModuleTypeInfoTable, Error> {
+    pub async fn recompute_type_info_table(
+        &mut self,
+        uri: &Url,
+    ) -> Result<ModuleTypeInfoTable, Error> {
         log::debug!("Recomputing type info table for: {}", uri);
-        let ust = self.ust(uri)?;
+        let ust = self.ust(uri).await?;
         let info_table = build_type_info_table(&ust);
         self.module_type_info_table.insert(uri.clone(), info_table.clone());
         Ok(info_table)
@@ -216,24 +222,24 @@ impl Database {
     //
     //
 
-    pub fn ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+    pub async fn ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
         match self.ast.get_unless_stale(uri) {
             Some(ast) => {
                 log::debug!("Found ast in cache: {}", uri);
                 ast.clone()
             }
-            None => self.recompute_ast(uri),
+            None => self.recompute_ast(uri).await,
         }
     }
 
-    pub fn recompute_ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+    pub async fn recompute_ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
         log::debug!("Recomputing ast for: {}", uri);
 
         // Compute the type info table
-        let info_table = self.type_info_table(uri)?;
+        let info_table = self.type_info_table(uri).await?;
 
         // Typecheck module
-        let ust = self.ust(uri).map(|x| (*x).clone())?;
+        let ust = self.ust(uri).await.map(|x| (*x).clone())?;
         let ast = elaborator::typechecker::check_with_lookup_table(Rc::new(ust), &info_table)
             .map(Arc::new)
             .map_err(|arg| Error::Type(Box::new(arg)));
@@ -245,19 +251,19 @@ impl Database {
     //
     //
 
-    pub fn info_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Info>, Error> {
+    pub async fn info_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Info>, Error> {
         match self.info_by_id.get_unless_stale(uri) {
             Some(infos) => {
                 log::debug!("Found info_by_id in cache: {}", uri);
                 Ok(infos.clone())
             }
-            None => self.recompute_info_by_id(uri),
+            None => self.recompute_info_by_id(uri).await,
         }
     }
 
-    fn recompute_info_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Info>, Error> {
+    async fn recompute_info_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Info>, Error> {
         log::debug!("Recomputing info_by_id for: {}", uri);
-        let (info_lapper, _item_lapper) = collect_info(self, uri)?;
+        let (info_lapper, _item_lapper) = collect_info(self, uri).await?;
         self.info_by_id.insert(uri.clone(), info_lapper.clone());
         Ok(info_lapper)
     }
@@ -266,19 +272,19 @@ impl Database {
     //
     //
 
-    pub fn item_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Item>, Error> {
+    pub async fn item_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Item>, Error> {
         match self.item_by_id.get_unless_stale(uri) {
             Some(items) => {
                 log::debug!("Found item_by_id in cache: {}", uri);
                 Ok(items.clone())
             }
-            None => self.recompute_item_by_id(uri),
+            None => self.recompute_item_by_id(uri).await,
         }
     }
 
-    fn recompute_item_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Item>, Error> {
+    async fn recompute_item_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Item>, Error> {
         log::debug!("Recomputing item_by_id for: {}", uri);
-        let (_info_lapper, item_lapper) = collect_info(self, uri)?;
+        let (_info_lapper, item_lapper) = collect_info(self, uri).await?;
         self.item_by_id.insert(uri.clone(), item_lapper.clone());
         Ok(item_lapper)
     }
@@ -287,21 +293,21 @@ impl Database {
     //
     //
 
-    pub fn deps(&mut self, uri: &Url) -> Result<Vec<Url>, Error> {
+    pub async fn deps(&mut self, uri: &Url) -> Result<Vec<Url>, Error> {
         match self.deps.get(uri) {
             Some(deps) => {
                 log::debug!("Found dependencies in cache: {}", uri);
                 Ok(deps.clone())
             }
-            None => self.recompute_deps(uri),
+            None => Box::pin(self.recompute_deps(uri)).await,
         }
     }
 
-    pub fn recompute_deps(&mut self, uri: &Url) -> Result<Vec<Url>, Error> {
+    pub async fn recompute_deps(&mut self, uri: &Url) -> Result<Vec<Url>, Error> {
         log::debug!("Recomputing dependencies for: {}", uri);
-        self.source(uri)?;
-        self.build_dependency_dag()?;
-        self.deps(uri)
+        self.source(uri).await?;
+        self.build_dependency_dag().await?;
+        self.deps(uri).await
     }
 
     // Creation
@@ -344,9 +350,9 @@ impl Database {
     }
 
     /// Invalidate the file behind the given URI and all its reverse dependencies
-    pub fn invalidate(&mut self, uri: &Url) -> Result<(), Error> {
+    pub async fn invalidate(&mut self, uri: &Url) -> Result<(), Error> {
         self.invalidate_impl(uri);
-        self.build_dependency_dag()?;
+        self.build_dependency_dag().await?;
         let rev_deps: HashSet<Url> =
             self.deps.reverse_dependencies(uri).into_iter().cloned().collect();
         log::debug!(
@@ -371,11 +377,11 @@ impl Database {
         self.item_by_id.invalidate(uri);
     }
 
-    pub fn run(&mut self, uri: &Url) -> Result<Option<Box<Exp>>, Error> {
-        let ast = self.ast(uri)?;
+    pub async fn run(&mut self, uri: &Url) -> Result<Option<Box<Exp>>, Error> {
+        let ast = self.ast(uri).await?;
 
         let main = ast.find_main();
-        let info_table = self.type_info_table(uri)?;
+        let info_table = self.type_info_table(uri).await?;
 
         match main {
             Some(exp) => {
@@ -392,24 +398,24 @@ impl Database {
         miette_error.with_source_code(miette::NamedSource::new(uri, source.to_owned()))
     }
 
-    pub fn write_source(&mut self, uri: &Url, source: &str) -> Result<(), Error> {
-        self.invalidate(uri)?;
-        self.source.write_string(uri, source).map_err(|err| err.into())
+    pub async fn write_source(&mut self, uri: &Url, source: &str) -> Result<(), Error> {
+        self.invalidate(uri).await?;
+        self.source.write_string(uri, source).await.map_err(|err| err.into())
     }
 
-    pub fn print_to_string(&mut self, uri: &Url) -> Result<String, Error> {
-        let module = self.ust(uri)?;
+    pub async fn print_to_string(&mut self, uri: &Url) -> Result<String, Error> {
+        let module = self.ust(uri).await?;
         let mut module = (*module).clone();
         module.rename();
         Ok(printer::Print::print_to_string(&module, None))
     }
 
-    pub fn load_imports(&mut self, module_uri: &Url) -> Result<(), Error> {
-        self.build_dependency_dag()?;
+    pub async fn load_imports(&mut self, module_uri: &Url) -> Result<(), Error> {
+        self.build_dependency_dag().await?;
         let empty_vec = Vec::new();
         let direct_deps = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
         for direct_dep in direct_deps {
-            self.ast(&direct_dep)?;
+            self.ast(&direct_dep).await?;
         }
         Ok(())
     }
@@ -422,20 +428,20 @@ impl Database {
     /// # Errors
     ///
     /// Returns an error if a cycle is detected or if a module cannot be found or loaded.
-    pub fn build_dependency_dag(&mut self) -> Result<(), Error> {
+    pub async fn build_dependency_dag(&mut self) -> Result<(), Error> {
         let mut visited = HashSet::default();
         let mut stack = Vec::new();
         let mut graph = DependencyGraph::default();
         let modules: Vec<Url> = self.files.keys().cloned().collect();
         for module_uri in modules {
-            self.visit_module(&module_uri, &mut visited, &mut stack, &mut graph)?;
+            self.visit_module(&module_uri, &mut visited, &mut stack, &mut graph).await?;
         }
         self.deps = graph;
         Ok(())
     }
 
     /// Recursively visits a module, adds its dependencies to the graph, and checks for cycles.
-    fn visit_module(
+    async fn visit_module(
         &mut self,
         module_uri: &Url,
         visited: &mut HashSet<Url>,
@@ -456,7 +462,7 @@ impl Database {
         visited.insert(module_uri.clone());
         stack.push(module_uri.clone());
 
-        let module = self.cst(module_uri)?;
+        let module = self.cst(module_uri).await?;
 
         // Collect dependencies from `use` declarations
         let mut dependencies = Vec::new();
@@ -467,7 +473,7 @@ impl Database {
             dependencies.push(dep_url.clone());
 
             // Recursively visit the dependency
-            self.visit_module(&dep_url, visited, stack, graph)?;
+            Box::pin(self.visit_module(&dep_url, visited, stack, graph)).await?;
         }
 
         // Add the module and its dependencies to the graph
