@@ -1,5 +1,5 @@
-use "../std/data/nat.pol"
-use "../std/data/bool.pol"
+use "../../../std/data/nat.pol"
+use "../../../std/data/bool.pol"
 
 let one: Nat { 1 }
 
