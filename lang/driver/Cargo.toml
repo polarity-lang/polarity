@@ -14,6 +14,7 @@ categories.workspace = true
 [dependencies]
 # async
 async-trait = "0.1"
+tokio = { version = "1", features = ["rt-multi-thread"] }
 # adressing symbols
 url = { workspace = true }
 codespan = { workspace = true }

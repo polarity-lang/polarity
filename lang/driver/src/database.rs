@@ -109,8 +109,14 @@ impl Database {
     async fn recompute_cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
         log::debug!("Recomputing cst for: {}", uri);
         let source = self.source(uri).await?;
-        let module =
-            parser::parse_module(uri.clone(), &source).map_err(Error::Parser).map(Arc::new);
+        let module = {
+            let uri = uri.clone();
+            tokio::task::spawn_blocking(move || {
+                parser::parse_module(uri.clone(), &source).map_err(Error::Parser).map(Arc::new)
+            })
+            .await
+            .map_err(|err| DriverError::TokioJoin(Arc::new(err)))?
+        };
         self.cst.insert(uri.clone(), module.clone());
         module
     }
@@ -132,7 +138,10 @@ impl Database {
     async fn recompute_symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
         log::debug!("Recomputing symbol table for: {}", uri);
         let cst = self.cst(uri).await?;
-        let module_symbol_table = lowering::build_symbol_table(&cst).map(Arc::new)?;
+        let module_symbol_table =
+            tokio::task::spawn_blocking(move || lowering::build_symbol_table(&cst).map(Arc::new))
+                .await
+                .map_err(|err| DriverError::TokioJoin(Arc::new(err)))??;
         self.symbol_table.insert(uri.clone(), module_symbol_table.clone());
         Ok(module_symbol_table)
     }
@@ -167,10 +176,13 @@ impl Database {
             symbol_table.insert(dep.clone(), module_symbol_table);
         }
 
-        let ust = lowering::lower_module_with_symbol_table(&cst, &symbol_table)
-            .map_err(Error::Lowering)
-            .map(Arc::new);
-
+        let ust = tokio::task::spawn_blocking(move || {
+            lowering::lower_module_with_symbol_table(&cst, &symbol_table)
+                .map_err(Error::Lowering)
+                .map(Arc::new)
+        })
+        .await
+        .map_err(|err| DriverError::TokioJoin(Arc::new(err)))?;
         self.ust.insert(uri.clone(), ust.clone());
         ust
     }
@@ -213,7 +225,9 @@ impl Database {
     ) -> Result<ModuleTypeInfoTable, Error> {
         log::debug!("Recomputing type info table for: {}", uri);
         let ust = self.ust(uri).await?;
-        let info_table = build_type_info_table(&ust);
+        let info_table = tokio::task::spawn_blocking(move || build_type_info_table(&ust))
+            .await
+            .map_err(|err| DriverError::TokioJoin(Arc::new(err)))?;
         self.module_type_info_table.insert(uri.clone(), info_table.clone());
         Ok(info_table)
     }
@@ -240,9 +254,13 @@ impl Database {
 
         // Typecheck module
         let ust = self.ust(uri).await.map(|x| (*x).clone())?;
-        let ast = elaborator::typechecker::check_with_lookup_table(Rc::new(ust), &info_table)
-            .map(Arc::new)
-            .map_err(|arg| Error::Type(Box::new(arg)));
+        let ast = tokio::task::spawn_blocking(move || {
+            elaborator::typechecker::check_with_lookup_table(Rc::new(ust), &info_table)
+                .map(Arc::new)
+                .map_err(|arg| Error::Type(Box::new(arg)))
+        })
+        .await
+        .map_err(|err| DriverError::TokioJoin(Arc::new(err)))?;
         self.ast.insert(uri.clone(), ast.clone());
         ast
     }
@@ -385,7 +403,11 @@ impl Database {
 
         match main {
             Some(exp) => {
-                let nf = exp.normalize_in_empty_env(&Rc::new(info_table));
+                let nf = tokio::task::spawn_blocking(move || {
+                    exp.normalize_in_empty_env(&Rc::new(info_table))
+                })
+                .await
+                .map_err(|err| DriverError::TokioJoin(Arc::new(err)))?;
                 nf.map(Some).map_err(|type_err| Error::Type(Box::new(type_err)))
             }
             None => Ok(None),

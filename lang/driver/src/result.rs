@@ -25,6 +25,8 @@ pub enum DriverError {
     FileNotFound(Url),
     #[error("IO error: {0}")]
     Io(#[from] Arc<std::io::Error>),
+    #[error("Tokio join error: {0}")]
+    TokioJoin(#[from] Arc<tokio::task::JoinError>),
     #[error("URL error: {0}")]
     Url(#[from] url::ParseError),
     #[error("Impossible: {0}")]

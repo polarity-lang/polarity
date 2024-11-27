@@ -700,6 +700,7 @@ dependencies = [
  "ropey",
  "rust-lapper",
  "thiserror",
+ "tokio",
  "transformations",
  "url",
 ]
@@ -2419,7 +2420,6 @@ dependencies = [
  "driver",
  "elaborator",
  "env_logger",
- "futures",
  "log",
  "miette",
  "parser",
@@ -2428,6 +2428,7 @@ dependencies = [
  "serde_derive",
  "tantivy",
  "termcolor",
+ "tokio",
  "toml",
  "url",
  "walkdir",

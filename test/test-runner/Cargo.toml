@@ -9,7 +9,7 @@ autobins = false
 
 [dependencies]
 # async
-futures = "0.3"
+tokio = { version = "1", features = ["rt-multi-thread"] }
 # cli
 clap = { version = "4", features = ["derive"] }
 # full text search engine
