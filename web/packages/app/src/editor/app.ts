@@ -34,7 +34,7 @@ export default class App {
     const language = Language.initialize(client);
 
     const id = language.id;
-    const uri = monaco.Uri.parse("inmemory://demo.pol");
+    const uri = monaco.Uri.parse("inmemory:///examples/demo.pol");
 
     const model = monaco.editor.createModel("", id, uri);
 
