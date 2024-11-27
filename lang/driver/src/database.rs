@@ -109,14 +109,8 @@ impl Database {
     async fn recompute_cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
         log::debug!("Recomputing cst for: {}", uri);
         let source = self.source(uri).await?;
-        let module = {
-            let uri = uri.clone();
-            tokio::task::spawn_blocking(move || {
-                parser::parse_module(uri.clone(), &source).map_err(Error::Parser).map(Arc::new)
-            })
-            .await
-            .map_err(|err| DriverError::TokioJoin(Arc::new(err)))?
-        };
+        let module =
+            parser::parse_module(uri.clone(), &source).map_err(Error::Parser).map(Arc::new);
         self.cst.insert(uri.clone(), module.clone());
         module
     }
@@ -138,10 +132,7 @@ impl Database {
     async fn recompute_symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
         log::debug!("Recomputing symbol table for: {}", uri);
         let cst = self.cst(uri).await?;
-        let module_symbol_table =
-            tokio::task::spawn_blocking(move || lowering::build_symbol_table(&cst).map(Arc::new))
-                .await
-                .map_err(|err| DriverError::TokioJoin(Arc::new(err)))??;
+        let module_symbol_table = lowering::build_symbol_table(&cst).map(Arc::new)?;
         self.symbol_table.insert(uri.clone(), module_symbol_table.clone());
         Ok(module_symbol_table)
     }
@@ -176,13 +167,10 @@ impl Database {
             symbol_table.insert(dep.clone(), module_symbol_table);
         }
 
-        let ust = tokio::task::spawn_blocking(move || {
-            lowering::lower_module_with_symbol_table(&cst, &symbol_table)
-                .map_err(Error::Lowering)
-                .map(Arc::new)
-        })
-        .await
-        .map_err(|err| DriverError::TokioJoin(Arc::new(err)))?;
+        let ust = lowering::lower_module_with_symbol_table(&cst, &symbol_table)
+            .map_err(Error::Lowering)
+            .map(Arc::new);
+
         self.ust.insert(uri.clone(), ust.clone());
         ust
     }
@@ -225,9 +213,7 @@ impl Database {
     ) -> Result<ModuleTypeInfoTable, Error> {
         log::debug!("Recomputing type info table for: {}", uri);
         let ust = self.ust(uri).await?;
-        let info_table = tokio::task::spawn_blocking(move || build_type_info_table(&ust))
-            .await
-            .map_err(|err| DriverError::TokioJoin(Arc::new(err)))?;
+        let info_table = build_type_info_table(&ust);
         self.module_type_info_table.insert(uri.clone(), info_table.clone());
         Ok(info_table)
     }
@@ -254,13 +240,9 @@ impl Database {
 
         // Typecheck module
         let ust = self.ust(uri).await.map(|x| (*x).clone())?;
-        let ast = tokio::task::spawn_blocking(move || {
-            elaborator::typechecker::check_with_lookup_table(Rc::new(ust), &info_table)
-                .map(Arc::new)
-                .map_err(|arg| Error::Type(Box::new(arg)))
-        })
-        .await
-        .map_err(|err| DriverError::TokioJoin(Arc::new(err)))?;
+        let ast = elaborator::typechecker::check_with_lookup_table(Rc::new(ust), &info_table)
+            .map(Arc::new)
+            .map_err(|arg| Error::Type(Box::new(arg)));
         self.ast.insert(uri.clone(), ast.clone());
         ast
     }
@@ -403,11 +385,7 @@ impl Database {
 
         match main {
             Some(exp) => {
-                let nf = tokio::task::spawn_blocking(move || {
-                    exp.normalize_in_empty_env(&Rc::new(info_table))
-                })
-                .await
-                .map_err(|err| DriverError::TokioJoin(Arc::new(err)))?;
+                let nf = exp.normalize_in_empty_env(&Rc::new(info_table));
                 nf.map(Some).map_err(|type_err| Error::Type(Box::new(type_err)))
             }
             None => Ok(None),
@@ -507,40 +485,8 @@ impl Database {
 
     /// Resolves a module name to a `Url` relative to the current module.
     pub fn resolve_module_name(&self, name: &str, current_module: &Url) -> Result<Url, Error> {
-        join_url(current_module, name).map_err(|err| DriverError::Url(err).into())
+        current_module.join(name).map_err(|err| DriverError::Url(err).into())
     }
-}
-
-/// Join a base URL with a relative path.
-///
-/// Unlike the `Url::join` method, this function handles relative paths and non-standard schemes.
-/// It also does not rely on `Path::join` which is not available on the web.
-fn join_url(base: &Url, relative_path: &str) -> Result<Url, url::ParseError> {
-    let mut new_url = base.clone();
-
-    let mut path_segments = new_url.path_segments_mut().expect("Cannot get path segments");
-
-    if !base.path().ends_with('/') {
-        path_segments.pop();
-    }
-
-    for segment in relative_path.split('/') {
-        match segment {
-            ".." => {
-                path_segments.pop();
-            }
-            "." | "" => {
-                // Do nothing for '.' or empty segments
-            }
-            _ => {
-                path_segments.push(segment);
-            }
-        }
-    }
-
-    drop(path_segments);
-
-    Ok(new_url)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
