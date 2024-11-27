@@ -507,8 +507,40 @@ impl Database {
 
     /// Resolves a module name to a `Url` relative to the current module.
     pub fn resolve_module_name(&self, name: &str, current_module: &Url) -> Result<Url, Error> {
-        current_module.join(name).map_err(|err| DriverError::Url(err).into())
+        join_url(current_module, name).map_err(|err| DriverError::Url(err).into())
     }
+}
+
+/// Join a base URL with a relative path.
+///
+/// Unlike the `Url::join` method, this function handles relative paths and non-standard schemes.
+/// It also does not rely on `Path::join` which is not available on the web.
+fn join_url(base: &Url, relative_path: &str) -> Result<Url, url::ParseError> {
+    let mut new_url = base.clone();
+
+    let mut path_segments = new_url.path_segments_mut().expect("Cannot get path segments");
+
+    if !base.path().ends_with('/') {
+        path_segments.pop();
+    }
+
+    for segment in relative_path.split('/') {
+        match segment {
+            ".." => {
+                path_segments.pop();
+            }
+            "." | "" => {
+                // Do nothing for '.' or empty segments
+            }
+            _ => {
+                path_segments.push(segment);
+            }
+        }
+    }
+
+    drop(path_segments);
+
+    Ok(new_url)
 }
 
 #[cfg(not(target_arch = "wasm32"))]

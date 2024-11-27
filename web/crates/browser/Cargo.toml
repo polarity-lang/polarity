@@ -11,19 +11,30 @@ default = ["tower-lsp/runtime-agnostic"]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-console_error_panic_hook = "0.1"
-lsp-server = { path = "../../../lang/lsp" }
+# async
+async-trait = "0.1"
 futures = "0.3"
-js-sys = "0.3"
 tower-lsp = { version = "0.17", default-features = false }
+# web platform
+console_error_panic_hook = "0.1"
+js-sys = "0.3"
 wasm-bindgen = "0.2"
-wasm-bindgen-futures = { version = "0.4", features = ["futures-core-03-stream"] }
+wasm-bindgen-futures = { version = "0.4", features = [
+  "futures-core-03-stream",
+] }
 wasm-streams = "0.2"
+# fetch sources
+reqwest = { version = "0.12", features = ["blocking"] }
+# workspace
+lsp-server = { path = "../../../lang/lsp" }
+driver = { path = "../../../lang/driver" }
 
 [dependencies.web-sys]
 version = "0.3"
 features = [
   "console",
+  "Window",
+  "Location",
   "HtmlTextAreaElement",
   "ReadableStream",
   "WritableStream",

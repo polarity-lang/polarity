@@ -1,10 +1,15 @@
 #![deny(clippy::all)]
 #![deny(unsafe_code)]
 
+use driver::{FileSource, InMemorySource};
 use futures::stream::TryStreamExt;
 use tower_lsp::{LspService, Server};
 use wasm_bindgen::{prelude::*, JsCast};
 use wasm_bindgen_futures::stream::JsStream;
+
+mod source;
+
+use source::FetchSource;
 
 #[wasm_bindgen]
 pub struct ServerConfig {
@@ -48,7 +53,13 @@ pub async fn serve(config: ServerConfig) -> Result<(), JsValue> {
     let output = wasm_streams::WritableStream::from_raw(output);
     let output = output.try_into_async_write().map_err(|err| err.0)?;
 
-    let (service, messages) = LspService::new(lsp_server::Server::new);
+    let create_server = |client| {
+        let source = InMemorySource::new().fallback_to(FetchSource::default());
+        let database = driver::Database::from_source(source);
+        lsp_server::Server::with_database(client, database)
+    };
+
+    let (service, messages) = LspService::new(create_server);
     Server::new(input, output, messages).serve(service).await;
 
     Ok(())

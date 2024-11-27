@@ -103,7 +103,10 @@ module.exports = (env, argv) => {
       new webpack.ProgressPlugin(),
       new CleanWebpackPlugin(),
       new CopyWebpackPlugin({
-        patterns: [{ from: "../../../examples", to: "examples" }],
+        patterns: [
+          { from: "../../../examples", to: "examples" },
+          { from: "../../../std", to: "std" }
+        ],
       }),
       new webpack.DefinePlugin({
         DEBUG: !prod,
