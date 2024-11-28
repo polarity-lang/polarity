@@ -1,8 +1,0 @@
-@use "sass:meta";
-
-html[data-theme="light"] {
-    @include meta.load-css("./hljs-vs-light");
-}
-html[data-theme="dark"] {
-    @include meta.load-css("./hljs-vs-dark");
-}
