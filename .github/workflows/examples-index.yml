@@ -10,6 +10,10 @@ on:
       - 'examples/**'
       - 'examples/index.json'
 
+permissions:
+  contents: read
+  statuses: write
+
 jobs:
   check-index:
     runs-on: ubuntu-latest
