@@ -55,7 +55,7 @@ impl Index {
     }
 }
 
-impl<'a> Writer<'a> {
+impl Writer<'_> {
     pub fn add(&mut self, suite: &str, case: &Case, content: &str) {
         let schema = self.writer.index().schema();
         let suite_field = schema.get_field("suite").unwrap();

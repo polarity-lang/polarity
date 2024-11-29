@@ -88,7 +88,7 @@ impl Eval for Call {
                 // the further computation is blocked so we return a neutral value.
                 if attr.attrs.contains(&Attribute::Transparent) {
                     let args = args.eval(info_table, env)?;
-                    return env.bind_iter(args.to_vals().iter(), |env| body.eval(info_table, env));
+                    env.bind_iter(args.to_vals().iter(), |env| body.eval(info_table, env))
                 } else {
                     Ok(Box::new(Val::Neu(
                         val::OpaqueCall {

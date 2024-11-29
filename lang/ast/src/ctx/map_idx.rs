@@ -15,7 +15,7 @@ pub struct MapIdx<'a, T, U, F: Fn(Idx, &T) -> U> {
     f: F,
 }
 
-impl<'a, T, U, F: Fn(Idx, &T) -> U> MapIdx<'a, T, U, F> {
+impl<T, U, F: Fn(Idx, &T) -> U> MapIdx<'_, T, U, F> {
     pub fn collect(self) -> Vec<Vec<U>> {
         self.inner
             .iter()

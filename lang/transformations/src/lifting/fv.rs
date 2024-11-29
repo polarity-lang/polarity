@@ -309,7 +309,7 @@ pub struct USTVisitor<'a> {
     lvl_ctx: LevelCtx,
 }
 
-impl<'a> USTVisitor<'a> {
+impl USTVisitor<'_> {
     /// Add a free variable as well as all free variables its type
     fn add_fv(&mut self, name: String, lvl: Lvl, typ: Box<Exp>, ctx: LevelCtx) {
         // Add the free variable
@@ -322,7 +322,7 @@ impl<'a> USTVisitor<'a> {
     }
 }
 
-impl<'a> BindContext for USTVisitor<'a> {
+impl BindContext for USTVisitor<'_> {
     type Ctx = LevelCtx;
 
     fn ctx_mut(&mut self) -> &mut Self::Ctx {
@@ -384,19 +384,19 @@ impl Shift for FVSubst {
     }
 }
 
-impl<'a> Shift for FVBodySubst<'a> {
+impl Shift for FVBodySubst<'_> {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since FVSubst works with levels, it is shift-invariant
     }
 }
 
-impl<'a> Shift for FVParamSubst<'a> {
+impl Shift for FVParamSubst<'_> {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since FVSubst works with levels, it is shift-invariant
     }
 }
 
-impl<'a> Substitution for FVBodySubst<'a> {
+impl Substitution for FVBodySubst<'_> {
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
         // Let Γ be the original context, let Δ be the context according to which the new De-Bruijn index should be calculated
         //
@@ -420,7 +420,7 @@ impl<'a> Substitution for FVBodySubst<'a> {
     }
 }
 
-impl<'a> Substitution for FVParamSubst<'a> {
+impl Substitution for FVParamSubst<'_> {
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
         self.inner.subst.get(&lvl).map(|fv| {
             Box::new(Exp::Variable(Variable {

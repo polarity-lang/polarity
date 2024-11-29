@@ -3,11 +3,8 @@
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const WebpackWatchFilesPlugin = require("webpack-watch-files-plugin").default;
 const path = require("path");
 const webpack = require("webpack");
-const Handlebars = require("handlebars");
-const { marked } = require("marked");
 const fs = require("fs");
 
 const loadExamples = () => {
@@ -69,33 +66,12 @@ module.exports = (env, argv) => {
           use: ["style-loader", "css-loader"],
         },
         {
-          test: /\.s[ac]ss$/i,
-          use: ["style-loader", "css-loader", "sass-loader"],
-        },
-        {
           test: /\.(woff|woff2|eot|ttf|otf)$/i,
           type: "asset/resource",
         },
         {
           test: /\.html$/,
           loader: "html-loader",
-          options: {
-            preprocessor: (content, loaderContext) => {
-              let result;
-
-              const input = { examples: loadExamples() };
-
-              try {
-                result = Handlebars.compile(content)(input);
-              } catch (error) {
-                loaderContext.emitError(error);
-
-                return content;
-              }
-
-              return result;
-            },
-          },
         },
       ],
     },
@@ -105,7 +81,7 @@ module.exports = (env, argv) => {
       new CopyWebpackPlugin({
         patterns: [
           { from: "../../../examples", to: "examples" },
-          { from: "../../../std", to: "std" }
+          { from: "../../../std", to: "std" },
         ],
       }),
       new webpack.DefinePlugin({
