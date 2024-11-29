@@ -750,7 +750,6 @@ dependencies = [
  "askama",
  "ast",
  "driver",
- "html-escape",
  "opener",
  "printer",
 ]
@@ -1181,15 +1180,6 @@ name = "hermit-abi"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fbf6a919d6cf397374f7dfeeea91d974c7c0a7221d0d0f4f20d859d329e53fcc"
-
-[[package]]
-name = "html-escape"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f53b4b5f55e44df22318fdd8e62f3e106fa0231c542ab5a6e38d018b48e144f5"
-dependencies = [
- "utf8-width",
-]
 
 [[package]]
 name = "htmlescape"
@@ -3316,12 +3306,6 @@ name = "utf8-ranges"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fcfc827f90e53a02eaef5e535ee14266c1d569214c6aa70133a624d8a3164ba"
-
-[[package]]
-name = "utf8-width"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86bd8d4e895da8537e5315b8254664e6b769c4ff3db18321b297a1e7004392e3"
 
 [[package]]
 name = "utf8parse"
