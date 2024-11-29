@@ -111,7 +111,7 @@ pub struct WithScrutinee<'a> {
 }
 
 /// Check a pattern match
-impl<'a> WithScrutinee<'a> {
+impl WithScrutinee<'_> {
     /// Check whether the pattern match contains exactly one clause for every
     /// constructor declared in the data type declaration.
     pub fn check_exhaustiveness(&self, ctx: &mut Ctx) -> Result<(), TypeError> {

@@ -63,7 +63,7 @@ pub struct WithExpectedType<'a> {
 }
 
 /// Infer a copattern match
-impl<'a> WithExpectedType<'a> {
+impl WithExpectedType<'_> {
     /// Check whether the copattern match contains exactly one clause for every
     /// destructor declared in the codata type declaration.
     pub fn check_exhaustiveness(&self, ctx: &mut Ctx) -> Result<(), TypeError> {
