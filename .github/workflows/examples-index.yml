@@ -1,0 +1,24 @@
+name: Check Examples Index
+
+on:
+  push:
+    paths:
+      - 'examples/**'
+      - 'examples/index.json'
+  pull_request:
+    paths:
+      - 'examples/**'
+      - 'examples/index.json'
+
+jobs:
+  check-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Check index
+        run: |
+          ./scripts/check_examples_index.sh
