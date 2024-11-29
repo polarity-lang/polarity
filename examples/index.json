@@ -1,0 +1,42 @@
+[
+    {
+        "name": "Lawful Functor Class",
+        "path": "functor.pol"
+    },
+    {
+        "name": "Martin-Löf Equality Type",
+        "path": "eq.pol"
+    },
+    {
+        "name": "STLC Type Soundness",
+        "path": "stlc.pol"
+    },
+    {
+        "name": "Strong Existentials Demystified",
+        "path": "strong_existentials.pol"
+    },
+    {
+        "name": "Tutorial",
+        "path": "tutorial.pol"
+    },
+    {
+        "name": "Π Is Not Built-In",
+        "path": "pi.pol"
+    },
+    {
+        "name": "λ-Encoding: Church",
+        "path": "encoding_church.pol"
+    },
+    {
+        "name": "λ-Encoding: Fu & Stump",
+        "path": "encoding_fu_stump.pol"
+    },
+    {
+        "name": "λ-Encoding: Parigot",
+        "path": "encoding_parigot.pol"
+    },
+    {
+        "name": "λ-Encoding: Scott",
+        "path": "encoding_scott.pol"
+    }
+  ]
