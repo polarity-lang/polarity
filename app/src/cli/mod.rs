@@ -4,7 +4,7 @@ mod check;
 mod clean;
 mod doc;
 mod format;
-mod generate_completion;
+mod gen_completions;
 mod lift;
 mod lsp;
 mod run;
@@ -39,7 +39,7 @@ pub fn exec() -> miette::Result<()> {
             Lift(args) => lift::exec(args).await,
             Doc(args) => doc::exec(args).await,
             Clean => clean::exec().await,
-            GenerateCompletion(args) => generate_completion::exec(args).await,
+            GenerateCompletion(args) => gen_completions::exec(args).await,
         }
     };
 
@@ -80,6 +80,6 @@ enum Command {
     Doc(doc::Args),
     /// Clean target_pol directory
     Clean,
-    /// Generate completion script for bash
-    GenerateCompletion(generate_completion::Args),
+    /// Generate completion scripts for various shells
+    GenerateCompletion(gen_completions::Args),
 }
