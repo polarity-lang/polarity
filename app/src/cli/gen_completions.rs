@@ -1,4 +1,4 @@
-use std::{io, path::PathBuf};
+use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::CommandFactory;
 use clap_complete::{
@@ -28,12 +28,13 @@ pub struct Args {
 }
 
 pub async fn exec(cmd: Args) -> miette::Result<()> {
+    let mut file = BufWriter::new(File::create(cmd.filepath).expect("Failed to create file"));
     match cmd.shell {
-        Shell::Bash => generate(Bash, &mut Cli::command(), "pol", &mut io::stdout()),
-        Shell::Elvish => generate(Elvish, &mut Cli::command(), "pol", &mut io::stdout()),
-        Shell::Fish => generate(Fish, &mut Cli::command(), "pol", &mut io::stdout()),
-        Shell::PowerShell => generate(PowerShell, &mut Cli::command(), "pol", &mut io::stdout()),
-        Shell::Zsh => generate(Zsh, &mut Cli::command(), "pol", &mut io::stdout()),
+        Shell::Bash => generate(Bash, &mut Cli::command(), "pol", &mut file),
+        Shell::Elvish => generate(Elvish, &mut Cli::command(), "pol", &mut file),
+        Shell::Fish => generate(Fish, &mut Cli::command(), "pol", &mut file),
+        Shell::PowerShell => generate(PowerShell, &mut Cli::command(), "pol", &mut file),
+        Shell::Zsh => generate(Zsh, &mut Cli::command(), "pol", &mut file),
     }
     Ok(())
 }
