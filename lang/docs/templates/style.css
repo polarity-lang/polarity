@@ -33,14 +33,12 @@ code {
     font-family: 'Courier New', Courier, monospace;
 }
 
-/* Syntax Highlighting Styling */
 .keyword {
     color: #ff79c6;
     font-weight: bold;
 }
 
-.type,
-.title {
+.type{
     color: #8be9fd;
 }
 
