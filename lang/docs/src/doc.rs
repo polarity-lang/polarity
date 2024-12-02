@@ -17,14 +17,9 @@ pub async fn write_html(filepath: &PathBuf, htmlpath: &PathBuf) {
     let cfg = PrintCfg::default();
 
     if !Path::new(CSS_PATH).exists() {
-        let template_css_path = Path::new(CSS_TEMPLATE_PATH);
-        if template_css_path.exists() {
-            fs::create_dir_all(Path::new(CSS_PATH).parent().unwrap())
-                .expect("Failed to create CSS directory");
-            fs::copy(template_css_path, CSS_PATH).expect("Failed to copy CSS file");
-        } else {
-            eprintln!("Warning: template CSS file does not exist at {:?}", template_css_path);
-        }
+        fs::create_dir_all(Path::new(CSS_PATH).parent().unwrap())
+            .expect("Failed to create CSS directory");
+        fs::write(CSS_PATH, CSS_TEMPLATE_PATH).expect("Failed to create CSS file");
     }
 
     let mut stream = Box::new(fs::File::create(htmlpath).expect("Failed to create file"));
