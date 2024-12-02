@@ -3,7 +3,6 @@ use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
 use askama::Template;
-use html_escape::decode_html_entities;
 use opener;
 
 use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH};
@@ -23,12 +22,12 @@ pub async fn write_html(filepath: &PathBuf, htmlpath: &PathBuf) {
     }
 
     let mut stream = Box::new(fs::File::create(htmlpath).expect("Failed to create file"));
-    let code = prg.print_html_to_string(Some(&cfg));
 
+    let code = prg.print_html_to_string(Some(&cfg));
     let title = filepath.file_name().unwrap().to_str().unwrap();
     let output = generate_html(title, &code);
-    let out = decode_html_entities(&output);
-    stream.write_all(out.as_bytes()).expect("Failed to write to file");
+
+    stream.write_all(output.as_bytes()).expect("Failed to write to file");
 }
 
 pub fn open(filepath: &PathBuf) {
@@ -37,7 +36,7 @@ pub fn open(filepath: &PathBuf) {
 }
 
 #[derive(Template)]
-#[template(path = "code.html")]
+#[template(path = "code.html", escape = "none")]
 struct HelloTemplate<'a> {
     title: &'a str,
     code: &'a str,
