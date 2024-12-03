@@ -21,7 +21,7 @@ pub async fn write_html(filepath: &PathBuf, htmlpath: &PathBuf) {
         fs::write(CSS_PATH, CSS_TEMPLATE_PATH).expect("Failed to create CSS file");
     }
 
-    let mut stream = Box::new(fs::File::create(htmlpath).expect("Failed to create file"));
+    let mut stream = fs::File::create(htmlpath).expect("Failed to create file");
 
     let code = prg.print_html_to_string(Some(&cfg));
     let title = filepath.file_name().unwrap().to_str().unwrap();
