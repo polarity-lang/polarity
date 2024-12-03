@@ -125,7 +125,6 @@ impl GenerateDocs for Codef {
 
         let codef = CodefTemplate {
             doc: &doc,
-            self_param: "",
             name: &name,
             params: &params,
             typ: &typ,
@@ -192,7 +191,6 @@ struct DefTemplate<'a> {
 #[template(path = "codef.html", escape = "none")]
 struct CodefTemplate<'a> {
     pub doc: &'a str,
-    pub self_param: &'a str,
     pub name: &'a str,
     pub params: &'a str,
     pub typ: &'a str,
