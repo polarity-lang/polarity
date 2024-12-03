@@ -1,15 +1,26 @@
+-- We can define the data type Bool with constructors T and F.
 data Bool { T, F }
 
+-- We can define `not`, which negates a boolean value, by case distinction.
 def Bool.not: Bool {
     T => F,
     F => T
 }
 
+-- We can define the if_then_else observation. This example also illustrates how to use the `Type` universe to introduce the type variable `a`. 
 def Bool.if_then_else(a: Type, then else: a): a {
     T => then,
     F => else
 }
 
+-- Since polarity is dependently typed, we can return different types,
+-- depending on the value of the Bool that is scrutinized.
+def (b : Bool).dep_if_then_else(t1 t2: Type, then: t1, else: t2): b.if_then_else(Type, t1, t2){
+  T => then,
+  F => else
+}
+
+-- We can define simple recursive data types.
 data Nat { Z, S(n: Nat) }
 
 def Nat.add(y: Nat): Nat {
@@ -17,43 +28,76 @@ def Nat.add(y: Nat): Nat {
     S(x') => S(x'.add(y))
 }
 
+-- And more complex, parametrised ones, like this classic.
 data Vec(n: Nat) {
     VNil: Vec(Z),
     VCons(n x: Nat, xs: Vec(n)): Vec(S(n))
 }
 
+-- So far so good. We have covered a bunch of examples in a simple, dependently typed
+-- language. But what makes polarity special?
+
+-- Polarity allows to define codata types.
+-- They do not tell you what they are made of, but how you observe them.
+-- If you look at a stream, for example, you can either observe its head,
+-- which in this case is just a natural number, or its tail, which is,
+-- once again, a Stream.
 codata Stream { .head: Nat, .tail: Stream }
 
+-- Polarity does not have a builtin function type; instead, we have to use codata
+-- types to build it ourselves. This specific one is specialised to Nats.
 codata NatToNat { .ap(x: Nat): Nat }
 
-let main: Nat { 2.add(3) }
+-- A simple value of this type would be the function that returns the predecessor of a
+-- Nat, or Zero if the Nat is already Zero. To build values of codata types, we use codef:
+codef Pred: NatToNat {
+  -- if we observe the application of a function of Nat to Nat
+  .ap(n) => n.match { -- we case split on the Nat
+    Z => Z,           -- in case we obtain Zero, we return Zero
+    S(m) => m         -- and otherwise, we return the predecessor
+  }
+}
 
+-- This definition (main) is the main entry point for running programs 
+-- in polarity. When invoking pol run tutorial.pol, this will print S(S(S(S(Z)))) 
+-- (also known as 4) as expected
+let main: Nat { Pred.ap(2.add(3)) }
 
+-- Now that we covered all the basics, lets look at some more examples:
+
+-- We can build an option type that may (Some) or may not (None) contain a value.
 data Option(a: Type) {
     None(a: Type): Option(a),
     Some(a: Type, x: a): Option(a)
 }
 
+-- We can also build simple, non-dependent Lists, as a data type.
 data List(a: Type) {
     Nil(a: Type): List(a),
     Cons(a: Type, x: a, xs: List(a)): List(a)
 }
 
+-- And of course write a (safe) head implementation for it.
 def List(a).hd(a: Type): Option(a) {
     Nil(a) => None(a),
     Cons(a, x, xs) => Some(a, x)
 }
 
+-- We can build different kinds of (infinite) streams.
+
+-- One that contains only Zeroes:
 codef Zeroes: Stream {
     .head => Z,
     .tail => Zeroes
 }
 
+-- One that contains only Ones:
 codef Ones: Stream {
     .head => S(Z),
     .tail => Ones
 }
 
+-- And one that alternates between Ones and Zeroes:
 codef Alternate(choose: Bool): Stream {
     .head => choose.if_then_else(Nat, S(Z), Z),
     .tail => Alternate(choose.not)
