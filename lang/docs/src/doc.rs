@@ -36,13 +36,13 @@ pub fn open(filepath: &PathBuf) {
 }
 
 #[derive(Template)]
-#[template(path = "code.html", escape = "none")]
-struct HelloTemplate<'a> {
+#[template(path = "module.html", escape = "none")]
+struct ModuleTemplate<'a> {
     title: &'a str,
     code: &'a str,
 }
 
 fn generate_html(title: &str, code: &str) -> String {
-    let template = HelloTemplate { title, code };
+    let template = ModuleTemplate { title, code };
     template.render().unwrap()
 }
