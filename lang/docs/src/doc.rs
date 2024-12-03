@@ -28,6 +28,7 @@ pub async fn write_html(filepath: &PathBuf, htmlpath: &PathBuf) {
     let output = generate_html(title, &code);
 
     stream.write_all(output.as_bytes()).expect("Failed to write to file");
+    println!("new Generate: {}", prg.generate_docs())
 }
 
 pub fn open(filepath: &PathBuf) {
