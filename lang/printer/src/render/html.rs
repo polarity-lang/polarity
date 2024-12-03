@@ -20,11 +20,13 @@ where
     type Error = io::Error;
 
     fn write_str(&mut self, s: &str) -> io::Result<usize> {
-        self.upstream.write(s.as_bytes())
+        let escaped = askama_escape::escape(s, askama_escape::Html).to_string();
+        self.upstream.write(escaped.as_bytes())
     }
 
     fn write_str_all(&mut self, s: &str) -> io::Result<()> {
-        self.upstream.write_all(s.as_bytes())
+        let escaped = askama_escape::escape(s, askama_escape::Html).to_string();
+        self.upstream.write_all(escaped.as_bytes())
     }
 
     fn fail_doc(&self) -> Self::Error {
