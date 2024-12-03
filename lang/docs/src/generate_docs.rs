@@ -11,7 +11,7 @@ impl GenerateDocs for Module {
         self.decls.iter()
             .map(|decl| decl.generate_docs())
             .collect::<Vec<_>>()
-            .join("\n")
+            .join("<br>")
     }
 }
 
@@ -80,7 +80,7 @@ impl GenerateDocs for Codata {
 
 impl GenerateDocs for Def {
     fn generate_docs(&self) -> String {
-        let Def { span: _, doc, name, attr, params, self_param, ret_typ, cases } = self;
+        let Def { span: _, doc, name, attr: _, params, self_param, ret_typ, cases } = self;
 
         let doc = doc.generate();
         let name = &name.id;
@@ -109,7 +109,7 @@ impl GenerateDocs for Def {
 
 impl GenerateDocs for Codef {
     fn generate_docs(&self) -> String {
-        let Codef { span: _, doc, name, attr, params, typ, cases } = self;
+        let Codef { span: _, doc, name, attr: _, params, typ, cases } = self;
 
         let doc = doc.generate();
         let name = &name.id;
@@ -137,11 +137,10 @@ impl GenerateDocs for Codef {
 
 impl GenerateDocs for Let {
     fn generate_docs(&self) -> String {
-        let Let { span: _, doc, name, attr, params, typ, body } = self;
+        let Let { span: _, doc, name, attr: _, params, typ, body } = self;
 
         let doc = doc.generate();
         let name = &name.id;
-        let attr: String = attr.generate();
         let params: String = params.generate();
         let typ: String = typ.generate();
         let body: String = body.generate();

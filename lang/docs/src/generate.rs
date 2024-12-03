@@ -13,10 +13,10 @@ impl Generate for Ctor{
         let head = if typ.is_simple() {
             head
         } else {
-            format!("{} : {}", head, typ.generate())
+            format!("{}: {}", head, typ.generate())
         };
 
-        format!("{}\n{}", doc_str, head)
+        format!("{}{}", doc_str, head)
     }
 }
 
@@ -31,7 +31,7 @@ impl Generate for Dtor{
             format!("{}.", self_param.generate())
         };
         
-        format!("{}\n{}{}{}: {}",doc_str, head, name.id, params.generate(), ret_typ.generate())
+        format!("{}{}{}{}: {}",doc_str, head, name.id, params.generate(), ret_typ.generate())
     }
 }
 
@@ -48,14 +48,14 @@ impl Generate for Telescope{
                 // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
                 Some((rtype, rimplicit)) if rtype == typ.as_ref() && rimplicit == *implicit => {
                     // We are adding another parameter of the same type.
-                    output.push_str(&format!(" {}", name.id));
+                    output.push_str(&format!(" {} ", name.id));
                 }
                 Some((rtype, _)) => {
                     // We are adding another parameter with a different type,
                     // and have to close the previous list first.
-                    output.push_str(&format!(" : {},\n", rtype.generate()));
+                    output.push_str(&format!(" : {}, ", rtype.generate()));
                     if *implicit {
-                        output.push_str(&format!("implicit {}", name.id));
+                        output.push_str(&format!("implicit {} ", name.id));
                     } else {
                         output.push_str(&name.id);
                     }
@@ -81,6 +81,7 @@ impl Generate for Telescope{
        "(".to_owned() + &output + &")".to_owned()
     }
 }
+
 impl<T: Generate> Generate for Option<T> {
     fn generate(&self) -> String {
         match self {
@@ -92,7 +93,7 @@ impl<T: Generate> Generate for Option<T> {
 
 impl<T: Generate> Generate for Vec<T> {
     fn generate(&self) -> String {
-        self.iter().map(|value| value.generate()).collect::<Vec<String>>().join(", ")
+        self.iter().map(|value| value.generate()).collect::<Vec<String>>().join(",<br>")
     }
 }
 
@@ -114,8 +115,9 @@ impl Generate for SelfParam{
 impl Generate for DocComment {
     fn generate(&self) -> String {
         let DocComment { docs } = self;
-        let prefix = "-- |";
-        docs.iter().map(|doc| format!("{} {}", prefix, doc)).collect::<Vec<String>>().join("\n")
+        let prefix = "<span class=\"comment\"> -- |";
+        let posfix = "</span>";
+        docs.iter().map(|doc| format!("{} {} {}", prefix, doc, posfix)).collect::<Vec<String>>().join("<br>") + &"<br>".to_owned()
     }
 }
 

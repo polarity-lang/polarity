@@ -3,11 +3,9 @@ body {
     background-color: #000;
     color: #fff;
     margin: 0;
-    padding: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
 }
 
 h1 {
@@ -17,20 +15,17 @@ h1 {
     margin-bottom: 20px;
 }
 
-pre {
+.code_card{
     background-color: #111;
     color: #f8f8f2;
-    padding: 20px;
     border-radius: 8px;
     width: 80%;
     overflow-x: auto;
     font-size: 1.1em;
     line-height: 1.6;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-}
-
-code {
-    font-family: 'Courier New', Courier, monospace;
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
 .keyword {
