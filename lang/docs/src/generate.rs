@@ -48,14 +48,14 @@ impl Generate for Telescope{
                 // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
                 Some((rtype, rimplicit)) if rtype == typ.as_ref() && rimplicit == *implicit => {
                     // We are adding another parameter of the same type.
-                    output.push_str(&format!(" {} ", name.id));
+                    output.push_str(&format!(" {}", name.id));
                 }
                 Some((rtype, _)) => {
                     // We are adding another parameter with a different type,
                     // and have to close the previous list first.
-                    output.push_str(&format!(" : {}, ", rtype.generate()));
+                    output.push_str(&format!(": {}, ", rtype.generate()));
                     if *implicit {
-                        output.push_str(&format!("implicit {} ", name.id));
+                        output.push_str(&format!("implicit {}", name.id));
                     } else {
                         output.push_str(&name.id);
                     }
@@ -75,7 +75,7 @@ impl Generate for Telescope{
 
         // Close the last parameter
         if let Some((rtype, _)) = running {
-            output.push_str(&format!(" : {}", rtype.generate()));
+            output.push_str(&format!(": {}", rtype.generate()));
         }
 
        "(".to_owned() + &output + &")".to_owned()
@@ -108,7 +108,7 @@ impl Generate for SelfParam{
         let SelfParam { info: _, name, typ } = self;
 
         match name {
-            Some(name) => format!("{} : {}", name.id, typ.generate()),
+            Some(name) => format!("{}: {}", name.id, typ.generate()),
             None => typ.generate(),
         }
     }}
@@ -152,7 +152,7 @@ impl Generate for Param{
         if *implicit {
             format!("implicit {} : {}",name.id, typ.generate())
         } else {
-            format!("{} : ({})",name.id, typ.generate())
+            format!("{}: ({})",name.id, typ.generate())
         }
     }
 }
@@ -219,7 +219,7 @@ impl Generate for DotCall{
 impl Generate for Anno{
     fn generate(&self) -> String {
     let Anno { exp, typ, .. } = self;
-    format!("{} : {}", exp.generate(), typ.generate())
+    format!("{}: {}", exp.generate(), typ.generate())
     }
 }
 
@@ -329,3 +329,4 @@ impl Generate for Hole{
         "_".to_string()
     }
 }
+
