@@ -118,7 +118,7 @@ impl Generate for DocComment {
         let prefix = "<span class=\"comment\"> -- |";
         let postfix = "</span>";
         docs.iter()
-            .map(|doc| format!("{} {} {}", prefix, doc, postfix))
+            .map(|doc| format!("{} {} {}", prefix, askama_escape::escape(doc, askama_escape::Html), postfix))
             .collect::<Vec<String>>()
             .join("<br>")
             + "<br>"
