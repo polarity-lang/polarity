@@ -1,41 +1,41 @@
-use ast::{Anno, Arg, Args, Attribute, Attributes, Call, Case, Ctor, DocComment, DotCall, Dtor, Exp, Hole, LocalComatch, LocalMatch, Motive, Param, ParamInst, Pattern, SelfParam, Telescope, TelescopeInst, TypCtor, TypeUniv, Variable};
+use ast::{
+    Anno, Arg, Args, Attribute, Attributes, Call, Case, Ctor, DocComment, DotCall, Dtor, Exp, Hole,
+    LocalComatch, LocalMatch, Motive, Param, ParamInst, Pattern, SelfParam, Telescope,
+    TelescopeInst, TypCtor, TypeUniv, Variable,
+};
 
-pub trait Generate{
+pub trait Generate {
     fn generate(&self) -> String;
 }
-impl Generate for Ctor{
+impl Generate for Ctor {
     fn generate(&self) -> String {
         let Ctor { span: _, doc, name, params, typ } = self;
 
         let doc_str = doc.generate();
         let head = format!("{}{}", name.id, params.generate());
 
-        let head = if typ.is_simple() {
-            head
-        } else {
-            format!("{}: {}", head, typ.generate())
-        };
+        let head = if typ.is_simple() { head } else { format!("{}: {}", head, typ.generate()) };
 
         format!("{}{}", doc_str, head)
     }
 }
 
-impl Generate for Dtor{
+impl Generate for Dtor {
     fn generate(&self) -> String {
         let Dtor { span: _, doc, name, params, self_param, ret_typ } = self;
 
         let doc_str = doc.generate();
-        let head = if self_param.is_simple(){
+        let head = if self_param.is_simple() {
             ".".to_owned()
         } else {
             format!("{}.", self_param.generate())
         };
-        
-        format!("{}{}{}{}: {}",doc_str, head, name.id, params.generate(), ret_typ.generate())
+
+        format!("{}{}{}{}: {}", doc_str, head, name.id, params.generate(), ret_typ.generate())
     }
 }
 
-impl Generate for Telescope{
+impl Generate for Telescope {
     fn generate(&self) -> String {
         let Telescope { params } = self;
         let mut output = String::new();
@@ -77,8 +77,7 @@ impl Generate for Telescope{
         if let Some((rtype, _)) = running {
             output.push_str(&format!(": {}", rtype.generate()));
         }
-
-       "(".to_owned() + &output + &")".to_owned()
+        format!("({})", output)
     }
 }
 
@@ -103,7 +102,7 @@ impl<T: Generate> Generate for Box<T> {
     }
 }
 
-impl Generate for SelfParam{
+impl Generate for SelfParam {
     fn generate(&self) -> String {
         let SelfParam { info: _, name, typ } = self;
 
@@ -111,17 +110,22 @@ impl Generate for SelfParam{
             Some(name) => format!("{}: {}", name.id, typ.generate()),
             None => typ.generate(),
         }
-    }}
+    }
+}
 impl Generate for DocComment {
     fn generate(&self) -> String {
         let DocComment { docs } = self;
         let prefix = "<span class=\"comment\"> -- |";
-        let posfix = "</span>";
-        docs.iter().map(|doc| format!("{} {} {}", prefix, doc, posfix)).collect::<Vec<String>>().join("<br>") + &"<br>".to_owned()
+        let postfix = "</span>";
+        docs.iter()
+            .map(|doc| format!("{} {} {}", prefix, doc, postfix))
+            .collect::<Vec<String>>()
+            .join("<br>")
+            + "<br>"
     }
 }
 
-impl Generate for Attribute{
+impl Generate for Attribute {
     fn generate(&self) -> String {
         match self {
             Attribute::OmitPrint => "omit_print".to_owned(),
@@ -132,32 +136,31 @@ impl Generate for Attribute{
     }
 }
 
-impl Generate for Attributes{
+impl Generate for Attributes {
     fn generate(&self) -> String {
         if self.attrs.is_empty() {
             "".to_owned()
         } else {
-            "#".to_owned() + "( " + &self.attrs.iter().map(|attr| attr.generate()).collect::<Vec<String>>().join(", ") + " )"
+            "#".to_owned()
+                + "( "
+                + &self.attrs.iter().map(|attr| attr.generate()).collect::<Vec<String>>().join(", ")
+                + " )"
         }
     }
 }
 
-
-
-
-
-impl Generate for Param{
+impl Generate for Param {
     fn generate(&self) -> String {
         let Param { implicit, name, typ } = self;
         if *implicit {
-            format!("implicit {} : {}",name.id, typ.generate())
+            format!("implicit {} : {}", name.id, typ.generate())
         } else {
-            format!("{}: ({})",name.id, typ.generate())
+            format!("{}: ({})", name.id, typ.generate())
         }
     }
 }
 
-impl Generate for Exp{
+impl Generate for Exp {
     fn generate(&self) -> String {
         match self {
             Exp::Variable(variable) => variable.generate(),
@@ -173,13 +176,13 @@ impl Generate for Exp{
     }
 }
 
-impl Generate for Variable{
+impl Generate for Variable {
     fn generate(&self) -> String {
         self.name.id.clone()
     }
 }
 
-impl Generate for TypCtor{
+impl Generate for TypCtor {
     fn generate(&self) -> String {
         let TypCtor { name, args, .. } = self;
         if name.id == "Fun" && args.len() == 2 {
@@ -187,25 +190,25 @@ impl Generate for TypCtor{
             let res = args.args[1].generate();
             format!("{} -> {}", arg, res)
         } else if !args.is_empty() {
-            format!("{}({})", name.id, args.generate())    
+            format!("{}({})", name.id, args.generate())
         } else {
             name.id.clone()
         }
     }
 }
 
-impl Generate for Call{
+impl Generate for Call {
     fn generate(&self) -> String {
         let Call { name, args, .. } = self;
         if args.args.is_empty() {
-            return name.id.clone();
-        } else{
+            name.id.clone()
+        } else {
             format!("{}({})", name.id, args.generate())
         }
     }
 }
 
-impl Generate for DotCall{
+impl Generate for DotCall {
     fn generate(&self) -> String {
         let DotCall { exp, name, args, .. } = self;
         let mut result = format!("{}.{}", exp.generate(), name.id);
@@ -216,20 +219,20 @@ impl Generate for DotCall{
     }
 }
 
-impl Generate for Anno{
+impl Generate for Anno {
     fn generate(&self) -> String {
-    let Anno { exp, typ, .. } = self;
-    format!("{}: {}", exp.generate(), typ.generate())
+        let Anno { exp, typ, .. } = self;
+        format!("{}: {}", exp.generate(), typ.generate())
     }
 }
 
-impl Generate for TypeUniv{
+impl Generate for TypeUniv {
     fn generate(&self) -> String {
         "Type".to_string()
     }
 }
 
-impl Generate for LocalMatch{
+impl Generate for LocalMatch {
     fn generate(&self) -> String {
         let LocalMatch { name, on_exp, motive, cases, .. } = self;
         format!(
@@ -242,7 +245,7 @@ impl Generate for LocalMatch{
     }
 }
 
-impl Generate for LocalComatch{
+impl Generate for LocalComatch {
     fn generate(&self) -> String {
         let LocalComatch { name, is_lambda_sugar, cases, .. } = self;
         if *is_lambda_sugar {
@@ -257,76 +260,74 @@ impl Generate for LocalComatch{
     }
 }
 
-impl Generate for Arg{
+impl Generate for Arg {
     fn generate(&self) -> String {
         match self {
-            Arg::NamedArg(var_bound,exp ) 
-            => format!("{}({})",
-                var_bound.id.clone(),
-                exp.generate()),
+            Arg::NamedArg(var_bound, exp) => {
+                format!("{}({})", var_bound.id.clone(), exp.generate())
+            }
             Arg::UnnamedArg(exp) => exp.generate(),
             Arg::InsertedImplicitArg(_) => "Hole".to_string(),
-            
         }
     }
 }
 
-impl Generate for Args{
+impl Generate for Args {
     fn generate(&self) -> String {
         self.args.iter().map(|arg| arg.generate()).collect::<Vec<String>>().join(", ")
     }
 }
 
-impl Generate for Case{
+impl Generate for Case {
     fn generate(&self) -> String {
-    let Case { pattern, body, .. } = self;
+        let Case { pattern, body, .. } = self;
 
-    let body_str = match body {
-        None => "absurd".to_string(),
-        Some(body) => format!("=> {}", body.generate()),
-    };
+        let body_str = match body {
+            None => "absurd".to_string(),
+            Some(body) => format!("=> {}", body.generate()),
+        };
 
-    format!("{} {}", pattern.generate(), body_str)
+        format!("{} {}", pattern.generate(), body_str)
     }
 }
 
-impl Generate for Pattern{
+impl Generate for Pattern {
     fn generate(&self) -> String {
         let Pattern { is_copattern, name, params } = self;
         let copattern = if *is_copattern { "." } else { "" };
         if params.is_empty() {
-            return format!("{}{}", copattern, name.id);
+            format!("{}{}", copattern, name.id)
         } else {
             format!("{}{}({})", copattern, name.id, params.generate())
         }
     }
 }
 
-impl Generate for TelescopeInst{
+impl Generate for TelescopeInst {
     fn generate(&self) -> String {
         let TelescopeInst { params } = self;
-        let params = params.iter().map(|value| value.generate()).collect::<Vec<String>>().join(", ");
-        format!("{}", params)
+        let params =
+            params.iter().map(|value| value.generate()).collect::<Vec<String>>().join(", ");
+        params.to_string()
     }
 }
 
-impl Generate for ParamInst{
+impl Generate for ParamInst {
     fn generate(&self) -> String {
         let ParamInst { span: _, info: _, name, typ: _ } = self;
         name.id.clone()
     }
 }
 
-impl Generate for Motive{
+impl Generate for Motive {
     fn generate(&self) -> String {
         let Motive { param, ret_typ, .. } = self;
         format!("{} => {}", param.generate(), ret_typ.generate())
     }
 }
 
-impl Generate for Hole{
+impl Generate for Hole {
     fn generate(&self) -> String {
         "_".to_string()
     }
 }
-
