@@ -1,13 +1,13 @@
 -- We can define the data type Bool with constructors T and F.
 data Bool { T, F }
 
--- We can define the not operator by case distinction.
+-- We can define `not`, which negates a boolean value, by case distinction.
 def Bool.not: Bool {
     T => F,
     F => T
 }
 
--- We can define the if_then_else operation.
+-- We can define the if_then_else observation. This example also illustrates how to use the `Type` universe to introduce the type variable `a`. 
 def Bool.if_then_else(a: Type, then else: a): a {
     T => then,
     F => else
@@ -44,7 +44,7 @@ data Vec(n: Nat) {
 -- once again, a Stream.
 codata Stream { .head: Nat, .tail: Stream }
 
--- Since polarity does not have a function type. Instead, we have to use codata
+-- Polarity does not have a builtin function type; instead, we have to use codata
 -- types to build it ourselves. This specific one is specialised to Nats.
 codata NatToNat { .ap(x: Nat): Nat }
 
