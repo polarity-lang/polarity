@@ -1,5 +1,5 @@
-use ast::{Codata, Codef, Data, Decl, Def, Let, Module,};
 use askama::Template;
+use ast::{Codata, Codef, Data, Decl, Def, Let, Module};
 
 use crate::generate::Generate;
 pub trait GenerateDocs {
@@ -8,10 +8,7 @@ pub trait GenerateDocs {
 
 impl GenerateDocs for Module {
     fn generate_docs(&self) -> String {
-        self.decls.iter()
-            .map(|decl| decl.generate_docs())
-            .collect::<Vec<_>>()
-            .join("<br>")
+        self.decls.iter().map(|decl| decl.generate_docs()).collect::<Vec<_>>().join("<br>")
     }
 }
 
@@ -35,19 +32,9 @@ impl GenerateDocs for Data {
         let attr: String = attr.generate();
         let typ: String = typ.generate();
 
-        let body = if ctors.is_empty() {
-            "{}".to_string()
-        } else {
-            ctors.generate()
-        };
+        let body = if ctors.is_empty() { "{}".to_string() } else { ctors.generate() };
 
-        let data = DataTemplate {
-            doc: &doc,
-            name: &name,
-            attr: &attr,
-            typ: &typ,
-            body: &body,
-        };
+        let data = DataTemplate { doc: &doc, name, attr: &attr, typ: &typ, body: &body };
         data.render().unwrap()
     }
 }
@@ -61,19 +48,9 @@ impl GenerateDocs for Codata {
         let attr: String = attr.generate();
         let typ: String = typ.generate();
 
-        let body = if dtors.is_empty() {
-            "{}".to_string()
-        } else {
-            dtors.generate()
-        };
+        let body = if dtors.is_empty() { "{}".to_string() } else { dtors.generate() };
 
-        let codata = CodataTemplate {
-            doc: &doc,
-            name: &name,
-            attr: &attr,
-            typ: &typ,
-            body: &body,
-        };
+        let codata = CodataTemplate { doc: &doc, name, attr: &attr, typ: &typ, body: &body };
         codata.render().unwrap()
     }
 }
@@ -89,16 +66,12 @@ impl GenerateDocs for Def {
         let ret_typ: String = ret_typ.generate();
         let cases: String = cases.generate();
 
-        let body = if cases.is_empty() {
-            "{}".to_string()
-        } else {
-            cases
-        };
+        let body = if cases.is_empty() { "{}".to_string() } else { cases };
 
         let def = DefTemplate {
             doc: &doc,
             self_param: &self_param,
-            name: &name,
+            name,
             params: &params,
             typ: &ret_typ,
             body: &body,
@@ -117,19 +90,9 @@ impl GenerateDocs for Codef {
         let typ: String = typ.generate();
         let cases: String = cases.generate();
 
-        let body = if cases.is_empty() {
-            "{}".to_string()
-        } else {
-            cases
-        };
+        let body = if cases.is_empty() { "{}".to_string() } else { cases };
 
-        let codef = CodefTemplate {
-            doc: &doc,
-            name: &name,
-            params: &params,
-            typ: &typ,
-            body: &body,
-        };
+        let codef = CodefTemplate { doc: &doc, name, params: &params, typ: &typ, body: &body };
         codef.render().unwrap()
     }
 }
@@ -144,14 +107,7 @@ impl GenerateDocs for Let {
         let typ: String = typ.generate();
         let body: String = body.generate();
 
-        let let_template = LetTemplate {
-            doc: &doc,
-            self_param: "",
-            name: &name,
-            params: &params,
-            typ: &typ,
-            body: &body,
-        };
+        let let_template = LetTemplate { doc: &doc, name, params: &params, typ: &typ, body: &body };
         let_template.render().unwrap()
     }
 }
@@ -201,14 +157,8 @@ struct CodefTemplate<'a> {
 #[template(path = "let.html", escape = "none")]
 struct LetTemplate<'a> {
     pub doc: &'a str,
-    pub self_param: &'a str,
     pub name: &'a str,
     pub params: &'a str,
     pub typ: &'a str,
     pub body: &'a str,
 }
-
-
-
-
-
