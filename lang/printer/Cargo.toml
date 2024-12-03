@@ -13,3 +13,4 @@ categories.workspace = true
 
 [dependencies]
 pretty = { workspace = true }
+askama_escape = "0.10.3"

@@ -11,6 +11,7 @@ categories.workspace = true
 
 [dependencies]
 opener = "0.5"
+askama = "0.12.1"
 
 # workspace members
 ast = { path = "../ast" }
