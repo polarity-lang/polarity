@@ -32,22 +32,6 @@ h1 {
     font-weight: bold;
 }
 
-.type{
-    color: #8be9fd;
-}
-
-.dtor {
-    color: #ff5555;
-}
-
-.ctor {
-    color: #ff79c6;
-}
-
-.string {
-    color: #f1fa8c;
-}
-
 .comment {
     color: #6272a4;
     font-style: italic;
