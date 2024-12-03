@@ -197,7 +197,11 @@ impl Generate for TypCtor{
 impl Generate for Call{
     fn generate(&self) -> String {
         let Call { name, args, .. } = self;
-        format!("{}{}", name.id, args.generate())
+        if args.args.is_empty() {
+            return name.id.clone();
+        } else{
+            format!("{}({})", name.id, args.generate())
+        }
     }
 }
 
@@ -286,19 +290,23 @@ impl Generate for Case{
     }
 }
 
-
 impl Generate for Pattern{
     fn generate(&self) -> String {
         let Pattern { is_copattern, name, params } = self;
-        let copattern = if *is_copattern { "co" } else { "" };
-        format!("{}{} {}", copattern, name.id, params.generate())
+        let copattern = if *is_copattern { "." } else { "" };
+        if params.is_empty() {
+            return format!("{}{}", copattern, name.id);
+        } else {
+            format!("{}{}({})", copattern, name.id, params.generate())
+        }
     }
 }
 
 impl Generate for TelescopeInst{
     fn generate(&self) -> String {
         let TelescopeInst { params } = self;
-        format!("{}", params.generate())
+        let params = params.iter().map(|value| value.generate()).collect::<Vec<String>>().join(", ");
+        format!("{}", params)
     }
 }
 
