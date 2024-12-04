@@ -84,9 +84,9 @@ impl CheckInfer for LocalMatch {
             }
         };
 
-        let ws = WithScrutinee { cases, scrutinee: typ_app_nf.clone() };
-        ws.check_exhaustiveness(ctx)?;
-        let cases = ws.check_ws(ctx, &body_t)?;
+        let with_scrutinee_type = WithScrutineeType { cases, scrutinee_type: typ_app_nf.clone() };
+        with_scrutinee_type.check_exhaustiveness(ctx)?;
+        let cases = with_scrutinee_type.check_type(ctx, &body_t)?;
 
         Ok(LocalMatch {
             span: *span,
@@ -105,19 +105,19 @@ impl CheckInfer for LocalMatch {
     }
 }
 
-pub struct WithScrutinee<'a> {
+pub struct WithScrutineeType<'a> {
     pub cases: &'a Vec<Case>,
-    pub scrutinee: TypCtor,
+    pub scrutinee_type: TypCtor,
 }
 
 /// Check a pattern match
-impl WithScrutinee<'_> {
+impl WithScrutineeType<'_> {
     /// Check whether the pattern match contains exactly one clause for every
     /// constructor declared in the data type declaration.
     pub fn check_exhaustiveness(&self, ctx: &mut Ctx) -> Result<(), TypeError> {
-        let WithScrutinee { cases, .. } = &self;
+        let WithScrutineeType { cases, .. } = &self;
         // Check that this match is on a data type
-        let data = ctx.type_info_table.lookup_data(&self.scrutinee.name)?;
+        let data = ctx.type_info_table.lookup_data(&self.scrutinee_type.name)?;
 
         // Check exhaustiveness
         let ctors_expected: HashSet<_> =
@@ -142,29 +142,42 @@ impl WithScrutinee<'_> {
                 ctors_missing.map(|i| &i.id).cloned().collect(),
                 ctors_undeclared.map(|i| &i.id).cloned().collect(),
                 ctors_duplicate.into_iter().map(|i| i.id).collect(),
-                &self.scrutinee.span(),
+                &self.scrutinee_type.span(),
             ));
         }
         Ok(())
     }
 
-    pub fn check_ws(&self, ctx: &mut Ctx, t: &Exp) -> Result<Vec<Case>, TypeError> {
-        let WithScrutinee { cases, .. } = &self;
+    /// Typecheck the pattern match cases
+    pub fn check_type(&self, ctx: &mut Ctx, t: &Exp) -> Result<Vec<Case>, TypeError> {
+        let WithScrutineeType { cases, .. } = &self;
 
         let cases: Vec<_> = cases.to_vec();
         let mut cases_out = Vec::new();
 
         for case in cases {
             let Case { span, pattern: Pattern { name, params: args, .. }, body } = case;
-            // Build equations for this case
             let CtorMeta { typ: TypCtor { args: def_args, .. }, params, .. } =
                 ctx.type_info_table.lookup_ctor(&name)?;
+            let TypCtor { args: on_args, .. } = &self.scrutinee_type;
+            // We are in the following situation:
+            //
+            // data T(...) {  C(...): T(...), ...}
+            //                ^ ^^^     ^^^^
+            //                |  |        \-------------------------- def_args
+            //                |  \----------------------------------- params
+            //                \-------------------------------------- name
+            //
+            // (... : T(...)).match as self => t { C(...) => e, ...}
+            //          ^^^                          ^^^     ^
+            //           |                            |      \------- body
+            //           |                            \-------------- args
+            //           \------------------------------------------- scrutinee_type
 
             let def_args_nf = LevelCtx::empty().bind_iter(params.params.iter(), |ctx_| {
                 def_args.normalize(&ctx.type_info_table, &mut ctx_.env())
             })?;
 
-            let TypCtor { args: on_args, .. } = &self.scrutinee;
             let on_args = shift_and_clone(on_args, (1, 0)); // FIXME: where to shift this
 
             // Check the case given the equations
