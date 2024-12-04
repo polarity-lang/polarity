@@ -1,0 +1,12 @@
+use "../../../std/data/eq.pol"
+use "../../../std/data/bool.pol"
+use "../../../std/codata/fun.pol"
+
+#[transparent]
+let foo : Fun(Bool, Bool)  {
+    \x. x
+}
+
+let proof: Eq(Fun(Bool, Bool), foo, foo) {
+    Refl(Fun(Bool,Bool), foo)
+}

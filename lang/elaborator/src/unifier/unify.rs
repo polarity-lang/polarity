@@ -237,6 +237,10 @@ impl Ctx {
                     lhs: Box::new(lhs.clone()),
                     rhs: exp.clone(),
                 }),
+                (
+                    Exp::LocalComatch(LocalComatch { name: name_lhs, .. }),
+                    Exp::LocalComatch(LocalComatch { name: name_rhs, .. }),
+                ) if name_lhs == name_rhs => Ok(Yes(())),
                 (_, _) => Err(TypeError::cannot_decide(lhs, rhs, while_elaborating_span)),
             },
             Constraint::EqualityArgs { lhs, rhs } => {
