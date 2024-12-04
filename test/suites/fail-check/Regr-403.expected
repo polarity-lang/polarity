@@ -4,7 +4,7 @@ T-002
   │   1: Eq(Bool -> Bool, \x. T, \x. T)
   │   2: Eq(Bool -> Bool, \x. T, \x. F)
   │ 
-    ╭─[Regr-403.pol:5:1]
+    ╭─[Regr-403.pol:6:13]
   5 │ #[transparent]
   6 │ let foo(y: Bool) : Fun(Bool, Bool)  {
     ·             ─────┬─────

@@ -1,7 +1,7 @@
 L-011
 
   × Mismatched named arguments: given x, expected head
-    ╭─[L-011-ctor.pol:8:1]
+    ╭─[L-011-ctor.pol:9:15]
   8 │ let example1: List {
   9 │     Cons(x := True, xs := Nil)
     ·               ────

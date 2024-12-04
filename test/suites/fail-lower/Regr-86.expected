@@ -1,7 +1,7 @@
 L-009
 
   × Expected a type constructor
-   ╭─[Regr-86.pol:6:1]
+   ╭─[Regr-86.pol:7:5]
  6 │ 
  7 │ def MkUnit.test : Unit -> Unit {
    ·     ──────

@@ -1,7 +1,7 @@
 L-005
 
   × Arguments to type constructor List must be provided for Cons
-   ╭─[L-005.pol:2:1]
+   ╭─[L-005.pol:3:5]
  2 │     Nil(a : Type) : List(a), 
  3 │     Cons(a : Type, x : a, xs : List(a)) 
    ·     ───────────────────────────────────

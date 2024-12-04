@@ -28,7 +28,7 @@ categories = ["compilers"]
 
 [workspace.dependencies]
 # fancy error messages
-miette = { version = "5" }
+miette = { version = "7" }
 thiserror = { version = "1" }
 # source code locations
 codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149" }

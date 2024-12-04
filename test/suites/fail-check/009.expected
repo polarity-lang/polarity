@@ -1,7 +1,7 @@
 T-016
 
   × Cannot automatically decide whether Type and Foo unify
-   ╭─[009.pol:1:1]
+   ╭─[009.pol:2:15]
  1 │ data Foo { }
  2 │ codata Bar(n: Foo) { }
    ·               ───

@@ -32,7 +32,7 @@ impl ToMiette for codespan::Span {
 
     fn to_miette(self) -> Self::Target {
         let length = self.end() - self.start();
-        miette::SourceSpan::new(self.start().to_miette(), length.to_miette())
+        miette::SourceSpan::new(self.start().to_miette(), length.to_usize())
     }
 }
 

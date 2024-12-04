@@ -4,14 +4,14 @@ T-002
   │   1: Eq(Nat, S(S(Z)), S(S(Z)))
   │   2: Eq(Nat, S(S(Z)), opaqueTwo)
   │ 
-   ╭─[005.pol:3:1]
+   ╭─[005.pol:4:26]
  3 │ data Eq(a: Type, x y: a) {
  4 │     Refl(a: Type, x: a): Eq(a, x, x)
    ·                          ─────┬─────
    ·                               ╰── Source of (1)
  5 │ }
    ╰────
-    ╭─[005.pol:10:1]
+    ╭─[005.pol:11:9]
  10 │ -- | This proof typechecks
  11 │ let p2: Eq(Nat, S(S(Z)), opaqueTwo) {Refl(Nat, S(S(Z)))}
     ·         ─────────────┬─────────────  ─────────┬────────

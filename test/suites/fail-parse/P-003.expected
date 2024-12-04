@@ -1,6 +1,6 @@
 P-002
 
   × Unexpected end of file. Expected "(", ")", ",", "->", ".", ":", ":=", "=>", "Identifier", "_", "absurd", "as", "{", "}"
-   ╭─[P-003.pol:1:1]
+   ╭─[P-003.pol:1:9]
  1 │ data foo
    ╰────

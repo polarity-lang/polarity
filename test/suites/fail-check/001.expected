@@ -4,7 +4,7 @@ T-002
   │   1: a
   │   2: b
   │ 
-   ╭─[001.pol:5:1]
+   ╭─[001.pol:6:21]
  5 │ codef ConvertAny(a: Type, b: Type): Fun(a, b) {
  6 │     .ap(a, b, x) => x
    ·                     ┬

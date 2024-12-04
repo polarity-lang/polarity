@@ -1,7 +1,7 @@
 L-012
 
   × Used named argument wrong for wildcard parameter
-   ╭─[L-012.pol:2:1]
+   ╭─[L-012.pol:3:13]
  2 │ 
  3 │ data Option(_: Type) {
    ·             ─
