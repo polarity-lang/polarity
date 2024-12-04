@@ -31,10 +31,11 @@ impl CheckInfer for LocalComatch {
             });
         }
 
-        let wd = WithExpectedType { cases, label: None, expected_type: expected_type_app.clone() };
+        let with_expected_type =
+            WithExpectedType { cases, label: None, expected_type: expected_type_app.clone() };
 
-        wd.check_exhaustiveness(ctx)?;
-        let cases = wd.infer_wd(ctx)?;
+        with_expected_type.check_exhaustiveness(ctx)?;
+        let cases = with_expected_type.check_type(ctx)?;
 
         Ok(LocalComatch {
             span: *span,
@@ -101,7 +102,8 @@ impl WithExpectedType<'_> {
         Ok(())
     }
 
-    pub fn infer_wd(&self, ctx: &mut Ctx) -> Result<Vec<Case>, TypeError> {
+    /// Type-check the comatch
+    pub fn check_type(&self, ctx: &mut Ctx) -> Result<Vec<Case>, TypeError> {
         let WithExpectedType { cases, expected_type, label } = &self;
         let TypCtor { args: on_args, .. } = expected_type;
 
@@ -256,7 +258,7 @@ impl WithExpectedType<'_> {
                                     //              |  \------------------------------------- params_inst
                                     //              \---------------------------------------- name
                                     //
-                                    // Note that t is tyed under the following context:
+                                    // Note that t is typed under the following context:
                                     // Ξ;self |- t : Type
                                     // We want to perform the following substitution:
                                     // Δ;Ξ |- [C id_Δ / self]t : Type
