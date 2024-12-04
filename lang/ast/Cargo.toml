@@ -13,7 +13,7 @@ categories.workspace = true
 
 [dependencies]
 # fancy error messages
-miette = "7"
+miette = { workspace = true }
 thiserror = "1"
 # url (for file locations)
 url = "2.5.0"
