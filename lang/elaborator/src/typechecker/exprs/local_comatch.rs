@@ -258,7 +258,7 @@ impl WithExpectedType<'_> {
                                     //              |  \------------------------------------- params_inst
                                     //              \---------------------------------------- name
                                     //
-                                    // Note that t is tyed under the following context:
+                                    // Note that t is typed under the following context:
                                     // Ξ;self |- t : Type
                                     // We want to perform the following substitution:
                                     // Δ;Ξ |- [C id_Δ / self]t : Type
