@@ -129,10 +129,8 @@ impl BuildMatrix for ast::Codata {
 impl BuildMatrix for ast::Def {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.self_param.typ.name;
-        let xdata = out.map.get_mut(&type_name.id).ok_or(XfuncError::Impossible {
-            message: format!("Could not resolve {type_name}"),
-            span: None,
-        })?;
+        // Only add to the matrix if the type is declared in this module
+        let Some(xdata) = out.map.get_mut(&type_name.id) else { return Ok(()) };
         xdata.dtors.insert(self.name.id.clone(), self.to_dtor());
 
         let cases = &self.cases;
@@ -149,10 +147,10 @@ impl BuildMatrix for ast::Def {
 impl BuildMatrix for ast::Codef {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.typ.name;
-        let xdata = out.map.get_mut(&type_name.id).ok_or(XfuncError::Impossible {
-            message: format!("Could not resolve {type_name}"),
-            span: None,
-        })?;
+        // Only add to the matrix if the type is declared in this module
+        let Some(xdata) = out.map.get_mut(&type_name.id) else {
+            return Ok(());
+        };
         xdata.ctors.insert(self.name.id.clone(), self.to_ctor());
 
         let cases = &self.cases;

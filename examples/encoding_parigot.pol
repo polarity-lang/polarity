@@ -1,6 +1,14 @@
-codata Fun(A B: Type) {
-    Fun(A, B).ap(A B: Type, x: A): B
-}
+use "../std/codata/fun.pol"
+-- The Parigot encoding combines the properties of the Church encoding and the Scott
+-- encoding.
+--
+-- The method "analyze" is the combination of the methods "iter" from the Church encoding
+-- and the method "case" from the Scott encoding. We have access to both the predecessor
+-- number itself and to the result of the recursive call.
+--
+-- By defunctionalizing and refunctionalizing the type "Nat" you can observe how
+-- the Parigot encoding can be understood as the refunctionalized version of Peano natural
+-- numbers which implement a "analyze" method.
 
 codata Nat { .analyze(A: Type, z: A, s: Nat -> A -> A): A }
 
