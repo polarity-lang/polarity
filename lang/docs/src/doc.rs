@@ -1,12 +1,17 @@
 use std::fs;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
+use std::path::{Path, PathBuf};
 
+use askama::Template;
 use askama::Template;
 use opener;
 
 use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH};
+use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH};
 use driver::Database;
+
+use crate::generate_docs::GenerateDocs;
 
 use crate::generate_docs::GenerateDocs;
 
@@ -35,6 +40,16 @@ pub fn open(filepath: &PathBuf) {
     opener::open(&absolute_path).unwrap();
 }
 
+#[derive(Template)]
+#[template(path = "module.html", escape = "none")]
+struct ModuleTemplate<'a> {
+    title: &'a str,
+    code: &'a str,
+}
+
+fn generate_html(title: &str, code: &str) -> String {
+    let template = ModuleTemplate { title, code };
+    template.render().unwrap()
 #[derive(Template)]
 #[template(path = "module.html", escape = "none")]
 struct ModuleTemplate<'a> {
