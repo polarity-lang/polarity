@@ -6,7 +6,7 @@ use ast::*;
 use super::CheckToplevel;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
-use crate::typechecker::exprs::local_match::WithScrutinee;
+use crate::typechecker::exprs::local_match::WithScrutineeType;
 use crate::typechecker::{
     ctx::Ctx,
     exprs::{CheckInfer, InferTelescope},
@@ -31,9 +31,11 @@ impl CheckToplevel for Def {
                     Ok((ret_typ_out, ret_typ_nf, self_param_out))
                 })?;
 
-            let ws = WithScrutinee { cases, scrutinee: self_param_nf.expect_typ_app()? };
-            ws.check_exhaustiveness(ctx)?;
-            let cases = ws.check_ws(ctx, &ret_typ_nf)?;
+            let with_scrutinee_type =
+                WithScrutineeType { cases, scrutinee_type: self_param_nf.expect_typ_app()? };
+            with_scrutinee_type.check_exhaustiveness(ctx)?;
+            let cases = with_scrutinee_type.check_type(ctx, &ret_typ_nf)?;
+
             Ok(Def {
                 span: *span,
                 doc: doc.clone(),

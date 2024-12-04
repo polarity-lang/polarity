@@ -29,14 +29,14 @@ impl CheckToplevel for Codef {
         params.infer_telescope(ctx, |ctx, params_out| {
             let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
             let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
-            let wd = WithExpectedType {
+            let with_expected_type = WithExpectedType {
                 cases,
                 label: Some((label, params.len())),
                 expected_type: typ_nf.expect_typ_app()?,
             };
 
-            wd.check_exhaustiveness(ctx)?;
-            let cases = wd.infer_wd(ctx)?;
+            with_expected_type.check_exhaustiveness(ctx)?;
+            let cases = with_expected_type.check_type(ctx)?;
 
             Ok(Codef {
                 span: *span,

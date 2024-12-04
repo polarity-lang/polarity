@@ -84,9 +84,9 @@ impl CheckInfer for LocalMatch {
             }
         };
 
-        let ws = WithScrutinee { cases, scrutinee: typ_app_nf.clone() };
-        ws.check_exhaustiveness(ctx)?;
-        let cases = ws.check_ws(ctx, &body_t)?;
+        let with_scrutinee_type = WithScrutineeType { cases, scrutinee_type: typ_app_nf.clone() };
+        with_scrutinee_type.check_exhaustiveness(ctx)?;
+        let cases = with_scrutinee_type.check_type(ctx, &body_t)?;
 
         Ok(LocalMatch {
             span: *span,
@@ -105,19 +105,19 @@ impl CheckInfer for LocalMatch {
     }
 }
 
-pub struct WithScrutinee<'a> {
+pub struct WithScrutineeType<'a> {
     pub cases: &'a Vec<Case>,
-    pub scrutinee: TypCtor,
+    pub scrutinee_type: TypCtor,
 }
 
 /// Check a pattern match
-impl WithScrutinee<'_> {
+impl WithScrutineeType<'_> {
     /// Check whether the pattern match contains exactly one clause for every
     /// constructor declared in the data type declaration.
     pub fn check_exhaustiveness(&self, ctx: &mut Ctx) -> Result<(), TypeError> {
-        let WithScrutinee { cases, .. } = &self;
+        let WithScrutineeType { cases, .. } = &self;
         // Check that this match is on a data type
-        let data = ctx.type_info_table.lookup_data(&self.scrutinee.name)?;
+        let data = ctx.type_info_table.lookup_data(&self.scrutinee_type.name)?;
 
         // Check exhaustiveness
         let ctors_expected: HashSet<_> =
@@ -142,33 +142,59 @@ impl WithScrutinee<'_> {
                 ctors_missing.map(|i| &i.id).cloned().collect(),
                 ctors_undeclared.map(|i| &i.id).cloned().collect(),
                 ctors_duplicate.into_iter().map(|i| i.id).collect(),
-                &self.scrutinee.span(),
+                &self.scrutinee_type.span(),
             ));
         }
         Ok(())
     }
 
-    pub fn check_ws(&self, ctx: &mut Ctx, t: &Exp) -> Result<Vec<Case>, TypeError> {
-        let WithScrutinee { cases, .. } = &self;
+    /// Typecheck the pattern match cases
+    pub fn check_type(&self, ctx: &mut Ctx, t: &Exp) -> Result<Vec<Case>, TypeError> {
+        let WithScrutineeType { cases, .. } = &self;
 
         let cases: Vec<_> = cases.to_vec();
         let mut cases_out = Vec::new();
 
         for case in cases {
             let Case { span, pattern: Pattern { name, params: args, .. }, body } = case;
-            // Build equations for this case
             let CtorMeta { typ: TypCtor { args: def_args, .. }, params, .. } =
                 ctx.type_info_table.lookup_ctor(&name)?;
+            let TypCtor { args: on_args, .. } = &self.scrutinee_type;
+            // We are in the following situation:
+            //
+            // data T(...) {  C(...): T(...), ...}
+            //                ^ ^^^     ^^^^
+            //                |  |        \-------------------------- def_args
+            //                |  \----------------------------------- params
+            //                \-------------------------------------- name
+            //
+            // (... : T(...)).match as self => t { C(...) => e, ...}
+            //          ^^^                          ^^^     ^
+            //           |                            |      \------- body
+            //           |                            \-------------- args
+            //           \------------------------------------------- on_args
 
+            // Normalize the arguments of the constructor type.
+            // They will later be unified with the arguments of the scrutinee type.
             let def_args_nf = LevelCtx::empty().bind_iter(params.params.iter(), |ctx_| {
                 def_args.normalize(&ctx.type_info_table, &mut ctx_.env())
             })?;
 
-            let TypCtor { args: on_args, .. } = &self.scrutinee;
-            let on_args = shift_and_clone(on_args, (1, 0)); // FIXME: where to shift this
-
-            // Check the case given the equations
-            // FIXME: Refactor this
+            // To check each individual case, we need to substitute the constructor for the self parameter
+            // in the return type of the match t.
+            // Recall that we are in the following situation:
+            //
+            // (... : T(...)).match as self => t { C(Ξ) => e, ...}
+            //
+            // Initally, t is defined under the context [self: T(...)].
+            // Checking the body of the case against t must happen under the context Ξ.
+            // Hence, to substitute the constructor for the self parameter within the body of the case,
+            // we will do the following:
+            //
+            // * Extend the context with the pattern arguments: [self: T(...), Ξ]
+            // * Swap the levels such that t has context [Ξ, self: T(...)]
+            // * Substitute C(Ξ) for self
+            // * Shift t by one level such that we end up with the context Ξ
             let mut subst_ctx_1 = ctx.levels().append(&vec![1, params.len()].into());
             let mut subst_ctx_2 = ctx.levels().append(&vec![params.len(), 1].into());
             let curr_lvl = subst_ctx_2.len() - 1;
@@ -182,6 +208,8 @@ impl WithScrutinee<'_> {
                 &params,
                 |ctx, args_out| {
                     // Substitute the constructor for the self parameter
+                    //
+                    //
                     let args = (0..params.len())
                         .rev()
                         .map(|snd| {
@@ -201,8 +229,6 @@ impl WithScrutinee<'_> {
                         inferred_type: None,
                     }));
                     let subst = Assign { lvl: Lvl { fst: curr_lvl, snd: 0 }, exp: ctor };
-
-                    // FIXME: Refactor this
                     let mut t = t.clone();
                     t.shift((1, 0));
                     let mut t = t
@@ -210,11 +236,25 @@ impl WithScrutinee<'_> {
                         .subst(&mut subst_ctx_2, &subst);
                     t.shift((-1, 0));
 
+                    // We have to check whether we have an absurd case or an ordinary case.
+                    // To do this we have solve the following unification problem:
+                    //
+                    //               T(...) =? T(...)
+                    //                 ^^^       ^^^
+                    //                  |         \----------------------- on_args
+                    //                  \--------------------------------- def_args
+                    //
+                    // Recall that while def_args depends on the parameters of the constructor,
+                    // on_args does not. Hence, we need to shift on_args by one telescope level s.t.
+                    // the lhs and rhs of the unification constraint have the same context.
+                    let on_args = shift_and_clone(on_args, (1, 0));
                     let constraint =
                         Constraint::EqualityArgs { lhs: Args { args: def_args_nf }, rhs: on_args };
 
                     let body_out = match body {
                         Some(body) => {
+                            // The programmer wrote a non-absurd case. We therefore have to check
+                            // that the unification succeeds.
                             let unif =
                                 unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, &span)?
                                     .map_no(|()| TypeError::PatternIsAbsurd {
@@ -238,6 +278,9 @@ impl WithScrutinee<'_> {
                             })?
                         }
                         None => {
+                            // The programmer wrote an absurd case. We therefore have to check whether
+                            // this case is really absurd. To do this, we verify that the unification
+                            // actually fails.
                             unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, &span)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                     name: Box::new(name.clone()),
