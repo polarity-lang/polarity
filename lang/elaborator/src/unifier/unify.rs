@@ -241,13 +241,14 @@ impl Ctx {
                     Exp::LocalComatch(LocalComatch { name: name_lhs, cases: cases_lhs, .. }),
                     Exp::LocalComatch(LocalComatch { name: name_rhs, cases: cases_rhs, .. }),
                 ) if name_lhs == name_rhs => {
-                    let new_eqns = cases_by_xtors(cases_lhs, cases_rhs).filter_map(|(lhs, rhs)| {
-                        if let (Some(lhs), Some(rhs)) = (lhs.body, rhs.body) {
-                            Some(Constraint::Equality { lhs, rhs })
-                        } else {
-                            None
-                        }
-                    });
+                    let new_eqns =
+                        zip_cases_by_xtors(cases_lhs, cases_rhs).filter_map(|(lhs, rhs)| {
+                            if let (Some(lhs), Some(rhs)) = (lhs.body, rhs.body) {
+                                Some(Constraint::Equality { lhs, rhs })
+                            } else {
+                                None
+                            }
+                        });
                     self.add_constraints(new_eqns)
                 }
                 (_, _) => Err(TypeError::cannot_decide(lhs, rhs, while_elaborating_span)),
@@ -343,7 +344,10 @@ impl Print for Unificator {
     }
 }
 
-fn cases_by_xtors(cases_lhs: &[Case], cases_rhs: &[Case]) -> impl Iterator<Item = (Case, Case)> {
+fn zip_cases_by_xtors(
+    cases_lhs: &[Case],
+    cases_rhs: &[Case],
+) -> impl Iterator<Item = (Case, Case)> {
     assert_eq!(cases_lhs.len(), cases_rhs.len());
 
     let mut cases = vec![];
