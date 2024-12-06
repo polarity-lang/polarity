@@ -42,6 +42,3 @@ docs = { path = "../lang/docs" }
 [dev-dependencies]
 # For testing the binary
 assert_cmd = "2.0.14"
-
-[dependencies]
-askama = "0.12.1"
