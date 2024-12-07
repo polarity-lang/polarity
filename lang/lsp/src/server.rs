@@ -33,6 +33,8 @@ impl LanguageServer for Server {
         let capabilities = capabilities();
         #[cfg(not(target_arch = "wasm32"))]
         // FIXME: Use `workspace_folders` instead of `root_uri`.
+        // `root_uri` is deprecated in in favor of `workspace_folders`, see:
+        // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initialize
         #[allow(deprecated)]
         if let Some(root_uri) = params.root_uri {
             let root_path =
