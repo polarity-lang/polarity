@@ -1,152 +1,232 @@
-import debounce from "debounce";
-import * as monaco from "monaco-editor-core";
-import { MonacoToProtocolConverter, PublishDiagnosticsParams } from "monaco-languageclient";
+import * as vscode from "vscode";
 import * as proto from "vscode-languageserver-protocol";
+import { createConverter as createCodeConverter } from "vscode-languageclient/lib/common/codeConverter.js";
+import { createConverter as createProtocolConverter } from "vscode-languageclient/lib/common/protocolConverter.js";
+
+import getKeybindingsServiceOverride from "@codingame/monaco-vscode-keybindings-service-override";
+import "@codingame/monaco-vscode-theme-defaults-default-extension";
+import {
+  RegisteredFileSystemProvider,
+  registerFileSystemOverlay,
+  RegisteredMemoryFile,
+} from "@codingame/monaco-vscode-files-service-override";
+
+import { WrapperConfig, MonacoEditorLanguageClientWrapper } from "monaco-editor-wrapper";
 
 import Client from "./client";
-import { FromServer, IntoServer } from "./codec";
-import Language, { protocolToMonaco } from "./language";
 import Server from "./server";
+import { configureMonacoWorkers } from "./workers";
+import { FromServer, IntoServer } from "./codec";
+import Language from "./language";
 
-class Environment implements monaco.Environment {
-  getWorkerUrl(moduleId: string, label: string) {
-    if (label === "editorWorkerService") {
-      const path = parentPath(location.pathname);
-      return `${path}editor.worker.bundle.js`;
-    }
-    throw new Error(`getWorkerUrl: unexpected ${JSON.stringify({ moduleId, label })}`);
-  }
-}
+import polarityLanguageConfig from "./language-configuration.json?raw";
+import polarityTextmateGrammar from "./pol.tmLanguage.json?raw";
 
-const monacoToProtocol = new MonacoToProtocolConverter(monaco);
+const code2Protocol = createCodeConverter();
+const protocol2Code = createProtocolConverter(undefined, true, true);
 
 export default class App {
-  readonly #window: Window & monaco.Window & typeof globalThis = self;
+  private diagnosticCollection: vscode.DiagnosticCollection | undefined;
+  private client: Client | undefined;
+  private currentDocument: vscode.TextDocument | undefined;
+  private wrapper: MonacoEditorLanguageClientWrapper | undefined;
+  private fileSystemProvider: RegisteredFileSystemProvider | undefined;
+  private inMemoryFile: RegisteredMemoryFile | undefined;
+  private inMemoryFileUri: vscode.Uri;
+  private language: Language | undefined;
 
-  readonly #intoServer: IntoServer = new IntoServer();
-  readonly #fromServer: FromServer = FromServer.create();
-
-  initializeMonaco(): void {
-    this.#window.MonacoEnvironment = new Environment();
+  constructor() {
+    this.inMemoryFileUri = vscode.Uri.file("/examples/demo.pol");
   }
 
-  createModel(client: Client): monaco.editor.ITextModel {
-    const language = Language.initialize(client);
+  async createEditor(client: Client): Promise<void> {
+    this.client = client;
 
-    const id = language.id;
-    const uri = monaco.Uri.parse("inmemory:///examples/demo.pol");
-
-    const model = monaco.editor.createModel("", id, uri);
-
-    model.onDidChangeContent(
-      debounce(() => {
-        const text = model.getValue();
-        client.notify(proto.DidChangeTextDocumentNotification.type.method, {
-          textDocument: {
-            version: 0,
-            uri: model.uri.toString(),
-          },
-          contentChanges: [
-            {
-              range: monacoToProtocol.asRange(model.getFullModelRange()),
-              text,
-            },
-          ],
-        } as proto.DidChangeTextDocumentParams);
-      }, 200),
-    );
-
-    // eslint-disable-next-line @typescript-eslint/require-await
-    client.pushAfterInitializeHook(async () => {
-      client.notify(proto.DidOpenTextDocumentNotification.type.method, {
-        textDocument: {
-          uri: model.uri.toString(),
-          languageId: language.id,
-          version: 0,
-          text: model.getValue(),
-        },
-      } as proto.DidOpenTextDocumentParams);
-    });
-
-    client.addMethod(proto.PublishDiagnosticsNotification.type.method, (params) => {
-      const { diagnostics } = params as PublishDiagnosticsParams;
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const markers: monaco.editor.IMarkerData[] = protocolToMonaco.asDiagnostics(diagnostics);
-
-      monaco.editor.setModelMarkers(model, language.id, markers);
-    });
-
-    async function handleHashChange() {
-      const filepath = location.hash.slice(1);
-      if (filepath === "") {
-        model.setValue("");
-        return;
-      }
-      const path = parentPath(location.pathname);
-      const url = `${location.protocol}//${location.host}${path}examples/${filepath}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        model.setValue("");
-      } else {
-        const text = await response.text();
-        model.setValue(text);
-      }
+    const htmlContainer = document.getElementById("editor");
+    if (!htmlContainer) {
+      throw new Error("HTML container for Monaco editor not found.");
     }
 
-    addEventListener("hashchange", (event) => {
-      void event;
-      void handleHashChange();
-    });
+    const languageId = "polarity";
+    const extensionFilesOrContents = new Map<string, string | URL>();
+    extensionFilesOrContents.set("/language-configuration.json", JSON.stringify(polarityLanguageConfig));
+    extensionFilesOrContents.set("/syntaxes/pol.tmLanguage.json", JSON.stringify(polarityTextmateGrammar));
 
-    return model;
-  }
-
-  createEditor(client: Client): void {
-    const container = document.getElementById("editor")!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
-    this.initializeMonaco();
-    const model = this.createModel(client);
-    monaco.editor.create(container, {
-      model,
-      automaticLayout: true,
-      scrollBeyondLastLine: false,
-      theme: window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs-light",
-      scrollbar: {
-        // Pass scroll events to parent
-        alwaysConsumeMouseWheel: false,
+    const wrapperConfig: WrapperConfig = {
+      $type: "extended",
+      htmlContainer,
+      logLevel: vscode.LogLevel.Debug,
+      vscodeApiConfig: {
+        serviceOverrides: {
+          ...getKeybindingsServiceOverride(),
+        },
+        userConfiguration: {
+          json: JSON.stringify({
+            "workbench.colorTheme":
+              window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "Default Dark Modern"
+                : "Default Light Modern",
+            "editor.guides.bracketPairsHorizontal": "active",
+            "editor.lightbulb.enabled": "On",
+            "editor.experimental.asyncTokenization": true,
+          }),
+        },
       },
+      extensions: [
+        {
+          config: {
+            name: "polarity",
+            publisher: "polarity-lang",
+            version: "0.0.1",
+            engines: {
+              vscode: "*",
+            },
+            contributes: {
+              languages: [
+                {
+                  id: "polarity",
+                  extensions: [".pol"],
+                  aliases: ["pol"],
+                  configuration: "./language-configuration.json",
+                },
+              ],
+              grammars: [
+                {
+                  language: "polarity",
+                  scopeName: "source.pol",
+                  path: "./syntaxes/pol.tmLanguage.json",
+                },
+              ],
+            },
+          },
+          filesOrContents: extensionFilesOrContents,
+        },
+      ],
+      editorAppConfig: {
+        codeResources: {
+          main: {
+            text: "",
+            uri: this.inMemoryFileUri.toString(),
+            fileExt: "pol",
+          },
+        },
+        monacoWorkerFactory: configureMonacoWorkers,
+      },
+    };
+
+    this.wrapper = new MonacoEditorLanguageClientWrapper();
+    await this.wrapper.init(wrapperConfig);
+    await this.wrapper.start();
+
+    this.diagnosticCollection = vscode.languages.createDiagnosticCollection("pol");
+    this.fileSystemProvider = new RegisteredFileSystemProvider(false);
+    this.inMemoryFile = new RegisteredMemoryFile(this.inMemoryFileUri, "");
+    this.fileSystemProvider.registerFile(this.inMemoryFile);
+    registerFileSystemOverlay(1, this.fileSystemProvider);
+
+    Language.registerLanguageFeatures(client);
+
+    vscode.workspace.onDidChangeTextDocument((e) => {
+      if (!this.client || !this.currentDocument) return;
+      if (e.document.uri.toString() !== this.currentDocument.uri.toString()) return;
+
+      // For FULL sync, we need to send the entire updated text content
+      const fullText = e.document.getText();
+
+      this.client.notify(proto.DidChangeTextDocumentNotification.type.method, {
+        textDocument: code2Protocol.asVersionedTextDocumentIdentifier(e.document),
+        contentChanges: [
+          {
+            text: fullText,
+          },
+        ],
+      } as proto.DidChangeTextDocumentParams);
     });
 
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === "attributes") {
-          const thm = document.documentElement.getAttribute("data-theme");
-          if (thm == "dark") {
-            monaco.editor.setTheme("vs-dark");
-          } else if (thm == "light") {
-            monaco.editor.setTheme("vs-light");
-          }
-        }
+    client.pushAfterInitializeHook(async () => {
+      if (!this.currentDocument) return;
+      this.client?.notify(proto.DidOpenTextDocumentNotification.type.method, {
+        textDocument: {
+          uri: this.currentDocument.uri.toString(),
+          languageId: languageId,
+          version: this.currentDocument.version,
+          text: this.currentDocument.getText(),
+        },
+      } as proto.DidOpenTextDocumentParams);
+
+      await Promise.resolve();
+    });
+
+    client.addMethod(proto.PublishDiagnosticsNotification.type.method, async (params) => {
+      if (!params) return;
+      const p = params as proto.PublishDiagnosticsParams;
+      const diagnostics = (await protocol2Code.asDiagnostics(p.diagnostics)) ?? [];
+      this.diagnosticCollection?.set(vscode.Uri.parse(p.uri), diagnostics);
+    });
+
+    const handleHashChange = async () => {
+      const filepath = location.hash.slice(1).trim();
+      if (filepath === "") {
+        await this.updateInMemoryFileContent("");
+        return;
+      }
+
+      const url = `${location.protocol}//${location.host}/examples/${encodeURIComponent(filepath)}`;
+      const response = await fetch(url);
+      const text = await response.text();
+
+      await this.updateInMemoryFileContent(text);
+    };
+
+    window.addEventListener("hashchange", () => {
+      void handleHashChange().catch((error) => {
+        console.error("Error handling hash change:", error);
       });
     });
-    observer.observe(document.documentElement, { attributes: true });
+
+    await handleHashChange();
   }
 
   async run(): Promise<void> {
-    const client = new Client(this.#fromServer, this.#intoServer);
-    const server = await Server.initialize(this.#intoServer, this.#fromServer);
-    this.createEditor(client);
-    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    console.log("run");
+
+    const fromServer = FromServer.create();
+    const intoServer = new IntoServer();
+    const client = new Client(fromServer, intoServer);
+    const server = await Server.initialize(intoServer, fromServer);
+    await this.createEditor(client);
+
+    console.log("client.start");
+
     await Promise.all([server.start(), client.start()]);
   }
-}
 
-function parentPath(pathname: string): string {
-  if (pathname.endsWith("/")) {
-    pathname = pathname.slice(0, -1);
+  private async updateInMemoryFileContent(newContent: string): Promise<void> {
+    const encoder = new TextEncoder();
+    const encodedContent = encoder.encode(newContent);
+    await this.inMemoryFile?.write(encodedContent);
+
+    if (this.currentDocument && this.currentDocument.uri.toString() === this.inMemoryFileUri.toString()) {
+      const edit: vscode.WorkspaceEdit = new vscode.WorkspaceEdit();
+      const fullRange = new vscode.Range(
+        this.currentDocument.positionAt(0),
+        this.currentDocument.positionAt(this.currentDocument.getText().length),
+      );
+      edit.replace(this.currentDocument.uri, fullRange, newContent);
+      await vscode.workspace.applyEdit(edit);
+      this.client?.notify(proto.DidChangeTextDocumentNotification.type.method, {
+        textDocument: code2Protocol.asVersionedTextDocumentIdentifier(this.currentDocument),
+        contentChanges: [
+          {
+            text: newContent,
+          },
+        ],
+      } as proto.DidChangeTextDocumentParams);
+    } else {
+      // Open the in-memory document if it's not already open
+      const doc = await vscode.workspace.openTextDocument(this.inMemoryFileUri);
+      this.currentDocument = doc;
+      await vscode.window.showTextDocument(doc, { preview: false });
+    }
   }
-  if (pathname === "") {
-    return "/";
-  }
-  return pathname.slice(0, pathname.lastIndexOf("/") + 1);
 }
