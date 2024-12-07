@@ -14,7 +14,7 @@ crate-type = ["cdylib", "rlib"]
 # async
 async-trait = "0.1"
 futures = "0.3"
-tower-lsp = { git = "https://github.com/tower-lsp/tower-lsp", rev = "19f5a87810ff4b643d2bc394e438450bd9c74365", default-features = false }
+tower-lsp = { workspace = true }
 # web platform
 console_error_panic_hook = "0.1"
 js-sys = "0.3"
