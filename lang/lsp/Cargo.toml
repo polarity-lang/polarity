@@ -13,8 +13,7 @@ categories.workspace = true
 
 [dependencies]
 # lsp
-lsp = { version = "0.93", package = "lsp-types" }
-tower-lsp = { version = "0.17", default-features = false, features = [
+tower-lsp = { git = "https://github.com/tower-lsp/tower-lsp", rev = "19f5a87810ff4b643d2bc394e438450bd9c74365", default-features = false, features = [
     "runtime-agnostic",
 ] }
 # asynchronous locks
