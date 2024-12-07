@@ -188,18 +188,13 @@ export default class App {
   }
 
   async run(): Promise<void> {
-    console.log("run");
-
     const fromServer = FromServer.create();
     const intoServer = new IntoServer();
     const client = new Client(fromServer, intoServer);
     const server = await Server.initialize(intoServer, fromServer);
     await this.createEditor(client);
-
-    console.log("client.start");
-
     await Promise.all([server.start(), client.start()]);
-  }
+  };
 
   private async updateInMemoryFileContent(newContent: string): Promise<void> {
     const encoder = new TextEncoder();
