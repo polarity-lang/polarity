@@ -1,8 +1,8 @@
 use ast::{
-    Anno, Arg, Args, Attribute, Attributes, Call, Case, Ctor, DocComment, DotCall, Dtor, Exp, Hole,
-    LocalComatch, LocalMatch, Motive, Param, ParamInst, Pattern, SelfParam, Telescope,
-    TelescopeInst, TypCtor, TypeUniv, Variable,
+    Arg, Args, Attribute, Attributes, Case, Ctor, DocComment, Dtor, Exp, Hole, Motive, Param,
+    ParamInst, Pattern, SelfParam, Telescope, TelescopeInst, TypCtor,
 };
+use printer::{Print, PrintCfg};
 
 pub trait Generate {
     fn generate(&self) -> String;
@@ -169,23 +169,7 @@ impl Generate for Param {
 
 impl Generate for Exp {
     fn generate(&self) -> String {
-        match self {
-            Exp::Variable(variable) => variable.generate(),
-            Exp::TypCtor(typ_ctor) => typ_ctor.generate(),
-            Exp::Call(call) => call.generate(),
-            Exp::DotCall(dot_call) => dot_call.generate(),
-            Exp::Anno(anno) => anno.generate(),
-            Exp::TypeUniv(type_univ) => type_univ.generate(),
-            Exp::LocalMatch(local_match) => local_match.generate(),
-            Exp::LocalComatch(local_comatch) => local_comatch.generate(),
-            Exp::Hole(hole) => hole.generate(),
-        }
-    }
-}
-
-impl Generate for Variable {
-    fn generate(&self) -> String {
-        self.name.id.clone()
+        self.print_html_to_string(Some(&PrintCfg::default()))
     }
 }
 
@@ -200,69 +184,6 @@ impl Generate for TypCtor {
             format!("{}({})", name.id, args.generate())
         } else {
             name.id.clone()
-        }
-    }
-}
-
-impl Generate for Call {
-    fn generate(&self) -> String {
-        let Call { name, args, .. } = self;
-        if args.args.is_empty() {
-            name.id.clone()
-        } else {
-            format!("{}({})", name.id, args.generate())
-        }
-    }
-}
-
-impl Generate for DotCall {
-    fn generate(&self) -> String {
-        let DotCall { exp, name, args, .. } = self;
-        let mut result = format!("{}.{}", exp.generate(), name.id);
-        if !args.args.is_empty() {
-            result = format!("{}({})", result, args.generate());
-        }
-        result
-    }
-}
-
-impl Generate for Anno {
-    fn generate(&self) -> String {
-        let Anno { exp, typ, .. } = self;
-        format!("{}: {}", exp.generate(), typ.generate())
-    }
-}
-
-impl Generate for TypeUniv {
-    fn generate(&self) -> String {
-        "Type".to_string()
-    }
-}
-
-impl Generate for LocalMatch {
-    fn generate(&self) -> String {
-        let LocalMatch { name, on_exp, motive, cases, .. } = self;
-        format!(
-            "{}.match {} {} {}",
-            on_exp.generate(),
-            name.user_name.as_ref().map_or("".to_string(), |n| n.id.clone()),
-            motive.as_ref().map_or("".to_string(), |m| m.generate()),
-            cases.generate()
-        )
-    }
-}
-
-impl Generate for LocalComatch {
-    fn generate(&self) -> String {
-        let LocalComatch { name, is_lambda_sugar, cases, .. } = self;
-        if *is_lambda_sugar {
-            format!("lambda_sugar({})", cases.generate())
-        } else {
-            format!(
-                "comatch {} {}",
-                name.user_name.as_ref().map_or("".to_string(), |n| n.id.clone()),
-                cases.generate()
-            )
         }
     }
 }
