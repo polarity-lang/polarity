@@ -1,7 +1,7 @@
 L-003
 
   × d must be used as destructor
-   ╭─[L-003.pol:6:1]
+   ╭─[L-003.pol:7:15]
  6 │ def Unit.foo : ? {
  7 │     MkUnit => d
    ·               ─

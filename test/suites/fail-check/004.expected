@@ -1,7 +1,7 @@
 T-013
 
   × Local comatch not supported for type Bool because Bool contains destructors with self parameters
-    ╭─[004.pol:12:1]
+    ╭─[004.pol:13:12]
  12 │     def Unit.example : Bool {
  13 │ ╭─▶     Top => comatch {
  14 │ │                 .neg_inverse => ?,

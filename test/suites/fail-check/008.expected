@@ -4,7 +4,7 @@ T-002
   │   1: B
   │   2: A
   │ 
-   ╭─[008.pol:2:1]
+   ╭─[008.pol:3:13]
  2 │ data B {b} -- annotate the type of b explicitly
  3 │ data C (a : A) {}
    ·             ┬

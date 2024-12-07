@@ -66,6 +66,9 @@ mod file_system {
             let path = self.root.join(filepath);
             let source =
                 std::fs::read_to_string(&path).map_err(Arc::new).map_err(DriverError::Io)?;
+            // Depending on how git is configured on Windows, it may check-out Unix line endings (\n) as Windows line endings (\r\n).
+            // To have identical source code spans on all platforms, we replace these by Unix line endings (\n).
+            let source = source.replace("\r\n", "\n");
             Ok(source)
         }
 

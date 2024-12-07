@@ -1,7 +1,7 @@
 T-016
 
   × Cannot automatically decide whether T and ? unify
-    ╭─[010.pol:3:1]
+    ╭─[010.pol:4:14]
   3 │ data Foo(a: Bool) {
   4 │     Bar: Foo(T),
     ·              ─

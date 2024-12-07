@@ -1,7 +1,7 @@
 L-011
 
   × Mismatched named arguments: given wrong, expected elem
-   ╭─[L-011-tyctor.pol:7:1]
+   ╭─[L-011-tyctor.pol:8:31]
  7 │ 
  8 │ let example2: Option(wrong := Bool) { None(Bool) }
    ·                               ────

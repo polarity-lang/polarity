@@ -1,7 +1,7 @@
 L-002
 
   × Duplicate definition of True
-   ╭─[L-002-01.pol:1:1]
+   ╭─[L-002-01.pol:1:19]
  1 │ data Bool { True, True }
    ·                   ─────
    ╰────

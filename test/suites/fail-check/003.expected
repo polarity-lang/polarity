@@ -4,7 +4,7 @@ T-002
   │   1: Foo(False)
   │   2: Foo(True)
   │ 
-    ╭─[003.pol:12:1]
+    ╭─[003.pol:13:11]
  12 │     Bar : Foo(True),
  13 │     Baz : Foo(False),
     ·           ─────┬────

@@ -33,7 +33,9 @@ impl Case {
     }
 
     pub fn content(&self) -> io::Result<String> {
-        fs::read_to_string(&self.path)
+        // Depending on how git is configured on Windows, it may check-out Unix line endings (\n) as Windows line endings (\r\n).
+        // If this is the case, we need to replace these by Unix line endings for comparision.
+        fs::read_to_string(&self.path).map(|s| s.replace("\r\n", "\n"))
     }
 
     pub fn uri(&self) -> Url {

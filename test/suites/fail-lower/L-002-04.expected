@@ -1,7 +1,7 @@
 L-002
 
   × Duplicate definition of T
-   ╭─[L-002-04.pol:1:1]
+   ╭─[L-002-04.pol:1:10]
  1 │ data T { T }
    ·          ──
    ╰────

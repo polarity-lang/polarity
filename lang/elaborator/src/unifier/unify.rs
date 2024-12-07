@@ -237,6 +237,20 @@ impl Ctx {
                     lhs: Box::new(lhs.clone()),
                     rhs: exp.clone(),
                 }),
+                (
+                    Exp::LocalComatch(LocalComatch { name: name_lhs, cases: cases_lhs, .. }),
+                    Exp::LocalComatch(LocalComatch { name: name_rhs, cases: cases_rhs, .. }),
+                ) if name_lhs == name_rhs => {
+                    let new_eqns =
+                        zip_cases_by_xtors(cases_lhs, cases_rhs).filter_map(|(lhs, rhs)| {
+                            if let (Some(lhs), Some(rhs)) = (lhs.body, rhs.body) {
+                                Some(Constraint::Equality { lhs, rhs })
+                            } else {
+                                None
+                            }
+                        });
+                    self.add_constraints(new_eqns)
+                }
                 (_, _) => Err(TypeError::cannot_decide(lhs, rhs, while_elaborating_span)),
             },
             Constraint::EqualityArgs { lhs, rhs } => {
@@ -328,4 +342,21 @@ impl Print for Unificator {
         });
         alloc.intersperse(exps, ",").enclose("{", "}")
     }
+}
+
+fn zip_cases_by_xtors(
+    cases_lhs: &[Case],
+    cases_rhs: &[Case],
+) -> impl Iterator<Item = (Case, Case)> {
+    assert_eq!(cases_lhs.len(), cases_rhs.len());
+
+    let mut cases = vec![];
+    for case_lhs in cases_lhs {
+        let rhs_index =
+            cases_rhs.iter().position(|case_rhs| case_lhs.pattern.name == case_rhs.pattern.name);
+        if let Some(rhs_index) = rhs_index {
+            cases.push((case_lhs.clone(), cases_rhs[rhs_index].clone()));
+        }
+    }
+    cases.into_iter()
 }

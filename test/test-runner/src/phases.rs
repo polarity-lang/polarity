@@ -13,6 +13,9 @@ use crate::{
     suites::{self, Case},
 };
 
+/// Terminal width for pretty-printing error messages.
+const TERMINAL_WIDTH: usize = 200;
+
 pub trait Phase {
     type Out: TestOutput;
 
@@ -450,7 +453,7 @@ fn render_report(report: &miette::Report, colorize: bool) -> String {
     } else {
         miette::GraphicalTheme::unicode_nocolor()
     };
-    let handler = miette::GraphicalReportHandler::new_themed(theme);
+    let handler = miette::GraphicalReportHandler::new_themed(theme).with_width(TERMINAL_WIDTH);
     let mut output = String::new();
     handler.render_report(&mut output, report.as_ref()).expect("Failed to render report");
     output

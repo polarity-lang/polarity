@@ -1,7 +1,7 @@
 L-002
 
   × Duplicate definition of f
-   ╭─[L-002-05.pol:4:1]
+   ╭─[L-002-05.pol:5:1]
  4 │     
  5 │ ╭─▶ def Bool.f : Bool {
  6 │ │       True => ?,
