@@ -8,6 +8,7 @@ rustPlatform.buildRustPackage rec {
     lockFile = "${src}/Cargo.lock";
     outputHashes = {
       "codespan-0.11.1" = "sha256-Wq99v77bqSGIOK/iyv+x/EG1563XSeaTDW5K2X3kSXU=";
+      "tower-lsp-0.20.0" = "sha256-f3S2CyFFX6yylaxMoXhB1/bfizVsLfNldLM+dXl5Y8k=";
     };
   };
 

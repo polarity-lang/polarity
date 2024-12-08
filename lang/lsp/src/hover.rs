@@ -15,15 +15,15 @@ pub async fn hover(server: &Server, params: HoverParams) -> jsonrpc::Result<Opti
 
     server
         .client
-        .log_message(MessageType::INFO, format!("Hover request: {}", text_document.uri))
+        .log_message(MessageType::INFO, format!("Hover request: {}", text_document.uri.from_lsp()))
         .await;
 
     let pos = pos_params.position;
     let mut db = server.database.write().await;
-    let info = db.location_to_index(&text_document.uri, pos.from_lsp());
+    let info = db.location_to_index(&text_document.uri.from_lsp(), pos.from_lsp());
 
     let info = match info {
-        Some(idx) => db.hoverinfo_at_index(&text_document.uri, idx).await,
+        Some(idx) => db.hoverinfo_at_index(&text_document.uri.from_lsp(), idx).await,
         None => None,
     };
 
@@ -31,8 +31,8 @@ pub async fn hover(server: &Server, params: HoverParams) -> jsonrpc::Result<Opti
     Ok(res)
 }
 
-fn info_to_hover(db: &Database, uri: &Url, info: Info) -> Hover {
-    let range = db.span_to_locations(uri, info.span).map(ToLsp::to_lsp);
+fn info_to_hover(db: &Database, uri: &Uri, info: Info) -> Hover {
+    let range = db.span_to_locations(&uri.from_lsp(), info.span).map(ToLsp::to_lsp);
     let contents = info.content.to_hover_content();
     Hover { contents, range }
 }

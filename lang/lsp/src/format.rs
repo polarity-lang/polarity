@@ -2,6 +2,8 @@
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 
+use crate::conversion::FromLsp;
+
 use super::server::*;
 use printer::{Print, PrintCfg};
 
@@ -13,12 +15,15 @@ pub async fn formatting(
 
     server
         .client
-        .log_message(MessageType::INFO, format!("Formatting request: {}", text_document.uri))
+        .log_message(
+            MessageType::INFO,
+            format!("Formatting request: {}", text_document.uri.from_lsp()),
+        )
         .await;
 
     let mut db = server.database.write().await;
 
-    let prg = match db.ust(&text_document.uri).await {
+    let prg = match db.ust(&text_document.uri.from_lsp()).await {
         Ok(prg) => prg,
         Err(_) => return Ok(None),
     };

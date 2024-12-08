@@ -13,10 +13,7 @@ categories.workspace = true
 
 [dependencies]
 # lsp
-lsp = { version = "0.93", package = "lsp-types" }
-tower-lsp = { version = "0.17", default-features = false, features = [
-    "runtime-agnostic",
-] }
+tower-lsp = { workspace = true }
 # asynchronous locks
 async-lock = "2"
 # source code spans

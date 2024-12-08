@@ -2,6 +2,5 @@
   "private": true,
   "workspaces": [
     "packages/app"
-  ],
-  "dependencies": {}
+  ]
 }

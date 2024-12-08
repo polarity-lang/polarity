@@ -33,11 +33,10 @@ module.exports = (env, argv) => {
       "editor.worker": "monaco-editor-core/esm/vs/editor/editor.worker.js",
     },
     resolve: {
-      alias: {
-        vscode: require.resolve("monaco-languageclient/vscode-compatibility"),
-      },
       extensions: [".ts", ".js", ".json", ".ttf"],
       fallback: {
+        vm: require.resolve("vm-browserify"),
+        module: false,
         fs: false,
         child_process: false,
         net: false,
@@ -114,6 +113,9 @@ module.exports = (env, argv) => {
         writeToDisk: true,
       },
     },
+    // Otherwise webpack fails the build with:
+    // WARNING in ../../node_modules/vscode/vscode/src/vs/amdX.js 142:14-31
+    ignoreWarnings: [/Critical dependency: the request of a dependency is an expression/],
   };
   return config;
 };

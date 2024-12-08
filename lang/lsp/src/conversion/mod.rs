@@ -1,7 +1,8 @@
-use lsp::DiagnosticSeverity;
 use miette::Severity;
+use tower_lsp::lsp_types::DiagnosticSeverity;
 
 mod spans;
+mod uri_to_url;
 
 pub trait FromLsp {
     type Target;
