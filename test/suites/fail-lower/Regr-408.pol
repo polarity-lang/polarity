@@ -1,0 +1,6 @@
+codata Stream(a : Type) { Stream(a).head(a : Type): a, Stream(a).tail(a : Type): Stream(a) }
+
+codef Ones: Stream {
+    .head => S(Z),
+    .tail => Ones
+}
