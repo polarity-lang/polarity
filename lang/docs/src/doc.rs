@@ -7,13 +7,13 @@ use opener;
 
 use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH};
 use driver::Database;
-use printer::{Print, PrintCfg};
+
+use crate::generate_docs::GenerateDocs;
 
 pub async fn write_html(filepath: &PathBuf, htmlpath: &PathBuf) {
     let mut db = Database::from_path(filepath);
     let uri = db.resolve_path(filepath).expect("Failed to resolve path");
     let prg = db.ust(&uri).await.expect("Failed to get UST");
-    let cfg = PrintCfg::default();
 
     if !Path::new(CSS_PATH).exists() {
         fs::create_dir_all(Path::new(CSS_PATH).parent().unwrap())
@@ -23,7 +23,7 @@ pub async fn write_html(filepath: &PathBuf, htmlpath: &PathBuf) {
 
     let mut stream = fs::File::create(htmlpath).expect("Failed to create file");
 
-    let code = prg.print_html_to_string(Some(&cfg));
+    let code = prg.generate_docs();
     let title = filepath.file_name().unwrap().to_str().unwrap();
     let output = generate_html(title, &code);
 

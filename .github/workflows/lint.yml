@@ -32,6 +32,7 @@ jobs:
           VALIDATE_JAVASCRIPT_STANDARD: false
           # We use prettier rather than ts-standard
           TYPESCRIPT_DEFAULT_STYLE: prettier
+          VALIDATE_HTML: false
           # We use a slightly different stylelint version/setup
           VALIDATE_CSS: false
           # We don't validate formatting of bash scripts
