@@ -25,6 +25,8 @@ pub struct Database {
     pub source: Box<dyn FileSource>,
     /// Dependency graph for each module
     pub deps: DependencyGraph,
+    /// All dependencies which are directly mentioned in "use" declarations.
+    pub direct_dependencies: Cache<Vec<Url>>,
     /// The source code text of each file
     pub files: Cache<codespan::File<String>>,
     /// The CST of each file (once parsed)
@@ -113,6 +115,36 @@ impl Database {
             parser::parse_module(uri.clone(), &source).map_err(Error::Parser).map(Arc::new);
         self.cst.insert(uri.clone(), module.clone());
         module
+    }
+
+    // Core API: Direct Dependencies
+    //
+    //
+
+    pub async fn direct_dependencies(&mut self, uri: &Url) -> Result<Vec<Url>, Error> {
+        match self.direct_dependencies.get_unless_stale(uri) {
+            Some(dd) => {
+                log::debug!("Found direct dependencies in cache: {}", uri);
+                Ok(dd.clone())
+            }
+            None => self.recompute_direct_dependencies(uri).await,
+        }
+    }
+
+    async fn recompute_direct_dependencies(&mut self, uri: &Url) -> Result<Vec<Url>, Error> {
+        log::debug!("Recomputing direct dependencies for: {}", uri);
+        let module = self.cst(uri).await?;
+
+        let mut direct_dependencies = Vec::new();
+        for use_decl in &module.use_decls {
+            let UseDecl { path, .. } = use_decl;
+            // Resolve the module name to a `Url`
+            let dep_url = self.resolve_module_name(path, uri)?;
+            direct_dependencies.push(dep_url.clone());
+        }
+
+        self.direct_dependencies.insert(uri.clone(), direct_dependencies.clone());
+        Ok(direct_dependencies)
     }
 
     // Core API: SymbolTable
@@ -325,6 +357,7 @@ impl Database {
             source: Box::new(source),
             files: Cache::default(),
             deps: DependencyGraph::default(),
+            direct_dependencies: Cache::default(),
             cst: Cache::default(),
             symbol_table: Cache::default(),
             ust: Cache::default(),
@@ -368,6 +401,7 @@ impl Database {
 
     fn invalidate_impl(&mut self, uri: &Url) {
         self.files.invalidate(uri);
+        self.direct_dependencies.invalidate(uri);
         self.cst.invalidate(uri);
         self.symbol_table.invalidate(uri);
         self.ust.invalidate(uri);
@@ -462,18 +496,11 @@ impl Database {
         visited.insert(module_uri.clone());
         stack.push(module_uri.clone());
 
-        let module = self.cst(module_uri).await?;
-
         // Collect dependencies from `use` declarations
-        let mut dependencies = Vec::new();
-        for use_decl in &module.use_decls {
-            let UseDecl { path, .. } = use_decl;
-            // Resolve the module name to a `Url`
-            let dep_url = self.resolve_module_name(path, module_uri)?;
-            dependencies.push(dep_url.clone());
-
+        let dependencies = self.direct_dependencies(module_uri).await?;
+        for dep in dependencies.iter() {
             // Recursively visit the dependency
-            Box::pin(self.visit_module(&dep_url, visited, stack, graph)).await?;
+            Box::pin(self.visit_module(dep, visited, stack, graph)).await?;
         }
 
         // Add the module and its dependencies to the graph
