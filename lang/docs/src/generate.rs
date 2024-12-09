@@ -1,6 +1,4 @@
-use ast::{
-    Ctor, DocComment, Dtor,
-};
+use ast::{Ctor, DocComment, Dtor};
 use printer::{Print, PrintCfg};
 
 pub trait Generate {
@@ -29,11 +27,8 @@ impl Generate for Dtor {
         let ret_typ = ret_typ.print_html_to_string(Some(&PrintCfg::default()));
 
         let doc_str = doc.generate();
-        let head = if self_param.is_simple() {
-            ".".to_owned()
-        } else {
-            format!("{}.", self_parameter)
-        };
+        let head =
+            if self_param.is_simple() { ".".to_owned() } else { format!("{}.", self_parameter) };
 
         format!("{}{}{}{}: {}", doc_str, head, name.id, parmeter, ret_typ)
     }
@@ -79,4 +74,3 @@ impl<T: Generate> Generate for Box<T> {
         self.as_ref().generate()
     }
 }
-
