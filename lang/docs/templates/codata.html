@@ -1,4 +1,9 @@
-<span>{{doc}}</span>
-<span><span class="keyword">Codata</span> {{name}}{{attr}} {{typ}} {</span> <br>
-<span>{{body}}</span> <br>
-<span>}</span> <br>
+<div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+        <span><span class="keyword">Codata</span> {{name}}{{attr}} {{typ}}</span>
+    </div>
+    <div class="card-content">
+        <span>{{doc}}</span> <br>
+        <span>{{body}}</span>
+    </div>
+</div>
