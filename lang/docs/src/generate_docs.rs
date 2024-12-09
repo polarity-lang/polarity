@@ -1,5 +1,6 @@
 use askama::Template;
 use ast::{Codata, Codef, Data, Decl, Def, Let, Module};
+use printer::{Print, PrintCfg};
 
 use crate::generate::Generate;
 pub trait GenerateDocs {
@@ -29,8 +30,8 @@ impl GenerateDocs for Data {
         let Data { span: _, doc, name, attr, typ, ctors } = self;
         let doc = doc.generate();
         let name = &name.id;
-        let attr: String = attr.generate();
-        let typ: String = typ.generate();
+        let attr: String = attr.print_html_to_string(Some(&PrintCfg::default()));
+        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
 
         let body = if ctors.is_empty() { "{}".to_string() } else { ctors.generate() };
 
@@ -45,8 +46,8 @@ impl GenerateDocs for Codata {
 
         let doc = doc.generate();
         let name = &name.id;
-        let attr: String = attr.generate();
-        let typ: String = typ.generate();
+        let attr: String = attr.print_html_to_string(Some(&PrintCfg::default()));
+        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
 
         let body = if dtors.is_empty() { "{}".to_string() } else { dtors.generate() };
 
@@ -61,10 +62,10 @@ impl GenerateDocs for Def {
 
         let doc = doc.generate();
         let name = &name.id;
-        let params: String = params.generate();
-        let self_param: String = self_param.generate();
-        let ret_typ: String = ret_typ.generate();
-        let cases: String = cases.generate();
+        let params: String = params.print_html_to_string(Some(&PrintCfg::default()));
+        let self_param: String = self_param.print_html_to_string(Some(&PrintCfg::default()));
+        let ret_typ: String = ret_typ.print_html_to_string(Some(&PrintCfg::default()));
+        let cases: String = cases.print_html_to_string(Some(&PrintCfg::default()));
 
         let body = if cases.is_empty() { "{}".to_string() } else { cases };
 
@@ -86,9 +87,9 @@ impl GenerateDocs for Codef {
 
         let doc = doc.generate();
         let name = &name.id;
-        let params: String = params.generate();
-        let typ: String = typ.generate();
-        let cases: String = cases.generate();
+        let params: String = params.print_html_to_string(Some(&PrintCfg::default()));
+        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
+        let cases: String = cases.print_html_to_string(Some(&PrintCfg::default()));
 
         let body = if cases.is_empty() { "{}".to_string() } else { cases };
 
@@ -103,9 +104,9 @@ impl GenerateDocs for Let {
 
         let doc = doc.generate();
         let name = &name.id;
-        let params: String = params.generate();
-        let typ: String = typ.generate();
-        let body: String = body.generate();
+        let params: String = params.print_html_to_string(Some(&PrintCfg::default()));
+        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
+        let body: String = body.print_html_to_string(Some(&PrintCfg::default()));
 
         let let_template = LetTemplate { doc: &doc, name, params: &params, typ: &typ, body: &body };
         let_template.render().unwrap()
