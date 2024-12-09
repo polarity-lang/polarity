@@ -14,7 +14,7 @@ crate-type = ["cdylib", "rlib"]
 # async
 async-trait = "0.1"
 futures = "0.3"
-tower-lsp = { version = "0.17", default-features = false }
+tower-lsp = { workspace = true }
 # web platform
 console_error_panic_hook = "0.1"
 js-sys = "0.3"

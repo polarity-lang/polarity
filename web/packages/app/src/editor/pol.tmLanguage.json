@@ -1,0 +1,52 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "pol",
+  "patterns": [
+    { "include": "#keywords" },
+    { "include": "#symbols" },
+    { "include": "#comments" },
+    { "include": "#strings" }
+  ],
+  "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control",
+          "match": "\\b(data|codata|let|def|codef|match|comatch|absurd|Type|implicit|use)\\b"
+        }
+      ]
+    },
+    "symbols": {
+      "patterns": [
+        {
+          "match": "(;|=>|,|:|\\.)",
+          "name": "keyword.syntax"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "match": "--.*$",
+          "name": "comment.line.double-dash.syntax"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "scopeName": "source.pol"
+}
