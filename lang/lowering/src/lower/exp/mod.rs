@@ -135,6 +135,7 @@ fn lower_args(
     ///
     /// # Parameters
     ///
+    /// - `span`: The source span of the given argument list.
     /// - `given`: A mutable iterator over the given arguments.
     /// - `expected_bs`: The binding site of the expected parameter.
     /// - `args_out`: A mutable vector to collect the lowered arguments.
@@ -145,6 +146,7 @@ fn lower_args(
     /// - `Ok(())`: The argument was successfully processed and added to `args_out`.
     /// - `Err(LoweringError)`: An error occurred while processing the argument.
     fn pop_arg<'a>(
+        span: Span,
         given: &mut impl Iterator<Item = &'a cst::exp::Arg>,
         expected_bs: &BindingSite,
         args_out: &mut Vec<ast::Arg>,
@@ -153,7 +155,7 @@ fn lower_args(
         let Some(arg) = given.next() else {
             return Err(LoweringError::MissingArgForParam {
                 expected: bs_to_name(expected_bs).to_owned(),
-                span: bs_to_span(expected_bs).to_miette(),
+                span: span.to_miette(),
             });
         };
         match arg {
@@ -197,7 +199,7 @@ fn lower_args(
                         });
                     };
                     if expected_name == given_name {
-                        pop_arg(&mut given_iter, expected_bs, &mut args_out, ctx)?;
+                        pop_arg(span, &mut given_iter, expected_bs, &mut args_out, ctx)?;
                         continue;
                     }
                 }
@@ -216,7 +218,7 @@ fn lower_args(
 
                 args_out.push(ast::Arg::InsertedImplicitArg(hole));
             } else {
-                pop_arg(&mut given_iter, expected_bs, &mut args_out, ctx)?;
+                pop_arg(span, &mut given_iter, expected_bs, &mut args_out, ctx)?;
             }
         }
     }

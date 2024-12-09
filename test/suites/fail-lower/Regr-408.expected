@@ -1,0 +1,9 @@
+L-013
+
+  × Missing argument for parameter a
+   ╭─[Regr-408.pol:3:13]
+ 2 │ 
+ 3 │ codef Ones: Stream {
+   ·             ───────
+ 4 │     .head => S(Z),
+   ╰────
