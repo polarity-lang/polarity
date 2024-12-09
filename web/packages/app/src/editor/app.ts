@@ -194,7 +194,7 @@ export default class App {
     const server = await Server.initialize(intoServer, fromServer);
     await this.createEditor(client);
     await Promise.all([server.start(), client.start()]);
-  };
+  }
 
   private async updateInMemoryFileContent(newContent: string): Promise<void> {
     const encoder = new TextEncoder();
