@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>{{title}}</h1>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="#">Link 1</a></li>
+            <li><a href="#">Link 2</a></li>
+            <li><a href="#">Link 3</a></li>
+            <li><a href="#">Link 4</a></li>
+        </ul>
+    </nav>
+    <main>{{code}}</main>
+    <script>
+        function toggleCard(element) {
+            const content = element.nextElementSibling;
+            const icon = element.querySelector('.toggle-icon');
+            
+            if (content.style.display === "none" || content.style.display === "") {
+                content.style.display = "block";
+                icon.textContent = "-";
+            } else {
+                content.style.display = "none";
+                icon.textContent = "+";
+            }
+        }
+    </script>
+</body>
+</html>
