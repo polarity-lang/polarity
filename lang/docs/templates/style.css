@@ -3,7 +3,7 @@
 header {
     position: fixed;
     top: 0;
-    left: 0;
+    left: 200px;
     right: 0;
     height: 60px;
     background-color: #333;
@@ -18,7 +18,7 @@ nav {
     width: 200px;
     height: 100vh;
     position: fixed;
-    top: 60px;
+    top: 0;
     left: 0;
     background-color: #444;
     color: white;
