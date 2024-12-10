@@ -33,6 +33,7 @@ nav ul li {
     margin: 10px 0;
 }
 nav ul li a {
+    cursor: pointer;
     color: white;
     text-decoration: none;
 }
