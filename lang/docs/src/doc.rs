@@ -11,19 +11,9 @@ use driver::Database;
 use crate::generate_docs::GenerateDocs;
 
 pub async fn write_html(filepath: &Path, htmlpath: &Path) {
-    let example_path = Path::new(EXAMPLE_PATH);
-    let mut all_modules = String::new();
-    for file in get_files(example_path) {
-        let mut db = Database::from_path(&file);
-        let uri = db.resolve_path(&file).expect("Failed to resolve path");
-        let prg = db.ust(&uri).await.expect("Failed to get UST");
-
-        let title = &file.file_name().unwrap().to_str().unwrap();
-        let code = prg.generate_docs();
-        let content = generate_module(title, &code);
-
-        all_modules.push_str(&content);
-    }
+    let content = write_modules().await;
+    let title = filepath.file_name().unwrap().to_str().unwrap();
+    let list = file_list(get_files(Path::new(EXAMPLE_PATH)));
 
     if !Path::new(CSS_PATH).exists() {
         fs::create_dir_all(Path::new(CSS_PATH).parent().unwrap())
@@ -32,10 +22,7 @@ pub async fn write_html(filepath: &Path, htmlpath: &Path) {
     }
 
     let mut stream = fs::File::create(htmlpath).expect("Failed to create file");
-
-    let title = filepath.file_name().unwrap().to_str().unwrap();
-    let list = make_list(get_files(example_path));
-    let output = generate_html(title, &list, &all_modules);
+    let output = generate_html(title, &list, &content);
 
     stream.write_all(output.as_bytes()).expect("Failed to write to file");
 }
@@ -71,6 +58,24 @@ fn generate_module(title: &str, content: &str) -> String {
     template.render().unwrap()
 }
 
+
+async fn write_modules() -> String {
+    let example_path = Path::new(EXAMPLE_PATH);
+    let mut all_modules = String::new();
+    for file in get_files(example_path) {
+        let mut db = Database::from_path(&file);
+        let uri = db.resolve_path(&file).expect("Failed to resolve path");
+        let prg = db.ust(&uri).await.expect("Failed to get UST");
+
+        let title = &file.file_name().unwrap().to_str().unwrap();
+        let code = prg.generate_docs();
+        let content = generate_module(title, &code);
+
+        all_modules.push_str(&content);
+    }
+    all_modules
+}
+
 fn get_files(path: &Path) -> Vec<PathBuf> {
     let mut files = Vec::new();
     if path.is_dir() {
@@ -85,7 +90,7 @@ fn get_files(path: &Path) -> Vec<PathBuf> {
     files
 }
 
-fn make_list(files: Vec<PathBuf>) -> String {
+fn file_list(files: Vec<PathBuf>) -> String {
     let mut list = String::new();
     for file in files {
         let name = file.file_name().unwrap().to_str().unwrap();
