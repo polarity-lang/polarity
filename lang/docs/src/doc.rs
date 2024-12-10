@@ -10,11 +10,20 @@ use driver::Database;
 
 use crate::generate_docs::GenerateDocs;
 
-pub async fn write_html(filepath: &PathBuf, htmlpath: &PathBuf) {
+pub async fn write_html(filepath: &Path, htmlpath: &Path) {
     let example_path = Path::new(EXAMPLE_PATH);
-    let mut db = Database::from_path(filepath);
-    let uri = db.resolve_path(filepath).expect("Failed to resolve path");
-    let prg = db.ust(&uri).await.expect("Failed to get UST");
+    let mut all_modules = String::new();
+    for file in get_files(example_path) {
+        let mut db = Database::from_path(&file);
+        let uri = db.resolve_path(&file).expect("Failed to resolve path");
+        let prg = db.ust(&uri).await.expect("Failed to get UST");
+
+        let title = &file.file_name().unwrap().to_str().unwrap();
+        let code = prg.generate_docs();
+        let content = generate_module(title, &code);
+
+        all_modules.push_str(&content);
+    }
 
     if !Path::new(CSS_PATH).exists() {
         fs::create_dir_all(Path::new(CSS_PATH).parent().unwrap())
@@ -24,11 +33,9 @@ pub async fn write_html(filepath: &PathBuf, htmlpath: &PathBuf) {
 
     let mut stream = fs::File::create(htmlpath).expect("Failed to create file");
 
-    let code = prg.generate_docs();
     let title = filepath.file_name().unwrap().to_str().unwrap();
     let list = make_list(get_files(example_path));
-    let content = generate_module(title, &code);
-    let output = generate_html(title, &list, &content);
+    let output = generate_html(title, &list, &all_modules);
 
     stream.write_all(output.as_bytes()).expect("Failed to write to file");
 }
@@ -44,10 +51,11 @@ struct IndexTemplate<'a> {
     title: &'a str,
     list: &'a str,
     code: &'a str,
+    start: &'a str,
 }
 
 fn generate_html(title: &str, list: &str, code: &str) -> String {
-    let template = IndexTemplate { title, list, code };
+    let template = IndexTemplate { title, list, code, start: title };
     template.render().unwrap()
 }
 
@@ -65,11 +73,13 @@ fn generate_module(title: &str, content: &str) -> String {
 
 fn get_files(path: &Path) -> Vec<PathBuf> {
     let mut files = Vec::new();
-    for entry in fs::read_dir(path).expect("Failed to read directory") {
-        let entry = entry.expect("Failed to get entry");
-        let path = entry.path();
-        if path.is_file() {
-            files.push(path);
+    if path.is_dir() {
+        for entry in fs::read_dir(path).expect("Failed to read directory") {
+            let entry = entry.expect("Failed to read entry");
+            let path = entry.path();
+            if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("pol") {
+                files.push(path);
+            }
         }
     }
     files

@@ -7,9 +7,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>{{title}}</h1>
-    </header>
     <nav>
         <ul>
             {{list}}
@@ -29,6 +26,20 @@
                 icon.textContent = "+";
             }
         }
+
+        function showContent(contentId) {
+            // Hide all content sections
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => section.style.display = 'none');
+
+            // Show the selected content section
+            const selectedSection = document.getElementById(contentId);
+            if (selectedSection) {
+                selectedSection.style.display = 'block';
+            }
+        }
+        
+        showContent('{{start}}');
     </script>
 </body>
 </html>
