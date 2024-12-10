@@ -25,7 +25,8 @@ pub async fn write_html(filepath: &PathBuf, htmlpath: &PathBuf) {
 
     let code = prg.generate_docs();
     let title = filepath.file_name().unwrap().to_str().unwrap();
-    let output = generate_html(title, &code);
+    let content = generate_module(title, &code);
+    let output = generate_html(title, &content);
 
     stream.write_all(output.as_bytes()).expect("Failed to write to file");
 }
@@ -36,13 +37,25 @@ pub fn open(filepath: &PathBuf) {
 }
 
 #[derive(Template)]
-#[template(path = "module.html", escape = "none")]
-struct ModuleTemplate<'a> {
+#[template(path = "index.html", escape = "none")]
+struct IndexTemplate<'a> {
     title: &'a str,
     code: &'a str,
 }
 
 fn generate_html(title: &str, code: &str) -> String {
-    let template = ModuleTemplate { title, code };
+    let template = IndexTemplate { title, code };
+    template.render().unwrap()
+}
+
+#[derive(Template)]
+#[template(path = "module.html", escape = "none")]
+struct ModuleTemplate<'a> {
+    title: &'a str,
+    content: &'a str,
+}
+
+fn generate_module(title: &str, content: &str) -> String {
+    let template = ModuleTemplate { title, content };
     template.render().unwrap()
 }
