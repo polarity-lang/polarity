@@ -12,7 +12,7 @@ use crate::generate_docs::GenerateDocs;
 
 pub async fn write_html(filepath: &Path, htmlpath: &Path) {
     let content = write_modules().await;
-    let title = filepath.file_name().unwrap().to_str().unwrap();
+    let title = filepath.file_stem().unwrap().to_str().unwrap();
     let list = file_list(get_files(Path::new(EXAMPLE_PATH)));
 
     if !Path::new(CSS_PATH).exists() {
@@ -67,7 +67,7 @@ async fn write_modules() -> String {
         let uri = db.resolve_path(&file).expect("Failed to resolve path");
         let prg = db.ust(&uri).await.expect("Failed to get UST");
 
-        let title = &file.file_name().unwrap().to_str().unwrap();
+        let title = file.file_stem().unwrap().to_str().unwrap();
         let code = prg.generate_docs();
         let content = generate_module(title, &code);
 
@@ -93,7 +93,7 @@ fn get_files(path: &Path) -> Vec<PathBuf> {
 fn file_list(files: Vec<PathBuf>) -> String {
     let mut list = String::new();
     for file in files {
-        let name = file.file_name().unwrap().to_str().unwrap();
+        let name = file.file_stem().unwrap().to_str().unwrap();
         list.push_str(&format!("<li><a onclick=\"showContent('{}')\">{}</a></li>", name, name));
     }
     list
