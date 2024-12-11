@@ -58,7 +58,6 @@ fn generate_module(title: &str, content: &str) -> String {
     template.render().unwrap()
 }
 
-
 async fn write_modules() -> String {
     let example_path = Path::new(EXAMPLE_PATH);
     let mut all_modules = String::new();
