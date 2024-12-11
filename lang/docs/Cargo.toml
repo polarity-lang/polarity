@@ -12,9 +12,10 @@ categories.workspace = true
 [dependencies]
 opener = "0.5"
 askama = "0.12.1"
+askama_escape = "0.10.3"
+
 
 # workspace members
 ast = { path = "../ast" }
 printer = { path = "../printer" }
 driver = { path = "../driver" }
-
