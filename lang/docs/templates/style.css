@@ -14,6 +14,17 @@ header {
     z-index: 1000;
 }
 
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+li {
+    text-align: left;
+    margin-bottom: 10px;
+}
+
 nav {
     width: 200px;
     height: 100vh;
@@ -84,3 +95,9 @@ main {
     color: #3dc248;
     font-style: italic;
 }
+
+.type {
+    color: #3f3dc2;
+    font-style: italic;
+}
+
