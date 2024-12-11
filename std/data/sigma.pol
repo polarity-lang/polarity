@@ -1,0 +1,6 @@
+use "../codata/fun.pol"
+
+-- | The Sigma type defined by a toupling constructor.
+data Σ(A: Type, T: A -> Type) {
+  ΣSum(A: Type, T: A -> Type, x: A, w: T.ap(x)): Σ(A,T)
+}

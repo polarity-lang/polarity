@@ -1,0 +1,7 @@
+use "./fun.pol"
+
+-- | The (strong) Sigma type defined by first and second projections.
+codata Σ(A: Type, T: A -> Type) {
+  Σ(A,T).π₁(A: Type, T: A -> Type): A,
+  (self: Σ(A,T)).π₂(A: Type, T: A -> Type): T.ap(self.π₁(A,T))
+}
