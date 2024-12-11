@@ -1,4 +1,4 @@
-use ast::{Ctor, DocComment, Dtor};
+use ast::{Case, Ctor, DocComment, Dtor};
 use printer::{Print, PrintCfg};
 
 pub trait Generate {
@@ -15,7 +15,7 @@ impl Generate for Ctor {
 
         let head = if typ.is_simple() { head } else { format!("{}: {}", head, typs) };
 
-        format!("{}{}", doc_str, head)
+        format!("<li>{}{}</li>", doc_str, head)
     }
 }
 
@@ -30,7 +30,7 @@ impl Generate for Dtor {
         let head =
             if self_param.is_simple() { ".".to_owned() } else { format!("{}.", self_parameter) };
 
-        format!("{}{}{}{}: {}", doc_str, head, name.id, parmeter, ret_typ)
+        format!("<li>{}{}{}{}: {}</li>", doc_str, head, name.id, parmeter, ret_typ)
     }
 }
 
@@ -63,9 +63,30 @@ impl<T: Generate> Generate for Option<T> {
     }
 }
 
-impl<T: Generate> Generate for Vec<T> {
+impl Generate for Vec<DocComment> {
     fn generate(&self) -> String {
         self.iter().map(|value| value.generate()).collect::<Vec<String>>().join(",<br>")
+    }
+}
+
+impl Generate for Vec<Case> {
+    fn generate(&self) -> String {
+        self.iter()
+            .map(|value| format!("<li>{}</li>", value.print_html_to_string(Some(&PrintCfg::default()))))
+            .collect::<Vec<String>>()
+            .join("")
+    }
+}
+
+impl Generate for Vec<Ctor> {
+    fn generate(&self) -> String {
+        self.iter().map(|value| value.generate()).collect::<Vec<String>>().join("")
+    }
+}
+
+impl Generate for Vec<Dtor> {
+    fn generate(&self) -> String {
+        self.iter().map(|value| value.generate()).collect::<Vec<String>>().join("")
     }
 }
 
