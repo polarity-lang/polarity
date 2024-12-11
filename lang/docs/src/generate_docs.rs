@@ -33,15 +33,19 @@ impl GenerateDocs for Data {
         let attr: String = attr.print_html_to_string(Some(&PrintCfg::default()));
         let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
 
-        let body = if ctors.is_empty() { "{}".to_string() } else { format!("<ul>{}</ul>", ctors.generate()) };
+        let body = if ctors.is_empty() {
+            "{}".to_string()
+        } else {
+            format!("<ul>{}</ul>", ctors.generate())
+        };
 
         let data = DataTemplate { doc: &doc, name, attr: &attr, typ: &typ, body: &body };
         data.render().unwrap()
-        }
     }
+}
 
-    impl GenerateDocs for Codata {
-        fn generate_docs(&self) -> String {
+impl GenerateDocs for Codata {
+    fn generate_docs(&self) -> String {
         let Codata { span: _, doc, name, attr, typ, dtors } = self;
 
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
@@ -49,7 +53,11 @@ impl GenerateDocs for Data {
         let attr: String = attr.print_html_to_string(Some(&PrintCfg::default()));
         let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
 
-        let body = if dtors.is_empty() { "{}".to_string() } else { format!("<ul>{}</ul>", dtors.generate()) };
+        let body = if dtors.is_empty() {
+            "{}".to_string()
+        } else {
+            format!("<ul>{}</ul>", dtors.generate())
+        };
 
         let codata = CodataTemplate { doc: &doc, name, attr: &attr, typ: &typ, body: &body };
         codata.render().unwrap()
@@ -66,7 +74,11 @@ impl GenerateDocs for Def {
         let self_param: String = self_param.print_html_to_string(Some(&PrintCfg::default()));
         let ret_typ: String = ret_typ.print_html_to_string(Some(&PrintCfg::default()));
 
-        let body = if cases.is_empty() { "{}".to_string() } else { format!("<ul>{}</ul>", cases.generate()) };
+        let body = if cases.is_empty() {
+            "{}".to_string()
+        } else {
+            format!("<ul>{}</ul>", cases.generate())
+        };
 
         let def = DefTemplate {
             doc: &doc,
@@ -89,7 +101,11 @@ impl GenerateDocs for Codef {
         let params: String = params.print_html_to_string(Some(&PrintCfg::default()));
         let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
 
-        let body = if cases.is_empty() { "{}".to_string() } else { format!("<ul>{}</ul>", cases.generate()) };
+        let body = if cases.is_empty() {
+            "{}".to_string()
+        } else {
+            format!("<ul>{}</ul>", cases.generate())
+        };
 
         let codef = CodefTemplate { doc: &doc, name, params: &params, typ: &typ, body: &body };
         codef.render().unwrap()
