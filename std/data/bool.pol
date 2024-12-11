@@ -56,7 +56,7 @@ def Bool.nand(other: Bool): Bool {
 
 -- | If-then-else combinator which returns the `then` argument if the boolean is true
 -- | and the `else` argument otherwise.
-def Bool.ite(a: Type, then else: a): a {
+def Bool.ite(implicit a: Type, then else: a): a {
     T => then,
     F => else
 }

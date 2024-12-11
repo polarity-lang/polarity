@@ -12,6 +12,6 @@ use "../std/codata/fun.pol"
 
 codata Nat { .iter(A: Type, z: A, s: A -> A): A }
 
-codef S(p: Nat): Nat { .iter(A, z, s) => s.ap(A, A, p.iter(A, z, s)) }
+codef S(p: Nat): Nat { .iter(A, z, s) => s.ap(p.iter(A, z, s)) }
 
 codef Z: Nat { .iter(A, z, s) => z }
