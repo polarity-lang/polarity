@@ -5,15 +5,16 @@ use std::path::{Path, PathBuf};
 use askama::Template;
 use opener;
 
-use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH, EXAMPLE_PATH};
+use driver::paths::{CSS_PATH, DOCS_PATH, CSS_TEMPLATE_PATH, EXAMPLE_PATH};
 use driver::Database;
 
 use crate::generate_docs::GenerateDocs;
 
-pub async fn write_html(filepath: &Path, htmlpath: &Path) {
+pub async fn write_html(filepath: &Path) {
     let content = write_modules().await;
     let title = filepath.file_stem().unwrap().to_str().unwrap();
     let list = file_list(get_files(Path::new(EXAMPLE_PATH)));
+    let htmlpath = Path::new(DOCS_PATH).join("index.html");
 
     if !Path::new(CSS_PATH).exists() {
         fs::create_dir_all(Path::new(CSS_PATH).parent().unwrap())
@@ -70,6 +71,11 @@ async fn write_modules() -> String {
         let code = prg.generate_docs();
         let content = generate_module(title, &code);
 
+        let htmlpath = get_path(&file);
+        let mut stream = fs::File::create(htmlpath).expect("Failed to create file");
+
+        stream.write_all(content.as_bytes()).expect("Failed to write to file");
+
         all_modules.push_str(&content);
     }
     all_modules
@@ -96,4 +102,11 @@ fn file_list(files: Vec<PathBuf>) -> String {
         list.push_str(&format!("<li><a onclick=\"showContent('{}')\">{}</a></li>", name, name));
     }
     list
+}
+
+fn get_path(filepath: &Path) -> PathBuf {
+    let mut path =
+        Path::new(DOCS_PATH).join(filepath.file_name().unwrap().to_string_lossy().as_ref());
+    path.set_extension("html");
+    path
 }

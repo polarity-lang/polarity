@@ -14,18 +14,11 @@ pub struct Args {
 }
 
 pub async fn exec(cmd: Args) -> miette::Result<()> {
-    let htmlpath = get_path(&cmd);
     let filepath = &cmd.filepath;
-    write_html(filepath, &htmlpath).await;
+    let htmlpath = Path::new(DOCS_PATH).join("index.html");
+    write_html(filepath).await;
     if cmd.open {
         open(&htmlpath);
     }
     Ok(())
-}
-
-fn get_path(cmd: &Args) -> PathBuf {
-    let mut path =
-        Path::new(DOCS_PATH).join(cmd.filepath.file_name().unwrap().to_string_lossy().as_ref());
-    path.set_extension("html");
-    path
 }
