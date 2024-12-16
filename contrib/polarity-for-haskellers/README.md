@@ -10,7 +10,7 @@ data Stream a = MkStream a (Stream a)
 ones :: Stream Int
 ones = MkStream 1 ones
 ```
-Now, we could easily just observe the 5th element by pealing off 5 `MkStream` constructors and returning the the element in the cell contained there; no need of `codata`.
+Now, we could easily just observe the 5th element by peeling off 5 `MkStream` constructors and returning the the element in the cell contained there; no need for `codata`.
 However, it is not that easy in typical strict languages. For that, let us make Haskell a language with strict datatypes, using the `-XUnliftedDataTypes` extension.
 
 ```haskell
