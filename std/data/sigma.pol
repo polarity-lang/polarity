@@ -1,0 +1,6 @@
+use "../codata/fun.pol"
+
+-- | The Sigma type defined by a tupling constructor.
+data Sigma(A: Type, T: A -> Type) {
+  MkSigma(A: Type, T: A -> Type, x: A, w: T.ap(x)): Sigma(A,T)
+}

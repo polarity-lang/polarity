@@ -12,6 +12,6 @@ use "../std/codata/fun.pol"
 
 codata Nat { .case(A: Type, z: A, s: Nat -> A): A }
 
-codef S(p: Nat): Nat { .case(A, z, s) => s.ap(Nat, A, p) }
+codef S(p: Nat): Nat { .case(A, z, s) => s.ap(p) }
 
 codef Z: Nat { .case(A, z, s) => z }
