@@ -1,6 +1,6 @@
 # Polarity for Haskellers
 
-It might be a bit confusing to understand what polarity's `data` and `codata` and `def` and `codef` do differently than Haskell's data. Especially observing infinite streams is incredibly easy in Haskell.
+It might be a bit confusing to understand what Polarity's `data` and `codata` and `def` and `codef` do differently than Haskell's data. Especially observing infinite streams is incredibly easy in Haskell.
 
 Take for example:
 
@@ -10,7 +10,7 @@ data Stream a = MkStream a (Stream a)
 ones :: Stream Int
 ones = MkStream 1 ones
 ```
-Now, we could easily just observe the 5th element by pealing off 5 `MkStream` constructors and returning the the element in the cell contained there; No need of `codata`.
+Now, we could easily just observe the 5th element by pealing off 5 `MkStream` constructors and returning the the element in the cell contained there; no need of `codata`.
 However, it is not that easy in typical strict languages. For that, let us make Haskell a language with strict datatypes, using the `-XUnliftedDataTypes` extension.
 
 ```haskell
@@ -37,8 +37,8 @@ data Stream a = MkStream a (Stream a)
 ```
 
 Now that we cannot make infinite streams that simply anymore, we have to shift our thinking from what it means to *build* a stream to what it means to *observe* a stream. In order to achive this, we dualize the stream type by:
-1. instead of using a product of compontents, use a sum of observervations
-2. instead of demanding the compontents when building the stream, ask for the decision of what we are going to observe
+1. instead of using a product of components, use a sum of observations
+2. instead of demanding the components when building the stream, ask for the decision of what we are going to observe
 
 The former is pretty simple, we define the datatype:
 ```haskell 
@@ -85,7 +85,7 @@ codef Ones: Stream(Nat) { -- use codef to define a Stream
 
 So far so good, now we know how to use the non-dependent portion of polarity and how it corresponds to Haskell.
 
-Howerver, there's another peculiar thing happening: instead of infinitely many numbers, we now only need a single one to construct the stream, so, if we do not duplicate the stream or let the continuation use the result multiple times, there's actually only a single one we can get out of a stream.
+However, there's another peculiar thing happening: instead of infinitely many numbers, we now only need a single one to construct the stream, so, if we do not duplicate the stream or let the continuation use the result multiple times, there's actually only a single one we can get out of a stream.
 
 We can make that obvious using `-XLinearHaskell` but we have to rewrite some definitions:
 ```haskell
@@ -108,7 +108,7 @@ mk x = MkStream \case
   Hd k -> k x
   Tl k -> k (mk x)
 ```
-Now, if we were allowed to use this `a` more than one, the type checker would scream at us, but since it doesn't, we are good.
+Now, if we were allowed to use this `a` more than once, the type checker would complain, but since it doesn't, we are good.
 
 So to recap:
 - in polarity, making things observable instead of buildable is achieved using `codef` and `codata`. This is equivalent to non-strict semantics, in that we have to pass the continuation that does the observation for us.
