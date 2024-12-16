@@ -12,8 +12,9 @@ permissions:
 jobs:
   check_nix:
     name: Check nix code
-    strategy: 
-      matrix: 
+    strategy:
+      fail-fast: false
+      matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
