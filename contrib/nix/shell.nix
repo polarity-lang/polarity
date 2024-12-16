@@ -12,5 +12,11 @@ pkgs.mkShell.override { inherit stdenv; } {
     pkgs.rustfmt
 
     pkgs.nixfmt-rfc-style
+
+    pkgs.pkg-config
+    pkgs.openssl
   ];
+
+  PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+
 }

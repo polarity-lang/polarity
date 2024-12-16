@@ -31,3 +31,5 @@ jobs:
       - name: Build and run a static polarity exe
         if: matrix.os == 'ubuntu-latest'
         run: nix -Lv run .#polarity-static -- --help
+      - name: Drop into nix devshell and run tests
+        run: nix develop -Lv -c bash -c "make test"
