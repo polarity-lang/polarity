@@ -1,6 +1,6 @@
 use "./fun.pol"
 
 -- | The dependent function type.
-codata Π(a: Type, p: a -> Type) {
-    Π(a, p).dap(a: Type, p: a -> Type, x: a): p.ap(x)
+codata Pi(a: Type, p: a -> Type) {
+    Pi(a, p).dap(a: Type, p: a -> Type, x: a): p.ap(x)
 }
