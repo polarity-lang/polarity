@@ -16,7 +16,4 @@ pkgs.mkShell.override { inherit stdenv; } {
     pkgs.pkg-config
     pkgs.openssl
   ];
-
-  PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
-
 }
