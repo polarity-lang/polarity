@@ -15,7 +15,7 @@ pkgs.mkShell.override { inherit stdenv; } {
 
     pkgs.pkg-config
     pkgs.openssl
-  ];
+  ] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ libiconv ]);
 
   PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
 
