@@ -4,19 +4,21 @@
   ...
 }:
 pkgs.mkShell.override { inherit stdenv; } {
-  nativeBuildInputs = [
-    pkgs.cargo
-    pkgs.clippy
-    pkgs.rust-analyzer
-    pkgs.rustc
-    pkgs.rustfmt
+  nativeBuildInputs =
+    [
+      pkgs.cargo
+      pkgs.clippy
+      pkgs.rust-analyzer
+      pkgs.rustc
+      pkgs.rustfmt
 
-    pkgs.nixfmt-rfc-style
+      pkgs.nixfmt-rfc-style
 
-    pkgs.pkg-config
-    pkgs.openssl
-  ];
-
-  PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
-
+      pkgs.pkg-config
+      pkgs.openssl
+    ]
+    ++ pkgs.lib.optionals stdenv.isDarwin [
+      pkgs.libiconv
+      pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
+    ];
 }
