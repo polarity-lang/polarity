@@ -34,7 +34,7 @@ impl GenerateDocs for Data {
         let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
 
         let body = if ctors.is_empty() {
-            "{}".to_string()
+            "".to_string()
         } else {
             format!("<ul>{}</ul>", ctors.generate())
         };
@@ -54,7 +54,7 @@ impl GenerateDocs for Codata {
         let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
 
         let body = if dtors.is_empty() {
-            "{}".to_string()
+            "".to_string()
         } else {
             format!("<ul>{}</ul>", dtors.generate())
         };
