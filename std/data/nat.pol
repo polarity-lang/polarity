@@ -33,3 +33,10 @@ def Nat.fact: Nat {
     Z => 1,
     S(pred) => S(pred).mul(pred.fact)
 }
+
+-- | The predecessor of a natural number.
+-- | The predecessor of `Z` is `Z`.
+def Nat.pred: Nat {
+    Z => Z,
+    S(x) => x
+}
