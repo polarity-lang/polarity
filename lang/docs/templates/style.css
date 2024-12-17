@@ -71,15 +71,18 @@ main {
 .card-header {
     background-color: #ccc;
     padding: 15px;
-    cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: space-between;
 }
 .card-header span {
     font-weight: bold;
 }
-.card-header .toggle-icon {
-    font-size: 18px;
+
+.card-header button{
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
 }
 .card-content {
     display: none;
