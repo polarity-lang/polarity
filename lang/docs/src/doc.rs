@@ -11,16 +11,16 @@ use driver::Database;
 use crate::generate_docs::GenerateDocs;
 
 pub async fn write_html(filepath: &Path) {
-    let content = write_modules().await;
-    let title = filepath.file_stem().unwrap().to_str().unwrap();
-    let list = file_list(get_files(Path::new(EXAMPLE_PATH)));
-    let htmlpath = Path::new(DOCS_PATH).join("index.html");
-
     if !Path::new(CSS_PATH).exists() {
         fs::create_dir_all(Path::new(CSS_PATH).parent().unwrap())
             .expect("Failed to create CSS directory");
         fs::write(CSS_PATH, CSS_TEMPLATE_PATH).expect("Failed to create CSS file");
     }
+
+    let content = write_modules().await;
+    let title = filepath.file_stem().unwrap().to_str().unwrap();
+    let list = file_list(get_files(Path::new(EXAMPLE_PATH)));
+    let htmlpath = Path::new(DOCS_PATH).join("index.html");
 
     let mut stream = fs::File::create(htmlpath).expect("Failed to create file");
     let output = generate_html(title, &list, &content);
