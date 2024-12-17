@@ -1,0 +1,9 @@
+-- | The result of comparing two totally-ordered values.
+data Ordering {
+    -- | Lesser than
+    LT,
+    -- | Equal
+    EQ,
+    -- | Greater than
+    GT,
+}
