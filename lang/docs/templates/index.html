@@ -15,7 +15,7 @@
     <main>{{code}}</main>
     <script>
         function toggleCard(element) {
-            const content = element.nextElementSibling;
+            const content = element.nextElementSibling.nextElementSibling;
             const icon = element.querySelector('.toggle-icon');
             
             if (content.style.display === "none" || content.style.display === "") {
