@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use askama::Template;
 use opener;
 
-use driver::paths::{CSS_PATH, DOCS_PATH, CSS_TEMPLATE_PATH, EXAMPLE_PATH};
+use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH, DOCS_PATH, EXAMPLE_PATH};
 use driver::Database;
 
 use crate::generate_docs::GenerateDocs;

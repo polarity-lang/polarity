@@ -16,14 +16,14 @@
     <script>
         function toggleCard(element) {
             const content = element.nextElementSibling.nextElementSibling;
-            const icon = element.querySelector('.toggle-icon');
+            const button = element.querySelector('.button');
             
             if (content.style.display === "none" || content.style.display === "") {
                 content.style.display = "block";
-                icon.textContent = "-";
+                button.textContent = "hide content";
             } else {
                 content.style.display = "none";
-                icon.textContent = "+";
+                button.textContent = "show content";
             }
         }
 
