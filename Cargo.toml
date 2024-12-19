@@ -9,6 +9,7 @@ members = [
     "lang/elaborator",
     "lang/driver",
     "lang/transformations",
+    "lang/backend",
     "web/crates/browser",
     "app",
     "test/test-runner",
