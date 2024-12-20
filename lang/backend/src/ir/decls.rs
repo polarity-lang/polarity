@@ -11,36 +11,9 @@ use super::exprs::{Case, Exp};
 pub struct Module {
     pub uri: Url,
     pub use_decls: Vec<UseDecl>,
-    pub data_decls: Vec<Data>,
-    pub codata_decls: Vec<Codata>,
     pub def_decls: Vec<Def>,
     pub codef_decls: Vec<Codef>,
     pub let_decls: Vec<Let>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Data {
-    pub name: String,
-    pub ctors: Vec<Ctor>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Codata {
-    pub name: String,
-    pub dtors: Vec<Dtor>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Ctor {
-    pub name: String,
-    pub params: Vec<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Dtor {
-    pub name: String,
-    pub self_param: String,
-    pub params: Vec<String>,
 }
 
 #[derive(Debug, Clone)]

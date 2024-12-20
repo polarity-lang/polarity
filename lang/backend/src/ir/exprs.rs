@@ -1,3 +1,5 @@
+use url::Url;
+
 #[derive(Debug, Clone)]
 pub enum Exp {
     Variable(Variable),
@@ -19,12 +21,16 @@ pub struct Variable {
 #[derive(Debug, Clone)]
 pub struct Call {
     pub name: String,
+    /// The URI of the module where `name` is defined.
+    pub module_uri: Url,
     pub args: Vec<Exp>,
 }
 
 #[derive(Debug, Clone)]
 pub struct DotCall {
     pub exp: Box<Exp>,
+    /// The URI of the module where `name` is defined.
+    pub module_uri: Url,
     pub name: String,
     pub args: Vec<Exp>,
 }
