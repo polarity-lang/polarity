@@ -36,7 +36,7 @@ tower-lsp = { git = "https://github.com/tower-lsp/tower-lsp", rev = "19f5a87810f
     "runtime-agnostic",
 ] }
 # source code locations
-codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149" }
+codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "91e4f64801cee923661097eb35e05a782996d8ea" }
 # ignoring fields when deriving traits (e.g. Eq, Hash)
 derivative = { version = "2" }
 # big integers
