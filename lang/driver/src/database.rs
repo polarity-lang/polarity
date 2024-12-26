@@ -29,7 +29,7 @@ pub struct Database {
     /// Dependency graph for each module
     pub deps: DependencyGraph,
     /// The source code text of each file
-    pub files: Cache<codespan::File<String>>,
+    pub files: Cache<crate::codespan::File<String>>,
     /// The CST of each file (once parsed)
     pub cst: Cache<Result<Arc<cst::decls::Module>, Error>>,
     /// The symbol table constructed during lowering
@@ -92,7 +92,7 @@ impl Database {
     async fn recompute_source(&mut self, uri: &Url) -> Result<String, Error> {
         log::debug!("Recomputing source for: {}", uri);
         let source = self.source.read_to_string(uri).await?;
-        let file = codespan::File::new(uri.as_str().into(), source.clone());
+        let file = crate::codespan::File::new(uri.as_str().into(), source.clone());
         self.files.insert(uri.clone(), file);
         Ok(source)
     }

@@ -2,6 +2,7 @@ pub use result::Error;
 
 mod asserts;
 mod cache;
+mod codespan;
 mod database;
 mod dependency_graph;
 mod edit;

@@ -8,7 +8,7 @@ pub mod typ_ctor;
 pub mod type_univ;
 pub mod variable;
 
-use codespan::Span;
+use miette_util::codespan::Span;
 use miette_util::ToMiette;
 
 use log::trace;

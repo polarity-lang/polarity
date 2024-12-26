@@ -1,6 +1,6 @@
 //! Implementation of the goto-definition functionality of the LSP server
 
-use codespan::Span;
+use miette_util::codespan::Span;
 use tower_lsp::{jsonrpc, lsp_types::*};
 
 use super::conversion::*;

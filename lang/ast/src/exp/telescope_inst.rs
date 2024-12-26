@@ -1,5 +1,5 @@
-use codespan::Span;
 use derivative::Derivative;
+use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{Alloc, Builder, Print, PrintCfg};
 

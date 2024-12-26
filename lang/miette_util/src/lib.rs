@@ -1,3 +1,5 @@
+pub mod codespan;
+
 pub trait ToMiette {
     type Target;
 

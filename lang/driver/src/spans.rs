@@ -1,4 +1,4 @@
-use codespan::{ByteIndex, Location, Span};
+use miette_util::codespan::{ByteIndex, Location, Span};
 use url::Url;
 
 use crate::database::Database;

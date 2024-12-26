@@ -14,7 +14,6 @@ categories.workspace = true
 [dependencies]
 miette = { workspace = true }
 thiserror = { workspace = true }
-codespan = { workspace = true }
 derivative = { workspace = true }
 pretty = { workspace = true }
 log = { workspace = true }

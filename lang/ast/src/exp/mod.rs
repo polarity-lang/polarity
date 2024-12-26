@@ -1,7 +1,7 @@
 use std::fmt;
 
-use codespan::Span;
 use derivative::Derivative;
+use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::theme::ThemeExt;
 use printer::tokens::{AS, FAT_ARROW};

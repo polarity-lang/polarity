@@ -53,10 +53,10 @@
 //! When hovering over the holes in an editor connected to our language server, you will see that both holes are solved with `Nat`.
 
 use ast::{ctx::values::TypeCtx, Exp, HashMap, MetaVar, MetaVarState};
-use codespan::Span;
 use constraints::Constraint;
 use dec::Dec;
 use log::trace;
+use miette_util::codespan::Span;
 use printer::Print;
 use unify::Ctx;
 
