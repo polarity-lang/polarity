@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use codespan::Span;
+use miette_util::codespan::Span;
 use url::Url;
 
 use ast::ctx::values::TypeCtx;

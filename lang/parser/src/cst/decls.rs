@@ -1,4 +1,4 @@
-use codespan::Span;
+use miette_util::codespan::Span;
 use url::Url;
 
 use super::exp::Copattern;

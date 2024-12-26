@@ -1,5 +1,5 @@
-use codespan::Span;
 use miette::{Diagnostic, SourceSpan};
+use miette_util::codespan::Span;
 use miette_util::ToMiette;
 use thiserror::Error;
 

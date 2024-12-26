@@ -171,7 +171,6 @@ dependencies = [
 name = "ast"
 version = "0.1.0"
 dependencies = [
- "codespan",
  "derivative",
  "fxhash",
  "miette",
@@ -563,14 +562,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
 
 [[package]]
-name = "codespan"
-version = "0.11.1"
-source = "git+https://github.com/polarity-lang/codespan.git?rev=91e4f64801cee923661097eb35e05a782996d8ea#91e4f64801cee923661097eb35e05a782996d8ea"
-dependencies = [
- "url",
-]
-
-[[package]]
 name = "colorchoice"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -778,11 +769,11 @@ version = "0.1.0"
 dependencies = [
  "ast",
  "async-trait",
- "codespan",
  "elaborator",
  "log",
  "lowering",
  "miette",
+ "miette_util",
  "parser",
  "printer",
  "ropey",
@@ -803,7 +794,6 @@ name = "elaborator"
 version = "0.1.0"
 dependencies = [
  "ast",
- "codespan",
  "derivative",
  "log",
  "miette",
@@ -1716,7 +1706,6 @@ name = "lowering"
 version = "0.1.0"
 dependencies = [
  "ast",
- "codespan",
  "log",
  "miette",
  "miette_util",
@@ -1759,7 +1748,6 @@ version = "0.1.0"
 dependencies = [
  "ast",
  "async-lock 2.8.0",
- "codespan",
  "driver",
  "miette",
  "miette_util",
@@ -1847,7 +1835,6 @@ dependencies = [
 name = "miette_util"
 version = "0.1.0"
 dependencies = [
- "codespan",
  "miette",
 ]
 
@@ -2102,13 +2089,13 @@ dependencies = [
 name = "parser"
 version = "0.1.0"
 dependencies = [
- "codespan",
  "derivative",
  "lalrpop 0.19.12",
  "lalrpop 0.20.2",
  "lalrpop-util 0.20.2",
  "logos",
  "miette",
+ "miette_util",
  "num-bigint",
  "thiserror",
  "url",
@@ -3266,9 +3253,9 @@ name = "transformations"
 version = "0.1.0"
 dependencies = [
  "ast",
- "codespan",
  "derivative",
  "miette",
+ "miette_util",
  "thiserror",
  "url",
 ]

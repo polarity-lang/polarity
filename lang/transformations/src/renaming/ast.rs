@@ -1,6 +1,6 @@
 use ast::ctx::*;
 use ast::*;
-use codespan::Span;
+use miette_util::codespan::Span;
 
 use super::ctx::*;
 

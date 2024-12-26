@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use codespan::Span;
+use miette_util::codespan::Span;
 use ropey::Rope;
 use url::Url;
 
