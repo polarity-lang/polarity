@@ -21,10 +21,10 @@ lalrpop = "0.20"
 lalrpop-util = "0.20"
 # url (for file locations)
 url = "2.5.0"
-codespan = { workspace = true }
 miette = { workspace = true }
 thiserror = { workspace = true }
 num-bigint = { workspace = true }
+miette_util = { path = "../miette_util" }
 
 [build-dependencies.lalrpop]
 version = "0.19"

@@ -17,8 +17,6 @@ miette = { workspace = true }
 thiserror = "1"
 # url (for file locations)
 url = "2.5.0"
-# source code locations
-codespan = { workspace = true }
 # ignoring fields when deriving traits (e.g. Eq, Hash)
 derivative = "2"
 # big integers

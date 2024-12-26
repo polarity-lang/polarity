@@ -2,8 +2,8 @@ use std::collections::HashSet;
 
 use ast::ctx::LevelCtx;
 use ast::{occurs_in, Variable};
-use codespan::Span;
 use ctx::GenericCtx;
+use miette_util::codespan::Span;
 
 use crate::result::TypeError;
 use crate::unifier::dec::{Dec, No, Yes};
