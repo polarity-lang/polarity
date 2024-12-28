@@ -1,5 +1,4 @@
 
-/* Titelzeile */
 header {
     position: fixed;
     top: 0;
@@ -89,7 +88,7 @@ main {
     padding: 15px;
 }
 
-.doc{
+.doc {
     margin-top: 15px;
     margin-left: 15px;
 }
