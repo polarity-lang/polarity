@@ -565,9 +565,8 @@ checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
 [[package]]
 name = "codespan"
 version = "0.11.1"
-source = "git+https://github.com/polarity-lang/codespan.git?rev=542320ab177fd38fff3a398a97b3f0352e065149#542320ab177fd38fff3a398a97b3f0352e065149"
+source = "git+https://github.com/polarity-lang/codespan.git?rev=91e4f64801cee923661097eb35e05a782996d8ea#91e4f64801cee923661097eb35e05a782996d8ea"
 dependencies = [
- "lsp-types 0.91.1",
  "url",
 ]
 
@@ -1766,19 +1765,6 @@ dependencies = [
  "miette_util",
  "printer",
  "tower-lsp",
- "url",
-]
-
-[[package]]
-name = "lsp-types"
-version = "0.91.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2368312c59425dd133cb9a327afee65be0a633a8ce471d248e2202a48f8f68ae"
-dependencies = [
- "bitflags 1.3.2",
- "serde",
- "serde_json",
- "serde_repr",
  "url",
 ]
 
@@ -3219,7 +3205,7 @@ dependencies = [
  "dashmap",
  "futures",
  "httparse",
- "lsp-types 0.97.0",
+ "lsp-types",
  "memchr",
  "serde",
  "serde_json",
@@ -3350,7 +3336,6 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
- "serde",
 ]
 
 [[package]]
