@@ -12,5 +12,8 @@ categories.workspace = true
 [dependencies]
 # ir structures
 url = { workspace = true }
+# error handling
+miette = { workspace = true }
+thiserror = { workspace = true }
 # workspace dependencies
 ast = { path = "../ast" }
