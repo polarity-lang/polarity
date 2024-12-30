@@ -161,7 +161,7 @@ where
                 }
             };
             let name = VarBind { span: Some(name.span), id: name.id.clone() };
-            let param_out = ast::Param { implicit: *implicit, name, typ: typ_out };
+            let param_out = ast::Param { implicit: *implicit, name, typ: typ_out, erased: false };
             params_out.push(param_out);
             Ok(params_out)
         },

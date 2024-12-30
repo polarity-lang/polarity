@@ -179,7 +179,7 @@ impl BuildSymbolTable for ast::Codata {
 
         let dtors = dtors
             .iter()
-            .map(|ast::Dtor { span: _, doc: _, name, params, self_param, ret_typ }| {
+            .map(|ast::Dtor { span: _, doc: _, name, params, self_param, ret_typ, erased: _ }| {
                 let params = mark_erased_params(&params.params);
                 let erased = is_erased_type(ret_typ);
                 Dtor {
@@ -212,7 +212,7 @@ impl BuildSymbolTable for ast::Ctor {
 
 impl BuildSymbolTable for ast::Dtor {
     fn build(&self, table: &mut ModuleErasureSymbolTable) {
-        let ast::Dtor { span: _, doc: _, name, params, self_param, ret_typ } = self;
+        let ast::Dtor { span: _, doc: _, name, params, self_param, ret_typ, erased: _ } = self;
 
         let params = mark_erased_params(&params.params);
         let erased = is_erased_type(ret_typ);
@@ -228,8 +228,17 @@ impl BuildSymbolTable for ast::Dtor {
 
 impl BuildSymbolTable for ast::Def {
     fn build(&self, table: &mut ModuleErasureSymbolTable) {
-        let ast::Def { span: _, doc: _, name, attr: _, params, self_param, ret_typ, cases: _ } =
-            self;
+        let ast::Def {
+            span: _,
+            doc: _,
+            name,
+            attr: _,
+            params,
+            self_param,
+            ret_typ,
+            cases: _,
+            erased: _,
+        } = self;
 
         let params = mark_erased_params(&params.params);
         let erased = is_erased_type(ret_typ);
@@ -257,7 +266,7 @@ impl BuildSymbolTable for ast::Codef {
 
 impl BuildSymbolTable for ast::Let {
     fn build(&self, table: &mut ModuleErasureSymbolTable) {
-        let ast::Let { span: _, doc: _, name, attr: _, params, typ, body: _ } = self;
+        let ast::Let { span: _, doc: _, name, attr: _, params, typ, body: _, erased: _ } = self;
 
         let params = mark_erased_params(&params.params);
         let erased = is_erased_type(typ);

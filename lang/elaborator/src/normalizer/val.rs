@@ -849,11 +849,17 @@ impl ReadBack for Arg {
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
         match self {
-            Arg::UnnamedArg(val) => Ok(ast::Arg::UnnamedArg(val.read_back(info_table)?)),
-            Arg::NamedArg(name, val) => {
-                Ok(ast::Arg::NamedArg(name.clone(), val.read_back(info_table)?))
+            Arg::UnnamedArg(val) => {
+                Ok(ast::Arg::UnnamedArg { arg: val.read_back(info_table)?, erased: false })
             }
-            Arg::InsertedImplicitArg(val) => Ok(ast::Arg::UnnamedArg(val.read_back(info_table)?)),
+            Arg::NamedArg(name, val) => Ok(ast::Arg::NamedArg {
+                name: name.clone(),
+                arg: val.read_back(info_table)?,
+                erased: false,
+            }),
+            Arg::InsertedImplicitArg(val) => {
+                Ok(ast::Arg::UnnamedArg { arg: val.read_back(info_table)?, erased: false })
+            }
         }
     }
 }

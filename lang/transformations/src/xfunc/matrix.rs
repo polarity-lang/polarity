@@ -220,6 +220,7 @@ impl XData {
                     self_param: dtor.self_param.clone(),
                     ret_typ: dtor.ret_typ.clone(),
                     cases,
+                    erased: false,
                 }
             })
             .collect();

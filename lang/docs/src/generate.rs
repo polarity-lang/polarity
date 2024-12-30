@@ -21,7 +21,7 @@ impl Generate for Ctor {
 
 impl Generate for Dtor {
     fn generate(&self) -> String {
-        let Dtor { span: _, doc, name, params, self_param, ret_typ } = self;
+        let Dtor { span: _, doc, name, params, self_param, ret_typ, erased: _ } = self;
         let self_parameter = self_param.print_html_to_string(Some(&PrintCfg::default()));
         let parmeter = params.print_html_to_string(Some(&PrintCfg::default()));
         let ret_typ = ret_typ.print_html_to_string(Some(&PrintCfg::default()));

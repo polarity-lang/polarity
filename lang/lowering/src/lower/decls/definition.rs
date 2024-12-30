@@ -27,6 +27,7 @@ impl Lower for cst::decls::Def {
                     self_param,
                     ret_typ: ret_typ.lower(ctx)?,
                     cases,
+                    erased: false,
                 })
             })
         })

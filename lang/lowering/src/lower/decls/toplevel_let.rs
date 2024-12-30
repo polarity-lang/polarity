@@ -21,6 +21,7 @@ impl Lower for cst::decls::Let {
                 params,
                 typ: typ.lower(ctx)?,
                 body: body.lower(ctx)?,
+                erased: false,
             })
         })
     }

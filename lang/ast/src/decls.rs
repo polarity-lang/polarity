@@ -601,11 +601,14 @@ pub struct Dtor {
     pub params: Telescope,
     pub self_param: SelfParam,
     pub ret_typ: Box<Exp>,
+    /// Whether the destructor is erased during compilation.
+    /// This flag is annotated during the erasure transformation.
+    pub erased: bool,
 }
 
 impl Print for Dtor {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Dtor { span: _, doc, name, params, self_param, ret_typ } = self;
+        let Dtor { span: _, doc, name, params, self_param, ret_typ, erased: _ } = self;
 
         let doc = doc.print(cfg, alloc);
         let head = if self_param.is_simple() {
@@ -624,7 +627,7 @@ impl Print for Dtor {
 
 impl Zonk for Dtor {
     fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
-        let Dtor { span: _, doc: _, name: _, params, self_param, ret_typ } = self;
+        let Dtor { span: _, doc: _, name: _, params, self_param, ret_typ, erased: _ } = self;
         params.zonk(meta_vars)?;
         self_param.zonk(meta_vars)?;
         ret_typ.zonk(meta_vars)?;
@@ -634,7 +637,7 @@ impl Zonk for Dtor {
 
 impl ContainsMetaVars for Dtor {
     fn contains_metavars(&self) -> bool {
-        let Dtor { span: _, doc: _, name: _, params, self_param, ret_typ } = self;
+        let Dtor { span: _, doc: _, name: _, params, self_param, ret_typ, erased: _ } = self;
 
         params.contains_metavars() || self_param.contains_metavars() || ret_typ.contains_metavars()
     }
@@ -654,6 +657,9 @@ pub struct Def {
     pub self_param: SelfParam,
     pub ret_typ: Box<Exp>,
     pub cases: Vec<Case>,
+    /// Whether the definition is erased during compilation.
+    /// This flag is annotated during the erasure transformation.
+    pub erased: bool,
 }
 
 impl Def {
@@ -665,13 +671,14 @@ impl Def {
             params: self.params.clone(),
             self_param: self.self_param.clone(),
             ret_typ: self.ret_typ.clone(),
+            erased: self.erased,
         }
     }
 }
 
 impl Print for Def {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { span: _, doc, name, attr, params, self_param, ret_typ, cases } = self;
+        let Def { span: _, doc, name, attr, params, self_param, ret_typ, cases, erased: _ } = self;
         if !attr.is_visible() {
             return alloc.nil();
         }
@@ -696,7 +703,17 @@ impl Print for Def {
 
 impl Zonk for Def {
     fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
-        let Def { span: _, doc: _, name: _, attr: _, params, self_param, ret_typ, cases } = self;
+        let Def {
+            span: _,
+            doc: _,
+            name: _,
+            attr: _,
+            params,
+            self_param,
+            ret_typ,
+            cases,
+            erased: _,
+        } = self;
         params.zonk(meta_vars)?;
         self_param.zonk(meta_vars)?;
         ret_typ.zonk(meta_vars)?;
@@ -709,7 +726,17 @@ impl Zonk for Def {
 
 impl ContainsMetaVars for Def {
     fn contains_metavars(&self) -> bool {
-        let Def { span: _, doc: _, name: _, attr: _, params, self_param, ret_typ, cases } = self;
+        let Def {
+            span: _,
+            doc: _,
+            name: _,
+            attr: _,
+            params,
+            self_param,
+            ret_typ,
+            cases,
+            erased: _,
+        } = self;
 
         params.contains_metavars()
             || self_param.contains_metavars()
@@ -805,6 +832,9 @@ pub struct Let {
     pub params: Telescope,
     pub typ: Box<Exp>,
     pub body: Box<Exp>,
+    /// Whether the let binding is erased during compilation.
+    /// This flag is annotated during the erasure transformation.
+    pub erased: bool,
 }
 
 impl Let {
@@ -816,7 +846,7 @@ impl Let {
 
 impl Print for Let {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Let { span: _, doc, name, attr, params, typ, body } = self;
+        let Let { span: _, doc, name, attr, params, typ, body, erased: _ } = self;
         if !attr.is_visible() {
             return alloc.nil();
         }
@@ -839,7 +869,7 @@ impl Print for Let {
 
 impl Zonk for Let {
     fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
-        let Let { span: _, doc: _, name: _, attr: _, params, typ, body } = self;
+        let Let { span: _, doc: _, name: _, attr: _, params, typ, body, erased: _ } = self;
         params.zonk(meta_vars)?;
         typ.zonk(meta_vars)?;
         body.zonk(meta_vars)?;
@@ -849,7 +879,7 @@ impl Zonk for Let {
 
 impl ContainsMetaVars for Let {
     fn contains_metavars(&self) -> bool {
-        let Let { span: _, doc: _, name: _, attr: _, params, typ, body } = self;
+        let Let { span: _, doc: _, name: _, attr: _, params, typ, body, erased: _ } = self;
 
         params.contains_metavars() || typ.contains_metavars() || body.contains_metavars()
     }
@@ -873,6 +903,7 @@ impl SelfParam {
                 implicit: false,
                 name: self.name.clone().unwrap_or_else(|| VarBind::from_string("")),
                 typ: Box::new(self.typ.to_exp()),
+                erased: false,
             }],
         }
     }
@@ -946,11 +977,12 @@ impl Telescope {
         let params = self
             .params
             .iter()
-            .map(|Param { name, .. }| ParamInst {
+            .map(|Param { name, erased, .. }| ParamInst {
                 span: None,
                 name: name.clone(),
                 info: None,
                 typ: None,
+                erased: *erased,
             })
             .collect();
         TelescopeInst { params }
@@ -978,7 +1010,7 @@ impl Print for Telescope {
         };
         // Running stands for the type and implicitness of the current "chunk" we are building.
         let mut running: Option<(&Exp, bool)> = None;
-        for Param { implicit, name, typ } in params {
+        for Param { implicit, name, typ, erased: _ } in params {
             match running {
                 // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
                 Some((rtype, rimplicit))
@@ -1063,11 +1095,13 @@ mod print_telescope_tests {
             implicit: false,
             name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let param2 = Param {
             implicit: false,
             name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(x y: Type)")
@@ -1079,11 +1113,13 @@ mod print_telescope_tests {
             implicit: true,
             name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let param2 = Param {
             implicit: true,
             name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(implicit x y: Type)")
@@ -1095,11 +1131,13 @@ mod print_telescope_tests {
             implicit: true,
             name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let param2 = Param {
             implicit: false,
             name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(implicit x: Type, y: Type)")
@@ -1111,11 +1149,13 @@ mod print_telescope_tests {
             implicit: false,
             name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let param2 = Param {
             implicit: true,
             name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(x: Type, implicit y: Type)")
@@ -1127,6 +1167,7 @@ mod print_telescope_tests {
             implicit: false,
             name: VarBind::from_string("a"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let param2 = Param {
             implicit: false,
@@ -1137,6 +1178,7 @@ mod print_telescope_tests {
                 name: VarBound::from_string("a"),
                 inferred_type: None,
             })),
+            erased: false,
         };
         let param3 = Param {
             implicit: false,
@@ -1147,6 +1189,7 @@ mod print_telescope_tests {
                 name: VarBound::from_string("a"),
                 inferred_type: None,
             })),
+            erased: false,
         };
         let tele = Telescope { params: vec![param1, param2, param3] };
         assert_eq!(tele.print_to_string(Default::default()), "(a: Type, x y: a)")
@@ -1164,19 +1207,22 @@ pub struct Param {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: VarBind,
     pub typ: Box<Exp>,
+    /// Whether the parameter is erased during compilation.
+    /// This flag is annotated during the erasure transformation.
+    pub erased: bool,
 }
 
 impl Substitutable for Param {
     type Result = Param;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Param { implicit, name, typ } = self;
-        Param { implicit: *implicit, name: name.clone(), typ: typ.subst(ctx, by) }
+        let Param { implicit, name, typ, erased } = self;
+        Param { implicit: *implicit, name: name.clone(), typ: typ.subst(ctx, by), erased: *erased }
     }
 }
 
 impl Print for Param {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Param { implicit, name, typ } = self;
+        let Param { implicit, name, typ, erased: _ } = self;
         if *implicit {
             alloc
                 .text(IMPLICIT)
@@ -1193,14 +1239,14 @@ impl Print for Param {
 
 impl Zonk for Param {
     fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
-        let Param { implicit: _, name: _, typ } = self;
+        let Param { implicit: _, name: _, typ, erased: _ } = self;
         typ.zonk(meta_vars)
     }
 }
 
 impl ContainsMetaVars for Param {
     fn contains_metavars(&self) -> bool {
-        let Param { implicit: _, name: _, typ } = self;
+        let Param { implicit: _, name: _, typ, erased: _ } = self;
 
         typ.contains_metavars()
     }
