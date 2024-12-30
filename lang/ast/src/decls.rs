@@ -1,5 +1,5 @@
-use codespan::Span;
 use derivative::Derivative;
+use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::print_comma_separated;
 use printer::theme::ThemeExt;

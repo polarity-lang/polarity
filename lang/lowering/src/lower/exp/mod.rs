@@ -2,7 +2,7 @@ use ast::IdBound;
 use ast::MetaVarKind;
 use ast::VarBind;
 use ast::VarBound;
-use codespan::Span;
+use miette_util::codespan::Span;
 use num_bigint::BigUint;
 
 use ast::Hole;

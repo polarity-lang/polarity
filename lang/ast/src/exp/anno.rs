@@ -1,5 +1,5 @@
-use codespan::Span;
 use derivative::Derivative;
+use miette_util::codespan::Span;
 use printer::{tokens::COLON, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{

@@ -16,7 +16,6 @@ categories.workspace = true
 async-trait = "0.1"
 # adressing symbols
 url = { workspace = true }
-codespan = { workspace = true }
 # index of source code intervals
 rust-lapper = "1"
 # text rope
@@ -33,3 +32,4 @@ elaborator = { path = "../elaborator" }
 printer = { path = "../printer" }
 parser = { path = "../parser" }
 transformations = { path = "../transformations" }
+miette_util = { path = "../miette_util" }

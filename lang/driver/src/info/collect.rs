@@ -1,4 +1,4 @@
-use codespan::Span;
+use miette_util::codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
 use ast::*;

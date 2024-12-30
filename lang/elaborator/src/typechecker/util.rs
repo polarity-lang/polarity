@@ -1,5 +1,5 @@
-use codespan::Span;
 use log::trace;
+use miette_util::codespan::Span;
 
 use ast::ctx::LevelCtx;
 use ast::*;

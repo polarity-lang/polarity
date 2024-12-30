@@ -13,4 +13,3 @@ categories.workspace = true
 
 [dependencies]
 miette = { workspace = true }
-codespan = { workspace = true }
