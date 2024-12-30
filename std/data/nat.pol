@@ -40,3 +40,33 @@ def Nat.pred: Nat {
     Z => Z,
     S(x) => x
 }
+
+-- | The lesser-or-equal relation on natural numbers.
+data LE(x y: Nat) {
+    LERefl(x: Nat): LE(x, x),
+    LESucc(x y: Nat, h: LE(x, y)): LE(x, S(y))
+}
+
+-- | Z is smaller than any natural number.
+def (x: Nat).z_le: LE(Z, x) {
+    Z => LERefl(Z),
+    S(x) => LESucc(Z, x, x.z_le)
+}
+
+-- | If x <= y, then S(x) <= S(y)
+def LE(x, y).le_succ(x y: Nat): LE(S(x), S(y)) {
+    LERefl(_) => LERefl(S(x)),
+    LESucc(x, y, h) => LESucc(S(x), S(y), h.le_succ(x, y))
+}
+
+-- | If S(x) <= S(y), then x <= y.
+def LE(S(x), S(y)).le_unsucc(x y: Nat): LE(x, y) {
+    LERefl(_) => LERefl(x),
+    LESucc(_, _, h) => h.s_le(x, y)
+}
+
+-- | If S(x) <= y, then x <= y
+def LE(S(x), y).s_le(x y: Nat): LE(x, y) {
+    LERefl(_) => LESucc(x, x, LERefl(x)),
+    LESucc(_, y', h) => LESucc(x, y', h.s_le(x, y'))
+}

@@ -536,12 +536,6 @@ def Eq(Ctx, xs, ys).eq_cons(xs ys: Ctx, t: Typ): Eq(Ctx, Cons(t, xs), Cons(t, ys
     Refl(_, _) => Refl(Ctx, Cons(t, xs))
 }
 
-data LE(x y: Nat) {
-    LERefl(x: Nat): LE(x, x),
-    LESucc(x y: Nat, h: LE(x, y)): LE(x, S(y))
-}
-
-
 def Nat.cmp(y: Nat): Ordering {
     Z =>
         y.match {
@@ -577,26 +571,6 @@ def (x: Nat).cmp_reflect(y: Nat): CmpReflect(x, y) {
                     IsGT(_, _, h1, h2) => IsGT(S(x), S(y), h1, h2.le_succ(S(y), x))
                 }
         }
-}
-
-def (x: Nat).z_le: LE(Z, x) {
-    Z => LERefl(Z),
-    S(x) => LESucc(Z, x, x.z_le)
-}
-
-def LE(x, y).le_succ(x y: Nat): LE(S(x), S(y)) {
-    LERefl(_) => LERefl(S(x)),
-    LESucc(x, y, h) => LESucc(S(x), S(y), h.le_succ(x, y))
-}
-
-def LE(S(x), S(y)).le_unsucc(x y: Nat): LE(x, y) {
-    LERefl(_) => LERefl(x),
-    LESucc(_, _, h) => h.s_le(x, y)
-}
-
-def LE(S(x), y).s_le(x y: Nat): LE(x, y) {
-    LERefl(_) => LESucc(x, x, LERefl(x)),
-    LESucc(_, y', h) => LESucc(x, y', h.s_le(x, y'))
 }
 
 def LE(S(x), y).s_pred(x y: Nat): Eq(Nat, S(y.pred), y) {
