@@ -50,7 +50,7 @@ fn generate_module(title: &str, content: &str) -> String {
     template.render().unwrap()
 }
 
-async fn write_modules(){
+async fn write_modules() {
     let example_path = Path::new(EXAMPLE_PATH);
     let mut all_modules = String::new();
     let list = file_list(get_files(Path::new(EXAMPLE_PATH)));
