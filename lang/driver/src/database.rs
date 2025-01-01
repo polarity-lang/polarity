@@ -1,21 +1,27 @@
-use crate::result::DriverError;
-use crate::{cache::*, Error, FileSource};
 use std::rc::Rc;
 use std::sync::Arc;
 
-use crate::dependency_graph::DependencyGraph;
+use url::Url;
+
 use ast::Exp;
 use ast::HashSet;
+use backend::ast2ir::traits::ToIR;
+use backend::ir;
 use elaborator::normalizer::normalize::Normalize;
 use elaborator::{build_type_info_table, ModuleTypeInfoTable, TypeInfoTable};
 use lowering::{ModuleSymbolTable, SymbolTable};
 use parser::cst;
 use parser::cst::decls::UseDecl;
+use transformations::build_erasure_symbol_table;
+use transformations::erase;
+use transformations::GlobalErasureSymbolTable;
 use transformations::Rename;
-use url::Url;
 
+use crate::dependency_graph::DependencyGraph;
 use crate::fs::*;
 use crate::info::*;
+use crate::result::DriverError;
+use crate::{cache::*, Error, FileSource};
 
 use rust_lapper::Lapper;
 
@@ -35,6 +41,8 @@ pub struct Database {
     pub ust: Cache<Result<Arc<ast::Module>, Error>>,
     /// The typechecked AST of a module
     pub ast: Cache<Result<Arc<ast::Module>, Error>>,
+    /// The IR of a module
+    pub ir: Cache<Result<Arc<ir::Module>, Error>>,
     /// The type info table constructed during typechecking
     pub module_type_info_table: Cache<elaborator::ModuleTypeInfoTable>,
     /// Hover information for spans
@@ -247,6 +255,48 @@ impl Database {
         ast
     }
 
+    // Core API: ir
+    //
+    //
+
+    pub async fn ir(&mut self, uri: &Url) -> Result<Arc<ir::Module>, Error> {
+        match self.ir.get_unless_stale(uri) {
+            Some(module) => {
+                log::debug!("Found ir in cache: {}", uri);
+                module.clone()
+            }
+            None => self.recompute_ir(uri).await,
+        }
+    }
+
+    pub async fn recompute_ir(&mut self, uri: &Url) -> Result<Arc<ir::Module>, Error> {
+        log::debug!("Recomputing ir for: {}", uri);
+
+        let mut module = self.ast(uri).await?;
+        let deps = self.deps(uri).await?;
+
+        // Build the erasure symbol table
+        let mut symbol_table = GlobalErasureSymbolTable::default();
+        let module_symbol_table = build_erasure_symbol_table(&module);
+        symbol_table.insert(uri.clone(), module_symbol_table);
+        for dep in deps {
+            let ast = self.ast(&dep).await?;
+            let module_symbol_table = build_erasure_symbol_table(&ast);
+            symbol_table.insert(dep.clone(), module_symbol_table);
+        }
+
+        // Erase the module
+        let module = Arc::make_mut(&mut module);
+        erase(symbol_table, module)?;
+
+        // Convert to intermediate representation (IR)
+        let ir = module.to_ir().map(Arc::new).map_err(Error::Backend);
+
+        self.ir.insert(uri.clone(), ir.clone());
+
+        ir
+    }
+
     // Core API: info_by_id
     //
     //
@@ -329,6 +379,7 @@ impl Database {
             symbol_table: Cache::default(),
             ust: Cache::default(),
             ast: Cache::default(),
+            ir: Cache::default(),
             module_type_info_table: Cache::default(),
             info_by_id: Cache::default(),
             item_by_id: Cache::default(),

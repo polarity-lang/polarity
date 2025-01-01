@@ -41,6 +41,14 @@ impl Arg {
         }
     }
 
+    pub fn set_erased(&mut self, erased: bool) {
+        match self {
+            Arg::UnnamedArg { erased: e, .. } => *e = erased,
+            Arg::NamedArg { erased: e, .. } => *e = erased,
+            Arg::InsertedImplicitArg { erased: e, .. } => *e = erased,
+        }
+    }
+
     pub fn erased(&self) -> bool {
         match self {
             Arg::UnnamedArg { erased, .. } => *erased,

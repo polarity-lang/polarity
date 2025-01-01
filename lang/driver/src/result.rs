@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
+use backend::result::BackendError;
 use miette::Diagnostic;
 use thiserror::Error;
+use transformations::ErasureError;
 use url::Url;
 
 #[derive(Error, Diagnostic, Debug, Clone)]
@@ -13,6 +15,8 @@ pub enum Error {
     Type(#[from] Box<elaborator::result::TypeError>),
     Xfunc(#[from] transformations::result::XfuncError),
     Driver(#[from] DriverError),
+    Erasure(#[from] ErasureError),
+    Backend(#[from] BackendError),
 }
 
 #[derive(Error, Debug, Diagnostic, Clone)]

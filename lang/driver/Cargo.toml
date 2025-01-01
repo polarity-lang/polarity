@@ -33,3 +33,4 @@ elaborator = { path = "../elaborator" }
 printer = { path = "../printer" }
 parser = { path = "../parser" }
 transformations = { path = "../transformations" }
+backend = { path = "../backend" }
