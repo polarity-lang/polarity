@@ -20,11 +20,16 @@ pub fn build_erasure_symbol_table(module: &ast::Module) -> ModuleErasureSymbolTa
     table
 }
 
+#[derive(Default, Debug)]
 pub struct GlobalErasureSymbolTable {
-    pub modules: HashMap<String, ModuleErasureSymbolTable>,
+    pub modules: HashMap<Url, ModuleErasureSymbolTable>,
 }
 
 impl GlobalErasureSymbolTable {
+    pub fn insert(&mut self, uri: Url, table: ModuleErasureSymbolTable) {
+        self.modules.insert(uri, table);
+    }
+
     pub fn lookup_data(&self, uri: &Url, name: &str) -> Result<&Data, ErasureError> {
         let module = self.lookup_module(uri)?;
         module
@@ -83,12 +88,12 @@ impl GlobalErasureSymbolTable {
 
     fn lookup_module(&self, uri: &Url) -> Result<&ModuleErasureSymbolTable, ErasureError> {
         self.modules
-            .get(uri.as_str())
+            .get(uri)
             .ok_or_else(|| ErasureError::Impossible(format!("Unknown module: {}", uri.as_str())))
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ModuleErasureSymbolTable {
     pub map_data: HashMap<String, Data>,
     pub map_codata: HashMap<String, Codata>,
@@ -160,13 +165,17 @@ impl BuildSymbolTable for ast::Data {
     fn build(&self, table: &mut ModuleErasureSymbolTable) {
         let ast::Data { span: _, doc: _, name, attr: _, typ: _, ctors } = self;
 
-        let ctors = ctors
+        let ctors: Vec<Ctor> = ctors
             .iter()
             .map(|ast::Ctor { span: _, doc: _, name, params, typ: _ }| {
                 let params = mark_erased_params(&params.params);
                 Ctor { name: name.to_string(), params }
             })
             .collect();
+
+        for ctor in &ctors {
+            table.map_ctor.insert(ctor.name.clone(), ctor.clone());
+        }
 
         let data = Data { name: name.to_string(), ctors };
         table.map_data.insert(name.to_string(), data);
@@ -177,7 +186,7 @@ impl BuildSymbolTable for ast::Codata {
     fn build(&self, table: &mut ModuleErasureSymbolTable) {
         let ast::Codata { span: _, doc: _, name, attr: _, typ: _, dtors } = self;
 
-        let dtors = dtors
+        let dtors: Vec<Dtor> = dtors
             .iter()
             .map(|ast::Dtor { span: _, doc: _, name, params, self_param, ret_typ, erased: _ }| {
                 let params = mark_erased_params(&params.params);
@@ -194,6 +203,10 @@ impl BuildSymbolTable for ast::Codata {
                 }
             })
             .collect();
+
+        for dtor in &dtors {
+            table.map_dtor.insert(dtor.name.clone(), dtor.clone());
+        }
 
         let codata = Codata { name: name.to_string(), dtors };
         table.map_codata.insert(name.to_string(), codata);
