@@ -60,9 +60,10 @@ async fn write_modules() {
         let prg = db.ust(&uri).await.expect("Failed to get UST");
 
         let title = file.file_stem().unwrap().to_str().unwrap();
+        let title = title.replace('_', " ");
         let code = prg.generate_docs();
-        let content = generate_module(title, &code);
-        let output_file = generate_html(title, &list, &content);
+        let content = generate_module(&title, &code);
+        let output_file = generate_html(&title, &list, &content);
 
         let htmlpath = get_path(&file);
         let mut stream = fs::File::create(htmlpath).expect("Failed to create file");
@@ -92,6 +93,7 @@ fn file_list(files: Vec<PathBuf>) -> String {
     for file in files {
         let name = file.file_stem().unwrap().to_str().unwrap();
         let path = name.to_string() + ".html";
+        let name = name.replace('_', " ");
         list.push_str(&format!("<li><a href={}>{}</a></li>", &path, name));
     }
     list
