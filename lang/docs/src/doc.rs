@@ -10,22 +10,13 @@ use driver::Database;
 
 use crate::generate_docs::GenerateDocs;
 
-pub async fn write_html(filepath: &Path) {
+pub async fn write_html() {
     if !Path::new(CSS_PATH).exists() {
         fs::create_dir_all(Path::new(CSS_PATH).parent().unwrap())
             .expect("Failed to create CSS directory");
         fs::write(CSS_PATH, CSS_TEMPLATE_PATH).expect("Failed to create CSS file");
     }
-
-    let content = write_modules().await;
-    let title = filepath.file_stem().unwrap().to_str().unwrap();
-    let list = file_list(get_files(Path::new(EXAMPLE_PATH)));
-    let htmlpath = Path::new(DOCS_PATH).join("index.html");
-
-    let mut stream = fs::File::create(htmlpath).expect("Failed to create file");
-    let output = generate_html(title, &list, &content);
-
-    stream.write_all(output.as_bytes()).expect("Failed to write to file");
+    write_modules().await;
 }
 
 pub fn open(filepath: &PathBuf) {
@@ -59,9 +50,10 @@ fn generate_module(title: &str, content: &str) -> String {
     template.render().unwrap()
 }
 
-async fn write_modules() -> String {
+async fn write_modules(){
     let example_path = Path::new(EXAMPLE_PATH);
     let mut all_modules = String::new();
+    let list = file_list(get_files(Path::new(EXAMPLE_PATH)));
     for file in get_files(example_path) {
         let mut db = Database::from_path(&file);
         let uri = db.resolve_path(&file).expect("Failed to resolve path");
@@ -70,15 +62,15 @@ async fn write_modules() -> String {
         let title = file.file_stem().unwrap().to_str().unwrap();
         let code = prg.generate_docs();
         let content = generate_module(title, &code);
+        let output_file = generate_html(title, &list, &content);
 
         let htmlpath = get_path(&file);
         let mut stream = fs::File::create(htmlpath).expect("Failed to create file");
 
-        stream.write_all(content.as_bytes()).expect("Failed to write to file");
+        stream.write_all(output_file.as_bytes()).expect("Failed to write to file");
 
-        all_modules.push_str(&content);
+        all_modules.push_str(&output_file);
     }
-    all_modules
 }
 
 fn get_files(path: &Path) -> Vec<PathBuf> {
