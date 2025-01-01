@@ -99,7 +99,8 @@ fn file_list(files: Vec<PathBuf>) -> String {
     let mut list = String::new();
     for file in files {
         let name = file.file_stem().unwrap().to_str().unwrap();
-        list.push_str(&format!("<li><a onclick=\"showContent('{}')\">{}</a></li>", name, name));
+        let path = name.to_string() + ".html";
+        list.push_str(&format!("<li><a href={}>{}</a></li>", &path, name));
     }
     list
 }
