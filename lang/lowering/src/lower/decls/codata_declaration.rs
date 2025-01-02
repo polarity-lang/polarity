@@ -74,6 +74,7 @@ fn lower_destructor(
                 params,
                 self_param,
                 ret_typ: ret_typ.lower(ctx)?,
+                erased: false,
             })
         })
     })

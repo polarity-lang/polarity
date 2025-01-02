@@ -224,15 +224,18 @@ impl WithExpectedType<'_> {
                                     let args = (0..*n_label_args)
                                         .rev()
                                         .map(|snd| {
-                                            Arg::UnnamedArg(Box::new(Exp::Variable(Variable {
-                                                span: None,
-                                                // The field `fst` has to be `2` because we have two surrounding telescopes:
-                                                // - The arguments to the toplevel codefinition
-                                                // - The arguments bound by the destructor copattern.
-                                                idx: Idx { fst: 2, snd },
-                                                name: VarBound::from_string(""),
-                                                inferred_type: None,
-                                            })))
+                                            Arg::UnnamedArg {
+                                                arg: Box::new(Exp::Variable(Variable {
+                                                    span: None,
+                                                    // The field `fst` has to be `2` because we have two surrounding telescopes:
+                                                    // - The arguments to the toplevel codefinition
+                                                    // - The arguments bound by the destructor copattern.
+                                                    idx: Idx { fst: 2, snd },
+                                                    name: VarBound::from_string(""),
+                                                    inferred_type: None,
+                                                })),
+                                                erased: false,
+                                            }
                                         })
                                         .collect();
                                     let ctor = Box::new(Exp::Call(Call {

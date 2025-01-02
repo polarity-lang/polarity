@@ -169,14 +169,22 @@ impl Lift for Dtor {
     type Target = Dtor;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Dtor { span, doc, name, params, self_param, ret_typ } = self;
+        let Dtor { span, doc, name, params, self_param, ret_typ, erased } = self;
 
         params.lift_telescope(ctx, |ctx, params| {
             let (self_param, ret_typ) = self_param.lift_telescope(ctx, |ctx, self_param| {
                 let ret_typ = ret_typ.lift(ctx);
                 (self_param, ret_typ)
             });
-            Dtor { span: *span, doc: doc.clone(), name: name.clone(), params, self_param, ret_typ }
+            Dtor {
+                span: *span,
+                doc: doc.clone(),
+                name: name.clone(),
+                params,
+                self_param,
+                ret_typ,
+                erased: *erased,
+            }
         })
     }
 }
@@ -185,7 +193,7 @@ impl Lift for Def {
     type Target = Def;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Def { span, doc, name, attr, params, self_param, ret_typ, cases } = self;
+        let Def { span, doc, name, attr, params, self_param, ret_typ, cases, erased } = self;
 
         params.lift_telescope(ctx, |ctx, params| {
             let (self_param, ret_typ) = self_param.lift_telescope(ctx, |ctx, self_param| {
@@ -202,6 +210,7 @@ impl Lift for Def {
                 self_param,
                 ret_typ,
                 cases: cases.lift(ctx),
+                erased: *erased,
             }
         })
     }
@@ -229,7 +238,7 @@ impl Lift for Let {
     type Target = Let;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Let { span, doc, name, attr, params, typ, body } = self;
+        let Let { span, doc, name, attr, params, typ, body, erased } = self;
 
         params.lift_telescope(ctx, |ctx, params| Let {
             span: *span,
@@ -239,6 +248,7 @@ impl Lift for Let {
             params,
             typ: typ.lift(ctx),
             body: body.lift(ctx),
+            erased: *erased,
         })
     }
 }
@@ -479,9 +489,15 @@ impl Lift for Arg {
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         match self {
-            Arg::UnnamedArg(exp) => Arg::UnnamedArg(exp.lift(ctx)),
-            Arg::NamedArg(name, exp) => Arg::NamedArg(name.clone(), exp.lift(ctx)),
-            Arg::InsertedImplicitArg(hole) => Arg::InsertedImplicitArg(hole.lift(ctx)),
+            Arg::UnnamedArg { arg, erased } => {
+                Arg::UnnamedArg { arg: arg.lift(ctx), erased: *erased }
+            }
+            Arg::NamedArg { name, arg, erased } => {
+                Arg::NamedArg { name: name.clone(), arg: arg.lift(ctx), erased: *erased }
+            }
+            Arg::InsertedImplicitArg { hole, erased } => {
+                Arg::InsertedImplicitArg { hole: hole.lift(ctx), erased: *erased }
+            }
         }
     }
 }
@@ -490,9 +506,9 @@ impl Lift for Param {
     type Target = Param;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Param { implicit, name, typ } = self;
+        let Param { implicit, name, typ, erased } = self;
 
-        Param { implicit: *implicit, name: name.clone(), typ: typ.lift(ctx) }
+        Param { implicit: *implicit, name: name.clone(), typ: typ.lift(ctx), erased: *erased }
     }
 }
 
@@ -500,9 +516,9 @@ impl Lift for ParamInst {
     type Target = ParamInst;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let ParamInst { span, name, typ: _, .. } = self;
+        let ParamInst { span, name, typ: _, erased, .. } = self;
 
-        ParamInst { span: *span, info: None, name: name.clone(), typ: None }
+        ParamInst { span: *span, info: None, name: name.clone(), typ: None, erased: *erased }
     }
 }
 
@@ -602,6 +618,7 @@ impl Ctx {
             },
             ret_typ: def_ret_typ,
             cases,
+            erased: false,
         };
 
         self.new_decls.push(Decl::Def(def));

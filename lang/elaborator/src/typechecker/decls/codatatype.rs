@@ -39,7 +39,7 @@ impl CheckToplevel for Codata {
 fn check_dtor_wf(codata_name: &IdBind, dtor: &Dtor, ctx: &mut Ctx) -> Result<Dtor, TypeError> {
     trace!("Checking well-formedness of destructor: {}", dtor.name);
 
-    let Dtor { span, doc, name, params, self_param, ret_typ } = dtor;
+    let Dtor { span, doc, name, params, self_param, ret_typ, erased } = dtor;
 
     // Check that the destructor lies in the codata type it is defined in
     if &self_param.typ.name != codata_name {
@@ -61,6 +61,7 @@ fn check_dtor_wf(codata_name: &IdBind, dtor: &Dtor, ctx: &mut Ctx) -> Result<Dto
                 params: params_out,
                 self_param: self_param_out,
                 ret_typ: ret_typ_out,
+                erased: *erased,
             })
         })
     })

@@ -66,7 +66,8 @@ impl GenerateDocs for Codata {
 
 impl GenerateDocs for Def {
     fn generate_docs(&self) -> String {
-        let Def { span: _, doc, name, attr: _, params, self_param, ret_typ, cases } = self;
+        let Def { span: _, doc, name, attr: _, params, self_param, ret_typ, cases, erased: _ } =
+            self;
 
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
@@ -114,7 +115,7 @@ impl GenerateDocs for Codef {
 
 impl GenerateDocs for Let {
     fn generate_docs(&self) -> String {
-        let Let { span: _, doc, name, attr: _, params, typ, body } = self;
+        let Let { span: _, doc, name, attr: _, params, typ, body, erased: _ } = self;
 
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;

@@ -17,7 +17,7 @@ impl CheckToplevel for Let {
     fn check_wf(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         trace!("Checking well-formedness of global let: {}", self.name);
 
-        let Let { span, doc, name, attr, params, typ, body } = self;
+        let Let { span, doc, name, attr, params, typ, body, erased } = self;
 
         params.infer_telescope(ctx, |ctx, params_out| {
             let typ_out = typ.infer(ctx)?;
@@ -32,6 +32,7 @@ impl CheckToplevel for Let {
                 params: params_out,
                 typ: typ_out,
                 body: body_out,
+                erased: *erased,
             })
         })
     }

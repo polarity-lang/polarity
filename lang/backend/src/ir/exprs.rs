@@ -61,5 +61,7 @@ pub struct Case {
 pub struct Pattern {
     pub is_copattern: bool,
     pub name: String,
+    /// The URI of the module where `name` is defined.
+    pub module_uri: Url,
     pub params: Vec<String>,
 }

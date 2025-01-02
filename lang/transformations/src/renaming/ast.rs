@@ -279,9 +279,9 @@ impl Rename for Args {
 impl Rename for Arg {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         match self {
-            Arg::UnnamedArg(exp) => exp.rename_in_ctx(ctx),
-            Arg::NamedArg(_name, exp) => exp.rename_in_ctx(ctx),
-            Arg::InsertedImplicitArg(hole) => hole.rename_in_ctx(ctx),
+            Arg::UnnamedArg { arg, .. } => arg.rename_in_ctx(ctx),
+            Arg::NamedArg { arg, .. } => arg.rename_in_ctx(ctx),
+            Arg::InsertedImplicitArg { hole, .. } => hole.rename_in_ctx(ctx),
         }
     }
 }
