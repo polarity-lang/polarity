@@ -1,33 +1,20 @@
 :root {
-    /* Background & Text */
-    --color-body-bg: #f0f4f7;           /* Overall page background with a soft bluish tint */
-    --color-text-default: #2f2f2f;      /* Dark grey for text */
-
-    /* Header */
-    --color-header-bg: #dfe6ea;         /* Light greyish-blue for header background */
-    --color-header-text: #2f2f2f;       /* Dark grey for header text */
-
-    /* Navigation */
-    --color-nav-bg: #e2e8ec;           /* Slightly darker bluish-grey for nav background */
-    --color-nav-text: #2f2f2f;         /* Dark grey for nav text */
-
-    /* Cards */
-    --color-card-bg: #ffffff;          /* White background for cards */
-    --color-card-header-bg: #e0eaf1;   /* Subtle bluish tone for the card header */
-
-    /* General */
-    --color-shadow: rgba(0, 0, 0, 0.1); /* Soft shadow */
-    --color-highlight: #3f3dc2;         /* Bluish accent for keywords or highlights */
-    --color-comment: #444444;           /* Dark grey for comments */
-    --color-type: #2f2dc2;             /* Another subtle blue for types or special text */
+    --background-1: #f0f4f7;
+    --background-2: #dfe6ea;
+    --background-3: #e2e8ec;
+    --background-4: #e0eaf1;
+    --text-color-1: #2f2f2f;
+    --text-color-2: #444444; 
+    --highlight-1: #3f3dc2;
+    --highlight-2: #2d69c2;
+    --shadow: rgba(0, 0, 0, 0.1);
 }
 
-/* Global Reset/Body Styles */
 html, body {
     margin: 0;
     padding: 0;
-    background-color: var(--color-body-bg);
-    color: var(--color-text-default);
+    background-color: var(--background-1);
+    color: var(--text-color-1);
     font-family: sans-serif;
     box-sizing: border-box;
 }
@@ -41,17 +28,16 @@ ul, li {
     margin: 0;
 }
 
-/* Navigation (Sidebar) */
 nav {
     width: 200px;
     height: 100vh;
     position: fixed;
     top: 60px;
     left: 0;
-    background-color: var(--color-nav-bg);
-    color: var(--color-nav-text);
+    background-color: var(--background-2);
+    color: var(--text-color-1);
     padding: 10px;
-    overflow-y: auto; /* Optional: scroll if content is tall */
+    overflow-y: auto;
 }
 
 nav ul {
@@ -65,7 +51,7 @@ nav ul li {
 }
 
 nav ul li a {
-    color: var(--color-nav-text);
+    color: var(--text-color-1);
     text-decoration: none;
     cursor: pointer;
 }
@@ -74,42 +60,40 @@ nav ul li a:hover {
     text-decoration: underline;
 }
 
-/* Header (Fixed) */
 header {
     position: fixed;
     top: 0;
-    left: 0; /* space for the nav */
+    left: 0;
     right: 0;
     height: 60px;
-    background-color: var(--color-header-bg);
-    color: var(--color-header-text);
+    background-color: var(--background-3);
+    color: var(--text-color-1);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    box-shadow: 0 2px 5px var(--color-shadow);
+    box-shadow: 0 2px 5px var(--shadow-color);
 }
 
-/* Main Content */
+
 main {
-    margin-left: 200px; /* space for the nav */
-    margin-top: 60px;   /* space for the header */
+    margin-left: 200px;
+    margin-top: 60px;
     padding: 20px;
-    min-height: calc(100vh - 60px); /* ensures main grows to fill viewport below header */
+    min-height: calc(100vh - 60px);
     box-sizing: border-box;
 }
 
-/* Card Layout */
 .card {
-    background-color: var(--color-card-bg);
+    background-color: white;
     margin-bottom: 20px;
     border-radius: 5px;
     overflow: hidden;
-    box-shadow: 0 2px 5px var(--color-shadow);
+    box-shadow: 0 2px 5px var(--shadow-color);
 }
 
 .card-header {
-    background-color: var(--color-card-header-bg);
+    background-color: var(--background-4);
     padding: 15px;
     display: flex;
     align-items: center;
@@ -127,28 +111,26 @@ main {
 }
 
 .card-content {
-    display: none; /* hidden by default; controlled by JS toggle if desired */
+    display: none;
     padding: 15px;
 }
 
-/* Documentation or Additional Sections */
 .doc {
     margin-top: 15px;
     margin-left: 15px;
 }
 
-/* Syntax-Like Styling */
 .keyword {
-    color: var(--color-highlight);
+    color: var(--highlight-1);
     font-weight: bold;
 }
 
 .comment {
-    color: var(--color-comment);
+    color: var(--text-color-2);
     font-style: italic;
 }
 
 .type {
-    color: var(--color-type);
+    color: var(--highlight-2);
     font-style: italic;
 }
