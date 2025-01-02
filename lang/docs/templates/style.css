@@ -1,30 +1,96 @@
-body {
-    font-family: 'Courier New', Courier, monospace;
-    background-color: #000;
-    color: #fff;
-    margin: 0;
+
+header {
+    position: fixed;
+    top: 0;
+    left: 200px;
+    right: 0;
+    height: 60px;
+    background-color: #333;
+    color: white;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    z-index: 1000;
 }
 
-h1 {
-    font-size: 2.5em;
-    text-align: center;
-    color: #fff;
-    margin-bottom: 20px;
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-.code-card{
-    background-color: #111;
-    color: #f8f8f2;
-    border-radius: 8px;
-    overflow-x: auto;
-    font-size: 1.1em;
-    line-height: 1.6;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+li {
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+nav {
+    width: 200px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #444;
+    color: white;
+    padding: 10px;
+    box-sizing: border-box;
+}
+nav ul {
+    list-style: none;
+    padding: 0;
+}
+nav ul li {
+    margin: 10px 0;
+}
+nav ul li a {
+    cursor: pointer;
+    color: white;
+    text-decoration: none;
+}
+nav ul li a:hover {
+    text-decoration: underline;
+}
+
+
+main {
+    margin-left: 220px;
+    margin-top: 80px;
     padding: 20px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+.card {
+    background-color: #f4f4f4;
     margin-bottom: 20px;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.card-header {
+    background-color: #ccc;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.card-header span {
+    font-weight: bold;
+}
+
+.card-header button{
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+}
+.card-content {
+    display: none;
+    padding: 15px;
+}
+
+.doc {
+    margin-top: 15px;
+    margin-left: 15px;
 }
 
 .keyword {
@@ -33,6 +99,12 @@ h1 {
 }
 
 .comment {
-    color: #6272a4;
+    color: #000000;
     font-style: italic;
 }
+
+.type {
+    color: #3f3dc2;
+    font-style: italic;
+}
+

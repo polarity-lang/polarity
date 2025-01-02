@@ -1,4 +1,14 @@
-<span>{{doc}}</span>
-<span><span class="keyword">Let</span> {{name}}: {{params}}{{typ}} {</span> <br>
-<span>{{body}}</span> <br>
-<span>}</span> <br>
+<div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+        <span><span class="keyword">let</span> {{name}}: {{params}}{{typ}}</span>
+        <button class="button">show code</button>
+    </div>
+    <div class="doc" style="display: block;">
+        <span>{{doc}}</span>
+    </div>
+    <div class="card-content" style="display: none;">
+        <code>
+            <span>{{body}}</span>
+        </code>
+    </div>
+</div>
