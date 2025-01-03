@@ -130,6 +130,7 @@ main {
 }
 
 .card-content {
+    cursor: pointer;
     display: none;
     padding: 15px;
 }
@@ -146,7 +147,6 @@ main {
 
 .comment {
     color: var(--text-color-2);
-    font-style: italic;
 }
 
 .type {
