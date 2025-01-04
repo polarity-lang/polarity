@@ -1,16 +1,9 @@
 use std::fmt;
 use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
 
-/// The raw, untyped offset.
-pub type RawOffset = i64;
-
-/// The raw, untyped index. We use a 32-bit integer here for space efficiency,
-/// assuming we won't be working with sources larger than 4GB.
-pub type RawIndex = u32;
-
 /// A byte position in a source file.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ByteIndex(pub RawIndex);
+pub struct ByteIndex(pub u32);
 
 impl ByteIndex {
     /// Convert the position into a `usize`, for use in array indexing
@@ -37,7 +30,7 @@ impl Sub for ByteIndex {
 
     #[inline]
     fn sub(self, rhs: ByteIndex) -> ByteOffset {
-        ByteOffset(self.0 as RawOffset - rhs.0 as RawOffset)
+        ByteOffset(self.0 as i64 - rhs.0 as i64)
     }
 }
 
@@ -46,13 +39,13 @@ impl Add<ByteOffset> for ByteIndex {
 
     #[inline]
     fn add(self, rhs: ByteOffset) -> ByteIndex {
-        ByteIndex((self.0 as RawOffset + rhs.0) as RawIndex)
+        ByteIndex((self.0 as i64 + rhs.0) as u32)
     }
 }
 
 /// A byte offset in a source file
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ByteOffset(pub RawOffset);
+pub struct ByteOffset(pub i64);
 
 impl ByteOffset {
     /// Convert the offset into a `usize`, for use in array indexing
@@ -148,7 +141,7 @@ impl fmt::Display for Span {
 
 /// A 1-indexed line number. Useful for pretty printing source locations.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct LineNumber(RawIndex);
+pub struct LineNumber(u32);
 
 impl fmt::Display for LineNumber {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -158,11 +151,11 @@ impl fmt::Display for LineNumber {
 
 /// A zero-indexed line offset into a source file
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct LineIndex(pub RawIndex);
+pub struct LineIndex(pub u32);
 
 /// A line offset in a source file
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct LineOffset(pub RawOffset);
+pub struct LineOffset(pub i64);
 
 impl LineIndex {
     /// The 1-indexed line number. Useful for pretty printing source locations.
@@ -188,7 +181,7 @@ impl Add<LineOffset> for LineIndex {
 
     #[inline]
     fn add(self, rhs: LineOffset) -> LineIndex {
-        LineIndex((self.0 as RawOffset + rhs.0) as RawIndex)
+        LineIndex((self.0 as i64 + rhs.0) as u32)
     }
 }
 
@@ -208,7 +201,7 @@ impl fmt::Display for LineIndex {
 
 /// A 1-indexed column number. Useful for pretty printing source locations.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ColumnNumber(RawIndex);
+pub struct ColumnNumber(u32);
 
 impl fmt::Display for ColumnNumber {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -218,11 +211,11 @@ impl fmt::Display for ColumnNumber {
 
 /// A zero-indexed column offset into a source file
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ColumnIndex(pub RawIndex);
+pub struct ColumnIndex(pub u32);
 
 /// A column offset in a source file
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ColumnOffset(pub RawOffset);
+pub struct ColumnOffset(pub i64);
 
 impl ColumnIndex {
     /// Convert the index into a `usize`, for use in array indexing
