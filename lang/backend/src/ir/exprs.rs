@@ -17,6 +17,9 @@ pub enum Exp {
     LocalMatch(LocalMatch),
     LocalComatch(LocalComatch),
     Panic(Panic),
+    /// Zero-Sized Term
+    /// This term has no runtime effect and is generated as a placeholder whenever types cannot be erased by the current implementation.
+    ZST,
 }
 
 impl Print for Exp {
@@ -36,6 +39,7 @@ impl Print for Exp {
             Exp::LocalMatch(m) => m.print_prec(cfg, alloc, prec),
             Exp::LocalComatch(m) => m.print_prec(cfg, alloc, prec),
             Exp::Panic(p) => p.print_prec(cfg, alloc, prec),
+            Exp::ZST => alloc.keyword("<ZST>"),
         }
     }
 }
