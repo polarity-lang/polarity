@@ -14,3 +14,4 @@ categories.workspace = true
 url = { workspace = true }
 # workspace dependencies
 ast = { path = "../ast" }
+printer = { path = "../printer" }
