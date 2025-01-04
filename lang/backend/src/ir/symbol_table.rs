@@ -1,10 +1,11 @@
 use ast::HashMap;
 
-pub struct GlobalLookupTable {
-    pub modules: HashMap<String, ModuleLookupTable>,
+pub struct GlobalSymbolTable {
+    pub modules: HashMap<String, ModuleSymbolTable>,
 }
 
-pub struct ModuleLookupTable {
+#[derive(Default)]
+pub struct ModuleSymbolTable {
     pub data_decls: HashMap<String, Data>,
     pub codata_decls: HashMap<String, Codata>,
 }

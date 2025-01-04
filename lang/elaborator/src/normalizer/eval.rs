@@ -457,11 +457,11 @@ impl Eval for Arg {
 
     fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
         match self {
-            Arg::UnnamedArg(exp) => Ok(val::Arg::UnnamedArg(exp.eval(info_table, env)?)),
-            Arg::NamedArg(name, exp) => {
-                Ok(val::Arg::NamedArg(name.clone(), exp.eval(info_table, env)?))
+            Arg::UnnamedArg { arg, .. } => Ok(val::Arg::UnnamedArg(arg.eval(info_table, env)?)),
+            Arg::NamedArg { name, arg, .. } => {
+                Ok(val::Arg::NamedArg(name.clone(), arg.eval(info_table, env)?))
             }
-            Arg::InsertedImplicitArg(hole) => {
+            Arg::InsertedImplicitArg { hole, .. } => {
                 Ok(val::Arg::InsertedImplicitArg(hole.eval(info_table, env)?))
             }
         }

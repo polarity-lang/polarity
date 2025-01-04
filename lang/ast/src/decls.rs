@@ -873,6 +873,7 @@ impl SelfParam {
                 implicit: false,
                 name: self.name.clone().unwrap_or_else(|| VarBind::from_string("")),
                 typ: Box::new(self.typ.to_exp()),
+                erased: false,
             }],
         }
     }
@@ -946,11 +947,12 @@ impl Telescope {
         let params = self
             .params
             .iter()
-            .map(|Param { name, .. }| ParamInst {
+            .map(|Param { name, erased, .. }| ParamInst {
                 span: None,
                 name: name.clone(),
                 info: None,
                 typ: None,
+                erased: *erased,
             })
             .collect();
         TelescopeInst { params }
@@ -978,7 +980,7 @@ impl Print for Telescope {
         };
         // Running stands for the type and implicitness of the current "chunk" we are building.
         let mut running: Option<(&Exp, bool)> = None;
-        for Param { implicit, name, typ } in params {
+        for Param { implicit, name, typ, erased: _ } in params {
             match running {
                 // We need to shift before comparing to ensure we compare the correct De-Bruijn indices
                 Some((rtype, rimplicit))
@@ -1063,11 +1065,13 @@ mod print_telescope_tests {
             implicit: false,
             name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let param2 = Param {
             implicit: false,
             name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(x y: Type)")
@@ -1079,11 +1083,13 @@ mod print_telescope_tests {
             implicit: true,
             name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let param2 = Param {
             implicit: true,
             name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(implicit x y: Type)")
@@ -1095,11 +1101,13 @@ mod print_telescope_tests {
             implicit: true,
             name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let param2 = Param {
             implicit: false,
             name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(implicit x: Type, y: Type)")
@@ -1111,11 +1119,13 @@ mod print_telescope_tests {
             implicit: false,
             name: VarBind::from_string("x"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let param2 = Param {
             implicit: true,
             name: VarBind::from_string("y"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let tele = Telescope { params: vec![param1, param2] };
         assert_eq!(tele.print_to_string(Default::default()), "(x: Type, implicit y: Type)")
@@ -1127,6 +1137,7 @@ mod print_telescope_tests {
             implicit: false,
             name: VarBind::from_string("a"),
             typ: Box::new(TypeUniv::new().into()),
+            erased: false,
         };
         let param2 = Param {
             implicit: false,
@@ -1137,6 +1148,7 @@ mod print_telescope_tests {
                 name: VarBound::from_string("a"),
                 inferred_type: None,
             })),
+            erased: false,
         };
         let param3 = Param {
             implicit: false,
@@ -1147,6 +1159,7 @@ mod print_telescope_tests {
                 name: VarBound::from_string("a"),
                 inferred_type: None,
             })),
+            erased: false,
         };
         let tele = Telescope { params: vec![param1, param2, param3] };
         assert_eq!(tele.print_to_string(Default::default()), "(a: Type, x y: a)")
@@ -1164,19 +1177,21 @@ pub struct Param {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: VarBind,
     pub typ: Box<Exp>,
+    /// Whether the parameter is erased during compilation.
+    pub erased: bool,
 }
 
 impl Substitutable for Param {
     type Result = Param;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let Param { implicit, name, typ } = self;
-        Param { implicit: *implicit, name: name.clone(), typ: typ.subst(ctx, by) }
+        let Param { implicit, name, typ, erased } = self;
+        Param { implicit: *implicit, name: name.clone(), typ: typ.subst(ctx, by), erased: *erased }
     }
 }
 
 impl Print for Param {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Param { implicit, name, typ } = self;
+        let Param { implicit, name, typ, erased: _ } = self;
         if *implicit {
             alloc
                 .text(IMPLICIT)
@@ -1193,14 +1208,14 @@ impl Print for Param {
 
 impl Zonk for Param {
     fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
-        let Param { implicit: _, name: _, typ } = self;
+        let Param { implicit: _, name: _, typ, erased: _ } = self;
         typ.zonk(meta_vars)
     }
 }
 
 impl ContainsMetaVars for Param {
     fn contains_metavars(&self) -> bool {
-        let Param { implicit: _, name: _, typ } = self;
+        let Param { implicit: _, name: _, typ, erased: _ } = self;
 
         typ.contains_metavars()
     }

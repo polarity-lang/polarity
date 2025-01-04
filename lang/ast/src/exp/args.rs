@@ -23,21 +23,29 @@ use super::{Exp, Hole, Lvl, MetaVar, VarBound};
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Arg {
-    UnnamedArg(Box<Exp>),
-    NamedArg(VarBound, Box<Exp>),
-    InsertedImplicitArg(Hole),
+    UnnamedArg { arg: Box<Exp>, erased: bool },
+    NamedArg { name: VarBound, arg: Box<Exp>, erased: bool },
+    InsertedImplicitArg { hole: Hole, erased: bool },
 }
 
 impl Arg {
     pub fn is_inserted_implicit(&self) -> bool {
-        matches!(self, Arg::InsertedImplicitArg(_))
+        matches!(self, Arg::InsertedImplicitArg { .. })
     }
 
     pub fn exp(&self) -> Box<Exp> {
         match self {
-            Arg::UnnamedArg(e) => e.clone(),
-            Arg::NamedArg(_, e) => e.clone(),
-            Arg::InsertedImplicitArg(hole) => Box::new(hole.clone().into()),
+            Arg::UnnamedArg { arg, .. } => arg.clone(),
+            Arg::NamedArg { arg, .. } => arg.clone(),
+            Arg::InsertedImplicitArg { hole, .. } => Box::new(hole.clone().into()),
+        }
+    }
+
+    pub fn erased(&self) -> bool {
+        match self {
+            Arg::UnnamedArg { erased, .. } => *erased,
+            Arg::NamedArg { erased, .. } => *erased,
+            Arg::InsertedImplicitArg { erased, .. } => *erased,
         }
     }
 }
@@ -45,9 +53,9 @@ impl Arg {
 impl HasSpan for Arg {
     fn span(&self) -> Option<Span> {
         match self {
-            Arg::UnnamedArg(e) => e.span(),
-            Arg::NamedArg(_, e) => e.span(),
-            Arg::InsertedImplicitArg(hole) => hole.span(),
+            Arg::UnnamedArg { arg, .. } => arg.span(),
+            Arg::NamedArg { arg, .. } => arg.span(),
+            Arg::InsertedImplicitArg { hole, .. } => hole.span(),
         }
     }
 }
@@ -55,9 +63,9 @@ impl HasSpan for Arg {
 impl Shift for Arg {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         match self {
-            Arg::UnnamedArg(e) => e.shift_in_range(range, by),
-            Arg::NamedArg(_, e) => e.shift_in_range(range, by),
-            Arg::InsertedImplicitArg(hole) => hole.shift_in_range(range, by),
+            Arg::UnnamedArg { arg, .. } => arg.shift_in_range(range, by),
+            Arg::NamedArg { arg, .. } => arg.shift_in_range(range, by),
+            Arg::InsertedImplicitArg { hole, .. } => hole.shift_in_range(range, by),
         }
     }
 }
@@ -65,9 +73,9 @@ impl Shift for Arg {
 impl Occurs for Arg {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         match self {
-            Arg::UnnamedArg(e) => e.occurs(ctx, lvl),
-            Arg::NamedArg(_, e) => e.occurs(ctx, lvl),
-            Arg::InsertedImplicitArg(hole) => hole.occurs(ctx, lvl),
+            Arg::UnnamedArg { arg, .. } => arg.occurs(ctx, lvl),
+            Arg::NamedArg { arg, .. } => arg.occurs(ctx, lvl),
+            Arg::InsertedImplicitArg { hole, .. } => hole.occurs(ctx, lvl),
         }
     }
 }
@@ -75,9 +83,9 @@ impl Occurs for Arg {
 impl HasType for Arg {
     fn typ(&self) -> Option<Box<Exp>> {
         match self {
-            Arg::UnnamedArg(e) => e.typ(),
-            Arg::NamedArg(_, e) => e.typ(),
-            Arg::InsertedImplicitArg(hole) => hole.typ(),
+            Arg::UnnamedArg { arg, .. } => arg.typ(),
+            Arg::NamedArg { arg, .. } => arg.typ(),
+            Arg::InsertedImplicitArg { hole, .. } => hole.typ(),
         }
     }
 }
@@ -86,9 +94,15 @@ impl Substitutable for Arg {
     type Result = Arg;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
         match self {
-            Arg::UnnamedArg(e) => Arg::UnnamedArg(e.subst(ctx, by)),
-            Arg::NamedArg(i, e) => Arg::NamedArg(i.clone(), e.subst(ctx, by)),
-            Arg::InsertedImplicitArg(hole) => Arg::InsertedImplicitArg(hole.subst(ctx, by)),
+            Arg::UnnamedArg { arg, erased } => {
+                Arg::UnnamedArg { arg: arg.subst(ctx, by), erased: *erased }
+            }
+            Arg::NamedArg { name: var, arg, erased } => {
+                Arg::NamedArg { name: var.clone(), arg: arg.subst(ctx, by), erased: *erased }
+            }
+            Arg::InsertedImplicitArg { hole, erased } => {
+                Arg::InsertedImplicitArg { hole: hole.subst(ctx, by), erased: *erased }
+            }
         }
     }
 }
@@ -96,9 +110,11 @@ impl Substitutable for Arg {
 impl Print for Arg {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            Arg::UnnamedArg(e) => e.print(cfg, alloc),
-            Arg::NamedArg(i, e) => alloc.text(&i.id).append(COLONEQ).append(e.print(cfg, alloc)),
-            Arg::InsertedImplicitArg(_) => {
+            Arg::UnnamedArg { arg, .. } => arg.print(cfg, alloc),
+            Arg::NamedArg { name: var, arg, .. } => {
+                alloc.text(&var.id).append(COLONEQ).append(arg.print(cfg, alloc))
+            }
+            Arg::InsertedImplicitArg { .. } => {
                 panic!("Inserted implicit arguments should not be printed")
             }
         }
@@ -111,9 +127,9 @@ impl Zonk for Arg {
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
         match self {
-            Arg::UnnamedArg(e) => e.zonk(meta_vars),
-            Arg::NamedArg(_, e) => e.zonk(meta_vars),
-            Arg::InsertedImplicitArg(hole) => hole.zonk(meta_vars),
+            Arg::UnnamedArg { arg, .. } => arg.zonk(meta_vars),
+            Arg::NamedArg { arg, .. } => arg.zonk(meta_vars),
+            Arg::InsertedImplicitArg { hole, .. } => hole.zonk(meta_vars),
         }
     }
 }
@@ -121,9 +137,9 @@ impl Zonk for Arg {
 impl ContainsMetaVars for Arg {
     fn contains_metavars(&self) -> bool {
         match self {
-            Arg::UnnamedArg(e) => e.contains_metavars(),
-            Arg::NamedArg(_, e) => e.contains_metavars(),
-            Arg::InsertedImplicitArg(hole) => hole.contains_metavars(),
+            Arg::UnnamedArg { arg, .. } => arg.contains_metavars(),
+            Arg::NamedArg { arg, .. } => arg.contains_metavars(),
+            Arg::InsertedImplicitArg { hole, .. } => hole.contains_metavars(),
         }
     }
 }
@@ -249,13 +265,19 @@ mod args_tests {
         );
 
         assert_eq!(
-            Args { args: vec![Arg::UnnamedArg(ctor.clone())] }.print_to_string(Default::default()),
+            Args { args: vec![Arg::UnnamedArg { arg: ctor.clone(), erased: false }] }
+                .print_to_string(Default::default()),
             "(T)".to_string()
         );
 
         assert_eq!(
-            Args { args: vec![Arg::UnnamedArg(ctor.clone()), Arg::UnnamedArg(ctor)] }
-                .print_to_string(Default::default()),
+            Args {
+                args: vec![
+                    Arg::UnnamedArg { arg: ctor.clone(), erased: false },
+                    Arg::UnnamedArg { arg: ctor, erased: false }
+                ]
+            }
+            .print_to_string(Default::default()),
             "(T, T)".to_string()
         )
     }
@@ -273,7 +295,8 @@ mod args_tests {
         };
 
         assert_eq!(
-            Args { args: vec![Arg::InsertedImplicitArg(hole)] }.print_to_string(Default::default()),
+            Args { args: vec![Arg::InsertedImplicitArg { hole, erased: false }] }
+                .print_to_string(Default::default()),
             "".to_string()
         )
     }

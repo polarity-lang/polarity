@@ -56,6 +56,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
                 info: None,
                 name: VarBind { span: Some(span), id: name.id.clone() },
                 typ: None,
+                erased: false,
             };
             params_out.push(param_out);
             Ok(params_out)
@@ -160,7 +161,7 @@ fn lower_args(
         };
         match arg {
             cst::exp::Arg::UnnamedArg(exp) => {
-                args_out.push(ast::Arg::UnnamedArg(exp.lower(ctx)?));
+                args_out.push(ast::Arg::UnnamedArg { arg: exp.lower(ctx)?, erased: false });
             }
             cst::exp::Arg::NamedArg(name, exp) => {
                 let expected_name = match &expected_bs {
@@ -180,7 +181,7 @@ fn lower_args(
                     });
                 }
                 let name = VarBound { span: Some(name.span), id: name.id.clone() };
-                args_out.push(ast::Arg::NamedArg(name, exp.lower(ctx)?));
+                args_out.push(ast::Arg::NamedArg { name, arg: exp.lower(ctx)?, erased: false });
             }
         }
         Ok(())
@@ -216,7 +217,7 @@ fn lower_args(
                     solution: None,
                 };
 
-                args_out.push(ast::Arg::InsertedImplicitArg(hole));
+                args_out.push(ast::Arg::InsertedImplicitArg { hole, erased: false });
             } else {
                 pop_arg(span, &mut given_iter, expected_bs, &mut args_out, ctx)?;
             }
@@ -503,7 +504,9 @@ impl Lower for cst::exp::NatLit {
                 span: Some(*span),
                 kind: call_kind,
                 name: ast::IdBound { span: Some(*span), id: "S".to_owned(), uri: uri.clone() },
-                args: ast::Args { args: vec![ast::Arg::UnnamedArg(Box::new(out))] },
+                args: ast::Args {
+                    args: vec![ast::Arg::UnnamedArg { arg: Box::new(out), erased: false }],
+                },
                 inferred_type: None,
             });
         }
@@ -522,8 +525,8 @@ impl Lower for cst::exp::Fun {
             name: ast::IdBound { span: Some(*span), id: "Fun".to_owned(), uri: uri.clone() },
             args: ast::Args {
                 args: vec![
-                    ast::Arg::UnnamedArg(from.lower(ctx)?),
-                    ast::Arg::UnnamedArg(to.lower(ctx)?),
+                    ast::Arg::UnnamedArg { arg: from.lower(ctx)?, erased: false },
+                    ast::Arg::UnnamedArg { arg: to.lower(ctx)?, erased: false },
                 ],
             },
         }
@@ -586,6 +589,7 @@ impl Lower for cst::exp::Motive {
                 info: None,
                 name: ast::VarBind { span: Some(bs_to_span(param)), id: bs_to_name(param).id },
                 typ: None,
+                erased: false,
             },
             ret_typ: ctx.bind_single(param, |ctx| ret_typ.lower(ctx))?,
         })

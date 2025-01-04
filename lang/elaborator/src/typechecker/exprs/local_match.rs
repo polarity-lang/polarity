@@ -73,6 +73,7 @@ impl CheckInfer for LocalMatch {
                         info: Some(self_t_nf),
                         name: param.name.clone(),
                         typ: Box::new(typ_app.to_exp()).into(),
+                        erased: param.erased,
                     },
                     ret_typ: ret_typ_out,
                 });
@@ -212,13 +213,14 @@ impl WithScrutineeType<'_> {
                     //
                     let args = (0..params.len())
                         .rev()
-                        .map(|snd| {
-                            Arg::UnnamedArg(Box::new(Exp::Variable(Variable {
+                        .map(|snd| Arg::UnnamedArg {
+                            arg: Box::new(Exp::Variable(Variable {
                                 span: None,
                                 idx: Idx { fst: 1, snd },
                                 name: VarBound::from_string(""),
                                 inferred_type: None,
-                            })))
+                            })),
+                            erased: false,
                         })
                         .collect();
                     let ctor = Box::new(Exp::Call(Call {

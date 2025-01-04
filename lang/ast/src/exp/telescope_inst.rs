@@ -75,11 +75,13 @@ pub struct ParamInst {
     pub name: VarBind,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub typ: Option<Box<Exp>>,
+    /// Whether the parameter is erased during compilation.
+    pub erased: bool,
 }
 
 impl Print for ParamInst {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let ParamInst { span: _, info: _, name, typ: _ } = self;
+        let ParamInst { span: _, info: _, name, typ: _, erased: _ } = self;
         alloc.text(&name.id)
     }
 }
@@ -89,7 +91,7 @@ impl Zonk for ParamInst {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        let ParamInst { span: _, info, name: _, typ } = self;
+        let ParamInst { span: _, info, name: _, typ, erased: _ } = self;
 
         info.zonk(meta_vars)?;
         typ.zonk(meta_vars)?;
@@ -99,7 +101,7 @@ impl Zonk for ParamInst {
 
 impl ContainsMetaVars for ParamInst {
     fn contains_metavars(&self) -> bool {
-        let ParamInst { span: _, info, name: _, typ } = self;
+        let ParamInst { span: _, info, name: _, typ, erased: _ } = self;
 
         info.contains_metavars() || typ.contains_metavars()
     }

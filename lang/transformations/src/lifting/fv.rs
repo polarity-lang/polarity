@@ -101,9 +101,9 @@ impl FV for Args {
 impl FV for Arg {
     fn visit_fv(&self, v: &mut USTVisitor) {
         match self {
-            Arg::UnnamedArg(exp) => exp.visit_fv(v),
-            Arg::NamedArg(_, exp) => exp.visit_fv(v),
-            Arg::InsertedImplicitArg(hole) => hole.visit_fv(v),
+            Arg::UnnamedArg { arg, .. } => arg.visit_fv(v),
+            Arg::NamedArg { arg, .. } => arg.visit_fv(v),
+            Arg::InsertedImplicitArg { hole, .. } => hole.visit_fv(v),
         }
     }
 }
@@ -194,14 +194,21 @@ impl FreeVars {
 
             let typ = typ.subst(&mut ctx, &subst.in_param());
 
-            let param =
-                Param { implicit: false, name: VarBind::from_string(&name), typ: typ.clone() };
-            let arg = Arg::UnnamedArg(Box::new(Exp::Variable(Variable {
-                span: None,
-                idx: base_ctx.lvl_to_idx(fv.lvl),
-                name: VarBound::from_string(&name),
-                inferred_type: None,
-            })));
+            let param = Param {
+                implicit: false,
+                name: VarBind::from_string(&name),
+                typ: typ.clone(),
+                erased: false,
+            };
+            let arg = Arg::UnnamedArg {
+                arg: Box::new(Exp::Variable(Variable {
+                    span: None,
+                    idx: base_ctx.lvl_to_idx(fv.lvl),
+                    name: VarBound::from_string(&name),
+                    inferred_type: None,
+                })),
+                erased: false,
+            };
             args.push(arg);
             params.push(param);
             subst.add(name, lvl);
