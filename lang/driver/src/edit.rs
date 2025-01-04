@@ -25,7 +25,7 @@ impl Database {
             let char_range =
                 rope.byte_to_char(remove_range.start)..rope.byte_to_char(remove_range.end);
             rope.remove(char_range);
-            let char_idx = rope.byte_to_char(edit.span.start().into());
+            let char_idx = rope.byte_to_char(edit.span.start().0 as usize);
             rope.insert(char_idx, &edit.text);
         }
 
@@ -39,6 +39,6 @@ trait SpanAsRange {
 
 impl SpanAsRange for Span {
     fn as_range(&self) -> Range<usize> {
-        self.start().into()..self.end().into()
+        self.start().0 as usize..self.end().0 as usize
     }
 }
