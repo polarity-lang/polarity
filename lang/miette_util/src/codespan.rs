@@ -20,13 +20,6 @@ impl ByteIndex {
     }
 }
 
-#[allow(clippy::derivable_impls)]
-impl Default for ByteIndex {
-    fn default() -> ByteIndex {
-        ByteIndex(0)
-    }
-}
-
 impl fmt::Debug for ByteIndex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "ByteIndex(")?;
@@ -49,13 +42,6 @@ impl ByteOffset {
     /// Convert the offset into a `usize`, for use in array indexing
     pub const fn to_usize(self) -> usize {
         self.0 as usize
-    }
-}
-
-impl Default for ByteOffset {
-    #[inline]
-    fn default() -> ByteOffset {
-        ByteOffset(0)
     }
 }
 
@@ -205,13 +191,6 @@ impl LineIndex {
     }
 }
 
-#[allow(clippy::derivable_impls)]
-impl Default for LineIndex {
-    fn default() -> LineIndex {
-        LineIndex(0)
-    }
-}
-
 impl fmt::Debug for LineIndex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "LineIndex(")?;
@@ -260,13 +239,6 @@ impl ColumnIndex {
     /// Convert the index into a `usize`, for use in array indexing
     pub const fn to_usize(self) -> usize {
         self.0 as usize
-    }
-}
-
-#[allow(clippy::derivable_impls)]
-impl Default for ColumnIndex {
-    fn default() -> ColumnIndex {
-        ColumnIndex(0)
     }
 }
 
