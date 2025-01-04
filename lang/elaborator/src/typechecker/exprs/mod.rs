@@ -103,17 +103,29 @@ impl CheckInfer for Exp {
 impl CheckInfer for Arg {
     fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
         match self {
-            Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.check(ctx, t)?)),
-            Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.check(ctx, t)?)),
-            Arg::InsertedImplicitArg(hole) => Ok(Arg::InsertedImplicitArg(hole.check(ctx, t)?)),
+            Arg::UnnamedArg { arg, erased } => {
+                Ok(Arg::UnnamedArg { arg: arg.check(ctx, t)?, erased: *erased })
+            }
+            Arg::NamedArg { name, arg, erased } => {
+                Ok(Arg::NamedArg { name: name.clone(), arg: arg.check(ctx, t)?, erased: *erased })
+            }
+            Arg::InsertedImplicitArg { hole, erased } => {
+                Ok(Arg::InsertedImplicitArg { hole: hole.check(ctx, t)?, erased: *erased })
+            }
         }
     }
 
     fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
         match self {
-            Arg::UnnamedArg(exp) => Ok(Arg::UnnamedArg(exp.infer(ctx)?)),
-            Arg::NamedArg(name, exp) => Ok(Arg::NamedArg(name.clone(), exp.infer(ctx)?)),
-            Arg::InsertedImplicitArg(hole) => Ok(Arg::InsertedImplicitArg(hole.infer(ctx)?)),
+            Arg::UnnamedArg { arg, erased } => {
+                Ok(Arg::UnnamedArg { arg: arg.infer(ctx)?, erased: *erased })
+            }
+            Arg::NamedArg { name, arg, erased } => {
+                Ok(Arg::NamedArg { name: name.clone(), arg: arg.infer(ctx)?, erased: *erased })
+            }
+            Arg::InsertedImplicitArg { hole, erased } => {
+                Ok(Arg::InsertedImplicitArg { hole: hole.infer(ctx)?, erased: *erased })
+            }
         }
     }
 }
@@ -203,7 +215,7 @@ impl CheckTelescope for TelescopeInst {
             vec![],
             |ctx, params_out, (param_actual, param_expected)| {
                 let ParamInst { span, name, .. } = param_actual;
-                let Param { typ, .. } = param_expected;
+                let Param { typ, erased, .. } = param_expected;
                 let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
                 let mut params_out = params_out;
@@ -212,6 +224,7 @@ impl CheckTelescope for TelescopeInst {
                     info: Some(typ_nf.clone()),
                     name: name.clone(),
                     typ: typ_out.into(),
+                    erased: *erased,
                 };
                 params_out.push(param_out);
                 let elem = Binder { name: param_actual.name.clone(), typ: typ_nf };
@@ -236,10 +249,15 @@ impl InferTelescope for Telescope {
             params.iter(),
             vec![],
             |ctx, mut params_out, param| {
-                let Param { implicit, typ, name } = param;
+                let Param { implicit, typ, name, erased } = param;
                 let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
-                let param_out = Param { implicit: *implicit, name: name.clone(), typ: typ_out };
+                let param_out = Param {
+                    implicit: *implicit,
+                    name: name.clone(),
+                    typ: typ_out,
+                    erased: *erased,
+                };
                 params_out.push(param_out);
                 let elem = Binder { name: param.name.clone(), typ: typ_nf };
                 Result::<_, TypeError>::Ok(BindElem { elem, ret: params_out })

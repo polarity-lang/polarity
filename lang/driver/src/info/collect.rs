@@ -477,9 +477,9 @@ impl CollectInfo for Args {
 impl CollectInfo for Arg {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         match self {
-            Arg::UnnamedArg(exp) => exp.collect_info(db, collector),
-            Arg::NamedArg(_, exp) => exp.collect_info(db, collector),
-            Arg::InsertedImplicitArg(hole) => hole.collect_info(db, collector),
+            Arg::UnnamedArg { arg, .. } => arg.collect_info(db, collector),
+            Arg::NamedArg { arg, .. } => arg.collect_info(db, collector),
+            Arg::InsertedImplicitArg { hole, .. } => hole.collect_info(db, collector),
         }
     }
 }

@@ -479,9 +479,15 @@ impl Lift for Arg {
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         match self {
-            Arg::UnnamedArg(exp) => Arg::UnnamedArg(exp.lift(ctx)),
-            Arg::NamedArg(name, exp) => Arg::NamedArg(name.clone(), exp.lift(ctx)),
-            Arg::InsertedImplicitArg(hole) => Arg::InsertedImplicitArg(hole.lift(ctx)),
+            Arg::UnnamedArg { arg, erased } => {
+                Arg::UnnamedArg { arg: arg.lift(ctx), erased: *erased }
+            }
+            Arg::NamedArg { name, arg, erased } => {
+                Arg::NamedArg { name: name.clone(), arg: arg.lift(ctx), erased: *erased }
+            }
+            Arg::InsertedImplicitArg { hole, erased } => {
+                Arg::InsertedImplicitArg { hole: hole.lift(ctx), erased: *erased }
+            }
         }
     }
 }
@@ -490,9 +496,9 @@ impl Lift for Param {
     type Target = Param;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Param { implicit, name, typ } = self;
+        let Param { implicit, name, typ, erased } = self;
 
-        Param { implicit: *implicit, name: name.clone(), typ: typ.lift(ctx) }
+        Param { implicit: *implicit, name: name.clone(), typ: typ.lift(ctx), erased: *erased }
     }
 }
 
@@ -500,9 +506,9 @@ impl Lift for ParamInst {
     type Target = ParamInst;
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
-        let ParamInst { span, name, typ: _, .. } = self;
+        let ParamInst { span, name, typ: _, erased, .. } = self;
 
-        ParamInst { span: *span, info: None, name: name.clone(), typ: None }
+        ParamInst { span: *span, info: None, name: name.clone(), typ: None, erased: *erased }
     }
 }
 
