@@ -1,0 +1,6 @@
+def .not {
+    True => False,
+    False => True
+}
+
+def .false { Unit => True.not }

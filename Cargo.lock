@@ -781,6 +781,7 @@ version = "0.1.0"
 dependencies = [
  "ast",
  "async-trait",
+ "backend",
  "codespan",
  "elaborator",
  "log",

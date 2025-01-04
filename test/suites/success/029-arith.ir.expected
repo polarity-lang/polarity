@@ -1,0 +1,28 @@
+def .add(y) {
+    Z => y,
+    S(x') => S(x'.add(y))
+}
+
+def .and(y) {
+    T => y,
+    F => F
+}
+
+def .preserves(e1, e2, t, h1) {
+    EAddCongL(lhs, lhs', rhs, h_lhs) => panic!("not yet implemented"),
+    EAddCongR(lhs, rhs, rhs', h_rhs) => panic!("not yet implemented"),
+    EAddRed(n1, n2) => panic!("not yet implemented"),
+    EIsZeroCong(e, e', h_e) => panic!("not yet implemented"),
+    EAndCongL(lhs, lhs', rhs, h_lhs) => panic!("not yet implemented"),
+    EAndCongR(lhs, rhs, rhs', h_rhs) => panic!("not yet implemented"),
+    EAndRed(b1, b2) => panic!("not yet implemented")
+}
+
+let example { And(IsZero(Add(Num(Z), Num(Z))), Boo(T)) }
+
+let example_has_type {
+    TAnd(IsZero(Add(Num(Z), Num(Z))),
+         Boo(T),
+         TIsZero(Add(Num(Z), Num(Z)), TAdd(Num(Z), Num(Z), TNum(Z), TNum(Z))),
+         TBoo(T))
+}

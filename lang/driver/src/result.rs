@@ -4,6 +4,8 @@ use miette::Diagnostic;
 use thiserror::Error;
 use url::Url;
 
+use backend::result::BackendError;
+
 #[derive(Error, Diagnostic, Debug, Clone)]
 #[diagnostic(transparent)]
 #[error(transparent)]
@@ -13,6 +15,7 @@ pub enum Error {
     Type(#[from] Box<elaborator::result::TypeError>),
     Xfunc(#[from] transformations::result::XfuncError),
     Driver(#[from] DriverError),
+    Backend(#[from] BackendError),
 }
 
 #[derive(Error, Debug, Diagnostic, Clone)]

@@ -1,0 +1,6 @@
+codef MyFoo {
+    .foo1 => True,
+    .foo2 absurd,
+    .foo3 absurd,
+    .foo4 absurd
+}
