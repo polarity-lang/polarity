@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
+use std::ops::{Add, Sub};
 
 /// A byte position in a source file.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -251,32 +251,4 @@ impl Location {
     pub fn new(line: impl Into<LineIndex>, column: impl Into<ColumnIndex>) -> Location {
         Location { line: line.into(), column: column.into() }
     }
-}
-
-/// A relative offset between two indices
-///
-/// These can be thought of as 1-dimensional vectors
-pub trait Offset: Copy + Ord
-where
-    Self: Neg<Output = Self>,
-    Self: Add<Self, Output = Self>,
-    Self: AddAssign<Self>,
-    Self: Sub<Self, Output = Self>,
-    Self: SubAssign<Self>,
-{
-    const ZERO: Self;
-}
-
-/// Index types
-///
-/// These can be thought of as 1-dimensional points
-pub trait Index: Copy + Ord
-where
-    Self: Add<<Self as Index>::Offset, Output = Self>,
-    Self: AddAssign<<Self as Index>::Offset>,
-    Self: Sub<<Self as Index>::Offset, Output = Self>,
-    Self: SubAssign<<Self as Index>::Offset>,
-    Self: Sub<Self, Output = <Self as Index>::Offset>,
-{
-    type Offset: Offset;
 }
