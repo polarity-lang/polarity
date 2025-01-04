@@ -47,10 +47,16 @@ impl Print for Module {
         //
         //
 
-        if use_decls.is_nil() {
+        let doc = if use_decls.is_nil() {
             decls
         } else {
             use_decls.append(alloc.line()).append(alloc.line()).append(decls)
+        };
+
+        if doc.is_nil() {
+            doc
+        } else {
+            doc.append(alloc.hardline())
         }
     }
 }

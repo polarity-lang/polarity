@@ -222,6 +222,10 @@ impl Print for Pattern {
 }
 
 pub fn print_params<'a>(params: &'a [String], alloc: &'a Alloc<'a>) -> Builder<'a> {
+    if params.is_empty() {
+        return alloc.nil();
+    }
+
     let mut doc = alloc.nil();
     let mut first = true;
 
@@ -260,6 +264,10 @@ pub fn print_cases<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) 
 }
 
 fn print_args<'a>(args: &'a [Exp], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    if args.is_empty() {
+        return alloc.nil();
+    }
+
     let mut doc = alloc.nil();
     let mut first = true;
 
