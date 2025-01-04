@@ -3,8 +3,8 @@ def .and(other) {
     False => False
 }
 
-let example1 {Cons(True, Nil)}
+let example1 { Cons(True, Nil) }
 
-let example2 {True.and(False)}
+let example2 { True.and(False) }
 
-let example3 {None(<ZST>)}
+let example3 { None(<ZST>) }

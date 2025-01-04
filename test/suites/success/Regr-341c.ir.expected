@@ -3,6 +3,6 @@ def .neg {
     F => T
 }
 
-let foo {comatch { .ap(x) => x.neg }}
+let foo { comatch { .ap(x) => x.neg } }
 
-let bar {Refl(F)}
+let bar { Refl(F) }

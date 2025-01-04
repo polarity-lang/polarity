@@ -18,9 +18,11 @@ def .preserves(e1, e2, t, h1) {
     EAndRed(b1, b2) => panic!("not yet implemented")
 }
 
-let example {And(IsZero(Add(Num(Z), Num(Z))), Boo(T))}
+let example { And(IsZero(Add(Num(Z), Num(Z))), Boo(T)) }
 
-let example_has_type {TAnd(IsZero(Add(Num(Z), Num(Z))),
-                           Boo(T),
-                           TIsZero(Add(Num(Z), Num(Z)), TAdd(Num(Z), Num(Z), TNum(Z), TNum(Z))),
-                           TBoo(T))}
+let example_has_type {
+    TAnd(IsZero(Add(Num(Z), Num(Z))),
+         Boo(T),
+         TIsZero(Add(Num(Z), Num(Z)), TAdd(Num(Z), Num(Z), TNum(Z), TNum(Z))),
+         TBoo(T))
+}

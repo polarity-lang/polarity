@@ -8,4 +8,4 @@ def .append'(n, m, ys) {
     Nil => ys
 }
 
-let append(n, m, xs, ys) {xs.append'(n, m, ys)}
+let append(n, m, xs, ys) { xs.append'(n, m, ys) }

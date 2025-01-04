@@ -2,6 +2,6 @@ use "../../../std/data/eq.pol"
 use "../../../std/data/bool.pol"
 use "../../../std/codata/fun.pol"
 
-let foo {comatch { .ap(_, _, x1) => x1 }}
+let foo { comatch { .ap(_, _, x1) => x1 } }
 
-let proof {Refl(<ZST>, foo)}
+let proof { Refl(<ZST>, foo) }

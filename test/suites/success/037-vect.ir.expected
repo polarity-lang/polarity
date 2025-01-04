@@ -20,4 +20,4 @@ def .append(n, m, ys) {
 
 def .example1 { Unit => Cons(S(Z), Z, Cons(Z, Z, Nil)) }
 
-let main {Unit.example1.append(S(S(Z)), S(S(Z)), Unit.example1)}
+let main { Unit.example1.append(S(S(Z)), S(S(Z)), Unit.example1) }

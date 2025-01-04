@@ -6,6 +6,6 @@ def .iNeg {
     F => T
 }
 
-let one {S(Z)}
+let one { S(Z) }
 
-let true {T}
+let true { T }

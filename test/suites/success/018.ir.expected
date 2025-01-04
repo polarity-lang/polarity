@@ -1,1 +1,1 @@
-let example {None(panic!("not yet implemented"))}
+let example { None(panic!("not yet implemented")) }

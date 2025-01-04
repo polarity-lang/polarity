@@ -1,1 +1,1 @@
-let example {Cons(<ZST>, Unit, Nil(<ZST>))}
+let example { Cons(<ZST>, Unit, Nil(<ZST>)) }

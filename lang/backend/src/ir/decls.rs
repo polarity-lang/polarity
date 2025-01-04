@@ -128,7 +128,13 @@ impl Print for Let {
             .append(print_params(params, alloc))
             .group();
 
-        let body = body.print(cfg, alloc).braces_anno();
+        let body = alloc
+            .line()
+            .append(body.print(cfg, alloc))
+            .nest(cfg.indent)
+            .append(alloc.line())
+            .braces_anno()
+            .group();
 
         head.append(alloc.space()).append(body)
     }
