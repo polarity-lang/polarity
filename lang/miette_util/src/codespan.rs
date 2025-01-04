@@ -66,10 +66,7 @@ pub struct Span {
 
 impl Span {
     /// Create a new span from a starting and ending span.
-    pub fn new(start: impl Into<ByteIndex>, end: impl Into<ByteIndex>) -> Span {
-        let start = start.into();
-        let end = end.into();
-
+    pub fn new(start: ByteIndex, end: ByteIndex) -> Span {
         assert!(end >= start);
 
         Span { start, end }
@@ -90,7 +87,7 @@ impl Span {
     /// assert_eq!(span, Span::new(0, 5));
     /// ```
     pub fn from_string(s: &str) -> Span {
-        Span::new(0, s.len() as u32)
+        Span::new(ByteIndex(0), ByteIndex(s.len() as u32))
     }
 
     /// Get the starting byte index.
