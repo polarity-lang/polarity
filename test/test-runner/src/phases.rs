@@ -166,23 +166,18 @@ where
     }
 }
 
+/// A test case failed.
 #[derive(Debug)]
 pub enum Failure {
-    Mismatch {
-        phase: &'static str,
-        expected: String,
-        actual: String,
-    },
+    /// The output of a phase did not match the expected output.
+    Mismatch { phase: &'static str, expected: String, actual: String },
+    /// The test was expected to fail, but it succeeded.
     #[allow(clippy::enum_variant_names)]
-    ExpectedFailure {
-        got: String,
-    },
-    ExpectedSuccess {
-        got: miette::Report,
-    },
-    Panic {
-        msg: String,
-    },
+    ExpectedFailure { got: String },
+    /// The test was expected to succeed, but it failed.
+    ExpectedSuccess { got: miette::Report },
+    /// The test panicked during execution.
+    Panic { msg: String },
 }
 
 impl Error for Failure {}
