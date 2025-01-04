@@ -113,6 +113,7 @@ impl Runner {
             .then(config, Lower::new("relower"))
             .then(config, Check::new("recheck"))
             .then(config, Xfunc::new("xfunc"))
+            .then(config, IR::new("ir"))
             .report()
     }
 }
@@ -138,8 +139,8 @@ impl RunResult {
 
     pub fn update_expected(&self) {
         for CaseResult { case, result } in self.case_results() {
-            if let Err(Failure::Mismatch { ref actual, .. }) = result {
-                case.set_expected(actual);
+            if let Err(Failure::Mismatch { phase, ref actual, .. }) = result {
+                case.set_expected(phase, actual);
             }
         }
     }

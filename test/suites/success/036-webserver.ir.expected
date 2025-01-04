@@ -1,0 +1,47 @@
+def .cong_pair(t1, t2, a, b, c) { Refl(x, x0) => Refl(<ZST>, Pair(t1, t2, b, c)) }
+
+codef Pair(a, b, x, y) {
+    .fst(a0, b0) => x,
+    .snd(a0, b0) => y
+}
+
+codef MkUtils {
+    .put_twice(n, route, state) =>
+        route.put(n).ap(<ZST>, <ZST>, route.put(n).ap(<ZST>, <ZST>, state).fst(<ZST>, <ZST>))
+}
+
+codef Index {
+    .requiresLogin => F,
+    .post =>
+        comatch {
+            .ap(_, _, state) =>
+                comatch {
+                    .fst(a, b) => state,
+                    .snd(a, b) => Forbidden
+                }
+        },
+    .get => comatch { .ap(_, _, state) => Return(state.counter(F)) },
+    .put(n) => comatch { .ap(_, _, state) => Pair(<ZST>, <ZST>, state, Forbidden) },
+    .put_idempotent(n) =>
+        comatch { .dap(x, x0, state) => Refl(<ZST>, Pair(<ZST>, <ZST>, state, Forbidden)) }
+}
+
+codef Admin {
+    .requiresLogin => T,
+    .post =>
+        comatch {
+            .ap(_, _, state) =>
+                comatch {
+                    .fst(a, b) => state.increment,
+                    .snd(a, b) => Return(state.increment.counter(T))
+                }
+        },
+    .get => comatch { .ap(_, _, state) => Return(state.counter(T)) },
+    .put(n) => comatch { .ap(_, _, state) => Pair(<ZST>, <ZST>, state.set(n), Return(n)) },
+    .put_idempotent(n) =>
+        comatch {
+            .dap(x, x0, state) =>
+                state.set_idempotent(T, n)
+                     .cong_pair(<ZST>, <ZST>, state.set(n), state.set(n).set(n), Return(n))
+        }
+}

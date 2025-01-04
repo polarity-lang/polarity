@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 
 mod check;
 mod clean;
+mod compile;
 mod doc;
 mod format;
 mod gen_completions;
@@ -40,6 +41,7 @@ pub fn exec() -> miette::Result<()> {
             Doc(args) => doc::exec(args).await,
             Clean => clean::exec().await,
             GenerateCompletion(args) => gen_completions::exec(args).await,
+            Compile(args) => compile::exec(args).await,
         }
     };
 
@@ -82,4 +84,6 @@ enum Command {
     Clean,
     /// Generate completion scripts for various shells
     GenerateCompletion(gen_completions::Args),
+    /// Compile an executable
+    Compile(compile::Args),
 }

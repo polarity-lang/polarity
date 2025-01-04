@@ -1,0 +1,9 @@
+def .top_is_zero(n) {
+    Unit =>
+        n.match {
+            Z => T,
+            S(n0) => F
+        }
+}
+
+def .top_id(a) { Unit => comatch { .ap(a0, b, x) => x } }

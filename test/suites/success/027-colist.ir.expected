@@ -1,0 +1,15 @@
+def .pred {
+    Z => Z,
+    S(n) => n,
+    Omega => Omega
+}
+
+codef CountUp(from) {
+    .head(n, p) => from,
+    .tail(n) => CountUp(S(from))
+}
+
+codef TakeN(n, s) {
+    .head(n', p) => s.head(Omega, OmegaNotZero),
+    .tail(n') => TakeN(n.pred, s.tail(Omega))
+}

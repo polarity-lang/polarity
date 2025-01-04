@@ -1,0 +1,11 @@
+use "../../../std/data/nat.pol"
+use "../../../std/data/bool.pol"
+
+def .iNeg {
+    T => F,
+    F => T
+}
+
+let one {S(Z)}
+
+let true {T}

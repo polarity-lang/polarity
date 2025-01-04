@@ -1,0 +1,8 @@
+def .add(m) {
+    Z => m,
+    S(n) => S(n.add(m))
+}
+
+let two {S(S(Z))}
+
+let foo {Refl(<ZST>, two.add(S(S(Z))))}

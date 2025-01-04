@@ -1,0 +1,4 @@
+let add(x, y) {x.match {
+    Z => y,
+    S(x') => panic!("not yet implemented")
+}}

@@ -44,19 +44,27 @@ impl Case {
         Url::from_file_path(canonicalized_path).unwrap()
     }
 
-    pub fn expected(&self) -> Option<String> {
-        let path = self.expected_path();
+    pub fn expected(&self, phase_name: &str) -> Option<String> {
+        let path = self.expected_path(phase_name);
         // Depending on how git is configured on Windows, it may check-out Unix line endings (\n) as Windows line endings (\r\n).
         // If this is the case, we need to replace these by Unix line endings for comparision.
         path.is_file().then(|| fs::read_to_string(path).unwrap().replace("\r\n", "\n"))
     }
 
-    pub fn set_expected(&self, s: &str) {
-        fs::write(self.expected_path(), s).unwrap();
+    pub fn set_expected(&self, phase_name: &str, s: &str) {
+        fs::write(self.expected_path(phase_name), s).unwrap();
     }
 
-    fn expected_path(&self) -> PathBuf {
-        self.path.parent().unwrap().join(format!("{}.expected", self.name))
+    fn expected_path(&self, phase_name: &str) -> PathBuf {
+        let file_extension = phase_name.to_lowercase();
+        let path =
+            self.path.parent().unwrap().join(format!("{}.{}.expected", self.name, file_extension));
+        if path.exists() {
+            path
+        } else {
+            // Fallback: Tests that expect failure have a single expected file for the error message.
+            self.path.parent().unwrap().join(format!("{}.expected", self.name))
+        }
     }
 }
 

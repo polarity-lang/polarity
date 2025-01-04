@@ -4,6 +4,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 
 use driver::{Database, FileSource, FileSystemSource, InMemorySource};
+use printer::Print as _;
 use url::Url;
 
 use parser::cst;
@@ -67,15 +68,11 @@ where
         // Whether we expect a success in this phase.
         let expect_success = config.fail.as_ref().map(|fail| fail != phase.name()).unwrap_or(true);
 
-        // If we are in the phase that is expected to fail, we check
-        // whether there is an expected error output.
-        let output = config.fail.as_ref().and_then(|fail| {
-            if fail == phase.name() {
-                self.case.expected()
-            } else {
-                None
-            }
-        });
+        let expected_output = match config.fail.as_deref() {
+            Some(fail) if fail == phase.name() => self.case.expected(phase.name()),
+            None => self.case.expected(phase.name()),
+            _ => None,
+        };
 
         // Run the phase and handle the result
         let result =
@@ -100,10 +97,14 @@ where
                         if !expect_success {
                             return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
                         }
-                        if let Some(expected) = output {
+                        if let Some(expected) = expected_output {
                             let actual = out2.test_output();
                             if actual != expected {
-                                return Err(PhasesError::Mismatch { expected, actual });
+                                return Err(PhasesError::Mismatch {
+                                    phase: phase.name(),
+                                    expected,
+                                    actual,
+                                });
                             }
                         }
                         Ok(out2)
@@ -118,10 +119,14 @@ where
                         if expect_success {
                             return Err(PhasesError::ExpectedSuccess { got: report });
                         }
-                        if let Some(expected) = output {
+                        if let Some(expected) = expected_output {
                             let actual = render_report(&report, false);
                             if actual != expected {
-                                return Err(PhasesError::Mismatch { expected, actual });
+                                return Err(PhasesError::Mismatch {
+                                    phase: phase.name(),
+                                    expected,
+                                    actual,
+                                });
                             }
                         }
                         Err(PhasesError::AsExpected)
@@ -149,8 +154,8 @@ where
         let result = match self.result {
             Ok(_) => Ok(()),
             Err(PhasesError::AsExpected { .. }) => Ok(()),
-            Err(PhasesError::Mismatch { expected, actual }) => {
-                Err(Failure::Mismatch { expected, actual })
+            Err(PhasesError::Mismatch { phase, expected, actual }) => {
+                Err(Failure::Mismatch { phase, expected, actual })
             }
             Err(PhasesError::ExpectedFailure { got }) => Err(Failure::ExpectedFailure { got }),
             Err(PhasesError::ExpectedSuccess { got }) => Err(Failure::ExpectedSuccess { got }),
@@ -164,6 +169,7 @@ where
 #[derive(Debug)]
 pub enum Failure {
     Mismatch {
+        phase: &'static str,
         expected: String,
         actual: String,
     },
@@ -184,7 +190,7 @@ impl Error for Failure {}
 impl fmt::Display for Failure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Failure::Mismatch { expected, actual } => {
+            Failure::Mismatch { phase: _, expected, actual } => {
                 write!(f, "\n  Expected : {expected}\n  Got      : {actual}")
             }
             Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
@@ -201,7 +207,7 @@ impl fmt::Display for Failure {
 enum PhasesError {
     AsExpected,
     Panic { msg: String },
-    Mismatch { expected: String, actual: String },
+    Mismatch { phase: &'static str, expected: String, actual: String },
     ExpectedFailure { got: String },
     ExpectedSuccess { got: miette::Report },
 }
@@ -378,6 +384,32 @@ impl Phase for Xfunc {
         }
 
         Ok(())
+    }
+}
+
+// IR Phase
+//
+// This phase generates the intermediate representation of the module.
+
+pub struct IR {
+    name: &'static str,
+}
+
+impl Phase for IR {
+    type Out = String;
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, driver::Error> {
+        let ir = db.ir(uri).await?;
+        let pretty_ir = ir.print_to_string(None);
+        Ok(pretty_ir)
     }
 }
 
