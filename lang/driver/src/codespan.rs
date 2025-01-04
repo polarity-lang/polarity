@@ -25,7 +25,7 @@ pub struct File {
 
 impl File {
     pub fn new(source: String) -> Self {
-        let line_starts = line_starts(source.as_ref()).map(|i| ByteIndex::from(i as u32)).collect();
+        let line_starts = line_starts(source.as_ref()).map(|i| ByteIndex(i as u32)).collect();
 
         File { source, line_starts }
     }
@@ -44,12 +44,12 @@ impl File {
     }
 
     fn last_line_index(&self) -> LineIndex {
-        LineIndex::from(self.line_starts.len() as RawIndex)
+        LineIndex(self.line_starts.len() as RawIndex)
     }
 
     pub fn line_span(&self, line_index: LineIndex) -> Result<Span, Error> {
         let line_start = self.line_start(line_index)?;
-        let next_line_start = self.line_start(line_index + LineOffset::from(1))?;
+        let next_line_start = self.line_start(line_index + LineOffset(1))?;
 
         Ok(Span::new(line_start, next_line_start))
     }
@@ -57,8 +57,8 @@ impl File {
     fn line_index(&self, byte_index: ByteIndex) -> LineIndex {
         match self.line_starts.binary_search(&byte_index) {
             // Found the start of a line
-            Ok(line) => LineIndex::from(line as u32),
-            Err(next_line) => LineIndex::from(next_line as u32 - 1),
+            Ok(line) => LineIndex(line as u32),
+            Err(next_line) => LineIndex(next_line as u32 - 1),
         }
     }
 
@@ -81,10 +81,7 @@ impl File {
                 }
             })?;
 
-        Ok(Location {
-            line: line_index,
-            column: ColumnIndex::from(line_src.chars().count() as u32),
-        })
+        Ok(Location { line: line_index, column: ColumnIndex(line_src.chars().count() as u32) })
     }
 
     pub fn source(&self) -> &String {

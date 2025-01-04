@@ -32,6 +32,23 @@ impl fmt::Display for ByteIndex {
         self.0.fmt(f)
     }
 }
+impl Sub for ByteIndex {
+    type Output = ByteOffset;
+
+    #[inline]
+    fn sub(self, rhs: ByteIndex) -> ByteOffset {
+        ByteOffset(self.0 as RawOffset - rhs.0 as RawOffset)
+    }
+}
+
+impl Add<ByteOffset> for ByteIndex {
+    type Output = ByteIndex;
+
+    #[inline]
+    fn add(self, rhs: ByteOffset) -> ByteIndex {
+        ByteIndex((self.0 as RawOffset + rhs.0) as RawIndex)
+    }
+}
 
 /// A byte offset in a source file
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -84,7 +101,7 @@ impl Span {
     ///
     /// let span = Span::from_string("hello");
     ///
-    /// assert_eq!(span, Span::new(0, 5));
+    /// assert_eq!(span, Span::new(ByteIndex(0), ByteIndex(5)));
     /// ```
     pub fn from_string(s: &str) -> Span {
         Span::new(ByteIndex(0), ByteIndex(s.len() as u32))
@@ -95,9 +112,9 @@ impl Span {
     /// ```rust
     /// use miette_util::codespan::{ByteIndex, Span};
     ///
-    /// let span = Span::new(0, 4);
+    /// let span = Span::new(ByteIndex(0), ByteIndex(4));
     ///
-    /// assert_eq!(span.start(), ByteIndex::from(0));
+    /// assert_eq!(span.start(), ByteIndex(0));
     /// ```
     pub fn start(self) -> ByteIndex {
         self.start
@@ -108,9 +125,9 @@ impl Span {
     /// ```rust
     /// use miette_util::codespan::{ByteIndex, Span};
     ///
-    /// let span = Span::new(0, 4);
+    /// let span = Span::new(ByteIndex(0), ByteIndex(4));
     ///
-    /// assert_eq!(span.end(), ByteIndex::from(4));
+    /// assert_eq!(span.end(), ByteIndex(4));
     /// ```
     pub fn end(self) -> ByteIndex {
         self.end
@@ -163,6 +180,15 @@ impl LineIndex {
     /// Convert the index into a `usize`, for use in array indexing
     pub const fn to_usize(self) -> usize {
         self.0 as usize
+    }
+}
+
+impl Add<LineOffset> for LineIndex {
+    type Output = LineIndex;
+
+    #[inline]
+    fn add(self, rhs: LineOffset) -> LineIndex {
+        LineIndex((self.0 as RawOffset + rhs.0) as RawIndex)
     }
 }
 
@@ -261,143 +287,3 @@ where
 {
     type Offset: Offset;
 }
-
-macro_rules! impl_index {
-    ($Index:ident, $Offset:ident) => {
-        impl From<RawOffset> for $Offset {
-            #[inline]
-            fn from(i: RawOffset) -> Self {
-                $Offset(i)
-            }
-        }
-
-        impl From<RawIndex> for $Index {
-            #[inline]
-            fn from(i: RawIndex) -> Self {
-                $Index(i)
-            }
-        }
-
-        impl From<$Index> for RawIndex {
-            #[inline]
-            fn from(index: $Index) -> RawIndex {
-                index.0
-            }
-        }
-
-        impl From<$Offset> for RawOffset {
-            #[inline]
-            fn from(offset: $Offset) -> RawOffset {
-                offset.0
-            }
-        }
-
-        impl From<$Index> for usize {
-            #[inline]
-            fn from(index: $Index) -> usize {
-                index.0 as usize
-            }
-        }
-
-        impl From<$Offset> for usize {
-            #[inline]
-            fn from(offset: $Offset) -> usize {
-                offset.0 as usize
-            }
-        }
-
-        impl Offset for $Offset {
-            const ZERO: $Offset = $Offset(0);
-        }
-
-        impl Index for $Index {
-            type Offset = $Offset;
-        }
-
-        impl Add<$Offset> for $Index {
-            type Output = $Index;
-
-            #[inline]
-            fn add(self, rhs: $Offset) -> $Index {
-                $Index((self.0 as RawOffset + rhs.0) as RawIndex)
-            }
-        }
-
-        impl AddAssign<$Offset> for $Index {
-            #[inline]
-            fn add_assign(&mut self, rhs: $Offset) {
-                *self = *self + rhs;
-            }
-        }
-
-        impl Neg for $Offset {
-            type Output = $Offset;
-
-            #[inline]
-            fn neg(self) -> $Offset {
-                $Offset(-self.0)
-            }
-        }
-
-        impl Add<$Offset> for $Offset {
-            type Output = $Offset;
-
-            #[inline]
-            fn add(self, rhs: $Offset) -> $Offset {
-                $Offset(self.0 + rhs.0)
-            }
-        }
-
-        impl AddAssign<$Offset> for $Offset {
-            #[inline]
-            fn add_assign(&mut self, rhs: $Offset) {
-                self.0 += rhs.0;
-            }
-        }
-
-        impl Sub<$Offset> for $Offset {
-            type Output = $Offset;
-
-            #[inline]
-            fn sub(self, rhs: $Offset) -> $Offset {
-                $Offset(self.0 - rhs.0)
-            }
-        }
-
-        impl SubAssign<$Offset> for $Offset {
-            #[inline]
-            fn sub_assign(&mut self, rhs: $Offset) {
-                self.0 -= rhs.0;
-            }
-        }
-
-        impl Sub for $Index {
-            type Output = $Offset;
-
-            #[inline]
-            fn sub(self, rhs: $Index) -> $Offset {
-                $Offset(self.0 as RawOffset - rhs.0 as RawOffset)
-            }
-        }
-
-        impl Sub<$Offset> for $Index {
-            type Output = $Index;
-
-            #[inline]
-            fn sub(self, rhs: $Offset) -> $Index {
-                $Index((self.0 as RawOffset - rhs.0 as RawOffset) as u32)
-            }
-        }
-
-        impl SubAssign<$Offset> for $Index {
-            #[inline]
-            fn sub_assign(&mut self, rhs: $Offset) {
-                self.0 = (self.0 as RawOffset - rhs.0) as RawIndex;
-            }
-        }
-    };
-}
-
-impl_index!(ByteIndex, ByteOffset);
-impl_index!(LineIndex, LineOffset);
-impl_index!(ColumnIndex, ColumnOffset);
