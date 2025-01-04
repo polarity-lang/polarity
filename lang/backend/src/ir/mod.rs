@@ -3,8 +3,6 @@
 
 pub mod decls;
 pub mod exprs;
-pub mod symbol_table;
 
 pub use decls::*;
 pub use exprs::*;
-pub use symbol_table::*;
