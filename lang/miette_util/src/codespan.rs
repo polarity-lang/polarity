@@ -1,5 +1,4 @@
 use std::fmt;
-use std::ops::Range;
 use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
 
 /// The raw, untyped offset.
@@ -203,18 +202,6 @@ pub struct ColumnIndex(pub RawIndex);
 pub struct ColumnOffset(pub RawOffset);
 
 impl ColumnIndex {
-    /// The 1-indexed column number. Useful for pretty printing source locations.
-    ///
-    /// ```rust
-    /// use miette_util::codespan::{ColumnIndex, ColumnNumber};
-    ///
-    /// assert_eq!(format!("{}", ColumnIndex(0).number()), "1");
-    /// assert_eq!(format!("{}", ColumnIndex(3).number()), "4");
-    /// ```
-    pub const fn number(self) -> ColumnNumber {
-        ColumnNumber(self.0 + 1)
-    }
-
     /// Convert the index into a `usize`, for use in array indexing
     pub const fn to_usize(self) -> usize {
         self.0 as usize
