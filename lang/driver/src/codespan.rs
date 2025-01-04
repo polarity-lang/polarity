@@ -1,6 +1,4 @@
-use miette_util::codespan::{
-    ByteIndex, ColumnIndex, LineIndex, LineOffset, Location, RawIndex, Span,
-};
+use miette_util::codespan::{ByteIndex, ColumnIndex, LineIndex, LineOffset, Location, Span};
 
 /// An enum representing an error that happened while looking up a file or a piece of content in that file.
 #[derive(Debug)]
@@ -44,7 +42,7 @@ impl File {
     }
 
     fn last_line_index(&self) -> LineIndex {
-        LineIndex(self.line_starts.len() as RawIndex)
+        LineIndex(self.line_starts.len() as u32)
     }
 
     pub fn line_span(&self, line_index: LineIndex) -> Result<Span, Error> {
