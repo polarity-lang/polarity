@@ -1,7 +1,6 @@
 use miette_util::codespan::{
     ByteIndex, ColumnIndex, LineIndex, LineOffset, Location, RawIndex, Span,
 };
-use std::ffi::OsString;
 
 /// An enum representing an error that happened while looking up a file or a piece of content in that file.
 #[derive(Debug)]
@@ -17,23 +16,18 @@ pub enum Error {
 
 /// A file that is stored in the database.
 #[derive(Debug, Clone)]
-pub struct File<Source> {
-    /// The name of the file.
-    pub name: OsString,
+pub struct File {
     /// The source code of the file.
-    pub source: Source,
+    pub source: String,
     /// The starting byte indices in the source code.
     pub line_starts: Vec<ByteIndex>,
 }
 
-impl<Source> File<Source>
-where
-    Source: AsRef<str>,
-{
-    pub fn new(name: OsString, source: Source) -> Self {
+impl File {
+    pub fn new(source: String) -> Self {
         let line_starts = line_starts(source.as_ref()).map(|i| ByteIndex::from(i as u32)).collect();
 
-        File { name, source, line_starts }
+        File { source, line_starts }
     }
 
     fn line_start(&self, line_index: LineIndex) -> Result<ByteIndex, Error> {
@@ -72,15 +66,14 @@ where
         let line_index = self.line_index(byte_index);
         let line_start_index = self.line_start(line_index).map_err(|_| Error::IndexTooLarge {
             given: byte_index.to_usize(),
-            max: self.source().as_ref().len() - 1,
+            max: self.source().len() - 1,
         })?;
         let line_src = self
             .source
-            .as_ref()
             .get(line_start_index.to_usize()..byte_index.to_usize())
             .ok_or_else(|| {
                 let given = byte_index.to_usize();
-                let max = self.source().as_ref().len() - 1;
+                let max = self.source().len() - 1;
                 if given > max {
                     Error::IndexTooLarge { given, max }
                 } else {
@@ -94,7 +87,7 @@ where
         })
     }
 
-    pub fn source(&self) -> &Source {
+    pub fn source(&self) -> &String {
         &self.source
     }
 
