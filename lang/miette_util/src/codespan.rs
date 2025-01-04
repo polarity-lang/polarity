@@ -133,27 +133,6 @@ impl fmt::Display for Span {
     }
 }
 
-impl<I> From<Range<I>> for Span
-where
-    I: Into<ByteIndex>,
-{
-    fn from(range: Range<I>) -> Span {
-        Span::new(range.start, range.end)
-    }
-}
-
-impl From<Span> for Range<usize> {
-    fn from(span: Span) -> Range<usize> {
-        span.start.into()..span.end.into()
-    }
-}
-
-impl From<Span> for Range<RawIndex> {
-    fn from(span: Span) -> Range<RawIndex> {
-        span.start.0..span.end.0
-    }
-}
-
 /// A 1-indexed line number. Useful for pretty printing source locations.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct LineNumber(RawIndex);
