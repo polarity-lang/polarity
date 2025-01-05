@@ -27,7 +27,7 @@ def .not {
     F => T
 }
 
-def .if_then_else(a, then, else) {
+def .if_then_else(then, else) {
     T => then,
     F => else
 }
@@ -43,6 +43,6 @@ codef Ones {
 }
 
 codef Alternate(choose) {
-    .sHead => choose.if_then_else(<ZST>, S(panic!("not yet implemented")), Z),
+    .sHead => choose.if_then_else(S(panic!("not yet implemented")), Z),
     .sTail => Alternate(choose.not)
 }

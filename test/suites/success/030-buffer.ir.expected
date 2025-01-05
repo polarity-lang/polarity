@@ -13,7 +13,7 @@ codef Empty { .read(n) absurd }
 codef FromVec(n, xs) {
     .read(n') =>
         comatch {
-            .proj1(x, x0) => xs.head(n'),
-            .proj2(x, x0) => FromVec(n', xs.tail(n'))
+            .proj1 => xs.head(n'),
+            .proj2 => FromVec(n', xs.tail(n'))
         }
 }

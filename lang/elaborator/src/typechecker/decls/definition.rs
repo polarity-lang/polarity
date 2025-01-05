@@ -6,6 +6,7 @@ use ast::*;
 use super::CheckToplevel;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
+use crate::typechecker::erasure;
 use crate::typechecker::exprs::local_match::WithScrutineeType;
 use crate::typechecker::{
     ctx::Ctx,
@@ -21,7 +22,7 @@ impl CheckToplevel for Def {
 
         let Def { span, doc, name, attr, params, self_param, ret_typ, cases } = self;
 
-        params.infer_telescope(ctx, |ctx, params_out| {
+        params.infer_telescope(ctx, |ctx, mut params_out| {
             let self_param_nf = self_param.typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
 
             let (ret_typ_out, ret_typ_nf, self_param_out) =
@@ -35,6 +36,8 @@ impl CheckToplevel for Def {
                 WithScrutineeType { cases, scrutinee_type: self_param_nf.expect_typ_app()? };
             with_scrutinee_type.check_exhaustiveness(ctx)?;
             let cases = with_scrutinee_type.check_type(ctx, &ret_typ_nf)?;
+
+            erasure::mark_erased_params(&mut params_out);
 
             Ok(Def {
                 span: *span,

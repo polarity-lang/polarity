@@ -5,4 +5,4 @@ def .add(m) {
 
 let two { S(S(Z)) }
 
-let foo { Refl(<ZST>, two.add(S(S(Z)))) }
+let foo { Refl(two.add(S(S(Z)))) }

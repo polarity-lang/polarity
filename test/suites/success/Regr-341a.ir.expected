@@ -1,8 +1,5 @@
-codef F { .ap(x, x0, x1) => <ZST> }
+codef F { .ap(x1) => <ZST> }
 
-let foo(t, x) { panic!("not yet implemented") }
+let foo(x) { panic!("not yet implemented") }
 
-let T {
-    foo(F.ap(<ZST>, <ZST>, panic!("not yet implemented")),
-        comatch { .ap(_, _, x1) => F.ap(<ZST>, <ZST>, x1) })
-}
+let T { foo(comatch { .ap(x1) => F.ap(x1) }) }

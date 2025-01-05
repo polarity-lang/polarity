@@ -1,1 +1,1 @@
-codef Id(a) { .ap(a0, b, x) => x }
+codef Id { .ap(x) => x }

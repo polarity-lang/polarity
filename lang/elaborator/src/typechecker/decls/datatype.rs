@@ -6,6 +6,7 @@ use ast::*;
 
 use crate::typechecker::{
     ctx::Ctx,
+    erasure,
     exprs::{CheckInfer, InferTelescope},
     TypeError,
 };
@@ -50,8 +51,10 @@ fn check_ctor_wf(data_type_name: &IdBind, ctor: &Ctor, ctx: &mut Ctx) -> Result<
         });
     }
 
-    params.infer_telescope(ctx, |ctx, params_out| {
+    params.infer_telescope(ctx, |ctx, mut params_out| {
         let typ_out = typ.infer(ctx)?;
+
+        erasure::mark_erased_params(&mut params_out);
 
         Ok(Ctor {
             span: *span,

@@ -1,1 +1,1 @@
-let example1 { MkPair(<ZST>, <ZST>, True, False) }
+let example1 { MkPair(True, False) }

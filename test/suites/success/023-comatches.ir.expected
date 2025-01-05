@@ -1,14 +1,11 @@
-def .id { Unit => comatch { .pi_elim(x, x0, a) => comatch { .ap(x1, x2, x3) => x3 } } }
+def .id { Unit => comatch { .pi_elim(x0, a) => comatch { .ap(x3) => x3 } } }
 
 def .const {
     Unit =>
         comatch {
-            .pi_elim(x, x0, a) =>
-                comatch {
-                    .pi_elim(x1, x2, b) =>
-                        comatch { .ap(x3, x4, x5) => comatch { .ap(x6, x7, y) => x5 } }
-                }
+            .pi_elim(x0, a) =>
+                comatch { .pi_elim(x2, b) => comatch { .ap(x5) => comatch { .ap(y) => x5 } } }
         }
 }
 
-codef IdType { .ap(x, x0, a) => <ZST> }
+codef IdType { .ap(a) => <ZST> }

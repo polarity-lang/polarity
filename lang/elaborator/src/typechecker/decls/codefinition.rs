@@ -7,6 +7,7 @@ use ast::*;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 
+use crate::typechecker::erasure;
 use crate::typechecker::exprs::local_comatch::WithExpectedType;
 use crate::typechecker::{
     ctx::Ctx,
@@ -26,7 +27,7 @@ impl CheckToplevel for Codef {
 
         let label = IdBound { span: name.span, id: name.id.clone(), uri: ctx.module.uri.clone() };
 
-        params.infer_telescope(ctx, |ctx, params_out| {
+        params.infer_telescope(ctx, |ctx, mut params_out| {
             let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
             let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
             let with_expected_type = WithExpectedType {
@@ -37,6 +38,8 @@ impl CheckToplevel for Codef {
 
             with_expected_type.check_exhaustiveness(ctx)?;
             let cases = with_expected_type.check_type(ctx)?;
+
+            erasure::mark_erased_params(&mut params_out);
 
             Ok(Codef {
                 span: *span,

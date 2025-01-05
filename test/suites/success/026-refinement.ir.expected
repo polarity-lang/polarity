@@ -1,10 +1,10 @@
-def .sym(a, x, y) { Refl(a0, x0) => Refl(a, y) }
+def .sym(x, y) { Refl(x0) => Refl(y) }
 
-def .subst(a, x, y, p) { Refl(a0, x0) => p }
+def .subst(x, y, p) { Refl(x0) => p }
 
-def .trans(a, x, y, z, h) { Refl(a0, x0) => h }
+def .trans(x, y, z, h) { Refl(x0) => h }
 
-def .cong(a, b, x, y, f) { Refl(a0, x0) => Refl(b, f.ap(a, b, y)) }
+def .cong(x, y, f) { Refl(x0) => Refl(f.ap(y)) }
 
 def .not {
     True => False,
@@ -12,6 +12,6 @@ def .not {
 }
 
 def self.not_inverse {
-    True => Refl(<ZST>, True),
-    False => Refl(<ZST>, False)
+    True => Refl(True),
+    False => Refl(False)
 }

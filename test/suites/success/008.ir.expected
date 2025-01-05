@@ -1,1 +1,1 @@
-def .id(a) { Unit => comatch { .ap(_, _, x1) => x1 } }
+def .id { Unit => comatch { .ap(x1) => x1 } }

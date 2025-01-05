@@ -1,1 +1,1 @@
-codef Compose(a, b, c, f, g) { .ap(a', c', x) => g.ap(b, c, f.ap(a, b, x)) }
+codef Compose(f, g) { .ap(x) => g.ap(f.ap(x)) }

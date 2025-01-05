@@ -6,6 +6,7 @@ use ast::*;
 
 use crate::typechecker::{
     ctx::Ctx,
+    erasure,
     exprs::{CheckInfer, InferTelescope},
     TypeError,
 };
@@ -50,9 +51,11 @@ fn check_dtor_wf(codata_name: &IdBind, dtor: &Dtor, ctx: &mut Ctx) -> Result<Dto
         });
     }
 
-    params.infer_telescope(ctx, |ctx, params_out| {
+    params.infer_telescope(ctx, |ctx, mut params_out| {
         self_param.infer_telescope(ctx, |ctx, self_param_out| {
             let ret_typ_out = ret_typ.infer(ctx)?;
+
+            erasure::mark_erased_params(&mut params_out);
 
             Ok(Dtor {
                 span: *span,

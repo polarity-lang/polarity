@@ -1,6 +1,6 @@
-def .elim_zero(a) { SNotZero(n) absurd }
+def .elim_zero { SNotZero(n) absurd }
 
-def .elim(a) {
-    Ok(a0, x) => x,
-    Absurd(x) => x.elim_zero(<ZST>)
+def .elim {
+    Ok(x) => x,
+    Absurd(x) => x.elim_zero
 }
