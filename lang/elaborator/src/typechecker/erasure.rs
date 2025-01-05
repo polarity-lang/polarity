@@ -1,3 +1,17 @@
+//! Erasure
+//!
+//! At the moment, erasure is purely syntactic and only affects parameter and argument lists.
+//! Elaboration consults the functions in this module to determine whether a parameter or argument
+//! should be marked as erased.
+//!
+//! At the moment, a parameter is erased if its type is ...
+//!
+//! * the type universe `Type`
+//! * an annotated type universe `Type : Type`
+//! * a hole that solves to `Type`
+//!
+//! An argument is erased if its corresponding parameter is erased.
+
 /// Mark parameters as erased where applicable
 pub fn mark_erased_params(params: &mut ast::Telescope) {
     for param in params.params.iter_mut() {
