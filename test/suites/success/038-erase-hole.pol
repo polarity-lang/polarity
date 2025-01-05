@@ -1,0 +1,7 @@
+data Top { Unit }
+
+data Foo(a : ?) {
+    MkFoo(a: Type, x: a): Foo(a)
+}
+
+let foo: Foo(Top) { MkFoo(Top, Unit) }

@@ -16,7 +16,7 @@ pub fn is_erased_type(typ: &ast::Exp) -> bool {
         ast::Exp::TypeUniv(_) => true,
         ast::Exp::LocalMatch(_) => false,
         ast::Exp::LocalComatch(_) => false,
-        ast::Exp::Hole(_) => false,
+        ast::Exp::Hole(hole) => hole.solution.as_ref().map(|s| is_erased_type(s)).unwrap_or(false),
     }
 }
 
