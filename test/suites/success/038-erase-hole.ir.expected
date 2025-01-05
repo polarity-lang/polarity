@@ -1,1 +1,6 @@
-let foo { MkFoo(Unit) }
+use "../../../std/data/list.pol"
+use "../../../std/data/nat.pol"
+
+let foo(a) { Nil }
+
+let bar { foo(<ZST>) }

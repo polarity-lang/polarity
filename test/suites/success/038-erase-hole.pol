@@ -1,7 +1,7 @@
-data Top { Unit }
+use "../../../std/data/list.pol"
+use "../../../std/data/nat.pol"
 
-data Foo(a : ?) {
-    MkFoo(a: Type, x: a): Foo(a)
-}
+-- | FIXME: At the moment, a is not erased.
+let foo(a: _) : List(a) { Nil(a) }
 
-let foo: Foo(Top) { MkFoo(Top, Unit) }
+let bar: List(Nat) { foo(Nat) }
