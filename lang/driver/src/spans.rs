@@ -1,4 +1,5 @@
-use miette_util::codespan::{ByteIndex, Location, Span};
+use lsp_types::{Position, Range};
+use miette_util::codespan::{ByteIndex, LineIndex, Span};
 use url::Url;
 
 use crate::database::Database;
@@ -6,22 +7,22 @@ use crate::database::Database;
 use super::info::{Info, Item};
 
 impl Database {
-    pub fn location_to_index(&self, uri: &Url, location: Location) -> Option<ByteIndex> {
+    pub fn location_to_index(&self, uri: &Url, location: Position) -> Option<ByteIndex> {
         let file = self.files.get_even_if_stale(uri).unwrap();
-        let line_span = file.line_span(location.line).ok()?;
-        let index: usize = line_span.start().to_usize() + location.column.to_usize();
+        let line_span = file.line_span(LineIndex(location.line)).ok()?;
+        let index: usize = line_span.start().to_usize() + LineIndex(location.character).to_usize();
         Some(ByteIndex(index as u32))
     }
 
-    pub fn index_to_location(&self, uri: &Url, idx: ByteIndex) -> Option<Location> {
+    pub fn index_to_location(&self, uri: &Url, idx: ByteIndex) -> Option<Position> {
         let file = self.files.get_even_if_stale(uri).unwrap();
         file.location(idx).ok()
     }
 
-    pub fn span_to_locations(&self, uri: &Url, span: Span) -> Option<(Location, Location)> {
+    pub fn span_to_locations(&self, uri: &Url, span: Span) -> Option<Range> {
         let start = self.index_to_location(uri, span.start())?;
         let end = self.index_to_location(uri, span.end())?;
-        Some((start, end))
+        Some(Range { start, end })
     }
 
     pub async fn hoverinfo_at_index(&mut self, uri: &Url, idx: ByteIndex) -> Option<Info> {

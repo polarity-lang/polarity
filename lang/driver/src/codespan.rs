@@ -1,4 +1,5 @@
-use miette_util::codespan::{ByteIndex, ColumnIndex, LineIndex, LineOffset, Location, Span};
+use lsp_types::Position;
+use miette_util::codespan::{ByteIndex, LineIndex, LineOffset, Span};
 
 /// An enum representing an error that happened while looking up a file or a piece of content in that file.
 #[derive(Debug)]
@@ -60,7 +61,7 @@ impl File {
         }
     }
 
-    pub fn location(&self, byte_index: ByteIndex) -> Result<Location, Error> {
+    pub fn location(&self, byte_index: ByteIndex) -> Result<Position, Error> {
         let line_index = self.line_index(byte_index);
         let line_start_index = self.line_start(line_index).map_err(|_| Error::IndexTooLarge {
             given: byte_index.to_usize(),
@@ -79,7 +80,7 @@ impl File {
                 }
             })?;
 
-        Ok(Location { line: line_index, column: ColumnIndex(line_src.chars().count() as u32) })
+        Ok(Position { line: line_index.0, character: line_src.chars().count() as u32 })
     }
 
     pub fn source(&self) -> &String {
