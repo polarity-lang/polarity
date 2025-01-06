@@ -776,6 +776,7 @@ dependencies = [
  "elaborator",
  "log",
  "lowering",
+ "lsp-types",
  "miette",
  "miette_util",
  "parser",

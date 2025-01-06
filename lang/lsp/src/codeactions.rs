@@ -23,8 +23,8 @@ pub async fn code_action(
         .await;
 
     let mut db = server.database.write().await;
-    let span_start = db.location_to_index(&text_document.uri.from_lsp(), range.start.from_lsp());
-    let span_end = db.location_to_index(&text_document.uri.from_lsp(), range.end.from_lsp());
+    let span_start = db.location_to_index(&text_document.uri.from_lsp(), range.start);
+    let span_end = db.location_to_index(&text_document.uri.from_lsp(), range.end);
     let span = span_start
         .and_then(|start| span_end.map(|end| miette_util::codespan::Span::new(start, end)));
     let item = if let Some(span) = span {
@@ -42,10 +42,7 @@ pub async fn code_action(
         let edits = edits
             .into_iter()
             .map(|edit| TextEdit {
-                range: db
-                    .span_to_locations(&text_document.uri.from_lsp(), edit.span)
-                    .unwrap()
-                    .to_lsp(),
+                range: db.span_to_locations(&text_document.uri.from_lsp(), edit.span).unwrap(),
                 new_text: edit.text,
             })
             .collect();
