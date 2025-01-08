@@ -12,28 +12,34 @@
 //!
 //! An argument is erased if its corresponding parameter is erased.
 
-/// Mark parameters as erased where applicable
+/// Mark runtime-irrelevant parameters as erased
 pub fn mark_erased_params(params: &mut ast::Telescope) {
     for param in params.params.iter_mut() {
-        param.erased = is_erased_type(&param.typ);
+        param.erased = is_runtime_irrelevant(&param.typ);
     }
 }
 
-/// Whether a term of type `typ` can be erased.
-pub fn is_erased_type(typ: &ast::Exp) -> bool {
+/// If this function return true on a term of type `typ`,
+/// then it has no runtime relevance and the term can be erased.
+pub fn is_runtime_irrelevant(typ: &ast::Exp) -> bool {
     match typ {
         ast::Exp::Variable(_) => false,
         ast::Exp::TypCtor(_) => false,
         ast::Exp::Call(_) => false,
         ast::Exp::DotCall(_) => false,
-        ast::Exp::Anno(anno) => is_erased_type(&anno.exp),
+        ast::Exp::Anno(anno) => is_runtime_irrelevant(&anno.exp),
         ast::Exp::TypeUniv(_) => true,
         ast::Exp::LocalMatch(_) => false,
         ast::Exp::LocalComatch(_) => false,
-        ast::Exp::Hole(hole) => hole.solution.as_ref().map(|s| is_erased_type(s)).unwrap_or(false),
+        ast::Exp::Hole(hole) => {
+            hole.solution.as_ref().map(|s| is_runtime_irrelevant(s)).unwrap_or(false)
+        }
     }
 }
 
+/// Mark runtime-irrelevant arguments as erased
+///
+/// We mark each argument as erased if the corresponding parameter is marked as erased.
 pub fn mark_erased_args(params: &ast::Telescope, args: &mut ast::Args) {
     for (param, arg) in params.params.iter().zip(args.args.iter_mut()) {
         arg.set_erased(param.erased);
