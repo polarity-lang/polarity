@@ -25,8 +25,8 @@ pub async fn code_action(
     let mut db = server.database.write().await;
     let span_start = db.location_to_index(&text_document.uri.from_lsp(), range.start);
     let span_end = db.location_to_index(&text_document.uri.from_lsp(), range.end);
-    let span = span_start
-        .and_then(|start| span_end.map(|end| miette_util::codespan::Span::new(start, end)));
+    let span =
+        span_start.and_then(|start| span_end.map(|end| miette_util::codespan::Span { start, end }));
     let item = if let Some(span) = span {
         db.item_at_span(&text_document.uri.from_lsp(), span).await
     } else {

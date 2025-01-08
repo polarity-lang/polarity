@@ -34,7 +34,7 @@ impl File {
 
         match line_index.cmp(&self.last_line_index()) {
             Ordering::Less => Ok(self.line_starts[line_index.to_usize()]),
-            Ordering::Equal => Ok(self.source_span().end()),
+            Ordering::Equal => Ok(self.source_span().end),
             Ordering::Greater => Err(Error::LineTooLarge {
                 given: line_index.to_usize(),
                 max: self.last_line_index().to_usize(),
@@ -50,7 +50,7 @@ impl File {
         let line_start = self.line_start(line_index)?;
         let next_line_start = self.line_start(line_index + LineOffset(1))?;
 
-        Ok(Span::new(line_start, next_line_start))
+        Ok(Span { start: line_start, end: next_line_start })
     }
 
     fn line_index(&self, byte_index: ByteIndex) -> LineIndex {

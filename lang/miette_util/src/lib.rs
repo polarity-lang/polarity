@@ -33,8 +33,8 @@ impl ToMiette for codespan::Span {
     type Target = miette::SourceSpan;
 
     fn to_miette(self) -> Self::Target {
-        let length = self.end() - self.start();
-        miette::SourceSpan::new(self.start().to_miette(), length.to_usize())
+        let length = self.end - self.start;
+        miette::SourceSpan::new(self.start.to_miette(), length.to_usize())
     }
 }
 
@@ -60,6 +60,6 @@ impl FromMiette for miette::SourceSpan {
     fn from_miette(self) -> Self::Target {
         let start = codespan::ByteIndex(self.offset() as u32);
         let end = codespan::ByteIndex((self.offset() + self.len()) as u32);
-        codespan::Span::new(start, end)
+        codespan::Span { start, end }
     }
 }

@@ -34,8 +34,8 @@ pub async fn collect_info(
             content: InfoContent::UseInfo(UseInfo { uri: dep_uri, path: use_decl.path.clone() }),
         };
         collector.info_spans.push(Interval {
-            start: use_decl.span.start().0,
-            stop: use_decl.span.end().0,
+            start: use_decl.span.start.0,
+            stop: use_decl.span.end.0,
             val: info,
         })
     }
@@ -62,15 +62,15 @@ impl InfoCollector {
 
     fn add_info<T: Into<InfoContent>>(&mut self, span: Span, info: T) {
         let info = Interval {
-            start: span.start().0,
-            stop: span.end().0,
+            start: span.start.0,
+            stop: span.end.0,
             val: Info { span, content: info.into() },
         };
         self.info_spans.push(info)
     }
 
     fn add_item(&mut self, span: Span, item: Item) {
-        let item = Interval { start: span.start().0, stop: span.end().0, val: item };
+        let item = Interval { start: span.start.0, stop: span.end.0, val: item };
         self.item_spans.push(item)
     }
 }
