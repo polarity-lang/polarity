@@ -154,7 +154,7 @@ impl ToIR for ast::Case {
 
     fn to_ir(&self) -> Result<Self::Target, BackendError> {
         let ast::Case { pattern, body, .. } = self;
-        let ast::Pattern { is_copattern, params, name } = pattern;
+        let ast::Pattern { span: _, is_copattern, params, name } = pattern;
 
         let params = params.to_ir()?;
 

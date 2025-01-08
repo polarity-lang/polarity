@@ -248,7 +248,12 @@ impl Lower for cst::exp::Case<cst::exp::Pattern> {
             };
             Ok(ast::Case {
                 span: Some(*span),
-                pattern: ast::Pattern { is_copattern: false, name, params },
+                pattern: ast::Pattern {
+                    span: Some(pattern.span),
+                    is_copattern: false,
+                    name,
+                    params,
+                },
                 body: body.lower(ctx)?,
             })
         })
@@ -270,7 +275,12 @@ impl Lower for cst::exp::Case<cst::exp::Copattern> {
             };
             Ok(ast::Case {
                 span: Some(*span),
-                pattern: ast::Pattern { is_copattern: true, name, params },
+                pattern: ast::Pattern {
+                    span: Some(pattern.span),
+                    is_copattern: true,
+                    name,
+                    params,
+                },
                 body: body.lower(ctx)?,
             })
         })
@@ -543,6 +553,7 @@ impl Lower for cst::exp::Lam {
         let case = cst::exp::Case {
             span: *span,
             pattern: cst::exp::Copattern {
+                span: *span,
                 name: Ident { span: *span, id: "ap".to_owned() },
                 params: vec![
                     cst::exp::BindingSite::Wildcard { span: Default::default() },

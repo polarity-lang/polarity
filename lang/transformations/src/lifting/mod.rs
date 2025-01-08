@@ -252,6 +252,7 @@ impl Lift for Case {
         pattern.params.lift_telescope(ctx, |ctx, params| Case {
             span: *span,
             pattern: Pattern {
+                span: None,
                 is_copattern: pattern.is_copattern,
                 name: pattern.name.clone(),
                 params,

@@ -184,6 +184,7 @@ impl WithExpectedType<'_> {
                             let case_out = Case {
                                 span: *span,
                                 pattern: Pattern {
+                                    span: None,
                                     is_copattern: true,
                                     name: name.clone(),
                                     params: args_out,
@@ -323,6 +324,7 @@ impl WithExpectedType<'_> {
                             let case_out = Case {
                                 span: *span,
                                 pattern: Pattern {
+                                    span: None,
                                     is_copattern: true,
                                     name: name.clone(),
                                     params: args_out,

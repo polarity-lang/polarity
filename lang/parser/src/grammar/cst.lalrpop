@@ -201,11 +201,11 @@ Let: Let = <l: @L> <doc: DocComment?> <attr: OptAttributes> "let" <name: Ident><
 
 
 Pattern: Pattern = {
-  <name: Ident><params: OptTelescopeInst> => Pattern { name, params },
+  <l: @L><name: Ident><params: OptTelescopeInst><r: @R> => Pattern { span: span(l,r), name, params },
 }
 
 Copattern: Copattern = {
-  "." <name: Ident><params: OptTelescopeInst> => Copattern { name, params },
+  <l: @L> "." <name: Ident><params: OptTelescopeInst> <r: @R> => Copattern { span: span(l,r), name, params },
 }
 
 Case<P> : Case<P> = {

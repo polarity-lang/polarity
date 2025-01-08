@@ -668,6 +668,7 @@ impl ReadBack for Case {
         Ok(ast::Case {
             span: *span,
             pattern: ast::Pattern {
+                span: None,
                 is_copattern: *is_copattern,
                 name: name.clone(),
                 params: params.clone(),

@@ -296,6 +296,7 @@ impl WithScrutineeType<'_> {
                     let case_out = Case {
                         span,
                         pattern: Pattern {
+                            span: None,
                             is_copattern: false,
                             name: name.clone(),
                             params: args_out,
