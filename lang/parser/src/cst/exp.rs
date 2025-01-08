@@ -11,12 +11,14 @@ pub enum BindingSite {
 
 #[derive(Debug, Clone)]
 pub struct Pattern {
+    pub span: Span,
     pub name: Ident,
     pub params: Vec<BindingSite>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Copattern {
+    pub span: Span,
     pub name: Ident,
     pub params: Vec<BindingSite>,
 }

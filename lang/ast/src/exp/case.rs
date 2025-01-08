@@ -23,6 +23,7 @@ use super::{Exp, IdBound, Lvl, MetaVar, TelescopeInst};
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct Pattern {
+    pub span: Option<Span>,
     pub is_copattern: bool,
     pub name: IdBound,
     pub params: TelescopeInst,
@@ -30,7 +31,7 @@ pub struct Pattern {
 
 impl Print for Pattern {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Pattern { is_copattern, name, params } = self;
+        let Pattern { span: _, is_copattern, name, params } = self;
         if *is_copattern {
             alloc.text(DOT).append(alloc.ctor(&name.id)).append(params.print(cfg, alloc))
         } else {
@@ -44,7 +45,7 @@ impl Zonk for Pattern {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        let Pattern { is_copattern: _, name: _, params } = self;
+        let Pattern { span: _, is_copattern: _, name: _, params } = self;
         params.zonk(meta_vars)
     }
 }

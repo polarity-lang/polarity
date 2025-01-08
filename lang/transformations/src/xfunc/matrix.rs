@@ -198,6 +198,7 @@ impl XData {
                         body.map(|body| ast::Case {
                             span: None,
                             pattern: ast::Pattern {
+                                span: None,
                                 is_copattern: false,
                                 name: IdBound {
                                     span: None,
@@ -259,6 +260,7 @@ impl XData {
                         body.map(|body| ast::Case {
                             span: None,
                             pattern: ast::Pattern {
+                                span: None,
                                 is_copattern: true,
                                 name: IdBound {
                                     span: None,

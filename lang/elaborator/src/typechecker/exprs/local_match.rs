@@ -157,7 +157,11 @@ impl WithScrutineeType<'_> {
         let mut cases_out = Vec::new();
 
         for case in cases {
-            let Case { span, pattern: Pattern { name, params: args, .. }, body } = case;
+            let Case {
+                span,
+                pattern: Pattern { name, params: args, span: pattern_span, .. },
+                body,
+            } = case;
             let CtorMeta { typ: TypCtor { args: def_args, .. }, params, .. } =
                 ctx.type_info_table.lookup_ctor(&name)?;
             let TypCtor { args: on_args, .. } = &self.scrutinee_type;
@@ -296,6 +300,7 @@ impl WithScrutineeType<'_> {
                     let case_out = Case {
                         span,
                         pattern: Pattern {
+                            span: pattern_span,
                             is_copattern: false,
                             name: name.clone(),
                             params: args_out,
