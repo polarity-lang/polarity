@@ -11,17 +11,38 @@ use miette_util::FromMiette;
 use crate::conversion::ToLsp;
 
 pub trait Diagnostics {
-    fn diagnostics(&self, uri: &Url, result: Result<(), Error>) -> Vec<lsp_types::Diagnostic> {
-        match result {
-            Ok(()) => vec![],
-            Err(err) => self.error_diagnostics(uri, err),
-        }
-    }
+    /// Compute the diagnostics for the given URI and all of its reverse dependencies.
+    async fn diagnostics(&mut self, uri: &Url, result: Result<(), Error>) -> DiagnosticsPerUri;
 
     fn error_diagnostics(&self, uri: &Url, error: Error) -> Vec<lsp_types::Diagnostic>;
 }
 
+pub type DiagnosticsPerUri = ast::HashMap<Url, Vec<lsp_types::Diagnostic>>;
+
 impl Diagnostics for Database {
+    async fn diagnostics(&mut self, uri: &Url, result: Result<(), Error>) -> DiagnosticsPerUri {
+        // When computing the diagnostics for an URI, we also need to recompute the diagnostics for all of its reverse dependencies.
+        let rev_deps: Vec<_> = self.deps.reverse_dependencies(uri).into_iter().cloned().collect();
+        let mut diagnostics = ast::HashMap::default();
+
+        for uri in rev_deps {
+            let mut diagnostics_for_uri = vec![];
+            let ast = self.ast(&uri).await;
+            if let Err(err) = ast {
+                diagnostics_for_uri.extend(self.error_diagnostics(&uri, err));
+            }
+            diagnostics.insert(uri, diagnostics_for_uri);
+        }
+
+        if let Err(err) = result {
+            diagnostics.insert(uri.clone(), self.error_diagnostics(uri, err));
+        } else {
+            diagnostics.insert(uri.clone(), vec![]);
+        }
+
+        diagnostics
+    }
+
     fn error_diagnostics(&self, uri: &Url, error: Error) -> Vec<lsp_types::Diagnostic> {
         // Compute the range where the error should be displayed.
         // The range is computed from the first available label, otherwise

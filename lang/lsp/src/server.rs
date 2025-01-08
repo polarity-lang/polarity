@@ -6,7 +6,7 @@ use driver::Database;
 #[cfg(not(target_arch = "wasm32"))]
 use driver::{FileSource, FileSystemSource, InMemorySource};
 
-use crate::conversion::FromLsp;
+use crate::conversion::{FromLsp, ToLsp};
 
 use super::capabilities::*;
 use super::diagnostics::*;
@@ -74,8 +74,8 @@ impl LanguageServer for Server {
         source_mut.write_string(&text_document.uri.from_lsp(), &text_document.text).await.unwrap();
 
         let res = db.ast(&text_document.uri.from_lsp()).await.map(|_| ());
-        let diags = db.diagnostics(&text_document.uri.from_lsp(), res);
-        self.send_diagnostics(text_document.uri, diags).await;
+        let diags = db.diagnostics(&text_document.uri.from_lsp(), res).await;
+        self.send_diagnostics(diags).await;
     }
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
@@ -111,15 +111,12 @@ impl LanguageServer for Server {
         assert!(source_mut.manage(&text_document.uri.from_lsp()));
         source_mut.write_string(&text_document.uri.from_lsp(), &text).await.unwrap();
 
-        let res = db.invalidate(&text_document.uri.from_lsp()).await;
+        db.invalidate(&text_document.uri.from_lsp()).await;
 
-        let res = match res {
-            Ok(()) => db.ast(&text_document.uri.from_lsp()).await.map(|_| ()),
-            Err(err) => Err(err),
-        };
+        let res = db.ast(&text_document.uri.from_lsp()).await.map(|_| ());
+        let diags = db.diagnostics(&text_document.uri.from_lsp(), res).await;
 
-        let diags = db.diagnostics(&text_document.uri.from_lsp(), res);
-        self.send_diagnostics(text_document.uri, diags).await;
+        self.send_diagnostics(diags).await;
     }
 
     async fn goto_definition(
@@ -146,7 +143,9 @@ impl LanguageServer for Server {
 }
 
 impl Server {
-    pub(crate) async fn send_diagnostics(&self, uri: Uri, diags: Vec<Diagnostic>) {
-        self.client.publish_diagnostics(uri, diags, None).await;
+    pub(crate) async fn send_diagnostics(&self, diags: DiagnosticsPerUri) {
+        for (uri, diags) in diags {
+            self.client.publish_diagnostics(uri.to_lsp(), diags, None).await;
+        }
     }
 }
