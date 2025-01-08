@@ -1,17 +1,7 @@
 use lsp_types::Position;
 use miette_util::codespan::{ByteIndex, LineIndex, LineOffset, Span};
 
-/// An enum representing an error that happened while looking up a file or a piece of content in that file.
-#[derive(Debug)]
-#[non_exhaustive]
-pub enum Error {
-    /// The file is present, but does not contain the specified byte index.
-    IndexTooLarge { given: usize, max: usize },
-    /// The file is present, but does not contain the specified line index.
-    LineTooLarge { given: usize, max: usize },
-    /// The given index is contained in the file, but is not a boundary of a UTF-8 code point.
-    InvalidCharBoundary { given: usize },
-}
+use crate::DriverError;
 
 /// A file that is stored in the database.
 #[derive(Debug, Clone)]
@@ -32,13 +22,13 @@ impl File {
         File { source, line_starts }
     }
 
-    fn line_start(&self, line_index: LineIndex) -> Result<ByteIndex, Error> {
+    fn line_start(&self, line_index: LineIndex) -> Result<ByteIndex, DriverError> {
         use std::cmp::Ordering;
 
         match line_index.cmp(&self.last_line_index()) {
             Ordering::Less => Ok(self.line_starts[line_index.to_usize()]),
             Ordering::Equal => Ok(self.source_span().end),
-            Ordering::Greater => Err(Error::LineTooLarge {
+            Ordering::Greater => Err(DriverError::LineTooLarge {
                 given: line_index.to_usize(),
                 max: self.last_line_index().to_usize(),
             }),
@@ -49,7 +39,7 @@ impl File {
         LineIndex(self.line_starts.len() as u32)
     }
 
-    pub fn line_span(&self, line_index: LineIndex) -> Result<Span, Error> {
+    pub fn line_span(&self, line_index: LineIndex) -> Result<Span, DriverError> {
         let line_start = self.line_start(line_index)?;
         let next_line_start = self.line_start(line_index + LineOffset(1))?;
 
@@ -64,12 +54,13 @@ impl File {
         }
     }
 
-    pub fn location(&self, byte_index: ByteIndex) -> Result<Position, Error> {
+    pub fn location(&self, byte_index: ByteIndex) -> Result<Position, DriverError> {
         let line_index = self.line_index(byte_index);
-        let line_start_index = self.line_start(line_index).map_err(|_| Error::IndexTooLarge {
-            given: byte_index.to_usize(),
-            max: self.source().len() - 1,
-        })?;
+        let line_start_index =
+            self.line_start(line_index).map_err(|_| DriverError::IndexTooLarge {
+                given: byte_index.to_usize(),
+                max: self.source().len() - 1,
+            })?;
         let line_src = self
             .source
             .get(line_start_index.to_usize()..byte_index.to_usize())
@@ -77,9 +68,9 @@ impl File {
                 let given = byte_index.to_usize();
                 let max = self.source().len() - 1;
                 if given > max {
-                    Error::IndexTooLarge { given, max }
+                    DriverError::IndexTooLarge { given, max }
                 } else {
-                    Error::InvalidCharBoundary { given }
+                    DriverError::InvalidCharBoundary { given }
                 }
             })?;
 
