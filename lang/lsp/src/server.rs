@@ -100,7 +100,7 @@ impl LanguageServer for Server {
 
         let res = match res {
             Ok(()) => db.ast(&text_document.uri.from_lsp()).await.map(|_| ()),
-            Err(_) => Ok(()),
+            Err(err) => Err(err),
         };
 
         let diags = db.diagnostics(&text_document.uri.from_lsp(), res);
