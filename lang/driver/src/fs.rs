@@ -16,6 +16,11 @@ pub trait FileSource: Send + Sync {
     fn manage(&mut self, uri: &Url) -> bool;
     /// Check if the source manages a file with the given URI
     fn manages(&self, uri: &Url) -> bool;
+    /// Stop managing a file with the given URI
+    ///
+    /// This is mostly relevant for in-memory sources.
+    /// Returns `true` if the source was managing the file.
+    fn forget(&mut self, uri: &Url) -> bool;
     /// Read the contents of a file with the given URI
     async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError>;
     /// Write the contents of a file with the given URI
@@ -57,6 +62,11 @@ mod file_system {
         }
 
         fn manages(&self, uri: &Url) -> bool {
+            let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
+            self.root.join(filepath).exists()
+        }
+
+        fn forget(&mut self, uri: &Url) -> bool {
             let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
             self.root.join(filepath).exists()
         }
@@ -116,6 +126,12 @@ impl FileSource for InMemorySource {
         self.files.contains_key(uri)
     }
 
+    fn forget(&mut self, uri: &Url) -> bool {
+        let managed = self.files.remove(uri).is_some();
+        self.modified.remove(uri);
+        managed
+    }
+
     async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
         if self.manages(uri) {
             self.modified.insert(uri.clone(), false);
@@ -156,6 +172,10 @@ where
 
     fn manages(&self, uri: &Url) -> bool {
         self.first.manages(uri) || self.second.manages(uri)
+    }
+
+    fn forget(&mut self, uri: &Url) -> bool {
+        self.first.forget(uri) || self.second.forget(uri)
     }
 
     async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {

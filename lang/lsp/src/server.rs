@@ -78,6 +78,21 @@ impl LanguageServer for Server {
         self.send_diagnostics(text_document.uri, diags).await;
     }
 
+    async fn did_close(&self, params: DidCloseTextDocumentParams) {
+        let text_document = params.text_document;
+        let mut db = self.database.write().await;
+
+        self.client
+            .log_message(
+                MessageType::INFO,
+                format!("Closed file: {}", text_document.uri.from_lsp()),
+            )
+            .await;
+
+        let source_mut = db.file_source_mut();
+        source_mut.forget(&text_document.uri.from_lsp());
+    }
+
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let text_document = params.text_document;
         let mut content_changes = params.content_changes;
