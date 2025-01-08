@@ -83,7 +83,7 @@ impl Database {
         match self.files.get_unless_stale(uri) {
             Some(file) => {
                 log::debug!("Found source in cache: {}", uri);
-                Ok(file.source().to_string())
+                Ok(file.source.to_string())
             }
             None => self.recompute_source(uri).await,
         }

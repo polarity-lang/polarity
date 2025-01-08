@@ -27,7 +27,7 @@ impl File {
 
         match line_index.cmp(&self.last_line_index()) {
             Ordering::Less => Ok(self.line_starts[line_index.to_usize()]),
-            Ordering::Equal => Ok(self.source_span().end),
+            Ordering::Equal => Ok(Span::from_string(self.source.as_ref()).end),
             Ordering::Greater => Err(DriverError::LineTooLarge {
                 given: line_index.to_usize(),
                 max: self.last_line_index().to_usize(),
@@ -56,17 +56,15 @@ impl File {
 
     pub fn location(&self, byte_index: ByteIndex) -> Result<Position, DriverError> {
         let line_index = self.line_index(byte_index);
-        let line_start_index =
-            self.line_start(line_index).map_err(|_| DriverError::IndexTooLarge {
-                given: byte_index.to_usize(),
-                max: self.source().len() - 1,
-            })?;
+        let line_start_index = self.line_start(line_index).map_err(|_| {
+            DriverError::IndexTooLarge { given: byte_index.to_usize(), max: self.source.len() - 1 }
+        })?;
         let line_src = self
             .source
             .get(line_start_index.to_usize()..byte_index.to_usize())
             .ok_or_else(|| {
                 let given = byte_index.to_usize();
-                let max = self.source().len() - 1;
+                let max = self.source.len() - 1;
                 if given > max {
                     DriverError::IndexTooLarge { given, max }
                 } else {
@@ -75,13 +73,5 @@ impl File {
             })?;
 
         Ok(Position { line: line_index.0, character: line_src.chars().count() as u32 })
-    }
-
-    pub fn source(&self) -> &String {
-        &self.source
-    }
-
-    fn source_span(&self) -> Span {
-        Span::from_string(self.source.as_ref())
     }
 }
