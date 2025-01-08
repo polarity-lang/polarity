@@ -24,7 +24,10 @@ pub struct File {
 
 impl File {
     pub fn new(source: String) -> Self {
-        let line_starts = line_starts(source.as_ref()).map(|i| ByteIndex(i as u32)).collect();
+        let line_starts: Vec<ByteIndex> = std::iter::once(0)
+            .chain(source.match_indices('\n').map(|(i, _)| i + 1))
+            .map(|i| ByteIndex(i as u32))
+            .collect();
 
         File { source, line_starts }
     }
@@ -90,9 +93,4 @@ impl File {
     fn source_span(&self) -> Span {
         Span::from_string(self.source.as_ref())
     }
-}
-
-// NOTE: this is copied from `codespan_reporting::files::line_starts` and should be kept in sync.
-fn line_starts(source: &str) -> impl '_ + Iterator<Item = usize> {
-    std::iter::once(0).chain(source.match_indices('\n').map(|(i, _)| i + 1))
 }
