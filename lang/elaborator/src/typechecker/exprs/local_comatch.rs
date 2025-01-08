@@ -118,7 +118,11 @@ impl WithExpectedType<'_> {
             let DtorMeta { self_param, ret_typ, params, .. } =
                 ctx.type_info_table.lookup_dtor(&case.pattern.name)?;
             let SelfParam { typ: TypCtor { args: def_args, .. }, .. } = self_param;
-            let Case { span, pattern: Pattern { name, params: params_inst, .. }, body } = &case;
+            let Case {
+                span,
+                pattern: Pattern { span: pattern_span, name, params: params_inst, .. },
+                body,
+            } = &case;
             // We are in the following situation:
             //
             // codata T(...) {  (self : T(.....)).d(...) : t, ...}
@@ -184,7 +188,7 @@ impl WithExpectedType<'_> {
                             let case_out = Case {
                                 span: *span,
                                 pattern: Pattern {
-                                    span: None,
+                                    span: *pattern_span,
                                     is_copattern: true,
                                     name: name.clone(),
                                     params: args_out,
@@ -324,7 +328,7 @@ impl WithExpectedType<'_> {
                             let case_out = Case {
                                 span: *span,
                                 pattern: Pattern {
-                                    span: None,
+                                    span: *pattern_span,
                                     is_copattern: true,
                                     name: name.clone(),
                                     params: args_out,
