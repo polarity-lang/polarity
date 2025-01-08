@@ -93,6 +93,7 @@ impl ToHoverContent for InfoContent {
             InfoContent::LocalComatchInfo(i) => i.to_hover_content(),
             InfoContent::HoleInfo(i) => i.to_hover_content(),
             InfoContent::AnnoInfo(i) => i.to_hover_content(),
+            InfoContent::PatternInfo(i) => i.to_hover_content(),
             InfoContent::CaseInfo(i) => i.to_hover_content(),
             InfoContent::DataInfo(i) => i.to_hover_content(),
             InfoContent::CtorInfo(i) => i.to_hover_content(),
@@ -180,6 +181,16 @@ impl ToHoverContent for AnnoInfo {
         let header = MarkedString::String("Annotated term".to_owned());
         let typ = string_to_language_string(typ);
         HoverContents::Array(vec![header, typ])
+    }
+}
+
+impl ToHoverContent for PatternInfo {
+    fn to_hover_content(self) -> HoverContents {
+        if self.is_copattern {
+            HoverContents::Array(vec![MarkedString::String(format!("Copattern: `{}`", self.name))])
+        } else {
+            HoverContents::Array(vec![MarkedString::String(format!("Pattern: `{}`", self.name))])
+        }
     }
 }
 

@@ -16,7 +16,7 @@ use super::data::{
 };
 use super::item::Item;
 use super::lookup::{lookup_codef, lookup_ctor, lookup_decl, lookup_def, lookup_dtor, lookup_let};
-use super::CaseInfo;
+use super::{CaseInfo, PatternInfo};
 
 /// Traverse the program and collect information for the LSP server.
 #[allow(clippy::type_complexity)]
@@ -459,13 +459,24 @@ impl CollectInfo for LocalComatch {
     }
 }
 
+impl CollectInfo for Pattern {
+    fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
+        let Pattern { span, name, is_copattern, .. } = self;
+        if let Some(span) = span {
+            let info = PatternInfo { is_copattern: *is_copattern, name: name.id.clone() };
+            collector.add_info(*span, info)
+        }
+    }
+}
+
 impl CollectInfo for Case {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
-        let Case { body, span, .. } = self;
+        let Case { body, span, pattern, .. } = self;
         if let Some(span) = span {
             let info = CaseInfo {};
             collector.add_info(*span, info)
         }
+        pattern.collect_info(db, collector);
         body.collect_info(db, collector)
     }
 }
