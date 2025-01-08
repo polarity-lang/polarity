@@ -78,7 +78,15 @@ impl InfoCollector {
 /// Every syntax node which implements this trait can be traversed and
 /// make source-code indexed information available for the LSP server.
 trait CollectInfo {
-    fn collect_info(&self, _db: &Database, _collector: &mut InfoCollector);
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+        self.collect_info_erased(db, collector, false)
+    }
+    /// The information whether a syntax node is erased is not always annotated in the syntax node itself,
+    /// but in the surrounding "Arg" or "Param" node. We therefore have to pass through the information whether
+    /// a syntax node for which we want to generate a "Info" struct is erased.
+    fn collect_info_erased(&self, db: &Database, collector: &mut InfoCollector, _erased: bool) {
+        self.collect_info(db, collector);
+    }
 }
 
 // Generic implementations
@@ -86,8 +94,8 @@ trait CollectInfo {
 //
 
 impl<T: CollectInfo> CollectInfo for Box<T> {
-    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
-        (**self).collect_info(db, collector)
+    fn collect_info_erased(&self, db: &Database, collector: &mut InfoCollector, erased: bool) {
+        (**self).collect_info_erased(db, collector, erased)
     }
 }
 
@@ -253,33 +261,34 @@ impl CollectInfo for Let {
 //
 
 impl CollectInfo for Exp {
-    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+    fn collect_info_erased(&self, db: &Database, collector: &mut InfoCollector, erased: bool) {
         match self {
-            Exp::Variable(e) => e.collect_info(db, collector),
-            Exp::TypCtor(e) => e.collect_info(db, collector),
-            Exp::Call(e) => e.collect_info(db, collector),
-            Exp::DotCall(e) => e.collect_info(db, collector),
-            Exp::Hole(e) => e.collect_info(db, collector),
-            Exp::TypeUniv(e) => e.collect_info(db, collector),
-            Exp::Anno(e) => e.collect_info(db, collector),
-            Exp::LocalMatch(e) => e.collect_info(db, collector),
-            Exp::LocalComatch(e) => e.collect_info(db, collector),
+            Exp::Variable(e) => e.collect_info_erased(db, collector, erased),
+            Exp::TypCtor(e) => e.collect_info_erased(db, collector, erased),
+            Exp::Call(e) => e.collect_info_erased(db, collector, erased),
+            Exp::DotCall(e) => e.collect_info_erased(db, collector, erased),
+            Exp::Hole(e) => e.collect_info_erased(db, collector, erased),
+            Exp::TypeUniv(e) => e.collect_info_erased(db, collector, erased),
+            Exp::Anno(e) => e.collect_info_erased(db, collector, erased),
+            Exp::LocalMatch(e) => e.collect_info_erased(db, collector, erased),
+            Exp::LocalComatch(e) => e.collect_info_erased(db, collector, erased),
         }
     }
 }
 
 impl CollectInfo for Variable {
-    fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
+    fn collect_info_erased(&self, _db: &Database, collector: &mut InfoCollector, erased: bool) {
         let Variable { span, inferred_type, name, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let info = VariableInfo { typ: typ.print_to_string(None), name: name.clone().id };
+            let info =
+                VariableInfo { typ: typ.print_to_string(None), name: name.clone().id, erased };
             collector.add_info(*span, info)
         }
     }
 }
 
 impl CollectInfo for TypCtor {
-    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+    fn collect_info_erased(&self, db: &Database, collector: &mut InfoCollector, erased: bool) {
         let TypCtor { span, args, name } = self;
         if let Some(span) = span {
             let decl = lookup_decl(db, name);
@@ -296,7 +305,7 @@ impl CollectInfo for TypCtor {
                 }
                 _ => (None, None),
             };
-            let info = TypeCtorInfo { name: name.clone().id, definition_site, doc };
+            let info = TypeCtorInfo { name: name.clone().id, definition_site, doc, erased };
             collector.add_info(*span, info)
         }
         args.collect_info(db, collector)
@@ -304,7 +313,7 @@ impl CollectInfo for TypCtor {
 }
 
 impl CollectInfo for Call {
-    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+    fn collect_info_erased(&self, db: &Database, collector: &mut InfoCollector, erased: bool) {
         let Call { span, kind, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             let (definition_site, doc) = match kind {
@@ -340,6 +349,7 @@ impl CollectInfo for Call {
                 typ: typ.print_to_string(None),
                 name: name.clone().id,
                 definition_site,
+                erased,
             };
             collector.add_info(*span, info)
         }
@@ -348,7 +358,7 @@ impl CollectInfo for Call {
 }
 
 impl CollectInfo for DotCall {
-    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+    fn collect_info_erased(&self, db: &Database, collector: &mut InfoCollector, erased: bool) {
         let DotCall { span, kind, exp, args, inferred_type, name } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             let (definition_site, doc) = match kind {
@@ -375,6 +385,7 @@ impl CollectInfo for DotCall {
                 name: name.clone().id,
                 typ: typ.print_to_string(None),
                 definition_site,
+                erased,
             };
             collector.add_info(*span, info)
         }
@@ -384,7 +395,7 @@ impl CollectInfo for DotCall {
 }
 
 impl CollectInfo for Hole {
-    fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
+    fn collect_info_erased(&self, _db: &Database, collector: &mut InfoCollector, erased: bool) {
         let Hole { span, kind: _, metavar, inferred_type, inferred_ctx, args, solution: _ } = self;
         if let Some(span) = span {
             let metavar_state = collector
@@ -405,6 +416,7 @@ impl CollectInfo for Hole {
                     .map(|subst| subst.iter().map(|exp| exp.print_to_string(None)).collect())
                     .collect(),
                 metavar_state: metavar_str,
+                erased,
             };
             collector.add_info(*span, info)
         }
@@ -412,33 +424,35 @@ impl CollectInfo for Hole {
 }
 
 impl CollectInfo for TypeUniv {
-    fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
+    fn collect_info_erased(&self, _db: &Database, collector: &mut InfoCollector, erased: bool) {
         let TypeUniv { span } = self;
         if let Some(span) = span {
-            let info = TypeUnivInfo {};
+            let info = TypeUnivInfo { erased };
             collector.add_info(*span, info)
         }
     }
 }
 
 impl CollectInfo for Anno {
-    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+    fn collect_info_erased(&self, db: &Database, collector: &mut InfoCollector, erased: bool) {
         let Anno { span, exp, typ, normalized_type } = self;
         if let (Some(span), Some(typ)) = (span, normalized_type) {
-            let info = AnnoInfo { typ: typ.print_to_string(None) };
+            let info = AnnoInfo { typ: typ.print_to_string(None), erased };
             collector.add_info(*span, info)
         }
-        exp.collect_info(db, collector);
-        typ.collect_info(db, collector)
+        // We pass through the erased flag to the annotated expression.
+        exp.collect_info_erased(db, collector, erased);
+        // We always mark the type argument as erased in the LSP!
+        typ.collect_info_erased(db, collector, true)
     }
 }
 
 impl CollectInfo for LocalMatch {
-    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+    fn collect_info_erased(&self, db: &Database, collector: &mut InfoCollector, erased: bool) {
         let LocalMatch { span, on_exp, ret_typ, cases, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             // Add info
-            let info = LocalMatchInfo { typ: typ.print_to_string(None) };
+            let info = LocalMatchInfo { typ: typ.print_to_string(None), erased };
             collector.add_info(*span, info)
         }
         on_exp.collect_info(db, collector);
@@ -448,11 +462,11 @@ impl CollectInfo for LocalMatch {
 }
 
 impl CollectInfo for LocalComatch {
-    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+    fn collect_info_erased(&self, db: &Database, collector: &mut InfoCollector, erased: bool) {
         let LocalComatch { span, cases, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             // Add info
-            let info = LocalComatchInfo { typ: typ.print_to_string(None) };
+            let info = LocalComatchInfo { typ: typ.print_to_string(None), erased };
             collector.add_info(*span, info)
         }
         cases.collect_info(db, collector)
@@ -493,9 +507,11 @@ impl CollectInfo for Args {
 impl CollectInfo for Arg {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         match self {
-            Arg::UnnamedArg { arg, .. } => arg.collect_info(db, collector),
-            Arg::NamedArg { arg, .. } => arg.collect_info(db, collector),
-            Arg::InsertedImplicitArg { hole, .. } => hole.collect_info(db, collector),
+            Arg::UnnamedArg { arg, erased, .. } => arg.collect_info_erased(db, collector, *erased),
+            Arg::NamedArg { arg, erased, .. } => arg.collect_info_erased(db, collector, *erased),
+            Arg::InsertedImplicitArg { hole, erased, .. } => {
+                hole.collect_info_erased(db, collector, *erased)
+            }
         }
     }
 }
@@ -508,8 +524,8 @@ impl CollectInfo for Telescope {
 
 impl CollectInfo for Param {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
-        let Param { typ, .. } = self;
-        typ.collect_info(db, collector)
+        let Param { typ, erased, .. } = self;
+        typ.collect_info_erased(db, collector, *erased)
     }
 }
 

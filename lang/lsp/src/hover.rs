@@ -111,28 +111,39 @@ impl ToHoverContent for InfoContent {
 //
 //
 
+fn append_erased_annot(content: &mut Vec<MarkedString>) {
+    content.push(MarkedString::String("[Erased Argument]".to_string()));
+}
+
 impl ToHoverContent for VariableInfo {
     fn to_hover_content(self) -> HoverContents {
-        let VariableInfo { typ, name } = self;
-        let header = MarkedString::String(format!("Bound variable: `{}`", name));
-        let typ = string_to_language_string(typ);
-        HoverContents::Array(vec![header, typ])
+        let VariableInfo { typ, name, erased } = self;
+        let mut content: Vec<MarkedString> = Vec::new();
+        content.push(MarkedString::String(format!("Bound variable: `{}`", name)));
+        content.push(string_to_language_string(typ));
+        if erased {
+            append_erased_annot(&mut content);
+        }
+        HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for TypeCtorInfo {
     fn to_hover_content(self) -> HoverContents {
-        let TypeCtorInfo { name, doc, .. } = self;
+        let TypeCtorInfo { name, doc, erased, .. } = self;
         let mut content: Vec<MarkedString> = Vec::new();
         content.push(MarkedString::String(format!("Type constructor: `{}`", name)));
         add_doc_comment(&mut content, doc);
+        if erased {
+            append_erased_annot(&mut content);
+        }
         HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for CallInfo {
     fn to_hover_content(self) -> HoverContents {
-        let CallInfo { kind, typ, name, doc, .. } = self;
+        let CallInfo { kind, typ, name, doc, erased, .. } = self;
         let mut content: Vec<MarkedString> = Vec::new();
         content.push(match kind {
             CallKind::Constructor => MarkedString::String(format!("Constructor: `{}`", name)),
@@ -142,13 +153,16 @@ impl ToHoverContent for CallInfo {
         add_doc_comment(&mut content, doc);
         content.push(MarkedString::String("---".to_owned()));
         content.push(string_to_language_string(typ));
+        if erased {
+            append_erased_annot(&mut content);
+        }
         HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for DotCallInfo {
     fn to_hover_content(self) -> HoverContents {
-        let DotCallInfo { kind, name, typ, doc, .. } = self;
+        let DotCallInfo { kind, name, typ, doc, erased, .. } = self;
         let mut content: Vec<MarkedString> = Vec::new();
         content.push(match kind {
             DotCallKind::Destructor => MarkedString::String(format!("Destructor: `{}`", name)),
@@ -157,13 +171,16 @@ impl ToHoverContent for DotCallInfo {
         add_doc_comment(&mut content, doc);
         content.push(MarkedString::String("---".to_owned()));
         content.push(string_to_language_string(typ));
+        if erased {
+            append_erased_annot(&mut content);
+        }
         HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for TypeUnivInfo {
     fn to_hover_content(self) -> HoverContents {
-        let content: Vec<MarkedString> = vec![
+        let mut content: Vec<MarkedString> = vec![
             MarkedString::String("Universe: `Type`".to_owned()),
             MarkedString::String("---".to_owned()),
             MarkedString::String(
@@ -171,16 +188,23 @@ impl ToHoverContent for TypeUnivInfo {
                     .to_owned(),
             ),
         ];
+        if self.erased {
+            append_erased_annot(&mut content);
+        }
         HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for AnnoInfo {
     fn to_hover_content(self) -> HoverContents {
-        let AnnoInfo { typ } = self;
-        let header = MarkedString::String("Annotated term".to_owned());
-        let typ = string_to_language_string(typ);
-        HoverContents::Array(vec![header, typ])
+        let AnnoInfo { typ, erased } = self;
+        let mut content: Vec<MarkedString> = Vec::new();
+        content.push(MarkedString::String("Annotated term".to_owned()));
+        content.push(string_to_language_string(typ));
+        if erased {
+            append_erased_annot(&mut content);
+        }
+        HoverContents::Array(content)
     }
 }
 
@@ -202,25 +226,33 @@ impl ToHoverContent for CaseInfo {
 
 impl ToHoverContent for LocalMatchInfo {
     fn to_hover_content(self) -> HoverContents {
-        let LocalMatchInfo { typ } = self;
-        let header = MarkedString::String("Local match".to_owned());
-        let typ = string_to_language_string(typ);
-        HoverContents::Array(vec![header, typ])
+        let LocalMatchInfo { typ, erased } = self;
+        let mut content: Vec<MarkedString> = Vec::new();
+        content.push(MarkedString::String("Local match".to_owned()));
+        content.push(string_to_language_string(typ));
+        if erased {
+            append_erased_annot(&mut content);
+        }
+        HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for LocalComatchInfo {
     fn to_hover_content(self) -> HoverContents {
-        let LocalComatchInfo { typ } = self;
-        let header = MarkedString::String("Local comatch".to_owned());
-        let typ = string_to_language_string(typ);
-        HoverContents::Array(vec![header, typ])
+        let LocalComatchInfo { typ, erased } = self;
+        let mut content: Vec<MarkedString> = Vec::new();
+        content.push(MarkedString::String("Local comatch".to_owned()));
+        content.push(string_to_language_string(typ));
+        if erased {
+            append_erased_annot(&mut content);
+        }
+        HoverContents::Array(content)
     }
 }
 
 impl ToHoverContent for HoleInfo {
     fn to_hover_content(self) -> HoverContents {
-        let HoleInfo { metavar, goal, ctx, args, metavar_state } = self;
+        let HoleInfo { metavar, goal, ctx, args, metavar_state, erased } = self;
         if let Some(ctx) = ctx {
             let mut value = String::new();
             match metavar {
@@ -237,6 +269,9 @@ impl ToHoverContent for HoleInfo {
             if let Some(solution) = metavar_state {
                 value.push_str("\n\nSolution:\n\n");
                 value.push_str(&solution);
+            }
+            if erased {
+                value.push_str("\n\n[Erased Argument]\n\n");
             }
             HoverContents::Markup(MarkupContent { kind: MarkupKind::Markdown, value })
         } else {
