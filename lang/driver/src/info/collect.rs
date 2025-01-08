@@ -16,6 +16,7 @@ use super::data::{
 };
 use super::item::Item;
 use super::lookup::{lookup_codef, lookup_ctor, lookup_decl, lookup_def, lookup_dtor, lookup_let};
+use super::CaseInfo;
 
 /// Traverse the program and collect information for the LSP server.
 #[allow(clippy::type_complexity)]
@@ -460,7 +461,11 @@ impl CollectInfo for LocalComatch {
 
 impl CollectInfo for Case {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
-        let Case { body, .. } = self;
+        let Case { body, span, .. } = self;
+        if let Some(span) = span {
+            let info = CaseInfo {};
+            collector.add_info(*span, info)
+        }
         body.collect_info(db, collector)
     }
 }

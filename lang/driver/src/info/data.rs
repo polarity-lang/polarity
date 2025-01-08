@@ -33,6 +33,8 @@ pub enum InfoContent {
     AnnoInfo(AnnoInfo),
     LocalMatchInfo(LocalMatchInfo),
     LocalComatchInfo(LocalComatchInfo),
+    // Various
+    CaseInfo(CaseInfo),
     // Toplevel Declarations
     DataInfo(DataInfo),
     CtorInfo(CtorInfo),
@@ -243,6 +245,15 @@ pub struct AnnoInfo {
 impl From<AnnoInfo> for InfoContent {
     fn from(value: AnnoInfo) -> Self {
         InfoContent::AnnoInfo(value)
+    }
+}
+// Information for clauses in pattern and copattern matches
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CaseInfo {}
+
+impl From<CaseInfo> for InfoContent {
+    fn from(value: CaseInfo) -> Self {
+        InfoContent::CaseInfo(value)
     }
 }
 
