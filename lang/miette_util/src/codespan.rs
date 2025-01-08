@@ -1,7 +1,7 @@
 use std::ops::{Add, Sub};
 
 /// A byte position in a source file.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ByteIndex(pub u32);
 
 impl ByteIndex {
@@ -40,7 +40,7 @@ impl ByteOffset {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Span {
     pub start: ByteIndex,
     pub end: ByteIndex,
@@ -55,12 +55,6 @@ impl Span {
     /// Measure the span of a string.
     pub fn from_string(s: &str) -> Span {
         Span { start: ByteIndex(0), end: ByteIndex(s.len() as u32) }
-    }
-}
-
-impl Default for Span {
-    fn default() -> Span {
-        Span::initial()
     }
 }
 
