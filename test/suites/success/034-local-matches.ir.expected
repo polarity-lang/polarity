@@ -6,4 +6,4 @@ def .top_is_zero(n) {
         }
 }
 
-def .top_id(a) { Unit => comatch { .ap(a0, b, x) => x } }
+def .top_id { Unit => comatch { .ap(x) => x } }

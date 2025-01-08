@@ -2,6 +2,7 @@
 
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
+use crate::typechecker::erasure;
 use crate::typechecker::type_info_table::DtorMeta;
 use ast::*;
 
@@ -39,7 +40,7 @@ impl CheckInfer for DotCall {
         let DtorMeta { params, self_param, ret_typ, .. } =
             &ctx.type_info_table.lookup_dtor_or_def(&name.clone())?;
 
-        let args_out = check_args(args, &name.clone(), ctx, params, *span)?;
+        let mut args_out = check_args(args, &name.clone(), ctx, params, *span)?;
 
         let self_param_out = self_param
             .typ
@@ -52,6 +53,8 @@ impl CheckInfer for DotCall {
         let subst = vec![args.to_exps(), vec![exp.clone()]];
         let typ_out = ret_typ.subst_under_ctx(vec![params.len(), 1].into(), &subst);
         let typ_out_nf = typ_out.normalize(&ctx.type_info_table, &mut ctx.env())?;
+
+        erasure::mark_erased_args(params, &mut args_out);
 
         Ok(DotCall {
             span: *span,

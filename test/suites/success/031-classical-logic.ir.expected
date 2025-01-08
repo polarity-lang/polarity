@@ -1,15 +1,8 @@
-def .contra(a, prf, ref) { Unit => ref.ret(a, prf) }
+def .contra(prf, ref) { Unit => ref.ret(prf) }
 
-def .lem(a) {
+def .lem {
     Unit =>
         comatch {
-            .given(x, k) =>
-                Unit.contra(<ZST>,
-                            Right(a,
-                                  <ZST>,
-                                  comatch {
-                                      .ret(x0, x1) => Unit.contra(<ZST>, Left(a, <ZST>, x1), k)
-                                  }),
-                            k)
+            .given(k) => Unit.contra(Right(comatch { .ret(x1) => Unit.contra(Left(x1), k) }), k)
         }
 }

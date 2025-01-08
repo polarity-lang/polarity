@@ -1,47 +1,42 @@
-def .cong_pair(t1, t2, a, b, c) { Refl(x, x0) => Refl(<ZST>, Pair(t1, t2, b, c)) }
+def .cong_pair(a, b, c) { Refl(x0) => Refl(Pair(b, c)) }
 
-codef Pair(a, b, x, y) {
-    .fst(a0, b0) => x,
-    .snd(a0, b0) => y
+codef Pair(x, y) {
+    .fst => x,
+    .snd => y
 }
 
-codef MkUtils {
-    .put_twice(n, route, state) =>
-        route.put(n).ap(<ZST>, <ZST>, route.put(n).ap(<ZST>, <ZST>, state).fst(<ZST>, <ZST>))
-}
+codef MkUtils { .put_twice(n, route, state) => route.put(n).ap(route.put(n).ap(state).fst) }
 
 codef Index {
     .requiresLogin => F,
     .post =>
         comatch {
-            .ap(_, _, state) =>
+            .ap(state) =>
                 comatch {
-                    .fst(a, b) => state,
-                    .snd(a, b) => Forbidden
+                    .fst => state,
+                    .snd => Forbidden
                 }
         },
-    .get => comatch { .ap(_, _, state) => Return(state.counter(F)) },
-    .put(n) => comatch { .ap(_, _, state) => Pair(<ZST>, <ZST>, state, Forbidden) },
-    .put_idempotent(n) =>
-        comatch { .dap(x, x0, state) => Refl(<ZST>, Pair(<ZST>, <ZST>, state, Forbidden)) }
+    .get => comatch { .ap(state) => Return(state.counter(F)) },
+    .put(n) => comatch { .ap(state) => Pair(state, Forbidden) },
+    .put_idempotent(n) => comatch { .dap(x0, state) => Refl(Pair(state, Forbidden)) }
 }
 
 codef Admin {
     .requiresLogin => T,
     .post =>
         comatch {
-            .ap(_, _, state) =>
+            .ap(state) =>
                 comatch {
-                    .fst(a, b) => state.increment,
-                    .snd(a, b) => Return(state.increment.counter(T))
+                    .fst => state.increment,
+                    .snd => Return(state.increment.counter(T))
                 }
         },
-    .get => comatch { .ap(_, _, state) => Return(state.counter(T)) },
-    .put(n) => comatch { .ap(_, _, state) => Pair(<ZST>, <ZST>, state.set(n), Return(n)) },
+    .get => comatch { .ap(state) => Return(state.counter(T)) },
+    .put(n) => comatch { .ap(state) => Pair(state.set(n), Return(n)) },
     .put_idempotent(n) =>
         comatch {
-            .dap(x, x0, state) =>
-                state.set_idempotent(T, n)
-                     .cong_pair(<ZST>, <ZST>, state.set(n), state.set(n).set(n), Return(n))
+            .dap(x0, state) =>
+                state.set_idempotent(T, n).cong_pair(state.set(n), state.set(n).set(n), Return(n))
         }
 }

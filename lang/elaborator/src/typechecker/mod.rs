@@ -1,5 +1,6 @@
 pub mod ctx;
 pub mod decls;
+mod erasure;
 pub mod exprs;
 pub mod type_info_table;
 pub mod util;

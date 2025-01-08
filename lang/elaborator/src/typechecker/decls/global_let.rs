@@ -7,6 +7,7 @@ use ast::*;
 use super::CheckToplevel;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
+use crate::typechecker::erasure;
 use crate::typechecker::{
     ctx::Ctx,
     exprs::{CheckInfer, InferTelescope},
@@ -19,10 +20,12 @@ impl CheckToplevel for Let {
 
         let Let { span, doc, name, attr, params, typ, body } = self;
 
-        params.infer_telescope(ctx, |ctx, params_out| {
+        params.infer_telescope(ctx, |ctx, mut params_out| {
             let typ_out = typ.infer(ctx)?;
             let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
             let body_out = body.check(ctx, &typ_nf)?;
+
+            erasure::mark_erased_params(&mut params_out);
 
             Ok(Let {
                 span: *span,

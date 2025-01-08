@@ -2,4 +2,4 @@ codef S(n) { .add(m) => n.add(S(m)) }
 
 codef Z { .add(m) => m }
 
-let test { Refl(<ZST>, S(S(S(S(Z))))) }
+let test { Refl(S(S(S(S(Z))))) }

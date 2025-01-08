@@ -25,26 +25,26 @@ def .subst_result(x, by) {
 def e.progress(t) {
     Var(x) =>
         comatch {
-            .ap(_, _, h_t) =>
+            .ap(h_t) =>
                 h_t.match {
-                    TVar(x2, x3, x4, elem) => elem.empty_absurd(x, t).elim_bot(<ZST>),
+                    TVar(x2, x3, x4, elem) => elem.empty_absurd(x, t).elim_bot,
                     TLam(x2, x3, x4, x5, x6) absurd,
                     TApp(x2, x3, x4, x5, x6, x7, x8) absurd,
                     TLit(x2, x3) absurd,
                     TIf(x2, x3, x4, x5, x6, x7, x8, x9) absurd
                 }
         },
-    Lam(e) => comatch { .ap(_, _, x1) => PVal(Lam(e), VLam(e)) },
+    Lam(e) => comatch { .ap(x1) => PVal(Lam(e), VLam(e)) },
     App(e1, e2) =>
         comatch {
-            .ap(_, _, h_t) =>
+            .ap(h_t) =>
                 h_t.match {
                     TVar(x1, x2, x3, x4) absurd,
                     TLam(x1, x2, x3, x4, x5) absurd,
                     TLit(x1, x2) absurd,
                     TIf(x1, x2, x3, x4, x5, x6, x7, x8) absurd,
                     TApp(x1, t1, t2, x2, x3, e1_t, e2_t) =>
-                        e1.progress(FunT(t1, t)).ap(<ZST>, <ZST>, e1_t).match {
+                        e1.progress(FunT(t1, t)).ap(e1_t).match {
                             PStep(x4, e1', e1_eval_e1') =>
                                 PStep(App(e1, e2),
                                       App(e1', e2),
@@ -64,17 +64,17 @@ def e.progress(t) {
                         }
                 }
         },
-    Lit(b) => comatch { .ap(_, _, x1) => PVal(Lit(b), VLit(b)) },
+    Lit(b) => comatch { .ap(x1) => PVal(Lit(b), VLit(b)) },
     If(cond, then, else) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 h_e.match {
                     TVar(x1, x2, x3, x4) absurd,
                     TLam(x1, x2, x3, x4, x5) absurd,
                     TApp(x1, x2, x3, x4, x5, x6, x7) absurd,
                     TLit(x1, x2) absurd,
                     TIf(x1, x2, x3, x4, x5, h_cond, h_then, h_else) =>
-                        cond.progress(BooT).ap(<ZST>, <ZST>, h_cond).match {
+                        cond.progress(BooT).ap(h_cond).match {
                             PVal(x6, h_val) =>
                                 h_val.match {
                                     VLam(x7) =>
@@ -109,9 +109,9 @@ def e.progress(t) {
 def e1.preservation(e2, t) {
     Var(x) =>
         comatch {
-            .ap(_, _, h_t) =>
+            .ap(h_t) =>
                 comatch {
-                    .ap(_, _, h_eval) =>
+                    .ap(h_eval) =>
                         h_eval.match {
                             EBeta(x4, x5) absurd,
                             ECongApp1(x4, x5, x6, x7) absurd,
@@ -124,9 +124,9 @@ def e1.preservation(e2, t) {
         },
     Lam(x) =>
         comatch {
-            .ap(_, _, h_t) =>
+            .ap(h_t) =>
                 comatch {
-                    .ap(_, _, h_eval) =>
+                    .ap(h_eval) =>
                         h_eval.match {
                             EBeta(x4, x5) absurd,
                             ECongApp1(x4, x5, x6, x7) absurd,
@@ -139,7 +139,7 @@ def e1.preservation(e2, t) {
         },
     App(e1, e3) =>
         comatch {
-            .ap(_, _, h_t) =>
+            .ap(h_t) =>
                 h_t.match {
                     TVar(x1, x2, x3, x4) absurd,
                     TLam(x1, x2, x3, x4, x5) absurd,
@@ -147,7 +147,7 @@ def e1.preservation(e2, t) {
                     TIf(x1, x2, x3, x4, x5, x6, x7, x8) absurd,
                     TApp(x1, t1, t2, x2, x3, h_lam, h_e2) =>
                         comatch {
-                            .ap(_, _, h_eval) =>
+                            .ap(h_eval) =>
                                 h_eval.match {
                                     ECongIf(x6, x7, x8, x9, x10) absurd,
                                     EIfTrue(x6, x7) absurd,
@@ -158,9 +158,7 @@ def e1.preservation(e2, t) {
                                              t,
                                              e1',
                                              e3,
-                                             e1.preservation(e1', FunT(t1, t))
-                                               .ap(<ZST>, <ZST>, h_lam)
-                                               .ap(<ZST>, <ZST>, h),
+                                             e1.preservation(e1', FunT(t1, t)).ap(h_lam).ap(h),
                                              h_e2),
                                     ECongApp2(x6, x7, e2', h) =>
                                         TApp(Nil,
@@ -169,9 +167,7 @@ def e1.preservation(e2, t) {
                                              e1,
                                              e2',
                                              h_lam,
-                                             e3.preservation(e2', t1)
-                                               .ap(<ZST>, <ZST>, h_e2)
-                                               .ap(<ZST>, <ZST>, h)),
+                                             e3.preservation(e2', t1).ap(h_e2).ap(h)),
                                     EBeta(e4, x6) =>
                                         h_lam.match {
                                             TVar(x7, x8, x9, x10) absurd,
@@ -180,8 +176,8 @@ def e1.preservation(e2, t) {
                                             TIf(x7, x8, x9, x10, x11, x12, x13, x14) absurd,
                                             TLam(x7, x8, x9, x10, h_e1) =>
                                                 e4.subst_lemma(Nil, Nil, t1, t, e3)
-                                                  .ap(<ZST>, <ZST>, h_e1)
-                                                  .ap(<ZST>, <ZST>, h_e2)
+                                                  .ap(h_e1)
+                                                  .ap(h_e2)
                                         }
                                 }
                         }
@@ -189,9 +185,9 @@ def e1.preservation(e2, t) {
         },
     Lit(b) =>
         comatch {
-            .ap(_, _, h_t) =>
+            .ap(h_t) =>
                 comatch {
-                    .ap(_, _, h_eval) =>
+                    .ap(h_eval) =>
                         h_eval.match {
                             EBeta(x3, x4) absurd,
                             ECongApp1(x3, x4, x5, x6) absurd,
@@ -204,9 +200,9 @@ def e1.preservation(e2, t) {
         },
     If(cond, then, else) =>
         comatch {
-            .ap(_, _, h_t) =>
+            .ap(h_t) =>
                 comatch {
-                    .ap(_, _, h_eval) =>
+                    .ap(h_eval) =>
                         h_t.match {
                             TVar(x3, x4, x5, x6) absurd,
                             TApp(x3, x4, x5, x6, x7, x8, x9) absurd,
@@ -224,8 +220,8 @@ def e1.preservation(e2, t) {
                                             else,
                                             t,
                                             cond.preservation(cond', BooT)
-                                                .ap(<ZST>, <ZST>, h_cond)
-                                                .ap(<ZST>, <ZST>, h_eval_cond),
+                                                .ap(h_cond)
+                                                .ap(h_eval_cond),
                                             h_then,
                                             h_else),
                                     EIfTrue(x7, x8) => h_then,
@@ -239,9 +235,9 @@ def e1.preservation(e2, t) {
 def e.subst_lemma(ctx1, ctx2, t1, t2, by_e) {
     Var(x) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 comatch {
-                    .ap(_, _, h_by) =>
+                    .ap(h_by) =>
                         h_e.match {
                             TLam(x4, x5, x6, x7, x8) absurd,
                             TApp(x4, x5, x6, x7, x8, x9, x10) absurd,
@@ -250,57 +246,43 @@ def e.subst_lemma(ctx1, ctx2, t1, t2, by_e) {
                             TVar(x4, x5, x6, h_elem) =>
                                 x.cmp_reflect(ctx1.len).match {
                                     IsLT(x7, x8, h_eq_lt, h_lt) =>
-                                        h_eq_lt.transport(<ZST>,
-                                                          LT,
+                                        h_eq_lt.transport(LT,
                                                           x.cmp(ctx1.len),
-                                                          comatch { .ap(x9, x10, cmp) => <ZST> },
+                                                          comatch { .ap(cmp) => <ZST> },
                                                           ctx2.weaken_append(ctx1, Var(x), t2)
-                                                              .ap(<ZST>,
-                                                                  <ZST>,
-                                                                  TVar(ctx1,
+                                                              .ap(TVar(ctx1,
                                                                        x,
                                                                        t2,
                                                                        ctx1.elem_append_first(Cons(t1,
                                                                                                    ctx2),
                                                                                               t2,
                                                                                               x)
-                                                                           .ap(<ZST>, <ZST>, h_lt)
-                                                                           .ap(<ZST>,
-                                                                               <ZST>,
-                                                                               h_elem)))),
+                                                                           .ap(h_lt)
+                                                                           .ap(h_elem)))),
                                     IsEQ(x7, x8, h_eq_eq, h_eq) =>
-                                        h_eq_eq.transport(<ZST>,
-                                                          EQ,
+                                        h_eq_eq.transport(EQ,
                                                           x.cmp(ctx1.len),
-                                                          comatch { .ap(x9, x10, cmp) => <ZST> },
+                                                          comatch { .ap(cmp) => <ZST> },
                                                           ctx1.append(ctx2)
                                                               .weaken_append(Nil, by_e, t2)
-                                                              .ap(<ZST>,
-                                                                  <ZST>,
-                                                                  ctx1.ctx_lookup(ctx2, t2, t1)
-                                                                      .ap(<ZST>,
-                                                                          <ZST>,
-                                                                          h_eq.transport(<ZST>,
-                                                                                         x,
+                                                              .ap(ctx1.ctx_lookup(ctx2, t2, t1)
+                                                                      .ap(h_eq.transport(x,
                                                                                          ctx1.len,
                                                                                          comatch {
-                                                                                             .ap(x9, x10, x11) =>
+                                                                                             .ap(x11) =>
                                                                                                  <ZST>
                                                                                          },
                                                                                          h_elem))
-                                                                      .transport(<ZST>,
-                                                                                 t1,
+                                                                      .transport(t1,
                                                                                  t2,
                                                                                  comatch {
-                                                                                     .ap(x9, x10, t) =>
-                                                                                         <ZST>
+                                                                                     .ap(t) => <ZST>
                                                                                  },
                                                                                  h_by))),
                                     IsGT(x7, x8, h_eq_gt, h_gt) =>
-                                        h_eq_gt.transport(<ZST>,
-                                                          GT,
+                                        h_eq_gt.transport(GT,
                                                           x.cmp(ctx1.len),
-                                                          comatch { .ap(x9, x10, cmp) => <ZST> },
+                                                          comatch { .ap(cmp) => <ZST> },
                                                           TVar(ctx1.append(ctx2),
                                                                x.pred,
                                                                t2,
@@ -308,17 +290,17 @@ def e.subst_lemma(ctx1, ctx2, t1, t2, by_e) {
                                                                                      t2,
                                                                                      t1,
                                                                                      x)
-                                                                   .ap(<ZST>, <ZST>, h_gt)
-                                                                   .ap(<ZST>, <ZST>, h_elem)))
+                                                                   .ap(h_gt)
+                                                                   .ap(h_elem)))
                                 }
                         }
                 }
         },
     Lam(body) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 comatch {
-                    .ap(_, _, h_by) =>
+                    .ap(h_by) =>
                         h_e.match {
                             TVar(x3, x4, x5, x6) absurd,
                             TApp(x3, x4, x5, x6, x7, x8, x9) absurd,
@@ -330,16 +312,16 @@ def e.subst_lemma(ctx1, ctx2, t1, t2, by_e) {
                                      b,
                                      body.subst(S(ctx1.len), by_e),
                                      body.subst_lemma(Cons(a, ctx1), ctx2, t1, b, by_e)
-                                         .ap(<ZST>, <ZST>, h_body)
-                                         .ap(<ZST>, <ZST>, h_by))
+                                         .ap(h_body)
+                                         .ap(h_by))
                         }
                 }
         },
     App(e1, e2) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 comatch {
-                    .ap(_, _, h_by) =>
+                    .ap(h_by) =>
                         h_e.match {
                             TVar(x3, x4, x5, x6) absurd,
                             TLam(x3, x4, x5, x6, x7) absurd,
@@ -352,19 +334,17 @@ def e.subst_lemma(ctx1, ctx2, t1, t2, by_e) {
                                      e1.subst(ctx1.len, by_e),
                                      e2.subst(ctx1.len, by_e),
                                      e1.subst_lemma(ctx1, ctx2, t1, FunT(a, t2), by_e)
-                                       .ap(<ZST>, <ZST>, h_e1)
-                                       .ap(<ZST>, <ZST>, h_by),
-                                     e2.subst_lemma(ctx1, ctx2, t1, a, by_e)
-                                       .ap(<ZST>, <ZST>, h_e2)
-                                       .ap(<ZST>, <ZST>, h_by))
+                                       .ap(h_e1)
+                                       .ap(h_by),
+                                     e2.subst_lemma(ctx1, ctx2, t1, a, by_e).ap(h_e2).ap(h_by))
                         }
                 }
         },
     Lit(b) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 comatch {
-                    .ap(_, _, h_by) =>
+                    .ap(h_by) =>
                         h_e.match {
                             TVar(x3, x4, x5, x6) absurd,
                             TLam(x3, x4, x5, x6, x7) absurd,
@@ -376,9 +356,9 @@ def e.subst_lemma(ctx1, ctx2, t1, t2, by_e) {
         },
     If(cond, then, else) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 comatch {
-                    .ap(_, _, h_by) =>
+                    .ap(h_by) =>
                         h_e.match {
                             TVar(x3, x4, x5, x6) absurd,
                             TLam(x3, x4, x5, x6, x7) absurd,
@@ -391,14 +371,10 @@ def e.subst_lemma(ctx1, ctx2, t1, t2, by_e) {
                                     else.subst(ctx1.len, by_e),
                                     t2,
                                     cond.subst_lemma(ctx1, ctx2, t1, BooT, by_e)
-                                        .ap(<ZST>, <ZST>, h_cond)
-                                        .ap(<ZST>, <ZST>, h_by),
-                                    then.subst_lemma(ctx1, ctx2, t1, t2, by_e)
-                                        .ap(<ZST>, <ZST>, h_then)
-                                        .ap(<ZST>, <ZST>, h_by),
-                                    else.subst_lemma(ctx1, ctx2, t1, t2, by_e)
-                                        .ap(<ZST>, <ZST>, h_else)
-                                        .ap(<ZST>, <ZST>, h_by))
+                                        .ap(h_cond)
+                                        .ap(h_by),
+                                    then.subst_lemma(ctx1, ctx2, t1, t2, by_e).ap(h_then).ap(h_by),
+                                    else.subst_lemma(ctx1, ctx2, t1, t2, by_e).ap(h_else).ap(h_by))
                         }
                 }
         }
@@ -407,33 +383,26 @@ def e.subst_lemma(ctx1, ctx2, t1, t2, by_e) {
 def ctx2.weaken_append(ctx1, e, t) {
     Nil =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 ctx1.append_nil
-                    .transport(<ZST>,
-                               ctx1,
-                               ctx1.append(Nil),
-                               comatch { .ap(x1, x2, ctx) => <ZST> },
-                               h_e)
+                    .transport(ctx1, ctx1.append(Nil), comatch { .ap(ctx) => <ZST> }, h_e)
         },
     Cons(t', ts) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 ctx1.append_assoc(Cons(t', Nil), ts)
-                    .transport(<ZST>,
-                               ctx1.append(Cons(t', Nil)).append(ts),
+                    .transport(ctx1.append(Cons(t', Nil)).append(ts),
                                ctx1.append(Cons(t', ts)),
-                               comatch { .ap(x1, x2, ctx) => <ZST> },
+                               comatch { .ap(ctx) => <ZST> },
                                ts.weaken_append(ctx1.append(Cons(t', Nil)), e, t)
-                                 .ap(<ZST>,
-                                     <ZST>,
-                                     e.weaken_cons(ctx1, t', t).ap(<ZST>, <ZST>, h_e)))
+                                 .ap(e.weaken_cons(ctx1, t', t).ap(h_e)))
         }
 }
 
 def e.weaken_cons(ctx, t1, t2) {
     Var(x) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 h_e.match {
                     TLam(x2, x3, x4, x5, x6) absurd,
                     TApp(x2, x3, x4, x5, x6, x7, x8) absurd,
@@ -445,7 +414,7 @@ def e.weaken_cons(ctx, t1, t2) {
         },
     Lam(e) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 h_e.match {
                     TVar(x1, x2, x3, x4) absurd,
                     TApp(x1, x2, x3, x4, x5, x6, x7) absurd,
@@ -456,12 +425,12 @@ def e.weaken_cons(ctx, t1, t2) {
                              a,
                              b,
                              e,
-                             e.weaken_cons(Cons(a, ctx), t1, b).ap(<ZST>, <ZST>, h_e0))
+                             e.weaken_cons(Cons(a, ctx), t1, b).ap(h_e0))
                 }
         },
     App(e1, e2) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 h_e.match {
                     TVar(x1, x2, x3, x4) absurd,
                     TLam(x1, x2, x3, x4, x5) absurd,
@@ -473,13 +442,13 @@ def e.weaken_cons(ctx, t1, t2) {
                              t2,
                              e1,
                              e2,
-                             e1.weaken_cons(ctx, t1, FunT(a, t2)).ap(<ZST>, <ZST>, h_e1),
-                             e2.weaken_cons(ctx, t1, a).ap(<ZST>, <ZST>, h_e2))
+                             e1.weaken_cons(ctx, t1, FunT(a, t2)).ap(h_e1),
+                             e2.weaken_cons(ctx, t1, a).ap(h_e2))
                 }
         },
     Lit(b) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 h_e.match {
                     TVar(x1, x2, x3, x4) absurd,
                     TLam(x1, x2, x3, x4, x5) absurd,
@@ -490,7 +459,7 @@ def e.weaken_cons(ctx, t1, t2) {
         },
     If(cond, then, else) =>
         comatch {
-            .ap(_, _, h_e) =>
+            .ap(h_e) =>
                 h_e.match {
                     TVar(x1, x2, x3, x4) absurd,
                     TLam(x1, x2, x3, x4, x5) absurd,
@@ -502,9 +471,9 @@ def e.weaken_cons(ctx, t1, t2) {
                             then,
                             else,
                             t2,
-                            cond.weaken_cons(ctx, t1, BooT).ap(<ZST>, <ZST>, h_cond),
-                            then.weaken_cons(ctx, t1, t2).ap(<ZST>, <ZST>, h_then),
-                            else.weaken_cons(ctx, t1, t2).ap(<ZST>, <ZST>, h_else))
+                            cond.weaken_cons(ctx, t1, BooT).ap(h_cond),
+                            then.weaken_cons(ctx, t1, t2).ap(h_then),
+                            else.weaken_cons(ctx, t1, t2).ap(h_else))
                 }
         }
 }
@@ -516,18 +485,16 @@ def .elem_append(n, t1, t2, ctx) {
 }
 
 def ctx1.append_assoc(ctx2, ctx3) {
-    Nil => Refl(<ZST>, ctx2.append(ctx3)),
+    Nil => Refl(ctx2.append(ctx3)),
     Cons(x, xs) =>
         xs.append_assoc(ctx2, ctx3)
-          .cong(<ZST>,
-                <ZST>,
-                xs.append(ctx2).append(ctx3),
+          .cong(xs.append(ctx2).append(ctx3),
                 xs.append(ctx2.append(ctx3)),
-                comatch { .ap(x0, x1, xs0) => Cons(x, xs0) })
+                comatch { .ap(xs0) => Cons(x, xs0) })
 }
 
 def ctx.append_nil {
-    Nil => Refl(<ZST>, Nil),
+    Nil => Refl(Nil),
     Cons(t, ts) => ts.append_nil.eq_cons(ts, ts.append(Nil), t)
 }
 
@@ -537,18 +504,18 @@ def .empty_absurd(x, t) {
 }
 
 def .elem_unique(ctx, t1, t2) {
-    Here(x, x0) => Refl(<ZST>, t2),
+    Here(x, x0) => Refl(t2),
     There(x, x0, x1, x2, x3) absurd
 }
 
 def ctx1.ctx_lookup(ctx2, t1, t2) {
-    Nil => comatch { .ap(_, _, h) => h.elem_unique(ctx2, t1, t2) },
+    Nil => comatch { .ap(h) => h.elem_unique(ctx2, t1, t2) },
     Cons(t, ts) =>
         comatch {
-            .ap(_, _, h) =>
+            .ap(h) =>
                 h.match {
                     Here(x1, x2) absurd,
-                    There(x1, x2, x3, x4, h0) => ts.ctx_lookup(ctx2, t1, t2).ap(<ZST>, <ZST>, h0)
+                    There(x1, x2, x3, x4, h0) => ts.ctx_lookup(ctx2, t1, t2).ap(h0)
                 }
         }
 }
@@ -556,9 +523,9 @@ def ctx1.ctx_lookup(ctx2, t1, t2) {
 def ctx1.elem_append_first(ctx2, t, x) {
     Nil =>
         comatch {
-            .ap(_, _, h_lt) =>
+            .ap(h_lt) =>
                 comatch {
-                    .ap(_, _, h_elem) =>
+                    .ap(h_elem) =>
                         h_lt.match {
                             LERefl(x4) absurd,
                             LESucc(x4, x5, x6) absurd
@@ -567,9 +534,9 @@ def ctx1.elem_append_first(ctx2, t, x) {
         },
     Cons(t', ts) =>
         comatch {
-            .ap(_, _, h_lt) =>
+            .ap(h_lt) =>
                 comatch {
-                    .ap(_, _, h_elem) =>
+                    .ap(h_elem) =>
                         h_elem.match {
                             Here(x4, x5) => Here(t', ts),
                             There(x', x4, x5, x6, h) =>
@@ -578,8 +545,8 @@ def ctx1.elem_append_first(ctx2, t, x) {
                                       t',
                                       ts,
                                       ts.elem_append_first(ctx2, t, x')
-                                        .ap(<ZST>, <ZST>, h_lt.le_unsucc(S(), ts.len))
-                                        .ap(<ZST>, <ZST>, h))
+                                        .ap(h_lt.le_unsucc(S(), ts.len))
+                                        .ap(h))
                         }
                 }
         }
@@ -588,9 +555,9 @@ def ctx1.elem_append_first(ctx2, t, x) {
 def ctx1.elem_append_pred(ctx2, t1, t2, x) {
     Nil =>
         comatch {
-            .ap(_, _, h_gt) =>
+            .ap(h_gt) =>
                 comatch {
-                    .ap(_, _, h_elem) =>
+                    .ap(h_elem) =>
                         h_elem.match {
                             Here(x4, x5) =>
                                 h_gt.match {
@@ -603,9 +570,9 @@ def ctx1.elem_append_pred(ctx2, t1, t2, x) {
         },
     Cons(t, ts) =>
         comatch {
-            .ap(_, _, h_gt) =>
+            .ap(h_gt) =>
                 comatch {
-                    .ap(_, _, h_elem) =>
+                    .ap(h_elem) =>
                         h_elem.match {
                             Here(x4, x5) =>
                                 h_gt.match {
@@ -615,35 +582,32 @@ def ctx1.elem_append_pred(ctx2, t1, t2, x) {
                             There(x', x4, x5, x6, h) =>
                                 h_gt.le_unsucc(S(ts.len), x')
                                     .s_pred(ts.len, x')
-                                    .transport(<ZST>,
-                                               S(x'.pred),
+                                    .transport(S(x'.pred),
                                                x',
-                                               comatch { .ap(x7, x8, x9) => <ZST> },
+                                               comatch { .ap(x9) => <ZST> },
                                                There(x'.pred,
                                                      t1,
                                                      t,
                                                      ts.append(ctx2),
                                                      ts.elem_append_pred(ctx2, t1, t2, x')
-                                                       .ap(<ZST>,
-                                                           <ZST>,
-                                                           h_gt.le_unsucc(S(ts.len), x'))
-                                                       .ap(<ZST>, <ZST>, h)))
+                                                       .ap(h_gt.le_unsucc(S(ts.len), x'))
+                                                       .ap(h)))
                         }
                 }
         }
 }
 
-def .elim_bot(a) { }
+def .elim_bot { }
 
-def .sym(a, x, y) { Refl(a0, x0) => Refl(a, y) }
+def .sym(x, y) { Refl(x0) => Refl(y) }
 
-def .transport(a, x, y, p, prf) { Refl(a0, x0) => prf }
+def .transport(x, y, p, prf) { Refl(x0) => prf }
 
-def .cong(a, b, x, y, f) { Refl(a0, x0) => Refl(b, f.ap(a, b, y)) }
+def .cong(x, y, f) { Refl(x0) => Refl(f.ap(y)) }
 
-def .eq_s(x, y) { Refl(x0, x1) => Refl(<ZST>, S(y)) }
+def .eq_s(x, y) { Refl(x1) => Refl(S(y)) }
 
-def .eq_cons(xs, ys, t) { Refl(x, x0) => Refl(<ZST>, Cons(t, ys)) }
+def .eq_cons(xs, ys, t) { Refl(x0) => Refl(Cons(t, ys)) }
 
 def .pred {
     Z => Z,
@@ -666,12 +630,12 @@ def .cmp(y) {
 def x.cmp_reflect(y) {
     Z =>
         y.match {
-            Z => IsEQ(Z, Z, Refl(<ZST>, EQ), Refl(<ZST>, Z)),
-            S(y0) => IsLT(Z, S(y0), Refl(<ZST>, LT), y0.z_le.le_succ(Z, y0))
+            Z => IsEQ(Z, Z, Refl(EQ), Refl(Z)),
+            S(y0) => IsLT(Z, S(y0), Refl(LT), y0.z_le.le_succ(Z, y0))
         },
     S(x) =>
         y.match {
-            Z => IsGT(S(x), Z, Refl(<ZST>, GT), x.z_le.le_succ(Z, x)),
+            Z => IsGT(S(x), Z, Refl(GT), x.z_le.le_succ(Z, x)),
             S(y0) =>
                 x.cmp_reflect(y0).match {
                     IsLT(x0, x1, h1, h2) => IsLT(S(x), S(y0), h1, h2.le_succ(S(x), y0)),
@@ -702,8 +666,8 @@ def .s_le(x, y) {
 }
 
 def .s_pred(x, y) {
-    LERefl(x0) => Refl(<ZST>, S(x)),
-    LESucc(x0, y', x1) => Refl(<ZST>, S())
+    LERefl(x0) => Refl(S(x)),
+    LESucc(x0, y', x1) => Refl(S())
 }
 
 def .not {

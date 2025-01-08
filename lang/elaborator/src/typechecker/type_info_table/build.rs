@@ -1,5 +1,7 @@
 use ast::*;
 
+use crate::typechecker::erasure;
+
 use super::{CtorMeta, DtorMeta, ModuleTypeInfoTable, TyCtorMeta};
 
 pub fn build_type_info_table(module: &Module) -> ModuleTypeInfoTable {
@@ -42,9 +44,9 @@ impl BuildTypeInfoTable for Data {
 impl BuildTypeInfoTable for Ctor {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
         let Ctor { name, params, typ, .. } = self;
-        info_table
-            .map_ctor
-            .insert(name.id.clone(), CtorMeta { params: params.clone(), typ: typ.clone() });
+        let mut params = params.clone();
+        erasure::mark_erased_params(&mut params);
+        info_table.map_ctor.insert(name.id.clone(), CtorMeta { params, typ: typ.clone() });
     }
 }
 
@@ -62,31 +64,35 @@ impl BuildTypeInfoTable for Codata {
 impl BuildTypeInfoTable for Dtor {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
         let Dtor { name, params, self_param, ret_typ, .. } = self;
+        let mut params = params.clone();
+        erasure::mark_erased_params(&mut params);
         info_table.map_dtor.insert(
             name.id.clone(),
-            DtorMeta {
-                params: params.clone(),
-                self_param: self_param.clone(),
-                ret_typ: ret_typ.clone(),
-            },
+            DtorMeta { params, self_param: self_param.clone(), ret_typ: ret_typ.clone() },
         );
     }
 }
 
 impl BuildTypeInfoTable for Def {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
-        info_table.map_def.insert(self.name.id.clone(), self.clone());
+        let mut def = self.clone();
+        erasure::mark_erased_params(&mut def.params);
+        info_table.map_def.insert(self.name.id.clone(), def);
     }
 }
 
 impl BuildTypeInfoTable for Codef {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
-        info_table.map_codef.insert(self.name.id.clone(), self.clone());
+        let mut codef = self.clone();
+        erasure::mark_erased_params(&mut codef.params);
+        info_table.map_codef.insert(self.name.id.clone(), codef);
     }
 }
 
 impl BuildTypeInfoTable for Let {
     fn build(&self, info_table: &mut ModuleTypeInfoTable) {
-        info_table.map_let.insert(self.name.id.clone(), self.clone());
+        let mut tl_let = self.clone();
+        erasure::mark_erased_params(&mut tl_let.params);
+        info_table.map_let.insert(self.name.id.clone(), tl_let);
     }
 }
