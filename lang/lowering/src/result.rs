@@ -94,6 +94,12 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
+    #[error("Type universe \"Type\" does not take arguments")]
+    #[diagnostic(code("L-015"))]
+    TypeUnivArgs {
+        #[label]
+        span: SourceSpan,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("L-XXX"))]
     /// This error should not occur.
