@@ -28,7 +28,6 @@ impl Lower for cst::exp::Exp {
             cst::exp::Exp::Call(e) => e.lower(ctx),
             cst::exp::Exp::DotCall(e) => e.lower(ctx),
             cst::exp::Exp::Anno(e) => e.lower(ctx),
-            cst::exp::Exp::TypeUniv(e) => e.lower(ctx),
             cst::exp::Exp::LocalMatch(e) => e.lower(ctx),
             cst::exp::Exp::LocalComatch(e) => e.lower(ctx),
             cst::exp::Exp::Hole(e) => e.lower(ctx),
@@ -400,15 +399,6 @@ impl Lower for cst::exp::Anno {
             normalized_type: None,
         }
         .into())
-    }
-}
-
-impl Lower for cst::exp::TypeUniv {
-    type Target = ast::Exp;
-
-    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::TypeUniv { span } = self;
-        Ok(TypeUniv { span: Some(*span) }.into())
     }
 }
 
