@@ -292,6 +292,10 @@ impl Lower for cst::exp::Call {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Call { span, name, args } = self;
 
+        if name.id == "Type" {
+            return Ok(TypeUniv { span: Some(*span) }.into());
+        }
+
         // If we find the identifier in the local context then we have to lower
         // it to a variable.
         if let Some(idx) = ctx.lookup_local(name) {
