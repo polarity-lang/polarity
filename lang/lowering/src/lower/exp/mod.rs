@@ -295,7 +295,7 @@ impl Lower for cst::exp::Call {
         // The type universe "Type" is treated as an ordinary call in the lexer and parser.
         // For this reason we have to special case the logic for lowering the type universe here.
         if name.id == "Type" {
-            if args.len() != 0 {
+            if !args.is_empty() {
                 return Err(LoweringError::TypeUnivArgs { span: span.to_miette() });
             }
             return Ok(TypeUniv { span: Some(*span) }.into());
