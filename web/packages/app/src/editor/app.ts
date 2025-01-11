@@ -221,7 +221,9 @@ export default class App {
       // Open the in-memory document if it's not already open
       const doc = await vscode.workspace.openTextDocument(this.inMemoryFileUri);
       this.currentDocument = doc;
-      await vscode.window.showTextDocument(doc, { preview: false });
+      // `preserveFocus: true` is necessary to prevent the editor from grapping focus on page load.
+      // This resulted the landing page to jump to the editor immediately after page load.
+      await vscode.window.showTextDocument(doc, { preview: false, preserveFocus: true });
     }
   }
 }
