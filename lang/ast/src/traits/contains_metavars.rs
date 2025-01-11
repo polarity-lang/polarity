@@ -17,6 +17,6 @@ impl<T: ContainsMetaVars> ContainsMetaVars for Box<T> {
 
 impl<T: ContainsMetaVars> ContainsMetaVars for Option<T> {
     fn contains_metavars(&self) -> bool {
-        self.as_ref().map_or(false, |x| x.contains_metavars())
+        self.as_ref().is_some_and(|x| x.contains_metavars())
     }
 }
