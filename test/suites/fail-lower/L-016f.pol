@@ -1,0 +1,3 @@
+let foo(Type: Type): Type {
+   Type
+}

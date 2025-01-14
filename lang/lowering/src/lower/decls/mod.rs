@@ -1,6 +1,6 @@
 use ast::VarBind;
+use exp::bs_to_name;
 use miette_util::ToMiette;
-use parser::cst::exp::BindingSite;
 use parser::cst::{self};
 
 use super::*;
@@ -154,12 +154,7 @@ where
             let mut params_out = params_out?;
             let cst::decls::Param { implicit, name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
             let typ_out = typ.lower(ctx)?;
-            let name = match name {
-                BindingSite::Var { name, .. } => name.clone(),
-                BindingSite::Wildcard { span } => {
-                    parser::cst::ident::Ident { span: *span, id: "_".to_owned() }
-                }
-            };
+            let name = bs_to_name(name)?;
             let name = VarBind { span: Some(name.span), id: name.id.clone() };
             let param_out = ast::Param { implicit: *implicit, name, typ: typ_out, erased: false };
             params_out.push(param_out);
