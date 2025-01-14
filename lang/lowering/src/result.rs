@@ -100,6 +100,12 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
+    #[error("\"Type\" is not a valid identifier")]
+    #[diagnostic(code("L-016"))]
+    TypeUnivIdentifier {
+        #[label]
+        span: SourceSpan,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("L-XXX"))]
     /// This error should not occur.

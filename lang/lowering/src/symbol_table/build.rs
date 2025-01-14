@@ -1,4 +1,5 @@
 use ast::HashMap;
+use codespan::Span;
 use decls::*;
 use miette_util::ToMiette;
 use parser::cst::*;
@@ -17,6 +18,13 @@ pub fn build_symbol_table(module: &Module) -> Result<ModuleSymbolTable, Lowering
     }
 
     Ok(symbol_table)
+}
+
+fn check_ident(ident: &Ident, span: &Span) -> Result<(), LoweringError> {
+    if ident.id == "Type" {
+        return Err(LoweringError::TypeUnivIdentifier { span: span.to_miette() });
+    }
+    Ok(())
 }
 
 trait BuildSymbolTable {
@@ -38,6 +46,7 @@ impl BuildSymbolTable for Decl {
 impl BuildSymbolTable for Data {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Data { span, name, params, ctors, .. } = self;
+        check_ident(name, span)?;
         match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {
@@ -60,6 +69,7 @@ impl BuildSymbolTable for Data {
 impl BuildSymbolTable for Ctor {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Ctor { span, name, params, .. } = self;
+        check_ident(name, span)?;
         match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {
@@ -79,6 +89,7 @@ impl BuildSymbolTable for Ctor {
 impl BuildSymbolTable for Codata {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Codata { span, name, params, dtors, .. } = self;
+        check_ident(name, span)?;
         match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {
@@ -101,6 +112,7 @@ impl BuildSymbolTable for Codata {
 impl BuildSymbolTable for Dtor {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Dtor { span, name, params, .. } = self;
+        check_ident(name, span)?;
         match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {
@@ -120,6 +132,7 @@ impl BuildSymbolTable for Dtor {
 impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Def { span, name, params, .. } = self;
+        check_ident(name, span)?;
 
         match symbol_table.get(name) {
             Some(_) => {
@@ -140,6 +153,7 @@ impl BuildSymbolTable for Def {
 impl BuildSymbolTable for Codef {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Codef { span, name, params, .. } = self;
+        check_ident(name, span)?;
 
         match symbol_table.get(name) {
             Some(_) => {
@@ -160,6 +174,7 @@ impl BuildSymbolTable for Codef {
 impl BuildSymbolTable for Let {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Let { span, name, params, .. } = self;
+        check_ident(name, span)?;
         match symbol_table.get(name) {
             Some(_) => {
                 return Err(LoweringError::AlreadyDefined {

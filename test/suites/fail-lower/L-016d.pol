@@ -1,0 +1,2 @@
+data Bool { T, F }
+codata Foo { .Type : Bool }

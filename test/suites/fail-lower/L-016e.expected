@@ -1,0 +1,8 @@
+L-016
+
+  × "Type" is not a valid identifier
+   ╭─[L-016e.pol:2:1]
+ 1 │ data Bool { T, F }
+ 2 │ let Type : Bool { T }
+   · ─────────────────────
+   ╰────
