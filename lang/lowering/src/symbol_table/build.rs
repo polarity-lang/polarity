@@ -20,9 +20,20 @@ pub fn build_symbol_table(module: &Module) -> Result<ModuleSymbolTable, Lowering
     Ok(symbol_table)
 }
 
-fn check_ident(ident: &Ident, span: &Span) -> Result<(), LoweringError> {
-    if ident.id == "Type" {
+/// Checks whether the identifier is reserved or already defined.
+fn check_name(
+    symbol_table: &mut ModuleSymbolTable,
+    name: &Ident,
+    span: &Span,
+) -> Result<(), LoweringError> {
+    if name.id == "Type" {
         return Err(LoweringError::TypeUnivIdentifier { span: span.to_miette() });
+    }
+    if symbol_table.get(name).is_some() {
+        return Err(LoweringError::AlreadyDefined {
+            name: name.to_owned(),
+            span: span.to_miette(),
+        });
     }
     Ok(())
 }
@@ -46,19 +57,12 @@ impl BuildSymbolTable for Decl {
 impl BuildSymbolTable for Data {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Data { span, name, params, ctors, .. } = self;
-        check_ident(name, span)?;
-        match symbol_table.get(name) {
-            Some(_) => {
-                return Err(LoweringError::AlreadyDefined {
-                    name: name.to_owned(),
-                    span: span.to_miette(),
-                });
-            }
-            None => {
-                let meta = DeclMeta::Data { params: params.clone() };
-                symbol_table.insert(name.clone(), meta);
-            }
-        }
+
+        check_name(symbol_table, name, span)?;
+
+        let meta = DeclMeta::Data { params: params.clone() };
+        symbol_table.insert(name.clone(), meta);
+
         for ctor in ctors {
             ctor.build(symbol_table)?;
         }
@@ -69,19 +73,11 @@ impl BuildSymbolTable for Data {
 impl BuildSymbolTable for Ctor {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Ctor { span, name, params, .. } = self;
-        check_ident(name, span)?;
-        match symbol_table.get(name) {
-            Some(_) => {
-                return Err(LoweringError::AlreadyDefined {
-                    name: name.to_owned(),
-                    span: span.to_miette(),
-                });
-            }
-            None => {
-                let meta = DeclMeta::Ctor { params: params.clone() };
-                symbol_table.insert(name.clone(), meta);
-            }
-        }
+        check_name(symbol_table, name, span)?;
+
+        let meta = DeclMeta::Ctor { params: params.clone() };
+        symbol_table.insert(name.clone(), meta);
+
         Ok(())
     }
 }
@@ -89,19 +85,11 @@ impl BuildSymbolTable for Ctor {
 impl BuildSymbolTable for Codata {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Codata { span, name, params, dtors, .. } = self;
-        check_ident(name, span)?;
-        match symbol_table.get(name) {
-            Some(_) => {
-                return Err(LoweringError::AlreadyDefined {
-                    name: name.to_owned(),
-                    span: span.to_miette(),
-                });
-            }
-            None => {
-                let meta = DeclMeta::Codata { params: params.clone() };
-                symbol_table.insert(name.clone(), meta);
-            }
-        }
+        check_name(symbol_table, name, span)?;
+
+        let meta = DeclMeta::Codata { params: params.clone() };
+        symbol_table.insert(name.clone(), meta);
+
         for dtor in dtors {
             dtor.build(symbol_table)?;
         }
@@ -112,19 +100,11 @@ impl BuildSymbolTable for Codata {
 impl BuildSymbolTable for Dtor {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Dtor { span, name, params, .. } = self;
-        check_ident(name, span)?;
-        match symbol_table.get(name) {
-            Some(_) => {
-                return Err(LoweringError::AlreadyDefined {
-                    name: name.to_owned(),
-                    span: span.to_miette(),
-                });
-            }
-            None => {
-                let meta = DeclMeta::Dtor { params: params.clone() };
-                symbol_table.insert(name.clone(), meta);
-            }
-        }
+        check_name(symbol_table, name, span)?;
+
+        let meta = DeclMeta::Dtor { params: params.clone() };
+        symbol_table.insert(name.clone(), meta);
+
         Ok(())
     }
 }
@@ -132,20 +112,11 @@ impl BuildSymbolTable for Dtor {
 impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Def { span, name, params, .. } = self;
-        check_ident(name, span)?;
+        check_name(symbol_table, name, span)?;
 
-        match symbol_table.get(name) {
-            Some(_) => {
-                return Err(LoweringError::AlreadyDefined {
-                    name: name.to_owned(),
-                    span: span.to_miette(),
-                });
-            }
-            None => {
-                let meta = DeclMeta::Def { params: params.clone() };
-                symbol_table.insert(name.clone(), meta);
-            }
-        }
+        let meta = DeclMeta::Def { params: params.clone() };
+        symbol_table.insert(name.clone(), meta);
+
         Ok(())
     }
 }
@@ -153,20 +124,11 @@ impl BuildSymbolTable for Def {
 impl BuildSymbolTable for Codef {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Codef { span, name, params, .. } = self;
-        check_ident(name, span)?;
+        check_name(symbol_table, name, span)?;
 
-        match symbol_table.get(name) {
-            Some(_) => {
-                return Err(LoweringError::AlreadyDefined {
-                    name: name.to_owned(),
-                    span: span.to_miette(),
-                });
-            }
-            None => {
-                let meta = DeclMeta::Codef { params: params.clone() };
-                symbol_table.insert(name.clone(), meta);
-            }
-        }
+        let meta = DeclMeta::Codef { params: params.clone() };
+        symbol_table.insert(name.clone(), meta);
+
         Ok(())
     }
 }
@@ -174,19 +136,11 @@ impl BuildSymbolTable for Codef {
 impl BuildSymbolTable for Let {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
         let Let { span, name, params, .. } = self;
-        check_ident(name, span)?;
-        match symbol_table.get(name) {
-            Some(_) => {
-                return Err(LoweringError::AlreadyDefined {
-                    name: name.to_owned(),
-                    span: span.to_miette(),
-                });
-            }
-            None => {
-                let meta = DeclMeta::Let { params: params.clone() };
-                symbol_table.insert(name.clone(), meta);
-            }
-        }
+        check_name(symbol_table, name, span)?;
+
+        let meta = DeclMeta::Let { params: params.clone() };
+        symbol_table.insert(name.clone(), meta);
+
         Ok(())
     }
 }
