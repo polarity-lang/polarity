@@ -49,10 +49,8 @@ impl Diagnostics for Database {
         // the default range is used, which corresponds to the beginning of the
         // file.
         let span = get_span(&error);
-        let range = span
-            .and_then(|x| self.span_to_locations(uri, x.from_miette()))
-            .map(ToLsp::to_lsp)
-            .unwrap_or_default();
+        let range =
+            span.and_then(|x| self.span_to_locations(uri, x.from_miette())).unwrap_or_default();
 
         // Compute the message.
         let message = error.to_string();

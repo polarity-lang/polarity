@@ -12,8 +12,6 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-# source code locations
-codespan = { workspace = true }
 url = "2"
 # error handling
 miette = { workspace = true }
@@ -21,3 +19,4 @@ thiserror = { workspace = true }
 derivative = { workspace = true }
 # workspace members
 ast = { path = "../ast" }
+miette_util = { path = "../miette_util" }

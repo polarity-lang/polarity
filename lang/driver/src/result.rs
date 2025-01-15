@@ -32,4 +32,12 @@ pub enum DriverError {
     Url(#[from] url::ParseError),
     #[error("Impossible: {0}")]
     Impossible(String),
+    #[error("The file is present, but does not contain the specified byte index.")]
+    IndexTooLarge { given: usize, max: usize },
+    #[error("The file is present, but does not contain the specified line index.")]
+    LineTooLarge { given: usize, max: usize },
+    #[error(
+        "The given index is contained in the file, but is not a boundary of a UTF-8 code point."
+    )]
+    InvalidCharBoundary { given: usize },
 }

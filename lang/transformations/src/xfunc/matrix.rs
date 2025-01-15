@@ -1,9 +1,9 @@
-use codespan::Span;
 use url::Url;
 
 use ast::ctx::{BindContext, LevelCtx};
 use ast::{self, HashMap, IdBound, SwapWithCtx};
 use ast::{Attributes, DocComment};
+use miette_util::codespan::Span;
 
 use crate::result::XfuncError;
 

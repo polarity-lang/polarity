@@ -1,5 +1,5 @@
-use codespan::Span;
 use derivative::Derivative;
+use miette_util::codespan::Span;
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]

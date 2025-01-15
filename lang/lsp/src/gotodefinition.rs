@@ -1,6 +1,6 @@
 //! Implementation of the goto-definition functionality of the LSP server
 
-use codespan::Span;
+use miette_util::codespan::Span;
 use tower_lsp::{jsonrpc, lsp_types::*};
 
 use super::conversion::*;
@@ -24,7 +24,7 @@ pub async fn goto_definition(
 
     let pos = pos_params.position;
     let mut db = server.database.write().await;
-    let info = db.location_to_index(&text_document.uri.from_lsp(), pos.from_lsp());
+    let info = db.location_to_index(&text_document.uri.from_lsp(), pos);
     let info = match info {
         Some(idx) => db.hoverinfo_at_index(&text_document.uri.from_lsp(), idx).await,
         None => None,
@@ -40,7 +40,7 @@ fn info_to_jump(db: &Database, info: Info) -> Option<GotoDefinitionResponse> {
 }
 
 fn span_to_location(span: &Span, uri: &Uri, db: &Database) -> Option<Location> {
-    let range = db.span_to_locations(&uri.from_lsp(), *span).map(ToLsp::to_lsp)?;
+    let range = db.span_to_locations(&uri.from_lsp(), *span)?;
     Some(Location { uri: uri.clone(), range })
 }
 
