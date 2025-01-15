@@ -25,7 +25,7 @@ impl CheckInfer for DotCall {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        convert(ctx.levels(), &mut ctx.meta_vars, inferred_typ, t, &self.span())?;
+        convert(&mut ctx.meta_vars, inferred_typ, t, &self.span())?;
         Ok(inferred_term)
     }
 

@@ -21,7 +21,6 @@ pub fn uses_self(codata: &Codata) -> Result<bool, TypeError> {
 }
 
 pub fn convert(
-    ctx: LevelCtx,
     meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     this: Box<Exp>,
     other: &Exp,
@@ -31,7 +30,7 @@ pub fn convert(
     // Convertibility is checked using the unification algorithm.
     let constraint: Constraint =
         Constraint::Equality { lhs: this.clone(), rhs: Box::new(other.clone()) };
-    let res = unify(ctx, meta_vars, constraint, true, while_elaborating_span)?;
+    let res = unify(meta_vars, constraint, while_elaborating_span)?;
     match res {
         crate::conversion_checking::dec::Dec::Yes(_) => Ok(()),
         crate::conversion_checking::dec::Dec::No(_) => {

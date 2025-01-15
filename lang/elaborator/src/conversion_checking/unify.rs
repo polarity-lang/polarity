@@ -1,62 +1,24 @@
 use std::collections::HashSet;
 
-use ast::ctx::LevelCtx;
-use ast::{occurs_in, Variable};
+use ast::Variable;
 use codespan::Span;
 use ctx::GenericCtx;
 
 use crate::result::TypeError;
 use ast::*;
-use printer::{DocAllocator, Print};
+use printer::Print;
 
 use super::constraints::Constraint;
 use super::dec::{Dec, No, Yes};
 
-#[derive(Debug, Clone)]
-pub struct Unificator {
-    map: HashMap<Lvl, Box<Exp>>,
-}
-
-impl Substitutable for Unificator {
-    type Result = Unificator;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        let map = self
-            .map
-            .iter()
-            .map(|(entry_lvl, entry_val)| (*entry_lvl, entry_val.subst(ctx, by)))
-            .collect();
-        Self { map }
-    }
-}
-
-impl Shift for Unificator {
-    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        self.map.iter_mut().for_each(|(_, exp)| exp.shift_in_range(range, by));
-    }
-}
-
-impl Substitution for Unificator {
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
-        self.map.get(&lvl).cloned()
-    }
-}
-
-impl Unificator {
-    pub fn empty() -> Self {
-        Self { map: HashMap::default() }
-    }
-}
-
 pub fn unify(
-    ctx: LevelCtx,
     meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     constraint: Constraint,
-    vars_are_rigid: bool,
     while_elaborating_span: &Option<Span>,
-) -> Result<Dec<Unificator>, TypeError> {
-    let mut ctx = Ctx::new(vec![constraint], ctx.clone(), vars_are_rigid);
+) -> Result<Dec<()>, TypeError> {
+    let mut ctx = Ctx::new(vec![constraint]);
     let res = match ctx.unify(meta_vars, while_elaborating_span)? {
-        Yes(_) => Yes(ctx.unif),
+        Yes(_) => Yes(()),
         No(()) => No(()),
     };
     Ok(res)
@@ -68,13 +30,6 @@ struct Ctx {
     /// A cache of solved constraints. We can skip solving a constraint
     /// if we have seen it before
     done: HashSet<Constraint>,
-    ctx: LevelCtx,
-    /// Partial solution that we have computed from solving previous constraints.
-    unif: Unificator,
-    /// When we use the unifier as a conversion checker then we don't want to
-    /// treat two distinct variables as unifiable. In that case we call the unifier
-    /// and enable this boolean flag in order to treat all variables as rigid.
-    vars_are_rigid: bool,
 }
 
 /// Tests whether the hole is in Miller's pattern fragment, i.e. whether it is applied
@@ -99,14 +54,8 @@ fn is_solvable(h: &Hole) -> bool {
 }
 
 impl Ctx {
-    fn new(constraints: Vec<Constraint>, ctx: LevelCtx, vars_are_rigid: bool) -> Self {
-        Self {
-            constraints,
-            done: HashSet::default(),
-            ctx,
-            unif: Unificator::empty(),
-            vars_are_rigid,
-        }
+    fn new(constraints: Vec<Constraint>) -> Self {
+        Self { constraints, done: HashSet::default() }
     }
 
     fn unify(
@@ -134,7 +83,7 @@ impl Ctx {
     ) -> Result<Dec, TypeError> {
         match eqn {
             Constraint::Equality { lhs, rhs, .. } => match (&**lhs, &**rhs) {
-                (Exp::Hole(h), e) | (e, Exp::Hole(h)) if self.vars_are_rigid => {
+                (Exp::Hole(h), e) | (e, Exp::Hole(h)) => {
                     let metavar_state = meta_vars.get(&h.metavar).unwrap();
                     match metavar_state {
                         MetaVarState::Solved { ctx, solution } => {
@@ -170,26 +119,12 @@ impl Ctx {
                 ) => {
                     if idx_1 == idx_2 {
                         Ok(Yes(()))
-                    } else if self.vars_are_rigid {
-                        Ok(No(()))
                     } else {
-                        self.add_assignment(*idx_1, rhs.clone())
+                        Ok(No(()))
                     }
                 }
-                (Exp::Variable(Variable { idx, .. }), _) => {
-                    if self.vars_are_rigid {
-                        Ok(No(()))
-                    } else {
-                        self.add_assignment(*idx, rhs.clone())
-                    }
-                }
-                (_, Exp::Variable(Variable { idx, .. })) => {
-                    if self.vars_are_rigid {
-                        Ok(No(()))
-                    } else {
-                        self.add_assignment(*idx, lhs.clone())
-                    }
-                }
+                (Exp::Variable(Variable { .. }), _) => Ok(No(())),
+                (_, Exp::Variable(Variable { .. })) => Ok(No(())),
                 (
                     Exp::TypCtor(TypCtor { name, args, .. }),
                     Exp::TypCtor(TypCtor { name: name2, args: args2, .. }),
@@ -264,25 +199,6 @@ impl Ctx {
         }
     }
 
-    fn add_assignment(&mut self, idx: Idx, exp: Box<Exp>) -> Result<Dec, TypeError> {
-        if occurs_in(&mut self.ctx, idx, &exp) {
-            return Err(TypeError::occurs_check_failed(idx, &exp));
-        }
-        let insert_lvl = self.ctx.idx_to_lvl(idx);
-        let exp = exp.subst(&mut self.ctx, &self.unif);
-        self.unif = self.unif.subst(&mut self.ctx, &Assign { lvl: insert_lvl, exp: exp.clone() });
-        match self.unif.map.get(&insert_lvl) {
-            Some(other_exp) => {
-                let eqn = Constraint::Equality { lhs: exp, rhs: other_exp.clone() };
-                self.add_constraint(eqn)
-            }
-            None => {
-                self.unif.map.insert(insert_lvl, exp);
-                Ok(Yes(()))
-            }
-        }
-    }
-
     fn add_constraint(&mut self, eqn: Constraint) -> Result<Dec, TypeError> {
         self.add_constraints([eqn])
     }
@@ -326,21 +242,6 @@ impl Ctx {
             }
         }
         Ok(())
-    }
-}
-
-impl Print for Unificator {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        let mut keys: Vec<_> = self.map.keys().collect();
-        keys.sort();
-        let exps = keys.into_iter().map(|key| {
-            alloc.text(format!("{key}")).append(" := ").append(self.map[key].print(cfg, alloc))
-        });
-        alloc.intersperse(exps, ",").enclose("{", "}")
     }
 }
 

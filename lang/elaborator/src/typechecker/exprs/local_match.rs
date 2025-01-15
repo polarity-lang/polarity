@@ -61,7 +61,7 @@ impl CheckInfer for LocalMatch {
                 let mut motive_t = ret_typ.subst(&mut subst_ctx, &subst);
                 motive_t.shift((-1, 0));
                 let motive_t_nf = motive_t.normalize(&ctx.type_info_table, &mut ctx.env())?;
-                convert(subst_ctx, &mut ctx.meta_vars, motive_t_nf, t, span)?;
+                convert(&mut ctx.meta_vars, motive_t_nf, t, span)?;
 
                 body_t = ctx.bind_single(&self_binder, |ctx| {
                     ret_typ.normalize(&ctx.type_info_table, &mut ctx.env())
