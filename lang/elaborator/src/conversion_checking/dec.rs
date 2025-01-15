@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(PartialEq, Eq)]
 pub enum Dec {
     Yes,
     No,
