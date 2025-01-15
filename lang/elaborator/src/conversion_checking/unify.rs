@@ -11,25 +11,12 @@ use printer::Print;
 use super::constraints::Constraint;
 use super::dec::{Dec, No, Yes};
 
-pub fn unify(
-    meta_vars: &mut HashMap<MetaVar, MetaVarState>,
-    constraint: Constraint,
-    while_elaborating_span: &Option<Span>,
-) -> Result<Dec, TypeError> {
-    let mut ctx = Ctx::new(vec![constraint]);
-    let res = match ctx.unify(meta_vars, while_elaborating_span)? {
-        Yes => Yes,
-        No => No,
-    };
-    Ok(res)
-}
-
-struct Ctx {
+pub struct Ctx {
     /// Constraints that have not yet been solved
-    constraints: Vec<Constraint>,
+    pub constraints: Vec<Constraint>,
     /// A cache of solved constraints. We can skip solving a constraint
     /// if we have seen it before
-    done: HashSet<Constraint>,
+    pub done: HashSet<Constraint>,
 }
 
 /// Tests whether the hole is in Miller's pattern fragment, i.e. whether it is applied
@@ -54,11 +41,11 @@ fn is_solvable(h: &Hole) -> bool {
 }
 
 impl Ctx {
-    fn new(constraints: Vec<Constraint>) -> Self {
+    pub fn new(constraints: Vec<Constraint>) -> Self {
         Self { constraints, done: HashSet::default() }
     }
 
-    fn unify(
+    pub fn unify(
         &mut self,
         meta_vars: &mut HashMap<MetaVar, MetaVarState>,
         while_elaborating_span: &Option<Span>,

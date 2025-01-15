@@ -57,6 +57,7 @@ use codespan::Span;
 use constraints::Constraint;
 use log::trace;
 use printer::Print;
+use unify::Ctx;
 
 use crate::result::TypeError;
 
@@ -74,8 +75,8 @@ pub fn convert(
     // Convertibility is checked using the unification algorithm.
     let constraint: Constraint =
         Constraint::Equality { lhs: this.clone(), rhs: Box::new(other.clone()) };
-    let res = unify::unify(meta_vars, constraint, while_elaborating_span)?;
-    match res {
+    let mut ctx = Ctx::new(vec![constraint]);
+    match ctx.unify(meta_vars, while_elaborating_span)? {
         crate::conversion_checking::dec::Dec::Yes => Ok(()),
         crate::conversion_checking::dec::Dec::No => {
             Err(TypeError::not_eq(&this, other, while_elaborating_span))
