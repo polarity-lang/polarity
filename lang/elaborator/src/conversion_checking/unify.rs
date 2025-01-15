@@ -83,7 +83,7 @@ impl Ctx {
     ) -> Result<Dec, TypeError> {
         match eqn {
             Constraint::Equality { lhs, rhs, .. } => match (&**lhs, &**rhs) {
-                (Exp::Hole(h), e) | (e, Exp::Hole(h)) if true => {
+                (Exp::Hole(h), e) | (e, Exp::Hole(h)) => {
                     let metavar_state = meta_vars.get(&h.metavar).unwrap();
                     match metavar_state {
                         MetaVarState::Solved { ctx, solution } => {
