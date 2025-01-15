@@ -6,11 +6,11 @@ use codespan::Span;
 use ctx::GenericCtx;
 
 use crate::result::TypeError;
-use crate::unifier::dec::{Dec, No, Yes};
 use ast::*;
 use printer::{DocAllocator, Print};
 
 use super::constraints::Constraint;
+use super::dec::{Dec, No, Yes};
 
 #[derive(Debug, Clone)]
 pub struct Unificator {

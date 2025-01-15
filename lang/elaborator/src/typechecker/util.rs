@@ -5,7 +5,7 @@ use ast::ctx::LevelCtx;
 use ast::*;
 use printer::types::Print;
 
-use crate::unifier::{constraints::Constraint, unify::unify};
+use crate::conversion_checking::{constraints::Constraint, unify::unify};
 
 use super::TypeError;
 
@@ -33,8 +33,8 @@ pub fn convert(
         Constraint::Equality { lhs: this.clone(), rhs: Box::new(other.clone()) };
     let res = unify(ctx, meta_vars, constraint, true, while_elaborating_span)?;
     match res {
-        crate::unifier::dec::Dec::Yes(_) => Ok(()),
-        crate::unifier::dec::Dec::No(_) => {
+        crate::conversion_checking::dec::Dec::Yes(_) => Ok(()),
+        crate::conversion_checking::dec::Dec::No(_) => {
             Err(TypeError::not_eq(&this, other, while_elaborating_span))
         }
     }
