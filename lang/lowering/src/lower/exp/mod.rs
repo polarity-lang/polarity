@@ -28,7 +28,6 @@ impl Lower for cst::exp::Exp {
             cst::exp::Exp::Call(e) => e.lower(ctx),
             cst::exp::Exp::DotCall(e) => e.lower(ctx),
             cst::exp::Exp::Anno(e) => e.lower(ctx),
-            cst::exp::Exp::TypeUniv(e) => e.lower(ctx),
             cst::exp::Exp::LocalMatch(e) => e.lower(ctx),
             cst::exp::Exp::LocalComatch(e) => e.lower(ctx),
             cst::exp::Exp::Hole(e) => e.lower(ctx),
@@ -50,7 +49,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
         |_ctx, params_out, param| {
             let mut params_out = params_out?;
             let span = bs_to_span(param);
-            let name = bs_to_name(param);
+            let name = bs_to_name(param)?;
             let param_out = ast::ParamInst {
                 span: Some(span),
                 info: None,
@@ -155,7 +154,7 @@ fn lower_args(
     ) -> Result<(), LoweringError> {
         let Some(arg) = given.next() else {
             return Err(LoweringError::MissingArgForParam {
-                expected: bs_to_name(expected_bs).to_owned(),
+                expected: bs_to_name(expected_bs)?.to_owned(),
                 span: span.to_miette(),
             });
         };
@@ -293,6 +292,15 @@ impl Lower for cst::exp::Call {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Call { span, name, args } = self;
 
+        // The type universe "Type" is treated as an ordinary call in the lexer and parser.
+        // For this reason we have to special case the logic for lowering the type universe here.
+        if name.id == "Type" {
+            if !args.is_empty() {
+                return Err(LoweringError::TypeUnivArgs { span: span.to_miette() });
+            }
+            return Ok(TypeUniv { span: Some(*span) }.into());
+        }
+
         // If we find the identifier in the local context then we have to lower
         // it to a variable.
         if let Some(idx) = ctx.lookup_local(name) {
@@ -400,15 +408,6 @@ impl Lower for cst::exp::Anno {
             normalized_type: None,
         }
         .into())
-    }
-}
-
-impl Lower for cst::exp::TypeUniv {
-    type Target = ast::Exp;
-
-    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::TypeUniv { span } = self;
-        Ok(TypeUniv { span: Some(*span) }.into())
     }
 }
 
@@ -573,10 +572,16 @@ impl Lower for cst::exp::Lam {
     }
 }
 
-fn bs_to_name(bs: &cst::exp::BindingSite) -> Ident {
+pub fn bs_to_name(bs: &cst::exp::BindingSite) -> Result<Ident, LoweringError> {
     match bs {
-        BindingSite::Var { name, .. } => name.clone(),
-        BindingSite::Wildcard { span } => Ident { span: *span, id: "_".to_owned() },
+        BindingSite::Var { name, span } => {
+            if name.id == "Type" {
+                Err(LoweringError::TypeUnivIdentifier { span: span.to_miette() })
+            } else {
+                Ok(name.clone())
+            }
+        }
+        BindingSite::Wildcard { span } => Ok(Ident { span: *span, id: "_".to_owned() }),
     }
 }
 
@@ -598,7 +603,7 @@ impl Lower for cst::exp::Motive {
             param: ast::ParamInst {
                 span: Some(bs_to_span(param)),
                 info: None,
-                name: ast::VarBind { span: Some(bs_to_span(param)), id: bs_to_name(param).id },
+                name: ast::VarBind { span: Some(bs_to_span(param)), id: bs_to_name(param)?.id },
                 typ: None,
                 erased: false,
             },

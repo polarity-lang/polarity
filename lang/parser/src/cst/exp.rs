@@ -54,7 +54,6 @@ pub enum Exp {
     Call(Call),
     DotCall(DotCall),
     Anno(Anno),
-    TypeUniv(TypeUniv),
     LocalMatch(LocalMatch),
     LocalComatch(LocalComatch),
     Hole(Hole),
@@ -69,7 +68,6 @@ impl Exp {
             Exp::Call(call) => call.span,
             Exp::DotCall(dot_call) => dot_call.span,
             Exp::Anno(anno) => anno.span,
-            Exp::TypeUniv(type_univ) => type_univ.span,
             Exp::LocalMatch(local_match) => local_match.span,
             Exp::LocalComatch(local_comatch) => local_comatch.span,
             Exp::Hole(hole) => hole.span,
@@ -103,12 +101,6 @@ pub struct Anno {
     pub span: Span,
     pub exp: Box<Exp>,
     pub typ: Box<Exp>,
-}
-
-#[derive(Debug, Clone)]
-/// The Type universe (Type in Type)
-pub struct TypeUniv {
-    pub span: Span,
 }
 
 #[derive(Debug, Clone)]

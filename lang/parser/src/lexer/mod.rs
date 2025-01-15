@@ -39,8 +39,6 @@ pub enum Token {
     Comatch,
     #[token("absurd")]
     Absurd,
-    #[token("Type")]
-    Type,
     #[token("implicit")]
     Implicit,
     #[token("use")]

@@ -28,7 +28,6 @@ extern {
     "as" => Token::As,
     "comatch" => Token::Comatch,
     "absurd" => Token::Absurd,
-    "Type" => Token::Type,
     "implicit" => Token::Implicit,
     "use" => Token::Use,
 
@@ -247,11 +246,6 @@ pub Ops = {
 pub App = {
     <e: CallWithArgs> => Box::new(Exp::Call(e)),
     <e: LocalComatch> => Box::new(Exp::LocalComatch(e)),
-    Builtins,
-}
-
-pub Builtins: Box<Exp> = {
-    <e: TypeUniv> => Box::new(Exp::TypeUniv(e)),
     Holes,
 }
 
@@ -293,9 +287,6 @@ CallWithoutArgs: Call = <l: @L> <name: Ident> <r: @R> =>
 
 LocalComatch: LocalComatch = <l: @L> "comatch" <name: Ident?> "{" <cases: Comma<Case<Copattern>>> "}" <r: @R> =>
   LocalComatch { span: span(l, r), name, is_lambda_sugar: false, cases };
-
-TypeUniv: TypeUniv = <l: @L> "Type" <r: @R> =>
-  TypeUniv { span: span(l, r) };
 
 Hole: Hole = {
   <l: @L> "_" <r: @R> => Hole { span: span(l, r), kind: HoleKind::MustSolve },

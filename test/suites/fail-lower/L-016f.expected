@@ -1,0 +1,9 @@
+L-016
+
+  × "Type" is not a valid identifier
+   ╭─[L-016f.pol:1:9]
+ 1 │ let foo(Type: Type): Type {
+   ·         ────
+ 2 │    Type
+   ╰────
+  help: "Type" is the name of the impredicative type universe.

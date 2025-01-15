@@ -1,0 +1,7 @@
+L-015
+
+  × Type universe "Type" does not take arguments
+   ╭─[L-015.pol:1:13]
+ 1 │ let foo() : Type(?) { ? }
+   ·             ───────
+   ╰────

@@ -1,0 +1,8 @@
+L-016
+
+  × "Type" is not a valid identifier
+   ╭─[L-016b.pol:1:1]
+ 1 │ codata Type {}
+   · ──────────────
+   ╰────
+  help: "Type" is the name of the impredicative type universe.
