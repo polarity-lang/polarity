@@ -383,9 +383,8 @@ impl Database {
     }
 
     /// Invalidate the file behind the given URI and all its reverse dependencies
-    pub async fn invalidate(&mut self, uri: &Url) -> Result<(), Error> {
+    pub async fn invalidate(&mut self, uri: &Url) {
         self.invalidate_impl(uri);
-        self.build_dependency_dag().await?;
         let rev_deps: HashSet<Url> =
             self.deps.reverse_dependencies(uri).into_iter().cloned().collect();
         log::debug!(
@@ -396,7 +395,6 @@ impl Database {
         for rev_dep in &rev_deps {
             self.invalidate_impl(rev_dep);
         }
-        Ok(())
     }
 
     fn invalidate_impl(&mut self, uri: &Url) {
@@ -432,7 +430,7 @@ impl Database {
     }
 
     pub async fn write_source(&mut self, uri: &Url, source: &str) -> Result<(), Error> {
-        self.invalidate(uri).await?;
+        self.invalidate(uri).await;
         self.source.write_string(uri, source).await.map_err(|err| err.into())
     }
 

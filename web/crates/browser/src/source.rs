@@ -19,6 +19,10 @@ impl FileSource for FetchSource {
         true
     }
 
+    fn forget(&mut self, _uri: &reqwest::Url) -> bool {
+        true
+    }
+
     async fn read_to_string(&mut self, uri: &reqwest::Url) -> Result<String, DriverError> {
         let url =
             get_base_url().join(uri.path()).map_err(|_| DriverError::FileNotFound(uri.clone()))?;
