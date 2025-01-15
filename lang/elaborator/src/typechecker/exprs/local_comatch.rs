@@ -1,11 +1,11 @@
 //! Bidirectional type checker
 
+use crate::index_unification::constraints::Constraint;
+use crate::index_unification::unify::*;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::typechecker::exprs::CheckTelescope;
 use crate::typechecker::type_info_table::DtorMeta;
-use crate::unifier::constraints::Constraint;
-use crate::unifier::unify::*;
 use ast::ctx::LevelCtx;
 use ast::*;
 use miette_util::ToMiette;
