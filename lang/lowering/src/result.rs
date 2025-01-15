@@ -102,6 +102,7 @@ pub enum LoweringError {
     },
     #[error("\"Type\" is not a valid identifier")]
     #[diagnostic(code("L-016"))]
+    #[diagnostic(help("\"Type\" is the name of the impredicative type universe."))]
     TypeUnivIdentifier {
         #[label]
         span: SourceSpan,

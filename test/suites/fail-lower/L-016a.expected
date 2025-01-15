@@ -5,3 +5,4 @@ L-016
  1 │ data Type {}
    · ────────────
    ╰────
+  help: "Type" is the name of the impredicative type universe.

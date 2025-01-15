@@ -6,3 +6,4 @@ L-016
  2 │ codata Foo { .Type : Bool }
    ·              ────────────
    ╰────
+  help: "Type" is the name of the impredicative type universe.
