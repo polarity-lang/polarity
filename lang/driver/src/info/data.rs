@@ -164,6 +164,7 @@ impl From<LetInfo> for InfoContent {
 pub struct VariableInfo {
     pub name: String,
     pub typ: String,
+    pub erased: bool,
 }
 
 impl From<VariableInfo> for InfoContent {
@@ -181,6 +182,7 @@ pub struct TypeCtorInfo {
     /// Doc comment from the definition site
     pub doc: Option<Vec<String>>,
     pub name: String,
+    pub erased: bool,
 }
 
 impl From<TypeCtorInfo> for InfoContent {
@@ -200,6 +202,7 @@ pub struct CallInfo {
     pub kind: CallKind,
     pub name: String,
     pub typ: String,
+    pub erased: bool,
 }
 
 impl From<CallInfo> for InfoContent {
@@ -219,6 +222,7 @@ pub struct DotCallInfo {
     pub kind: DotCallKind,
     pub name: String,
     pub typ: String,
+    pub erased: bool,
 }
 
 impl From<DotCallInfo> for InfoContent {
@@ -229,7 +233,9 @@ impl From<DotCallInfo> for InfoContent {
 
 /// Information for type universes
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TypeUnivInfo {}
+pub struct TypeUnivInfo {
+    pub erased: bool,
+}
 
 impl From<TypeUnivInfo> for InfoContent {
     fn from(value: TypeUnivInfo) -> Self {
@@ -241,6 +247,7 @@ impl From<TypeUnivInfo> for InfoContent {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnnoInfo {
     pub typ: String,
+    pub erased: bool,
 }
 
 impl From<AnnoInfo> for InfoContent {
@@ -276,6 +283,7 @@ impl From<CaseInfo> for InfoContent {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LocalMatchInfo {
     pub typ: String,
+    pub erased: bool,
 }
 
 impl From<LocalMatchInfo> for InfoContent {
@@ -288,6 +296,7 @@ impl From<LocalMatchInfo> for InfoContent {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LocalComatchInfo {
     pub typ: String,
+    pub erased: bool,
 }
 
 impl From<LocalComatchInfo> for InfoContent {
@@ -305,6 +314,7 @@ pub struct HoleInfo {
     pub args: Vec<Vec<String>>,
     /// `Some(e)` if the solution`e` has been found for the metavariable.
     pub metavar_state: Option<String>,
+    pub erased: bool,
 }
 
 impl From<HoleInfo> for InfoContent {
