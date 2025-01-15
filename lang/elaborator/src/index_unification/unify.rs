@@ -3,7 +3,6 @@ use std::collections::HashSet;
 use ast::ctx::LevelCtx;
 use ast::{occurs_in, Variable};
 use codespan::Span;
-use ctx::GenericCtx;
 
 use crate::result::TypeError;
 use ast::*;
@@ -49,13 +48,11 @@ impl Unificator {
 
 pub fn unify(
     ctx: LevelCtx,
-    meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     constraint: Constraint,
-    vars_are_rigid: bool,
     while_elaborating_span: &Option<Span>,
 ) -> Result<Dec<Unificator>, TypeError> {
-    let mut ctx = Ctx::new(vec![constraint], ctx.clone(), vars_are_rigid);
-    let res = match ctx.unify(meta_vars, while_elaborating_span)? {
+    let mut ctx = Ctx::new(vec![constraint], ctx.clone());
+    let res = match ctx.unify(while_elaborating_span)? {
         Yes(_) => Yes(ctx.unif),
         No(()) => No(()),
     };
@@ -71,51 +68,16 @@ struct Ctx {
     ctx: LevelCtx,
     /// Partial solution that we have computed from solving previous constraints.
     unif: Unificator,
-    /// When we use the unifier as a conversion checker then we don't want to
-    /// treat two distinct variables as unifiable. In that case we call the unifier
-    /// and enable this boolean flag in order to treat all variables as rigid.
-    vars_are_rigid: bool,
-}
-
-/// Tests whether the hole is in Miller's pattern fragment, i.e. whether it is applied
-/// to distinct bound variables.
-fn is_solvable(h: &Hole) -> bool {
-    let Hole { args, .. } = h;
-    let mut seen: HashSet<Idx> = HashSet::new();
-    for subst in args {
-        for exp in subst {
-            let Exp::Variable(v) = &**exp else {
-                return false;
-            };
-            if seen.contains(&v.idx) {
-                return false;
-            } else {
-                seen.insert(v.idx);
-                continue;
-            }
-        }
-    }
-    true
 }
 
 impl Ctx {
-    fn new(constraints: Vec<Constraint>, ctx: LevelCtx, vars_are_rigid: bool) -> Self {
-        Self {
-            constraints,
-            done: HashSet::default(),
-            ctx,
-            unif: Unificator::empty(),
-            vars_are_rigid,
-        }
+    fn new(constraints: Vec<Constraint>, ctx: LevelCtx) -> Self {
+        Self { constraints, done: HashSet::default(), ctx, unif: Unificator::empty() }
     }
 
-    fn unify(
-        &mut self,
-        meta_vars: &mut HashMap<MetaVar, MetaVarState>,
-        while_elaborating_span: &Option<Span>,
-    ) -> Result<Dec, TypeError> {
+    fn unify(&mut self, while_elaborating_span: &Option<Span>) -> Result<Dec, TypeError> {
         while let Some(constraint) = self.constraints.pop() {
-            match self.unify_eqn(&constraint, meta_vars, while_elaborating_span)? {
+            match self.unify_eqn(&constraint, while_elaborating_span)? {
                 Yes(_) => {
                     self.done.insert(constraint);
                 }
@@ -129,67 +91,22 @@ impl Ctx {
     fn unify_eqn(
         &mut self,
         eqn: &Constraint,
-        meta_vars: &mut HashMap<MetaVar, MetaVarState>,
         while_elaborating_span: &Option<Span>,
     ) -> Result<Dec, TypeError> {
         match eqn {
             Constraint::Equality { lhs, rhs, .. } => match (&**lhs, &**rhs) {
-                (Exp::Hole(h), e) | (e, Exp::Hole(h)) if self.vars_are_rigid => {
-                    let metavar_state = meta_vars.get(&h.metavar).unwrap();
-                    match metavar_state {
-                        MetaVarState::Solved { ctx, solution } => {
-                            let lhs = solution.clone().subst(&mut ctx.clone(), &h.args);
-                            self.add_constraint(Constraint::Equality {
-                                lhs,
-                                rhs: Box::new(e.clone()),
-                            })?;
-                        }
-                        MetaVarState::Unsolved { ctx } => {
-                            if is_solvable(h) {
-                                self.solve_meta_var(
-                                    meta_vars,
-                                    h.metavar,
-                                    ctx.clone(),
-                                    Box::new(e.clone()),
-                                )?;
-                            } else {
-                                return Err(TypeError::cannot_decide(
-                                    &Box::new(Exp::Hole(h.clone())),
-                                    &Box::new(e.clone()),
-                                    while_elaborating_span,
-                                ));
-                            }
-                        }
-                    }
-
-                    Ok(Yes(()))
-                }
                 (
                     Exp::Variable(Variable { idx: idx_1, .. }),
                     Exp::Variable(Variable { idx: idx_2, .. }),
                 ) => {
                     if idx_1 == idx_2 {
                         Ok(Yes(()))
-                    } else if self.vars_are_rigid {
-                        Ok(No(()))
                     } else {
                         self.add_assignment(*idx_1, rhs.clone())
                     }
                 }
-                (Exp::Variable(Variable { idx, .. }), _) => {
-                    if self.vars_are_rigid {
-                        Ok(No(()))
-                    } else {
-                        self.add_assignment(*idx, rhs.clone())
-                    }
-                }
-                (_, Exp::Variable(Variable { idx, .. })) => {
-                    if self.vars_are_rigid {
-                        Ok(No(()))
-                    } else {
-                        self.add_assignment(*idx, lhs.clone())
-                    }
-                }
+                (Exp::Variable(Variable { idx, .. }), _) => self.add_assignment(*idx, rhs.clone()),
+                (_, Exp::Variable(Variable { idx, .. })) => self.add_assignment(*idx, lhs.clone()),
                 (
                     Exp::TypCtor(TypCtor { name, args, .. }),
                     Exp::TypCtor(TypCtor { name: name2, args: args2, .. }),
@@ -293,39 +210,6 @@ impl Ctx {
     ) -> Result<Dec, TypeError> {
         self.constraints.extend(iter.into_iter().filter(|eqn| !self.done.contains(eqn)));
         Ok(Yes(()))
-    }
-
-    fn solve_meta_var(
-        &mut self,
-        meta_vars: &mut HashMap<MetaVar, MetaVarState>,
-        metavar: MetaVar,
-        ctx: GenericCtx<()>,
-        mut solution: Box<Exp>,
-    ) -> Result<(), TypeError> {
-        log::trace!(
-            "Solved metavariable: {} with solution: {}",
-            metavar.id,
-            solution.print_trace()
-        );
-        solution
-            .zonk(meta_vars)
-            .map_err(|err| TypeError::Impossible { message: err.to_string(), span: None })?;
-        meta_vars.insert(metavar, MetaVarState::Solved { ctx: ctx.clone(), solution });
-        let meta_vars_snapshot = meta_vars.clone();
-        for (_, state) in meta_vars.iter_mut() {
-            match state {
-                MetaVarState::Solved { ctx: _, solution } => {
-                    solution.zonk(&meta_vars_snapshot).map_err(|err| TypeError::Impossible {
-                        message: err.to_string(),
-                        span: None,
-                    })?;
-                }
-                MetaVarState::Unsolved { ctx: _ } => {
-                    // Nothing to do for unsolved metavariables
-                }
-            }
-        }
-        Ok(())
     }
 }
 
