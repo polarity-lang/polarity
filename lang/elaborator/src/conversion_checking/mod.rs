@@ -76,8 +76,8 @@ pub fn convert(
         Constraint::Equality { lhs: this.clone(), rhs: Box::new(other.clone()) };
     let res = unify::unify(meta_vars, constraint, while_elaborating_span)?;
     match res {
-        crate::conversion_checking::dec::Dec::Yes(_) => Ok(()),
-        crate::conversion_checking::dec::Dec::No(_) => {
+        crate::conversion_checking::dec::Dec::Yes => Ok(()),
+        crate::conversion_checking::dec::Dec::No => {
             Err(TypeError::not_eq(&this, other, while_elaborating_span))
         }
     }
