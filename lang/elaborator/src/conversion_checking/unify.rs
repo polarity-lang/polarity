@@ -11,25 +11,12 @@ use printer::Print;
 use super::constraints::Constraint;
 use super::dec::{Dec, No, Yes};
 
-pub fn unify(
-    meta_vars: &mut HashMap<MetaVar, MetaVarState>,
-    constraint: Constraint,
-    while_elaborating_span: &Option<Span>,
-) -> Result<Dec<()>, TypeError> {
-    let mut ctx = Ctx::new(vec![constraint]);
-    let res = match ctx.unify(meta_vars, while_elaborating_span)? {
-        Yes(_) => Yes(()),
-        No(()) => No(()),
-    };
-    Ok(res)
-}
-
-struct Ctx {
+pub struct Ctx {
     /// Constraints that have not yet been solved
-    constraints: Vec<Constraint>,
+    pub constraints: Vec<Constraint>,
     /// A cache of solved constraints. We can skip solving a constraint
     /// if we have seen it before
-    done: HashSet<Constraint>,
+    pub done: HashSet<Constraint>,
 }
 
 /// Tests whether the hole is in Miller's pattern fragment, i.e. whether it is applied
@@ -54,25 +41,25 @@ fn is_solvable(h: &Hole) -> bool {
 }
 
 impl Ctx {
-    fn new(constraints: Vec<Constraint>) -> Self {
+    pub fn new(constraints: Vec<Constraint>) -> Self {
         Self { constraints, done: HashSet::default() }
     }
 
-    fn unify(
+    pub fn unify(
         &mut self,
         meta_vars: &mut HashMap<MetaVar, MetaVarState>,
         while_elaborating_span: &Option<Span>,
     ) -> Result<Dec, TypeError> {
         while let Some(constraint) = self.constraints.pop() {
             match self.unify_eqn(&constraint, meta_vars, while_elaborating_span)? {
-                Yes(_) => {
+                Yes => {
                     self.done.insert(constraint);
                 }
-                No(_) => return Ok(No(())),
+                No => return Ok(No),
             }
         }
 
-        Ok(Yes(()))
+        Ok(Yes)
     }
 
     fn unify_eqn(
@@ -111,20 +98,20 @@ impl Ctx {
                         }
                     }
 
-                    Ok(Yes(()))
+                    Ok(Yes)
                 }
                 (
                     Exp::Variable(Variable { idx: idx_1, .. }),
                     Exp::Variable(Variable { idx: idx_2, .. }),
                 ) => {
                     if idx_1 == idx_2 {
-                        Ok(Yes(()))
+                        Ok(Yes)
                     } else {
-                        Ok(No(()))
+                        Ok(No)
                     }
                 }
-                (Exp::Variable(Variable { .. }), _) => Ok(No(())),
-                (_, Exp::Variable(Variable { .. })) => Ok(No(())),
+                (Exp::Variable(Variable { .. }), _) => Ok(No),
+                (_, Exp::Variable(Variable { .. })) => Ok(No),
                 (
                     Exp::TypCtor(TypCtor { name, args, .. }),
                     Exp::TypCtor(TypCtor { name: name2, args: args2, .. }),
@@ -136,7 +123,7 @@ impl Ctx {
                 (Exp::TypCtor(TypCtor { name, .. }), Exp::TypCtor(TypCtor { name: name2, .. }))
                     if name != name2 =>
                 {
-                    Ok(No(()))
+                    Ok(No)
                 }
                 (
                     Exp::Call(Call { name, args, .. }),
@@ -149,7 +136,7 @@ impl Ctx {
                 (Exp::Call(Call { name, .. }), Exp::Call(Call { name: name2, .. }))
                     if name != name2 =>
                 {
-                    Ok(No(()))
+                    Ok(No)
                 }
                 (
                     Exp::DotCall(DotCall { exp, name, args, .. }),
@@ -163,7 +150,7 @@ impl Ctx {
                         Constraint::EqualityArgs { lhs: args.clone(), rhs: args2.clone() };
                     self.add_constraint(constraint)
                 }
-                (Exp::TypeUniv(_), Exp::TypeUniv(_)) => Ok(Yes(())),
+                (Exp::TypeUniv(_), Exp::TypeUniv(_)) => Ok(Yes),
                 (Exp::Anno(Anno { exp, .. }), rhs) => self.add_constraint(Constraint::Equality {
                     lhs: exp.clone(),
                     rhs: Box::new(rhs.clone()),
@@ -194,7 +181,7 @@ impl Ctx {
                         Constraint::Equality { lhs: lhs.exp().clone(), rhs: rhs.exp().clone() }
                     });
                 self.add_constraints(new_eqns)?;
-                Ok(Yes(()))
+                Ok(Yes)
             }
         }
     }
@@ -208,7 +195,7 @@ impl Ctx {
         iter: I,
     ) -> Result<Dec, TypeError> {
         self.constraints.extend(iter.into_iter().filter(|eqn| !self.done.contains(eqn)));
-        Ok(Yes(()))
+        Ok(Yes)
     }
 
     fn solve_meta_var(

@@ -7,6 +7,7 @@ use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
 use miette_util::ToMiette;
 
+use crate::conversion_checking::convert;
 use crate::index_unification::constraints::Constraint;
 use crate::index_unification::unify::*;
 use crate::normalizer::env::ToEnv;

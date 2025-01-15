@@ -3,8 +3,8 @@
 use ast::*;
 
 use super::super::ctx::*;
-use super::super::util::*;
 use super::CheckInfer;
+use crate::conversion_checking::convert;
 use crate::result::TypeError;
 
 // TypeUniv

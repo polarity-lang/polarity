@@ -3,9 +3,9 @@
 use ast::*;
 
 use super::super::ctx::*;
-use super::super::util::*;
 use super::check_args;
 use super::CheckInfer;
+use crate::conversion_checking::convert;
 use crate::result::TypeError;
 
 impl CheckInfer for TypCtor {

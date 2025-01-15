@@ -1,5 +1,6 @@
 //! Bidirectional type checker
 
+use crate::conversion_checking::convert;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use crate::typechecker::erasure;
@@ -7,7 +8,6 @@ use crate::typechecker::type_info_table::DtorMeta;
 use ast::*;
 
 use super::super::ctx::*;
-use super::super::util::*;
 use super::check_args;
 use super::CheckInfer;
 use crate::result::TypeError;
