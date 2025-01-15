@@ -261,13 +261,12 @@ impl WithScrutineeType<'_> {
                         Some(body) => {
                             // The programmer wrote a non-absurd case. We therefore have to check
                             // that the unification succeeds.
-                            let unif =
-                                unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, &span)?
-                                    .map_no(|()| TypeError::PatternIsAbsurd {
-                                        name: Box::new(name.clone()),
-                                        span: span.to_miette(),
-                                    })
-                                    .ok_yes()?;
+                            let unif = unify(ctx.levels(), constraint, &span)?
+                                .map_no(|()| TypeError::PatternIsAbsurd {
+                                    name: Box::new(name.clone()),
+                                    span: span.to_miette(),
+                                })
+                                .ok_yes()?;
 
                             ctx.fork::<Result<_, TypeError>, _>(|ctx| {
                                 let type_info_table = ctx.type_info_table.clone();
@@ -287,7 +286,7 @@ impl WithScrutineeType<'_> {
                             // The programmer wrote an absurd case. We therefore have to check whether
                             // this case is really absurd. To do this, we verify that the unification
                             // actually fails.
-                            unify(ctx.levels(), &mut ctx.meta_vars, constraint, false, &span)?
+                            unify(ctx.levels(), constraint, &span)?
                                 .map_yes(|_| TypeError::PatternIsNotAbsurd {
                                     name: Box::new(name.clone()),
                                     span: span.to_miette(),
