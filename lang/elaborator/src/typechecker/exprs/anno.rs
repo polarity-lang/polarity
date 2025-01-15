@@ -1,11 +1,11 @@
 //! Bidirectional type checker
 
+use crate::conversion_checking::convert;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use ast::*;
 
 use super::super::ctx::*;
-use super::super::util::*;
 use super::CheckInfer;
 use crate::result::TypeError;
 
