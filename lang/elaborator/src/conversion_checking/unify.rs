@@ -69,13 +69,14 @@ impl Ctx {
         while_elaborating_span: &Option<Span>,
     ) -> Result<Dec, TypeError> {
         match eqn {
-            Constraint::Equality { lhs, rhs, .. } => match (&**lhs, &**rhs) {
+            Constraint::Equality { ctx: constraint_cxt, lhs, rhs } => match (&**lhs, &**rhs) {
                 (Exp::Hole(h), e) | (e, Exp::Hole(h)) => {
                     let metavar_state = meta_vars.get(&h.metavar).unwrap();
                     match metavar_state {
                         MetaVarState::Solved { ctx, solution } => {
                             let lhs = solution.clone().subst(&mut ctx.clone(), &h.args);
                             self.add_constraint(Constraint::Equality {
+                                ctx: constraint_cxt.clone(),
                                 lhs,
                                 rhs: Box::new(e.clone()),
                             })?;
@@ -116,8 +117,11 @@ impl Ctx {
                     Exp::TypCtor(TypCtor { name, args, .. }),
                     Exp::TypCtor(TypCtor { name: name2, args: args2, .. }),
                 ) if name == name2 => {
-                    let constraint =
-                        Constraint::EqualityArgs { lhs: args.clone(), rhs: args2.clone() };
+                    let constraint = Constraint::EqualityArgs {
+                        ctx: constraint_cxt.clone(),
+                        lhs: args.clone(),
+                        rhs: args2.clone(),
+                    };
                     self.add_constraint(constraint)
                 }
                 (Exp::TypCtor(TypCtor { name, .. }), Exp::TypCtor(TypCtor { name: name2, .. }))
@@ -129,8 +133,11 @@ impl Ctx {
                     Exp::Call(Call { name, args, .. }),
                     Exp::Call(Call { name: name2, args: args2, .. }),
                 ) if name == name2 => {
-                    let constraint =
-                        Constraint::EqualityArgs { lhs: args.clone(), rhs: args2.clone() };
+                    let constraint = Constraint::EqualityArgs {
+                        ctx: constraint_cxt.clone(),
+                        lhs: args.clone(),
+                        rhs: args2.clone(),
+                    };
                     self.add_constraint(constraint)
                 }
                 (Exp::Call(Call { name, .. }), Exp::Call(Call { name: name2, .. }))
@@ -143,19 +150,25 @@ impl Ctx {
                     Exp::DotCall(DotCall { exp: exp2, name: name2, args: args2, .. }),
                 ) if name == name2 => {
                     self.add_constraint(Constraint::Equality {
+                        ctx: constraint_cxt.clone(),
                         lhs: exp.clone(),
                         rhs: exp2.clone(),
                     })?;
-                    let constraint =
-                        Constraint::EqualityArgs { lhs: args.clone(), rhs: args2.clone() };
+                    let constraint = Constraint::EqualityArgs {
+                        ctx: constraint_cxt.clone(),
+                        lhs: args.clone(),
+                        rhs: args2.clone(),
+                    };
                     self.add_constraint(constraint)
                 }
                 (Exp::TypeUniv(_), Exp::TypeUniv(_)) => Ok(Yes),
                 (Exp::Anno(Anno { exp, .. }), rhs) => self.add_constraint(Constraint::Equality {
+                    ctx: constraint_cxt.clone(),
                     lhs: exp.clone(),
                     rhs: Box::new(rhs.clone()),
                 }),
                 (lhs, Exp::Anno(Anno { exp, .. })) => self.add_constraint(Constraint::Equality {
+                    ctx: constraint_cxt.clone(),
                     lhs: Box::new(lhs.clone()),
                     rhs: exp.clone(),
                 }),
@@ -166,7 +179,7 @@ impl Ctx {
                     let new_eqns =
                         zip_cases_by_xtors(cases_lhs, cases_rhs).filter_map(|(lhs, rhs)| {
                             if let (Some(lhs), Some(rhs)) = (lhs.body, rhs.body) {
-                                Some(Constraint::Equality { lhs, rhs })
+                                Some(Constraint::Equality { ctx: constraint_cxt.clone(), lhs, rhs })
                             } else {
                                 None
                             }
@@ -175,10 +188,14 @@ impl Ctx {
                 }
                 (_, _) => Err(TypeError::cannot_decide(lhs, rhs, while_elaborating_span)),
             },
-            Constraint::EqualityArgs { lhs, rhs } => {
+            Constraint::EqualityArgs { ctx: constraint_ctx, lhs, rhs } => {
                 let new_eqns =
                     lhs.args.iter().cloned().zip(rhs.args.iter().cloned()).map(|(lhs, rhs)| {
-                        Constraint::Equality { lhs: lhs.exp().clone(), rhs: rhs.exp().clone() }
+                        Constraint::Equality {
+                            ctx: constraint_ctx.clone(),
+                            lhs: lhs.exp().clone(),
+                            rhs: rhs.exp().clone(),
+                        }
                     });
                 self.add_constraints(new_eqns)?;
                 Ok(Yes)

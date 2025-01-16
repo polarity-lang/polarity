@@ -22,7 +22,7 @@ impl CheckInfer for TypCtor {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        convert(&mut ctx.meta_vars, inferred_typ, t, &self.span())?;
+        convert(ctx.vars.clone(), &mut ctx.meta_vars, inferred_typ, t, &self.span())?;
         Ok(inferred_term)
     }
 
