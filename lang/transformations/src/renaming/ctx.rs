@@ -25,12 +25,23 @@ impl Context for Ctx {
     }
 
     fn push_binder(&mut self, elem: Self::Elem) {
-        //assert!(id == "_" || id.is_empty() || !self.contains_name(&elem.clone()));
-        self.ctx
-            .bound
-            .last_mut()
-            .expect("Cannot push without calling push_telescope first")
-            .push(elem.clone());
+        match elem {
+            elem @ VarBind::Var { .. } => {
+                assert!(!self.contains_name(&elem.clone()));
+                self.ctx
+                    .bound
+                    .last_mut()
+                    .expect("Cannot push without calling push_telescope first")
+                    .push(elem.clone());
+            }
+            elem @ VarBind::Wildcard { .. } => {
+                self.ctx
+                    .bound
+                    .last_mut()
+                    .expect("Cannot push without calling push_telescope first")
+                    .push(elem.clone());
+            }
+        }
     }
 
     fn pop_binder(&mut self, _elem: Self::Elem) {
