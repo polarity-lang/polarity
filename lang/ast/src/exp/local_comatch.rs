@@ -93,7 +93,7 @@ fn print_lambda_sugar<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a
         .name;
     alloc
         .backslash_anno(cfg)
-        .append(&var_name.id)
+        .append(var_name.print(cfg, alloc))
         .append(DOT)
         .append(alloc.space())
         .append(body.print(cfg, alloc))

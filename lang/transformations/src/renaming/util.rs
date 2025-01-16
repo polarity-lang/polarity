@@ -1,14 +1,19 @@
 use ast::VarBind;
 
-pub fn increment_name(mut name: VarBind) -> VarBind {
-    if name.id.ends_with('\'') {
-        name.id.push('\'');
-        return name;
-    }
-    let (s, digits) = split_trailing_digits(&name.id);
-    match digits {
-        None => VarBind::from_string(&format!("{s}0")),
-        Some(n) => VarBind::from_string(&format!("{s}{}", n + 1)),
+pub fn increment_name(name: VarBind) -> VarBind {
+    match name {
+        VarBind::Var { span, mut id } => {
+            if id.ends_with('\'') {
+                id.push('\'');
+                return VarBind::Var { id, span };
+            }
+            let (s, digits) = split_trailing_digits(&id);
+            match digits {
+                None => VarBind::from_string(&format!("{s}0")),
+                Some(n) => VarBind::from_string(&format!("{s}{}", n + 1)),
+            }
+        }
+        wc @ VarBind::Wildcard { .. } => wc,
     }
 }
 

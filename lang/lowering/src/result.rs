@@ -81,10 +81,10 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
-    #[error("Missing argument for parameter {}", expected.id)]
+    #[error("Missing argument for parameter {}", expected)]
     #[diagnostic(code("L-013"))]
     MissingArgForParam {
-        expected: Ident,
+        expected: String,
         #[label]
         span: SourceSpan,
     },

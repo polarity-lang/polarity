@@ -1,6 +1,5 @@
 use ast::IdBound;
 use ast::MetaVarKind;
-use ast::VarBind;
 use ast::VarBound;
 use codespan::Span;
 use num_bigint::BigUint;
@@ -13,6 +12,7 @@ use parser::cst;
 use parser::cst::decls::Telescope;
 use parser::cst::exp::BindingSite;
 use parser::cst::ident::Ident;
+use printer::Print;
 
 use crate::ctx::*;
 use crate::result::*;
@@ -46,14 +46,13 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
     ctx.bind_fold(
         tel_inst.iter(),
         Ok(vec![]),
-        |_ctx, params_out, param| {
+        |ctx, params_out, param| {
             let mut params_out = params_out?;
             let span = bs_to_span(param);
-            let name = bs_to_name(param)?;
             let param_out = ast::ParamInst {
                 span: Some(span),
                 info: None,
-                name: VarBind { span: Some(span), id: name.id.clone() },
+                name: param.lower(ctx)?,
                 typ: None,
                 erased: false,
             };
@@ -153,10 +152,9 @@ fn lower_args(
         ctx: &mut Ctx,
     ) -> Result<(), LoweringError> {
         let Some(arg) = given.next() else {
-            return Err(LoweringError::MissingArgForParam {
-                expected: bs_to_name(expected_bs)?.to_owned(),
-                span: span.to_miette(),
-            });
+            let expected = expected_bs.lower(ctx)?;
+            let expected = expected.print_to_string(None);
+            return Err(LoweringError::MissingArgForParam { expected, span: span.to_miette() });
         };
         match arg {
             cst::exp::Arg::UnnamedArg(exp) => {
@@ -572,23 +570,27 @@ impl Lower for cst::exp::Lam {
     }
 }
 
-pub fn bs_to_name(bs: &cst::exp::BindingSite) -> Result<Ident, LoweringError> {
-    match bs {
-        BindingSite::Var { name, span } => {
-            if name.id == "Type" {
-                Err(LoweringError::TypeUnivIdentifier { span: span.to_miette() })
-            } else {
-                Ok(name.clone())
-            }
-        }
-        BindingSite::Wildcard { span } => Ok(Ident { span: *span, id: "_".to_owned() }),
-    }
-}
-
 fn bs_to_span(bs: &cst::exp::BindingSite) -> Span {
     match bs {
         BindingSite::Var { span, .. } => *span,
         BindingSite::Wildcard { span } => *span,
+    }
+}
+
+impl Lower for cst::exp::BindingSite {
+    type Target = ast::VarBind;
+
+    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+        match self {
+            BindingSite::Var { span, name } => {
+                if name.id == "Type" {
+                    Err(LoweringError::TypeUnivIdentifier { span: span.to_miette() })
+                } else {
+                    Ok(ast::VarBind::Var { span: Some(*span), id: name.id.clone() })
+                }
+            }
+            BindingSite::Wildcard { span } => Ok(ast::VarBind::Wildcard { span: Some(*span) }),
+        }
     }
 }
 
@@ -603,7 +605,7 @@ impl Lower for cst::exp::Motive {
             param: ast::ParamInst {
                 span: Some(bs_to_span(param)),
                 info: None,
-                name: ast::VarBind { span: Some(bs_to_span(param)), id: bs_to_name(param)?.id },
+                name: param.lower(ctx)?,
                 typ: None,
                 erased: false,
             },
