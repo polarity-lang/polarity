@@ -3,7 +3,7 @@
 //! Tracks locally bound variables
 
 use pretty::DocAllocator;
-use printer::tokens::COMMA;
+use printer::tokens::{COLON, COMMA};
 use printer::{Alloc, Builder, Print, PrintCfg};
 
 use crate::ctx::Context;
@@ -85,12 +85,22 @@ impl ContextElem<TypeCtx> for &Binder {
 
 impl Print for TypeCtx {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let sep = alloc.text(COMMA).append(alloc.space());
         let iter = self.iter().map(|ctx| {
             alloc
-                .intersperse(ctx.iter().map(|b| b.typ.print(cfg, alloc)), alloc.text(COMMA))
+                .intersperse(
+                    ctx.iter().map(|b| {
+                        b.name
+                            .print(cfg, alloc)
+                            .append(COLON)
+                            .append(alloc.space())
+                            .append(b.typ.print(cfg, alloc))
+                    }),
+                    sep.clone(),
+                )
                 .brackets()
         });
-        alloc.intersperse(iter, alloc.text(COMMA)).brackets()
+        alloc.intersperse(iter, sep.clone()).brackets()
     }
 }
 
