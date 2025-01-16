@@ -52,7 +52,7 @@
 //! ```
 //! When hovering over the holes in an editor connected to our language server, you will see that both holes are solved with `Nat`.
 
-use ast::{Exp, HashMap, MetaVar, MetaVarState};
+use ast::{ctx::values::TypeCtx, Exp, HashMap, MetaVar, MetaVarState};
 use codespan::Span;
 use constraints::Constraint;
 use dec::Dec;
@@ -67,15 +67,16 @@ mod dec;
 mod unify;
 
 pub fn convert(
+    ctx: TypeCtx,
     meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     this: Box<Exp>,
     other: &Exp,
     while_elaborating_span: &Option<Span>,
 ) -> Result<(), TypeError> {
-    trace!("{} =? {}", this.print_trace(), other.print_trace());
+    trace!("{} |- {} =? {}", ctx.print_trace(), this.print_trace(), other.print_trace());
     // Convertibility is checked using the unification algorithm.
     let constraint: Constraint =
-        Constraint::Equality { lhs: this.clone(), rhs: Box::new(other.clone()) };
+        Constraint::Equality { ctx, lhs: this.clone(), rhs: Box::new(other.clone()) };
     let mut ctx = Ctx::new(vec![constraint]);
     match ctx.unify(meta_vars, while_elaborating_span)? {
         Dec::Yes => Ok(()),
@@ -85,14 +86,17 @@ pub fn convert(
 
 #[cfg(test)]
 mod test {
-    use ast::{HashMap, Idx, MetaVar, MetaVarState, TypeUniv, VarBound, Variable};
+    use ast::{
+        ctx::values::{Binder, TypeCtx},
+        HashMap, Idx, MetaVar, MetaVarState, TypeUniv, VarBind, VarBound, Variable,
+    };
 
     use crate::conversion_checking::{constraints::Constraint, dec::Dec, unify::Ctx};
 
     /// Assert that the two expressions are convertible
-    fn check_eq<E: Into<ast::Exp>>(e1: E, e2: E) {
+    fn check_eq<E: Into<ast::Exp>>(ctx: TypeCtx, e1: E, e2: E) {
         let constraint =
-            Constraint::Equality { lhs: Box::new(e1.into()), rhs: Box::new(e2.into()) };
+            Constraint::Equality { ctx, lhs: Box::new(e1.into()), rhs: Box::new(e2.into()) };
 
         let mut ctx = Ctx::new(vec![constraint]);
         let mut hm: HashMap<MetaVar, MetaVarState> = Default::default();
@@ -100,16 +104,16 @@ mod test {
     }
 
     /// Assert that the two expressions are not convertible
-    fn check_neq<E: Into<ast::Exp>>(e1: E, e2: E) {
+    fn check_neq<E: Into<ast::Exp>>(ctx: TypeCtx, e1: E, e2: E) {
         let constraint =
-            Constraint::Equality { lhs: Box::new(e1.into()), rhs: Box::new(e2.into()) };
+            Constraint::Equality { ctx, lhs: Box::new(e1.into()), rhs: Box::new(e2.into()) };
 
         let mut ctx = Ctx::new(vec![constraint]);
         let mut hm: HashMap<MetaVar, MetaVarState> = Default::default();
         assert!(ctx.unify(&mut hm, &None).unwrap() == Dec::No)
     }
 
-    /// Check that `v =? v` holds.
+    /// Check that `[[a: Type, v: a]] |- v =? v` holds.
     #[test]
     fn convert_var_var_1() {
         let v = Variable {
@@ -118,32 +122,83 @@ mod test {
             name: VarBound { span: None, id: "x".to_string() },
             inferred_type: None,
         };
-        check_eq(v.clone(), v)
+        let ctx = vec![vec![
+            Binder {
+                name: VarBind { span: None, id: "a".to_string() },
+                typ: Box::new(TypeUniv { span: None }.into()),
+            },
+            Binder {
+                name: VarBind { span: None, id: "v".to_string() },
+                typ: Box::new(
+                    Variable {
+                        span: None,
+                        idx: Idx { fst: 0, snd: 1 },
+                        name: VarBound { span: None, id: "a".to_string() },
+                        inferred_type: None,
+                    }
+                    .into(),
+                ),
+            },
+        ]];
+        check_eq(ctx.into(), v.clone(), v)
     }
 
-    /// Check that `v =? v'` does not hold.
+    /// Check that `[[a: Type, v', v]] |- v =? v'` does not hold.
     #[test]
     fn convert_var_var_2() {
         let v1 = Variable {
             span: None,
             idx: Idx { fst: 0, snd: 0 },
-            name: VarBound { span: None, id: "x".to_string() },
+            name: VarBound { span: None, id: "v".to_string() },
             inferred_type: None,
         };
 
         let v2 = Variable {
             span: None,
             idx: Idx { fst: 1, snd: 0 },
-            name: VarBound { span: None, id: "x".to_string() },
+            name: VarBound { span: None, id: "v'".to_string() },
             inferred_type: None,
         };
-        check_neq(v1, v2);
+
+        let ctx = vec![vec![
+            Binder {
+                name: VarBind { span: None, id: "a".to_string() },
+                typ: Box::new(TypeUniv { span: None }.into()),
+            },
+            Binder {
+                name: VarBind { span: None, id: "v'".to_string() },
+                typ: Box::new(
+                    Variable {
+                        span: None,
+                        idx: Idx { fst: 0, snd: 2 },
+                        name: VarBound { span: None, id: "a".to_string() },
+                        inferred_type: None,
+                    }
+                    .into(),
+                ),
+            },
+            Binder {
+                name: VarBind { span: None, id: "v".to_string() },
+                typ: Box::new(
+                    Variable {
+                        span: None,
+                        idx: Idx { fst: 0, snd: 2 },
+                        name: VarBound { span: None, id: "a".to_string() },
+                        inferred_type: None,
+                    }
+                    .into(),
+                ),
+            },
+        ]];
+
+        check_neq(ctx.into(), v1, v2);
     }
 
-    /// Check that `Type =? Type` holds.
+    /// Check that `[] |- Type =? Type` holds.
     #[test]
     fn convert_type_type() {
         let t = TypeUniv { span: None };
-        check_eq(t.clone(), t);
+        let ctx = vec![];
+        check_eq(ctx.into(), t.clone(), t);
     }
 }

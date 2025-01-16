@@ -1,14 +1,28 @@
 //! This module defines the language of constraints that can be solved by the constraint solver.
-use ast::{Args, Exp};
+use ast::{ctx::values::TypeCtx, Args, Exp};
+use derivative::Derivative;
 use printer::Print;
 
 /// A constraint that can be solved by the constraint solver.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
 pub enum Constraint {
-    /// An equality constraint between two expressions.
-    Equality { lhs: Box<Exp>, rhs: Box<Exp> },
-    /// An equality constraint between two argument lists.
-    EqualityArgs { lhs: Args, rhs: Args },
+    /// An equality constraint between two expressions under the same context.
+    /// ctx |- lhs = rhs
+    Equality {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        ctx: TypeCtx,
+        lhs: Box<Exp>,
+        rhs: Box<Exp>,
+    },
+    /// An equality constraint between two argument lists under the same context.
+    /// ctx |- lhs = rhs
+    EqualityArgs {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        ctx: TypeCtx,
+        lhs: Args,
+        rhs: Args,
+    },
 }
 
 impl Print for Constraint {
@@ -18,12 +32,18 @@ impl Print for Constraint {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Constraint::Equality { lhs, rhs } => {
-                lhs.print(cfg, alloc).append(" = ").append(rhs.print(cfg, alloc))
-            }
-            Constraint::EqualityArgs { lhs, rhs } => {
-                lhs.print(cfg, alloc).append(" = ").append(rhs.print(cfg, alloc))
-            }
+            Constraint::Equality { ctx, lhs, rhs } => ctx
+                .print(cfg, alloc)
+                .append(" |- ")
+                .append(lhs.print(cfg, alloc))
+                .append(" = ")
+                .append(rhs.print(cfg, alloc)),
+            Constraint::EqualityArgs { ctx, lhs, rhs } => ctx
+                .print(cfg, alloc)
+                .append(" |- ")
+                .append(lhs.print(cfg, alloc))
+                .append(" = ")
+                .append(rhs.print(cfg, alloc)),
         }
     }
 }
