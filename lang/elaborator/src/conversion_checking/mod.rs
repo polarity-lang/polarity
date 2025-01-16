@@ -113,7 +113,7 @@ mod test {
         assert!(ctx.unify(&mut hm, &None).unwrap() == Dec::No)
     }
 
-    /// Check that `[a: Type, v: a] |- v =? v` holds.
+    /// Check that `[[a: Type, v: a]] |- v =? v` holds.
     #[test]
     fn convert_var_var_1() {
         let v = Variable {
@@ -143,7 +143,7 @@ mod test {
         check_eq(ctx.into(), v.clone(), v)
     }
 
-    /// Check that `v =? v'` does not hold.
+    /// Check that `[[a: Type, v', v]] |- v =? v'` does not hold.
     #[test]
     fn convert_var_var_2() {
         let v1 = Variable {
