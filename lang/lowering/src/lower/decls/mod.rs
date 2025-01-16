@@ -98,7 +98,7 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, Lowering
                 ctx,
                 ast::SelfParam {
                     info: Some(*span),
-                    name: name.clone().map(|name| ast::VarBind { span: None, id: name.id }),
+                    name: name.clone().map(|name| ast::VarBind::Var { span: None, id: name.id }),
                     typ: typ_ctor,
                 },
             )
@@ -155,7 +155,7 @@ where
             let cst::decls::Param { implicit, name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
             let typ_out = typ.lower(ctx)?;
             let name = bs_to_name(name)?;
-            let name = VarBind { span: Some(name.span), id: name.id.clone() };
+            let name = VarBind::Var { span: Some(name.span), id: name.id.clone() };
             let param_out = ast::Param { implicit: *implicit, name, typ: typ_out, erased: false };
             params_out.push(param_out);
             Ok(params_out)

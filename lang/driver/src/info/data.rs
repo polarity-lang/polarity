@@ -334,6 +334,10 @@ impl From<TypeCtx> for Ctx {
 
 impl From<TypeCtxBinder> for Binder {
     fn from(binder: TypeCtxBinder) -> Self {
-        Binder { name: binder.name.id, typ: binder.typ.print_to_string(None) }
+        match binder.name {
+            ast::VarBind::Var { id, .. } => {
+                Binder { name: id, typ: binder.typ.print_to_string(None) }
+            }
+        }
     }
 }

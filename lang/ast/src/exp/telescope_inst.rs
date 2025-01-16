@@ -80,9 +80,9 @@ pub struct ParamInst {
 }
 
 impl Print for ParamInst {
-    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let ParamInst { span: _, info: _, name, typ: _, erased: _ } = self;
-        alloc.text(&name.id)
+        name.print(cfg, alloc)
     }
 }
 

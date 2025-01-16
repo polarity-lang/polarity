@@ -893,8 +893,8 @@ impl Print for SelfParam {
         cfg.print_function_sugar = false;
 
         match name {
-            Some(name) => alloc
-                .text(&name.id)
+            Some(name) => name
+                .print(&cfg, alloc)
                 .append(COLON)
                 .append(alloc.space())
                 .append(typ.print(&cfg, alloc))
@@ -987,7 +987,7 @@ impl Print for Telescope {
                     if shift_and_clone(rtype, (0, 1)) == **typ && rimplicit == *implicit =>
                 {
                     // We are adding another parameter of the same type.
-                    output = output.append(alloc.space()).append(alloc.text(&name.id));
+                    output = output.append(alloc.space()).append(name.print(cfg, alloc));
                 }
                 Some((rtype, _)) => {
                     // We are adding another parameter with a different type,
@@ -1002,9 +1002,9 @@ impl Print for Telescope {
                         output = output
                             .append(IMPLICIT)
                             .append(alloc.space())
-                            .append(alloc.text(&name.id));
+                            .append(name.print(cfg, alloc));
                     } else {
-                        output = output.append(alloc.text(&name.id));
+                        output = output.append(name.print(cfg, alloc));
                     }
                 }
                 None => {
@@ -1015,7 +1015,7 @@ impl Print for Telescope {
                         output = output.append(IMPLICIT).append(alloc.space())
                     }
 
-                    output = output.append(alloc.text(&name.id));
+                    output = output.append(name.print(cfg, alloc));
                 }
             }
             running = Some((typ, *implicit));
@@ -1196,12 +1196,12 @@ impl Print for Param {
             alloc
                 .text(IMPLICIT)
                 .append(alloc.space())
-                .append(&name.id)
+                .append(name.print(cfg, alloc))
                 .append(COLON)
                 .append(alloc.space())
                 .append(typ.print(cfg, alloc))
         } else {
-            alloc.text(&name.id).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
+            name.print(cfg, alloc).append(COLON).append(alloc.space()).append(typ.print(cfg, alloc))
         }
     }
 }

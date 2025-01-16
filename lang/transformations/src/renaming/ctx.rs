@@ -25,12 +25,12 @@ impl Context for Ctx {
     }
 
     fn push_binder(&mut self, elem: Self::Elem) {
-        assert!(elem.id == "_" || elem.id.is_empty() || !self.contains_name(&elem));
+        //assert!(id == "_" || id.is_empty() || !self.contains_name(&elem.clone()));
         self.ctx
             .bound
             .last_mut()
             .expect("Cannot push without calling push_telescope first")
-            .push(elem);
+            .push(elem.clone());
     }
 
     fn pop_binder(&mut self, _elem: Self::Elem) {
@@ -50,10 +50,13 @@ impl Context for Ctx {
 }
 
 impl Ctx {
-    pub(super) fn disambiguate_name(&self, mut name: VarBind) -> VarBind {
-        if name.id == "_" || name.id.is_empty() {
-            "x".clone_into(&mut name.id);
+    pub(super) fn disambiguate_name(&self, name: VarBind) -> VarBind {
+        let VarBind::Var { span, mut id } = name;
+
+        if id == "_" || id.is_empty() {
+            "x".clone_into(&mut id);
         }
+        let mut name = VarBind::Var { span, id };
         while self.contains_name(&name) {
             name = increment_name(name);
         }
