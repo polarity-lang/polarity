@@ -21,6 +21,7 @@ log = { workspace = true }
 url = { workspace = true }
 
 # workspace members
+printer = { path = "../printer" }
 parser = { path = "../parser" }
 ast = { path = "../ast" }
 miette_util = { path = "../miette_util" }

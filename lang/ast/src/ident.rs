@@ -107,9 +107,7 @@ impl HasSpan for VarBound {
 
 impl Print for VarBound {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        match self {
-            VarBound { id, .. } => alloc.text(id),
-        }
+        alloc.text(self.id.clone())
     }
 }
 

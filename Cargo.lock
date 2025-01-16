@@ -1725,6 +1725,7 @@ dependencies = [
  "miette_util",
  "num-bigint",
  "parser",
+ "printer",
  "thiserror",
  "url",
 ]
