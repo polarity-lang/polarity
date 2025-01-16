@@ -319,9 +319,9 @@ pub struct Ctx {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Binder {
-    pub name: String,
-    pub typ: String,
+pub enum Binder {
+    Var { name: String, typ: String },
+    Wildcard { typ: String },
 }
 
 impl From<TypeCtx> for Ctx {
@@ -336,10 +336,10 @@ impl From<TypeCtxBinder> for Binder {
     fn from(binder: TypeCtxBinder) -> Self {
         match binder.name {
             ast::VarBind::Var { id, .. } => {
-                Binder { name: id, typ: binder.typ.print_to_string(None) }
+                Binder::Var { name: id, typ: binder.typ.print_to_string(None) }
             }
             ast::VarBind::Wildcard { .. } => {
-                Binder { name: "_".to_string(), typ: binder.typ.print_to_string(None) }
+                Binder::Wildcard { typ: binder.typ.print_to_string(None) }
             }
         }
     }

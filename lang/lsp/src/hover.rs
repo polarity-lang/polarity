@@ -41,15 +41,17 @@ fn ctx_to_markdown(ctx: &Ctx, value: &mut String) {
     value.push_str("**Context**\n\n");
     value.push_str("| | |\n");
     value.push_str("|-|-|\n");
-    for Binder { name, typ } in ctx.bound.iter().rev().flatten() {
-        if name == "_" {
-            continue;
+    for binder in ctx.bound.iter().rev().flatten() {
+        match binder {
+            Binder::Var { name, typ } => {
+                value.push_str("| ");
+                value.push_str(name);
+                value.push_str(" | `");
+                value.push_str(typ);
+                value.push_str("` |\n");
+            }
+            Binder::Wildcard { .. } => continue,
         }
-        value.push_str("| ");
-        value.push_str(name);
-        value.push_str(" | `");
-        value.push_str(typ);
-        value.push_str("` |\n");
     }
 }
 
