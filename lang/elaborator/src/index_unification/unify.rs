@@ -54,7 +54,7 @@ pub fn unify(
     let mut ctx = Ctx::new(vec![constraint], ctx.clone());
     let res = match ctx.unify(while_elaborating_span)? {
         Yes(_) => Yes(ctx.unif),
-        No(()) => No(()),
+        No => No,
     };
     Ok(res)
 }
@@ -81,7 +81,7 @@ impl Ctx {
                 Yes(_) => {
                     self.done.insert(constraint);
                 }
-                No(_) => return Ok(No(())),
+                No => return Ok(No),
             }
         }
 
@@ -118,7 +118,7 @@ impl Ctx {
                 (Exp::TypCtor(TypCtor { name, .. }), Exp::TypCtor(TypCtor { name: name2, .. }))
                     if name != name2 =>
                 {
-                    Ok(No(()))
+                    Ok(No)
                 }
                 (
                     Exp::Call(Call { name, args, .. }),
@@ -131,7 +131,7 @@ impl Ctx {
                 (Exp::Call(Call { name, .. }), Exp::Call(Call { name: name2, .. }))
                     if name != name2 =>
                 {
-                    Ok(No(()))
+                    Ok(No)
                 }
                 (
                     Exp::DotCall(DotCall { exp, name, args, .. }),
