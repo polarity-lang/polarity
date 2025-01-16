@@ -262,12 +262,18 @@ impl WithScrutineeType<'_> {
                         Some(body) => {
                             // The programmer wrote a non-absurd case. We therefore have to check
                             // that the unification succeeds.
-                            let unif = unify(ctx.levels(), constraint, &span)?
-                                .map_no(|()| TypeError::PatternIsAbsurd {
-                                    name: Box::new(name.clone()),
-                                    span: span.to_miette(),
-                                })
-                                .ok_yes()?;
+                            let res = unify(ctx.levels(), constraint, &span)?;
+                            let unif = match res {
+                                crate::index_unification::dec::Dec::Yes(unif) => unif,
+                                crate::index_unification::dec::Dec::No => {
+                                    // A right-hand side was provided in the clause, but unification fails.
+                                    let err = TypeError::PatternIsAbsurd {
+                                        name: Box::new(name.clone()),
+                                        span: span.to_miette(),
+                                    };
+                                    return Err(err);
+                                }
+                            };
 
                             ctx.fork::<Result<_, TypeError>, _>(|ctx| {
                                 let type_info_table = ctx.type_info_table.clone();
@@ -287,13 +293,15 @@ impl WithScrutineeType<'_> {
                             // The programmer wrote an absurd case. We therefore have to check whether
                             // this case is really absurd. To do this, we verify that the unification
                             // actually fails.
-                            unify(ctx.levels(), constraint, &span)?
-                                .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                            let res = unify(ctx.levels(), constraint, &span)?;
+                            if let crate::index_unification::dec::Dec::Yes(_) = res {
+                                // The case was annotated as absurd but index unification succeeds.
+                                let err = TypeError::PatternIsNotAbsurd {
                                     name: Box::new(name.clone()),
                                     span: span.to_miette(),
-                                })
-                                .ok_no()?;
-
+                                };
+                                return Err(err);
+                            }
                             None
                         }
                     };

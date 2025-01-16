@@ -178,12 +178,14 @@ impl WithExpectedType<'_> {
                         // this case is really absurd. To do this, we verify that the unification
                         // actually fails.
                         None => {
-                            unify(ctx.levels(), constraint, span)?
-                                .map_yes(|_| TypeError::PatternIsNotAbsurd {
+                            let res = unify(ctx.levels(), constraint, span)?;
+                            if let crate::index_unification::dec::Dec::Yes(_) = res {
+                                let err = TypeError::PatternIsNotAbsurd {
                                     name: Box::new(name.clone()),
                                     span: span.to_miette(),
-                                })
-                                .ok_no()?;
+                                };
+                                return Err(err);
+                            }
 
                             let case_out = Case {
                                 span: *span,
@@ -297,12 +299,18 @@ impl WithExpectedType<'_> {
                                 }
                             };
                             let body_out = {
-                                let unif = unify(ctx.levels(), constraint, span)?
-                                    .map_no(|()| TypeError::PatternIsAbsurd {
-                                        name: Box::new(name.clone()),
-                                        span: span.to_miette(),
-                                    })
-                                    .ok_yes()?;
+                                let res = unify(ctx.levels(), constraint, span)?;
+                                let unif = match res {
+                                    crate::index_unification::dec::Dec::Yes(unif) => unif,
+                                    crate::index_unification::dec::Dec::No => {
+                                        // The pattern is absurd.
+                                        let err = TypeError::PatternIsAbsurd {
+                                            name: Box::new(name.clone()),
+                                            span: span.to_miette(),
+                                        };
+                                        return Err(err);
+                                    }
+                                };
 
                                 ctx.fork::<Result<_, TypeError>, _>(|ctx| {
                                     let type_info_table = ctx.type_info_table.clone();
