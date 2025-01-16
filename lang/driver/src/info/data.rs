@@ -338,6 +338,9 @@ impl From<TypeCtxBinder> for Binder {
             ast::VarBind::Var { id, .. } => {
                 Binder { name: id, typ: binder.typ.print_to_string(None) }
             }
+            ast::VarBind::Wildcard { .. } => {
+                Binder { name: "_".to_string(), typ: binder.typ.print_to_string(None) }
+            }
         }
     }
 }

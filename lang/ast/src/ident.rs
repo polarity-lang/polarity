@@ -26,6 +26,9 @@ pub enum VarBind {
         span: Option<Span>,
         id: String,
     },
+    Wildcard {
+        span: Option<Span>,
+    },
 }
 
 impl VarBind {
@@ -38,6 +41,7 @@ impl fmt::Display for VarBind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             VarBind::Var { id, .. } => write!(f, "{}", id),
+            VarBind::Wildcard { .. } => write!(f, "_"),
         }
     }
 }
@@ -46,14 +50,17 @@ impl Print for VarBind {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             VarBind::Var { id, .. } => alloc.text(id),
+            VarBind::Wildcard { .. } => alloc.text(UNDERSCORE),
         }
     }
 }
 
+/// TODO: Remove this instance!
 impl From<VarBind> for VarBound {
     fn from(var: VarBind) -> Self {
         match var {
             VarBind::Var { span, id } => VarBound { span, id },
+            VarBind::Wildcard { span } => VarBound { span, id: "_".to_string() },
         }
     }
 }
@@ -62,6 +69,7 @@ impl HasSpan for VarBind {
     fn span(&self) -> Option<Span> {
         match self {
             VarBind::Var { span, .. } => *span,
+            VarBind::Wildcard { span } => *span,
         }
     }
 }

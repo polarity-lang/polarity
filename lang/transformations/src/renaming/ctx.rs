@@ -51,11 +51,11 @@ impl Context for Ctx {
 
 impl Ctx {
     pub(super) fn disambiguate_name(&self, name: VarBind) -> VarBind {
-        let VarBind::Var { span, mut id } = name;
+        let (id, span) = match name {
+            VarBind::Var { span, id } => (id, span),
+            VarBind::Wildcard { span } => ("x".to_string(), span),
+        };
 
-        if id == "_" || id.is_empty() {
-            "x".clone_into(&mut id);
-        }
         let mut name = VarBind::Var { span, id };
         while self.contains_name(&name) {
             name = increment_name(name);
