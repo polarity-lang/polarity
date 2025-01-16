@@ -27,6 +27,7 @@ pub enum VarBind {
         id: String,
     },
     Wildcard {
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Option<Span>,
     },
 }
