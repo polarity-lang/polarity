@@ -6,18 +6,18 @@ use ast::*;
 use super::CheckToplevel;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
+use crate::result::TcResult;
 use crate::typechecker::erasure;
 use crate::typechecker::exprs::local_match::WithScrutineeType;
 use crate::typechecker::{
     ctx::Ctx,
     exprs::{CheckInfer, InferTelescope},
     util::ExpectTypApp,
-    TypeError,
 };
 
 /// Infer a definition
 impl CheckToplevel for Def {
-    fn check_wf(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn check_wf(&self, ctx: &mut Ctx) -> TcResult<Self> {
         trace!("Checking well-formedness of definition: {}", self.name);
 
         let Def { span, doc, name, attr, params, self_param, ret_typ, cases } = self;

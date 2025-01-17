@@ -12,7 +12,7 @@ use crate::index_unification::constraints::Constraint;
 use crate::index_unification::unify::*;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
-use crate::result::TypeError;
+use crate::result::{TcResult, TypeError};
 use crate::typechecker::exprs::CheckTelescope;
 use crate::typechecker::type_info_table::CtorMeta;
 
@@ -25,7 +25,7 @@ use super::CheckInfer;
 //
 
 impl CheckInfer for LocalMatch {
-    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         let LocalMatch { span, name, on_exp, motive, cases, .. } = self;
         let on_exp_out = on_exp.infer(ctx)?;
         let typ_app_nf = on_exp_out
@@ -102,7 +102,7 @@ impl CheckInfer for LocalMatch {
         })
     }
 
-    fn infer(&self, __ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, __ctx: &mut Ctx) -> TcResult<Self> {
         Err(TypeError::CannotInferMatch { span: self.span().to_miette() })
     }
 }
@@ -116,7 +116,7 @@ pub struct WithScrutineeType<'a> {
 impl WithScrutineeType<'_> {
     /// Check whether the pattern match contains exactly one clause for every
     /// constructor declared in the data type declaration.
-    pub fn check_exhaustiveness(&self, ctx: &mut Ctx) -> Result<(), TypeError> {
+    pub fn check_exhaustiveness(&self, ctx: &mut Ctx) -> TcResult {
         let WithScrutineeType { cases, .. } = &self;
         // Check that this match is on a data type
         let data = ctx.type_info_table.lookup_data(&self.scrutinee_type.name)?;
@@ -151,7 +151,7 @@ impl WithScrutineeType<'_> {
     }
 
     /// Typecheck the pattern match cases
-    pub fn check_type(&self, ctx: &mut Ctx, t: &Exp) -> Result<Vec<Case>, TypeError> {
+    pub fn check_type(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Vec<Case>> {
         let WithScrutineeType { cases, .. } = &self;
 
         let cases: Vec<_> = cases.to_vec();
@@ -275,7 +275,7 @@ impl WithScrutineeType<'_> {
                                 }
                             };
 
-                            ctx.fork::<Result<_, TypeError>, _>(|ctx| {
+                            ctx.fork::<TcResult<_>, _>(|ctx| {
                                 let type_info_table = ctx.type_info_table.clone();
                                 ctx.subst(&type_info_table, &unif)?;
                                 let body = body.subst(&mut ctx.levels(), &unif);

@@ -17,7 +17,7 @@ use super::val::AnnoNeu;
 pub trait Eval {
     type Val;
 
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError>;
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val>;
 }
 
 pub trait Apply {
@@ -31,7 +31,7 @@ pub trait Apply {
 impl Eval for Exp {
     type Val = Box<Val>;
 
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let e = match self {
             Exp::Variable(e) => e.eval(info_table, env),
             Exp::TypCtor(e) => e.eval(info_table, env),
@@ -56,7 +56,7 @@ impl Eval for Exp {
 impl Eval for Variable {
     type Val = Box<Val>;
 
-    fn eval(&self, _info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, _info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let Variable { idx, .. } = self;
         Ok(env.lookup(*idx))
     }
@@ -65,7 +65,7 @@ impl Eval for Variable {
 impl Eval for TypCtor {
     type Val = Box<Val>;
 
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let TypCtor { span, name, args } = self;
         Ok(Box::new(
             val::TypCtor { span: *span, name: name.clone(), args: args.eval(info_table, env)? }
@@ -77,7 +77,7 @@ impl Eval for TypCtor {
 impl Eval for Call {
     type Val = Box<Val>;
 
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let Call { span, name, kind, args, .. } = self;
         match kind {
             CallKind::LetBound => {
@@ -125,7 +125,7 @@ impl Eval for DotCall {
     /// ┃ ┗━━━━━━━━━━━━ name
     /// ┗━━━━━━━━━━━━━━ exp
     /// ```
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let DotCall { span, kind, exp, name, args, .. } = self;
 
         // We first evaluate `exp` and then the arguments `args` to `d` from left to right.
@@ -289,7 +289,7 @@ fn strip_annotations(val: &Val) -> Val {
 impl Eval for Anno {
     type Val = Box<Val>;
 
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let Anno { span, exp, typ, normalized_type: _ } = self;
         let exp = exp.eval(info_table, env)?;
         let typ = typ.eval(info_table, env)?;
@@ -321,7 +321,7 @@ impl Eval for LocalMatch {
     /// ┃          ┗━━━━ cases
     /// ┗━━━━━━━━━━━━━━━ on_exp
     /// ```
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let LocalMatch { name: match_name, on_exp, cases, .. } = self;
         // We first evaluate `on_exp` and `cases`
         let on_exp = on_exp.eval(info_table, env)?;
@@ -396,7 +396,7 @@ impl Eval for LocalMatch {
 impl Eval for LocalComatch {
     type Val = Box<Val>;
 
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
         Ok(Box::new(
             val::LocalComatch {
@@ -413,7 +413,7 @@ impl Eval for LocalComatch {
 impl Eval for Hole {
     type Val = Box<Val>;
 
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let Hole { span, kind, metavar, args, .. } = self;
         let args = args.eval(info_table, env)?;
         Ok(Box::new(Val::Neu(
@@ -425,7 +425,7 @@ impl Eval for Hole {
 impl Eval for Case {
     type Val = val::Case;
 
-    fn eval(&self, _info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, _info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let Case { span, pattern, body } = self;
 
         let body = body.as_ref().map(|body| Closure {
@@ -447,7 +447,7 @@ impl Eval for Case {
 impl Eval for Args {
     type Val = val::Args;
 
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         Ok(val::Args(self.args.eval(info_table, env)?))
     }
 }
@@ -455,7 +455,7 @@ impl Eval for Args {
 impl Eval for Arg {
     type Val = val::Arg;
 
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         match self {
             Arg::UnnamedArg { arg, .. } => Ok(val::Arg::UnnamedArg(arg.eval(info_table, env)?)),
             Arg::NamedArg { name, arg, .. } => {
@@ -469,11 +469,7 @@ impl Eval for Arg {
 }
 
 impl Apply for Closure {
-    fn apply(
-        mut self,
-        info_table: &Rc<TypeInfoTable>,
-        args: &[Box<Val>],
-    ) -> Result<Box<Val>, TypeError> {
+    fn apply(mut self, info_table: &Rc<TypeInfoTable>, args: &[Box<Val>]) -> TcResult<Box<Val>> {
         self.env.bind_iter(args.iter(), |env| self.body.eval(info_table, env))
     }
 }
@@ -481,7 +477,7 @@ impl Apply for Closure {
 impl<T: Eval> Eval for Vec<T> {
     type Val = Vec<T::Val>;
 
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         self.iter().map(|x| x.eval(info_table, env)).collect()
     }
 }
@@ -489,7 +485,7 @@ impl<T: Eval> Eval for Vec<T> {
 impl Eval for Box<Exp> {
     type Val = Box<Val>;
 
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> Result<Self::Val, TypeError> {
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         (**self).eval(info_table, env)
     }
 }

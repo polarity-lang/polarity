@@ -10,15 +10,14 @@ use ast::*;
 use miette_util::ToMiette;
 use printer::Print;
 
+use crate::result::TcResult;
+
 use super::{ctx::Ctx, type_info_table::TypeInfoTable, TypeError};
 
 /// Check a module
 ///
 /// The caller of this function needs to resolve module dependencies, check all dependencies, and provide a info table with all symbols from these dependencies.
-pub fn check_with_lookup_table(
-    prg: Rc<Module>,
-    info_table: &TypeInfoTable,
-) -> Result<Module, TypeError> {
+pub fn check_with_lookup_table(prg: Rc<Module>, info_table: &TypeInfoTable) -> TcResult<Module> {
     log::debug!("Checking module: {}", prg.uri);
 
     let mut ctx = Ctx::new(prg.meta_vars.clone(), info_table.clone(), prg.clone());
@@ -45,7 +44,7 @@ pub fn check_with_lookup_table(
 }
 
 /// Check that there are no unresolved metavariables that remain after typechecking.
-pub fn check_metavars_solved(meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), TypeError> {
+pub fn check_metavars_solved(meta_vars: &HashMap<MetaVar, MetaVarState>) -> TcResult {
     let mut unsolved: HashSet<MetaVar> = HashSet::default();
     for (var, state) in meta_vars.iter() {
         // We only have to throw an error for unsolved metavars which were either
@@ -72,10 +71,7 @@ pub fn check_metavars_solved(meta_vars: &HashMap<MetaVar, MetaVarState>) -> Resu
 
 /// Check that there are no must-solve metavariables whose solution references
 /// other metavariables.
-fn check_metavars_resolved(
-    meta_vars: &HashMap<MetaVar, MetaVarState>,
-    decls: &[Decl],
-) -> Result<(), TypeError> {
+fn check_metavars_resolved(meta_vars: &HashMap<MetaVar, MetaVarState>, decls: &[Decl]) -> TcResult {
     // Check in module metavars table
     for (var, state) in meta_vars.iter() {
         if var.must_be_solved() {
@@ -101,12 +97,12 @@ fn check_metavars_resolved(
 }
 
 pub trait CheckToplevel: Sized {
-    fn check_wf(&self, ctx: &mut Ctx) -> Result<Self, TypeError>;
+    fn check_wf(&self, ctx: &mut Ctx) -> TcResult<Self>;
 }
 
 /// Check a declaration
 impl CheckToplevel for Decl {
-    fn check_wf(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn check_wf(&self, ctx: &mut Ctx) -> TcResult<Self> {
         let out = match self {
             Decl::Data(data) => Decl::Data(data.check_wf(ctx)?),
             Decl::Codata(codata) => Decl::Codata(codata.check_wf(ctx)?),

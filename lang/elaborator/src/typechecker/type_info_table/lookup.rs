@@ -1,9 +1,11 @@
 use ast::*;
 
+use crate::result::TcResult;
+
 use super::{CtorMeta, DtorMeta, TyCtorMeta, TypeError, TypeInfoTable};
 
 impl TypeInfoTable {
-    pub fn lookup_data(&self, name: &IdBound) -> Result<&Data, TypeError> {
+    pub fn lookup_data(&self, name: &IdBound) -> TcResult<&Data> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,
@@ -16,7 +18,7 @@ impl TypeInfoTable {
             span: None,
         })
     }
-    pub fn lookup_codata(&self, name: &IdBound) -> Result<&Codata, TypeError> {
+    pub fn lookup_codata(&self, name: &IdBound) -> TcResult<&Codata> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,
@@ -30,7 +32,7 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_ctor_or_codef(&self, name: &IdBound) -> Result<CtorMeta, TypeError> {
+    pub fn lookup_ctor_or_codef(&self, name: &IdBound) -> TcResult<CtorMeta> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,
@@ -47,7 +49,7 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_dtor_or_def(&self, name: &IdBound) -> Result<DtorMeta, TypeError> {
+    pub fn lookup_dtor_or_def(&self, name: &IdBound) -> TcResult<DtorMeta> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,
@@ -64,7 +66,7 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_let(&self, name: &IdBound) -> Result<&Let, TypeError> {
+    pub fn lookup_let(&self, name: &IdBound) -> TcResult<&Let> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,
@@ -78,7 +80,7 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_tyctor(&self, name: &IdBound) -> Result<&TyCtorMeta, TypeError> {
+    pub fn lookup_tyctor(&self, name: &IdBound) -> TcResult<&TyCtorMeta> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,
@@ -92,7 +94,7 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_codef(&self, name: &IdBound) -> Result<&Codef, TypeError> {
+    pub fn lookup_codef(&self, name: &IdBound) -> TcResult<&Codef> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,
@@ -106,7 +108,7 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_ctor(&self, name: &IdBound) -> Result<&CtorMeta, TypeError> {
+    pub fn lookup_ctor(&self, name: &IdBound) -> TcResult<&CtorMeta> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,
@@ -120,7 +122,7 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_def(&self, name: &IdBound) -> Result<&Def, TypeError> {
+    pub fn lookup_def(&self, name: &IdBound) -> TcResult<&Def> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,
@@ -134,7 +136,7 @@ impl TypeInfoTable {
         })
     }
 
-    pub fn lookup_dtor(&self, name: &IdBound) -> Result<&DtorMeta, TypeError> {
+    pub fn lookup_dtor(&self, name: &IdBound) -> TcResult<&DtorMeta> {
         let map = self.map.get(&name.uri).ok_or(TypeError::Impossible {
             message: format!("Module with URI {} not found", name.uri),
             span: None,

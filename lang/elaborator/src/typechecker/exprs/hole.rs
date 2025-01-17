@@ -5,14 +5,14 @@ use miette_util::ToMiette;
 
 use super::super::ctx::*;
 use super::CheckInfer;
-use crate::result::TypeError;
+use crate::result::{TcResult, TypeError};
 
 // Hole
 //
 //
 
 impl CheckInfer for Hole {
-    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         let Hole { span, kind, metavar, args, solution, .. } = self;
         let args: Vec<Vec<Box<Exp>>> = args
             .iter()
@@ -29,7 +29,7 @@ impl CheckInfer for Hole {
         })
     }
 
-    fn infer(&self, __ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, __ctx: &mut Ctx) -> TcResult<Self> {
         Err(TypeError::CannotInferHole { span: self.span().to_miette() })
     }
 }
