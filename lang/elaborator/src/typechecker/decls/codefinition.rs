@@ -32,7 +32,7 @@ impl CheckToplevel for Codef {
             let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
             let with_expected_type = WithExpectedType {
                 cases,
-                label: Some((label, params.len())),
+                signature: Some((label, params)),
                 expected_type: typ_nf.expect_typ_app()?,
             };
 

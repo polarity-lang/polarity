@@ -8,7 +8,8 @@ use super::TypeError;
 // Checks whether the codata type contains destructors with a self parameter
 pub fn uses_self(codata: &Codata) -> TcResult<bool> {
     for dtor in &codata.dtors {
-        let mut ctx = LevelCtx::from(vec![dtor.params.len(), 1]);
+        let mut ctx =
+            LevelCtx::from(vec![dtor.params.params.clone(), vec![dtor.self_param.to_param()]]);
         if dtor.ret_typ.occurs(&mut ctx, Lvl { fst: 1, snd: 0 }) {
             return Ok(true);
         }

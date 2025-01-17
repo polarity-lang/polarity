@@ -5,6 +5,7 @@ use std::collections::HashSet;
 use ast::ctx::values::Binder;
 use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
+use ctx::ContextElem;
 use miette_util::ToMiette;
 
 use crate::conversion_checking::convert;
@@ -56,7 +57,7 @@ impl CheckInfer for LocalMatch {
                 })?;
 
                 // Ensure that the motive matches the expected type
-                let mut subst_ctx = ctx.levels().append(&vec![1].into());
+                let mut subst_ctx = ctx.levels().append(&vec![vec![motive.as_element()]].into());
                 let on_exp = shift_and_clone(on_exp, (1, 0));
                 let subst = Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp };
                 let mut motive_t = ret_typ.subst(&mut subst_ctx, &subst);
@@ -86,7 +87,8 @@ impl CheckInfer for LocalMatch {
             }
         };
 
-        let with_scrutinee_type = WithScrutineeType { cases, scrutinee_type: typ_app_nf.clone() };
+        let with_scrutinee_type =
+            WithScrutineeType { cases, scrutinee_type: typ_app_nf.clone(), scrutinee_name: None };
         with_scrutinee_type.check_exhaustiveness(ctx)?;
         let cases = with_scrutinee_type.check_type(ctx, &body_t)?;
 
@@ -110,6 +112,7 @@ impl CheckInfer for LocalMatch {
 pub struct WithScrutineeType<'a> {
     pub cases: &'a Vec<Case>,
     pub scrutinee_type: TypCtor,
+    pub scrutinee_name: Option<VarBind>,
 }
 
 /// Check a pattern match
@@ -152,7 +155,7 @@ impl WithScrutineeType<'_> {
 
     /// Typecheck the pattern match cases
     pub fn check_type(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Vec<Case>> {
-        let WithScrutineeType { cases, .. } = &self;
+        let WithScrutineeType { cases, scrutinee_name, .. } = &self;
 
         let cases: Vec<_> = cases.to_vec();
         let mut cases_out = Vec::new();
@@ -201,8 +204,20 @@ impl WithScrutineeType<'_> {
             // * Swap the levels such that t has context [Ξ, self: T(...)]
             // * Substitute C(Ξ) for self
             // * Shift t by one level such that we end up with the context Ξ
-            let mut subst_ctx_1 = ctx.levels().append(&vec![1, params.len()].into());
-            let mut subst_ctx_2 = ctx.levels().append(&vec![params.len(), 1].into());
+            let mut subst_ctx_1 = ctx.levels().append(
+                &vec![
+                    vec![scrutinee_name.clone().unwrap_or(VarBind::Wildcard { span: None })],
+                    params.params.iter().map(|p| p.name.clone()).collect(),
+                ]
+                .into(),
+            );
+            let mut subst_ctx_2 = ctx.levels().append(
+                &vec![
+                    params.params.iter().map(|p| p.name.clone()).collect(),
+                    vec![scrutinee_name.clone().unwrap_or(VarBind::Wildcard { span: None })],
+                ]
+                .into(),
+            );
             let curr_lvl = subst_ctx_2.len() - 1;
 
             let name = name.clone();

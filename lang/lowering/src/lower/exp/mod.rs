@@ -1,9 +1,11 @@
+use ast::HasSpan;
 use ast::IdBound;
 use ast::MetaVarKind;
 use ast::VarBound;
 use miette_util::codespan::Span;
 use num_bigint::BigUint;
 
+use ast::ctx::BindContext;
 use ast::Hole;
 use ast::TypeUniv;
 use ast::Variable;
@@ -43,19 +45,14 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
     ctx: &mut Ctx,
     f: F,
 ) -> Result<T, LoweringError> {
+    let tel_inst = tel_inst.iter().map(|bs| bs.lower(ctx)).collect::<Result<Vec<_>, _>>()?;
     ctx.bind_fold(
-        tel_inst.iter(),
+        tel_inst.into_iter(),
         Ok(vec![]),
-        |ctx, params_out, param| {
+        |_ctx, params_out, name| {
             let mut params_out = params_out?;
-            let span = bs_to_span(param);
-            let param_out = ast::ParamInst {
-                span: Some(span),
-                info: None,
-                name: param.lower(ctx)?,
-                typ: None,
-                erased: false,
-            };
+            let param_out =
+                ast::ParamInst { span: name.span(), info: None, name, typ: None, erased: false };
             params_out.push(param_out);
             Ok(params_out)
         },
@@ -570,13 +567,6 @@ impl Lower for cst::exp::Lam {
     }
 }
 
-fn bs_to_span(bs: &cst::exp::BindingSite) -> Span {
-    match bs {
-        BindingSite::Var { span, .. } => *span,
-        BindingSite::Wildcard { span } => *span,
-    }
-}
-
 impl Lower for cst::exp::BindingSite {
     type Target = ast::VarBind;
 
@@ -600,16 +590,18 @@ impl Lower for cst::exp::Motive {
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::Motive { span, param, ret_typ } = self;
 
+        let name = param.lower(ctx)?;
+
         Ok(ast::Motive {
             span: Some(*span),
             param: ast::ParamInst {
-                span: Some(bs_to_span(param)),
+                span: name.span(),
                 info: None,
-                name: param.lower(ctx)?,
+                name: name.clone(),
                 typ: None,
                 erased: false,
             },
-            ret_typ: ctx.bind_single(param, |ctx| ret_typ.lower(ctx))?,
+            ret_typ: ctx.bind_single(name, |ctx| ret_typ.lower(ctx))?,
         })
     }
 }

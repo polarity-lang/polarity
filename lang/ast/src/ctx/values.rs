@@ -6,15 +6,23 @@ use pretty::DocAllocator;
 use printer::tokens::COMMA;
 use printer::{Alloc, Builder, Print, PrintCfg};
 
-use crate::ctx::Context;
 use crate::traits::Shift;
 use crate::*;
 
-use super::{ContextElem, GenericCtx};
+use super::{Context, ContextElem, GenericCtx, LevelCtx};
 
 pub type TypeCtx = GenericCtx<Binder>;
 
 impl TypeCtx {
+    pub fn levels(&self) -> LevelCtx {
+        let bound: Vec<Vec<_>> = self
+            .bound
+            .iter()
+            .map(|inner| inner.iter().map(|b| b.name.to_owned()).collect())
+            .collect();
+        LevelCtx::from(bound)
+    }
+
     fn shift<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         for lvl in 0..self.bound.len() {
             self.shift_at_lvl(range, lvl, by)

@@ -33,7 +33,7 @@ impl CheckInfer for LocalComatch {
         }
 
         let with_expected_type =
-            WithExpectedType { cases, label: None, expected_type: expected_type_app.clone() };
+            WithExpectedType { cases, signature: None, expected_type: expected_type_app.clone() };
 
         with_expected_type.check_exhaustiveness(ctx)?;
         let cases = with_expected_type.check_type(ctx)?;
@@ -57,9 +57,9 @@ impl CheckInfer for LocalComatch {
 /// This struct is used to share code between the typechecking of local and global comatches.
 pub struct WithExpectedType<'a> {
     pub cases: &'a Vec<Case>,
-    /// Name of the global codefinition that gets substituted for the destructor's self parameters
+    /// Signature of the global codefinition that gets substituted for the destructor's self parameters
     /// This is `None` for a local comatch.
-    pub label: Option<(IdBound, usize)>,
+    pub signature: Option<(IdBound, &'a Telescope)>,
     /// The expected type of the comatch, i.e. `Stream(Int)` for `comatch { hd => 1, tl => ... }`.
     pub expected_type: TypCtor,
 }
@@ -105,7 +105,7 @@ impl WithExpectedType<'_> {
 
     /// Type-check the comatch
     pub fn check_type(&self, ctx: &mut Ctx) -> TcResult<Vec<Case>> {
-        let WithExpectedType { cases, expected_type, label } = &self;
+        let WithExpectedType { cases, expected_type, signature: label } = &self;
         let TypCtor { args: on_args, .. } = expected_type;
 
         // We will compare `on_args` against `def_args`. But `def_args` are defined
@@ -146,15 +146,18 @@ impl WithExpectedType<'_> {
             // Normalize the arguments of the return type and the arguments to the self-parameter
             // of the destructor declaration.
             // TODO: Why can't we do this once *before* we repeatedly look them up in the context?
-            let def_args = def_args
-                .normalize(&ctx.type_info_table, &mut LevelCtx::from(vec![params.len()]).env())?;
+            let def_args = def_args.normalize(
+                &ctx.type_info_table,
+                &mut LevelCtx::from(vec![params.params.clone()]).env(),
+            )?;
             let ret_typ = ret_typ.normalize(
                 &ctx.type_info_table,
-                &mut LevelCtx::from(vec![params.len(), 1]).env(),
+                &mut LevelCtx::from(vec![params.params.clone(), vec![self_param.to_param()]]).env(),
             )?;
 
             let name = name.clone();
             let params = params.clone();
+            let self_param = self_param.clone();
 
             params_inst.check_telescope(
                 &name.id,
@@ -218,7 +221,7 @@ impl WithExpectedType<'_> {
                             // we compute the types `Nat` resp, `Stream(Nat)` for the respective
                             // cocases.
                             let ret_typ_nf = match label {
-                                Some((label, n_label_args)) => {
+                                Some((label, codef_params)) => {
                                     // We know that we are checking a *global* comatch which can use
                                     // the self parameter in its return type.
                                     // The term that we have to substitute for `self` is:
@@ -229,7 +232,7 @@ impl WithExpectedType<'_> {
                                     // \--------------- label
                                     //
                                     // ```
-                                    let args = (0..*n_label_args)
+                                    let args = (0..codef_params.len())
                                         .rev()
                                         .map(|snd| {
                                             Arg::UnnamedArg {
@@ -284,13 +287,19 @@ impl WithExpectedType<'_> {
                                     // Δ;Ξ |- [C id_Δ / self]t : Type
                                     //
                                     let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
-                                    let mut subst_ctx = LevelCtx::from(vec![params.len(), 1]);
+                                    let mut subst_ctx = LevelCtx::from(vec![
+                                        params.params.clone(),
+                                        vec![self_param.to_param()],
+                                    ]);
                                     let mut ret_typ = ret_typ.subst(&mut subst_ctx, &subst);
                                     ret_typ.shift((-1, 0));
                                     ret_typ.normalize(
                                         &ctx.type_info_table,
-                                        &mut LevelCtx::from(vec![*n_label_args, params.len()])
-                                            .env(),
+                                        &mut LevelCtx::from(vec![
+                                            codef_params.params.clone(),
+                                            params.params.clone(),
+                                        ])
+                                        .env(),
                                     )?
                                 }
 

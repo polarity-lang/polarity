@@ -32,8 +32,11 @@ impl CheckToplevel for Def {
                     Ok((ret_typ_out, ret_typ_nf, self_param_out))
                 })?;
 
-            let with_scrutinee_type =
-                WithScrutineeType { cases, scrutinee_type: self_param_nf.expect_typ_app()? };
+            let with_scrutinee_type = WithScrutineeType {
+                cases,
+                scrutinee_type: self_param_nf.expect_typ_app()?,
+                scrutinee_name: self_param.name.clone(),
+            };
             with_scrutinee_type.check_exhaustiveness(ctx)?;
             let cases = with_scrutinee_type.check_type(ctx, &ret_typ_nf)?;
 

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use ast::Variable;
-use ctx::GenericCtx;
+use ctx::LevelCtx;
 use miette_util::codespan::Span;
 
 use crate::result::{TcResult, TypeError};
@@ -216,7 +216,7 @@ impl Ctx {
         &mut self,
         meta_vars: &mut HashMap<MetaVar, MetaVarState>,
         metavar: MetaVar,
-        ctx: GenericCtx<()>,
+        ctx: LevelCtx,
         mut solution: Box<Exp>,
     ) -> TcResult {
         log::trace!(

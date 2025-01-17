@@ -868,13 +868,15 @@ pub struct SelfParam {
 
 impl SelfParam {
     pub fn telescope(&self) -> Telescope {
-        Telescope {
-            params: vec![Param {
-                implicit: false,
-                name: self.name.clone().unwrap_or_else(|| VarBind::from_string("")),
-                typ: Box::new(self.typ.to_exp()),
-                erased: false,
-            }],
+        Telescope { params: vec![self.to_param()] }
+    }
+
+    pub fn to_param(&self) -> Param {
+        Param {
+            implicit: false,
+            name: self.name.clone().unwrap_or_else(|| VarBind::from_string("")),
+            typ: Box::new(self.typ.to_exp()),
+            erased: false,
         }
     }
 
