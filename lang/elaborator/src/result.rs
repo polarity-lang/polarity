@@ -15,6 +15,9 @@ fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
     vec.join(s)
 }
 
+/// The result type specialized to type errors.
+pub type TcResult<T = ()> = Result<T, TypeError>;
+
 #[derive(Error, Diagnostic, Debug, Clone)]
 pub enum TypeError {
     #[error("Wrong number of arguments to {name} provided: got {actual}, expected {expected}")]

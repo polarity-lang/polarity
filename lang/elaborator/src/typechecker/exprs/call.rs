@@ -3,6 +3,7 @@
 use crate::conversion_checking::convert;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
+use crate::result::TcResult;
 use crate::typechecker::erasure;
 use crate::typechecker::type_info_table::CtorMeta;
 use ast::*;
@@ -19,7 +20,7 @@ impl CheckInfer for Call {
     ///           ──────────────────
     ///            P, Γ ⊢ Cσ ⇐ τ
     /// ```
-    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         let inferred_term = self.infer(ctx)?;
         let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
@@ -34,7 +35,7 @@ impl CheckInfer for Call {
     ///           ──────────────────
     ///            P, Γ ⊢ Cσ ⇒ ...
     /// ```
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, ctx: &mut Ctx) -> TcResult<Self> {
         let Call { span, kind, name, args, .. } = self;
 
         match kind {

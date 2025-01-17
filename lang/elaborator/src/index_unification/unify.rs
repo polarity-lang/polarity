@@ -4,7 +4,7 @@ use ast::ctx::LevelCtx;
 use ast::{occurs_in, Variable};
 use codespan::Span;
 
-use crate::result::TypeError;
+use crate::result::{TcResult, TypeError};
 use ast::*;
 use printer::{DocAllocator, Print};
 
@@ -50,7 +50,7 @@ pub fn unify(
     ctx: LevelCtx,
     constraint: Constraint,
     while_elaborating_span: &Option<Span>,
-) -> Result<Dec<Unificator>, TypeError> {
+) -> TcResult<Dec<Unificator>> {
     let mut ctx = Ctx::new(vec![constraint], ctx.clone());
     let res = match ctx.unify(while_elaborating_span)? {
         Yes(_) => Yes(ctx.unif),
@@ -75,7 +75,7 @@ impl Ctx {
         Self { constraints, done: HashSet::default(), ctx, unif: Unificator::empty() }
     }
 
-    fn unify(&mut self, while_elaborating_span: &Option<Span>) -> Result<Dec, TypeError> {
+    fn unify(&mut self, while_elaborating_span: &Option<Span>) -> TcResult<Dec> {
         while let Some(constraint) = self.constraints.pop() {
             match self.unify_eqn(&constraint, while_elaborating_span)? {
                 Yes(_) => {
@@ -92,7 +92,7 @@ impl Ctx {
         &mut self,
         eqn: &Constraint,
         while_elaborating_span: &Option<Span>,
-    ) -> Result<Dec, TypeError> {
+    ) -> TcResult<Dec> {
         match eqn {
             Constraint::Equality { lhs, rhs, .. } => match (&**lhs, &**rhs) {
                 (
@@ -181,7 +181,7 @@ impl Ctx {
         }
     }
 
-    fn add_assignment(&mut self, idx: Idx, exp: Box<Exp>) -> Result<Dec, TypeError> {
+    fn add_assignment(&mut self, idx: Idx, exp: Box<Exp>) -> TcResult<Dec> {
         if occurs_in(&mut self.ctx, idx, &exp) {
             return Err(TypeError::occurs_check_failed(idx, &exp));
         }
@@ -200,14 +200,11 @@ impl Ctx {
         }
     }
 
-    fn add_constraint(&mut self, eqn: Constraint) -> Result<Dec, TypeError> {
+    fn add_constraint(&mut self, eqn: Constraint) -> TcResult<Dec> {
         self.add_constraints([eqn])
     }
 
-    fn add_constraints<I: IntoIterator<Item = Constraint>>(
-        &mut self,
-        iter: I,
-    ) -> Result<Dec, TypeError> {
+    fn add_constraints<I: IntoIterator<Item = Constraint>>(&mut self, iter: I) -> TcResult<Dec> {
         self.constraints.extend(iter.into_iter().filter(|eqn| !self.done.contains(eqn)));
         Ok(Yes(()))
     }

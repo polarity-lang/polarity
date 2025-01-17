@@ -4,7 +4,7 @@ use ast::Variable;
 use codespan::Span;
 use ctx::GenericCtx;
 
-use crate::result::TypeError;
+use crate::result::{TcResult, TypeError};
 use ast::*;
 use printer::Print;
 
@@ -49,7 +49,7 @@ impl Ctx {
         &mut self,
         meta_vars: &mut HashMap<MetaVar, MetaVarState>,
         while_elaborating_span: &Option<Span>,
-    ) -> Result<Dec, TypeError> {
+    ) -> TcResult<Dec> {
         while let Some(constraint) = self.constraints.pop() {
             match self.unify_eqn(&constraint, meta_vars, while_elaborating_span)? {
                 Yes => {
@@ -67,7 +67,7 @@ impl Ctx {
         eqn: &Constraint,
         meta_vars: &mut HashMap<MetaVar, MetaVarState>,
         while_elaborating_span: &Option<Span>,
-    ) -> Result<Dec, TypeError> {
+    ) -> TcResult<Dec> {
         match eqn {
             Constraint::Equality { ctx: constraint_cxt, lhs, rhs } => match (&**lhs, &**rhs) {
                 (Exp::Hole(h), e) | (e, Exp::Hole(h)) => {
@@ -203,14 +203,11 @@ impl Ctx {
         }
     }
 
-    fn add_constraint(&mut self, eqn: Constraint) -> Result<Dec, TypeError> {
+    fn add_constraint(&mut self, eqn: Constraint) -> TcResult<Dec> {
         self.add_constraints([eqn])
     }
 
-    fn add_constraints<I: IntoIterator<Item = Constraint>>(
-        &mut self,
-        iter: I,
-    ) -> Result<Dec, TypeError> {
+    fn add_constraints<I: IntoIterator<Item = Constraint>>(&mut self, iter: I) -> TcResult<Dec> {
         self.constraints.extend(iter.into_iter().filter(|eqn| !self.done.contains(eqn)));
         Ok(Yes)
     }
@@ -221,7 +218,7 @@ impl Ctx {
         metavar: MetaVar,
         ctx: GenericCtx<()>,
         mut solution: Box<Exp>,
-    ) -> Result<(), TypeError> {
+    ) -> TcResult {
         log::trace!(
             "Solved metavariable: {} with solution: {}",
             metavar.id,

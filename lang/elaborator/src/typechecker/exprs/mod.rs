@@ -20,7 +20,7 @@ use ast::*;
 
 use super::ctx::*;
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
-use crate::result::TypeError;
+use crate::result::{TcResult, TypeError};
 
 use ast::ctx::values::Binder;
 use ast::ctx::{BindContext, BindElem};
@@ -38,7 +38,7 @@ pub trait CheckInfer: Sized {
     /// - P: The program context of toplevel declarations.
     /// - Γ: The context of locally bound variables
     /// - τ: The type we check against, must be in normal form.
-    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError>;
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self>;
     /// Tries to infer a type for the given expression. For inference we use the
     /// following syntax:
     /// ```text
@@ -46,14 +46,14 @@ pub trait CheckInfer: Sized {
     /// ```
     ///  - P: The program context of toplevel declarations.
     ///  - Γ: The context of locally bound variables.
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError>;
+    fn infer(&self, ctx: &mut Ctx) -> TcResult<Self>;
 }
 
 impl<T: CheckInfer> CheckInfer for Box<T> {
-    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         Ok(Box::new((**self).check(ctx, t)?))
     }
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, ctx: &mut Ctx) -> TcResult<Self> {
         Ok(Box::new((**self).infer(ctx)?))
     }
 }
@@ -63,7 +63,7 @@ impl<T: CheckInfer> CheckInfer for Box<T> {
 //
 
 impl CheckInfer for Exp {
-    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         trace!("{} |- {} <= {}", ctx.print_trace(), self.print_trace(), t.print_trace());
         match self {
             Exp::Variable(e) => Ok(e.check(ctx, t)?.into()),
@@ -78,7 +78,7 @@ impl CheckInfer for Exp {
         }
     }
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, ctx: &mut Ctx) -> TcResult<Self> {
         let res: Result<Exp, TypeError> = match self {
             Exp::Variable(e) => Ok(e.infer(ctx)?.into()),
             Exp::TypCtor(e) => Ok(e.infer(ctx)?.into()),
@@ -101,7 +101,7 @@ impl CheckInfer for Exp {
 }
 
 impl CheckInfer for Arg {
-    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         match self {
             Arg::UnnamedArg { arg, erased } => {
                 Ok(Arg::UnnamedArg { arg: arg.check(ctx, t)?, erased: *erased })
@@ -115,7 +115,7 @@ impl CheckInfer for Arg {
         }
     }
 
-    fn infer(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, ctx: &mut Ctx) -> TcResult<Self> {
         match self {
             Arg::UnnamedArg { arg, erased } => {
                 Ok(Arg::UnnamedArg { arg: arg.infer(ctx)?, erased: *erased })
@@ -136,7 +136,7 @@ fn check_args(
     ctx: &mut Ctx,
     params: &Telescope,
     span: Option<Span>,
-) -> Result<Args, TypeError> {
+) -> TcResult<Args> {
     if this.len() != params.len() {
         return Err(TypeError::ArgLenMismatch {
             name: name.to_owned().id,
@@ -165,20 +165,20 @@ fn check_args(
 pub trait CheckTelescope {
     type Target;
 
-    fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
+    fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> TcResult<T>>(
         &self,
         name: &str,
         ctx: &mut Ctx,
         params: &Telescope,
         f: F,
         span: Option<Span>,
-    ) -> Result<T, TypeError>;
+    ) -> TcResult<T>;
 }
 
 pub trait InferTelescope {
     type Target;
 
-    fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
+    fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> TcResult<T>>(
         &self,
         ctx: &mut Ctx,
         f: F,
@@ -188,14 +188,14 @@ pub trait InferTelescope {
 impl CheckTelescope for TelescopeInst {
     type Target = TelescopeInst;
 
-    fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
+    fn check_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> TcResult<T>>(
         &self,
         name: &str,
         ctx: &mut Ctx,
         param_types: &Telescope,
         f: F,
         span: Option<Span>,
-    ) -> Result<T, TypeError> {
+    ) -> TcResult<T> {
         let Telescope { params: param_types } = param_types;
         let TelescopeInst { params } = self;
 
@@ -228,7 +228,7 @@ impl CheckTelescope for TelescopeInst {
                 };
                 params_out.push(param_out);
                 let elem = Binder { name: param_actual.name.clone(), typ: typ_nf };
-                Result::<_, TypeError>::Ok(BindElem { elem, ret: params_out })
+                TcResult::<_>::Ok(BindElem { elem, ret: params_out })
             },
             |ctx, params| f(ctx, TelescopeInst { params }),
         )?
@@ -238,11 +238,11 @@ impl CheckTelescope for TelescopeInst {
 impl InferTelescope for Telescope {
     type Target = Telescope;
 
-    fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
+    fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> TcResult<T>>(
         &self,
         ctx: &mut Ctx,
         f: F,
-    ) -> Result<T, TypeError> {
+    ) -> TcResult<T> {
         let Telescope { params } = self;
 
         ctx.bind_fold_failable(
@@ -260,7 +260,7 @@ impl InferTelescope for Telescope {
                 };
                 params_out.push(param_out);
                 let elem = Binder { name: param.name.clone(), typ: typ_nf };
-                Result::<_, TypeError>::Ok(BindElem { elem, ret: params_out })
+                TcResult::<_>::Ok(BindElem { elem, ret: params_out })
             },
             |ctx, params| f(ctx, Telescope { params }),
         )?
@@ -270,11 +270,11 @@ impl InferTelescope for Telescope {
 impl InferTelescope for SelfParam {
     type Target = SelfParam;
 
-    fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> Result<T, TypeError>>(
+    fn infer_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> TcResult<T>>(
         &self,
         ctx: &mut Ctx,
         f: F,
-    ) -> Result<T, TypeError> {
+    ) -> TcResult<T> {
         let SelfParam { info, name, typ } = self;
 
         let typ_nf = typ.to_exp().normalize(&ctx.type_info_table, &mut ctx.env())?;

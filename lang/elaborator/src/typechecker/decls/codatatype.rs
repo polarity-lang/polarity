@@ -4,18 +4,21 @@ use miette_util::ToMiette;
 
 use ast::*;
 
-use crate::typechecker::{
-    ctx::Ctx,
-    erasure,
-    exprs::{CheckInfer, InferTelescope},
-    TypeError,
+use crate::{
+    result::TcResult,
+    typechecker::{
+        ctx::Ctx,
+        erasure,
+        exprs::{CheckInfer, InferTelescope},
+        TypeError,
+    },
 };
 
 use super::CheckToplevel;
 
 /// Infer a codata declaration
 impl CheckToplevel for Codata {
-    fn check_wf(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn check_wf(&self, ctx: &mut Ctx) -> TcResult<Self> {
         trace!("Checking well-formedness of codata type: {}", self.name);
 
         let Codata { span, doc, name, attr, typ, dtors } = self;
@@ -37,7 +40,7 @@ impl CheckToplevel for Codata {
 }
 
 /// Infer a destructor declaration
-fn check_dtor_wf(codata_name: &IdBind, dtor: &Dtor, ctx: &mut Ctx) -> Result<Dtor, TypeError> {
+fn check_dtor_wf(codata_name: &IdBind, dtor: &Dtor, ctx: &mut Ctx) -> TcResult<Dtor> {
     trace!("Checking well-formedness of destructor: {}", dtor.name);
 
     let Dtor { span, doc, name, params, self_param, ret_typ } = dtor;

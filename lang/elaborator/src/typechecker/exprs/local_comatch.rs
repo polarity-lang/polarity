@@ -4,6 +4,7 @@ use crate::index_unification::constraints::Constraint;
 use crate::index_unification::unify::*;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
+use crate::result::TcResult;
 use crate::typechecker::exprs::CheckTelescope;
 use crate::typechecker::type_info_table::DtorMeta;
 use ast::ctx::LevelCtx;
@@ -16,7 +17,7 @@ use super::CheckInfer;
 use crate::result::TypeError;
 
 impl CheckInfer for LocalComatch {
-    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
         // The expected type that we check against should be a type constructor applied to
         // arguments.
@@ -47,7 +48,7 @@ impl CheckInfer for LocalComatch {
         })
     }
 
-    fn infer(&self, __ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, __ctx: &mut Ctx) -> TcResult<Self> {
         // We cannot currently infer the type of a copattern match, only check against an expected type.
         Err(TypeError::CannotInferComatch { span: self.span().to_miette() })
     }
@@ -67,7 +68,7 @@ pub struct WithExpectedType<'a> {
 impl WithExpectedType<'_> {
     /// Check whether the copattern match contains exactly one clause for every
     /// destructor declared in the codata type declaration.
-    pub fn check_exhaustiveness(&self, ctx: &mut Ctx) -> Result<(), TypeError> {
+    pub fn check_exhaustiveness(&self, ctx: &mut Ctx) -> TcResult {
         let WithExpectedType { cases, .. } = &self;
         // Check that this comatch is on a codata type
         let codata = ctx.type_info_table.lookup_codata(&self.expected_type.name)?;
@@ -103,7 +104,7 @@ impl WithExpectedType<'_> {
     }
 
     /// Type-check the comatch
-    pub fn check_type(&self, ctx: &mut Ctx) -> Result<Vec<Case>, TypeError> {
+    pub fn check_type(&self, ctx: &mut Ctx) -> TcResult<Vec<Case>> {
         let WithExpectedType { cases, expected_type, label } = &self;
         let TypCtor { args: on_args, .. } = expected_type;
 

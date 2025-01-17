@@ -9,16 +9,9 @@ use super::eval::*;
 pub trait Normalize {
     type Nf;
 
-    fn normalize(
-        &self,
-        info_table: &Rc<TypeInfoTable>,
-        env: &mut Env,
-    ) -> Result<Self::Nf, TypeError>;
+    fn normalize(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Nf>;
 
-    fn normalize_in_empty_env(
-        &self,
-        info_table: &Rc<TypeInfoTable>,
-    ) -> Result<Self::Nf, TypeError> {
+    fn normalize_in_empty_env(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         self.normalize(info_table, &mut Env::empty())
     }
 }

@@ -44,13 +44,13 @@ fn print_cases<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> B
 pub trait ReadBack {
     type Nf;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError>;
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf>;
 }
 
 impl<T: ReadBack> ReadBack for Vec<T> {
     type Nf = Vec<T::Nf>;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         self.iter().map(|x| x.read_back(info_table)).collect()
     }
 }
@@ -58,7 +58,7 @@ impl<T: ReadBack> ReadBack for Vec<T> {
 impl<T: ReadBack> ReadBack for Box<T> {
     type Nf = Box<T::Nf>;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         (**self).read_back(info_table).map(Box::new)
     }
 }
@@ -66,7 +66,7 @@ impl<T: ReadBack> ReadBack for Box<T> {
 impl<T: ReadBack> ReadBack for Option<T> {
     type Nf = Option<T::Nf>;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         self.as_ref().map(|x| x.read_back(info_table)).transpose()
     }
 }
@@ -116,7 +116,7 @@ impl Print for Val {
 impl ReadBack for Val {
     type Nf = ast::Exp;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let res = match self {
             Val::TypCtor(e) => e.read_back(info_table)?.into(),
             Val::Call(e) => e.read_back(info_table)?.into(),
@@ -164,7 +164,7 @@ impl From<TypCtor> for Val {
 impl ReadBack for TypCtor {
     type Nf = ast::TypCtor;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let TypCtor { span, name, args } = self;
         Ok(ast::TypCtor {
             span: *span,
@@ -209,7 +209,7 @@ impl From<Call> for Val {
 impl ReadBack for Call {
     type Nf = ast::Call;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let Call { span, kind, name, args } = self;
         Ok(ast::Call {
             span: *span,
@@ -249,7 +249,7 @@ impl From<TypeUniv> for Val {
 impl ReadBack for TypeUniv {
     type Nf = ast::TypeUniv;
 
-    fn read_back(&self, _info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, _info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let TypeUniv { span } = self;
         Ok(ast::TypeUniv { span: *span })
     }
@@ -293,7 +293,7 @@ impl From<LocalComatch> for Val {
 
 impl ReadBack for LocalComatch {
     type Nf = ast::LocalComatch;
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let LocalComatch { span, name, is_lambda_sugar, cases } = self;
         Ok(ast::LocalComatch {
             span: *span,
@@ -340,7 +340,7 @@ impl From<AnnoVal> for Val {
 impl ReadBack for AnnoVal {
     type Nf = ast::Anno;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let AnnoVal { span, exp, typ } = self;
         let typ_nf = typ.read_back(info_table)?;
         Ok(ast::Anno {
@@ -404,7 +404,7 @@ impl From<Neu> for Val {
 impl ReadBack for Neu {
     type Nf = ast::Exp;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let res = match self {
             Neu::Variable(e) => e.read_back(info_table)?.into(),
             Neu::DotCall(e) => e.read_back(info_table)?.into(),
@@ -450,7 +450,7 @@ impl From<Variable> for Neu {
 impl ReadBack for Variable {
     type Nf = ast::Variable;
 
-    fn read_back(&self, _info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, _info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let Variable { span, name, idx } = self;
         Ok(ast::Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: None })
     }
@@ -493,7 +493,7 @@ impl From<DotCall> for Neu {
 impl ReadBack for DotCall {
     type Nf = ast::DotCall;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let DotCall { span, kind, exp, name, args } = self;
         Ok(ast::DotCall {
             span: *span,
@@ -548,7 +548,7 @@ impl From<LocalMatch> for Neu {
 impl ReadBack for LocalMatch {
     type Nf = ast::LocalMatch;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let LocalMatch { span, name, on_exp, cases } = self;
         Ok(ast::LocalMatch {
             span: *span,
@@ -601,7 +601,7 @@ impl From<Hole> for Neu {
 impl ReadBack for Hole {
     type Nf = ast::Hole;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let Hole { span, kind, metavar, args } = self;
         let args = args.read_back(info_table)?;
         Ok(ast::Hole {
@@ -662,7 +662,7 @@ impl Print for Case {
 impl ReadBack for Case {
     type Nf = ast::Case;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let Case { span, is_copattern, name, params, body } = self;
 
         Ok(ast::Case {
@@ -712,7 +712,7 @@ impl From<OpaqueCall> for Neu {
 impl ReadBack for OpaqueCall {
     type Nf = ast::Call;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let OpaqueCall { span, name, args } = self;
         Ok(ast::Call {
             span: *span,
@@ -756,7 +756,7 @@ impl From<AnnoNeu> for Neu {
 impl ReadBack for AnnoNeu {
     type Nf = ast::Anno;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let AnnoNeu { span, exp, typ } = self;
         let typ_nf = typ.read_back(info_table)?;
         Ok(ast::Anno {
@@ -798,7 +798,7 @@ impl Shift for Args {
 impl ReadBack for Args {
     type Nf = Vec<ast::Arg>;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         self.0.read_back(info_table)
     }
 }
@@ -848,7 +848,7 @@ impl Shift for Arg {
 impl ReadBack for Arg {
     type Nf = ast::Arg;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         match self {
             Arg::UnnamedArg(val) => {
                 Ok(ast::Arg::UnnamedArg { arg: val.read_back(info_table)?, erased: false })
@@ -918,7 +918,7 @@ impl Print for Closure {
 impl ReadBack for Closure {
     type Nf = Box<ast::Exp>;
 
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> Result<Self::Nf, TypeError> {
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let args: Vec<Box<Val>> = (0..self.n_args)
             .rev()
             .map(|snd| {

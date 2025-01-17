@@ -60,7 +60,7 @@ use log::trace;
 use printer::Print;
 use unify::Ctx;
 
-use crate::result::TypeError;
+use crate::result::{TcResult, TypeError};
 
 mod constraints;
 mod dec;
@@ -72,7 +72,7 @@ pub fn convert(
     this: Box<Exp>,
     other: &Exp,
     while_elaborating_span: &Option<Span>,
-) -> Result<(), TypeError> {
+) -> TcResult {
     trace!("{} |- {} =? {}", ctx.print_trace(), this.print_trace(), other.print_trace());
     // Convertibility is checked using the unification algorithm.
     let constraint: Constraint =

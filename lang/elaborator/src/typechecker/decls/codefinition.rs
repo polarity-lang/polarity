@@ -7,20 +7,20 @@ use ast::*;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 
+use crate::result::TcResult;
 use crate::typechecker::erasure;
 use crate::typechecker::exprs::local_comatch::WithExpectedType;
 use crate::typechecker::{
     ctx::Ctx,
     exprs::{CheckInfer, InferTelescope},
     util::ExpectTypApp,
-    TypeError,
 };
 
 use super::CheckToplevel;
 
 /// Infer a co-definition
 impl CheckToplevel for Codef {
-    fn check_wf(&self, ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn check_wf(&self, ctx: &mut Ctx) -> TcResult<Self> {
         trace!("Checking well-formedness of codefinition: {}", self.name);
 
         let Codef { span, doc, name, attr, params, typ, cases } = self;

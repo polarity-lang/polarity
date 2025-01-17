@@ -5,7 +5,7 @@ use ast::*;
 use super::super::ctx::*;
 use super::CheckInfer;
 use crate::conversion_checking::convert;
-use crate::result::TypeError;
+use crate::result::TcResult;
 
 // TypeUniv
 //
@@ -18,7 +18,7 @@ impl CheckInfer for TypeUniv {
     ///           ──────────────────
     ///            P, Γ ⊢ Type ⇐ τ
     /// ```
-    fn check(&self, ctx: &mut Ctx, t: &Exp) -> Result<Self, TypeError> {
+    fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         convert(
             ctx.vars.clone(),
             &mut ctx.meta_vars,
@@ -36,7 +36,7 @@ impl CheckInfer for TypeUniv {
     /// ```
     /// Note: The type universe is impredicative and the theory
     /// therefore inconsistent.
-    fn infer(&self, _ctx: &mut Ctx) -> Result<Self, TypeError> {
+    fn infer(&self, _ctx: &mut Ctx) -> TcResult<Self> {
         Ok(self.clone())
     }
 }
