@@ -57,7 +57,8 @@ impl CheckInfer for LocalComatch {
 /// This struct is used to share code between the typechecking of local and global comatches.
 pub struct WithExpectedType<'a> {
     pub cases: &'a Vec<Case>,
-    /// Signature of the global codefinition that gets substituted for the destructor's self parameters
+    /// Signature of the global codefinition
+    /// This is needed because a codefinition call will be substituted for the destructor's self parameters
     /// This is `None` for a local comatch.
     pub signature: Option<(IdBound, &'a Telescope)>,
     /// The expected type of the comatch, i.e. `Stream(Int)` for `comatch { hd => 1, tl => ... }`.
