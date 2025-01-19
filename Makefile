@@ -15,6 +15,9 @@ lint:
 test:
 	@cargo test --workspace
 
+.PHONY: bench
+bench:
+	@cargo run -p polarity-bench
 
 .PHONY: update-expected
 update-expected:

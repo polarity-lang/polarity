@@ -73,8 +73,9 @@ We have chosen this architecture to keep the design more modular.
 
 ## Users of the Core Logic
 
-There are three binaries which use the logic defined in the `lang/` subdirectory.
+There are four binaries which use the logic defined in the `lang/` subdirectory.
 
 - The `pol` CLI which allows to use the language on the command-line is defined in the `app` directory. That directory contains all the logic for parsing command-line arguments and executing the desired actions. This binary should not contain complicated logic involving compilation; this logic should be implemented in `lang/driver` instead.
 - The testsuite runner defined in the `test/test-runner` directory. This testsuite runner directly instantiates a driver session and uses this session to test various stages of the compiler separately.
 - The webdemo defined in the `web` directory which is served on [polarity-lang.github.io](polarity-lang.github.io). The webdemo is built by compiling the core logic to web assembly using the Rust web assembly backend. The webdemo then runs entirely in the browser of the client.
+- The benchmark suite in the `bench` directory which benchmarks the performance of the implementation.
