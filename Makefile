@@ -17,7 +17,7 @@ test:
 
 .PHONY: bench
 bench:
-	@cargo run -p polarity-bench
+	@cargo run -p polarity-bench -- --bench
 
 .PHONY: update-expected
 update-expected:
