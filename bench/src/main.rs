@@ -13,7 +13,11 @@ fn benchmark_strong_existentials(c: &mut Criterion) {
 }
 
 fn run(example: &str) -> miette::Result<()> {
-    tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap().block_on(run_async(example))
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(run_async(example))
 }
 
 async fn run_async(example: &str) -> miette::Result<()> {
