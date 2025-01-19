@@ -19,6 +19,7 @@ This document contains information about the developer workflow, including our g
 
 ```text
 ├── app                     CLI application
+├── bench                   Benchmarking suite
 ├── examples                Example code in the object language
 ├── lang                    Language implementation
 │   ├── ast                 Definition of the abstract syntax tree (untyped and typed)

@@ -12,6 +12,7 @@ members = [
     "lang/backend",
     "web/crates/browser",
     "app",
+    "bench",
     "test/test-runner",
 ]
 resolver = "2"
