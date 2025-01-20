@@ -1,3 +1,8 @@
+//! The code in this module was originally part of the codespan library https://github.com/brendanzab/codespan.
+//!
+//! The contributors @Johann150, @Marwes, @brendanzab, @jyn514 and @etaoins have graciously
+//! agreed to additionally license their contributions under both the Apache-2.0 and the MIT license to us:
+//! - https://github.com/polarity-lang/polarity/pull/425
 use std::ops::{Add, Sub};
 
 /// A byte position in a source file.

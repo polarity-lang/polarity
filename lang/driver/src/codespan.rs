@@ -1,3 +1,8 @@
+//! The code in this module was originally part of the codespan library https://github.com/brendanzab/codespan.
+//!
+//! The codespan contributors @Johann150, @Marwes, @brendanzab, @jyn514 and @etaoins have graciously
+//! agreed to additionally license their contributions under both the Apache-2.0 and the MIT license to us:
+//! - https://github.com/polarity-lang/polarity/pull/425
 use lsp_types::Position;
 use miette_util::codespan::{ByteIndex, LineIndex, LineOffset, Span};
 
