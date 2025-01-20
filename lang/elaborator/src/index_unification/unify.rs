@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use ast::ctx::LevelCtx;
 use ast::{occurs_in, Variable};
-use codespan::Span;
+use miette_util::codespan::Span;
 
 use crate::result::{TcResult, TypeError};
 use ast::*;

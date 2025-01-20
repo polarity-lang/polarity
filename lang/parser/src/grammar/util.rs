@@ -1,5 +1,5 @@
-use codespan::Span;
+use miette_util::codespan::{ByteIndex, Span};
 
 pub fn span(l: usize, r: usize) -> Span {
-    Span::new(l as u32, r as u32)
+    Span { start: ByteIndex(l as u32), end: ByteIndex(r as u32) }
 }

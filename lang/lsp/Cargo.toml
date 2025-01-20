@@ -16,8 +16,6 @@ categories.workspace = true
 tower-lsp = { workspace = true }
 # asynchronous locks
 async-lock = "2"
-# source code spans
-codespan = { workspace = true }
 # fancy error messages
 miette = { workspace = true }
 # URLs

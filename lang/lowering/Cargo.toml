@@ -14,7 +14,6 @@ categories.workspace = true
 [dependencies]
 miette = { workspace = true }
 thiserror = { workspace = true }
-codespan = { workspace = true }
 # big integers
 num-bigint = { workspace = true }
 log = { workspace = true }

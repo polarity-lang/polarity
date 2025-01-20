@@ -32,11 +32,10 @@ categories = ["compilers"]
 miette = { version = "7" }
 thiserror = { version = "1" }
 # lsp server
+lsp-types = { version = "0.97" }
 tower-lsp = { git = "https://github.com/tower-lsp/tower-lsp", rev = "19f5a87810ff4b643d2bc394e438450bd9c74365", default-features = false, features = [
     "runtime-agnostic",
 ] }
-# source code locations
-codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "91e4f64801cee923661097eb35e05a782996d8ea" }
 # ignoring fields when deriving traits (e.g. Eq, Hash)
 derivative = { version = "2" }
 # big integers

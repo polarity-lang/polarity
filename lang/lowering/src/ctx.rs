@@ -1,4 +1,4 @@
-use codespan::Span;
+use miette_util::codespan::Span;
 use miette_util::ToMiette;
 use parser::cst;
 

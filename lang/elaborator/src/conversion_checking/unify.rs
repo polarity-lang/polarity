@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
 use ast::Variable;
-use codespan::Span;
 use ctx::GenericCtx;
+use miette_util::codespan::Span;
 
 use crate::result::{TcResult, TypeError};
 use ast::*;
