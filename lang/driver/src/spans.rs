@@ -1,4 +1,4 @@
-use lsp_types::{HoverContents, Position, Range};
+use lsp_types::{HoverContents, Location, Position, Range};
 use miette_util::codespan::{ByteIndex, LineIndex, Span};
 use url::Url;
 
@@ -26,11 +26,26 @@ impl Database {
     }
 
     pub async fn hoverinfo_at_index(&mut self, uri: &Url, idx: ByteIndex) -> Option<HoverContents> {
-        self.hoverinfo_at_span(uri, Span { start: idx, end: ByteIndex(idx.0 + 1) }).await
+        let span = Span { start: idx, end: ByteIndex(idx.0 + 1) };
+        self.hoverinfo_at_span(uri, span).await
+
     }
 
     pub async fn hoverinfo_at_span(&mut self, uri: &Url, span: Span) -> Option<HoverContents> {
         let lapper = self.hover_by_id(uri).await.ok()?;
+        let intervals = lapper.find(span.start.0, span.end.0);
+        let smallest_interval =
+            intervals.min_by(|i1, i2| (i1.stop - i1.start).cmp(&(i2.stop - i2.start)));
+        smallest_interval.map(|interval| interval.val.clone())
+    }
+
+    pub async fn goto_at_index(&mut self, uri: &Url, idx: ByteIndex) -> Option<Location> {
+        let span = Span { start: idx, end: ByteIndex(idx.0 + 1) };
+        self.goto_at_span(uri, span).await
+    }
+
+    pub async fn goto_at_span(&mut self, uri: &Url, span: Span) -> Option<Location> {
+        let lapper = self.goto_by_id(uri).await.ok()?;
         let intervals = lapper.find(span.start.0, span.end.0);
         let smallest_interval =
             intervals.min_by(|i1, i2| (i1.stop - i1.start).cmp(&(i2.stop - i2.start)));
