@@ -1,5 +1,6 @@
 //! Implementation of the type-on-hover functionality of the LSP server
 use driver::*;
+use miette_util::codespan::Span;
 use tower_lsp::{jsonrpc, lsp_types::*};
 
 use super::conversion::*;
@@ -28,7 +29,7 @@ pub async fn hover(server: &Server, params: HoverParams) -> jsonrpc::Result<Opti
     Ok(res)
 }
 
-fn info_to_hover(db: &Database, uri: &Uri, contents: HoverContents) -> Hover {
-    let range = db.span_to_locations(&uri.from_lsp(), info.span);
-    Hover { contents, range }
+fn info_to_hover(db: &Database, uri: &Uri, contents: (Span, HoverContents)) -> Hover {
+    let range = db.span_to_locations(&uri.from_lsp(), contents.0);
+    Hover { contents: contents.1, range }
 }

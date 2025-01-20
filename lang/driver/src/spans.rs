@@ -25,26 +25,26 @@ impl Database {
         Some(Range { start, end })
     }
 
-    pub async fn hoverinfo_at_index(&mut self, uri: &Url, idx: ByteIndex) -> Option<HoverContents> {
+    pub async fn hoverinfo_at_index(
+        &mut self,
+        uri: &Url,
+        idx: ByteIndex,
+    ) -> Option<(Span, HoverContents)> {
         let span = Span { start: idx, end: ByteIndex(idx.0 + 1) };
-        self.hoverinfo_at_span(uri, span).await
-
-    }
-
-    pub async fn hoverinfo_at_span(&mut self, uri: &Url, span: Span) -> Option<HoverContents> {
         let lapper = self.hover_by_id(uri).await.ok()?;
         let intervals = lapper.find(span.start.0, span.end.0);
         let smallest_interval =
             intervals.min_by(|i1, i2| (i1.stop - i1.start).cmp(&(i2.stop - i2.start)));
-        smallest_interval.map(|interval| interval.val.clone())
+        smallest_interval.map(|interval| {
+            (
+                Span { start: ByteIndex(interval.start), end: ByteIndex(interval.stop) },
+                interval.val.clone(),
+            )
+        })
     }
 
     pub async fn goto_at_index(&mut self, uri: &Url, idx: ByteIndex) -> Option<Location> {
         let span = Span { start: idx, end: ByteIndex(idx.0 + 1) };
-        self.goto_at_span(uri, span).await
-    }
-
-    pub async fn goto_at_span(&mut self, uri: &Url, span: Span) -> Option<Location> {
         let lapper = self.goto_by_id(uri).await.ok()?;
         let intervals = lapper.find(span.start.0, span.end.0);
         let smallest_interval =
