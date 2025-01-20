@@ -1,4 +1,4 @@
-use lsp_types::{HoverContents, Location, Position, Range};
+use lsp_types::{HoverContents, Position, Range};
 use miette_util::codespan::{ByteIndex, LineIndex, Span};
 use url::Url;
 
@@ -43,7 +43,7 @@ impl Database {
         })
     }
 
-    pub async fn goto_at_index(&mut self, uri: &Url, idx: ByteIndex) -> Option<Location> {
+    pub async fn goto_at_index(&mut self, uri: &Url, idx: ByteIndex) -> Option<(Url, Span)> {
         let span = Span { start: idx, end: ByteIndex(idx.0 + 1) };
         let lapper = self.goto_by_id(uri).await.ok()?;
         let intervals = lapper.find(span.start.0, span.end.0);

@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use lsp_types::HoverContents;
-use lsp_types::Location;
+use miette_util::codespan::Span;
 use url::Url;
 
 use ast::Exp;
@@ -47,7 +47,7 @@ pub struct Database {
     /// Hover information for spans
     pub hover_by_id: Cache<Lapper<u32, HoverContents>>,
     /// Goto information for spans
-    pub goto_by_id: Cache<Lapper<u32, Location>>,
+    pub goto_by_id: Cache<Lapper<u32, (Url, Span)>>,
     /// Spans of top-level items
     pub item_by_id: Cache<Lapper<u32, Item>>,
 }
@@ -287,7 +287,7 @@ impl Database {
     //
     //
 
-    pub async fn goto_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Location>, Error> {
+    pub async fn goto_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, (Url, Span)>, Error> {
         match self.goto_by_id.get_unless_stale(uri) {
             Some(loc) => {
                 log::debug!("Found goto_by_id in cache: {}", uri);
@@ -297,9 +297,9 @@ impl Database {
         }
     }
 
-    async fn recompute_goto_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Location>, Error> {
+    async fn recompute_goto_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, (Url, Span)>, Error> {
         log::debug!("Recomputing goto_by_id for: {}", uri);
-        let (_hover_lapper,location_lapper, _item_lapper) = collect_info(self, uri).await?;
+        let (_hover_lapper, location_lapper, _item_lapper) = collect_info(self, uri).await?;
         self.goto_by_id.insert(uri.clone(), location_lapper.clone());
         Ok(location_lapper)
     }
@@ -318,9 +318,12 @@ impl Database {
         }
     }
 
-    async fn recompute_hover_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, HoverContents>, Error> {
+    async fn recompute_hover_by_id(
+        &mut self,
+        uri: &Url,
+    ) -> Result<Lapper<u32, HoverContents>, Error> {
         log::debug!("Recomputing hover_by_id for: {}", uri);
-        let (hover_lapper,_location_lapper, _item_lapper) = collect_info(self, uri).await?;
+        let (hover_lapper, _location_lapper, _item_lapper) = collect_info(self, uri).await?;
         self.hover_by_id.insert(uri.clone(), hover_lapper.clone());
         Ok(hover_lapper)
     }

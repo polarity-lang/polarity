@@ -27,6 +27,14 @@ pub async fn goto_definition(
         Some(idx) => db.goto_at_index(&text_document.uri.from_lsp(), idx).await,
         None => None,
     };
-    let res = info.and_then(|info| Some(GotoDefinitionResponse::Scalar(info)));
+    let res = info.and_then(|info| {
+        let range = db.span_to_locations(&info.0, info.1);
+        match range {
+            Some(range) => {
+                Some(GotoDefinitionResponse::Scalar(Location { uri: info.0.to_lsp(), range }))
+            }
+            None => None,
+        }
+    });
     Ok(res)
 }

@@ -1,4 +1,4 @@
-use lsp_types::{HoverContents, LanguageString, Location, MarkedString, MarkupContent, MarkupKind};
+use lsp_types::{HoverContents, LanguageString, MarkedString, MarkupContent, MarkupKind};
 use miette_util::codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
@@ -7,7 +7,6 @@ use printer::{Print, PrintCfg};
 use url::Url;
 
 use crate::{Database, Error};
-
 
 use super::item::Item;
 use super::lookup::{lookup_codef, lookup_ctor, lookup_decl, lookup_def, lookup_dtor, lookup_let};
@@ -18,26 +17,19 @@ use super::{Binder, Ctx};
 pub async fn collect_info(
     db: &mut Database,
     uri: &Url,
-) -> Result<(Lapper<u32, HoverContents>, Lapper<u32, Location>, Lapper<u32, Item>), Error> {
+) -> Result<(Lapper<u32, HoverContents>, Lapper<u32, (Url, Span)>, Lapper<u32, Item>), Error> {
     let module = db.ast(uri).await?;
     let mut collector = InfoCollector::new(module.meta_vars.clone());
 
     for use_decl in module.use_decls.iter() {
-        let dep_uri = db.resolve_module_name(&use_decl.path, uri)?;
         // Add hover info
         let content = MarkedString::String(format!("Import module `{}`", use_decl.path));
         let hover_content = HoverContents::Scalar(content);
         collector.add_hover(use_decl.span, hover_content);
 
-        // let info = Info {
-        //     span: use_decl.span,
-        //     content: InfoContent::UseInfo(UseInfo { uri: dep_uri, path: use_decl.path.clone() }),
-        // };
-        // collector.info_spans.push(Interval {
-        //     start: use_decl.span.start.0,
-        //     stop: use_decl.span.end.0,
-        //     val: info,
-        // })
+        // Add goto info
+        let dep_uri = db.resolve_module_name(&use_decl.path, uri)?;
+        collector.add_goto(use_decl.span, (dep_uri, Span::default()));
     }
 
     for decl in module.decls.iter() {
@@ -75,7 +67,7 @@ fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
 struct InfoCollector {
     meta_vars: HashMap<MetaVar, MetaVarState>,
     hover_spans: Vec<Interval<u32, HoverContents>>,
-    location_spans: Vec<Interval<u32, Location>>,
+    location_spans: Vec<Interval<u32, (Url, Span)>>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
@@ -89,7 +81,7 @@ impl InfoCollector {
         self.hover_spans.push(hover)
     }
 
-    fn add_goto(&mut self, span: Span, location: Location) {
+    fn add_goto(&mut self, span: Span, location: (Url, Span)) {
         let goto = Interval { start: span.start.0, stop: span.end.0, val: location };
         self.location_spans.push(goto)
     }
@@ -355,6 +347,10 @@ impl CollectInfo for TypCtor {
             let hover_contents = HoverContents::Array(content);
             collector.add_hover(*span, hover_contents);
 
+            // Add goto info
+            if let Some(goto) = definition_site {
+                collector.add_goto(*span, goto)
+            }
         }
         args.collect_info(db, collector)
     }
@@ -390,8 +386,8 @@ impl CollectInfo for Call {
                     None => (None, None),
                 },
             };
+            // Add hover info
             let typ = typ.print_to_string(None);
-
             let mut content: Vec<MarkedString> = Vec::new();
             content.push(match kind {
                 CallKind::Constructor => {
@@ -409,6 +405,11 @@ impl CollectInfo for Call {
             content.push(string_to_language_string(typ));
             let hover_content = HoverContents::Array(content);
             collector.add_hover(*span, hover_content);
+
+            // Add goto info
+            if let Some(goto) = definition_site {
+                collector.add_goto(*span, goto)
+            }
         }
         args.collect_info(db, collector)
     }
@@ -436,8 +437,8 @@ impl CollectInfo for DotCall {
                     None => (None, None),
                 },
             };
-            let typ = typ.print_to_string(None);
             // Add hover info
+            let typ = typ.print_to_string(None);
             let mut content: Vec<MarkedString> = Vec::new();
             content.push(match kind {
                 DotCallKind::Destructor => {
@@ -451,7 +452,12 @@ impl CollectInfo for DotCall {
             content.push(MarkedString::String("---".to_owned()));
             content.push(string_to_language_string(typ));
             let hover_content = HoverContents::Array(content);
-            collector.add_hover(*span, hover_content)
+            collector.add_hover(*span, hover_content);
+
+            // Add goto info
+            if let Some(goto) = definition_site {
+                collector.add_goto(*span, goto)
+            }
         }
         exp.collect_info(db, collector);
         args.collect_info(db, collector)
