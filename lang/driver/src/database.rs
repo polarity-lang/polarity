@@ -1,6 +1,8 @@
 use std::rc::Rc;
 use std::sync::Arc;
 
+use lsp_types::HoverContents;
+use lsp_types::Location;
 use url::Url;
 
 use ast::Exp;
@@ -43,7 +45,9 @@ pub struct Database {
     /// The type info table constructed during typechecking
     pub module_type_info_table: Cache<elaborator::ModuleTypeInfoTable>,
     /// Hover information for spans
-    pub info_by_id: Cache<Lapper<u32, Info>>,
+    pub hover_by_id: Cache<Lapper<u32, HoverContents>>,
+    /// Goto information for spans
+    pub goto_by_id: Cache<Lapper<u32, Location>>,
     /// Spans of top-level items
     pub item_by_id: Cache<Lapper<u32, Item>>,
 }
@@ -279,25 +283,46 @@ impl Database {
         ir
     }
 
-    // Core API: info_by_id
+    // Core API: goto_by_id
     //
     //
 
-    pub async fn info_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Info>, Error> {
-        match self.info_by_id.get_unless_stale(uri) {
-            Some(infos) => {
-                log::debug!("Found info_by_id in cache: {}", uri);
-                Ok(infos.clone())
+    pub async fn goto_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Location>, Error> {
+        match self.goto_by_id.get_unless_stale(uri) {
+            Some(loc) => {
+                log::debug!("Found goto_by_id in cache: {}", uri);
+                Ok(loc.clone())
             }
-            None => self.recompute_info_by_id(uri).await,
+            None => self.recompute_goto_by_id(uri).await,
         }
     }
 
-    async fn recompute_info_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Info>, Error> {
-        log::debug!("Recomputing info_by_id for: {}", uri);
-        let (info_lapper, _item_lapper) = collect_info(self, uri).await?;
-        self.info_by_id.insert(uri.clone(), info_lapper.clone());
-        Ok(info_lapper)
+    async fn recompute_goto_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Location>, Error> {
+        log::debug!("Recomputing goto_by_id for: {}", uri);
+        let (_hover_lapper,location_lapper, _item_lapper) = collect_info(self, uri).await?;
+        self.goto_by_id.insert(uri.clone(), location_lapper.clone());
+        Ok(location_lapper)
+    }
+
+    // Core API: hover_by_id
+    //
+    //
+
+    pub async fn hover_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, HoverContents>, Error> {
+        match self.hover_by_id.get_unless_stale(uri) {
+            Some(hover) => {
+                log::debug!("Found hover_by_id in cache: {}", uri);
+                Ok(hover.clone())
+            }
+            None => self.recompute_hover_by_id(uri).await,
+        }
+    }
+
+    async fn recompute_hover_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, HoverContents>, Error> {
+        log::debug!("Recomputing hover_by_id for: {}", uri);
+        let (hover_lapper,_location_lapper, _item_lapper) = collect_info(self, uri).await?;
+        self.hover_by_id.insert(uri.clone(), hover_lapper.clone());
+        Ok(hover_lapper)
     }
 
     // Core API: item_by_id
@@ -316,7 +341,7 @@ impl Database {
 
     async fn recompute_item_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Item>, Error> {
         log::debug!("Recomputing item_by_id for: {}", uri);
-        let (_info_lapper, item_lapper) = collect_info(self, uri).await?;
+        let (_info_lapper, _location_lapper, item_lapper) = collect_info(self, uri).await?;
         self.item_by_id.insert(uri.clone(), item_lapper.clone());
         Ok(item_lapper)
     }
@@ -363,7 +388,8 @@ impl Database {
             ast: Cache::default(),
             ir: Cache::default(),
             module_type_info_table: Cache::default(),
-            info_by_id: Cache::default(),
+            hover_by_id: Cache::default(),
+            goto_by_id: Cache::default(),
             item_by_id: Cache::default(),
         }
     }
@@ -404,7 +430,8 @@ impl Database {
         self.ust.invalidate(uri);
         self.ast.invalidate(uri);
         self.module_type_info_table.invalidate(uri);
-        self.info_by_id.invalidate(uri);
+        self.hover_by_id.invalidate(uri);
+        self.goto_by_id.invalidate(uri);
         self.item_by_id.invalidate(uri);
     }
 

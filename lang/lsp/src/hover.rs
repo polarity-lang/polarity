@@ -31,9 +31,8 @@ pub async fn hover(server: &Server, params: HoverParams) -> jsonrpc::Result<Opti
     Ok(res)
 }
 
-fn info_to_hover(db: &Database, uri: &Uri, info: Info) -> Hover {
+fn info_to_hover(db: &Database, uri: &Uri, contents: HoverContents) -> Hover {
     let range = db.span_to_locations(&uri.from_lsp(), info.span);
-    let contents = info.content.to_hover_content();
     Hover { contents, range }
 }
 
@@ -97,13 +96,6 @@ impl ToHoverContent for InfoContent {
             InfoContent::AnnoInfo(i) => i.to_hover_content(),
             InfoContent::PatternInfo(i) => i.to_hover_content(),
             InfoContent::CaseInfo(i) => i.to_hover_content(),
-            InfoContent::DataInfo(i) => i.to_hover_content(),
-            InfoContent::CtorInfo(i) => i.to_hover_content(),
-            InfoContent::CodataInfo(i) => i.to_hover_content(),
-            InfoContent::DtorInfo(i) => i.to_hover_content(),
-            InfoContent::DefInfo(i) => i.to_hover_content(),
-            InfoContent::CodefInfo(i) => i.to_hover_content(),
-            InfoContent::LetInfo(i) => i.to_hover_content(),
             InfoContent::UseInfo(i) => i.to_hover_content(),
         }
     }

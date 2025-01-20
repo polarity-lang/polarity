@@ -1,3 +1,4 @@
+use lsp_types::{HoverContents, Location, MarkedString};
 use miette_util::codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
@@ -5,10 +6,7 @@ use ast::*;
 use printer::{Print, PrintCfg};
 use url::Url;
 
-use crate::{
-    CodataInfo, CodefInfo, CtorInfo, DataInfo, Database, DefInfo, DtorInfo, Error, LetInfo,
-    LocalComatchInfo, LocalMatchInfo,
-};
+use crate::{ Database, Error, LocalComatchInfo, LocalMatchInfo};
 
 use super::data::{
     AnnoInfo, CallInfo, DotCallInfo, HoleInfo, Info, InfoContent, TypeCtorInfo, TypeUnivInfo,
@@ -23,7 +21,7 @@ use super::{CaseInfo, PatternInfo};
 pub async fn collect_info(
     db: &mut Database,
     uri: &Url,
-) -> Result<(Lapper<u32, Info>, Lapper<u32, Item>), Error> {
+) -> Result<(Lapper<u32, HoverContents>, Lapper<u32, Location>, Lapper<u32, Item>), Error> {
     let module = db.ast(uri).await?;
     let mut collector = InfoCollector::new(module.meta_vars.clone());
 
@@ -33,40 +31,52 @@ pub async fn collect_info(
             span: use_decl.span,
             content: InfoContent::UseInfo(UseInfo { uri: dep_uri, path: use_decl.path.clone() }),
         };
-        collector.info_spans.push(Interval {
-            start: use_decl.span.start.0,
-            stop: use_decl.span.end.0,
-            val: info,
-        })
+        // collector.info_spans.push(Interval {
+        //     start: use_decl.span.start.0,
+        //     stop: use_decl.span.end.0,
+        //     val: info,
+        // })
     }
 
     for decl in module.decls.iter() {
         decl.collect_info(db, &mut collector)
     }
 
-    let info_lapper = Lapper::new(collector.info_spans);
+    let hover_lapper = Lapper::new(collector.hover_spans);
+    let location_lapper = Lapper::new(collector.location_spans);
     let item_lapper = Lapper::new(collector.item_spans);
-    Ok((info_lapper, item_lapper))
+    Ok((hover_lapper, location_lapper, item_lapper))
+}
+
+fn add_doc_comment(builder: &mut Vec<MarkedString>, doc: Option<Vec<String>>) {
+    if let Some(doc) = doc {
+        builder.push(MarkedString::String("---".to_owned()));
+        for d in doc {
+            builder.push(MarkedString::String(d))
+        }
+    }
 }
 
 struct InfoCollector {
     meta_vars: HashMap<MetaVar, MetaVarState>,
-    info_spans: Vec<Interval<u32, Info>>,
+    hover_spans: Vec<Interval<u32, HoverContents>>,
+    location_spans: Vec<Interval<u32, Location>>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
 impl InfoCollector {
     fn new(meta_vars: HashMap<MetaVar, MetaVarState>) -> Self {
-        InfoCollector { meta_vars, info_spans: vec![], item_spans: vec![] }
+        InfoCollector { meta_vars, hover_spans: vec![], location_spans: vec![], item_spans: vec![] }
     }
 
-    fn add_info<T: Into<InfoContent>>(&mut self, span: Span, info: T) {
-        let info = Interval {
-            start: span.start.0,
-            stop: span.end.0,
-            val: Info { span, content: info.into() },
-        };
-        self.info_spans.push(info)
+    fn add_hover(&mut self, span: Span, hover: HoverContents) {
+        let hover = Interval { start: span.start.0, stop: span.end.0, val: hover };
+        self.hover_spans.push(hover)
+    }
+
+    fn add_goto(&mut self, span: Span, location: Location) {
+        let goto = Interval { start: span.start.0, stop: span.end.0, val: location };
+        self.location_spans.push(goto)
     }
 
     fn add_item(&mut self, span: Span, item: Item) {
@@ -131,11 +141,18 @@ impl CollectInfo for Data {
             // Add item
             let item = Item::Data(name.clone().id);
             collector.add_item(*span, item);
-            // Add info
-            let doc = doc.clone().map(|doc| doc.docs);
-            let info =
-                DataInfo { name: name.clone().id, doc, params: typ.params.print_to_string(None) };
-            collector.add_info(*span, info)
+
+            // Add hover info
+            let params = typ.params.print_to_string(None);
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(MarkedString::String(format!("Data declaration: `{name}`")));
+            add_doc_comment(&mut content, doc.clone().map(|doc| doc.docs));
+            if !params.is_empty() {
+                content.push(MarkedString::String("---".to_owned()).to_owned());
+                content.push(MarkedString::String(format!("Parameters: `{}`", params)));
+                let hover_content = HoverContents::Array(content);
+                collector.add_hover(*span, hover_content);
+            }
         }
 
         for ctor in ctors {
@@ -153,11 +170,18 @@ impl CollectInfo for Codata {
             // Add item
             let item = Item::Codata(name.clone().id);
             collector.add_item(*span, item);
-            // Add info
-            let doc = doc.clone().map(|doc| doc.docs);
-            let info =
-                CodataInfo { name: name.clone().id, doc, params: typ.params.print_to_string(None) };
-            collector.add_info(*span, info);
+
+            // Add hover info
+            let params = typ.params.print_to_string(None);
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(MarkedString::String(format!("Codata declaration: `{}`", name)));
+            add_doc_comment(&mut content, doc.clone().map(|doc| doc.docs));
+            if !params.is_empty() {
+                content.push(MarkedString::String("---".to_owned()).to_owned());
+                content.push(MarkedString::String(format!("Parameters: `{}`", params)));
+                let hover_content = HoverContents::Array(content);
+                collector.add_hover(*span, hover_content);
+            }
         }
 
         for dtor in dtors {
@@ -176,9 +200,10 @@ impl CollectInfo for Def {
             let item =
                 Item::Def { name: name.clone().id, type_name: self_param.typ.name.clone().id };
             collector.add_item(*span, item);
-            // Add Info
-            let info = DefInfo {};
-            collector.add_info(*span, info);
+            // Add hover info
+            let header = MarkedString::String("Definition".to_owned());
+            let hover_contents = HoverContents::Scalar(header);
+            collector.add_hover(*span, hover_contents);
         };
 
         self_param.collect_info(db, collector);
@@ -195,9 +220,10 @@ impl CollectInfo for Codef {
             // Add item
             let item = Item::Codef { name: name.clone().id, type_name: typ.name.clone().id };
             collector.add_item(*span, item);
-            // Add info
-            let info = CodefInfo {};
-            collector.add_info(*span, info);
+            // Add hover_info
+            let header = MarkedString::String("Codefinition".to_owned());
+            let hover_contents = HoverContents::Scalar(header);
+            collector.add_hover(*span, hover_contents);
         }
         typ.collect_info(db, collector);
         cases.collect_info(db, collector);
@@ -211,8 +237,11 @@ impl CollectInfo for Ctor {
         if let Some(span) = span {
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
-            let info = CtorInfo { name: name.clone().id, doc };
-            collector.add_info(*span, info);
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(MarkedString::String(format!("Constructor: `{}`", name)));
+            add_doc_comment(&mut content, doc);
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
         }
         params.collect_info(db, collector);
         typ.collect_info(db, collector);
@@ -225,8 +254,11 @@ impl CollectInfo for Dtor {
         if let Some(span) = span {
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
-            let info = DtorInfo { name: name.clone().id, doc };
-            collector.add_info(*span, info);
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(MarkedString::String(format!("Destructor: `{}`", name)));
+            add_doc_comment(&mut content, doc);
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
         }
         self_param.collect_info(db, collector);
         params.collect_info(db, collector);
@@ -238,9 +270,10 @@ impl CollectInfo for Let {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Let { span, typ, body, params, .. } = self;
         if let Some(span) = span {
-            // Add info
-            let info = LetInfo {};
-            collector.add_info(*span, info);
+            // Add hover info
+            let header = MarkedString::String("Let-binding".to_owned());
+            let hover_content = HoverContents::Scalar(header);
+            collector.add_hover(*span, hover_content);
         }
         typ.collect_info(db, collector);
         body.collect_info(db, collector);

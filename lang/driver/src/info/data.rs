@@ -36,14 +36,6 @@ pub enum InfoContent {
     // Various
     CaseInfo(CaseInfo),
     PatternInfo(PatternInfo),
-    // Toplevel Declarations
-    DataInfo(DataInfo),
-    CtorInfo(CtorInfo),
-    CodataInfo(CodataInfo),
-    DtorInfo(DtorInfo),
-    DefInfo(DefInfo),
-    CodefInfo(CodefInfo),
-    LetInfo(LetInfo),
     // Modules
     UseInfo(UseInfo),
 }
@@ -59,100 +51,6 @@ pub struct UseInfo {
     pub path: String,
     /// The URI of the module that is being used
     pub uri: Url,
-}
-
-// Info structs for toplevel declarations
-//
-//
-
-/// Information for toplevel data type declarations
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DataInfo {
-    /// Name of the data type
-    pub name: String,
-    /// Doc comments for data type
-    pub doc: Option<Vec<String>>,
-    /// Parameters
-    pub params: String,
-}
-
-impl From<DataInfo> for InfoContent {
-    fn from(value: DataInfo) -> Self {
-        InfoContent::DataInfo(value)
-    }
-}
-
-/// Information about constructor within a data type declaration
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CtorInfo {
-    pub name: String,
-    pub doc: Option<Vec<String>>,
-}
-
-impl From<CtorInfo> for InfoContent {
-    fn from(value: CtorInfo) -> Self {
-        InfoContent::CtorInfo(value)
-    }
-}
-
-/// Information for toplevel codata type declarations
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CodataInfo {
-    /// Name of the data type
-    pub name: String,
-    /// Doc comments for data type
-    pub doc: Option<Vec<String>>,
-    /// Parameters
-    pub params: String,
-}
-
-impl From<CodataInfo> for InfoContent {
-    fn from(value: CodataInfo) -> Self {
-        InfoContent::CodataInfo(value)
-    }
-}
-
-/// Information about destructor within a data type declaration
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DtorInfo {
-    pub name: String,
-    pub doc: Option<Vec<String>>,
-}
-
-impl From<DtorInfo> for InfoContent {
-    fn from(value: DtorInfo) -> Self {
-        InfoContent::DtorInfo(value)
-    }
-}
-
-/// Information for toplevel definitions
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DefInfo {}
-
-impl From<DefInfo> for InfoContent {
-    fn from(value: DefInfo) -> Self {
-        InfoContent::DefInfo(value)
-    }
-}
-
-/// Information for toplevel codefinitions
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CodefInfo {}
-
-impl From<CodefInfo> for InfoContent {
-    fn from(value: CodefInfo) -> Self {
-        InfoContent::CodefInfo(value)
-    }
-}
-
-/// Information for toplevel let bindings
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LetInfo {}
-
-impl From<LetInfo> for InfoContent {
-    fn from(value: LetInfo) -> Self {
-        InfoContent::LetInfo(value)
-    }
 }
 
 // Info structs for expressions
