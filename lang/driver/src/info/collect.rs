@@ -157,9 +157,9 @@ impl CollectInfo for Data {
             if !params.is_empty() {
                 content.push(MarkedString::String("---".to_owned()).to_owned());
                 content.push(MarkedString::String(format!("Parameters: `{}`", params)));
-                let hover_content = HoverContents::Array(content);
-                collector.add_hover(*span, hover_content);
             }
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
         }
 
         for ctor in ctors {
@@ -186,9 +186,9 @@ impl CollectInfo for Codata {
             if !params.is_empty() {
                 content.push(MarkedString::String("---".to_owned()).to_owned());
                 content.push(MarkedString::String(format!("Parameters: `{}`", params)));
-                let hover_content = HoverContents::Array(content);
-                collector.add_hover(*span, hover_content);
             }
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
         }
 
         for dtor in dtors {
