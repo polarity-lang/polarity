@@ -6,7 +6,7 @@ use askama::Template;
 use opener;
 
 use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH, DOCS_PATH, EXAMPLE_PATH};
-use driver::Database;
+use driver::{Database, CODATA_PATH, DATA_PATH, STD_PATH};
 
 use crate::generate_docs::GenerateDocs;
 
@@ -52,9 +52,19 @@ fn generate_module(title: &str, content: &str) -> String {
 
 async fn write_modules() {
     let example_path = Path::new(EXAMPLE_PATH);
+    let std_path = Path::new(STD_PATH);
+    let codata_path = Path::new(CODATA_PATH);
+    let data_path = Path::new(DATA_PATH);
+    write(example_path).await;
+    write(std_path).await;
+    write(codata_path).await;
+    write(data_path).await;
+}
+
+async fn write(path: &Path){
     let mut all_modules = String::new();
-    let list = file_list(get_files(Path::new(EXAMPLE_PATH)));
-    for file in get_files(example_path) {
+    let list = file_list(get_files(path));
+    for file in get_files(path) {
         let mut db = Database::from_path(&file);
         let uri = db.resolve_path(&file).expect("Failed to resolve path");
         let prg = db.ust(&uri).await.expect("Failed to get UST");
