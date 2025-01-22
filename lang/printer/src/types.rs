@@ -211,6 +211,12 @@ impl<T: Print, E: Error> Print for Result<T, E> {
     }
 }
 
+impl Print for () {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        alloc.text("…")
+    }
+}
+
 #[derive(Clone)]
 pub struct PrintCfg {
     /// The width of the output terminal/device. Width is used for

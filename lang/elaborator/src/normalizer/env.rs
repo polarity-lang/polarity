@@ -3,7 +3,7 @@ use pretty::DocAllocator;
 
 use ast::ctx::values::{Binder, TypeCtx};
 use ast::ctx::{map_idx::*, GenericCtx};
-use ast::ctx::{Context, ContextElem, LevelCtx};
+use ast::ctx::{Context, LevelCtx};
 use ast::{Idx, Var};
 use printer::tokens::COMMA;
 use printer::Print;
@@ -48,12 +48,6 @@ impl Context for Env {
     fn pop_binder(&mut self, _elem: Self::Elem) {
         let err = "Cannot pop from empty context";
         self.bound_vars.bound.last_mut().expect(err).pop().expect(err);
-    }
-}
-
-impl ContextElem<Env> for Binder<Box<Val>> {
-    fn as_element(&self) -> <Env as Context>::Elem {
-        (*self).clone()
     }
 }
 

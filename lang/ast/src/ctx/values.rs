@@ -2,10 +2,6 @@
 //!
 //! Tracks locally bound variables
 
-use pretty::DocAllocator;
-use printer::tokens::COMMA;
-use printer::{Alloc, Builder, Print, PrintCfg};
-
 use crate::traits::Shift;
 use crate::*;
 
@@ -23,18 +19,6 @@ impl TypeCtx {
             })
             .collect();
         LevelCtx::from(bound)
-    }
-
-    fn shift<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        for lvl in 0..self.bound.len() {
-            self.shift_at_lvl(range, lvl, by)
-        }
-    }
-
-    fn shift_at_lvl<R: ShiftRange>(&mut self, range: &R, lvl: usize, by: (isize, isize)) {
-        for i in 0..self.bound[lvl].len() {
-            self.bound[lvl][i].shift_in_range(range, by);
-        }
     }
 
     pub fn map_failable<E, F>(&self, f: F) -> Result<Self, E>
@@ -56,54 +40,9 @@ impl TypeCtx {
     }
 }
 
-impl Context for TypeCtx {
-    type Elem = Binder<Box<Exp>>;
-
-    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
-        let lvl = self.var_to_lvl(idx.into());
-        self.bound
-            .get(lvl.fst)
-            .and_then(|ctx| ctx.get(lvl.snd))
-            .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
-            .clone()
-    }
-
-    fn push_telescope(&mut self) {
-        self.shift(&(0..), (1, 0));
-        self.bound.push(vec![]);
-    }
-
-    fn pop_telescope(&mut self) {
-        self.bound.pop().unwrap();
-        self.shift(&(0..), (-1, 0));
-    }
-
-    fn push_binder(&mut self, elem: Self::Elem) {
-        self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
-        self.shift_at_lvl(&(0..1), self.bound.len() - 1, (0, 1));
-    }
-
-    fn pop_binder(&mut self, _elem: Self::Elem) {
-        let err = "Cannot pop from empty context";
-        self.bound.last_mut().expect(err).pop().expect(err);
-        self.shift_at_lvl(&(0..1), self.bound.len() - 1, (0, -1));
-    }
-}
-
 impl ContextElem<TypeCtx> for &Binder<Box<Exp>> {
     fn as_element(&self) -> <TypeCtx as Context>::Elem {
         (*self).clone()
-    }
-}
-
-impl Print for TypeCtx {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let iter = self.iter().map(|ctx| {
-            alloc
-                .intersperse(ctx.iter().map(|b| b.content.print(cfg, alloc)), alloc.text(COMMA))
-                .brackets()
-        });
-        alloc.intersperse(iter, alloc.text(COMMA)).brackets()
     }
 }
 

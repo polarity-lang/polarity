@@ -5,7 +5,6 @@ use std::collections::HashSet;
 use ast::ctx::values::Binder;
 use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
-use ctx::ContextElem;
 use miette_util::ToMiette;
 
 use crate::conversion_checking::convert;
@@ -57,7 +56,14 @@ impl CheckInfer for LocalMatch {
                 })?;
 
                 // Ensure that the motive matches the expected type
-                let mut subst_ctx = ctx.levels().append(&vec![vec![motive.as_element()]].into());
+                let motive_binder = Binder {
+                    name: match motive {
+                        Some(m) => m.param.name.clone(),
+                        None => VarBind::Wildcard { span: None },
+                    },
+                    content: (),
+                };
+                let mut subst_ctx = ctx.levels().append(&vec![vec![motive_binder]].into());
                 let on_exp = shift_and_clone(on_exp, (1, 0));
                 let subst = Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp };
                 let mut motive_t = ret_typ.subst(&mut subst_ctx, &subst);
