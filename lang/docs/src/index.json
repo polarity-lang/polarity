@@ -1,0 +1,114 @@
+[
+    {
+        "name": "Lawful Functor Class",
+        "path": "examples/functor.pol"
+    },
+    {
+        "name": "Martin-Löf Equality Type",
+        "path": "examples/eq.pol"
+    },
+    {
+        "name": "STLC Type Soundness",
+        "path": "examples/stlc.pol"
+    },
+    {
+        "name": "Strong Existentials Demystified",
+        "path": "examples/strong_existentials.pol"
+    },
+    {
+        "name": "Tutorial",
+        "path": "examples/tutorial.pol"
+    },
+    {
+        "name": "Π Is Not Built-In",
+        "path": "examples/pi.pol"
+    },
+    {
+        "name": "λ-Encoding: Church",
+        "path": "examples/encoding_church.pol"
+    },
+    {
+        "name": "λ-Encoding: Fu & Stump",
+        "path": "examples/encoding_fu_stump.pol"
+    },
+    {
+        "name": "λ-Encoding: Parigot",
+        "path": "examples/encoding_parigot.pol"
+    },
+    {
+        "name": "λ-Encoding: Scott",
+        "path": "examples/encoding_scott.pol"
+    },
+    {
+        "name": "Fun",
+        "path": "std/codata/fun.pol"
+    },
+    {
+        "name": "Pair",
+        "path": "std/codata/pair.pol"
+    },
+    {
+        "name": "Pi",
+        "path": "std/codata/pi.pol"
+    },
+    {
+        "name": "Sigma",
+        "path": "std/codata/sigma.pol"
+    },
+    {
+        "name": "Stream",
+        "path": "std/codata/stream.pol"
+    },
+    {
+        "name": "Unit",
+        "path": "std/codata/unit.pol"
+    },
+    {
+        "name": "Bool",
+        "path": "std/data/bool.pol"
+    },
+    {
+        "name": "Eq",
+        "path": "std/data/eq.pol"
+    },
+    {
+        "name": "List",
+        "path": "std/data/list.pol"
+    },
+    {
+        "name": "Nat",
+        "path": "std/data/nat.pol"
+    },
+    {
+        "name": "Option",
+        "path": "std/data/option.pol"
+    },
+    {
+        "name": "Ordering",
+        "path": "std/data/ordering.pol"
+    },
+    {
+        "name": "Pair",
+        "path": "std/data/pair.pol"
+    },
+    {
+        "name": "Result",
+        "path": "std/data/result.pol"
+    },
+    {
+        "name": "Sigma",
+        "path": "std/data/sigma.pol"
+    },
+    {
+        "name": "Unit",
+        "path": "std/data/unit.pol"
+    },
+    {
+        "name": "Vec",
+        "path": "std/data/vec.pol"
+    },
+    {
+        "name": "Void",
+        "path": "std/data/void.pol"
+    }
+]
