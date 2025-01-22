@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use ctx::values::Binder;
 use miette_util::codespan::Span;
 use url::Url;
 
@@ -425,11 +426,8 @@ impl Lift for Motive {
 
         let param = param.lift(ctx);
 
-        ctx.bind_single(&param.clone(), |ctx| Motive {
-            span: *span,
-            param,
-            ret_typ: ret_typ.lift(ctx),
-        })
+        let binder = Binder { name: param.name.clone(), content: () };
+        ctx.bind_single(&binder, |ctx| Motive { span: *span, param, ret_typ: ret_typ.lift(ctx) })
     }
 }
 
