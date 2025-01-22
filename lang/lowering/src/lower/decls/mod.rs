@@ -160,7 +160,7 @@ where
             let param_out =
                 ast::Param { implicit: *implicit, name: name.clone(), typ: typ_out, erased: false };
             params_out.push(param_out);
-            let binder = Binder { name, typ: () };
+            let binder = Binder { name, content: () };
             Ok(BindElem { elem: binder, ret: params_out })
         },
         |ctx, params| f(ctx, ast::Telescope { params }),

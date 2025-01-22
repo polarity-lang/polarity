@@ -932,8 +932,11 @@ impl ReadBack for Closure {
             })
             .map(Box::new)
             .collect();
-        let binders =
-            self.params.iter().zip(args).map(|(name, arg)| Binder { name: name.clone(), typ: arg });
+        let binders = self
+            .params
+            .iter()
+            .zip(args)
+            .map(|(name, arg)| Binder { name: name.clone(), content: arg });
         let mut shifted_env = shift_and_clone(&self.env, (1, 0));
         shifted_env.bind_iter(binders, |env| self.body.eval(info_table, env))?.read_back(info_table)
     }

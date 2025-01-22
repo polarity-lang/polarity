@@ -59,7 +59,7 @@ impl Eval for Variable {
 
     fn eval(&self, _info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let Variable { idx, .. } = self;
-        Ok(env.lookup(*idx).typ)
+        Ok(env.lookup(*idx).content)
     }
 }
 
@@ -93,7 +93,7 @@ impl Eval for Call {
                         .params
                         .iter()
                         .zip(args.to_vals())
-                        .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg });
+                        .map(|(param, arg)| Binder { name: param.name.clone(), content: arg });
                     env.bind_iter(binders, |env| body.eval(info_table, env))
                 } else {
                     Ok(Box::new(Val::Neu(
@@ -167,7 +167,7 @@ impl Eval for DotCall {
                             .params
                             .iter()
                             .zip(args.to_vals())
-                            .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg });
+                            .map(|(param, arg)| Binder { name: param.name.clone(), content: arg });
                         let cases = env.bind_iter(binders, |env| cases.eval(info_table, env))?;
                         let val::Case { body, params, .. } = cases
                             .clone()
@@ -180,7 +180,7 @@ impl Eval for DotCall {
                             .params
                             .iter()
                             .zip(call_args.to_vals())
-                            .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg })
+                            .map(|(param, arg)| Binder { name: param.name.clone(), content: arg })
                             .collect::<Vec<_>>();
                         body.clone().unwrap().apply(info_table, binders)
                     }
@@ -204,11 +204,10 @@ impl Eval for DotCall {
                         let Codef { cases, params, .. } =
                             info_table.lookup_codef(&call_name.clone())?;
                         let mut env = Env::empty();
-                        let binders = params
-                            .params
-                            .iter()
-                            .zip(call_args.to_vals())
-                            .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg });
+                        let binders =
+                            params.params.iter().zip(call_args.to_vals()).map(|(param, arg)| {
+                                Binder { name: param.name.clone(), content: arg }
+                            });
                         let cases = env.bind_iter(binders, |env| cases.eval(info_table, env))?;
                         let val::Case { body, params, .. } = cases
                             .clone()
@@ -221,7 +220,7 @@ impl Eval for DotCall {
                             .params
                             .iter()
                             .zip(args.to_vals())
-                            .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg })
+                            .map(|(param, arg)| Binder { name: param.name.clone(), content: arg })
                             .collect::<Vec<_>>();
                         body.clone().unwrap().apply(info_table, binders)
                     }
@@ -259,7 +258,7 @@ impl Eval for DotCall {
                     .params
                     .iter()
                     .zip(args.to_vals())
-                    .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg })
+                    .map(|(param, arg)| Binder { name: param.name.clone(), content: arg })
                     .collect::<Vec<_>>();
                 body.clone().unwrap().apply(info_table, binders)
             }
@@ -387,7 +386,7 @@ impl Eval for LocalMatch {
                     .params
                     .iter()
                     .zip(args.to_vals())
-                    .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg })
+                    .map(|(param, arg)| Binder { name: param.name.clone(), content: arg })
                     .collect::<Vec<_>>();
                 body.clone().unwrap().apply(info_table, binders)
             }

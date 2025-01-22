@@ -89,7 +89,7 @@ impl Ctx {
     }
 
     pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Box<Exp> {
-        self.vars.lookup(idx).typ
+        self.vars.lookup(idx).content
     }
 
     pub fn levels(&self) -> LevelCtx {

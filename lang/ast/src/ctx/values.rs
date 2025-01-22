@@ -19,7 +19,7 @@ impl TypeCtx {
             .bound
             .iter()
             .map(|inner| {
-                inner.iter().map(|b| Binder { name: b.name.to_owned(), typ: () }).collect()
+                inner.iter().map(|b| Binder { name: b.name.to_owned(), content: () }).collect()
             })
             .collect();
         LevelCtx::from(bound)
@@ -45,7 +45,10 @@ impl TypeCtx {
             .bound
             .iter()
             .map(|stack| {
-                stack.iter().map(|b| Ok(Binder { name: b.name.clone(), typ: f(&b.typ)? })).collect()
+                stack
+                    .iter()
+                    .map(|b| Ok(Binder { name: b.name.clone(), content: f(&b.content)? }))
+                    .collect()
             })
             .collect();
 
@@ -97,7 +100,7 @@ impl Print for TypeCtx {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let iter = self.iter().map(|ctx| {
             alloc
-                .intersperse(ctx.iter().map(|b| b.typ.print(cfg, alloc)), alloc.text(COMMA))
+                .intersperse(ctx.iter().map(|b| b.content.print(cfg, alloc)), alloc.text(COMMA))
                 .brackets()
         });
         alloc.intersperse(iter, alloc.text(COMMA)).brackets()
@@ -107,11 +110,11 @@ impl Print for TypeCtx {
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Binder<T> {
     pub name: VarBind,
-    pub typ: T,
+    pub content: T,
 }
 
 impl<T: Shift> Shift for Binder<T> {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        self.typ.shift_in_range(range, by);
+        self.content.shift_in_range(range, by);
     }
 }

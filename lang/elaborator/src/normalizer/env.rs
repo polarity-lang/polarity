@@ -68,7 +68,7 @@ impl Env {
             .map(|inner| {
                 inner
                     .into_iter()
-                    .map(|v| Binder { name: ast::VarBind::Wildcard { span: None }, typ: v })
+                    .map(|v| Binder { name: ast::VarBind::Wildcard { span: None }, content: v })
                     .collect()
             })
             .collect();
@@ -81,7 +81,7 @@ impl Env {
     {
         for outer in self.bound_vars.bound.iter_mut() {
             for inner in outer {
-                f(&mut inner.typ)
+                f(&mut inner.content)
             }
         }
     }
@@ -148,7 +148,7 @@ impl Print for Env {
     ) -> printer::Builder<'a> {
         let iter = self.bound_vars.iter().map(|ctx| {
             alloc
-                .intersperse(ctx.iter().map(|v| v.typ.print(cfg, alloc)), alloc.text(COMMA))
+                .intersperse(ctx.iter().map(|v| v.content.print(cfg, alloc)), alloc.text(COMMA))
                 .brackets()
         });
         alloc.intersperse(iter, alloc.text(COMMA)).brackets()

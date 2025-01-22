@@ -40,7 +40,7 @@ impl From<Vec<Vec<Param>>> for LevelCtx {
     fn from(value: Vec<Vec<Param>>) -> Self {
         let bound = value
             .into_iter()
-            .map(|v| v.into_iter().map(|p| Binder { name: p.name, typ: () }).collect())
+            .map(|v| v.into_iter().map(|p| Binder { name: p.name, content: () }).collect())
             .collect();
         Self { bound }
     }
@@ -80,7 +80,7 @@ impl From<Vec<Vec<VarBind>>> for LevelCtx {
     fn from(value: Vec<Vec<VarBind>>) -> Self {
         let bound = value
             .into_iter()
-            .map(|v| v.into_iter().map(|b| Binder { name: b.clone(), typ: () }).collect())
+            .map(|v| v.into_iter().map(|b| Binder { name: b.clone(), content: () }).collect())
             .collect();
         Self { bound }
     }
@@ -88,25 +88,25 @@ impl From<Vec<Vec<VarBind>>> for LevelCtx {
 
 impl ContextElem<LevelCtx> for VarBind {
     fn as_element(&self) -> <LevelCtx as Context>::Elem {
-        Binder { name: self.clone(), typ: () }
+        Binder { name: self.clone(), content: () }
     }
 }
 
 impl ContextElem<LevelCtx> for &Binder<()> {
     fn as_element(&self) -> <LevelCtx as Context>::Elem {
-        Binder { name: self.name.clone(), typ: () }
+        Binder { name: self.name.clone(), content: () }
     }
 }
 
 impl ContextElem<LevelCtx> for &Param {
     fn as_element(&self) -> <LevelCtx as Context>::Elem {
-        Binder { name: self.name.clone(), typ: () }
+        Binder { name: self.name.clone(), content: () }
     }
 }
 
 impl ContextElem<LevelCtx> for &ParamInst {
     fn as_element(&self) -> <LevelCtx as Context>::Elem {
-        Binder { name: self.name.clone(), typ: () }
+        Binder { name: self.name.clone(), content: () }
     }
 }
 
@@ -116,14 +116,14 @@ impl ContextElem<LevelCtx> for &Option<Motive> {
             Some(m) => m.param.name.clone(),
             None => VarBind::Wildcard { span: None },
         };
-        Binder { name, typ: () }
+        Binder { name, content: () }
     }
 }
 
 impl ContextElem<LevelCtx> for &SelfParam {
     fn as_element(&self) -> <LevelCtx as Context>::Elem {
         let name = self.name.clone().unwrap_or(VarBind::Wildcard { span: None });
-        Binder { name, typ: () }
+        Binder { name, content: () }
     }
 }
 
