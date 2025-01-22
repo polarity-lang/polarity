@@ -21,7 +21,8 @@ impl TypeInfoTable {
         Err(TypeError::Impossible {
             message: format!("Top-level data type {name} not found"),
             span: name.span.to_miette(),
-        })
+        }
+        .into())
     }
     pub fn lookup_codata(&self, name: &IdBound) -> TcResult<&Codata> {
         let map = self.get_map(name)?;
@@ -31,7 +32,8 @@ impl TypeInfoTable {
         Err(TypeError::Impossible {
             message: format!("Top-level codata type {name} not found"),
             span: name.span.to_miette(),
-        })
+        }
+        .into())
     }
 
     pub fn lookup_ctor_or_codef(&self, name: &IdBound) -> TcResult<CtorMeta> {
@@ -45,7 +47,8 @@ impl TypeInfoTable {
         Err(TypeError::Impossible {
             message: format!("Top-level ctor or codef {name} not found"),
             span: name.span.to_miette(),
-        })
+        }
+        .into())
     }
 
     pub fn lookup_dtor_or_def(&self, name: &IdBound) -> TcResult<DtorMeta> {
@@ -60,7 +63,8 @@ impl TypeInfoTable {
         Err(TypeError::Impossible {
             message: format!("Top-level dtor or def {name} not found"),
             span: name.span.to_miette(),
-        })
+        }
+        .into())
     }
 
     pub fn lookup_let(&self, name: &IdBound) -> TcResult<&Let> {
@@ -72,7 +76,8 @@ impl TypeInfoTable {
         Err(TypeError::Impossible {
             message: format!("Top-level let {name} not found"),
             span: name.span.to_miette(),
-        })
+        }
+        .into())
     }
 
     pub fn lookup_tyctor(&self, name: &IdBound) -> TcResult<&TyCtorMeta> {
@@ -84,7 +89,8 @@ impl TypeInfoTable {
         Err(TypeError::Impossible {
             message: format!("Top-level tyctor {name} not found"),
             span: name.span.to_miette(),
-        })
+        }
+        .into())
     }
 
     pub fn lookup_codef(&self, name: &IdBound) -> TcResult<&Codef> {
@@ -96,7 +102,8 @@ impl TypeInfoTable {
         Err(TypeError::Impossible {
             message: format!("Top-level codef {name} not found"),
             span: name.span.to_miette(),
-        })
+        }
+        .into())
     }
 
     pub fn lookup_ctor(&self, name: &IdBound) -> TcResult<&CtorMeta> {
@@ -108,7 +115,8 @@ impl TypeInfoTable {
         Err(TypeError::Impossible {
             message: format!("Top-level ctor {name} not found"),
             span: name.span.to_miette(),
-        })
+        }
+        .into())
     }
 
     pub fn lookup_def(&self, name: &IdBound) -> TcResult<&Def> {
@@ -120,7 +128,8 @@ impl TypeInfoTable {
         Err(TypeError::Impossible {
             message: format!("Top-level def {name} not found"),
             span: name.span.to_miette(),
-        })
+        }
+        .into())
     }
 
     pub fn lookup_dtor(&self, name: &IdBound) -> TcResult<&DtorMeta> {
@@ -132,6 +141,7 @@ impl TypeInfoTable {
         Err(TypeError::Impossible {
             message: format!("Top-level dtor {name} not found"),
             span: name.span.to_miette(),
-        })
+        }
+        .into())
     }
 }

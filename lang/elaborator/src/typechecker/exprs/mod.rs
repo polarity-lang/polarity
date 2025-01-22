@@ -79,7 +79,7 @@ impl CheckInfer for Exp {
     }
 
     fn infer(&self, ctx: &mut Ctx) -> TcResult<Self> {
-        let res: Result<Exp, TypeError> = match self {
+        let res: TcResult<Exp> = match self {
             Exp::Variable(e) => Ok(e.infer(ctx)?.into()),
             Exp::TypCtor(e) => Ok(e.infer(ctx)?.into()),
             Exp::Call(e) => Ok(e.infer(ctx)?.into()),
@@ -143,7 +143,8 @@ fn check_args(
             expected: params.len(),
             actual: this.len(),
             span: span.to_miette(),
-        });
+        }
+        .into());
     }
 
     let Telescope { params } =
@@ -182,7 +183,7 @@ pub trait InferTelescope {
         &self,
         ctx: &mut Ctx,
         f: F,
-    ) -> Result<T, TypeError>;
+    ) -> TcResult<T>;
 }
 
 impl CheckTelescope for TelescopeInst {
@@ -205,7 +206,8 @@ impl CheckTelescope for TelescopeInst {
                 expected: param_types.len(),
                 actual: params.len(),
                 span: span.to_miette(),
-            });
+            }
+            .into());
         }
 
         let iter = params.iter().zip(param_types);

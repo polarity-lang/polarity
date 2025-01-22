@@ -18,3 +18,4 @@ T-002
     ·                      │                        ╰── While elaborating
     ·                      ╰── Source of (2)
     ╰────
+  help: The two subterms S(S(Z)) and opaqueTwo are not equal.

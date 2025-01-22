@@ -52,18 +52,16 @@
 //! ```
 //! When hovering over the holes in an editor connected to our language server, you will see that both holes are solved with `Nat`.
 
-use ast::{ctx::values::TypeCtx, Exp, HashMap, MetaVar, MetaVarState};
+use ast::{ctx::values::TypeCtx, Exp, HasSpan, HashMap, MetaVar, MetaVarState};
 use constraints::Constraint;
-use dec::Dec;
 use log::trace;
-use miette_util::codespan::Span;
+use miette_util::{codespan::Span, ToMiette};
 use printer::Print;
 use unify::Ctx;
 
 use crate::result::{TcResult, TypeError};
 
 mod constraints;
-mod dec;
 mod unify;
 
 pub fn convert(
@@ -78,9 +76,49 @@ pub fn convert(
     let constraint: Constraint =
         Constraint::Equality { ctx, lhs: this.clone(), rhs: Box::new(other.clone()) };
     let mut ctx = Ctx::new(vec![constraint]);
-    match ctx.unify(meta_vars, while_elaborating_span)? {
-        Dec::Yes => Ok(()),
-        Dec::No => Err(TypeError::not_eq(&this, other, while_elaborating_span)),
+    match ctx.unify(meta_vars, while_elaborating_span) {
+        Ok(()) => Ok(()),
+        Err(err) => match *err {
+            // The code below is responsible for generating improved error messages.
+            // See in particular the documentation at [crate::result::TypeError::NotEq].
+            //
+            // The basic idea is that when we check whether `List(Bool)` is equal to `List(Nat)`,
+            // then we want to report that they are unequal, and also point to the subexpressions
+            // `Bool` and `Nat` which are different.
+            TypeError::NotEqInternal { lhs, rhs } => {
+                let lhs_outer = this.print_to_string(None);
+                let rhs_outer = other.print_to_string(None);
+                // If `lhs == lhs_outer` and `rhs == rhs_outer` then it doesn't make
+                // sense to create a detailed error `TypeError::NotEqDetailed`, because
+                // the unequal subexpressions are the immediate subexpressions.
+                if lhs != lhs_outer || rhs != rhs_outer {
+                    Err({
+                        TypeError::NotEqDetailed {
+                            lhs: lhs_outer,
+                            rhs: rhs_outer,
+                            lhs_internal: lhs,
+                            rhs_internal: rhs,
+                            lhs_span: this.span().to_miette(),
+                            rhs_span: other.span().to_miette(),
+                            while_elaborating_span: while_elaborating_span.to_miette(),
+                        }
+                    }
+                    .into())
+                } else {
+                    Err({
+                        TypeError::NotEq {
+                            lhs: lhs_outer,
+                            rhs: rhs_outer,
+                            lhs_span: this.span().to_miette(),
+                            rhs_span: other.span().to_miette(),
+                            while_elaborating_span: while_elaborating_span.to_miette(),
+                        }
+                    }
+                    .into())
+                }
+            }
+            _ => Err(err),
+        },
     }
 }
 
@@ -91,7 +129,7 @@ mod test {
         HashMap, Idx, MetaVar, MetaVarState, TypeUniv, VarBind, VarBound, Variable,
     };
 
-    use crate::conversion_checking::{constraints::Constraint, dec::Dec, unify::Ctx};
+    use crate::conversion_checking::{constraints::Constraint, unify::Ctx};
 
     /// Assert that the two expressions are convertible
     fn check_eq<E: Into<ast::Exp>>(ctx: TypeCtx, e1: E, e2: E) {
@@ -100,7 +138,7 @@ mod test {
 
         let mut ctx = Ctx::new(vec![constraint]);
         let mut hm: HashMap<MetaVar, MetaVarState> = Default::default();
-        assert!(ctx.unify(&mut hm, &None).unwrap() == Dec::Yes)
+        assert!(ctx.unify(&mut hm, &None).is_ok())
     }
 
     /// Assert that the two expressions are not convertible
@@ -110,7 +148,7 @@ mod test {
 
         let mut ctx = Ctx::new(vec![constraint]);
         let mut hm: HashMap<MetaVar, MetaVarState> = Default::default();
-        assert!(ctx.unify(&mut hm, &None).unwrap() == Dec::No)
+        assert!(ctx.unify(&mut hm, &None).is_err())
     }
 
     /// Check that `[[a: Type, v: a]] |- v =? v` holds.

@@ -16,8 +16,10 @@ fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
 }
 
 /// The result type specialized to type errors.
-pub type TcResult<T = ()> = Result<T, TypeError>;
+pub type TcResult<T = ()> = Result<T, Box<TypeError>>;
 
+/// This enum contains all errors that can be emitted during elaboration, i.e. either
+/// during bidirectional type inference, normalization, index unification or conversion checking.
 #[derive(Error, Diagnostic, Debug, Clone)]
 pub enum TypeError {
     #[error("Wrong number of arguments to {name} provided: got {actual}, expected {expected}")]
@@ -29,6 +31,22 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
+    /// This is one of three [TypeError] variants that are emitted when we perform conversion checking
+    /// and the expressions are not convertible. The variants [TypeError::NotEq], [TypeError::NotEqDetailed]
+    /// and [TypeError::NotEqInternal] exist in order to improve the quality of the error messages.
+    ///
+    /// - The variant [TypeError::NotEq] is used for expressions which are not equal, and when we can also see
+    ///   this from the outermost constructor. For example, `Bool` and `Nat`.
+    /// - The variant [TypeError::NotEqDetailed] is used for expressions which are not equal, but which have an
+    ///   outermost constructor in common. An example of this is `S(x)` and `S(y)` or `List(Nat)` and `List(Bool)`.
+    ///   In that case we have additional fields [TypeError::NotEqDetailed::lhs_internal] and
+    ///   [TypeError::NotEqDetailed::rhs_internal] which store the String representation of the two subexpressions
+    ///   which differ: `x` and `y`, resp. `Nat` and `Bool` in this example.
+    /// - The variant [TypeError::NotEqInternal] should never be presented to the user. It is only used internally in
+    ///   the implementation of conversion checking. If we check whether `List(Int)` and `List(Nat)` are convertible, then
+    ///   we first internally throw a [TypeError::NotEqInternal] which carries the information that `Int` and `Nat`
+    ///   are not equal. We then catch this error and insert the information in the [TypeError::NotEqDetailed] variant.
+    ///
     #[error("The following terms are not equal:\n  1: {lhs}\n  2: {rhs}\n")]
     #[diagnostic(code("T-002"))]
     NotEq {
@@ -41,6 +59,27 @@ pub enum TypeError {
         #[label("While elaborating")]
         while_elaborating_span: Option<SourceSpan>,
     },
+    /// See documentation of [TypeError::NotEq] for details.
+    #[error("The following terms are not equal:\n  1: {lhs}\n  2: {rhs}\n")]
+    #[diagnostic(
+        code("T-002"),
+        help("The two subterms {lhs_internal} and {rhs_internal} are not equal.")
+    )]
+    NotEqDetailed {
+        lhs: String,
+        rhs: String,
+        #[label("Source of (1)")]
+        lhs_span: Option<SourceSpan>,
+        #[label("Source of (2)")]
+        rhs_span: Option<SourceSpan>,
+        lhs_internal: String,
+        rhs_internal: String,
+        #[label("While elaborating")]
+        while_elaborating_span: Option<SourceSpan>,
+    },
+    /// See documentation of [TypeError::NotEq] for details.
+    #[error("INTERNAL:\n  1: {lhs}\n  2: {rhs}\n")]
+    NotEqInternal { lhs: String, rhs: String },
     #[error("Cannot match on codata type {name}")]
     #[diagnostic(code("T-003"))]
     MatchOnCodata {
@@ -161,22 +200,12 @@ pub enum TypeError {
 }
 
 impl TypeError {
-    pub fn not_eq(lhs: &Exp, rhs: &Exp, while_elaborating_span: &Option<Span>) -> Self {
-        Self::NotEq {
-            lhs: lhs.print_to_string(None),
-            rhs: rhs.print_to_string(None),
-            lhs_span: lhs.span().to_miette(),
-            rhs_span: rhs.span().to_miette(),
-            while_elaborating_span: while_elaborating_span.to_miette(),
-        }
-    }
-
     pub fn invalid_match(
         missing: HashSet<String>,
         undeclared: HashSet<String>,
         duplicate: HashSet<String>,
         info: &Option<Span>,
-    ) -> Self {
+    ) -> Box<Self> {
         let mut msgs = Vec::new();
 
         if !missing.is_empty() {
@@ -189,22 +218,23 @@ impl TypeError {
             msgs.push(format!("duplicate {}", comma_separated(duplicate.iter().cloned())));
         }
 
-        Self::InvalidMatch { msg: separated("; ", msgs), span: info.to_miette() }
+        Self::InvalidMatch { msg: separated("; ", msgs), span: info.to_miette() }.into()
     }
 
     pub fn expected_typ_app(got: &Exp) -> Self {
         Self::ExpectedTypApp { got: got.print_to_string(None), span: got.span().to_miette() }
     }
 
-    pub fn occurs_check_failed(idx: Idx, exp: &Exp) -> Self {
+    pub fn occurs_check_failed(idx: Idx, exp: &Exp) -> Box<Self> {
         Self::OccursCheckFailed {
             idx,
             exp: exp.print_to_string(None),
             span: exp.span().to_miette(),
         }
+        .into()
     }
 
-    pub fn cannot_decide(lhs: &Exp, rhs: &Exp, while_elaborating_span: &Option<Span>) -> Self {
+    pub fn cannot_decide(lhs: &Exp, rhs: &Exp, while_elaborating_span: &Option<Span>) -> Box<Self> {
         Self::CannotDecide {
             lhs: lhs.print_to_string(None),
             rhs: rhs.print_to_string(None),
@@ -212,5 +242,6 @@ impl TypeError {
             rhs_span: rhs.span().to_miette(),
             while_elaborating_span: while_elaborating_span.to_miette(),
         }
+        .into()
     }
 }

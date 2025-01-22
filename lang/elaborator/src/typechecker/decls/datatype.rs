@@ -51,7 +51,8 @@ fn check_ctor_wf(data_type_name: &IdBind, ctor: &Ctor, ctx: &mut Ctx) -> TcResul
             expected: Box::new(data_type_name.clone()),
             actual: Box::new(typ.name.clone()),
             span: typ.span.to_miette(),
-        });
+        }
+        .into());
     }
 
     params.infer_telescope(ctx, |ctx, mut params_out| {

@@ -9,7 +9,6 @@ use ast::*;
 use printer::Print;
 
 use super::constraints::Constraint;
-use super::dec::{Dec, No, Yes};
 
 pub struct Ctx {
     /// Constraints that have not yet been solved
@@ -49,17 +48,12 @@ impl Ctx {
         &mut self,
         meta_vars: &mut HashMap<MetaVar, MetaVarState>,
         while_elaborating_span: &Option<Span>,
-    ) -> TcResult<Dec> {
+    ) -> TcResult {
         while let Some(constraint) = self.constraints.pop() {
-            match self.unify_eqn(&constraint, meta_vars, while_elaborating_span)? {
-                Yes => {
-                    self.done.insert(constraint);
-                }
-                No => return Ok(No),
-            }
+            self.unify_eqn(&constraint, meta_vars, while_elaborating_span)?;
+            self.done.insert(constraint);
         }
-
-        Ok(Yes)
+        Ok(())
     }
 
     fn unify_eqn(
@@ -67,7 +61,7 @@ impl Ctx {
         eqn: &Constraint,
         meta_vars: &mut HashMap<MetaVar, MetaVarState>,
         while_elaborating_span: &Option<Span>,
-    ) -> TcResult<Dec> {
+    ) -> TcResult {
         match eqn {
             Constraint::Equality { ctx: constraint_cxt, lhs, rhs } => match (&**lhs, &**rhs) {
                 (Exp::Hole(h), e) | (e, Exp::Hole(h)) => {
@@ -99,20 +93,32 @@ impl Ctx {
                         }
                     }
 
-                    Ok(Yes)
+                    Ok(())
                 }
                 (
-                    Exp::Variable(Variable { idx: idx_1, .. }),
-                    Exp::Variable(Variable { idx: idx_2, .. }),
+                    Exp::Variable(v1 @ Variable { idx: idx_1, .. }),
+                    Exp::Variable(v2 @ Variable { idx: idx_2, .. }),
                 ) => {
                     if idx_1 == idx_2 {
-                        Ok(Yes)
+                        Ok(())
                     } else {
-                        Ok(No)
+                        Err(TypeError::NotEqInternal {
+                            lhs: v1.print_to_string(None),
+                            rhs: v2.print_to_string(None),
+                        }
+                        .into())
                     }
                 }
-                (Exp::Variable(Variable { .. }), _) => Ok(No),
-                (_, Exp::Variable(Variable { .. })) => Ok(No),
+                (Exp::Variable(v @ Variable { .. }), other) => Err(TypeError::NotEqInternal {
+                    lhs: v.print_to_string(None),
+                    rhs: other.print_to_string(None),
+                }
+                .into()),
+                (other, Exp::Variable(v @ Variable { .. })) => Err(TypeError::NotEqInternal {
+                    lhs: other.print_to_string(None),
+                    rhs: v.print_to_string(None),
+                }
+                .into()),
                 (
                     Exp::TypCtor(TypCtor { name, args, .. }),
                     Exp::TypCtor(TypCtor { name: name2, args: args2, .. }),
@@ -124,11 +130,14 @@ impl Ctx {
                     };
                     self.add_constraint(constraint)
                 }
-                (Exp::TypCtor(TypCtor { name, .. }), Exp::TypCtor(TypCtor { name: name2, .. }))
-                    if name != name2 =>
-                {
-                    Ok(No)
+                (
+                    Exp::TypCtor(t1 @ TypCtor { name, .. }),
+                    Exp::TypCtor(t2 @ TypCtor { name: name2, .. }),
+                ) if name != name2 => Err(TypeError::NotEqInternal {
+                    lhs: t1.print_to_string(None),
+                    rhs: t2.print_to_string(None),
                 }
+                .into()),
                 (
                     Exp::Call(Call { name, args, .. }),
                     Exp::Call(Call { name: name2, args: args2, .. }),
@@ -140,10 +149,14 @@ impl Ctx {
                     };
                     self.add_constraint(constraint)
                 }
-                (Exp::Call(Call { name, .. }), Exp::Call(Call { name: name2, .. }))
+                (Exp::Call(c1 @ Call { name, .. }), Exp::Call(c2 @ Call { name: name2, .. }))
                     if name != name2 =>
                 {
-                    Ok(No)
+                    Err(TypeError::NotEqInternal {
+                        lhs: c1.print_to_string(None),
+                        rhs: c2.print_to_string(None),
+                    }
+                    .into())
                 }
                 (
                     Exp::DotCall(DotCall { exp, name, args, .. }),
@@ -161,7 +174,7 @@ impl Ctx {
                     };
                     self.add_constraint(constraint)
                 }
-                (Exp::TypeUniv(_), Exp::TypeUniv(_)) => Ok(Yes),
+                (Exp::TypeUniv(_), Exp::TypeUniv(_)) => Ok(()),
                 (Exp::Anno(Anno { exp, .. }), rhs) => self.add_constraint(Constraint::Equality {
                     ctx: constraint_cxt.clone(),
                     lhs: exp.clone(),
@@ -198,18 +211,18 @@ impl Ctx {
                         }
                     });
                 self.add_constraints(new_eqns)?;
-                Ok(Yes)
+                Ok(())
             }
         }
     }
 
-    fn add_constraint(&mut self, eqn: Constraint) -> TcResult<Dec> {
+    fn add_constraint(&mut self, eqn: Constraint) -> TcResult {
         self.add_constraints([eqn])
     }
 
-    fn add_constraints<I: IntoIterator<Item = Constraint>>(&mut self, iter: I) -> TcResult<Dec> {
+    fn add_constraints<I: IntoIterator<Item = Constraint>>(&mut self, iter: I) -> TcResult {
         self.constraints.extend(iter.into_iter().filter(|eqn| !self.done.contains(eqn)));
-        Ok(Yes)
+        Ok(())
     }
 
     fn solve_meta_var(

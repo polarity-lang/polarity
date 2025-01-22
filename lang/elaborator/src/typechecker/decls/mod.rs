@@ -22,11 +22,8 @@ pub fn check_with_lookup_table(prg: Rc<Module>, info_table: &TypeInfoTable) -> T
 
     let mut ctx = Ctx::new(prg.meta_vars.clone(), info_table.clone(), prg.clone());
 
-    let mut decls = prg
-        .decls
-        .iter()
-        .map(|decl| decl.check_wf(&mut ctx))
-        .collect::<Result<Vec<_>, TypeError>>()?;
+    let mut decls =
+        prg.decls.iter().map(|decl| decl.check_wf(&mut ctx)).collect::<TcResult<Vec<_>>>()?;
 
     decls
         .zonk(&ctx.meta_vars)
@@ -64,7 +61,7 @@ pub fn check_metavars_solved(meta_vars: &HashMap<MetaVar, MetaVarState>) -> TcRe
             span: mv.span.to_miette(),
             message: mv.print_to_string(None),
         };
-        return Err(err);
+        return Err(err.into());
     }
     Ok(())
 }
@@ -80,7 +77,7 @@ fn check_metavars_resolved(meta_vars: &HashMap<MetaVar, MetaVarState>, decls: &[
                 return Err(TypeError::Impossible { message:
                     format!("Metavariable {} must be solved, but its solution references other metavariables", var.id),
                     span: None,
-                });
+                }.into());
             }
         }
     }
@@ -90,7 +87,8 @@ fn check_metavars_resolved(meta_vars: &HashMap<MetaVar, MetaVarState>, decls: &[
             return Err(TypeError::Impossible {
                 message: format!("Declaration {} contains unresolved metavariables", decl.ident()),
                 span: None,
-            });
+            }
+            .into());
         }
     }
     Ok(())

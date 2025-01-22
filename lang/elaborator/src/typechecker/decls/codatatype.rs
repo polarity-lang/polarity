@@ -51,7 +51,8 @@ fn check_dtor_wf(codata_name: &IdBind, dtor: &Dtor, ctx: &mut Ctx) -> TcResult<D
             expected: Box::new(codata_name.clone()),
             actual: Box::new(self_param.typ.name.clone()),
             span: self_param.typ.span.to_miette(),
-        });
+        }
+        .into());
     }
 
     params.infer_telescope(ctx, |ctx, mut params_out| {

@@ -26,3 +26,4 @@ T-002
     ·             ╰── While elaborating
  25 │ }
     ╰────
+  help: The two subterms False and True are not equal.
