@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use ctx::values::Binder;
+use ctx::BindElem;
 use miette_util::codespan::Span;
 use url::Url;
 
@@ -437,12 +438,12 @@ impl LiftTelescope for Telescope {
     fn lift_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> T>(&self, ctx: &mut Ctx, f: F) -> T {
         let Telescope { params } = self;
 
-        ctx.bind_fold(
+        ctx.bind_fold2(
             params.iter(),
             vec![],
             |ctx, mut acc, param| {
                 acc.push(param.lift(ctx));
-                acc
+                BindElem { elem: Binder { name: param.name.clone(), content: () }, ret: acc }
             },
             |ctx, params| f(ctx, Telescope { params }),
         )
@@ -455,12 +456,12 @@ impl LiftTelescope for TelescopeInst {
     fn lift_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> T>(&self, ctx: &mut Ctx, f: F) -> T {
         let TelescopeInst { params } = self;
 
-        ctx.bind_fold(
+        ctx.bind_fold2(
             params.iter(),
             vec![],
             |ctx, mut acc, param| {
                 acc.push(param.lift(ctx));
-                acc
+                BindElem { elem: Binder { name: param.name.clone(), content: () }, ret: acc }
             },
             |ctx, params| f(ctx, TelescopeInst { params }),
         )

@@ -1,5 +1,7 @@
 use std::fmt::Debug;
 
+use values::Binder;
+
 use crate::ctx::*;
 use crate::Variable;
 use crate::*;
@@ -180,12 +182,12 @@ impl SubstInTelescope for Telescope {
     fn subst_in_telescope<S: Substitution>(&self, mut ctx: LevelCtx, s: &S) -> Self {
         let Telescope { params } = self;
 
-        ctx.bind_fold(
+        ctx.bind_fold2(
             params.iter(),
             Vec::new(),
             |ctx, mut params_out, param| {
                 params_out.push(param.subst(ctx, s));
-                params_out
+                BindElem { elem: Binder { name: param.name.clone(), content: () }, ret: params_out }
             },
             |_, params_out| Telescope { params: params_out },
         )
