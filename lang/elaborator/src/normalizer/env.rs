@@ -1,9 +1,9 @@
-use ast::{Shift, ShiftRange, VarBound};
+use ast::{Lvl, Shift, ShiftRange, VarBound};
 use pretty::DocAllocator;
 
+use ast::ctx::map_idx::*;
 use ast::ctx::values::{Binder, TypeCtx};
-use ast::ctx::{map_idx::*, GenericCtx};
-use ast::ctx::{Context, LevelCtx};
+use ast::ctx::LevelCtx;
 use ast::{Idx, Var};
 use printer::tokens::COMMA;
 use printer::Print;
@@ -13,51 +13,39 @@ use crate::normalizer::val::*;
 #[derive(Debug, Clone)]
 pub struct Env {
     /// Environment for locally bound variables
-    bound_vars: GenericCtx<Box<Val>>,
+    bound_vars: Vec<Vec<Binder<Box<Val>>>>,
 }
 
-impl Context for Env {
-    type Elem = Binder<Box<Val>>;
-
-    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
-        let lvl = self.bound_vars.var_to_lvl(idx.into());
+impl Env {
+    pub fn lookup<V: Into<Var>>(&self, idx: V) -> Binder<Box<Val>> {
+        let lvl = self.var_to_lvl(idx.into());
         self.bound_vars
-            .bound
             .get(lvl.fst)
             .and_then(|ctx| ctx.get(lvl.snd))
             .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
             .clone()
     }
 
-    fn push_telescope(&mut self) {
-        self.bound_vars.bound.push(vec![]);
-    }
-
-    fn pop_telescope(&mut self) {
-        self.bound_vars.bound.pop().unwrap();
-    }
-
-    fn push_binder(&mut self, elem: Self::Elem) {
-        self.bound_vars
-            .bound
-            .last_mut()
-            .expect("Cannot push without calling push_telescope first")
-            .push(elem);
-    }
-
-    fn pop_binder(&mut self, _elem: Self::Elem) {
-        let err = "Cannot pop from empty context";
-        self.bound_vars.bound.last_mut().expect(err).pop().expect(err);
+    /// Bind an iterator `iter` of binders
+    pub fn bind_iter<I, O, F>(&mut self, iter: I, f: F) -> O
+    where
+        I: Iterator<Item = Binder<Box<Val>>>,
+        F: FnOnce(&mut Self) -> O,
+    {
+        self.bound_vars.push(iter.collect());
+        let res = f(self);
+        self.bound_vars.pop().unwrap();
+        res
     }
 }
 
 impl Env {
     pub fn empty() -> Self {
-        Self { bound_vars: GenericCtx::empty() }
+        Self { bound_vars: Vec::new() }
     }
 
     pub fn from_vec(bound: Vec<Vec<Box<Val>>>) -> Self {
-        let bound: Vec<Vec<_>> = bound
+        let bound_vars: Vec<Vec<_>> = bound
             .into_iter()
             .map(|inner| {
                 inner
@@ -66,17 +54,36 @@ impl Env {
                     .collect()
             })
             .collect();
-        Self { bound_vars: GenericCtx::from(bound) }
+        Self { bound_vars }
     }
 
     pub(super) fn for_each<F>(&mut self, f: F)
     where
         F: Fn(&mut Box<Val>),
     {
-        for outer in self.bound_vars.bound.iter_mut() {
+        for outer in self.bound_vars.iter_mut() {
             for inner in outer {
                 f(&mut inner.content)
             }
+        }
+    }
+
+    pub fn idx_to_lvl(&self, idx: Idx) -> Lvl {
+        let fst = self.bound_vars.len() - 1 - idx.fst;
+        let snd = self.bound_vars[fst].len() - 1 - idx.snd;
+        Lvl { fst, snd }
+    }
+
+    pub fn lvl_to_idx(&self, lvl: Lvl) -> Idx {
+        let fst = self.bound_vars.len() - 1 - lvl.fst;
+        let snd = self.bound_vars[lvl.fst].len() - 1 - lvl.snd;
+        Idx { fst, snd }
+    }
+
+    pub fn var_to_lvl(&self, var: Var) -> Lvl {
+        match var {
+            Var::Lvl(lvl) => lvl,
+            Var::Idx(idx) => self.idx_to_lvl(idx),
         }
     }
 }

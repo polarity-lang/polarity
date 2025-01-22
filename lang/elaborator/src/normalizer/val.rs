@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use ast;
 use ast::ctx::values::Binder;
-use ast::ctx::BindContext;
 use ast::shift_and_clone;
 use ast::Idx;
 use ast::MetaVar;
