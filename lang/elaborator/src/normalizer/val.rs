@@ -3,7 +3,6 @@ use std::rc::Rc;
 use ast;
 use ast::ctx::values::Binder;
 use ast::ctx::BindContext;
-use ast::shift_and_clone;
 use ast::Idx;
 use ast::MetaVar;
 use ast::Shift;
@@ -907,7 +906,7 @@ pub struct Closure {
 
 impl Shift for Closure {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        self.env.shift_in_range(range, by);
+        self.env.shift(range, by);
     }
 }
 
@@ -937,7 +936,8 @@ impl ReadBack for Closure {
             .iter()
             .zip(args)
             .map(|(name, arg)| Binder { name: name.clone(), content: arg });
-        let mut shifted_env = shift_and_clone(&self.env, (1, 0));
+        let mut shifted_env = self.env.clone();
+        shifted_env.shift(&(0..), (1, 0));
         shifted_env.bind_iter(binders, |env| self.body.eval(info_table, env))?.read_back(info_table)
     }
 }

@@ -46,36 +46,6 @@ impl From<Vec<Vec<Param>>> for LevelCtx {
     }
 }
 
-impl Context for LevelCtx {
-    type Elem = Binder<()>;
-
-    fn push_telescope(&mut self) {
-        self.bound.push(Vec::new());
-    }
-
-    fn pop_telescope(&mut self) {
-        self.bound.pop().unwrap();
-    }
-
-    fn push_binder(&mut self, elem: Self::Elem) {
-        self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
-    }
-
-    fn pop_binder(&mut self, _elem: Self::Elem) {
-        let err = "Cannot pop from empty context";
-        self.bound.last_mut().expect(err).pop();
-    }
-
-    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
-        let lvl = self.var_to_lvl(idx.into());
-        self.bound
-            .get(lvl.fst)
-            .and_then(|ctx| ctx.get(lvl.snd))
-            .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
-            .clone()
-    }
-}
-
 impl From<Vec<Vec<VarBind>>> for LevelCtx {
     fn from(value: Vec<Vec<VarBind>>) -> Self {
         let bound = value

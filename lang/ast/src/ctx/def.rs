@@ -1,8 +1,10 @@
 //! Generic definition of variable contexts
 
 use derivative::Derivative;
+use pretty::DocAllocator;
+use printer::{tokens::*, Alloc, Builder, Print, PrintCfg};
 
-use crate::{Idx, Lvl, Var};
+use crate::{Idx, Lvl, Shift, ShiftRange, Var};
 
 use super::values::Binder;
 
@@ -55,9 +57,78 @@ impl<T> GenericCtx<T> {
     }
 }
 
+impl<T: Shift> GenericCtx<T> {
+    pub fn shift<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        for lvl in 0..self.bound.len() {
+            self.shift_at_lvl(range, lvl, by)
+        }
+    }
+
+    fn shift_at_lvl<R: ShiftRange>(&mut self, range: &R, lvl: usize, by: (isize, isize)) {
+        for i in 0..self.bound[lvl].len() {
+            self.bound[lvl][i].shift_in_range(range, by);
+        }
+    }
+}
+
 impl<T> From<Vec<Vec<Binder<T>>>> for GenericCtx<T> {
     fn from(value: Vec<Vec<Binder<T>>>) -> Self {
         GenericCtx { bound: value }
+    }
+}
+
+impl<T: Print> Print for GenericCtx<T> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let sep = alloc.text(COMMA).append(alloc.space());
+        let iter = self.iter().map(|ctx| {
+            alloc
+                .intersperse(
+                    ctx.iter().map(|b| {
+                        b.name
+                            .print(cfg, alloc)
+                            .append(COLON)
+                            .append(alloc.space())
+                            .append(b.content.print(cfg, alloc))
+                    }),
+                    sep.clone(),
+                )
+                .brackets()
+        });
+        alloc.intersperse(iter, sep.clone()).brackets()
+    }
+}
+
+impl<T: Shift + Clone> Context for GenericCtx<T> {
+    type Elem = Binder<T>;
+
+    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
+        let lvl = self.var_to_lvl(idx.into());
+        self.bound
+            .get(lvl.fst)
+            .and_then(|ctx| ctx.get(lvl.snd))
+            .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
+            .clone()
+    }
+
+    fn push_telescope(&mut self) {
+        self.shift(&(0..), (1, 0));
+        self.bound.push(vec![]);
+    }
+
+    fn pop_telescope(&mut self) {
+        self.bound.pop().unwrap();
+        self.shift(&(0..), (-1, 0));
+    }
+
+    fn push_binder(&mut self, elem: Self::Elem) {
+        self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
+        self.shift_at_lvl(&(0..1), self.bound.len() - 1, (0, 1));
+    }
+
+    fn pop_binder(&mut self, _elem: Self::Elem) {
+        let err = "Cannot pop from empty context";
+        self.bound.last_mut().expect(err).pop().expect(err);
+        self.shift_at_lvl(&(0..1), self.bound.len() - 1, (0, -1));
     }
 }
 
@@ -231,5 +302,11 @@ impl<C: Context> BindContext for C {
 
     fn ctx_mut(&mut self) -> &mut Self::Ctx {
         self
+    }
+}
+
+impl<C: Context> ContextElem<C> for C::Elem {
+    fn as_element(&self) -> C::Elem {
+        self.clone()
     }
 }
