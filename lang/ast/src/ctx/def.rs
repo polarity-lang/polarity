@@ -188,38 +188,14 @@ pub trait BindContext: Sized {
         I: Iterator<Item = T>,
         F: FnOnce(&mut Self) -> O,
     {
-        self.bind_fold(iter, (), |_ctx, (), _x| (), |ctx, ()| f(ctx))
-    }
-
-    /// Bind an iterator `iter` of elements
-    ///
-    /// Fold the iterator and consume the result
-    /// under the inner context with all binders in scope.
-    ///
-    /// This is used for checking telescopes.
-    ///
-    /// * `iter` - An iterator of binders
-    /// * `acc` - Accumulator for folding the iterator
-    /// * `f_acc` - Accumulator function run for each binder
-    /// * `f_inner` - Inner function computing the final result under the context of all binders
-    fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
-        &mut self,
-        iter: I,
-        acc: O1,
-        f_acc: F1,
-        f_inner: F2,
-    ) -> O2
-    where
-        T: ContextElem<Self::Ctx>,
-        F1: Fn(&mut Self, O1, T) -> O1,
-        F2: FnOnce(&mut Self, O1) -> O2,
-    {
-        self.bind_fold2(
-            iter,
-            acc,
-            |this, acc, x| BindElem { elem: x.as_element(), ret: f_acc(this, acc, x) },
-            f_inner,
-        )
+        {
+            self.bind_fold2(
+                iter,
+                (),
+                |_ctx, (), x| BindElem { elem: x.as_element(), ret: () },
+                |ctx, ()| f(ctx),
+            )
+        }
     }
 
     fn bind_fold2<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
