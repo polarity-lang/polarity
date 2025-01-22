@@ -138,14 +138,13 @@ impl<T> Context for GenericCtx<T> {
     type Elem = T;
 }
 
-/// Interface to bind variables to anything that has a `Context`
+/// Interface to bind variables to anything that has a `GenericCtx`.
 ///
 /// There are two ways to use this trait.
 ///
-/// Case 1: You have a type that implements `Context`.
-/// Then, a blanket impl ensures that this type also implements `BindContext`.
+/// Case 1: It is implemented for `GenericCtx`.
 ///
-/// Case 2: You have a type that has a field which implements `Context`.
+/// Case 2: You have a type that has a field of type `GenericCtx`.
 /// Then, only implement the `ctx_mut` method for `BindContext` and return the field that implements `Context`.
 /// Do not override the default implementations for the `bind_*` methods.
 ///
@@ -153,9 +152,10 @@ impl<T> Context for GenericCtx<T> {
 pub trait BindContext: Sized {
     type Content: Shift + Clone;
 
+    /// Get a mutable reference to the context
     fn ctx_mut(&mut self) -> &mut GenericCtx<Self::Content>;
 
-    /// Bind a single element
+    /// Bind a single binder as a one-element telescope
     fn bind_single<T, O, F>(&mut self, elem: T, f: F) -> O
     where
         T: AsBinder<Self::Content>,
@@ -174,6 +174,15 @@ pub trait BindContext: Sized {
         self.bind_fold(iter, (), |_ctx, (), x| x.as_binder(), |ctx, ()| f(ctx))
     }
 
+    /// Bind a telescope, binder by binder and simultaneously fold over the binders
+    ///
+    /// Parameters:
+    /// * `iter`: An iterator of elements to bind
+    /// * `acc`: Initial fold accumulator
+    /// * `f_acc`: Function called on each element in `iter`
+    ///            The return value is the binder to bind.
+    ///            The function can mutate the accumulator.
+    /// * `f_inner`: Function called on a context where all binders have been bound
     fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
         &mut self,
         iter: I,
@@ -194,6 +203,7 @@ pub trait BindContext: Sized {
         .unwrap()
     }
 
+    /// Like `bind_fold`, but allows the accumulator function `f_acc` to fail
     fn bind_fold_failable<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
         &mut self,
         iter: I,
