@@ -56,32 +56,32 @@ impl From<Vec<Vec<VarBind>>> for LevelCtx {
     }
 }
 
-impl ContextElem<LevelCtx> for VarBind {
-    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+impl ContextElem<()> for VarBind {
+    fn as_element(&self) -> Binder<()> {
         Binder { name: self.clone(), content: () }
     }
 }
 
-impl ContextElem<LevelCtx> for &Binder<()> {
-    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+impl ContextElem<()> for &Binder<()> {
+    fn as_element(&self) -> Binder<()> {
         Binder { name: self.name.clone(), content: () }
     }
 }
 
-impl ContextElem<LevelCtx> for &Param {
-    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+impl ContextElem<()> for &Param {
+    fn as_element(&self) -> Binder<()> {
         Binder { name: self.name.clone(), content: () }
     }
 }
 
-impl ContextElem<LevelCtx> for &ParamInst {
-    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+impl ContextElem<()> for &ParamInst {
+    fn as_element(&self) -> Binder<()> {
         Binder { name: self.name.clone(), content: () }
     }
 }
 
-impl ContextElem<LevelCtx> for &Option<Motive> {
-    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+impl ContextElem<()> for &Option<Motive> {
+    fn as_element(&self) -> Binder<()> {
         let name = match self {
             Some(m) => m.param.name.clone(),
             None => VarBind::Wildcard { span: None },
@@ -90,8 +90,8 @@ impl ContextElem<LevelCtx> for &Option<Motive> {
     }
 }
 
-impl ContextElem<LevelCtx> for &SelfParam {
-    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+impl ContextElem<()> for &SelfParam {
+    fn as_element(&self) -> Binder<()> {
         let name = self.name.clone().unwrap_or(VarBind::Wildcard { span: None });
         Binder { name, content: () }
     }

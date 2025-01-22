@@ -5,7 +5,7 @@
 use crate::traits::Shift;
 use crate::*;
 
-use super::{Context, ContextElem, GenericCtx, LevelCtx};
+use super::{GenericCtx, LevelCtx};
 
 pub type TypeCtx = GenericCtx<Box<Exp>>;
 
@@ -37,12 +37,6 @@ impl TypeCtx {
             .collect();
 
         Ok(Self { bound: bound? })
-    }
-}
-
-impl ContextElem<TypeCtx> for &Binder<Box<Exp>> {
-    fn as_element(&self) -> <TypeCtx as Context>::Elem {
-        (*self).clone()
     }
 }
 

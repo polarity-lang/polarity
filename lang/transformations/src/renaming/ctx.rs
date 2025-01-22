@@ -15,9 +15,9 @@ impl From<GenericCtx<()>> for Ctx {
 }
 
 impl BindContext for Ctx {
-    type Ctx = LevelCtx;
+    type Content = ();
 
-    fn ctx_mut(&mut self) -> &mut Self::Ctx {
+    fn ctx_mut(&mut self) -> &mut LevelCtx {
         &mut self.binders
     }
 }

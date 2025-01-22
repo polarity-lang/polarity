@@ -330,9 +330,9 @@ impl USTVisitor<'_> {
 }
 
 impl BindContext for USTVisitor<'_> {
-    type Ctx = LevelCtx;
+    type Content = ();
 
-    fn ctx_mut(&mut self) -> &mut Self::Ctx {
+    fn ctx_mut(&mut self) -> &mut LevelCtx {
         &mut self.lvl_ctx
     }
 }
