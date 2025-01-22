@@ -40,7 +40,7 @@ pub struct Hole {
     /// is a nested vector.
     ///
     /// Example:
-    /// [x, y][z][v, w] |- ?[x, y][z][v,w]
+    /// `[x, y][z][v, w] |- ?[x, y][z][v,w]`
     pub args: Vec<Vec<Box<Exp>>>,
     /// The solution found by unification. It is propagated during zonking.
     pub solution: Option<Box<Exp>>,

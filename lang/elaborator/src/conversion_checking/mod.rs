@@ -79,9 +79,18 @@ pub fn convert(
     match ctx.unify(meta_vars, while_elaborating_span) {
         Ok(()) => Ok(()),
         Err(err) => match *err {
+            // The code below is responsible for generating improved error messages.
+            // See in particular the documentation at [crate::result::TypeError::NotEq].
+            //
+            // The basic idea is that when we check whether `List(Bool)` is equal to `List(Nat)`,
+            // then we want to report that they are unequal, and also point to the subexpressions
+            // `Bool` and `Nat` which are different.
             TypeError::NotEqInternal { lhs, rhs } => {
                 let lhs_outer = this.print_to_string(None);
                 let rhs_outer = other.print_to_string(None);
+                // If `lhs == lhs_outer` and `rhs == rhs_outer` then it doesn't make
+                // sense to create a detailed error `TypeError::NotEqDetailed`, because
+                // the unequal subexpressions are the immediate subexpressions.
                 if lhs != lhs_outer || rhs != rhs_outer {
                     Err({
                         TypeError::NotEqDetailed {
