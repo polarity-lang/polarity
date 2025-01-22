@@ -163,7 +163,7 @@ impl Zonk for Hole {
     ) -> Result<(), ZonkError> {
         match meta_vars.get(&self.metavar) {
             Some(crate::MetaVarState::Solved { ctx, solution }) => {
-                self.solution = Some(solution.subst_under_ctx(ctx.levels(), &self.args));
+                self.solution = Some(solution.subst_under_ctx(ctx.clone(), &self.args));
             }
             Some(crate::MetaVarState::Unsolved { .. }) => {
                 // Nothing to do, the hole remains unsolved

@@ -251,7 +251,7 @@ impl Substitutable for Motive {
         Motive {
             span: *span,
             param: param.clone(),
-            ret_typ: ctx.bind_single((), |ctx| {
+            ret_typ: ctx.bind_single(param, |ctx| {
                 let mut by = (*by).clone();
                 by.shift((1, 0));
                 ret_typ.subst(ctx, &by)

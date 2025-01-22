@@ -1,3 +1,7 @@
+use ast::{
+    ctx::{BindContext, BindElem},
+    VarBind,
+};
 use miette_util::ToMiette;
 use parser::cst::{self};
 
@@ -86,22 +90,23 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, Lowering
     let typ_out = typ.lower(ctx)?;
     let typ_ctor =
         typ_out.to_typctor().ok_or(LoweringError::ExpectedTypCtor { span: span.to_miette() })?;
-    ctx.bind_single(
-        name.clone().unwrap_or_else(|| parser::cst::ident::Ident {
-            span: Default::default(),
-            id: "".to_owned(),
-        }),
-        |ctx| {
-            f(
-                ctx,
-                ast::SelfParam {
-                    info: Some(*span),
-                    name: name.clone().map(|name| ast::VarBind::Var { span: None, id: name.id }),
-                    typ: typ_ctor,
+    let name = match name {
+        Some(ident) => VarBind::Var { span: Some(ident.span), id: ident.id.clone() },
+        None => VarBind::Wildcard { span: None },
+    };
+    ctx.bind_single(name.clone(), |ctx| {
+        f(
+            ctx,
+            ast::SelfParam {
+                info: Some(*span),
+                name: match name {
+                    v @ VarBind::Var { .. } => Some(v),
+                    VarBind::Wildcard { .. } => None,
                 },
-            )
-        },
-    )
+                typ: typ_ctor,
+            },
+        )
+    })
 }
 
 // Telescopes
@@ -145,18 +150,18 @@ where
     F: FnOnce(&mut Ctx, ast::Telescope) -> Result<T, LoweringError>,
 {
     let tel = desugar_telescope(tele);
-    ctx.bind_fold(
+    ctx.bind_fold_failable(
         tel.0.iter(),
-        Ok(vec![]),
-        |ctx, params_out, param| {
-            let mut params_out = params_out?;
+        vec![],
+        |ctx, mut params_out, param| {
             let cst::decls::Param { implicit, name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
             let typ_out = typ.lower(ctx)?;
             let name = name.lower(ctx)?;
-            let param_out = ast::Param { implicit: *implicit, name, typ: typ_out, erased: false };
+            let param_out =
+                ast::Param { implicit: *implicit, name: name.clone(), typ: typ_out, erased: false };
             params_out.push(param_out);
-            Ok(params_out)
+            Ok(BindElem { elem: name, ret: params_out })
         },
-        |ctx, params| f(ctx, params.map(|params| ast::Telescope { params })?),
-    )
+        |ctx, params| f(ctx, ast::Telescope { params }),
+    )?
 }

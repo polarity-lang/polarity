@@ -162,8 +162,8 @@ impl BuildMatrix for ast::Codef {
             let body = body.as_ref().map(|body| {
                 let mut ctx = LevelCtx::empty();
                 // TODO: Reconsider where to swap this
-                ctx.bind_iter(self.params.params.iter().map(|_| ()), |ctx| {
-                    ctx.bind_iter(case.pattern.params.params.iter().map(|_| ()), |ctx| {
+                ctx.bind_iter(self.params.params.iter(), |ctx| {
+                    ctx.bind_iter(case.pattern.params.params.iter(), |ctx| {
                         body.swap_with_ctx(ctx, 0, 1)
                     })
                 })

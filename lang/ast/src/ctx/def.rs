@@ -4,8 +4,6 @@ use derivative::Derivative;
 
 use crate::{Idx, Lvl, Var};
 
-use super::LevelCtx;
-
 #[derive(Debug, Clone, Default, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct GenericCtx<T> {
@@ -23,11 +21,6 @@ impl<T> GenericCtx<T> {
 
     pub fn empty() -> Self {
         Self { bound: vec![] }
-    }
-
-    pub fn levels(&self) -> LevelCtx {
-        let bound: Vec<_> = self.bound.iter().map(|inner| inner.len()).collect();
-        LevelCtx::from(bound)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &[T]> {

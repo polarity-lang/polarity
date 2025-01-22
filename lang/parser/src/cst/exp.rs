@@ -9,6 +9,15 @@ pub enum BindingSite {
     Wildcard { span: Span },
 }
 
+impl BindingSite {
+    pub fn span(&self) -> Span {
+        match self {
+            BindingSite::Var { span, .. } => *span,
+            BindingSite::Wildcard { span } => *span,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Pattern {
     pub span: Span,

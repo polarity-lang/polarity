@@ -21,7 +21,7 @@ pub fn lift(module: Arc<Module>, name: &str) -> LiftResult {
         new_decls: vec![],
         curr_decl: IdBind::from_string(""),
         modified_decls: HashSet::default(),
-        ctx: LevelCtx::default(),
+        ctx: LevelCtx::empty(),
         uri: module.uri.clone(),
     };
 
@@ -268,7 +268,7 @@ impl LiftTelescope for SelfParam {
     fn lift_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> T>(&self, ctx: &mut Ctx, f: F) -> T {
         let SelfParam { info, name, typ } = self;
 
-        ctx.bind_single((), |ctx| {
+        ctx.bind_single(name.clone().unwrap_or(VarBind::Wildcard { span: None }), |ctx| {
             let self_param = SelfParam { info: *info, name: name.clone(), typ: typ.lift(ctx) };
             f(ctx, self_param)
         })
@@ -425,7 +425,11 @@ impl Lift for Motive {
 
         let param = param.lift(ctx);
 
-        ctx.bind_single((), |ctx| Motive { span: *span, param, ret_typ: ret_typ.lift(ctx) })
+        ctx.bind_single(&param.clone(), |ctx| Motive {
+            span: *span,
+            param,
+            ret_typ: ret_typ.lift(ctx),
+        })
     }
 }
 

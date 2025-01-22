@@ -414,8 +414,17 @@ impl Substitution for FVBodySubst<'_> {
         // Δ = [[x, y], [z]]
         //      ^^^^^^  ^^^ bound vars
         // new telescope
-        let new_ctx =
-            LevelCtx::from(vec![self.inner.subst.len()]).append(&ctx.tail(self.inner.cutoff));
+
+        // Compute the names for the free variables in the correct order
+        // This is only needed to satisfy LevelCtx now tracking the names of the binders.
+        // FIXME: This needs to be refactored
+        let mut free_vars = self.inner.subst.iter().collect::<Vec<_>>();
+        free_vars.sort_by_key(|(lvl, _)| *lvl);
+        let free_vars = free_vars
+            .into_iter()
+            .map(|(_, var)| VarBind::Var { id: var.name.clone(), span: None })
+            .collect::<Vec<_>>();
+        let new_ctx = LevelCtx::from(vec![free_vars]).append(&ctx.tail(self.inner.cutoff));
         self.inner.subst.get(&lvl).map(|fv| {
             Box::new(Exp::Variable(Variable {
                 span: None,

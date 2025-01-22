@@ -73,7 +73,7 @@ impl Shift for Case {
 impl Occurs for Case {
     fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         let Case { pattern, body, .. } = self;
-        ctx.bind_iter(pattern.params.params.iter().map(|_| ()), |ctx| body.occurs(ctx, lvl))
+        ctx.bind_iter(pattern.params.params.iter(), |ctx| body.occurs(ctx, lvl))
     }
 }
 

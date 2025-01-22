@@ -1,5 +1,7 @@
 use std::fmt;
 
+use ctx::values::Binder;
+
 use crate::*;
 
 use super::def::*;
@@ -13,7 +15,7 @@ fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
     vec.join(s)
 }
 
-pub type LevelCtx = GenericCtx<()>;
+pub type LevelCtx = GenericCtx<VarBind>;
 
 impl LevelCtx {
     pub fn append(&self, other: &LevelCtx) -> Self {
@@ -34,8 +36,15 @@ impl LevelCtx {
     }
 }
 
+impl From<Vec<Vec<Param>>> for LevelCtx {
+    fn from(value: Vec<Vec<Param>>) -> Self {
+        let bound = value.into_iter().map(|v| v.into_iter().map(|p| p.name).collect()).collect();
+        Self { bound }
+    }
+}
+
 impl Context for LevelCtx {
-    type Elem = ();
+    type Elem = VarBind;
 
     fn push_telescope(&mut self) {
         self.bound.push(Vec::new());
@@ -45,8 +54,8 @@ impl Context for LevelCtx {
         self.bound.pop().unwrap();
     }
 
-    fn push_binder(&mut self, _elem: Self::Elem) {
-        self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(());
+    fn push_binder(&mut self, elem: Self::Elem) {
+        self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
     }
 
     fn pop_binder(&mut self, _elem: Self::Elem) {
@@ -54,16 +63,46 @@ impl Context for LevelCtx {
         self.bound.last_mut().expect(err).pop();
     }
 
-    fn lookup<V: Into<Var>>(&self, _idx: V) -> Self::Elem {}
+    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
+        let lvl = self.var_to_lvl(idx.into());
+        self.bound
+            .get(lvl.fst)
+            .and_then(|ctx| ctx.get(lvl.snd))
+            .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
+            .clone()
+    }
 }
 
-impl<T> ContextElem<LevelCtx> for T {
-    fn as_element(&self) -> <LevelCtx as Context>::Elem {}
+impl ContextElem<LevelCtx> for VarBind {
+    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+        self.clone()
+    }
 }
 
-impl From<Vec<usize>> for LevelCtx {
-    fn from(bound: Vec<usize>) -> Self {
-        Self { bound: bound.iter().map(|i| vec![(); *i]).collect() }
+impl ContextElem<LevelCtx> for &Binder {
+    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+        self.name.clone()
+    }
+}
+
+impl ContextElem<LevelCtx> for &Param {
+    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+        self.name.clone()
+    }
+}
+
+impl ContextElem<LevelCtx> for &ParamInst {
+    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+        self.name.clone()
+    }
+}
+
+impl ContextElem<LevelCtx> for &Option<Motive> {
+    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+        match self {
+            Some(m) => m.param.name.clone(),
+            None => VarBind::Wildcard { span: None },
+        }
     }
 }
 
