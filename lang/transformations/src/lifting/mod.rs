@@ -1,14 +1,13 @@
 use std::sync::Arc;
 
-use ctx::values::Binder;
-use ctx::BindElem;
-use miette_util::codespan::Span;
 use url::Url;
 
 use ast::ctx::values::TypeCtx;
 use ast::ctx::BindContext;
 use ast::ctx::LevelCtx;
 use ast::*;
+use ctx::values::Binder;
+use miette_util::codespan::Span;
 
 use crate::Rename;
 
@@ -443,7 +442,7 @@ impl LiftTelescope for Telescope {
             vec![],
             |ctx, acc, param| {
                 acc.push(param.lift(ctx));
-                BindElem { elem: Binder { name: param.name.clone(), content: () } }
+                Binder { name: param.name.clone(), content: () }
             },
             |ctx, params| f(ctx, Telescope { params }),
         )
@@ -461,7 +460,7 @@ impl LiftTelescope for TelescopeInst {
             vec![],
             |ctx, acc, param| {
                 acc.push(param.lift(ctx));
-                BindElem { elem: Binder { name: param.name.clone(), content: () } }
+                Binder { name: param.name.clone(), content: () }
             },
             |ctx, params| f(ctx, TelescopeInst { params }),
         )

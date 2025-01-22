@@ -1,5 +1,4 @@
 use ast::ctx::values::Binder;
-use ast::ctx::BindElem;
 use ast::HasSpan;
 use ast::IdBound;
 use ast::MetaVarKind;
@@ -60,7 +59,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
                 erased: false,
             };
             params_out.push(param_out);
-            Ok(BindElem { elem: Binder { name, content: () } })
+            Ok(Binder { name, content: () })
         },
         |ctx, params| f(ctx, ast::TelescopeInst { params }),
     )?

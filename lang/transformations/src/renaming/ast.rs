@@ -139,8 +139,7 @@ impl Rename for Telescope {
                 param.rename_in_ctx(ctx);
                 let new_name = param.name.clone();
                 acc.push(param);
-                let binder = Binder { name: new_name, content: () };
-                BindElem { elem: binder }
+                Binder { name: new_name, content: () }
             },
             |_ctx, _params| (),
         )
@@ -165,8 +164,7 @@ impl Rename for TelescopeInst {
                 param.rename_in_ctx(ctx);
                 let new_name = param.name.clone();
                 acc.push(param);
-                let binder = Binder { name: new_name, content: () };
-                BindElem { elem: binder }
+                Binder { name: new_name, content: () }
             },
             |_ctx, _params| (),
         )

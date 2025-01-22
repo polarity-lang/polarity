@@ -188,7 +188,7 @@ pub trait BindContext: Sized {
         I: Iterator<Item = T>,
         F: FnOnce(&mut Self) -> O,
     {
-        self.bind_fold(iter, (), |_ctx, (), x| BindElem { elem: x.as_element() }, |ctx, ()| f(ctx))
+        self.bind_fold(iter, (), |_ctx, (), x| x.as_element(), |ctx, ()| f(ctx))
     }
 
     fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
@@ -199,7 +199,7 @@ pub trait BindContext: Sized {
         f_inner: F2,
     ) -> O2
     where
-        F1: Fn(&mut Self, &mut O1, T) -> BindElem<<Self::Ctx as Context>::Elem>,
+        F1: Fn(&mut Self, &mut O1, T) -> <Self::Ctx as Context>::Elem,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         self.bind_fold_failable(
@@ -219,7 +219,7 @@ pub trait BindContext: Sized {
         f_inner: F2,
     ) -> Result<O2, E>
     where
-        F1: Fn(&mut Self, &mut O1, T) -> Result<BindElem<<Self::Ctx as Context>::Elem>, E>,
+        F1: Fn(&mut Self, &mut O1, T) -> Result<<Self::Ctx as Context>::Elem, E>,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         fn bind_inner<This: BindContext, T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
@@ -234,13 +234,12 @@ pub trait BindContext: Sized {
                 &mut This,
                 &mut O1,
                 T,
-            )
-                -> Result<BindElem<<<This as BindContext>::Ctx as Context>::Elem>, E>,
+            ) -> Result<<<This as BindContext>::Ctx as Context>::Elem, E>,
             F2: FnOnce(&mut This, O1) -> O2,
         {
             match iter.next() {
                 Some(x) => {
-                    let BindElem { elem } = f_acc(this, &mut acc, x)?;
+                    let elem = f_acc(this, &mut acc, x)?;
                     this.ctx_mut().push_binder(elem.clone());
                     let res = bind_inner(this, iter, acc, f_acc, f_inner);
                     this.ctx_mut().pop_binder(elem);
@@ -255,10 +254,6 @@ pub trait BindContext: Sized {
         self.ctx_mut().pop_telescope();
         res
     }
-}
-
-pub struct BindElem<E> {
-    pub elem: E,
 }
 
 pub trait ContextElem<C: Context> {
