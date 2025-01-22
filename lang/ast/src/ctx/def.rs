@@ -158,7 +158,7 @@ pub trait BindContext: Sized {
     /// Bind a single element
     fn bind_single<T, O, F>(&mut self, elem: T, f: F) -> O
     where
-        T: ContextElem<Self::Content>,
+        T: AsBinder<Self::Content>,
         F: FnOnce(&mut Self) -> O,
     {
         self.bind_iter([elem].into_iter(), f)
@@ -167,11 +167,11 @@ pub trait BindContext: Sized {
     /// Bind an iterator `iter` of binders
     fn bind_iter<T, I, O, F>(&mut self, iter: I, f: F) -> O
     where
-        T: ContextElem<Self::Content>,
+        T: AsBinder<Self::Content>,
         I: Iterator<Item = T>,
         F: FnOnce(&mut Self) -> O,
     {
-        self.bind_fold(iter, (), |_ctx, (), x| x.as_element(), |ctx, ()| f(ctx))
+        self.bind_fold(iter, (), |_ctx, (), x| x.as_binder(), |ctx, ()| f(ctx))
     }
 
     fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
@@ -235,8 +235,8 @@ pub trait BindContext: Sized {
     }
 }
 
-pub trait ContextElem<T> {
-    fn as_element(&self) -> Binder<T>;
+pub trait AsBinder<T> {
+    fn as_binder(&self) -> Binder<T>;
 }
 
 impl<T: Shift + Clone> BindContext for GenericCtx<T> {
@@ -247,8 +247,8 @@ impl<T: Shift + Clone> BindContext for GenericCtx<T> {
     }
 }
 
-impl<T: Clone> ContextElem<T> for Binder<T> {
-    fn as_element(&self) -> Binder<T> {
+impl<T: Clone> AsBinder<T> for Binder<T> {
+    fn as_binder(&self) -> Binder<T> {
         self.clone()
     }
 }
