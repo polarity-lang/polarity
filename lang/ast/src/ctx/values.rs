@@ -11,14 +11,16 @@ use crate::*;
 
 use super::{Context, ContextElem, GenericCtx, LevelCtx};
 
-pub type TypeCtx = GenericCtx<Binder>;
+pub type TypeCtx = GenericCtx<Box<Exp>>;
 
 impl TypeCtx {
     pub fn levels(&self) -> LevelCtx {
         let bound: Vec<Vec<_>> = self
             .bound
             .iter()
-            .map(|inner| inner.iter().map(|b| b.name.to_owned()).collect())
+            .map(|inner| {
+                inner.iter().map(|b| Binder { name: b.name.to_owned(), typ: () }).collect()
+            })
             .collect();
         LevelCtx::from(bound)
     }
@@ -52,7 +54,7 @@ impl TypeCtx {
 }
 
 impl Context for TypeCtx {
-    type Elem = Binder;
+    type Elem = Binder<Box<Exp>>;
 
     fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
         let lvl = self.var_to_lvl(idx.into());
@@ -85,7 +87,7 @@ impl Context for TypeCtx {
     }
 }
 
-impl ContextElem<TypeCtx> for &Binder {
+impl ContextElem<TypeCtx> for &Binder<Box<Exp>> {
     fn as_element(&self) -> <TypeCtx as Context>::Elem {
         (*self).clone()
     }
@@ -102,13 +104,13 @@ impl Print for TypeCtx {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Binder {
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub struct Binder<T> {
     pub name: VarBind,
-    pub typ: Box<Exp>,
+    pub typ: T,
 }
 
-impl Shift for Binder {
+impl<T: Shift> Shift for Binder<T> {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         self.typ.shift_in_range(range, by);
     }

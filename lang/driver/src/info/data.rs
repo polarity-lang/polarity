@@ -21,8 +21,8 @@ impl From<TypeCtx> for Ctx {
     }
 }
 
-impl From<TypeCtxBinder> for Binder {
-    fn from(binder: TypeCtxBinder) -> Self {
+impl From<TypeCtxBinder<Box<ast::Exp>>> for Binder {
+    fn from(binder: TypeCtxBinder<Box<ast::Exp>>) -> Self {
         match binder.name {
             ast::VarBind::Var { id, .. } => {
                 Binder::Var { name: id, typ: binder.typ.print_to_string(None) }

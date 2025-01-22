@@ -1,7 +1,7 @@
 use ast::{Shift, ShiftRange, VarBound};
 use pretty::DocAllocator;
 
-use ast::ctx::values::TypeCtx;
+use ast::ctx::values::{Binder, TypeCtx};
 use ast::ctx::{map_idx::*, GenericCtx};
 use ast::ctx::{Context, ContextElem, LevelCtx};
 use ast::{Idx, Var};
@@ -26,6 +26,7 @@ impl Context for Env {
             .get(lvl.fst)
             .and_then(|ctx| ctx.get(lvl.snd))
             .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
+            .typ
             .clone()
     }
 
@@ -42,7 +43,7 @@ impl Context for Env {
             .bound
             .last_mut()
             .expect("Cannot push without calling push_telescope first")
-            .push(elem);
+            .push(Binder { name: ast::VarBind::Wildcard { span: None }, typ: elem });
     }
 
     fn pop_binder(&mut self, _elem: Self::Elem) {
@@ -63,6 +64,15 @@ impl Env {
     }
 
     pub fn from_vec(bound: Vec<Vec<Box<Val>>>) -> Self {
+        let bound: Vec<Vec<_>> = bound
+            .into_iter()
+            .map(|inner| {
+                inner
+                    .into_iter()
+                    .map(|v| Binder { name: ast::VarBind::Wildcard { span: None }, typ: v })
+                    .collect()
+            })
+            .collect();
         Self { bound_vars: GenericCtx::from(bound) }
     }
 
@@ -72,7 +82,7 @@ impl Env {
     {
         for outer in self.bound_vars.bound.iter_mut() {
             for inner in outer {
-                f(inner)
+                f(&mut inner.typ)
             }
         }
     }
@@ -139,7 +149,7 @@ impl Print for Env {
     ) -> printer::Builder<'a> {
         let iter = self.bound_vars.iter().map(|ctx| {
             alloc
-                .intersperse(ctx.iter().map(|typ| typ.print(cfg, alloc)), alloc.text(COMMA))
+                .intersperse(ctx.iter().map(|v| v.typ.print(cfg, alloc)), alloc.text(COMMA))
                 .brackets()
         });
         alloc.intersperse(iter, alloc.text(COMMA)).brackets()

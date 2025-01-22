@@ -1,5 +1,5 @@
 use ast::{
-    ctx::{BindContext, BindElem},
+    ctx::{values::Binder, BindContext, BindElem},
     VarBind,
 };
 use miette_util::ToMiette;
@@ -160,7 +160,8 @@ where
             let param_out =
                 ast::Param { implicit: *implicit, name: name.clone(), typ: typ_out, erased: false };
             params_out.push(param_out);
-            Ok(BindElem { elem: name, ret: params_out })
+            let binder = Binder { name, typ: () };
+            Ok(BindElem { elem: binder, ret: params_out })
         },
         |ctx, params| f(ctx, ast::Telescope { params }),
     )?
