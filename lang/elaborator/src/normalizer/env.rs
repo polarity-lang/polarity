@@ -17,7 +17,7 @@ pub struct Env {
 }
 
 impl Context for Env {
-    type Elem = Box<Val>;
+    type Elem = Binder<Box<Val>>;
 
     fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
         let lvl = self.bound_vars.var_to_lvl(idx.into());
@@ -26,7 +26,6 @@ impl Context for Env {
             .get(lvl.fst)
             .and_then(|ctx| ctx.get(lvl.snd))
             .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
-            .typ
             .clone()
     }
 
@@ -43,7 +42,7 @@ impl Context for Env {
             .bound
             .last_mut()
             .expect("Cannot push without calling push_telescope first")
-            .push(Binder { name: ast::VarBind::Wildcard { span: None }, typ: elem });
+            .push(elem);
     }
 
     fn pop_binder(&mut self, _elem: Self::Elem) {
@@ -52,7 +51,7 @@ impl Context for Env {
     }
 }
 
-impl ContextElem<Env> for &Box<Val> {
+impl ContextElem<Env> for Binder<Box<Val>> {
     fn as_element(&self) -> <Env as Context>::Elem {
         (*self).clone()
     }

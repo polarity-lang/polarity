@@ -4,6 +4,7 @@ use log::trace;
 
 use ast::ctx::{BindContext, Context};
 use ast::*;
+use ctx::values::Binder;
 use miette_util::ToMiette;
 use printer::types::Print;
 
@@ -24,7 +25,7 @@ pub trait Apply {
     fn apply(
         self,
         info_table: &Rc<TypeInfoTable>,
-        args: &[Box<Val>],
+        args: Vec<Binder<Box<Val>>>,
     ) -> Result<Box<Val>, TypeError>;
 }
 
@@ -58,7 +59,7 @@ impl Eval for Variable {
 
     fn eval(&self, _info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         let Variable { idx, .. } = self;
-        Ok(env.lookup(*idx))
+        Ok(env.lookup(*idx).typ)
     }
 }
 
@@ -81,14 +82,19 @@ impl Eval for Call {
         let Call { span, name, kind, args, .. } = self;
         match kind {
             CallKind::LetBound => {
-                let Let { attr, body, .. } = info_table.lookup_let(name)?;
+                let Let { attr, body, params, .. } = info_table.lookup_let(name)?;
                 // We now have to distinguish two cases:
                 // If the let-bound definition is transparent, then we substitute the
                 // arguments for the body of the definition. If it is opaque, then
                 // the further computation is blocked so we return a neutral value.
                 if attr.attrs.contains(&Attribute::Transparent) {
                     let args = args.eval(info_table, env)?;
-                    env.bind_iter(args.to_vals().iter(), |env| body.eval(info_table, env))
+                    let binders = params
+                        .params
+                        .iter()
+                        .zip(args.to_vals())
+                        .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg });
+                    env.bind_iter(binders, |env| body.eval(info_table, env))
                 } else {
                     Ok(Box::new(Val::Neu(
                         val::OpaqueCall {
@@ -155,18 +161,28 @@ impl Eval for DotCall {
                         // data type, and `d` is the name of a toplevel definition.
 
                         // First, we have to find the corresponding case in the toplevel definition `d`.
-                        let Def { cases, .. } = info_table.lookup_def(&name.clone())?;
+                        let Def { cases, params, .. } = info_table.lookup_def(&name.clone())?;
                         let mut env = Env::empty();
-                        let cases = env
-                            .bind_iter(args.to_vals().iter(), |env| cases.eval(info_table, env))?;
-                        let val::Case { body, .. } = cases
+                        let binders = params
+                            .params
+                            .iter()
+                            .zip(args.to_vals())
+                            .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg });
+                        let cases = env.bind_iter(binders, |env| cases.eval(info_table, env))?;
+                        let val::Case { body, params, .. } = cases
                             .clone()
                             .into_iter()
                             .find(|case| case.name == call_name)
                             .ok_or_else(|| TypeError::MissingCase { name: call_name.id.clone() })?;
 
                         // Then we apply the body to the `call_args`.
-                        body.clone().unwrap().apply(info_table, &call_args.to_vals())
+                        let binders = params
+                            .params
+                            .iter()
+                            .zip(call_args.to_vals())
+                            .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg })
+                            .collect::<Vec<_>>();
+                        body.clone().unwrap().apply(info_table, binders)
                     }
                     CallKind::Codefinition => {
                         // The specific instance of the DotCall we are evaluating is:
@@ -185,19 +201,29 @@ impl Eval for DotCall {
 
                         // First, we have to find the corresponding cocase in the toplevel
                         // codefinition `C`.
-                        let Codef { cases, .. } = info_table.lookup_codef(&call_name.clone())?;
+                        let Codef { cases, params, .. } =
+                            info_table.lookup_codef(&call_name.clone())?;
                         let mut env = Env::empty();
-                        let cases = env.bind_iter(call_args.to_vals().iter(), |env| {
-                            cases.eval(info_table, env)
-                        })?;
-                        let val::Case { body, .. } = cases
+                        let binders = params
+                            .params
+                            .iter()
+                            .zip(call_args.to_vals())
+                            .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg });
+                        let cases = env.bind_iter(binders, |env| cases.eval(info_table, env))?;
+                        let val::Case { body, params, .. } = cases
                             .clone()
                             .into_iter()
                             .find(|cocase| cocase.name == *name)
                             .ok_or_else(|| TypeError::MissingCocase { name: name.id.clone() })?;
 
                         // Then we apply the body to the `args`.
-                        body.clone().unwrap().apply(info_table, &args.to_vals())
+                        let binders = params
+                            .params
+                            .iter()
+                            .zip(args.to_vals())
+                            .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg })
+                            .collect::<Vec<_>>();
+                        body.clone().unwrap().apply(info_table, binders)
                     }
                     CallKind::LetBound => {
                         // This case is unreachable because all let-bound calls have either already
@@ -222,14 +248,20 @@ impl Eval for DotCall {
                 // codata type.
 
                 // First, we have to select the correct case from the comatch.
-                let val::Case { body, .. } = cases
+                let val::Case { body, params, .. } = cases
                     .clone()
                     .into_iter()
                     .find(|cocase| cocase.name == *name)
                     .ok_or_else(|| TypeError::MissingCocase { name: name.id.clone() })?;
 
                 // Then we apply the body to the `args`.
-                body.clone().unwrap().apply(info_table, &args.to_vals())
+                let binders = params
+                    .params
+                    .iter()
+                    .zip(args.to_vals())
+                    .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg })
+                    .collect::<Vec<_>>();
+                body.clone().unwrap().apply(info_table, binders)
             }
 
             Val::Neu(exp) => {
@@ -344,14 +376,20 @@ impl Eval for LocalMatch {
                 // type declaration.
 
                 // We first look up the correct case.
-                let val::Case { body, .. } = cases
+                let val::Case { body, params, .. } = cases
                     .clone()
                     .into_iter()
                     .find(|case| case.name == ctor_name)
                     .ok_or_else(|| TypeError::MissingCase { name: ctor_name.id.clone() })?;
 
                 // Then we substitute the `args` in the body.
-                body.clone().unwrap().apply(info_table, &args.to_vals())
+                let binders = params
+                    .params
+                    .iter()
+                    .zip(args.to_vals())
+                    .map(|(param, arg)| Binder { name: param.name.clone(), typ: arg })
+                    .collect::<Vec<_>>();
+                body.clone().unwrap().apply(info_table, binders)
             }
             Val::Neu(exp) => {
                 // The specific instance of the LocalMatch we are evaluating is:
@@ -430,7 +468,7 @@ impl Eval for Case {
 
         let body = body.as_ref().map(|body| Closure {
             body: body.clone(),
-            n_args: pattern.params.len(),
+            params: pattern.params.params.iter().map(|p| p.name.clone()).collect(),
             env: env.clone(),
         });
 
@@ -469,8 +507,12 @@ impl Eval for Arg {
 }
 
 impl Apply for Closure {
-    fn apply(mut self, info_table: &Rc<TypeInfoTable>, args: &[Box<Val>]) -> TcResult<Box<Val>> {
-        self.env.bind_iter(args.iter(), |env| self.body.eval(info_table, env))
+    fn apply(
+        mut self,
+        info_table: &Rc<TypeInfoTable>,
+        args: Vec<Binder<Box<Val>>>,
+    ) -> TcResult<Box<Val>> {
+        self.env.bind_iter(args.into_iter(), |env| self.body.eval(info_table, env))
     }
 }
 
