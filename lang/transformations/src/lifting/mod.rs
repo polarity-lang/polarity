@@ -438,7 +438,7 @@ impl LiftTelescope for Telescope {
     fn lift_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> T>(&self, ctx: &mut Ctx, f: F) -> T {
         let Telescope { params } = self;
 
-        ctx.bind_fold2(
+        ctx.bind_fold(
             params.iter(),
             vec![],
             |ctx, mut acc, param| {
@@ -456,7 +456,7 @@ impl LiftTelescope for TelescopeInst {
     fn lift_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> T>(&self, ctx: &mut Ctx, f: F) -> T {
         let TelescopeInst { params } = self;
 
-        ctx.bind_fold2(
+        ctx.bind_fold(
             params.iter(),
             vec![],
             |ctx, mut acc, param| {

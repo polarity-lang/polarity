@@ -132,7 +132,7 @@ impl Rename for Let {
 impl Rename for Telescope {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         let Telescope { params } = self;
-        ctx.bind_fold2(
+        ctx.bind_fold(
             params.iter_mut(),
             vec![],
             |ctx, mut acc, param| {
@@ -158,7 +158,7 @@ impl Rename for TelescopeInst {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         let TelescopeInst { params } = self;
 
-        ctx.bind_fold2(
+        ctx.bind_fold(
             params.iter_mut(),
             vec![],
             |ctx, mut acc, param| {

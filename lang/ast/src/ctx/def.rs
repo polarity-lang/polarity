@@ -189,7 +189,7 @@ pub trait BindContext: Sized {
         F: FnOnce(&mut Self) -> O,
     {
         {
-            self.bind_fold2(
+            self.bind_fold(
                 iter,
                 (),
                 |_ctx, (), x| BindElem { elem: x.as_element(), ret: () },
@@ -198,7 +198,7 @@ pub trait BindContext: Sized {
         }
     }
 
-    fn bind_fold2<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
+    fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
         &mut self,
         iter: I,
         acc: O1,

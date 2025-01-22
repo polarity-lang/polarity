@@ -182,7 +182,7 @@ impl SubstInTelescope for Telescope {
     fn subst_in_telescope<S: Substitution>(&self, mut ctx: LevelCtx, s: &S) -> Self {
         let Telescope { params } = self;
 
-        ctx.bind_fold2(
+        ctx.bind_fold(
             params.iter(),
             Vec::new(),
             |ctx, mut params_out, param| {
