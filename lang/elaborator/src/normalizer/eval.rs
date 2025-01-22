@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use log::trace;
 
-use ast::ctx::{BindContext, Context};
 use ast::*;
 use ctx::values::Binder;
 use miette_util::ToMiette;

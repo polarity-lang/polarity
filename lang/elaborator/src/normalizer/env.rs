@@ -3,7 +3,7 @@ use pretty::DocAllocator;
 
 use ast::ctx::map_idx::*;
 use ast::ctx::values::{Binder, TypeCtx};
-use ast::ctx::{Context, LevelCtx};
+use ast::ctx::LevelCtx;
 use ast::{Idx, Var};
 use printer::tokens::COMMA;
 use printer::Print;
@@ -16,10 +16,8 @@ pub struct Env {
     bound_vars: Vec<Vec<Binder<Box<Val>>>>,
 }
 
-impl Context for Env {
-    type Elem = Binder<Box<Val>>;
-
-    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
+impl Env {
+    pub fn lookup<V: Into<Var>>(&self, idx: V) -> Binder<Box<Val>> {
         let lvl = self.var_to_lvl(idx.into());
         self.bound_vars
             .get(lvl.fst)
@@ -28,24 +26,16 @@ impl Context for Env {
             .clone()
     }
 
-    fn push_telescope(&mut self) {
-        self.bound_vars.push(vec![]);
-    }
-
-    fn pop_telescope(&mut self) {
+    /// Bind an iterator `iter` of binders
+    pub fn bind_iter<I, O, F>(&mut self, iter: I, f: F) -> O
+    where
+        I: Iterator<Item = Binder<Box<Val>>>,
+        F: FnOnce(&mut Self) -> O,
+    {
+        self.bound_vars.push(iter.collect());
+        let res = f(self);
         self.bound_vars.pop().unwrap();
-    }
-
-    fn push_binder(&mut self, elem: Self::Elem) {
-        self.bound_vars
-            .last_mut()
-            .expect("Cannot push without calling push_telescope first")
-            .push(elem);
-    }
-
-    fn pop_binder(&mut self, _elem: Self::Elem) {
-        let err = "Cannot pop from empty context";
-        self.bound_vars.last_mut().expect(err).pop().expect(err);
+        res
     }
 }
 
