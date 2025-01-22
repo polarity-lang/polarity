@@ -42,7 +42,7 @@ pub enum TypeError {
     ///   In that case we have additional fields [TypeError::NotEqDetailed::lhs_internal] and
     ///   [TypeError::NotEqDetailed::rhs_internal] which store the String representation of the two subexpressions
     ///   which differ: `x` and `y`, resp. `Nat` and `Bool` in this example.
-    /// - The variant [TypeError::NotEqInternal] should never be presented to the user. It is only  used internally in
+    /// - The variant [TypeError::NotEqInternal] should never be presented to the user. It is only used internally in
     ///   the implementation of conversion checking. If we check whether `List(Int)` and `List(Nat)` are convertible, then
     ///   we first internally throw a [TypeError::NotEqInternal] which carries the information that `Int` and `Nat`
     ///   are not equal. We then catch this error and insert the information in the [TypeError::NotEqDetailed] variant.
