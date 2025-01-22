@@ -220,7 +220,6 @@ impl CheckTelescope for TelescopeInst {
                 let Param { typ, erased, .. } = param_expected;
                 let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
-                let mut params_out = params_out;
                 let param_out = ParamInst {
                     span: *span,
                     info: Some(typ_nf.clone()),
@@ -230,7 +229,7 @@ impl CheckTelescope for TelescopeInst {
                 };
                 params_out.push(param_out);
                 let elem = Binder { name: param_actual.name.clone(), content: typ_nf };
-                TcResult::<_>::Ok(BindElem { elem, ret: params_out })
+                TcResult::<_>::Ok(BindElem { elem })
             },
             |ctx, params| f(ctx, TelescopeInst { params }),
         )?
@@ -250,7 +249,7 @@ impl InferTelescope for Telescope {
         ctx.bind_fold_failable(
             params.iter(),
             vec![],
-            |ctx, mut params_out, param| {
+            |ctx, params_out, param| {
                 let Param { implicit, typ, name, erased } = param;
                 let typ_out = typ.check(ctx, &Box::new(TypeUniv::new().into()))?;
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
@@ -262,7 +261,7 @@ impl InferTelescope for Telescope {
                 };
                 params_out.push(param_out);
                 let elem = Binder { name: param.name.clone(), content: typ_nf };
-                TcResult::<_>::Ok(BindElem { elem, ret: params_out })
+                TcResult::<_>::Ok(BindElem { elem })
             },
             |ctx, params| f(ctx, Telescope { params }),
         )?

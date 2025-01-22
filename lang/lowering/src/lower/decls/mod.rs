@@ -153,7 +153,7 @@ where
     ctx.bind_fold_failable(
         tel.0.iter(),
         vec![],
-        |ctx, mut params_out, param| {
+        |ctx, params_out, param| {
             let cst::decls::Param { implicit, name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
             let typ_out = typ.lower(ctx)?;
             let name = name.lower(ctx)?;
@@ -161,7 +161,7 @@ where
                 ast::Param { implicit: *implicit, name: name.clone(), typ: typ_out, erased: false };
             params_out.push(param_out);
             let binder = Binder { name, content: () };
-            Ok(BindElem { elem: binder, ret: params_out })
+            Ok(BindElem { elem: binder })
         },
         |ctx, params| f(ctx, ast::Telescope { params }),
     )?

@@ -441,9 +441,9 @@ impl LiftTelescope for Telescope {
         ctx.bind_fold(
             params.iter(),
             vec![],
-            |ctx, mut acc, param| {
+            |ctx, acc, param| {
                 acc.push(param.lift(ctx));
-                BindElem { elem: Binder { name: param.name.clone(), content: () }, ret: acc }
+                BindElem { elem: Binder { name: param.name.clone(), content: () } }
             },
             |ctx, params| f(ctx, Telescope { params }),
         )
@@ -459,9 +459,9 @@ impl LiftTelescope for TelescopeInst {
         ctx.bind_fold(
             params.iter(),
             vec![],
-            |ctx, mut acc, param| {
+            |ctx, acc, param| {
                 acc.push(param.lift(ctx));
-                BindElem { elem: Binder { name: param.name.clone(), content: () }, ret: acc }
+                BindElem { elem: Binder { name: param.name.clone(), content: () } }
             },
             |ctx, params| f(ctx, TelescopeInst { params }),
         )

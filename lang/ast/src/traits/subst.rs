@@ -185,9 +185,9 @@ impl SubstInTelescope for Telescope {
         ctx.bind_fold(
             params.iter(),
             Vec::new(),
-            |ctx, mut params_out, param| {
+            |ctx, params_out, param| {
                 params_out.push(param.subst(ctx, s));
-                BindElem { elem: Binder { name: param.name.clone(), content: () }, ret: params_out }
+                BindElem { elem: Binder { name: param.name.clone(), content: () } }
             },
             |_, params_out| Telescope { params: params_out },
         )

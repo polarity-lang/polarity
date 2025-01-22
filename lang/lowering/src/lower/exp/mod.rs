@@ -51,7 +51,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
     ctx.bind_fold_failable(
         tel_inst.into_iter(),
         vec![],
-        |_ctx, mut params_out, name| {
+        |_ctx, params_out, name| {
             let param_out = ast::ParamInst {
                 span: name.span(),
                 info: None,
@@ -60,7 +60,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
                 erased: false,
             };
             params_out.push(param_out);
-            Ok(BindElem { elem: Binder { name, content: () }, ret: params_out })
+            Ok(BindElem { elem: Binder { name, content: () } })
         },
         |ctx, params| f(ctx, ast::TelescopeInst { params }),
     )?

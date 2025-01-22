@@ -188,14 +188,7 @@ pub trait BindContext: Sized {
         I: Iterator<Item = T>,
         F: FnOnce(&mut Self) -> O,
     {
-        {
-            self.bind_fold(
-                iter,
-                (),
-                |_ctx, (), x| BindElem { elem: x.as_element(), ret: () },
-                |ctx, ()| f(ctx),
-            )
-        }
+        self.bind_fold(iter, (), |_ctx, (), x| BindElem { elem: x.as_element() }, |ctx, ()| f(ctx))
     }
 
     fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
@@ -206,7 +199,7 @@ pub trait BindContext: Sized {
         f_inner: F2,
     ) -> O2
     where
-        F1: Fn(&mut Self, O1, T) -> BindElem<<Self::Ctx as Context>::Elem, O1>,
+        F1: Fn(&mut Self, &mut O1, T) -> BindElem<<Self::Ctx as Context>::Elem>,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         self.bind_fold_failable(
@@ -226,28 +219,28 @@ pub trait BindContext: Sized {
         f_inner: F2,
     ) -> Result<O2, E>
     where
-        F1: Fn(&mut Self, O1, T) -> Result<BindElem<<Self::Ctx as Context>::Elem, O1>, E>,
+        F1: Fn(&mut Self, &mut O1, T) -> Result<BindElem<<Self::Ctx as Context>::Elem>, E>,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         fn bind_inner<This: BindContext, T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
             this: &mut This,
             mut iter: I,
-            acc: O1,
+            mut acc: O1,
             f_acc: F1,
             f_inner: F2,
         ) -> Result<O2, E>
         where
             F1: Fn(
                 &mut This,
-                O1,
+                &mut O1,
                 T,
             )
-                -> Result<BindElem<<<This as BindContext>::Ctx as Context>::Elem, O1>, E>,
+                -> Result<BindElem<<<This as BindContext>::Ctx as Context>::Elem>, E>,
             F2: FnOnce(&mut This, O1) -> O2,
         {
             match iter.next() {
                 Some(x) => {
-                    let BindElem { elem, ret: acc } = f_acc(this, acc, x)?;
+                    let BindElem { elem } = f_acc(this, &mut acc, x)?;
                     this.ctx_mut().push_binder(elem.clone());
                     let res = bind_inner(this, iter, acc, f_acc, f_inner);
                     this.ctx_mut().pop_binder(elem);
@@ -264,9 +257,8 @@ pub trait BindContext: Sized {
     }
 }
 
-pub struct BindElem<E, O> {
+pub struct BindElem<E> {
     pub elem: E,
-    pub ret: O,
 }
 
 pub trait ContextElem<C: Context> {
