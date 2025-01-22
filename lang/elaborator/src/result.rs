@@ -41,6 +41,9 @@ pub enum TypeError {
         #[label("While elaborating")]
         while_elaborating_span: Option<SourceSpan>,
     },
+    /// TOdo document.
+    #[error("INTERNAL:\n  1: {lhs}\n  2: {rhs}\n")]
+    NotEqInternal { lhs: String, rhs: String },
     #[error("Cannot match on codata type {name}")]
     #[diagnostic(code("T-003"))]
     MatchOnCodata {
