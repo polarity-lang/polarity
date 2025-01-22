@@ -188,20 +188,9 @@ pub trait BindContext: Sized {
         I: Iterator<Item = T>,
         F: FnOnce(&mut Self) -> O,
     {
-        self.bind_fold(iter, (), |_ctx, (), _x| (), |ctx, ()| f(ctx))
+        self.bind_fold(iter, (), |_ctx, (), x| x.as_element(), |ctx, ()| f(ctx))
     }
 
-    /// Bind an iterator `iter` of elements
-    ///
-    /// Fold the iterator and consume the result
-    /// under the inner context with all binders in scope.
-    ///
-    /// This is used for checking telescopes.
-    ///
-    /// * `iter` - An iterator of binders
-    /// * `acc` - Accumulator for folding the iterator
-    /// * `f_acc` - Accumulator function run for each binder
-    /// * `f_inner` - Inner function computing the final result under the context of all binders
     fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
         &mut self,
         iter: I,
@@ -210,27 +199,7 @@ pub trait BindContext: Sized {
         f_inner: F2,
     ) -> O2
     where
-        T: ContextElem<Self::Ctx>,
-        F1: Fn(&mut Self, O1, T) -> O1,
-        F2: FnOnce(&mut Self, O1) -> O2,
-    {
-        self.bind_fold2(
-            iter,
-            acc,
-            |this, acc, x| BindElem { elem: x.as_element(), ret: f_acc(this, acc, x) },
-            f_inner,
-        )
-    }
-
-    fn bind_fold2<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
-        &mut self,
-        iter: I,
-        acc: O1,
-        f_acc: F1,
-        f_inner: F2,
-    ) -> O2
-    where
-        F1: Fn(&mut Self, O1, T) -> BindElem<<Self::Ctx as Context>::Elem, O1>,
+        F1: Fn(&mut Self, &mut O1, T) -> <Self::Ctx as Context>::Elem,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         self.bind_fold_failable(
@@ -250,28 +219,27 @@ pub trait BindContext: Sized {
         f_inner: F2,
     ) -> Result<O2, E>
     where
-        F1: Fn(&mut Self, O1, T) -> Result<BindElem<<Self::Ctx as Context>::Elem, O1>, E>,
+        F1: Fn(&mut Self, &mut O1, T) -> Result<<Self::Ctx as Context>::Elem, E>,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         fn bind_inner<This: BindContext, T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
             this: &mut This,
             mut iter: I,
-            acc: O1,
+            mut acc: O1,
             f_acc: F1,
             f_inner: F2,
         ) -> Result<O2, E>
         where
             F1: Fn(
                 &mut This,
-                O1,
+                &mut O1,
                 T,
-            )
-                -> Result<BindElem<<<This as BindContext>::Ctx as Context>::Elem, O1>, E>,
+            ) -> Result<<<This as BindContext>::Ctx as Context>::Elem, E>,
             F2: FnOnce(&mut This, O1) -> O2,
         {
             match iter.next() {
                 Some(x) => {
-                    let BindElem { elem, ret: acc } = f_acc(this, acc, x)?;
+                    let elem = f_acc(this, &mut acc, x)?;
                     this.ctx_mut().push_binder(elem.clone());
                     let res = bind_inner(this, iter, acc, f_acc, f_inner);
                     this.ctx_mut().pop_binder(elem);
@@ -286,11 +254,6 @@ pub trait BindContext: Sized {
         self.ctx_mut().pop_telescope();
         res
     }
-}
-
-pub struct BindElem<E, O> {
-    pub elem: E,
-    pub ret: O,
 }
 
 pub trait ContextElem<C: Context> {

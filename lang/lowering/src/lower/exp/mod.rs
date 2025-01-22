@@ -1,3 +1,4 @@
+use ast::ctx::values::Binder;
 use ast::HasSpan;
 use ast::IdBound;
 use ast::MetaVarKind;
@@ -46,18 +47,22 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
     f: F,
 ) -> Result<T, LoweringError> {
     let tel_inst = tel_inst.iter().map(|bs| bs.lower(ctx)).collect::<Result<Vec<_>, _>>()?;
-    ctx.bind_fold(
+    ctx.bind_fold_failable(
         tel_inst.into_iter(),
-        Ok(vec![]),
+        vec![],
         |_ctx, params_out, name| {
-            let mut params_out = params_out?;
-            let param_out =
-                ast::ParamInst { span: name.span(), info: None, name, typ: None, erased: false };
+            let param_out = ast::ParamInst {
+                span: name.span(),
+                info: None,
+                name: name.clone(),
+                typ: None,
+                erased: false,
+            };
             params_out.push(param_out);
-            Ok(params_out)
+            Ok(Binder { name, content: () })
         },
-        |ctx, params| f(ctx, params.map(|params| ast::TelescopeInst { params })?),
-    )
+        |ctx, params| f(ctx, ast::TelescopeInst { params }),
+    )?
 }
 /// Lowers a list of arguments, ensuring that named arguments match the expected parameter names.
 ///
