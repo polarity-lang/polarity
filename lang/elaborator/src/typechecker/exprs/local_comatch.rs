@@ -29,7 +29,8 @@ impl CheckInfer for LocalComatch {
             return Err(TypeError::LocalComatchWithSelf {
                 type_name: codata.name.to_owned().id,
                 span: span.to_miette(),
-            });
+            }
+            .into());
         }
 
         let with_expected_type =
@@ -50,7 +51,7 @@ impl CheckInfer for LocalComatch {
 
     fn infer(&self, __ctx: &mut Ctx) -> TcResult<Self> {
         // We cannot currently infer the type of a copattern match, only check against an expected type.
-        Err(TypeError::CannotInferComatch { span: self.span().to_miette() })
+        Err(TypeError::CannotInferComatch { span: self.span().to_miette() }.into())
     }
 }
 
@@ -189,7 +190,7 @@ impl WithExpectedType<'_> {
                                     name: Box::new(name.clone()),
                                     span: span.to_miette(),
                                 };
-                                return Err(err);
+                                return Err(err.into());
                             }
 
                             let case_out = Case {
@@ -319,11 +320,11 @@ impl WithExpectedType<'_> {
                                             name: Box::new(name.clone()),
                                             span: span.to_miette(),
                                         };
-                                        return Err(err);
+                                        return Err(err.into());
                                     }
                                 };
 
-                                ctx.fork::<Result<_, TypeError>, _>(|ctx| {
+                                ctx.fork::<TcResult<_>, _>(|ctx| {
                                     let type_info_table = ctx.type_info_table.clone();
                                     ctx.subst(&type_info_table, &unif)?;
                                     let body = body.subst(&mut ctx.levels(), &unif);

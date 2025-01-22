@@ -26,7 +26,7 @@ pub trait Apply {
         self,
         info_table: &Rc<TypeInfoTable>,
         args: Vec<Binder<Box<Val>>>,
-    ) -> Result<Box<Val>, TypeError>;
+    ) -> TcResult<Box<Val>>;
 }
 
 impl Eval for Exp {
@@ -288,15 +288,18 @@ impl Eval for DotCall {
             Val::Anno(_) => Err(TypeError::Impossible {
                 message: "Type annotation was not stripped when evaluating DotCall".to_owned(),
                 span: span.to_miette(),
-            }),
+            }
+            .into()),
             Val::TypCtor(_) => Err(TypeError::Impossible {
                 message: "Cannot apply DotCall to type constructor".to_owned(),
                 span: span.to_miette(),
-            }),
+            }
+            .into()),
             Val::TypeUniv(_) => Err(TypeError::Impossible {
                 message: "Cannot apply DotCall to type universe".to_owned(),
                 span: span.to_miette(),
-            }),
+            }
+            .into()),
         }
     }
 }
@@ -331,11 +334,7 @@ impl Eval for Anno {
 impl Eval for TypeUniv {
     type Val = Box<Val>;
 
-    fn eval(
-        &self,
-        _info_table: &Rc<TypeInfoTable>,
-        _env: &mut Env,
-    ) -> Result<Self::Val, TypeError> {
+    fn eval(&self, _info_table: &Rc<TypeInfoTable>, _env: &mut Env) -> TcResult<Self::Val> {
         let TypeUniv { span } = self;
         Ok(Box::new(val::TypeUniv { span: *span }.into()))
     }
@@ -413,19 +412,23 @@ impl Eval for LocalMatch {
             Val::TypCtor(typ_ctor) => Err(TypeError::Impossible {
                 message: "Cannot match on a type constructor".to_owned(),
                 span: typ_ctor.span.to_miette(),
-            }),
+            }
+            .into()),
             Val::TypeUniv(type_univ) => Err(TypeError::Impossible {
                 message: "Cannot match on a type universe".to_owned(),
                 span: type_univ.span.to_miette(),
-            }),
+            }
+            .into()),
             Val::LocalComatch(local_comatch) => Err(TypeError::Impossible {
                 message: "Cannot match on a local comatch".to_owned(),
                 span: local_comatch.span.to_miette(),
-            }),
+            }
+            .into()),
             Val::Anno(anno_val) => Err(TypeError::Impossible {
                 message: "Type annotation was not stripped when evaluating local match".to_owned(),
                 span: anno_val.span.to_miette(),
-            }),
+            }
+            .into()),
         }
     }
 }

@@ -23,11 +23,7 @@ where
 {
     type Nf = <<T as Eval>::Val as ReadBack>::Nf;
 
-    fn normalize(
-        &self,
-        info_table: &Rc<TypeInfoTable>,
-        env: &mut Env,
-    ) -> Result<Self::Nf, TypeError> {
+    fn normalize(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Nf> {
         let val = self.eval(info_table, env)?;
         val.read_back(info_table)
     }

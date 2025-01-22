@@ -78,34 +78,38 @@ pub fn convert(
     let mut ctx = Ctx::new(vec![constraint]);
     match ctx.unify(meta_vars, while_elaborating_span) {
         Ok(()) => Ok(()),
-        Err(TypeError::NotEqInternal { lhs, rhs }) => {
-            let lhs_outer = this.print_to_string(None);
-            let rhs_outer = other.print_to_string(None);
-            if lhs != lhs_outer || rhs != rhs_outer {
-                Err({
-                    TypeError::NotEqDetailed {
-                        lhs: lhs_outer,
-                        rhs: rhs_outer,
-                        lhs_internal: lhs,
-                        rhs_internal: rhs,
-                        lhs_span: this.span().to_miette(),
-                        rhs_span: other.span().to_miette(),
-                        while_elaborating_span: while_elaborating_span.to_miette(),
+        Err(err) => match *err {
+            TypeError::NotEqInternal { lhs, rhs } => {
+                let lhs_outer = this.print_to_string(None);
+                let rhs_outer = other.print_to_string(None);
+                if lhs != lhs_outer || rhs != rhs_outer {
+                    Err({
+                        TypeError::NotEqDetailed {
+                            lhs: lhs_outer,
+                            rhs: rhs_outer,
+                            lhs_internal: lhs,
+                            rhs_internal: rhs,
+                            lhs_span: this.span().to_miette(),
+                            rhs_span: other.span().to_miette(),
+                            while_elaborating_span: while_elaborating_span.to_miette(),
+                        }
                     }
-                })
-            } else {
-                Err({
-                    TypeError::NotEq {
-                        lhs: lhs_outer,
-                        rhs: rhs_outer,
-                        lhs_span: this.span().to_miette(),
-                        rhs_span: other.span().to_miette(),
-                        while_elaborating_span: while_elaborating_span.to_miette(),
+                    .into())
+                } else {
+                    Err({
+                        TypeError::NotEq {
+                            lhs: lhs_outer,
+                            rhs: rhs_outer,
+                            lhs_span: this.span().to_miette(),
+                            rhs_span: other.span().to_miette(),
+                            while_elaborating_span: while_elaborating_span.to_miette(),
+                        }
                     }
-                })
+                    .into())
+                }
             }
-        }
-        Err(err) => Err(err),
+            _ => Err(err),
+        },
     }
 }
 

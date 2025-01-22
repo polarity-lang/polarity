@@ -27,7 +27,7 @@ impl ExpectTypApp for Exp {
             Exp::TypCtor(TypCtor { span, name, args }) => {
                 Ok(TypCtor { span: *span, name: name.clone(), args: args.clone() })
             }
-            _ => Err(TypeError::expected_typ_app(self)),
+            _ => Err(TypeError::expected_typ_app(self).into()),
         }
     }
 }

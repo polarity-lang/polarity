@@ -105,7 +105,7 @@ impl CheckInfer for LocalMatch {
     }
 
     fn infer(&self, __ctx: &mut Ctx) -> TcResult<Self> {
-        Err(TypeError::CannotInferMatch { span: self.span().to_miette() })
+        Err(TypeError::CannotInferMatch { span: self.span().to_miette() }.into())
     }
 }
 
@@ -286,7 +286,7 @@ impl WithScrutineeType<'_> {
                                         name: Box::new(name.clone()),
                                         span: span.to_miette(),
                                     };
-                                    return Err(err);
+                                    return Err(err.into());
                                 }
                             };
 
@@ -315,7 +315,7 @@ impl WithScrutineeType<'_> {
                                     name: Box::new(name.clone()),
                                     span: span.to_miette(),
                                 };
-                                return Err(err);
+                                return Err(err.into());
                             }
                             None
                         }

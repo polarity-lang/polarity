@@ -105,17 +105,20 @@ impl Ctx {
                         Err(TypeError::NotEqInternal {
                             lhs: v1.print_to_string(None),
                             rhs: v2.print_to_string(None),
-                        })
+                        }
+                        .into())
                     }
                 }
                 (Exp::Variable(v @ Variable { .. }), other) => Err(TypeError::NotEqInternal {
                     lhs: v.print_to_string(None),
                     rhs: other.print_to_string(None),
-                }),
+                }
+                .into()),
                 (other, Exp::Variable(v @ Variable { .. })) => Err(TypeError::NotEqInternal {
                     lhs: other.print_to_string(None),
                     rhs: v.print_to_string(None),
-                }),
+                }
+                .into()),
                 (
                     Exp::TypCtor(TypCtor { name, args, .. }),
                     Exp::TypCtor(TypCtor { name: name2, args: args2, .. }),
@@ -133,7 +136,8 @@ impl Ctx {
                 ) if name != name2 => Err(TypeError::NotEqInternal {
                     lhs: t1.print_to_string(None),
                     rhs: t2.print_to_string(None),
-                }),
+                }
+                .into()),
                 (
                     Exp::Call(Call { name, args, .. }),
                     Exp::Call(Call { name: name2, args: args2, .. }),
@@ -151,7 +155,8 @@ impl Ctx {
                     Err(TypeError::NotEqInternal {
                         lhs: c1.print_to_string(None),
                         rhs: c2.print_to_string(None),
-                    })
+                    }
+                    .into())
                 }
                 (
                     Exp::DotCall(DotCall { exp, name, args, .. }),

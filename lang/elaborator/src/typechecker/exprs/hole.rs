@@ -30,6 +30,6 @@ impl CheckInfer for Hole {
     }
 
     fn infer(&self, __ctx: &mut Ctx) -> TcResult<Self> {
-        Err(TypeError::CannotInferHole { span: self.span().to_miette() })
+        Err(TypeError::CannotInferHole { span: self.span().to_miette() }.into())
     }
 }

@@ -11,7 +11,7 @@ use ast::ctx::{BindContext, Context, LevelCtx};
 use ast::*;
 use printer::Print;
 
-use crate::result::TypeError;
+use crate::result::TcResult;
 
 use super::type_info_table::TypeInfoTable;
 
@@ -42,19 +42,11 @@ impl Ctx {
     }
 }
 pub trait ContextSubstExt: Sized {
-    fn subst<S: Substitution>(
-        &mut self,
-        type_info_table: &Rc<TypeInfoTable>,
-        s: &S,
-    ) -> Result<(), TypeError>;
+    fn subst<S: Substitution>(&mut self, type_info_table: &Rc<TypeInfoTable>, s: &S) -> TcResult;
 }
 
 impl ContextSubstExt for Ctx {
-    fn subst<S: Substitution>(
-        &mut self,
-        type_info_table: &Rc<TypeInfoTable>,
-        s: &S,
-    ) -> Result<(), TypeError> {
+    fn subst<S: Substitution>(&mut self, type_info_table: &Rc<TypeInfoTable>, s: &S) -> TcResult {
         let env = self.vars.env();
         let levels = self.vars.levels();
         self.map_failable(|nf| {
