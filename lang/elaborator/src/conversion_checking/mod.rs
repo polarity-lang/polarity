@@ -52,10 +52,10 @@
 //! ```
 //! When hovering over the holes in an editor connected to our language server, you will see that both holes are solved with `Nat`.
 
-use ast::{ctx::values::TypeCtx, Exp, HashMap, MetaVar, MetaVarState};
+use ast::{ctx::values::TypeCtx, Exp, HasSpan, HashMap, MetaVar, MetaVarState};
 use constraints::Constraint;
 use log::trace;
-use miette_util::codespan::Span;
+use miette_util::{codespan::Span, ToMiette};
 use printer::Print;
 use unify::Ctx;
 
@@ -78,7 +78,34 @@ pub fn convert(
     let mut ctx = Ctx::new(vec![constraint]);
     match ctx.unify(meta_vars, while_elaborating_span) {
         Ok(()) => Ok(()),
-        Err(_) => Err(TypeError::not_eq(&this, other, while_elaborating_span)),
+        Err(TypeError::NotEqInternal { lhs, rhs }) => {
+            let lhs_outer = this.print_to_string(None);
+            let rhs_outer = other.print_to_string(None);
+            if lhs != lhs_outer || rhs != rhs_outer {
+                Err({
+                    TypeError::NotEqDetailed {
+                        lhs: lhs_outer,
+                        rhs: rhs_outer,
+                        lhs_internal: lhs,
+                        rhs_internal: rhs,
+                        lhs_span: this.span().to_miette(),
+                        rhs_span: other.span().to_miette(),
+                        while_elaborating_span: while_elaborating_span.to_miette(),
+                    }
+                })
+            } else {
+                Err({
+                    TypeError::NotEq {
+                        lhs: lhs_outer,
+                        rhs: rhs_outer,
+                        lhs_span: this.span().to_miette(),
+                        rhs_span: other.span().to_miette(),
+                        while_elaborating_span: while_elaborating_span.to_miette(),
+                    }
+                })
+            }
+        }
+        Err(err) => Err(err),
     }
 }
 

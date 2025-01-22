@@ -41,6 +41,23 @@ pub enum TypeError {
         #[label("While elaborating")]
         while_elaborating_span: Option<SourceSpan>,
     },
+    #[error("The following terms are not equal:\n  1: {lhs}\n  2: {rhs}\n")]
+    #[diagnostic(
+        code("T-002"),
+        help("The two subterms {lhs_internal} and {rhs_internal} are not equal.")
+    )]
+    NotEqDetailed {
+        lhs: String,
+        rhs: String,
+        #[label("Source of (1)")]
+        lhs_span: Option<SourceSpan>,
+        #[label("Source of (2)")]
+        rhs_span: Option<SourceSpan>,
+        lhs_internal: String,
+        rhs_internal: String,
+        #[label("While elaborating")]
+        while_elaborating_span: Option<SourceSpan>,
+    },
     /// TOdo document.
     #[error("INTERNAL:\n  1: {lhs}\n  2: {rhs}\n")]
     NotEqInternal { lhs: String, rhs: String },
@@ -164,16 +181,6 @@ pub enum TypeError {
 }
 
 impl TypeError {
-    pub fn not_eq(lhs: &Exp, rhs: &Exp, while_elaborating_span: &Option<Span>) -> Self {
-        Self::NotEq {
-            lhs: lhs.print_to_string(None),
-            rhs: rhs.print_to_string(None),
-            lhs_span: lhs.span().to_miette(),
-            rhs_span: rhs.span().to_miette(),
-            while_elaborating_span: while_elaborating_span.to_miette(),
-        }
-    }
-
     pub fn invalid_match(
         missing: HashSet<String>,
         undeclared: HashSet<String>,
