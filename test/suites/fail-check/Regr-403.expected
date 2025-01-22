@@ -20,3 +20,4 @@ T-002
     ·                   ╰── While elaborating
  12 │ }
     ╰────
+  help: The two subterms T and F are not equal.
