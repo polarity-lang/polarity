@@ -1,3 +1,4 @@
+use lsp_types::{HoverContents, LanguageString, MarkedString, MarkupContent, MarkupKind};
 use miette_util::codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
@@ -5,68 +6,84 @@ use ast::*;
 use printer::{Print, PrintCfg};
 use url::Url;
 
-use crate::{
-    CodataInfo, CodefInfo, CtorInfo, DataInfo, Database, DefInfo, DtorInfo, Error, LetInfo,
-    LocalComatchInfo, LocalMatchInfo,
-};
+use crate::{Database, Error};
 
-use super::data::{
-    AnnoInfo, CallInfo, DotCallInfo, HoleInfo, Info, InfoContent, TypeCtorInfo, TypeUnivInfo,
-    UseInfo, VariableInfo,
-};
 use super::item::Item;
 use super::lookup::{lookup_codef, lookup_ctor, lookup_decl, lookup_def, lookup_dtor, lookup_let};
-use super::{CaseInfo, PatternInfo};
+use super::{Binder, Ctx};
 
 /// Traverse the program and collect information for the LSP server.
 #[allow(clippy::type_complexity)]
 pub async fn collect_info(
     db: &mut Database,
     uri: &Url,
-) -> Result<(Lapper<u32, Info>, Lapper<u32, Item>), Error> {
+) -> Result<(Lapper<u32, HoverContents>, Lapper<u32, (Url, Span)>, Lapper<u32, Item>), Error> {
     let module = db.ast(uri).await?;
     let mut collector = InfoCollector::new(module.meta_vars.clone());
 
     for use_decl in module.use_decls.iter() {
+        // Add hover info
+        let content = MarkedString::String(format!("Import module `{}`", use_decl.path));
+        let hover_content = HoverContents::Scalar(content);
+        collector.add_hover(use_decl.span, hover_content);
+
+        // Add goto info
         let dep_uri = db.resolve_module_name(&use_decl.path, uri)?;
-        let info = Info {
-            span: use_decl.span,
-            content: InfoContent::UseInfo(UseInfo { uri: dep_uri, path: use_decl.path.clone() }),
-        };
-        collector.info_spans.push(Interval {
-            start: use_decl.span.start.0,
-            stop: use_decl.span.end.0,
-            val: info,
-        })
+        collector.add_goto(use_decl.span, (dep_uri, Span::default()));
     }
 
     for decl in module.decls.iter() {
         decl.collect_info(db, &mut collector)
     }
 
-    let info_lapper = Lapper::new(collector.info_spans);
+    let hover_lapper = Lapper::new(collector.hover_spans);
+    let location_lapper = Lapper::new(collector.location_spans);
     let item_lapper = Lapper::new(collector.item_spans);
-    Ok((info_lapper, item_lapper))
+    Ok((hover_lapper, location_lapper, item_lapper))
+}
+
+fn string_to_language_string(s: String) -> MarkedString {
+    MarkedString::LanguageString(LanguageString { language: "pol".to_owned(), value: s })
+}
+
+fn add_doc_comment(builder: &mut Vec<MarkedString>, doc: Option<Vec<String>>) {
+    if let Some(doc) = doc {
+        builder.push(MarkedString::String("---".to_owned()));
+        for d in doc {
+            builder.push(MarkedString::String(d))
+        }
+    }
+}
+
+fn comma_separated<I: IntoIterator<Item = String>>(iter: I) -> String {
+    separated(", ", iter)
+}
+
+fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
+    let vec: Vec<_> = iter.into_iter().collect();
+    vec.join(s)
 }
 
 struct InfoCollector {
     meta_vars: HashMap<MetaVar, MetaVarState>,
-    info_spans: Vec<Interval<u32, Info>>,
+    hover_spans: Vec<Interval<u32, HoverContents>>,
+    location_spans: Vec<Interval<u32, (Url, Span)>>,
     item_spans: Vec<Interval<u32, Item>>,
 }
 
 impl InfoCollector {
     fn new(meta_vars: HashMap<MetaVar, MetaVarState>) -> Self {
-        InfoCollector { meta_vars, info_spans: vec![], item_spans: vec![] }
+        InfoCollector { meta_vars, hover_spans: vec![], location_spans: vec![], item_spans: vec![] }
     }
 
-    fn add_info<T: Into<InfoContent>>(&mut self, span: Span, info: T) {
-        let info = Interval {
-            start: span.start.0,
-            stop: span.end.0,
-            val: Info { span, content: info.into() },
-        };
-        self.info_spans.push(info)
+    fn add_hover(&mut self, span: Span, hover: HoverContents) {
+        let hover = Interval { start: span.start.0, stop: span.end.0, val: hover };
+        self.hover_spans.push(hover)
+    }
+
+    fn add_goto(&mut self, span: Span, location: (Url, Span)) {
+        let goto = Interval { start: span.start.0, stop: span.end.0, val: location };
+        self.location_spans.push(goto)
     }
 
     fn add_item(&mut self, span: Span, item: Item) {
@@ -131,11 +148,18 @@ impl CollectInfo for Data {
             // Add item
             let item = Item::Data(name.clone().id);
             collector.add_item(*span, item);
-            // Add info
-            let doc = doc.clone().map(|doc| doc.docs);
-            let info =
-                DataInfo { name: name.clone().id, doc, params: typ.params.print_to_string(None) };
-            collector.add_info(*span, info)
+
+            // Add hover info
+            let params = typ.params.print_to_string(None);
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(MarkedString::String(format!("Data declaration: `{name}`")));
+            add_doc_comment(&mut content, doc.clone().map(|doc| doc.docs));
+            if !params.is_empty() {
+                content.push(MarkedString::String("---".to_owned()).to_owned());
+                content.push(MarkedString::String(format!("Parameters: `{}`", params)));
+            }
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
         }
 
         for ctor in ctors {
@@ -153,11 +177,18 @@ impl CollectInfo for Codata {
             // Add item
             let item = Item::Codata(name.clone().id);
             collector.add_item(*span, item);
-            // Add info
-            let doc = doc.clone().map(|doc| doc.docs);
-            let info =
-                CodataInfo { name: name.clone().id, doc, params: typ.params.print_to_string(None) };
-            collector.add_info(*span, info);
+
+            // Add hover info
+            let params = typ.params.print_to_string(None);
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(MarkedString::String(format!("Codata declaration: `{}`", name)));
+            add_doc_comment(&mut content, doc.clone().map(|doc| doc.docs));
+            if !params.is_empty() {
+                content.push(MarkedString::String("---".to_owned()).to_owned());
+                content.push(MarkedString::String(format!("Parameters: `{}`", params)));
+            }
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
         }
 
         for dtor in dtors {
@@ -176,9 +207,10 @@ impl CollectInfo for Def {
             let item =
                 Item::Def { name: name.clone().id, type_name: self_param.typ.name.clone().id };
             collector.add_item(*span, item);
-            // Add Info
-            let info = DefInfo {};
-            collector.add_info(*span, info);
+            // Add hover info
+            let header = MarkedString::String("Definition".to_owned());
+            let hover_contents = HoverContents::Scalar(header);
+            collector.add_hover(*span, hover_contents);
         };
 
         self_param.collect_info(db, collector);
@@ -195,9 +227,10 @@ impl CollectInfo for Codef {
             // Add item
             let item = Item::Codef { name: name.clone().id, type_name: typ.name.clone().id };
             collector.add_item(*span, item);
-            // Add info
-            let info = CodefInfo {};
-            collector.add_info(*span, info);
+            // Add hover_info
+            let header = MarkedString::String("Codefinition".to_owned());
+            let hover_contents = HoverContents::Scalar(header);
+            collector.add_hover(*span, hover_contents);
         }
         typ.collect_info(db, collector);
         cases.collect_info(db, collector);
@@ -211,8 +244,11 @@ impl CollectInfo for Ctor {
         if let Some(span) = span {
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
-            let info = CtorInfo { name: name.clone().id, doc };
-            collector.add_info(*span, info);
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(MarkedString::String(format!("Constructor: `{}`", name)));
+            add_doc_comment(&mut content, doc);
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
         }
         params.collect_info(db, collector);
         typ.collect_info(db, collector);
@@ -225,8 +261,11 @@ impl CollectInfo for Dtor {
         if let Some(span) = span {
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
-            let info = DtorInfo { name: name.clone().id, doc };
-            collector.add_info(*span, info);
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(MarkedString::String(format!("Destructor: `{}`", name)));
+            add_doc_comment(&mut content, doc);
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
         }
         self_param.collect_info(db, collector);
         params.collect_info(db, collector);
@@ -238,9 +277,10 @@ impl CollectInfo for Let {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Let { span, typ, body, params, .. } = self;
         if let Some(span) = span {
-            // Add info
-            let info = LetInfo {};
-            collector.add_info(*span, info);
+            // Add hover info
+            let header = MarkedString::String("Let-binding".to_owned());
+            let hover_content = HoverContents::Scalar(header);
+            collector.add_hover(*span, hover_content);
         }
         typ.collect_info(db, collector);
         body.collect_info(db, collector);
@@ -272,8 +312,11 @@ impl CollectInfo for Variable {
     fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
         let Variable { span, inferred_type, name, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
-            let info = VariableInfo { typ: typ.print_to_string(None), name: name.clone().id };
-            collector.add_info(*span, info)
+            let typ = typ.print_to_string(None);
+            let header = MarkedString::String(format!("Bound variable: `{}`", name.id));
+            let typ = string_to_language_string(typ);
+            let hover_content = HoverContents::Array(vec![header, typ]);
+            collector.add_hover(*span, hover_content)
         }
     }
 }
@@ -296,8 +339,18 @@ impl CollectInfo for TypCtor {
                 }
                 _ => (None, None),
             };
-            let info = TypeCtorInfo { name: name.clone().id, definition_site, doc };
-            collector.add_info(*span, info)
+
+            // Add hover info
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(MarkedString::String(format!("Type constructor: `{}`", name)));
+            add_doc_comment(&mut content, doc);
+            let hover_contents = HoverContents::Array(content);
+            collector.add_hover(*span, hover_contents);
+
+            // Add goto info
+            if let Some(goto) = definition_site {
+                collector.add_goto(*span, goto)
+            }
         }
         args.collect_info(db, collector)
     }
@@ -333,15 +386,30 @@ impl CollectInfo for Call {
                     None => (None, None),
                 },
             };
+            // Add hover info
+            let typ = typ.print_to_string(None);
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(match kind {
+                CallKind::Constructor => {
+                    MarkedString::String(format!("Constructor: `{}`", name.id))
+                }
+                CallKind::Codefinition => {
+                    MarkedString::String(format!("Codefinition: `{}`", name.id))
+                }
+                CallKind::LetBound => {
+                    MarkedString::String(format!("Let-bound definition: `{}`", name.id))
+                }
+            });
+            add_doc_comment(&mut content, doc);
+            content.push(MarkedString::String("---".to_owned()));
+            content.push(string_to_language_string(typ));
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
 
-            let info = CallInfo {
-                kind: *kind,
-                doc,
-                typ: typ.print_to_string(None),
-                name: name.clone().id,
-                definition_site,
-            };
-            collector.add_info(*span, info)
+            // Add goto info
+            if let Some(goto) = definition_site {
+                collector.add_goto(*span, goto)
+            }
         }
         args.collect_info(db, collector)
     }
@@ -369,18 +437,56 @@ impl CollectInfo for DotCall {
                     None => (None, None),
                 },
             };
-            let info = DotCallInfo {
-                kind: *kind,
-                doc,
-                name: name.clone().id,
-                typ: typ.print_to_string(None),
-                definition_site,
-            };
-            collector.add_info(*span, info)
+            // Add hover info
+            let typ = typ.print_to_string(None);
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(match kind {
+                DotCallKind::Destructor => {
+                    MarkedString::String(format!("Destructor: `{}`", name.id))
+                }
+                DotCallKind::Definition => {
+                    MarkedString::String(format!("Definition: `{}`", name.id))
+                }
+            });
+            add_doc_comment(&mut content, doc);
+            content.push(MarkedString::String("---".to_owned()));
+            content.push(string_to_language_string(typ));
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
+
+            // Add goto info
+            if let Some(goto) = definition_site {
+                collector.add_goto(*span, goto)
+            }
         }
         exp.collect_info(db, collector);
         args.collect_info(db, collector)
     }
+}
+
+fn ctx_to_markdown(ctx: &Ctx, value: &mut String) {
+    value.push_str("**Context**\n\n");
+    value.push_str("| | |\n");
+    value.push_str("|-|-|\n");
+    for binder in ctx.bound.iter().rev().flatten() {
+        match binder {
+            Binder::Var { name, typ } => {
+                value.push_str("| ");
+                value.push_str(name);
+                value.push_str(" | `");
+                value.push_str(typ);
+                value.push_str("` |\n");
+            }
+            Binder::Wildcard { .. } => continue,
+        }
+    }
+}
+
+fn goal_to_markdown(goal_type: &str, value: &mut String) {
+    value.push_str("**Goal**\n\n");
+    value.push_str("```\n");
+    value.push_str(goal_type);
+    value.push_str("\n```\n");
 }
 
 impl CollectInfo for Hole {
@@ -395,18 +501,38 @@ impl CollectInfo for Hole {
             let metavar_str = metavar_state.solution().map(|e| {
                 e.print_to_string(Some(&PrintCfg { print_metavar_ids: true, ..Default::default() }))
             });
+            let goal = inferred_type.print_to_string(None);
+            let metavar = Some(format!("?{}", metavar.id));
+            let ctx = inferred_ctx.clone().map(Into::into);
+            let args: Vec<Vec<String>> = args
+                .iter()
+                .map(|subst| subst.iter().map(|exp| exp.print_to_string(None)).collect())
+                .collect();
 
-            let info = HoleInfo {
-                goal: inferred_type.print_to_string(None),
-                metavar: Some(format!("?{}", metavar.id)),
-                ctx: inferred_ctx.clone().map(Into::into),
-                args: args
-                    .iter()
-                    .map(|subst| subst.iter().map(|exp| exp.print_to_string(None)).collect())
-                    .collect(),
-                metavar_state: metavar_str,
+            let hover_contents = if let Some(ctx) = ctx {
+                let mut value = String::new();
+                match metavar {
+                    Some(mv) => value.push_str(&format!("Hole: `{}`\n\n", mv)),
+                    None => value.push_str("Hole: `?`\n\n"),
+                }
+                goal_to_markdown(&goal, &mut value);
+                value.push_str("\n\n");
+                ctx_to_markdown(&ctx, &mut value);
+                value.push_str("\n\nArguments:\n\n");
+                let args_str =
+                    args.iter().cloned().map(comma_separated).map(|s| format!("({})", s));
+                let args_str = format!("({})", comma_separated(args_str));
+                value.push_str(&args_str);
+                if let Some(solution) = metavar_str {
+                    value.push_str("\n\nSolution:\n\n");
+                    value.push_str(&solution);
+                }
+                HoverContents::Markup(MarkupContent { kind: MarkupKind::Markdown, value })
+            } else {
+                HoverContents::Scalar(string_to_language_string(goal))
             };
-            collector.add_info(*span, info)
+
+            collector.add_hover(*span, hover_contents)
         }
     }
 }
@@ -415,8 +541,16 @@ impl CollectInfo for TypeUniv {
     fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
         let TypeUniv { span } = self;
         if let Some(span) = span {
-            let info = TypeUnivInfo {};
-            collector.add_info(*span, info)
+            let content: Vec<MarkedString> = vec![
+            MarkedString::String("Universe: `Type`".to_owned()),
+            MarkedString::String("---".to_owned()),
+            MarkedString::String(
+                "The impredicative universe whose terms are types or the universe `Type` itself."
+                    .to_owned(),
+            ),
+        ];
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
         }
     }
 }
@@ -425,8 +559,11 @@ impl CollectInfo for Anno {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Anno { span, exp, typ, normalized_type } = self;
         if let (Some(span), Some(typ)) = (span, normalized_type) {
-            let info = AnnoInfo { typ: typ.print_to_string(None) };
-            collector.add_info(*span, info)
+            let header = MarkedString::String("Annotated term".to_owned());
+            let typ = typ.print_to_string(None);
+            let typ = string_to_language_string(typ);
+            let hover_contents = HoverContents::Array(vec![header, typ]);
+            collector.add_hover(*span, hover_contents);
         }
         exp.collect_info(db, collector);
         typ.collect_info(db, collector)
@@ -438,8 +575,11 @@ impl CollectInfo for LocalMatch {
         let LocalMatch { span, on_exp, ret_typ, cases, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             // Add info
-            let info = LocalMatchInfo { typ: typ.print_to_string(None) };
-            collector.add_info(*span, info)
+            let typ = typ.print_to_string(None);
+            let header = MarkedString::String("Local match".to_owned());
+            let typ = string_to_language_string(typ);
+            let hover_contents = HoverContents::Array(vec![header, typ]);
+            collector.add_hover(*span, hover_contents)
         }
         on_exp.collect_info(db, collector);
         ret_typ.collect_info(db, collector);
@@ -452,8 +592,11 @@ impl CollectInfo for LocalComatch {
         let LocalComatch { span, cases, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             // Add info
-            let info = LocalComatchInfo { typ: typ.print_to_string(None) };
-            collector.add_info(*span, info)
+            let typ = typ.print_to_string(None);
+            let header = MarkedString::String("Local comatch".to_owned());
+            let typ = string_to_language_string(typ);
+            let hover_content = HoverContents::Array(vec![header, typ]);
+            collector.add_hover(*span, hover_content)
         }
         cases.collect_info(db, collector)
     }
@@ -463,8 +606,15 @@ impl CollectInfo for Pattern {
     fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
         let Pattern { span, name, is_copattern, .. } = self;
         if let Some(span) = span {
-            let info = PatternInfo { is_copattern: *is_copattern, name: name.id.clone() };
-            collector.add_info(*span, info)
+            let hover_contents = if *is_copattern {
+                HoverContents::Array(vec![MarkedString::String(format!(
+                    "Copattern: `{}`",
+                    name.id
+                ))])
+            } else {
+                HoverContents::Array(vec![MarkedString::String(format!("Pattern: `{}`", name.id))])
+            };
+            collector.add_hover(*span, hover_contents)
         }
     }
 }
@@ -473,8 +623,9 @@ impl CollectInfo for Case {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
         let Case { body, span, pattern, .. } = self;
         if let Some(span) = span {
-            let info = CaseInfo {};
-            collector.add_info(*span, info)
+            let hover_contents =
+                HoverContents::Array(vec![MarkedString::String("Clause".to_owned())]);
+            collector.add_hover(*span, hover_contents)
         }
         pattern.collect_info(db, collector);
         body.collect_info(db, collector)
