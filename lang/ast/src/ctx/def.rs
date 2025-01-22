@@ -130,14 +130,6 @@ impl<T: Print> Print for GenericCtx<T> {
     }
 }
 
-pub trait Context {
-    type Elem;
-}
-
-impl<T> Context for GenericCtx<T> {
-    type Elem = T;
-}
-
 /// Interface to bind variables to anything that has a `GenericCtx`.
 ///
 /// There are two ways to use this trait.
