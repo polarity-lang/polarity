@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use ast;
+use ast::ctx::values::Binder;
 use ast::ctx::BindContext;
 use ast::shift_and_clone;
 use ast::Idx;
@@ -8,6 +9,7 @@ use ast::MetaVar;
 use ast::Shift;
 use ast::ShiftRange;
 use ast::ShiftRangeExt;
+use ast::VarBind;
 use ast::VarBound;
 use log::trace;
 use miette_util::codespan::Span;
@@ -899,7 +901,7 @@ impl Arg {
 #[derive(Debug, Clone)]
 pub struct Closure {
     pub env: Env,
-    pub n_args: usize,
+    pub params: Vec<VarBind>,
     pub body: Box<ast::Exp>,
 }
 
@@ -919,7 +921,7 @@ impl ReadBack for Closure {
     type Nf = Box<ast::Exp>;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
-        let args: Vec<Box<Val>> = (0..self.n_args)
+        let args: Vec<Box<Val>> = (0..self.params.len())
             .rev()
             .map(|snd| {
                 Val::Neu(Neu::Variable(Variable {
@@ -930,9 +932,12 @@ impl ReadBack for Closure {
             })
             .map(Box::new)
             .collect();
+        let binders = self
+            .params
+            .iter()
+            .zip(args)
+            .map(|(name, arg)| Binder { name: name.clone(), content: arg });
         let mut shifted_env = shift_and_clone(&self.env, (1, 0));
-        shifted_env
-            .bind_iter(args.iter(), |env| self.body.eval(info_table, env))?
-            .read_back(info_table)
+        shifted_env.bind_iter(binders, |env| self.body.eval(info_table, env))?.read_back(info_table)
     }
 }

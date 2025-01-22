@@ -74,7 +74,7 @@ impl FV for Variable {
         // The typing context contains the types for all free variables where lvl < cutoff
         if lvl.fst < v.cutoff {
             let typ = shift_and_clone(
-                &v.type_ctx.lookup(lvl).typ,
+                &v.type_ctx.lookup(lvl).content,
                 ((v.lvl_ctx.len() - v.type_ctx.len()) as isize, 0),
             );
             v.add_fv(name.id.clone(), lvl, typ, v.lvl_ctx.clone())

@@ -1,7 +1,7 @@
 use ast::{Shift, ShiftRange, VarBound};
 use pretty::DocAllocator;
 
-use ast::ctx::values::TypeCtx;
+use ast::ctx::values::{Binder, TypeCtx};
 use ast::ctx::{map_idx::*, GenericCtx};
 use ast::ctx::{Context, ContextElem, LevelCtx};
 use ast::{Idx, Var};
@@ -17,7 +17,7 @@ pub struct Env {
 }
 
 impl Context for Env {
-    type Elem = Box<Val>;
+    type Elem = Binder<Box<Val>>;
 
     fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
         let lvl = self.bound_vars.var_to_lvl(idx.into());
@@ -51,7 +51,7 @@ impl Context for Env {
     }
 }
 
-impl ContextElem<Env> for &Box<Val> {
+impl ContextElem<Env> for Binder<Box<Val>> {
     fn as_element(&self) -> <Env as Context>::Elem {
         (*self).clone()
     }
@@ -63,6 +63,15 @@ impl Env {
     }
 
     pub fn from_vec(bound: Vec<Vec<Box<Val>>>) -> Self {
+        let bound: Vec<Vec<_>> = bound
+            .into_iter()
+            .map(|inner| {
+                inner
+                    .into_iter()
+                    .map(|v| Binder { name: ast::VarBind::Wildcard { span: None }, content: v })
+                    .collect()
+            })
+            .collect();
         Self { bound_vars: GenericCtx::from(bound) }
     }
 
@@ -72,7 +81,7 @@ impl Env {
     {
         for outer in self.bound_vars.bound.iter_mut() {
             for inner in outer {
-                f(inner)
+                f(&mut inner.content)
             }
         }
     }
@@ -139,7 +148,7 @@ impl Print for Env {
     ) -> printer::Builder<'a> {
         let iter = self.bound_vars.iter().map(|ctx| {
             alloc
-                .intersperse(ctx.iter().map(|typ| typ.print(cfg, alloc)), alloc.text(COMMA))
+                .intersperse(ctx.iter().map(|v| v.content.print(cfg, alloc)), alloc.text(COMMA))
                 .brackets()
         });
         alloc.intersperse(iter, alloc.text(COMMA)).brackets()

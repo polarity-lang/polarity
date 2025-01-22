@@ -125,11 +125,11 @@ mod test {
         let ctx = vec![vec![
             Binder {
                 name: VarBind::Var { span: None, id: "a".to_string() },
-                typ: Box::new(TypeUniv { span: None }.into()),
+                content: Box::new(TypeUniv { span: None }.into()),
             },
             Binder {
                 name: VarBind::Var { span: None, id: "v".to_string() },
-                typ: Box::new(
+                content: Box::new(
                     Variable {
                         span: None,
                         idx: Idx { fst: 0, snd: 1 },
@@ -163,11 +163,11 @@ mod test {
         let ctx = vec![vec![
             Binder {
                 name: VarBind::Var { span: None, id: "a".to_string() },
-                typ: Box::new(TypeUniv { span: None }.into()),
+                content: Box::new(TypeUniv { span: None }.into()),
             },
             Binder {
                 name: VarBind::Var { span: None, id: "v'".to_string() },
-                typ: Box::new(
+                content: Box::new(
                     Variable {
                         span: None,
                         idx: Idx { fst: 0, snd: 2 },
@@ -179,7 +179,7 @@ mod test {
             },
             Binder {
                 name: VarBind::Var { span: None, id: "v".to_string() },
-                typ: Box::new(
+                content: Box::new(
                     Variable {
                         span: None,
                         idx: Idx { fst: 0, snd: 2 },

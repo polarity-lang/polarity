@@ -49,7 +49,7 @@ impl Ctx {
         for fst in (0..self.binders.len()).rev() {
             let inner = &self.binders.bound[fst];
             for snd in (0..inner.len()).rev() {
-                let ast::VarBind::Var { id, .. } = &inner[snd] else {
+                let ast::VarBind::Var { id, .. } = &inner[snd].name else {
                     continue;
                 };
                 if id == &name.id {
@@ -124,12 +124,12 @@ impl Ctx {
         let mut curr_subst = Vec::new();
 
         for (fst, inner) in self.binders.iter().enumerate() {
-            for (snd, name) in inner.iter().enumerate() {
+            for (snd, binder) in inner.iter().enumerate() {
                 curr_subst.push(Box::new(
                     ast::Variable {
                         span: None,
                         idx: self.level_to_index(Lvl { fst, snd }),
-                        name: name.clone().into(),
+                        name: binder.name.clone().into(),
                         inferred_type: None,
                     }
                     .into(),

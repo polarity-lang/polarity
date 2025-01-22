@@ -49,7 +49,7 @@ impl CheckInfer for LocalMatch {
                 let mut self_t_nf =
                     typ_app.to_exp().normalize(&ctx.type_info_table, &mut ctx.env())?;
                 self_t_nf.shift((1, 0));
-                let self_binder = Binder { name: param.name.clone(), typ: self_t_nf.clone() };
+                let self_binder = Binder { name: param.name.clone(), content: self_t_nf.clone() };
 
                 // Typecheck the motive
                 let ret_typ_out = ctx.bind_single(&self_binder, |ctx| {

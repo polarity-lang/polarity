@@ -15,7 +15,7 @@ fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
     vec.join(s)
 }
 
-pub type LevelCtx = GenericCtx<VarBind>;
+pub type LevelCtx = GenericCtx<()>;
 
 impl LevelCtx {
     pub fn append(&self, other: &LevelCtx) -> Self {
@@ -38,13 +38,16 @@ impl LevelCtx {
 
 impl From<Vec<Vec<Param>>> for LevelCtx {
     fn from(value: Vec<Vec<Param>>) -> Self {
-        let bound = value.into_iter().map(|v| v.into_iter().map(|p| p.name).collect()).collect();
+        let bound = value
+            .into_iter()
+            .map(|v| v.into_iter().map(|p| Binder { name: p.name, content: () }).collect())
+            .collect();
         Self { bound }
     }
 }
 
 impl Context for LevelCtx {
-    type Elem = VarBind;
+    type Elem = Binder<()>;
 
     fn push_telescope(&mut self) {
         self.bound.push(Vec::new());
@@ -73,36 +76,54 @@ impl Context for LevelCtx {
     }
 }
 
-impl ContextElem<LevelCtx> for VarBind {
-    fn as_element(&self) -> <LevelCtx as Context>::Elem {
-        self.clone()
+impl From<Vec<Vec<VarBind>>> for LevelCtx {
+    fn from(value: Vec<Vec<VarBind>>) -> Self {
+        let bound = value
+            .into_iter()
+            .map(|v| v.into_iter().map(|b| Binder { name: b.clone(), content: () }).collect())
+            .collect();
+        Self { bound }
     }
 }
 
-impl ContextElem<LevelCtx> for &Binder {
+impl ContextElem<LevelCtx> for VarBind {
     fn as_element(&self) -> <LevelCtx as Context>::Elem {
-        self.name.clone()
+        Binder { name: self.clone(), content: () }
+    }
+}
+
+impl ContextElem<LevelCtx> for &Binder<()> {
+    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+        Binder { name: self.name.clone(), content: () }
     }
 }
 
 impl ContextElem<LevelCtx> for &Param {
     fn as_element(&self) -> <LevelCtx as Context>::Elem {
-        self.name.clone()
+        Binder { name: self.name.clone(), content: () }
     }
 }
 
 impl ContextElem<LevelCtx> for &ParamInst {
     fn as_element(&self) -> <LevelCtx as Context>::Elem {
-        self.name.clone()
+        Binder { name: self.name.clone(), content: () }
     }
 }
 
 impl ContextElem<LevelCtx> for &Option<Motive> {
     fn as_element(&self) -> <LevelCtx as Context>::Elem {
-        match self {
+        let name = match self {
             Some(m) => m.param.name.clone(),
             None => VarBind::Wildcard { span: None },
-        }
+        };
+        Binder { name, content: () }
+    }
+}
+
+impl ContextElem<LevelCtx> for &SelfParam {
+    fn as_element(&self) -> <LevelCtx as Context>::Elem {
+        let name = self.name.clone().unwrap_or(VarBind::Wildcard { span: None });
+        Binder { name, content: () }
     }
 }
 

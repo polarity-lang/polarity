@@ -1,6 +1,7 @@
 use ast::ctx::*;
 use ast::*;
 use miette_util::codespan::Span;
+use values::Binder;
 
 use super::ctx::*;
 
@@ -78,19 +79,17 @@ impl Rename for Codata {
 impl Rename for Ctor {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         self.params.rename_in_ctx(ctx);
-        ctx.bind_iter(self.params.params.clone().into_iter(), |new_ctx| {
-            self.typ.rename_in_ctx(new_ctx)
-        });
+        ctx.bind_iter(self.params.params.iter(), |new_ctx| self.typ.rename_in_ctx(new_ctx));
     }
 }
 
 impl Rename for Dtor {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         self.params.rename_in_ctx(ctx);
-        ctx.bind_iter(self.params.params.clone().into_iter(), |new_ctx| {
+        ctx.bind_iter(self.params.params.iter(), |new_ctx| {
             self.self_param.rename_in_ctx(new_ctx);
 
-            new_ctx.bind_single(self.self_param.clone(), |new_ctx| {
+            new_ctx.bind_single(&self.self_param, |new_ctx| {
                 self.ret_typ.rename_in_ctx(new_ctx);
             })
         })
@@ -100,12 +99,11 @@ impl Rename for Dtor {
 impl Rename for Def {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         self.params.rename_in_ctx(ctx);
-        ctx.bind_iter(self.params.params.clone().into_iter(), |new_ctx| {
+        ctx.bind_iter(self.params.params.iter(), |new_ctx| {
             self.self_param.rename_in_ctx(new_ctx);
             self.cases.rename_in_ctx(new_ctx);
 
-            new_ctx
-                .bind_single(self.self_param.clone(), |new_ctx| self.ret_typ.rename_in_ctx(new_ctx))
+            new_ctx.bind_single(&self.self_param, |new_ctx| self.ret_typ.rename_in_ctx(new_ctx))
         })
     }
 }
@@ -114,7 +112,7 @@ impl Rename for Codef {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         self.params.rename_in_ctx(ctx);
 
-        ctx.bind_iter(self.params.params.clone().into_iter(), |new_ctx| {
+        ctx.bind_iter(self.params.params.iter(), |new_ctx| {
             self.typ.rename_in_ctx(new_ctx);
             self.cases.rename_in_ctx(new_ctx);
         })
@@ -124,7 +122,7 @@ impl Rename for Codef {
 impl Rename for Let {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         self.params.rename_in_ctx(ctx);
-        ctx.bind_iter(self.params.params.clone().into_iter(), |new_ctx| {
+        ctx.bind_iter(self.params.params.iter(), |new_ctx| {
             self.typ.rename_in_ctx(new_ctx);
             self.body.rename_in_ctx(new_ctx);
         })
@@ -141,7 +139,8 @@ impl Rename for Telescope {
                 param.rename_in_ctx(ctx);
                 let new_name = param.name.clone();
                 acc.push(param);
-                BindElem { elem: new_name, ret: acc }
+                let binder = Binder { name: new_name, content: () };
+                BindElem { elem: binder, ret: acc }
             },
             |_ctx, _params| (),
         )
@@ -166,7 +165,8 @@ impl Rename for TelescopeInst {
                 param.rename_in_ctx(ctx);
                 let new_name = param.name.clone();
                 acc.push(param);
-                BindElem { elem: new_name, ret: acc }
+                let binder = Binder { name: new_name, content: () };
+                BindElem { elem: binder, ret: acc }
             },
             |_ctx, _params| (),
         )
@@ -225,7 +225,7 @@ impl Rename for DotCall {
 }
 impl Rename for Variable {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
-        self.name = ctx.lookup(self.idx).into();
+        self.name = ctx.binders.lookup(self.idx).name.into();
         self.inferred_type.rename_in_ctx(ctx);
     }
 }
@@ -290,7 +290,7 @@ impl Rename for Case {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         self.pattern.params.rename_in_ctx(ctx);
 
-        ctx.bind_iter(self.pattern.params.params.clone().into_iter(), |new_ctx| {
+        ctx.bind_iter(self.pattern.params.params.iter(), |new_ctx| {
             self.body.rename_in_ctx(new_ctx);
         })
     }
@@ -299,7 +299,7 @@ impl Rename for Case {
 impl Rename for Motive {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         self.param.rename_in_ctx(ctx);
-        ctx.bind_single(self.param.clone(), |new_ctx| {
+        ctx.bind_single(&self.param, |new_ctx| {
             self.ret_typ.rename_in_ctx(new_ctx);
         })
     }

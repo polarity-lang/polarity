@@ -11,14 +11,16 @@ use crate::*;
 
 use super::{Context, ContextElem, GenericCtx, LevelCtx};
 
-pub type TypeCtx = GenericCtx<Binder>;
+pub type TypeCtx = GenericCtx<Box<Exp>>;
 
 impl TypeCtx {
     pub fn levels(&self) -> LevelCtx {
         let bound: Vec<Vec<_>> = self
             .bound
             .iter()
-            .map(|inner| inner.iter().map(|b| b.name.to_owned()).collect())
+            .map(|inner| {
+                inner.iter().map(|b| Binder { name: b.name.to_owned(), content: () }).collect()
+            })
             .collect();
         LevelCtx::from(bound)
     }
@@ -43,7 +45,10 @@ impl TypeCtx {
             .bound
             .iter()
             .map(|stack| {
-                stack.iter().map(|b| Ok(Binder { name: b.name.clone(), typ: f(&b.typ)? })).collect()
+                stack
+                    .iter()
+                    .map(|b| Ok(Binder { name: b.name.clone(), content: f(&b.content)? }))
+                    .collect()
             })
             .collect();
 
@@ -52,7 +57,7 @@ impl TypeCtx {
 }
 
 impl Context for TypeCtx {
-    type Elem = Binder;
+    type Elem = Binder<Box<Exp>>;
 
     fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
         let lvl = self.var_to_lvl(idx.into());
@@ -85,7 +90,7 @@ impl Context for TypeCtx {
     }
 }
 
-impl ContextElem<TypeCtx> for &Binder {
+impl ContextElem<TypeCtx> for &Binder<Box<Exp>> {
     fn as_element(&self) -> <TypeCtx as Context>::Elem {
         (*self).clone()
     }
@@ -95,21 +100,21 @@ impl Print for TypeCtx {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let iter = self.iter().map(|ctx| {
             alloc
-                .intersperse(ctx.iter().map(|b| b.typ.print(cfg, alloc)), alloc.text(COMMA))
+                .intersperse(ctx.iter().map(|b| b.content.print(cfg, alloc)), alloc.text(COMMA))
                 .brackets()
         });
         alloc.intersperse(iter, alloc.text(COMMA)).brackets()
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Binder {
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub struct Binder<T> {
     pub name: VarBind,
-    pub typ: Box<Exp>,
+    pub content: T,
 }
 
-impl Shift for Binder {
+impl<T: Shift> Shift for Binder<T> {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        self.typ.shift_in_range(range, by);
+        self.content.shift_in_range(range, by);
     }
 }

@@ -4,10 +4,12 @@ use derivative::Derivative;
 
 use crate::{Idx, Lvl, Var};
 
+use super::values::Binder;
+
 #[derive(Debug, Clone, Default, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct GenericCtx<T> {
-    pub bound: Vec<Vec<T>>,
+    pub bound: Vec<Vec<Binder<T>>>,
 }
 
 impl<T> GenericCtx<T> {
@@ -23,7 +25,7 @@ impl<T> GenericCtx<T> {
         Self { bound: vec![] }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &[T]> {
+    pub fn iter(&self) -> impl Iterator<Item = &[Binder<T>]> {
         self.bound.iter().map(|inner| &inner[..])
     }
 
@@ -53,8 +55,8 @@ impl<T> GenericCtx<T> {
     }
 }
 
-impl<T> From<Vec<Vec<T>>> for GenericCtx<T> {
-    fn from(value: Vec<Vec<T>>) -> Self {
+impl<T> From<Vec<Vec<Binder<T>>>> for GenericCtx<T> {
+    fn from(value: Vec<Vec<Binder<T>>>) -> Self {
         GenericCtx { bound: value }
     }
 }
