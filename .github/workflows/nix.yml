@@ -1,9 +1,12 @@
 name: Check nix code
+
 on:
-  workflow_dispatch:
+  # We run this pipeline on all branches, but perform the time-intesive steps only on main
   push:
-    branches:
-      - 'main'
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -25,12 +28,20 @@ jobs:
         with:
           name: polarity
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      # Step that runs on all branches
       - name: Evaluate nix code
         run: nix -Lv flake check
+
+      # Time-intensive steps only run on the main branch
       - name: Build and run polarity using nix
+        if: ${{ github.ref == 'refs/heads/main' }}
         run: nix -Lv run .# -- --help
+
       - name: Build and run a static polarity exe
-        if: matrix.os == 'ubuntu-latest'
+        if: ${{ github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest' }}
         run: nix -Lv run .#polarity-static -- --help
+
       - name: Drop into nix devshell and run tests
+        if: ${{ github.ref == 'refs/heads/main' }}
         run: nix develop -Lv -c bash -c "make test"
