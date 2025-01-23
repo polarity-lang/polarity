@@ -1,0 +1,33 @@
+[package]
+name = "polarity-bench"
+
+# Inherited from workspace Cargo.toml
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories.workspace = true
+
+[[bin]]
+name = "pol-bench"
+path = "src/main.rs"
+
+[dependencies]
+# runtime
+tokio = { version = "1", features = ["rt-multi-thread"] }
+futures = "0.3"
+async-std = "1"
+# fancy error messages
+miette = { workspace = true, features = ["fancy"] }
+# workspace members
+driver = { path = "../lang/driver" }
+elaborator = { path = "../lang/elaborator" }
+ast = { path = "../lang/ast" }
+printer = { path = "../lang/printer" }
+lsp-server = { path = "../lang/lsp" }
+docs = { path = "../lang/docs" }
+# benchmarking
+criterion = { version = "0.5", features = ["html_reports"] }
