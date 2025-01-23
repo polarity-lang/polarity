@@ -7,7 +7,7 @@ use std::rc::Rc;
 use crate::normalizer::env::{Env, ToEnv};
 use crate::normalizer::normalize::Normalize;
 use ast::ctx::values::TypeCtx;
-use ast::ctx::{BindContext, Context, LevelCtx};
+use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
 use printer::Print;
 
@@ -58,9 +58,9 @@ impl ContextSubstExt for Ctx {
 }
 
 impl BindContext for Ctx {
-    type Ctx = TypeCtx;
+    type Content = Box<Exp>;
 
-    fn ctx_mut(&mut self) -> &mut Self::Ctx {
+    fn ctx_mut(&mut self) -> &mut TypeCtx {
         &mut self.vars
     }
 }

@@ -14,6 +14,17 @@ pub struct GenericCtx<T> {
     pub bound: Vec<Vec<Binder<T>>>,
 }
 
+impl<T: Clone> GenericCtx<T> {
+    pub fn lookup<V: Into<Var>>(&self, idx: V) -> Binder<T> {
+        let lvl = self.var_to_lvl(idx.into());
+        self.bound
+            .get(lvl.fst)
+            .and_then(|ctx| ctx.get(lvl.snd))
+            .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
+            .clone()
+    }
+}
+
 impl<T> GenericCtx<T> {
     pub fn len(&self) -> usize {
         self.bound.len()
@@ -58,6 +69,27 @@ impl<T> GenericCtx<T> {
 }
 
 impl<T: Shift> GenericCtx<T> {
+    fn push_telescope(&mut self) {
+        self.shift(&(0..), (1, 0));
+        self.bound.push(vec![]);
+    }
+
+    fn pop_telescope(&mut self) {
+        self.bound.pop().unwrap();
+        self.shift(&(0..), (-1, 0));
+    }
+
+    fn push_binder(&mut self, elem: Binder<T>) {
+        self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
+        self.shift_at_lvl(&(0..1), self.bound.len() - 1, (0, 1));
+    }
+
+    fn pop_binder(&mut self, _elem: Binder<T>) {
+        let err = "Cannot pop from empty context";
+        self.bound.last_mut().expect(err).pop().expect(err);
+        self.shift_at_lvl(&(0..1), self.bound.len() - 1, (0, -1));
+    }
+
     pub fn shift<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         for lvl in 0..self.bound.len() {
             self.shift_at_lvl(range, lvl, by)
@@ -98,84 +130,27 @@ impl<T: Print> Print for GenericCtx<T> {
     }
 }
 
-impl<T: Shift + Clone> Context for GenericCtx<T> {
-    type Elem = Binder<T>;
-
-    fn lookup<V: Into<Var>>(&self, idx: V) -> Self::Elem {
-        let lvl = self.var_to_lvl(idx.into());
-        self.bound
-            .get(lvl.fst)
-            .and_then(|ctx| ctx.get(lvl.snd))
-            .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
-            .clone()
-    }
-
-    fn push_telescope(&mut self) {
-        self.shift(&(0..), (1, 0));
-        self.bound.push(vec![]);
-    }
-
-    fn pop_telescope(&mut self) {
-        self.bound.pop().unwrap();
-        self.shift(&(0..), (-1, 0));
-    }
-
-    fn push_binder(&mut self, elem: Self::Elem) {
-        self.bound.last_mut().expect("Cannot push without calling level_inc_fst first").push(elem);
-        self.shift_at_lvl(&(0..1), self.bound.len() - 1, (0, 1));
-    }
-
-    fn pop_binder(&mut self, _elem: Self::Elem) {
-        let err = "Cannot pop from empty context";
-        self.bound.last_mut().expect(err).pop().expect(err);
-        self.shift_at_lvl(&(0..1), self.bound.len() - 1, (0, -1));
-    }
-}
-
-/// Defines the interface of a variable context
-pub trait Context: Sized {
-    /// The type of elements that are stored in the context
-    type Elem: Clone;
-
-    /// Get the element bound at `var`
-    fn lookup<V: Into<Var> + std::fmt::Debug>(&self, var: V) -> Self::Elem;
-
-    /// Add a new telescope to the context
-    /// This function is run if a new list of binders should be pushed to the context
-    fn push_telescope(&mut self);
-
-    /// Remove a telescope from the context
-    /// Function that is run if the most-recently pushed list of binders should be unbound from the context
-    fn pop_telescope(&mut self);
-
-    /// Push a binder into the most-recently pushed telescope
-    fn push_binder(&mut self, elem: Self::Elem);
-
-    /// Pop a binder from the most-recently pushed telescope
-    fn pop_binder(&mut self, elem: Self::Elem);
-}
-
-/// Interface to bind variables to anything that has a `Context`
+/// Interface to bind variables to anything that has a `GenericCtx`.
 ///
 /// There are two ways to use this trait.
 ///
-/// Case 1: You have a type that implements `Context`.
-/// Then, a blanket impl ensures that this type also implements `BindContext`.
+/// Case 1: It is implemented for `GenericCtx`.
 ///
-/// Case 2: You have a type that has a field which implements `Context`.
+/// Case 2: You have a type that has a field of type `GenericCtx`.
 /// Then, only implement the `ctx_mut` method for `BindContext` and return the field that implements `Context`.
 /// Do not override the default implementations for the `bind_*` methods.
 ///
 /// In both cases, `BindContext` will provide a safe interface to bind variables and telescopes.
 pub trait BindContext: Sized {
-    type Ctx: Context;
+    type Content: Shift + Clone;
 
-    fn ctx_mut(&mut self) -> &mut Self::Ctx;
+    /// Get a mutable reference to the context
+    fn ctx_mut(&mut self) -> &mut GenericCtx<Self::Content>;
 
-    /// Bind a single element
+    /// Bind a single binder as a one-element telescope
     fn bind_single<T, O, F>(&mut self, elem: T, f: F) -> O
     where
-        T: ContextElem<Self::Ctx>,
+        T: AsBinder<Self::Content>,
         F: FnOnce(&mut Self) -> O,
     {
         self.bind_iter([elem].into_iter(), f)
@@ -184,13 +159,22 @@ pub trait BindContext: Sized {
     /// Bind an iterator `iter` of binders
     fn bind_iter<T, I, O, F>(&mut self, iter: I, f: F) -> O
     where
-        T: ContextElem<Self::Ctx>,
+        T: AsBinder<Self::Content>,
         I: Iterator<Item = T>,
         F: FnOnce(&mut Self) -> O,
     {
-        self.bind_fold(iter, (), |_ctx, (), x| x.as_element(), |ctx, ()| f(ctx))
+        self.bind_fold(iter, (), |_ctx, (), x| x.as_binder(), |ctx, ()| f(ctx))
     }
 
+    /// Bind a telescope, binder by binder and simultaneously fold over the binders
+    ///
+    /// Parameters:
+    /// * `iter`: An iterator of elements to bind
+    /// * `acc`: Initial fold accumulator
+    /// * `f_acc`: Function called on each element in `iter`
+    ///            The return value is the binder to bind.
+    ///            The function can mutate the accumulator.
+    /// * `f_inner`: Function called on a context where all binders have been bound
     fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
         &mut self,
         iter: I,
@@ -199,7 +183,7 @@ pub trait BindContext: Sized {
         f_inner: F2,
     ) -> O2
     where
-        F1: Fn(&mut Self, &mut O1, T) -> <Self::Ctx as Context>::Elem,
+        F1: Fn(&mut Self, &mut O1, T) -> Binder<Self::Content>,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         self.bind_fold_failable(
@@ -211,6 +195,7 @@ pub trait BindContext: Sized {
         .unwrap()
     }
 
+    /// Like `bind_fold`, but allows the accumulator function `f_acc` to fail
     fn bind_fold_failable<T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
         &mut self,
         iter: I,
@@ -219,7 +204,7 @@ pub trait BindContext: Sized {
         f_inner: F2,
     ) -> Result<O2, E>
     where
-        F1: Fn(&mut Self, &mut O1, T) -> Result<<Self::Ctx as Context>::Elem, E>,
+        F1: Fn(&mut Self, &mut O1, T) -> Result<Binder<Self::Content>, E>,
         F2: FnOnce(&mut Self, O1) -> O2,
     {
         fn bind_inner<This: BindContext, T, I: Iterator<Item = T>, O1, O2, F1, F2, E>(
@@ -230,11 +215,7 @@ pub trait BindContext: Sized {
             f_inner: F2,
         ) -> Result<O2, E>
         where
-            F1: Fn(
-                &mut This,
-                &mut O1,
-                T,
-            ) -> Result<<<This as BindContext>::Ctx as Context>::Elem, E>,
+            F1: Fn(&mut This, &mut O1, T) -> Result<Binder<<This as BindContext>::Content>, E>,
             F2: FnOnce(&mut This, O1) -> O2,
         {
             match iter.next() {
@@ -256,20 +237,20 @@ pub trait BindContext: Sized {
     }
 }
 
-pub trait ContextElem<C: Context> {
-    fn as_element(&self) -> C::Elem;
+pub trait AsBinder<T> {
+    fn as_binder(&self) -> Binder<T>;
 }
 
-impl<C: Context> BindContext for C {
-    type Ctx = Self;
+impl<T: Shift + Clone> BindContext for GenericCtx<T> {
+    type Content = T;
 
-    fn ctx_mut(&mut self) -> &mut Self::Ctx {
+    fn ctx_mut(&mut self) -> &mut GenericCtx<Self::Content> {
         self
     }
 }
 
-impl<C: Context> ContextElem<C> for C::Elem {
-    fn as_element(&self) -> C::Elem {
+impl<T: Clone> AsBinder<T> for Binder<T> {
+    fn as_binder(&self) -> Binder<T> {
         self.clone()
     }
 }
