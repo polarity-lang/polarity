@@ -34,7 +34,6 @@ async fn write_modules() {
         let output_file = generate_html(&json::get_name(&entry), &list, &content);
 
         let target_path = Path::new("target_pol/docs/").join(json::get_target(&entry));
-        print!("Writing to file: {:?}", target_path.to_str().unwrap());
         let mut stream = fs::File::create(target_path).expect("Failed to create file");
 
         stream.write_all(output_file.as_bytes()).expect("Failed to write to file");
