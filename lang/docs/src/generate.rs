@@ -40,16 +40,16 @@ impl Generate for DocComment {
     fn generate(&self) -> String {
         let mut options = Options::default();
         options.render.hardbreaks = true;
+        options.render.escape = true;
         let DocComment { docs } = self;
         let prefix = "<span class=\"comment\">";
         let postfix = "</span>";
         let text = docs
             .iter()
-            .map(|doc| askama_escape::escape(doc, askama_escape::Html).to_string())
+            .map(|doc| markdown_to_html(doc, &options))
             .collect::<Vec<String>>()
             .join("\n");
-        let html = markdown_to_html(&text, &options);
-        format!("{}{}{}", prefix, html, postfix)
+        format!("{}{}{}", prefix, text, postfix)
     }
 }
 
