@@ -5,11 +5,10 @@ use std::path::{Path, PathBuf};
 use askama::Template;
 use opener;
 
-use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH};
+use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH, DOCS_PATH};
 use driver::Database;
 
 use crate::generate_docs::GenerateDocs;
-use crate::json;
 
 pub async fn write_html() {
     if !Path::new(CSS_PATH).exists() {
@@ -21,19 +20,24 @@ pub async fn write_html() {
 }
 
 async fn write_modules() {
-    let entries = json::read_json(Path::new("lang/docs/src/index.json"));
-    let list = json::list_to_html(&entries);
+    let folders: Vec<&Path> = vec![
+        Path::new("examples/"),
+        Path::new("std/data"),
+        Path::new("std/codata"),
+    ];
+    let path_list = get_all_filepaths(folders);
+    let list = list_to_html(&path_list);
     let mut all_modules = String::new();
-    for entry in entries {
-        let mut db = Database::from_path(json::get_path(&entry));
-        let uri = db.resolve_path(json::get_path(&entry)).expect("Failed to resolve path");
+    for path in path_list {
+        let mut db = Database::from_path(&path);
+        let uri = db.resolve_path(&path).expect("Failed to resolve path");
         let prg = db.ust(&uri).await.expect("Failed to get UST");
 
         let code = prg.generate_docs();
-        let content = generate_module(&json::get_name(&entry), &code);
-        let output_file = generate_html(&json::get_name(&entry), &list, &content);
+        let content = generate_module(path.file_stem().unwrap().to_str().unwrap(), &code);
+        let output_file = generate_html(path.file_stem().unwrap().to_str().unwrap(), &list, &content);
 
-        let target_path = Path::new("target_pol/docs/").join(json::get_target(&entry));
+        let target_path = get_target_path(&path);
         let mut stream = fs::File::create(target_path).expect("Failed to create file");
 
         stream.write_all(output_file.as_bytes()).expect("Failed to write to file");
@@ -69,4 +73,53 @@ struct IndexTemplate<'a> {
     list: &'a str,
     code: &'a str,
     start: &'a str,
+}
+
+fn get_filepaths_from_folder(folder: &Path) -> Vec<PathBuf> {
+    let mut filepaths = Vec::new();
+    if folder.is_dir() {
+        for entry in fs::read_dir(folder).expect("Failed to read directory") {
+            let entry = entry.expect("Failed to get directory entry");
+            let path = entry.path();
+            if path.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some("pol") {
+                filepaths.push(path);
+            }
+        }
+    }
+    filepaths
+}
+
+fn get_all_filepaths(folders: Vec<&Path>) -> Vec<PathBuf> {
+    let mut all_filepaths = Vec::new();
+    for folder in folders {
+        let mut filepaths = get_filepaths_from_folder(folder);
+        all_filepaths.append(&mut filepaths);
+    }
+    all_filepaths
+}
+
+fn get_target_path(path: &Path) -> PathBuf {
+    let mut new_path = PathBuf::from(DOCS_PATH);
+    if let Some(stem) = path.file_stem() {
+        new_path.push(stem);
+        new_path.set_extension("html");
+    }
+    new_path
+}
+
+pub fn list_to_html(list: &Vec<PathBuf>) -> String {
+    let mut html = String::new();
+    for path in list {
+        let target = get_target_path(&path);
+        html.push_str(&path_to_html(&target));
+    }
+    html
+}
+
+fn path_to_html(path: &Path) -> String {
+    format!(
+        "<li><a href={}>{}</a></li>",
+        path.file_name().unwrap().to_string_lossy(),
+        path.file_stem().unwrap().to_string_lossy()
+    )
 }

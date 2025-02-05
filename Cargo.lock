@@ -875,8 +875,6 @@ dependencies = [
  "driver",
  "opener",
  "printer",
- "serde",
- "serde_json",
 ]
 
 [[package]]
