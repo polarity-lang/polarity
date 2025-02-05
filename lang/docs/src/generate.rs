@@ -1,4 +1,6 @@
 use ast::{Case, Ctor, DocComment, Dtor};
+
+use comrak::{markdown_to_html, Options};
 use printer::{Print, PrintCfg};
 
 pub trait Generate {
@@ -36,21 +38,18 @@ impl Generate for Dtor {
 
 impl Generate for DocComment {
     fn generate(&self) -> String {
+        let mut options = Options::default();
+        options.render.hardbreaks = true;
+        options.render.escape = true;
         let DocComment { docs } = self;
         let prefix = "<span class=\"comment\">";
         let postfix = "</span>";
-        docs.iter()
-            .map(|doc| {
-                format!(
-                    "{} {} {}",
-                    prefix,
-                    askama_escape::escape(doc, askama_escape::Html),
-                    postfix
-                )
-            })
+        let text = docs
+            .iter()
+            .map(|doc| markdown_to_html(doc, &options))
             .collect::<Vec<String>>()
-            .join("<br>")
-            + "<br>"
+            .join("\n");
+        format!("{}{}{}", prefix, text, postfix)
     }
 }
 

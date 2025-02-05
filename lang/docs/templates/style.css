@@ -24,6 +24,11 @@ li {
     margin-bottom: 10px;
 }
 
+p {
+    padding: 0;
+    margin: 0;
+}
+
 nav {
     width: 200px;
     height: 100vh;
