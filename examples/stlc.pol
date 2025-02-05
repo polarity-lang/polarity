@@ -20,6 +20,7 @@ data Typ {
 }
 
 -- | **Typing contexts**.
+-- | <html>code</html>
 -- | Because we use de Bruijn indices the typing context does not contain variable names.
 data Ctx {
     -- | The empty context
