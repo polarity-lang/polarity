@@ -20,11 +20,8 @@ pub async fn write_html() {
 }
 
 async fn write_modules() {
-    let folders: Vec<&Path> = vec![
-        Path::new("examples/"),
-        Path::new("std/data"),
-        Path::new("std/codata"),
-    ];
+    let folders: Vec<&Path> =
+        vec![Path::new("examples/"), Path::new("std/data"), Path::new("std/codata")];
     let path_list = get_all_filepaths(folders);
     let list = list_to_html(&path_list);
     let mut all_modules = String::new();
@@ -35,9 +32,13 @@ async fn write_modules() {
 
         let code = prg.generate_docs();
         let content = generate_module(path.file_stem().unwrap().to_str().unwrap(), &code);
-        let output_file = generate_html(path.file_stem().unwrap().to_str().unwrap(), &list, &content);
+        let output_file =
+            generate_html(path.file_stem().unwrap().to_str().unwrap(), &list, &content);
 
         let target_path = get_target_path(&path);
+        if let Some(parent) = target_path.parent() {
+            fs::create_dir_all(parent).expect("Failed to create directories");
+        }
         let mut stream = fs::File::create(target_path).expect("Failed to create file");
 
         stream.write_all(output_file.as_bytes()).expect("Failed to write to file");
@@ -98,8 +99,14 @@ fn get_all_filepaths(folders: Vec<&Path>) -> Vec<PathBuf> {
     all_filepaths
 }
 
-fn get_target_path(path: &Path) -> PathBuf {
+pub fn get_target_path(path: &Path) -> PathBuf {
     let mut new_path = PathBuf::from(DOCS_PATH);
+    if let Some(parent) = path.parent() {
+        if let Some(folder_name) = parent.file_stem().map(|s| s.to_string_lossy().to_string() + "/")
+        {
+            new_path.push(folder_name);
+        }
+    }
     if let Some(stem) = path.file_stem() {
         new_path.push(stem);
         new_path.set_extension("html");
@@ -110,8 +117,7 @@ fn get_target_path(path: &Path) -> PathBuf {
 pub fn list_to_html(list: &Vec<PathBuf>) -> String {
     let mut html = String::new();
     for path in list {
-        let target = get_target_path(&path);
-        html.push_str(&path_to_html(&target));
+        html.push_str(&path_to_html(&get_target_path(path)));
     }
     html
 }

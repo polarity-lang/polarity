@@ -1,9 +1,8 @@
-use std::path::Path;
 use std::path::PathBuf;
 
+use docs::get_target_path;
 use docs::open;
 use docs::write_html;
-use driver::paths::DOCS_PATH;
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -15,17 +14,10 @@ pub struct Args {
 
 pub async fn exec(cmd: Args) -> miette::Result<()> {
     let filepath = &cmd.filepath;
-    let htmlpath = get_path(filepath);
+    let htmlpath = get_target_path(filepath);
     write_html().await;
     if cmd.open {
         open(&htmlpath);
     }
     Ok(())
-}
-
-fn get_path(filepath: &Path) -> PathBuf {
-    let mut path =
-        Path::new(DOCS_PATH).join(filepath.file_name().unwrap().to_string_lossy().as_ref());
-    path.set_extension("html");
-    path
 }
