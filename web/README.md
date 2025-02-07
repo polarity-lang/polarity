@@ -24,6 +24,20 @@ make run
 
 Then, navigate to [http://localhost:9000/editor#example.pol](http://localhost:9000/editor#example.pol), where `example.pol` can be any file in the `examples` directory.
 
+## Troubleshooting
+
+If you experience the following error:
+
+```
+FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
+```
+
+consider increasing the heap size, e.g. by setting the `NODE_OPTIONS` environment variable:
+
+```sh
+export NODE_OPTIONS=--max-old-space-size=4096
+```
+
 ## License
 
 The content in this folder is based on [tower-lsp-web-demo](https://github.com/silvanshade/tower-lsp-web-demo/) by Darin Morrison.

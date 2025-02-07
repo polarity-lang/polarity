@@ -29,8 +29,9 @@ export default class Server {
   }
 
   async start(): Promise<void> {
+    const logLevel = DEBUG ? "DEBUG" : null;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-    const config = new ServerConfig(this.#intoServer, this.#fromServer);
+    const config = new ServerConfig(this.#intoServer, this.#fromServer, logLevel);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await serve(config);
   }

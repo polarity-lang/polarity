@@ -15,13 +15,18 @@ use source::FetchSource;
 pub struct ServerConfig {
     into_server: js_sys::AsyncIterator,
     from_server: web_sys::WritableStream,
+    log_level: Option<String>,
 }
 
 #[wasm_bindgen]
 impl ServerConfig {
     #[wasm_bindgen(constructor)]
-    pub fn new(into_server: js_sys::AsyncIterator, from_server: web_sys::WritableStream) -> Self {
-        Self { into_server, from_server }
+    pub fn new(
+        into_server: js_sys::AsyncIterator,
+        from_server: web_sys::WritableStream,
+        log_level: Option<String>,
+    ) -> Self {
+        Self { into_server, from_server, log_level }
     }
 }
 
@@ -36,7 +41,12 @@ pub async fn serve(config: ServerConfig) -> Result<(), JsValue> {
 
     web_sys::console::log_1(&"server::serve".into());
 
-    let ServerConfig { into_server, from_server } = config;
+    let ServerConfig { into_server, from_server, log_level } = config;
+
+    if let Some(log_level) = log_level {
+        let log_level = log_level.parse().expect("nvalid log level");
+        console_log::init_with_level(log_level).expect("error initializing logger");
+    }
 
     let input = JsStream::from(into_server);
     let input = input
