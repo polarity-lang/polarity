@@ -55,7 +55,7 @@ export default class App {
     const wrapperConfig: WrapperConfig = {
       $type: "extended",
       htmlContainer,
-      logLevel: vscode.LogLevel.Debug,
+      logLevel: DEBUG ? vscode.LogLevel.Debug : vscode.LogLevel.Off,
       vscodeApiConfig: {
         serviceOverrides: {
           ...getKeybindingsServiceOverride(),
