@@ -23,6 +23,9 @@ wasm-bindgen-futures = { version = "0.4", features = [
   "futures-core-03-stream",
 ] }
 wasm-streams = "0.2"
+# logging
+log = "0.4"
+console_log = "1"
 # fetch sources
 reqwest = { version = "0.12" }
 # workspace
