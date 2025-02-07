@@ -428,6 +428,7 @@ impl Database {
 
     fn invalidate_impl(&mut self, uri: &Url) {
         self.files.invalidate(uri);
+        self.deps.invalidate(uri);
         self.cst.invalidate(uri);
         self.symbol_table.invalidate(uri);
         self.ust.invalidate(uri);

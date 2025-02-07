@@ -12,6 +12,10 @@ impl DependencyGraph {
         self.graph.get(url)
     }
 
+    pub fn invalidate(&mut self, url: &Url) {
+        self.graph.remove(url);
+    }
+
     pub fn insert(&mut self, url: Url, deps: Vec<Url>) {
         self.graph.insert(url, deps);
     }
