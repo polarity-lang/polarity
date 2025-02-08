@@ -127,11 +127,7 @@ fn path_to_html(path: &Path) -> String {
 }
 
 fn get_parent_folder(path: &Path) -> String {
-    if let Some(parent) = path.parent() {
-        if let Some(folder_name) = parent.file_stem().map(|s| s.to_string_lossy().to_string() + "/")
-        {
-            return folder_name;
-        }
-    }
-    String::new()
+    let parent = path.parent().expect("Failed to get parent directory");
+    let folder_name = parent.file_stem().expect("Failed to get folder name").to_string_lossy().to_string() + "/";
+    folder_name
 }
