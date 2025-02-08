@@ -31,7 +31,7 @@ async fn write_modules() {
 
         let code = prg.generate_docs();
         let content = generate_module_docs(path.file_stem().unwrap().to_str().unwrap(), &code);
-        let output_file =
+        let html_file =
             generate_html(path.file_stem().unwrap().to_str().unwrap(), &list, &content);
 
         let target_path = get_target_path(&path);
@@ -40,7 +40,7 @@ async fn write_modules() {
         }
         let mut stream = fs::File::create(target_path).expect("Failed to create file");
 
-        stream.write_all(output_file.as_bytes()).expect("Failed to write to file");
+        stream.write_all(html_file.as_bytes()).expect("Failed to write to file");
     }
 }
 
