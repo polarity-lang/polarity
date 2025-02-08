@@ -101,12 +101,7 @@ fn get_all_filepaths(folders: Vec<&Path>) -> Vec<PathBuf> {
 
 pub fn get_target_path(path: &Path) -> PathBuf {
     let mut new_path = PathBuf::from(DOCS_PATH);
-    if let Some(parent) = path.parent() {
-        if let Some(folder_name) = parent.file_stem().map(|s| s.to_string_lossy().to_string() + "/")
-        {
-            new_path.push(folder_name);
-        }
-    }
+    new_path.push(get_parent_folder(path));
     if let Some(stem) = path.file_stem() {
         new_path.push(stem);
         new_path.set_extension("html");
@@ -124,8 +119,19 @@ pub fn list_to_html(list: &Vec<PathBuf>) -> String {
 
 fn path_to_html(path: &Path) -> String {
     format!(
-        "<li><a href={}>{}</a></li>",
+        "<li><a href=../{}{}>{}</a></li>",
+        get_parent_folder(path),
         path.file_name().unwrap().to_string_lossy(),
         path.file_stem().unwrap().to_string_lossy()
     )
+}
+
+fn get_parent_folder(path: &Path) -> String {
+    if let Some(parent) = path.parent() {
+        if let Some(folder_name) = parent.file_stem().map(|s| s.to_string_lossy().to_string() + "/")
+        {
+            return folder_name;
+        }
+    }
+    String::new()
 }
