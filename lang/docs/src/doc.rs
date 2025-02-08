@@ -20,7 +20,7 @@ pub async fn write_html() {
 
 async fn write_modules() {
     let folders: Vec<&Path> =
-        vec![Path::new("examples/"), Path::new("std/data"), Path::new("std/codata")];
+        vec![Path::new("examples/"), Path::new("std")];
     let path_list = get_all_filepaths(folders);
     let list = list_to_html(&path_list);
     for path in path_list {
@@ -78,6 +78,8 @@ fn get_filepaths_from_folder(folder: &Path) -> Vec<PathBuf> {
             let path = entry.path();
             if path.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some("pol") {
                 filepaths.push(path);
+            } else if path.is_dir() {
+                filepaths.append(&mut get_filepaths_from_folder(&path));
             }
         }
     }
