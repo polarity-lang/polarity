@@ -15,7 +15,6 @@ askama = "0.12.1"
 askama_escape = "0.10.3"
 comrak = "0.32"
 
-
 # workspace members
 ast = { path = "../ast" }
 printer = { path = "../printer" }
