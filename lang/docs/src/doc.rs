@@ -24,7 +24,6 @@ async fn write_modules() {
         vec![Path::new("examples/"), Path::new("std/data"), Path::new("std/codata")];
     let path_list = get_all_filepaths(folders);
     let list = list_to_html(&path_list);
-    let mut all_modules = String::new();
     for path in path_list {
         let mut db = Database::from_path(&path);
         let uri = db.resolve_path(&path).expect("Failed to resolve path");
@@ -42,8 +41,6 @@ async fn write_modules() {
         let mut stream = fs::File::create(target_path).expect("Failed to create file");
 
         stream.write_all(output_file.as_bytes()).expect("Failed to write to file");
-
-        all_modules.push_str(&output_file);
     }
 }
 
