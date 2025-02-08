@@ -1,5 +1,4 @@
 use std::fs;
-use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
 use askama::Template;
@@ -31,16 +30,14 @@ async fn write_modules() {
 
         let code = prg.generate_docs();
         let content = generate_module_docs(path.file_stem().unwrap().to_str().unwrap(), &code);
-        let html_file =
-            generate_html(path.file_stem().unwrap().to_str().unwrap(), &list, &content);
+        let html_file = generate_html(path.file_stem().unwrap().to_str().unwrap(), &list, &content);
 
         let target_path = get_target_path(&path);
         if let Some(parent) = target_path.parent() {
             fs::create_dir_all(parent).expect("Failed to create directories");
         }
-        let mut stream = fs::File::create(target_path).expect("Failed to create file");
 
-        stream.write_all(html_file.as_bytes()).expect("Failed to write to file");
+        fs::write(target_path, html_file.as_bytes()).expect("Failed to write to file");
     }
 }
 
@@ -103,6 +100,9 @@ pub fn get_target_path(path: &Path) -> PathBuf {
         new_path.push(stem);
         new_path.set_extension("html");
     }
+    if let Some(parent) = new_path.parent() {
+        fs::create_dir_all(parent).expect("Failed to create directories");
+    }
     new_path
 }
 
@@ -125,6 +125,7 @@ fn path_to_html(path: &Path) -> String {
 
 fn get_parent_folder(path: &Path) -> String {
     let parent = path.parent().expect("Failed to get parent directory");
-    let folder_name = parent.file_stem().expect("Failed to get folder name").to_string_lossy().to_string() + "/";
+    let folder_name =
+        parent.file_stem().expect("Failed to get folder name").to_string_lossy().to_string() + "/";
     folder_name
 }
