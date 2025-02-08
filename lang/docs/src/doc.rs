@@ -118,7 +118,7 @@ pub fn list_to_html(list: &Vec<PathBuf>) -> String {
 
 fn path_to_html(path: &Path) -> String {
     format!(
-        "<li><a href=../{}{}>{}</a></li>",
+        "<li><a href=../{}/{}>{}</a></li>",
         get_parent_folder(path),
         path.file_name().unwrap().to_string_lossy(),
         path.file_stem().unwrap().to_string_lossy()
@@ -127,7 +127,5 @@ fn path_to_html(path: &Path) -> String {
 
 fn get_parent_folder(path: &Path) -> String {
     let parent = path.parent().expect("Failed to get parent directory");
-    let folder_name =
-        parent.file_stem().expect("Failed to get folder name").to_string_lossy().to_string() + "/";
-    folder_name
+    parent.file_stem().expect("Failed to get folder name").to_string_lossy().to_string()
 }
