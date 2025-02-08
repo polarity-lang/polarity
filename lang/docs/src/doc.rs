@@ -19,8 +19,7 @@ pub async fn write_html() {
 }
 
 async fn write_modules() {
-    let folders: Vec<&Path> =
-        vec![Path::new("examples/"), Path::new("std")];
+    let folders: Vec<&Path> = vec![Path::new("examples/"), Path::new("std")];
     let path_list = get_all_filepaths(folders);
     let list = list_to_html(&path_list);
     for path in path_list {
