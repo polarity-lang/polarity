@@ -30,7 +30,7 @@ async fn write_modules() {
         let prg = db.ust(&uri).await.expect("Failed to get UST");
 
         let code = prg.generate_docs();
-        let content = generate_module(path.file_stem().unwrap().to_str().unwrap(), &code);
+        let content = generate_module_docs(path.file_stem().unwrap().to_str().unwrap(), &code);
         let output_file =
             generate_html(path.file_stem().unwrap().to_str().unwrap(), &list, &content);
 
@@ -49,7 +49,7 @@ pub fn open(filepath: &PathBuf) {
     opener::open(&absolute_path).unwrap();
 }
 
-fn generate_module(title: &str, content: &str) -> String {
+fn generate_module_docs(title: &str, content: &str) -> String {
     let template = ModuleTemplate { title, content };
     template.render().unwrap()
 }
