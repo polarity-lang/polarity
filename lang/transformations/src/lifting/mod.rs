@@ -581,10 +581,11 @@ impl Ctx {
         let cases = cases.lift(self);
         let self_typ = inferred_type.lift(self);
 
-        let FreeVarsResult { telescope, subst, args } = free_vars_closure(&cases, type_ctx)
+        let fvs = free_vars_closure(&cases, type_ctx)
             .union(free_vars_closure(&self_typ, type_ctx))
-            .union(ret_fvs)
-            .telescope(&self.ctx);
+            .union(ret_fvs);
+
+        let FreeVarsResult { telescope, subst, args } = telescope_and_substitutions(fvs, &self.ctx);
 
         // Substitute the new parameters for the free variables
         let cases = cases.subst(&mut self.ctx, &subst.in_body());
@@ -656,10 +657,10 @@ impl Ctx {
         let typ = inferred_type.lift(self);
 
         // Collect the free variables in the comatch and the return type
+        let fvs = free_vars_closure(&cases, type_ctx).union(free_vars_closure(&typ, type_ctx));
+
         // Build a telescope of the types of the lifted variables
-        let FreeVarsResult { telescope, subst, args } = free_vars_closure(&cases, type_ctx)
-            .union(free_vars_closure(&typ, type_ctx))
-            .telescope(&self.ctx);
+        let FreeVarsResult { telescope, subst, args } = telescope_and_substitutions(fvs, &self.ctx);
 
         // Substitute the new parameters for the free variables
         let cases = cases.subst(&mut self.ctx, &subst.in_body());

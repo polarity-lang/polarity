@@ -6,86 +6,84 @@ use ast::{Occurs, Variable};
 
 use super::fv::*;
 
-impl FreeVars {
-    pub fn telescope(self, base_ctx: &LevelCtx) -> FreeVarsResult {
-        let cutoff = base_ctx.len();
-        // Sort the list of free variables by the De-Bruijn level such the dependency relation is satisfied.
-        // Types can only depend on types which occur earlier in the context.
-        let fvs = self.sorted();
+pub fn telescope_and_substitutions(fvs: FreeVars, base_ctx: &LevelCtx) -> FreeVarsResult {
+    let cutoff = base_ctx.len();
+    // Sort the list of free variables by the De-Bruijn level such the dependency relation is satisfied.
+    // Types can only depend on types which occur earlier in the context.
+    let fvs = sort_free_vars(fvs);
 
-        let mut params: Vec<Param> = vec![];
-        let mut args = vec![];
-        let mut subst = FVSubst::new(cutoff);
+    let mut params: Vec<Param> = vec![];
+    let mut args = vec![];
+    let mut subst = FVSubst::new(cutoff);
 
-        // FIXME: The manual context management here should be abstracted out
-        for fv in fvs.into_iter() {
-            let FreeVar { name, lvl, typ, mut ctx } = fv;
+    // FIXME: The manual context management here should be abstracted out
+    for fv in fvs.into_iter() {
+        let FreeVar { name, lvl, typ, mut ctx } = fv;
 
-            let typ = typ.subst(&mut ctx, &subst.in_param());
+        let typ = typ.subst(&mut ctx, &subst.in_param());
 
-            let param = Param {
-                implicit: false,
-                name: VarBind::from_string(&name),
-                typ: typ.clone(),
-                erased: false,
-            };
-            let arg = Arg::UnnamedArg {
-                arg: Box::new(Exp::Variable(Variable {
-                    span: None,
-                    idx: base_ctx.lvl_to_idx(fv.lvl),
-                    name: VarBound::from_string(&name),
-                    inferred_type: None,
-                })),
-                erased: false,
-            };
-            args.push(arg);
-            params.push(param);
-            subst.add(name, lvl);
-        }
-
-        FreeVarsResult { telescope: Telescope { params }, subst, args: Args { args } }
+        let param = Param {
+            implicit: false,
+            name: VarBind::from_string(&name),
+            typ: typ.clone(),
+            erased: false,
+        };
+        let arg = Arg::UnnamedArg {
+            arg: Box::new(Exp::Variable(Variable {
+                span: None,
+                idx: base_ctx.lvl_to_idx(fv.lvl),
+                name: VarBound::from_string(&name),
+                inferred_type: None,
+            })),
+            erased: false,
+        };
+        args.push(arg);
+        params.push(param);
+        subst.add(name, lvl);
     }
 
-    /// Sort the free variables such the dependency relation is satisfied
-    /// Due to unification, it is not sufficient to sort them according to their De-Bruijn level:
-    /// Unification can lead to a set of free variables where variables with a higher De-Bruijn level
-    /// may occur in the types of variables with a lower De-Bruijn level.
-    /// This is because unification may locally refine types.
-    /// Example:
-    ///
-    /// ```pol
-    /// data Bar(a: Type) { }
-    ///
-    /// codata Baz { unit: Top }
-    ///
-    /// data Foo(a: Type) {
-    ///    MkFoo(a: Type): Foo(Bar(a)),
-    /// }
-    ///
-    /// data Top { Unit }
-    ///
-    /// def Top.ignore(a: Type, x: a): Top {
-    ///     Unit => Unit
-    /// }
-    ///
-    /// def Top.foo(a: Type, foo: Foo(a)): Baz {
-    ///     Unit => foo.match {
-    ///         MkFoo(a') => comatch {
-    ///            unit => Unit.ignore(Foo(Bar(a')), foo)
-    ///        }
-    ///    }
-    /// }
-    /// ```
-    ///
-    /// In this example, unification may perform the substitution `{a := a'}` such that locally
-    /// the type of foo is known to be `Foo(Bar(a'))`.
-    /// Hence, lifting of the comatch will need to consider the free variables [ foo: Foo(Bar(a')), a': Type ]
-    /// where `foo` depends on `a'` even though it has been bound earlier in the context
-    fn sorted(self) -> Vec<FreeVar> {
-        let mut fvs: Vec<_> = self.fvs.into_iter().collect();
-        fvs.sort();
-        fvs
-    }
+    FreeVarsResult { telescope: Telescope { params }, subst, args: Args { args } }
+}
+
+/// Sort the free variables such the dependency relation is satisfied
+/// Due to unification, it is not sufficient to sort them according to their De-Bruijn level:
+/// Unification can lead to a set of free variables where variables with a higher De-Bruijn level
+/// may occur in the types of variables with a lower De-Bruijn level.
+/// This is because unification may locally refine types.
+/// Example:
+///
+/// ```pol
+/// data Bar(a: Type) { }
+///
+/// codata Baz { unit: Top }
+///
+/// data Foo(a: Type) {
+///    MkFoo(a: Type): Foo(Bar(a)),
+/// }
+///
+/// data Top { Unit }
+///
+/// def Top.ignore(a: Type, x: a): Top {
+///     Unit => Unit
+/// }
+///
+/// def Top.foo(a: Type, foo: Foo(a)): Baz {
+///     Unit => foo.match {
+///         MkFoo(a') => comatch {
+///            unit => Unit.ignore(Foo(Bar(a')), foo)
+///        }
+///    }
+/// }
+/// ```
+///
+/// In this example, unification may perform the substitution `{a := a'}` such that locally
+/// the type of foo is known to be `Foo(Bar(a'))`.
+/// Hence, lifting of the comatch will need to consider the free variables [ foo: Foo(Bar(a')), a': Type ]
+/// where `foo` depends on `a'` even though it has been bound earlier in the context
+fn sort_free_vars(fvs: FreeVars) -> Vec<FreeVar> {
+    let mut fvs: Vec<_> = fvs.fvs.into_iter().collect();
+    fvs.sort();
+    fvs
 }
 
 impl PartialOrd for FreeVar {
