@@ -37,7 +37,7 @@ pub fn free_vars_closure<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
 
     arg.visit_fv(&mut v);
 
-    FreeVars { fvs: v.fvs, cutoff: ctx.len() }
+    FreeVars { fvs: v.fvs }
 }
 
 pub trait FV {
@@ -216,8 +216,6 @@ impl BindContext for FreeVarsVisitor<'_> {
 
 #[derive(Debug)]
 pub struct FreeVars {
-    /// The De-Bruijn level (fst index) up to which a variable counts as free
-    pub(super) cutoff: usize,
     /// List of found free variables
     pub(super) fvs: HashSet<FreeVar>,
 }

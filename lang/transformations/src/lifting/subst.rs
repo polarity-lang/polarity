@@ -8,7 +8,7 @@ use super::fv::*;
 
 impl FreeVars {
     pub fn telescope(self, base_ctx: &LevelCtx) -> FreeVarsResult {
-        let cutoff = self.cutoff;
+        let cutoff = base_ctx.len();
         // Sort the list of free variables by the De-Bruijn level such the dependency relation is satisfied.
         // Types can only depend on types which occur earlier in the context.
         let fvs = self.sorted();
@@ -48,10 +48,9 @@ impl FreeVars {
 
     /// Compute the union of two free variable sets
     pub fn union(self, other: FreeVars) -> FreeVars {
-        assert_eq!(self.cutoff, other.cutoff);
         let mut fvs = self.fvs;
         fvs.extend(other.fvs);
-        Self { fvs, cutoff: self.cutoff }
+        Self { fvs }
     }
 
     /// Sort the free variables such the dependency relation is satisfied
