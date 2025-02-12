@@ -12,10 +12,10 @@ use miette_util::codespan::Span;
 use crate::Rename;
 
 mod fv;
-mod subst;
+mod signature;
 
 use fv::*;
-use subst::*;
+use signature::*;
 
 /// Lift local (co)matches for `name` in `module` to top-level (co)definitions
 pub fn lift(module: Arc<Module>, name: &str) -> LiftResult {
@@ -585,15 +585,15 @@ impl Ctx {
         fvs.extend(free_vars_closure(&self_typ, type_ctx));
         fvs.extend(ret_fvs);
 
-        let FreeVarsResult { telescope, subst, args } = telescope_and_substitutions(fvs, &self.ctx);
+        let LiftedSignature { telescope, subst, args } = lifted_signature(fvs, &self.ctx);
 
         // Substitute the new parameters for the free variables
-        let cases = cases.subst(&mut self.ctx, &subst.in_body());
-        let self_typ = self_typ.subst(&mut self.ctx, &subst.in_body());
+        let cases = cases.subst(&mut self.ctx, &subst);
+        let self_typ = self_typ.subst(&mut self.ctx, &subst);
         let def_ret_typ = match &motive {
-            Some(m) => m.lift(self).subst(&mut self.ctx, &subst.in_body()).ret_typ,
+            Some(m) => m.lift(self).subst(&mut self.ctx, &subst).ret_typ,
             None => shift_and_clone(
-                &ret_typ.clone().unwrap().lift(self).subst(&mut self.ctx, &subst.in_body()),
+                &ret_typ.clone().unwrap().lift(self).subst(&mut self.ctx, &subst),
                 (1, 0),
             ),
         };
@@ -661,11 +661,11 @@ impl Ctx {
         fvs.extend(free_vars_closure(&typ, type_ctx));
 
         // Build a telescope of the types of the lifted variables
-        let FreeVarsResult { telescope, subst, args } = telescope_and_substitutions(fvs, &self.ctx);
+        let LiftedSignature { telescope, subst, args } = lifted_signature(fvs, &self.ctx);
 
         // Substitute the new parameters for the free variables
-        let cases = cases.subst(&mut self.ctx, &subst.in_body());
-        let typ = typ.subst(&mut self.ctx, &subst.in_body());
+        let cases = cases.subst(&mut self.ctx, &subst);
+        let typ = typ.subst(&mut self.ctx, &subst);
 
         // Build the new top-level definition
         let name = self.unique_codef_name(name, &inferred_type.name.id);

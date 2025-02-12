@@ -6,7 +6,39 @@ use ast::{Occurs, Variable};
 
 use super::fv::*;
 
-pub fn telescope_and_substitutions(fvs: HashSet<FreeVar>, base_ctx: &LevelCtx) -> FreeVarsResult {
+/// Compute the lifted signature based on the set of free variables of an expression `e`.
+/// Using the lifted signature `LiftedSignature { telescope, subst, args }`, the lifted expression
+///
+/// ```text
+/// let f(telescope) { e[subst] }
+/// ```
+///
+/// can be constructed, where `f` is a fresh name. The expression `e` can be replaced by `f(args)`.
+///
+/// # Parameters
+///
+/// - `fvs`: Set of free variables
+/// - `base_ctx`: Context under which the expression `e` is well-typed
+///
+/// # Requires
+///
+/// - `fvs ⊆ base_ctx`
+///
+/// # Returns
+///
+/// The signature `LiftedSignature { telescope, subst, args }` of the lifted expression, consisting of:
+///
+/// - `telescope`: The telescope under which `e[subst]` is closed
+/// - `subst`: A substitution that closes the free variables under `telescope`
+/// - `args`: The arguments to apply to the lifted expression
+///
+/// # Ensures
+///
+/// - `telescope ⊆ base_ctx`
+/// - `let f(telescope) { e[subst] }` is well-typed in the empty context
+/// - `e = f(args)` and well-typed in `base_ctx`
+///
+pub fn lifted_signature(fvs: HashSet<FreeVar>, base_ctx: &LevelCtx) -> LiftedSignature {
     let cutoff = base_ctx.len();
     // Sort the list of free variables by the De-Bruijn level such the dependency relation is satisfied.
     // Types can only depend on types which occur earlier in the context.
@@ -14,13 +46,12 @@ pub fn telescope_and_substitutions(fvs: HashSet<FreeVar>, base_ctx: &LevelCtx) -
 
     let mut params: Vec<Param> = vec![];
     let mut args = vec![];
-    let mut subst = FVSubst::new(cutoff);
+    let mut subst = FVParamSubst::new(cutoff);
 
-    // FIXME: The manual context management here should be abstracted out
     for fv in fvs.into_iter() {
         let FreeVar { name, lvl, typ, mut ctx } = fv;
 
-        let typ = typ.subst(&mut ctx, &subst.in_param());
+        let typ = typ.subst(&mut ctx, &subst);
 
         let param = Param {
             implicit: false,
@@ -42,7 +73,21 @@ pub fn telescope_and_substitutions(fvs: HashSet<FreeVar>, base_ctx: &LevelCtx) -
         subst.add(name, lvl);
     }
 
-    FreeVarsResult { telescope: Telescope { params }, subst, args: Args { args } }
+    LiftedSignature {
+        telescope: Telescope { params },
+        subst: subst.into_body_subst(),
+        args: Args { args },
+    }
+}
+
+/// The signature of a lifted expression
+pub struct LiftedSignature {
+    /// Telescope of the lifted expression
+    pub telescope: Telescope,
+    /// Substitution that is applied to the body of the lifted expression
+    pub subst: FVBodySubst,
+    /// An instantiation of `telescope` with the free variables
+    pub args: Args,
 }
 
 /// Sort the free variables such the dependency relation is satisfied
@@ -107,23 +152,28 @@ impl Ord for FreeVar {
     }
 }
 
-/// The result of closing under the set of free variables
-pub struct FreeVarsResult {
-    /// Telescope of the types of the free variables
-    pub telescope: Telescope,
-    /// A substitution close the free variables under `telescope`
-    pub subst: FVSubst,
-    /// An instantiation of `telescope` with the free variables
-    pub args: Args,
-}
-
-/// Substitution of free variables
+/// Substitution applied to parameters of the telscope
 #[derive(Clone, Debug)]
-pub struct FVSubst {
+pub struct FVParamSubst {
     /// Mapping of the original De-Bruijn levels of a free variable to the new reference
     subst: HashMap<Lvl, NewVar>,
     /// The De-Bruijn level (fst index) up to which a variable counts as free
     cutoff: usize,
+}
+
+impl FVParamSubst {
+    fn new(cutoff: usize) -> Self {
+        Self { subst: Default::default(), cutoff }
+    }
+
+    fn add(&mut self, name: String, lvl: Lvl) {
+        self.subst.insert(lvl, NewVar { name, lvl: Lvl { fst: 0, snd: self.subst.len() } });
+    }
+
+    /// Build the substitution applied to the body of the new definition
+    fn into_body_subst(self) -> FVBodySubst {
+        FVBodySubst { subst: self.subst, cutoff: self.cutoff }
+    }
 }
 
 /// A free variable as part of `FVSubst`
@@ -135,55 +185,28 @@ struct NewVar {
     lvl: Lvl,
 }
 
-/// Substitution in the body of the new definition
+/// Substitution applied to the body of the new definition
 #[derive(Clone, Debug)]
-pub struct FVBodySubst<'a> {
-    inner: &'a FVSubst,
+pub struct FVBodySubst {
+    /// Mapping of the original De-Bruijn levels of a free variable to the new reference
+    subst: HashMap<Lvl, NewVar>,
+    /// The De-Bruijn level (fst index) up to which a variable counts as free
+    cutoff: usize,
 }
 
-/// Substitution in the type parameters of the new definition
-#[derive(Clone, Debug)]
-pub struct FVParamSubst<'a> {
-    inner: &'a FVSubst,
-}
-
-impl FVSubst {
-    fn new(cutoff: usize) -> Self {
-        Self { subst: Default::default(), cutoff }
-    }
-
-    fn add(&mut self, name: String, lvl: Lvl) {
-        self.subst.insert(lvl, NewVar { name, lvl: Lvl { fst: 0, snd: self.subst.len() } });
-    }
-
-    pub fn in_body(&self) -> FVBodySubst<'_> {
-        FVBodySubst { inner: self }
-    }
-
-    pub fn in_param(&self) -> FVParamSubst<'_> {
-        FVParamSubst { inner: self }
-    }
-}
-
-impl Shift for FVSubst {
+impl Shift for FVParamSubst {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since FVSubst works with levels, it is shift-invariant
     }
 }
 
-impl Shift for FVBodySubst<'_> {
+impl Shift for FVBodySubst {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
         // Since FVSubst works with levels, it is shift-invariant
     }
 }
 
-impl Shift for FVParamSubst<'_> {
-    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
-        // Since FVSubst works with levels, it is shift-invariant
-    }
-}
-
-impl Substitution for FVBodySubst<'_> {
+impl Substitution for FVBodySubst {
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
         // Let Γ be the original context, let Δ be the context according to which the new De-Bruijn index should be calculated
         //
@@ -198,14 +221,14 @@ impl Substitution for FVBodySubst<'_> {
         // Compute the names for the free variables in the correct order
         // This is only needed to satisfy LevelCtx now tracking the names of the binders.
         // FIXME: This needs to be refactored
-        let mut free_vars = self.inner.subst.iter().collect::<Vec<_>>();
+        let mut free_vars = self.subst.iter().collect::<Vec<_>>();
         free_vars.sort_by_key(|(lvl, _)| *lvl);
         let free_vars = free_vars
             .into_iter()
             .map(|(_, var)| VarBind::Var { id: var.name.clone(), span: None })
             .collect::<Vec<_>>();
-        let new_ctx = LevelCtx::from(vec![free_vars]).append(&ctx.tail(self.inner.cutoff));
-        self.inner.subst.get(&lvl).map(|fv| {
+        let new_ctx = LevelCtx::from(vec![free_vars]).append(&ctx.tail(self.cutoff));
+        self.subst.get(&lvl).map(|fv| {
             Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: new_ctx.lvl_to_idx(fv.lvl),
@@ -216,12 +239,12 @@ impl Substitution for FVBodySubst<'_> {
     }
 }
 
-impl Substitution for FVParamSubst<'_> {
+impl Substitution for FVParamSubst {
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
-        self.inner.subst.get(&lvl).map(|fv| {
+        self.subst.get(&lvl).map(|fv| {
             Box::new(Exp::Variable(Variable {
                 span: None,
-                idx: Idx { fst: 0, snd: self.inner.subst.len() - 1 - fv.lvl.snd },
+                idx: Idx { fst: 0, snd: self.subst.len() - 1 - fv.lvl.snd },
                 name: VarBound::from_string(&fv.name),
                 inferred_type: None,
             }))
