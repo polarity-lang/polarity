@@ -9,7 +9,7 @@ use super::subst::*;
 
 /// Find all free variables
 pub fn free_vars<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
-    let mut v = USTVisitor {
+    let mut v = FreeVarsVisitor {
         fvs: Default::default(),
         cutoff: ctx.len(),
         type_ctx: ctx,
@@ -22,11 +22,11 @@ pub fn free_vars<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
 }
 
 pub trait FV {
-    fn visit_fv(&self, v: &mut USTVisitor);
+    fn visit_fv(&self, v: &mut FreeVarsVisitor);
 }
 
 impl FV for Vec<Case> {
-    fn visit_fv(&self, v: &mut USTVisitor) {
+    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
         for case in self {
             case.visit_fv(v)
         }
@@ -34,7 +34,7 @@ impl FV for Vec<Case> {
 }
 
 impl FV for Exp {
-    fn visit_fv(&self, v: &mut USTVisitor) {
+    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
         match self {
             Exp::Anno(Anno { exp, typ, .. }) => {
                 exp.visit_fv(v);
@@ -66,7 +66,7 @@ impl FV for Exp {
 }
 
 impl FV for Variable {
-    fn visit_fv(&self, v: &mut USTVisitor) {
+    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
         let Variable { idx, name, .. } = self;
         // We use the level context to convert the De Bruijn index to a De Bruijn level
         let lvl = v.lvl_ctx.idx_to_lvl(*idx);
@@ -83,14 +83,14 @@ impl FV for Variable {
 }
 
 impl FV for TypCtor {
-    fn visit_fv(&self, v: &mut USTVisitor) {
+    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
         let TypCtor { span: _, name: _, args } = self;
         args.visit_fv(v)
     }
 }
 
 impl FV for Args {
-    fn visit_fv(&self, v: &mut USTVisitor) {
+    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
         let Args { args } = self;
         for arg in args {
             arg.visit_fv(v)
@@ -99,7 +99,7 @@ impl FV for Args {
 }
 
 impl FV for Arg {
-    fn visit_fv(&self, v: &mut USTVisitor) {
+    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
         match self {
             Arg::UnnamedArg { arg, .. } => arg.visit_fv(v),
             Arg::NamedArg { arg, .. } => arg.visit_fv(v),
@@ -109,7 +109,7 @@ impl FV for Arg {
 }
 
 impl FV for Hole {
-    fn visit_fv(&self, v: &mut USTVisitor) {
+    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
         let Hole { args, .. } = self;
         for subst in args {
             for exp in subst {
@@ -120,7 +120,7 @@ impl FV for Hole {
 }
 
 impl FV for Case {
-    fn visit_fv(&self, v: &mut USTVisitor) {
+    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
         let Case { span: _, pattern, body } = self;
 
         v.bind_iter(pattern.params.params.iter(), |v| {
@@ -130,7 +130,7 @@ impl FV for Case {
 }
 
 impl FV for Motive {
-    fn visit_fv(&self, v: &mut USTVisitor) {
+    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
         let Motive { span: _, param, ret_typ } = self;
 
         param.visit_fv(v);
@@ -140,27 +140,27 @@ impl FV for Motive {
 }
 
 impl FV for ParamInst {
-    fn visit_fv(&self, _v: &mut USTVisitor) {
+    fn visit_fv(&self, _v: &mut FreeVarsVisitor) {
         //contains no type info for ust.
     }
 }
 
 impl<T: FV> FV for Box<T> {
-    fn visit_fv(&self, v: &mut USTVisitor) {
+    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
         (**self).visit_fv(v)
     }
 }
 
 impl<T: FV> FV for Option<T> {
-    fn visit_fv(&self, v: &mut USTVisitor) {
+    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
         if let Some(x) = self {
             x.visit_fv(v)
         }
     }
 }
 
-/// Visitor that collects free variables in an untyped syntax tree
-pub struct USTVisitor<'a> {
+/// Visitor that collects free variables
+pub struct FreeVarsVisitor<'a> {
     /// Set of collected free variables
     fvs: HashSet<FreeVar>,
     /// The De-Bruijn level (fst index) up to which a variable counts as free
@@ -171,7 +171,7 @@ pub struct USTVisitor<'a> {
     lvl_ctx: LevelCtx,
 }
 
-impl USTVisitor<'_> {
+impl FreeVarsVisitor<'_> {
     /// Add a free variable as well as all free variables its type
     fn add_fv(&mut self, name: String, lvl: Lvl, typ: Box<Exp>, ctx: LevelCtx) {
         // Add the free variable
@@ -184,7 +184,7 @@ impl USTVisitor<'_> {
     }
 }
 
-impl BindContext for USTVisitor<'_> {
+impl BindContext for FreeVarsVisitor<'_> {
     type Content = ();
 
     fn ctx_mut(&mut self) -> &mut LevelCtx {
