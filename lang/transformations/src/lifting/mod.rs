@@ -15,6 +15,7 @@ mod fv;
 mod subst;
 
 use fv::*;
+use subst::*;
 
 /// Lift local (co)matches for `name` in `module` to top-level (co)definitions
 pub fn lift(module: Arc<Module>, name: &str) -> LiftResult {

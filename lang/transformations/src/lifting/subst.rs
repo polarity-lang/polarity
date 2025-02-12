@@ -116,6 +116,16 @@ impl Ord for FreeVar {
     }
 }
 
+/// The result of closing under the set of free variables
+pub struct FreeVarsResult {
+    /// Telescope of the types of the free variables
+    pub telescope: Telescope,
+    /// A substitution close the free variables under `telescope`
+    pub subst: FVSubst,
+    /// An instantiation of `telescope` with the free variables
+    pub args: Args,
+}
+
 /// Substitution of free variables
 #[derive(Clone, Debug)]
 pub struct FVSubst {

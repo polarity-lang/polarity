@@ -5,8 +5,6 @@ use ast::ctx::*;
 use ast::*;
 use ast::{Hole, TypeUniv, Variable};
 
-use super::subst::*;
-
 /// Compute the closure of free variables in `arg` closed under type dependencies
 ///
 /// In a dependent type system, if a variable `x` is free in `arg` (i.e., `x` ∈ `FV(arg, ctx)`),
@@ -214,20 +212,10 @@ impl BindContext for FreeVarsVisitor<'_> {
     }
 }
 
+/// Set of free variables
 #[derive(Debug)]
 pub struct FreeVars {
-    /// List of found free variables
     pub(super) fvs: HashSet<FreeVar>,
-}
-
-/// The result of closing under the set of free variables
-pub struct FreeVarsResult {
-    /// Telescope of the types of the free variables
-    pub telescope: Telescope,
-    /// A substitution close the free variables under `telescope`
-    pub subst: FVSubst,
-    /// An instantiation of `telescope` with the free variables
-    pub args: Args,
 }
 
 #[derive(Clone, Debug, Derivative)]
