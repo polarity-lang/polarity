@@ -6,7 +6,7 @@ use ast::{Occurs, Variable};
 
 use super::fv::*;
 
-pub fn telescope_and_substitutions(fvs: FreeVars, base_ctx: &LevelCtx) -> FreeVarsResult {
+pub fn telescope_and_substitutions(fvs: HashSet<FreeVar>, base_ctx: &LevelCtx) -> FreeVarsResult {
     let cutoff = base_ctx.len();
     // Sort the list of free variables by the De-Bruijn level such the dependency relation is satisfied.
     // Types can only depend on types which occur earlier in the context.
@@ -80,8 +80,8 @@ pub fn telescope_and_substitutions(fvs: FreeVars, base_ctx: &LevelCtx) -> FreeVa
 /// the type of foo is known to be `Foo(Bar(a'))`.
 /// Hence, lifting of the comatch will need to consider the free variables [ foo: Foo(Bar(a')), a': Type ]
 /// where `foo` depends on `a'` even though it has been bound earlier in the context
-fn sort_free_vars(fvs: FreeVars) -> Vec<FreeVar> {
-    let mut fvs: Vec<_> = fvs.fvs.into_iter().collect();
+fn sort_free_vars(fvs: HashSet<FreeVar>) -> Vec<FreeVar> {
+    let mut fvs: Vec<_> = fvs.into_iter().collect();
     fvs.sort();
     fvs
 }
