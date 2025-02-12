@@ -7,8 +7,32 @@ use ast::{Hole, TypeUniv, Variable};
 
 use super::subst::*;
 
-/// Find all free variables
-pub fn free_vars<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
+/// Compute the closure of free variables in `arg` closed under type dependencies
+///
+/// In a dependent type system, if a variable `x` is free in `arg` (i.e., `x` ∈ `FV(arg, ctx)`),
+/// then the type of `x` might itself contain further free variables, and those variables may
+/// also have types with additional free variables, and so on. This function computes this
+/// transitive closure of free variables in `arg` under type dependencies.
+///
+/// We can recursively specify this function as follows:
+///
+/// ```text
+/// free_vars_closure(arg, ctx) = FV(arg, ctx) ∪ { free_vars_closure(t, ctx) | for x: t ∈ FV(arg, ctx) }
+/// ```
+///
+/// where `FV(arg, ctx)` is the syntactic set of free variables in `arg` with respect to the context `ctx`.
+///
+/// # Parameters
+///
+/// - `arg`: The expression for which to compute the closure of free variables
+/// - `ctx`: The typing context in which `arg` is well-typed
+///
+/// # Returns
+///
+/// The result is a set of variables, a subset of `ctx`.
+/// This set includes every variable that appears free in `arg` (syntactically) as well as
+/// any variables that appear free in the types of those variables, recursively.
+pub fn free_vars_closure<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
     let mut v = FreeVarsVisitor {
         fvs: Default::default(),
         cutoff: ctx.len(),
