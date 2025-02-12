@@ -1,14 +1,64 @@
-use transformations::LiftResult;
 use url::Url;
 
-use crate::database::Database;
+use ast::*;
+use miette_util::codespan::Span;
+use printer::Print;
+use transformations::LiftResult;
+
+use crate::{database::Database, DriverError, Edit};
 
 impl Database {
-    pub async fn lift(&mut self, uri: &Url, type_name: &str) -> Result<ast::Module, crate::Error> {
+    pub async fn lift(&mut self, uri: &Url, type_name: &str) -> Result<Vec<Edit>, crate::Error> {
         let prg = self.ast(uri).await?;
 
-        let LiftResult { module: prg, .. } = transformations::lift(prg, type_name);
+        let type_span = prg
+            .decls
+            .iter()
+            .find(|decl| decl.ident().id == type_name)
+            .and_then(|x| x.span())
+            .ok_or(DriverError::Impossible(format!("Could not resolve {type_name}")))?;
 
-        Ok(prg)
+        let LiftResult { module: prg, modified_decls, new_decls } =
+            transformations::lift(prg, type_name);
+
+        let edits = generate_edits(type_name, type_span, &prg, modified_decls, new_decls);
+
+        Ok(edits)
     }
+}
+
+fn generate_edits(
+    type_name: &str,
+    type_span: Span,
+    module: &ast::Module,
+    modified_decls: HashSet<IdBind>,
+    new_decls: HashSet<IdBind>,
+) -> Vec<Edit> {
+    let new_decls = module
+        .decls
+        .iter()
+        .filter(|decl| new_decls.contains(decl.ident()) || decl.ident().id == type_name)
+        .cloned()
+        .collect();
+
+    let new_items = Module {
+        uri: module.uri.clone(),
+        // Use declarations don't change, and we are only printing an excerpt of the module
+        use_decls: vec![],
+        decls: new_decls,
+        meta_vars: module.meta_vars.clone(),
+    };
+
+    let text = new_items.print_to_string(None);
+
+    let mut edits = vec![Edit { span: type_span, text }];
+
+    for name in modified_decls {
+        let decl = module.decls.iter().find(|d| d.ident() == &name).unwrap();
+        let span = decl.span().unwrap();
+        let text = decl.print_to_string(None);
+        edits.push(Edit { span, text });
+    }
+
+    edits
 }
