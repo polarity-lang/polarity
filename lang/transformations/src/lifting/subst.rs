@@ -46,13 +46,6 @@ impl FreeVars {
         FreeVarsResult { telescope: Telescope { params }, subst, args: Args { args } }
     }
 
-    /// Compute the union of two free variable sets
-    pub fn union(self, other: FreeVars) -> FreeVars {
-        let mut fvs = self.fvs;
-        fvs.extend(other.fvs);
-        Self { fvs }
-    }
-
     /// Sort the free variables such the dependency relation is satisfied
     /// Due to unification, it is not sufficient to sort them according to their De-Bruijn level:
     /// Unification can lead to a set of free variables where variables with a higher De-Bruijn level
