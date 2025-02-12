@@ -1,8 +1,9 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use driver::Database;
+use driver::{Database, FileSource, InMemorySource};
+use url::Url;
 
-const EXAMPLE_STLC: &str = "examples/stlc.pol";
-const EXAMPLE_STRONG_EX: &str = "examples/strong_existentials.pol";
+const EXAMPLE_STLC: &str = include_str!("../../examples/stlc.pol");
+const EXAMPLE_STRONG_EX: &str = include_str!("../../examples/strong_existentials.pol");
 
 fn benchmark_stlc(c: &mut Criterion) {
     c.bench_function("stlc.pol", |b| b.iter(|| run(EXAMPLE_STLC)));
@@ -21,8 +22,10 @@ fn run(example: &str) -> miette::Result<()> {
 }
 
 async fn run_async(example: &str) -> miette::Result<()> {
-    let mut db = Database::from_path(example);
-    let uri = db.resolve_path(example)?;
+    let mut inmemory_source = InMemorySource::new();
+    let uri: Url = "inmemory:///bench.pol".parse().expect("Failed to parse URI");
+    inmemory_source.write_string(&uri, example).await.expect("Failed to write inmemory source");
+    let mut db = Database::from_source(inmemory_source);
     let _ = db.ast(&uri).await.map_err(|err| db.pretty_error(&uri, err));
     Ok(())
 }

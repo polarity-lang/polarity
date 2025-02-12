@@ -20,6 +20,7 @@ path = "src/main.rs"
 tokio = { version = "1", features = ["rt-multi-thread"] }
 futures = "0.3"
 async-std = "1"
+url = "2"
 # fancy error messages
 miette = { workspace = true, features = ["fancy"] }
 # workspace members
