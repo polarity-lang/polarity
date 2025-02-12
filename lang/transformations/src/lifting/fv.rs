@@ -33,12 +33,7 @@ use super::subst::*;
 /// This set includes every variable that appears free in `arg` (syntactically) as well as
 /// any variables that appear free in the types of those variables, recursively.
 pub fn free_vars_closure<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
-    let mut v = FreeVarsVisitor {
-        fvs: Default::default(),
-        cutoff: ctx.len(),
-        type_ctx: ctx,
-        lvl_ctx: ctx.levels(),
-    };
+    let mut v = FreeVarsVisitor { fvs: Default::default(), type_ctx: ctx, lvl_ctx: ctx.levels() };
 
     arg.visit_fv(&mut v);
 
@@ -96,7 +91,7 @@ impl FV for Variable {
         let lvl = v.lvl_ctx.idx_to_lvl(*idx);
         // If the variable is considered free (based on the cutoff), we look up its type in the typing context
         // The typing context contains the types for all free variables where lvl < cutoff
-        if lvl.fst < v.cutoff {
+        if lvl.fst < v.cutoff() {
             let typ = shift_and_clone(
                 &v.type_ctx.lookup(lvl).content,
                 ((v.lvl_ctx.len() - v.type_ctx.len()) as isize, 0),
@@ -187,15 +182,18 @@ impl<T: FV> FV for Option<T> {
 pub struct FreeVarsVisitor<'a> {
     /// Set of collected free variables
     fvs: HashSet<FreeVar>,
-    /// The De-Bruijn level (fst index) up to which a variable counts as free
-    cutoff: usize,
-    /// The typing context where all free variables with lvl < cutoff can be looked up
+    /// The typing context where all free variables with lvl < type_ctx.len() can be looked up
     type_ctx: &'a TypeCtx,
     /// The level context which tracks the number of binders currently in scope
     lvl_ctx: LevelCtx,
 }
 
 impl FreeVarsVisitor<'_> {
+    /// The De-Bruijn level (fst index) up to which a variable counts as free
+    pub fn cutoff(&self) -> usize {
+        self.type_ctx.len()
+    }
+
     /// Add a free variable as well as all free variables its type
     fn add_fv(&mut self, name: String, lvl: Lvl, typ: Box<Exp>, ctx: LevelCtx) {
         // Add the free variable
