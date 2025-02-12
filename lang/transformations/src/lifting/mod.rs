@@ -12,6 +12,7 @@ use miette_util::codespan::Span;
 use crate::Rename;
 
 mod fv;
+mod subst;
 
 use fv::*;
 
