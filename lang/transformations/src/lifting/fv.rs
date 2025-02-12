@@ -1,9 +1,10 @@
+use std::collections::HashSet;
+
 use derivative::Derivative;
 
 use ast::ctx::values::TypeCtx;
 use ast::ctx::*;
 use ast::*;
-use ast::{Hole, TypeUniv, Variable};
 
 /// Compute the closure of free variables in `arg` closed under type dependencies
 ///
@@ -31,7 +32,7 @@ use ast::{Hole, TypeUniv, Variable};
 ///
 /// # Returns
 ///
-/// The result is a set of variables, a subset of `ctx`.
+/// The fvs is a set of variables, a subset of `ctx`.
 /// This set includes every variable that appears free in `arg` (syntactically) as well as
 /// any variables that appear free in the types of those variables, recursively.
 ///
@@ -40,199 +41,56 @@ use ast::{Hole, TypeUniv, Variable};
 /// - `free_vars_closure(arg, ctx) ⊆ ctx`
 ///
 pub fn free_vars_closure<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
-    let mut v = FreeVarsVisitor { fvs: Default::default(), type_ctx: ctx, lvl_ctx: ctx.levels() };
-
-    arg.visit_fv(&mut v);
-
-    FreeVars { fvs: v.fvs }
+    // Start with the context’s level context and the given type context.
+    arg.free_vars_closure(ctx.levels().clone(), ctx.clone())
 }
 
-/// Vistor trait for computing the closure of free variables closed under type dependencies
-///
-/// This vistor implements an AST traversal that stores any free variables it encounters.
-/// It uses `FreeVarsVisitor` to store the free variables and to keep track of the context.
-/// The interesting case is when a variable is encountered: `impl FV for Variable`.
+/// A trait for computing the free variables of an AST node (transitive closure).
 pub trait FV {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor);
+    /// Returns the closure of free variables in `self` that are bound in `type_ctx`.
+    ///
+    /// # Parameters
+    ///
+    /// - `lvl_ctx`:  The context that contains all free variables in `self`.
+    /// - `type_ctx`: The context that contains the types of free variables of interest.
+    ///
+    /// # Requires
+    ///
+    /// - `self` is well-typed in `lvl_ctx`.
+    /// - `type_ctx ⊆ lvl_ctx`.
+    ///
+    /// # Returns
+    ///
+    /// The closure of free variables in `self` closed under type dependencies with respect to `type_ctx`.
+    ///
+    /// # Ensures
+    ///
+    /// - `free_vars_closure(self, lvl_ctx, type_ctx) ⊆ type_ctx`
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars;
 }
 
-impl FV for Vec<Case> {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
-        for case in self {
-            case.visit_fv(v)
-        }
-    }
-}
-
-impl FV for Exp {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
-        match self {
-            Exp::Anno(Anno { exp, typ, .. }) => {
-                exp.visit_fv(v);
-                typ.visit_fv(v)
-            }
-            Exp::Variable(e) => e.visit_fv(v),
-            Exp::LocalComatch(LocalComatch { cases, .. }) => {
-                for case in cases {
-                    case.visit_fv(v)
-                }
-            }
-            Exp::Call(Call { args, .. }) => args.visit_fv(v),
-            Exp::DotCall(DotCall { exp, args, .. }) => {
-                exp.visit_fv(v);
-                args.visit_fv(v);
-            }
-            Exp::TypCtor(e) => e.visit_fv(v),
-            Exp::Hole(e) => e.visit_fv(v),
-            Exp::TypeUniv(TypeUniv { span: _ }) => {}
-            Exp::LocalMatch(LocalMatch { on_exp, motive, cases, .. }) => {
-                for case in cases {
-                    case.visit_fv(v);
-                }
-                on_exp.visit_fv(v);
-                motive.visit_fv(v)
-            }
-        }
-    }
-}
-
-impl FV for Variable {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
-        let Variable { idx, name, .. } = self;
-        // We use the level context to convert the De Bruijn index to a De Bruijn level
-        let lvl = v.lvl_ctx.idx_to_lvl(*idx);
-        // If the variable is considered free (based on the cutoff), we look up its type in the typing context
-        // The typing context contains the types for all free variables where lvl < cutoff
-        if lvl.fst < v.cutoff() {
-            let typ = shift_and_clone(
-                &v.type_ctx.lookup(lvl).content,
-                ((v.lvl_ctx.len() - v.type_ctx.len()) as isize, 0),
-            );
-            v.add_fv(name.id.clone(), lvl, typ, v.lvl_ctx.clone())
-        }
-    }
-}
-
-impl FV for TypCtor {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
-        let TypCtor { span: _, name: _, args } = self;
-        args.visit_fv(v)
-    }
-}
-
-impl FV for Args {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
-        let Args { args } = self;
-        for arg in args {
-            arg.visit_fv(v)
-        }
-    }
-}
-
-impl FV for Arg {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
-        match self {
-            Arg::UnnamedArg { arg, .. } => arg.visit_fv(v),
-            Arg::NamedArg { arg, .. } => arg.visit_fv(v),
-            Arg::InsertedImplicitArg { hole, .. } => hole.visit_fv(v),
-        }
-    }
-}
-
-impl FV for Hole {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
-        let Hole { args, .. } = self;
-        for subst in args {
-            for exp in subst {
-                exp.visit_fv(v);
-            }
-        }
-    }
-}
-
-impl FV for Case {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
-        let Case { span: _, pattern, body } = self;
-
-        v.bind_iter(pattern.params.params.iter(), |v| {
-            body.visit_fv(v);
-        })
-    }
-}
-
-impl FV for Motive {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
-        let Motive { span: _, param, ret_typ } = self;
-
-        param.visit_fv(v);
-
-        v.bind_single(param, |v| ret_typ.visit_fv(v))
-    }
-}
-
-impl FV for ParamInst {
-    fn visit_fv(&self, _v: &mut FreeVarsVisitor) {
-        //contains no type info for ust.
-    }
-}
-
-impl<T: FV> FV for Box<T> {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
-        (**self).visit_fv(v)
-    }
-}
-
-impl<T: FV> FV for Option<T> {
-    fn visit_fv(&self, v: &mut FreeVarsVisitor) {
-        if let Some(x) = self {
-            x.visit_fv(v)
-        }
-    }
-}
-
-/// Visitor that collects free variables
-pub struct FreeVarsVisitor<'a> {
-    /// Set of collected free variables
-    fvs: HashSet<FreeVar>,
-    /// The typing context where all free variables with lvl < type_ctx.len() can be looked up
-    type_ctx: &'a TypeCtx,
-    /// The level context which tracks the number of binders currently in scope
-    lvl_ctx: LevelCtx,
-}
-
-impl FreeVarsVisitor<'_> {
-    /// The De-Bruijn level (fst index) up to which a variable counts as free
-    pub fn cutoff(&self) -> usize {
-        self.type_ctx.len()
-    }
-
-    /// Add a free variable as well as all free variables its type
-    fn add_fv(&mut self, name: String, lvl: Lvl, typ: Box<Exp>, ctx: LevelCtx) {
-        // Add the free variable
-        let fv = FreeVar { name, lvl, typ: typ.clone(), ctx };
-        if self.fvs.insert(fv) {
-            // If it has not already been added:
-            // Find all free variables in the type of the free variable
-            typ.visit_fv(self);
-        }
-    }
-}
-
-impl BindContext for FreeVarsVisitor<'_> {
-    type Content = ();
-
-    fn ctx_mut(&mut self) -> &mut LevelCtx {
-        &mut self.lvl_ctx
-    }
-}
-
-/// Set of free variables
-#[derive(Debug)]
+/// A set of free variables.
+#[derive(Debug, Default)]
 pub struct FreeVars {
     pub fvs: HashSet<FreeVar>,
 }
 
-/// Information about a free variable
+impl FreeVars {
+    /// Insert a single `FreeVar` into this set.
+    /// Returns `true` if it was newly inserted, or `false` if it was already present.
+    pub fn insert(&mut self, fv: FreeVar) -> bool {
+        self.fvs.insert(fv)
+    }
+
+    /// Compute the union of two free variable sets
+    pub fn union(self, other: FreeVars) -> FreeVars {
+        let mut fvs = self.fvs;
+        fvs.extend(other.fvs);
+        Self { fvs }
+    }
+}
+
+/// Information about a free variable, including its name, level, type, and context.
 #[derive(Clone, Debug, Derivative)]
 #[derivative(Hash, Eq, PartialEq)]
 pub struct FreeVar {
@@ -247,4 +105,143 @@ pub struct FreeVar {
     /// Context under which the type is closed
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: LevelCtx,
+}
+
+impl FV for Exp {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        match self {
+            Exp::Anno(Anno { exp, typ, .. }) => FreeVars::default()
+                .union(exp.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+                .union(typ.free_vars_closure(lvl_ctx, type_ctx)),
+            Exp::Variable(var) => var.free_vars_closure(lvl_ctx, type_ctx),
+            Exp::LocalComatch(LocalComatch { cases, .. }) => {
+                cases.iter().fold(FreeVars::default(), |acc, c| {
+                    acc.union(c.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+                })
+            }
+            Exp::Call(Call { args, .. }) => args.free_vars_closure(lvl_ctx, type_ctx),
+            Exp::DotCall(DotCall { exp, args, .. }) => FreeVars::default()
+                .union(exp.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+                .union(args.free_vars_closure(lvl_ctx, type_ctx)),
+            Exp::TypCtor(typ_ctor) => typ_ctor.free_vars_closure(lvl_ctx, type_ctx),
+            Exp::Hole(h) => h.free_vars_closure(lvl_ctx, type_ctx),
+            Exp::TypeUniv(TypeUniv { .. }) => FreeVars::default(),
+            Exp::LocalMatch(LocalMatch { on_exp, motive, cases, .. }) => {
+                let cases_fvs = cases.iter().fold(FreeVars::default(), |acc, c| {
+                    acc.union(c.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+                });
+                cases_fvs
+                    .union(on_exp.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+                    .union(motive.free_vars_closure(lvl_ctx, type_ctx))
+            }
+        }
+    }
+}
+
+impl FV for Variable {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        let mut fvs = FreeVars::default();
+        let Variable { idx, name, .. } = self;
+        let lvl = lvl_ctx.idx_to_lvl(*idx);
+
+        // Only consider this variable if is bound in `type_ctx`.
+        if lvl.fst < type_ctx.len() {
+            let typ = shift_and_clone(
+                &type_ctx.lookup(lvl).content,
+                ((lvl_ctx.len() - type_ctx.len()) as isize, 0),
+            );
+            let fv = FreeVar { name: name.id.clone(), lvl, typ: typ.clone(), ctx: lvl_ctx.clone() };
+
+            if fvs.insert(fv) {
+                return fvs.union(typ.free_vars_closure(lvl_ctx, type_ctx));
+            }
+        }
+        fvs
+    }
+}
+
+impl FV for TypCtor {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        let TypCtor { span: _, name: _, args } = self;
+        args.free_vars_closure(lvl_ctx, type_ctx)
+    }
+}
+
+impl FV for Args {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        self.args.iter().fold(FreeVars::default(), |acc, arg| {
+            acc.union(arg.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+        })
+    }
+}
+
+impl FV for Arg {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        match self {
+            Arg::UnnamedArg { arg, .. } => arg.free_vars_closure(lvl_ctx, type_ctx),
+            Arg::NamedArg { arg, .. } => arg.free_vars_closure(lvl_ctx, type_ctx),
+            Arg::InsertedImplicitArg { hole, .. } => hole.free_vars_closure(lvl_ctx, type_ctx),
+        }
+    }
+}
+
+impl FV for Hole {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        self.args.iter().fold(FreeVars::default(), |acc, subst_list| {
+            subst_list.iter().fold(acc, |acc, exp| {
+                acc.union(exp.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+            })
+        })
+    }
+}
+
+impl FV for Case {
+    fn free_vars_closure(&self, mut lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        let Case { span: _, pattern, body } = self;
+
+        lvl_ctx.bind_iter(pattern.params.params.iter(), |ctx| {
+            body.free_vars_closure(ctx.clone(), type_ctx.clone())
+        })
+    }
+}
+
+impl FV for Motive {
+    fn free_vars_closure(&self, mut lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        let Motive { span: _, param, ret_typ } = self;
+
+        lvl_ctx.bind_iter(std::slice::from_ref(param).iter(), |ctx| {
+            ret_typ.free_vars_closure(ctx.clone(), type_ctx.clone())
+        })
+    }
+}
+
+impl FV for ParamInst {
+    fn free_vars_closure(&self, _lvl_ctx: LevelCtx, _type_ctx: TypeCtx) -> FreeVars {
+        // ParamInst contains no type info relevant for free variables
+        FreeVars::default()
+    }
+}
+
+impl<T: FV> FV for Box<T> {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        (**self).free_vars_closure(lvl_ctx, type_ctx)
+    }
+}
+
+impl<T: FV> FV for Option<T> {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        if let Some(x) = self {
+            x.free_vars_closure(lvl_ctx, type_ctx)
+        } else {
+            FreeVars::default()
+        }
+    }
+}
+
+impl<T: FV> FV for Vec<T> {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        self.iter().fold(FreeVars::default(), |acc, item| {
+            acc.union(item.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+        })
+    }
 }
