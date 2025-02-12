@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use derivative::Derivative;
 
 use ast::ctx::values::TypeCtx;
@@ -40,7 +38,7 @@ use ast::*;
 ///
 /// - `free_vars_closure(arg, ctx) ⊆ ctx`
 ///
-pub fn free_vars_closure<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
+pub fn free_vars_closure<T: FV>(arg: &T, ctx: &TypeCtx) -> HashSet<FreeVar> {
     let mut lvl_ctx = ctx.levels();
     arg.free_vars_closure(&mut lvl_ctx, ctx)
 }
@@ -66,27 +64,7 @@ pub trait FV {
     /// # Ensures
     ///
     /// - `free_vars_closure(self, lvl_ctx, type_ctx) ⊆ type_ctx`
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars;
-}
-
-/// A set of free variables.
-#[derive(Debug, Default)]
-pub struct FreeVars {
-    pub fvs: HashSet<FreeVar>,
-}
-
-impl FreeVars {
-    /// Insert a single `FreeVar` into this set.
-    /// Returns `true` if it was newly inserted, or `false` if it was already present.
-    pub fn insert(&mut self, fv: FreeVar) -> bool {
-        self.fvs.insert(fv)
-    }
-
-    /// Compute the union of two free variable sets
-    pub fn union(mut self, other: FreeVars) -> FreeVars {
-        self.fvs.extend(other.fvs);
-        self
-    }
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar>;
 }
 
 /// Information about a free variable, including its name, level, type, and context.
@@ -107,7 +85,7 @@ pub struct FreeVar {
 }
 
 impl FV for Exp {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         match self {
             Exp::Anno(anno) => anno.free_vars_closure(lvl_ctx, type_ctx),
             Exp::Variable(var) => var.free_vars_closure(lvl_ctx, type_ctx),
@@ -116,22 +94,23 @@ impl FV for Exp {
             Exp::DotCall(dot_call) => dot_call.free_vars_closure(lvl_ctx, type_ctx),
             Exp::TypCtor(typ_ctor) => typ_ctor.free_vars_closure(lvl_ctx, type_ctx),
             Exp::Hole(hole) => hole.free_vars_closure(lvl_ctx, type_ctx),
-            Exp::TypeUniv(_) => FreeVars::default(),
+            Exp::TypeUniv(_) => HashSet::default(),
             Exp::LocalMatch(local_match) => local_match.free_vars_closure(lvl_ctx, type_ctx),
         }
     }
 }
 
 impl FV for Anno {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
-        let Anno { exp, typ, .. } = self;
-        exp.free_vars_closure(lvl_ctx, type_ctx).union(typ.free_vars_closure(lvl_ctx, type_ctx))
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        let mut fvs = self.exp.free_vars_closure(lvl_ctx, type_ctx);
+        fvs.extend(self.typ.free_vars_closure(lvl_ctx, type_ctx));
+        fvs
     }
 }
 
 impl FV for Variable {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
-        let mut fvs = FreeVars::default();
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        let mut fvs = HashSet::default();
         let Variable { idx, name, .. } = self;
         let lvl = lvl_ctx.idx_to_lvl(*idx);
 
@@ -143,9 +122,9 @@ impl FV for Variable {
             );
             let fv = FreeVar { name: name.id.clone(), lvl, typ: typ.clone(), ctx: lvl_ctx.clone() };
 
-            // If we inserted a new free variable, we must also union in the FV of its type
+            // If we inserted a new free variable, we must also extend with the FV of its type
             if fvs.insert(fv) {
-                fvs = fvs.union(typ.free_vars_closure(lvl_ctx, type_ctx));
+                fvs.extend(typ.free_vars_closure(lvl_ctx, type_ctx));
             }
         }
         fvs
@@ -153,43 +132,47 @@ impl FV for Variable {
 }
 
 impl FV for LocalComatch {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
-        self.cases
-            .iter()
-            .fold(FreeVars::default(), |acc, c| acc.union(c.free_vars_closure(lvl_ctx, type_ctx)))
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        let mut fvs = HashSet::default();
+        for c in &self.cases {
+            fvs.extend(c.free_vars_closure(lvl_ctx, type_ctx));
+        }
+        fvs
     }
 }
 
 impl FV for Call {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         self.args.free_vars_closure(lvl_ctx, type_ctx)
     }
 }
 
 impl FV for DotCall {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
-        self.exp
-            .free_vars_closure(lvl_ctx, type_ctx)
-            .union(self.args.free_vars_closure(lvl_ctx, type_ctx))
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        let mut fvs = self.exp.free_vars_closure(lvl_ctx, type_ctx);
+        fvs.extend(self.args.free_vars_closure(lvl_ctx, type_ctx));
+        fvs
     }
 }
 
 impl FV for TypCtor {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         self.args.free_vars_closure(lvl_ctx, type_ctx)
     }
 }
 
 impl FV for Args {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
-        self.args.iter().fold(FreeVars::default(), |acc, arg| {
-            acc.union(arg.free_vars_closure(lvl_ctx, type_ctx))
-        })
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        let mut fvs = HashSet::default();
+        for arg in &self.args {
+            fvs.extend(arg.free_vars_closure(lvl_ctx, type_ctx));
+        }
+        fvs
     }
 }
 
 impl FV for Arg {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         match self {
             Arg::UnnamedArg { arg, .. } => arg.free_vars_closure(lvl_ctx, type_ctx),
             Arg::NamedArg { arg, .. } => arg.free_vars_closure(lvl_ctx, type_ctx),
@@ -199,35 +182,39 @@ impl FV for Arg {
 }
 
 impl FV for Hole {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
-        self.args.iter().fold(FreeVars::default(), |acc, subst_list| {
-            subst_list
-                .iter()
-                .fold(acc, |acc, exp| acc.union(exp.free_vars_closure(lvl_ctx, type_ctx)))
-        })
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        let mut fvs = HashSet::default();
+        for subst_list in &self.args {
+            for exp in subst_list {
+                fvs.extend(exp.free_vars_closure(lvl_ctx, type_ctx));
+            }
+        }
+        fvs
     }
 }
 
 impl FV for LocalMatch {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         let LocalMatch { on_exp, motive, cases, .. } = self;
-        cases
-            .iter()
-            .fold(FreeVars::default(), |acc, c| acc.union(c.free_vars_closure(lvl_ctx, type_ctx)))
-            .union(on_exp.free_vars_closure(lvl_ctx, type_ctx))
-            .union(motive.free_vars_closure(lvl_ctx, type_ctx))
+        let mut fvs = HashSet::default();
+        for c in cases {
+            fvs.extend(c.free_vars_closure(lvl_ctx, type_ctx));
+        }
+        fvs.extend(on_exp.free_vars_closure(lvl_ctx, type_ctx));
+        fvs.extend(motive.free_vars_closure(lvl_ctx, type_ctx));
+        fvs
     }
 }
 
 impl FV for Case {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         let Case { span: _, pattern, body } = self;
         lvl_ctx.bind_iter(pattern.params.params.iter(), |ctx| body.free_vars_closure(ctx, type_ctx))
     }
 }
 
 impl FV for Motive {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         let Motive { span: _, param, ret_typ } = self;
         lvl_ctx.bind_iter(std::slice::from_ref(param).iter(), |ctx| {
             ret_typ.free_vars_closure(ctx, type_ctx)
@@ -236,32 +223,34 @@ impl FV for Motive {
 }
 
 impl FV for ParamInst {
-    fn free_vars_closure(&self, _lvl_ctx: &mut LevelCtx, _type_ctx: &TypeCtx) -> FreeVars {
+    fn free_vars_closure(&self, _lvl_ctx: &mut LevelCtx, _type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         // ParamInst contains no type info relevant for free variables.
-        FreeVars::default()
+        HashSet::default()
     }
 }
 
 impl<T: FV> FV for Box<T> {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         (**self).free_vars_closure(lvl_ctx, type_ctx)
     }
 }
 
 impl<T: FV> FV for Option<T> {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         if let Some(x) = self {
             x.free_vars_closure(lvl_ctx, type_ctx)
         } else {
-            FreeVars::default()
+            HashSet::default()
         }
     }
 }
 
 impl<T: FV> FV for Vec<T> {
-    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> FreeVars {
-        self.iter().fold(FreeVars::default(), |acc, item| {
-            acc.union(item.free_vars_closure(lvl_ctx, type_ctx))
-        })
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        let mut fvs = HashSet::default();
+        for item in self {
+            fvs.extend(item.free_vars_closure(lvl_ctx, type_ctx));
+        }
+        fvs
     }
 }
