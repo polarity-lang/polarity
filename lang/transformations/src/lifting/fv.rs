@@ -25,11 +25,20 @@ use ast::{Hole, TypeUniv, Variable};
 /// - `arg`: The expression for which to compute the closure of free variables
 /// - `ctx`: The typing context in which `arg` is well-typed
 ///
+/// # Requires
+///
+/// - `arg` is well-typed in `ctx`.
+///
 /// # Returns
 ///
 /// The result is a set of variables, a subset of `ctx`.
 /// This set includes every variable that appears free in `arg` (syntactically) as well as
 /// any variables that appear free in the types of those variables, recursively.
+///
+/// # Ensures
+///
+/// - `free_vars_closure(arg, ctx) ⊆ ctx`
+///
 pub fn free_vars_closure<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
     let mut v = FreeVarsVisitor { fvs: Default::default(), type_ctx: ctx, lvl_ctx: ctx.levels() };
 
