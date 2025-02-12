@@ -38,6 +38,11 @@ pub fn free_vars_closure<T: FV>(arg: &T, ctx: &TypeCtx) -> FreeVars {
     FreeVars { fvs: v.fvs }
 }
 
+/// Vistor trait for computing the closure of free variables closed under type dependencies
+///
+/// This vistor implements an AST traversal that stores any free variables it encounters.
+/// It uses `FreeVarsVisitor` to store the free variables and to keep track of the context.
+/// The interesting case is when a variable is encountered: `impl FV for Variable`.
 pub trait FV {
     fn visit_fv(&self, v: &mut FreeVarsVisitor);
 }
@@ -215,9 +220,10 @@ impl BindContext for FreeVarsVisitor<'_> {
 /// Set of free variables
 #[derive(Debug)]
 pub struct FreeVars {
-    pub(super) fvs: HashSet<FreeVar>,
+    pub fvs: HashSet<FreeVar>,
 }
 
+/// Information about a free variable
 #[derive(Clone, Debug, Derivative)]
 #[derivative(Hash, Eq, PartialEq)]
 pub struct FreeVar {
