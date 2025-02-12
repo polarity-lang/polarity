@@ -110,31 +110,25 @@ pub struct FreeVar {
 impl FV for Exp {
     fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
         match self {
-            Exp::Anno(Anno { exp, typ, .. }) => FreeVars::default()
-                .union(exp.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
-                .union(typ.free_vars_closure(lvl_ctx, type_ctx)),
+            Exp::Anno(anno) => anno.free_vars_closure(lvl_ctx, type_ctx),
             Exp::Variable(var) => var.free_vars_closure(lvl_ctx, type_ctx),
-            Exp::LocalComatch(LocalComatch { cases, .. }) => {
-                cases.iter().fold(FreeVars::default(), |acc, c| {
-                    acc.union(c.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
-                })
-            }
-            Exp::Call(Call { args, .. }) => args.free_vars_closure(lvl_ctx, type_ctx),
-            Exp::DotCall(DotCall { exp, args, .. }) => FreeVars::default()
-                .union(exp.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
-                .union(args.free_vars_closure(lvl_ctx, type_ctx)),
+            Exp::LocalComatch(comatch) => comatch.free_vars_closure(lvl_ctx, type_ctx),
+            Exp::Call(call) => call.free_vars_closure(lvl_ctx, type_ctx),
+            Exp::DotCall(dot_call) => dot_call.free_vars_closure(lvl_ctx, type_ctx),
             Exp::TypCtor(typ_ctor) => typ_ctor.free_vars_closure(lvl_ctx, type_ctx),
-            Exp::Hole(h) => h.free_vars_closure(lvl_ctx, type_ctx),
-            Exp::TypeUniv(TypeUniv { .. }) => FreeVars::default(),
-            Exp::LocalMatch(LocalMatch { on_exp, motive, cases, .. }) => {
-                let cases_fvs = cases.iter().fold(FreeVars::default(), |acc, c| {
-                    acc.union(c.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
-                });
-                cases_fvs
-                    .union(on_exp.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
-                    .union(motive.free_vars_closure(lvl_ctx, type_ctx))
-            }
+            Exp::Hole(hole) => hole.free_vars_closure(lvl_ctx, type_ctx),
+            Exp::TypeUniv(_) => FreeVars::default(),
+            Exp::LocalMatch(local_match) => local_match.free_vars_closure(lvl_ctx, type_ctx),
         }
+    }
+}
+
+impl FV for Anno {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        let Anno { exp, typ, .. } = self;
+        FreeVars::default()
+            .union(exp.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+            .union(typ.free_vars_closure(lvl_ctx, type_ctx))
     }
 }
 
@@ -144,7 +138,7 @@ impl FV for Variable {
         let Variable { idx, name, .. } = self;
         let lvl = lvl_ctx.idx_to_lvl(*idx);
 
-        // Only consider this variable if is bound in `type_ctx`.
+        // Only consider this variable if it is bound in `type_ctx`.
         if lvl.fst < type_ctx.len() {
             let typ = shift_and_clone(
                 &type_ctx.lookup(lvl).content,
@@ -152,6 +146,7 @@ impl FV for Variable {
             );
             let fv = FreeVar { name: name.id.clone(), lvl, typ: typ.clone(), ctx: lvl_ctx.clone() };
 
+            // If we inserted a new free variable, we must also union in the FV of its type
             if fvs.insert(fv) {
                 return fvs.union(typ.free_vars_closure(lvl_ctx, type_ctx));
             }
@@ -160,9 +155,31 @@ impl FV for Variable {
     }
 }
 
+impl FV for LocalComatch {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        self.cases.iter().fold(FreeVars::default(), |acc, c| {
+            acc.union(c.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+        })
+    }
+}
+
+impl FV for Call {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        self.args.free_vars_closure(lvl_ctx, type_ctx)
+    }
+}
+
+impl FV for DotCall {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        FreeVars::default()
+            .union(self.exp.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+            .union(self.args.free_vars_closure(lvl_ctx, type_ctx))
+    }
+}
+
 impl FV for TypCtor {
     fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
-        let TypCtor { span: _, name: _, args } = self;
+        let TypCtor { args, .. } = self;
         args.free_vars_closure(lvl_ctx, type_ctx)
     }
 }
@@ -192,6 +209,18 @@ impl FV for Hole {
                 acc.union(exp.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
             })
         })
+    }
+}
+
+impl FV for LocalMatch {
+    fn free_vars_closure(&self, lvl_ctx: LevelCtx, type_ctx: TypeCtx) -> FreeVars {
+        let LocalMatch { on_exp, motive, cases, .. } = self;
+        let cases_fvs = cases.iter().fold(FreeVars::default(), |acc, c| {
+            acc.union(c.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+        });
+        cases_fvs
+            .union(on_exp.free_vars_closure(lvl_ctx.clone(), type_ctx.clone()))
+            .union(motive.free_vars_closure(lvl_ctx, type_ctx))
     }
 }
 
