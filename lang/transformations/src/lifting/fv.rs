@@ -32,7 +32,7 @@ use ast::*;
 ///
 /// # Returns
 ///
-/// The fvs is a set of variables, a subset of `ctx`.
+/// The result is a set of variables, a subset of `ctx`.
 /// This set includes every variable that appears free in `arg` (syntactically) as well as
 /// any variables that appear free in the types of those variables, recursively.
 ///
