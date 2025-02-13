@@ -31,7 +31,7 @@ categories = ["compilers"]
 [workspace.dependencies]
 # fancy error messages
 miette = { version = "7" }
-thiserror = { version = "1" }
+thiserror = { version = "2" }
 # lsp server
 lsp-types = { version = "0.97" }
 tower-lsp = { git = "https://github.com/tower-lsp/tower-lsp", rev = "19f5a87810ff4b643d2bc394e438450bd9c74365", default-features = false, features = [
@@ -42,8 +42,8 @@ derivative = { version = "2" }
 # big integers
 num-bigint = { version = "0.4" }
 # url (for file locations)
-url = { version = "2.5.0" }
-pretty = { version = "0.11", features = ["termcolor"] }
+url = { version = "2.5.4" }
+pretty = { version = "0.12", features = ["termcolor"] }
 # logging infrastructure
-log = "0.4.21"
-env_logger = "0.11.3"
+log = "0.4.25"
+env_logger = "0.11.6"

@@ -15,7 +15,7 @@ categories.workspace = true
 # lsp
 tower-lsp = { workspace = true }
 # asynchronous locks
-async-lock = "2"
+async-lock = "3"
 # fancy error messages
 miette = { workspace = true }
 # URLs

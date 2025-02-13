@@ -18,7 +18,7 @@ path = "src/main.rs"
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # cli
 clap = { version = "4", features = ["derive"] }
-clap_complete = { version = "4.5.38" }
+clap_complete = { version = "4.5.44" }
 termsize = "0.1"
 # fancy error messages
 miette = { workspace = true, features = ["fancy"] }
@@ -41,4 +41,4 @@ docs = { path = "../lang/docs" }
 
 [dev-dependencies]
 # For testing the binary
-assert_cmd = "2.0.14"
+assert_cmd = "2.0.16"
