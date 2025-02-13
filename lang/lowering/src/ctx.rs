@@ -2,7 +2,7 @@ use miette_util::codespan::Span;
 use miette_util::ToMiette;
 
 use ast::ctx::{BindContext, LevelCtx};
-use ast::{self, MetaVar, MetaVarKind, MetaVarState};
+use ast::{self, MetaVar, MetaVarKind, MetaVarState, VarBound};
 use ast::{HashMap, HashSet};
 use ast::{Idx, Lvl};
 use parser::cst::ident::Ident;
@@ -129,7 +129,13 @@ impl Ctx {
                     ast::Variable {
                         span: None,
                         idx: self.level_to_index(Lvl { fst, snd }),
-                        name: binder.name.clone().into(),
+                        name: match &binder.name {
+                            ast::VarBind::Var { id, .. } => VarBound::from_string(id),
+                            // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
+                            // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
+                            // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
+                            ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
+                        },
                         inferred_type: None,
                     }
                     .into(),

@@ -64,18 +64,16 @@ impl Print for Module {
 #[derive(Debug, Clone)]
 pub struct Def {
     pub name: String,
-    pub self_param: String,
     pub params: Vec<String>,
     pub cases: Vec<Case>,
 }
 
 impl Print for Def {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Def { name, self_param, params, cases } = self;
+        let Def { name, params, cases } = self;
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
-            .append(self_param.print(cfg, alloc))
             .append(DOT)
             .append(alloc.dtor(name))
             .append(print_params(params, alloc))

@@ -271,7 +271,7 @@ impl LiftTelescope for SelfParam {
     fn lift_telescope<T, F: FnOnce(&mut Ctx, Self::Target) -> T>(&self, ctx: &mut Ctx, f: F) -> T {
         let SelfParam { info, name, typ } = self;
 
-        ctx.bind_single(name.clone().unwrap_or(VarBind::Wildcard { span: None }), |ctx| {
+        ctx.bind_single(name.clone(), |ctx| {
             let self_param = SelfParam { info: *info, name: name.clone(), typ: typ.lift(ctx) };
             f(ctx, self_param)
         })
@@ -609,7 +609,10 @@ impl Ctx {
             params: telescope,
             self_param: SelfParam {
                 info: None,
-                name: motive.as_ref().map(|m| m.param.name.clone()),
+                name: motive
+                    .as_ref()
+                    .map(|m| m.param.name.clone())
+                    .unwrap_or(VarBind::Wildcard { span: None }),
                 typ: self_typ,
             },
             ret_typ: def_ret_typ,

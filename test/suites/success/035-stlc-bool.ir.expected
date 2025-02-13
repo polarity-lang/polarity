@@ -22,7 +22,7 @@ def .subst_result(x, by) {
     GT => Var(x.pred)
 }
 
-def e.progress(t) {
+def .progress(t) {
     Var(x) =>
         comatch {
             .ap(h_t) =>
@@ -106,7 +106,7 @@ def e.progress(t) {
         }
 }
 
-def e1.preservation(e2, t) {
+def .preservation(e2, t) {
     Var(x) =>
         comatch {
             .ap(h_t) =>
@@ -232,7 +232,7 @@ def e1.preservation(e2, t) {
         }
 }
 
-def e.subst_lemma(ctx1, ctx2, t1, t2, by_e) {
+def .subst_lemma(ctx1, ctx2, t1, t2, by_e) {
     Var(x) =>
         comatch {
             .ap(h_e) =>
@@ -380,7 +380,7 @@ def e.subst_lemma(ctx1, ctx2, t1, t2, by_e) {
         }
 }
 
-def ctx2.weaken_append(ctx1, e, t) {
+def .weaken_append(ctx1, e, t) {
     Nil =>
         comatch {
             .ap(h_e) =>
@@ -399,7 +399,7 @@ def ctx2.weaken_append(ctx1, e, t) {
         }
 }
 
-def e.weaken_cons(ctx, t1, t2) {
+def .weaken_cons(ctx, t1, t2) {
     Var(x) =>
         comatch {
             .ap(h_e) =>
@@ -484,7 +484,7 @@ def .elem_append(n, t1, t2, ctx) {
         There(n0, t2, t', ts.append(Cons(t1, Nil)), h.elem_append(n0, t1, t2, ts))
 }
 
-def ctx1.append_assoc(ctx2, ctx3) {
+def .append_assoc(ctx2, ctx3) {
     Nil => Refl(ctx2.append(ctx3)),
     Cons(x, xs) =>
         xs.append_assoc(ctx2, ctx3)
@@ -493,7 +493,7 @@ def ctx1.append_assoc(ctx2, ctx3) {
                 comatch { .ap(xs0) => Cons(x, xs0) })
 }
 
-def ctx.append_nil {
+def .append_nil {
     Nil => Refl(Nil),
     Cons(t, ts) => ts.append_nil.eq_cons(ts, ts.append(Nil), t)
 }
@@ -508,7 +508,7 @@ def .elem_unique(ctx, t1, t2) {
     There(x, x0, x1, x2, x3) absurd
 }
 
-def ctx1.ctx_lookup(ctx2, t1, t2) {
+def .ctx_lookup(ctx2, t1, t2) {
     Nil => comatch { .ap(h) => h.elem_unique(ctx2, t1, t2) },
     Cons(t, ts) =>
         comatch {
@@ -520,7 +520,7 @@ def ctx1.ctx_lookup(ctx2, t1, t2) {
         }
 }
 
-def ctx1.elem_append_first(ctx2, t, x) {
+def .elem_append_first(ctx2, t, x) {
     Nil =>
         comatch {
             .ap(h_lt) =>
@@ -552,7 +552,7 @@ def ctx1.elem_append_first(ctx2, t, x) {
         }
 }
 
-def ctx1.elem_append_pred(ctx2, t1, t2, x) {
+def .elem_append_pred(ctx2, t1, t2, x) {
     Nil =>
         comatch {
             .ap(h_gt) =>
@@ -627,7 +627,7 @@ def .cmp(y) {
         }
 }
 
-def x.cmp_reflect(y) {
+def .cmp_reflect(y) {
     Z =>
         y.match {
             Z => IsEQ(Z, Z, Refl(EQ), Refl(Z)),
@@ -645,7 +645,7 @@ def x.cmp_reflect(y) {
         }
 }
 
-def x.z_le {
+def .z_le {
     Z => LERefl(Z),
     S(x) => LESucc(Z, x, x.z_le)
 }

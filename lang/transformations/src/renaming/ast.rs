@@ -149,7 +149,7 @@ impl Rename for Telescope {
 impl Rename for Param {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         self.typ.rename_in_ctx(ctx);
-        self.name = ctx.disambiguate_name(self.name.clone());
+        self.name = ctx.disambiguate_var_bind(self.name.clone());
     }
 }
 
@@ -175,13 +175,13 @@ impl Rename for ParamInst {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         self.info = None;
         self.typ.rename_in_ctx(ctx);
-        self.name = ctx.disambiguate_name(self.name.clone());
+        self.name = ctx.disambiguate_var_bind(self.name.clone());
     }
 }
 
 impl Rename for SelfParam {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
-        let new_name = self.name.as_ref().map(|name| ctx.disambiguate_name(name.clone()));
+        let new_name = ctx.disambiguate_var_bind(self.name.clone());
         self.name = new_name;
         self.typ.rename_in_ctx(ctx);
     }
@@ -221,9 +221,19 @@ impl Rename for DotCall {
         self.inferred_type.rename_in_ctx(ctx);
     }
 }
+
 impl Rename for Variable {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
-        self.name = ctx.binders.lookup(self.idx).name.into();
+        let name = match ctx.binders.lookup(self.idx).name {
+            VarBind::Var { id, .. } => id,
+            VarBind::Wildcard { .. } => {
+                // Currently, any wildcards are replaced by named variables when binding them to the context.
+                // Therefore this case is unreachable.
+                // In the future, we may want to allow wildcards to survive renaming.
+                unreachable!()
+            }
+        };
+        self.name = VarBound::from_string(&name);
         self.inferred_type.rename_in_ctx(ctx);
     }
 }

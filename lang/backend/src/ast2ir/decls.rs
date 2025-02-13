@@ -37,17 +37,12 @@ impl ToIR for ast::Def {
     type Target = ir::Def;
 
     fn to_ir(&self) -> Result<Self::Target, BackendError> {
-        let ast::Def { name, params, self_param, cases, .. } = self;
+        let ast::Def { name, params, cases, .. } = self;
 
         let params = params.to_ir()?;
         let cases = cases.to_ir()?;
 
-        Ok(ir::Def {
-            name: name.to_string(),
-            self_param: self_param.name.as_ref().map(|nm| nm.to_string()).unwrap_or_default(),
-            params,
-            cases,
-        })
+        Ok(ir::Def { name: name.to_string(), params, cases })
     }
 }
 

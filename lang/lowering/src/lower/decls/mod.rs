@@ -95,17 +95,7 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, Lowering
         None => VarBind::Wildcard { span: None },
     };
     ctx.bind_single(name.clone(), |ctx| {
-        f(
-            ctx,
-            ast::SelfParam {
-                info: Some(*span),
-                name: match name {
-                    v @ VarBind::Var { .. } => Some(v),
-                    VarBind::Wildcard { .. } => None,
-                },
-                typ: typ_ctor,
-            },
-        )
+        f(ctx, ast::SelfParam { info: Some(*span), name, typ: typ_ctor })
     })
 }
 

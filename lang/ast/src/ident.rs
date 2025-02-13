@@ -56,16 +56,6 @@ impl Print for VarBind {
     }
 }
 
-/// TODO: Remove this instance!
-impl From<VarBind> for VarBound {
-    fn from(var: VarBind) -> Self {
-        match var {
-            VarBind::Var { span, id } => VarBound { span, id },
-            VarBind::Wildcard { span } => VarBound { span, id: "_".to_string() },
-        }
-    }
-}
-
 impl HasSpan for VarBind {
     fn span(&self) -> Option<Span> {
         match self {

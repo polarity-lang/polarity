@@ -862,7 +862,7 @@ impl ContainsMetaVars for Let {
 #[derive(Debug, Clone)]
 pub struct SelfParam {
     pub info: Option<Span>,
-    pub name: Option<VarBind>,
+    pub name: VarBind,
     pub typ: TypCtor,
 }
 
@@ -874,16 +874,16 @@ impl SelfParam {
     pub fn to_param(&self) -> Param {
         Param {
             implicit: false,
-            name: self.name.clone().unwrap_or_else(|| VarBind::from_string("")),
+            name: self.name.clone(),
             typ: Box::new(self.typ.to_exp()),
             erased: false,
         }
     }
 
-    /// A self parameter is simple if the list of arguments to the type is empty, and the name is None.
+    /// A self parameter is simple if the list of arguments to the type is empty, and the name is omitted (a wildcard).
     /// If the self parameter is simple, we can omit it during prettyprinting.
     pub fn is_simple(&self) -> bool {
-        self.typ.is_simple() && self.name.is_none()
+        self.typ.is_simple() && matches!(self.name, VarBind::Wildcard { .. })
     }
 }
 
@@ -895,13 +895,13 @@ impl Print for SelfParam {
         cfg.print_function_sugar = false;
 
         match name {
-            Some(name) => name
+            VarBind::Var { id, .. } => id
                 .print(&cfg, alloc)
                 .append(COLON)
                 .append(alloc.space())
                 .append(typ.print(&cfg, alloc))
                 .parens(),
-            None => typ.print(&cfg, alloc),
+            VarBind::Wildcard { .. } => typ.print(&cfg, alloc),
         }
     }
 }

@@ -92,8 +92,7 @@ impl AsBinder<()> for &Option<Motive> {
 
 impl AsBinder<()> for &SelfParam {
     fn as_binder(&self) -> Binder<()> {
-        let name = self.name.clone().unwrap_or(VarBind::Wildcard { span: None });
-        Binder { name, content: () }
+        Binder { name: self.name.clone(), content: () }
     }
 }
 

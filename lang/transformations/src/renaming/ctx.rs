@@ -23,22 +23,25 @@ impl BindContext for Ctx {
 }
 
 impl Ctx {
-    pub(super) fn disambiguate_name(&self, name: VarBind) -> VarBind {
-        let (id, span) = match name {
+    pub(super) fn disambiguate_var_bind(&self, var: VarBind) -> VarBind {
+        let (mut name, span) = match var {
             VarBind::Var { span, id } => (id, span),
             VarBind::Wildcard { span } => ("x".to_string(), span),
         };
 
-        let mut name = VarBind::Var { span, id };
         while self.contains_name(&name) {
             name = increment_name(name);
         }
-        name
+
+        VarBind::Var { span, id: name }
     }
 
-    fn contains_name(&self, name: &VarBind) -> bool {
+    fn contains_name(&self, name: &str) -> bool {
         for telescope in &self.binders.bound {
-            if telescope.iter().any(|binder| &binder.name == name) {
+            if telescope.iter().any(|binder| match &binder.name {
+                VarBind::Var { id, .. } => id == name,
+                VarBind::Wildcard { .. } => false,
+            }) {
                 return true;
             }
         }

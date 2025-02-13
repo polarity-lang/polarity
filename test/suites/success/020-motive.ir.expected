@@ -1,4 +1,4 @@
-def self.rep {
+def .rep {
     T => TrueRep,
     F => FalseRep
 }
