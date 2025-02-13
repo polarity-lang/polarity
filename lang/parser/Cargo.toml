@@ -13,19 +13,19 @@ categories.workspace = true
 
 [dependencies]
 # lexer generator
-logos = "0.14.0"
+logos = "0.15.0"
 # Deriving
 derivative = { workspace = true }
 # parser generator
-lalrpop = "0.20"
-lalrpop-util = "0.20"
+lalrpop = "0.22"
+lalrpop-util = "0.22"
 # url (for file locations)
-url = "2.5.0"
+url = "2.5.4"
 miette = { workspace = true }
 thiserror = { workspace = true }
 num-bigint = { workspace = true }
 miette_util = { path = "../miette_util" }
 
 [build-dependencies.lalrpop]
-version = "0.19"
+version = "0.22"
 features = ["lexer"]

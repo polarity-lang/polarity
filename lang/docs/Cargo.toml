@@ -10,10 +10,10 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-opener = "0.5"
+opener = "0.7"
 askama = "0.12.1"
 askama_escape = "0.10.3"
-comrak = "0.32"
+comrak = "0.35"
 
 # workspace members
 ast = { path = "../ast" }
