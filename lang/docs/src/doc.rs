@@ -1,4 +1,5 @@
 use std::fs;
+use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
 use askama::Template;
@@ -19,24 +20,30 @@ pub async fn write_html() {
 }
 
 async fn write_modules() {
-    let folders: Vec<&Path> = vec![Path::new("examples/"), Path::new("std")];
+    let folders: Vec<&Path> =
+        vec![Path::new("examples/"), Path::new("std/data"), Path::new("std/codata")];
     let path_list = get_all_filepaths(folders);
     let list = list_to_html(&path_list);
+    let mut all_modules = String::new();
     for path in path_list {
         let mut db = Database::from_path(&path);
         let uri = db.resolve_path(&path).expect("Failed to resolve path");
         let prg = db.ust(&uri).await.expect("Failed to get UST");
 
         let code = prg.generate_docs();
-        let content = generate_module_docs(path.file_stem().unwrap().to_str().unwrap(), &code);
-        let html_file = generate_html(path.file_stem().unwrap().to_str().unwrap(), &list, &content);
+        let content = generate_module(path.file_stem().unwrap().to_str().unwrap(), &code);
+        let output_file =
+            generate_html(path.file_stem().unwrap().to_str().unwrap(), &list, &content);
 
         let target_path = get_target_path(&path);
         if let Some(parent) = target_path.parent() {
             fs::create_dir_all(parent).expect("Failed to create directories");
         }
+        let mut stream = fs::File::create(target_path).expect("Failed to create file");
 
-        fs::write(target_path, html_file.as_bytes()).expect("Failed to write to file");
+        stream.write_all(output_file.as_bytes()).expect("Failed to write to file");
+
+        all_modules.push_str(&output_file);
     }
 }
 
@@ -45,7 +52,7 @@ pub fn open(filepath: &PathBuf) {
     opener::open(&absolute_path).unwrap();
 }
 
-fn generate_module_docs(title: &str, content: &str) -> String {
+fn generate_module(title: &str, content: &str) -> String {
     let template = ModuleTemplate { title, content };
     template.render().unwrap()
 }
@@ -57,7 +64,7 @@ struct ModuleTemplate<'a> {
 }
 
 fn generate_html(title: &str, list: &str, code: &str) -> String {
-    let template = IndexTemplate { title, list, code, start: title };
+    let template = IndexTemplate { title, list, code };
     template.render().unwrap()
 }
 #[derive(Template)]
@@ -66,7 +73,6 @@ struct IndexTemplate<'a> {
     title: &'a str,
     list: &'a str,
     code: &'a str,
-    start: &'a str,
 }
 
 fn get_filepaths_from_folder(folder: &Path) -> Vec<PathBuf> {
@@ -77,8 +83,6 @@ fn get_filepaths_from_folder(folder: &Path) -> Vec<PathBuf> {
             let path = entry.path();
             if path.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some("pol") {
                 filepaths.push(path);
-            } else if path.is_dir() {
-                filepaths.append(&mut get_filepaths_from_folder(&path));
             }
         }
     }
@@ -101,9 +105,6 @@ pub fn get_target_path(path: &Path) -> PathBuf {
         new_path.push(stem);
         new_path.set_extension("html");
     }
-    if let Some(parent) = new_path.parent() {
-        fs::create_dir_all(parent).expect("Failed to create directories");
-    }
     new_path
 }
 
@@ -117,7 +118,7 @@ pub fn list_to_html(list: &Vec<PathBuf>) -> String {
 
 fn path_to_html(path: &Path) -> String {
     format!(
-        "<li><a href=../{}/{}>{}</a></li>",
+        "<li><a href=../{}{}>{}</a></li>",
         get_parent_folder(path),
         path.file_name().unwrap().to_string_lossy(),
         path.file_stem().unwrap().to_string_lossy()
@@ -125,6 +126,11 @@ fn path_to_html(path: &Path) -> String {
 }
 
 fn get_parent_folder(path: &Path) -> String {
-    let parent = path.parent().expect("Failed to get parent directory");
-    parent.file_stem().expect("Failed to get folder name").to_string_lossy().to_string()
+    if let Some(parent) = path.parent() {
+        if let Some(folder_name) = parent.file_stem().map(|s| s.to_string_lossy().to_string() + "/")
+        {
+            return folder_name;
+        }
+    }
+    String::new()
 }

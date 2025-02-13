@@ -31,7 +31,7 @@ impl GenerateDocs for Data {
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
         let attr: String = attr.print_html_to_string(Some(&PrintCfg::default()));
-        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
+        let typ: String = typ.generate();
 
         let body = if ctors.is_empty() {
             "".to_string()
@@ -51,7 +51,7 @@ impl GenerateDocs for Codata {
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
         let attr: String = attr.print_html_to_string(Some(&PrintCfg::default()));
-        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
+        let typ: String = typ.generate();
 
         let body = if dtors.is_empty() {
             "".to_string()
@@ -70,9 +70,9 @@ impl GenerateDocs for Def {
 
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
-        let params: String = params.print_html_to_string(Some(&PrintCfg::default()));
+        let params: String = params.generate();
         let self_param: String = self_param.print_html_to_string(Some(&PrintCfg::default()));
-        let ret_typ: String = ret_typ.print_html_to_string(Some(&PrintCfg::default()));
+        let ret_typ: String = ret_typ.generate();
 
         let body = if cases.is_empty() {
             "{}".to_string()
@@ -98,8 +98,8 @@ impl GenerateDocs for Codef {
 
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
-        let params: String = params.print_html_to_string(Some(&PrintCfg::default()));
-        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
+        let params: String = params.generate();
+        let typ: String = typ.generate();
 
         let body = if cases.is_empty() {
             "{}".to_string()
@@ -118,9 +118,9 @@ impl GenerateDocs for Let {
 
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
-        let params: String = params.print_html_to_string(Some(&PrintCfg::default()));
-        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
-        let body: String = body.print_html_to_string(Some(&PrintCfg::default()));
+        let params: String = params.generate();
+        let typ: String = typ.generate();
+        let body: String = body.generate();
 
         let let_template = LetTemplate { doc: &doc, name, params: &params, typ: &typ, body: &body };
         let_template.render().unwrap()
