@@ -1,4 +1,4 @@
-def x.add(m) {
+def .add(m) {
     Z => m,
     S(n) => S(n.add(m))
 }

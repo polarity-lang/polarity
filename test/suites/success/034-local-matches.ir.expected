@@ -1,4 +1,4 @@
-def x.top_is_zero(n) {
+def .top_is_zero(n) {
     Unit =>
         n.match {
             Z => T,
@@ -6,4 +6,4 @@ def x.top_is_zero(n) {
         }
 }
 
-def x.top_id { Unit => comatch { .ap(x) => x } }
+def .top_id { Unit => comatch { .ap(x) => x } }

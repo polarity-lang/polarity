@@ -1,4 +1,4 @@
-def x.neg {
+def .neg {
     T => F,
     F => T
 }

@@ -1,6 +1,6 @@
-def x.contra(prf, ref) { Unit => ref.ret(prf) }
+def .contra(prf, ref) { Unit => ref.ret(prf) }
 
-def x.lem {
+def .lem {
     Unit =>
         comatch {
             .given(k) => Unit.contra(Right(comatch { .ret(x1) => Unit.contra(Left(x1), k) }), k)

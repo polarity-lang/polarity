@@ -1,17 +1,17 @@
-def x0.sym(x, y) { Refl(x0) => Refl(y) }
+def .sym(x, y) { Refl(x0) => Refl(y) }
 
-def x0.subst(x, y, p) { Refl(x0) => p }
+def .subst(x, y, p) { Refl(x0) => p }
 
-def x0.trans(x, y, z, h) { Refl(x0) => h }
+def .trans(x, y, z, h) { Refl(x0) => h }
 
-def x0.cong(x, y, f) { Refl(x0) => Refl(f.ap(y)) }
+def .cong(x, y, f) { Refl(x0) => Refl(f.ap(y)) }
 
-def x.not {
+def .not {
     True => False,
     False => True
 }
 
-def self.not_inverse {
+def .not_inverse {
     True => Refl(True),
     False => Refl(False)
 }

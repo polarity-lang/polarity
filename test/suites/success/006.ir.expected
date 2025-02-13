@@ -1,1 +1,1 @@
-def x.foo(a, d) { Unit => d.match { MkD(a0) => MkD(a).match { MkD(x) => MkD(a) } } }
+def .foo(a, d) { Unit => d.match { MkD(a0) => MkD(a).match { MkD(x) => MkD(a) } } }

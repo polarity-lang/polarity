@@ -1,14 +1,14 @@
-def x.add(y) {
+def .add(y) {
     Z => y,
     S(x') => S(x'.add(y))
 }
 
-def x.and(y) {
+def .and(y) {
     T => y,
     F => F
 }
 
-def x.preserves(e1, e2, t, h1) {
+def .preserves(e1, e2, t, h1) {
     EAddCongL(lhs, lhs', rhs, h_lhs) => panic!("not yet implemented"),
     EAddCongR(lhs, rhs, rhs', h_rhs) => panic!("not yet implemented"),
     EAddRed(n1, n2) => panic!("not yet implemented"),

@@ -1,4 +1,4 @@
-def x.ind(P, step) {
+def .ind(P, step) {
     True => panic!("not yet implemented"),
     False => panic!("not yet implemented")
 }

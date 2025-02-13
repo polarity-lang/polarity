@@ -1,4 +1,4 @@
-def x.and(other) {
+def .and(other) {
     True => other,
     False => False
 }
