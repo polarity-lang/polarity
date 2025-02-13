@@ -880,7 +880,7 @@ impl SelfParam {
         }
     }
 
-    /// A self parameter is simple if the list of arguments to the type is empty, and the name is None.
+    /// A self parameter is simple if the list of arguments to the type is empty, and the name is omitted (a wildcard).
     /// If the self parameter is simple, we can omit it during prettyprinting.
     pub fn is_simple(&self) -> bool {
         self.typ.is_simple() && matches!(self.name, VarBind::Wildcard { .. })
