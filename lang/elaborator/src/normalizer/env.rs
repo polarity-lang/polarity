@@ -129,9 +129,14 @@ impl ToEnv for TypeCtx {
             .bound
             .map_idx(|idx, binder| {
                 Box::new(Val::Neu(Neu::Variable(Variable {
-                    // FIXME: handle info
                     span: None,
-                    name: binder.name.clone().into(),
+                    name: match &binder.name {
+                        ast::VarBind::Var { span, id } => VarBound { span: *span, id: id.clone() },
+                        // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
+                        // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
+                        // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
+                        ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
+                    },
                     idx,
                 })))
             })
