@@ -1,9 +1,9 @@
-def .add(y) {
+def x.add(y) {
     Z => y,
     S(x') => S(x'.add(y))
 }
 
-def .append'(n, m, ys) {
+def x.append'(n, m, ys) {
     Cons(n', x, xs) => Cons(n'.add(m), x, xs.append'(n', m, ys)),
     Nil => ys
 }

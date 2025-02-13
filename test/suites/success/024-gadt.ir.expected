@@ -1,4 +1,4 @@
-def .unwrap {
+def x.unwrap {
     WrapFoo(x) => x,
     WrapBar(x) => x
 }

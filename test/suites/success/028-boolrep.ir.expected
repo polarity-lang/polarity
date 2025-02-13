@@ -1,11 +1,11 @@
 use "../../../std/data/bool.pol"
 
-def .extract(x) {
+def x0.extract(x) {
     TrueRep => T,
     FalseRep => F
 }
 
-def .flipRep(x, rep) {
+def x0.flipRep(x, rep) {
     Unit =>
         rep.match {
             TrueRep => FalseRep,
@@ -13,4 +13,4 @@ def .flipRep(x, rep) {
         }
 }
 
-def .example { Unit => Unit.flipRep(T, TrueRep).extract(F) }
+def x.example { Unit => Unit.flipRep(T, TrueRep).extract(F) }

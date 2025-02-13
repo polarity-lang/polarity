@@ -1,7 +1,7 @@
 use "../../../std/data/nat.pol"
 use "../../../std/data/bool.pol"
 
-def .iNeg {
+def x.iNeg {
     T => F,
     F => T
 }

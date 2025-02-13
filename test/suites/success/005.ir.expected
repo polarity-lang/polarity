@@ -1,6 +1,6 @@
-def .not {
+def x.not {
     True => False,
     False => True
 }
 
-def .false { Unit => True.not }
+def x.false { Unit => True.not }

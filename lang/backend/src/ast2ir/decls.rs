@@ -44,7 +44,7 @@ impl ToIR for ast::Def {
 
         Ok(ir::Def {
             name: name.to_string(),
-            self_param: self_param.name.as_ref().map(|nm| nm.to_string()).unwrap_or_default(),
+            self_param: self_param.name.to_string(),
             params,
             cases,
         })

@@ -1,4 +1,4 @@
-def .id { App(e) => App(e) }
+def x.id { App(e) => App(e) }
 
 def self.preservation(e2) {
     App(e) => comatch { .ap(h_eval) => h_eval.match { EBeta(f) => panic!("not yet implemented") } }

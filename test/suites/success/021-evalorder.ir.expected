@@ -1,7 +1,7 @@
-def .diverge { Unit => Unit.diverge }
+def x.diverge { Unit => Unit.diverge }
 
-def .before { Unit => Ignore(Unit.diverge) }
+def x.before { Unit => Ignore(Unit.diverge) }
 
-def .after { Unit => comatch { .ap(x) => x } }
+def x.after { Unit => comatch { .ap(x) => x } }
 
 codef Ignore(y) { .ap(x) => x }

@@ -1,9 +1,9 @@
-def .head(n) {
+def x.head(n) {
     Cons(n', x, xs) => x,
     Nil absurd
 }
 
-def .tail(n) {
+def x.tail(n) {
     Cons(n', x, xs) => xs,
     Nil absurd
 }

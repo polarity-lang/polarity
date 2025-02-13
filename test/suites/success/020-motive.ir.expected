@@ -3,7 +3,7 @@ def self.rep {
     F => FalseRep
 }
 
-def .example(b) {
+def x.example(b) {
     Unit =>
         b.match {
             T => TrueRep,

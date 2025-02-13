@@ -1,33 +1,33 @@
-def .add(y) {
+def x.add(y) {
     Z => y,
     S(x') => S(x'.add(y))
 }
 
-def .head(n) {
+def x.head(n) {
     Cons(n', x, xs) => panic!("not yet implemented"),
     Nil absurd
 }
 
-def .tail(n) {
+def x.tail(n) {
     Cons(n', x, xs) => panic!("not yet implemented"),
     Nil absurd
 }
 
-def .append(n, m, ys) {
+def x.append(n, m, ys) {
     Nil => ys,
     Cons(n', x, xs) => Cons(n'.add(m), x, xs.append(n', m, ys))
 }
 
-def .example1 { Unit => Cons(S(Z), Z, Cons(Z, Z, Nil)) }
+def x.example1 { Unit => Cons(S(Z), Z, Cons(Z, Z, Nil)) }
 
-def .example2 { Unit => Unit.example1.append(S(S(Z)), S(S(Z)), Unit.example1) }
+def x.example2 { Unit => Unit.example1.append(S(S(Z)), S(S(Z)), Unit.example1) }
 
-def .not {
+def x.not {
     T => F,
     F => T
 }
 
-def .if_then_else(then, else) {
+def x.if_then_else(then, else) {
     T => then,
     F => else
 }

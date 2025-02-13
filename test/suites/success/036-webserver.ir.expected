@@ -1,4 +1,4 @@
-def .cong_pair(a, b, c) { Refl(x0) => Refl(Pair(b, c)) }
+def x.cong_pair(a, b, c) { Refl(x0) => Refl(Pair(b, c)) }
 
 codef Pair(x, y) {
     .fst => x,

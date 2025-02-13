@@ -1,4 +1,4 @@
-def .pred {
+def x.pred {
     Z => Z,
     S(n) => n,
     Omega => Omega

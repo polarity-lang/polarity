@@ -1,14 +1,14 @@
-def .append(other) {
+def x.append(other) {
     Nil => other,
     Cons(t, ts) => Cons(t, ts.append(other))
 }
 
-def .len {
+def x.len {
     Nil => Z,
     Cons(x, ts) => S(ts.len)
 }
 
-def .subst(v, by) {
+def x.subst(v, by) {
     Var(x) => x.cmp(v).subst_result(x, by),
     Lam(e) => Lam(e.subst(S(v), by)),
     App(e1, e2) => App(e1.subst(v, by), e2.subst(v, by)),
@@ -16,7 +16,7 @@ def .subst(v, by) {
     If(cond, then, else) => If(cond.subst(v, by), then.subst(v, by), else.subst(v, by))
 }
 
-def .subst_result(x, by) {
+def x0.subst_result(x, by) {
     LT => Var(x),
     EQ => by,
     GT => Var(x.pred)
@@ -478,7 +478,7 @@ def e.weaken_cons(ctx, t1, t2) {
         }
 }
 
-def .elem_append(n, t1, t2, ctx) {
+def x.elem_append(n, t1, t2, ctx) {
     Here(t, ts) => Here(t2, ts.append(Cons(t1, Nil))),
     There(n0, x, t', ts, h) =>
         There(n0, t2, t', ts.append(Cons(t1, Nil)), h.elem_append(n0, t1, t2, ts))
@@ -498,12 +498,12 @@ def ctx.append_nil {
     Cons(t, ts) => ts.append_nil.eq_cons(ts, ts.append(Nil), t)
 }
 
-def .empty_absurd(x, t) {
+def x0.empty_absurd(x, t) {
     Here(x0, x1) absurd,
     There(x0, x1, x2, x3, x4) absurd
 }
 
-def .elem_unique(ctx, t1, t2) {
+def x.elem_unique(ctx, t1, t2) {
     Here(x, x0) => Refl(t2),
     There(x, x0, x1, x2, x3) absurd
 }
@@ -597,24 +597,24 @@ def ctx1.elem_append_pred(ctx2, t1, t2, x) {
         }
 }
 
-def .elim_bot { }
+def x.elim_bot { }
 
-def .sym(x, y) { Refl(x0) => Refl(y) }
+def x0.sym(x, y) { Refl(x0) => Refl(y) }
 
-def .transport(x, y, p, prf) { Refl(x0) => prf }
+def x0.transport(x, y, p, prf) { Refl(x0) => prf }
 
-def .cong(x, y, f) { Refl(x0) => Refl(f.ap(y)) }
+def x0.cong(x, y, f) { Refl(x0) => Refl(f.ap(y)) }
 
-def .eq_s(x, y) { Refl(x1) => Refl(S(y)) }
+def x0.eq_s(x, y) { Refl(x1) => Refl(S(y)) }
 
-def .eq_cons(xs, ys, t) { Refl(x0) => Refl(Cons(t, ys)) }
+def x.eq_cons(xs, ys, t) { Refl(x0) => Refl(Cons(t, ys)) }
 
-def .pred {
+def x.pred {
     Z => Z,
     S(x) => x
 }
 
-def .cmp(y) {
+def x.cmp(y) {
     Z =>
         y.match {
             Z => EQ,
@@ -650,27 +650,27 @@ def x.z_le {
     S(x) => LESucc(Z, x, x.z_le)
 }
 
-def .le_succ(x, y) {
+def x0.le_succ(x, y) {
     LERefl(x0) => LERefl(S(y)),
     LESucc(x0, y0, h) => LESucc(S(x), S(y0), h.le_succ(x, y0))
 }
 
-def .le_unsucc(x, y) {
+def x0.le_unsucc(x, y) {
     LERefl(x0) => LERefl(y),
     LESucc(x0, x1, h) => h.s_le(x, y)
 }
 
-def .s_le(x, y) {
+def x0.s_le(x, y) {
     LERefl(x0) => LESucc(x, x, LERefl(x)),
     LESucc(x0, y', h) => LESucc(x, y', h.s_le(x, y'))
 }
 
-def .s_pred(x, y) {
+def x0.s_pred(x, y) {
     LERefl(x0) => Refl(S(x)),
     LESucc(x0, y', x1) => Refl(S())
 }
 
-def .not {
+def x.not {
     True => False,
     False => True
 }

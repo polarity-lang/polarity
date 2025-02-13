@@ -1,6 +1,6 @@
-def .id { Unit => comatch { .pi_elim(x0, a) => comatch { .ap(x3) => x3 } } }
+def x.id { Unit => comatch { .pi_elim(x0, a) => comatch { .ap(x3) => x3 } } }
 
-def .const {
+def x.const {
     Unit =>
         comatch {
             .pi_elim(x0, a) =>

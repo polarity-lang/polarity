@@ -1,4 +1,4 @@
-def .pres(e, ty) {
+def x.pres(e, ty) {
     TTrue => comatch { .preservationStep(e1, e2, ty0, s) => s.d_step1(e2) },
     TFalse => comatch { .preservationStep(e1, e2, ty0, s) => s.d_step3(e2) },
     TIte(e1, e2, e3, ty0, t1, t2, t3) =>

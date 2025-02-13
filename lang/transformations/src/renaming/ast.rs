@@ -181,7 +181,7 @@ impl Rename for ParamInst {
 
 impl Rename for SelfParam {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
-        let new_name = self.name.as_ref().map(|name| ctx.disambiguate_var_bind(name.clone()));
+        let new_name = ctx.disambiguate_var_bind(self.name.clone());
         self.name = new_name;
         self.typ.rename_in_ctx(ctx);
     }

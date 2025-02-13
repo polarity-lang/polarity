@@ -93,8 +93,11 @@ impl CheckInfer for LocalMatch {
             }
         };
 
-        let with_scrutinee_type =
-            WithScrutineeType { cases, scrutinee_type: typ_app_nf.clone(), scrutinee_name: None };
+        let with_scrutinee_type = WithScrutineeType {
+            cases,
+            scrutinee_type: typ_app_nf.clone(),
+            scrutinee_name: VarBind::Wildcard { span: None },
+        };
         with_scrutinee_type.check_exhaustiveness(ctx)?;
         let cases = with_scrutinee_type.check_type(ctx, &body_t)?;
 
@@ -118,7 +121,7 @@ impl CheckInfer for LocalMatch {
 pub struct WithScrutineeType<'a> {
     pub cases: &'a Vec<Case>,
     pub scrutinee_type: TypCtor,
-    pub scrutinee_name: Option<VarBind>,
+    pub scrutinee_name: VarBind,
 }
 
 /// Check a pattern match
@@ -212,7 +215,7 @@ impl WithScrutineeType<'_> {
             // * Shift t by one level such that we end up with the context Ξ
             let mut subst_ctx_1 = ctx.levels().append(
                 &vec![
-                    vec![scrutinee_name.clone().unwrap_or(VarBind::Wildcard { span: None })],
+                    vec![scrutinee_name.clone()],
                     params.params.iter().map(|p| p.name.clone()).collect(),
                 ]
                 .into(),
@@ -220,7 +223,7 @@ impl WithScrutineeType<'_> {
             let mut subst_ctx_2 = ctx.levels().append(
                 &vec![
                     params.params.iter().map(|p| p.name.clone()).collect(),
-                    vec![scrutinee_name.clone().unwrap_or(VarBind::Wildcard { span: None })],
+                    vec![scrutinee_name.clone()],
                 ]
                 .into(),
             );
