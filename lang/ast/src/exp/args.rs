@@ -99,17 +99,17 @@ impl HasType for Arg {
 }
 
 impl Substitutable for Arg {
-    type Result = Arg;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+    type Target = Arg;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
         match self {
             Arg::UnnamedArg { arg, erased } => {
-                Arg::UnnamedArg { arg: arg.subst(ctx, by), erased: *erased }
+                Ok(Arg::UnnamedArg { arg: arg.subst(ctx, by)?, erased: *erased })
             }
             Arg::NamedArg { name: var, arg, erased } => {
-                Arg::NamedArg { name: var.clone(), arg: arg.subst(ctx, by), erased: *erased }
+                Ok(Arg::NamedArg { name: var.clone(), arg: arg.subst(ctx, by)?, erased: *erased })
             }
             Arg::InsertedImplicitArg { hole, erased } => {
-                Arg::InsertedImplicitArg { hole: hole.subst(ctx, by), erased: *erased }
+                Ok(Arg::InsertedImplicitArg { hole: hole.subst(ctx, by)?, erased: *erased })
             }
         }
     }
@@ -189,9 +189,10 @@ impl Shift for Args {
 }
 
 impl Substitutable for Args {
-    type Result = Args;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
-        Args { args: self.args.subst(ctx, by) }
+    type Target = Args;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+        let args = self.args.iter().map(|arg| arg.subst(ctx, by)).collect::<Result<Vec<_>, _>>()?;
+        Ok(Args { args })
     }
 }
 

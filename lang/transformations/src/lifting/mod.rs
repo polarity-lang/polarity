@@ -588,12 +588,13 @@ impl Ctx {
         let LiftedSignature { telescope, subst, args } = lifted_signature(fvs, &self.ctx);
 
         // Substitute the new parameters for the free variables
-        let cases = cases.subst(&mut self.ctx, &subst);
-        let self_typ = self_typ.subst(&mut self.ctx, &subst);
+        // Unwrap is safe here because we are unwrapping an infallible result
+        let cases = cases.subst(&mut self.ctx, &subst).unwrap();
+        let self_typ = self_typ.subst(&mut self.ctx, &subst).unwrap();
         let def_ret_typ = match &motive {
-            Some(m) => m.lift(self).subst(&mut self.ctx, &subst).ret_typ,
+            Some(m) => m.lift(self).subst(&mut self.ctx, &subst).unwrap().ret_typ,
             None => shift_and_clone(
-                &ret_typ.clone().unwrap().lift(self).subst(&mut self.ctx, &subst),
+                &ret_typ.clone().unwrap().lift(self).subst(&mut self.ctx, &subst).unwrap(),
                 (1, 0),
             ),
         };
@@ -667,8 +668,9 @@ impl Ctx {
         let LiftedSignature { telescope, subst, args } = lifted_signature(fvs, &self.ctx);
 
         // Substitute the new parameters for the free variables
-        let cases = cases.subst(&mut self.ctx, &subst);
-        let typ = typ.subst(&mut self.ctx, &subst);
+        // Unwrap is safe here because we are unwrapping an infallible result
+        let cases = cases.subst(&mut self.ctx, &subst).unwrap();
+        let typ = typ.subst(&mut self.ctx, &subst).unwrap();
 
         // Build the new top-level definition
         let name = self.unique_codef_name(name, &inferred_type.name.id);

@@ -66,7 +66,7 @@ impl CheckInfer for LocalMatch {
                 let mut subst_ctx = ctx.levels().append(&vec![vec![motive_binder]].into());
                 let on_exp = shift_and_clone(on_exp, (1, 0));
                 let subst = Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp };
-                let mut motive_t = ret_typ.subst(&mut subst_ctx, &subst);
+                let mut motive_t = ret_typ.subst(&mut subst_ctx, &subst)?;
                 motive_t.shift((-1, 0));
                 let motive_t_nf = motive_t.normalize(&ctx.type_info_table, &mut ctx.env())?;
                 convert(ctx.vars.clone(), &mut ctx.meta_vars, motive_t_nf, t, span)?;
@@ -264,7 +264,7 @@ impl WithScrutineeType<'_> {
                     t.shift((1, 0));
                     let mut t = t
                         .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
-                        .subst(&mut subst_ctx_2, &subst);
+                        .subst(&mut subst_ctx_2, &subst)?;
                     t.shift((-1, 0));
 
                     // We have to check whether we have an absurd case or an ordinary case.
@@ -302,9 +302,9 @@ impl WithScrutineeType<'_> {
                             ctx.fork::<TcResult<_>, _>(|ctx| {
                                 let type_info_table = ctx.type_info_table.clone();
                                 ctx.subst(&type_info_table, &unif)?;
-                                let body = body.subst(&mut ctx.levels(), &unif);
+                                let body = body.subst(&mut ctx.levels(), &unif)?;
 
-                                let t_subst = t.subst(&mut ctx.levels(), &unif);
+                                let t_subst = t.subst(&mut ctx.levels(), &unif)?;
                                 let t_nf =
                                     t_subst.normalize(&ctx.type_info_table, &mut ctx.env())?;
 

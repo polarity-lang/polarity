@@ -68,10 +68,10 @@ impl HasType for TypCtor {
 }
 
 impl Substitutable for TypCtor {
-    type Result = TypCtor;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    type Target = TypCtor;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
         let TypCtor { span, name, args } = self;
-        TypCtor { span: *span, name: name.clone(), args: args.subst(ctx, by) }
+        Ok(TypCtor { span: *span, name: name.clone(), args: args.subst(ctx, by)? })
     }
 }
 

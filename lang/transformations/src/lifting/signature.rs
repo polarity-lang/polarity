@@ -1,4 +1,5 @@
 use std::cmp;
+use std::convert::Infallible;
 
 use ast::ctx::*;
 use ast::*;
@@ -51,7 +52,8 @@ pub fn lifted_signature(fvs: HashSet<FreeVar>, base_ctx: &LevelCtx) -> LiftedSig
     for fv in fvs.into_iter() {
         let FreeVar { name, lvl, typ, mut ctx } = fv;
 
-        let typ = typ.subst(&mut ctx, &subst);
+        // Unwrap is safe here because we are unwrapping an infallible result
+        let typ = typ.subst(&mut ctx, &subst).unwrap();
 
         let param = Param {
             implicit: false,
@@ -207,7 +209,9 @@ impl Shift for FVBodySubst {
 }
 
 impl Substitution for FVBodySubst {
-    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
+    type Err = Infallible;
+
+    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
         // Let Γ be the original context, let Δ be the context according to which the new De-Bruijn index should be calculated
         //
         // Γ = [[x], [y], [z]]
@@ -228,26 +232,28 @@ impl Substitution for FVBodySubst {
             .map(|(_, var)| VarBind::Var { id: var.name.clone(), span: None })
             .collect::<Vec<_>>();
         let new_ctx = LevelCtx::from(vec![free_vars]).append(&ctx.tail(self.cutoff));
-        self.subst.get(&lvl).map(|fv| {
+        Ok(self.subst.get(&lvl).map(|fv| {
             Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: new_ctx.lvl_to_idx(fv.lvl),
                 name: VarBound::from_string(&fv.name),
                 inferred_type: None,
             }))
-        })
+        }))
     }
 }
 
 impl Substitution for FVParamSubst {
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Option<Box<Exp>> {
-        self.subst.get(&lvl).map(|fv| {
+    type Err = Infallible;
+
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
+        Ok(self.subst.get(&lvl).map(|fv| {
             Box::new(Exp::Variable(Variable {
                 span: None,
                 idx: Idx { fst: 0, snd: self.subst.len() - 1 - fv.lvl.snd },
                 name: VarBound::from_string(&fv.name),
                 inferred_type: None,
             }))
-        })
+        }))
     }
 }

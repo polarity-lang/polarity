@@ -64,18 +64,18 @@ impl HasType for LocalComatch {
 }
 
 impl Substitutable for LocalComatch {
-    type Result = LocalComatch;
+    type Target = LocalComatch;
 
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
         let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
-        LocalComatch {
+        Ok(LocalComatch {
             span: *span,
             ctx: None,
             name: name.clone(),
             is_lambda_sugar: *is_lambda_sugar,
-            cases: cases.iter().map(|case| case.subst(ctx, by)).collect(),
+            cases: cases.iter().map(|case| case.subst(ctx, by)).collect::<Result<Vec<_>, _>>()?,
             inferred_type: None,
-        }
+        })
     }
 }
 
