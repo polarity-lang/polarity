@@ -21,25 +21,26 @@ impl Database {
         let LiftResult { module: prg, modified_decls, new_decls } =
             transformations::lift(prg, type_name);
 
-        let edits = generate_edits(type_name, type_span, &prg, modified_decls, new_decls);
+        let edits = generate_edits(type_span, &prg, modified_decls, new_decls);
 
         Ok(edits)
     }
 }
 
 fn generate_edits(
-    type_name: &str,
     type_span: Span,
     module: &ast::Module,
     modified_decls: HashSet<IdBind>,
     new_decls: HashSet<IdBind>,
 ) -> Vec<Edit> {
-    let new_decls = module
-        .decls
-        .iter()
-        .filter(|decl| new_decls.contains(decl.ident()) || decl.ident().id == type_name)
-        .cloned()
-        .collect();
+    // If there are no modifications, no local (co)matches have been lifted.
+    if new_decls.is_empty() {
+        assert!(modified_decls.is_empty());
+        return vec![];
+    }
+
+    let new_decls =
+        module.decls.iter().filter(|decl| new_decls.contains(decl.ident())).cloned().collect();
 
     let new_items = Module {
         uri: module.uri.clone(),
@@ -49,9 +50,12 @@ fn generate_edits(
         meta_vars: module.meta_vars.clone(),
     };
 
-    let text = new_items.print_to_string(None);
+    let mut text = "\n\n".to_owned();
+    text.push_str(&new_items.print_to_string(None));
 
-    let mut edits = vec![Edit { span: type_span, text }];
+    let span = Span { start: type_span.end, end: type_span.end };
+
+    let mut edits = vec![Edit { span, text }];
 
     for name in modified_decls {
         let decl = module.decls.iter().find(|d| d.ident() == &name).unwrap();

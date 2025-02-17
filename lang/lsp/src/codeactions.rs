@@ -92,6 +92,11 @@ async fn lifting_action(
     let Ok(edits) = db.lift(&text_document.uri.from_lsp(), item.type_name()).await else {
         return None;
     };
+
+    if edits.is_empty() {
+        return None;
+    }
+
     let edits = edits
         .into_iter()
         .map(|edit| TextEdit {
