@@ -2,6 +2,9 @@
 //!
 //! Tracks locally bound variables
 
+use pretty::DocAllocator;
+use printer::Print;
+
 use crate::traits::Shift;
 use crate::*;
 
@@ -72,5 +75,21 @@ impl<T: Substitutable> Substitutable for Binder<T> {
 impl<T: ContainsMetaVars> ContainsMetaVars for Binder<T> {
     fn contains_metavars(&self) -> bool {
         self.content.contains_metavars()
+    }
+}
+
+impl<T: Print> Print for Binder<T> {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+        prec: printer::Precedence,
+    ) -> printer::Builder<'a> {
+        let Binder { name, content } = self;
+
+        alloc
+            .text(name.to_string())
+            .append(alloc.text(":="))
+            .append(content.print_prec(cfg, alloc, prec))
     }
 }

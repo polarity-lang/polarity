@@ -59,7 +59,7 @@ pub fn check_metavars_solved(meta_vars: &HashMap<MetaVar, MetaVarState>) -> TcRe
     if let Some(mv) = unsolved.iter().next() {
         let err = TypeError::UnresolvedMeta {
             span: mv.span.to_miette(),
-            message: mv.print_to_string(None),
+            meta_var: mv.print_to_string(None),
         };
         return Err(err.into());
     }

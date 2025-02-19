@@ -1,0 +1,15 @@
+T-022
+
+  × The metavariable _0 was equated with an expression that contains b which is not in scope for _0
+    ╭─[011-escaping-hole.pol:8:19]
+  7 │ #[transparent]
+  8 │ let foo(): Bool { _ }
+    ·                   ─
+  9 │ 
+ 10 │ let bar(b: Bool): Eq(Bool, foo(), b) {
+ 11 │     Refl(Bool, b)
+    ·     ──────┬──────
+    ·           ╰── While elaborating
+ 12 │ }
+    ╰────
+  help: This means that the metavariable cannot be solved automatically.

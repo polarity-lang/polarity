@@ -1,0 +1,7 @@
+codata Foo {
+    (f: Foo).foo(a: Type, x: ?): a
+}
+
+let force(f: Foo, b: Type, x: b): b {
+    f.foo(b, x)
+}
