@@ -126,9 +126,18 @@ impl Attributes {
 #[derive(Debug, Clone)]
 pub enum MetaVarState {
     /// We know what the metavariable stands for.
-    Solved { ctx: LevelCtx, solution: Box<Exp> },
+    /// The solution lives in the same context as the metavariable.
+    Solved {
+        /// The context in which the metavariable and therefore also its solution lives.
+        ctx: LevelCtx,
+        /// The solution to the metavariable.
+        solution: Box<Exp>,
+    },
     /// We don't know yet what the metavariable stands for.
-    Unsolved { ctx: LevelCtx },
+    Unsolved {
+        /// The context in which the metavariable lives.
+        ctx: LevelCtx,
+    },
 }
 
 impl MetaVarState {

@@ -1,0 +1,3 @@
+let foo { T }
+
+let bar { Refl(T) }
