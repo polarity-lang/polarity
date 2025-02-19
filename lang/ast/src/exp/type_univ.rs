@@ -63,11 +63,11 @@ impl HasType for TypeUniv {
 }
 
 impl Substitutable for TypeUniv {
-    type Result = TypeUniv;
+    type Target = TypeUniv;
 
-    fn subst<S: Substitution>(&self, _ctx: &mut LevelCtx, _by: &S) -> Self::Result {
+    fn subst<S: Substitution>(&self, _ctx: &mut LevelCtx, _by: &S) -> Result<Self::Target, S::Err> {
         let TypeUniv { span } = self;
-        TypeUniv { span: *span }
+        Ok(TypeUniv { span: *span })
     }
 }
 

@@ -68,7 +68,7 @@ impl Ctx {
                     let metavar_state = meta_vars.get(&h.metavar).unwrap();
                     match metavar_state {
                         MetaVarState::Solved { ctx, solution } => {
-                            let lhs = solution.clone().subst(&mut ctx.clone(), &h.args);
+                            let lhs = solution.clone().subst(&mut ctx.clone(), &h.args)?;
                             self.add_constraint(Constraint::Equality {
                                 ctx: constraint_cxt.clone(),
                                 lhs,

@@ -65,17 +65,17 @@ impl HasType for Variable {
 }
 
 impl Substitutable for Variable {
-    type Result = Box<Exp>;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+    type Target = Box<Exp>;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
         let Variable { span, idx, name, .. } = self;
-        match by.get_subst(ctx, ctx.idx_to_lvl(*idx)) {
-            Some(exp) => exp,
-            None => Box::new(Exp::Variable(Variable {
+        match by.get_subst(ctx, ctx.idx_to_lvl(*idx))? {
+            Some(exp) => Ok(exp),
+            None => Ok(Box::new(Exp::Variable(Variable {
                 span: *span,
                 idx: *idx,
                 name: name.clone(),
                 inferred_type: None,
-            })),
+            }))),
         }
     }
 }

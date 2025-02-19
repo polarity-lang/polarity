@@ -1184,10 +1184,15 @@ pub struct Param {
 }
 
 impl Substitutable for Param {
-    type Result = Param;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    type Target = Param;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
         let Param { implicit, name, typ, erased } = self;
-        Param { implicit: *implicit, name: name.clone(), typ: typ.subst(ctx, by), erased: *erased }
+        Ok(Param {
+            implicit: *implicit,
+            name: name.clone(),
+            typ: typ.subst(ctx, by)?,
+            erased: *erased,
+        })
     }
 }
 

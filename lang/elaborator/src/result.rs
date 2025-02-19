@@ -1,3 +1,5 @@
+use std::convert::Infallible;
+
 use miette::{Diagnostic, SourceSpan};
 use miette_util::codespan::Span;
 use miette_util::ToMiette;
@@ -243,5 +245,17 @@ impl TypeError {
             while_elaborating_span: while_elaborating_span.to_miette(),
         }
         .into()
+    }
+}
+
+impl From<Infallible> for TypeError {
+    fn from(inf: Infallible) -> Self {
+        match inf {}
+    }
+}
+
+impl From<Infallible> for Box<TypeError> {
+    fn from(inf: Infallible) -> Self {
+        Box::new(TypeError::from(inf))
     }
 }

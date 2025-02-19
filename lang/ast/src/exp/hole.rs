@@ -9,8 +9,8 @@ use printer::{
 
 use crate::{
     ctx::{values::TypeCtx, LevelCtx},
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, SubstUnderCtx, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
+    Zonk, ZonkError,
 };
 
 use super::{Exp, Lvl, MetaVar, MetaVarKind};
@@ -83,19 +83,19 @@ impl HasType for Hole {
 }
 
 impl Substitutable for Hole {
-    type Result = Hole;
+    type Target = Hole;
 
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
         let Hole { span, kind, metavar, args, .. } = self;
-        Hole {
+        Ok(Hole {
             span: *span,
             kind: *kind,
             metavar: *metavar,
             inferred_type: None,
             inferred_ctx: None,
-            args: args.subst(ctx, by),
-            solution: self.solution.subst(ctx, by),
-        }
+            args: args.subst(ctx, by)?,
+            solution: self.solution.as_ref().map(|s| s.subst(ctx, by)).transpose()?,
+        })
     }
 }
 
@@ -163,7 +163,8 @@ impl Zonk for Hole {
     ) -> Result<(), ZonkError> {
         match meta_vars.get(&self.metavar) {
             Some(crate::MetaVarState::Solved { ctx, solution }) => {
-                self.solution = Some(solution.subst_under_ctx(ctx.clone(), &self.args));
+                // Unwrap is safe here because we are unwrapping an infallible result.
+                self.solution = Some(solution.subst(&mut ctx.clone(), &self.args).unwrap());
             }
             Some(crate::MetaVarState::Unsolved { .. }) => {
                 // Nothing to do, the hole remains unsolved

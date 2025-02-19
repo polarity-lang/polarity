@@ -152,18 +152,18 @@ impl HasType for Exp {
 }
 
 impl Substitutable for Exp {
-    type Result = Exp;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+    type Target = Exp;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
         match self {
-            Exp::Variable(e) => *e.subst(ctx, by),
-            Exp::TypCtor(e) => e.subst(ctx, by).into(),
-            Exp::Call(e) => e.subst(ctx, by).into(),
-            Exp::DotCall(e) => e.subst(ctx, by).into(),
-            Exp::Anno(e) => e.subst(ctx, by).into(),
-            Exp::TypeUniv(e) => e.subst(ctx, by).into(),
-            Exp::LocalMatch(e) => e.subst(ctx, by).into(),
-            Exp::LocalComatch(e) => e.subst(ctx, by).into(),
-            Exp::Hole(e) => e.subst(ctx, by).into(),
+            Exp::Variable(e) => Ok(*e.subst(ctx, by)?),
+            Exp::TypCtor(e) => Ok(e.subst(ctx, by)?.into()),
+            Exp::Call(e) => Ok(e.subst(ctx, by)?.into()),
+            Exp::DotCall(e) => Ok(e.subst(ctx, by)?.into()),
+            Exp::Anno(e) => Ok(e.subst(ctx, by)?.into()),
+            Exp::TypeUniv(e) => Ok(e.subst(ctx, by)?.into()),
+            Exp::LocalMatch(e) => Ok(e.subst(ctx, by)?.into()),
+            Exp::LocalComatch(e) => Ok(e.subst(ctx, by)?.into()),
+            Exp::Hole(e) => Ok(e.subst(ctx, by)?.into()),
         }
     }
 }
@@ -244,19 +244,19 @@ impl Shift for Motive {
 }
 
 impl Substitutable for Motive {
-    type Result = Motive;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+    type Target = Motive;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
         let Motive { span, param, ret_typ } = self;
 
-        Motive {
+        Ok(Motive {
             span: *span,
             param: param.clone(),
             ret_typ: ctx.bind_single(param, |ctx| {
                 let mut by = (*by).clone();
                 by.shift((1, 0));
                 ret_typ.subst(ctx, &by)
-            }),
-        }
+            })?,
+        })
     }
 }
 

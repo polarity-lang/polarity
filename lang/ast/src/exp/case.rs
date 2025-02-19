@@ -78,17 +78,22 @@ impl Occurs for Case {
 }
 
 impl Substitutable for Case {
-    type Result = Case;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self {
+    type Target = Case;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
         let Case { span, pattern, body } = self;
-        ctx.bind_iter(pattern.params.params.iter(), |ctx| Case {
-            span: *span,
-            pattern: pattern.clone(),
-            body: body.as_ref().map(|body| {
-                let mut by = (*by).clone();
-                by.shift((1, 0));
-                body.subst(ctx, &by)
-            }),
+        ctx.bind_iter(pattern.params.params.iter(), |ctx| {
+            Ok(Case {
+                span: *span,
+                pattern: pattern.clone(),
+                body: body
+                    .as_ref()
+                    .map(|body| {
+                        let mut by = (*by).clone();
+                        by.shift((1, 0));
+                        body.subst(ctx, &by)
+                    })
+                    .transpose()?,
+            })
         })
     }
 }

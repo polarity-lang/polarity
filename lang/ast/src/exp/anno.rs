@@ -61,16 +61,16 @@ impl HasType for Anno {
 }
 
 impl Substitutable for Anno {
-    type Result = Anno;
+    type Target = Anno;
 
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
         let Anno { span, exp, typ, .. } = self;
-        Anno {
+        Ok(Anno {
             span: *span,
-            exp: exp.subst(ctx, by),
-            typ: typ.subst(ctx, by),
+            exp: exp.subst(ctx, by)?,
+            typ: typ.subst(ctx, by)?,
             normalized_type: None,
-        }
+        })
     }
 }
 

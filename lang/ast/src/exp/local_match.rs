@@ -69,19 +69,19 @@ impl HasType for LocalMatch {
 }
 
 impl Substitutable for LocalMatch {
-    type Result = LocalMatch;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Self::Result {
+    type Target = LocalMatch;
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
         let LocalMatch { span, name, on_exp, motive, ret_typ, cases, .. } = self;
-        LocalMatch {
+        Ok(LocalMatch {
             span: *span,
             ctx: None,
             name: name.clone(),
-            on_exp: on_exp.subst(ctx, by),
-            motive: motive.subst(ctx, by),
-            ret_typ: ret_typ.subst(ctx, by),
-            cases: cases.iter().map(|case| case.subst(ctx, by)).collect(),
+            on_exp: on_exp.subst(ctx, by)?,
+            motive: motive.as_ref().map(|m| m.subst(ctx, by)).transpose()?,
+            ret_typ: ret_typ.as_ref().map(|t| t.subst(ctx, by)).transpose()?,
+            cases: cases.iter().map(|case| case.subst(ctx, by)).collect::<Result<Vec<_>, _>>()?,
             inferred_type: None,
-        }
+        })
     }
 }
 

@@ -293,7 +293,7 @@ impl WithExpectedType<'_> {
                                         params.params.clone(),
                                         vec![self_param.to_param()],
                                     ]);
-                                    let mut ret_typ = ret_typ.subst(&mut subst_ctx, &subst);
+                                    let mut ret_typ = ret_typ.subst(&mut subst_ctx, &subst)?;
                                     ret_typ.shift((-1, 0));
                                     ret_typ.normalize(
                                         &ctx.type_info_table,
@@ -327,9 +327,9 @@ impl WithExpectedType<'_> {
                                 ctx.fork::<TcResult<_>, _>(|ctx| {
                                     let type_info_table = ctx.type_info_table.clone();
                                     ctx.subst(&type_info_table, &unif)?;
-                                    let body = body.subst(&mut ctx.levels(), &unif);
+                                    let body = body.subst(&mut ctx.levels(), &unif)?;
 
-                                    let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif);
+                                    let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif)?;
                                     let t_nf =
                                         t_subst.normalize(&ctx.type_info_table, &mut ctx.env())?;
 

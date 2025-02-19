@@ -14,6 +14,7 @@ use printer::Print;
 use crate::result::TcResult;
 
 use super::type_info_table::TypeInfoTable;
+use super::TypeError;
 
 #[derive(Debug, Clone)]
 pub struct Ctx {
@@ -42,15 +43,20 @@ impl Ctx {
     }
 }
 pub trait ContextSubstExt: Sized {
-    fn subst<S: Substitution>(&mut self, type_info_table: &Rc<TypeInfoTable>, s: &S) -> TcResult;
+    fn subst<S: Substitution>(&mut self, type_info_table: &Rc<TypeInfoTable>, s: &S) -> TcResult
+    where
+        S::Err: Into<TypeError>;
 }
 
 impl ContextSubstExt for Ctx {
-    fn subst<S: Substitution>(&mut self, type_info_table: &Rc<TypeInfoTable>, s: &S) -> TcResult {
+    fn subst<S: Substitution>(&mut self, type_info_table: &Rc<TypeInfoTable>, s: &S) -> TcResult
+    where
+        S::Err: Into<TypeError>,
+    {
         let env = self.vars.env();
         let levels = self.vars.levels();
         self.map_failable(|nf| {
-            let exp = nf.subst(&mut levels.clone(), s);
+            let exp = nf.subst(&mut levels.clone(), s).map_err(Into::into)?;
             let nf = exp.normalize(type_info_table, &mut env.clone())?;
             Ok(nf)
         })
