@@ -139,8 +139,8 @@ impl PartialOrd for FreeVar {
 
 impl Ord for FreeVar {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
-        let self_occurs_in_other = other.typ.occurs(&mut other.ctx.clone(), self.lvl);
-        let other_occurs_in_self = self.typ.occurs(&mut self.ctx.clone(), other.lvl);
+        let self_occurs_in_other = other.typ.occurs_var(&mut other.ctx.clone(), self.lvl);
+        let other_occurs_in_self = self.typ.occurs_var(&mut self.ctx.clone(), other.lvl);
         assert!(!(self_occurs_in_other && other_occurs_in_self));
         if self_occurs_in_other {
             cmp::Ordering::Less

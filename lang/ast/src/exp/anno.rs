@@ -7,7 +7,7 @@ use crate::{
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Exp, Lvl, MetaVar};
+use super::{Exp, MetaVar};
 
 /// Type annotated term `e : t`
 #[derive(Debug, Clone, Derivative)]
@@ -48,9 +48,12 @@ impl Shift for Anno {
 }
 
 impl Occurs for Anno {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
         let Anno { exp, typ, .. } = self;
-        exp.occurs(ctx, lvl) || typ.occurs(ctx, lvl)
+        exp.occurs(ctx, f) || typ.occurs(ctx, f)
     }
 }
 

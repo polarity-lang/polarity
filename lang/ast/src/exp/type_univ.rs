@@ -3,11 +3,11 @@ use miette_util::codespan::Span;
 use printer::{theme::ThemeExt, tokens::TYPE, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable,
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Exp, Lvl, MetaVar};
+use super::{Exp, MetaVar};
 
 /// The impredicative type universe "Type" is used
 /// for typing data and codata types. I.e. we have
@@ -48,12 +48,6 @@ impl Default for TypeUniv {
 
 impl Shift for TypeUniv {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {}
-}
-
-impl Occurs for TypeUniv {
-    fn occurs(&self, _ctx: &mut LevelCtx, _lvl: Lvl) -> bool {
-        false
-    }
 }
 
 impl HasType for TypeUniv {

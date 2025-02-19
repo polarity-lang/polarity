@@ -4,11 +4,11 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable,
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Exp, Idx, Lvl, MetaVar, VarBound};
+use super::{Exp, Idx, MetaVar, VarBound};
 
 /// A bound variable occurrence. The variable is represented
 /// using a de-Bruijn index, but we keep the information
@@ -48,13 +48,6 @@ impl Shift for Variable {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         self.idx.shift_in_range(range, by);
         self.inferred_type = None;
-    }
-}
-
-impl Occurs for Variable {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
-        let Variable { idx, .. } = self;
-        ctx.idx_to_lvl(*idx) == lvl
     }
 }
 

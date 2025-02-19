@@ -120,17 +120,23 @@ impl Shift for Exp {
 }
 
 impl Occurs for Exp {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
+        if f(ctx, self) {
+            return true;
+        }
         match self {
-            Exp::Variable(e) => e.occurs(ctx, lvl),
-            Exp::TypCtor(e) => e.occurs(ctx, lvl),
-            Exp::Call(e) => e.occurs(ctx, lvl),
-            Exp::DotCall(e) => e.occurs(ctx, lvl),
-            Exp::Anno(e) => e.occurs(ctx, lvl),
-            Exp::TypeUniv(e) => e.occurs(ctx, lvl),
-            Exp::LocalMatch(e) => e.occurs(ctx, lvl),
-            Exp::LocalComatch(e) => e.occurs(ctx, lvl),
-            Exp::Hole(e) => e.occurs(ctx, lvl),
+            Exp::Variable(_) => false,
+            Exp::TypCtor(e) => e.occurs(ctx, f),
+            Exp::Call(e) => e.occurs(ctx, f),
+            Exp::DotCall(e) => e.occurs(ctx, f),
+            Exp::Anno(e) => e.occurs(ctx, f),
+            Exp::TypeUniv(_) => false,
+            Exp::LocalMatch(e) => e.occurs(ctx, f),
+            Exp::LocalComatch(e) => e.occurs(ctx, f),
+            Exp::Hole(e) => e.occurs(ctx, f),
         }
     }
 }
@@ -293,5 +299,15 @@ impl ContainsMetaVars for Motive {
         let Motive { span: _, param, ret_typ } = self;
 
         param.contains_metavars() || ret_typ.contains_metavars()
+    }
+}
+
+impl Occurs for Motive {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
+        let Motive { param, ret_typ, .. } = self;
+        ctx.bind_single(param, |ctx| ret_typ.occurs(ctx, f))
     }
 }
