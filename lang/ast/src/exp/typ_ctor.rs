@@ -2,6 +2,7 @@ use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{theme::ThemeExt, tokens::ARROW, Alloc, Builder, Precedence, Print, PrintCfg};
+use std::path::{Path, PathBuf};
 
 use crate::{
     ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
@@ -96,7 +97,7 @@ impl Print for TypCtor {
                 fun.parens()
             }
         } else {
-            alloc.typ(&name.id).append(args.print(cfg, alloc))
+            alloc.reference(transform_path(name.uri.as_str()).to_str().unwrap(), &name.id).append(alloc.typ(&name.id).append(args.print(cfg, alloc)))
         }
     }
 }
@@ -118,4 +119,43 @@ impl ContainsMetaVars for TypCtor {
 
         args.contains_metavars()
     }
+}
+
+fn transform_path<P: AsRef<Path>>(input: P) -> PathBuf {
+    let input = input.as_ref();
+
+    // Split the path into two parts:
+    // - before_polarity: everything up to and including "polarity"
+    // - after_polarity: everything following "polarity"
+    let mut before_polarity = PathBuf::new();
+    let mut after_polarity = PathBuf::new();
+    let mut found_polarity = false;
+
+    for comp in input.components() {
+        let comp_str = comp.as_os_str();
+        if !found_polarity {
+            before_polarity.push(comp_str);
+            if comp_str == "polarity" {
+                found_polarity = true;
+            }
+        } else {
+            after_polarity.push(comp_str);
+        }
+    }
+
+    // If "polarity" is not found, return the original path
+    if !found_polarity {
+        return input.to_path_buf();
+    }
+
+    // Build the new path: [before_polarity]/target_doc/src/[after_polarity]
+    let mut new_path = before_polarity;
+    new_path.push("target_pol");
+    new_path.push("docs");
+    new_path.push(after_polarity);
+
+    // Change the file extension to ".html"
+    new_path.set_extension("html");
+
+    new_path
 }

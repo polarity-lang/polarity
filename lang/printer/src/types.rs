@@ -8,7 +8,7 @@ use pretty::{
 
 use crate::{render, tokens::COMMA};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Anno {
     Keyword,
     Ctor,
@@ -19,6 +19,7 @@ pub enum Anno {
     BraceOpen,
     BraceClose,
     Error,
+    Reference(String, String),
 }
 
 pub type Alloc<'a> = pretty::Arena<'a, Anno>;

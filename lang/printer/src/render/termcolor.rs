@@ -30,11 +30,19 @@ where
     type Error = io::Error;
 
     fn write_str(&mut self, s: &str) -> io::Result<usize> {
-        self.upstream.write(s.as_bytes())
+        if matches!(self.anno_stack.last(), Some(Anno::Reference(_, _))) {
+            Ok(0)
+        } else {
+            self.upstream.write(s.as_bytes())
+        }
     }
 
     fn write_str_all(&mut self, s: &str) -> io::Result<()> {
-        self.upstream.write_all(s.as_bytes())
+        if matches!(self.anno_stack.last(), Some(Anno::Reference(_, _))) {
+            Ok(())
+        } else {
+            self.upstream.write_all(s.as_bytes())
+        }
     }
 
     fn fail_doc(&self) -> Self::Error {
@@ -47,7 +55,7 @@ where
     W: WriteColor,
 {
     fn push_annotation(&mut self, anno: &Anno) -> Result<(), Self::Error> {
-        self.anno_stack.push(*anno);
+        self.anno_stack.push(anno.clone());
         self.upstream.set_color(&anno.color_spec())
     }
 
@@ -72,6 +80,7 @@ impl Anno {
             Anno::BraceOpen => Default::default(),
             Anno::BraceClose => Default::default(),
             Anno::Error => ERROR.spec(),
+            Anno::Reference(_, _) => Default::default(),
         }
     }
 }

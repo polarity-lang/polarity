@@ -20,11 +20,19 @@ where
     type Error = io::Error;
 
     fn write_str(&mut self, s: &str) -> io::Result<usize> {
-        self.upstream.write(s.as_bytes())
+        if matches!(self.anno_stack.last(), Some(Anno::Reference(_, _))) {
+            Ok(0)
+        } else{
+            self.upstream.write(s.as_bytes())
+        }
     }
 
     fn write_str_all(&mut self, s: &str) -> io::Result<()> {
-        self.upstream.write_all(s.as_bytes())
+        if matches!(self.anno_stack.last(), Some(Anno::Reference(_, _))) {
+            Ok(())
+        } else{
+            self.upstream.write_all(s.as_bytes())
+        } 
     }
 
     fn fail_doc(&self) -> Self::Error {
@@ -37,7 +45,7 @@ where
     W: io::Write,
 {
     fn push_annotation(&mut self, anno: &Anno) -> Result<(), Self::Error> {
-        self.anno_stack.push(*anno);
+        self.anno_stack.push(anno.clone());
         let out = match anno {
             Anno::Keyword => r"\polKw{",
             Anno::Ctor => r"\polCtor{",
@@ -51,13 +59,14 @@ where
             // Escape a closing brace that follows immediately
             Anno::BraceClose => r"\",
             Anno::Error => r"\textcolor{polRed}{",
+            Anno::Reference(_, _) => "",
         };
         self.upstream.write_all(out.as_bytes())
     }
 
     fn pop_annotation(&mut self) -> Result<(), Self::Error> {
         let res = match self.anno_stack.last() {
-            Some(Anno::BraceOpen) | Some(Anno::BraceClose) => Ok(()),
+            Some(Anno::BraceOpen) | Some(Anno::BraceClose) | Some(Anno::Reference(_, _))=> Ok(()),
             _ => self.upstream.write_all("}".as_bytes()),
         };
         self.anno_stack.pop();
