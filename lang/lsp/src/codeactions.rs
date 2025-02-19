@@ -1,8 +1,10 @@
 //! Implementation of code actions provided by the LSP server
+
 use std::collections::HashMap;
+
 use tower_lsp::{jsonrpc, lsp_types::*};
 
-use driver::Xfunc;
+use driver::{Database, Item, Xfunc};
 
 use super::conversion::*;
 use super::server::*;
@@ -34,32 +36,85 @@ pub async fn code_action(
     };
 
     if let Some(item) = item {
-        let Ok(Xfunc { title, edits }) =
-            db.xfunc(&text_document.uri.from_lsp(), item.type_name()).await
-        else {
-            return Ok(None);
-        };
-        let edits = edits
-            .into_iter()
-            .map(|edit| TextEdit {
-                range: db.span_to_locations(&text_document.uri.from_lsp(), edit.span).unwrap(),
-                new_text: edit.text,
-            })
-            .collect();
+        let mut res = vec![];
 
-        #[allow(clippy::mutable_key_type)]
-        let mut changes = HashMap::new();
-        changes.insert(text_document.uri, edits);
+        if let Some(action) = xfunc_action(&mut db, &text_document, &item).await {
+            res.push(action);
+        }
 
-        let res = vec![CodeActionOrCommand::CodeAction(CodeAction {
-            title,
-            kind: Some(CodeActionKind::REFACTOR_REWRITE),
-            edit: Some(WorkspaceEdit { changes: Some(changes), ..Default::default() }),
-            ..Default::default()
-        })];
+        if let Some(action) = lifting_action(&mut db, &text_document, &item).await {
+            res.push(action);
+        }
 
         Ok(Some(res))
     } else {
         Ok(Some(vec![]))
     }
+}
+
+async fn xfunc_action(
+    db: &mut Database,
+    text_document: &TextDocumentIdentifier,
+    item: &Item,
+) -> Option<CodeActionOrCommand> {
+    let Ok(Xfunc { title, edits }) =
+        db.xfunc(&text_document.uri.from_lsp(), item.type_name()).await
+    else {
+        return None;
+    };
+    let edits = edits
+        .into_iter()
+        .map(|edit| TextEdit {
+            range: db.span_to_locations(&text_document.uri.from_lsp(), edit.span).unwrap(),
+            new_text: edit.text,
+        })
+        .collect();
+
+    #[allow(clippy::mutable_key_type)]
+    let mut changes = HashMap::new();
+    changes.insert(text_document.uri.clone(), edits);
+
+    let res = CodeActionOrCommand::CodeAction(CodeAction {
+        title,
+        kind: Some(CodeActionKind::REFACTOR_REWRITE),
+        edit: Some(WorkspaceEdit { changes: Some(changes), ..Default::default() }),
+        ..Default::default()
+    });
+
+    Some(res)
+}
+
+async fn lifting_action(
+    db: &mut Database,
+    text_document: &TextDocumentIdentifier,
+    item: &Item,
+) -> Option<CodeActionOrCommand> {
+    let Ok(edits) = db.lift(&text_document.uri.from_lsp(), item.type_name()).await else {
+        return None;
+    };
+
+    if edits.is_empty() {
+        return None;
+    }
+
+    let edits = edits
+        .into_iter()
+        .map(|edit| TextEdit {
+            range: db.span_to_locations(&text_document.uri.from_lsp(), edit.span).unwrap(),
+            new_text: edit.text,
+        })
+        .collect();
+
+    #[allow(clippy::mutable_key_type)]
+    let mut changes = HashMap::new();
+    changes.insert(text_document.uri.clone(), edits);
+
+    let res = CodeActionOrCommand::CodeAction(CodeAction {
+        title: format!("Lift {}", item.type_name()),
+        kind: Some(CodeActionKind::REFACTOR_REWRITE),
+        edit: Some(WorkspaceEdit { changes: Some(changes), ..Default::default() }),
+        ..Default::default()
+    });
+
+    Some(res)
 }

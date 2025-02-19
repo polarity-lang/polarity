@@ -3,7 +3,6 @@ use std::io;
 use std::path::PathBuf;
 
 use driver::Database;
-use printer::{Print, PrintCfg};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -18,20 +17,17 @@ pub struct Args {
 pub async fn exec(cmd: Args) -> miette::Result<()> {
     let mut db = Database::from_path(&cmd.filepath);
     let uri = db.resolve_path(&cmd.filepath)?;
-    let prg = db.lift(&uri, &cmd.r#type).await.map_err(miette::Report::msg)?;
+    let edits = db.lift(&uri, &cmd.r#type).await.map_err(miette::Report::msg)?;
 
     // Write to file or to stdout
-    let mut stream: Box<dyn io::Write> = match cmd.output {
+    let stream: Box<dyn io::Write> = match cmd.output {
         Some(path) => Box::new(fs::File::create(path).expect("Failed to create file")),
         None => Box::new(io::stdout()),
     };
 
-    print_prg(&prg, &PrintCfg::default(), &mut stream);
+    let output = db.edited(&uri, edits);
+
+    output.write_to(stream).expect("Failed to write file");
 
     Ok(())
-}
-
-fn print_prg<W: io::Write>(prg: &ast::Module, cfg: &PrintCfg, stream: &mut W) {
-    prg.print_io(cfg, stream).expect("Failed to print to stdout");
-    println!();
 }
