@@ -54,6 +54,20 @@ impl Ctx {
             Constraint::Equality { ctx: constraint_cxt, lhs, rhs } => match (&**lhs, &**rhs) {
                 // This is the most interesting case, where we equate a hole with an expression.
                 (Exp::Hole(h), candidate) | (candidate, Exp::Hole(h)) => {
+                    // First, we check if the hole has already been solved.
+                    // In that case, we only need to substitute the arguments in the solution.
+                    // For instance, this is the case for any holes in declarations imported from other modules.
+                    // For these, it is particularly important to have this early-return, because metavariables
+                    // from other modules are not bound in the metavars map for this module!
+                    if let Some(solution) = &h.solution {
+                        let lhs = solution.clone().subst(&mut h.levels(), &h.args)?;
+                        self.add_constraint(Constraint::Equality {
+                            ctx: constraint_cxt.clone(),
+                            lhs,
+                            rhs: Box::new(candidate.clone()),
+                        })?;
+                        return Ok(());
+                    }
                     // Every hole is associated with a metavariable and a list of arguments.
                     // The unification problem is:
                     //
