@@ -22,19 +22,19 @@ where
     fn write_str(&mut self, s: &str) -> io::Result<usize> {
         if matches!(self.anno_stack.last(), Some(Anno::Type)) {
             Ok(0)
-        } else{
+        } else {
             let escaped = askama_escape::escape(s, askama_escape::Html).to_string();
             self.upstream.write(escaped.as_bytes())
-        } 
+        }
     }
 
     fn write_str_all(&mut self, s: &str) -> io::Result<()> {
         if matches!(self.anno_stack.last(), Some(Anno::Type)) {
             Ok(())
-        } else{
+        } else {
             let escaped = askama_escape::escape(s, askama_escape::Html).to_string();
             self.upstream.write_all(escaped.as_bytes())
-        } 
+        }
     }
 
     fn fail_doc(&self) -> Self::Error {
@@ -65,7 +65,10 @@ where
 
     fn pop_annotation(&mut self) -> Result<(), Self::Error> {
         let res = match self.anno_stack.last() {
-            Some(Anno::Backslash) | Some(Anno::BraceOpen) | Some(Anno::BraceClose) | Some(Anno::Type) => Ok(()),
+            Some(Anno::Backslash)
+            | Some(Anno::BraceOpen)
+            | Some(Anno::BraceClose)
+            | Some(Anno::Type) => Ok(()),
             Some(Anno::Reference(_, _)) => self.upstream.write_all("</a>".as_bytes()),
             _ => self.upstream.write_all("</span>".as_bytes()),
         };

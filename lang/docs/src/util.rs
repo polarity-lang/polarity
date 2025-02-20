@@ -1,5 +1,8 @@
-use std::{fs, path::{Path, PathBuf}};
 use driver::{CSS_PATH, DOCS_PATH};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 /* pub fn get_target_path(path: &Path) -> PathBuf {
     let mut new_path = PathBuf::from(DOCS_PATH);
@@ -19,7 +22,7 @@ pub fn get_target_path(path: &Path) -> PathBuf {
     let mut components = path.components().peekable();
     let mut new_path = PathBuf::new();
 
-    while let Some(component) = components.next() {
+    for component in components.by_ref() {
         new_path.push(component);
         if component.as_os_str() == "polarity" {
             new_path.push(DOCS_PATH);
@@ -27,7 +30,7 @@ pub fn get_target_path(path: &Path) -> PathBuf {
         }
     }
 
-    while let Some(component) = components.next() {
+    for component in components {
         new_path.push(component);
     }
 
@@ -87,17 +90,12 @@ pub fn open(filepath: &PathBuf) {
 
 pub fn get_absolut_css_path() -> String {
     let css_path = fs::canonicalize(PathBuf::from(CSS_PATH)).expect("Failed to get absolute path");
-    let css_path = trim_windows_path_prefix(&css_path);
-    css_path
+    trim_windows_path_prefix(&css_path)
 }
 
 pub fn trim_windows_path_prefix(path: &Path) -> String {
     let canonical_str = path.to_string_lossy();
-    if canonical_str.starts_with(r"\\?\") {
-        canonical_str[4..].to_string()
-    } else {
-        canonical_str.to_string()
-    }
+    canonical_str.strip_prefix(r"\\?\").unwrap_or(&canonical_str).to_string()
 }
 
 pub fn create_parent_directory(target_path: &Path) {
