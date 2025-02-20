@@ -7,7 +7,7 @@ use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH};
 use driver::Database;
 
 use crate::generate_docs::GenerateDocs;
-use crate::util::{get_files, generate_html_link_list};
+use crate::util::{generate_html_link_list, get_absolut_css_path, get_files};
 
 pub async fn write_html() {
     if !Path::new(CSS_PATH).exists() {
@@ -29,7 +29,7 @@ async fn write_modules() {
 
         let code = prg.generate_docs();
         let content = generate_module_docs(source_path.file_stem().unwrap().to_str().unwrap(), &code);
-        let html_file = generate_html(source_path.file_stem().unwrap().to_str().unwrap(), &list, &content);
+        let html_file = generate_html(source_path.file_stem().unwrap().to_str().unwrap(), &list, &content, &get_absolut_css_path());
 
         if let Some(parent) = target_path.parent() {
             fs::create_dir_all(parent).expect("Failed to create directories");
@@ -50,8 +50,8 @@ struct ModuleTemplate<'a> {
     content: &'a str,
 }
 
-fn generate_html(title: &str, list: &str, code: &str) -> String {
-    let template = IndexTemplate { title, list, code, start: title};
+fn generate_html(title: &str, list: &str, code: &str, css: &str) -> String {
+    let template = IndexTemplate { title, list, code, start: title, css};
     template.render().unwrap()
 }
 #[derive(Template)]
@@ -61,4 +61,5 @@ struct IndexTemplate<'a> {
     list: &'a str,
     code: &'a str,
     start: &'a str,
+    css: &'a str,
 }

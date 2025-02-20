@@ -1,5 +1,5 @@
 use std::{fs, path::{Path, PathBuf}};
-use driver::DOCS_PATH;
+use driver::{CSS_PATH, DOCS_PATH};
 
 pub fn get_target_path(path: &Path) -> PathBuf {
     let mut new_path = PathBuf::from(DOCS_PATH);
@@ -37,9 +37,7 @@ pub fn generate_html_link_list(folders: &Vec<(PathBuf, PathBuf)>) -> String {
     let mut html = String::new();
     for (source_path, target_path) in folders {
         let canonical_path = fs::canonicalize(target_path).expect("Failed to canonicalize path");
-        //please note that this removes //?/ from windows paths
         let canonical_path = trim_windows_path_prefix(&canonical_path);
-        print!("{:?}", canonical_path);
         html.push_str(&format!(
             "<li><a href=\"{}\">{}</a></li>",
             canonical_path,
@@ -57,6 +55,12 @@ pub fn get_parent_folder(path: &Path) -> String {
 pub fn open(filepath: &PathBuf) {
     let absolute_path = fs::canonicalize(filepath).expect("Failed to get absolute path");
     opener::open(&absolute_path).unwrap();
+}
+
+pub fn get_absolut_css_path() -> String {
+    let css_path = fs::canonicalize(PathBuf::from(CSS_PATH)).expect("Failed to get absolute path");
+    let css_path = trim_windows_path_prefix(&css_path);
+    css_path
 }
 
 pub fn trim_windows_path_prefix(path: &Path) -> String {
