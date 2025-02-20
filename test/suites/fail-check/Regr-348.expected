@@ -1,0 +1,11 @@
+T-022
+
+  × The metavariable ?1 was equated with an expression that contains f which is not in scope for ?1
+   ╭─[Regr-348.pol:5:19]
+ 4 │ 
+ 5 │ let bar(f: Fun(?, ?)): f.ap(?, ?, ?) {
+   ·                   ─    ┬
+   ·                   │    ╰── While elaborating
+ 6 │     ?
+   ╰────
+  help: This means that the metavariable cannot be solved automatically.

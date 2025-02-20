@@ -1,0 +1,12 @@
+data Bool { T, F }
+
+data Eq(a: Type, x y: a) {
+    Refl(a: Type, x: a): Eq(a, x, x)
+}
+
+#[transparent]
+let foo(): Bool { _ }
+
+let bar(b: Bool): Eq(Bool, foo(), b) {
+    Refl(Bool, b)
+}

@@ -1,6 +1,6 @@
 use crate::ctx::LevelCtx;
 use crate::exp::Exp;
-use crate::{Idx, Lvl, Variable};
+use crate::{Hole, Idx, Lvl, Variable};
 
 pub trait Occurs {
     /// Whether a subexpression that fulfills a predicate occurs
@@ -29,6 +29,22 @@ pub trait Occurs {
     fn occurs_var(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
         self.occurs(ctx, &|ctx, exp| match exp {
             Exp::Variable(Variable { idx, .. }) => ctx.idx_to_lvl(*idx) == lvl,
+            _ => false,
+        })
+    }
+    /// Whether a metavariable with the given `meta_var_id` occurs as a subexpression
+    ///
+    /// # Parameters
+    ///
+    /// - `ctx`: current context under which `self` is closed
+    /// - `meta_var_id`: the metavariable id we are looking for
+    ///
+    /// # Returns
+    ///
+    /// Whether a hole with `meta_var_id` occurs as a subexpression
+    fn occurs_metavar(&self, ctx: &mut LevelCtx, meta_var_id: u64) -> bool {
+        self.occurs(ctx, &|_ctx, exp| match exp {
+            Exp::Hole(Hole { metavar, .. }) => metavar.id == meta_var_id,
             _ => false,
         })
     }

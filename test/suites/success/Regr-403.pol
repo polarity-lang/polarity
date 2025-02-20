@@ -7,6 +7,6 @@ let foo : Fun(Bool, Bool)  {
     \x. x
 }
 
-let proof: Eq(Fun(Bool, Bool), foo, foo) {
-    Refl(Fun(Bool,Bool), foo)
+let proof: Eq(a := Fun(Bool, Bool), foo, foo) {
+    Refl(a:= Fun(Bool,Bool), foo)
 }
