@@ -7,6 +7,7 @@ use url::Url;
 
 use ast::Exp;
 use ast::HashSet;
+use ast::Zonk;
 use backend::ast2ir::traits::ToIR;
 use backend::ir;
 use elaborator::normalizer::normalize::Normalize;
@@ -42,14 +43,26 @@ pub struct Database {
     pub ast: Cache<Result<Arc<ast::Module>, Error>>,
     /// The IR of a module
     pub ir: Cache<Result<Arc<ir::Module>, Error>>,
-    /// The type info table constructed during typechecking
-    pub module_type_info_table: Cache<elaborator::ModuleTypeInfoTable>,
+    /// The type info table, either open or closed
+    pub type_info_table: Cache<OpenClosed>,
     /// Hover information for spans
     pub hover_by_id: Cache<Lapper<u32, HoverContents>>,
     /// Goto information for spans
     pub goto_by_id: Cache<Lapper<u32, (Url, Span)>>,
     /// Spans of top-level items
     pub item_by_id: Cache<Lapper<u32, Item>>,
+}
+
+/// Open or closed type info table
+pub enum OpenClosed {
+    /// The type info table constructed *before* elaboration.
+    /// This table is used to lookup top-level signatures in the module that is currently being checked.
+    /// "open" means there may be unsolved metavariables in the table.
+    Open(elaborator::ModuleTypeInfoTable),
+    /// The type info table constructed *after* elaboration.
+    /// This table is used to lookup top-level signatures in dependencies.
+    /// "closed" means that no unsolved metavariables occur in the table.
+    Closed(elaborator::ModuleTypeInfoTable),
 }
 
 impl Database {
@@ -189,41 +202,99 @@ impl Database {
     //
 
     pub async fn type_info_table(&mut self, uri: &Url) -> Result<TypeInfoTable, Error> {
-        let deps = self.deps(uri).await?;
+        Box::pin(async move {
+            let deps = self.deps(uri).await?;
 
-        // Compute the type info table
-        let mut info_table = TypeInfoTable::default();
-        let mod_info_table = self.module_type_info_table(uri).await?;
-        info_table.insert(uri.clone(), mod_info_table);
-        for dep_url in deps {
-            let mod_info_table = self.module_type_info_table(&dep_url).await?;
-            info_table.insert(dep_url.clone(), mod_info_table);
-        }
+            // Compute the type info table
+            let mut info_table = TypeInfoTable::default();
+            let mod_info_table = self.module_type_info_table(uri, false).await?;
+            info_table.insert(uri.clone(), mod_info_table);
+            for dep_url in deps {
+                let mod_info_table = self.module_type_info_table(&dep_url, true).await?;
+                info_table.insert(dep_url.clone(), mod_info_table);
+            }
 
-        Ok(info_table)
+            Ok(info_table)
+        })
+        .await
     }
 
+    /// Get the type the type info table for a module with the given `uri`
+    ///
+    /// # Parameters
+    ///
+    /// - `uri`:    The module URI for which we want the type info table
+    /// - `closed`: Whether to return the open or the closed type info table.
+    ///             The open type info table is used to lookup top-level signatures while elaborating the very same module.
+    ///             It may contain unsolved metavariables.
+    ///             The closed type info table is used to lookup top-level signatures of module dependencies.
+    ///             It contains no unsolved metavariables.
+    ///
+    /// # Returns
+    ///
+    /// The type info table for the requested module.
+    ///
+    /// # Ensures
+    ///
+    /// - If `closed = true`, no unsolved metavariables occur in the type info table.
     pub async fn module_type_info_table(
         &mut self,
         uri: &Url,
+        closed: bool,
     ) -> Result<ModuleTypeInfoTable, Error> {
-        match self.module_type_info_table.get_unless_stale(uri) {
-            Some(table) => {
+        match self.type_info_table.get_unless_stale(uri) {
+            Some(open_closed) => {
+                let table = match (open_closed, closed) {
+                    (OpenClosed::Open(_), true) => {
+                        // Closed table is requested, but only open table is available
+                        return self.recompute_type_info_table(uri, closed).await;
+                    }
+                    (OpenClosed::Open(table), false) => table,
+                    (OpenClosed::Closed(table), _) => table,
+                };
                 log::debug!("Found type info table in cache: {}", uri);
                 Ok(table.clone())
             }
-            None => self.recompute_type_info_table(uri).await,
+            None => self.recompute_type_info_table(uri, closed).await,
         }
     }
 
+    /// Recompute type the type info table for a module with the given `uri`
+    ///
+    /// # Parameters
+    ///
+    /// - `uri`:    The module URI for which we want to recompute the type info table
+    /// - `closed`: Whether to recompute the open or the closed type info table.
+    ///             Computing the closed type info table requires elaboration of the module
+    ///             and replacing all metavariables with their solution ("zonking").
+    ///
+    /// # Returns
+    ///
+    /// The type info table for the requested module.
+    ///
+    /// # Ensures
+    ///
+    /// - If `closed = true`, no unsolved metavariables occur in the type info table.
     pub async fn recompute_type_info_table(
         &mut self,
         uri: &Url,
+        closed: bool,
     ) -> Result<ModuleTypeInfoTable, Error> {
-        log::debug!("Recomputing type info table for: {}", uri);
+        log::debug!(
+            "Recomputing {} type info table for: {}",
+            if closed { "closed" } else { "open" },
+            uri
+        );
         let ust = self.ust(uri).await?;
-        let info_table = build_type_info_table(&ust);
-        self.module_type_info_table.insert(uri.clone(), info_table.clone());
+        let mut info_table = build_type_info_table(&ust);
+        self.type_info_table.insert(uri.clone(), OpenClosed::Open(info_table.clone()));
+        if closed {
+            let ast = self.ast(uri).await?;
+            info_table
+                .zonk(&ast.meta_vars)
+                .map_err(|err| DriverError::Impossible(err.to_string()))?;
+            self.type_info_table.insert(uri.clone(), OpenClosed::Closed(info_table.clone()));
+        }
         Ok(info_table)
     }
 
@@ -390,7 +461,7 @@ impl Database {
             ust: Cache::default(),
             ast: Cache::default(),
             ir: Cache::default(),
-            module_type_info_table: Cache::default(),
+            type_info_table: Cache::default(),
             hover_by_id: Cache::default(),
             goto_by_id: Cache::default(),
             item_by_id: Cache::default(),
@@ -433,7 +504,8 @@ impl Database {
         self.symbol_table.invalidate(uri);
         self.ust.invalidate(uri);
         self.ast.invalidate(uri);
-        self.module_type_info_table.invalidate(uri);
+        self.type_info_table.invalidate(uri);
+        self.type_info_table.invalidate(uri);
         self.hover_by_id.invalidate(uri);
         self.goto_by_id.invalidate(uri);
         self.item_by_id.invalidate(uri);
