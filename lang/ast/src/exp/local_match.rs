@@ -13,7 +13,7 @@ use crate::{
     Zonk, ZonkError,
 };
 
-use super::{print_cases, Case, Exp, Label, Lvl, MetaVar, Motive, TypCtor};
+use super::{print_cases, Case, Exp, Label, MetaVar, Motive, TypCtor};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -56,9 +56,15 @@ impl Shift for LocalMatch {
 }
 
 impl Occurs for LocalMatch {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
-        let LocalMatch { on_exp, cases, .. } = self;
-        on_exp.occurs(ctx, lvl) || cases.occurs(ctx, lvl)
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
+        let LocalMatch { on_exp, motive, ret_typ, cases, .. } = self;
+        on_exp.occurs(ctx, f)
+            || motive.as_ref().is_some_and(|m| m.occurs(ctx, f))
+            || ret_typ.as_ref().is_some_and(|t| t.occurs(ctx, f))
+            || cases.iter().any(|case| case.occurs(ctx, f))
     }
 }
 

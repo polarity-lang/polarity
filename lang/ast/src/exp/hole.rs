@@ -13,7 +13,7 @@ use crate::{
     Zonk, ZonkError,
 };
 
-use super::{Exp, Lvl, MetaVar, MetaVarKind};
+use super::{Exp, MetaVar, MetaVarKind};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -71,8 +71,13 @@ impl Shift for Hole {
 }
 
 impl Occurs for Hole {
-    fn occurs(&self, _ctx: &mut LevelCtx, _lvl: Lvl) -> bool {
-        false
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
+        let Hole { args, solution, .. } = self;
+        args.iter().any(|arg_group| arg_group.iter().any(|arg| arg.occurs(ctx, f)))
+            || solution.as_ref().is_some_and(|sol| sol.occurs(ctx, f))
     }
 }
 

@@ -8,7 +8,7 @@ use crate::{
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Args, Exp, IdBound, Lvl, MetaVar};
+use super::{Args, Exp, IdBound, MetaVar};
 
 /// A DotCall expression can be one of two different kinds:
 /// - A destructor introduced by a codata type declaration
@@ -66,9 +66,12 @@ impl Shift for DotCall {
 }
 
 impl Occurs for DotCall {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
         let DotCall { exp, args, .. } = self;
-        exp.occurs(ctx, lvl) || args.args.iter().any(|arg| arg.occurs(ctx, lvl))
+        exp.occurs(ctx, f) || args.occurs(ctx, f)
     }
 }
 

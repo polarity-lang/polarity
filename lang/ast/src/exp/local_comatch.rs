@@ -14,7 +14,7 @@ use crate::{
     Zonk, ZonkError,
 };
 
-use super::{print_cases, Case, Exp, Label, Lvl, MetaVar, TypCtor};
+use super::{print_cases, Case, Exp, Label, MetaVar, TypCtor};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -51,9 +51,12 @@ impl Shift for LocalComatch {
 }
 
 impl Occurs for LocalComatch {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
         let LocalComatch { cases, .. } = self;
-        cases.occurs(ctx, lvl)
+        cases.iter().any(|case| case.occurs(ctx, f))
     }
 }
 

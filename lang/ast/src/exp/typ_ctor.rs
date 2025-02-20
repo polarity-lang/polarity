@@ -8,7 +8,7 @@ use crate::{
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Args, Exp, IdBound, Lvl, MetaVar, TypeUniv};
+use super::{Args, Exp, IdBound, MetaVar, TypeUniv};
 
 /// A type constructor applied to arguments. The type of `TypCtor`
 /// is always the type universe `Type`.
@@ -55,9 +55,12 @@ impl Shift for TypCtor {
 }
 
 impl Occurs for TypCtor {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
         let TypCtor { args, .. } = self;
-        args.args.iter().any(|arg| arg.occurs(ctx, lvl))
+        args.occurs(ctx, f)
     }
 }
 

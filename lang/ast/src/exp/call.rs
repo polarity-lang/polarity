@@ -7,7 +7,7 @@ use crate::{
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Args, Exp, IdBound, Lvl, MetaVar};
+use super::{Args, Exp, IdBound, MetaVar};
 
 /// A Call expression can be one of three different kinds:
 /// - A constructor introduced by a data type declaration
@@ -63,9 +63,12 @@ impl Shift for Call {
 }
 
 impl Occurs for Call {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
         let Call { args, .. } = self;
-        args.args.iter().any(|arg| arg.occurs(ctx, lvl))
+        args.occurs(ctx, f)
     }
 }
 

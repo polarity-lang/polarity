@@ -14,7 +14,7 @@ use crate::{
     ZonkError,
 };
 
-use super::{Exp, IdBound, Lvl, MetaVar, TelescopeInst};
+use super::{Exp, IdBound, MetaVar, TelescopeInst};
 
 // Pattern
 //
@@ -71,9 +71,14 @@ impl Shift for Case {
 }
 
 impl Occurs for Case {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
         let Case { pattern, body, .. } = self;
-        ctx.bind_iter(pattern.params.params.iter(), |ctx| body.occurs(ctx, lvl))
+        ctx.bind_iter(pattern.params.params.iter(), |ctx| {
+            body.as_ref().is_some_and(|b| b.occurs(ctx, f))
+        })
     }
 }
 

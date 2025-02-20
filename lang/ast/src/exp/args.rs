@@ -11,7 +11,7 @@ use crate::{
     Substitution, Zonk, ZonkError,
 };
 
-use super::{Exp, Hole, Lvl, MetaVar, VarBound};
+use super::{Exp, Hole, MetaVar, VarBound};
 
 // Arg
 //
@@ -79,11 +79,14 @@ impl Shift for Arg {
 }
 
 impl Occurs for Arg {
-    fn occurs(&self, ctx: &mut LevelCtx, lvl: Lvl) -> bool {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
         match self {
-            Arg::UnnamedArg { arg, .. } => arg.occurs(ctx, lvl),
-            Arg::NamedArg { arg, .. } => arg.occurs(ctx, lvl),
-            Arg::InsertedImplicitArg { hole, .. } => hole.occurs(ctx, lvl),
+            Arg::UnnamedArg { arg, .. } => arg.occurs(ctx, f),
+            Arg::NamedArg { arg, .. } => arg.occurs(ctx, f),
+            Arg::InsertedImplicitArg { hole, .. } => hole.occurs(ctx, f),
         }
     }
 }
@@ -185,6 +188,15 @@ impl Args {
 impl Shift for Args {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         self.args.shift_in_range(range, by);
+    }
+}
+
+impl Occurs for Args {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
+        self.args.iter().any(|arg| arg.occurs(ctx, f))
     }
 }
 
