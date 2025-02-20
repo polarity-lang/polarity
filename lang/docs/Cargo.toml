@@ -19,3 +19,5 @@ comrak = "0.32"
 ast = { path = "../ast" }
 printer = { path = "../printer" }
 driver = { path = "../driver" }
+# url (for file locations)
+url = "2.5.0"

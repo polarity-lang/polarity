@@ -951,6 +951,7 @@ dependencies = [
  "driver",
  "opener",
  "printer",
+ "url",
 ]
 
 [[package]]
