@@ -505,7 +505,6 @@ impl Database {
         self.ust.invalidate(uri);
         self.ast.invalidate(uri);
         self.type_info_table.invalidate(uri);
-        self.type_info_table.invalidate(uri);
         self.hover_by_id.invalidate(uri);
         self.goto_by_id.invalidate(uri);
         self.item_by_id.invalidate(uri);
