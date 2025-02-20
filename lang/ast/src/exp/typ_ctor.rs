@@ -97,7 +97,7 @@ impl Print for TypCtor {
                 fun.parens()
             }
         } else {
-            alloc.reference(transform_path(name.uri.as_str()).to_str().unwrap(), &name.id).append(alloc.typ(&name.id).append(args.print(cfg, alloc)))
+            alloc.reference(&format!("{}#{}",transform_path(name.uri.as_str()).to_str().unwrap(), &name.id), &name.id).append(alloc.typ(&name.id).append(args.print(cfg, alloc)))
         }
     }
 }

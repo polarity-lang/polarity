@@ -1,7 +1,7 @@
 use std::{fs, path::{Path, PathBuf}};
 use driver::{CSS_PATH, DOCS_PATH};
 
-pub fn get_target_path(path: &Path) -> PathBuf {
+/* pub fn get_target_path(path: &Path) -> PathBuf {
     let mut new_path = PathBuf::from(DOCS_PATH);
     new_path.push(get_parent_folder(path));
     if let Some(stem) = path.file_stem() {
@@ -11,6 +11,32 @@ pub fn get_target_path(path: &Path) -> PathBuf {
     if let Some(parent) = new_path.parent() {
         fs::create_dir_all(parent).expect("Failed to create directories");
     }
+    new_path
+} */
+
+pub fn get_target_path(path: &Path) -> PathBuf {
+    let path = fs::canonicalize(path).expect("Failed to canonicalize path");
+    let mut components = path.components().peekable();
+    let mut new_path = PathBuf::new();
+
+    while let Some(component) = components.next() {
+        new_path.push(component);
+        if component.as_os_str() == "polarity" {
+            new_path.push(DOCS_PATH);
+            break;
+        }
+    }
+
+    while let Some(component) = components.next() {
+        new_path.push(component);
+    }
+
+    let stem = new_path.file_stem().map(|s| s.to_os_string());
+    if let Some(stem) = stem {
+        new_path.set_file_name(stem);
+        new_path.set_extension("html");
+    }
+
     new_path
 }
 
