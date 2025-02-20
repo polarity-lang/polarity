@@ -67,3 +67,57 @@ impl From<Dtor> for DtorMeta {
         DtorMeta { params: dtor.params, self_param: dtor.self_param, ret_typ: dtor.ret_typ }
     }
 }
+
+impl Zonk for ModuleTypeInfoTable {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), ZonkError> {
+        let ModuleTypeInfoTable {
+            map_data,
+            map_codata,
+            map_let,
+            map_tyctor,
+            map_codef,
+            map_ctor,
+            map_def,
+            map_dtor,
+        } = self;
+
+        for (_, data) in map_data.iter_mut() {
+            data.zonk(meta_vars)?;
+        }
+
+        for (_, codata) in map_codata.iter_mut() {
+            codata.zonk(meta_vars)?;
+        }
+
+        for (_, let_) in map_let.iter_mut() {
+            let_.zonk(meta_vars)?;
+        }
+
+        for (_, tyctor) in map_tyctor.iter_mut() {
+            tyctor.params.zonk(meta_vars)?;
+        }
+
+        for (_, codef) in map_codef.iter_mut() {
+            codef.zonk(meta_vars)?;
+        }
+
+        for (_, ctor) in map_ctor.iter_mut() {
+            let CtorMeta { params, typ } = ctor;
+            params.zonk(meta_vars)?;
+            typ.zonk(meta_vars)?;
+        }
+
+        for (_, def) in map_def.iter_mut() {
+            def.zonk(meta_vars)?;
+        }
+
+        for (_, dtor) in map_dtor.iter_mut() {
+            let DtorMeta { params, self_param, ret_typ } = dtor;
+            params.zonk(meta_vars)?;
+            self_param.zonk(meta_vars)?;
+            ret_typ.zonk(meta_vars)?;
+        }
+
+        Ok(())
+    }
+}
