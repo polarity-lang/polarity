@@ -43,20 +43,26 @@ pub struct Database {
     pub ast: Cache<Result<Arc<ast::Module>, Error>>,
     /// The IR of a module
     pub ir: Cache<Result<Arc<ir::Module>, Error>>,
-    /// The type info table constructed *before* elaboration.
-    /// This table is used to lookup top-level signatures in the module that is currently being checked.
-    /// "open" means there may be free metavariables in the table.
-    pub open_type_info_table: Cache<elaborator::ModuleTypeInfoTable>,
-    /// The type info table constructed *after* elaboration.
-    /// This table is used to lookup top-level signatures in dependencies.
-    /// "closed" means that no unsolved metavariables occur in the table.
-    pub closed_type_info_table: Cache<elaborator::ModuleTypeInfoTable>,
+    /// The type info table, either open or closed
+    pub type_info_table: Cache<OpenClosed>,
     /// Hover information for spans
     pub hover_by_id: Cache<Lapper<u32, HoverContents>>,
     /// Goto information for spans
     pub goto_by_id: Cache<Lapper<u32, (Url, Span)>>,
     /// Spans of top-level items
     pub item_by_id: Cache<Lapper<u32, Item>>,
+}
+
+/// Open or closed type info table
+pub enum OpenClosed {
+    /// The type info table constructed *before* elaboration.
+    /// This table is used to lookup top-level signatures in the module that is currently being checked.
+    /// "open" means there may be unsolved metavariables in the table.
+    Open(elaborator::ModuleTypeInfoTable),
+    /// The type info table constructed *after* elaboration.
+    /// This table is used to lookup top-level signatures in dependencies.
+    /// "closed" means that no unsolved metavariables occur in the table.
+    Closed(elaborator::ModuleTypeInfoTable),
 }
 
 impl Database {
@@ -236,10 +242,16 @@ impl Database {
         uri: &Url,
         closed: bool,
     ) -> Result<ModuleTypeInfoTable, Error> {
-        let table = if closed { &self.closed_type_info_table } else { &self.open_type_info_table };
-
-        match table.get_unless_stale(uri) {
-            Some(table) => {
+        match self.type_info_table.get_unless_stale(uri) {
+            Some(open_closed) => {
+                let table = match (open_closed, closed) {
+                    (OpenClosed::Open(_), true) => {
+                        // Closed table is requested, but only open table is available
+                        return self.recompute_type_info_table(uri, closed).await;
+                    }
+                    (OpenClosed::Open(table), false) => table,
+                    (OpenClosed::Closed(table), _) => table,
+                };
                 log::debug!("Found type info table in cache: {}", uri);
                 Ok(table.clone())
             }
@@ -275,13 +287,13 @@ impl Database {
         );
         let ust = self.ust(uri).await?;
         let mut info_table = build_type_info_table(&ust);
-        self.open_type_info_table.insert(uri.clone(), info_table.clone());
+        self.type_info_table.insert(uri.clone(), OpenClosed::Open(info_table.clone()));
         if closed {
             let ast = self.ast(uri).await?;
             info_table
                 .zonk(&ast.meta_vars)
                 .map_err(|err| DriverError::Impossible(err.to_string()))?;
-            self.closed_type_info_table.insert(uri.clone(), info_table.clone());
+            self.type_info_table.insert(uri.clone(), OpenClosed::Closed(info_table.clone()));
         }
         Ok(info_table)
     }
@@ -449,8 +461,7 @@ impl Database {
             ust: Cache::default(),
             ast: Cache::default(),
             ir: Cache::default(),
-            open_type_info_table: Cache::default(),
-            closed_type_info_table: Cache::default(),
+            type_info_table: Cache::default(),
             hover_by_id: Cache::default(),
             goto_by_id: Cache::default(),
             item_by_id: Cache::default(),
@@ -493,8 +504,8 @@ impl Database {
         self.symbol_table.invalidate(uri);
         self.ust.invalidate(uri);
         self.ast.invalidate(uri);
-        self.open_type_info_table.invalidate(uri);
-        self.closed_type_info_table.invalidate(uri);
+        self.type_info_table.invalidate(uri);
+        self.type_info_table.invalidate(uri);
         self.hover_by_id.invalidate(uri);
         self.goto_by_id.invalidate(uri);
         self.item_by_id.invalidate(uri);
