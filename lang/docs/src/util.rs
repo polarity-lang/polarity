@@ -23,6 +23,8 @@ pub fn get_files(folders: Vec<&Path>) -> Vec<(PathBuf, PathBuf)> {
                 let path = entry.path();
                 if path.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some("pol") {
                     let target_path = get_target_path(&path);
+                    create_parent_directory(&target_path);
+                    fs::File::create(&target_path).expect("Failed to create file");
                     pol_files.push((path, target_path));
                 } else if path.is_dir() {
                     pol_files.append(&mut get_files(vec![&path]));
@@ -69,5 +71,11 @@ pub fn trim_windows_path_prefix(path: &Path) -> String {
         canonical_str[4..].to_string()
     } else {
         canonical_str.to_string()
+    }
+}
+
+pub fn create_parent_directory(target_path: &Path) {
+    if let Some(parent) = target_path.parent() {
+        fs::create_dir_all(parent).expect("Failed to create directories");
     }
 }
