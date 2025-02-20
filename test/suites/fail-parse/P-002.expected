@@ -1,6 +1,6 @@
 P-002
 
-  × Unexpected end of file. Expected "DocComment", "Identifier", "}"
+  × Unexpected end of file. Expected "}", "Identifier", "DocComment"
    ╭─[P-002.pol:1:12]
  1 │ data Bool { 
    ·            ▲
