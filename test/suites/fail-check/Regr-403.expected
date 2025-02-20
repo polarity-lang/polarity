@@ -1,23 +1,23 @@
 T-002
 
   × The following terms are not equal:
-  │   1: Eq(Bool -> Bool, \x. T, \x. T)
-  │   2: Eq(Bool -> Bool, \x. T, \x. F)
+  │   1: Eq(<Bool -> Bool>, \x. T, \x. T)
+  │   2: Eq(a:=Bool -> Bool, \x. T, \x. F)
   │ 
-    ╭─[Regr-403.pol:6:13]
+    ╭─[Regr-403.pol:6:31]
   5 │ #[transparent]
   6 │ let foo(y: Bool) : Fun(Bool, Bool)  {
-    ·             ─────┬─────
-    ·                  ╰── Source of (1)
+    ·                               ────┬───
+    ·                                   ╰── Source of (1)
   7 │     \x. y
   8 │ }
   9 │ 
- 10 │ let proof: Eq(Fun(Bool, Bool), foo(T), foo(F)) {
-    ·            ─────────────────┬─────────────────
-    ·                             ╰── Source of (2)
- 11 │     Refl(Fun(Bool,Bool), foo(T))
-    ·     ──────────────┬─────────────
-    ·                   ╰── While elaborating
+ 10 │ let proof: Eq(a := Fun(Bool, Bool), foo(T), foo(F)) {
+    ·            ────────────────────┬───────────────────
+    ·                                ╰── Source of (2)
+ 11 │     Refl(a := Fun(Bool,Bool), foo(T))
+    ·     ────────────────┬────────────────
+    ·                     ╰── While elaborating
  12 │ }
     ╰────
   help: The two subterms T and F are not equal.
