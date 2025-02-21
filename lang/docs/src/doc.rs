@@ -53,7 +53,7 @@ struct ModuleTemplate<'a> {
 }
 
 fn generate_html(title: &str, list: &str, code: &str, css: &str) -> String {
-    let template = IndexTemplate { title, list, code, start: title, css };
+    let template = IndexTemplate { title, list, code, css };
     template.render().unwrap()
 }
 #[derive(Template)]
@@ -62,6 +62,5 @@ struct IndexTemplate<'a> {
     title: &'a str,
     list: &'a str,
     code: &'a str,
-    start: &'a str,
     css: &'a str,
 }
