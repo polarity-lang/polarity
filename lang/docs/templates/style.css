@@ -103,6 +103,10 @@ main {
     box-sizing: border-box;
 }
 
+.anchor {
+    scroll-margin-top: 100px;
+  }
+
 .card {
     background-color: white;
     margin-bottom: 20px;
