@@ -4,19 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/* pub fn get_target_path(path: &Path) -> PathBuf {
-    let mut new_path = PathBuf::from(DOCS_PATH);
-    new_path.push(get_parent_folder(path));
-    if let Some(stem) = path.file_stem() {
-        new_path.push(stem);
-        new_path.set_extension("html");
-    }
-    if let Some(parent) = new_path.parent() {
-        fs::create_dir_all(parent).expect("Failed to create directories");
-    }
-    new_path
-} */
-
 pub fn get_target_path(path: &Path) -> PathBuf {
     let path = fs::canonicalize(path).expect("Failed to canonicalize path");
     let mut components = path.components().peekable();

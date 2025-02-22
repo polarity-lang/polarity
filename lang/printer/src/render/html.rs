@@ -1,6 +1,7 @@
-use std::io;
+use std::{io, path::{Path, PathBuf}};
 
 use crate::types::*;
+
 
 pub struct RenderHtml<W> {
     anno_stack: Vec<Anno>,
@@ -58,7 +59,7 @@ where
             Anno::BraceOpen => "",
             Anno::BraceClose => "",
             Anno::Error => "<span class=\"error\">",
-            Anno::Reference(uri, _) => &format!("<a href=\"{}\">", uri),
+            Anno::Reference(uri, name) => &format!("<a href=\"{}#{}\">", get_target_path(Path::new(uri)).to_str().unwrap(), name),
         };
         self.upstream.write_all(out.as_bytes())
     }
@@ -75,4 +76,30 @@ where
         self.anno_stack.pop();
         res
     }
+}
+
+
+pub fn get_target_path(path: &Path) -> PathBuf {
+    let mut components = path.components().peekable();
+    let mut new_path = PathBuf::new();
+
+    for component in components.by_ref() {
+        new_path.push(component);
+        if component.as_os_str() == "polarity" {
+            new_path.push("target_pol/docs/");
+            break;
+        }
+    }
+
+    for component in components {
+        new_path.push(component);
+    }
+
+    let stem = new_path.file_stem().map(|s| s.to_os_string());
+    if let Some(stem) = stem {
+        new_path.set_file_name(stem);
+        new_path.set_extension("html");
+    }
+
+    new_path
 }
