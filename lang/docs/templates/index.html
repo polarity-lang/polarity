@@ -14,9 +14,8 @@
     </nav>
     <main>{{code}}</main>
     <script>
-        function toggleCard(element) {
-            const content = element.nextElementSibling.nextElementSibling;
-            const button = element.querySelector('.button');
+        function toggleCard(button) {
+            const content = button.parentElement.parentElement.nextElementSibling.nextElementSibling;
             
             if (content.style.display === "none" || content.style.display === "") {
                 content.style.display = "block";

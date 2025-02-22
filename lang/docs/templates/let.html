@@ -1,8 +1,12 @@
 <span class="anchor" id="{{name}}"></span>
 <div class="card">
-    <div class="card-header" onclick="toggleCard(this)">
-        <span><span class="keyword">let</span> {{name}}: {{params}}{{typ}}</span>
-        <button class="button">show code</button>
+    <div class="card-header">
+        <div>
+            <span><span class="keyword">let</span> {{name}}: {{params}}{{typ}}</span>
+        </div>
+        <div>
+            <button class="button"  onclick="toggleCard(this)">show code</button>
+        </div>
     </div>
     <div class="doc" style="display: block;">
         <span>{{doc}}</span>

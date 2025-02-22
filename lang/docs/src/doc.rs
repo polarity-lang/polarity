@@ -19,6 +19,7 @@ pub async fn write_html() {
 }
 
 async fn write_modules() {
+    let css_path = get_absolut_css_path();
     let folders: Vec<&Path> = vec![Path::new("examples/"), Path::new("std")];
     let path_list = get_files(folders);
     let list = generate_html_link_list(&path_list);
@@ -27,14 +28,15 @@ async fn write_modules() {
         let uri = db.resolve_path(&source_path).expect("Failed to resolve path");
         let prg = db.ust(&uri).await.expect("Failed to get UST");
 
+        let title = source_path.file_stem().unwrap().to_str().unwrap();
         let code = prg.generate_docs();
         let content =
-            generate_module_docs(source_path.file_stem().unwrap().to_str().unwrap(), &code);
+            generate_module_docs(title, &code);
         let html_file = generate_html(
-            source_path.file_stem().unwrap().to_str().unwrap(),
+            title,
             &list,
             &content,
-            &get_absolut_css_path(),
+            &css_path,
         );
 
         fs::write(target_path, html_file.as_bytes()).expect("Failed to write to file");
