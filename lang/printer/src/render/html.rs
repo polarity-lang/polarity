@@ -1,7 +1,9 @@
-use std::{io, path::{Path, PathBuf}};
+use std::{
+    io,
+    path::{Path, PathBuf},
+};
 
 use crate::types::*;
-
 
 pub struct RenderHtml<W> {
     anno_stack: Vec<Anno>,
@@ -59,7 +61,11 @@ where
             Anno::BraceOpen => "",
             Anno::BraceClose => "",
             Anno::Error => "<span class=\"error\">",
-            Anno::Reference(uri, name) => &format!("<a href=\"{}#{}\">", get_target_path(Path::new(uri)).to_str().unwrap(), name),
+            Anno::Reference(uri, name) => &format!(
+                "<a href=\"{}#{}\">",
+                get_target_path(Path::new(uri)).to_str().unwrap(),
+                name
+            ),
         };
         self.upstream.write_all(out.as_bytes())
     }
@@ -77,7 +83,6 @@ where
         res
     }
 }
-
 
 pub fn get_target_path(path: &Path) -> PathBuf {
     let mut components = path.components().peekable();

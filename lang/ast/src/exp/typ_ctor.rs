@@ -97,14 +97,7 @@ impl Print for TypCtor {
             }
         } else {
             alloc
-                .reference(
-                    &format!(
-                        "{}#{}",
-                        &name.uri.to_string(),
-                        &name.id
-                    ),
-                    &name.id,
-                )
+                .reference(&format!("{}#{}", &name.uri.to_string(), &name.id), &name.id)
                 .append(alloc.typ(&name.id).append(args.print(cfg, alloc)))
         }
     }

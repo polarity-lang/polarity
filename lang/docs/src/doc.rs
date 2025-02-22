@@ -30,14 +30,8 @@ async fn write_modules() {
 
         let title = source_path.file_stem().unwrap().to_str().unwrap();
         let code = prg.generate_docs();
-        let content =
-            generate_module_docs(title, &code);
-        let html_file = generate_html(
-            title,
-            &list,
-            &content,
-            &css_path,
-        );
+        let content = generate_module_docs(title, &code);
+        let html_file = generate_html(title, &list, &content, &css_path);
 
         fs::write(target_path, html_file.as_bytes()).expect("Failed to write to file");
     }
