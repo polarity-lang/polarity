@@ -1,4 +1,5 @@
 use pretty::DocAllocator;
+use url::Url;
 
 use super::types::*;
 
@@ -8,7 +9,7 @@ pub trait ThemeExt<'a> {
     fn dtor(&'a self, text: &str) -> Builder<'a>;
     fn typ(&'a self, text: &str) -> Builder<'a>;
     fn comment(&'a self, text: &str) -> Builder<'a>;
-    fn reference(&'a self, uri: &str, text: &str) -> Builder<'a>;
+    fn reference(&'a self, module_uri: Url, text: &str) -> Builder<'a>;
 }
 
 impl<'a> ThemeExt<'a> for Alloc<'a> {
@@ -31,7 +32,7 @@ impl<'a> ThemeExt<'a> for Alloc<'a> {
     fn comment(&'a self, text: &str) -> Builder<'a> {
         self.text(text.to_owned()).annotate(Anno::Comment)
     }
-    fn reference(&'a self, uri: &str, text: &str) -> Builder<'a> {
-        self.text(text.to_owned()).annotate(Anno::Reference(uri.to_owned(), text.to_owned()))
+    fn reference(&'a self, module_uri: Url, text: &str) -> Builder<'a> {
+        self.text(text.to_owned()).annotate(Anno::Reference { module_uri: module_uri.to_owned(), name: text.to_owned() })
     }
 }

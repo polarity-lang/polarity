@@ -23,21 +23,13 @@ where
     type Error = io::Error;
 
     fn write_str(&mut self, s: &str) -> io::Result<usize> {
-        if matches!(self.anno_stack.last(), Some(Anno::Type)) {
-            Ok(0)
-        } else {
-            let escaped = askama_escape::escape(s, askama_escape::Html).to_string();
-            self.upstream.write(escaped.as_bytes())
-        }
+        let escaped = askama_escape::escape(s, askama_escape::Html).to_string();
+        self.upstream.write(escaped.as_bytes())
     }
 
     fn write_str_all(&mut self, s: &str) -> io::Result<()> {
-        if matches!(self.anno_stack.last(), Some(Anno::Type)) {
-            Ok(())
-        } else {
-            let escaped = askama_escape::escape(s, askama_escape::Html).to_string();
-            self.upstream.write_all(escaped.as_bytes())
-        }
+        let escaped = askama_escape::escape(s, askama_escape::Html).to_string();
+        self.upstream.write_all(escaped.as_bytes())
     }
 
     fn fail_doc(&self) -> Self::Error {
@@ -61,9 +53,9 @@ where
             Anno::BraceOpen => "",
             Anno::BraceClose => "",
             Anno::Error => "<span class=\"error\">",
-            Anno::Reference(uri, name) => &format!(
+            Anno::Reference { module_uri, name } => &format!(
                 "<a href=\"{}#{}\">",
-                get_target_path(Path::new(uri)).to_str().unwrap(),
+                get_target_path(Path::new(module_uri.as_str())).to_str().unwrap(),
                 name
             ),
         };
@@ -76,7 +68,7 @@ where
             | Some(Anno::BraceOpen)
             | Some(Anno::BraceClose)
             | Some(Anno::Type) => Ok(()),
-            Some(Anno::Reference(_, _)) => self.upstream.write_all("</a>".as_bytes()),
+            Some(Anno::Reference {module_uri: _, name: _}) => self.upstream.write_all("</a>".as_bytes()),
             _ => self.upstream.write_all("</span>".as_bytes()),
         };
         self.anno_stack.pop();
@@ -91,7 +83,7 @@ pub fn get_target_path(path: &Path) -> PathBuf {
     for component in components.by_ref() {
         new_path.push(component);
         if component.as_os_str() == "polarity" {
-            new_path.push("target_pol/docs/");
+            new_path.push("target_pol/docs");
             break;
         }
     }

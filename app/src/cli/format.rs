@@ -65,6 +65,7 @@ pub async fn exec(cmd: Args) -> miette::Result<()> {
         print_lambda_sugar: !cmd.omit_lambda_sugar,
         print_function_sugar: !cmd.omit_function_sugar,
         print_metavar_ids: false,
+        html: false,
     };
 
     print_prg(&prg, &cfg, &mut stream);

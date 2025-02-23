@@ -1,8 +1,7 @@
+use std::fs;
+use std::path::{Path, PathBuf};
+
 use driver::{CSS_PATH, DOCS_PATH};
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
 
 pub fn get_target_path(path: &Path) -> PathBuf {
     let path = fs::canonicalize(path).expect("Failed to canonicalize path");

@@ -96,9 +96,14 @@ impl Print for TypCtor {
                 fun.parens()
             }
         } else {
-            alloc
-                .reference(&format!("{}#{}", &name.uri.to_string(), &name.id), &name.id)
-                .append(alloc.typ(&name.id).append(args.print(cfg, alloc)))
+            if cfg.html {
+                return alloc
+                    .reference(name.uri.to_owned(), &name.id).append(args.print(cfg, alloc));
+            } else {
+                return alloc
+                    .typ(&name.id)
+                    .append(args.print(cfg, alloc));
+            }
         }
     }
 }

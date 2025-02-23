@@ -14,3 +14,5 @@ categories.workspace = true
 [dependencies]
 pretty = { workspace = true }
 askama_escape = "0.10.3"
+# url (for file locations)
+url = "2.5.0"

@@ -20,19 +20,11 @@ where
     type Error = io::Error;
 
     fn write_str(&mut self, s: &str) -> io::Result<usize> {
-        if matches!(self.anno_stack.last(), Some(Anno::Reference(_, _))) {
-            Ok(0)
-        } else {
-            self.upstream.write(s.as_bytes())
-        }
+        self.upstream.write(s.as_bytes())
     }
 
     fn write_str_all(&mut self, s: &str) -> io::Result<()> {
-        if matches!(self.anno_stack.last(), Some(Anno::Reference(_, _))) {
-            Ok(())
-        } else {
-            self.upstream.write_all(s.as_bytes())
-        }
+        self.upstream.write_all(s.as_bytes())
     }
 
     fn fail_doc(&self) -> Self::Error {
@@ -59,14 +51,14 @@ where
             // Escape a closing brace that follows immediately
             Anno::BraceClose => r"\",
             Anno::Error => r"\textcolor{polRed}{",
-            Anno::Reference(_, _) => "",
+            Anno::Reference { module_uri: _, name: _ } => "",
         };
         self.upstream.write_all(out.as_bytes())
     }
 
     fn pop_annotation(&mut self) -> Result<(), Self::Error> {
         let res = match self.anno_stack.last() {
-            Some(Anno::BraceOpen) | Some(Anno::BraceClose) | Some(Anno::Reference(_, _)) => Ok(()),
+            Some(Anno::BraceOpen) | Some(Anno::BraceClose) | Some(Anno::Reference { module_uri: _, name: _ }) => Ok(()),
             _ => self.upstream.write_all("}".as_bytes()),
         };
         self.anno_stack.pop();
