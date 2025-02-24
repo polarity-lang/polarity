@@ -1,7 +1,9 @@
+use core::panic;
+
 use tantivy::collector::DocSetCollector;
 use tantivy::query::QueryParser;
 use tantivy::schema::*;
-use tantivy::{LeasedItem, ReloadPolicy};
+use tantivy::ReloadPolicy;
 
 use super::suites::Case;
 
@@ -19,7 +21,7 @@ pub struct Writer<'a> {
 }
 
 pub struct Searcher {
-    searcher: LeasedItem<tantivy::Searcher>,
+    searcher: tantivy::Searcher,
 }
 
 impl Index {
@@ -62,7 +64,7 @@ impl Writer<'_> {
         let name_field = schema.get_field("name").unwrap();
         let path_field = schema.get_field("path").unwrap();
         let content_field = schema.get_field("content").unwrap();
-        let mut doc = Document::default();
+        let mut doc = TantivyDocument::default();
         doc.add_text(suite_field, suite);
         doc.add_text(name_field, &case.name);
         doc.add_text(path_field, case.path.to_str().unwrap());
@@ -91,14 +93,21 @@ impl Searcher {
         let query = query_parser.parse_query(q).unwrap();
 
         let res = self.searcher.search(&query, &DocSetCollector).unwrap().into_iter().map(|addr| {
-            let doc = self.searcher.doc(addr).unwrap();
+            let doc: TantivyDocument = self.searcher.doc(addr).unwrap();
             Case {
-                suite: doc.get_first(suite_field).unwrap().as_text().unwrap().to_owned(),
-                name: doc.get_first(name_field).unwrap().as_text().unwrap().to_owned(),
-                path: doc.get_first(path_field).unwrap().as_text().unwrap().into(),
+                suite: extract_text(doc.get_first(suite_field).unwrap()),
+                name: extract_text(doc.get_first(name_field).unwrap()),
+                path: extract_text(doc.get_first(path_field).unwrap()).into(),
             }
         });
 
         res.collect::<Vec<_>>().into_iter()
+    }
+}
+
+fn extract_text(value: &OwnedValue) -> String {
+    match value {
+        OwnedValue::Str(s) => s.clone(),
+        _ => panic!("Expected text, got {:?}", value),
     }
 }

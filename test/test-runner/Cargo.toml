@@ -13,7 +13,7 @@ tokio = { version = "1", features = ["rt-multi-thread"] }
 # cli
 clap = { version = "4", features = ["derive"] }
 # full text search engine
-tantivy = "0.18"
+tantivy = "0.22"
 # url (for file locations)
 url = { workspace = true }
 # Logging infrastructure
@@ -24,7 +24,7 @@ miette = { workspace = true, features = ["fancy"] }
 # config
 serde = "1"
 serde_derive = "1"
-toml = "0.5"
+toml = "0.8"
 # Colored output
 termcolor = { version = "1.4.1" }
 # Find files recursively

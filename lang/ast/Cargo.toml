@@ -14,9 +14,9 @@ categories.workspace = true
 [dependencies]
 # fancy error messages
 miette = { workspace = true }
-thiserror = "1"
+thiserror = "2"
 # url (for file locations)
-url = "2.5.0"
+url = "2.5.4"
 # ignoring fields when deriving traits (e.g. Eq, Hash)
 derivative = "2"
 # big integers
@@ -24,7 +24,7 @@ num-bigint = "0.4"
 # lazy static
 fxhash = "0.2.1"
 # prettyprinting
-pretty = { version = "0.11", features = ["termcolor"] }
+pretty = { version = "0.12", features = ["termcolor"] }
 # workspace members
 miette_util = { path = "../miette_util" }
 printer = { path = "../printer" }
