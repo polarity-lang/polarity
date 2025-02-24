@@ -1,7 +1,8 @@
 use std::{io, path::Path};
 
-use crate::util::get_target_path;
 use printer::Anno;
+
+use crate::util::get_target_path;
 
 pub struct RenderHtml<W> {
     anno_stack: Vec<Anno>,

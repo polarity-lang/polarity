@@ -8,6 +8,7 @@ use crate::printer::print_html_to_string;
 pub trait Generate {
     fn generate(&self) -> String;
 }
+
 impl Generate for Ctor {
     fn generate(&self) -> String {
         let Ctor { span: _, doc, name, params, typ } = self;

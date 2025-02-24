@@ -1,9 +1,11 @@
 use askama::Template;
+
 use ast::{Codata, Codef, Data, Decl, Def, Let, Module};
 use printer::PrintCfg;
 
 use crate::generate::Generate;
 use crate::printer::print_html_to_string;
+
 pub trait GenerateDocs {
     fn generate_docs(&self) -> String;
 }
