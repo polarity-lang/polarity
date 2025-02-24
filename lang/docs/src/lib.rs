@@ -1,4 +1,3 @@
-pub const DEFAULT_WIDTH: usize = 100;
 pub mod doc;
 pub mod generate;
 pub mod generate_docs;
