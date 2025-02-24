@@ -230,7 +230,7 @@ impl Ctx {
     }
 
     /// Attempt to solve a metavariable with a given candidate solution.
-    /// In particular, this function attempts to solve the following equation:
+    /// In particular, this method attempts to solve the following equation:
     ///
     /// ```text
     /// constraint_ctx ⊢ metavar args =? candidate
@@ -239,7 +239,7 @@ impl Ctx {
     /// Let us start with a quick note on the contexts involved here.
     /// First of all, at the site where it is introduced, `metavar` is a well-typed hole under a context which
     /// we will call `metavar_ctx`.
-    /// However, when this function is called we also know that, by assumption,
+    /// However, when this method is called we also know that, by assumption,
     /// `constraint_ctx  ⊢ candidate` as well as `constraint_ctx ⊢ metavar args`.
     /// Our goal is to transform `candidate` in such a way that it can be inserted for `metavar`.
     /// Let's call the transformed `candidate` expression `solution`.
