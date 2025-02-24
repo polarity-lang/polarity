@@ -13,7 +13,7 @@ use crate::{
         LevelCtx,
     },
     ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    VarBind, Zonk, ZonkError,
+    Zonk, ZonkError,
 };
 
 use super::{Exp, MetaVar, MetaVarKind};
@@ -57,8 +57,7 @@ impl Hole {
             .iter()
             .map(|args| {
                 args.iter()
-                    // FIXME: Track the variable names of hole arguments
-                    .map(|_| Binder { name: VarBind::from_string("x"), content: () })
+                    .map(|binder| Binder { name: binder.name.clone(), content: () })
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
