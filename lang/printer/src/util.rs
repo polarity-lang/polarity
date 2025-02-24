@@ -1,5 +1,3 @@
-use std::path::{Path, PathBuf};
-
 use pretty::DocAllocator;
 
 use super::types::*;
@@ -50,32 +48,4 @@ where
     fn is_nil(&self) -> bool {
         matches!(self.1, pretty::BuildDoc::Doc(pretty::Doc::Nil))
     }
-}
-
-pub fn get_target_path(path: &Path) -> PathBuf {
-    let cwd = std::env::current_dir().expect("Failed to get current working directory");
-    let cwd_name = cwd.file_name().expect("Failed to get current working directory name");
-
-    let mut components = path.components().peekable();
-    let mut new_path = PathBuf::new();
-
-    for component in components.by_ref() {
-        new_path.push(component);
-        if component.as_os_str() == cwd_name {
-            new_path.push("target_pol/docs");
-            break;
-        }
-    }
-
-    for component in components {
-        new_path.push(component);
-    }
-
-    let stem = new_path.file_stem().map(|s| s.to_os_string());
-    if let Some(stem) = stem {
-        new_path.set_file_name(stem);
-        new_path.set_extension("html");
-    }
-
-    new_path
 }

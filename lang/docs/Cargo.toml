@@ -10,6 +10,7 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
+pretty = { workspace = true }
 opener = "0.5"
 askama = "0.12.1"
 askama_escape = "0.10.3"

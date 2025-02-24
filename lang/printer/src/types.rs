@@ -67,20 +67,6 @@ pub trait Print {
         doc_builder.render_raw(cfg.width, &mut render::RenderLatex::new(out))
     }
 
-    fn print_html<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
-        let alloc = Alloc::new();
-        let doc_builder = self.print(cfg, &alloc);
-        doc_builder.render_raw(cfg.width, &mut render::RenderHtml::new(out))
-    }
-
-    fn print_html_to_string(&self, cfg: Option<&PrintCfg>) -> String {
-        let mut buf = Vec::new();
-        let def = PrintCfg::default();
-        let cfg = cfg.unwrap_or(&def);
-        self.print_html(cfg, &mut buf).expect("Failed to print to string");
-        String::from_utf8(buf).expect("Failed to convert Vec<u8> to String")
-    }
-
     fn print_to_string(&self, cfg: Option<&PrintCfg>) -> String {
         let mut buf = Vec::new();
         let def = PrintCfg::default();

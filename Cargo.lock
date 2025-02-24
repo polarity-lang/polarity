@@ -950,6 +950,7 @@ dependencies = [
  "comrak",
  "driver",
  "opener",
+ "pretty",
  "printer",
  "url",
 ]

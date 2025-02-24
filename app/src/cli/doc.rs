@@ -1,9 +1,9 @@
 use std::fs;
 use std::path::PathBuf;
 
+use docs::get_target_path;
 use docs::open;
 use docs::write_html;
-use printer::get_target_path;
 
 #[derive(clap::Args)]
 pub struct Args {
