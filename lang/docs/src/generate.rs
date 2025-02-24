@@ -12,8 +12,8 @@ static CFG: PrintCfg = PrintCfg {
     print_lambda_sugar: true,
     print_function_sugar: true,
     print_metavar_ids: false,
-    html: true,
 };
+
 pub trait Generate {
     fn generate(&self) -> String;
 }

@@ -95,10 +95,14 @@ impl Print for TypCtor {
             } else {
                 fun.parens()
             }
-        } else if cfg.html {
-            return alloc.reference(name.uri.to_owned(), &name.id).append(args.print(cfg, alloc));
         } else {
-            return alloc.typ(&name.id).append(args.print(cfg, alloc));
+            alloc
+                .typ(&name.id)
+                .annotate(printer::Anno::Reference {
+                    module_uri: name.uri.to_owned(),
+                    name: name.id.clone(),
+                })
+                .append(args.print(cfg, alloc))
         }
     }
 }

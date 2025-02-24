@@ -42,7 +42,6 @@ pub async fn formatting(
         print_lambda_sugar: true,
         print_function_sugar: true,
         print_metavar_ids: false,
-        html: false,
     };
 
     let formatted_prog: String = prg.print_to_string(Some(&cfg));

@@ -108,7 +108,6 @@ pub trait Print {
             print_lambda_sugar: true,
             print_function_sugar: true,
             print_metavar_ids: true,
-            html: false,
         };
         self.print_to_colored_string(Some(&TRACE_CFG))
     }
@@ -239,8 +238,6 @@ pub struct PrintCfg {
     pub print_function_sugar: bool,
     /// Whether to print the ids of metavariables
     pub print_metavar_ids: bool,
-    /// Whether html output ore not
-    pub html: bool,
 }
 
 impl Default for PrintCfg {
@@ -254,7 +251,6 @@ impl Default for PrintCfg {
             print_lambda_sugar: true,
             print_function_sugar: true,
             print_metavar_ids: false,
-            html: false,
         }
     }
 }
