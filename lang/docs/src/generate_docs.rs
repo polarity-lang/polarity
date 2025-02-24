@@ -7,17 +7,6 @@ pub trait GenerateDocs {
     fn generate_docs(&self) -> String;
 }
 
-static CFG: PrintCfg = PrintCfg {
-    width: 100,
-    latex: false,
-    omit_decl_sep: false,
-    de_bruijn: false,
-    indent: 4,
-    print_lambda_sugar: true,
-    print_function_sugar: true,
-    print_metavar_ids: false,
-};
-
 impl GenerateDocs for Module {
     fn generate_docs(&self) -> String {
         self.decls.iter().map(|decl| decl.generate_docs()).collect::<Vec<_>>().join("<br>")
@@ -41,8 +30,8 @@ impl GenerateDocs for Data {
         let Data { span: _, doc, name, attr, typ, ctors } = self;
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
-        let attr: String = attr.print_html_to_string(Some(&CFG));
-        let typ: String = typ.print_html_to_string(Some(&CFG));
+        let attr: String = attr.print_html_to_string(Some(&PrintCfg::default()));
+        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
 
         let body = if ctors.is_empty() {
             "".to_string()
@@ -61,8 +50,8 @@ impl GenerateDocs for Codata {
 
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
-        let attr: String = attr.print_html_to_string(Some(&CFG));
-        let typ: String = typ.print_html_to_string(Some(&CFG));
+        let attr: String = attr.print_html_to_string(Some(&PrintCfg::default()));
+        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
 
         let body = if dtors.is_empty() {
             "".to_string()
@@ -81,9 +70,9 @@ impl GenerateDocs for Def {
 
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
-        let params: String = params.print_html_to_string(Some(&CFG));
-        let self_param: String = self_param.print_html_to_string(Some(&CFG));
-        let ret_typ: String = ret_typ.print_html_to_string(Some(&CFG));
+        let params: String = params.print_html_to_string(Some(&PrintCfg::default()));
+        let self_param: String = self_param.print_html_to_string(Some(&PrintCfg::default()));
+        let ret_typ: String = ret_typ.print_html_to_string(Some(&PrintCfg::default()));
 
         let body = if cases.is_empty() {
             "{}".to_string()
@@ -109,8 +98,8 @@ impl GenerateDocs for Codef {
 
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
-        let params: String = params.print_html_to_string(Some(&CFG));
-        let typ: String = typ.print_html_to_string(Some(&CFG));
+        let params: String = params.print_html_to_string(Some(&PrintCfg::default()));
+        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
 
         let body = if cases.is_empty() {
             "{}".to_string()
@@ -129,9 +118,9 @@ impl GenerateDocs for Let {
 
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
-        let params: String = params.print_html_to_string(Some(&CFG));
-        let typ: String = typ.print_html_to_string(Some(&CFG));
-        let body: String = body.print_html_to_string(Some(&CFG));
+        let params: String = params.print_html_to_string(Some(&PrintCfg::default()));
+        let typ: String = typ.print_html_to_string(Some(&PrintCfg::default()));
+        let body: String = body.print_html_to_string(Some(&PrintCfg::default()));
 
         let let_template = LetTemplate { doc: &doc, name, params: &params, typ: &typ, body: &body };
         let_template.render().unwrap()

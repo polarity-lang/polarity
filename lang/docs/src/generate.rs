@@ -3,25 +3,14 @@ use ast::{Case, Ctor, DocComment, Dtor};
 use comrak::{markdown_to_html, Options};
 use printer::{Print, PrintCfg};
 
-static CFG: PrintCfg = PrintCfg {
-    width: 100,
-    latex: false,
-    omit_decl_sep: false,
-    de_bruijn: false,
-    indent: 4,
-    print_lambda_sugar: true,
-    print_function_sugar: true,
-    print_metavar_ids: false,
-};
-
 pub trait Generate {
     fn generate(&self) -> String;
 }
 impl Generate for Ctor {
     fn generate(&self) -> String {
         let Ctor { span: _, doc, name, params, typ } = self;
-        let parameter = params.print_html_to_string(Some(&CFG));
-        let typs = typ.print_html_to_string(Some(&CFG));
+        let parameter = params.print_html_to_string(Some(&PrintCfg::default()));
+        let typs = typ.print_html_to_string(Some(&PrintCfg::default()));
 
         let doc_str = doc.generate();
         let head = format!("{}{}", name.id, parameter);
@@ -35,9 +24,9 @@ impl Generate for Ctor {
 impl Generate for Dtor {
     fn generate(&self) -> String {
         let Dtor { span: _, doc, name, params, self_param, ret_typ } = self;
-        let self_parameter = self_param.print_html_to_string(Some(&CFG));
-        let parmeter = params.print_html_to_string(Some(&CFG));
-        let ret_typ = ret_typ.print_html_to_string(Some(&CFG));
+        let self_parameter = self_param.print_html_to_string(Some(&PrintCfg::default()));
+        let parmeter = params.print_html_to_string(Some(&PrintCfg::default()));
+        let ret_typ = ret_typ.print_html_to_string(Some(&PrintCfg::default()));
 
         let doc_str = doc.generate();
         let head =
@@ -82,7 +71,9 @@ impl Generate for Vec<DocComment> {
 impl Generate for Vec<Case> {
     fn generate(&self) -> String {
         self.iter()
-            .map(|value| format!("<li>{}</li>", value.print_html_to_string(Some(&CFG))))
+            .map(|value| {
+                format!("<li>{}</li>", value.print_html_to_string(Some(&PrintCfg::default())))
+            })
             .collect::<Vec<String>>()
             .join("")
     }
