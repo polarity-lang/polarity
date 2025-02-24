@@ -237,7 +237,7 @@ impl Ctx {
     /// ```
     ///
     /// Let us start with a quick note on the contexts involved here.
-    /// First of all, at its definition site, `metavar` is a well-typed hole under a context which
+    /// First of all, at the site where it is introduced, `metavar` is a well-typed hole under a context which
     /// we will call `metavar_ctx`.
     /// However, when this function is called we also know that, by assumption,
     /// `constraint_ctx  ⊢ candidate` as well as `constraint_ctx ⊢ metavar args`.
@@ -291,7 +291,7 @@ impl Ctx {
     /// let force(b: Type, x: b): b { bar(b, x) }
     /// ```
     ///
-    /// Here, the type of `x` in `bar` left out. We call the metavariable `?0`.
+    /// Here, the type of `x` in `bar` is left out and a metavariable `?0` generated for the hole.
     /// Solving this metavariable is forced in the call to `bar` in `force`.
     /// In particular, we check that `(b, x): [a: Type, x: ?0 (a)]`, which equates `?0 =? b`.
     /// Hence, we have that:
