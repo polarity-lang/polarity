@@ -454,7 +454,7 @@ impl PartialRenaming {
 
 /// Extract the variable from an expression.
 ///
-/// This function helps ensure condition 1 of Millner's pattern fragment,
+/// This function helps ensure condition 1 of Miller's pattern fragment,
 /// in particular that the arguments of a metavariable consist of bound variables rather than arbitrary expressions.
 /// However, in Polarity, variables can also occur underneath type annotations or as the solution of a hole.
 /// Therefore, this function strips away these layers to get to the variable, if any.
