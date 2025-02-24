@@ -574,7 +574,7 @@ pub struct Hole {
     pub kind: ast::MetaVarKind,
     pub metavar: MetaVar,
     /// Explicit substitution of the context, compare documentation of ast::Hole
-    pub args: Vec<Vec<Box<Val>>>,
+    pub args: Vec<Vec<Binder<Box<Val>>>>,
 }
 
 impl Shift for Hole {
@@ -614,6 +614,16 @@ impl ReadBack for Hole {
             args,
             solution: None,
         })
+    }
+}
+
+impl<T: ReadBack> ReadBack for Binder<T> {
+    type Nf = Binder<T::Nf>;
+
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
+        let Binder { name, content } = self;
+
+        Ok(Binder { name: name.clone(), content: content.read_back(info_table)? })
     }
 }
 

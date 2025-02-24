@@ -253,6 +253,18 @@ impl Rename for Hole {
         self.args.rename_in_ctx(ctx);
     }
 }
+
+impl<T: Rename> Rename for Binder<T> {
+    fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
+        // In expressions, `Binder` is currently only used to track the names of hole arguments.
+        // These do not need to be renamed because they don't show up in the printed output.
+        // They are solely used for better error messages.
+        let Binder { name: _, content } = self;
+
+        content.rename_in_ctx(ctx);
+    }
+}
+
 impl Rename for LocalMatch {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         self.ctx = None;

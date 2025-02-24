@@ -1,3 +1,4 @@
+use ast::ctx::values::Binder;
 use miette_util::codespan::Span;
 use miette_util::ToMiette;
 
@@ -119,13 +120,13 @@ impl Ctx {
     /// all variables in Γ. This function computes the substitution id_Γ.
     /// This substitution is needed when lowering typed holes since they stand for unknown terms which
     /// could potentially use all variables in the context.
-    pub fn subst_from_ctx(&self) -> Vec<Vec<Box<ast::Exp>>> {
-        let mut args: Vec<Vec<Box<ast::Exp>>> = Vec::new();
+    pub fn subst_from_ctx(&self) -> Vec<Vec<Binder<Box<ast::Exp>>>> {
+        let mut args: Vec<Vec<Binder<Box<ast::Exp>>>> = Vec::new();
         let mut curr_subst = Vec::new();
 
         for (fst, inner) in self.binders.iter().enumerate() {
             for (snd, binder) in inner.iter().enumerate() {
-                curr_subst.push(Box::new(
+                let var = Box::new(
                     ast::Variable {
                         span: None,
                         idx: self.level_to_index(Lvl { fst, snd }),
@@ -139,7 +140,8 @@ impl Ctx {
                         inferred_type: None,
                     }
                     .into(),
-                ))
+                );
+                curr_subst.push(Binder { name: binder.name.clone(), content: var });
             }
             args.push(curr_subst);
             curr_subst = vec![];

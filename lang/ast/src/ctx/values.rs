@@ -51,3 +51,26 @@ impl<T: Shift> Shift for Binder<T> {
         self.content.shift_in_range(range, by);
     }
 }
+
+impl<T: Occurs> Occurs for Binder<T> {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
+        self.content.occurs(ctx, f)
+    }
+}
+
+impl<T: Substitutable> Substitutable for Binder<T> {
+    type Target = Binder<T::Target>;
+
+    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+        Ok(Binder { name: self.name.clone(), content: self.content.subst(ctx, by)? })
+    }
+}
+
+impl<T: ContainsMetaVars> ContainsMetaVars for Binder<T> {
+    fn contains_metavars(&self) -> bool {
+        self.content.contains_metavars()
+    }
+}

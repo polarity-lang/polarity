@@ -1,6 +1,6 @@
 use derivative::Derivative;
 
-use ast::ctx::values::TypeCtx;
+use ast::ctx::values::{Binder, TypeCtx};
 use ast::ctx::*;
 use ast::*;
 
@@ -190,6 +190,13 @@ impl FV for Hole {
             }
         }
         fvs
+    }
+}
+
+impl<T: FV> FV for Binder<T> {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        let Binder { name: _, content } = self;
+        content.free_vars_closure(lvl_ctx, type_ctx)
     }
 }
 

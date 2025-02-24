@@ -461,6 +461,16 @@ impl Eval for Hole {
     }
 }
 
+impl<T: Eval> Eval for Binder<T> {
+    type Val = Binder<T::Val>;
+
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
+        let Binder { name, content } = self;
+
+        Ok(Binder { name: name.to_owned(), content: content.eval(info_table, env)? })
+    }
+}
+
 impl Eval for Case {
     type Val = val::Case;
 
