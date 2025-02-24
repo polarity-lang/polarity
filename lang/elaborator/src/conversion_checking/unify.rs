@@ -25,7 +25,7 @@ fn is_solvable(h: &Hole) -> bool {
     let mut seen: HashSet<Idx> = HashSet::new();
     for subst in args {
         for exp in subst {
-            let Exp::Variable(v) = &**exp else {
+            let Exp::Variable(v) = &*exp.content else {
                 return false;
             };
             if seen.contains(&v.idx) {

@@ -31,6 +31,17 @@ impl Substitution for Vec<Vec<Box<Exp>>> {
     }
 }
 
+impl Substitution for Vec<Vec<Binder<Box<Exp>>>> {
+    type Err = Infallible;
+
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
+        if lvl.fst >= self.len() {
+            return Ok(None);
+        }
+        Ok(Some(self[lvl.fst][lvl.snd].content.clone()))
+    }
+}
+
 impl Substitution for Vec<Vec<Arg>> {
     type Err = Infallible;
 

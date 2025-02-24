@@ -8,7 +8,10 @@ use printer::{
 };
 
 use crate::{
-    ctx::{values::TypeCtx, LevelCtx},
+    ctx::{
+        values::{Binder, TypeCtx},
+        LevelCtx,
+    },
     ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
     Zonk, ZonkError,
 };
@@ -41,7 +44,7 @@ pub struct Hole {
     ///
     /// Example:
     /// `[x, y][z][v, w] |- ?[x, y][z][v,w]`
-    pub args: Vec<Vec<Box<Exp>>>,
+    pub args: Vec<Vec<Binder<Box<Exp>>>>,
     /// The solution found by unification. It is propagated during zonking.
     pub solution: Option<Box<Exp>>,
 }

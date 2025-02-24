@@ -506,7 +506,14 @@ impl CollectInfo for Hole {
             let ctx = inferred_ctx.clone().map(Into::into);
             let args: Vec<Vec<String>> = args
                 .iter()
-                .map(|subst| subst.iter().map(|exp| exp.print_to_string(None)).collect())
+                .map(|subst| {
+                    subst
+                        .iter()
+                        .map(|binder| {
+                            format!("{}:={}", binder.name, binder.content.print_to_string(None))
+                        })
+                        .collect()
+                })
                 .collect();
 
             let hover_contents = if let Some(ctx) = ctx {
