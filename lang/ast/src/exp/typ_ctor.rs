@@ -95,18 +95,15 @@ impl Print for TypCtor {
             } else {
                 fun.parens()
             }
-        } else {
-            if cfg.html {
+        } else if cfg.html {
                 return alloc
-                    .reference(name.uri.to_owned(), &name.id).append(args.print(cfg, alloc));
-            } else {
-                return alloc
-                    .typ(&name.id)
+                    .reference(name.uri.to_owned(), &name.id)
                     .append(args.print(cfg, alloc));
+            } else {
+                return alloc.typ(&name.id).append(args.print(cfg, alloc));
             }
         }
     }
-}
 
 /// Implement Zonk for TypCtor
 impl Zonk for TypCtor {

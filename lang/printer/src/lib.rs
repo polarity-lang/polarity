@@ -13,5 +13,6 @@ pub mod types;
 pub mod util;
 
 pub use types::*;
+pub use util::get_target_path;
 
 pub const DEFAULT_WIDTH: usize = 100;

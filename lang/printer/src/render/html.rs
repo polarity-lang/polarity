@@ -1,9 +1,7 @@
-use std::{
-    io,
-    path::{Path, PathBuf},
-};
+use std::{io, path::Path};
 
 use crate::types::*;
+use crate::util::get_target_path;
 
 pub struct RenderHtml<W> {
     anno_stack: Vec<Anno>,
@@ -55,7 +53,7 @@ where
             Anno::Error => "<span class=\"error\">",
             Anno::Reference { module_uri, name } => &format!(
                 "<a href=\"{}#{}\">",
-                get_target_path(Path::new(module_uri.as_str())).to_str().unwrap(),
+                get_target_path(Path::new(module_uri.as_str())).to_string_lossy(),
                 name
             ),
         };
@@ -68,35 +66,12 @@ where
             | Some(Anno::BraceOpen)
             | Some(Anno::BraceClose)
             | Some(Anno::Type) => Ok(()),
-            Some(Anno::Reference {module_uri: _, name: _}) => self.upstream.write_all("</a>".as_bytes()),
+            Some(Anno::Reference { module_uri: _, name: _ }) => {
+                self.upstream.write_all("</a>".as_bytes())
+            }
             _ => self.upstream.write_all("</span>".as_bytes()),
         };
         self.anno_stack.pop();
         res
     }
-}
-
-pub fn get_target_path(path: &Path) -> PathBuf {
-    let mut components = path.components().peekable();
-    let mut new_path = PathBuf::new();
-
-    for component in components.by_ref() {
-        new_path.push(component);
-        if component.as_os_str() == "polarity" {
-            new_path.push("target_pol/docs");
-            break;
-        }
-    }
-
-    for component in components {
-        new_path.push(component);
-    }
-
-    let stem = new_path.file_stem().map(|s| s.to_os_string());
-    if let Some(stem) = stem {
-        new_path.set_file_name(stem);
-        new_path.set_extension("html");
-    }
-
-    new_path
 }

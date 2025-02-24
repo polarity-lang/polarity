@@ -1,33 +1,9 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use driver::{CSS_PATH, DOCS_PATH};
+use driver::CSS_PATH;
 
-pub fn get_target_path(path: &Path) -> PathBuf {
-    let path = fs::canonicalize(path).expect("Failed to canonicalize path");
-    let mut components = path.components().peekable();
-    let mut new_path = PathBuf::new();
-
-    for component in components.by_ref() {
-        new_path.push(component);
-        if component.as_os_str() == "polarity" {
-            new_path.push(DOCS_PATH);
-            break;
-        }
-    }
-
-    for component in components {
-        new_path.push(component);
-    }
-
-    let stem = new_path.file_stem().map(|s| s.to_os_string());
-    if let Some(stem) = stem {
-        new_path.set_file_name(stem);
-        new_path.set_extension("html");
-    }
-
-    new_path
-}
+use printer::get_target_path;
 
 pub fn get_files(folders: Vec<&Path>) -> Vec<(PathBuf, PathBuf)> {
     let mut pol_files = Vec::new();
@@ -37,7 +13,9 @@ pub fn get_files(folders: Vec<&Path>) -> Vec<(PathBuf, PathBuf)> {
                 let entry = entry.expect("Failed to get directory entry");
                 let path = entry.path();
                 if path.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some("pol") {
-                    let target_path = get_target_path(&path);
+                    let target_path = get_target_path(
+                        &fs::canonicalize(&path).expect("Failed to canonicalize path"),
+                    );
                     create_parent_directory(&target_path);
                     fs::File::create(&target_path).expect("Failed to create file");
                     pol_files.push((path, target_path));

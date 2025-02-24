@@ -1,8 +1,9 @@
+use std::fs;
 use std::path::PathBuf;
 
-use docs::get_target_path;
 use docs::open;
 use docs::write_html;
+use printer::get_target_path;
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -14,7 +15,8 @@ pub struct Args {
 
 pub async fn exec(cmd: Args) -> miette::Result<()> {
     let filepath = &cmd.filepath;
-    let htmlpath = get_target_path(filepath);
+    let htmlpath =
+        get_target_path(&fs::canonicalize(filepath).expect("failed to canonicalize path"));
     write_html().await;
     if cmd.open {
         open(&htmlpath);

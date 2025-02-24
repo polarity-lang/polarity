@@ -20,7 +20,7 @@ pub enum Anno {
     BraceOpen,
     BraceClose,
     Error,
-    Reference{module_uri: Url,name: String},
+    Reference { module_uri: Url, name: String },
 }
 
 pub type Alloc<'a> = pretty::Arena<'a, Anno>;

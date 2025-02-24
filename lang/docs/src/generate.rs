@@ -82,9 +82,7 @@ impl Generate for Vec<DocComment> {
 impl Generate for Vec<Case> {
     fn generate(&self) -> String {
         self.iter()
-            .map(|value| {
-                format!("<li>{}</li>", value.print_html_to_string(Some(&CFG)))
-            })
+            .map(|value| format!("<li>{}</li>", value.print_html_to_string(Some(&CFG))))
             .collect::<Vec<String>>()
             .join("")
     }

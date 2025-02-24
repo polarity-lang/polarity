@@ -58,7 +58,9 @@ where
 
     fn pop_annotation(&mut self) -> Result<(), Self::Error> {
         let res = match self.anno_stack.last() {
-            Some(Anno::BraceOpen) | Some(Anno::BraceClose) | Some(Anno::Reference { module_uri: _, name: _ }) => Ok(()),
+            Some(Anno::BraceOpen)
+            | Some(Anno::BraceClose)
+            | Some(Anno::Reference { module_uri: _, name: _ }) => Ok(()),
             _ => self.upstream.write_all("}".as_bytes()),
         };
         self.anno_stack.pop();

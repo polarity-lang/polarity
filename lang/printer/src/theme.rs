@@ -33,6 +33,7 @@ impl<'a> ThemeExt<'a> for Alloc<'a> {
         self.text(text.to_owned()).annotate(Anno::Comment)
     }
     fn reference(&'a self, module_uri: Url, text: &str) -> Builder<'a> {
-        self.text(text.to_owned()).annotate(Anno::Reference { module_uri: module_uri.to_owned(), name: text.to_owned() })
+        self.text(text.to_owned())
+            .annotate(Anno::Reference { module_uri: module_uri.to_owned(), name: text.to_owned() })
     }
 }
