@@ -354,7 +354,7 @@ impl Ctx {
         log::trace!("candidate = {}", candidate.print_trace());
 
         // Condition 3: `metavar` does not occur in `candidate`
-        if candidate.occurs_metavar(&mut constraint_ctx.clone(), metavar.id) {
+        if candidate.occurs_metavar(&mut constraint_ctx.clone(), &metavar) {
             return Err(TypeError::MetaOccursCheckFailed {
                 span: metavar.span.to_miette(),
                 meta_var: metavar.print_to_string(None),
