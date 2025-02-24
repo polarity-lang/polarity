@@ -1,5 +1,6 @@
 use std::rc::Rc;
 use std::{error::Error, io};
+use url::Url;
 
 use pretty::{
     termcolor::{Ansi, WriteColor},
@@ -8,7 +9,7 @@ use pretty::{
 
 use crate::{render, tokens::COMMA};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Anno {
     Keyword,
     Ctor,
@@ -19,6 +20,7 @@ pub enum Anno {
     BraceOpen,
     BraceClose,
     Error,
+    Reference { module_uri: Url, name: String },
 }
 
 pub type Alloc<'a> = pretty::Arena<'a, Anno>;
@@ -63,20 +65,6 @@ pub trait Print {
         let alloc = Alloc::new();
         let doc_builder = self.print(cfg, &alloc);
         doc_builder.render_raw(cfg.width, &mut render::RenderLatex::new(out))
-    }
-
-    fn print_html<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
-        let alloc = Alloc::new();
-        let doc_builder = self.print(cfg, &alloc);
-        doc_builder.render_raw(cfg.width, &mut render::RenderHtml::new(out))
-    }
-
-    fn print_html_to_string(&self, cfg: Option<&PrintCfg>) -> String {
-        let mut buf = Vec::new();
-        let def = PrintCfg::default();
-        let cfg = cfg.unwrap_or(&def);
-        self.print_html(cfg, &mut buf).expect("Failed to print to string");
-        String::from_utf8(buf).expect("Failed to convert Vec<u8> to String")
     }
 
     fn print_to_string(&self, cfg: Option<&PrintCfg>) -> String {

@@ -37,7 +37,7 @@ where
     W: io::Write,
 {
     fn push_annotation(&mut self, anno: &Anno) -> Result<(), Self::Error> {
-        self.anno_stack.push(*anno);
+        self.anno_stack.push(anno.clone());
         let out = match anno {
             Anno::Keyword => r"\polKw{",
             Anno::Ctor => r"\polCtor{",
@@ -51,13 +51,16 @@ where
             // Escape a closing brace that follows immediately
             Anno::BraceClose => r"\",
             Anno::Error => r"\textcolor{polRed}{",
+            Anno::Reference { module_uri: _, name: _ } => "",
         };
         self.upstream.write_all(out.as_bytes())
     }
 
     fn pop_annotation(&mut self) -> Result<(), Self::Error> {
         let res = match self.anno_stack.last() {
-            Some(Anno::BraceOpen) | Some(Anno::BraceClose) => Ok(()),
+            Some(Anno::BraceOpen)
+            | Some(Anno::BraceClose)
+            | Some(Anno::Reference { module_uri: _, name: _ }) => Ok(()),
             _ => self.upstream.write_all("}".as_bytes()),
         };
         self.anno_stack.pop();

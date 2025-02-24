@@ -1,9 +1,17 @@
+<span class="anchor" id="{{name}}"></span>
 <div class="card">
     <div class="card-header">
-        <span><span class="keyword">codata</span> {{name}}{{attr}} {{typ}}</span>
+        <div>
+            <span><span class="keyword">codata</span> {{name}}{{attr}} {{typ}}</span>
+        </div>
+        <div>
+            <button class="button"  onclick="toggleCard(this)">hide code</button>
+        </div>
+    </div>
+    <div class="doc" style="display: block;">
+        <span>{{doc}}</span>
     </div>
     <div class="card-content" style="display: block;">
-        <span>{{doc}}</span>
         <code>
             <span>{{body}}</span>
         </code>

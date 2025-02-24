@@ -1,16 +1,19 @@
 use ast::{Case, Ctor, DocComment, Dtor};
 
 use comrak::{markdown_to_html, Options};
-use printer::{Print, PrintCfg};
+use printer::PrintCfg;
+
+use crate::printer::print_html_to_string;
 
 pub trait Generate {
     fn generate(&self) -> String;
 }
+
 impl Generate for Ctor {
     fn generate(&self) -> String {
         let Ctor { span: _, doc, name, params, typ } = self;
-        let parameter = params.print_html_to_string(Some(&PrintCfg::default()));
-        let typs = typ.print_html_to_string(Some(&PrintCfg::default()));
+        let parameter = print_html_to_string(params, Some(&PrintCfg::default()));
+        let typs = print_html_to_string(typ, Some(&PrintCfg::default()));
 
         let doc_str = doc.generate();
         let head = format!("{}{}", name.id, parameter);
@@ -24,9 +27,9 @@ impl Generate for Ctor {
 impl Generate for Dtor {
     fn generate(&self) -> String {
         let Dtor { span: _, doc, name, params, self_param, ret_typ } = self;
-        let self_parameter = self_param.print_html_to_string(Some(&PrintCfg::default()));
-        let parmeter = params.print_html_to_string(Some(&PrintCfg::default()));
-        let ret_typ = ret_typ.print_html_to_string(Some(&PrintCfg::default()));
+        let self_parameter = print_html_to_string(self_param, Some(&PrintCfg::default()));
+        let parmeter = print_html_to_string(params, Some(&PrintCfg::default()));
+        let ret_typ = print_html_to_string(ret_typ, Some(&PrintCfg::default()));
 
         let doc_str = doc.generate();
         let head =
@@ -72,7 +75,7 @@ impl Generate for Vec<Case> {
     fn generate(&self) -> String {
         self.iter()
             .map(|value| {
-                format!("<li>{}</li>", value.print_html_to_string(Some(&PrintCfg::default())))
+                format!("<li>{}</li>", print_html_to_string(value, Some(&PrintCfg::default())))
             })
             .collect::<Vec<String>>()
             .join("")

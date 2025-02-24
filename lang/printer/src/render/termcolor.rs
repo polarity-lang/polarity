@@ -47,7 +47,7 @@ where
     W: WriteColor,
 {
     fn push_annotation(&mut self, anno: &Anno) -> Result<(), Self::Error> {
-        self.anno_stack.push(*anno);
+        self.anno_stack.push(anno.clone());
         self.upstream.set_color(&anno.color_spec())
     }
 
@@ -72,6 +72,7 @@ impl Anno {
             Anno::BraceOpen => Default::default(),
             Anno::BraceClose => Default::default(),
             Anno::Error => ERROR.spec(),
+            Anno::Reference { module_uri: _, name: _ } => Default::default(),
         }
     }
 }

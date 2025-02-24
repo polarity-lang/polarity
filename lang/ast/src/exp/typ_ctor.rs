@@ -96,7 +96,13 @@ impl Print for TypCtor {
                 fun.parens()
             }
         } else {
-            alloc.typ(&name.id).append(args.print(cfg, alloc))
+            alloc
+                .typ(&name.id)
+                .annotate(printer::Anno::Reference {
+                    module_uri: name.uri.to_owned(),
+                    name: name.id.clone(),
+                })
+                .append(args.print(cfg, alloc))
         }
     }
 }

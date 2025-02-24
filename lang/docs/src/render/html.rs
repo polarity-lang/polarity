@@ -1,6 +1,8 @@
-use std::io;
+use std::{io, path::Path};
 
-use crate::types::*;
+use printer::Anno;
+
+use crate::util::get_target_path;
 
 pub struct RenderHtml<W> {
     anno_stack: Vec<Anno>,
@@ -39,7 +41,7 @@ where
     W: io::Write,
 {
     fn push_annotation(&mut self, anno: &Anno) -> Result<(), Self::Error> {
-        self.anno_stack.push(*anno);
+        self.anno_stack.push(anno.clone());
         let out = match anno {
             Anno::Keyword => "<span class=\"keyword\">",
             Anno::Ctor => "<span class=\"ctor\">",
@@ -50,13 +52,24 @@ where
             Anno::BraceOpen => "",
             Anno::BraceClose => "",
             Anno::Error => "<span class=\"error\">",
+            Anno::Reference { module_uri, name } => &format!(
+                "<a href=\"{}#{}\">",
+                get_target_path(Path::new(module_uri.as_str())).to_string_lossy(),
+                name
+            ),
         };
         self.upstream.write_all(out.as_bytes())
     }
 
     fn pop_annotation(&mut self) -> Result<(), Self::Error> {
         let res = match self.anno_stack.last() {
-            Some(Anno::Backslash) | Some(Anno::BraceOpen) | Some(Anno::BraceClose) => Ok(()),
+            Some(Anno::Backslash)
+            | Some(Anno::BraceOpen)
+            | Some(Anno::BraceClose)
+            | Some(Anno::Type) => Ok(()),
+            Some(Anno::Reference { module_uri: _, name: _ }) => {
+                self.upstream.write_all("</a>".as_bytes())
+            }
             _ => self.upstream.write_all("</span>".as_bytes()),
         };
         self.anno_stack.pop();

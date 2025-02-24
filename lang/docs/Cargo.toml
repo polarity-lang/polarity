@@ -10,6 +10,7 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
+pretty = { workspace = true }
 opener = "0.5"
 askama = "0.12.1"
 askama_escape = "0.10.3"
@@ -19,3 +20,5 @@ comrak = "0.32"
 ast = { path = "../ast" }
 printer = { path = "../printer" }
 driver = { path = "../driver" }
+# url (for file locations)
+url = "2.5.0"
