@@ -419,30 +419,26 @@ impl PartialRenaming {
         for (fst, telescope) in args.iter().enumerate() {
             for (snd, arg) in telescope.iter().enumerate() {
                 let to_lvl = Lvl { fst, snd };
-                match &*arg.content {
-                    Exp::Variable(Variable { idx, name, .. }) => {
-                        let from_lvl = constraint_ctx.idx_to_lvl(*idx);
-                        if map.insert(from_lvl, to_lvl).is_some() {
-                            // Condition 1: `args` consists of *distinct* bound variables
-                            return Err(TypeError::MetaArgNotDistinct {
-                                span: meta_var.span.to_miette(),
-                                meta_var: meta_var.print_to_string(None),
-                                arg: name.print_to_string(None),
-                                while_elaborating_span: while_elaborating_span.to_miette(),
-                            }
-                            .into());
-                        }
+                let Some(Variable { idx, name, .. }) = expect_variable(&arg.content) else {
+                    // Condition 1: `args` consists of distinct bound *variables*
+                    return Err(TypeError::MetaArgNotVariable {
+                        span: meta_var.span.to_miette(),
+                        meta_var: meta_var.print_to_string(None),
+                        arg: arg.print_to_string(None),
+                        while_elaborating_span: while_elaborating_span.to_miette(),
                     }
-                    other => {
-                        // Condition 1: `args` consists of distinct bound *variables*
-                        return Err(TypeError::MetaArgNotVariable {
-                            span: meta_var.span.to_miette(),
-                            meta_var: meta_var.print_to_string(None),
-                            arg: other.print_to_string(None),
-                            while_elaborating_span: while_elaborating_span.to_miette(),
-                        }
-                        .into());
+                    .into());
+                };
+                let from_lvl = constraint_ctx.idx_to_lvl(*idx);
+                if map.insert(from_lvl, to_lvl).is_some() {
+                    // Condition 1: `args` consists of *distinct* bound variables
+                    return Err(TypeError::MetaArgNotDistinct {
+                        span: meta_var.span.to_miette(),
+                        meta_var: meta_var.print_to_string(None),
+                        arg: name.print_to_string(None),
+                        while_elaborating_span: while_elaborating_span.to_miette(),
                     }
+                    .into());
                 }
             }
         }
@@ -453,6 +449,30 @@ impl PartialRenaming {
             meta_var: *meta_var,
             while_elaborating_span: *while_elaborating_span,
         })
+    }
+}
+
+/// Extract the variable from an expression.
+///
+/// This function helps ensure condition 1 of Millner's pattern fragment,
+/// in particular that the arguments of a metavariable consist of bound variables rather than arbitrary expressions.
+/// However, in Polarity, variables can also occur underneath type annotations or as the solution of a hole.
+/// Therefore, this function strips away these layers to get to the variable, if any.
+///
+/// # Parameters
+///
+/// - `exp`: The expression to extract the variable from
+///
+/// # Returns
+///
+/// `Some(variable)` if `exp` is a variable, or has a variable as a subexpression to layers of holes or type annotations.
+///
+fn expect_variable(exp: &Exp) -> Option<&Variable> {
+    match exp {
+        Exp::Variable(v) => Some(v),
+        Exp::Hole(Hole { solution, .. }) => solution.as_ref().and_then(|sol| expect_variable(sol)),
+        Exp::Anno(Anno { exp, .. }) => expect_variable(exp),
+        _ => None,
     }
 }
 
@@ -550,6 +570,12 @@ mod tests {
         Box::new(Exp::TypCtor(TypCtor { span: None, name, args: Args { args: vec![] } }))
     }
 
+    fn bool_type() -> Box<Exp> {
+        let uri = dummy_uri();
+        let name = IdBound { span: None, id: "Bool".to_owned(), uri };
+        Box::new(Exp::TypCtor(TypCtor { span: None, name, args: Args { args: vec![] } }))
+    }
+
     fn fun_type(a: Box<Exp>, b: Box<Exp>) -> Box<Exp> {
         let uri = dummy_uri();
         let name = IdBound { span: None, id: "Fun".to_owned(), uri };
@@ -601,7 +627,7 @@ mod tests {
             MetaArgNotVariable {
                 span: None,
                 meta_var: "_0".to_owned(),
-                arg: "T".to_owned(),
+                arg: "x:=T".to_owned(),
                 while_elaborating_span: None,
             }
         );
@@ -699,6 +725,37 @@ mod tests {
                 span: None,
                 meta_var: "_0".to_owned(),
                 while_elaborating_span: None
+            }
+        );
+    }
+
+    #[test]
+    fn test_expect_variable_under_anno_and_hole() {
+        let var_exp = var("x", (0, 0));
+
+        let anno_and_hole_exp = Box::new(Exp::Anno(Anno {
+            exp: Box::new(Exp::Hole(Hole {
+                span: None,
+                kind: MetaVarKind::MustSolve,
+                metavar: meta_var(0),
+                inferred_type: None,
+                inferred_ctx: None,
+                args: vec![],
+                solution: Some(var_exp),
+            })),
+            span: None,
+            typ: bool_type(),
+            normalized_type: None,
+        }));
+
+        let result = expect_variable(&anno_and_hole_exp).unwrap();
+        assert_eq!(
+            result,
+            &Variable {
+                span: None,
+                idx: Idx { fst: 0, snd: 0 },
+                name: VarBound::from_string("x"),
+                inferred_type: None
             }
         );
     }
