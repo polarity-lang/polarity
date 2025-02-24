@@ -52,17 +52,19 @@
 //! ```
 //! When hovering over the holes in an editor connected to our language server, you will see that both holes are solved with `Nat`.
 
-use ast::{ctx::values::TypeCtx, Exp, HasSpan, HashMap, MetaVar, MetaVarState};
-use constraints::Constraint;
 use log::trace;
+
+use ast::{ctx::values::TypeCtx, Exp, HasSpan, HashMap, MetaVar, MetaVarState};
 use miette_util::{codespan::Span, ToMiette};
 use printer::Print;
-use unify::Ctx;
 
 use crate::result::{TcResult, TypeError};
 
 mod constraints;
 mod unify;
+
+use constraints::Constraint;
+use unify::Ctx;
 
 pub fn convert(
     ctx: TypeCtx,

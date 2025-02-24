@@ -575,6 +575,8 @@ pub struct Hole {
     pub metavar: MetaVar,
     /// Explicit substitution of the context, compare documentation of ast::Hole
     pub args: Vec<Vec<Binder<Box<Val>>>>,
+    /// The solution of this hole, if any
+    pub solution: Option<Box<Val>>,
 }
 
 impl Shift for Hole {
@@ -603,7 +605,7 @@ impl ReadBack for Hole {
     type Nf = ast::Hole;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
-        let Hole { span, kind, metavar, args } = self;
+        let Hole { span, kind, metavar, args, solution } = self;
         let args = args.read_back(info_table)?;
         Ok(ast::Hole {
             span: *span,
@@ -612,7 +614,7 @@ impl ReadBack for Hole {
             inferred_type: None,
             inferred_ctx: None,
             args,
-            solution: None,
+            solution: solution.read_back(info_table)?,
         })
     }
 }

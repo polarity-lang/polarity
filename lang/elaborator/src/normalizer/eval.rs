@@ -453,10 +453,11 @@ impl Eval for Hole {
     type Val = Box<Val>;
 
     fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
-        let Hole { span, kind, metavar, args, .. } = self;
+        let Hole { span, kind, metavar, args, solution, .. } = self;
         let args = args.eval(info_table, env)?;
+        let solution = solution.eval(info_table, env)?;
         Ok(Box::new(Val::Neu(
-            val::Hole { span: *span, kind: *kind, metavar: *metavar, args }.into(),
+            val::Hole { span: *span, kind: *kind, metavar: *metavar, args, solution }.into(),
         )))
     }
 }
@@ -540,5 +541,13 @@ impl Eval for Box<Exp> {
 
     fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
         (**self).eval(info_table, env)
+    }
+}
+
+impl<T: Eval> Eval for Option<T> {
+    type Val = Option<T::Val>;
+
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
+        self.as_ref().map(|x| x.eval(info_table, env)).transpose()
     }
 }

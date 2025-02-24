@@ -49,6 +49,23 @@ pub struct Hole {
     pub solution: Option<Box<Exp>>,
 }
 
+impl Hole {
+    /// The context of the hole arguments
+    pub fn levels(&self) -> LevelCtx {
+        let bound = self
+            .args
+            .iter()
+            .map(|args| {
+                args.iter()
+                    .map(|binder| Binder { name: binder.name.clone(), content: () })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+
+        LevelCtx { bound }
+    }
+}
+
 impl HasSpan for Hole {
     fn span(&self) -> Option<Span> {
         self.span
@@ -169,8 +186,17 @@ impl Zonk for Hole {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
+        // If the hole has already been solved, we zonk in the solution
+        if let Some(solution) = &mut self.solution {
+            solution.zonk(meta_vars)?;
+            return Ok(());
+        }
+        // Otherwise, we check the metavars map
         match meta_vars.get(&self.metavar) {
             Some(crate::MetaVarState::Solved { ctx, solution }) => {
+                // We assume that the metavars map is well-maintained, i.e. metavariables have already been zonked
+                // in the solutions contained in the metavars map.
+                // Assuming this invariant holds, we do not need to zonk here.
                 // Unwrap is safe here because we are unwrapping an infallible result.
                 self.solution = Some(solution.subst(&mut ctx.clone(), &self.args).unwrap());
             }

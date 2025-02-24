@@ -22,7 +22,7 @@ pub type TcResult<T = ()> = Result<T, Box<TypeError>>;
 
 /// This enum contains all errors that can be emitted during elaboration, i.e. either
 /// during bidirectional type inference, normalization, index unification or conversion checking.
-#[derive(Error, Diagnostic, Debug, Clone)]
+#[derive(Error, Diagnostic, Debug, Clone, PartialEq, Eq)]
 pub enum TypeError {
     #[error("Wrong number of arguments to {name} provided: got {actual}, expected {expected}")]
     #[diagnostic(code("T-001"))]
@@ -177,12 +177,12 @@ pub enum TypeError {
         #[label("While elaborating")]
         while_elaborating_span: Option<SourceSpan>,
     },
-    #[error("The metavariable {message} could not be solved")]
+    #[error("The metavariable {meta_var} could not be solved")]
     #[diagnostic(code("T-017"))]
     UnresolvedMeta {
         #[label]
         span: Option<SourceSpan>,
-        message: String,
+        meta_var: String,
     },
     #[error("A case for constructor {name} was missing during evaluation.")]
     #[diagnostic(code("T-018"))]
@@ -190,6 +190,57 @@ pub enum TypeError {
     #[error("A case for destructor {name} was missing during evaluation.")]
     #[diagnostic(code("T-019"))]
     MissingCocase { name: String },
+    #[error("The metavariable {meta_var} received {arg} as an argument more than once")]
+    #[diagnostic(
+        code("T-020"),
+        help("This means that the metavariable cannot be solved automatically.")
+    )]
+    MetaArgNotDistinct {
+        #[label]
+        span: Option<SourceSpan>,
+        meta_var: String,
+        arg: String,
+        #[label("While elaborating")]
+        while_elaborating_span: Option<SourceSpan>,
+    },
+    #[error("The metavariable {meta_var} received argument {arg} which is not a variable")]
+    #[diagnostic(
+        code("T-021"),
+        help("This means that the metavariable cannot be solved automatically.")
+    )]
+    MetaArgNotVariable {
+        #[label]
+        span: Option<SourceSpan>,
+        meta_var: String,
+        arg: String,
+        #[label("While elaborating")]
+        while_elaborating_span: Option<SourceSpan>,
+    },
+    #[error("The metavariable {meta_var} was equated with an expression that contains {out_of_scope} which is not in scope for {meta_var}")]
+    #[diagnostic(
+        code("T-022"),
+        help("This means that the metavariable cannot be solved automatically.")
+    )]
+    MetaEquatedToOutOfScope {
+        #[label]
+        span: Option<SourceSpan>,
+        meta_var: String,
+        out_of_scope: String,
+        #[label("While elaborating")]
+        while_elaborating_span: Option<SourceSpan>,
+    },
+    #[error("The metavariable {meta_var} was equated with an expression that itself contains {meta_var}")]
+    #[diagnostic(
+        code("T-023"),
+        help("This means that the metavariable cannot be solved automatically.")
+    )]
+    MetaOccursCheckFailed {
+        #[label]
+        span: Option<SourceSpan>,
+        meta_var: String,
+        #[label("While elaborating")]
+        while_elaborating_span: Option<SourceSpan>,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("T-XXX"))]
     /// This error should not occur.
