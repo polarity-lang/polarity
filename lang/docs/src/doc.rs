@@ -7,7 +7,8 @@ use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH};
 use driver::Database;
 
 use crate::generate_docs::GenerateDocs;
-use crate::util::{generate_html_link_list, get_absolut_css_path, get_files};
+use crate::generate_html_from_paths;
+use crate::util::{get_absolut_css_path, get_files};
 
 pub async fn write_html() {
     if !Path::new(CSS_PATH).exists() {
@@ -21,8 +22,8 @@ pub async fn write_html() {
 async fn write_modules() {
     let css_path = get_absolut_css_path();
     let folders: Vec<&Path> = vec![Path::new("examples/"), Path::new("std")];
-    let path_list = get_files(folders);
-    let list = generate_html_link_list(&path_list);
+    let path_list = get_files(folders.clone());
+    let list = generate_html_from_paths(folders);
     for (source_path, target_path) in path_list {
         let mut db = Database::from_path(&source_path);
         let uri = db.resolve_path(&source_path).expect("Failed to resolve path");
