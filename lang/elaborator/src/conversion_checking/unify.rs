@@ -6,8 +6,6 @@
 //! * Adam Gundry and Conor McBride. "A tutorial implementation of dynamic pattern unification." (2013).
 //! * András Kovács's elaboration-zoo (https://github.com/AndrasKovacs/elaboration-zoo)
 
-use std::collections::HashSet;
-
 use ast::{ctx::values::Binder, Variable};
 use ctx::LevelCtx;
 use miette_util::{codespan::Span, ToMiette};
@@ -396,7 +394,7 @@ impl Ctx {
 
 #[derive(Debug, Clone)]
 struct PartialRenaming {
-    map: HashMap<Lvl, Lvl>,
+    map: HashMap<Lvl, HashSet<Lvl>>,
     /// The context of the metavariable (and its solution)
     metavar_ctx: LevelCtx,
     /// The metavariable, tracked here for better error messages
@@ -406,20 +404,18 @@ struct PartialRenaming {
 }
 
 impl PartialRenaming {
-    #[allow(clippy::vec_box)]
-    fn from_args(
+    fn build_renaming(
         constraint_ctx: &LevelCtx,
-        metavar_ctx: &LevelCtx,
         meta_var: &MetaVar,
         args: &[Vec<Binder<Box<Exp>>>],
         while_elaborating_span: &Option<Span>,
-    ) -> TcResult<Self> {
+    ) -> TcResult<HashMap<Lvl, HashSet<Lvl>>> {
         let mut map = HashMap::default();
 
         for (fst, telescope) in args.iter().enumerate() {
             for (snd, arg) in telescope.iter().enumerate() {
                 let to_lvl = Lvl { fst, snd };
-                let Some(Variable { idx, name, .. }) = expect_variable(&arg.content) else {
+                let Some(Variable { idx, .. }) = expect_variable(&arg.content) else {
                     // Condition 1: `args` consists of distinct bound *variables*
                     return Err(TypeError::MetaArgNotVariable {
                         span: meta_var.span.to_miette(),
@@ -430,18 +426,22 @@ impl PartialRenaming {
                     .into());
                 };
                 let from_lvl = constraint_ctx.idx_to_lvl(*idx);
-                if map.insert(from_lvl, to_lvl).is_some() {
-                    // Condition 1: `args` consists of *distinct* bound variables
-                    return Err(TypeError::MetaArgNotDistinct {
-                        span: meta_var.span.to_miette(),
-                        meta_var: meta_var.print_to_string(None),
-                        arg: name.print_to_string(None),
-                        while_elaborating_span: while_elaborating_span.to_miette(),
-                    }
-                    .into());
-                }
+                map.entry(from_lvl).or_insert(HashSet::default()).insert(to_lvl);
             }
         }
+
+        Ok(map)
+    }
+
+    #[allow(clippy::vec_box)]
+    fn from_args(
+        constraint_ctx: &LevelCtx,
+        metavar_ctx: &LevelCtx,
+        meta_var: &MetaVar,
+        args: &[Vec<Binder<Box<Exp>>>],
+        while_elaborating_span: &Option<Span>,
+    ) -> TcResult<Self> {
+        let map = Self::build_renaming(constraint_ctx, meta_var, args, while_elaborating_span)?;
 
         Ok(Self {
             map,
@@ -487,31 +487,44 @@ impl Substitution for PartialRenaming {
 
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
         let from_binder = ctx.lookup(lvl);
-        self.map
-            .get(&lvl)
-            .map(|target_lvl| {
-                let idx = self.metavar_ctx.lvl_to_idx(*target_lvl);
-                let to_binder = self.metavar_ctx.lookup(*target_lvl);
-                Some(Box::new(Exp::Variable(Variable {
-                    span: None,
-                    idx,
-                    name: match to_binder.name {
-                        VarBind::Var { id, .. } => VarBound { span: None, id },
-                        // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
-                        // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
-                        // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
-                        ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
-                    },
-                    inferred_type: None,
-                })))
-            })
+
+        let Some(target_lvls) = self.map.get(&lvl) else {
             // Condition 2: every free variable of `candidate` occurs in `args`
-            .ok_or(TypeError::MetaEquatedToOutOfScope {
+            return Err(TypeError::MetaEquatedToOutOfScope {
                 span: self.meta_var.span.to_miette(),
                 meta_var: self.meta_var.print_to_string(None),
                 out_of_scope: from_binder.name.to_string(),
                 while_elaborating_span: self.while_elaborating_span.to_miette(),
-            })
+            });
+        };
+
+        if target_lvls.len() > 1 {
+            // Condition 1: `args` consists of *distinct* bound variables
+            return Err(TypeError::MetaArgNotDistinct {
+                span: self.meta_var.span.to_miette(),
+                meta_var: self.meta_var.print_to_string(None),
+                // FIXME: Track the name of the variable for a better error message.
+                arg: lvl.to_string(),
+                while_elaborating_span: self.while_elaborating_span.to_miette(),
+            });
+        };
+        assert_eq!(target_lvls.len(), 1);
+        let target_lvl = target_lvls.iter().next().unwrap();
+        let idx = self.metavar_ctx.lvl_to_idx(*target_lvl);
+        let to_binder = self.metavar_ctx.lookup(*target_lvl);
+
+        Ok(Some(Box::new(Exp::Variable(Variable {
+            span: None,
+            idx,
+            name: match to_binder.name {
+                VarBind::Var { id, .. } => VarBound { span: None, id },
+                // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
+                // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
+                // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
+                ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
+            },
+            inferred_type: None,
+        }))))
     }
 }
 
@@ -758,5 +771,38 @@ mod tests {
                 inferred_type: None
             }
         );
+    }
+
+    #[test]
+    fn test_non_linear_arguments() {
+        let mut ctx = Ctx { constraints: vec![], done: HashSet::default() };
+        let mut meta_vars = HashMap::default();
+
+        let metavar_ctx = level_ctx(vec![vec!["x", "y", "z"]]);
+        let metavar = meta_var(0);
+
+        let args = &[vec![
+            Binder { name: VarBind::from_string("x"), content: var("a", (0, 1)) },
+            Binder { name: VarBind::from_string("y"), content: var("a", (0, 1)) },
+            Binder { name: VarBind::from_string("z"), content: var("c", (0, 0)) },
+        ]];
+
+        let constraint_ctx = level_ctx(vec![vec!["a", "c"]]);
+        let candidate = var("c", (0, 0));
+
+        ctx.solve_meta_var(
+            &mut meta_vars,
+            metavar_ctx.clone(),
+            metavar,
+            args,
+            constraint_ctx,
+            candidate,
+            &None,
+        )
+        .unwrap();
+
+        let solution = &meta_vars[&metavar];
+
+        assert_eq!(solution, &MetaVarState::Solved { ctx: metavar_ctx, solution: var("z", (0, 0)) })
     }
 }

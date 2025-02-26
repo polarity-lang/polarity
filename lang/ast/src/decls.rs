@@ -123,7 +123,7 @@ impl Attributes {
 ///
 /// A metavariable is always annotated with a local context which specifies
 /// which free variables may occur in the solution.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MetaVarState {
     /// We know what the metavariable stands for.
     /// The solution lives in the same context as the metavariable.
