@@ -15,13 +15,13 @@
     </nav>
     <main>{{code}}</main>
     <script>
-        const folders = document.querySelectorAll('.folder');
+        const folders = document.querySelectorAll('.label');
 
         folders.forEach(folder => {
-        folder.addEventListener('click', function(e) {
+            folder.addEventListener('click', function(e) {
             e.stopPropagation();
-            this.classList.toggle('collapsed');
-        });
+            this.parentElement.classList.toggle('collapsed');
+            });
         });
 
         function toggleCard(button) {
