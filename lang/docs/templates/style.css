@@ -140,7 +140,6 @@ nav {
     margin: 4px 0;
     padding-left: 20px;
     color: var(--text-color-1);
-    cursor: pointer;
 }
 
 .folder::before {
@@ -155,7 +154,7 @@ nav {
     content: "►";
 }
 
-.folder.collapsed > ul {
+.folder.collapsed>ul {
     display: none;
 }
 
@@ -167,5 +166,10 @@ nav {
 .file a {
     color: var(--text-color-1);
     text-decoration: none;
+    cursor: pointer;
+}
+
+.folder .label,
+.file .label {
     cursor: pointer;
 }
