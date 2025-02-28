@@ -11,9 +11,19 @@
         <ul>
             {{list}}
         </ul>
+        <li>&nbsp;</li>
     </nav>
     <main>{{code}}</main>
     <script>
+        const folders = document.querySelectorAll('.label');
+
+        folders.forEach(folder => {
+            folder.addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.parentElement.classList.toggle('collapsed');
+            });
+        });
+
         function toggleCard(button) {
             const content = button.parentElement.parentElement.nextElementSibling.nextElementSibling;
             

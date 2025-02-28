@@ -3,13 +3,16 @@
     --background-2: #dfe6ea;
     --background-3: #e2e8ec;
     --background-4: #e0eaf1;
+
     --text-color-1: #2f2f2f;
     --text-color-2: #444444;
+
     --highlight-1: #3f3dc2;
-    --highlight-2: #2d69c2;
-    --highlight-3: #58a6ff;
-    --highlight-4: #98e2d6;
-    --highlight-5: #c2a6e2;
+    /* --highlight-2: #2d69c2; */
+    /* --highlight-3: #58a6ff; */
+    /* --highlight-4: #98e2d6; */
+    /* --highlight-5: #c2a6e2; */
+
     --shadow: rgba(0, 0, 0, 0.1);
 }
 
@@ -42,41 +45,8 @@ li {
 }
 
 p {
-    padding: 0;
     margin: 0;
-}
-
-/* Navigation (Sidebar) */
-nav {
-    width: 200px;
-    height: 100vh;
-    position: fixed;
-    top: 60px;
-    left: 0;
-    background-color: var(--background-2);
-    color: var(--text-color-1);
-    padding: 10px;
-    overflow-y: auto;
-}
-
-nav ul {
-    list-style: none;
     padding: 0;
-    margin: 0;
-}
-
-nav ul li {
-    margin-bottom: 10px;
-}
-
-nav ul li a {
-    color: var(--text-color-1);
-    text-decoration: none;
-    cursor: pointer;
-}
-
-nav ul li a:hover {
-    text-decoration: underline;
 }
 
 header {
@@ -91,28 +61,26 @@ header {
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    box-shadow: 0 2px 5px var(--shadow-color);
+    box-shadow: 0 2px 5px var(--shadow);
 }
-
 
 main {
     margin-left: 200px;
     margin-top: 60px;
     padding: 20px;
     min-height: calc(100vh - 60px);
-    box-sizing: border-box;
 }
 
 .anchor {
     scroll-margin-top: 100px;
-  }
+}
 
 .card {
-    background-color: white;
+    background-color: #fff;
     margin-bottom: 20px;
     border-radius: 5px;
     overflow: hidden;
-    box-shadow: 0 2px 5px var(--shadow-color);
+    box-shadow: 0 2px 5px var(--shadow);
 }
 
 .card-header {
@@ -134,9 +102,9 @@ main {
 }
 
 .card-content {
-    cursor: pointer;
     display: none;
     padding: 15px;
+    cursor: pointer;
 }
 
 .doc {
@@ -153,7 +121,55 @@ main {
     color: var(--text-color-2);
 }
 
-.type {
-    color: var(--highlight-2);
-    font-style: italic;
+/* Navigation (Sidebar) */
+nav {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    height: 100vh;
+    min-width: 200px;
+    background-color: var(--background-2);
+    color: var(--text-color-1);
+    padding: 10px;
+    overflow-y: auto;
+    white-space: nowrap;
+}
+
+.folder {
+    position: relative;
+    margin: 4px 0;
+    padding-left: 20px;
+    color: var(--text-color-1);
+}
+
+.folder::before {
+    content: "▼";
+    position: absolute;
+    left: 0;
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+}
+
+.collapsed::before {
+    content: "►";
+}
+
+.folder.collapsed>ul {
+    display: none;
+}
+
+.file {
+    margin: 2px 0;
+    padding-left: 10px;
+}
+
+.file a {
+    color: var(--text-color-1);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.folder .label,
+.file .label {
+    cursor: pointer;
 }
