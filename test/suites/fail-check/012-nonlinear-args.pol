@@ -1,0 +1,11 @@
+data Bool { T, F }
+
+data Eq(a: Type, x y: a) {
+    Refl(a: Type, x: a): Eq(a, x, x)
+}
+
+data Foo(a b: Bool) {}
+
+def Eq(Bool, b1, b2).bar(b1 b2: Bool, x: Foo(?, b2)): Foo(b1, b2) {
+    Refl(_, _) => x
+}

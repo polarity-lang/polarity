@@ -394,7 +394,10 @@ impl Ctx {
 
 #[derive(Debug, Clone)]
 struct PartialRenaming {
-    map: HashMap<Lvl, HashSet<Lvl>>,
+    /// Map from the metavariable arguments to the levels in the solution
+    args_map: HashMap<Lvl, HashSet<Lvl>>,
+    /// The names of the variables supplied as arguments to the metavariable, tracked here for better error messages
+    arg_var_names: HashMap<Lvl, String>,
     /// The context of the metavariable (and its solution)
     metavar_ctx: LevelCtx,
     /// The metavariable, tracked here for better error messages
@@ -404,18 +407,21 @@ struct PartialRenaming {
 }
 
 impl PartialRenaming {
-    fn build_renaming(
+    #[allow(clippy::vec_box)]
+    fn from_args(
         constraint_ctx: &LevelCtx,
+        metavar_ctx: &LevelCtx,
         meta_var: &MetaVar,
         args: &[Vec<Binder<Box<Exp>>>],
         while_elaborating_span: &Option<Span>,
-    ) -> TcResult<HashMap<Lvl, HashSet<Lvl>>> {
-        let mut map = HashMap::default();
+    ) -> TcResult<Self> {
+        let mut args_map = HashMap::default();
+        let mut arg_var_names = HashMap::default();
 
         for (fst, telescope) in args.iter().enumerate() {
             for (snd, arg) in telescope.iter().enumerate() {
                 let to_lvl = Lvl { fst, snd };
-                let Some(Variable { idx, .. }) = expect_variable(&arg.content) else {
+                let Some(Variable { idx, name, .. }) = expect_variable(&arg.content) else {
                     // Condition 1: `args` consists of distinct bound *variables*
                     return Err(TypeError::MetaArgNotVariable {
                         span: meta_var.span.to_miette(),
@@ -426,25 +432,14 @@ impl PartialRenaming {
                     .into());
                 };
                 let from_lvl = constraint_ctx.idx_to_lvl(*idx);
-                map.entry(from_lvl).or_insert(HashSet::default()).insert(to_lvl);
+                args_map.entry(from_lvl).or_insert(HashSet::default()).insert(to_lvl);
+                arg_var_names.insert(from_lvl, name.id.to_string());
             }
         }
 
-        Ok(map)
-    }
-
-    #[allow(clippy::vec_box)]
-    fn from_args(
-        constraint_ctx: &LevelCtx,
-        metavar_ctx: &LevelCtx,
-        meta_var: &MetaVar,
-        args: &[Vec<Binder<Box<Exp>>>],
-        while_elaborating_span: &Option<Span>,
-    ) -> TcResult<Self> {
-        let map = Self::build_renaming(constraint_ctx, meta_var, args, while_elaborating_span)?;
-
         Ok(Self {
-            map,
+            args_map,
+            arg_var_names,
             metavar_ctx: metavar_ctx.clone(),
             meta_var: *meta_var,
             while_elaborating_span: *while_elaborating_span,
@@ -488,7 +483,7 @@ impl Substitution for PartialRenaming {
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
         let from_binder = ctx.lookup(lvl);
 
-        let Some(target_lvls) = self.map.get(&lvl) else {
+        let Some(target_lvls) = self.args_map.get(&lvl) else {
             // Condition 2: every free variable of `candidate` occurs in `args`
             return Err(TypeError::MetaEquatedToOutOfScope {
                 span: self.meta_var.span.to_miette(),
@@ -503,8 +498,7 @@ impl Substitution for PartialRenaming {
             return Err(TypeError::MetaArgNotDistinct {
                 span: self.meta_var.span.to_miette(),
                 meta_var: self.meta_var.print_to_string(None),
-                // FIXME: Track the name of the variable for a better error message.
-                arg: lvl.to_string(),
+                arg: self.arg_var_names[&lvl].clone(),
                 while_elaborating_span: self.while_elaborating_span.to_miette(),
             });
         };
