@@ -1,5 +1,5 @@
 use miette::Severity;
-use tower_lsp::lsp_types::DiagnosticSeverity;
+use tower_lsp_server::lsp_types::DiagnosticSeverity;
 
 mod uri_to_url;
 

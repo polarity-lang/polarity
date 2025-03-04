@@ -13,7 +13,7 @@ categories.workspace = true
 
 [dependencies]
 # lsp
-tower-lsp = { workspace = true }
+tower-lsp-server = { workspace = true }
 # asynchronous locks
 async-lock = "2"
 # fancy error messages

@@ -1,4 +1,4 @@
-use tower_lsp::{LspService, Server};
+use tower_lsp_server::{LspService, Server};
 
 #[derive(clap::Args)]
 pub struct Args {}

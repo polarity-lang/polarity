@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use tower_lsp::lsp_types::Uri;
+use tower_lsp_server::lsp_types::Uri;
 
 use super::{FromLsp, ToLsp};
 

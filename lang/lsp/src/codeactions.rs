@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use tower_lsp::{jsonrpc, lsp_types::*};
+use tower_lsp_server::{jsonrpc, lsp_types::*};
 
 use driver::{Database, Item, Xfunc};
 

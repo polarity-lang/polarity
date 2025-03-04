@@ -30,7 +30,7 @@ log = { workspace = true }
 tokio = { version = "1", features = ["rt-multi-thread"] }
 futures = "0.3"
 async-std = "1"
-tower-lsp = { workspace = true }
+tower-lsp-server = { workspace = true }
 # workspace members
 driver = { path = "../lang/driver" }
 elaborator = { path = "../lang/elaborator" }

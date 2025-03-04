@@ -1,6 +1,6 @@
 //! Implementation of the goto-definition functionality of the LSP server
 
-use tower_lsp::{jsonrpc, lsp_types::*};
+use tower_lsp_server::{jsonrpc, lsp_types::*};
 
 use super::conversion::*;
 use super::server::*;

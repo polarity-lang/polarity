@@ -1,6 +1,6 @@
 //! Implementation of the formatting functionality of the LSP server
-use tower_lsp::jsonrpc::Result;
-use tower_lsp::lsp_types::*;
+use tower_lsp_server::jsonrpc::Result;
+use tower_lsp_server::lsp_types::*;
 
 use printer::Print;
 
