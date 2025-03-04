@@ -1,6 +1,6 @@
 use async_lock::RwLock;
-use tower_lsp::jsonrpc::Result;
-use tower_lsp::{jsonrpc, lsp_types::*, LanguageServer};
+use tower_lsp_server::jsonrpc::Result;
+use tower_lsp_server::{jsonrpc, lsp_types::*, LanguageServer};
 
 use driver::Database;
 #[cfg(not(target_arch = "wasm32"))]
@@ -12,22 +12,22 @@ use super::capabilities::*;
 use super::diagnostics::*;
 
 pub struct Server {
-    pub client: tower_lsp::Client,
+    pub client: tower_lsp_server::Client,
     pub database: RwLock<Database>,
 }
 
 impl Server {
-    pub fn new(client: tower_lsp::Client) -> Self {
+    pub fn new(client: tower_lsp_server::Client) -> Self {
         let database = Database::in_memory();
         Self::with_database(client, database)
     }
 
-    pub fn with_database(client: tower_lsp::Client, database: Database) -> Self {
+    pub fn with_database(client: tower_lsp_server::Client, database: Database) -> Self {
         Server { client, database: RwLock::new(database) }
     }
 }
 
-#[tower_lsp::async_trait]
+#[tower_lsp_server::async_trait]
 impl LanguageServer for Server {
     async fn initialize(&self, params: InitializeParams) -> jsonrpc::Result<InitializeResult> {
         let capabilities = capabilities();

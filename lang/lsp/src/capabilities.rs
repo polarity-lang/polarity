@@ -1,4 +1,4 @@
-use tower_lsp::lsp_types::*;
+use tower_lsp_server::lsp_types::*;
 
 pub fn capabilities() -> ServerCapabilities {
     let text_document_sync = {
