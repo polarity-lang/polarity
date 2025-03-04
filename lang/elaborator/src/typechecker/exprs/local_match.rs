@@ -170,6 +170,8 @@ impl WithScrutineeType<'_> {
         let mut cases_out = Vec::new();
 
         for case in cases {
+            log::trace!("Checking case for constructor: {}", case.pattern.name.id);
+
             let Case {
                 span,
                 pattern: Pattern { name, params: args, span: pattern_span, .. },

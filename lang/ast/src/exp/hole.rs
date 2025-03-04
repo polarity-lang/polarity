@@ -3,7 +3,7 @@ use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{
     theme::ThemeExt,
-    tokens::{QUESTION_MARK, UNDERSCORE},
+    tokens::{COMMA, QUESTION_MARK, UNDERSCORE},
     Alloc, Builder, Precedence, Print, PrintCfg,
 };
 
@@ -139,6 +139,10 @@ impl Print for Hole {
                     doc = doc.append(self.metavar.id.to_string());
                 }
 
+                if cfg.print_metavar_args {
+                    doc = doc.append(print_hole_args(&self.args, cfg, alloc))
+                }
+
                 if let Some(solution) = &self.solution {
                     doc = doc.append("<").append(solution.print_prec(cfg, alloc, prec)).append(">")
                 }
@@ -152,6 +156,10 @@ impl Print for Hole {
                     doc = doc.append(self.metavar.id.to_string());
                 }
 
+                if cfg.print_metavar_args {
+                    doc = doc.append(print_hole_args(&self.args, cfg, alloc))
+                }
+
                 if let Some(solution) = &self.solution {
                     doc = doc.append("<").append(solution.print_prec(cfg, alloc, prec)).append(">")
                 }
@@ -163,6 +171,10 @@ impl Print for Hole {
 
                 if cfg.print_metavar_ids {
                     doc = doc.append(self.metavar.id.to_string());
+                }
+
+                if cfg.print_metavar_args {
+                    doc = doc.append(print_hole_args(&self.args, cfg, alloc))
                 }
 
                 match &self.solution {
@@ -179,6 +191,16 @@ impl Print for Hole {
             }
         }
     }
+}
+
+fn print_hole_args<'a>(
+    args: &'a [Vec<Binder<Box<Exp>>>],
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a> {
+    let groups = args.iter().map(|group| group.print(cfg, alloc).parens());
+    let sep = alloc.text(COMMA).append(alloc.space());
+    alloc.intersperse(groups, sep).brackets()
 }
 
 impl Zonk for Hole {
