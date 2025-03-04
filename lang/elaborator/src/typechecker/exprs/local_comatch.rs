@@ -118,6 +118,8 @@ impl WithExpectedType<'_> {
         let mut cases_out = Vec::new();
 
         for case in cases.iter().cloned() {
+            log::trace!("Checking cocase for destructor: {}", case.pattern.name.id);
+
             let DtorMeta { self_param, ret_typ, params, .. } =
                 ctx.type_info_table.lookup_dtor(&case.pattern.name)?;
             let SelfParam { typ: TypCtor { args: def_args, .. }, .. } = self_param;
