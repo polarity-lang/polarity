@@ -1,0 +1,13 @@
+T-020
+
+  × The metavariable ?0 received b2 as an argument more than once
+    ╭─[012-nonlinear-args.pol:9:46]
+  8 │ 
+  9 │ def Eq(Bool, b1, b2).bar(b1 b2: Bool, x: Foo(?, b2)): Foo(b1, b2) {
+    ·                                              ─
+ 10 │     Refl(_, _) => x
+    ·                   ┬
+    ·                   ╰── While elaborating
+ 11 │ }
+    ╰────
+  help: This means that the metavariable cannot be solved automatically.
