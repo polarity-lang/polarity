@@ -1,22 +1,22 @@
 use "../std/codata/fun.pol"
--- Using an encoding proposed by Fu and Stump, we can represent a natural number using its
--- induction principle.
---
--- The induction principle for the number "n" allows to construct, for any property "P : Nat -> Type",
--- a proof of "P n" by applying the induction step n-times to the proof of the base case "P Z".
---
--- By defunctionalizing and refunctionalizing the type "Nat" you can observe how
--- the Fu-Stump encoding corresponds to a program which defines an induction principle
--- on Peano natural numbers.
---
--- - Peng Fu, Aaron Stump (2013): Self Types for Dependently Typed Lambda Encodings
+// Using an encoding proposed by Fu and Stump, we can represent a natural number using its
+// induction principle.
+//
+// The induction principle for the number "n" allows to construct, for any property "P : Nat -> Type",
+// a proof of "P n" by applying the induction step n-times to the proof of the base case "P Z".
+//
+// By defunctionalizing and refunctionalizing the type "Nat" you can observe how
+// the Fu-Stump encoding corresponds to a program which defines an induction principle
+// on Peano natural numbers.
+//
+// - Peng Fu, Aaron Stump (2013): Self Types for Dependently Typed Lambda Encodings
 
--- | The type of dependent functions.
+/// The type of dependent functions.
 codata Π(A: Type, T: A -> Type) {
     Π(A, T).dap(A: Type, T: A -> Type, x: A): T.ap(a := A, b := Type, x)
 }
 
--- | An abbreviation of the induction step, i.e. a function from "P x" to "P (S x)".
+/// An abbreviation of the induction step, i.e. a function from "P x" to "P (S x)".
 codef StepFun(P: Nat -> Type): Fun(Nat, Type) {
     .ap(_, _, x) => P.ap(a := Nat, b:= Type, x) -> P.ap(a := Nat, b:= Type, S(x))
 }

@@ -1,6 +1,6 @@
 use "./fun.pol"
 
--- | The (strong) Sigma type defined by first and second projections.
+/// The (strong) Sigma type defined by first and second projections.
 codata Sigma(A: Type, T: A -> Type) {
   Sigma(A,T).proj1(A: Type, T: A -> Type): A,
   (self: Sigma(A,T)).proj2(A: Type, T: A -> Type): T.ap(self.proj1(A,T))

@@ -1,2 +1,2 @@
--- | The unit codata type.
+/// The unit codata type.
 codata Unit { }
