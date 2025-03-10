@@ -36,6 +36,7 @@ driver = { path = "../lang/driver" }
 elaborator = { path = "../lang/elaborator" }
 ast = { path = "../lang/ast" }
 printer = { path = "../lang/printer" }
+parser = { path = "../lang/parser" }
 lsp-server = { path = "../lang/lsp" }
 docs = { path = "../lang/docs" }
 

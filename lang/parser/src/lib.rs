@@ -1,6 +1,6 @@
 pub mod cst;
 mod grammar;
-mod lexer;
+pub mod lexer;
 mod result;
 
 use lexer::Lexer;
