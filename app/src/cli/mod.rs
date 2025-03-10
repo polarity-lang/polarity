@@ -6,6 +6,7 @@ mod compile;
 mod doc;
 mod format;
 mod gen_completions;
+mod lex;
 mod lift;
 mod lsp;
 mod run;
@@ -36,6 +37,7 @@ pub fn exec() -> miette::Result<()> {
             Fmt(args) => format::exec(args).await,
             Texify(args) => texify::exec(args).await,
             Xfunc(args) => xfunc::exec(args).await,
+            Lex(args) => lex::exec(args).await,
             Lsp(args) => lsp::exec(args).await,
             Lift(args) => lift::exec(args).await,
             Doc(args) => doc::exec(args).await,
@@ -76,6 +78,9 @@ enum Command {
     /// Start an LSP server
     #[clap(hide(true))]
     Lsp(lsp::Args),
+    /// Lex a file and print the resulting token stream for debugging
+    #[clap(hide(true))]
+    Lex(lex::Args),
     /// Lift local (co)matches of a type to the top-level
     Lift(lift::Args),
     /// Generate documentation for a file

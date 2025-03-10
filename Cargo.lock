@@ -2509,6 +2509,7 @@ dependencies = [
  "log",
  "lsp-server",
  "miette",
+ "parser",
  "printer",
  "termsize",
  "thiserror",
