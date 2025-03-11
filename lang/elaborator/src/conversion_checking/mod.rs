@@ -17,9 +17,9 @@
 //! For instance, consider the following example:
 //!
 //! ```pol
-//! -- | The type of non-dependent functions.
+//! /// The type of non-dependent functions.
 //! codata Fun(a b: Type) {
-//!     -- | Application of a function to its argument.
+//!     /// Application of a function to its argument.
 //!     Fun(a, b).ap(implicit a b: Type, x: a): b
 //! }
 //!
