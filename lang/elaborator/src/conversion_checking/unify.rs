@@ -17,16 +17,16 @@ use crate::result::{TcResult, TypeError};
 
 use super::constraints::Constraint;
 
-pub struct Ctx {
+pub struct Ctx<'a> {
     /// Constraints that have not yet been solved
-    pub constraints: Vec<Constraint>,
+    pub constraints: Vec<Constraint<'a>>,
     /// A cache of solved constraints. We can skip solving a constraint
     /// if we have seen it before
-    pub done: HashSet<Constraint>,
+    pub done: HashSet<Constraint<'a>>,
 }
 
-impl Ctx {
-    pub fn new(constraints: Vec<Constraint>) -> Self {
+impl<'a> Ctx<'a> {
+    pub fn new(constraints: Vec<Constraint<'a>>) -> Self {
         Self { constraints, done: HashSet::default() }
     }
 
@@ -44,7 +44,7 @@ impl Ctx {
 
     fn unify_eqn(
         &mut self,
-        eqn: &Constraint,
+        eqn: &Constraint<'a>,
         meta_vars: &mut HashMap<MetaVar, MetaVarState>,
         while_elaborating_span: &Option<Span>,
     ) -> TcResult {
@@ -60,7 +60,7 @@ impl Ctx {
                     if let Some(solution) = &h.solution {
                         let lhs = solution.clone().subst(&mut h.levels(), &h.args)?;
                         self.add_constraint(Constraint::Equality {
-                            ctx: constraint_cxt.clone(),
+                            ctx: constraint_cxt,
                             lhs,
                             rhs: Box::new(candidate.clone()),
                         })?;
@@ -88,7 +88,7 @@ impl Ctx {
                         MetaVarState::Solved { ctx, solution } => {
                             let lhs = solution.clone().subst(&mut ctx.clone(), &h.args)?;
                             self.add_constraint(Constraint::Equality {
-                                ctx: constraint_cxt.clone(),
+                                ctx: constraint_cxt,
                                 lhs,
                                 rhs: Box::new(candidate.clone()),
                             })?;
@@ -126,7 +126,7 @@ impl Ctx {
                     Exp::TypCtor(TypCtor { name: name2, args: args2, .. }),
                 ) if name == name2 => {
                     let constraint = Constraint::EqualityArgs {
-                        ctx: constraint_cxt.clone(),
+                        ctx: constraint_cxt,
                         lhs: args.clone(),
                         rhs: args2.clone(),
                     };
@@ -145,7 +145,7 @@ impl Ctx {
                     Exp::Call(Call { name: name2, args: args2, .. }),
                 ) if name == name2 => {
                     let constraint = Constraint::EqualityArgs {
-                        ctx: constraint_cxt.clone(),
+                        ctx: constraint_cxt,
                         lhs: args.clone(),
                         rhs: args2.clone(),
                     };
@@ -165,12 +165,12 @@ impl Ctx {
                     Exp::DotCall(DotCall { exp: exp2, name: name2, args: args2, .. }),
                 ) if name == name2 => {
                     self.add_constraint(Constraint::Equality {
-                        ctx: constraint_cxt.clone(),
+                        ctx: constraint_cxt,
                         lhs: exp.clone(),
                         rhs: exp2.clone(),
                     })?;
                     let constraint = Constraint::EqualityArgs {
-                        ctx: constraint_cxt.clone(),
+                        ctx: constraint_cxt,
                         lhs: args.clone(),
                         rhs: args2.clone(),
                     };
@@ -178,12 +178,12 @@ impl Ctx {
                 }
                 (Exp::TypeUniv(_), Exp::TypeUniv(_)) => Ok(()),
                 (Exp::Anno(Anno { exp, .. }), rhs) => self.add_constraint(Constraint::Equality {
-                    ctx: constraint_cxt.clone(),
+                    ctx: constraint_cxt,
                     lhs: exp.clone(),
                     rhs: Box::new(rhs.clone()),
                 }),
                 (lhs, Exp::Anno(Anno { exp, .. })) => self.add_constraint(Constraint::Equality {
-                    ctx: constraint_cxt.clone(),
+                    ctx: constraint_cxt,
                     lhs: Box::new(lhs.clone()),
                     rhs: exp.clone(),
                 }),
@@ -194,7 +194,7 @@ impl Ctx {
                     let new_eqns =
                         zip_cases_by_xtors(cases_lhs, cases_rhs).filter_map(|(lhs, rhs)| {
                             if let (Some(lhs), Some(rhs)) = (lhs.body, rhs.body) {
-                                Some(Constraint::Equality { ctx: constraint_cxt.clone(), lhs, rhs })
+                                Some(Constraint::Equality { ctx: constraint_cxt, lhs, rhs })
                             } else {
                                 None
                             }
@@ -207,7 +207,7 @@ impl Ctx {
                 let new_eqns =
                     lhs.args.iter().cloned().zip(rhs.args.iter().cloned()).map(|(lhs, rhs)| {
                         Constraint::Equality {
-                            ctx: constraint_ctx.clone(),
+                            ctx: constraint_ctx,
                             lhs: lhs.exp().clone(),
                             rhs: rhs.exp().clone(),
                         }
@@ -218,11 +218,11 @@ impl Ctx {
         }
     }
 
-    fn add_constraint(&mut self, eqn: Constraint) -> TcResult {
+    fn add_constraint(&mut self, eqn: Constraint<'a>) -> TcResult {
         self.add_constraints([eqn])
     }
 
-    fn add_constraints<I: IntoIterator<Item = Constraint>>(&mut self, iter: I) -> TcResult {
+    fn add_constraints<I: IntoIterator<Item = Constraint<'a>>>(&mut self, iter: I) -> TcResult {
         self.constraints.extend(iter.into_iter().filter(|eqn| !self.done.contains(eqn)));
         Ok(())
     }
