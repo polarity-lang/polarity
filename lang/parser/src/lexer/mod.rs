@@ -173,7 +173,7 @@ mod lexer_tests {
 
     #[test]
     fn doc_comment_2() {
-        let str = r###"//comment\n/// hello"###;
+        let str = "//comment\n/// hello";
         let mut lexer = Lexer::new(str);
         assert_eq!(lexer.next().unwrap().unwrap().1, Token::DocComment("/// hello".to_string()))
     }

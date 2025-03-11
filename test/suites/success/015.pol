@@ -7,5 +7,5 @@ data Eq(a: Type, x y: a) {
 #[transparent]
 let transparentTwo: Nat {S(S(Z))}
 
--- | This proof typechecks
+/// This proof typechecks
 let p2: Eq(Nat, S(S(Z)), transparentTwo) {Refl(Nat, S(S(Z)))}

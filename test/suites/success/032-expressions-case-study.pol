@@ -1,10 +1,10 @@
--- | The terms of the object language.
+/// The terms of the object language.
 data Tm { TmTrue, TmFalse, TmIte(c e1 e2: Tm) }
 
--- | The types of the object language.
+/// The types of the object language.
 data Ty { TyBool }
 
--- | Small step operational semantics.
+/// Small step operational semantics.
 codata Step(e1 e2: Tm) {
     Step(TmFalse, e2).d_step3(e2: Tm): Typing(e2, TyBool),
     Step(TmTrue, e2).d_step1(e2: Tm): Typing(e2, TyBool),
@@ -36,7 +36,7 @@ codef StIte(e1 e2 e3 e4: Tm, s: Step(e1, e2)): Step(TmIte(e1, e3, e4), TmIte(e2,
         TIte(e2, e3, e4, ty, t1.pres(e1, TyBool).preservationStep(e1, e2, TyBool, s), t2, t3)
 }
 
--- | The typing relation.
+/// The typing relation.
 data Typing(e: Tm, ty: Ty) {
     TTrue: Typing(TmTrue, TyBool),
     TFalse: Typing(TmFalse, TyBool),
@@ -44,7 +44,7 @@ data Typing(e: Tm, ty: Ty) {
         : Typing(TmIte(e1, e2, e3), ty)
 }
 
--- | Preservation.
+/// Preservation.
 codata Preservation(e: Tm, ty: Ty) {
     Preservation(e1, ty).preservationStep(e1 e2: Tm, ty: Ty, s: Step(e1, e2)): Typing(e2, ty)
 }

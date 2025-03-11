@@ -13,7 +13,7 @@ def Bool.neg: Bool {
     F => T,
 }
 
--- | Annotations can occur in neutral expressions
+/// Annotations can occur in neutral expressions
 #[transparent]
 let foo: Fun {
     comatch {

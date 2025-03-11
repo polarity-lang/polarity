@@ -5,7 +5,7 @@ T-002
   │   2: A
   │ 
    ╭─[008.pol:3:13]
- 2 │ data B {b} -- annotate the type of b explicitly
+ 2 │ data B {b} // annotate the type of b explicitly
  3 │ data C (a : A) {}
    ·             ┬
    ·             ╰── Source of (2)

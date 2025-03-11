@@ -1,6 +1,6 @@
--------------------
--- Specification --
--------------------
+//
+// Specification
+//
 
 data Exp {
     Var(x: Nat),
@@ -83,9 +83,9 @@ data Progress(e: Exp) {
     PStep(e1 e2: Exp, h: Eval(e1, e2)): Progress(e1),
 }
 
---------------
--- Theorems --
---------------
+//
+// Theorems
+//
 
 def (e: Exp).progress(t: Typ): HasType(Nil, e, t) -> Progress(e)
 {
@@ -262,9 +262,9 @@ def (e1: Exp).preservation(e2: Exp, t: Typ)
     },
 }
 
------------------
--- Main Lemmas --
------------------
+//
+// Main Lemmas
+//
 
 def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
     : HasType(ctx1.append(Cons(t1, ctx2)), e, t2)
@@ -657,9 +657,9 @@ def (ctx1: Ctx).elem_append_pred(ctx2: Ctx, t1 t2: Typ, x: Nat)
     }
 }
 
--------------------------------------
--- Standard Definitions and Lemmas --
--------------------------------------
+//
+// Standard Definitions and Lemmas
+//
 
 data Bot {}
 

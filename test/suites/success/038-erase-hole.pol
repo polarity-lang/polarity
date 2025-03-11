@@ -1,7 +1,7 @@
 use "../../../std/data/list.pol"
 use "../../../std/data/nat.pol"
 
--- | FIXME: At the moment, a is not erased.
+/// FIXME: At the moment, a is not erased.
 let foo(a: _) : List(a) { Nil(a) }
 
 let bar: List(Nat) { foo(Nat) }

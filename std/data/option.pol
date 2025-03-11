@@ -1,7 +1,7 @@
--- | An optional value.
+/// An optional value.
 data Option(a: Type) {
-    -- | No value
+    /// No value
     None(a: Type): Option(a),
-    -- | Some value of type `a`
+    /// Some value of type `a`
     Some(a: Type, x: a): Option(a)
 }

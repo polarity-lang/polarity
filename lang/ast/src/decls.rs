@@ -54,7 +54,7 @@ pub struct DocComment {
 impl Print for DocComment {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let DocComment { docs } = self;
-        let prefix = "-- | ";
+        let prefix = "/// ";
         alloc.concat(
             docs.iter().map(|doc| {
                 alloc.comment(prefix).append(alloc.comment(doc)).append(alloc.hardline())
