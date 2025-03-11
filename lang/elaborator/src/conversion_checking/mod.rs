@@ -67,7 +67,7 @@ use constraints::Constraint;
 use unify::Ctx;
 
 pub fn convert(
-    ctx: TypeCtx,
+    ctx: &TypeCtx,
     meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     this: Box<Exp>,
     other: &Exp,
@@ -76,7 +76,7 @@ pub fn convert(
     trace!("{} |- {} =? {}", ctx.print_trace(), this.print_trace(), other.print_trace());
     // Convertibility is checked using the unification algorithm.
     let constraint: Constraint =
-        Constraint::Equality { ctx, lhs: this.clone(), rhs: Box::new(other.clone()) };
+        Constraint::Equality { ctx: ctx.clone(), lhs: this.clone(), rhs: Box::new(other.clone()) };
     let mut ctx = Ctx::new(vec![constraint]);
     match ctx.unify(meta_vars, while_elaborating_span) {
         Ok(()) => Ok(()),

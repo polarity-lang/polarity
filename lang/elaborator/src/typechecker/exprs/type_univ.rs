@@ -20,7 +20,7 @@ impl CheckInfer for TypeUniv {
     /// ```
     fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         convert(
-            ctx.vars.clone(),
+            &ctx.vars,
             &mut ctx.meta_vars,
             Box::new(TypeUniv::new().into()),
             t,
