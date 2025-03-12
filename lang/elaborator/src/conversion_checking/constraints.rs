@@ -6,12 +6,12 @@ use printer::Print;
 /// A constraint that can be solved by the constraint solver.
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
-pub enum Constraint {
+pub enum Constraint<'a> {
     /// An equality constraint between two expressions under the same context.
     /// ctx |- lhs = rhs
     Equality {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        ctx: TypeCtx,
+        ctx: &'a TypeCtx,
         lhs: Box<Exp>,
         rhs: Box<Exp>,
     },
@@ -19,13 +19,13 @@ pub enum Constraint {
     /// ctx |- lhs = rhs
     EqualityArgs {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        ctx: TypeCtx,
+        ctx: &'a TypeCtx,
         lhs: Args,
         rhs: Args,
     },
 }
 
-impl Print for Constraint {
+impl Print for Constraint<'_> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,

@@ -26,7 +26,7 @@ impl CheckInfer for Call {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        convert(ctx.vars.clone(), &mut ctx.meta_vars, inferred_typ, t, &self.span())?;
+        convert(&ctx.vars, &mut ctx.meta_vars, inferred_typ, t, &self.span())?;
         Ok(inferred_term)
     }
     /// The *inference* rule for calls is:

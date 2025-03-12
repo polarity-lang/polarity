@@ -19,13 +19,7 @@ impl CheckInfer for TypeUniv {
     ///            P, Γ ⊢ Type ⇐ τ
     /// ```
     fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
-        convert(
-            ctx.vars.clone(),
-            &mut ctx.meta_vars,
-            Box::new(TypeUniv::new().into()),
-            t,
-            &self.span(),
-        )?;
+        convert(&ctx.vars, &mut ctx.meta_vars, Box::new(TypeUniv::new().into()), t, &self.span())?;
         Ok(self.clone())
     }
 

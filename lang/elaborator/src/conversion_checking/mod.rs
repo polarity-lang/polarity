@@ -67,7 +67,7 @@ use constraints::Constraint;
 use unify::Ctx;
 
 pub fn convert(
-    ctx: TypeCtx,
+    ctx: &TypeCtx,
     meta_vars: &mut HashMap<MetaVar, MetaVarState>,
     this: Box<Exp>,
     other: &Exp,
@@ -134,7 +134,7 @@ mod test {
     use crate::conversion_checking::{constraints::Constraint, unify::Ctx};
 
     /// Assert that the two expressions are convertible
-    fn check_eq<E: Into<ast::Exp>>(ctx: TypeCtx, e1: E, e2: E) {
+    fn check_eq<E: Into<ast::Exp>>(ctx: &TypeCtx, e1: E, e2: E) {
         let constraint =
             Constraint::Equality { ctx, lhs: Box::new(e1.into()), rhs: Box::new(e2.into()) };
 
@@ -144,7 +144,7 @@ mod test {
     }
 
     /// Assert that the two expressions are not convertible
-    fn check_neq<E: Into<ast::Exp>>(ctx: TypeCtx, e1: E, e2: E) {
+    fn check_neq<E: Into<ast::Exp>>(ctx: &TypeCtx, e1: E, e2: E) {
         let constraint =
             Constraint::Equality { ctx, lhs: Box::new(e1.into()), rhs: Box::new(e2.into()) };
 
@@ -180,7 +180,7 @@ mod test {
                 ),
             },
         ]];
-        check_eq(ctx.into(), v.clone(), v)
+        check_eq(&ctx.into(), v.clone(), v)
     }
 
     /// Check that `[[a: Type, v', v]] |- v =? v'` does not hold.
@@ -231,7 +231,7 @@ mod test {
             },
         ]];
 
-        check_neq(ctx.into(), v1, v2);
+        check_neq(&ctx.into(), v1, v2);
     }
 
     /// Check that `[] |- Type =? Type` holds.
@@ -239,6 +239,6 @@ mod test {
     fn convert_type_type() {
         let t = TypeUniv { span: None };
         let ctx = vec![];
-        check_eq(ctx.into(), t.clone(), t);
+        check_eq(&ctx.into(), t.clone(), t);
     }
 }

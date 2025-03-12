@@ -21,7 +21,7 @@ impl CheckInfer for Variable {
             message: "Expected inferred type".to_owned(),
             span: None,
         })?;
-        convert(ctx.vars.clone(), &mut ctx.meta_vars, inferred_typ, t, &self.span())?;
+        convert(&ctx.vars, &mut ctx.meta_vars, inferred_typ, t, &self.span())?;
         Ok(inferred_term)
     }
 
