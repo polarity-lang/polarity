@@ -103,8 +103,8 @@ unStream (MkStream s) = s
 ```
 Now, if we want to define a stream of some universally quantified `a`, we can write:
 ```haskell
-mk :: a %1 -> Stream a
-mk x = MkStream \case
+repeat :: a %1 -> Stream a
+repeat x = MkStream \case
   Hd k -> k x
   Tl k -> k (mk x)
 ```
