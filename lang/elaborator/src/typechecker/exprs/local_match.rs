@@ -36,62 +36,95 @@ impl CheckInfer for LocalMatch {
             })?
             .expect_typ_app()?;
         let typ_app = typ_app_nf.infer(ctx)?;
-        let ret_typ_out = t.check(ctx, &Box::new(TypeUniv::new().into()))?;
 
         let motive_out;
         let body_t;
 
+        let ret_typ: Box<Exp>;
+        let param: ParamInst;
+
+        // Synthesize the motive if it is not user-provided
+        //
+        //
+
+        // We always use pattern matching with motive
+        // Pattern matches without motive are desugared here to pattern matches with motive.
         match motive {
-            // Pattern matching with motive
             Some(m) => {
-                let Motive { span: info, param, ret_typ } = m;
-                let mut self_t_nf =
-                    typ_app.to_exp().normalize(&ctx.type_info_table, &mut ctx.env())?;
-                self_t_nf.shift((1, 0));
-                let self_binder = Binder { name: param.name.clone(), content: self_t_nf.clone() };
-
-                // Typecheck the motive
-                let ret_typ_out = ctx.bind_single(self_binder.clone(), |ctx| {
-                    ret_typ.check(ctx, &Box::new(TypeUniv::new().into()))
-                })?;
-
-                // Ensure that the motive matches the expected type
-                let motive_binder = Binder {
-                    name: match motive {
-                        Some(m) => m.param.name.clone(),
-                        None => VarBind::Wildcard { span: None },
-                    },
-                    content: (),
-                };
-                let mut subst_ctx = ctx.levels().append(&vec![vec![motive_binder]].into());
-                let on_exp = shift_and_clone(on_exp, (1, 0));
-                let subst = Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp };
-                let mut motive_t = ret_typ.subst(&mut subst_ctx, &subst)?;
-                motive_t.shift((-1, 0));
-                let motive_t_nf = motive_t.normalize(&ctx.type_info_table, &mut ctx.env())?;
-                convert(&ctx.vars, &mut ctx.meta_vars, motive_t_nf, t, span)?;
-
-                body_t = ctx.bind_single(self_binder.clone(), |ctx| {
-                    ret_typ.normalize(&ctx.type_info_table, &mut ctx.env())
-                })?;
-                motive_out = Some(Motive {
-                    span: *info,
-                    param: ParamInst {
-                        span: *info,
-                        info: Some(self_t_nf),
-                        name: param.name.clone(),
-                        typ: Box::new(typ_app.to_exp()).into(),
-                        erased: param.erased,
-                    },
-                    ret_typ: ret_typ_out,
-                });
+                ret_typ = m.ret_typ.clone();
+                param = m.param.clone();
             }
-            // Pattern matching without motive
             None => {
-                body_t = Box::new(shift_and_clone(t, (1, 0)));
-                motive_out = None;
+                ret_typ = {
+                    let mut t2 = Box::new(t.clone());
+                    t2.shift((1, 0));
+                    t2
+                };
+                param = ParamInst {
+                    span: None,
+                    info: None,
+                    name: VarBind::Wildcard { span: None },
+                    typ: on_exp_out.typ(),
+                    erased: false,
+                };
             }
         };
+
+        // Typecheck the motive
+        //
+        //
+
+        let mut self_t_nf = typ_app.to_exp().normalize(&ctx.type_info_table, &mut ctx.env())?;
+        self_t_nf.shift((1, 0));
+        let self_binder = Binder { name: param.name.clone(), content: self_t_nf.clone() };
+
+        let ret_typ_out = ctx.bind_single(self_binder.clone(), |ctx| {
+            ret_typ.check(ctx, &Box::new(TypeUniv::new().into()))
+        })?;
+
+        motive_out = motive.as_ref().and_then(|m| {
+            Some(Motive {
+                span: m.span,
+                param: ParamInst {
+                    span: m.param.span,
+                    info: Some(self_t_nf),
+                    name: param.name.clone(),
+                    typ: Box::new(typ_app.to_exp()).into(),
+                    erased: param.erased,
+                },
+                ret_typ: ret_typ_out.clone(),
+            })
+        });
+
+        // Ensure that the motive matches the expected type
+        //
+        //
+
+        let motive_binder = Binder {
+            name: match motive {
+                Some(m) => m.param.name.clone(),
+                None => VarBind::Wildcard { span: None },
+            },
+            content: (),
+        };
+        let mut subst_ctx = ctx.levels().append(&vec![vec![motive_binder]].into());
+        let on_exp = shift_and_clone(on_exp, (1, 0));
+        let subst = Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp };
+        let mut motive_t = ret_typ.subst(&mut subst_ctx, &subst)?;
+        motive_t.shift((-1, 0));
+        let motive_t_nf = motive_t.normalize(&ctx.type_info_table, &mut ctx.env())?;
+
+        if motive.is_some() {
+            convert(&ctx.vars, &mut ctx.meta_vars, motive_t_nf, t, span)?;
+        }
+
+        // Typecheck the body
+        //
+        //
+
+        body_t = ctx.bind_single(self_binder.clone(), |ctx| {
+            ret_typ.normalize(&ctx.type_info_table, &mut ctx.env())
+        })?;
 
         let with_scrutinee_type = WithScrutineeType {
             cases,
@@ -107,7 +140,7 @@ impl CheckInfer for LocalMatch {
             name: name.clone(),
             on_exp: on_exp_out,
             motive: motive_out,
-            ret_typ: Some(Box::new(ret_typ_out)),
+            ret_typ: Some(Box::new(t.clone())),
             cases,
             inferred_type: Some(typ_app),
         })
