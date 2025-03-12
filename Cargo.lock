@@ -1997,7 +1997,7 @@ dependencies = [
  "log",
  "lsp-server",
  "reqwest",
- "tower-lsp",
+ "tower-lsp-server",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-streams",
@@ -2014,7 +2014,7 @@ dependencies = [
  "miette",
  "miette_util",
  "printer",
- "tower-lsp",
+ "tower-lsp-server",
  "url",
 ]
 
@@ -2514,7 +2514,7 @@ dependencies = [
  "termsize",
  "thiserror",
  "tokio",
- "tower-lsp",
+ "tower-lsp-server",
 ]
 
 [[package]]
@@ -3589,9 +3589,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "121c2a6cda46980bb0fcd1647ffaf6cd3fc79a013de288782836f6df9c48780e"
 
 [[package]]
-name = "tower-lsp"
-version = "0.20.0"
-source = "git+https://github.com/tower-lsp/tower-lsp?rev=19f5a87810ff4b643d2bc394e438450bd9c74365#19f5a87810ff4b643d2bc394e438450bd9c74365"
+name = "tower-lsp-server"
+version = "0.21.0"
+source = "git+https://github.com/tower-lsp-community/tower-lsp-server?rev=ae955f1d1c2a86bf675cc9bd0638e4c684864a6d#ae955f1d1c2a86bf675cc9bd0638e4c684864a6d"
 dependencies = [
  "async-codec-lite",
  "async-trait",
@@ -3605,14 +3605,14 @@ dependencies = [
  "serde",
  "serde_json",
  "tower",
- "tower-lsp-macros",
+ "tower-lsp-server-macros",
  "tracing",
 ]
 
 [[package]]
-name = "tower-lsp-macros"
+name = "tower-lsp-server-macros"
 version = "0.9.0"
-source = "git+https://github.com/tower-lsp/tower-lsp?rev=19f5a87810ff4b643d2bc394e438450bd9c74365#19f5a87810ff4b643d2bc394e438450bd9c74365"
+source = "git+https://github.com/tower-lsp-community/tower-lsp-server?rev=ae955f1d1c2a86bf675cc9bd0638e4c684864a6d#ae955f1d1c2a86bf675cc9bd0638e4c684864a6d"
 dependencies = [
  "proc-macro2",
  "quote",

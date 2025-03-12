@@ -34,7 +34,7 @@ miette = { version = "7" }
 thiserror = { version = "1" }
 # lsp server
 lsp-types = { version = "0.97" }
-tower-lsp = { git = "https://github.com/tower-lsp/tower-lsp", rev = "19f5a87810ff4b643d2bc394e438450bd9c74365", default-features = false, features = [
+tower-lsp-server = { git = "https://github.com/tower-lsp-community/tower-lsp-server", rev = "ae955f1d1c2a86bf675cc9bd0638e4c684864a6d", default-features = false, features = [
     "runtime-agnostic",
 ] }
 # ignoring fields when deriving traits (e.g. Eq, Hash)

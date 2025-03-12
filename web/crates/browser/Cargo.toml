@@ -5,7 +5,7 @@ name = "lsp-browser"
 version = "0.0.0"
 
 [features]
-default = ["tower-lsp/runtime-agnostic"]
+default = ["tower-lsp-server/runtime-agnostic"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -14,7 +14,7 @@ crate-type = ["cdylib", "rlib"]
 # async
 async-trait = "0.1"
 futures = "0.3"
-tower-lsp = { workspace = true }
+tower-lsp-server = { workspace = true }
 # web platform
 console_error_panic_hook = "0.1"
 js-sys = "0.3"
