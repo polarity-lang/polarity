@@ -1,4 +1,4 @@
--- | The trivially uninhabitated data type.
+/// The trivially uninhabitated data type.
 data Void { }
 
 def Void.ex_falso(a: Type): a { }

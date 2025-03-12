@@ -16,7 +16,14 @@ impl fmt::Display for LexicalError {
 }
 
 #[derive(Logos, Clone, Debug, PartialEq)]
-#[logos(skip r"\s*", skip r"--(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*", error = LexicalError)]
+#[logos(skip r"\s*", skip r"//([^/\n\r]([^\n\r]*))?[\n\r]*", error = LexicalError)]
+//                          ^^   ^^^^^^  ^^^^^^^  ^^^^^^^
+//                          (1)   (2)      (3)     (4)
+// Comments start with "//" (1).
+// Then we have to exclude the possibility of a doc comment which starts with "///":
+// If the line is not empty, then the next character must not contain "/" (2)
+// And this character can be followed by any number of characters which don't end the line (3)
+// And finally many newlines (5)
 pub enum Token {
     // Keywords
     //
@@ -116,7 +123,12 @@ pub enum Token {
     // DocComments
     //
     //
-    #[regex(r"-- \|[^\n\r]*[\n\r]*", |lex| lex.slice().to_string())]
+    #[regex(r"///[^\n\r]*[\n\r]*", |lex| lex.slice().to_string())]
+    //        ^^^ ^^^^^^^ ^^^^^^
+    //        (1)   (2)    (3)
+    // Doc comments start with "///" (1),
+    // followed by any number of non-line-break characters (2),
+    // followed by any number of empty lines (3).
     DocComment(String),
 }
 
@@ -151,6 +163,20 @@ impl Iterator for Lexer<'_> {
 #[cfg(test)]
 mod lexer_tests {
     use super::{Lexer, Token};
+
+    #[test]
+    fn doc_comment_1() {
+        let str = r###"/// hello"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::DocComment("/// hello".to_string()))
+    }
+
+    #[test]
+    fn doc_comment_2() {
+        let str = "//comment\n/// hello";
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::DocComment("/// hello".to_string()))
+    }
 
     #[test]
     fn string_lit_simple() {

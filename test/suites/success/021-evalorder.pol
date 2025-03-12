@@ -23,7 +23,7 @@ def Top.before : Fun(Bool, Bool) {
 
 def Top.after : Fun(Bool, Bool) {
     Unit =>
-        -- let y = Unit.diverge in
+        // let y = Unit.diverge in
         comatch Ignore2 {
             .ap(a, b, x) => x
         }

@@ -1,11 +1,11 @@
--- | The Martin-Löf equality type.
+/// The Martin-Löf equality type.
 data Eq(implicit a: Type, x y: a) {
-    -- | The reflexivity constructor.
+    /// The reflexivity constructor.
     Refl(implicit a: Type, x: a): Eq(x, x)
 }
 
--- | Proof of symmetry of equality.
+/// Proof of symmetry of equality.
 def Eq(a:=a, x, y).sym(a: Type, x y: a): Eq(a:=a, y, x) { Refl(a, x) => Refl(a:=a, x) }
 
--- | Proof of transitivity of equality.
+/// Proof of transitivity of equality.
 def Eq(a:=a, x, y).trans(a: Type, x y z: a, h: Eq(a:=a, y, z)): Eq(a:=a, x, z) { Refl(a, x) => h }

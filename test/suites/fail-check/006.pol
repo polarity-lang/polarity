@@ -1,4 +1,4 @@
--- We cannot infer the implicit argument to List, which should be passed explicitly via `List(a:= a)`.
+// We cannot infer the implicit argument to List, which should be passed explicitly via `List(a:= a)`.
 data List(implicit a: Type) {
     Nil(a: Type) : List
 }

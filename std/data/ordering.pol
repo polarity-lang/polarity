@@ -1,9 +1,9 @@
--- | The result of comparing two totally-ordered values.
+/// The result of comparing two totally-ordered values.
 data Ordering {
-    -- | Lesser than
+    /// Lesser than
     LT,
-    -- | Equal
+    /// Equal
     EQ,
-    -- | Greater than
+    /// Greater than
     GT,
 }

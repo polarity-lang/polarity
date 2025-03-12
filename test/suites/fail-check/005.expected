@@ -12,7 +12,7 @@ T-002
  5 │ }
    ╰────
     ╭─[005.pol:11:9]
- 10 │ -- | This proof typechecks
+ 10 │ /// This proof typechecks
  11 │ let p2: Eq(Nat, S(S(Z)), opaqueTwo) {Refl(Nat, S(S(Z)))}
     ·         ─────────────┬─────────────  ─────────┬────────
     ·                      │                        ╰── While elaborating

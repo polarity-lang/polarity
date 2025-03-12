@@ -11,5 +11,5 @@ data Eq(a: Type, x y: a) {
     Refl(a: Type, x: a): Eq(a, x, x)
 }
 
--- The "two" is opaque, so shouldn't be normalized, but the expressions should be equal nonetheless.
+// The "two" is opaque, so shouldn't be normalized, but the expressions should be equal nonetheless.
 let foo : Eq(Nat, two.add(S(S(Z))), two.add(S(S(Z)))) { Refl(Nat, two.add(S(S(Z))))}

@@ -27,8 +27,8 @@
     "comments": {
       "patterns": [
         {
-          "match": "--.*$",
-          "name": "comment.line.double-dash.syntax"
+          "match": "//.*$",
+          "name": "comment.line.double-slash.syntax"
         }
       ]
     },

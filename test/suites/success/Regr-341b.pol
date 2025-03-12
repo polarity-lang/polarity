@@ -5,7 +5,7 @@ data Foo(b: Bool) {
     Baz: Foo(F)
 }
 
--- | Ensure unification with type annotations works
+/// Ensure unification with type annotations works
 def Foo((T):Bool).foo: Bool {
     Bar => T,
     Baz absurd
