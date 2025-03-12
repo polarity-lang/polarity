@@ -207,6 +207,11 @@ Copattern: Copattern = {
   <l: @L> "." <name: Ident><params: OptTelescopeInst> <r: @R> => Copattern { span: span(l,r), name, params },
 }
 
+// In the syntactic sugar `\ap(x) => e` we do not need to parse the `.` in front of the identifier.
+CopatternLam: Copattern = {
+  <l: @L> <name: Ident><params: OptTelescopeInst> <r: @R> => Copattern { span: span(l,r), name, params },
+}
+
 Case<P> : Case<P> = {
     <l: @L> <pattern: P> <body: AbsurdOrBody> <r: @R> => Case { span: span(l, r), pattern, body },
 }
@@ -270,8 +275,8 @@ Anno: Anno = <l: @L> <exp: Ops> ":" <typ: Exp> <r: @R> =>
 Fun: Fun = <l: @L> <from: Ops> "->" <to: Exp> <r: @R> =>
   Fun { span: span(l, r), from, to };
 
-Lam: Lam = <l: @L> "\\" <var: BindingSite> "." <body: Exp> <r: @R> =>
-  Lam { span: span(l, r), var, body };
+Lam: Lam = <l: @L> "\\" <case: Case<CopatternLam>> <r: @R> =>
+  Lam { span: span(l, r), case };
 
 DotCall: DotCall = <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> =>
   DotCall { span: span(l, r), exp, name, args };

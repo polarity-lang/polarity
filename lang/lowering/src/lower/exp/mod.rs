@@ -547,26 +547,12 @@ impl Lower for cst::exp::Lam {
     type Target = ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::Lam { span, var, body } = self;
-
-        let case = cst::exp::Case {
-            span: *span,
-            pattern: cst::exp::Copattern {
-                span: *span,
-                name: Ident { span: *span, id: "ap".to_owned() },
-                params: vec![
-                    cst::exp::BindingSite::Wildcard { span: Default::default() },
-                    cst::exp::BindingSite::Wildcard { span: Default::default() },
-                    var.clone(),
-                ],
-            },
-            body: Some(body.clone()),
-        };
+        let cst::exp::Lam { span, case } = self;
         let comatch = cst::exp::Exp::LocalComatch(cst::exp::LocalComatch {
             span: *span,
             name: None,
             is_lambda_sugar: true,
-            cases: vec![case],
+            cases: vec![case.clone()],
         });
         comatch.lower(ctx)
     }

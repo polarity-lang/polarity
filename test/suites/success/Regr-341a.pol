@@ -13,5 +13,5 @@ let foo(t: Type, x: Fun(t, Type)): Type {
 }
 
 let T : Type {
-    foo(F.ap(Type, Type, (? : Type)), \x. F.ap(Type, Type, x))
+    foo(F.ap(Type, Type, (? : Type)), \ap(_,_,x) => F.ap(Type, Type, x))
 }
