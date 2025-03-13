@@ -84,8 +84,6 @@ pub enum Token {
     Dot,
     #[token("?")]
     QuestionMark,
-    #[token("->")]
-    RightArrow,
     #[token("\\")]
     Backslash,
     #[token("#")]
@@ -98,12 +96,19 @@ pub enum Token {
     // We use the following unicode categories:
     // Ll = lowercase letter
     // Lu = uppercase letter
-    // Sm = math symbol
     // No = other numbers (includes subscripts and superscript numerals)
     // ' is contained in the category Po (Punctuation other)
     // _ is contained in the category Pc (Punctuation connector)
-    #[regex(r"[\p{Ll}\p{Lu}\p{Sm}][\p{Ll}\p{Lu}\p{Sm}\p{No}0-9_']*", |lex| lex.slice().to_string())]
+    #[regex(r"[\p{Ll}\p{Lu}][\p{Ll}\p{Lu}\p{No}0-9_']*", |lex| lex.slice().to_string())]
     Ident(String),
+
+    // Operators
+    //
+    // We use the following unicode categories:
+    // Pd = Dash Punctuation
+    // Sm = math symbol
+    #[regex(r"[\p{Pd}\p{Sm}][\p{Pd}\p{Sm}]*", |lex| lex.slice().to_string())]
+    Operator(String),
 
     // Literals
     //

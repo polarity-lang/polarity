@@ -107,6 +107,13 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
+    #[error("Unknown operator: {operator}")]
+    #[diagnostic(code("L-017"))]
+    UnknownOperator {
+        #[label]
+        span: SourceSpan,
+        operator: String,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("L-XXX"))]
     /// This error should not occur.

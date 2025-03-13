@@ -1,19 +1,19 @@
-data ℕ {
+data Nat {
     Z,
-    S(n: ℕ),
+    S(n: Nat),
 }
 
-data Fin(max: ℕ) {
-    FZ(max: ℕ): Fin(max),
-    FS(max: ℕ, val: Fin(max)): Fin(S(max)),
+data Fin(max: Nat) {
+    FZ(max: Nat): Fin(max),
+    FS(max: Nat, val: Fin(max)): Fin(S(max)),
 }
 
-codata Product₋(arity: ℕ) {
-    Product₋(S(arity)).typeAt₋(arity: ℕ, pos: Fin(arity)): Type,
-    (self: Product₋(S(arity))).dataAt₋(arity: ℕ, pos: Fin(arity)): self.typeAt₋(arity, pos),
+codata ProductN(arity: Nat) {
+    ProductN(S(arity)).typeAt(arity: Nat, pos: Fin(arity)): Type,
+    (self: ProductN(S(arity))).dataAt(arity: Nat, pos: Fin(arity)): self.typeAt(arity, pos),
 }
 
-codef Unit₋: Product₋(0) {
-    .typeAt₋(_, _) absurd,
-    .dataAt₋(_, _) absurd,
+codef Unit: ProductN(0) {
+    .typeAt(_, _) absurd,
+    .dataAt(_, _) absurd,
 }
