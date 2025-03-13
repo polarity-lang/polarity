@@ -94,14 +94,14 @@ data Progress(e: Exp) {
 
 def (e: Exp).progress(t: Typ): HasType(Nil, e, t) -> Progress(e) {
     Var(x) =>
-        \h_t. h_t.match {
+        \ap(_,_,h_t) => h_t.match {
             TVar(_, _, _, elem) => elem.empty_absurd(x, t).ex_falso(Progress(Var(x))),
             TLam(_, _, _, _, _) absurd,
             TApp(_, _, _, _, _, _, _) absurd
         },
-    Lam(e) => \_. PVal(Lam(e), VLam(e)),
+    Lam(e) => \ap(_,_,_) => PVal(Lam(e), VLam(e)),
     App(e1, e2) =>
-        \h_t. h_t.match {
+        \ap(_,_,h_t) => h_t.match {
             TVar(_, _, _, _) absurd,
             TLam(_, _, _, _, _) absurd,
             TApp(_, t1, t2, _, _, e1_t, e2_t) =>
@@ -120,23 +120,23 @@ def (e: Exp).progress(t: Typ): HasType(Nil, e, t) -> Progress(e) {
 def (e1: Exp).preservation(e2: Exp, t: Typ)
     : HasType(Nil, e1, t) -> Eval(e1, e2) -> HasType(Nil, e2, t) {
     Var(_) =>
-        \h_t. \h_eval. h_eval.match {
+        \ap(_,_,h_t) => \ap(_,_,h_eval) => h_eval.match {
             EBeta(_, _) absurd,
             ECongApp1(_, _, _, _) absurd,
             ECongApp2(_, _, _, _) absurd
         },
     Lam(_) =>
-        \h_t. \h_eval. h_eval.match {
+        \ap(_,_,h_t) => \ap(_,_,h_eval) => h_eval.match {
             EBeta(_, _) absurd,
             ECongApp1(_, _, _, _) absurd,
             ECongApp2(_, _, _, _) absurd
         },
     App(e1, e2) =>
-        \h_t. h_t.match {
+        \ap(_,_,h_t) => h_t.match {
             TVar(_, _, _, _) absurd,
             TLam(_, _, _, _, _) absurd,
             TApp(_, t1, t2, _, _, h_lam, h_e2) =>
-                \h_eval. h_eval.match {
+                \ap(_,_,h_eval) => h_eval.match {
                     ECongApp1(_, e1', h, _) =>
                         TApp(Nil,
                              t1,
@@ -183,7 +183,7 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                                                                             e.subst(ctx1.len, by_e),
                                                                             t2) {
     Var(x) =>
-        \h_e. \h_by. h_e.match {
+        \ap(_,_,h_e) => \ap(_,_,h_by) => h_e.match {
             TLam(_, _, _, _, _) absurd,
             TApp(_, _, _, _, _, _, _) absurd,
             TVar(_, _, _, h_elem) =>
@@ -284,7 +284,7 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                 }
         },
     Lam(body) =>
-        \h_e. \h_by. h_e.match {
+        \ap(_,_,h_e) => \ap(_,_,h_by) => h_e.match {
             TVar(_, _, _, _) absurd,
             TApp(_, _, _, _, _, _, _) absurd,
             TLam(_, a, b, _, h_body) =>
@@ -303,7 +303,7 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                              h_by))
         },
     App(e1, e2) =>
-        \h_e. \h_by. h_e.match {
+        \ap(_,_,h_e) => \ap(_,_,h_by) => h_e.match {
             TVar(_, _, _, _) absurd,
             TLam(_, _, _, _, _) absurd,
             TApp(_, a, b, _, _, h_e1, h_e2) =>
@@ -336,14 +336,14 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
 def (ctx2: Ctx).weaken_append(ctx1: Ctx, e: Exp, t: Typ)
     : HasType(ctx1, e, t) -> HasType(ctx1.append(ctx2), e, t) {
     Nil =>
-        \h_e. ctx1.append_nil
+        \ap(_,_,h_e) => ctx1.append_nil
                   .transport(Ctx,
                              ctx1,
                              ctx1.append(Nil),
                              comatch { .ap(_, _, ctx) => HasType(ctx, e, t) },
                              h_e),
     Cons(t', ts) =>
-        \h_e. ctx1.append_assoc(Cons(t', Nil), ts)
+        \ap(_,_,h_e) => ctx1.append_assoc(Cons(t', Nil), ts)
                   .transport(Ctx,
                              ctx1.append(Cons(t', Nil)).append(ts),
                              ctx1.append(Cons(t', ts)),
@@ -360,14 +360,14 @@ def (ctx2: Ctx).weaken_append(ctx1: Ctx, e: Exp, t: Typ)
 def (e: Exp).weaken_cons(ctx: Ctx, t1 t2: Typ)
     : HasType(ctx, e, t2) -> HasType(ctx.append(Cons(t1, Nil)), e, t2) {
     Var(x) =>
-        \h_e. h_e.match {
+        \ap(_,_,h_e) => h_e.match {
             TLam(_, _, _, _, _) absurd,
             TApp(_, _, _, _, _, _, _) absurd,
             TVar(_, _, _, h_elem) =>
                 TVar(ctx.append(Cons(t1, Nil)), x, t2, h_elem.elem_append(x, t1, t2, ctx))
         },
     Lam(e) =>
-        \h_e. h_e.match {
+        \ap(_,_,h_e) => h_e.match {
             TVar(_, _, _, _) absurd,
             TApp(_, _, _, _, _, _, _) absurd,
             TLam(_, a, b, _, h_e) =>
@@ -381,7 +381,7 @@ def (e: Exp).weaken_cons(ctx: Ctx, t1 t2: Typ)
                           h_e))
         },
     App(e1, e2) =>
-        \h_e. h_e.match {
+        \ap(_,_,h_e) => h_e.match {
             TVar(_, _, _, _) absurd,
             TLam(_, _, _, _, _) absurd,
             TApp(_, a, b, _, _, h_e1, h_e2) =>
@@ -435,9 +435,9 @@ def Elem(Z, t1, Cons(t2, ctx)).elem_unique(ctx: Ctx, t1 t2: Typ): Eq(Typ, t2, t1
 
 def (ctx1: Ctx).ctx_lookup(ctx2: Ctx, t1 t2: Typ)
     : Elem(ctx1.len, t1, ctx1.append(Cons(t2, ctx2))) -> Eq(Typ, t2, t1) {
-    Nil => \h. h.elem_unique(ctx2, t1, t2),
+    Nil => \ap(_,_,h) => h.elem_unique(ctx2, t1, t2),
     Cons(t, ts) =>
-        \h. h.match {
+        \ap(_,_,h) => h.match {
             Here(_, _) absurd,
             There(_, _, _, _, h) =>
                 ts.ctx_lookup(ctx2, t1, t2)
@@ -448,12 +448,12 @@ def (ctx1: Ctx).ctx_lookup(ctx2: Ctx, t1 t2: Typ)
 def (ctx1: Ctx).elem_append_first(ctx2: Ctx, t: Typ, x: Nat)
     : LE(S(x), ctx1.len) -> Elem(x, t, ctx1.append(ctx2)) -> Elem(x, t, ctx1) {
     Nil =>
-        \h_lt. \h_elem. h_lt.match {
+        \ap(_,_,h_lt) => \ap(_,_,h_elem) => h_lt.match {
             LERefl(_) absurd,
             LESucc(_, _, _) absurd
         },
     Cons(t', ts) =>
-        \h_lt. \h_elem. h_elem.match {
+        \ap(_,_,h_lt) => \ap(_,_,h_elem) => h_elem.match {
             Here(_, _) => Here(t, ts),
             There(x', _, _, _, h) =>
                 There(x',
@@ -473,7 +473,7 @@ def (ctx1: Ctx).elem_append_pred(ctx2: Ctx, t1 t2: Typ, x: Nat)
                                                                              t1,
                                                                              ctx1.append(ctx2)) {
     Nil =>
-        \h_gt. \h_elem. h_elem.match {
+        \ap(_,_,h_gt) => \ap(_,_,h_elem) => h_elem.match {
             Here(_, _) =>
                 h_gt.match {
                     LERefl(_) absurd,
@@ -482,7 +482,7 @@ def (ctx1: Ctx).elem_append_pred(ctx2: Ctx, t1 t2: Typ, x: Nat)
             There(_, _, _, _, h) => h
         },
     Cons(t, ts) =>
-        \h_gt. \h_elem. h_elem.match {
+        \ap(_,_,h_gt) => \ap(_,_,h_elem) => h_elem.match {
             Here(_, _) =>
                 h_gt.match {
                     LERefl(_) absurd,

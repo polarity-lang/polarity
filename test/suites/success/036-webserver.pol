@@ -65,14 +65,14 @@ codata Route {
     (self: Route).post: State(self.requiresLogin) -> ×₋(State(self.requiresLogin),Response),
     (self: Route).put(n : Nat): State(self.requiresLogin) -> ×₋(State(self.requiresLogin),Response),
     (self: Route).put_idempotent(n : Nat) : Π(State(self.requiresLogin),
-        \state. Eq(×₋(State(self.requiresLogin), Response), self.put(n).ap(State(self.requiresLogin), ×₋(State(self.requiresLogin), Response), state), MkUtils.put_twice(n, self, state)))
+        \ap(_,_,state) => Eq(×₋(State(self.requiresLogin), Response), self.put(n).ap(State(self.requiresLogin), ×₋(State(self.requiresLogin), Response), state), MkUtils.put_twice(n, self, state)))
 }
 
 codef Index: Route {
     .requiresLogin => F,
-    .post => \state. comatch { .fst(a,b) => state, .snd(a,b) => Forbidden },
-    .get => \state. Return(state.counter(F)),
-    .put(n) => \state. Pair(State(F), Response, state, Forbidden),
+    .post => \ap(_,_,state) => comatch { .fst(a,b) => state, .snd(a,b) => Forbidden },
+    .get => \ap(_,_,state) => Return(state.counter(F)),
+    .put(n) => \ap(_,_,state) => Pair(State(F), Response, state, Forbidden),
     .put_idempotent(n) => comatch {
         .dap(_, _, state) => Refl(×₋(State(F), Response), Pair(State(F), Response, state, Forbidden))
     }
@@ -80,9 +80,9 @@ codef Index: Route {
 
 codef Admin: Route {
     .requiresLogin => T,
-    .post => \state. comatch { .fst(a,b) => state.increment, .snd(a,b) => Return(state.increment.counter(T)) },
-    .get => \state. Return(state.counter(T)),
-    .put(n) => \state. Pair(State(T), Response, state.set(n), Return(n)),
+    .post => \ap(_,_,state) => comatch { .fst(a,b) => state.increment, .snd(a,b) => Return(state.increment.counter(T)) },
+    .get => \ap(_,_,state) => Return(state.counter(T)),
+    .put(n) => \ap(_,_,state) => Pair(State(T), Response, state.set(n), Return(n)),
     .put_idempotent(n) => comatch {
         .dap(_, _, state) => state.set_idempotent(T, n).cong_pair(State(T), Response, state.set(n), state.set(n).set(n), Return(n))
     }

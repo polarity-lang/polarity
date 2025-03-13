@@ -161,11 +161,12 @@ pub struct Fun {
 }
 
 #[derive(Debug, Clone)]
-/// Lambda abstractions (syntactic sugar), e.g. \x. e
+/// Syntactic sugar for codata types with only one observation.
+/// Java, for example, calls these "SAM-types", i.e. types with a "single abstract method".
+/// The standard example of this is the function type, which has the destructor "ap".
 pub struct Lam {
     pub span: Span,
-    pub var: BindingSite,
-    pub body: Box<Exp>,
+    pub case: Case<Copattern>,
 }
 
 #[derive(Debug, Clone)]

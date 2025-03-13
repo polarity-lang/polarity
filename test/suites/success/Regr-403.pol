@@ -4,7 +4,7 @@ use "../../../std/codata/fun.pol"
 
 #[transparent]
 let foo : Fun(Bool, Bool)  {
-    \x. x
+    \ap(_,_,x) => x
 }
 
 let proof: Eq(a := Fun(Bool, Bool), foo, foo) {

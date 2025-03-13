@@ -22,7 +22,7 @@ data Top { Unit }
 
 def (self: Exp).preservation(e2: Exp): Fun(Eval(self, e2), HasType(e2))
 {
-    App(e) => \h_eval.
+    App(e) => \ap(_,_,h_eval) =>
         h_eval.match {
             EBeta(f) => ? : HasType(e)
         }

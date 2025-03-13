@@ -1,0 +1,7 @@
+data Bool { T, F }
+
+codata Foo(b: Bool) {
+    Foo(T).d(x: Bool): Bool
+}
+
+let example: Foo(F) {\d(_) absurd}

@@ -3,7 +3,7 @@ use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{
     theme::ThemeExt,
-    tokens::{COMATCH, DOT},
+    tokens::{ABSURD, COMATCH, FAT_ARROW},
     util::BackslashExt,
     Alloc, Builder, Precedence, Print, PrintCfg,
 };
@@ -87,19 +87,19 @@ impl Substitutable for LocalComatch {
 /// one cocase "ap" with three arguments; the function will
 /// panic otherwise.
 fn print_lambda_sugar<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-    let Case { pattern, body, .. } = cases.first().expect("Empty comatch marked as lambda sugar");
-    let var_name = &pattern
-        .params
-        .params
-        .get(2) // The variable we want to print is at the third position: comatch { ap(_,_,x) => ...}
-        .expect("No parameter bound in comatch marked as lambda sugar")
-        .name;
-    alloc
-        .backslash_anno(cfg)
-        .append(var_name.print(cfg, alloc))
-        .append(DOT)
-        .append(alloc.space())
-        .append(body.print(cfg, alloc))
+    let Case { span: _, pattern, body } =
+        cases.first().expect("Empty comatch marked as lambda sugar");
+
+    let body = match body {
+        None => alloc.keyword(ABSURD),
+        Some(body) => alloc
+            .text(FAT_ARROW)
+            .append(alloc.line())
+            .append(body.print(cfg, alloc))
+            .nest(cfg.indent),
+    };
+    let pattern = alloc.ctor(&pattern.name.id).append(pattern.params.print(cfg, alloc));
+    alloc.backslash_anno(cfg).append(pattern).append(alloc.space()).append(body).group()
 }
 
 impl Print for LocalComatch {
