@@ -13,12 +13,12 @@ codata Π(A: Type, T: Fun(A, Type)) {
   Π(A,T).dap(A: Type, T: Fun(A,Type), x: A): T.ap(A,Type,x)
 }
 
-codata ×₋(a b : Type) {
-    ×₋(a,b).fst(a : Type, b: Type) : a,
-    ×₋(a,b).snd(a : Type, b: Type) : b
+codata With(a b : Type) {
+    With(a,b).fst(a : Type, b: Type) : a,
+    With(a,b).snd(a : Type, b: Type) : b
 }
 
-codef Pair(a b : Type, x : a, y : b) : ×₋(a,b) {
+codef Pair(a b : Type, x : a, y : b) : With(a,b) {
     .fst(a,b) => x,
     .snd(a,b) => y
 }
@@ -43,29 +43,29 @@ codata State(loggedIn: Bool) {
 }
 
 codata Utils {
-    .put_twice(n: Nat, route: Route, state: State(route.requiresLogin)): ×₋(State(route.requiresLogin), Response)
+    .put_twice(n: Nat, route: Route, state: State(route.requiresLogin)): With(State(route.requiresLogin), Response)
 }
 
 codef MkUtils: Utils {
     .put_twice(n, route, state) =>
-        route.put(n).ap(State(route.requiresLogin), ×₋(State(route.requiresLogin), Response), route.put(n).ap(State(route.requiresLogin), ×₋(State(route.requiresLogin), Response), state).fst(State(route.requiresLogin), Response))
+        route.put(n).ap(State(route.requiresLogin), With(State(route.requiresLogin), Response), route.put(n).ap(State(route.requiresLogin), With(State(route.requiresLogin), Response), state).fst(State(route.requiresLogin), Response))
 }
 
 data Eq(t : Type, a: t, b: t) {
     Refl(t : Type, a : t) : Eq(t, a, a)
 }
 
-def Eq(t1, a, b).cong_pair(t1 t2: Type, a b: t1, c: t2): Eq(×₋(t1, t2), Pair(t1, t2, a, c), Pair(t1, t2, b, c)) {
-    Refl(_, _) => Refl(×₋(t1, t2), Pair(t1, t2, b, c))
+def Eq(t1, a, b).cong_pair(t1 t2: Type, a b: t1, c: t2): Eq(With(t1, t2), Pair(t1, t2, a, c), Pair(t1, t2, b, c)) {
+    Refl(_, _) => Refl(With(t1, t2), Pair(t1, t2, b, c))
 }
 
 codata Route {
     .requiresLogin: Bool,
     (self: Route).get: State(self.requiresLogin) -> Response,
-    (self: Route).post: State(self.requiresLogin) -> ×₋(State(self.requiresLogin),Response),
-    (self: Route).put(n : Nat): State(self.requiresLogin) -> ×₋(State(self.requiresLogin),Response),
+    (self: Route).post: State(self.requiresLogin) -> With(State(self.requiresLogin),Response),
+    (self: Route).put(n : Nat): State(self.requiresLogin) -> With(State(self.requiresLogin),Response),
     (self: Route).put_idempotent(n : Nat) : Π(State(self.requiresLogin),
-        \ap(_,_,state) => Eq(×₋(State(self.requiresLogin), Response), self.put(n).ap(State(self.requiresLogin), ×₋(State(self.requiresLogin), Response), state), MkUtils.put_twice(n, self, state)))
+        \ap(_,_,state) => Eq(With(State(self.requiresLogin), Response), self.put(n).ap(State(self.requiresLogin), With(State(self.requiresLogin), Response), state), MkUtils.put_twice(n, self, state)))
 }
 
 codef Index: Route {
@@ -74,7 +74,7 @@ codef Index: Route {
     .get => \ap(_,_,state) => Return(state.counter(F)),
     .put(n) => \ap(_,_,state) => Pair(State(F), Response, state, Forbidden),
     .put_idempotent(n) => comatch {
-        .dap(_, _, state) => Refl(×₋(State(F), Response), Pair(State(F), Response, state, Forbidden))
+        .dap(_, _, state) => Refl(With(State(F), Response), Pair(State(F), Response, state, Forbidden))
     }
 }
 

@@ -1,0 +1,3 @@
+data Bool { T, F }
+
+let f(x: Bool) : Bool { x +++ x}

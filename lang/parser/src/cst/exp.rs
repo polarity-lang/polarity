@@ -67,7 +67,7 @@ pub enum Exp {
     LocalComatch(LocalComatch),
     Hole(Hole),
     NatLit(NatLit),
-    Fun(Fun),
+    BinOp(BinOp),
     Lam(Lam),
 }
 
@@ -81,7 +81,7 @@ impl Exp {
             Exp::LocalComatch(local_comatch) => local_comatch.span,
             Exp::Hole(hole) => hole.span,
             Exp::NatLit(nat_lit) => nat_lit.span,
-            Exp::Fun(fun) => fun.span,
+            Exp::BinOp(binop) => binop.span,
             Exp::Lam(lam) => lam.span,
         }
     }
@@ -153,11 +153,12 @@ pub struct NatLit {
 }
 
 #[derive(Debug, Clone)]
-/// Function arrow (syntactic sugar), e.g. a -> b
-pub struct Fun {
+/// Binary Operator, e.g. `e -> e` or `e + e`.
+pub struct BinOp {
     pub span: Span,
-    pub from: Box<Exp>,
-    pub to: Box<Exp>,
+    pub operator: Operator,
+    pub lhs: Box<Exp>,
+    pub rhs: Box<Exp>,
 }
 
 #[derive(Debug, Clone)]

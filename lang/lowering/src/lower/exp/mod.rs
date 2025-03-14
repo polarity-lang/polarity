@@ -35,7 +35,7 @@ impl Lower for cst::exp::Exp {
             cst::exp::Exp::LocalComatch(e) => e.lower(ctx),
             cst::exp::Exp::Hole(e) => e.lower(ctx),
             cst::exp::Exp::NatLit(e) => e.lower(ctx),
-            cst::exp::Exp::Fun(e) => e.lower(ctx),
+            cst::exp::Exp::BinOp(e) => e.lower(ctx),
             cst::exp::Exp::Lam(e) => e.lower(ctx),
         }
     }
@@ -524,18 +524,25 @@ impl Lower for cst::exp::NatLit {
     }
 }
 
-impl Lower for cst::exp::Fun {
+impl Lower for cst::exp::BinOp {
     type Target = ast::Exp;
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::Fun { span, from, to } = self;
+        let cst::exp::BinOp { span, operator, lhs, rhs } = self;
+        if operator.id != "->" {
+            let err = LoweringError::UnknownOperator {
+                span: operator.span.to_miette(),
+                operator: operator.id.clone(),
+            };
+            return Err(err);
+        }
         let (_, uri) = ctx.symbol_table.lookup(&Ident { span: *span, id: "Fun".to_owned() })?;
         Ok(ast::TypCtor {
             span: Some(*span),
             name: ast::IdBound { span: Some(*span), id: "Fun".to_owned(), uri: uri.clone() },
             args: ast::Args {
                 args: vec![
-                    ast::Arg::UnnamedArg { arg: from.lower(ctx)?, erased: false },
-                    ast::Arg::UnnamedArg { arg: to.lower(ctx)?, erased: false },
+                    ast::Arg::UnnamedArg { arg: lhs.lower(ctx)?, erased: false },
+                    ast::Arg::UnnamedArg { arg: rhs.lower(ctx)?, erased: false },
                 ],
             },
         }

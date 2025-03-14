@@ -51,7 +51,6 @@ extern {
     ":" => Token::Colon,
     "." => Token::Dot,
     "?" => Token::QuestionMark,
-    "->" => Token::RightArrow,
     "\\" => Token::Backslash,
     "#" => Token::Hash,
     "_" => Token::Underscore,
@@ -60,6 +59,7 @@ extern {
     //
     //
     "Identifier" => Token::Ident(<String>),
+    "Operator" => Token::Operator(<String>),
 
     // Literals
     //
@@ -237,7 +237,7 @@ pub TypApp: Call = {
 
 pub Exp: Box<Exp> = {
     <e: Anno> => Box::new(Exp::Anno(e)),
-    <e: Fun> => Box::new(Exp::Fun(e)),
+    <e: BinOp> => Box::new(Exp::BinOp(e)),
     <e: Lam> => Box::new(Exp::Lam(e)),
     Ops,
 }
@@ -272,8 +272,8 @@ pub Atom: Box<Exp> = {
 Anno: Anno = <l: @L> <exp: Ops> ":" <typ: Exp> <r: @R> =>
   Anno { span: span(l, r), exp, typ };
 
-Fun: Fun = <l: @L> <from: Ops> "->" <to: Exp> <r: @R> =>
-  Fun { span: span(l, r), from, to };
+BinOp: BinOp = <l: @L> <lhs: Ops> <operator: Operator> <rhs: Exp> <r: @R> =>
+  BinOp { span: span(l, r), operator, lhs, rhs };
 
 Lam: Lam = <l: @L> "\\" <case: Case<CopatternLam>> <r: @R> =>
   Lam { span: span(l, r), case };
@@ -318,4 +318,8 @@ BindingSite: BindingSite = {
 
 Ident: Ident = {
    <l: @L> <i: "Identifier"> <r: @R> => Ident { span: span(l,r), id: i.to_owned() }
+}
+
+Operator: Operator = {
+  <l: @L> <i: "Operator"> <r: @R> => Operator { span: span(l,r), id: i.to_owned() }
 }
