@@ -272,8 +272,8 @@ pub Atom: Box<Exp> = {
 Anno: Anno = <l: @L> <exp: Ops> ":" <typ: Exp> <r: @R> =>
   Anno { span: span(l, r), exp, typ };
 
-BinOp: BinOp = <l: @L> <lhs: Ops> <s: "Operator"> <rhs: Exp> <r: @R> =>
-  BinOp { span: span(l, r), symbol: s.to_owned(), lhs, rhs };
+BinOp: BinOp = <l: @L> <lhs: Ops> <operator: Operator> <rhs: Exp> <r: @R> =>
+  BinOp { span: span(l, r), operator, lhs, rhs };
 
 Lam: Lam = <l: @L> "\\" <case: Case<CopatternLam>> <r: @R> =>
   Lam { span: span(l, r), case };
@@ -318,4 +318,8 @@ BindingSite: BindingSite = {
 
 Ident: Ident = {
    <l: @L> <i: "Identifier"> <r: @R> => Ident { span: span(l,r), id: i.to_owned() }
+}
+
+Operator: Operator = {
+  <l: @L> <i: "Operator"> <r: @R> => Operator { span: span(l,r), id: i.to_owned() }
 }

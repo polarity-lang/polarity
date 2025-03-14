@@ -527,10 +527,12 @@ impl Lower for cst::exp::NatLit {
 impl Lower for cst::exp::BinOp {
     type Target = ast::Exp;
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
-        let cst::exp::BinOp { span, symbol, lhs, rhs } = self;
-        if symbol != "->" {
-            let err =
-                LoweringError::UnknownOperator { span: span.to_miette(), operator: symbol.clone() };
+        let cst::exp::BinOp { span, operator, lhs, rhs } = self;
+        if operator.id != "->" {
+            let err = LoweringError::UnknownOperator {
+                span: operator.span.to_miette(),
+                operator: operator.id.clone(),
+            };
             return Err(err);
         }
         let (_, uri) = ctx.symbol_table.lookup(&Ident { span: *span, id: "Fun".to_owned() })?;

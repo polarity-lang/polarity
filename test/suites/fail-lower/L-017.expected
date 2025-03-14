@@ -1,8 +1,8 @@
 L-017
 
   × Unknown operator: +++
-   ╭─[L-017.pol:3:25]
+   ╭─[L-017.pol:3:27]
  2 │ 
  3 │ let f(x: Bool) : Bool { x +++ x}
-   ·                         ───────
+   ·                           ───
    ╰────

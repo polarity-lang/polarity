@@ -156,7 +156,7 @@ pub struct NatLit {
 /// Binary Operator, e.g. `e -> e` or `e + e`.
 pub struct BinOp {
     pub span: Span,
-    pub symbol: String,
+    pub operator: Operator,
     pub lhs: Box<Exp>,
     pub rhs: Box<Exp>,
 }
