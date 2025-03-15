@@ -50,6 +50,7 @@ impl BuildSymbolTable for Decl {
             Decl::Def(def) => def.build(symbol_table),
             Decl::Codef(codef) => codef.build(symbol_table),
             Decl::Let(tl_let) => tl_let.build(symbol_table),
+            Decl::Infix(infix) => infix.build(symbol_table),
         }
     }
 }
@@ -142,5 +143,11 @@ impl BuildSymbolTable for Let {
         symbol_table.insert(name.clone(), meta);
 
         Ok(())
+    }
+}
+
+impl BuildSymbolTable for Infix {
+    fn build(&self, _symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
+        todo!()
     }
 }
