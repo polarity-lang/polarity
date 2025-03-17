@@ -204,12 +204,20 @@ impl FV for LocalMatch {
     fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         let LocalMatch { on_exp, motive, cases, .. } = self;
         let mut fvs = HashSet::default();
-        for c in cases {
-            fvs.extend(c.free_vars_closure(lvl_ctx, type_ctx));
-        }
+        fvs.extend(cases.free_vars_closure(lvl_ctx, type_ctx));
         fvs.extend(on_exp.free_vars_closure(lvl_ctx, type_ctx));
         fvs.extend(motive.free_vars_closure(lvl_ctx, type_ctx));
         fvs
+    }
+}
+
+impl FV for Cases {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        use Cases::*;
+        match self {
+            Unchecked { cases } => cases.free_vars_closure(lvl_ctx, type_ctx),
+            Checked { cases: _, args, lifted_def:_ } => args.free_vars_closure(lvl_ctx, type_ctx)
+        }
     }
 }
 

@@ -391,6 +391,10 @@ impl Lift for LocalMatch {
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let LocalMatch { span, ctx: type_ctx, name, on_exp, motive, ret_typ, cases, inferred_type } =
             self;
+        let cases = match cases {
+            Cases::Unchecked { cases } => unreachable!(),
+            Cases::Checked { cases, args, lifted_def } => todo!(),
+        };
         ctx.lift_match(
             span,
             &inferred_type.clone().unwrap(),
@@ -564,7 +568,7 @@ impl Ctx {
                 on_exp: Box::new(on_exp.lift(self)),
                 motive: motive.lift(self),
                 ret_typ: None,
-                cases: cases.lift(self),
+                cases: todo!(),
             });
         }
 

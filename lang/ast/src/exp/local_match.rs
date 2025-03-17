@@ -10,7 +10,7 @@ use printer::{
 use crate::{
     ctx::{values::TypeCtx, LevelCtx},
     ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    Zonk, ZonkError,
+    Zonk, ZonkError, IdBound
 };
 
 use super::{print_cases, Case, Exp, Label, MetaVar, Motive, TypCtor};
@@ -27,7 +27,7 @@ pub struct LocalMatch {
     pub motive: Option<Motive>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ret_typ: Option<Box<Exp>>,
-    pub cases: Vec<Case>,
+    pub cases: Cases,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<TypCtor>,
 }
@@ -64,7 +64,7 @@ impl Occurs for LocalMatch {
         on_exp.occurs(ctx, f)
             || motive.as_ref().is_some_and(|m| m.occurs(ctx, f))
             || ret_typ.as_ref().is_some_and(|t| t.occurs(ctx, f))
-            || cases.iter().any(|case| case.occurs(ctx, f))
+            || cases.occurs(ctx, f)
     }
 }
 
@@ -85,7 +85,7 @@ impl Substitutable for LocalMatch {
             on_exp: on_exp.subst(ctx, by)?,
             motive: motive.as_ref().map(|m| m.subst(ctx, by)).transpose()?,
             ret_typ: ret_typ.as_ref().map(|t| t.subst(ctx, by)).transpose()?,
-            cases: cases.iter().map(|case| case.subst(ctx, by)).collect::<Result<Vec<_>, _>>()?,
+            cases: cases.subst(ctx, by)?,
             inferred_type: None,
         })
     }
@@ -109,7 +109,7 @@ impl Print for LocalMatch {
             })
             .append(motive.as_ref().map(|m| m.print(cfg, alloc)).unwrap_or(alloc.nil()))
             .append(alloc.space())
-            .append(print_cases(cases, cfg, alloc))
+            .append(cases.print(cfg, alloc))
     }
 }
 
@@ -124,9 +124,7 @@ impl Zonk for LocalMatch {
         motive.zonk(meta_vars)?;
         ret_typ.zonk(meta_vars)?;
         inferred_type.zonk(meta_vars)?;
-        for case in cases {
-            case.zonk(meta_vars)?;
-        }
+        cases.zonk(meta_vars)?;
         Ok(())
     }
 }
@@ -141,5 +139,99 @@ impl ContainsMetaVars for LocalMatch {
             || ret_typ.contains_metavars()
             || cases.contains_metavars()
             || inferred_type.contains_metavars()
+    }
+}
+
+
+// Cases
+//
+//
+
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
+pub enum Cases {
+    Unchecked{ cases : Vec<Case> },
+    Checked{
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        cases : Vec<Case>,
+        args : Vec<Exp>,
+        lifted_def : IdBound }
+}
+
+
+impl Shift for Cases {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        use Cases::*;
+        match self {
+            Unchecked { cases } => cases.shift_in_range(range, by),
+            Checked { cases, args, lifted_def:_ } => {
+                cases.shift_in_range(range, by);
+                args.shift_in_range(range, by);
+            }
+        }
+    }
+}
+
+impl Occurs for Cases {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
+        use Cases::*;
+        match self {
+            Unchecked { cases } => cases.occurs(ctx, f),
+            Checked { cases:_, args, lifted_def:_ } => args.occurs(ctx,f),
+        }
+    }
+}
+
+impl Substitutable for Cases {
+    type Target = Cases;
+    fn subst<S: Substitution>(&self, ctx: &mut crate::ctx::GenericCtx<()>, by: &S) -> Result<Self::Target, S::Err> {
+        use Cases::*;
+        match self {
+            Unchecked { cases } => {
+                Ok(Unchecked {
+                    cases : cases.subst(ctx, by)?
+                })
+            },
+            Checked { cases, args, lifted_def} => {
+                Ok(Checked {
+                    cases : cases.clone(),
+                    args : args.subst(ctx,by)?,
+                    lifted_def : lifted_def.clone()
+                })
+            },
+        }
+    }
+}
+
+impl Print for Cases {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        use Cases::*;
+        match self {
+            Unchecked { cases } => print_cases(cases, cfg, alloc),
+            Checked { cases, args: _, lifted_def:_ } => print_cases(cases, cfg, alloc)
+        }
+    }
+}
+
+impl Zonk for Cases {
+    fn zonk(&mut self, meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>) -> Result<(), ZonkError> {
+        use Cases::*;
+        match self {
+            Unchecked { cases } => cases.zonk(meta_vars),
+            Checked { cases:_, args, lifted_def:_ } => args.zonk(meta_vars),
+        }
+    }
+}
+
+impl ContainsMetaVars for Cases {
+    fn contains_metavars(&self) -> bool {
+        use Cases::*;
+        match self {
+            Unchecked { cases } => cases.contains_metavars(),
+            Checked { cases:_, args, lifted_def:_ } => args.contains_metavars() || todo!("implement metavar check for the lifted def"),
+        }
     }
 }

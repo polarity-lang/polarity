@@ -16,7 +16,7 @@ impl ToIR for ast::Exp {
             ast::Exp::DotCall(dot_call) => dot_call.to_ir()?,
             ast::Exp::Anno(anno) => anno.to_ir()?,
             ast::Exp::TypeUniv(type_univ) => type_univ.to_ir()?,
-            ast::Exp::LocalMatch(local_match) => ir::Exp::LocalMatch(local_match.to_ir()?),
+            ast::Exp::LocalMatch(local_match) => ir::Exp::DefCall(local_match.to_ir()?),
             ast::Exp::LocalComatch(local_comatch) => ir::Exp::LocalComatch(local_comatch.to_ir()?),
             ast::Exp::Hole(hole) => hole.to_ir()?,
         };
@@ -101,15 +101,19 @@ impl ToIR for ast::TypeUniv {
 }
 
 impl ToIR for ast::LocalMatch {
-    type Target = ir::LocalMatch;
+    type Target = ir::DotCall;
 
     fn to_ir(&self) -> Result<Self::Target, BackendError> {
         let ast::LocalMatch { on_exp, cases, .. } = self;
 
         let on_exp = Box::new(on_exp.to_ir()?);
-        let cases = cases.to_ir()?;
-
-        Ok(ir::LocalMatch { on_exp, cases })
+        let ast::Cases::Checked{cases:_, args, lifted_def} = cases else {return Err(BackendError::Impossible("Encountered unchecked local match".to_owned()))};
+        Ok(ir::DotCall{
+            exp : on_exp,
+            name : lifted_def.id.clone(),
+            module_uri: lifted_def.uri.clone(),
+            args : args.to_ir()?
+        })
     }
 }
 

@@ -432,6 +432,14 @@ impl Eval for LocalMatch {
     }
 }
 
+impl Eval for Cases {
+    type Val = ();
+
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
+        todo!()
+    }
+}
+
 impl Eval for LocalComatch {
     type Val = Box<Val>;
 
