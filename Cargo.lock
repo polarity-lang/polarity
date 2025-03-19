@@ -345,17 +345,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
-name = "auto_impl"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e12882f59de5360c748c4cbf569a042d5fb0eb515f7bea9c1f470b47f6ffbd73"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.98",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3591,11 +3580,10 @@ checksum = "121c2a6cda46980bb0fcd1647ffaf6cd3fc79a013de288782836f6df9c48780e"
 [[package]]
 name = "tower-lsp-server"
 version = "0.21.0"
-source = "git+https://github.com/tower-lsp-community/tower-lsp-server?rev=ae955f1d1c2a86bf675cc9bd0638e4c684864a6d#ae955f1d1c2a86bf675cc9bd0638e4c684864a6d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5694c4be24bb937ef1f01e663d8c37013cc5b76c4a7bf94866355663116ca231"
 dependencies = [
  "async-codec-lite",
- "async-trait",
- "auto_impl",
  "bytes",
  "dashmap",
  "futures",
@@ -3605,18 +3593,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tower",
- "tower-lsp-server-macros",
  "tracing",
-]
-
-[[package]]
-name = "tower-lsp-server-macros"
-version = "0.9.0"
-source = "git+https://github.com/tower-lsp-community/tower-lsp-server?rev=ae955f1d1c2a86bf675cc9bd0638e4c684864a6d#ae955f1d1c2a86bf675cc9bd0638e4c684864a6d"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.98",
 ]
 
 [[package]]

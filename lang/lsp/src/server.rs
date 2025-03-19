@@ -27,7 +27,6 @@ impl Server {
     }
 }
 
-#[tower_lsp_server::async_trait]
 impl LanguageServer for Server {
     async fn initialize(&self, params: InitializeParams) -> jsonrpc::Result<InitializeResult> {
         let capabilities = capabilities();
