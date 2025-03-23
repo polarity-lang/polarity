@@ -83,6 +83,14 @@ codef Ones: Stream(Nat) { -- use codef to define a Stream
 }
 ```
 
+You may have noticed that to model these `codata` types, in contrast to Haskell, Polarity does not need functions. In fact, Polarity has *no* builtin or "first class" function type - the function type can be defined as a `codata` type. For simplicity, here is how type of a function from `Nat` to `Nat` looks: 
+
+```polarity
+codata NatToNat { .ap(x: Nat): Nat }
+```
+
+It's the type that, if you observe `ap` (the only thing you may observers), requires a `Nat` to be able to give you back a `Nat`. (So just like `newtype NatToNat = NatToNat {ap :: Nat -> Nat}` in Haskell!)
+
 So far so good, now we know how to use the non-dependent portion of polarity and how it corresponds to Haskell.
 
 However, there's another peculiar thing happening: instead of infinitely many numbers, we now only need a single one to construct the stream, so, if we do not duplicate the stream or let the continuation use the result multiple times, there's actually only a single one we can get out of a stream.
@@ -113,3 +121,4 @@ Now, if we were allowed to use this `a` more than once, the type checker would c
 So to recap:
 - in polarity, making things observable instead of buildable is achieved using `codef` and `codata`. This is equivalent to non-strict semantics, in that we have to pass the continuation that does the observation for us.
 - what Haskell does not give you is dependent types, which is why we left them out here - the encoding of dependent types that you have to do in Haskell is much more complex than in polarity
+- in Haskell, datatypes can be lazy, which makes it such that in Hakell (in contrast to polarity) values of some lazy (lifted) datatype can represent a computation, not just values. This is not the case in polarity.
