@@ -113,7 +113,7 @@ impl Ctx {
             meta_vars,
             type_info_table: self.type_info_table.clone(),
             module: self.module.clone(),
-            lifted_decls
+            lifted_decls,
         };
         let res = f(&mut inner_ctx);
         self.meta_vars = inner_ctx.meta_vars;

@@ -11,7 +11,9 @@ use crate::{
     ctx::{
         values::{Binder, TypeCtx},
         LevelCtx,
-    }, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution, Zonk, ZonkError
+    },
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    Substitution, Zonk, ZonkError,
 };
 
 use super::{Exp, MetaVar, MetaVarKind};
@@ -246,8 +248,15 @@ impl ContainsMetaVars for Hole {
 
 impl FreeVars for Hole {
     fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
-        let Hole { span: _, kind: _, metavar: _, inferred_type: _, inferred_ctx: _, args, solution } =
-            self;
+        let Hole {
+            span: _,
+            kind: _,
+            metavar: _,
+            inferred_type: _,
+            inferred_ctx: _,
+            args,
+            solution,
+        } = self;
 
         let mut free_vars = args.free_vars(ctx, cutoff);
         free_vars.extend(solution.free_vars(ctx, cutoff));
