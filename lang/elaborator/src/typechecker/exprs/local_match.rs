@@ -141,7 +141,7 @@ impl CheckInfer for LocalMatch {
 
         let def = Def {
             // FIXME: How do we ensure good error messages?
-            span: span.clone(),
+            span: *span,
             doc: None,
             name: def_name.clone(),
             attr: Attributes::default(),

@@ -14,7 +14,7 @@ use crate::{
 };
 
 use super::{
-    print_cases, Arg, Args, Case, DotCall, DotCallKind, Exp, Label, MetaVar, Motive, TypCtor,
+    print_cases, Args, Case, DotCall, DotCallKind, Exp, Label, MetaVar, Motive, TypCtor,
 };
 
 #[derive(Debug, Clone, Derivative)]
@@ -56,7 +56,7 @@ impl LocalMatch {
 
         Some(DotCall {
             // FIXME: How do we ensure good error messages? Is this the span we want to use?
-            span: span.clone(),
+            span: *span,
             kind: DotCallKind::Definition,
             exp: on_exp.clone(),
             name: lifted_def.clone(),

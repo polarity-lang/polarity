@@ -93,7 +93,7 @@ impl Lift for Module {
 
         let name = ctx.name.clone();
 
-        for decl in lifted_decls.into_iter().map(|decl| decl.lift(ctx)) {
+        for decl in lifted_decls.iter().map(|decl| decl.lift(ctx)) {
             match decl {
                 Decl::Def(def) if def.self_param.typ.name.id == name => {
                     decls.push(Decl::Def(def));
@@ -622,15 +622,6 @@ impl Ctx {
     /// Mark the current declaration as modified
     fn mark_modified(&mut self) {
         self.modified_decls.insert(self.curr_decl.clone());
-    }
-
-    /// Generate a definition name based on the label and type information
-    fn unique_def_name(&self, label: &Label, type_name: &str) -> IdBind {
-        label.user_name.clone().unwrap_or_else(|| {
-            let lowered = type_name.to_lowercase();
-            let id = label.id;
-            IdBind::from_string(&format!("d_{lowered}{id}"))
-        })
     }
 
     /// Generate a codefinition name based on the label and type information
