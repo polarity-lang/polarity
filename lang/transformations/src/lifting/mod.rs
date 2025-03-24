@@ -513,7 +513,7 @@ impl Lift for ParamInst {
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
         let ParamInst { span, name, typ: _, erased, .. } = self;
 
-        ParamInst { span: *span, info: None, name: name.clone(), typ: None, erased: *erased }
+        ParamInst { span: *span, name: name.clone(), typ: None, erased: *erased }
     }
 }
 

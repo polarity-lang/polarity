@@ -86,7 +86,6 @@ fn compute_motive(
         span: *span,
         param: ParamInst {
             span: *span,
-            info: Some(self_t_nf),
             name: param.name.clone(),
             typ: Box::new(on_exp_typ.to_exp()).into(),
             erased: param.erased,

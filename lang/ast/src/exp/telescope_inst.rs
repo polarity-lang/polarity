@@ -70,8 +70,6 @@ pub struct ParamInst {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
-    pub info: Option<Box<Exp>>,
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: VarBind,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub typ: Option<Box<Exp>>,
@@ -81,7 +79,7 @@ pub struct ParamInst {
 
 impl Print for ParamInst {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let ParamInst { span: _, info: _, name, typ: _, erased: _ } = self;
+        let ParamInst { span: _, name, typ: _, erased: _ } = self;
         name.print(cfg, alloc)
     }
 }
@@ -91,9 +89,8 @@ impl Zonk for ParamInst {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        let ParamInst { span: _, info, name: _, typ, erased: _ } = self;
+        let ParamInst { span: _, name: _, typ, erased: _ } = self;
 
-        info.zonk(meta_vars)?;
         typ.zonk(meta_vars)?;
         Ok(())
     }
@@ -101,8 +98,8 @@ impl Zonk for ParamInst {
 
 impl ContainsMetaVars for ParamInst {
     fn contains_metavars(&self) -> bool {
-        let ParamInst { span: _, info, name: _, typ, erased: _ } = self;
+        let ParamInst { span: _, name: _, typ, erased: _ } = self;
 
-        info.contains_metavars() || typ.contains_metavars()
+        typ.contains_metavars()
     }
 }

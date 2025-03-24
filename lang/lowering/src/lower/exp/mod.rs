@@ -51,13 +51,8 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> Result<T, 
         tel_inst.into_iter(),
         vec![],
         |_ctx, params_out, name| {
-            let param_out = ast::ParamInst {
-                span: name.span(),
-                info: None,
-                name: name.clone(),
-                typ: None,
-                erased: false,
-            };
+            let param_out =
+                ast::ParamInst { span: name.span(), name: name.clone(), typ: None, erased: false };
             params_out.push(param_out);
             Ok(Binder { name, content: () })
         },
@@ -594,7 +589,6 @@ impl Lower for cst::exp::Motive {
             span: Some(*span),
             param: ast::ParamInst {
                 span: name.span(),
-                info: None,
                 name: name.clone(),
                 typ: None,
                 erased: false,

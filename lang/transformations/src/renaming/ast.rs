@@ -173,7 +173,6 @@ impl Rename for TelescopeInst {
 
 impl Rename for ParamInst {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
-        self.info = None;
         self.typ.rename_in_ctx(ctx);
         self.name = ctx.disambiguate_var_bind(self.name.clone());
     }

@@ -235,7 +235,6 @@ impl CheckTelescope for TelescopeInst {
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
                 let param_out = ParamInst {
                     span: *span,
-                    info: Some(typ_nf.clone()),
                     name: name.clone(),
                     typ: typ_out.into(),
                     erased: *erased,
