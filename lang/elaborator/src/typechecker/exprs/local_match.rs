@@ -18,7 +18,7 @@ use crate::typechecker::type_info_table::CtorMeta;
 
 use super::super::ctx::*;
 use super::super::util::*;
-use super::CheckInfer;
+use super::{CheckInfer, ExpectType};
 
 // LocalMatch
 //
@@ -28,13 +28,7 @@ impl CheckInfer for LocalMatch {
     fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         let LocalMatch { span, name, on_exp, motive, cases, .. } = self;
         let on_exp_out = on_exp.infer(ctx)?;
-        let typ_app_nf = on_exp_out
-            .typ()
-            .ok_or(TypeError::Impossible {
-                message: "Expected inferred type".to_owned(),
-                span: None,
-            })?
-            .expect_typ_app()?;
+        let typ_app_nf = on_exp_out.expect_typ()?.expect_typ_app()?;
         let typ_app = typ_app_nf.infer(ctx)?;
         let ret_typ_out = t.check(ctx, &Box::new(TypeUniv::new().into()))?;
 

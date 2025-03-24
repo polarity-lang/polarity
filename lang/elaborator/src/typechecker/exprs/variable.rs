@@ -3,9 +3,9 @@
 use ast::*;
 
 use super::super::ctx::*;
-use super::CheckInfer;
+use super::{CheckInfer, ExpectType};
 use crate::conversion_checking::convert;
-use crate::result::{TcResult, TypeError};
+use crate::result::TcResult;
 
 impl CheckInfer for Variable {
     /// The *checking* rule for variables is:
@@ -17,10 +17,7 @@ impl CheckInfer for Variable {
     /// ```
     fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         let inferred_term = self.infer(ctx)?;
-        let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
-            message: "Expected inferred type".to_owned(),
-            span: None,
-        })?;
+        let inferred_typ = inferred_term.expect_typ()?;
         convert(&ctx.vars, &mut ctx.meta_vars, inferred_typ, t, &self.span())?;
         Ok(inferred_term)
     }

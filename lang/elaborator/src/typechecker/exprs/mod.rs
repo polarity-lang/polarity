@@ -58,6 +58,19 @@ impl<T: CheckInfer> CheckInfer for Box<T> {
     }
 }
 
+trait ExpectType {
+    fn expect_typ(&self) -> TcResult<Box<Exp>>;
+}
+
+impl<T: HasType> ExpectType for T {
+    fn expect_typ(&self) -> TcResult<Box<Exp>> {
+        self.typ().ok_or(Box::new(TypeError::Impossible {
+            message: "Expected inferred type".to_owned(),
+            span: None,
+        }))
+    }
+}
+
 // Expressions
 //
 //

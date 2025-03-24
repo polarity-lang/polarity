@@ -5,17 +5,14 @@ use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
 use ast::*;
 
-use super::super::ctx::*;
 use super::CheckInfer;
-use crate::result::{TcResult, TypeError};
+use super::{super::ctx::*, ExpectType};
+use crate::result::TcResult;
 
 impl CheckInfer for Anno {
     fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         let inferred_term = self.infer(ctx)?;
-        let inferred_typ = inferred_term.typ().ok_or(TypeError::Impossible {
-            message: "Expected inferred type".to_owned(),
-            span: None,
-        })?;
+        let inferred_typ = inferred_term.expect_typ()?;
         convert(&ctx.vars, &mut ctx.meta_vars, inferred_typ, t, &self.span())?;
         Ok(inferred_term)
     }
