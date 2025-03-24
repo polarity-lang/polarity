@@ -3,7 +3,7 @@ use miette_util::codespan::Span;
 use printer::{theme::ThemeExt, tokens::TYPE, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable,
+    ctx::LevelCtx, ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Substitutable,
     Substitution, Zonk, ZonkError,
 };
 
@@ -90,5 +90,11 @@ impl Zonk for TypeUniv {
 impl ContainsMetaVars for TypeUniv {
     fn contains_metavars(&self) -> bool {
         false
+    }
+}
+
+impl FreeVars for TypeUniv {
+    fn free_vars(&self, _ctx: &mut LevelCtx, _cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        Default::default()
     }
 }

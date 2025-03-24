@@ -27,5 +27,11 @@ pub fn lower_module_with_symbol_table(
     let use_decls = prg.use_decls.lower(&mut ctx)?;
     let decls = prg.decls.lower(&mut ctx)?;
 
-    Ok(ast::Module { uri: prg.uri.clone(), use_decls, decls, meta_vars: ctx.meta_vars })
+    Ok(ast::Module {
+        uri: prg.uri.clone(),
+        use_decls,
+        decls,
+        meta_vars: ctx.meta_vars,
+        lifted_decls: vec![],
+    })
 }

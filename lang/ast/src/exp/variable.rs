@@ -4,7 +4,7 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable,
+    ctx::LevelCtx, ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Substitutable,
     Substitution, Zonk, ZonkError,
 };
 
@@ -107,5 +107,18 @@ impl ContainsMetaVars for Variable {
         let Variable { span: _, idx: _, name: _, inferred_type } = self;
 
         inferred_type.contains_metavars()
+    }
+}
+
+impl FreeVars for Variable {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        let Variable { span: _, idx, name: _, inferred_type: _ } = self;
+
+        let mut set = crate::HashSet::default();
+        let lvl = ctx.idx_to_lvl(*idx);
+        if lvl < cutoff {
+            set.insert(lvl);
+        }
+        set
     }
 }

@@ -1,8 +1,9 @@
 //! Bidirectional type checker
 
-use std::collections::HashSet;
+use std::cmp;
+use std::convert::Infallible;
 
-use ast::ctx::values::Binder;
+use ast::ctx::values::{Binder, TypeCtx};
 use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
 use miette_util::ToMiette;
@@ -105,7 +106,7 @@ impl CheckInfer for LocalMatch {
         let on_exp_typ = on_exp_out.expect_typ()?.expect_typ_app()?;
 
         // Compute the new motive and the type that we should use to check the bodies of the cases.
-        let (motive_out, body_t) = match motive {
+        let (motive_out, _) = match motive {
             // Pattern matching with motive
             Some(motive) => {
                 let (motive, body_typ) =
@@ -116,13 +117,50 @@ impl CheckInfer for LocalMatch {
             None => (None, Box::new(shift_and_clone(t, (1, 0)))),
         };
 
-        let with_scrutinee_type = WithScrutineeType {
-            cases,
-            scrutinee_type: on_exp_typ.clone(),
-            scrutinee_name: VarBind::Wildcard { span: None },
+        let Cases::Unchecked { cases } = cases else { unreachable!() };
+
+        let mut fvs = motive.free_vars_closure(&ctx.vars);
+        fvs.extend(t.free_vars_closure(&ctx.vars));
+        fvs.extend(cases.free_vars_closure(&ctx.vars));
+
+        let def_name = unique_def_name(name, &on_exp_typ.name.id);
+
+        let LiftedSignature { telescope: params, subst, args } = lifted_signature(&ctx.vars, fvs);
+
+        // Substitute the new parameters for the free variables
+        // Unwrap is safe here because we are unwrapping an infallible result
+        let def_cases = cases.subst(&mut ctx.levels(), &subst).unwrap();
+        let def_self_typ = on_exp_typ.subst(&mut ctx.levels(), &subst).unwrap();
+        let def_ret_typ = match &motive {
+            Some(m) => m.subst(&mut ctx.levels(), &subst).unwrap().ret_typ,
+            None => shift_and_clone(
+                &Box::new(t.clone().subst(&mut ctx.levels(), &subst).unwrap()),
+                (1, 0),
+            ),
         };
-        with_scrutinee_type.check_exhaustiveness(ctx)?;
-        let cases = with_scrutinee_type.check_type(ctx, &body_t)?;
+
+        let def = Def {
+            // FIXME: How do we ensure good error messages?
+            span: span.clone(),
+            doc: None,
+            name: def_name.clone(),
+            attr: Attributes::default(),
+            params,
+            self_param: SelfParam {
+                info: None,
+                name: motive
+                    .as_ref()
+                    .map(|m| m.param.name.clone())
+                    .unwrap_or(VarBind::Wildcard { span: None }),
+                typ: def_self_typ,
+            },
+            ret_typ: def_ret_typ,
+            cases: def_cases,
+        };
+
+        ctx.lifted_decls.push(def.into());
+
+        let lifted_def = IdBound { span: None, id: def_name.id, uri: ctx.module.uri.clone() };
 
         Ok(LocalMatch {
             span: *span,
@@ -131,7 +169,7 @@ impl CheckInfer for LocalMatch {
             on_exp: on_exp_out,
             motive: motive_out,
             ret_typ: Some(Box::new(t.clone())),
-            cases,
+            cases: Cases::Checked { cases: cases.clone(), args, lifted_def },
             inferred_type: Some(on_exp_typ),
         })
     }
@@ -372,5 +410,254 @@ impl WithScrutineeType<'_> {
         }
 
         Ok(cases_out)
+    }
+}
+
+/// Sort the variables such the dependency relation is satisfied
+/// Due to unification, it is not sufficient to sort them according to their De-Bruijn level:
+/// Unification can lead to a set of variables where variables with a higher De-Bruijn level
+/// may occur in the types of variables with a lower De-Bruijn level.
+/// This is because unification may locally refine types.
+/// Example:
+///
+/// ```pol
+/// data Bar(a: Type) { }
+///
+/// codata Baz { unit: Top }
+///
+/// data Foo(a: Type) {
+///    MkFoo(a: Type): Foo(Bar(a)),
+/// }
+///
+/// data Top { Unit }
+///
+/// def Top.ignore(a: Type, x: a): Top {
+///     Unit => Unit
+/// }
+///
+/// def Top.foo(a: Type, foo: Foo(a)): Baz {
+///     Unit => foo.match {
+///         MkFoo(a') => comatch {
+///            unit => Unit.ignore(Foo(Bar(a')), foo)
+///        }
+///    }
+/// }
+/// ```
+///
+/// In this example, unification may perform the substitution `{a := a'}` such that locally
+/// the type of foo is known to be `Foo(Bar(a'))`.
+/// Hence, lifting of the comatch will need to consider the variables [ foo: Foo(Bar(a')), a': Type ]
+/// where `foo` depends on `a'` even though it has been bound earlier in the context
+fn sort_vars(ctx: &TypeCtx, fvs: HashSet<Lvl>) -> Vec<Lvl> {
+    let mut fvs: Vec<_> = fvs.into_iter().collect();
+    fvs.sort_by(|x, y| cmp_vars(ctx, *x, *y));
+    fvs
+}
+
+fn cmp_vars(ctx: &TypeCtx, x: Lvl, y: Lvl) -> cmp::Ordering {
+    let x_typ = ctx.lookup(x);
+    let y_typ = ctx.lookup(y);
+    let x_occurs_in_y = y_typ.occurs_var(&mut ctx.levels(), x);
+    let y_occurs_in_x = x_typ.occurs_var(&mut ctx.levels(), y);
+    assert!(!(x_occurs_in_y && y_occurs_in_x));
+    if x_occurs_in_y {
+        cmp::Ordering::Less
+    } else if y_occurs_in_x {
+        cmp::Ordering::Greater
+    } else {
+        x.cmp(&y)
+    }
+}
+
+/// Generate a definition name based on the label and type information
+fn unique_def_name(label: &Label, type_name: &str) -> IdBind {
+    label.user_name.clone().unwrap_or_else(|| {
+        let lowered = type_name.to_lowercase();
+        let id = label.id;
+        IdBind::from_string(&format!("d_{lowered}{id}"))
+    })
+}
+
+/// Compute the lifted signature based on the set of free variables of an expression `e`.
+/// Using the lifted signature `LiftedSignature { telescope, subst, args }`, the lifted expression
+///
+/// ```text
+/// let f(telescope) { e[subst] }
+/// ```
+///
+/// can be constructed, where `f` is a fresh name. The expression `e` can be replaced by `f(args)`.
+///
+/// # Parameters
+///
+/// - `fvs`: Set of free variables
+/// - `base_ctx`: Context under which the expression `e` is well-typed
+///
+/// # Requires
+///
+/// - `fvs ⊆ base_ctx`
+///
+/// # Returns
+///
+/// The signature `LiftedSignature { telescope, subst, args }` of the lifted expression, consisting of:
+///
+/// - `telescope`: The telescope under which `e[subst]` is closed
+/// - `subst`: A substitution that closes the free variables under `telescope`
+/// - `args`: The arguments to apply to the lifted expression
+///
+/// # Ensures
+///
+/// - `telescope ⊆ base_ctx`
+/// - `let f(telescope) { e[subst] }` is well-typed in the empty context
+/// - `e = f(args)` and well-typed in `base_ctx`
+///
+pub fn lifted_signature(ctx: &TypeCtx, fvs: HashSet<Lvl>) -> LiftedSignature {
+    let cutoff = ctx.len();
+    // Sort the list of free variables by the De-Bruijn level such the dependency relation is satisfied.
+    // Types can only depend on types which occur earlier in the context.
+    let fvs_sorted = sort_vars(ctx, fvs);
+
+    let mut params: Vec<Param> = vec![];
+    let mut args = vec![];
+
+    let mut subst = CloseParamsSubst { subst: HashMap::default(), cutoff };
+
+    for lvl in fvs_sorted.into_iter() {
+        let binder = ctx.lookup(lvl);
+        let name = match &binder.name {
+            ast::VarBind::Var { id, .. } => VarBound::from_string(id),
+            // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
+            // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
+            // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
+            ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
+        };
+
+        // Unwrap is safe here because we are unwrapping an infallible result
+        let typ = binder.content.subst(&mut ctx.levels(), &subst).unwrap();
+
+        let param = Param {
+            implicit: false,
+            name: VarBind::from_string(&name.id),
+            typ: typ.clone(),
+            erased: false,
+        };
+        let arg = Arg::UnnamedArg {
+            arg: Box::new(Exp::Variable(Variable {
+                span: None,
+                idx: ctx.lvl_to_idx(lvl),
+                name: name.clone(),
+                inferred_type: None,
+            })),
+            erased: false,
+        };
+        args.push(arg);
+        params.push(param);
+        subst.add(name, lvl);
+    }
+
+    LiftedSignature {
+        telescope: Telescope { params },
+        subst: subst.into_body_subst(),
+        args: Args { args },
+    }
+}
+
+/// The signature of a lifted expression
+pub struct LiftedSignature {
+    /// Telescope of the lifted expression
+    pub telescope: Telescope,
+    /// Substitution that is applied to the body of the lifted expression
+    pub subst: CloseBodySubst,
+    /// An instantiation of `telescope` with the free variables
+    pub args: Args,
+}
+
+/// Substitution applied to parameters of the new top-level definition
+#[derive(Clone, Debug)]
+pub struct CloseParamsSubst {
+    /// Mapping of the original De-Bruijn levels of a free variable to the new binders
+    subst: HashMap<Lvl, (Lvl, VarBound)>,
+    /// The De-Bruijn level (fst index) up to which a variable counts as free
+    cutoff: usize,
+}
+
+impl CloseParamsSubst {
+    fn add(&mut self, name: VarBound, lvl: Lvl) {
+        self.subst.insert(lvl, (Lvl { fst: 0, snd: self.subst.len() }, name));
+    }
+
+    /// Build the substitution applied to the body of the new definition
+    fn into_body_subst(self) -> CloseBodySubst {
+        CloseBodySubst { subst: self.subst, cutoff: self.cutoff }
+    }
+}
+
+impl Shift for CloseParamsSubst {
+    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
+        // Since FVSubst works with levels, it is shift-invariant
+    }
+}
+
+impl Substitution for CloseParamsSubst {
+    type Err = Infallible;
+
+    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
+        Ok(self.subst.get(&lvl).map(|(lvl, name)| {
+            Box::new(Exp::Variable(Variable {
+                span: None,
+                idx: Idx { fst: 0, snd: self.subst.len() - 1 - lvl.snd },
+                name: name.clone(),
+                inferred_type: None,
+            }))
+        }))
+    }
+}
+
+/// Substitution applied to the body of the new definition
+#[derive(Clone, Debug)]
+pub struct CloseBodySubst {
+    /// Mapping of the original De-Bruijn levels of a free variable to the new reference
+    subst: HashMap<Lvl, (Lvl, VarBound)>,
+    /// The De-Bruijn level (fst index) up to which a variable counts as free
+    cutoff: usize,
+}
+
+impl Shift for CloseBodySubst {
+    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
+        // Since FVSubst works with levels, it is shift-invariant
+    }
+}
+
+impl Substitution for CloseBodySubst {
+    type Err = Infallible;
+
+    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
+        // Let Γ be the original context, let Δ be the context according to which the new De-Bruijn index should be calculated
+        //
+        // Γ = [[x], [y], [z]]
+        //     ^^^^^^^^  ^
+        //    free vars  cutoff
+        //
+        // Δ = [[x, y], [z]]
+        //      ^^^^^^  ^^^ bound vars
+        // new telescope
+
+        // Compute the names for the free variables in the correct order
+        // This is only needed to satisfy LevelCtx now tracking the names of the binders.
+        // FIXME: This needs to be refactored
+        let mut free_vars = self.subst.iter().collect::<Vec<_>>();
+        free_vars.sort_by_key(|(lvl, _)| *lvl);
+        let free_vars = free_vars
+            .into_iter()
+            .map(|(_, (_, name))| VarBind::from_string(&name.id))
+            .collect::<Vec<_>>();
+        let new_ctx = LevelCtx::from(vec![free_vars]).append(&ctx.tail(self.cutoff));
+        Ok(self.subst.get(&lvl).map(|(lvl, name)| {
+            Box::new(Exp::Variable(Variable {
+                span: None,
+                idx: new_ctx.lvl_to_idx(*lvl),
+                name: name.clone(),
+                inferred_type: None,
+            }))
+        }))
     }
 }

@@ -10,8 +10,8 @@ use printer::{
 
 use crate::{
     ctx::{values::TypeCtx, LevelCtx},
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    Substitution, Zonk, ZonkError,
 };
 
 use super::{print_cases, Case, Exp, Label, MetaVar, TypCtor};
@@ -146,5 +146,14 @@ impl ContainsMetaVars for LocalComatch {
             self;
 
         cases.contains_metavars() || inferred_type.contains_metavars()
+    }
+}
+
+impl FreeVars for LocalComatch {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        let LocalComatch { span: _, ctx: _, name: _, is_lambda_sugar: _, cases, inferred_type: _ } =
+            self;
+
+        cases.free_vars(ctx, cutoff)
     }
 }

@@ -60,10 +60,22 @@ impl<T> GenericCtx<T> {
             Var::Idx(idx) => self.idx_to_lvl(idx),
         }
     }
+
     pub fn var_to_idx(&self, var: Var) -> Idx {
         match var {
             Var::Lvl(lvl) => self.lvl_to_idx(lvl),
             Var::Idx(idx) => idx,
+        }
+    }
+
+    /// The smallest De Bruijn Level `cutoff` s.t. for all variable levels `lvl` in the context, `lvl < cutoff`
+    pub fn cutoff(&self) -> Lvl {
+        if self.bound.is_empty() {
+            Lvl { fst: 0, snd: 0 }
+        } else {
+            let fst = self.bound.len() - 1;
+            let snd = self.bound[fst].len();
+            Lvl { fst, snd }
         }
     }
 }

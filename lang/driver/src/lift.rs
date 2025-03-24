@@ -48,6 +48,7 @@ fn generate_edits(
         use_decls: vec![],
         decls: new_decls,
         meta_vars: module.meta_vars.clone(),
+        lifted_decls: vec![],
     };
 
     let mut text = "\n\n".to_owned();

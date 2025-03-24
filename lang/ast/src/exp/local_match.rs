@@ -9,11 +9,13 @@ use printer::{
 
 use crate::{
     ctx::{values::TypeCtx, LevelCtx},
-    ContainsMetaVars, HasSpan, HasType, IdBound, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, IdBound, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, Zonk, ZonkError,
 };
 
-use super::{print_cases, Case, Exp, Label, MetaVar, Motive, TypCtor};
+use super::{
+    print_cases, Arg, Args, Case, DotCall, DotCallKind, Exp, Label, MetaVar, Motive, TypCtor,
+};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
@@ -30,6 +32,38 @@ pub struct LocalMatch {
     pub cases: Cases,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<TypCtor>,
+}
+
+impl LocalMatch {
+    /// During typechecking, local matches are lifted to top-level definitions.
+    /// Once a local match has been typechecked, it can be desugared into a dot call to the lifted definition.
+    /// This useful for evaluating the match expression or lifting the match in the source program.
+    pub fn as_dot_call(&self) -> Option<DotCall> {
+        let LocalMatch {
+            span,
+            ctx: _,
+            name: _,
+            on_exp,
+            motive: _,
+            ret_typ,
+            cases,
+            inferred_type: _,
+        } = self;
+
+        let Cases::Checked { cases: _, args, lifted_def } = cases else {
+            return None;
+        };
+
+        Some(DotCall {
+            // FIXME: How do we ensure good error messages? Is this the span we want to use?
+            span: span.clone(),
+            kind: DotCallKind::Definition,
+            exp: on_exp.clone(),
+            name: lifted_def.clone(),
+            args: args.clone(),
+            inferred_type: ret_typ.clone(),
+        })
+    }
 }
 
 impl HasSpan for LocalMatch {
@@ -142,6 +176,26 @@ impl ContainsMetaVars for LocalMatch {
     }
 }
 
+impl FreeVars for LocalMatch {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        let LocalMatch {
+            span: _,
+            ctx: _,
+            name: _,
+            on_exp,
+            motive,
+            ret_typ: _,
+            cases,
+            inferred_type: _,
+        } = self;
+
+        let mut free_vars = on_exp.free_vars(ctx, cutoff);
+        free_vars.extend(motive.free_vars(ctx, cutoff));
+        free_vars.extend(cases.free_vars(ctx, cutoff));
+        free_vars
+    }
+}
+
 // Cases
 //
 //
@@ -155,7 +209,7 @@ pub enum Cases {
     Checked {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         cases: Vec<Case>,
-        args: Vec<Exp>,
+        args: Args,
         lifted_def: IdBound,
     },
 }
@@ -234,8 +288,19 @@ impl ContainsMetaVars for Cases {
         match self {
             Unchecked { cases } => cases.contains_metavars(),
             Checked { cases: _, args, lifted_def: _ } => {
-                args.contains_metavars() || todo!("implement metavar check for the lifted def")
+                // FIXME: Implement metavar check for the lifted def
+                args.contains_metavars() || true
             }
+        }
+    }
+}
+
+impl FreeVars for Cases {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        use Cases::*;
+        match self {
+            Unchecked { cases } => cases.free_vars(ctx, cutoff),
+            Checked { cases: _, args, lifted_def: _ } => args.free_vars(ctx, cutoff),
         }
     }
 }

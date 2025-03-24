@@ -187,6 +187,8 @@ pub struct Module {
     pub use_decls: Vec<UseDecl>,
     /// Declarations contained in the module other than imports.
     pub decls: Vec<Decl>,
+    /// Declarations that were lifted to the top level during typechecking.
+    pub lifted_decls: Vec<Decl>,
     /// Metavariables that were generated for this module during lowering.
     pub meta_vars: HashMap<MetaVar, MetaVarState>,
 }

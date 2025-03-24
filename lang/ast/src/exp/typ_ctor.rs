@@ -4,8 +4,8 @@ use pretty::DocAllocator;
 use printer::{theme::ThemeExt, tokens::ARROW, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, Zonk, ZonkError,
 };
 
 use super::{Args, Exp, IdBound, MetaVar, TypeUniv};
@@ -123,5 +123,13 @@ impl ContainsMetaVars for TypCtor {
         let TypCtor { span: _, name: _, args } = self;
 
         args.contains_metavars()
+    }
+}
+
+impl FreeVars for TypCtor {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        let TypCtor { span: _, name: _, args } = self;
+
+        args.free_vars(ctx, cutoff)
     }
 }

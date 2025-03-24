@@ -36,7 +36,8 @@ pub fn check_with_lookup_table(prg: Rc<Module>, info_table: &TypeInfoTable) -> T
         uri: prg.uri.clone(),
         use_decls: prg.use_decls.clone(),
         decls,
-        meta_vars: ctx.meta_vars.clone(),
+        meta_vars: ctx.meta_vars,
+        lifted_decls: ctx.lifted_decls,
     })
 }
 

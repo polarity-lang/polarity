@@ -7,13 +7,13 @@ impl ToIR for ast::Module {
     type Target = ir::Module;
 
     fn to_ir(&self) -> Result<Self::Target, BackendError> {
-        let ast::Module { uri, use_decls, decls, meta_vars: _ } = self;
+        let ast::Module { uri, use_decls, decls, meta_vars: _, lifted_decls } = self;
 
         let mut def_decls = Vec::new();
         let mut codef_decls = Vec::new();
         let mut let_decls = Vec::new();
 
-        for decl in decls {
+        for decl in decls.iter().chain(lifted_decls.iter()) {
             match decl {
                 ast::Decl::Def(def) => def_decls.push(def.to_ir()?),
                 ast::Decl::Codef(codef) => codef_decls.push(codef.to_ir()?),

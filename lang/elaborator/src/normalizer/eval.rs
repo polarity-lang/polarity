@@ -351,92 +351,18 @@ impl Eval for LocalMatch {
     /// ┗━━━━━━━━━━━━━━━ on_exp
     /// ```
     fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
-        let LocalMatch { name: match_name, on_exp, cases, .. } = self;
-        // We first evaluate `on_exp` and `cases`
-        let on_exp = on_exp.eval(info_table, env)?;
-        let cases = cases.eval(info_table, env)?;
-
-        let on_exp = strip_annotations(&on_exp);
-
-        match on_exp {
-            Val::Call(val::Call { name: ctor_name, args, .. }) => {
-                // The specific instance of the LocalMatch we are evaluating is:
-                //
-                // ```text
-                // C(e_1,...).match { ... }
-                // ┳ ━━━┳━━━         ━━┳━━
-                // ┃    ┃              ┗━━━━━ cases
-                // ┃    ┗━━━━━━━━━━━━━━━━━━━━ args
-                // ┗━━━━━━━━━━━━━━━━━━━━━━━━━ ctor__name
-                // ```
-                // where `C` is the name of a constructor declared in a data
-                // type declaration.
-
-                // We first look up the correct case.
-                let val::Case { body, params, .. } = cases
-                    .clone()
-                    .into_iter()
-                    .find(|case| case.name == ctor_name)
-                    .ok_or_else(|| TypeError::MissingCase { name: ctor_name.id.clone() })?;
-
-                // Then we substitute the `args` in the body.
-                let binders = params
-                    .params
-                    .iter()
-                    .zip(args.to_vals())
-                    .map(|(param, arg)| Binder { name: param.name.clone(), content: arg })
-                    .collect::<Vec<_>>();
-                body.clone().unwrap().apply(info_table, binders)
+        // During typechecking, local matches are lifted to the top-level.
+        // Once a local match has been typechecked, it can be desugared into a dot call to the lifted definition.
+        // Evaluation fails if the match is not lifted.
+        let Some(dot_call) = self.as_dot_call() else {
+            return Err(TypeError::Impossible {
+                message: "Cannot evaluate local match before it has been typechecked.".to_owned(),
+                span: self.span.to_miette(),
             }
-            Val::Neu(exp) => {
-                // The specific instance of the LocalMatch we are evaluating is:
-                //
-                // ```text
-                // n.match { ... }
-                // ┳        ━━┳━━
-                // ┃          ┗━━━━━ cases
-                // ┗━━━━━━━━━━━━━━━━ exp (Neutral value)
-                // ```
-                // Evaluation is blocked by the neutral value `n`.
-                Ok(Box::new(Val::Neu(
-                    val::LocalMatch {
-                        span: None,
-                        name: match_name.to_owned(),
-                        on_exp: Box::new(exp),
-                        cases,
-                    }
-                    .into(),
-                )))
-            }
-            Val::TypCtor(typ_ctor) => Err(TypeError::Impossible {
-                message: "Cannot match on a type constructor".to_owned(),
-                span: typ_ctor.span.to_miette(),
-            }
-            .into()),
-            Val::TypeUniv(type_univ) => Err(TypeError::Impossible {
-                message: "Cannot match on a type universe".to_owned(),
-                span: type_univ.span.to_miette(),
-            }
-            .into()),
-            Val::LocalComatch(local_comatch) => Err(TypeError::Impossible {
-                message: "Cannot match on a local comatch".to_owned(),
-                span: local_comatch.span.to_miette(),
-            }
-            .into()),
-            Val::Anno(anno_val) => Err(TypeError::Impossible {
-                message: "Type annotation was not stripped when evaluating local match".to_owned(),
-                span: anno_val.span.to_miette(),
-            }
-            .into()),
-        }
-    }
-}
+            .into());
+        };
 
-impl Eval for Cases {
-    type Val = ();
-
-    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
-        todo!()
+        dot_call.eval(info_table, env)
     }
 }
 

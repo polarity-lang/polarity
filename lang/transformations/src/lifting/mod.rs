@@ -86,15 +86,28 @@ impl Lift for Module {
     type Target = Module;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Module { uri, use_decls, decls, meta_vars } = self;
+        let Module { uri, use_decls, decls, meta_vars, lifted_decls } = self;
 
-        let decls = decls.iter().map(|decl| decl.lift(ctx)).collect();
+        let mut decls: Vec<Decl> = decls.iter().map(|decl| decl.lift(ctx)).collect();
+        let mut lifted_decls_out = vec![];
+
+        let name = ctx.name.clone();
+
+        for decl in lifted_decls.into_iter().map(|decl| decl.lift(ctx)) {
+            match decl {
+                Decl::Def(def) if def.self_param.typ.name.id == name => {
+                    decls.push(Decl::Def(def));
+                }
+                _ => lifted_decls_out.push(decl),
+            }
+        }
 
         Module {
             uri: uri.clone(),
             use_decls: use_decls.clone(),
             decls,
             meta_vars: meta_vars.clone(),
+            lifted_decls: lifted_decls_out,
         }
     }
 }
@@ -389,22 +402,13 @@ impl Lift for LocalMatch {
     type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let LocalMatch { span, ctx: type_ctx, name, on_exp, motive, ret_typ, cases, inferred_type } =
-            self;
-        let cases = match cases {
-            Cases::Unchecked { cases } => unreachable!(),
-            Cases::Checked { cases, args, lifted_def } => todo!(),
-        };
-        ctx.lift_match(
-            span,
-            &inferred_type.clone().unwrap(),
-            &type_ctx.clone().unwrap(),
-            name,
-            on_exp,
-            motive,
-            ret_typ,
-            cases,
-        )
+        // Only lift local matches for the specified type
+        if self.inferred_type.as_ref().unwrap().name.id != ctx.name {
+            return Exp::LocalMatch(self.clone());
+        }
+
+        ctx.mark_modified();
+        self.as_dot_call().unwrap().into()
     }
 }
 
@@ -547,97 +551,6 @@ impl<T: Lift> Lift for Vec<T> {
 
 impl Ctx {
     #[allow(clippy::too_many_arguments)]
-    fn lift_match(
-        &mut self,
-        span: &Option<Span>,
-        inferred_type: &TypCtor,
-        type_ctx: &TypeCtx,
-        name: &Label,
-        on_exp: &Exp,
-        motive: &Option<Motive>,
-        ret_typ: &Option<Box<Exp>>,
-        cases: &Vec<Case>,
-    ) -> Exp {
-        // Only lift local matches for the specified type
-        if inferred_type.name.id != self.name {
-            return Exp::LocalMatch(LocalMatch {
-                span: *span,
-                inferred_type: None,
-                ctx: None,
-                name: name.clone(),
-                on_exp: Box::new(on_exp.lift(self)),
-                motive: motive.lift(self),
-                ret_typ: None,
-                cases: todo!(),
-            });
-        }
-
-        self.mark_modified();
-
-        // Collect the free variables in the match,
-        // the type of the scrutinee as well as the return type of the match
-        // Build a telescope of the types of the lifted variables
-        let ret_fvs = motive
-            .as_ref()
-            .map(|m| free_vars_closure(m, type_ctx))
-            .unwrap_or_else(|| free_vars_closure(ret_typ, type_ctx));
-
-        let cases = cases.lift(self);
-        let self_typ = inferred_type.lift(self);
-
-        let mut fvs = free_vars_closure(&cases, type_ctx);
-        fvs.extend(free_vars_closure(&self_typ, type_ctx));
-        fvs.extend(ret_fvs);
-
-        let LiftedSignature { telescope, subst, args } = lifted_signature(fvs, &self.ctx);
-
-        // Substitute the new parameters for the free variables
-        // Unwrap is safe here because we are unwrapping an infallible result
-        let cases = cases.subst(&mut self.ctx, &subst).unwrap();
-        let self_typ = self_typ.subst(&mut self.ctx, &subst).unwrap();
-        let def_ret_typ = match &motive {
-            Some(m) => m.lift(self).subst(&mut self.ctx, &subst).unwrap().ret_typ,
-            None => shift_and_clone(
-                &ret_typ.clone().unwrap().lift(self).subst(&mut self.ctx, &subst).unwrap(),
-                (1, 0),
-            ),
-        };
-
-        // Build the new top-level definition
-        let name = self.unique_def_name(name, &inferred_type.name.id);
-
-        let def = Def {
-            span: None,
-            doc: None,
-            name: name.clone(),
-            attr: Attributes::default(),
-            params: telescope,
-            self_param: SelfParam {
-                info: None,
-                name: motive
-                    .as_ref()
-                    .map(|m| m.param.name.clone())
-                    .unwrap_or(VarBind::Wildcard { span: None }),
-                typ: self_typ,
-            },
-            ret_typ: def_ret_typ,
-            cases,
-        };
-
-        self.new_decls.push(Decl::Def(def));
-
-        // Replace the match by a dotcall of the new top-level definition
-        Exp::DotCall(DotCall {
-            span: None,
-            kind: DotCallKind::Definition,
-            exp: Box::new(on_exp.lift(self)),
-            name: IdBound { span: None, id: name.id.clone(), uri: self.uri.clone() },
-            args,
-            inferred_type: None,
-        })
-    }
-
-    #[allow(clippy::too_many_arguments)]
     fn lift_comatch(
         &mut self,
         span: &Option<Span>,
@@ -665,8 +578,8 @@ impl Ctx {
         let typ = inferred_type.lift(self);
 
         // Collect the free variables in the comatch and the return type
-        let mut fvs = free_vars_closure(&cases, type_ctx);
-        fvs.extend(free_vars_closure(&typ, type_ctx));
+        let mut fvs = free_vars_closure_legacy(&cases, type_ctx);
+        fvs.extend(free_vars_closure_legacy(&typ, type_ctx));
 
         // Build a telescope of the types of the lifted variables
         let LiftedSignature { telescope, subst, args } = lifted_signature(fvs, &self.ctx);

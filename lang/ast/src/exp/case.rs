@@ -10,8 +10,8 @@ use printer::{
 
 use crate::{
     ctx::{BindContext, LevelCtx},
-    ContainsMetaVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Substitutable, Substitution, Zonk,
-    ZonkError,
+    ContainsMetaVars, FreeVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Substitutable,
+    Substitution, Zonk, ZonkError,
 };
 
 use super::{Exp, IdBound, MetaVar, TelescopeInst};
@@ -165,5 +165,13 @@ impl ContainsMetaVars for Case {
         let Case { span: _, pattern: _, body } = self;
 
         body.contains_metavars()
+    }
+}
+
+impl FreeVars for Case {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        let Case { span: _, pattern, body } = self;
+
+        ctx.bind_iter(pattern.params.params.iter(), |ctx| body.free_vars(ctx, cutoff))
     }
 }

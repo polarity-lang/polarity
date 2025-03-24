@@ -26,6 +26,8 @@ pub struct Ctx {
     pub type_info_table: Rc<TypeInfoTable>,
     /// The program for looking up the expressions when evaluating
     pub module: Rc<Module>,
+    /// Declarations that were lifted during typechecking
+    pub lifted_decls: Vec<Decl>,
 }
 
 impl Ctx {
@@ -39,6 +41,7 @@ impl Ctx {
             meta_vars,
             type_info_table: Rc::new(type_info_table),
             module,
+            lifted_decls: Vec::new(),
         }
     }
 }
@@ -104,14 +107,17 @@ impl Ctx {
 
     pub fn fork<T, F: FnOnce(&mut Ctx) -> T>(&mut self, f: F) -> T {
         let meta_vars = std::mem::take(&mut self.meta_vars);
+        let lifted_decls = std::mem::take(&mut self.lifted_decls);
         let mut inner_ctx = Ctx {
             vars: self.vars.clone(),
             meta_vars,
             type_info_table: self.type_info_table.clone(),
             module: self.module.clone(),
+            lifted_decls
         };
         let res = f(&mut inner_ctx);
         self.meta_vars = inner_ctx.meta_vars;
+        self.lifted_decls = inner_ctx.lifted_decls;
         res
     }
 }

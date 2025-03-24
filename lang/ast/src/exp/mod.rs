@@ -8,7 +8,7 @@ use printer::tokens::{AS, FAT_ARROW};
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::{BindContext, LevelCtx};
-use crate::{ContainsMetaVars, Zonk, ZonkError};
+use crate::{ContainsMetaVars, FreeVars, Zonk, ZonkError};
 
 use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
@@ -236,6 +236,22 @@ impl ContainsMetaVars for Exp {
     }
 }
 
+impl FreeVars for Exp {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: Lvl) -> crate::HashSet<Lvl> {
+        match self {
+            Exp::Variable(variable) => variable.free_vars(ctx, cutoff),
+            Exp::TypCtor(typ_ctor) => typ_ctor.free_vars(ctx, cutoff),
+            Exp::Call(call) => call.free_vars(ctx, cutoff),
+            Exp::DotCall(dot_call) => dot_call.free_vars(ctx, cutoff),
+            Exp::Anno(anno) => anno.free_vars(ctx, cutoff),
+            Exp::TypeUniv(type_univ) => type_univ.free_vars(ctx, cutoff),
+            Exp::LocalMatch(local_match) => local_match.free_vars(ctx, cutoff),
+            Exp::LocalComatch(local_comatch) => local_comatch.free_vars(ctx, cutoff),
+            Exp::Hole(hole) => hole.free_vars(ctx, cutoff),
+        }
+    }
+}
+
 // Motive
 //
 //
@@ -315,5 +331,12 @@ impl Occurs for Motive {
     {
         let Motive { param, ret_typ, .. } = self;
         ctx.bind_single(param, |ctx| ret_typ.occurs(ctx, f))
+    }
+}
+
+impl FreeVars for Motive {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: Lvl) -> crate::HashSet<Lvl> {
+        let Motive { span: _, param, ret_typ } = self;
+        ctx.bind_single(param, |ctx| ret_typ.free_vars(ctx, cutoff))
     }
 }

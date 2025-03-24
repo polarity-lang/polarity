@@ -7,8 +7,8 @@ use printer::{
 };
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, Zonk, ZonkError,
 };
 
 use super::{Exp, Hole, MetaVar, VarBound};
@@ -155,6 +155,16 @@ impl ContainsMetaVars for Arg {
     }
 }
 
+impl FreeVars for Arg {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        match self {
+            Arg::UnnamedArg { arg, .. } => arg.free_vars(ctx, cutoff),
+            Arg::NamedArg { arg, .. } => arg.free_vars(ctx, cutoff),
+            Arg::InsertedImplicitArg { hole, .. } => hole.free_vars(ctx, cutoff),
+        }
+    }
+}
+
 // Args
 //
 //
@@ -250,6 +260,14 @@ impl ContainsMetaVars for Args {
         let Args { args } = self;
 
         args.contains_metavars()
+    }
+}
+
+impl FreeVars for Args {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        let Args { args } = self;
+
+        args.free_vars(ctx, cutoff)
     }
 }
 

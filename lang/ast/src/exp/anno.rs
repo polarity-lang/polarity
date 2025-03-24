@@ -3,8 +3,8 @@ use miette_util::codespan::Span;
 use printer::{tokens::COLON, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, Zonk, ZonkError,
 };
 
 use super::{Exp, MetaVar};
@@ -107,5 +107,15 @@ impl ContainsMetaVars for Anno {
         let Anno { span: _, exp, typ, normalized_type } = self;
 
         exp.contains_metavars() || typ.contains_metavars() || normalized_type.contains_metavars()
+    }
+}
+
+impl FreeVars for Anno {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        let Anno { span: _, exp, typ, normalized_type: _ } = self;
+
+        let mut free_vars = exp.free_vars(ctx, cutoff);
+        free_vars.extend(typ.free_vars(ctx, cutoff));
+        free_vars
     }
 }

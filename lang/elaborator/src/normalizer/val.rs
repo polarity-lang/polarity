@@ -362,7 +362,6 @@ impl ReadBack for AnnoVal {
 pub enum Neu {
     Variable(Variable),
     DotCall(DotCall),
-    LocalMatch(LocalMatch),
     Hole(Hole),
     /// A call which corresponds to an opaque let-bound definition on the toplevel
     /// cannot be inlined and must therefore block computation.
@@ -375,7 +374,6 @@ impl Shift for Neu {
         match self {
             Neu::Variable(e) => e.shift_in_range(range, by),
             Neu::DotCall(e) => e.shift_in_range(range, by),
-            Neu::LocalMatch(e) => e.shift_in_range(range, by),
             Neu::Hole(e) => e.shift_in_range(range, by),
             Neu::OpaqueCall(e) => e.shift_in_range(range, by),
             Neu::AnnoNeu(e) => e.shift_in_range(range, by),
@@ -388,7 +386,6 @@ impl Print for Neu {
         match self {
             Neu::Variable(e) => e.print(cfg, alloc),
             Neu::DotCall(e) => e.print(cfg, alloc),
-            Neu::LocalMatch(e) => e.print(cfg, alloc),
             Neu::Hole(e) => e.print(cfg, alloc),
             Neu::OpaqueCall(e) => e.print(cfg, alloc),
             Neu::AnnoNeu(e) => e.print(cfg, alloc),
@@ -409,7 +406,6 @@ impl ReadBack for Neu {
         let res = match self {
             Neu::Variable(e) => e.read_back(info_table)?.into(),
             Neu::DotCall(e) => e.read_back(info_table)?.into(),
-            Neu::LocalMatch(e) => e.read_back(info_table)?.into(),
             Neu::Hole(e) => e.read_back(info_table)?.into(),
             Neu::OpaqueCall(e) => e.read_back(info_table)?.into(),
             Neu::AnnoNeu(e) => e.read_back(info_table)?.into(),
@@ -537,30 +533,6 @@ impl Print for LocalMatch {
             .append(alloc.text(name.to_string()))
             .append(alloc.space())
             .append(print_cases(cases, cfg, alloc))
-    }
-}
-
-impl From<LocalMatch> for Neu {
-    fn from(value: LocalMatch) -> Self {
-        Neu::LocalMatch(value)
-    }
-}
-
-impl ReadBack for LocalMatch {
-    type Nf = ast::LocalMatch;
-
-    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
-        let LocalMatch { span, name, on_exp, cases } = self;
-        Ok(ast::LocalMatch {
-            span: *span,
-            ctx: None,
-            motive: None,
-            ret_typ: None,
-            name: name.clone(),
-            on_exp: on_exp.read_back(info_table)?,
-            cases: cases.read_back(info_table)?,
-            inferred_type: None,
-        })
     }
 }
 

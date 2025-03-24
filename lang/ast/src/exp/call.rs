@@ -3,8 +3,8 @@ use miette_util::codespan::Span;
 use printer::{theme::ThemeExt, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, Zonk, ZonkError,
 };
 
 use super::{Args, Exp, IdBound, MetaVar};
@@ -121,5 +121,13 @@ impl ContainsMetaVars for Call {
         let Call { span: _, kind: _, name: _, args, inferred_type } = self;
 
         args.contains_metavars() || inferred_type.contains_metavars()
+    }
+}
+
+impl FreeVars for Call {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        let Call { span: _, kind: _, name: _, args, inferred_type: _ } = self;
+
+        args.free_vars(ctx, cutoff)
     }
 }

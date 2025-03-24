@@ -4,8 +4,8 @@ use pretty::DocAllocator;
 use printer::{theme::ThemeExt, tokens::DOT, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, Zonk, ZonkError,
 };
 
 use super::{Args, Exp, IdBound, MetaVar};
@@ -144,5 +144,15 @@ impl Print for DotCall {
             dtor = exp;
         }
         dtor.print(cfg, alloc).append(dtors_group.align().group())
+    }
+}
+
+impl FreeVars for DotCall {
+    fn free_vars(&self, ctx: &mut LevelCtx, cutoff: crate::Lvl) -> crate::HashSet<crate::Lvl> {
+        let DotCall { span: _, kind: _, exp, name: _, args, inferred_type: _ } = self;
+
+        let mut free_vars = exp.free_vars(ctx, cutoff);
+        free_vars.extend(args.free_vars(ctx, cutoff));
+        free_vars
     }
 }

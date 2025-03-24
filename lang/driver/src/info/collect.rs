@@ -579,7 +579,7 @@ impl CollectInfo for Anno {
 
 impl CollectInfo for LocalMatch {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
-        let LocalMatch { span, on_exp, ret_typ, cases, inferred_type, .. } = self;
+        let LocalMatch { span, on_exp, ret_typ, inferred_type, .. } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             // Add info
             let typ = typ.print_to_string(None);
@@ -590,7 +590,6 @@ impl CollectInfo for LocalMatch {
         }
         on_exp.collect_info(db, collector);
         ret_typ.collect_info(db, collector);
-        cases.collect_info(db, collector)
     }
 }
 

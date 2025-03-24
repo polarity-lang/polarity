@@ -51,14 +51,6 @@ impl Zonk for TelescopeInst {
     }
 }
 
-impl ContainsMetaVars for TelescopeInst {
-    fn contains_metavars(&self) -> bool {
-        let TelescopeInst { params } = self;
-
-        params.contains_metavars()
-    }
-}
-
 // ParamInst
 //
 //
