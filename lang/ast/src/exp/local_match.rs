@@ -9,8 +9,8 @@ use printer::{
 
 use crate::{
     ctx::{values::TypeCtx, LevelCtx},
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    Zonk, ZonkError, IdBound
+    ContainsMetaVars, HasSpan, HasType, IdBound, Occurs, Shift, ShiftRange, Substitutable,
+    Substitution, Zonk, ZonkError,
 };
 
 use super::{print_cases, Case, Exp, Label, MetaVar, Motive, TypCtor};
@@ -142,7 +142,6 @@ impl ContainsMetaVars for LocalMatch {
     }
 }
 
-
 // Cases
 //
 //
@@ -150,21 +149,23 @@ impl ContainsMetaVars for LocalMatch {
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum Cases {
-    Unchecked{ cases : Vec<Case> },
-    Checked{
+    Unchecked {
+        cases: Vec<Case>,
+    },
+    Checked {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
-        cases : Vec<Case>,
-        args : Vec<Exp>,
-        lifted_def : IdBound }
+        cases: Vec<Case>,
+        args: Vec<Exp>,
+        lifted_def: IdBound,
+    },
 }
-
 
 impl Shift for Cases {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         use Cases::*;
         match self {
             Unchecked { cases } => cases.shift_in_range(range, by),
-            Checked { cases, args, lifted_def:_ } => {
+            Checked { cases, args, lifted_def: _ } => {
                 cases.shift_in_range(range, by);
                 args.shift_in_range(range, by);
             }
@@ -180,28 +181,26 @@ impl Occurs for Cases {
         use Cases::*;
         match self {
             Unchecked { cases } => cases.occurs(ctx, f),
-            Checked { cases:_, args, lifted_def:_ } => args.occurs(ctx,f),
+            Checked { cases: _, args, lifted_def: _ } => args.occurs(ctx, f),
         }
     }
 }
 
 impl Substitutable for Cases {
     type Target = Cases;
-    fn subst<S: Substitution>(&self, ctx: &mut crate::ctx::GenericCtx<()>, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst<S: Substitution>(
+        &self,
+        ctx: &mut crate::ctx::GenericCtx<()>,
+        by: &S,
+    ) -> Result<Self::Target, S::Err> {
         use Cases::*;
         match self {
-            Unchecked { cases } => {
-                Ok(Unchecked {
-                    cases : cases.subst(ctx, by)?
-                })
-            },
-            Checked { cases, args, lifted_def} => {
-                Ok(Checked {
-                    cases : cases.clone(),
-                    args : args.subst(ctx,by)?,
-                    lifted_def : lifted_def.clone()
-                })
-            },
+            Unchecked { cases } => Ok(Unchecked { cases: cases.subst(ctx, by)? }),
+            Checked { cases, args, lifted_def } => Ok(Checked {
+                cases: cases.clone(),
+                args: args.subst(ctx, by)?,
+                lifted_def: lifted_def.clone(),
+            }),
         }
     }
 }
@@ -211,17 +210,20 @@ impl Print for Cases {
         use Cases::*;
         match self {
             Unchecked { cases } => print_cases(cases, cfg, alloc),
-            Checked { cases, args: _, lifted_def:_ } => print_cases(cases, cfg, alloc)
+            Checked { cases, args: _, lifted_def: _ } => print_cases(cases, cfg, alloc),
         }
     }
 }
 
 impl Zonk for Cases {
-    fn zonk(&mut self, meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>) -> Result<(), ZonkError> {
+    fn zonk(
+        &mut self,
+        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+    ) -> Result<(), ZonkError> {
         use Cases::*;
         match self {
             Unchecked { cases } => cases.zonk(meta_vars),
-            Checked { cases:_, args, lifted_def:_ } => args.zonk(meta_vars),
+            Checked { cases: _, args, lifted_def: _ } => args.zonk(meta_vars),
         }
     }
 }
@@ -231,7 +233,9 @@ impl ContainsMetaVars for Cases {
         use Cases::*;
         match self {
             Unchecked { cases } => cases.contains_metavars(),
-            Checked { cases:_, args, lifted_def:_ } => args.contains_metavars() || todo!("implement metavar check for the lifted def"),
+            Checked { cases: _, args, lifted_def: _ } => {
+                args.contains_metavars() || todo!("implement metavar check for the lifted def")
+            }
         }
     }
 }

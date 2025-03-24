@@ -279,10 +279,10 @@ impl Rename for Cases {
     fn rename_in_ctx(&mut self, ctx: &mut Ctx) {
         match self {
             Cases::Unchecked { cases } => cases.rename_in_ctx(ctx),
-            Cases::Checked { cases, args, lifted_def:_} => {
+            Cases::Checked { cases, args, lifted_def: _ } => {
                 cases.rename_in_ctx(ctx);
                 args.rename_in_ctx(ctx);
-            },
+            }
         }
     }
 }

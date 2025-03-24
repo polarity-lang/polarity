@@ -216,7 +216,7 @@ impl FV for Cases {
         use Cases::*;
         match self {
             Unchecked { cases } => cases.free_vars_closure(lvl_ctx, type_ctx),
-            Checked { cases: _, args, lifted_def:_ } => args.free_vars_closure(lvl_ctx, type_ctx)
+            Checked { cases: _, args, lifted_def: _ } => args.free_vars_closure(lvl_ctx, type_ctx),
         }
     }
 }

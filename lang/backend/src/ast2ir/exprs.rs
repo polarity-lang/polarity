@@ -107,12 +107,14 @@ impl ToIR for ast::LocalMatch {
         let ast::LocalMatch { on_exp, cases, .. } = self;
 
         let on_exp = Box::new(on_exp.to_ir()?);
-        let ast::Cases::Checked{cases:_, args, lifted_def} = cases else {return Err(BackendError::Impossible("Encountered unchecked local match".to_owned()))};
-        Ok(ir::DotCall{
-            exp : on_exp,
-            name : lifted_def.id.clone(),
+        let ast::Cases::Checked { cases: _, args, lifted_def } = cases else {
+            return Err(BackendError::Impossible("Encountered unchecked local match".to_owned()));
+        };
+        Ok(ir::DotCall {
+            exp: on_exp,
+            name: lifted_def.id.clone(),
             module_uri: lifted_def.uri.clone(),
-            args : args.to_ir()?
+            args: args.to_ir()?,
         })
     }
 }

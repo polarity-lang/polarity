@@ -418,7 +418,7 @@ impl Lower for cst::exp::LocalMatch {
             on_exp: on_exp.lower(ctx)?,
             motive: motive.lower(ctx)?,
             ret_typ: None,
-            cases: ast::Cases::Unchecked {cases : cases.lower(ctx)?},
+            cases: ast::Cases::Unchecked { cases: cases.lower(ctx)? },
             inferred_type: None,
         }
         .into())
