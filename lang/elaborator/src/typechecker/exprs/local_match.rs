@@ -50,13 +50,7 @@ impl CheckInfer for LocalMatch {
                 })?;
 
                 // Ensure that the motive matches the expected type
-                let motive_binder = Binder {
-                    name: match motive {
-                        Some(m) => m.param.name.clone(),
-                        None => VarBind::Wildcard { span: None },
-                    },
-                    content: (),
-                };
+                let motive_binder = Binder { name: m.param.name.clone(), content: () };
                 let mut subst_ctx = ctx.levels().append(&vec![vec![motive_binder]].into());
                 let on_exp = shift_and_clone(on_exp, (1, 0));
                 let subst = Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp };
