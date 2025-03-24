@@ -961,7 +961,6 @@ impl Telescope {
             .map(|Param { name, erased, .. }| ParamInst {
                 span: None,
                 name: name.clone(),
-                info: None,
                 typ: None,
                 erased: *erased,
             })
