@@ -24,6 +24,34 @@ use super::{CheckInfer, ExpectType};
 //
 //
 
+/// Compute the annotated motive and type of the body of the clauses if the user has
+/// written a local pattern match with a motive:
+///
+/// ```text
+///  e.match as x => t { ... }
+///  ^       ^^^^^^^^^
+///  |         motive
+/// on_exp
+/// ```
+///
+/// # Parameters
+///
+/// - `ctx`: the typechecking context of the local match.
+/// - `motive`: The motive written by the programmer.
+/// - `on_exp`: The term on which we pattern match.
+/// - `on_exp_typ`: The type of `on_exp`.
+/// - `expected_type`: We are in checking mode, so this is the expected type of the entire pattern matching expression.
+///
+/// # Requires
+///
+/// - `on_exp` is already fully inferred.
+/// - `on_exp_typ` is the type of `on_exp`.
+///
+/// # Returns
+/// - The fully inferred and annotated motive
+/// - The type that we should use to check the RHSs of the individual clauses.
+///   (Before the refinements introduces through dependent pattern matching.)
+///
 fn compute_motive(
     ctx: &mut Ctx,
     motive: &Motive,
