@@ -18,7 +18,7 @@ use crate::typechecker::type_info_table::CtorMeta;
 
 use super::super::ctx::*;
 use super::super::util::*;
-use super::CheckInfer;
+use super::{CheckInfer, ExpectType};
 
 // LocalMatch
 //
@@ -27,16 +27,11 @@ use super::CheckInfer;
 impl CheckInfer for LocalMatch {
     fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
         let LocalMatch { span, name, on_exp, motive, cases, .. } = self;
+
+        // Compute the type of the expression we are pattern matching on.
+        // This should always be a type constructor for a data type.
         let on_exp_out = on_exp.infer(ctx)?;
-        let typ_app_nf = on_exp_out
-            .typ()
-            .ok_or(TypeError::Impossible {
-                message: "Expected inferred type".to_owned(),
-                span: None,
-            })?
-            .expect_typ_app()?;
-        let typ_app = typ_app_nf.infer(ctx)?;
-        let ret_typ_out = t.check(ctx, &Box::new(TypeUniv::new().into()))?;
+        let on_exp_typ = on_exp_out.expect_typ()?.expect_typ_app()?;
 
         let motive_out;
         let body_t;
@@ -46,7 +41,7 @@ impl CheckInfer for LocalMatch {
             Some(m) => {
                 let Motive { span: info, param, ret_typ } = m;
                 let mut self_t_nf =
-                    typ_app.to_exp().normalize(&ctx.type_info_table, &mut ctx.env())?;
+                    on_exp_typ.to_exp().normalize(&ctx.type_info_table, &mut ctx.env())?;
                 self_t_nf.shift((1, 0));
                 let self_binder = Binder { name: param.name.clone(), content: self_t_nf.clone() };
 
@@ -56,13 +51,7 @@ impl CheckInfer for LocalMatch {
                 })?;
 
                 // Ensure that the motive matches the expected type
-                let motive_binder = Binder {
-                    name: match motive {
-                        Some(m) => m.param.name.clone(),
-                        None => VarBind::Wildcard { span: None },
-                    },
-                    content: (),
-                };
+                let motive_binder = Binder { name: m.param.name.clone(), content: () };
                 let mut subst_ctx = ctx.levels().append(&vec![vec![motive_binder]].into());
                 let on_exp = shift_and_clone(on_exp, (1, 0));
                 let subst = Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp };
@@ -80,7 +69,7 @@ impl CheckInfer for LocalMatch {
                         span: *info,
                         info: Some(self_t_nf),
                         name: param.name.clone(),
-                        typ: Box::new(typ_app.to_exp()).into(),
+                        typ: Box::new(on_exp_typ.to_exp()).into(),
                         erased: param.erased,
                     },
                     ret_typ: ret_typ_out,
@@ -95,7 +84,7 @@ impl CheckInfer for LocalMatch {
 
         let with_scrutinee_type = WithScrutineeType {
             cases,
-            scrutinee_type: typ_app_nf.clone(),
+            scrutinee_type: on_exp_typ.clone(),
             scrutinee_name: VarBind::Wildcard { span: None },
         };
         with_scrutinee_type.check_exhaustiveness(ctx)?;
@@ -107,9 +96,9 @@ impl CheckInfer for LocalMatch {
             name: name.clone(),
             on_exp: on_exp_out,
             motive: motive_out,
-            ret_typ: Some(Box::new(ret_typ_out)),
+            ret_typ: Some(Box::new(t.clone())),
             cases,
-            inferred_type: Some(typ_app),
+            inferred_type: Some(on_exp_typ),
         })
     }
 
