@@ -1,3 +1,5 @@
+use "./bool.pol"
+
 /// The type of Peano natural numbers.
 data Nat {
     /// The constant zero.
@@ -39,6 +41,18 @@ def Nat.fact: Nat {
 def Nat.pred: Nat {
     Z => Z,
     S(x) => x
+}
+
+/// Compare two natural numbers for equality.
+def Nat.eq(other: Nat): Bool {
+    Z => other.match {
+        Z => T,
+        S(_) => F,
+    },
+    S(x) => other.match {
+        Z => F,
+        S(other) => x.eq(other),
+    },
 }
 
 /// The lesser-or-equal relation on natural numbers.

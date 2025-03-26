@@ -1,0 +1,63 @@
+use "../std/data/bool.pol"
+use "../std/data/eq.pol"
+use "../std/data/nat.pol"
+// Set objects from Section 3 of “On Understanding Data Abstraction, Revisited”
+// by William R. Cook https://www.cs.utexas.edu/~wcook/Drafts/2009/essay.pdf
+
+codata Set {
+    .is_empty: Bool,
+    .contains(i: Nat): Bool,
+    .insert(i: Nat): Set,
+    .union(r: Set): Set,
+}
+
+codef Empty: Set {
+    .is_empty => T,
+    .contains(_) => F,
+    .insert(i) => Insert(Empty, i),
+    .union(s) => s,
+}
+
+#[transparent]
+let Insert(s: Set, n: Nat): Set {
+    s.contains(n).match {
+        T => s,
+        // NOTE (2025-03-25): Polarity does not currently allow local comatches
+        // to use self parameters. Instead we lift this to the top-level.
+        F => Insert'(s, n),
+    }
+}
+
+codef Insert'(s: Set, n: Nat): Set {
+    .is_empty => F,
+    .contains(i) =>
+        i.eq(n).match {
+            T => T,
+            F => s.contains(i),
+        },
+    .insert(i) => Insert(Insert'(s, n), i),
+    .union(r) => Union(Insert'(s, n), r),
+}
+
+codef Union(s1 s2: Set): Set {
+    .is_empty => F,
+    .contains(i) =>
+        s1.contains(i).match {
+            T => T,
+            F => s2.contains(i),
+        },
+    .insert(i) => Insert(Union(s1, s2), i),
+    .union(r) => Union(Union(s1, s2), r),
+}
+
+codef Full : Set {
+    .is_empty => F,
+    .contains(_) => T,
+    .insert(_) => Full,
+    .union(_) => Full,
+}
+
+// Expression from Section 3.2 of the paper
+let paper_example : Eq(a:=Bool, Empty.insert(3).union(Empty.insert(1)).insert(5).contains(4), F) {
+    Refl(a:=Bool, F)
+}
