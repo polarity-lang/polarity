@@ -2,14 +2,14 @@ use "../../../std/data/bool.pol"
 
 def .extract(x) {
     TrueRep => T,
-    FalseRep => F
+    FalseRep => F,
 }
 
 def .flipRep(x, rep) {
     Unit =>
         rep.match {
             TrueRep => FalseRep,
-            FalseRep => TrueRep
+            FalseRep => TrueRep,
         }
 }
 

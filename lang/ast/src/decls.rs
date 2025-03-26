@@ -451,7 +451,11 @@ impl Print for Data {
         } else {
             alloc
                 .line()
-                .append(alloc.intersperse(ctors.iter().map(|ctor| ctor.print(cfg, alloc)), sep))
+                .append(
+                    alloc
+                        .intersperse(ctors.iter().map(|ctor| ctor.print(cfg, alloc)), sep)
+                        .append(alloc.text(COMMA).flat_alt(alloc.nil())),
+                )
                 .nest(cfg.indent)
                 .append(alloc.line())
                 .braces_anno()
@@ -519,7 +523,11 @@ impl Print for Codata {
         } else {
             alloc
                 .line()
-                .append(alloc.intersperse(dtors.iter().map(|dtor| dtor.print(cfg, alloc)), sep))
+                .append(
+                    alloc
+                        .intersperse(dtors.iter().map(|dtor| dtor.print(cfg, alloc)), sep.clone())
+                        .append(alloc.text(COMMA).flat_alt(alloc.nil())),
+                )
                 .nest(cfg.indent)
                 .append(alloc.line())
                 .braces_anno()

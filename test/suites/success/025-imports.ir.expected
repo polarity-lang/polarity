@@ -3,7 +3,7 @@ use "../../../std/data/bool.pol"
 
 def .iNeg {
     T => F,
-    F => T
+    F => T,
 }
 
 let one { S(Z) }

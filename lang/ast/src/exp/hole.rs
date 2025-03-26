@@ -200,7 +200,7 @@ fn print_hole_args<'a>(
 ) -> Builder<'a> {
     let groups = args.iter().map(|group| group.print(cfg, alloc).parens());
     let sep = alloc.text(COMMA).append(alloc.space());
-    alloc.intersperse(groups, sep).brackets()
+    alloc.intersperse(groups, sep).append(alloc.text(COMMA).flat_alt(alloc.nil())).brackets()
 }
 
 impl Zonk for Hole {

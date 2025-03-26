@@ -124,6 +124,7 @@ impl<T: Print> Print for GenericCtx<T> {
                     }),
                     sep.clone(),
                 )
+                .append(alloc.text(COMMA).flat_alt(alloc.nil()))
                 .brackets()
         });
         alloc.intersperse(iter, sep.clone()).brackets()

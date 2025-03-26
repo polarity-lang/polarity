@@ -1,12 +1,12 @@
 def .rep {
     T => TrueRep,
-    F => FalseRep
+    F => FalseRep,
 }
 
 def .example(b) {
     Unit =>
         b.match {
             T => TrueRep,
-            F => FalseRep
+            F => FalseRep,
         }
 }

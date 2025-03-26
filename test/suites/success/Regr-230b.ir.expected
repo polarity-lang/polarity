@@ -1,6 +1,6 @@
 def .add(m) {
     Z => m,
-    S(n) => S(n.add(m))
+    S(n) => S(n.add(m)),
 }
 
 let two { S(S(Z)) }

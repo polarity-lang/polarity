@@ -1,6 +1,6 @@
 def .and(other) {
     True => other,
-    False => False
+    False => False,
 }
 
 let example1 { Cons(True, Nil) }

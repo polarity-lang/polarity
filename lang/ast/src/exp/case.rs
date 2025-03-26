@@ -152,7 +152,8 @@ pub fn print_cases<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a>) 
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
                 .hardline()
-                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep))
+                .append(alloc.text(COMMA).flat_alt(alloc.nil()))
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()

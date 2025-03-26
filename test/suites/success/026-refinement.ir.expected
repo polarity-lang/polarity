@@ -8,10 +8,10 @@ def .cong(x, y, f) { Refl(x0) => Refl(f.ap(y)) }
 
 def .not {
     True => False,
-    False => True
+    False => True,
 }
 
 def .not_inverse {
     True => Refl(True),
-    False => Refl(False)
+    False => Refl(False),
 }
