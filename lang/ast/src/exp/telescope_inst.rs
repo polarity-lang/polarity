@@ -29,11 +29,7 @@ impl TelescopeInst {
 
 impl Print for TelescopeInst {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        if self.params.is_empty() {
-            alloc.nil()
-        } else {
-            self.params.print(cfg, alloc).parens()
-        }
+        if self.params.is_empty() { alloc.nil() } else { self.params.print(cfg, alloc).parens() }
     }
 }
 

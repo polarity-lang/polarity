@@ -4,8 +4,8 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable, Substitution, Zonk,
+    ZonkError, ctx::LevelCtx,
 };
 
 use super::{Exp, Idx, MetaVar, VarBound};

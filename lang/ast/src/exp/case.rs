@@ -2,16 +2,16 @@ use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{
+    Alloc, Builder, Print, PrintCfg,
     theme::ThemeExt,
     tokens::{ABSURD, COMMA, DOT, FAT_ARROW},
     util::BracesExt,
-    Alloc, Builder, Print, PrintCfg,
 };
 
 use crate::{
-    ctx::{BindContext, LevelCtx},
     ContainsMetaVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Substitutable, Substitution, Zonk,
     ZonkError,
+    ctx::{BindContext, LevelCtx},
 };
 
 use super::{Exp, IdBound, MetaVar, TelescopeInst};

@@ -2,13 +2,13 @@ use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{
-    tokens::{COLONEQ, COMMA},
     Alloc, Builder, Print, PrintCfg,
+    tokens::{COLONEQ, COMMA},
 };
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
+    Zonk, ZonkError, ctx::LevelCtx,
 };
 
 use super::{Exp, Hole, MetaVar, VarBound};
