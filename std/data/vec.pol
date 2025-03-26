@@ -5,11 +5,11 @@ data Vec(n : Nat, a: Type) {
     /// The empty vector.
     VNil(a : Type) : Vec(Z, a),
     /// Appending one element to a vector.
-    VCons(n : Nat, a: Type, x: a, xs: Vec(n,a)) : Vec(S(n), a)
+    VCons(n : Nat, a: Type, x: a, xs: Vec(n,a)) : Vec(S(n), a),
 }
 
 /// The first element of a non-empty vector.
 def Vec(S(n), a).head(n: Nat, a: Type) : a {
     VNil(_) absurd,
-    VCons(_,_,x,_) => x
+    VCons(_,_,x,_) => x,
 }

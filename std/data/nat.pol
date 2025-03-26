@@ -6,19 +6,19 @@ data Nat {
     /// The constant zero.
     Z,
     /// The successor of a Peano natural number.
-    S(pred: Nat)
+    S(pred: Nat),
 }
 
 /// Addition of two natural numbers.
 def Nat.add(other: Nat): Nat {
     Z => other,
-    S(x) => S(x.add(other))
+    S(x) => S(x.add(other)),
 }
 
 /// Multiplication of two natural numbers.
 def Nat.mul(other: Nat): Nat {
     Z => Z,
-    S(x) => other.add(x.mul(other))
+    S(x) => other.add(x.mul(other)),
 }
 
 /// A saturating version of subtraction.
@@ -27,21 +27,21 @@ def Nat.monus(other: Nat): Nat {
     S(pred) =>
         other.match {
             Z => S(pred),
-            S(pred') => pred.monus(pred')
-        }
+            S(pred') => pred.monus(pred'),
+        },
 }
 
 /// The factorial of a natural number.
 def Nat.fact: Nat {
     Z => 1,
-    S(pred) => S(pred).mul(pred.fact)
+    S(pred) => S(pred).mul(pred.fact),
 }
 
 /// The predecessor of a natural number.
 /// The predecessor of `Z` is `Z`.
 def Nat.pred: Nat {
     Z => Z,
-    S(x) => x
+    S(x) => x,
 }
 
 /// Compare two natural numbers.
@@ -59,29 +59,29 @@ def Nat.cmp(other: Nat): Ordering {
 /// The lesser-or-equal relation on natural numbers.
 data LE(x y: Nat) {
     LERefl(x: Nat): LE(x, x),
-    LESucc(x y: Nat, h: LE(x, y)): LE(x, S(y))
+    LESucc(x y: Nat, h: LE(x, y)): LE(x, S(y)),
 }
 
 /// Z is smaller than any natural number.
 def (x: Nat).z_le: LE(Z, x) {
     Z => LERefl(Z),
-    S(x) => LESucc(Z, x, x.z_le)
+    S(x) => LESucc(Z, x, x.z_le),
 }
 
 /// If x <= y, then S(x) <= S(y)
 def LE(x, y).le_succ(x y: Nat): LE(S(x), S(y)) {
     LERefl(_) => LERefl(S(x)),
-    LESucc(x, y, h) => LESucc(S(x), S(y), h.le_succ(x, y))
+    LESucc(x, y, h) => LESucc(S(x), S(y), h.le_succ(x, y)),
 }
 
 /// If S(x) <= S(y), then x <= y.
 def LE(S(x), S(y)).le_unsucc(x y: Nat): LE(x, y) {
     LERefl(_) => LERefl(x),
-    LESucc(_, _, h) => h.s_le(x, y)
+    LESucc(_, _, h) => h.s_le(x, y),
 }
 
 /// If S(x) <= y, then x <= y
 def LE(S(x), y).s_le(x y: Nat): LE(x, y) {
     LERefl(_) => LESucc(x, x, LERefl(x)),
-    LESucc(_, y', h) => LESucc(x, y', h.s_le(x, y'))
+    LESucc(_, y', h) => LESucc(x, y', h.s_le(x, y')),
 }

@@ -9,14 +9,14 @@ data Exp {
     /// Lambda abstractions
     Lam(body: Exp),
     /// Function applications
-    App(lhs rhs: Exp)
+    App(lhs rhs: Exp),
 }
 
 /// Types of the object language
 data Typ {
     /// Function type
     FunT(t1 t2: Typ),
-    VarT(x: Nat)
+    VarT(x: Nat),
 }
 
 /// **Typing contexts**.
@@ -25,37 +25,37 @@ data Ctx {
     /// The empty context
     Nil,
     /// Adding a typed binding to the context
-    Cons(t: Typ, ts: Ctx)
+    Cons(t: Typ, ts: Ctx),
 }
 
 /// Appending two contexts
 def Ctx.append(other: Ctx): Ctx {
     Nil => other,
-    Cons(t, ts) => Cons(t, ts.append(other))
+    Cons(t, ts) => Cons(t, ts.append(other)),
 }
 
 /// Computing the length of a context
 def Ctx.len: Nat {
     Nil => Z,
-    Cons(_, ts) => S(ts.len)
+    Cons(_, ts) => S(ts.len),
 }
 
 /// Substituting an expression for a variable in an expression.
 def Exp.subst(v: Nat, by: Exp): Exp {
     Var(x) => x.cmp(v).subst_result(x, by),
     Lam(e) => Lam(e.subst(S(v), by)),
-    App(e1, e2) => App(e1.subst(v, by), e2.subst(v, by))
+    App(e1, e2) => App(e1.subst(v, by), e2.subst(v, by)),
 }
 
 def Ordering.subst_result(x: Nat, by: Exp): Exp {
     LT => Var(x),
     EQ => by,
-    GT => Var(x.pred)
+    GT => Var(x.pred),
 }
 
 data Elem(x: Nat, t: Typ, ctx: Ctx) {
     Here(t: Typ, ts: Ctx): Elem(Z, t, Cons(t, ts)),
-    There(x: Nat, t t2: Typ, ts: Ctx, prf: Elem(x, t, ts)): Elem(S(x), t, Cons(t2, ts))
+    There(x: Nat, t t2: Typ, ts: Ctx, prf: Elem(x, t, ts)): Elem(S(x), t, Cons(t2, ts)),
 }
 
 /// The typing judgement.
@@ -68,9 +68,9 @@ data HasType(ctx: Ctx, e: Exp, t: Typ) {
          t1 t2: Typ,
          e1 e2: Exp,
          e1_t: HasType(ctx, e1, FunT(t1, t2)),
-         e2_t: HasType(ctx, e2, t1)
+         e2_t: HasType(ctx, e2, t1),
          )
-        : HasType(ctx, App(e1, e2), t2)
+        : HasType(ctx, App(e1, e2), t2),
 }
 
 /// The evaluation relation
@@ -78,18 +78,18 @@ data HasType(ctx: Ctx, e: Exp, t: Typ) {
 data Eval(e1 e2: Exp) {
     EBeta(e1 e2: Exp): Eval(App(Lam(e1), e2), e1.subst(Z, e2)),
     ECongApp1(e1 e1': Exp, h: Eval(e1, e1'), e2: Exp): Eval(App(e1, e2), App(e1', e2)),
-    ECongApp2(e1 e2 e2': Exp, h: Eval(e2, e2')): Eval(App(e1, e2), App(e1, e2'))
+    ECongApp2(e1 e2 e2': Exp, h: Eval(e2, e2')): Eval(App(e1, e2), App(e1, e2')),
 }
 
 /// Characterizes the subset of Values.
 data IsValue(e: Exp) {
     /// Every lambda abstraction is a value
-    VLam(e: Exp): IsValue(Lam(e))
+    VLam(e: Exp): IsValue(Lam(e)),
 }
 
 data Progress(e: Exp) {
     PVal(e: Exp, h: IsValue(e)): Progress(e),
-    PStep(e1 e2: Exp, h: Eval(e1, e2)): Progress(e1)
+    PStep(e1 e2: Exp, h: Eval(e1, e2)): Progress(e1),
 }
 
 def (e: Exp).progress(t: Typ): HasType(Nil, e, t) -> Progress(e) {
@@ -97,7 +97,7 @@ def (e: Exp).progress(t: Typ): HasType(Nil, e, t) -> Progress(e) {
         \ap(_,_,h_t) => h_t.match {
             TVar(_, _, _, elem) => elem.empty_absurd(x, t).ex_falso(Progress(Var(x))),
             TLam(_, _, _, _, _) absurd,
-            TApp(_, _, _, _, _, _, _) absurd
+            TApp(_, _, _, _, _, _, _) absurd,
         },
     Lam(e) => \ap(_,_,_) => PVal(Lam(e), VLam(e)),
     App(e1, e2) =>
@@ -111,10 +111,10 @@ def (e: Exp).progress(t: Typ): HasType(Nil, e, t) -> Progress(e) {
                         PStep(App(e1, e2), App(e1', e2), ECongApp1(e1, e1', e1_eval_e1', e2)),
                     PVal(_, is_val) =>
                         is_val.match {
-                            VLam(e) => PStep(App(Lam(e), e2), e.subst(Z, e2), EBeta(e, e2))
-                        }
-                }
-        }
+                            VLam(e) => PStep(App(Lam(e), e2), e.subst(Z, e2), EBeta(e, e2)),
+                        },
+                },
+        },
 }
 
 def (e1: Exp).preservation(e2: Exp, t: Typ)
@@ -123,13 +123,13 @@ def (e1: Exp).preservation(e2: Exp, t: Typ)
         \ap(_,_,h_t) => \ap(_,_,h_eval) => h_eval.match {
             EBeta(_, _) absurd,
             ECongApp1(_, _, _, _) absurd,
-            ECongApp2(_, _, _, _) absurd
+            ECongApp2(_, _, _, _) absurd,
         },
     Lam(_) =>
         \ap(_,_,h_t) => \ap(_,_,h_eval) => h_eval.match {
             EBeta(_, _) absurd,
             ECongApp1(_, _, _, _) absurd,
-            ECongApp2(_, _, _, _) absurd
+            ECongApp2(_, _, _, _) absurd,
         },
     App(e1, e2) =>
         \ap(_,_,h_t) => h_t.match {
@@ -170,10 +170,10 @@ def (e1: Exp).preservation(e2: Exp, t: Typ)
                                   .ap(HasType(Cons(t1, Nil), e1, t2),
                                       HasType(Nil, e2, t1) -> HasType(Nil, e1.subst(Z, e2), t2),
                                       h_e1)
-                                  .ap(HasType(Nil, e2, t1), HasType(Nil, e1.subst(Z, e2), t2), h_e2)
-                        }
-                }
-        }
+                                  .ap(HasType(Nil, e2, t1), HasType(Nil, e1.subst(Z, e2), t2), h_e2),
+                        },
+                },
+        },
 }
 
 def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
@@ -196,7 +196,7 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                                               .ap(_, _, cmp) =>
                                                   HasType(ctx1.append(ctx2),
                                                           cmp.subst_result(x, by_e),
-                                                          t2)
+                                                          t2),
                                           },
                                           ctx2.weaken_append(ctx1, Var(x), t2)
                                               .ap(HasType(ctx1, Var(x), t2),
@@ -226,7 +226,7 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                                               .ap(_, _, cmp) =>
                                                   HasType(ctx1.append(ctx2),
                                                           cmp.subst_result(x, by_e),
-                                                          t2)
+                                                          t2),
                                           },
                                           ctx1.append(ctx2)
                                               .weaken_append(Nil, by_e, t2)
@@ -264,7 +264,7 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                                               .ap(_, _, cmp) =>
                                                   HasType(ctx1.append(ctx2),
                                                           cmp.subst_result(x, by_e),
-                                                          t2)
+                                                          t2),
                                           },
                                           TVar(ctx1.append(ctx2),
                                                x.pred,
@@ -280,8 +280,8 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                                                        h_gt)
                                                    .ap(Elem(x, t2, ctx1.append(Cons(t1, ctx2))),
                                                        Elem(x.pred, t2, ctx1.append(ctx2)),
-                                                       h_elem)))
-                }
+                                                       h_elem))),
+                },
         },
     Lam(body) =>
         \ap(_,_,h_e) => \ap(_,_,h_by) => h_e.match {
@@ -300,7 +300,7 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                              h_body)
                          .ap(HasType(Nil, by_e, t1),
                              HasType(Cons(a, ctx1).append(ctx2), body.subst(S(ctx1.len), by_e), b),
-                             h_by))
+                             h_by)),
         },
     App(e1, e2) =>
         \ap(_,_,h_e) => \ap(_,_,h_by) => h_e.match {
@@ -329,8 +329,8 @@ def (e: Exp).subst_lemma(ctx1 ctx2: Ctx, t1 t2: Typ, by_e: Exp)
                            h_e2)
                        .ap(HasType(Nil, by_e, t1),
                            HasType(ctx1.append(ctx2), e2.subst(ctx1.len, by_e), a),
-                           h_by))
-        }
+                           h_by)),
+        },
 }
 
 def (ctx2: Ctx).weaken_append(ctx1: Ctx, e: Exp, t: Typ)
@@ -354,7 +354,7 @@ def (ctx2: Ctx).weaken_append(ctx1: Ctx, e: Exp, t: Typ)
                                    e.weaken_cons(ctx1, t', t)
                                     .ap(HasType(ctx1, e, t),
                                         HasType(ctx1.append(Cons(t', Nil)), e, t),
-                                        h_e)))
+                                        h_e))),
 }
 
 def (e: Exp).weaken_cons(ctx: Ctx, t1 t2: Typ)
@@ -364,7 +364,7 @@ def (e: Exp).weaken_cons(ctx: Ctx, t1 t2: Typ)
             TLam(_, _, _, _, _) absurd,
             TApp(_, _, _, _, _, _, _) absurd,
             TVar(_, _, _, h_elem) =>
-                TVar(ctx.append(Cons(t1, Nil)), x, t2, h_elem.elem_append(x, t1, t2, ctx))
+                TVar(ctx.append(Cons(t1, Nil)), x, t2, h_elem.elem_append(x, t1, t2, ctx)),
         },
     Lam(e) =>
         \ap(_,_,h_e) => h_e.match {
@@ -378,7 +378,7 @@ def (e: Exp).weaken_cons(ctx: Ctx, t1 t2: Typ)
                      e.weaken_cons(Cons(a, ctx), t1, b)
                       .ap(HasType(Cons(a, ctx), e, b),
                           HasType(Cons(a, ctx).append(Cons(t1, Nil)), e, b),
-                          h_e))
+                          h_e)),
         },
     App(e1, e2) =>
         \ap(_,_,h_e) => h_e.match {
@@ -395,15 +395,15 @@ def (e: Exp).weaken_cons(ctx: Ctx, t1 t2: Typ)
                            HasType(ctx.append(Cons(t1, Nil)), e1, FunT(a, b)),
                            h_e1),
                      e2.weaken_cons(ctx, t1, a)
-                       .ap(HasType(ctx, e2, a), HasType(ctx.append(Cons(t1, Nil)), e2, a), h_e2))
-        }
+                       .ap(HasType(ctx, e2, a), HasType(ctx.append(Cons(t1, Nil)), e2, a), h_e2)),
+        },
 }
 
 def Elem(n, t2, ctx).elem_append(n: Nat, t1 t2: Typ, ctx: Ctx)
     : Elem(n, t2, ctx.append(Cons(t1, Nil))) {
     Here(t, ts) => Here(t, ts.append(Cons(t1, Nil))),
     There(n, _, t', ts, h) =>
-        There(n, t2, t', ts.append(Cons(t1, Nil)), h.elem_append(n, t1, t2, ts))
+        There(n, t2, t', ts.append(Cons(t1, Nil)), h.elem_append(n, t1, t2, ts)),
 }
 
 def (ctx1: Ctx).append_assoc(ctx2 ctx3: Ctx)
@@ -415,22 +415,22 @@ def (ctx1: Ctx).append_assoc(ctx2 ctx3: Ctx)
                 Ctx,
                 xs.append(ctx2).append(ctx3),
                 xs.append(ctx2.append(ctx3)),
-                comatch { .ap(_, _, xs) => Cons(x, xs) })
+                comatch { .ap(_, _, xs) => Cons(x, xs) }),
 }
 
 def (ctx: Ctx).append_nil: Eq(Ctx, ctx, ctx.append(Nil)) {
     Nil => Refl(Ctx, Nil),
-    Cons(t, ts) => ts.append_nil.eq_cons(ts, ts.append(Nil), t)
+    Cons(t, ts) => ts.append_nil.eq_cons(ts, ts.append(Nil), t),
 }
 
 def Elem(x, t, Nil).empty_absurd(x: Nat, t: Typ): Void {
     Here(_, _) absurd,
-    There(_, _, _, _, _) absurd
+    There(_, _, _, _, _) absurd,
 }
 
 def Elem(Z, t1, Cons(t2, ctx)).elem_unique(ctx: Ctx, t1 t2: Typ): Eq(Typ, t2, t1) {
     Here(_, _) => Refl(Typ, t1),
-    There(_, _, _, _, _) absurd
+    There(_, _, _, _, _) absurd,
 }
 
 def (ctx1: Ctx).ctx_lookup(ctx2: Ctx, t1 t2: Typ)
@@ -441,8 +441,8 @@ def (ctx1: Ctx).ctx_lookup(ctx2: Ctx, t1 t2: Typ)
             Here(_, _) absurd,
             There(_, _, _, _, h) =>
                 ts.ctx_lookup(ctx2, t1, t2)
-                  .ap(Elem(ts.len, t1, ts.append(Cons(t2, ctx2))), Eq(Typ, t2, t1), h)
-        }
+                  .ap(Elem(ts.len, t1, ts.append(Cons(t2, ctx2))), Eq(Typ, t2, t1), h),
+        },
 }
 
 def (ctx1: Ctx).elem_append_first(ctx2: Ctx, t: Typ, x: Nat)
@@ -450,7 +450,7 @@ def (ctx1: Ctx).elem_append_first(ctx2: Ctx, t: Typ, x: Nat)
     Nil =>
         \ap(_,_,h_lt) => \ap(_,_,h_elem) => h_lt.match {
             LERefl(_) absurd,
-            LESucc(_, _, _) absurd
+            LESucc(_, _, _) absurd,
         },
     Cons(t', ts) =>
         \ap(_,_,h_lt) => \ap(_,_,h_elem) => h_elem.match {
@@ -464,8 +464,8 @@ def (ctx1: Ctx).elem_append_first(ctx2: Ctx, t: Typ, x: Nat)
                         .ap(LE(S(x'), ts.len),
                             Elem(x', t, ts.append(ctx2)) -> Elem(x', t, ts),
                             h_lt.le_unsucc(x, ts.len))
-                        .ap(Elem(x', t, ts.append(ctx2)), Elem(x', t, ts), h))
-        }
+                        .ap(Elem(x', t, ts.append(ctx2)), Elem(x', t, ts), h)),
+        },
 }
 
 def (ctx1: Ctx).elem_append_pred(ctx2: Ctx, t1 t2: Typ, x: Nat)
@@ -477,16 +477,16 @@ def (ctx1: Ctx).elem_append_pred(ctx2: Ctx, t1 t2: Typ, x: Nat)
             Here(_, _) =>
                 h_gt.match {
                     LERefl(_) absurd,
-                    LESucc(_, _, _) absurd
+                    LESucc(_, _, _) absurd,
                 },
-            There(_, _, _, _, h) => h
+            There(_, _, _, _, h) => h,
         },
     Cons(t, ts) =>
         \ap(_,_,h_gt) => \ap(_,_,h_elem) => h_elem.match {
             Here(_, _) =>
                 h_gt.match {
                     LERefl(_) absurd,
-                    LESucc(_, _, _) absurd
+                    LESucc(_, _, _) absurd,
                 },
             There(x', _, _, _, h) =>
                 h_gt.le_unsucc(S(ts.len), x')
@@ -507,59 +507,59 @@ def (ctx1: Ctx).elem_append_pred(ctx2: Ctx, t1 t2: Typ, x: Nat)
                                            h_gt.le_unsucc(S(ts.len), x'))
                                        .ap(Elem(x', t1, ts.append(Cons(t2, ctx2))),
                                            Elem(x'.pred, t1, ts.append(ctx2)),
-                                           h)))
-        }
+                                           h))),
+        },
 }
 
 
 codata Fun(a b: Type) {
-    Fun(a, b).ap(a b: Type, x: a): b
+    Fun(a, b).ap(a b: Type, x: a): b,
 }
 
 data Eq(a: Type, x y: a) {
-    Refl(a: Type, x: a): Eq(a, x, x)
+    Refl(a: Type, x: a): Eq(a, x, x),
 }
 
 def Eq(a, x, y).sym(a: Type, x y: a): Eq(a, y, x) { Refl(a, x) => Refl(a, x) }
 
 def Eq(a, x, y).transport(a: Type, x y: a, p: a -> Type, prf: p.ap(a, Type, x)): p.ap(a, Type, y) {
-    Refl(a, x) => prf
+    Refl(a, x) => prf,
 }
 
 def Eq(a, x, y).cong(a b: Type, x y: a, f: a -> b): Eq(b, f.ap(a, b, x), f.ap(a, b, y)) {
-    Refl(a, x) => Refl(b, f.ap(a, b, x))
+    Refl(a, x) => Refl(b, f.ap(a, b, x)),
 }
 
 def Eq(Nat, x, y).eq_s(x y: Nat): Eq(Nat, S(x), S(y)) { Refl(_, _) => Refl(Nat, S(x)) }
 
 def Eq(Ctx, xs, ys).eq_cons(xs ys: Ctx, t: Typ): Eq(Ctx, Cons(t, xs), Cons(t, ys)) {
-    Refl(_, _) => Refl(Ctx, Cons(t, xs))
+    Refl(_, _) => Refl(Ctx, Cons(t, xs)),
 }
 
 def Nat.cmp(y: Nat): Ordering {
     Z =>
         y.match {
             Z => EQ,
-            S(_) => LT
+            S(_) => LT,
         },
     S(x) =>
         y.match {
             Z => GT,
-            S(y) => x.cmp(y)
-        }
+            S(y) => x.cmp(y),
+        },
 }
 
 data CmpReflect(x y: Nat) {
     IsLT(x y: Nat, h1: Eq(Ordering, LT, x.cmp(y)), h2: LE(S(x), y)): CmpReflect(x, y),
     IsEQ(x y: Nat, h1: Eq(Ordering, EQ, x.cmp(y)), h2: Eq(Nat, x, y)): CmpReflect(x, y),
-    IsGT(x y: Nat, h1: Eq(Ordering, GT, x.cmp(y)), h2: LE(S(y), x)): CmpReflect(x, y)
+    IsGT(x y: Nat, h1: Eq(Ordering, GT, x.cmp(y)), h2: LE(S(y), x)): CmpReflect(x, y),
 }
 
 def (x: Nat).cmp_reflect(y: Nat): CmpReflect(x, y) {
     Z =>
         y.match as y => CmpReflect(Z, y) {
             Z => IsEQ(Z, Z, Refl(Ordering, EQ), Refl(Nat, Z)),
-            S(y) => IsLT(Z, S(y), Refl(Ordering, LT), y.z_le.le_succ(Z, y))
+            S(y) => IsLT(Z, S(y), Refl(Ordering, LT), y.z_le.le_succ(Z, y)),
         },
     S(x) =>
         y.match as y => CmpReflect(S(x), y) {
@@ -568,12 +568,12 @@ def (x: Nat).cmp_reflect(y: Nat): CmpReflect(x, y) {
                 x.cmp_reflect(y).match {
                     IsLT(_, _, h1, h2) => IsLT(S(x), S(y), h1, h2.le_succ(S(x), y)),
                     IsEQ(_, _, h1, h2) => IsEQ(S(x), S(y), h1, h2.eq_s(x, y)),
-                    IsGT(_, _, h1, h2) => IsGT(S(x), S(y), h1, h2.le_succ(S(y), x))
-                }
-        }
+                    IsGT(_, _, h1, h2) => IsGT(S(x), S(y), h1, h2.le_succ(S(y), x)),
+                },
+        },
 }
 
 def LE(S(x), y).s_pred(x y: Nat): Eq(Nat, S(y.pred), y) {
     LERefl(_) => Refl(Nat, y),
-    LESucc(_, y', _) => Refl(Nat, y)
+    LESucc(_, y', _) => Refl(Nat, y),
 }

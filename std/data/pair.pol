@@ -1,7 +1,7 @@
 /// The data type of pairs defined by a constructor.
 data Pair(a b: Type) {
     /// Constructing an element of the pair type.
-    MkPair(a b: Type, x: a, y: b): Pair(a, b)
+    MkPair(a b: Type, x: a, y: b): Pair(a, b),
 }
 
 /// Projection on the first element of a pair.

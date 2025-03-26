@@ -1,7 +1,7 @@
 /// The Martin-Löf equality type.
 data Eq(implicit a: Type, x y: a) {
     /// The reflexivity constructor.
-    Refl(implicit a: Type, x: a): Eq(x, x)
+    Refl(implicit a: Type, x: a): Eq(x, x),
 }
 
 /// Proof of symmetry of equality.

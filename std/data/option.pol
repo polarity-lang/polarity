@@ -3,5 +3,5 @@ data Option(a: Type) {
     /// No value
     None(a: Type): Option(a),
     /// Some value of type `a`
-    Some(a: Type, x: a): Option(a)
+    Some(a: Type, x: a): Option(a),
 }
