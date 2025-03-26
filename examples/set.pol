@@ -20,32 +20,21 @@ codef Empty: Set {
 
 #[transparent]
 let Insert(s: Set, n: Nat): Set {
-    s.contains(n).match {
-        T => s,
-        // NOTE (2025-03-25): Polarity does not currently allow local comatches
-        // to use self parameters. Instead we lift this to the top-level.
-        F => Insert'(s, n),
-    }
+    // NOTE (2025-03-25): Polarity does not currently allow local comatches
+    // to use self parameters. Instead we lift this to the top-level.
+    s.contains(n).ite(s, Insert'(s, n))
 }
 
 codef Insert'(s: Set, n: Nat): Set {
     .is_empty => F,
-    .contains(i) =>
-        i.eq(n).match {
-            T => T,
-            F => s.contains(i),
-        },
+    .contains(i) => i.eq(n).or(s.contains(i)),
     .insert(i) => Insert(Insert'(s, n), i),
     .union(r) => Union(Insert'(s, n), r),
 }
 
 codef Union(s1 s2: Set): Set {
-    .is_empty => F,
-    .contains(i) =>
-        s1.contains(i).match {
-            T => T,
-            F => s2.contains(i),
-        },
+    .is_empty => s1.is_empty.and(s2.is_empty),
+    .contains(i) => s1.contains(i).or(s2.contains(i)),
     .insert(i) => Insert(Union(s1, s2), i),
     .union(r) => Union(Union(s1, s2), r),
 }
