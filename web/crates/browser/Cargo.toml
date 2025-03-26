@@ -1,6 +1,6 @@
 [package]
 publish = false
-edition = "2021"
+edition = "2024"
 name = "lsp-browser"
 version = "0.0.0"
 
