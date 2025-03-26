@@ -11,11 +11,11 @@ use crate::ctx::{BindContext, LevelCtx};
 use crate::rename::{Rename, RenameCtx};
 use crate::{ContainsMetaVars, Zonk, ZonkError};
 
+use super::HasType;
 use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
 use super::traits::Occurs;
-use super::HasType;
-use super::{ident::*, Shift, ShiftRange, ShiftRangeExt};
+use super::{Shift, ShiftRange, ShiftRangeExt, ident::*};
 
 mod anno;
 mod args;

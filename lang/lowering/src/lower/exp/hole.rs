@@ -1,7 +1,7 @@
 use ast::Hole;
 use parser::cst;
 
-use crate::{lower::Lower, Ctx, LoweringResult};
+use crate::{Ctx, LoweringResult, lower::Lower};
 
 impl Lower for cst::exp::HoleKind {
     type Target = ast::MetaVarKind;

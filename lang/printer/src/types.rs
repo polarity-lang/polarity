@@ -3,8 +3,8 @@ use std::{error::Error, io};
 use url::Url;
 
 use pretty::{
-    termcolor::{Ansi, WriteColor},
     DocAllocator,
+    termcolor::{Ansi, WriteColor},
 };
 
 use crate::{render, tokens::COMMA};

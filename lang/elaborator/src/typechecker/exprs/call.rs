@@ -9,9 +9,9 @@ use crate::typechecker::type_info_table::CtorMeta;
 use ast::*;
 
 use super::super::ctx::*;
-use super::check_args;
 use super::CheckInfer;
 use super::ExpectType;
+use super::check_args;
 
 impl CheckInfer for Call {
     /// The *checking* rule for calls is:

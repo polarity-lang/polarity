@@ -3,9 +3,9 @@
 use ast::*;
 
 use super::super::ctx::*;
-use super::check_args;
 use super::CheckInfer;
 use super::ExpectType;
+use super::check_args;
 use crate::conversion_checking::convert;
 use crate::result::TcResult;
 

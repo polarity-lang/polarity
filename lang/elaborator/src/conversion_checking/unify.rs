@@ -6,9 +6,9 @@
 //! * Adam Gundry and Conor McBride. "A tutorial implementation of dynamic pattern unification." (2013).
 //! * András Kovács's elaboration-zoo (https://github.com/AndrasKovacs/elaboration-zoo)
 
-use ast::{ctx::values::Binder, Variable};
+use ast::{Variable, ctx::values::Binder};
 use ctx::LevelCtx;
-use miette_util::{codespan::Span, ToMiette};
+use miette_util::{ToMiette, codespan::Span};
 
 use ast::*;
 use printer::Print;

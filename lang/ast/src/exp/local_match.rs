@@ -2,19 +2,19 @@ use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{
+    Alloc, Builder, Precedence, Print, PrintCfg,
     theme::ThemeExt,
     tokens::{DOT, MATCH},
-    Alloc, Builder, Precedence, Print, PrintCfg,
 };
 
 use crate::{
-    ctx::{values::TypeCtx, LevelCtx},
-    rename::{Rename, RenameCtx},
     ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
     Zonk, ZonkError,
+    ctx::{LevelCtx, values::TypeCtx},
+    rename::{Rename, RenameCtx},
 };
 
-use super::{print_cases, Case, Exp, Label, MetaVar, Motive, TypCtor};
+use super::{Case, Exp, Label, MetaVar, Motive, TypCtor, print_cases};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]

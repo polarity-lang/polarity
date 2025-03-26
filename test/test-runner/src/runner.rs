@@ -143,7 +143,7 @@ impl RunResult {
     pub fn update_expected(&self) -> bool {
         self.case_results().all(|CaseResult { case, result }| match result {
             Ok(_) => true,
-            Err(Failure::Mismatch { phase, ref actual, .. }) => {
+            Err(Failure::Mismatch { phase, actual, .. }) => {
                 case.set_expected(phase, actual);
                 true
             }

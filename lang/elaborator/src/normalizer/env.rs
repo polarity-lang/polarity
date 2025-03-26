@@ -1,12 +1,12 @@
 use ast::{Lvl, Shift, ShiftRange, VarBound};
 use pretty::DocAllocator;
 
+use ast::ctx::LevelCtx;
 use ast::ctx::map_idx::*;
 use ast::ctx::values::{Binder, TypeCtx};
-use ast::ctx::LevelCtx;
 use ast::{Idx, Var};
-use printer::tokens::COMMA;
 use printer::Print;
+use printer::tokens::COMMA;
 
 use crate::normalizer::val::*;
 
