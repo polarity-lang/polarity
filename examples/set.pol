@@ -1,0 +1,80 @@
+use "../std/data/bool.pol"
+use "../std/data/eq.pol"
+use "../std/data/nat.pol"
+use "../std/data/ordering.pol"
+// An example of various implementations of the set interface from Section 3
+// of William R. Cook’s essay, “On Understanding Data Abstraction, Revisited”
+// https://www.cs.utexas.edu/~wcook/Drafts/2009/essay.pdf
+
+/// An interface for sets of natural numbers
+codata Set {
+    /// Returns `T` if the set is empty
+    .is_empty: Bool,
+    /// Returns `T` if `i` is in the set
+    .contains(i: Nat): Bool,
+    /// Inserts an element `i` into the set
+    .insert(i: Nat): Set,
+    /// Returns a set containing all of the elements in two sets
+    .union(r: Set): Set,
+}
+
+// Core set implementations from Figure 8 for the paper
+
+/// A set that contains no elements
+codef Empty: Set {
+    .is_empty => T,
+    .contains(_) => F,
+    .insert(i) => Insert(Empty, i),
+    .union(s) => s,
+}
+
+/// A set that contains the elements in `s` along with `n`
+#[transparent]
+let Insert(s: Set, n: Nat): Set {
+    // NOTE (2025-03-25): Polarity does not currently support local recursive
+    // definitions, so we use a top-level helper `codef Insert'` here.
+    s.contains(n).ite(s, Insert'(s, n))
+}
+
+codef Insert'(s: Set, n: Nat): Set {
+    .is_empty => F,
+    .contains(i) => i.cmp(n).isEq.or(s.contains(i)),
+    .insert(i) => Insert(Insert'(s, n), i),
+    .union(r) => Union(Insert'(s, n), r),
+}
+
+/// A set that contains all of the elements from `s1` and `s2`
+codef Union(s1 s2: Set): Set {
+    .is_empty => s1.is_empty.and(s2.is_empty),
+    .contains(i) => s1.contains(i).or(s2.contains(i)),
+    .insert(i) => Insert(Union(s1, s2), i),
+    .union(r) => Union(Union(s1, s2), r),
+}
+
+/// The expression from Section 3.2 of the paper
+#[transparent]
+let paper_example: Bool {
+    Empty.insert(3).union(Empty.insert(1)).insert(5).contains(4)
+}
+
+let test_paper_example : Eq(a:=Bool, paper_example, F) {
+    Refl(a:=Bool, F)
+}
+
+// Additional implementations from Section 3.4 of the paper:
+
+/// A set that contains all of the natural numbers
+codef Full : Set {
+    .is_empty => F,
+    .contains(_) => T,
+    .insert(_) => Full,
+    .union(_) => Full,
+}
+
+/// A set containing the natural numbers from `n` to `m` (inclusive).
+codef Interval(n m: Nat): Set {
+    .is_empty => n.cmp(m).isGt,
+    .contains(i) => n.cmp(i).isLe.and(i.cmp(m).isLe),
+    .insert(i) => Insert(Interval(n, m), i),
+    .union(r) => Union(Interval(n, m), r),
+}

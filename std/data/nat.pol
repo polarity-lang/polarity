@@ -1,3 +1,6 @@
+use "./bool.pol"
+use "./ordering.pol"
+
 /// The type of Peano natural numbers.
 data Nat {
     /// The constant zero.
@@ -39,6 +42,18 @@ def Nat.fact: Nat {
 def Nat.pred: Nat {
     Z => Z,
     S(x) => x
+}
+
+/// Compare two natural numbers.
+def Nat.cmp(other: Nat): Ordering {
+    Z => other.match {
+        Z => EQ,
+        S(_) => LT,
+    },
+    S(x) => other.match {
+        Z => GT,
+        S(other) => x.cmp(other),
+    },
 }
 
 /// The lesser-or-equal relation on natural numbers.
