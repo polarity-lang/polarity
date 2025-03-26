@@ -31,8 +31,8 @@ codef Empty: Set {
 /// A set that contains the elements in `s` along with `n`
 #[transparent]
 let Insert(s: Set, n: Nat): Set {
-    // NOTE (2025-03-25): Polarity does not currently allow local comatches
-    // to use self parameters. Instead we lift this to the top-level.
+    // NOTE (2025-03-25): Polarity does not currently support local recursive
+    // definitions, so we use a top-level helper `codef Insert'` here.
     s.contains(n).ite(s, Insert'(s, n))
 }
 
