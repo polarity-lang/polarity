@@ -2,16 +2,25 @@ use "../std/data/bool.pol"
 use "../std/data/eq.pol"
 use "../std/data/nat.pol"
 use "../std/data/ordering.pol"
-// Set objects from Section 3 of “On Understanding Data Abstraction, Revisited”
-// by William R. Cook https://www.cs.utexas.edu/~wcook/Drafts/2009/essay.pdf
+// An example of various implementations of the set interface from Section 3
+// of William R. Cook’s essay, “On Understanding Data Abstraction, Revisited”
+// https://www.cs.utexas.edu/~wcook/Drafts/2009/essay.pdf
 
+/// An interface for sets of natural numbers
 codata Set {
+    /// Returns `T` if the set is empty
     .is_empty: Bool,
+    /// Returns `T` if `i` is in the set
     .contains(i: Nat): Bool,
+    /// Inserts an element `i` into the set
     .insert(i: Nat): Set,
+    /// Returns a set containing all of the elements in two sets
     .union(r: Set): Set,
 }
 
+// Core set implementations from Figure 8 for the paper
+
+/// A set that contains no elements
 codef Empty: Set {
     .is_empty => T,
     .contains(_) => F,
@@ -19,6 +28,7 @@ codef Empty: Set {
     .union(s) => s,
 }
 
+/// A set that contains the elements in `s` along with `n`
 #[transparent]
 let Insert(s: Set, n: Nat): Set {
     // NOTE (2025-03-25): Polarity does not currently allow local comatches
@@ -33,6 +43,7 @@ codef Insert'(s: Set, n: Nat): Set {
     .union(r) => Union(Insert'(s, n), r),
 }
 
+/// A set that contains all of the elements from `s1` and `s2`
 codef Union(s1 s2: Set): Set {
     .is_empty => s1.is_empty.and(s2.is_empty),
     .contains(i) => s1.contains(i).or(s2.contains(i)),
@@ -40,13 +51,19 @@ codef Union(s1 s2: Set): Set {
     .union(r) => Union(Union(s1, s2), r),
 }
 
-// Expression from Section 3.2 of the paper
-let paper_example : Eq(a:=Bool, Empty.insert(3).union(Empty.insert(1)).insert(5).contains(4), F) {
+/// The expression from Section 3.2 of the paper
+#[transparent]
+let paper_example: Bool {
+    Empty.insert(3).union(Empty.insert(1)).insert(5).contains(4)
+}
+
+let test_paper_example : Eq(a:=Bool, paper_example, F) {
     Refl(a:=Bool, F)
 }
 
 // Additional implementations from Section 3.4 of the paper:
 
+/// A set that contains all of the natural numbers
 codef Full : Set {
     .is_empty => F,
     .contains(_) => T,
@@ -54,6 +71,7 @@ codef Full : Set {
     .union(_) => Full,
 }
 
+/// A set containing the natural numbers from `n` to `m` (inclusive).
 codef Interval(n m: Nat): Set {
     .is_empty => n.cmp(m).isGt,
     .contains(i) => n.cmp(i).isLe.and(i.cmp(m).isLe),
