@@ -1,4 +1,5 @@
 use "./bool.pol"
+use "./ordering.pol"
 
 /// The type of Peano natural numbers.
 data Nat {
@@ -43,15 +44,15 @@ def Nat.pred: Nat {
     S(x) => x
 }
 
-/// Compare two natural numbers for equality.
-def Nat.eq(other: Nat): Bool {
+/// Compare two natural numbers.
+def Nat.cmp(other: Nat): Ordering {
     Z => other.match {
-        Z => T,
-        S(_) => F,
+        Z => EQ,
+        S(_) => LT,
     },
     S(x) => other.match {
-        Z => F,
-        S(other) => x.eq(other),
+        Z => GT,
+        S(other) => x.cmp(other),
     },
 }
 

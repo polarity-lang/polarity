@@ -1,3 +1,5 @@
+use "./bool.pol"
+
 /// The result of comparing two totally-ordered values.
 data Ordering {
     /// Lesser than
@@ -6,4 +8,46 @@ data Ordering {
     EQ,
     /// Greater than
     GT,
+}
+
+/// Returns `T` if the ordering is `EQ`
+def Ordering.isEq: Bool {
+    LT => F,
+    EQ => T,
+    GT => F,
+}
+
+/// Returns `T` if the ordering is not `EQ`
+def Ordering.isNe: Bool {
+    LT => T,
+    EQ => F,
+    GT => T,
+}
+
+/// Returns `T` if the ordering is `LT`
+def Ordering.isLt: Bool {
+    LT => T,
+    EQ => F,
+    GT => F,
+}
+
+/// Returns `T` if the ordering is `GT`
+def Ordering.isGt: Bool {
+    LT => F,
+    EQ => F,
+    GT => T,
+}
+
+/// Returns `T` if the ordering is `LT` or `EQ`
+def Ordering.isLe: Bool {
+    LT => T,
+    EQ => T,
+    GT => F,
+}
+
+/// Returns `T` if the ordering is `EQ` or `GT`
+def Ordering.isGe: Bool {
+    LT => F,
+    EQ => T,
+    GT => T,
 }
