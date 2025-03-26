@@ -8,6 +8,10 @@
         "path": "eq.pol"
     },
     {
+        "name": "Set Interface",
+        "path": "set.pol"
+    },
+    {
         "name": "STLC Type Soundness",
         "path": "stlc.pol"
     },
