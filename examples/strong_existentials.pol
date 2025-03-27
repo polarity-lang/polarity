@@ -21,7 +21,7 @@
 // of type `B`. As a datatype it can be written as follows:
 
 data Tensor(A B: Type) {
-  Sum(A B: Type, x: A, y: B): Tensor(A,B)
+  Sum(A B: Type, x: A, y: B): Tensor(A,B),
 }
 
 // Using the negative polarization, the product is specified using the two
@@ -29,7 +29,7 @@ data Tensor(A B: Type) {
 
 codata With(A B: Type) {
   With(A,B).π₁(A B: Type): A,
-  With(A,B).π₂(A B: Type): B
+  With(A,B).π₂(A B: Type): B,
 }
 
 //
@@ -42,7 +42,7 @@ codata With(A B: Type) {
 // to introduce the type of functions first:
 
 codata Fun(A B: Type) {
-  Fun(A,B).ap(A B: Type, x: A): B
+  Fun(A,B).ap(A B: Type, x: A): B,
 }
 
 // The system has builtin syntactic sugar for the function type, which allows
@@ -54,7 +54,7 @@ codata Fun(A B: Type) {
 // in more standard notation.
 
 data ExistsPos(T: Type -> Type) {
-  ExistsSum(T: Type -> Type, A: Type, W: T.ap(Type,Type,A)): ExistsPos(T)
+  ExistsSum(T: Type -> Type, A: Type, W: T.ap(Type,Type,A)): ExistsPos(T),
 }
 
 // As a codata type, we still have two projections `eπ₁`and `eπ₂` as in the case
@@ -63,7 +63,7 @@ data ExistsPos(T: Type -> Type) {
 
 codata ExistsNeg(T: Type -> Type) {
   ExistsNeg(T).eπ₁(T: Type -> Type): Type,
-  (self: ExistsNeg(T)).eπ₂(T: Type -> Type): T.ap(Type,Type, self.eπ₁(T))
+  (self: ExistsNeg(T)).eπ₂(T: Type -> Type): T.ap(Type,Type, self.eπ₁(T)),
 }
 
 //
@@ -77,24 +77,24 @@ codata ExistsNeg(T: Type -> Type) {
 // type `A` and a type family `T: A -> Type`.
 
 data ΣPos(A: Type, T: A -> Type) {
-  ΣSum(A: Type, T: A -> Type, x: A, w: T.ap(A,Type,x)): ΣPos(A,T)
+  ΣSum(A: Type, T: A -> Type, x: A, w: T.ap(A,Type,x)): ΣPos(A,T),
 }
 
 def ΣPos(A,T).defπ₁(A: Type, T: A -> Type): A {
-  ΣSum(_,_,x,_) => x
+  ΣSum(_,_,x,_) => x,
 }
 
 def (self: ΣPos(A,T)).defπ₂(A: Type, T: A -> Type): T.ap(A,Type,self.defπ₁(A,T)) {
-  ΣSum(_,_,_,w) => w
+  ΣSum(_,_,_,w) => w,
 }
 
 
 codata ΣNeg(A: Type, T: A -> Type) {
   ΣNeg(A,T).sπ₁(A: Type, T: A -> Type): A,
-  (self: ΣNeg(A,T)).sπ₂(A: Type, T: A -> Type): T.ap(A,Type, self.sπ₁(A,T))
+  (self: ΣNeg(A,T)).sπ₂(A: Type, T: A -> Type): T.ap(A,Type, self.sπ₁(A,T)),
 }
 
 codef DefΣSum(A: Type, T: A -> Type, x: A, w: T.ap(A, Type, x)): ΣNeg(A,T) {
   .sπ₁(_,_) => x,
-  .sπ₂(_,_) => w
+  .sπ₂(_,_) => w,
 }

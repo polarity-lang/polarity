@@ -2,7 +2,7 @@ def .cong_pair(a, b, c) { Refl(x0) => Refl(Pair(b, c)) }
 
 codef Pair(x, y) {
     .fst => x,
-    .snd => y
+    .snd => y,
 }
 
 codef MkUtils { .put_twice(n, route, state) => route.put(n).ap(route.put(n).ap(state).fst) }
@@ -14,12 +14,12 @@ codef Index {
             .ap(state) =>
                 comatch {
                     .fst => state,
-                    .snd => Forbidden
+                    .snd => Forbidden,
                 }
         },
     .get => comatch { .ap(state) => Return(state.counter(F)) },
     .put(n) => comatch { .ap(state) => Pair(state, Forbidden) },
-    .put_idempotent(n) => comatch { .dap(x0, state) => Refl(Pair(state, Forbidden)) }
+    .put_idempotent(n) => comatch { .dap(x0, state) => Refl(Pair(state, Forbidden)) },
 }
 
 codef Admin {
@@ -29,7 +29,7 @@ codef Admin {
             .ap(state) =>
                 comatch {
                     .fst => state.increment,
-                    .snd => Return(state.increment.counter(T))
+                    .snd => Return(state.increment.counter(T)),
                 }
         },
     .get => comatch { .ap(state) => Return(state.counter(T)) },
@@ -38,5 +38,5 @@ codef Admin {
         comatch {
             .dap(x0, state) =>
                 state.set_idempotent(T, n).cong_pair(state.set(n), state.set(n).set(n), Return(n))
-        }
+        },
 }

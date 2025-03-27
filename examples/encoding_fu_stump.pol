@@ -13,17 +13,17 @@ use "../std/codata/fun.pol"
 
 /// The type of dependent functions.
 codata Π(A: Type, T: A -> Type) {
-    Π(A, T).dap(A: Type, T: A -> Type, x: A): T.ap(a := A, b := Type, x)
+    Π(A, T).dap(A: Type, T: A -> Type, x: A): T.ap(a := A, b := Type, x),
 }
 
 /// An abbreviation of the induction step, i.e. a function from "P x" to "P (S x)".
 codef StepFun(P: Nat -> Type): Fun(Nat, Type) {
-    .ap(_, _, x) => P.ap(a := Nat, b:= Type, x) -> P.ap(a := Nat, b:= Type, S(x))
+    .ap(_, _, x) => P.ap(a := Nat, b:= Type, x) -> P.ap(a := Nat, b:= Type, S(x)),
 }
 
 codata Nat {
     (n: Nat).ind(P: Nat -> Type, base: P.ap(a := Nat, b:= Type, Z), step: Π(Nat, StepFun(P)))
-        : P.ap(a := Nat, b:= Type, n)
+        : P.ap(a := Nat, b:= Type, n),
 }
 
 codef Z: Nat { .ind(P, base, step) => base }
@@ -31,5 +31,5 @@ codef Z: Nat { .ind(P, base, step) => base }
 codef S(m: Nat): Nat {
     .ind(P, base, step) =>
         step.dap(Nat, StepFun(P), m)
-            .ap(a := P.ap(a := Nat, b:= Type, m), b:= P.ap(a := Nat, b:= Type, S(m)), m.ind(P, base, step))
+            .ap(a := P.ap(a := Nat, b:= Type, m), b:= P.ap(a := Nat, b:= Type, S(m)), m.ind(P, base, step)),
 }

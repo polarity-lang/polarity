@@ -2,7 +2,7 @@ def .top_is_zero(n) {
     Unit =>
         n.match {
             Z => T,
-            S(n0) => F
+            S(n0) => F,
         }
 }
 

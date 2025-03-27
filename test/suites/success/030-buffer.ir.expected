@@ -1,11 +1,11 @@
 def .head(n) {
     Cons(n', x, xs) => x,
-    Nil absurd
+    Nil absurd,
 }
 
 def .tail(n) {
     Cons(n', x, xs) => xs,
-    Nil absurd
+    Nil absurd,
 }
 
 codef Empty { .read(n) absurd }
@@ -14,6 +14,6 @@ codef FromVec(n, xs) {
     .read(n') =>
         comatch {
             .proj1 => xs.head(n'),
-            .proj2 => FromVec(n', xs.tail(n'))
+            .proj2 => FromVec(n', xs.tail(n')),
         }
 }

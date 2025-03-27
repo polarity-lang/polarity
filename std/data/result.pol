@@ -3,5 +3,5 @@ data Result(a b: Type) {
     /// A successful result.
     Ok(a b: Type, res: a): Result(a, b),
     /// An error containing an error value.
-    Err(a b: Type, err: b): Result(a, b)
+    Err(a b: Type, err: b): Result(a, b),
 }

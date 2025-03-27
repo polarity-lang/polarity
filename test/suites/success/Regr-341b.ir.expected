@@ -1,4 +1,4 @@
 def .foo {
     Bar => T,
-    Baz absurd
+    Baz absurd,
 }
