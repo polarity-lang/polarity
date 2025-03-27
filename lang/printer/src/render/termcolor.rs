@@ -2,8 +2,8 @@ use std::io;
 
 use pretty::termcolor::{Color, ColorSpec};
 
-use crate::types::*;
 use crate::WriteColor;
+use crate::types::*;
 
 const KEYWORD: Color = Color::Magenta;
 const CTOR: Color = Color::Blue;

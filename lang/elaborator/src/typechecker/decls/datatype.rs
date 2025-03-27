@@ -7,10 +7,10 @@ use ast::*;
 use crate::{
     result::TcResult,
     typechecker::{
+        TypeError,
         ctx::Ctx,
         erasure,
         exprs::{CheckInfer, InferTelescope},
-        TypeError,
     },
 };
 

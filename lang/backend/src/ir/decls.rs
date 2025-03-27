@@ -6,8 +6,8 @@ use printer::tokens::*;
 use printer::util::{BracesExt, IsNilExt};
 use printer::{Alloc, Builder, DocAllocator, Print, PrintCfg};
 
-use super::exprs::{print_cases, print_params};
 use super::exprs::{Case, Exp};
+use super::exprs::{print_cases, print_params};
 
 #[derive(Debug, Clone)]
 pub struct Module {
@@ -53,11 +53,7 @@ impl Print for Module {
             use_decls.append(alloc.line()).append(alloc.line()).append(decls)
         };
 
-        if doc.is_nil() {
-            doc
-        } else {
-            doc.append(alloc.hardline())
-        }
+        if doc.is_nil() { doc } else { doc.append(alloc.hardline()) }
     }
 }
 

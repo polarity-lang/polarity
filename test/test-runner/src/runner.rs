@@ -139,7 +139,7 @@ impl RunResult {
 
     pub fn update_expected(&self) {
         for CaseResult { case, result } in self.case_results() {
-            if let Err(Failure::Mismatch { phase, ref actual, .. }) = result {
+            if let Err(Failure::Mismatch { phase, actual, .. }) = result {
                 case.set_expected(phase, actual);
             }
         }

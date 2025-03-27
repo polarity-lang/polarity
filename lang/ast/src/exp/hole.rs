@@ -2,18 +2,18 @@ use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{
+    Alloc, Builder, Precedence, Print, PrintCfg,
     theme::ThemeExt,
     tokens::{COMMA, QUESTION_MARK, UNDERSCORE},
-    Alloc, Builder, Precedence, Print, PrintCfg,
 };
 
 use crate::{
-    ctx::{
-        values::{Binder, TypeCtx},
-        LevelCtx,
-    },
     ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
     Zonk, ZonkError,
+    ctx::{
+        LevelCtx,
+        values::{Binder, TypeCtx},
+    },
 };
 
 use super::{Exp, MetaVar, MetaVarKind};

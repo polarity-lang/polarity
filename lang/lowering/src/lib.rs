@@ -10,10 +10,10 @@ use crate::lower::Lower;
 
 pub use ctx::*;
 pub use result::*;
-pub use symbol_table::build::build_symbol_table;
 pub use symbol_table::DeclMeta;
 pub use symbol_table::ModuleSymbolTable;
 pub use symbol_table::SymbolTable;
+pub use symbol_table::build::build_symbol_table;
 
 /// Lower a module
 ///

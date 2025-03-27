@@ -1,5 +1,5 @@
 //! This module defines the language of constraints that can be solved by the constraint solver.
-use ast::{ctx::values::TypeCtx, Args, Exp};
+use ast::{Args, Exp, ctx::values::TypeCtx};
 use derivative::Derivative;
 use printer::Print;
 

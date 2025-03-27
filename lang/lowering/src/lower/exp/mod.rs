@@ -1,15 +1,15 @@
-use ast::ctx::values::Binder;
 use ast::HasSpan;
 use ast::IdBound;
 use ast::MetaVarKind;
 use ast::VarBound;
+use ast::ctx::values::Binder;
 use miette_util::codespan::Span;
 use num_bigint::BigUint;
 
-use ast::ctx::BindContext;
 use ast::Hole;
 use ast::TypeUniv;
 use ast::Variable;
+use ast::ctx::BindContext;
 use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::decls::Telescope;

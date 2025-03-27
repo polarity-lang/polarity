@@ -1,10 +1,10 @@
+pub use pretty::DocAllocator;
 pub use pretty::termcolor;
 pub use pretty::termcolor::Color;
 pub use pretty::termcolor::ColorChoice;
 pub use pretty::termcolor::ColorSpec;
 pub use pretty::termcolor::StandardStream;
 pub use pretty::termcolor::WriteColor;
-pub use pretty::DocAllocator;
 
 mod render;
 pub mod theme;
