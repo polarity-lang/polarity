@@ -149,6 +149,7 @@ Decl: Decl = {
     <d: Def> => Decl::Def(d),
     <d: Codef> => Decl::Codef(d),
     <d: Let> => Decl::Let(d),
+    <d: Infix> => Decl::Infix(d)
 }
 
 // Data Type Declarations

@@ -3,14 +3,20 @@ use std::sync::Arc;
 use ast::HashMap;
 use decls::*;
 use ident::Ident;
-use parser::cst::*;
+use parser::cst::{ident::Operator, *};
 use url::Url;
 
 pub mod build;
 pub mod lookup;
 
 /// The symbol table for a single module.
-pub type ModuleSymbolTable = HashMap<Ident, DeclMeta>;
+#[derive(Debug, Default, Clone)]
+pub struct ModuleSymbolTable {
+    /// The mapping of identifiers to their metadata
+    pub idents: HashMap<Ident, DeclMeta>,
+    /// The mapping of operators to their definition
+    pub infix_ops: HashMap<Operator, Ident>,
+}
 
 /// The symbol table for a module and all of its imported modules.
 #[derive(Debug, Default, Clone)]
