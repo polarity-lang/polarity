@@ -29,7 +29,7 @@ pub fn lift(module: Arc<Module>, name: &str) -> LiftResult {
     };
 
     let mut module = module.lift(&mut ctx);
-    let new_decl_names = HashSet::from_iter(ctx.new_decls.iter().map(|decl| decl.ident().clone()));
+    let new_decl_names = todo!(); // HashSet::from_iter(ctx.new_decls.iter().map(|decl| decl.ident().clone()));
     module.decls.extend(ctx.new_decls);
     module.rename();
 
@@ -103,13 +103,15 @@ impl Lift for Decl {
     type Target = Decl;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        ctx.set_curr_decl(self.ident().clone());
+        //ctx.set_curr_decl(self.ident().clone());
+        // TODO: fix this
         match self {
             Decl::Data(data) => Decl::Data(data.lift(ctx)),
             Decl::Codata(cotata) => Decl::Codata(cotata.lift(ctx)),
             Decl::Def(def) => Decl::Def(def.lift(ctx)),
             Decl::Codef(codef) => Decl::Codef(codef.lift(ctx)),
             Decl::Let(tl_let) => Decl::Let(tl_let.lift(ctx)),
+            Decl::Infix(infix) => Decl::Infix(infix.lift(ctx)),
         }
     }
 }
@@ -722,5 +724,12 @@ impl Ctx {
             let id = label.id;
             IdBind::from_string(&format!("Mk{type_name}{id}"))
         })
+    }
+}
+
+impl Lift for Infix {
+    type Target = Infix;
+    fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
+        self.clone()
     }
 }

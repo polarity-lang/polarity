@@ -1,3 +1,5 @@
+use std::fmt::format;
+
 use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
@@ -6,13 +8,16 @@ use printer::theme::ThemeExt;
 use printer::tokens::CODATA;
 use printer::tokens::CODEF;
 use printer::tokens::COLON;
+use printer::tokens::COLONEQ;
 use printer::tokens::COMMA;
 use printer::tokens::DATA;
 use printer::tokens::DEF;
 use printer::tokens::DOT;
 use printer::tokens::HASH;
 use printer::tokens::IMPLICIT;
+use printer::tokens::INFIX;
 use printer::tokens::LET;
+use printer::tokens::UNDERSCORE;
 use printer::tokens::USE;
 use printer::util::BracesExt;
 use printer::util::IsNilExt;
@@ -240,10 +245,6 @@ impl Module {
         out
     }
 
-    pub fn lookup_decl(&self, name: &IdBound) -> Option<&Decl> {
-        self.decls.iter().find(|decl| decl.ident() == name)
-    }
-
     pub fn find_main(&self) -> Option<Box<Exp>> {
         self.decls.iter().find_map(|decl| match decl {
             Decl::Let(tl_let) if tl_let.is_main() => Some(tl_let.body.clone()),
@@ -302,6 +303,7 @@ pub enum Decl {
     Def(Def),
     Codef(Codef),
     Let(Let),
+    Infix(Infix),
 }
 
 impl From<Data> for Decl {
@@ -334,6 +336,12 @@ impl From<Let> for Decl {
     }
 }
 
+impl From<Infix> for Decl {
+    fn from(value: Infix) -> Self {
+        Decl::Infix(value)
+    }
+}
+
 impl Decl {
     /// A list of all attributes attached to the declaration.
     pub fn attributes(&self) -> &Attributes {
@@ -343,6 +351,7 @@ impl Decl {
             Decl::Def(Def { attr, .. }) => attr,
             Decl::Codef(Codef { attr, .. }) => attr,
             Decl::Let(Let { attr, .. }) => attr,
+            Decl::Infix(Infix { attr, .. }) => attr,
         }
     }
 
@@ -351,17 +360,6 @@ impl Decl {
         match self {
             Decl::Let(tl_let) => tl_let.is_main().then(|| tl_let.clone()),
             _ => None,
-        }
-    }
-
-    /// The identifier of the declaration.
-    pub fn ident(&self) -> &IdBind {
-        match self {
-            Decl::Data(Data { name, .. }) => name,
-            Decl::Codata(Codata { name, .. }) => name,
-            Decl::Def(Def { name, .. }) => name,
-            Decl::Codef(Codef { name, .. }) => name,
-            Decl::Let(Let { name, .. }) => name,
         }
     }
 }
@@ -374,6 +372,7 @@ impl HasSpan for Decl {
             Decl::Def(def) => def.span,
             Decl::Codef(codef) => codef.span,
             Decl::Let(tl_let) => tl_let.span,
+            Decl::Infix(infix) => infix.span,
         }
     }
 }
@@ -386,6 +385,7 @@ impl Print for Decl {
             Decl::Def(def) => def.print(cfg, alloc),
             Decl::Codef(codef) => codef.print(cfg, alloc),
             Decl::Let(tl_let) => tl_let.print(cfg, alloc),
+            Decl::Infix(infix) => infix.print(cfg, alloc),
         }
     }
 }
@@ -398,6 +398,7 @@ impl Zonk for Decl {
             Decl::Def(def) => def.zonk(meta_vars),
             Decl::Codef(codef) => codef.zonk(meta_vars),
             Decl::Let(tl_let) => tl_let.zonk(meta_vars),
+            Decl::Infix(infix) => infix.zonk(meta_vars),
         }
     }
 }
@@ -410,7 +411,47 @@ impl ContainsMetaVars for Decl {
             Decl::Def(def) => def.contains_metavars(),
             Decl::Codef(codef) => codef.contains_metavars(),
             Decl::Let(tl_let) => tl_let.contains_metavars(),
+            Decl::Infix(infix) => infix.contains_metavars(),
         }
+    }
+}
+
+// Infix
+//
+//
+
+#[derive(Debug, Clone)]
+pub struct Infix {
+    pub span: Option<Span>,
+    pub doc: Option<DocComment>,
+    pub attr: Attributes,
+    pub lhs: String,
+    pub rhs: String,
+}
+
+impl Print for Infix {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Infix { lhs, rhs, .. } = self;
+        alloc
+            .keyword(INFIX)
+            .append(format!(" _ {} _ ", lhs))
+            .append(COLONEQ)
+            .append(format!(" {}(_,_)", rhs))
+    }
+}
+
+impl ContainsMetaVars for Infix {
+    fn contains_metavars(&self) -> bool {
+        false
+    }
+}
+
+impl Zonk for Infix {
+    fn zonk(
+        &mut self,
+        _meta_vars: &HashMap<MetaVar, MetaVarState>,
+    ) -> Result<(), crate::ZonkError> {
+        Ok(())
     }
 }
 

@@ -5,7 +5,7 @@ use crate::Database;
 
 pub fn lookup_decl<'a>(db: &'a Database, name: &IdBound) -> Option<(Url, &'a Decl)> {
     let module = db.ust.get_unless_stale(&name.uri)?.as_ref().ok()?;
-    let decl = module.decls.iter().find(|decl| decl.ident() == name)?;
+    let decl = todo!(); // module.decls.iter().find(|decl| decl.ident() == name)?;
     Some((name.uri.clone(), decl))
 }
 
