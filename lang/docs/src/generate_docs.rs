@@ -1,6 +1,6 @@
 use askama::Template;
 
-use ast::{Codata, Codef, Data, Decl, Def, Let, Module};
+use ast::{Codata, Codef, Data, Decl, Def, Infix, Let, Module};
 use printer::PrintCfg;
 
 use crate::generate::Generate;
@@ -24,6 +24,7 @@ impl GenerateDocs for Decl {
             Decl::Def(def) => def.generate_docs(),
             Decl::Codef(codef) => codef.generate_docs(),
             Decl::Let(l) => l.generate_docs(),
+            Decl::Infix(i) => i.generate_docs(),
         }
     }
 }
@@ -127,6 +128,12 @@ impl GenerateDocs for Let {
 
         let let_template = LetTemplate { doc: &doc, name, params: &params, typ: &typ, body: &body };
         let_template.render().unwrap()
+    }
+}
+
+impl GenerateDocs for Infix {
+    fn generate_docs(&self) -> String {
+        "todo".to_string()
     }
 }
 

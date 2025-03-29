@@ -120,7 +120,7 @@ fn generate_edits(
     // Edits for all other declarations that have been touched
     // Here we surgically rewrite only the declarations that have been changed
     for name in dirty_decls {
-        let decl = module
+        let decl: &Decl = module
             .lookup_decl(&IdBound { span: None, id: name.id.clone(), uri: module.uri.clone() })
             .unwrap();
         let mut decl = decl.clone();
