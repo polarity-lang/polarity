@@ -137,6 +137,7 @@ impl CollectInfo for Decl {
             Decl::Def(def) => def.collect_info(db, collector),
             Decl::Codef(codef) => codef.collect_info(db, collector),
             Decl::Let(lets) => lets.collect_info(db, collector),
+            Decl::Infix(infix) => infix.collect_info(db, collector),
         }
     }
 }
@@ -286,6 +287,10 @@ impl CollectInfo for Let {
         body.collect_info(db, collector);
         params.collect_info(db, collector)
     }
+}
+
+impl CollectInfo for Infix {
+    fn collect_info(&self, _db: &Database, _collector: &mut InfoCollector) {}
 }
 
 // Traversing expressions and collection information

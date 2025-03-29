@@ -39,6 +39,9 @@ pub const UNDERSCORE: &str = "_";
 //
 //
 
+/// The keyword `infix`
+pub const INFIX: &str = "infix";
+
 /// The keyword `data`
 pub const DATA: &str = "data";
 

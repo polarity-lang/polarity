@@ -58,6 +58,7 @@ impl Rename for Decl {
             Decl::Def(def) => def.rename_in_ctx(ctx),
             Decl::Codef(codef) => codef.rename_in_ctx(ctx),
             Decl::Let(lets) => lets.rename_in_ctx(ctx),
+            Decl::Infix(infix) => infix.rename_in_ctx(ctx),
         }
     }
 }
@@ -344,5 +345,9 @@ impl<T: Rename> Rename for Vec<T> {
 }
 
 impl Rename for () {
+    fn rename_in_ctx(&mut self, _ctx: &mut Ctx) {}
+}
+
+impl Rename for Infix {
     fn rename_in_ctx(&mut self, _ctx: &mut Ctx) {}
 }

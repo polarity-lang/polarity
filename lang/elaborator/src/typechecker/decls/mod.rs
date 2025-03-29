@@ -5,6 +5,7 @@ mod codefinition;
 mod datatype;
 mod definition;
 mod global_let;
+mod infix_declaration;
 
 use ast::*;
 use miette_util::ToMiette;
@@ -110,6 +111,7 @@ impl CheckToplevel for Decl {
             Decl::Def(def) => Decl::Def(def.check_wf(ctx)?),
             Decl::Codef(codef) => Decl::Codef(codef.check_wf(ctx)?),
             Decl::Let(tl_let) => Decl::Let(tl_let.check_wf(ctx)?),
+            Decl::Infix(infix) => Decl::Infix(infix.check_wf(ctx)?),
         };
         Ok(out)
     }
