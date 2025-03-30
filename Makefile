@@ -1,6 +1,6 @@
 .PHONY: install
 install:
-	@cargo build
+	@cargo build --release
 	@cargo install --offline --locked --path app --force
 
 .PHONY: check
