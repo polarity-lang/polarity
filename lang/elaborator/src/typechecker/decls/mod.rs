@@ -85,8 +85,11 @@ fn check_metavars_resolved(meta_vars: &HashMap<MetaVar, MetaVarState>, decls: &[
     for decl in decls {
         if decl.contains_metavars() {
             return Err(TypeError::Impossible {
-                message: format!("Declaration {} contains unresolved metavariables", decl.ident()),
-                span: None,
+                message: format!(
+                    "Declaration {:?} contains unresolved metavariables",
+                    decl.ident()
+                ),
+                span: decl.span().to_miette(),
             }
             .into());
         }

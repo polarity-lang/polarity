@@ -14,7 +14,10 @@ impl Database {
         let type_span = prg
             .decls
             .iter()
-            .find(|decl| decl.ident().id == type_name)
+            .find(|decl| match decl.ident() {
+                None => false,
+                Some(id) => id.id == type_name,
+            })
             .and_then(|x| x.span())
             .ok_or(DriverError::Impossible(format!("Could not resolve {type_name}")))?;
 
@@ -39,8 +42,15 @@ fn generate_edits(
         return vec![];
     }
 
-    let new_decls =
-        module.decls.iter().filter(|decl| new_decls.contains(decl.ident())).cloned().collect();
+    let new_decls = module
+        .decls
+        .iter()
+        .filter(|decl| match decl.ident() {
+            None => false,
+            Some(id) => new_decls.contains(id),
+        })
+        .cloned()
+        .collect();
 
     let new_items = Module {
         uri: module.uri.clone(),
@@ -58,7 +68,14 @@ fn generate_edits(
     let mut edits = vec![Edit { span, text }];
 
     for name in modified_decls {
-        let decl = module.decls.iter().find(|d| d.ident() == &name).unwrap();
+        let decl = module
+            .decls
+            .iter()
+            .find(|d| match d.ident() {
+                None => false,
+                Some(id) => id == &name,
+            })
+            .unwrap();
         let span = decl.span().unwrap();
         let text = decl.print_to_string(None);
         edits.push(Edit { span, text });
