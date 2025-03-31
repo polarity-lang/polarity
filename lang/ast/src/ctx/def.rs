@@ -116,10 +116,7 @@ where
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let sep = alloc.text(COMMA).append(alloc.space());
         let iter = self.iter().map(|ctx| {
-            alloc
-                .intersperse(ctx.iter().map(|b| b.print(cfg, alloc)), sep.clone())
-                .append(alloc.text(COMMA).flat_alt(alloc.nil()))
-                .brackets()
+            alloc.intersperse(ctx.iter().map(|b| b.print(cfg, alloc)), sep.clone()).brackets()
         });
         alloc.intersperse(iter, sep.clone()).brackets()
     }
