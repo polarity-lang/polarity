@@ -46,12 +46,18 @@ fn main() {
         runner::Runner::load(crate::TEST_SUITES_PATH, crate::EXAMPLES_PATH, crate::STDLIB_PATH);
     let mut res = runner.run(&args);
     if args.update_expected {
-        res.update_expected();
+        let all_tests_fixed = res.update_expected();
         println!("Updated expected outputs.");
+
+        // Return non-zero exit code if not all tests could be fixed
+        if !all_tests_fixed {
+            println!("Warning: There were tests of which expected output could not be updated, because they failed for a reason other than having an unexpected output.");
+            std::process::exit(1);
+        }
     } else {
         res.print();
-    }
-    if !res.success() {
-        std::process::exit(1);
+        if !res.success() {
+            std::process::exit(1);
+        }
     }
 }
