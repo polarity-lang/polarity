@@ -328,7 +328,7 @@ impl CollectInfo for Variable {
 
 impl CollectInfo for TypCtor {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
-        let TypCtor { span, args, name } = self;
+        let TypCtor { span, args, name, is_bin_op: _ } = self;
         if let Some(span) = span {
             let decl = lookup_decl(db, name);
             let (definition_site, doc) = match decl {

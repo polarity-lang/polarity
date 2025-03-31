@@ -574,13 +574,23 @@ mod tests {
     fn true_exp() -> Box<Exp> {
         let uri = dummy_uri();
         let name = IdBound { span: None, id: "T".to_owned(), uri };
-        Box::new(Exp::TypCtor(TypCtor { span: None, name, args: Args { args: vec![] } }))
+        Box::new(Exp::TypCtor(TypCtor {
+            span: None,
+            name,
+            args: Args { args: vec![] },
+            is_bin_op: None,
+        }))
     }
 
     fn bool_type() -> Box<Exp> {
         let uri = dummy_uri();
         let name = IdBound { span: None, id: "Bool".to_owned(), uri };
-        Box::new(Exp::TypCtor(TypCtor { span: None, name, args: Args { args: vec![] } }))
+        Box::new(Exp::TypCtor(TypCtor {
+            span: None,
+            name,
+            args: Args { args: vec![] },
+            is_bin_op: None,
+        }))
     }
 
     fn fun_type(a: Box<Exp>, b: Box<Exp>) -> Box<Exp> {
@@ -595,6 +605,7 @@ mod tests {
                     Arg::UnnamedArg { arg: b, erased: false },
                 ],
             },
+            is_bin_op: None,
         }))
     }
 

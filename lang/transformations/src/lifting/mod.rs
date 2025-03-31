@@ -320,8 +320,13 @@ impl Lift for TypCtor {
     type Target = TypCtor;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let TypCtor { span, name, args } = self;
-        TypCtor { span: *span, name: name.clone(), args: args.lift(ctx) }
+        let TypCtor { span, name, args, is_bin_op } = self;
+        TypCtor {
+            span: *span,
+            name: name.clone(),
+            args: args.lift(ctx),
+            is_bin_op: is_bin_op.clone(),
+        }
     }
 }
 

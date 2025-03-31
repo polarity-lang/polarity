@@ -5,9 +5,6 @@
 //
 //
 
-/// The symbol `->`
-pub const ARROW: &str = "->";
-
 /// The symbol `=>`
 pub const FAT_ARROW: &str = "=>";
 

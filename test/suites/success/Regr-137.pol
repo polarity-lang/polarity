@@ -2,6 +2,8 @@ codata Fun(A B: Type) {
   Fun(A,B).ap(A B: Type, x: A): B
 }
 
+infix a -> b := Fun(a,b)
+
 codata Pi(T: Fun(Bool, Type)) {
   Pi(T).dap(T: Fun(Bool,Type), x: Bool): T.ap(Bool,Type,x)
 }
