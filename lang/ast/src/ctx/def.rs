@@ -117,16 +117,7 @@ where
         let sep = alloc.text(COMMA).append(alloc.space());
         let iter = self.iter().map(|ctx| {
             alloc
-                .intersperse(
-                    ctx.iter().map(|b| {
-                        b.name
-                            .print(cfg, alloc)
-                            .append(COLON)
-                            .append(alloc.space())
-                            .append(b.print(cfg, alloc))
-                    }),
-                    sep.clone(),
-                )
+                .intersperse(ctx.iter().map(|b| b.print(cfg, alloc)), sep.clone())
                 .append(alloc.text(COMMA).flat_alt(alloc.nil()))
                 .brackets()
         });
