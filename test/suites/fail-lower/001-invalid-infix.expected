@@ -1,0 +1,8 @@
+L-001
+
+  × Undefined identifier z
+   ╭─[001-invalid-infix.pol:3:18]
+ 2 │ 
+ 3 │ infix x + y := D(z)
+   ·                  ─
+   ╰────
