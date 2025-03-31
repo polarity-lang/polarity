@@ -23,24 +23,6 @@ impl TypeCtx {
             .collect();
         LevelCtx::from(bound)
     }
-
-    pub fn map_failable<E, F>(&self, f: F) -> Result<Self, E>
-    where
-        F: Fn(&Binding) -> Result<Binding, E>,
-    {
-        let bound: Result<_, _> = self
-            .bound
-            .iter()
-            .map(|stack| {
-                stack
-                    .iter()
-                    .map(|b| Ok(Binder { name: b.name.clone(), content: f(&b.content)? }))
-                    .collect()
-            })
-            .collect();
-
-        Ok(Self { bound: bound? })
-    }
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]

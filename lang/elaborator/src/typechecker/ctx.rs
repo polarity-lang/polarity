@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use crate::normalizer::env::{Env, ToEnv};
 use crate::normalizer::normalize::Normalize;
-use ast::ctx::values::{Binding, TypeCtx};
+use ast::ctx::values::{Binder, Binding, TypeCtx};
 use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
 use printer::Print;
@@ -55,11 +55,35 @@ impl ContextSubstExt for Ctx {
     {
         let env = self.vars.env();
         let levels = self.vars.levels();
-        self.map_failable(|binding| {
-            let mut binding = binding.subst(&mut levels.clone(), s).map_err(Into::into)?;
-            binding.typ = binding.typ.normalize(type_info_table, &mut env.clone())?;
-            Ok(binding)
-        })
+
+        self.vars.bound = self
+            .vars
+            .bound
+            .iter()
+            .enumerate()
+            .map(|(fst, stack)| {
+                stack
+                    .iter()
+                    .enumerate()
+                    .map(|(snd, Binder { name, content: binding })| {
+                        let lvl = Lvl { fst, snd };
+                        let mut binding =
+                            binding.subst(&mut levels.clone(), s).map_err(Into::into)?;
+                        if binding.val.is_none() {
+                            if let Some(val) =
+                                s.get_subst(&levels, lvl).map_err(|e| Box::new(e.into()))?
+                            {
+                                binding.val = Some(ctx::values::BoundValue::PatternMatching { val })
+                            }
+                        }
+                        binding.typ = binding.typ.normalize(type_info_table, &mut env.clone())?;
+                        Ok(Binder { name: name.clone(), content: binding })
+                    })
+                    .collect()
+            })
+            .collect::<TcResult<Vec<_>>>()?;
+
+        Ok(())
     }
 }
 
@@ -92,14 +116,6 @@ impl Ctx {
 
     pub fn levels(&self) -> LevelCtx {
         self.vars.levels()
-    }
-
-    pub fn map_failable<E, F>(&mut self, f: F) -> Result<(), E>
-    where
-        F: Fn(&Binding) -> Result<Binding, E>,
-    {
-        self.vars = self.vars.map_failable(f)?;
-        Ok(())
     }
 
     pub fn fork<T, F: FnOnce(&mut Ctx) -> T>(&mut self, f: F) -> T {
