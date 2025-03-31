@@ -22,7 +22,7 @@ use super::ctx::*;
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
 use crate::result::{TcResult, TypeError};
 
-use ast::ctx::values::Binder;
+use ast::ctx::values::{Binder, Binding};
 use ast::ctx::BindContext;
 
 /// The CheckInfer trait for bidirectional type inference.
@@ -240,7 +240,8 @@ impl CheckTelescope for TelescopeInst {
                     erased: *erased,
                 };
                 params_out.push(param_out);
-                let binder = Binder { name: param_actual.name.clone(), content: typ_nf };
+                let binder =
+                    Binder { name: param_actual.name.clone(), content: Binding::from_type(typ_nf) };
                 TcResult::<_>::Ok(binder)
             },
             |ctx, params| f(ctx, TelescopeInst { params }),
@@ -272,7 +273,8 @@ impl InferTelescope for Telescope {
                     erased: *erased,
                 };
                 params_out.push(param_out);
-                let binder = Binder { name: param.name.clone(), content: typ_nf };
+                let binder =
+                    Binder { name: param.name.clone(), content: Binding::from_type(typ_nf) };
                 TcResult::<_>::Ok(binder)
             },
             |ctx, params| f(ctx, Telescope { params }),
@@ -293,7 +295,7 @@ impl InferTelescope for SelfParam {
         let typ_nf = typ.to_exp().normalize(&ctx.type_info_table, &mut ctx.env())?;
         let typ_out = typ.infer(ctx)?;
         let param_out = SelfParam { info: *info, name: name.clone(), typ: typ_out };
-        let elem = Binder { name: name.clone(), content: typ_nf };
+        let elem = Binder { name: name.clone(), content: Binding::from_type(typ_nf) };
 
         // We need to shift the self parameter type here because we treat it as a 1-element telescope
         ctx.bind_single(shift_and_clone(&elem, (1, 0)), |ctx| f(ctx, param_out))

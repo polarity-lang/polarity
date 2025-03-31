@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use crate::normalizer::env::{Env, ToEnv};
 use crate::normalizer::normalize::Normalize;
-use ast::ctx::values::TypeCtx;
+use ast::ctx::values::{Binding, TypeCtx};
 use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
 use printer::Print;
@@ -55,16 +55,16 @@ impl ContextSubstExt for Ctx {
     {
         let env = self.vars.env();
         let levels = self.vars.levels();
-        self.map_failable(|nf| {
-            let exp = nf.subst(&mut levels.clone(), s).map_err(Into::into)?;
-            let nf = exp.normalize(type_info_table, &mut env.clone())?;
-            Ok(nf)
+        self.map_failable(|binding| {
+            let mut binding = binding.subst(&mut levels.clone(), s).map_err(Into::into)?;
+            binding.typ = binding.typ.normalize(type_info_table, &mut env.clone())?;
+            Ok(binding)
         })
     }
 }
 
 impl BindContext for Ctx {
-    type Content = Box<Exp>;
+    type Content = Binding;
 
     fn ctx_mut(&mut self) -> &mut TypeCtx {
         &mut self.vars
@@ -87,7 +87,7 @@ impl Ctx {
     }
 
     pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Box<Exp> {
-        self.vars.lookup(idx).content
+        self.vars.lookup(idx).content.typ
     }
 
     pub fn levels(&self) -> LevelCtx {
@@ -96,7 +96,7 @@ impl Ctx {
 
     pub fn map_failable<E, F>(&mut self, f: F) -> Result<(), E>
     where
-        F: Fn(&Exp) -> Result<Box<Exp>, E>,
+        F: Fn(&Binding) -> Result<Binding, E>,
     {
         self.vars = self.vars.map_failable(f)?;
         Ok(())
