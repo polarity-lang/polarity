@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use miette_util::codespan::Span;
 use printer::Print;
 use transformations::LiftResult;
@@ -38,8 +40,15 @@ impl Database {
     pub async fn xfunc(&mut self, uri: &Url, type_name: &str) -> Result<Xfunc, crate::Error> {
         let module = self.ast(uri).await?;
 
-        let decl_spans =
-            module.decls.iter().map(|decl| (decl.ident().clone(), decl.span().unwrap())).collect();
+        let mut decl_spans: HashMap<IdBind, Span> = HashMap::new();
+        for decl in module.decls.iter() {
+            match decl.ident() {
+                None => continue,
+                Some(id) => {
+                    decl_spans.insert(id.clone(), decl.span().unwrap());
+                }
+            }
+        }
 
         // xdefs and xtors before xfunc
         let xdefs = module.xdefs_for_type(type_name);

@@ -241,7 +241,17 @@ impl Module {
     }
 
     pub fn lookup_decl(&self, name: &IdBound) -> Option<&Decl> {
-        self.decls.iter().find(|decl| decl.ident() == name)
+        for decl in self.decls.iter() {
+            match decl {
+                Decl::Data(data) if data.name.id == name.id => return Some(decl),
+                Decl::Codata(codata) if codata.name.id == name.id => return Some(decl),
+                Decl::Def(def) if def.name.id == name.id => return Some(decl),
+                Decl::Codef(codef) if codef.name.id == name.id => return Some(decl),
+                Decl::Let(tl_let) if tl_let.name.id == name.id => return Some(decl),
+                _ => continue,
+            }
+        }
+        None
     }
 
     pub fn find_main(&self) -> Option<Box<Exp>> {
@@ -354,14 +364,14 @@ impl Decl {
         }
     }
 
-    /// The identifier of the declaration.
-    pub fn ident(&self) -> &IdBind {
+    /// The identifier of the declaration, if it has one.
+    pub fn ident(&self) -> Option<&IdBind> {
         match self {
-            Decl::Data(Data { name, .. }) => name,
-            Decl::Codata(Codata { name, .. }) => name,
-            Decl::Def(Def { name, .. }) => name,
-            Decl::Codef(Codef { name, .. }) => name,
-            Decl::Let(Let { name, .. }) => name,
+            Decl::Data(Data { name, .. }) => Some(name),
+            Decl::Codata(Codata { name, .. }) => Some(name),
+            Decl::Def(Def { name, .. }) => Some(name),
+            Decl::Codef(Codef { name, .. }) => Some(name),
+            Decl::Let(Let { name, .. }) => Some(name),
         }
     }
 }

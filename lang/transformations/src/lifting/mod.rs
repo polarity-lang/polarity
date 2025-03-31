@@ -29,7 +29,13 @@ pub fn lift(module: Arc<Module>, name: &str) -> LiftResult {
     };
 
     let mut module = module.lift(&mut ctx);
-    let new_decl_names = HashSet::from_iter(ctx.new_decls.iter().map(|decl| decl.ident().clone()));
+
+    let mut new_decl_names: HashSet<IdBind> = Default::default();
+    for decl in ctx.new_decls.iter() {
+        if let Some(id) = decl.ident() {
+            new_decl_names.insert(id.clone());
+        }
+    }
     module.decls.extend(ctx.new_decls);
     module.rename();
 
@@ -103,7 +109,6 @@ impl Lift for Decl {
     type Target = Decl;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        ctx.set_curr_decl(self.ident().clone());
         match self {
             Decl::Data(data) => Decl::Data(data.lift(ctx)),
             Decl::Codata(cotata) => Decl::Codata(cotata.lift(ctx)),
@@ -119,6 +124,7 @@ impl Lift for Data {
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Data { span, doc, name, attr, typ, ctors } = self;
+        ctx.set_curr_decl(name.clone());
 
         let ctors = ctors.iter().map(|ctor| ctor.lift(ctx)).collect();
 
@@ -138,6 +144,7 @@ impl Lift for Codata {
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Codata { span, doc, name, attr, typ, dtors } = self;
+        ctx.set_curr_decl(name.clone());
 
         let dtors = dtors.iter().map(|dtor| dtor.lift(ctx)).collect();
 
@@ -189,6 +196,7 @@ impl Lift for Def {
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Def { span, doc, name, attr, params, self_param, ret_typ, cases } = self;
+        ctx.set_curr_decl(name.clone());
 
         params.lift_telescope(ctx, |ctx, params| {
             let (self_param, ret_typ) = self_param.lift_telescope(ctx, |ctx, self_param| {
@@ -215,6 +223,7 @@ impl Lift for Codef {
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Codef { span, doc, name, attr, params, typ, cases } = self;
+        ctx.set_curr_decl(name.clone());
 
         params.lift_telescope(ctx, |ctx, params| Codef {
             span: *span,
@@ -233,6 +242,7 @@ impl Lift for Let {
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
         let Let { span, doc, name, attr, params, typ, body } = self;
+        ctx.set_curr_decl(name.clone());
 
         params.lift_telescope(ctx, |ctx, params| Let {
             span: *span,
