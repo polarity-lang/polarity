@@ -138,7 +138,7 @@ impl RunResult {
     }
 
     /// Updates the expected output of failed tests on disk
-    /// Returns all failed tests were successfully updated.
+    /// Returns true when all failed tests were due to unexpected output.
     /// Tests can not be updated if they failed for a reason other than a mismatched output.
     pub fn update_expected(&self) -> bool {
         self.case_results().all(|CaseResult { case, result }| {
