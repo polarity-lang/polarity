@@ -137,12 +137,18 @@ impl RunResult {
         self.failed_cases == 0
     }
 
-    pub fn update_expected(&self) {
-        for CaseResult { case, result } in self.case_results() {
-            if let Err(Failure::Mismatch { phase, ref actual, .. }) = result {
+    /// Updates the expected output of failed tests on disk
+    /// Returns true when all failed tests were due to unexpected output.
+    /// Tests can not be updated if they failed for a reason other than a mismatched output.
+    pub fn update_expected(&self) -> bool {
+        self.case_results().all(|CaseResult { case, result }| match result {
+            Ok(_) => true,
+            Err(Failure::Mismatch { phase, ref actual, .. }) => {
                 case.set_expected(phase, actual);
+                true
             }
-        }
+            Err(_) => false,
+        })
     }
 
     fn case_results(&self) -> impl Iterator<Item = &CaseResult> {
