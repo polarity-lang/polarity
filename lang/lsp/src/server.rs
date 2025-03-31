@@ -1,6 +1,6 @@
 use async_lock::RwLock;
 use tower_lsp_server::jsonrpc::Result;
-use tower_lsp_server::{jsonrpc, lsp_types::*, LanguageServer};
+use tower_lsp_server::{LanguageServer, jsonrpc, lsp_types::*};
 
 use driver::Database;
 #[cfg(not(target_arch = "wasm32"))]

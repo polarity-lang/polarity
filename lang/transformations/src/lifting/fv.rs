@@ -244,11 +244,7 @@ impl<T: FV> FV for Box<T> {
 
 impl<T: FV> FV for Option<T> {
     fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
-        if let Some(x) = self {
-            x.free_vars_closure(lvl_ctx, type_ctx)
-        } else {
-            HashSet::default()
-        }
+        if let Some(x) = self { x.free_vars_closure(lvl_ctx, type_ctx) } else { HashSet::default() }
     }
 }
 

@@ -4,8 +4,8 @@ use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{
-    tokens::{AT, DOT, QUESTION_MARK, UNDERSCORE},
     Alloc, Builder, Print, PrintCfg,
+    tokens::{AT, DOT, QUESTION_MARK, UNDERSCORE},
 };
 use url::Url;
 

@@ -1,6 +1,6 @@
 use ast::ctx::values::Binder;
-use miette_util::codespan::Span;
 use miette_util::ToMiette;
+use miette_util::codespan::Span;
 
 use ast::ctx::{BindContext, LevelCtx};
 use ast::{self, MetaVar, MetaVarKind, MetaVarState, VarBound};

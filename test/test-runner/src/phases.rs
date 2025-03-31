@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::fmt;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
 use driver::{Database, FileSource, FileSystemSource, InMemorySource};

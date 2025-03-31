@@ -1,10 +1,10 @@
 use derivative::Derivative;
 use miette_util::codespan::Span;
-use printer::{theme::ThemeExt, tokens::TYPE, Alloc, Builder, Precedence, Print, PrintCfg};
+use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::TYPE};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable, Substitution, Zonk,
+    ZonkError, ctx::LevelCtx,
 };
 
 use super::{Exp, MetaVar};

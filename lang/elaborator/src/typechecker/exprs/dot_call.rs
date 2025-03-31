@@ -9,9 +9,9 @@ use crate::typechecker::type_info_table::DtorMeta;
 use ast::*;
 
 use super::super::ctx::*;
-use super::check_args;
 use super::CheckInfer;
 use super::ExpectType;
+use super::check_args;
 
 impl CheckInfer for DotCall {
     /// The *checking* rule for dotcalls is:

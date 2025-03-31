@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use url::Url;
 
-use ast::ctx::values::TypeCtx;
 use ast::ctx::BindContext;
 use ast::ctx::LevelCtx;
+use ast::ctx::values::TypeCtx;
 use ast::*;
 use ctx::values::Binder;
 use miette_util::codespan::Span;

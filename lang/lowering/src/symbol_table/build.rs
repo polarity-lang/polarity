@@ -1,7 +1,7 @@
 use ast::HashMap;
 use decls::*;
-use miette_util::codespan::Span;
 use miette_util::ToMiette;
+use miette_util::codespan::Span;
 use parser::cst::*;
 
 use crate::LoweringError;

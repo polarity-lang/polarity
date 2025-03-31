@@ -75,11 +75,7 @@ impl Case {
 pub fn load<P: AsRef<Path>>(path: P) -> impl Iterator<Item = Suite> {
     let suite_paths = fs::read_dir(path).unwrap().filter_map(|entry| {
         let path = entry.unwrap().path();
-        if path.is_dir() {
-            Some(path)
-        } else {
-            None
-        }
+        if path.is_dir() { Some(path) } else { None }
     });
     suite_paths.map(Suite::new)
 }

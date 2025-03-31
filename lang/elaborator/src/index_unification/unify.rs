@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::convert::Infallible;
 
 use ast::ctx::LevelCtx;
-use ast::{occurs_in, Variable};
+use ast::{Variable, occurs_in};
 use miette_util::codespan::Span;
 
 use crate::result::{TcResult, TypeError};
