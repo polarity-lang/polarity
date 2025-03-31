@@ -24,9 +24,12 @@ pub trait ExpectTypApp {
 impl ExpectTypApp for Exp {
     fn expect_typ_app(&self) -> TcResult<TypCtor> {
         match self {
-            Exp::TypCtor(TypCtor { span, name, args }) => {
-                Ok(TypCtor { span: *span, name: name.clone(), args: args.clone() })
-            }
+            Exp::TypCtor(TypCtor { span, name, args, is_bin_op }) => Ok(TypCtor {
+                span: *span,
+                name: name.clone(),
+                args: args.clone(),
+                is_bin_op: is_bin_op.clone(),
+            }),
             _ => Err(TypeError::expected_typ_app(self).into()),
         }
     }

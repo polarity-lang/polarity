@@ -55,6 +55,7 @@ fn lower_constructor(
                             uri: ctx.uri.clone(),
                         },
                         args: ast::Args { args: vec![] },
+                        is_bin_op: None,
                     }
                 } else {
                     return Err(LoweringError::MustProvideArgs {

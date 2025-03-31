@@ -32,10 +32,15 @@ impl CheckInfer for TypCtor {
     ///            P, Γ ⊢ Tσ ⇒ Type
     /// ```
     fn infer(&self, ctx: &mut Ctx) -> TcResult<Self> {
-        let TypCtor { span, name, args } = self;
+        let TypCtor { span, name, args, is_bin_op } = self;
         let params = ctx.type_info_table.lookup_tyctor(name)?.params.clone();
         let args_out = check_args(args, name, ctx, &params, *span)?;
 
-        Ok(TypCtor { span: *span, name: name.clone(), args: args_out })
+        Ok(TypCtor {
+            span: *span,
+            name: name.clone(),
+            args: args_out,
+            is_bin_op: is_bin_op.clone(),
+        })
     }
 }
