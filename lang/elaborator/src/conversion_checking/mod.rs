@@ -127,7 +127,7 @@ pub fn convert(
 #[cfg(test)]
 mod test {
     use ast::{
-        ctx::values::{Binder, TypeCtx},
+        ctx::values::{Binder, Binding, TypeCtx},
         HashMap, Idx, MetaVar, MetaVarState, TypeUniv, VarBind, VarBound, Variable,
     };
 
@@ -165,11 +165,11 @@ mod test {
         let ctx = vec![vec![
             Binder {
                 name: VarBind::Var { span: None, id: "a".to_string() },
-                content: Box::new(TypeUniv { span: None }.into()),
+                content: Binding::from_type(Box::new(TypeUniv { span: None }.into())),
             },
             Binder {
                 name: VarBind::Var { span: None, id: "v".to_string() },
-                content: Box::new(
+                content: Binding::from_type(Box::new(
                     Variable {
                         span: None,
                         idx: Idx { fst: 0, snd: 1 },
@@ -177,7 +177,7 @@ mod test {
                         inferred_type: None,
                     }
                     .into(),
-                ),
+                )),
             },
         ]];
         check_eq(&ctx.into(), v.clone(), v)
@@ -203,11 +203,11 @@ mod test {
         let ctx = vec![vec![
             Binder {
                 name: VarBind::Var { span: None, id: "a".to_string() },
-                content: Box::new(TypeUniv { span: None }.into()),
+                content: Binding::from_type(Box::new(TypeUniv { span: None }.into())),
             },
             Binder {
                 name: VarBind::Var { span: None, id: "v'".to_string() },
-                content: Box::new(
+                content: Binding::from_type(Box::new(
                     Variable {
                         span: None,
                         idx: Idx { fst: 0, snd: 2 },
@@ -215,11 +215,11 @@ mod test {
                         inferred_type: None,
                     }
                     .into(),
-                ),
+                )),
             },
             Binder {
                 name: VarBind::Var { span: None, id: "v".to_string() },
-                content: Box::new(
+                content: Binding::from_type(Box::new(
                     Variable {
                         span: None,
                         idx: Idx { fst: 0, snd: 2 },
@@ -227,7 +227,7 @@ mod test {
                         inferred_type: None,
                     }
                     .into(),
-                ),
+                )),
             },
         ]];
 

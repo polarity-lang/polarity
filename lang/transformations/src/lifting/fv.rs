@@ -117,7 +117,7 @@ impl FV for Variable {
         // Only consider this variable if it is bound in `type_ctx`.
         if lvl.fst < type_ctx.len() {
             let typ = shift_and_clone(
-                &type_ctx.lookup(lvl).content,
+                &type_ctx.lookup(lvl).content.typ,
                 ((lvl_ctx.len() - type_ctx.len()) as isize, 0),
             );
             let fv = FreeVar { name: name.id.clone(), lvl, typ: typ.clone(), ctx: lvl_ctx.clone() };

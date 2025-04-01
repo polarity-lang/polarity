@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use crate::normalizer::env::{Env, ToEnv};
 use crate::normalizer::normalize::Normalize;
-use ast::ctx::values::TypeCtx;
+use ast::ctx::values::{Binder, Binding, TypeCtx};
 use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
 use printer::Print;
@@ -55,16 +55,40 @@ impl ContextSubstExt for Ctx {
     {
         let env = self.vars.env();
         let levels = self.vars.levels();
-        self.map_failable(|nf| {
-            let exp = nf.subst(&mut levels.clone(), s).map_err(Into::into)?;
-            let nf = exp.normalize(type_info_table, &mut env.clone())?;
-            Ok(nf)
-        })
+
+        self.vars.bound = self
+            .vars
+            .bound
+            .iter()
+            .enumerate()
+            .map(|(fst, stack)| {
+                stack
+                    .iter()
+                    .enumerate()
+                    .map(|(snd, Binder { name, content: binding })| {
+                        let lvl = Lvl { fst, snd };
+                        let mut binding =
+                            binding.subst(&mut levels.clone(), s).map_err(Into::into)?;
+                        if binding.val.is_none() {
+                            if let Some(val) =
+                                s.get_subst(&levels, lvl).map_err(|e| Box::new(e.into()))?
+                            {
+                                binding.val = Some(ctx::values::BoundValue::PatternMatching { val })
+                            }
+                        }
+                        binding.typ = binding.typ.normalize(type_info_table, &mut env.clone())?;
+                        Ok(Binder { name: name.clone(), content: binding })
+                    })
+                    .collect()
+            })
+            .collect::<TcResult<Vec<_>>>()?;
+
+        Ok(())
     }
 }
 
 impl BindContext for Ctx {
-    type Content = Box<Exp>;
+    type Content = Binding;
 
     fn ctx_mut(&mut self) -> &mut TypeCtx {
         &mut self.vars
@@ -87,19 +111,11 @@ impl Ctx {
     }
 
     pub fn lookup<V: Into<Var> + std::fmt::Debug>(&self, idx: V) -> Box<Exp> {
-        self.vars.lookup(idx).content
+        self.vars.lookup(idx).content.typ
     }
 
     pub fn levels(&self) -> LevelCtx {
         self.vars.levels()
-    }
-
-    pub fn map_failable<E, F>(&mut self, f: F) -> Result<(), E>
-    where
-        F: Fn(&Exp) -> Result<Box<Exp>, E>,
-    {
-        self.vars = self.vars.map_failable(f)?;
-        Ok(())
     }
 
     pub fn fork<T, F: FnOnce(&mut Ctx) -> T>(&mut self, f: F) -> T {
