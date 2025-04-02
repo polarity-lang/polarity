@@ -1,0 +1,3 @@
+codef f { .ap(x) => comatch { .test(x0) => x0 } }
+
+let eq { Refl(f.ap(T)) }
