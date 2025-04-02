@@ -6,6 +6,8 @@ codata Fun(a b: Type) {
     Fun(a, b).ap(a b: Type, x: a): b
 }
 
+infix a -> b := Fun(a,b)
+
 data Eq(a: Type, x y: a) {
     Refl(a: Type, x: a): Eq(a, x, x)
 }

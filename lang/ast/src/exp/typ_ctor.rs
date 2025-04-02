@@ -1,7 +1,7 @@
 use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
-use printer::{theme::ThemeExt, tokens::ARROW, Alloc, Builder, Precedence, Print, PrintCfg};
+use printer::{theme::ThemeExt, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
     ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
@@ -23,6 +23,10 @@ pub struct TypCtor {
     pub name: IdBound,
     /// Arguments to the type constructor
     pub args: Args,
+    /// If this TypCtor has been lowered from a binary operator.
+    ///
+    /// If the user has written "->" then we populate this field with `Some("->")`
+    pub is_bin_op: Option<String>,
 }
 
 impl TypCtor {
@@ -73,8 +77,13 @@ impl HasType for TypCtor {
 impl Substitutable for TypCtor {
     type Target = TypCtor;
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        let TypCtor { span, name, args } = self;
-        Ok(TypCtor { span: *span, name: name.clone(), args: args.subst(ctx, by)? })
+        let TypCtor { span, name, args, is_bin_op } = self;
+        Ok(TypCtor {
+            span: *span,
+            name: name.clone(),
+            args: args.subst(ctx, by)?,
+            is_bin_op: is_bin_op.clone(),
+        })
     }
 }
 
@@ -85,24 +94,26 @@ impl Print for TypCtor {
         alloc: &'a Alloc<'a>,
         prec: Precedence,
     ) -> Builder<'a> {
-        let TypCtor { span: _, name, args } = self;
-        if name.id == "Fun" && args.len() == 2 && cfg.print_function_sugar {
-            let arg = args.args[0].print_prec(cfg, alloc, 1);
-            let res = args.args[1].print_prec(cfg, alloc, 0);
-            let fun = arg.append(alloc.space()).append(ARROW).append(alloc.space()).append(res);
-            if prec == 0 {
-                fun
-            } else {
-                fun.parens()
+        let TypCtor { span: _, name, args, is_bin_op } = self;
+        match is_bin_op {
+            Some(op) if cfg.print_function_sugar => {
+                assert!(args.len() == 2);
+                let arg = args.args[0].print_prec(cfg, alloc, 1);
+                let res = args.args[1].print_prec(cfg, alloc, 0);
+                let fun = arg.append(alloc.space()).append(op).append(alloc.space()).append(res);
+                if prec == 0 {
+                    fun
+                } else {
+                    fun.parens()
+                }
             }
-        } else {
-            alloc
+            _ => alloc
                 .typ(&name.id)
                 .annotate(printer::Anno::Reference {
                     module_uri: name.uri.to_owned(),
                     name: name.id.clone(),
                 })
-                .append(args.print(cfg, alloc))
+                .append(args.print(cfg, alloc)),
         }
     }
 }
@@ -113,14 +124,14 @@ impl Zonk for TypCtor {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        let TypCtor { span: _, name: _, args } = self;
+        let TypCtor { span: _, name: _, args, is_bin_op: _ } = self;
         args.zonk(meta_vars)
     }
 }
 
 impl ContainsMetaVars for TypCtor {
     fn contains_metavars(&self) -> bool {
-        let TypCtor { span: _, name: _, args } = self;
+        let TypCtor { span: _, name: _, args, is_bin_op: _ } = self;
 
         args.contains_metavars()
     }

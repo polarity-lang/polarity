@@ -114,6 +114,13 @@ pub enum LoweringError {
         span: SourceSpan,
         operator: String,
     },
+    #[error("Operator already defined: {operator}")]
+    #[diagnostic(code("L-018"))]
+    OperatorAlreadyDefined {
+        #[label]
+        span: SourceSpan,
+        operator: String,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("L-XXX"))]
     /// This error should not occur.

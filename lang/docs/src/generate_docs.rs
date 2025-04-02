@@ -1,6 +1,6 @@
 use askama::Template;
 
-use ast::{Codata, Codef, Data, Decl, Def, Let, Module};
+use ast::{Codata, Codef, Data, Decl, Def, Infix, Let, Module};
 use printer::PrintCfg;
 
 use crate::generate::Generate;
@@ -24,6 +24,7 @@ impl GenerateDocs for Decl {
             Decl::Def(def) => def.generate_docs(),
             Decl::Codef(codef) => codef.generate_docs(),
             Decl::Let(l) => l.generate_docs(),
+            Decl::Infix(i) => i.generate_docs(),
         }
     }
 }
@@ -130,6 +131,17 @@ impl GenerateDocs for Let {
     }
 }
 
+impl GenerateDocs for Infix {
+    fn generate_docs(&self) -> String {
+        let Infix { span: _, doc, attr: _, lhs, rhs } = self;
+        let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
+        let lhs = print_html_to_string(lhs, Some(&PrintCfg::default()));
+        let rhs = print_html_to_string(rhs, Some(&PrintCfg::default()));
+        let infix_template = InfixTemplate { doc: &doc, lhs: &lhs, rhs: &rhs };
+        infix_template.render().unwrap()
+    }
+}
+
 #[derive(Template)]
 #[template(path = "data.html", escape = "none")]
 struct DataTemplate<'a> {
@@ -179,4 +191,12 @@ struct LetTemplate<'a> {
     pub params: &'a str,
     pub typ: &'a str,
     pub body: &'a str,
+}
+
+#[derive(Template)]
+#[template(path = "infix.html", escape = "none")]
+struct InfixTemplate<'a> {
+    pub doc: &'a str,
+    pub lhs: &'a str,
+    pub rhs: &'a str,
 }

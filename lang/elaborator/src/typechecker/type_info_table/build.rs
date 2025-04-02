@@ -26,6 +26,7 @@ impl BuildTypeInfoTable for Decl {
             Decl::Def(def) => def.build(info_table),
             Decl::Codef(codef) => codef.build(info_table),
             Decl::Let(tl_let) => tl_let.build(info_table),
+            Decl::Infix(infix) => infix.build(info_table),
         }
     }
 }
@@ -95,4 +96,8 @@ impl BuildTypeInfoTable for Let {
         erasure::mark_erased_params(&mut tl_let.params);
         info_table.map_let.insert(self.name.id.clone(), tl_let);
     }
+}
+
+impl BuildTypeInfoTable for Infix {
+    fn build(&self, _info_table: &mut ModuleTypeInfoTable) {}
 }

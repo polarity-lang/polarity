@@ -1,8 +1,8 @@
 use miette_util::codespan::Span;
 use url::Url;
 
-use super::exp::Copattern;
 use super::exp::{self, Pattern};
+use super::exp::{Call, Copattern};
 use super::ident::*;
 
 #[derive(Debug, Clone)]
@@ -45,6 +45,7 @@ pub enum Decl {
     Def(Def),
     Codef(Codef),
     Let(Let),
+    Infix(Infix),
 }
 
 /// Data type declaration
@@ -215,6 +216,23 @@ pub struct Let {
     pub params: Telescope,
     pub typ: Box<exp::Exp>,
     pub body: Box<exp::Exp>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Infix {
+    pub span: Span,
+    pub doc: Option<DocComment>,
+    pub lhs: BinOpPattern,
+    pub rhs: Call,
+}
+
+/// Binary Operator Pattern, e.g. `x -> y` or `_ + z`.
+#[derive(Debug, Clone)]
+pub struct BinOpPattern {
+    pub span: Span,
+    pub operator: Operator,
+    pub lhs: exp::BindingSite,
+    pub rhs: exp::BindingSite,
 }
 
 /// A `Param` can either be a single parameter, like `x : T`, or a list of parameters, like `x y z: T`.

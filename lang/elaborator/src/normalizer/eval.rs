@@ -66,10 +66,15 @@ impl Eval for TypCtor {
     type Val = Box<Val>;
 
     fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
-        let TypCtor { span, name, args } = self;
+        let TypCtor { span, name, args, is_bin_op } = self;
         Ok(Box::new(
-            val::TypCtor { span: *span, name: name.clone(), args: args.eval(info_table, env)? }
-                .into(),
+            val::TypCtor {
+                span: *span,
+                name: name.clone(),
+                args: args.eval(info_table, env)?,
+                is_bin_op: is_bin_op.clone(),
+            }
+            .into(),
         ))
     }
 }

@@ -5,9 +5,6 @@
 //
 //
 
-/// The symbol `->`
-pub const ARROW: &str = "->";
-
 /// The symbol `=>`
 pub const FAT_ARROW: &str = "=>";
 
@@ -38,6 +35,9 @@ pub const UNDERSCORE: &str = "_";
 // Keywords
 //
 //
+
+/// The keyword `infix`
+pub const INFIX: &str = "infix";
 
 /// The keyword `data`
 pub const DATA: &str = "data";

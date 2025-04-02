@@ -1,8 +1,8 @@
 T-002
 
   × The following terms are not equal:
-  │   1: Eq(<Bool -> Bool>, \ap(_, _, x) => T, \ap(_, _, x) => T)
-  │   2: Eq(a:=Bool -> Bool, \ap(_, _, x) => T, \ap(_, _, x) => F)
+  │   1: Eq(<Fun(Bool, Bool)>, \ap(_, _, x) => T, \ap(_, _, x) => T)
+  │   2: Eq(a:=Fun(Bool, Bool), \ap(_, _, x) => T, \ap(_, _, x) => F)
   │ 
     ╭─[Regr-403.pol:6:29]
   5 │ #[transparent]

@@ -45,8 +45,8 @@ codata Fun(A B: Type) {
   Fun(A,B).ap(A B: Type, x: A): B,
 }
 
-// The system has builtin syntactic sugar for the function type, which allows
-// us to use the notation `A -> B` instead of `Fun(A,B)`.
+infix a -> b := Fun(a,b)
+
 
 // The existential type can be represented using a data type with one constructor
 // `ExistsSum`. This constructor takes as arguments the function `T` of type `Type -> Type`,
