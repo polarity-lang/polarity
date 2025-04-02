@@ -1,0 +1,22 @@
+T-002
+
+  × The following terms are not equal:
+  │   1: Eq(Test, comatch { .test(_) => T }, comatch { .test(_) => T })
+  │   2: Eq(Test, comatch { .test(_) => T }, comatch { .test(_) => F })
+  │ 
+   ╭─[013-eta-comatch.pol:6:26]
+ 5 │ data Eq(a: Type, x y: a) {
+ 6 │     Refl(a: Type, x: a): Eq(a, x, x),
+   ·                          ─────┬─────
+   ·                               ╰── Source of (1)
+ 7 │ }
+   ╰────
+    ╭─[013-eta-comatch.pol:15:9]
+ 14 │     
+ 15 │ ╭─▶ let eq: Eq(Test, f.ap(Bool, Test, T), f.ap(Bool, Test, F)) {Refl(Test,
+    · │           ─────────────────────────┬────────────────────────
+    · │                                    ╰── Source of (2)
+ 16 │ ├─▶                                                                  f.ap(Bool, Test, T))}
+    · ╰──── While elaborating
+    ╰────
+  help: The two subterms T and F are not equal.
