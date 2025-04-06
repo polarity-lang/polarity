@@ -109,23 +109,14 @@ impl<T> From<Vec<Vec<Binder<T>>>> for GenericCtx<T> {
     }
 }
 
-impl<T: Print> Print for GenericCtx<T> {
+impl<T> Print for GenericCtx<T>
+where
+    Binder<T>: Print,
+{
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let sep = alloc.text(COMMA).append(alloc.space());
         let iter = self.iter().map(|ctx| {
-            alloc
-                .intersperse(
-                    ctx.iter().map(|b| {
-                        b.name
-                            .print(cfg, alloc)
-                            .append(COLON)
-                            .append(alloc.space())
-                            .append(b.content.print(cfg, alloc))
-                    }),
-                    sep.clone(),
-                )
-                .append(alloc.text(COMMA).flat_alt(alloc.nil()))
-                .brackets()
+            alloc.intersperse(ctx.iter().map(|b| b.print(cfg, alloc)), sep.clone()).brackets()
         });
         alloc.intersperse(iter, sep.clone()).brackets()
     }

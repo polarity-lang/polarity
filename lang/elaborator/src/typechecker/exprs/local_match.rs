@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use ast::ctx::values::Binder;
+use ast::ctx::values::{Binder, Binding};
 use ast::ctx::{BindContext, LevelCtx};
 use ast::*;
 use miette_util::ToMiette;
@@ -62,7 +62,8 @@ fn compute_motive(
     let Motive { span, param, ret_typ } = motive;
     let mut self_t_nf = on_exp_typ.to_exp().normalize(&ctx.type_info_table, &mut ctx.env())?;
     self_t_nf.shift((1, 0));
-    let self_binder = Binder { name: param.name.clone(), content: self_t_nf.clone() };
+    let self_binder =
+        Binder { name: param.name.clone(), content: Binding::from_type(self_t_nf.clone()) };
 
     // Typecheck the motive
     let ret_typ_out = ctx.bind_single(self_binder.clone(), |ctx| {
