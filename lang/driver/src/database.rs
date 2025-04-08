@@ -225,10 +225,10 @@ impl Database {
     ///
     /// - `uri`:    The module URI for which we want the type info table
     /// - `closed`: Whether to return the open or the closed type info table.
-    ///             The open type info table is used to lookup top-level signatures while elaborating the very same module.
-    ///             It may contain unsolved metavariables.
-    ///             The closed type info table is used to lookup top-level signatures of module dependencies.
-    ///             It contains no unsolved metavariables.
+    ///   The open type info table is used to lookup top-level signatures while elaborating the very same module.
+    ///   It may contain unsolved metavariables.
+    ///   The closed type info table is used to lookup top-level signatures of module dependencies.
+    ///   It contains no unsolved metavariables.
     ///
     /// # Returns
     ///
@@ -265,8 +265,8 @@ impl Database {
     ///
     /// - `uri`:    The module URI for which we want to recompute the type info table
     /// - `closed`: Whether to recompute the open or the closed type info table.
-    ///             Computing the closed type info table requires elaboration of the module
-    ///             and replacing all metavariables with their solution ("zonking").
+    ///   Computing the closed type info table requires elaboration of the module
+    ///   and replacing all metavariables with their solution ("zonking").
     ///
     /// # Returns
     ///

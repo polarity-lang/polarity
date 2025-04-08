@@ -164,8 +164,8 @@ pub trait BindContext: Sized {
     /// * `iter`: An iterator of elements to bind
     /// * `acc`: Initial fold accumulator
     /// * `f_acc`: Function called on each element in `iter`
-    ///            The return value is the binder to bind.
-    ///            The function can mutate the accumulator.
+    ///   The return value is the binder to bind.
+    ///   The function can mutate the accumulator.
     /// * `f_inner`: Function called on a context where all binders have been bound
     fn bind_fold<T, I: Iterator<Item = T>, O1, O2, F1, F2>(
         &mut self,

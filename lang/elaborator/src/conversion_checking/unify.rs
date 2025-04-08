@@ -309,7 +309,7 @@ impl<'a> Ctx<'a> {
     /// - `constraint_ctx`: The context of the solution
     /// - `candidate`: The candidate solution
     /// - `while_elaborating_span`: The origin of the unification call,
-    ///                             tracked here for better error messages
+    ///   tracked here for better error messages
     ///
     /// # Requires
     ///
@@ -328,7 +328,7 @@ impl<'a> Ctx<'a> {
     /// If solving is successful:
     ///
     /// - `meta_vars[meta_var] = Solved { ctx: metavar_ctx, solution }`
-    ///    where `solution` is the solution to the metavariable
+    ///   where `solution` is the solution to the metavariable
     /// - `metavar_ctx ⊢ solution[args]` is well-typed
     /// - `solution` does not contain any other solved metavariables
     /// - All other `meta_vars` do not contain `meta_var` (i.e. `meta_var` is replaced by `solution` via zonking)
