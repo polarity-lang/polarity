@@ -104,8 +104,8 @@ impl DependencyGraph {
 /// A `String` representing the file name or the full path if extraction fails.
 fn url_to_label(url: &Url) -> String {
     // Extract the file name from the path
-    if let Some(path_segments) = url.path_segments() {
-        if let Some(file_name) = path_segments.last() {
+    if let Some(mut path_segments) = url.path_segments() {
+        if let Some(file_name) = path_segments.next_back() {
             return file_name.to_string();
         }
     }
