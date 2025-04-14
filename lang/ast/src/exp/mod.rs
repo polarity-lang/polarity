@@ -8,6 +8,7 @@ use printer::tokens::{AS, FAT_ARROW};
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::{BindContext, LevelCtx};
+use crate::rename::{Rename, RenameCtx};
 use crate::{ContainsMetaVars, Zonk, ZonkError};
 
 use super::subst::{Substitutable, Substitution};
@@ -236,6 +237,22 @@ impl ContainsMetaVars for Exp {
     }
 }
 
+impl Rename for Exp {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        match self {
+            Exp::Variable(e) => e.rename_in_ctx(ctx),
+            Exp::LocalComatch(e) => e.rename_in_ctx(ctx),
+            Exp::Anno(e) => e.rename_in_ctx(ctx),
+            Exp::TypCtor(e) => e.rename_in_ctx(ctx),
+            Exp::Hole(e) => e.rename_in_ctx(ctx),
+            Exp::TypeUniv(e) => e.rename_in_ctx(ctx),
+            Exp::Call(e) => e.rename_in_ctx(ctx),
+            Exp::LocalMatch(e) => e.rename_in_ctx(ctx),
+            Exp::DotCall(e) => e.rename_in_ctx(ctx),
+        }
+    }
+}
+
 // Motive
 //
 //
@@ -315,5 +332,14 @@ impl Occurs for Motive {
     {
         let Motive { param, ret_typ, .. } = self;
         ctx.bind_single(param, |ctx| ret_typ.occurs(ctx, f))
+    }
+}
+
+impl Rename for Motive {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.param.rename_in_ctx(ctx);
+        ctx.bind_single(&self.param, |new_ctx| {
+            self.ret_typ.rename_in_ctx(new_ctx);
+        })
     }
 }

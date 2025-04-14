@@ -9,6 +9,7 @@ use printer::{
 
 use crate::{
     ctx::{values::TypeCtx, LevelCtx},
+    rename::{Rename, RenameCtx},
     ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
     Zonk, ZonkError,
 };
@@ -141,5 +142,16 @@ impl ContainsMetaVars for LocalMatch {
             || ret_typ.contains_metavars()
             || cases.contains_metavars()
             || inferred_type.contains_metavars()
+    }
+}
+
+impl Rename for LocalMatch {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.ctx = None;
+        self.inferred_type = None;
+        self.on_exp.rename_in_ctx(ctx);
+        self.motive.rename_in_ctx(ctx);
+        self.ret_typ.rename_in_ctx(ctx);
+        self.cases.rename_in_ctx(ctx);
     }
 }

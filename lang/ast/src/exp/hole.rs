@@ -12,6 +12,7 @@ use crate::{
         values::{Binder, TypeCtx},
         LevelCtx,
     },
+    rename::{Rename, RenameCtx},
     ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
     Zonk, ZonkError,
 };
@@ -243,5 +244,13 @@ impl ContainsMetaVars for Hole {
             || args.contains_metavars()
             || solution.contains_metavars()
             || metavar.must_be_solved() && solution.is_none()
+    }
+}
+
+impl Rename for Hole {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.inferred_ctx = None;
+        self.inferred_type.rename_in_ctx(ctx);
+        self.args.rename_in_ctx(ctx);
     }
 }

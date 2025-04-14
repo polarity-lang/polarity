@@ -1,6 +1,7 @@
 use std::rc::Rc;
 use std::sync::Arc;
 
+use ast::rename::Rename;
 use lsp_types::HoverContents;
 use miette_util::codespan::Span;
 use url::Url;
@@ -15,7 +16,6 @@ use elaborator::{build_type_info_table, ModuleTypeInfoTable, TypeInfoTable};
 use lowering::{ModuleSymbolTable, SymbolTable};
 use parser::cst;
 use parser::cst::decls::UseDecl;
-use transformations::Rename;
 
 use crate::dependency_graph::DependencyGraph;
 use crate::fs::*;

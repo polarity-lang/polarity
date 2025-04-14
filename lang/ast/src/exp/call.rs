@@ -3,8 +3,10 @@ use miette_util::codespan::Span;
 use printer::{theme::ThemeExt, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx,
+    rename::{Rename, RenameCtx},
+    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
+    Zonk, ZonkError,
 };
 
 use super::{Args, Exp, IdBound, MetaVar};
@@ -121,5 +123,12 @@ impl ContainsMetaVars for Call {
         let Call { span: _, kind: _, name: _, args, inferred_type } = self;
 
         args.contains_metavars() || inferred_type.contains_metavars()
+    }
+}
+
+impl Rename for Call {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.args.rename_in_ctx(ctx);
+        self.inferred_type.rename_in_ctx(ctx);
     }
 }

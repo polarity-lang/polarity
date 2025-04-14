@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
+use ast::rename::Rename;
 use miette_util::codespan::Span;
 use printer::Print;
 use transformations::LiftResult;
-use transformations::Rename;
 
 use ast::*;
 use parser::cst;

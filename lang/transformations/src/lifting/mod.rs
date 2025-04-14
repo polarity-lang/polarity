@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use ast::rename::Rename;
 use url::Url;
 
 use ast::ctx::values::TypeCtx;
@@ -8,8 +9,6 @@ use ast::ctx::LevelCtx;
 use ast::*;
 use ctx::values::Binder;
 use miette_util::codespan::Span;
-
-use crate::Rename;
 
 mod fv;
 mod signature;

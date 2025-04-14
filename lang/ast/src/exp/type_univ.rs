@@ -3,8 +3,10 @@ use miette_util::codespan::Span;
 use printer::{theme::ThemeExt, tokens::TYPE, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx,
+    rename::{Rename, RenameCtx},
+    ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable, Substitution, Zonk,
+    ZonkError,
 };
 
 use super::{Exp, MetaVar};
@@ -91,4 +93,8 @@ impl ContainsMetaVars for TypeUniv {
     fn contains_metavars(&self) -> bool {
         false
     }
+}
+
+impl Rename for TypeUniv {
+    fn rename_in_ctx(&mut self, _ctx: &mut RenameCtx) {}
 }

@@ -24,7 +24,11 @@ use printer::Print;
 use printer::PrintCfg;
 use url::Url;
 
+use crate::ctx::values::Binder;
+use crate::ctx::BindContext;
 use crate::ctx::LevelCtx;
+use crate::rename::Rename;
+use crate::rename::RenameCtx;
 use crate::shift_and_clone;
 use crate::ContainsMetaVars;
 use crate::Zonk;
@@ -303,6 +307,12 @@ impl Print for Module {
     }
 }
 
+impl Rename for Module {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.decls.rename_in_ctx(ctx);
+    }
+}
+
 // Decl
 //
 //
@@ -439,6 +449,18 @@ impl ContainsMetaVars for Decl {
         }
     }
 }
+impl Rename for Decl {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        match self {
+            Decl::Data(data) => data.rename_in_ctx(ctx),
+            Decl::Codata(codata) => codata.rename_in_ctx(ctx),
+            Decl::Def(def) => def.rename_in_ctx(ctx),
+            Decl::Codef(codef) => codef.rename_in_ctx(ctx),
+            Decl::Let(lets) => lets.rename_in_ctx(ctx),
+            Decl::Infix(infix) => infix.rename_in_ctx(ctx),
+        }
+    }
+}
 
 // Infix
 //
@@ -477,6 +499,10 @@ impl Zonk for Infix {
     ) -> Result<(), crate::ZonkError> {
         Ok(())
     }
+}
+
+impl Rename for Infix {
+    fn rename_in_ctx(&mut self, _ctx: &mut RenameCtx) {}
 }
 
 // Data
@@ -548,6 +574,13 @@ impl ContainsMetaVars for Data {
         let Data { span: _, doc: _, name: _, attr: _, typ, ctors } = self;
 
         typ.contains_metavars() || ctors.contains_metavars()
+    }
+}
+
+impl Rename for Data {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.ctors.rename_in_ctx(ctx);
+        self.typ.rename_in_ctx(ctx);
     }
 }
 
@@ -623,6 +656,13 @@ impl ContainsMetaVars for Codata {
     }
 }
 
+impl Rename for Codata {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.dtors.rename_in_ctx(ctx);
+        self.typ.rename_in_ctx(ctx);
+    }
+}
+
 // Ctor
 //
 //
@@ -668,6 +708,13 @@ impl ContainsMetaVars for Ctor {
         let Ctor { span: _, doc: _, name: _, params, typ } = self;
 
         params.contains_metavars() || typ.contains_metavars()
+    }
+}
+
+impl Rename for Ctor {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.params.rename_in_ctx(ctx);
+        ctx.bind_iter(self.params.params.iter(), |new_ctx| self.typ.rename_in_ctx(new_ctx));
     }
 }
 
@@ -719,6 +766,19 @@ impl ContainsMetaVars for Dtor {
         let Dtor { span: _, doc: _, name: _, params, self_param, ret_typ } = self;
 
         params.contains_metavars() || self_param.contains_metavars() || ret_typ.contains_metavars()
+    }
+}
+
+impl Rename for Dtor {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.params.rename_in_ctx(ctx);
+        ctx.bind_iter(self.params.params.iter(), |new_ctx| {
+            self.self_param.rename_in_ctx(new_ctx);
+
+            new_ctx.bind_single(&self.self_param, |new_ctx| {
+                self.ret_typ.rename_in_ctx(new_ctx);
+            })
+        })
     }
 }
 
@@ -800,6 +860,18 @@ impl ContainsMetaVars for Def {
     }
 }
 
+impl Rename for Def {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.params.rename_in_ctx(ctx);
+        ctx.bind_iter(self.params.params.iter(), |new_ctx| {
+            self.self_param.rename_in_ctx(new_ctx);
+            self.cases.rename_in_ctx(new_ctx);
+
+            new_ctx.bind_single(&self.self_param, |new_ctx| self.ret_typ.rename_in_ctx(new_ctx))
+        })
+    }
+}
+
 // Codef
 //
 //
@@ -874,6 +946,17 @@ impl ContainsMetaVars for Codef {
     }
 }
 
+impl Rename for Codef {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.params.rename_in_ctx(ctx);
+
+        ctx.bind_iter(self.params.params.iter(), |new_ctx| {
+            self.typ.rename_in_ctx(new_ctx);
+            self.cases.rename_in_ctx(new_ctx);
+        })
+    }
+}
+
 // Let
 //
 //
@@ -934,6 +1017,16 @@ impl ContainsMetaVars for Let {
         let Let { span: _, doc: _, name: _, attr: _, params, typ, body } = self;
 
         params.contains_metavars() || typ.contains_metavars() || body.contains_metavars()
+    }
+}
+
+impl Rename for Let {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.params.rename_in_ctx(ctx);
+        ctx.bind_iter(self.params.params.iter(), |new_ctx| {
+            self.typ.rename_in_ctx(new_ctx);
+            self.body.rename_in_ctx(new_ctx);
+        })
     }
 }
 
@@ -1002,6 +1095,14 @@ impl ContainsMetaVars for SelfParam {
         let SelfParam { info: _, name: _, typ } = self;
 
         typ.contains_metavars()
+    }
+}
+
+impl Rename for SelfParam {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        let new_name = ctx.disambiguate_var_bind(self.name.clone());
+        self.name = new_name;
+        self.typ.rename_in_ctx(ctx);
     }
 }
 
@@ -1128,6 +1229,23 @@ impl ContainsMetaVars for Telescope {
         let Telescope { params } = self;
 
         params.contains_metavars()
+    }
+}
+
+impl Rename for Telescope {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        let Telescope { params } = self;
+        ctx.bind_fold(
+            params.iter_mut(),
+            vec![],
+            |ctx, acc, param| {
+                param.rename_in_ctx(ctx);
+                let new_name = param.name.clone();
+                acc.push(param);
+                Binder { name: new_name, content: () }
+            },
+            |_ctx, _params| (),
+        )
     }
 }
 
@@ -1306,5 +1424,12 @@ impl ContainsMetaVars for Param {
         let Param { implicit: _, name: _, typ, erased: _ } = self;
 
         typ.contains_metavars()
+    }
+}
+
+impl Rename for Param {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.typ.rename_in_ctx(ctx);
+        self.name = ctx.disambiguate_var_bind(self.name.clone());
     }
 }

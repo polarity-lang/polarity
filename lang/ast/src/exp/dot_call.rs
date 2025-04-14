@@ -4,8 +4,10 @@ use pretty::DocAllocator;
 use printer::{theme::ThemeExt, tokens::DOT, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx,
+    rename::{Rename, RenameCtx},
+    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
+    Zonk, ZonkError,
 };
 
 use super::{Args, Exp, IdBound, MetaVar};
@@ -144,5 +146,13 @@ impl Print for DotCall {
             dtor = exp;
         }
         dtor.print(cfg, alloc).append(dtors_group.align().group())
+    }
+}
+
+impl Rename for DotCall {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.exp.rename_in_ctx(ctx);
+        self.args.rename_in_ctx(ctx);
+        self.inferred_type.rename_in_ctx(ctx);
     }
 }

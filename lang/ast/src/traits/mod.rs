@@ -2,6 +2,7 @@ mod contains_metavars;
 mod has_span;
 mod has_type;
 mod occurs;
+pub mod rename;
 mod shift;
 pub mod subst;
 mod zonk;

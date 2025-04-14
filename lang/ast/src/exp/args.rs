@@ -7,8 +7,10 @@ use printer::{
 };
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx,
+    rename::{Rename, RenameCtx},
+    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
+    Zonk, ZonkError,
 };
 
 use super::{Exp, Hole, MetaVar, VarBound};
@@ -155,6 +157,16 @@ impl ContainsMetaVars for Arg {
     }
 }
 
+impl Rename for Arg {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        match self {
+            Arg::UnnamedArg { arg, .. } => arg.rename_in_ctx(ctx),
+            Arg::NamedArg { arg, .. } => arg.rename_in_ctx(ctx),
+            Arg::InsertedImplicitArg { hole, .. } => hole.rename_in_ctx(ctx),
+        }
+    }
+}
+
 // Args
 //
 //
@@ -250,6 +262,12 @@ impl ContainsMetaVars for Args {
         let Args { args } = self;
 
         args.contains_metavars()
+    }
+}
+
+impl Rename for Args {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.args.rename_in_ctx(ctx);
     }
 }
 
