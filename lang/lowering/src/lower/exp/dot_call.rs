@@ -1,4 +1,3 @@
-use ast::IdBound;
 use miette_util::ToMiette;
 use parser::cst;
 
@@ -12,15 +11,14 @@ impl Lower for cst::exp::DotCall {
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::DotCall { span, exp, name, args } = self;
 
-        let (meta, uri) = ctx.symbol_table.lookup(name)?;
-        let (meta, uri) = (meta.clone(), uri.clone());
+        let (meta, name) = ctx.symbol_table.lookup(name)?;
 
-        match meta {
+        match meta.clone() {
             DeclMeta::Dtor { params, .. } => Ok(ast::Exp::DotCall(ast::DotCall {
                 span: Some(*span),
                 kind: ast::DotCallKind::Destructor,
                 exp: exp.lower(ctx)?,
-                name: IdBound { span: Some(name.span), id: name.id.clone(), uri },
+                name,
                 args: lower_args(*span, args, params, ctx)?,
                 inferred_type: None,
             })),
@@ -28,14 +26,11 @@ impl Lower for cst::exp::DotCall {
                 span: Some(*span),
                 kind: ast::DotCallKind::Definition,
                 exp: exp.lower(ctx)?,
-                name: IdBound { span: Some(name.span), id: name.id.clone(), uri },
+                name,
                 args: lower_args(*span, args, params, ctx)?,
                 inferred_type: None,
             })),
-            _ => Err(LoweringError::CannotUseAsDotCall {
-                name: name.clone(),
-                span: span.to_miette(),
-            }),
+            _ => Err(LoweringError::CannotUseAsDotCall { name, span: span.to_miette() }),
         }
     }
 }

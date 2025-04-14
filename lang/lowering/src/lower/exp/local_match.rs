@@ -1,4 +1,3 @@
-use ast::IdBound;
 use parser::cst;
 
 use crate::{lower::Lower, Ctx, LoweringResult};
@@ -31,12 +30,7 @@ impl Lower for cst::exp::Case<cst::exp::Pattern> {
         let cst::exp::Case { span, pattern, body } = self;
 
         lower_telescope_inst(&pattern.params, ctx, |ctx, params| {
-            let (_, uri) = ctx.symbol_table.lookup(&pattern.name)?;
-            let name = IdBound {
-                span: Some(pattern.name.span),
-                id: pattern.name.id.clone(),
-                uri: uri.clone(),
-            };
+            let (_, name) = ctx.symbol_table.lookup(&pattern.name)?;
             Ok(ast::Case {
                 span: Some(*span),
                 pattern: ast::Pattern {

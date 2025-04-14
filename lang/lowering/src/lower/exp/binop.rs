@@ -8,11 +8,11 @@ impl Lower for cst::exp::BinOp {
         let cst::exp::BinOp { span, operator, lhs, rhs } = self;
 
         let (id, _url) = ctx.symbol_table.lookup_operator(operator)?;
-        let (_, uri) = ctx.symbol_table.lookup(id)?;
+        let (_, name) = ctx.symbol_table.lookup(id)?;
 
         Ok(ast::TypCtor {
             span: Some(*span),
-            name: ast::IdBound { span: Some(*span), id: id.id.clone(), uri: uri.clone() },
+            name,
             args: ast::Args {
                 args: vec![
                     ast::Arg::UnnamedArg { arg: lhs.lower(ctx)?, erased: false },

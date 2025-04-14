@@ -1,3 +1,4 @@
+use ast::IdBound;
 use miette::{Diagnostic, SourceSpan};
 use parser::cst::ident::Ident;
 use thiserror::Error;
@@ -25,14 +26,14 @@ pub enum LoweringError {
     #[error("{} must be used as destructor", name.id)]
     #[diagnostic(code("L-003"))]
     MustUseAsDotCall {
-        name: Ident,
+        name: IdBound,
         #[label]
         span: SourceSpan,
     },
     #[error("{} cannot be used as a destructor", name.id)]
     #[diagnostic(code("L-004"))]
     CannotUseAsDotCall {
-        name: Ident,
+        name: IdBound,
         #[label]
         span: SourceSpan,
     },

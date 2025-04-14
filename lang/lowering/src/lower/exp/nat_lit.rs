@@ -12,10 +12,10 @@ impl Lower for cst::exp::NatLit {
 
         // We have to check whether "Z" is declared as a constructor or codefinition.
         // We assume that if Z exists, then S exists as well and is of the same kind.
-        let (z_kind, uri) = ctx
-            .symbol_table
-            .lookup(&Ident { span: *span, id: "Z".to_string() })
-            .map_err(|_| LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() })?;
+        let (z_kind, name) =
+            ctx.symbol_table.lookup(&Ident { span: *span, id: "Z".to_string() }).map_err(|_| {
+                LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() }
+            })?;
         let call_kind = match z_kind {
             DeclMeta::Codef { .. } => ast::CallKind::Codefinition,
             DeclMeta::Ctor { .. } => ast::CallKind::Constructor,
@@ -25,7 +25,7 @@ impl Lower for cst::exp::NatLit {
         let mut out = ast::Exp::Call(ast::Call {
             span: Some(*span),
             kind: call_kind,
-            name: ast::IdBound { span: Some(*span), id: "Z".to_owned(), uri: uri.clone() },
+            name: name.clone(),
             args: ast::Args { args: vec![] },
             inferred_type: None,
         });
@@ -37,7 +37,7 @@ impl Lower for cst::exp::NatLit {
             out = ast::Exp::Call(ast::Call {
                 span: Some(*span),
                 kind: call_kind,
-                name: ast::IdBound { span: Some(*span), id: "S".to_owned(), uri: uri.clone() },
+                name: ast::IdBound { span: Some(*span), id: "S".to_owned(), uri: name.uri.clone() },
                 args: ast::Args {
                     args: vec![ast::Arg::UnnamedArg { arg: Box::new(out), erased: false }],
                 },

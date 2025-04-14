@@ -1,4 +1,4 @@
-use ast::{IdBound, TypeUniv, VarBound, Variable};
+use ast::{TypeUniv, VarBound, Variable};
 use miette_util::ToMiette;
 use parser::cst;
 
@@ -35,10 +35,9 @@ impl Lower for cst::exp::Call {
 
         // If we find the identifier in the global context then we have to lower
         // it to a call or a type constructor.
-        let (meta, uri) = ctx.symbol_table.lookup(name)?;
+        let (meta, name) = ctx.symbol_table.lookup(name)?;
         match meta {
             DeclMeta::Data { params, .. } | DeclMeta::Codata { params, .. } => {
-                let name = IdBound { span: Some(name.span), id: name.id.clone(), uri: uri.clone() };
                 Ok(ast::Exp::TypCtor(ast::TypCtor {
                     span: Some(*span),
                     name,
@@ -49,36 +48,27 @@ impl Lower for cst::exp::Call {
             DeclMeta::Def { .. } | DeclMeta::Dtor { .. } => {
                 Err(LoweringError::MustUseAsDotCall { name: name.clone(), span: span.to_miette() })
             }
-            DeclMeta::Ctor { params, .. } => {
-                let name = IdBound { span: Some(name.span), id: name.id.clone(), uri: uri.clone() };
-                Ok(ast::Exp::Call(ast::Call {
-                    span: Some(*span),
-                    kind: ast::CallKind::Constructor,
-                    name,
-                    args: lower_args(*span, args, params.clone(), ctx)?,
-                    inferred_type: None,
-                }))
-            }
-            DeclMeta::Codef { params, .. } => {
-                let name = IdBound { span: Some(name.span), id: name.id.clone(), uri: uri.clone() };
-                Ok(ast::Exp::Call(ast::Call {
-                    span: Some(*span),
-                    kind: ast::CallKind::Codefinition,
-                    name,
-                    args: lower_args(*span, args, params.clone(), ctx)?,
-                    inferred_type: None,
-                }))
-            }
-            DeclMeta::Let { params, .. } => {
-                let name = IdBound { span: Some(name.span), id: name.id.clone(), uri: uri.clone() };
-                Ok(ast::Exp::Call(ast::Call {
-                    span: Some(*span),
-                    kind: ast::CallKind::LetBound,
-                    name,
-                    args: lower_args(*span, args, params.clone(), ctx)?,
-                    inferred_type: None,
-                }))
-            }
+            DeclMeta::Ctor { params, .. } => Ok(ast::Exp::Call(ast::Call {
+                span: Some(*span),
+                kind: ast::CallKind::Constructor,
+                name,
+                args: lower_args(*span, args, params.clone(), ctx)?,
+                inferred_type: None,
+            })),
+            DeclMeta::Codef { params, .. } => Ok(ast::Exp::Call(ast::Call {
+                span: Some(*span),
+                kind: ast::CallKind::Codefinition,
+                name,
+                args: lower_args(*span, args, params.clone(), ctx)?,
+                inferred_type: None,
+            })),
+            DeclMeta::Let { params, .. } => Ok(ast::Exp::Call(ast::Call {
+                span: Some(*span),
+                kind: ast::CallKind::LetBound,
+                name,
+                args: lower_args(*span, args, params.clone(), ctx)?,
+                inferred_type: None,
+            })),
         }
     }
 }

@@ -1,3 +1,4 @@
+use ast::IdBound;
 use miette_util::ToMiette;
 use parser::cst::ident::{Ident, Operator};
 use url::Url;
@@ -17,10 +18,17 @@ impl SymbolTable {
         false
     }
 
-    pub fn lookup(&self, name: &Ident) -> LoweringResult<(&DeclMeta, &Url)> {
+    pub fn lookup(&self, name: &Ident) -> LoweringResult<(&DeclMeta, IdBound)> {
         for (module_uri, symbol_table) in self.map.iter() {
             match symbol_table.idents.get(name) {
-                Some(meta) => return Ok((meta, module_uri)),
+                Some(meta) => {
+                    let name = IdBound {
+                        span: Some(name.span),
+                        id: name.id.clone(),
+                        uri: module_uri.clone(),
+                    };
+                    return Ok((meta, name));
+                }
                 None => continue,
             }
         }
