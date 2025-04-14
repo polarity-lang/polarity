@@ -121,6 +121,13 @@ pub enum LoweringError {
         span: SourceSpan,
         operator: String,
     },
+    #[error("Invalid infix declaration: {message}")]
+    #[diagnostic(code("L-019"))]
+    InvalidInfixDeclaration {
+        #[label]
+        span: SourceSpan,
+        message: String,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("L-XXX"))]
     /// This error should not occur.
