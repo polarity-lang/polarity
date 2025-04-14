@@ -96,10 +96,7 @@ impl Exp {
     /// Checks whether the expression is a hole `_` written with an underscore.
     pub fn is_underscore(&self) -> bool {
         match self {
-            Exp::Hole(h) => match h.kind {
-                HoleKind::MustSolve => true,
-                _ => false,
-            },
+            Exp::Hole(h) => matches!(h.kind, HoleKind::MustSolve),
             _ => false,
         }
     }
