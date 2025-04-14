@@ -1,3 +1,0 @@
-data Foo { C(x: Type) }
-
-infix x + y := C(z)

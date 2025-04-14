@@ -1,7 +1,0 @@
-P-003
-
-  × Unexpected "LParen", expected ")", ",", ":", ":=", "=>", "Identifier", "Operator", "_"
-   ╭─[001-invalid-infix.pol:1:12]
- 1 │ infix x + C(y) := D(x, y)
-   ·            ─
-   ╰────

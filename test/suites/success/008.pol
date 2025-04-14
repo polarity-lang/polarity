@@ -2,7 +2,7 @@ codata Fun(a: Type, b: Type) {
     Fun(a, b).ap(a: Type, b: Type, x: a) : b
 }
 
-infix a -> b := Fun(a,b)
+infix _ -> _ := Fun(_,_)
 
 data Top { Unit }
 

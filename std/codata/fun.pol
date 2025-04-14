@@ -4,7 +4,7 @@ codata Fun(a b: Type) {
     Fun(a, b).ap(implicit a b: Type, x: a): b,
 }
 
-infix a -> b := Fun(a,b)
+infix _ -> _ := Fun(_,_)
 
 /// The polymorphic identity function.
 codef Id(a: Type): Fun(a, a) { .ap(_, _, x) => x }

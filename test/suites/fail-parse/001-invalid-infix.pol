@@ -1,1 +1,0 @@
-infix x + C(y) := D(x, y)

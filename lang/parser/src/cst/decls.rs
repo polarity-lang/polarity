@@ -2,7 +2,7 @@ use miette_util::codespan::Span;
 use url::Url;
 
 use super::exp::{self, Pattern};
-use super::exp::{Call, Copattern};
+use super::exp::{BinOp, Call, Copattern};
 use super::ident::*;
 
 #[derive(Debug, Clone)]
@@ -222,17 +222,8 @@ pub struct Let {
 pub struct Infix {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub lhs: BinOpPattern,
+    pub lhs: BinOp,
     pub rhs: Call,
-}
-
-/// Binary Operator Pattern, e.g. `x -> y` or `_ + z`.
-#[derive(Debug, Clone)]
-pub struct BinOpPattern {
-    pub span: Span,
-    pub operator: Operator,
-    pub lhs: exp::BindingSite,
-    pub rhs: exp::BindingSite,
 }
 
 /// A `Param` can either be a single parameter, like `x : T`, or a list of parameters, like `x y z: T`.

@@ -3,7 +3,7 @@ codata Fun(a b: Type) {
     Fun(a, b).ap(a b: Type, x: a): b,
 }
 
-infix a -> b := Fun(a,b)
+infix _ -> _ := Fun(_,_)
 
 /// The dependent function type.
 codata Π(a: Type, p: a -> Type) {

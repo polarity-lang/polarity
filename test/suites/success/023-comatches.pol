@@ -2,7 +2,7 @@ codata Fun(a b: Type) {
     Fun(a, b).ap(a b: Type, x: a): b
 }
 
-infix a -> b := Fun(a,b)
+infix _ -> _ := Fun(_,_)
 
 codata Pi(a: Type, p: a -> Type) {
     Pi(a, p).pi_elim(a: Type, p: a -> Type, x: a): p.ap(a, Type, x)

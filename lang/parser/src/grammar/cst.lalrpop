@@ -234,11 +234,8 @@ pub TypApp: Call = {
 }
 
 Infix: Infix = {
-  <l: @L> <doc: DocComment?> "infix" <lhs: BinOpPattern> ":=" <rhs: CallWithArgs> <r: @R> => Infix { span: span(l,r), doc, lhs, rhs }
+  <l: @L> <doc: DocComment?> "infix" <lhs: BinOp> ":=" <rhs: CallWithArgs> <r: @R> => Infix { span: span(l,r), doc, lhs, rhs }
 }
-
-BinOpPattern: BinOpPattern = <l: @L> <lhs: BindingSite> <operator: Operator> <rhs: BindingSite> <r: @R> =>
-  BinOpPattern { span: span(l, r), operator, lhs, rhs };
 
 // Expressions
 //

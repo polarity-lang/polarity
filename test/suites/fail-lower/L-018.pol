@@ -1,5 +1,5 @@
 codata Fun(a b: Type) { Fun(a,b).ap(a b: Type, x: a): b }
 
-infix a -> b := Fun(a,b)
+infix _ -> _ := Fun(_,_)
 
-infix a -> b := Fun(a,b)
+infix _ -> _ := Fun(_,_)
