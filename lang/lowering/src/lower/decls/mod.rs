@@ -21,7 +21,7 @@ mod toplevel_let;
 impl Lower for cst::decls::DocComment {
     type Target = ast::DocComment;
 
-    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+    fn lower(&self, _ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         Ok(ast::DocComment { docs: self.docs.clone() })
     }
 }
@@ -41,7 +41,7 @@ fn parse_attribute(s: String) -> ast::Attribute {
 impl Lower for cst::decls::Attributes {
     type Target = ast::Attributes;
 
-    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+    fn lower(&self, _ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         Ok(ast::Attributes { attrs: self.attrs.clone().into_iter().map(parse_attribute).collect() })
     }
 }
@@ -53,7 +53,7 @@ impl Lower for cst::decls::Attributes {
 impl Lower for cst::decls::UseDecl {
     type Target = ast::UseDecl;
 
-    fn lower(&self, _ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+    fn lower(&self, _ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::decls::UseDecl { span, path } = self;
         Ok(ast::UseDecl { span: *span, path: path.clone() })
     }
@@ -66,7 +66,7 @@ impl Lower for cst::decls::UseDecl {
 impl Lower for cst::decls::Decl {
     type Target = ast::Decl;
 
-    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+    fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let decl = match self {
             cst::decls::Decl::Data(data) => data.lower(ctx)?.into(),
             cst::decls::Decl::Codata(codata) => codata.lower(ctx)?.into(),
@@ -83,11 +83,11 @@ impl Lower for cst::decls::Decl {
 //
 //
 
-fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> Result<T, LoweringError>>(
+fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> LoweringResult<T>>(
     self_param: &cst::decls::SelfParam,
     ctx: &mut Ctx,
     f: F,
-) -> Result<T, LoweringError> {
+) -> LoweringResult<T> {
     let cst::decls::SelfParam { span, name, typ } = self_param;
     let typ_out = typ.lower(ctx)?;
     let typ_ctor =
@@ -133,13 +133,9 @@ fn desugar_param(param: &cst::decls::Param) -> Vec<cst::decls::Param> {
 ///
 /// Execute a function `f` under the context where all binders
 /// of the telescope are in scope.
-fn lower_telescope<T, F>(
-    tele: &cst::decls::Telescope,
-    ctx: &mut Ctx,
-    f: F,
-) -> Result<T, LoweringError>
+fn lower_telescope<T, F>(tele: &cst::decls::Telescope, ctx: &mut Ctx, f: F) -> LoweringResult<T>
 where
-    F: FnOnce(&mut Ctx, ast::Telescope) -> Result<T, LoweringError>,
+    F: FnOnce(&mut Ctx, ast::Telescope) -> LoweringResult<T>,
 {
     let tel = desugar_telescope(tele);
     ctx.bind_fold_failable(

@@ -7,7 +7,7 @@ use super::lower_telescope;
 impl Lower for cst::decls::Let {
     type Target = ast::Let;
 
-    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+    fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         log::trace!("Lowering top-level let: {}", self.name.id);
 
         let cst::decls::Let { span, doc, name, attr, params, typ, body } = self;

@@ -9,7 +9,7 @@ use super::lower_telescope;
 impl Lower for cst::decls::Data {
     type Target = ast::Data;
 
-    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+    fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         log::trace!("Lowering data declaration: {}", self.name.id);
         let cst::decls::Data { span, doc, name, attr, params, ctors } = self;
 
@@ -34,7 +34,7 @@ fn lower_constructor(
     ctx: &mut Ctx,
     typ_name: &Ident,
     type_arity: usize,
-) -> Result<ast::Ctor, LoweringError> {
+) -> LoweringResult<ast::Ctor> {
     log::trace!("Lowering constructor: {:?}", ctor.name);
     let cst::decls::Ctor { span, doc, name, params, typ } = ctor;
 

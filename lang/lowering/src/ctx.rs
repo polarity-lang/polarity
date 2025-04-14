@@ -10,6 +10,7 @@ use parser::cst::ident::Ident;
 use url::Url;
 
 use crate::symbol_table::SymbolTable;
+use crate::LoweringResult;
 
 use super::result::LoweringError;
 
@@ -65,7 +66,7 @@ impl Ctx {
         &mut self,
         user_name: Option<Ident>,
         info: &Span,
-    ) -> Result<ast::Label, LoweringError> {
+    ) -> LoweringResult<ast::Label> {
         if let Some(user_name) = &user_name {
             if self.symbol_table.lookup_exists(user_name) {
                 return Err(LoweringError::LabelNotUnique {

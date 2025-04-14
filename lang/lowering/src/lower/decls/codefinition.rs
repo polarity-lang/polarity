@@ -8,7 +8,7 @@ use super::lower_telescope;
 impl Lower for cst::decls::Codef {
     type Target = ast::Codef;
 
-    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+    fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         log::trace!("Lowering codefinition: {}", self.name.id);
 
         let cst::decls::Codef { span, doc, name, attr, params, typ, cases, .. } = self;

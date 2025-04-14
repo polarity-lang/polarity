@@ -3,12 +3,12 @@ use miette_util::codespan::Span;
 use miette_util::ToMiette;
 use parser::cst::*;
 
-use crate::LoweringError;
+use crate::{LoweringError, LoweringResult};
 
 use super::{DeclMeta, ModuleSymbolTable};
 
-pub fn build_symbol_table(module: &Module) -> Result<ModuleSymbolTable, LoweringError> {
-    let mut symbol_table = Default::default();
+pub fn build_symbol_table(module: &Module) -> LoweringResult<ModuleSymbolTable> {
+    let mut symbol_table = ModuleSymbolTable::default();
 
     let Module { decls, .. } = module;
 
@@ -20,11 +20,7 @@ pub fn build_symbol_table(module: &Module) -> Result<ModuleSymbolTable, Lowering
 }
 
 /// Checks whether the identifier is reserved or already defined.
-fn check_name(
-    symbol_table: &mut ModuleSymbolTable,
-    name: &Ident,
-    span: &Span,
-) -> Result<(), LoweringError> {
+fn check_name(symbol_table: &mut ModuleSymbolTable, name: &Ident, span: &Span) -> LoweringResult {
     if name.id == "Type" {
         return Err(LoweringError::TypeUnivIdentifier { span: span.to_miette() });
     }
@@ -38,11 +34,11 @@ fn check_name(
 }
 
 trait BuildSymbolTable {
-    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError>;
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> LoweringResult;
 }
 
 impl BuildSymbolTable for Decl {
-    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> LoweringResult {
         match self {
             Decl::Data(data) => data.build(symbol_table),
             Decl::Codata(codata) => codata.build(symbol_table),
@@ -55,7 +51,7 @@ impl BuildSymbolTable for Decl {
 }
 
 impl BuildSymbolTable for Data {
-    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> LoweringResult {
         let Data { span, name, params, ctors, .. } = self;
 
         check_name(symbol_table, name, span)?;
@@ -71,7 +67,7 @@ impl BuildSymbolTable for Data {
 }
 
 impl BuildSymbolTable for Ctor {
-    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> LoweringResult {
         let Ctor { span, name, params, .. } = self;
         check_name(symbol_table, name, span)?;
 
@@ -83,7 +79,7 @@ impl BuildSymbolTable for Ctor {
 }
 
 impl BuildSymbolTable for Codata {
-    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> LoweringResult {
         let Codata { span, name, params, dtors, .. } = self;
         check_name(symbol_table, name, span)?;
 
@@ -98,7 +94,7 @@ impl BuildSymbolTable for Codata {
 }
 
 impl BuildSymbolTable for Dtor {
-    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> LoweringResult {
         let Dtor { span, name, params, .. } = self;
         check_name(symbol_table, name, span)?;
 
