@@ -290,7 +290,15 @@ impl CollectInfo for Let {
 }
 
 impl CollectInfo for Infix {
-    fn collect_info(&self, _db: &Database, _collector: &mut InfoCollector) {}
+    fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
+        let Infix { span, .. } = self;
+        if let Some(span) = span {
+            // Add hover info
+            let header = MarkedString::String("Infix declaration".to_owned());
+            let hover_content = HoverContents::Scalar(header);
+            collector.add_hover(*span, hover_content);
+        }
+    }
 }
 
 // Traversing expressions and collection information
