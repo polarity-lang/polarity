@@ -10,6 +10,7 @@ use printer::{
 
 use crate::{
     ctx::{BindContext, LevelCtx},
+    rename::{Rename, RenameCtx},
     ContainsMetaVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Substitutable, Substitution, Zonk,
     ZonkError,
 };
@@ -166,5 +167,15 @@ impl ContainsMetaVars for Case {
         let Case { span: _, pattern: _, body } = self;
 
         body.contains_metavars()
+    }
+}
+
+impl Rename for Case {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.pattern.params.rename_in_ctx(ctx);
+
+        ctx.bind_iter(self.pattern.params.params.iter(), |new_ctx| {
+            self.body.rename_in_ctx(new_ctx);
+        })
     }
 }

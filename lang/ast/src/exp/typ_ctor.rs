@@ -4,8 +4,10 @@ use pretty::DocAllocator;
 use printer::{theme::ThemeExt, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx,
+    rename::{Rename, RenameCtx},
+    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
+    Zonk, ZonkError,
 };
 
 use super::{Args, Exp, IdBound, MetaVar, TypeUniv};
@@ -134,5 +136,11 @@ impl ContainsMetaVars for TypCtor {
         let TypCtor { span: _, name: _, args, is_bin_op: _ } = self;
 
         args.contains_metavars()
+    }
+}
+
+impl Rename for TypCtor {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.args.rename_in_ctx(ctx);
     }
 }

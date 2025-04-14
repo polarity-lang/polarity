@@ -3,8 +3,10 @@ use miette_util::codespan::Span;
 use printer::{tokens::COLON, Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx,
+    rename::{Rename, RenameCtx},
+    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
+    Zonk, ZonkError,
 };
 
 use super::{Exp, MetaVar};
@@ -107,5 +109,13 @@ impl ContainsMetaVars for Anno {
         let Anno { span: _, exp, typ, normalized_type } = self;
 
         exp.contains_metavars() || typ.contains_metavars() || normalized_type.contains_metavars()
+    }
+}
+
+impl Rename for Anno {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.exp.rename_in_ctx(ctx);
+        self.typ.rename_in_ctx(ctx);
+        self.normalized_type.rename_in_ctx(ctx);
     }
 }

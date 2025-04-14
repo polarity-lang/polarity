@@ -4,8 +4,10 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx, ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ctx::LevelCtx,
+    rename::{Rename, RenameCtx},
+    ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable, Substitution, VarBind,
+    Zonk, ZonkError,
 };
 
 use super::{Exp, Idx, MetaVar, VarBound};
@@ -107,5 +109,21 @@ impl ContainsMetaVars for Variable {
         let Variable { span: _, idx: _, name: _, inferred_type } = self;
 
         inferred_type.contains_metavars()
+    }
+}
+
+impl Rename for Variable {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        let name = match ctx.binders.lookup(self.idx).name {
+            VarBind::Var { id, .. } => id,
+            VarBind::Wildcard { .. } => {
+                // Currently, any wildcards are replaced by named variables when binding them to the context.
+                // Therefore this case is unreachable.
+                // In the future, we may want to allow wildcards to survive renaming.
+                unreachable!()
+            }
+        };
+        self.name = VarBound::from_string(&name);
+        self.inferred_type.rename_in_ctx(ctx);
     }
 }

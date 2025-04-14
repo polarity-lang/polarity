@@ -3,7 +3,11 @@ use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{Alloc, Builder, Print, PrintCfg};
 
-use crate::{ContainsMetaVars, Zonk, ZonkError};
+use crate::{
+    ctx::{values::Binder, BindContext},
+    rename::{Rename, RenameCtx},
+    ContainsMetaVars, Zonk, ZonkError,
+};
 
 use super::{Exp, MetaVar, VarBind};
 // Telescope Inst
@@ -59,6 +63,24 @@ impl ContainsMetaVars for TelescopeInst {
     }
 }
 
+impl Rename for TelescopeInst {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        let TelescopeInst { params } = self;
+
+        ctx.bind_fold(
+            params.iter_mut(),
+            vec![],
+            |ctx, acc, param| {
+                param.rename_in_ctx(ctx);
+                let new_name = param.name.clone();
+                acc.push(param);
+                Binder { name: new_name, content: () }
+            },
+            |_ctx, _params| (),
+        )
+    }
+}
+
 // ParamInst
 //
 //
@@ -101,5 +123,12 @@ impl ContainsMetaVars for ParamInst {
         let ParamInst { span: _, name: _, typ, erased: _ } = self;
 
         typ.contains_metavars()
+    }
+}
+
+impl Rename for ParamInst {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.typ.rename_in_ctx(ctx);
+        self.name = ctx.disambiguate_var_bind(self.name.clone());
     }
 }
