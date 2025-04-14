@@ -137,6 +137,7 @@ impl CollectInfo for Decl {
             Decl::Def(def) => def.collect_info(db, collector),
             Decl::Codef(codef) => codef.collect_info(db, collector),
             Decl::Let(lets) => lets.collect_info(db, collector),
+            Decl::Infix(infix) => infix.collect_info(db, collector),
         }
     }
 }
@@ -288,6 +289,18 @@ impl CollectInfo for Let {
     }
 }
 
+impl CollectInfo for Infix {
+    fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
+        let Infix { span, .. } = self;
+        if let Some(span) = span {
+            // Add hover info
+            let header = MarkedString::String("Infix declaration".to_owned());
+            let hover_content = HoverContents::Scalar(header);
+            collector.add_hover(*span, hover_content);
+        }
+    }
+}
+
 // Traversing expressions and collection information
 //
 //
@@ -323,7 +336,7 @@ impl CollectInfo for Variable {
 
 impl CollectInfo for TypCtor {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
-        let TypCtor { span, args, name } = self;
+        let TypCtor { span, args, name, is_bin_op: _ } = self;
         if let Some(span) = span {
             let decl = lookup_decl(db, name);
             let (definition_site, doc) = match decl {

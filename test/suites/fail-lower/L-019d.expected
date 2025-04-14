@@ -1,0 +1,7 @@
+L-001
+
+  × Undefined identifier Fun
+   ╭─[L-019d.pol:1:17]
+ 1 │ infix _ -> _ := Fun(_,_)
+   ·                 ───
+   ╰────

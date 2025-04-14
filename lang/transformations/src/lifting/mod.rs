@@ -115,6 +115,7 @@ impl Lift for Decl {
             Decl::Def(def) => Decl::Def(def.lift(ctx)),
             Decl::Codef(codef) => Decl::Codef(codef.lift(ctx)),
             Decl::Let(tl_let) => Decl::Let(tl_let.lift(ctx)),
+            Decl::Infix(infix) => Decl::Infix(infix.lift(ctx)),
         }
     }
 }
@@ -319,8 +320,13 @@ impl Lift for TypCtor {
     type Target = TypCtor;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let TypCtor { span, name, args } = self;
-        TypCtor { span: *span, name: name.clone(), args: args.lift(ctx) }
+        let TypCtor { span, name, args, is_bin_op } = self;
+        TypCtor {
+            span: *span,
+            name: name.clone(),
+            args: args.lift(ctx),
+            is_bin_op: is_bin_op.clone(),
+        }
     }
 }
 
@@ -732,5 +738,12 @@ impl Ctx {
             let id = label.id;
             IdBind::from_string(&format!("Mk{type_name}{id}"))
         })
+    }
+}
+
+impl Lift for Infix {
+    type Target = Infix;
+    fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
+        self.clone()
     }
 }

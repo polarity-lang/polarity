@@ -1,4 +1,3 @@
-use ast::HashMap;
 use decls::*;
 use miette_util::codespan::Span;
 use miette_util::ToMiette;
@@ -9,7 +8,7 @@ use crate::LoweringError;
 use super::{DeclMeta, ModuleSymbolTable};
 
 pub fn build_symbol_table(module: &Module) -> Result<ModuleSymbolTable, LoweringError> {
-    let mut symbol_table = HashMap::default();
+    let mut symbol_table = Default::default();
 
     let Module { decls, .. } = module;
 
@@ -29,7 +28,7 @@ fn check_name(
     if name.id == "Type" {
         return Err(LoweringError::TypeUnivIdentifier { span: span.to_miette() });
     }
-    if symbol_table.get(name).is_some() {
+    if symbol_table.idents.contains_key(name) {
         return Err(LoweringError::AlreadyDefined {
             name: name.to_owned(),
             span: span.to_miette(),
@@ -50,6 +49,7 @@ impl BuildSymbolTable for Decl {
             Decl::Def(def) => def.build(symbol_table),
             Decl::Codef(codef) => codef.build(symbol_table),
             Decl::Let(tl_let) => tl_let.build(symbol_table),
+            Decl::Infix(infix) => infix.build(symbol_table),
         }
     }
 }
@@ -61,7 +61,7 @@ impl BuildSymbolTable for Data {
         check_name(symbol_table, name, span)?;
 
         let meta = DeclMeta::Data { params: params.clone() };
-        symbol_table.insert(name.clone(), meta);
+        symbol_table.idents.insert(name.clone(), meta);
 
         for ctor in ctors {
             ctor.build(symbol_table)?;
@@ -76,7 +76,7 @@ impl BuildSymbolTable for Ctor {
         check_name(symbol_table, name, span)?;
 
         let meta = DeclMeta::Ctor { params: params.clone() };
-        symbol_table.insert(name.clone(), meta);
+        symbol_table.idents.insert(name.clone(), meta);
 
         Ok(())
     }
@@ -88,7 +88,7 @@ impl BuildSymbolTable for Codata {
         check_name(symbol_table, name, span)?;
 
         let meta = DeclMeta::Codata { params: params.clone() };
-        symbol_table.insert(name.clone(), meta);
+        symbol_table.idents.insert(name.clone(), meta);
 
         for dtor in dtors {
             dtor.build(symbol_table)?;
@@ -103,7 +103,7 @@ impl BuildSymbolTable for Dtor {
         check_name(symbol_table, name, span)?;
 
         let meta = DeclMeta::Dtor { params: params.clone() };
-        symbol_table.insert(name.clone(), meta);
+        symbol_table.idents.insert(name.clone(), meta);
 
         Ok(())
     }
@@ -115,7 +115,7 @@ impl BuildSymbolTable for Def {
         check_name(symbol_table, name, span)?;
 
         let meta = DeclMeta::Def { params: params.clone() };
-        symbol_table.insert(name.clone(), meta);
+        symbol_table.idents.insert(name.clone(), meta);
 
         Ok(())
     }
@@ -127,7 +127,7 @@ impl BuildSymbolTable for Codef {
         check_name(symbol_table, name, span)?;
 
         let meta = DeclMeta::Codef { params: params.clone() };
-        symbol_table.insert(name.clone(), meta);
+        symbol_table.idents.insert(name.clone(), meta);
 
         Ok(())
     }
@@ -139,7 +139,23 @@ impl BuildSymbolTable for Let {
         check_name(symbol_table, name, span)?;
 
         let meta = DeclMeta::Let { params: params.clone() };
-        symbol_table.insert(name.clone(), meta);
+        symbol_table.idents.insert(name.clone(), meta);
+
+        Ok(())
+    }
+}
+
+impl BuildSymbolTable for Infix {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> Result<(), LoweringError> {
+        let Infix { span, doc: _, lhs, rhs } = self;
+
+        if symbol_table.infix_ops.contains_key(&lhs.operator) {
+            return Err(LoweringError::OperatorAlreadyDefined {
+                operator: lhs.operator.id.to_owned(),
+                span: span.to_miette(),
+            });
+        }
+        symbol_table.infix_ops.insert(lhs.operator.clone(), rhs.name.clone());
 
         Ok(())
     }

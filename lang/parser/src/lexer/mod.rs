@@ -50,6 +50,8 @@ pub enum Token {
     Implicit,
     #[token("use")]
     Use,
+    #[token("infix")]
+    Infix,
 
     // Parens, Braces and Brackets
     //

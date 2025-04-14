@@ -20,6 +20,7 @@ impl ToIR for ast::Module {
                 ast::Decl::Let(tl_let) => let_decls.push(tl_let.to_ir()?),
                 ast::Decl::Data(_) => {}
                 ast::Decl::Codata(_) => {}
+                ast::Decl::Infix(_) => {}
             }
         }
 

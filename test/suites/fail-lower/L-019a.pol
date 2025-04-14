@@ -1,0 +1,1 @@
+infix a -> b := Fun(_,_)

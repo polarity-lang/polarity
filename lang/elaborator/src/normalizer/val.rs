@@ -144,6 +144,7 @@ pub struct TypCtor {
     pub span: Option<Span>,
     pub name: ast::IdBound,
     pub args: Args,
+    pub is_bin_op: Option<String>,
 }
 
 impl Shift for TypCtor {
@@ -154,7 +155,7 @@ impl Shift for TypCtor {
 
 impl Print for TypCtor {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let TypCtor { span: _, name, args } = self;
+        let TypCtor { span: _, name, args, is_bin_op: _ } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
         alloc.typ(&name.id).append(psubst)
     }
@@ -170,11 +171,12 @@ impl ReadBack for TypCtor {
     type Nf = ast::TypCtor;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
-        let TypCtor { span, name, args } = self;
+        let TypCtor { span, name, args, is_bin_op } = self;
         Ok(ast::TypCtor {
             span: *span,
             name: name.clone(),
             args: ast::Args { args: args.read_back(info_table)? },
+            is_bin_op: is_bin_op.clone(),
         })
     }
 }

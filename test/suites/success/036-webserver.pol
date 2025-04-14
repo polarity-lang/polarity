@@ -9,6 +9,8 @@ codata Fun(a b: Type) {
     Fun(a, b).ap(a: Type, b: Type, x: a) : b,
 }
 
+infix _ -> _ := Fun(_,_)
+
 codata Π(A: Type, T: Fun(A, Type)) {
   Π(A,T).dap(A: Type, T: Fun(A,Type), x: A): T.ap(A,Type,x)
 }

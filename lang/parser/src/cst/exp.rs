@@ -56,6 +56,13 @@ impl Arg {
             Arg::NamedArg(_, exp) => exp.span(),
         }
     }
+
+    pub fn is_underscore(&self) -> bool {
+        match self {
+            Arg::UnnamedArg(arg) => arg.is_underscore(),
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -83,6 +90,14 @@ impl Exp {
             Exp::NatLit(nat_lit) => nat_lit.span,
             Exp::BinOp(binop) => binop.span,
             Exp::Lam(lam) => lam.span,
+        }
+    }
+
+    /// Checks whether the expression is a hole `_` written with an underscore.
+    pub fn is_underscore(&self) -> bool {
+        match self {
+            Exp::Hole(h) => matches!(h.kind, HoleKind::MustSolve),
+            _ => false,
         }
     }
 }

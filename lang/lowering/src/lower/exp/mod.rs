@@ -318,6 +318,7 @@ impl Lower for cst::exp::Call {
                     span: Some(*span),
                     name,
                     args: lower_args(*span, args, params.clone(), ctx)?,
+                    is_bin_op: None,
                 }))
             }
             DeclMeta::Def { .. } | DeclMeta::Dtor { .. } => {
@@ -523,23 +524,18 @@ impl Lower for cst::exp::BinOp {
     type Target = ast::Exp;
     fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
         let cst::exp::BinOp { span, operator, lhs, rhs } = self;
-        if operator.id != "->" {
-            let err = LoweringError::UnknownOperator {
-                span: operator.span.to_miette(),
-                operator: operator.id.clone(),
-            };
-            return Err(err);
-        }
-        let (_, uri) = ctx.symbol_table.lookup(&Ident { span: *span, id: "Fun".to_owned() })?;
+        let (id, _url) = ctx.symbol_table.lookup_operator(operator)?;
+        let (_, uri) = ctx.symbol_table.lookup(id)?;
         Ok(ast::TypCtor {
             span: Some(*span),
-            name: ast::IdBound { span: Some(*span), id: "Fun".to_owned(), uri: uri.clone() },
+            name: ast::IdBound { span: Some(*span), id: id.id.clone(), uri: uri.clone() },
             args: ast::Args {
                 args: vec![
                     ast::Arg::UnnamedArg { arg: lhs.lower(ctx)?, erased: false },
                     ast::Arg::UnnamedArg { arg: rhs.lower(ctx)?, erased: false },
                 ],
             },
+            is_bin_op: Some(operator.id.clone()),
         }
         .into())
     }

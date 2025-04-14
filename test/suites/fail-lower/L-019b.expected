@@ -1,0 +1,7 @@
+L-019
+
+  × Invalid infix declaration: The right hand side of an infix declaration must take exactly two arguments.
+   ╭─[L-019b.pol:1:17]
+ 1 │ infix _ -> _ := Fun(_,_,_)
+   ·                 ──────────
+   ╰────

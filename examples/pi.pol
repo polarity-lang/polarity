@@ -3,6 +3,8 @@ codata Fun(a b: Type) {
     Fun(a, b).ap(a b: Type, x: a): b,
 }
 
+infix _ -> _ := Fun(_,_)
+
 /// The dependent function type.
 codata Π(a: Type, p: a -> Type) {
     Π(a, p).pi_elim(a: Type, p: a -> Type, x: a): p.ap(a, Type, x),

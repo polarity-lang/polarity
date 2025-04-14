@@ -30,6 +30,7 @@ extern {
     "absurd" => Token::Absurd,
     "implicit" => Token::Implicit,
     "use" => Token::Use,
+    "infix" => Token::Infix,
 
     // Parens, Braces and Brackets
     //
@@ -148,6 +149,7 @@ Decl: Decl = {
     <d: Def> => Decl::Def(d),
     <d: Codef> => Decl::Codef(d),
     <d: Let> => Decl::Let(d),
+    <d: Infix> => Decl::Infix(d)
 }
 
 // Data Type Declarations
@@ -229,6 +231,10 @@ pub Scrutinee: Scrutinee = {
 
 pub TypApp: Call = {
     <l: @L> <name: Ident> <args: OptArgs> <r: @R> => Call { span: span(l, r), name, args },
+}
+
+Infix: Infix = {
+  <l: @L> <doc: DocComment?> "infix" <lhs: BinOp> ":=" <rhs: CallWithArgs> <r: @R> => Infix { span: span(l,r), doc, lhs, rhs }
 }
 
 // Expressions
