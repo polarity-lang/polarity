@@ -36,6 +36,10 @@ impl Lower for cst::decls::Infix {
             });
         }
 
+        // Check that the name on the RHS is available at the location
+        // of the infix declaration.
+        ctx.symbol_table.lookup(&rhs.name)?;
+
         Ok(ast::Infix {
             span: Some(*span),
             doc: doc.lower(ctx)?,
