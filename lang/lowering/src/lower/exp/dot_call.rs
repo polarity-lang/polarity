@@ -30,7 +30,7 @@ impl Lower for cst::exp::DotCall {
                 args: lower_args(*span, args, params, ctx)?,
                 inferred_type: None,
             })),
-            _ => Err(LoweringError::CannotUseAsDotCall { name, span: span.to_miette() }),
+            _ => Err(LoweringError::CannotUseAsDotCall { name, span: span.to_miette() }.into()),
         }
     }
 }

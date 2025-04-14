@@ -19,7 +19,11 @@ impl Lower for cst::exp::NatLit {
         let call_kind = match z_kind {
             DeclMeta::Codef { .. } => ast::CallKind::Codefinition,
             DeclMeta::Ctor { .. } => ast::CallKind::Constructor,
-            _ => return Err(LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() }),
+            _ => {
+                return Err(
+                    LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() }.into()
+                )
+            }
         };
 
         let mut out = ast::Exp::Call(ast::Call {

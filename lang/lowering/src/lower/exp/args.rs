@@ -63,7 +63,7 @@ pub fn lower_args(
     if given.len() > expected.len() {
         // The unwrap is safe because in this branch there must be at least one given.
         let err = LoweringError::TooManyArgs { span: given.first().unwrap().span().to_miette() };
-        return Err(err);
+        return Err(err.into());
     }
 
     // Create a peekable iterator over the given arguments to allow lookahead.
@@ -97,7 +97,9 @@ pub fn lower_args(
         let Some(arg) = given.next() else {
             let expected = expected_bs.lower(ctx)?;
             let expected = expected.print_to_string(None);
-            return Err(LoweringError::MissingArgForParam { expected, span: span.to_miette() });
+            return Err(
+                LoweringError::MissingArgForParam { expected, span: span.to_miette() }.into()
+            );
         };
         match arg {
             cst::exp::Arg::UnnamedArg(exp) => {
@@ -110,7 +112,8 @@ pub fn lower_args(
                         return Err(LoweringError::NamedArgForWildcard {
                             given: name.clone(),
                             span: span.to_miette(),
-                        });
+                        }
+                        .into());
                     }
                 };
                 if name.id != expected_name.id {
@@ -118,7 +121,8 @@ pub fn lower_args(
                         given: name.to_owned(),
                         expected: expected_name.to_owned(),
                         span: exp.span().to_miette(),
-                    });
+                    }
+                    .into());
                 }
                 let name = VarBound { span: Some(name.span), id: name.id.clone() };
                 args_out.push(ast::Arg::NamedArg { name, arg: exp.lower(ctx)?, erased: false });
@@ -137,7 +141,8 @@ pub fn lower_args(
                         return Err(LoweringError::NamedArgForWildcard {
                             given: given_name.clone(),
                             span: exp.span().to_miette(),
-                        });
+                        }
+                        .into());
                     };
                     if expected_name == given_name {
                         pop_arg(span, &mut given_iter, expected_bs, &mut args_out, ctx)?;
@@ -166,7 +171,7 @@ pub fn lower_args(
 
     // Check for any extra arguments that were not matched to parameters.
     if let Some(extra_arg) = given_iter.next() {
-        return Err(LoweringError::TooManyArgs { span: extra_arg.span().to_miette() });
+        return Err(LoweringError::TooManyArgs { span: extra_arg.span().to_miette() }.into());
     }
 
     // All arguments have been successfully processed.

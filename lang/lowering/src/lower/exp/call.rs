@@ -16,7 +16,7 @@ impl Lower for cst::exp::Call {
         // For this reason we have to special case the logic for lowering the type universe here.
         if name.id == "Type" {
             if !args.is_empty() {
-                return Err(LoweringError::TypeUnivArgs { span: span.to_miette() });
+                return Err(LoweringError::TypeUnivArgs { span: span.to_miette() }.into());
             }
             return Ok(TypeUniv { span: Some(*span) }.into());
         }
@@ -46,7 +46,8 @@ impl Lower for cst::exp::Call {
                 }))
             }
             DeclMeta::Def { .. } | DeclMeta::Dtor { .. } => {
-                Err(LoweringError::MustUseAsDotCall { name: name.clone(), span: span.to_miette() })
+                Err(LoweringError::MustUseAsDotCall { name: name.clone(), span: span.to_miette() }
+                    .into())
             }
             DeclMeta::Ctor { params, .. } => Ok(ast::Exp::Call(ast::Call {
                 span: Some(*span),

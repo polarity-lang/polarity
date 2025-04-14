@@ -47,7 +47,7 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> LoweringRe
     ctx.bind_fold_failable(
         tel_inst.into_iter(),
         vec![],
-        |_ctx, params_out, name| {
+        |_ctx, params_out, name| -> LoweringResult<Binder<()>> {
             let param_out =
                 ast::ParamInst { span: name.span(), name: name.clone(), typ: None, erased: false };
             params_out.push(param_out);
@@ -64,7 +64,7 @@ impl Lower for cst::exp::BindingSite {
         match self {
             BindingSite::Var { span, name } => {
                 if name.id == "Type" {
-                    Err(LoweringError::TypeUnivIdentifier { span: span.to_miette() })
+                    Err(LoweringError::TypeUnivIdentifier { span: span.to_miette() }.into())
                 } else {
                     Ok(ast::VarBind::Var { span: Some(*span), id: name.id.clone() })
                 }

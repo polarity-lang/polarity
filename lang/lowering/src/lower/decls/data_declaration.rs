@@ -62,7 +62,8 @@ fn lower_constructor(
                         xtor: name.clone(),
                         typ: typ_name.clone(),
                         span: span.to_miette(),
-                    });
+                    }
+                    .into());
                 }
             }
         };

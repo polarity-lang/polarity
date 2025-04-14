@@ -141,7 +141,7 @@ where
     ctx.bind_fold_failable(
         tel.0.iter(),
         vec![],
-        |ctx, params_out, param| {
+        |ctx, params_out, param| -> LoweringResult<Binder<()>> {
             let cst::decls::Param { implicit, name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
             let typ_out = typ.lower(ctx)?;
             let name = name.lower(ctx)?;

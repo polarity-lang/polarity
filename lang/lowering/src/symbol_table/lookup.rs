@@ -32,7 +32,8 @@ impl SymbolTable {
                 None => continue,
             }
         }
-        Err(LoweringError::UndefinedIdent { name: name.clone(), span: name.span.to_miette() })
+        Err(LoweringError::UndefinedIdent { name: name.clone(), span: name.span.to_miette() }
+            .into())
     }
 
     /// Check whether the operator already exists in any of the symbol tables.
@@ -45,13 +46,14 @@ impl SymbolTable {
         false
     }
 
-    pub fn lookup_operator(&self, op: &Operator) -> Result<(&Ident, &Url), LoweringError> {
+    pub fn lookup_operator(&self, op: &Operator) -> LoweringResult<(&Ident, &Url)> {
         for (module_uri, symbol_table) in self.map.iter() {
             match symbol_table.infix_ops.get(op) {
                 Some(id) => return Ok((id, module_uri)),
                 None => continue,
             }
         }
-        Err(LoweringError::UnknownOperator { span: op.span.to_miette(), operator: op.id.clone() })
+        Err(LoweringError::UnknownOperator { span: op.span.to_miette(), operator: op.id.clone() }
+            .into())
     }
 }

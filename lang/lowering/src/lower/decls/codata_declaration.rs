@@ -55,7 +55,8 @@ fn lower_destructor(
                         xtor: name.clone(),
                         typ: type_name.clone(),
                         span: span.to_miette(),
-                    });
+                    }
+                    .into());
                 }
             }
         };

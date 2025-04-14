@@ -72,21 +72,24 @@ impl Ctx {
                 return Err(LoweringError::LabelNotUnique {
                     name: user_name.id.to_owned(),
                     span: info.to_miette(),
-                });
+                }
+                .into());
             }
 
             if self.lookup_local(user_name).is_some() {
                 return Err(LoweringError::LabelShadowed {
                     name: user_name.id.to_owned(),
                     span: info.to_miette(),
-                });
+                }
+                .into());
             }
 
             if self.user_labels.contains(user_name) {
                 return Err(LoweringError::LabelNotUnique {
                     name: user_name.id.to_owned(),
                     span: info.to_miette(),
-                });
+                }
+                .into());
             }
             self.user_labels.insert(user_name.to_owned());
         }

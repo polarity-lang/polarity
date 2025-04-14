@@ -4,7 +4,7 @@ use parser::cst::ident::Ident;
 use thiserror::Error;
 
 /// The result type specialized to lowering errors.
-pub type LoweringResult<T = ()> = Result<T, LoweringError>;
+pub type LoweringResult<T = ()> = Result<T, Box<LoweringError>>;
 
 /// All the errors that can be emitted during lowering
 #[derive(Error, Diagnostic, Debug, Clone)]
