@@ -1,7 +1,12 @@
+use ast::IdBound;
 use miette::{Diagnostic, SourceSpan};
 use parser::cst::ident::Ident;
 use thiserror::Error;
 
+/// The result type specialized to lowering errors.
+pub type LoweringResult<T = ()> = Result<T, Box<LoweringError>>;
+
+/// All the errors that can be emitted during lowering
 #[derive(Error, Diagnostic, Debug, Clone)]
 pub enum LoweringError {
     #[error("Undefined identifier {}", name.id)]
@@ -21,14 +26,14 @@ pub enum LoweringError {
     #[error("{} must be used as destructor", name.id)]
     #[diagnostic(code("L-003"))]
     MustUseAsDotCall {
-        name: Ident,
+        name: IdBound,
         #[label]
         span: SourceSpan,
     },
     #[error("{} cannot be used as a destructor", name.id)]
     #[diagnostic(code("L-004"))]
     CannotUseAsDotCall {
-        name: Ident,
+        name: IdBound,
         #[label]
         span: SourceSpan,
     },

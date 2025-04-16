@@ -11,7 +11,7 @@ use backend::result::BackendError;
 #[error(transparent)]
 pub enum Error {
     Parser(#[from] parser::ParseError),
-    Lowering(#[from] lowering::LoweringError),
+    Lowering(#[from] Box<lowering::LoweringError>),
     Type(#[from] Box<elaborator::result::TypeError>),
     Xfunc(#[from] transformations::result::XfuncError),
     Driver(#[from] DriverError),

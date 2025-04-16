@@ -10,7 +10,7 @@ use super::lower_telescope;
 impl Lower for cst::decls::Codata {
     type Target = ast::Codata;
 
-    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+    fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         log::trace!("Lowering codata declaration: {}", self.name.id);
         let cst::decls::Codata { span, doc, name, attr, params, dtors } = self;
 
@@ -35,7 +35,7 @@ fn lower_destructor(
     ctx: &mut Ctx,
     type_name: &Ident,
     type_arity: usize,
-) -> Result<ast::Dtor, LoweringError> {
+) -> LoweringResult<ast::Dtor> {
     log::trace!("Lowering destructor: {:?}", dtor.name);
     let cst::decls::Dtor { span, doc, name, params, destructee, ret_typ } = dtor;
 
@@ -55,7 +55,8 @@ fn lower_destructor(
                         xtor: name.clone(),
                         typ: type_name.clone(),
                         span: span.to_miette(),
-                    });
+                    }
+                    .into());
                 }
             }
         };

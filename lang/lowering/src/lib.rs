@@ -21,7 +21,7 @@ pub use symbol_table::SymbolTable;
 pub fn lower_module_with_symbol_table(
     prg: &cst::decls::Module,
     symbol_table: &SymbolTable,
-) -> Result<ast::Module, LoweringError> {
+) -> LoweringResult<ast::Module> {
     let mut ctx = Ctx::empty(prg.uri.clone(), symbol_table.clone());
 
     let use_decls = prg.use_decls.lower(&mut ctx)?;

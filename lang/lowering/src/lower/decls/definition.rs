@@ -8,7 +8,7 @@ use super::lower_telescope;
 impl Lower for cst::decls::Def {
     type Target = ast::Def;
 
-    fn lower(&self, ctx: &mut Ctx) -> Result<Self::Target, LoweringError> {
+    fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         log::trace!("Lowering definition: {}", self.name.id);
 
         let cst::decls::Def { span, doc, name, attr, params, scrutinee, ret_typ, cases } = self;
