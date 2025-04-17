@@ -54,8 +54,8 @@
 
 use log::trace;
 
-use ast::{ctx::values::TypeCtx, Exp, HasSpan, HashMap, MetaVar, MetaVarState};
-use miette_util::{codespan::Span, ToMiette};
+use ast::{Exp, HasSpan, HashMap, MetaVar, MetaVarState, ctx::values::TypeCtx};
+use miette_util::{ToMiette, codespan::Span};
 use printer::Print;
 
 use crate::result::{TcResult, TypeError};
@@ -127,8 +127,8 @@ pub fn convert(
 #[cfg(test)]
 mod test {
     use ast::{
-        ctx::values::{Binder, Binding, TypeCtx},
         HashMap, Idx, MetaVar, MetaVarState, TypeUniv, VarBind, VarBound, Variable,
+        ctx::values::{Binder, Binding, TypeCtx},
     };
 
     use crate::conversion_checking::{constraints::Constraint, unify::Ctx};

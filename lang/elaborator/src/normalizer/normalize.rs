@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::normalizer::val::ReadBack;
-use crate::{result::*, TypeInfoTable};
+use crate::{TypeInfoTable, result::*};
 
 use super::env::Env;
 use super::eval::*;

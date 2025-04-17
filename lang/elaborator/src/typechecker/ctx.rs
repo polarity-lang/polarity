@@ -13,8 +13,8 @@ use printer::Print;
 
 use crate::result::TcResult;
 
-use super::type_info_table::TypeInfoTable;
 use super::TypeError;
+use super::type_info_table::TypeInfoTable;
 
 #[derive(Debug, Clone)]
 pub struct Ctx {

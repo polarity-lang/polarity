@@ -1,8 +1,8 @@
 use std::convert::Infallible;
 
 use miette::{Diagnostic, SourceSpan};
-use miette_util::codespan::Span;
 use miette_util::ToMiette;
+use miette_util::codespan::Span;
 use thiserror::Error;
 
 use ast::*;
@@ -150,7 +150,9 @@ pub enum TypeError {
         #[label]
         span: Option<SourceSpan>,
     },
-    #[error("Local comatch not supported for type {type_name} because {type_name} contains destructors with self parameters")]
+    #[error(
+        "Local comatch not supported for type {type_name} because {type_name} contains destructors with self parameters"
+    )]
     #[diagnostic(code("T-013"), help("Use a top-level codefinition instead"))]
     LocalComatchWithSelf {
         type_name: String,
@@ -216,7 +218,9 @@ pub enum TypeError {
         #[label("While elaborating")]
         while_elaborating_span: Option<SourceSpan>,
     },
-    #[error("The metavariable {meta_var} was equated with an expression that contains {out_of_scope} which is not in scope for {meta_var}")]
+    #[error(
+        "The metavariable {meta_var} was equated with an expression that contains {out_of_scope} which is not in scope for {meta_var}"
+    )]
     #[diagnostic(
         code("T-022"),
         help("This means that the metavariable cannot be solved automatically.")
@@ -229,7 +233,9 @@ pub enum TypeError {
         #[label("While elaborating")]
         while_elaborating_span: Option<SourceSpan>,
     },
-    #[error("The metavariable {meta_var} was equated with an expression that itself contains {meta_var}")]
+    #[error(
+        "The metavariable {meta_var} was equated with an expression that itself contains {meta_var}"
+    )]
     #[diagnostic(
         code("T-023"),
         help("This means that the metavariable cannot be solved automatically.")

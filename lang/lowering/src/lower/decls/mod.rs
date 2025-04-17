@@ -1,6 +1,6 @@
 use ast::{
-    ctx::{values::Binder, BindContext},
     VarBind,
+    ctx::{BindContext, values::Binder},
 };
 use miette_util::ToMiette;
 use parser::cst::{self};

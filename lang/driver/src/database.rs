@@ -12,7 +12,7 @@ use ast::Zonk;
 use backend::ast2ir::traits::ToIR;
 use backend::ir;
 use elaborator::normalizer::normalize::Normalize;
-use elaborator::{build_type_info_table, ModuleTypeInfoTable, TypeInfoTable};
+use elaborator::{ModuleTypeInfoTable, TypeInfoTable, build_type_info_table};
 use lowering::{ModuleSymbolTable, SymbolTable};
 use parser::cst;
 use parser::cst::decls::UseDecl;
@@ -21,7 +21,7 @@ use crate::dependency_graph::DependencyGraph;
 use crate::fs::*;
 use crate::info::*;
 use crate::result::DriverError;
-use crate::{cache::*, Error, FileSource};
+use crate::{Error, FileSource, cache::*};
 
 use rust_lapper::Lapper;
 

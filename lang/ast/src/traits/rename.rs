@@ -21,8 +21,8 @@
 //! Every time we encounter a variable we look up the name in the context.
 
 use crate::{
-    ctx::{values::Binder, BindContext, GenericCtx, LevelCtx},
     VarBind,
+    ctx::{BindContext, GenericCtx, LevelCtx, values::Binder},
 };
 
 pub trait Rename: Sized {

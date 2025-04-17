@@ -4,9 +4,9 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Print, PrintCfg};
 
 use crate::{
-    ctx::{values::Binder, BindContext},
-    rename::{Rename, RenameCtx},
     ContainsMetaVars, Zonk, ZonkError,
+    ctx::{BindContext, values::Binder},
+    rename::{Rename, RenameCtx},
 };
 
 use super::{Exp, MetaVar, VarBind};
@@ -33,11 +33,7 @@ impl TelescopeInst {
 
 impl Print for TelescopeInst {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        if self.params.is_empty() {
-            alloc.nil()
-        } else {
-            self.params.print(cfg, alloc).parens()
-        }
+        if self.params.is_empty() { alloc.nil() } else { self.params.print(cfg, alloc).parens() }
     }
 }
 

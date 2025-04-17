@@ -4,10 +4,10 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ctx::LevelCtx,
-    rename::{Rename, RenameCtx},
     ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable, Substitution, VarBind,
     Zonk, ZonkError,
+    ctx::LevelCtx,
+    rename::{Rename, RenameCtx},
 };
 
 use super::{Exp, Idx, MetaVar, VarBound};

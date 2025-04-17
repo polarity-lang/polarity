@@ -10,7 +10,7 @@ use printer::types::Print;
 use crate::normalizer::env::*;
 use crate::normalizer::val::{self, Closure, Val};
 
-use crate::{result::*, TypeInfoTable};
+use crate::{TypeInfoTable, result::*};
 
 use super::val::AnnoNeu;
 

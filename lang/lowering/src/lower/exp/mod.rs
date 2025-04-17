@@ -1,6 +1,6 @@
-use ast::ctx::values::Binder;
-use ast::ctx::BindContext;
 use ast::HasSpan;
+use ast::ctx::BindContext;
+use ast::ctx::values::Binder;
 use miette_util::ToMiette;
 use parser::cst;
 use parser::cst::exp::BindingSite;

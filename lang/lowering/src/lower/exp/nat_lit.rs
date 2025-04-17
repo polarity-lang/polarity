@@ -2,7 +2,7 @@ use miette_util::ToMiette;
 use num_bigint::BigUint;
 use parser::cst::{self, Ident};
 
-use crate::{lower::Lower, Ctx, DeclMeta, LoweringError, LoweringResult};
+use crate::{Ctx, DeclMeta, LoweringError, LoweringResult, lower::Lower};
 
 impl Lower for cst::exp::NatLit {
     type Target = ast::Exp;
@@ -22,7 +22,7 @@ impl Lower for cst::exp::NatLit {
             _ => {
                 return Err(
                     LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() }.into()
-                )
+                );
             }
         };
 

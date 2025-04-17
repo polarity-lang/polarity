@@ -1,6 +1,10 @@
 use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
+use printer::Alloc;
+use printer::Builder;
+use printer::Print;
+use printer::PrintCfg;
 use printer::print_comma_separated;
 use printer::theme::ThemeExt;
 use printer::tokens::CODATA;
@@ -18,26 +22,22 @@ use printer::tokens::LET;
 use printer::tokens::USE;
 use printer::util::BracesExt;
 use printer::util::IsNilExt;
-use printer::Alloc;
-use printer::Builder;
-use printer::Print;
-use printer::PrintCfg;
 use url::Url;
 
-use crate::ctx::values::Binder;
+use crate::ContainsMetaVars;
+use crate::Zonk;
 use crate::ctx::BindContext;
 use crate::ctx::LevelCtx;
+use crate::ctx::values::Binder;
 use crate::rename::Rename;
 use crate::rename::RenameCtx;
 use crate::shift_and_clone;
-use crate::ContainsMetaVars;
-use crate::Zonk;
 
+use super::HashMap;
 use super::exp::*;
 use super::ident::*;
-use super::traits::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
-use super::HashMap;
+use super::traits::subst::{Substitutable, Substitution};
 
 fn print_return_type<'a, T: Print>(
     cfg: &PrintCfg,

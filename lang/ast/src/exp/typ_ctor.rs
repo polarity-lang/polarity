@@ -1,13 +1,13 @@
 use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
-use printer::{theme::ThemeExt, Alloc, Builder, Precedence, Print, PrintCfg};
+use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt};
 
 use crate::{
-    ctx::LevelCtx,
-    rename::{Rename, RenameCtx},
     ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
     Zonk, ZonkError,
+    ctx::LevelCtx,
+    rename::{Rename, RenameCtx},
 };
 
 use super::{Args, Exp, IdBound, MetaVar, TypeUniv};
@@ -103,11 +103,7 @@ impl Print for TypCtor {
                 let arg = args.args[0].print_prec(cfg, alloc, 1);
                 let res = args.args[1].print_prec(cfg, alloc, 0);
                 let fun = arg.append(alloc.space()).append(op).append(alloc.space()).append(res);
-                if prec == 0 {
-                    fun
-                } else {
-                    fun.parens()
-                }
+                if prec == 0 { fun } else { fun.parens() }
             }
             _ => alloc
                 .typ(&name.id)

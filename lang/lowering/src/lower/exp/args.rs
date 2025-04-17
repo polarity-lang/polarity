@@ -1,9 +1,9 @@
 use ast::{Hole, MetaVarKind, VarBound};
-use miette_util::{codespan::Span, ToMiette};
+use miette_util::{ToMiette, codespan::Span};
 use parser::cst::{self, exp::BindingSite};
 use printer::Print;
 
-use crate::{lower::Lower, Ctx, LoweringError, LoweringResult};
+use crate::{Ctx, LoweringError, LoweringResult, lower::Lower};
 
 /// Lowers a list of arguments, ensuring that named arguments match the expected parameter names.
 ///

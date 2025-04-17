@@ -51,7 +51,9 @@ fn main() {
 
         // Return non-zero exit code if not all tests could be fixed
         if !all_tests_fixed {
-            println!("Warning: There were tests of which expected output could not be updated, because they failed for a reason other than having an unexpected output.");
+            println!(
+                "Warning: There were tests of which expected output could not be updated, because they failed for a reason other than having an unexpected output."
+            );
             std::process::exit(1);
         }
     } else {

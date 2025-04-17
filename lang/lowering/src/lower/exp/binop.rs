@@ -1,6 +1,6 @@
 use parser::cst::{self};
 
-use crate::{lower::Lower, Ctx, LoweringResult};
+use crate::{Ctx, LoweringResult, lower::Lower};
 
 impl Lower for cst::exp::BinOp {
     type Target = ast::Exp;

@@ -13,7 +13,7 @@ use printer::Print;
 
 use crate::result::TcResult;
 
-use super::{ctx::Ctx, type_info_table::TypeInfoTable, TypeError};
+use super::{TypeError, ctx::Ctx, type_info_table::TypeInfoTable};
 
 /// Check a module
 ///

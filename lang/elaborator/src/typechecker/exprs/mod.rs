@@ -8,8 +8,8 @@ pub mod typ_ctor;
 pub mod type_univ;
 pub mod variable;
 
-use miette_util::codespan::Span;
 use miette_util::ToMiette;
+use miette_util::codespan::Span;
 
 use log::trace;
 
@@ -22,8 +22,8 @@ use super::ctx::*;
 use crate::normalizer::{env::ToEnv, normalize::Normalize};
 use crate::result::{TcResult, TypeError};
 
-use ast::ctx::values::{Binder, Binding};
 use ast::ctx::BindContext;
+use ast::ctx::values::{Binder, Binding};
 
 /// The CheckInfer trait for bidirectional type inference.
 /// Expressions which implement this trait provide both a `check` function

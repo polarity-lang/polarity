@@ -1,7 +1,7 @@
 use miette_util::ToMiette;
 use parser::cst;
 
-use crate::{lower::Lower, Ctx, DeclMeta, LoweringError, LoweringResult};
+use crate::{Ctx, DeclMeta, LoweringError, LoweringResult, lower::Lower};
 
 use super::args::lower_args;
 
