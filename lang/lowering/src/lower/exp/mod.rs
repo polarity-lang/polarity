@@ -17,6 +17,7 @@ mod dot_call;
 mod hole;
 mod lam;
 mod local_comatch;
+mod local_let;
 mod local_match;
 mod nat_lit;
 
@@ -34,6 +35,7 @@ impl Lower for cst::exp::Exp {
             cst::exp::Exp::NatLit(e) => e.lower(ctx),
             cst::exp::Exp::BinOp(e) => e.lower(ctx),
             cst::exp::Exp::Lam(e) => e.lower(ctx),
+            cst::exp::Exp::LocalLet(e) => e.lower(ctx),
         }
     }
 }
