@@ -7,6 +7,9 @@ target
 *.zip
 target_pol
 
-# nix 
+# nix
 result
 result-
+
+# Editors
+.vscode/
