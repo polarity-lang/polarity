@@ -18,12 +18,21 @@ pub fn capabilities() -> ServerCapabilities {
 
     let definition_provider = Some(OneOf::Left(true));
 
+    let semantic_tokens_provider =
+        Some(SemanticTokensServerCapabilities::SemanticTokensOptions(SemanticTokensOptions {
+            work_done_progress_options: WorkDoneProgressOptions { work_done_progress: Some(false) },
+            legend: SemanticTokensLegend { token_types: vec![], token_modifiers: vec![] },
+            range: Some(false),
+            full: Some(SemanticTokensFullOptions::Bool(true)),
+        }));
+
     ServerCapabilities {
         text_document_sync,
         hover_provider,
         code_action_provider,
         document_formatting_provider,
         definition_provider,
+        semantic_tokens_provider,
         ..Default::default()
     }
 }
