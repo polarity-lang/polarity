@@ -139,6 +139,13 @@ impl LanguageServer for Server {
     async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
         super::format::formatting(self, params).await
     }
+
+    async fn semantic_tokens_full(
+        &self,
+        params: SemanticTokensParams,
+    ) -> Result<Option<SemanticTokensResult>> {
+        super::semantic_tokens::semantic_tokens_full(self, params).await
+    }
 }
 
 impl Server {
