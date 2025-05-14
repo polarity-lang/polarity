@@ -1,12 +1,12 @@
 use derivative::Derivative;
 use miette_util::codespan::Span;
-use printer::{tokens::COLON, Alloc, Builder, Precedence, Print, PrintCfg};
+use printer::{Alloc, Builder, Precedence, Print, PrintCfg, tokens::COLON};
 
 use crate::{
-    ctx::LevelCtx,
-    rename::{Rename, RenameCtx},
     ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
     Zonk, ZonkError,
+    ctx::LevelCtx,
+    rename::{Rename, RenameCtx},
 };
 
 use super::{Exp, MetaVar};

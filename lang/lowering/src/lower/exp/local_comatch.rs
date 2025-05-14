@@ -1,6 +1,6 @@
 use parser::cst;
 
-use crate::{lower::Lower, Ctx, LoweringResult};
+use crate::{Ctx, LoweringResult, lower::Lower};
 
 use super::lower_telescope_inst;
 

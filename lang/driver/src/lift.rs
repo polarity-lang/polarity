@@ -5,7 +5,7 @@ use miette_util::codespan::Span;
 use printer::Print;
 use transformations::LiftResult;
 
-use crate::{database::Database, DriverError, Edit};
+use crate::{DriverError, Edit, database::Database};
 
 impl Database {
     pub async fn lift(&mut self, uri: &Url, type_name: &str) -> Result<Vec<Edit>, crate::Error> {

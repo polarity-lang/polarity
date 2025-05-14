@@ -1,6 +1,6 @@
 use ast::ctx::values::Binder;
-use miette_util::codespan::Span;
 use miette_util::ToMiette;
+use miette_util::codespan::Span;
 
 use ast::ctx::{BindContext, LevelCtx};
 use ast::{self, MetaVar, MetaVarKind, MetaVarState, VarBound};
@@ -9,8 +9,8 @@ use ast::{Idx, Lvl};
 use parser::cst::ident::Ident;
 use url::Url;
 
-use crate::symbol_table::SymbolTable;
 use crate::LoweringResult;
+use crate::symbol_table::SymbolTable;
 
 use super::result::LoweringError;
 

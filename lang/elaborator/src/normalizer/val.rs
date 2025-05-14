@@ -1,8 +1,6 @@
 use std::rc::Rc;
 
 use ast;
-use ast::ctx::values::Binder;
-use ast::shift_and_clone;
 use ast::Idx;
 use ast::MetaVar;
 use ast::Shift;
@@ -10,6 +8,8 @@ use ast::ShiftRange;
 use ast::ShiftRangeExt;
 use ast::VarBind;
 use ast::VarBound;
+use ast::ctx::values::Binder;
+use ast::shift_and_clone;
 use log::trace;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
@@ -19,8 +19,8 @@ use printer::types::Print;
 use printer::types::*;
 use printer::util::*;
 
-use crate::normalizer::env::*;
 use crate::TypeInfoTable;
+use crate::normalizer::env::*;
 
 use super::eval::Eval;
 use crate::result::*;

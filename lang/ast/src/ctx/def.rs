@@ -2,7 +2,7 @@
 
 use derivative::Derivative;
 use pretty::DocAllocator;
-use printer::{tokens::*, Alloc, Builder, Print, PrintCfg};
+use printer::{Alloc, Builder, Print, PrintCfg, tokens::*};
 
 use crate::{Idx, Lvl, Shift, ShiftRange, Var};
 

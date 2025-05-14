@@ -3,8 +3,8 @@ use std::fmt::Debug;
 
 use values::Binder;
 
-use crate::ctx::*;
 use crate::Variable;
+use crate::ctx::*;
 use crate::*;
 
 // Substitution
@@ -75,11 +75,7 @@ impl Substitution for Assign {
     type Err = Infallible;
 
     fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
-        if self.lvl == lvl {
-            Ok(Some(self.exp.clone()))
-        } else {
-            Ok(None)
-        }
+        if self.lvl == lvl { Ok(Some(self.exp.clone())) } else { Ok(None) }
     }
 }
 

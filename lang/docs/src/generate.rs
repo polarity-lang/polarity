@@ -1,6 +1,6 @@
 use ast::{Case, Ctor, DocComment, Dtor};
 
-use comrak::{markdown_to_html, Options};
+use comrak::{Options, markdown_to_html};
 use printer::PrintCfg;
 
 use crate::printer::print_html_to_string;

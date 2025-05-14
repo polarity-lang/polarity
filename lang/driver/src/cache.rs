@@ -24,11 +24,7 @@ impl<T> Cache<T> {
 
     /// Get the value associated with a URI if it is not stale
     pub fn get_unless_stale(&self, uri: &Url) -> Option<&T> {
-        if self.is_stale(uri) {
-            None
-        } else {
-            self.get_even_if_stale(uri)
-        }
+        if self.is_stale(uri) { None } else { self.get_even_if_stale(uri) }
     }
 
     pub fn insert(&mut self, uri: Url, value: T) {

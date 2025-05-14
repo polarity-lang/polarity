@@ -1,6 +1,6 @@
 use parser::cst;
 
-use crate::{lower::Lower, Ctx, LoweringResult};
+use crate::{Ctx, LoweringResult, lower::Lower};
 
 impl Lower for cst::exp::Lam {
     type Target = ast::Exp;
