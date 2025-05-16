@@ -16,9 +16,15 @@ pub async fn semantic_tokens_full(
         )
         .await;
 
-    let mut _db = server.database.write().await;
+    let mut db = server.database.write().await;
 
-    let tokens: SemanticTokens = SemanticTokens { result_id: None, data: vec![] };
-    let res: SemanticTokensResult = SemanticTokensResult::Tokens(tokens);
-    Ok(Some(res))
+    let tokens = db.semantic_tokens(&text_document.uri.from_lsp()).await.ok();
+    match tokens {
+        Some(tokens) => {
+            let tokens: SemanticTokens = SemanticTokens { result_id: None, data: tokens };
+            let res: SemanticTokensResult = SemanticTokensResult::Tokens(tokens);
+            Ok(Some(res))
+        }
+        None => Ok(None),
+    }
 }
