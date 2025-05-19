@@ -10,7 +10,7 @@ use crate::Database;
 /// This legend is used because the actual semantic tokens only contain an index into
 /// this legend to save space.
 pub fn token_legend() -> SemanticTokensLegend {
-    SemanticTokensLegend { token_types: vec![SemanticTokenType::TYPE], token_modifiers: vec![] }
+    SemanticTokensLegend { token_types: vec![SemanticTokenType::ENUM], token_modifiers: vec![] }
 }
 
 /// Semantic token modifiers are set using a bitmap.
