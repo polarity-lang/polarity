@@ -1,34 +1,22 @@
 use std::sync::Arc;
+pub mod types;
 
 use ast::{Codata, Codef, Data, Decl, Def, Let, Module};
-use lsp_types::{SemanticToken, SemanticTokenType, SemanticTokensLegend};
-
-/// Describes which semantic tokens and modifiers are emitted by the server.
-/// This legend is used because the actual semantic tokens only contain an index into
-/// this legend to save space.
-pub fn token_legend() -> SemanticTokensLegend {
-    SemanticTokensLegend { token_types: vec![SemanticTokenType::TYPE], token_modifiers: vec![] }
-}
-
-/// The index of this token type in the legend.
-const SEMANTIC_TOKEN_DATATYPE: u32 = 0;
-
-/// Semantic token modifiers are set using a bitmap.
-/// If no token modifiers are used we therefore use the empty bitmap.
-const SEMANTIC_TOKEN_MODIFIER_NONE: u32 = 0;
+use lsp_types::SemanticToken;
+use types::{convert_sem_tokens, SemToken};
 
 pub fn compute_semantic_tokens(module: Arc<Module>) -> Vec<SemanticToken> {
-    let mut tokens: Vec<SemanticToken> = Vec::new();
+    let mut tokens: Vec<SemToken> = Vec::new();
     module.semantic_tokens(&mut tokens);
-    tokens
+    convert_sem_tokens(tokens)
 }
 
 trait SemTokens {
-    fn semantic_tokens(&self, tokens: &mut Vec<SemanticToken>);
+    fn semantic_tokens(&self, tokens: &mut Vec<SemToken>);
 }
 
 impl<T: SemTokens> SemTokens for Vec<T> {
-    fn semantic_tokens(&self, tokens: &mut Vec<SemanticToken>) {
+    fn semantic_tokens(&self, tokens: &mut Vec<SemToken>) {
         for x in self {
             x.semantic_tokens(tokens);
         }
@@ -36,14 +24,14 @@ impl<T: SemTokens> SemTokens for Vec<T> {
 }
 
 impl SemTokens for Module {
-    fn semantic_tokens(&self, tokens: &mut Vec<SemanticToken>) {
+    fn semantic_tokens(&self, tokens: &mut Vec<SemToken>) {
         let Module { decls, .. } = self;
         decls.semantic_tokens(tokens);
     }
 }
 
 impl SemTokens for Decl {
-    fn semantic_tokens(&self, tokens: &mut Vec<SemanticToken>) {
+    fn semantic_tokens(&self, tokens: &mut Vec<SemToken>) {
         match self {
             Decl::Data(data) => data.semantic_tokens(tokens),
             Decl::Codata(codata) => codata.semantic_tokens(tokens),
@@ -56,31 +44,28 @@ impl SemTokens for Decl {
 }
 
 impl SemTokens for Data {
-    fn semantic_tokens(&self, tokens: &mut Vec<SemanticToken>) {
+    fn semantic_tokens(&self, tokens: &mut Vec<SemToken>) {
         let Data { name, .. } = self;
-        let st: SemanticToken = SemanticToken {
-            delta_line: todo!(),
-            delta_start: todo!(),
-            length: todo!(),
-            token_type: SEMANTIC_TOKEN_DATATYPE,
-            token_modifiers_bitset: SEMANTIC_TOKEN_MODIFIER_NONE,
+        let st: SemToken = SemToken {
+            span: name.span.unwrap(),
+            typ: types::TokenType::DataType
         };
         tokens.push(st);
     }
 }
 
 impl SemTokens for Codata {
-    fn semantic_tokens(&self, _tokens: &mut Vec<SemanticToken>) {}
+    fn semantic_tokens(&self, _tokens: &mut Vec<SemToken>) {}
 }
 
 impl SemTokens for Def {
-    fn semantic_tokens(&self, _tokens: &mut Vec<SemanticToken>) {}
+    fn semantic_tokens(&self, _tokens: &mut Vec<SemToken>) {}
 }
 
 impl SemTokens for Codef {
-    fn semantic_tokens(&self, _tokens: &mut Vec<SemanticToken>) {}
+    fn semantic_tokens(&self, _tokens: &mut Vec<SemToken>) {}
 }
 
 impl SemTokens for Let {
-    fn semantic_tokens(&self, _tokens: &mut Vec<SemanticToken>) {}
+    fn semantic_tokens(&self, _tokens: &mut Vec<SemToken>) {}
 }
