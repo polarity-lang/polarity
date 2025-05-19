@@ -1,3 +1,4 @@
+use polarity_lang_driver::semantic_tokens::token_legend;
 use tower_lsp_server::lsp_types::*;
 
 pub fn capabilities() -> ServerCapabilities {
@@ -21,7 +22,7 @@ pub fn capabilities() -> ServerCapabilities {
     let semantic_tokens_provider =
         Some(SemanticTokensServerCapabilities::SemanticTokensOptions(SemanticTokensOptions {
             work_done_progress_options: WorkDoneProgressOptions { work_done_progress: Some(false) },
-            legend: SemanticTokensLegend { token_types: vec![], token_modifiers: vec![] },
+            legend: token_legend(),
             range: Some(false),
             full: Some(SemanticTokensFullOptions::Bool(true)),
         }));

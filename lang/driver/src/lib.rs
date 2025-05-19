@@ -10,7 +10,7 @@ mod lift;
 pub mod paths;
 mod render_reports;
 mod result;
-mod semantic_tokens;
+pub mod semantic_tokens;
 mod spans;
 mod xfunc;
 
