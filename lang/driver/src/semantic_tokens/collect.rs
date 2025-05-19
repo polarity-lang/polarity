@@ -55,7 +55,11 @@ impl SemTokens for Data {
 }
 
 impl SemTokens for Codata {
-    fn collect_tokens(&self, _tokens: &mut Vec<SemToken>) {}
+    fn collect_tokens(&self, tokens: &mut Vec<SemToken>) {
+        let Codata { name, ..} = self;
+        let st: SemToken = SemToken { span: name.span.unwrap(), typ: super::types::TokenType::CodataType };
+        tokens.push(st);
+    }
 }
 
 impl SemTokens for Def {
