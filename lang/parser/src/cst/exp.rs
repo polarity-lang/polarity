@@ -76,6 +76,7 @@ pub enum Exp {
     NatLit(NatLit),
     BinOp(BinOp),
     Lam(Lam),
+    LocalLet(LocalLet),
 }
 
 impl Exp {
@@ -90,6 +91,7 @@ impl Exp {
             Exp::NatLit(nat_lit) => nat_lit.span,
             Exp::BinOp(binop) => binop.span,
             Exp::Lam(lam) => lam.span,
+            Exp::LocalLet(local_let) => local_let.span,
         }
     }
 
@@ -125,6 +127,20 @@ pub struct Anno {
     pub span: Span,
     pub exp: Box<Exp>,
     pub typ: Box<Exp>,
+}
+
+#[derive(Debug, Clone)]
+/// Local let bindings:
+/// ```text
+/// let x : t := e; e
+/// let x := e ; e
+/// ```
+pub struct LocalLet {
+    pub span: Span,
+    pub bs: BindingSite,
+    pub typ: Option<Box<Exp>>,
+    pub bound: Box<Exp>,
+    pub body: Box<Exp>,
 }
 
 #[derive(Debug, Clone)]
