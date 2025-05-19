@@ -447,7 +447,7 @@ impl Database {
     pub async fn recompute_semantic_tokens(&mut self, uri: &Url) -> AppResult<Vec<SemanticToken>> {
         log::debug!("Recomputing semantic_tokens for: {}", uri);
         let ust = self.ust(uri).await?;
-        let semantic_tokens = compute_semantic_tokens(ust);
+        let semantic_tokens = compute_semantic_tokens(self, uri, ust);
         self.semantic_tokens.insert(uri.clone(), semantic_tokens.clone());
         Ok(semantic_tokens)
     }

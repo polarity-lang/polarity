@@ -1,7 +1,10 @@
 //! The different token types and modifiers supported by the server.
 
 use lsp_types::{SemanticToken, SemanticTokenType, SemanticTokensLegend};
-use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_miette_util::{ToMiette, codespan::Span};
+use url::Url;
+
+use crate::Database;
 
 /// Describes which semantic tokens and modifiers are emitted by the server.
 /// This legend is used because the actual semantic tokens only contain an index into
@@ -42,6 +45,28 @@ pub struct SemToken {
 /// and converts them to a vector of `SemanticToken` which use a relative encoding.
 /// That is, the position of each `SemanticToken` is relative to the token preceding
 /// it in the vector.
-pub fn convert_sem_tokens(_toks: Vec<SemToken>) -> Vec<SemanticToken> {
-    todo!()
+pub fn convert_sem_tokens(db: &Database, uri: &Url, toks: Vec<SemToken>) -> Vec<SemanticToken> {
+    let mut output: Vec<SemanticToken> = Vec::new();
+
+    let file = db.files.get_unless_stale(uri).unwrap();
+
+    let mut prev_line: u32 = 0;
+    let mut prev_character: u32 = 0;
+
+    for tok in toks {
+        let pos = file.location(tok.span.start).unwrap();
+
+        let st = SemanticToken {
+            delta_line: pos.line - prev_line,
+            delta_start: if pos.line != prev_line { 0 } else { pos.character - prev_character },
+            length: u32::try_from(tok.span.to_miette().len()).unwrap(),
+            token_type: tok.typ.index(),
+            token_modifiers_bitset: SEMANTIC_TOKEN_MODIFIER_NONE,
+        };
+        output.push(st);
+        prev_line = pos.line;
+        prev_character = pos.character;
+    }
+
+    output
 }

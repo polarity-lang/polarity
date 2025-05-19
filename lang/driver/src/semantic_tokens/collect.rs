@@ -1,7 +1,5 @@
 //! Traversing an AST to collect the semantic tokens.
 
-use std::sync::Arc;
-
 use polarity_lang_ast::{Codata, Codef, Data, Decl, Def, Extern, Let, Module, Note};
 
 use super::types::SemToken;

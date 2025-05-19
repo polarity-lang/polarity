@@ -1,4 +1,4 @@
-use polarity_lang_driver::semantic_tokens::token_legend;
+use polarity_lang_driver::semantic_tokens::types::token_legend;
 use tower_lsp_server::lsp_types::*;
 
 pub fn capabilities() -> ServerCapabilities {
