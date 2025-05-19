@@ -38,7 +38,7 @@ where
     }
 
     fn fail_doc(&self) -> Self::Error {
-        io::Error::new(io::ErrorKind::Other, "Document failed to render")
+        io::Error::other("Document failed to render")
     }
 }
 
