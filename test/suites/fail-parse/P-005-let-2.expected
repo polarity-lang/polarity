@@ -1,0 +1,8 @@
+P-003
+
+  × Unexpected "Let", expected "(", "?", "Identifier", "NumLit", "\\", "_", "comatch"
+   ╭─[P-005-let-2.pol:3:30]
+ 2 │ 
+ 3 │ let x : Nat { let x : Nat := let y := Z; y ; S(x) }
+   ·                              ───
+   ╰────

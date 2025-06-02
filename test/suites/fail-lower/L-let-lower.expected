@@ -1,0 +1,8 @@
+L-XXX
+
+  × An unexpected internal error occurred: Lowering of local let expressions not implemented yet
+   ╭─[L-let-lower.pol:3:16]
+ 2 │     
+ 3 │ ╭─▶ let foo: Nat { let x := Z;
+ 4 │ ╰─▶                S(x) }
+   ╰────

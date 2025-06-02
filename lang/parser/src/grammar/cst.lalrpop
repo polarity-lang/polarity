@@ -242,6 +242,11 @@ Infix: Infix = {
 //
 
 pub Exp: Box<Exp> = {
+    <e: LocalLet> => Box::new(Exp::LocalLet(e)),
+    NonLet,
+}
+
+pub NonLet: Box<Exp> = {
     <e: Anno> => Box::new(Exp::Anno(e)),
     <e: BinOp> => Box::new(Exp::BinOp(e)),
     <e: Lam> => Box::new(Exp::Lam(e)),
@@ -306,6 +311,9 @@ Hole: Hole = {
 
 NatLit: NatLit = <l: @L> <n: "NumLit"> <r: @R> =>
   NatLit { span: span(l, r), val: n };
+
+LocalLet: LocalLet = <l: @L> "let" <bs: BindingSite> <typ: (":" <NonLet>)?> ":=" <bound: NonLet> ";" <body: Exp> <r: @R> =>
+  LocalLet { span: span(l,r), bs, typ, bound, body };
 
 // Helpers
 //
