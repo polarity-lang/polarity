@@ -1,0 +1,3 @@
+data Nat { Z, S(x: Nat)}
+
+let x : Nat { let x : Nat := let y := Z; y ; S(x) }
