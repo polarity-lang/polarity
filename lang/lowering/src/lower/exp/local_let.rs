@@ -1,7 +1,7 @@
 use miette_util::ToMiette;
 use parser::cst;
 
-use crate::{lower::Lower, LoweringError};
+use crate::{LoweringError, lower::Lower};
 
 impl Lower for cst::exp::LocalLet {
     type Target = ast::Exp;
