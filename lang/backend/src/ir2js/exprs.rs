@@ -59,7 +59,7 @@ impl ir::Call {
     /// Output:
     ///
     /// ```js
-    /// { tag: "C", args: [x, y] }
+    /// { tag: "C", args: [〚 x, y 〛] }
     /// ```
     fn to_js_ctor_record(&self) -> BackendResult<js::Expr> {
         let Self { name, module_uri: _, args } = self;
@@ -92,7 +92,7 @@ impl ir::Call {
     /// Output:
     ///
     /// ```js
-    /// f(x, y)
+    /// f(〚 x, y 〛)
     /// ```
     fn to_js_function_call(&self) -> BackendResult<js::Expr> {
         let Self { name, module_uri: _, args } = self;
@@ -122,7 +122,7 @@ impl ir::DotCall {
     /// Output:
     ///
     /// ```js
-    /// exp.d(x, y)
+    /// 〚 exp 〛.d(〚 x, y 〛)
     /// ```
     fn to_js_record_member_call(&self) -> BackendResult<js::Expr> {
         let Self { exp, module_uri: _, name, args } = self;
@@ -154,7 +154,7 @@ impl ir::DotCall {
     /// Output:
     ///
     /// ```js
-    /// def_name(e, x, y)
+    /// def_name(〚 e 〛, 〚 x, y 〛)
     /// ```
     fn to_js_function_call_with_self(&self) -> BackendResult<js::Expr> {
         let Self { exp, module_uri: _, name, args } = self;
@@ -189,9 +189,9 @@ impl ir::DotCall {
 ///
 /// ```js
 /// (() => {
-///     const __scrutinee = expr;
+///     const __scrutinee = 〚 on_exp 〛;
 ///     switch (__scrutinee.tag) {
-///         cases
+///         〚 cases 〛
 ///     }
 /// })()
 /// ```
@@ -278,8 +278,7 @@ impl ToJSExpr for ir::LocalMatch {
 ///
 /// ```js
 /// {
-///     d1: cocases[0],
-///     d2: cocases[1],
+///     〚 cocases 〛,
 /// }
 /// ```
 impl ToJSExpr for ir::LocalComatch {
@@ -372,7 +371,7 @@ impl ir::Case {
     /// case "C":
     ///     const x = __scrutinee.args[0];
     ///     const y = __scrutinee.args[1];
-    ///     return body;
+    ///     return 〚 body 〛;
     /// ```
     pub fn to_js_switch_case(&self, scrutinee_name: &str) -> BackendResult<js::SwitchCase> {
         let Self { pattern, body } = self;
@@ -447,7 +446,7 @@ impl ir::Case {
     /// Output:
     ///
     /// ```js
-    /// d: (x, y) => (body):
+    /// d: (x, y) => (〚 body 〛):
     /// ```
     pub fn to_js_object_method(&self) -> BackendResult<js::PropOrSpread> {
         let Self { pattern, body } = self;
