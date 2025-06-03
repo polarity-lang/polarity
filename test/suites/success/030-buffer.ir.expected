@@ -1,14 +1,8 @@
-def .head(n) {
-    Cons(n', x, xs) => x,
-    Nil absurd,
-}
+def .head(n) { Cons(n', x, xs) => x }
 
-def .tail(n) {
-    Cons(n', x, xs) => xs,
-    Nil absurd,
-}
+def .tail(n) { Cons(n', x, xs) => xs }
 
-codef Empty { .read(n) absurd }
+codef Empty { }
 
 codef FromVec(n, xs) {
     .read(n') =>

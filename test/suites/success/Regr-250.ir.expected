@@ -1,4 +1,1 @@
-codef Unit {
-    .typeAt(x, x0) absurd,
-    .dataAt(x, x0) absurd,
-}
+codef Unit { }

@@ -1,4 +1,1 @@
-def .foo {
-    Bar => T,
-    Baz absurd,
-}
+def .foo { Bar => T }

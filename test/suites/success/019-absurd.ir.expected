@@ -1,4 +1,4 @@
-def .elim_zero { SNotZero(n) absurd }
+def .elim_zero { }
 
 def .elim {
     Ok(x) => x,

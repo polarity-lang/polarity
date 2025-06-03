@@ -181,21 +181,18 @@ impl Print for Panic {
 #[derive(Debug, Clone)]
 pub struct Case {
     pub pattern: Pattern,
-    pub body: Option<Box<Exp>>,
+    pub body: Box<Exp>,
 }
 
 impl Print for Case {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Case { pattern, body } = self;
 
-        let body = match body {
-            None => alloc.keyword(ABSURD),
-            Some(body) => alloc
-                .text(FAT_ARROW)
-                .append(alloc.line())
-                .append(body.print(cfg, alloc))
-                .nest(cfg.indent),
-        };
+        let body = alloc
+            .text(FAT_ARROW)
+            .append(alloc.line())
+            .append(body.print(cfg, alloc))
+            .nest(cfg.indent);
 
         pattern.print(cfg, alloc).append(alloc.space()).append(body).group()
     }
