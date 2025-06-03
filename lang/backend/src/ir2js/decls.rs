@@ -107,7 +107,7 @@ impl ToJSStmt for ir::Def {
         }];
         all_params.extend(params_to_js_params(params));
 
-        // Generate switch statement on self.tag
+        // Generate switch statement on __self.tag
         let cases = cases
             .iter()
             .map(|case| case.to_js_switch_case(SELF_PARAM_NAME))
