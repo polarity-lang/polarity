@@ -1,14 +1,14 @@
 use polarity_lang_ast::{LocalComatch, LocalLet};
 
 use crate::ir;
-use crate::result::BackendError;
+use crate::result::{BackendError, BackendResult};
 
 use super::traits::ToIR;
 
 impl ToIR for polarity_lang_ast::Exp {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let out = match self {
             polarity_lang_ast::Exp::Variable(variable) => ir::Exp::Variable(variable.to_ir()?),
             polarity_lang_ast::Exp::TypCtor(typ_ctor) => typ_ctor.to_ir()?,
@@ -34,7 +34,7 @@ impl ToIR for polarity_lang_ast::Exp {
 impl ToIR for polarity_lang_ast::Variable {
     type Target = ir::Variable;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Variable { name, .. } = self;
 
         Ok(ir::Variable { name: name.to_string() })
@@ -44,7 +44,7 @@ impl ToIR for polarity_lang_ast::Variable {
 impl ToIR for polarity_lang_ast::TypCtor {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         // Type constructors have no runtime relevance and is hence replaced by a zero-sized term.
         Ok(ir::Exp::ZST)
     }
@@ -53,7 +53,7 @@ impl ToIR for polarity_lang_ast::TypCtor {
 impl ToIR for polarity_lang_ast::Call {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Call { kind, name, args, .. } = self;
 
         let args = args.to_ir()?;
@@ -72,7 +72,7 @@ impl ToIR for polarity_lang_ast::Call {
 impl ToIR for polarity_lang_ast::DotCall {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::DotCall { kind, exp, name, args, .. } = self;
 
         let args = args.to_ir()?;
@@ -91,7 +91,7 @@ impl ToIR for polarity_lang_ast::DotCall {
 impl ToIR for polarity_lang_ast::Anno {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Anno { exp, .. } = self;
         // For type annotations `e: t`, we throw away the type `t` and convert `e` to IR.
         exp.to_ir()
@@ -101,7 +101,7 @@ impl ToIR for polarity_lang_ast::Anno {
 impl ToIR for polarity_lang_ast::TypeUniv {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         // The universe has no runtime relevance and is hence replaced by a zero-sized term.
         Ok(ir::Exp::ZST)
     }
@@ -110,7 +110,7 @@ impl ToIR for polarity_lang_ast::TypeUniv {
 impl ToIR for polarity_lang_ast::LocalMatch {
     type Target = ir::LocalMatch;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::LocalMatch { on_exp, cases, .. } = self;
 
         let on_exp = Box::new(on_exp.to_ir()?);
@@ -124,7 +124,7 @@ impl ToIR for polarity_lang_ast::LocalMatch {
 impl ToIR for polarity_lang_ast::LocalComatch {
     type Target = ir::LocalComatch;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let LocalComatch { cases, .. } = self;
 
         let cases =
@@ -137,7 +137,7 @@ impl ToIR for polarity_lang_ast::LocalComatch {
 impl ToIR for polarity_lang_ast::Hole {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Hole { kind, solution, .. } = self;
 
         let res =
@@ -162,7 +162,7 @@ impl ToIR for polarity_lang_ast::Hole {
 impl ToIR for LocalLet {
     type Target = ir::LocalLet;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let LocalLet { span: _, name, typ: _, bound, body, inferred_type: _ } = self;
 
         Ok(ir::LocalLet {
@@ -176,7 +176,7 @@ impl ToIR for LocalLet {
 impl ToIR for polarity_lang_ast::Literal {
     type Target = ir::Literal;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Literal { span: _, kind, inferred_type: _ } = self;
         match kind {
             polarity_lang_ast::LiteralKind::I64(v) => Ok(ir::Literal::I64(*v)),
@@ -194,7 +194,7 @@ impl ToIR for polarity_lang_ast::Literal {
 impl ToIR for polarity_lang_ast::Case {
     type Target = Option<ir::Case>;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Case { pattern, body, .. } = self;
         let polarity_lang_ast::Pattern { span: _, is_copattern, params, name } = pattern;
 
@@ -216,7 +216,7 @@ impl ToIR for polarity_lang_ast::Case {
 impl ToIR for polarity_lang_ast::Args {
     type Target = Vec<ir::Exp>;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Args { args, .. } = self;
 
         args.iter()
@@ -230,7 +230,7 @@ impl ToIR for polarity_lang_ast::Args {
 impl ToIR for polarity_lang_ast::Telescope {
     type Target = Vec<String>;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Telescope { params, .. } = self;
 
         Ok(params
@@ -244,7 +244,7 @@ impl ToIR for polarity_lang_ast::Telescope {
 impl ToIR for polarity_lang_ast::TelescopeInst {
     type Target = Vec<String>;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::TelescopeInst { params, .. } = self;
 
         Ok(params

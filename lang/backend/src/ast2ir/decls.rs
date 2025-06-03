@@ -1,12 +1,12 @@
 use crate::ir;
-use crate::result::BackendError;
+use crate::result::BackendResult;
 
 use super::traits::ToIR;
 
 impl ToIR for polarity_lang_ast::Module {
     type Target = ir::Module;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Module { uri, use_decls, decls, meta_vars: _ } = self;
 
         let mut def_decls = Vec::new();
@@ -39,7 +39,7 @@ impl ToIR for polarity_lang_ast::Module {
 impl ToIR for polarity_lang_ast::Def {
     type Target = ir::Def;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Def { name, params, cases, .. } = self;
 
         let params = params.to_ir()?;
@@ -53,7 +53,7 @@ impl ToIR for polarity_lang_ast::Def {
 impl ToIR for polarity_lang_ast::Codef {
     type Target = ir::Codef;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Codef { name, params, cases, .. } = self;
 
         let params = params.to_ir()?;
@@ -67,7 +67,7 @@ impl ToIR for polarity_lang_ast::Codef {
 impl ToIR for polarity_lang_ast::Let {
     type Target = ir::Let;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Let { name, params, body, .. } = self;
 
         let params = params.to_ir()?;

@@ -4,13 +4,13 @@ use swc_common::{DUMMY_SP, SyntaxContext};
 use swc_ecma_ast as js;
 
 use crate::ir;
-use crate::result::BackendError;
+use crate::result::BackendResult;
 
 use super::tokens::*;
 use super::traits::ToJSExpr;
 
 impl ToJSExpr for ir::Exp {
-    fn to_js_expr(&self) -> Result<js::Expr, BackendError> {
+    fn to_js_expr(&self) -> BackendResult<js::Expr> {
         match self {
             ir::Exp::Variable(var) => var.to_js_expr(),
             ir::Exp::CtorCall(call) => call.to_js_ctor_record(),
@@ -45,7 +45,7 @@ impl ToJSExpr for ir::Exp {
 /// x
 /// ```
 impl ToJSExpr for ir::Variable {
-    fn to_js_expr(&self) -> Result<js::Expr, BackendError> {
+    fn to_js_expr(&self) -> BackendResult<js::Expr> {
         let Self { name } = self;
         let name = name.clone();
         Ok(js::Expr::Ident(js::Ident::new(name.into(), DUMMY_SP, SyntaxContext::empty())))
@@ -64,7 +64,7 @@ impl ir::Call {
     /// ```js
     /// { tag: "C", args: [x, y] }
     /// ```
-    fn to_js_ctor_record(&self) -> Result<js::Expr, BackendError> {
+    fn to_js_ctor_record(&self) -> BackendResult<js::Expr> {
         let Self { name, module_uri: _, args } = self;
         let args = args_to_js_array(args)?;
 
@@ -97,7 +97,7 @@ impl ir::Call {
     /// ```js
     /// f(x, y)
     /// ```
-    fn to_js_function_call(&self) -> Result<js::Expr, BackendError> {
+    fn to_js_function_call(&self) -> BackendResult<js::Expr> {
         let Self { name, module_uri: _, args } = self;
         let args = args_to_js_exprs(args)?;
 
@@ -127,7 +127,7 @@ impl ir::DotCall {
     /// ```js
     /// exp.d(x, y)
     /// ```
-    fn to_js_record_member_call(&self) -> Result<js::Expr, BackendError> {
+    fn to_js_record_member_call(&self) -> BackendResult<js::Expr> {
         let Self { exp, module_uri: _, name, args } = self;
         let obj_expr = exp.to_js_expr()?;
         let args = args_to_js_exprs(args)?;
@@ -159,7 +159,7 @@ impl ir::DotCall {
     /// ```js
     /// def_name(e, x, y)
     /// ```
-    fn to_js_function_call_with_self(&self) -> Result<js::Expr, BackendError> {
+    fn to_js_function_call_with_self(&self) -> BackendResult<js::Expr> {
         let Self { exp, module_uri: _, name, args } = self;
         let exp = exp.to_js_expr()?;
 
@@ -199,7 +199,7 @@ impl ir::DotCall {
 /// })()
 /// ```
 impl ToJSExpr for ir::LocalMatch {
-    fn to_js_expr(&self) -> Result<js::Expr, BackendError> {
+    fn to_js_expr(&self) -> BackendResult<js::Expr> {
         let Self { on_exp, cases } = self;
         let on_expr = on_exp.to_js_expr()?;
 
@@ -286,7 +286,7 @@ impl ToJSExpr for ir::LocalMatch {
 /// }
 /// ```
 impl ToJSExpr for ir::LocalComatch {
-    fn to_js_expr(&self) -> Result<js::Expr, BackendError> {
+    fn to_js_expr(&self) -> BackendResult<js::Expr> {
         let Self { cases } = self;
         let props: Result<Vec<_>, _> =
             cases.iter().map(|case| case.to_js_object_method()).collect();
@@ -307,7 +307,7 @@ impl ToJSExpr for ir::LocalComatch {
 /// (() => { throw new Error("error message"); })()
 /// ```
 impl ToJSExpr for ir::Panic {
-    fn to_js_expr(&self) -> Result<js::Expr, BackendError> {
+    fn to_js_expr(&self) -> BackendResult<js::Expr> {
         let Self { message } = self;
         let message = message.clone();
 
@@ -377,7 +377,7 @@ impl ir::Case {
     ///     const y = __scrutinee.args[1];
     ///     return body;
     /// ```
-    pub fn to_js_switch_case(&self, scrutinee_name: &str) -> Result<js::SwitchCase, BackendError> {
+    pub fn to_js_switch_case(&self, scrutinee_name: &str) -> BackendResult<js::SwitchCase> {
         let Self { pattern, body } = self;
         let pattern_name = pattern.name.clone();
         let test = js::Expr::Lit(js::Lit::Str(js::Str {
@@ -452,7 +452,7 @@ impl ir::Case {
     /// ```js
     /// d: (x, y) => body:
     /// ```
-    pub fn to_js_object_method(&self) -> Result<js::PropOrSpread, BackendError> {
+    pub fn to_js_object_method(&self) -> BackendResult<js::PropOrSpread> {
         let Self { pattern, body } = self;
         let method_name = pattern.name.clone();
         let params: Vec<_> = pattern
@@ -486,12 +486,12 @@ impl ir::Case {
     }
 }
 
-fn args_to_js_array(args: &[ir::Exp]) -> Result<js::ArrayLit, BackendError> {
+fn args_to_js_array(args: &[ir::Exp]) -> BackendResult<js::ArrayLit> {
     let elems = args_to_js_exprs(args)?.into_iter().map(Some).collect::<Vec<_>>();
     Ok(js::ArrayLit { span: DUMMY_SP, elems })
 }
 
-fn args_to_js_exprs(args: &[ir::Exp]) -> Result<Vec<js::ExprOrSpread>, BackendError> {
+fn args_to_js_exprs(args: &[ir::Exp]) -> BackendResult<Vec<js::ExprOrSpread>> {
     args.iter()
         .map(|arg| {
             arg.to_js_expr().map(|expr| js::ExprOrSpread { spread: None, expr: Box::new(expr) })

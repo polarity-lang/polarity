@@ -9,4 +9,4 @@ pub enum BackendError {
     CodegenError(String),
 }
 
-pub type BackendResult<T> = Result<T, BackendError>;
+pub type BackendResult<T = ()> = Result<T, BackendError>;

@@ -2,13 +2,13 @@ use swc_common::{DUMMY_SP, SyntaxContext};
 use swc_ecma_ast as js;
 
 use crate::ir;
-use crate::result::BackendError;
+use crate::result::BackendResult;
 
 use super::tokens::*;
 use super::traits::{ToJSExpr, ToJSStmt};
 
 impl ir::Module {
-    pub fn to_js_module(&self) -> Result<js::Module, BackendError> {
+    pub fn to_js_module(&self) -> BackendResult<js::Module> {
         let Self { uri: _, use_decls: _, def_decls, codef_decls, let_decls } = self;
         let mut body = vec![];
 
@@ -44,7 +44,7 @@ impl ir::Module {
 ///     return body;
 /// }
 impl ToJSStmt for ir::Let {
-    fn to_js_stmt(&self) -> Result<js::Stmt, BackendError> {
+    fn to_js_stmt(&self) -> BackendResult<js::Stmt> {
         let Self { name, params, body } = self;
 
         let params = params_to_js_params(params);
@@ -93,7 +93,7 @@ impl ToJSStmt for ir::Let {
 /// }
 /// ```
 impl ToJSStmt for ir::Def {
-    fn to_js_stmt(&self) -> Result<js::Stmt, BackendError> {
+    fn to_js_stmt(&self) -> BackendResult<js::Stmt> {
         let Self { name, params, cases } = self;
 
         // Generate self parameter
@@ -167,7 +167,7 @@ impl ToJSStmt for ir::Def {
 /// }
 /// ```
 impl ToJSStmt for ir::Codef {
-    fn to_js_stmt(&self) -> Result<js::Stmt, BackendError> {
+    fn to_js_stmt(&self) -> BackendResult<js::Stmt> {
         let Self { name, params, cases } = self;
 
         let params = params_to_js_params(params);

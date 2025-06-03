@@ -12,12 +12,12 @@ mod exprs;
 mod tokens;
 mod traits;
 
-use crate::result::BackendError;
+use crate::result::{BackendError, BackendResult};
 
 use super::ir;
 
 /// Convert an IR module to JavaScript
-pub fn ir_to_js<W: io::Write>(ir_module: &ir::Module, writer: W) -> Result<(), BackendError> {
+pub fn ir_to_js<W: io::Write>(ir_module: &ir::Module, writer: W) -> BackendResult {
     let js_module = ir_module.to_js_module()?;
 
     let config = CodegenConfig::default();
