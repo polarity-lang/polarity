@@ -91,7 +91,7 @@ where `<expression>` is a valid [tantivy query](https://docs.rs/tantivy/latest/t
 | `content:Fun`      | Runs tests whose contents contain `Fun`     |
 | `path:success/001` | Runs tests whose path contains `sucess/001` |
 
-Usually you can don't have to explicitly specify the fields (`suite`, `name`, `content`, `path`).
+Usually you don't have to explicitly specify the fields (`suite`, `name`, `content`, `path`).
 For example, to run test `001` in suite `success`, just write:
 
 ```sh
