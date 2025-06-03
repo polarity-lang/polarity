@@ -32,7 +32,7 @@ impl ir::Module {
 
 /// Input:
 ///
-/// ```
+/// ```text
 /// let name(params) = body;
 /// ```
 ///
@@ -86,7 +86,7 @@ impl ToJSStmt for ir::Let {
 
 /// Input:
 ///
-/// ```
+/// ```text
 /// def name(params) {
 ///     C1(args) => body1,
 ///     C2(args) => body2,
@@ -172,7 +172,7 @@ impl ToJSStmt for ir::Def {
 
 /// Input:
 ///
-/// ```
+/// ```text
 /// codef name(params) {
 ///     .d1(args) => body1,
 ///     .d2(args) => body2,
