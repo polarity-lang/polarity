@@ -15,6 +15,10 @@ url = { workspace = true }
 # error handling
 miette = { workspace = true }
 thiserror = { workspace = true }
+# SWC for JS code generation
+swc_ecma_ast = "11"
+swc_ecma_codegen = "13"
+swc_common = "11"
 # workspace dependencies
 ast = { path = "../ast" }
 printer = { path = "../printer" }
