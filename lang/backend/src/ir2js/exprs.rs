@@ -429,38 +429,11 @@ impl ir::Case {
         }
 
         // Generate case body
-        match body {
-            Some(body) => {
-                let body_expr = body.to_js_expr()?;
-                stmts.push(js::Stmt::Return(js::ReturnStmt {
-                    span: DUMMY_SP,
-                    arg: Some(Box::new(body_expr)),
-                }));
-            }
-            None => {
-                stmts.push(js::Stmt::Throw(js::ThrowStmt {
-                    span: DUMMY_SP,
-                    arg: Box::new(js::Expr::New(js::NewExpr {
-                        span: DUMMY_SP,
-                        ctxt: SyntaxContext::empty(),
-                        callee: Box::new(js::Expr::Ident(js::Ident::new(
-                            "Error".into(),
-                            DUMMY_SP,
-                            SyntaxContext::empty(),
-                        ))),
-                        args: Some(vec![js::ExprOrSpread {
-                            spread: None,
-                            expr: Box::new(js::Expr::Lit(js::Lit::Str(js::Str {
-                                span: DUMMY_SP,
-                                value: "Absurd case".into(),
-                                raw: None,
-                            }))),
-                        }]),
-                        type_args: None,
-                    })),
-                }));
-            }
-        }
+        let body_expr = body.to_js_expr()?;
+        stmts.push(js::Stmt::Return(js::ReturnStmt {
+            span: DUMMY_SP,
+            arg: Some(Box::new(body_expr)),
+        }));
 
         Ok(js::SwitchCase { span: DUMMY_SP, test: Some(Box::new(test)), cons: stmts })
     }
@@ -492,33 +465,9 @@ impl ir::Case {
             })
             .collect();
 
-        let body_stmt = match body {
-            Some(body) => {
-                let body_expr = body.to_js_expr()?;
-                js::Stmt::Return(js::ReturnStmt { span: DUMMY_SP, arg: Some(Box::new(body_expr)) })
-            }
-            None => js::Stmt::Throw(js::ThrowStmt {
-                span: DUMMY_SP,
-                arg: Box::new(js::Expr::New(js::NewExpr {
-                    span: DUMMY_SP,
-                    ctxt: SyntaxContext::empty(),
-                    callee: Box::new(js::Expr::Ident(js::Ident::new(
-                        "Error".into(),
-                        DUMMY_SP,
-                        SyntaxContext::empty(),
-                    ))),
-                    args: Some(vec![js::ExprOrSpread {
-                        spread: None,
-                        expr: Box::new(js::Expr::Lit(js::Lit::Str(js::Str {
-                            span: DUMMY_SP,
-                            value: "Absurd case".into(),
-                            raw: None,
-                        }))),
-                    }]),
-                    type_args: None,
-                })),
-            }),
-        };
+        let body_expr = body.to_js_expr()?;
+        let body_stmt =
+            js::Stmt::Return(js::ReturnStmt { span: DUMMY_SP, arg: Some(Box::new(body_expr)) });
 
         Ok(js::PropOrSpread::Prop(Box::new(js::Prop::Method(js::MethodProp {
             key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: method_name.into() }),
