@@ -40,8 +40,8 @@ impl ir::Module {
 /// Output:
 ///
 /// ```js
-/// function name(params) {
-///     return body;
+/// function name(〚 params 〛) {
+///     return 〚 body 〛;
 /// }
 impl ToJSStmt for ir::Let {
     fn to_js_stmt(&self) -> BackendResult<js::Stmt> {
@@ -86,9 +86,9 @@ impl ToJSStmt for ir::Let {
 /// Output:
 ///
 /// ```js
-/// function name(__self, params) {
+/// function name(__self, 〚 params 〛) {
 ///     switch (__self.tag) {
-///         cases
+///         〚 cases 〛
 ///     }
 /// }
 /// ```
@@ -160,9 +160,9 @@ impl ToJSStmt for ir::Def {
 /// Output:
 ///
 /// ```js
-/// function name(params) {
+/// function name(〚 params 〛) {
 ///     return {
-///         cocases
+///         〚 cocases 〛
 ///     };
 /// }
 /// ```
