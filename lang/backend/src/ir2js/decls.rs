@@ -33,7 +33,7 @@ impl ir::Module {
 /// Input:
 ///
 /// ```text
-/// let name(params) = body;
+/// let name(params) { body };
 /// ```
 ///
 /// Output:
