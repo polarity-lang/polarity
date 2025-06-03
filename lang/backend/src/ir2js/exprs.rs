@@ -6,6 +6,7 @@ use swc_ecma_ast as js;
 use crate::ir;
 use crate::result::BackendError;
 
+use super::tokens::*;
 use super::traits::ToJSExpr;
 
 impl ToJSExpr for ir::Exp {
@@ -74,7 +75,7 @@ impl ir::Call {
 
         let props = vec![
             js::PropOrSpread::Prop(Box::new(js::Prop::KeyValue(js::KeyValueProp {
-                key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: "tag".into() }),
+                key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: CTOR_TAG.into() }),
                 value: Box::new(js::Expr::Lit(js::Lit::Str(js::Str {
                     span: DUMMY_SP,
                     value: ctor_name.into(),
@@ -82,7 +83,7 @@ impl ir::Call {
                 }))),
             }))),
             js::PropOrSpread::Prop(Box::new(js::Prop::KeyValue(js::KeyValueProp {
-                key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: "args".into() }),
+                key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: CTOR_ARGS.into() }),
                 value: Box::new(js::Expr::Array(js::ArrayLit {
                     span: DUMMY_SP,
                     elems: args_exprs?,
@@ -233,7 +234,7 @@ impl ToJSExpr for ir::LocalMatch {
         let match_var = js::VarDeclarator {
             span: DUMMY_SP,
             name: js::Pat::Ident(js::BindingIdent {
-                id: js::Ident::new("__scrutinee".into(), DUMMY_SP, SyntaxContext::empty()),
+                id: js::Ident::new(SCRUTINEE_NAME.into(), DUMMY_SP, SyntaxContext::empty()),
                 type_ann: None,
             }),
             init: Some(Box::new(on_expr)),
@@ -250,7 +251,7 @@ impl ToJSExpr for ir::LocalMatch {
 
         let cases = cases
             .iter()
-            .map(|case| case.to_js_switch_case("__scrutinee"))
+            .map(|case| case.to_js_switch_case(SCRUTINEE_NAME))
             .collect::<Result<Vec<_>, _>>()?;
 
         let switch_stmt = js::Stmt::Switch(js::SwitchStmt {
@@ -258,11 +259,11 @@ impl ToJSExpr for ir::LocalMatch {
             discriminant: Box::new(js::Expr::Member(js::MemberExpr {
                 span: DUMMY_SP,
                 obj: Box::new(js::Expr::Ident(js::Ident::new(
-                    "__scrutinee".into(),
+                    SCRUTINEE_NAME.into(),
                     DUMMY_SP,
                     SyntaxContext::empty(),
                 ))),
-                prop: js::MemberProp::Ident(js::IdentName { span: DUMMY_SP, sym: "tag".into() }),
+                prop: js::MemberProp::Ident(js::IdentName { span: DUMMY_SP, sym: CTOR_TAG.into() }),
             })),
             cases,
         });
@@ -439,7 +440,7 @@ impl ir::Case {
                             ))),
                             prop: js::MemberProp::Ident(js::IdentName {
                                 span: DUMMY_SP,
-                                sym: "args".into(),
+                                sym: CTOR_ARGS.into(),
                             }),
                         })),
                         prop: js::MemberProp::Computed(js::ComputedPropName {
