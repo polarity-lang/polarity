@@ -34,7 +34,7 @@ impl Print for Pattern {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Pattern { span: _, is_copattern, name, params } = self;
         if *is_copattern {
-            alloc.text(DOT).append(alloc.ctor(&name.id)).append(params.print(cfg, alloc))
+            alloc.text(DOT).append(alloc.dtor(&name.id)).append(params.print(cfg, alloc))
         } else {
             alloc.ctor(&name.id).append(params.print(cfg, alloc))
         }
