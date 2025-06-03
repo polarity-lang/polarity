@@ -75,6 +75,29 @@ Each such file, if it is present, contains the textual error message that we exp
 > [!TIP]
 > If you change the text of an error message that is emitted then you also have to update the `.expected` files. You can do that manually or use the `make update-expected` target we provide.
 
+For debugging, it is often useful to execute just a subset of the test suite.
+You can do so by running:
+
+```sh
+cargo test -p test-runner -- --filter <expression>
+```
+
+where `<expression>` is a valid [tantivy query](https://docs.rs/tantivy/latest/tantivy/query/struct.QueryParser.html).
+
+| Expression         | Explanation                                 |
+| ------------------ | ------------------------------------------- |
+| `suite:fail-check` | Runs tests in a specific suite              |
+| `name:042`         | Runs tests with name `042`                  |
+| `content:Fun`      | Runs tests whose contents contain `Fun`     |
+| `path:success/001` | Runs tests whose path contains `sucess/001` |
+
+Usually you can don't have to explicitly specify the fields (`suite`, `name`, `content`, `path`).
+For example, to run test `001` in suite `success`, just write:
+
+```sh
+cargo test -p test-runner --filter "success/001"
+```
+
 ## Code Coverage
 
 We do monitor the code coverage provided by our testsuite in order to diagnose which parts of the codebase are not tested sufficiently, but we do not implement coverage thresholds that a pull request needs to fulfil in order to be merged.
