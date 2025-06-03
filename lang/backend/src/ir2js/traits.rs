@@ -1,11 +1,11 @@
 use swc_ecma_ast as js;
 
-use crate::result::BackendError;
+use crate::result::BackendResult;
 
 pub trait ToJSExpr {
-    fn to_js_expr(&self) -> Result<js::Expr, BackendError>;
+    fn to_js_expr(&self) -> BackendResult<js::Expr>;
 }
 
 pub trait ToJSStmt {
-    fn to_js_stmt(&self) -> Result<js::Stmt, BackendError>;
+    fn to_js_stmt(&self) -> BackendResult<js::Stmt>;
 }
