@@ -4,6 +4,7 @@ use swc_ecma_ast as js;
 use crate::ir;
 use crate::result::BackendError;
 
+use super::tokens::*;
 use super::traits::{ToJSExpr, ToJSStmt};
 
 impl ir::Module {
@@ -110,7 +111,7 @@ impl ToJSStmt for ir::Def {
             span: DUMMY_SP,
             decorators: vec![],
             pat: js::Pat::Ident(js::BindingIdent {
-                id: js::Ident::new("__self".into(), DUMMY_SP, SyntaxContext::empty()),
+                id: js::Ident::new(SELF_PARAM_NAME.into(), DUMMY_SP, SyntaxContext::empty()),
                 type_ann: None,
             }),
         }];
@@ -127,7 +128,7 @@ impl ToJSStmt for ir::Def {
         // Generate switch statement on self.tag
         let cases = cases
             .iter()
-            .map(|case| case.to_js_switch_case("__self"))
+            .map(|case| case.to_js_switch_case(SELF_PARAM_NAME))
             .collect::<Result<Vec<_>, _>>()?;
 
         let body_stmts = vec![js::Stmt::Switch(js::SwitchStmt {
@@ -135,11 +136,11 @@ impl ToJSStmt for ir::Def {
             discriminant: Box::new(js::Expr::Member(js::MemberExpr {
                 span: DUMMY_SP,
                 obj: Box::new(js::Expr::Ident(js::Ident::new(
-                    "__self".into(),
+                    SELF_PARAM_NAME.into(),
                     DUMMY_SP,
                     SyntaxContext::empty(),
                 ))),
-                prop: js::MemberProp::Ident(js::IdentName { span: DUMMY_SP, sym: "tag".into() }),
+                prop: js::MemberProp::Ident(js::IdentName { span: DUMMY_SP, sym: CTOR_TAG.into() }),
             })),
             cases,
         })];

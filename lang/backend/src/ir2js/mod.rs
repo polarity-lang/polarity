@@ -9,6 +9,7 @@ use swc_ecma_codegen::{Config as CodegenConfig, Emitter};
 
 mod decls;
 mod exprs;
+mod tokens;
 mod traits;
 
 use crate::result::BackendError;
