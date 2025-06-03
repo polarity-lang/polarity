@@ -46,19 +46,9 @@ impl ir::Module {
 impl ToJSStmt for ir::Let {
     fn to_js_stmt(&self) -> Result<js::Stmt, BackendError> {
         let Self { name, params, body } = self;
-        let body_expr = body.to_js_expr()?;
 
-        let params: Vec<_> = params
-            .iter()
-            .map(|p| js::Param {
-                span: DUMMY_SP,
-                decorators: vec![],
-                pat: js::Pat::Ident(js::BindingIdent {
-                    id: js::Ident::new(p.clone().into(), DUMMY_SP, SyntaxContext::empty()),
-                    type_ann: None,
-                }),
-            })
-            .collect();
+        let params = params_to_js_params(params);
+        let body_expr = body.to_js_expr()?;
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
             ident: js::Ident::new(name.clone().into(), DUMMY_SP, SyntaxContext::empty()),
@@ -115,15 +105,7 @@ impl ToJSStmt for ir::Def {
                 type_ann: None,
             }),
         }];
-
-        all_params.extend(params.iter().map(|p| js::Param {
-            span: DUMMY_SP,
-            decorators: vec![],
-            pat: js::Pat::Ident(js::BindingIdent {
-                id: js::Ident::new(p.clone().into(), DUMMY_SP, SyntaxContext::empty()),
-                type_ann: None,
-            }),
-        }));
+        all_params.extend(params_to_js_params(params));
 
         // Generate switch statement on self.tag
         let cases = cases
@@ -187,31 +169,22 @@ impl ToJSStmt for ir::Def {
 impl ToJSStmt for ir::Codef {
     fn to_js_stmt(&self) -> Result<js::Stmt, BackendError> {
         let Self { name, params, cases } = self;
-        let js_params: Vec<_> = params
-            .iter()
-            .map(|p| js::Param {
-                span: DUMMY_SP,
-                decorators: vec![],
-                pat: js::Pat::Ident(js::BindingIdent {
-                    id: js::Ident::new(p.clone().into(), DUMMY_SP, SyntaxContext::empty()),
-                    type_ann: None,
-                }),
-            })
-            .collect();
 
-        let props: Result<Vec<_>, _> =
-            cases.iter().map(|case| case.to_js_object_method()).collect();
+        let params = params_to_js_params(params);
+
+        let props =
+            cases.iter().map(|case| case.to_js_object_method()).collect::<Result<Vec<_>, _>>()?;
 
         let return_stmt = js::Stmt::Return(js::ReturnStmt {
             span: DUMMY_SP,
-            arg: Some(Box::new(js::Expr::Object(js::ObjectLit { span: DUMMY_SP, props: props? }))),
+            arg: Some(Box::new(js::Expr::Object(js::ObjectLit { span: DUMMY_SP, props }))),
         });
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
             ident: js::Ident::new(name.clone().into(), DUMMY_SP, SyntaxContext::empty()),
             declare: false,
             function: Box::new(js::Function {
-                params: js_params,
+                params,
                 decorators: vec![],
                 span: DUMMY_SP,
                 ctxt: SyntaxContext::empty(),
@@ -227,4 +200,18 @@ impl ToJSStmt for ir::Codef {
             }),
         })))
     }
+}
+
+fn params_to_js_params(params: &[String]) -> Vec<js::Param> {
+    params
+        .iter()
+        .map(|p| js::Param {
+            span: DUMMY_SP,
+            decorators: vec![],
+            pat: js::Pat::Ident(js::BindingIdent {
+                id: js::Ident::new(p.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+                type_ann: None,
+            }),
+        })
+        .collect()
 }
