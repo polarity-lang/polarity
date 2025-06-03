@@ -13,10 +13,15 @@ categories.workspace = true
 description = "Internal component of the Polarity language: Code generation"
 
 [dependencies]
-miette    = { workspace = true }
+miette = { workspace = true }
 thiserror = { workspace = true }
-url       = { workspace = true }
+url = { workspace = true }
+
+# SWC for JS code generation
+swc_ecma_ast = "11"
+swc_ecma_codegen = "13"
+swc_common = "11"
 
 # workspace dependencies
-polarity-lang-ast     = { workspace = true }
+polarity-lang-ast = { workspace = true }
 polarity-lang-printer = { workspace = true }
