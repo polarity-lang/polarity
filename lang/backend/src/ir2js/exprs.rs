@@ -450,7 +450,7 @@ impl ir::Case {
     /// Output:
     ///
     /// ```js
-    /// d: function(x, y) { return body; }:
+    /// d: (x, y) => body:
     /// ```
     pub fn to_js_object_method(&self) -> Result<js::PropOrSpread, BackendError> {
         let Self { pattern, body } = self;
@@ -458,37 +458,30 @@ impl ir::Case {
         let params: Vec<_> = pattern
             .params
             .iter()
-            .map(|p| js::Param {
-                span: DUMMY_SP,
-                decorators: vec![],
-                pat: js::Pat::Ident(js::BindingIdent {
+            .map(|p| {
+                js::Pat::Ident(js::BindingIdent {
                     id: js::Ident::new(p.clone().into(), DUMMY_SP, SyntaxContext::empty()),
                     type_ann: None,
-                }),
+                })
             })
             .collect();
 
         let body_expr = body.to_js_expr()?;
-        let body_stmt =
-            js::Stmt::Return(js::ReturnStmt { span: DUMMY_SP, arg: Some(Box::new(body_expr)) });
 
-        Ok(js::PropOrSpread::Prop(Box::new(js::Prop::Method(js::MethodProp {
+        let arrow = js::Expr::Arrow(js::ArrowExpr {
+            span: DUMMY_SP,
+            ctxt: SyntaxContext::empty(),
+            params,
+            body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(body_expr))),
+            is_async: false,
+            is_generator: false,
+            type_params: None,
+            return_type: None,
+        });
+
+        Ok(js::PropOrSpread::Prop(Box::new(js::Prop::KeyValue(js::KeyValueProp {
             key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: method_name.into() }),
-            function: Box::new(js::Function {
-                params,
-                decorators: vec![],
-                span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                body: Some(js::BlockStmt {
-                    span: DUMMY_SP,
-                    ctxt: SyntaxContext::empty(),
-                    stmts: vec![body_stmt],
-                }),
-                is_generator: false,
-                is_async: false,
-                type_params: None,
-                return_type: None,
-            }),
+            value: Box::new(arrow),
         }))))
     }
 }
