@@ -32,13 +32,13 @@ impl ToJSExpr for ir::Exp {
 /// Input:
 ///
 /// ```text
-/// variable_name
+/// x
 /// ```
 ///
 /// Output:
 ///
 /// ```js
-/// variable_name
+/// x
 /// ```
 impl ToJSExpr for ir::Variable {
     fn to_js_expr(&self) -> Result<js::Expr, BackendError> {
@@ -52,19 +52,18 @@ impl ir::Call {
     /// Input:
     ///
     /// ```text
-    /// CtorName(arg1, arg2)
+    /// C(x, y)
     /// ```
     ///
     /// Output:
     ///
     /// ```js
-    /// { tag: "CtorName", args: [arg1, arg2] }
+    /// { tag: "C", args: [x, y] }
     /// ```
     fn to_js_ctor_record(&self) -> Result<js::Expr, BackendError> {
         let Self { name, module_uri: _, args } = self;
         let ctor_name = name.clone();
 
-        // Always include args array, even if empty
         let args_exprs: Result<Vec<_>, _> = args
             .iter()
             .map(|arg| {
@@ -97,13 +96,13 @@ impl ir::Call {
     /// Input:
     ///
     /// ```text
-    /// f(arg1, arg2)
+    /// f(x, y)
     /// ```
     ///
     /// Output:
     ///
     /// ```js
-    /// f(arg1, arg2)
+    /// f(x, y)
     /// ```
     fn to_js_function_call(&self) -> Result<js::Expr, BackendError> {
         let Self { name, module_uri: _, args } = self;
@@ -133,13 +132,13 @@ impl ir::DotCall {
     /// Input:
     ///
     /// ```text
-    /// exp.dtor_name(arg1, arg2)
+    /// exp.d(x, y)
     /// ```
     ///
     /// Output:
     ///
     /// ```js
-    /// exp.dtor_name(arg1, arg2)
+    /// exp.d(x, y)
     /// ```
     fn to_js_record_member_call(&self) -> Result<js::Expr, BackendError> {
         let Self { exp, module_uri: _, name, args } = self;
@@ -171,18 +170,17 @@ impl ir::DotCall {
     /// Input:
     ///
     /// ```text
-    /// exp.def_name(arg1, arg2)
+    /// e.def_name(x, y)
     /// ```
     ///
     /// Output:
     ///
     /// ```js
-    /// def_name(obj, arg1, arg2)
+    /// def_name(e, x, y)
     /// ```
     fn to_js_function_call_with_self(&self) -> Result<js::Expr, BackendError> {
         let Self { exp, module_uri: _, name, args } = self;
         let obj_expr = exp.to_js_expr()?;
-        let def_name = name.clone();
 
         let mut all_args =
             vec![js::ExprOrSpread { spread: None, expr: Box::new(obj_expr.clone()) }];
@@ -198,7 +196,7 @@ impl ir::DotCall {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
             callee: js::Callee::Expr(Box::new(js::Expr::Ident(js::Ident::new(
-                def_name.into(),
+                name.clone().into(),
                 DUMMY_SP,
                 SyntaxContext::empty(),
             )))),
@@ -211,9 +209,8 @@ impl ir::DotCall {
 /// Input:
 ///
 /// ```text
-/// match expr {
-///     C1(x, y) => body1,
-///     C2(z) => body2,
+/// on_exp.match {
+///     cases
 /// }
 /// ```
 ///
@@ -223,13 +220,7 @@ impl ir::DotCall {
 /// (() => {
 ///     const __scrutinee = expr;
 ///     switch (__scrutinee.tag) {
-///         case "C1":
-///             const x = __scrutinee.args[0];
-///             const y = __scrutinee.args[1];
-///             return body1;
-///         case "C2":
-///             const z = __scrutinee.args[0];
-///             return body2;
+///         cases
 ///     }
 /// })()
 /// ```
@@ -308,8 +299,7 @@ impl ToJSExpr for ir::LocalMatch {
 ///
 /// ```text
 /// comatch {
-///     .d1(x, y) => body1,
-///     .d2(z) => body2,
+///     cocases
 /// }
 /// ```
 ///
@@ -317,8 +307,8 @@ impl ToJSExpr for ir::LocalMatch {
 ///
 /// ```js
 /// {
-///     d1: function(x, y) { return body1; },
-///     d2: function(z) { return body2; }
+///     d1: cocases[0],
+///     d2: cocases[1],
 /// }
 /// ```
 impl ToJSExpr for ir::LocalComatch {
@@ -399,6 +389,20 @@ impl ToJSExpr for ir::Panic {
 }
 
 impl ir::Case {
+    /// Input:
+    ///
+    /// ```text
+    /// C(x, y) => body,
+    /// ```
+    ///
+    /// Output:
+    ///
+    /// ```js
+    /// case "C":
+    ///     const x = __scrutinee.args[0];
+    ///     const y = __scrutinee.args[1];
+    ///     return body;
+    /// ```
     pub fn to_js_switch_case(&self, scrutinee_name: &str) -> Result<js::SwitchCase, BackendError> {
         let Self { pattern, body } = self;
         let pattern_name = pattern.name.clone();
@@ -490,6 +494,17 @@ impl ir::Case {
         Ok(js::SwitchCase { span: DUMMY_SP, test: Some(Box::new(test)), cons: stmts })
     }
 
+    /// Input:
+    ///
+    /// ```text
+    /// .d(x, y) => body,
+    /// ```
+    ///
+    /// Output:
+    ///
+    /// ```js
+    /// d: function(x, y) { return body; }:
+    /// ```
     pub fn to_js_object_method(&self) -> Result<js::PropOrSpread, BackendError> {
         let Self { pattern, body } = self;
         let method_name = pattern.name.clone();
