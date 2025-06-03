@@ -66,31 +66,20 @@ impl ir::Call {
     /// ```
     fn to_js_ctor_record(&self) -> Result<js::Expr, BackendError> {
         let Self { name, module_uri: _, args } = self;
-        let ctor_name = name.clone();
-
-        let args_exprs: Result<Vec<_>, _> = args
-            .iter()
-            .map(|arg| {
-                arg.to_js_expr()
-                    .map(|expr| Some(js::ExprOrSpread { spread: None, expr: Box::new(expr) }))
-            })
-            .collect();
+        let args = args_to_js_array(args)?;
 
         let props = vec![
             js::PropOrSpread::Prop(Box::new(js::Prop::KeyValue(js::KeyValueProp {
                 key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: CTOR_TAG.into() }),
                 value: Box::new(js::Expr::Lit(js::Lit::Str(js::Str {
                     span: DUMMY_SP,
-                    value: ctor_name.into(),
+                    value: name.clone().into(),
                     raw: None,
                 }))),
             }))),
             js::PropOrSpread::Prop(Box::new(js::Prop::KeyValue(js::KeyValueProp {
                 key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: CTOR_ARGS.into() }),
-                value: Box::new(js::Expr::Array(js::ArrayLit {
-                    span: DUMMY_SP,
-                    elems: args_exprs?,
-                })),
+                value: Box::new(js::Expr::Array(args)),
             }))),
         ];
 
@@ -110,23 +99,17 @@ impl ir::Call {
     /// ```
     fn to_js_function_call(&self) -> Result<js::Expr, BackendError> {
         let Self { name, module_uri: _, args } = self;
-        let codef_name = name.clone();
-        let args_exprs: Result<Vec<_>, _> = args
-            .iter()
-            .map(|arg| {
-                arg.to_js_expr().map(|expr| js::ExprOrSpread { spread: None, expr: Box::new(expr) })
-            })
-            .collect();
+        let args = args_to_js_exprs(args)?;
 
         Ok(js::Expr::Call(js::CallExpr {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
             callee: js::Callee::Expr(Box::new(js::Expr::Ident(js::Ident::new(
-                codef_name.into(),
+                name.clone().into(),
                 DUMMY_SP,
                 SyntaxContext::empty(),
             )))),
-            args: args_exprs?,
+            args,
             type_args: None,
         }))
     }
@@ -147,13 +130,7 @@ impl ir::DotCall {
     fn to_js_record_member_call(&self) -> Result<js::Expr, BackendError> {
         let Self { exp, module_uri: _, name, args } = self;
         let obj_expr = exp.to_js_expr()?;
-        let dtor_name = name.clone();
-        let args_exprs: Result<Vec<_>, _> = args
-            .iter()
-            .map(|arg| {
-                arg.to_js_expr().map(|expr| js::ExprOrSpread { spread: None, expr: Box::new(expr) })
-            })
-            .collect();
+        let args = args_to_js_exprs(args)?;
 
         Ok(js::Expr::Call(js::CallExpr {
             span: DUMMY_SP,
@@ -163,10 +140,10 @@ impl ir::DotCall {
                 obj: Box::new(obj_expr),
                 prop: js::MemberProp::Ident(js::IdentName {
                     span: DUMMY_SP,
-                    sym: dtor_name.into(),
+                    sym: name.clone().into(),
                 }),
             }))),
-            args: args_exprs?,
+            args,
             type_args: None,
         }))
     }
@@ -184,17 +161,10 @@ impl ir::DotCall {
     /// ```
     fn to_js_function_call_with_self(&self) -> Result<js::Expr, BackendError> {
         let Self { exp, module_uri: _, name, args } = self;
-        let obj_expr = exp.to_js_expr()?;
+        let exp = exp.to_js_expr()?;
 
-        let mut all_args =
-            vec![js::ExprOrSpread { spread: None, expr: Box::new(obj_expr.clone()) }];
-        let args_exprs: Result<Vec<_>, _> = args
-            .iter()
-            .map(|arg| {
-                arg.to_js_expr().map(|expr| js::ExprOrSpread { spread: None, expr: Box::new(expr) })
-            })
-            .collect();
-        all_args.extend(args_exprs?);
+        let mut all_args = vec![js::ExprOrSpread { spread: None, expr: Box::new(exp.clone()) }];
+        all_args.extend(args_to_js_exprs(args)?);
 
         Ok(js::Expr::Call(js::CallExpr {
             span: DUMMY_SP,
@@ -521,4 +491,17 @@ impl ir::Case {
             }),
         }))))
     }
+}
+
+fn args_to_js_array(args: &[ir::Exp]) -> Result<js::ArrayLit, BackendError> {
+    let elems = args_to_js_exprs(args)?.into_iter().map(Some).collect::<Vec<_>>();
+    Ok(js::ArrayLit { span: DUMMY_SP, elems })
+}
+
+fn args_to_js_exprs(args: &[ir::Exp]) -> Result<Vec<js::ExprOrSpread>, BackendError> {
+    args.iter()
+        .map(|arg| {
+            arg.to_js_expr().map(|expr| js::ExprOrSpread { spread: None, expr: Box::new(expr) })
+        })
+        .collect()
 }
