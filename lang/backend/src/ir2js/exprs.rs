@@ -450,7 +450,7 @@ impl ir::Case {
     /// Output:
     ///
     /// ```js
-    /// d: (x, y) => body:
+    /// d: (x, y) => (body):
     /// ```
     pub fn to_js_object_method(&self) -> BackendResult<js::PropOrSpread> {
         let Self { pattern, body } = self;
@@ -468,11 +468,16 @@ impl ir::Case {
 
         let body_expr = body.to_js_expr()?;
 
+        // Wrap the body expression in parentheses.
+        // Without them, returning some expressions (such as objects literals) from an arrow function is not valid JavaScript syntax.
+        let paren_expr =
+            js::Expr::Paren(js::ParenExpr { span: DUMMY_SP, expr: Box::new(body_expr) });
+
         let arrow = js::Expr::Arrow(js::ArrowExpr {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
             params,
-            body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(body_expr))),
+            body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(paren_expr))),
             is_async: false,
             is_generator: false,
             type_params: None,
