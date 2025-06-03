@@ -77,6 +77,7 @@ pub enum Exp {
     BinOp(BinOp),
     Lam(Lam),
     LocalLet(LocalLet),
+    Parens(Parens),
 }
 
 impl Exp {
@@ -92,6 +93,7 @@ impl Exp {
             Exp::BinOp(binop) => binop.span,
             Exp::Lam(lam) => lam.span,
             Exp::LocalLet(local_let) => local_let.span,
+            Exp::Parens(parens) => parens.span,
         }
     }
 
@@ -199,6 +201,13 @@ pub struct BinOp {
 pub struct Lam {
     pub span: Span,
     pub case: Case<Copattern>,
+}
+
+#[derive(Debug, Clone)]
+/// A parenthesized expression
+pub struct Parens {
+    pub span: Span,
+    pub exp: Box<Exp>,
 }
 
 #[derive(Debug, Clone)]

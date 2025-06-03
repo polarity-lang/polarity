@@ -20,6 +20,7 @@ mod local_comatch;
 mod local_let;
 mod local_match;
 mod nat_lit;
+mod parens;
 
 impl Lower for cst::exp::Exp {
     type Target = ast::Exp;
@@ -36,6 +37,7 @@ impl Lower for cst::exp::Exp {
             cst::exp::Exp::BinOp(e) => e.lower(ctx),
             cst::exp::Exp::Lam(e) => e.lower(ctx),
             cst::exp::Exp::LocalLet(e) => e.lower(ctx),
+            cst::exp::Exp::Parens(e) => e.lower(ctx),
         }
     }
 }
