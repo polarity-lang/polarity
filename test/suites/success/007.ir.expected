@@ -1,4 +1,1 @@
-def .foo {
-    CTrue => Z,
-    CFalse absurd,
-}
+def .foo { CTrue => Z }

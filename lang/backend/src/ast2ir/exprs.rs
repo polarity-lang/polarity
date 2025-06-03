@@ -107,7 +107,8 @@ impl ToIR for ast::LocalMatch {
         let ast::LocalMatch { on_exp, cases, .. } = self;
 
         let on_exp = Box::new(on_exp.to_ir()?);
-        let cases = cases.to_ir()?;
+        let cases =
+            cases.iter().flat_map(|c| c.to_ir().transpose()).collect::<Result<Vec<_>, _>>()?;
 
         Ok(ir::LocalMatch { on_exp, cases })
     }
@@ -119,7 +120,8 @@ impl ToIR for ast::LocalComatch {
     fn to_ir(&self) -> Result<Self::Target, BackendError> {
         let LocalComatch { cases, .. } = self;
 
-        let cases = cases.to_ir()?;
+        let cases =
+            cases.iter().flat_map(|c| c.to_ir().transpose()).collect::<Result<Vec<_>, _>>()?;
 
         Ok(ir::LocalComatch { cases })
     }
@@ -150,7 +152,7 @@ impl ToIR for ast::Hole {
 }
 
 impl ToIR for ast::Case {
-    type Target = ir::Case;
+    type Target = Option<ir::Case>;
 
     fn to_ir(&self) -> Result<Self::Target, BackendError> {
         let ast::Case { pattern, body, .. } = self;
@@ -165,12 +167,9 @@ impl ToIR for ast::Case {
             params,
         };
 
-        let body = match body {
-            Some(body) => Some(Box::new(body.to_ir()?)),
-            None => None,
-        };
+        let Some(body) = body else { return Ok(None) };
 
-        Ok(ir::Case { pattern, body })
+        Ok(Some(ir::Case { pattern, body: Box::new(body.to_ir()?) }))
     }
 }
 

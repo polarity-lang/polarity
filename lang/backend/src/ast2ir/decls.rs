@@ -41,7 +41,8 @@ impl ToIR for ast::Def {
         let ast::Def { name, params, cases, .. } = self;
 
         let params = params.to_ir()?;
-        let cases = cases.to_ir()?;
+        let cases =
+            cases.iter().flat_map(|c| c.to_ir().transpose()).collect::<Result<Vec<_>, _>>()?;
 
         Ok(ir::Def { name: name.to_string(), params, cases })
     }
@@ -54,7 +55,8 @@ impl ToIR for ast::Codef {
         let ast::Codef { name, params, cases, .. } = self;
 
         let params = params.to_ir()?;
-        let cases = cases.to_ir()?;
+        let cases =
+            cases.iter().flat_map(|c| c.to_ir().transpose()).collect::<Result<Vec<_>, _>>()?;
 
         Ok(ir::Codef { name: name.to_string(), params, cases })
     }

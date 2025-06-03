@@ -3,15 +3,9 @@ def .add(y) {
     S(x') => S(x'.add(y)),
 }
 
-def .head(n) {
-    Cons(n', x, xs) => x,
-    Nil absurd,
-}
+def .head(n) { Cons(n', x, xs) => x }
 
-def .tail(n) {
-    Cons(n', x, xs) => xs,
-    Nil absurd,
-}
+def .tail(n) { Cons(n', x, xs) => xs }
 
 def .append(n, m, ys) {
     Nil => ys,

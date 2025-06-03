@@ -1,1 +1,1 @@
-let example { comatch { .d(x) absurd } }
+let example { comatch { } }

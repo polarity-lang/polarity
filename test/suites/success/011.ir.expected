@@ -1,6 +1,1 @@
-def .foo {
-    Foo1 => True,
-    Foo2 absurd,
-    Foo3 absurd,
-    Foo4 absurd,
-}
+def .foo { Foo1 => True }
