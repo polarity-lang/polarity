@@ -31,7 +31,7 @@ impl ToJSExpr for ir::Exp {
 
 /// Input:
 ///
-/// ```
+/// ```text
 /// variable_name
 /// ```
 ///
@@ -51,7 +51,7 @@ impl ToJSExpr for ir::Variable {
 impl ir::Call {
     /// Input:
     ///
-    /// ```
+    /// ```text
     /// CtorName(arg1, arg2)
     /// ```
     ///
@@ -96,7 +96,7 @@ impl ir::Call {
 
     /// Input:
     ///
-    /// ```
+    /// ```text
     /// f(arg1, arg2)
     /// ```
     ///
@@ -132,7 +132,7 @@ impl ir::Call {
 impl ir::DotCall {
     /// Input:
     ///
-    /// ```
+    /// ```text
     /// exp.dtor_name(arg1, arg2)
     /// ```
     ///
@@ -170,7 +170,7 @@ impl ir::DotCall {
 
     /// Input:
     ///
-    /// ```
+    /// ```text
     /// exp.def_name(arg1, arg2)
     /// ```
     ///
@@ -210,7 +210,7 @@ impl ir::DotCall {
 
 /// Input:
 ///
-/// ```
+/// ```text
 /// match expr {
 ///     C1(x, y) => body1,
 ///     C2(z) => body2,
@@ -306,7 +306,7 @@ impl ToJSExpr for ir::LocalMatch {
 
 /// Input:
 ///
-/// ```
+/// ```text
 /// comatch {
 ///     .d1(x, y) => body1,
 ///     .d2(z) => body2,
@@ -333,7 +333,7 @@ impl ToJSExpr for ir::LocalComatch {
 
 /// Input:
 ///
-/// ```
+/// ```text
 /// panic!("error message")
 /// ```
 ///
