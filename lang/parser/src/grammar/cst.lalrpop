@@ -272,7 +272,7 @@ pub Holes: Box<Exp> = {
 
 pub Atom: Box<Exp> = {
     <e: NatLit> => Box::new(Exp::NatLit(e)),
-    "(" <exp: Exp> ")" => exp,
+    <e: ParensExp> => Box::new(Exp::Parens(e)),
     <e: CallWithoutArgs> => Box::new(Exp::Call(e)),
 }
 
@@ -314,6 +314,9 @@ NatLit: NatLit = <l: @L> <n: "NumLit"> <r: @R> =>
 
 LocalLet: LocalLet = <l: @L> "let" <bs: BindingSite> <typ: (":" <NonLet>)?> ":=" <bound: NonLet> ";" <body: Exp> <r: @R> =>
   LocalLet { span: span(l,r), bs, typ, bound, body };
+
+ParensExp: Parens = <l: @L> "(" <exp: Exp> ")" <r: @R> =>
+  Parens { span: span(l,r), exp };
 
 // Helpers
 //
