@@ -20,7 +20,7 @@ pub async fn exec(cmd: Args) -> miette::Result<()> {
 }
 
 async fn generate_ir(db: &mut Database, filepath: &Path) -> miette::Result<()> {
-    let uri = db.resolve_path(&filepath)?;
+    let uri = db.resolve_path(filepath)?;
     let ir = db.ir(&uri).await.map_err(|err| db.pretty_error(&uri, err))?;
 
     if !Path::new(IR_PATH).exists() {
@@ -36,7 +36,7 @@ async fn generate_ir(db: &mut Database, filepath: &Path) -> miette::Result<()> {
 }
 
 async fn generate_js(db: &mut Database, filepath: &Path) -> miette::Result<()> {
-    let uri = db.resolve_path(&filepath)?;
+    let uri = db.resolve_path(filepath)?;
 
     if !Path::new(IR_PATH).exists() {
         fs::create_dir_all(IR_PATH).expect("Failed to create IR directory");
