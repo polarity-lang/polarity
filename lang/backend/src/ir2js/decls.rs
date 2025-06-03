@@ -88,8 +88,7 @@ impl ToJSStmt for ir::Let {
 ///
 /// ```text
 /// def name(params) {
-///     C1(args) => body1,
-///     C2(args) => body2,
+///     cases
 /// }
 /// ```
 ///
@@ -98,10 +97,7 @@ impl ToJSStmt for ir::Let {
 /// ```js
 /// function name(__self, params) {
 ///     switch (__self.tag) {
-///         case "C1":
-///             return body1;
-///         case "C2":
-///             return body2;
+///         cases
 ///     }
 /// }
 /// ```
@@ -174,8 +170,7 @@ impl ToJSStmt for ir::Def {
 ///
 /// ```text
 /// codef name(params) {
-///     .d1(args) => body1,
-///     .d2(args) => body2,
+///     cocases
 /// }
 /// ```
 ///
@@ -184,8 +179,7 @@ impl ToJSStmt for ir::Def {
 /// ```js
 /// function name(params) {
 ///     return {
-///         d1: function(args) { return body1; },
-///         d2: function(args) { return body2; }
+///         cocases
 ///     };
 /// }
 /// ```
