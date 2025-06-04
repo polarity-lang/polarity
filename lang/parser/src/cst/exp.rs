@@ -186,12 +186,20 @@ pub struct NatLit {
 }
 
 #[derive(Debug, Clone)]
-/// Binary Operator, e.g. `e -> e` or `e + e`.
+/// Binary Operator such as `e -> e` or `e + e`.
+///
+/// Since we don't have information about the associativity of operators we cannot
+/// create the correct AST during parsing.
+///
+/// For example, the surface syntax expression `a + b + c` could mean either `(a + b) + c`
+/// or `a + (b + c)`, and we need information from the symbol table to generate the correct AST.
+///
+/// For this reason, an expression like `a + b + c` is represented after parsing as the
+/// expression `a` and a vector containing the tuples `('+', b)` and `('+', c)`.
 pub struct BinOp {
     pub span: Span,
-    pub operator: Operator,
     pub lhs: Box<Exp>,
-    pub rhs: Box<Exp>,
+    pub rhs: Vec<(Operator, Exp)>,
 }
 
 #[derive(Debug, Clone)]
