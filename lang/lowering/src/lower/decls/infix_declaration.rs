@@ -9,8 +9,13 @@ impl Lower for cst::decls::Infix {
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::decls::Infix { span, doc, lhs, rhs } = self;
 
+        let (operator, lhs_rhs) = match lhs.rhs.as_slice() {
+            [x] => x,
+            _ => panic!("Should already have been caught when computing the symbol table."),
+        };
+
         // Check that LHS is of the form `_ + _`
-        if !(lhs.lhs.is_underscore() && lhs.rhs.is_underscore()) {
+        if !(lhs.lhs.is_underscore() && lhs_rhs.is_underscore()) {
             return Err(LoweringError::InvalidInfixDeclaration {
                 message: "The left hand side of an infix declaration must have the form \"_ + _\"."
                     .to_owned(),
@@ -47,7 +52,7 @@ impl Lower for cst::decls::Infix {
             span: Some(*span),
             doc: doc.lower(ctx)?,
             attr: Default::default(),
-            lhs: lhs.operator.id.clone(),
+            lhs: operator.id.clone(),
             rhs: rhs.name.id.clone(),
         })
     }
