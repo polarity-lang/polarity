@@ -11,6 +11,7 @@ mod info;
 mod lift;
 pub mod paths;
 mod result;
+pub mod semantic_tokens;
 mod spans;
 mod xfunc;
 
