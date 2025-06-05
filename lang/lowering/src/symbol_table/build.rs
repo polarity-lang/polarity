@@ -144,9 +144,9 @@ impl BuildSymbolTable for Let {
 
 impl BuildSymbolTable for Infix {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> LoweringResult {
-        let Infix { span, doc: _, lhs, rhs } = self;
+        let Infix { span, doc: _, pattern, rhs } = self;
 
-        match lhs.rhs.as_slice() {
+        match pattern.rhs.as_slice() {
             [(operator, _)] => {
                 if symbol_table.infix_ops.contains_key(operator) {
                     return Err(LoweringError::OperatorAlreadyDefined {

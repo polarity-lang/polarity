@@ -7,6 +7,9 @@ impl Lower for cst::exp::BinOp {
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::BinOp { span, lhs, rhs } = self;
 
+        // Note: Currently all binary operators are lowered as right-associative.
+        // The plan is to add associativity information to infix declarations so
+        // that we ca lower accordingly.
         match rhs.as_slice() {
             [] => {
                 let lowered = lhs.lower(ctx)?;

@@ -1,6 +1,6 @@
 L-019
 
-  × Invalid infix declaration: The left hand side of an infix declaration must have the form "_ + _".
+  × Invalid infix declaration: The left hand side of an infix declaration must have the form "_ <op> _".
    ╭─[L-019a.pol:1:7]
  1 │ infix a -> b := Fun(_,_)
    ·       ──────

@@ -222,7 +222,7 @@ pub struct Let {
 pub struct Infix {
     pub span: Span,
     pub doc: Option<DocComment>,
-    pub lhs: BinOp,
+    pub pattern: BinOp,
     pub rhs: Call,
 }
 
