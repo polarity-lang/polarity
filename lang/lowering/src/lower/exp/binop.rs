@@ -9,7 +9,7 @@ impl Lower for cst::exp::BinOp {
 
         // Note: Currently all binary operators are lowered as right-associative.
         // The plan is to add associativity information to infix declarations so
-        // that we ca lower accordingly.
+        // that we can lower accordingly.
         match rhs.as_slice() {
             [] => {
                 let lowered = lhs.lower(ctx)?;
