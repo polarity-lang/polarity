@@ -7,14 +7,27 @@ impl Lower for cst::decls::Infix {
     type Target = ast::Infix;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
-        let cst::decls::Infix { span, doc, lhs, rhs } = self;
+        let cst::decls::Infix { span, doc, pattern, rhs } = self;
+
+        let (operator, pattern_rhs) = match pattern.rhs.as_slice() {
+            [x] => x,
+            _ => {
+                let err = LoweringError::Impossible {
+                    message: "Should already have been caught when computing the symbol table."
+                        .to_string(),
+                    span: Some(span.to_miette()),
+                };
+                return Err(err.into());
+            }
+        };
 
         // Check that LHS is of the form `_ + _`
-        if !(lhs.lhs.is_underscore() && lhs.rhs.is_underscore()) {
+        if !(pattern.lhs.is_underscore() && pattern_rhs.is_underscore()) {
             return Err(LoweringError::InvalidInfixDeclaration {
-                message: "The left hand side of an infix declaration must have the form \"_ + _\"."
-                    .to_owned(),
-                span: lhs.span.to_miette(),
+                message:
+                    "The left hand side of an infix declaration must have the form \"_ <op> _\"."
+                        .to_owned(),
+                span: pattern.span.to_miette(),
             }
             .into());
         }
@@ -47,7 +60,7 @@ impl Lower for cst::decls::Infix {
             span: Some(*span),
             doc: doc.lower(ctx)?,
             attr: Default::default(),
-            lhs: lhs.operator.id.clone(),
+            lhs: operator.id.clone(),
             rhs: rhs.name.id.clone(),
         })
     }

@@ -144,16 +144,27 @@ impl BuildSymbolTable for Let {
 
 impl BuildSymbolTable for Infix {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> LoweringResult {
-        let Infix { span, doc: _, lhs, rhs } = self;
+        let Infix { span, doc: _, pattern, rhs } = self;
 
-        if symbol_table.infix_ops.contains_key(&lhs.operator) {
-            return Err(LoweringError::OperatorAlreadyDefined {
-                operator: lhs.operator.id.to_owned(),
-                span: span.to_miette(),
+        match pattern.rhs.as_slice() {
+            [(operator, _)] => {
+                if symbol_table.infix_ops.contains_key(operator) {
+                    return Err(LoweringError::OperatorAlreadyDefined {
+                        operator: operator.id.to_owned(),
+                        span: span.to_miette(),
+                    }
+                    .into());
+                }
+                symbol_table.infix_ops.insert(operator.clone(), rhs.name.clone());
             }
-            .into());
+            _ => {
+                let err = LoweringError::InvalidInfixDeclaration {
+                    message: "More than one operator on left hand side".to_string(),
+                    span: span.to_miette(),
+                };
+                return Err(Box::new(err));
+            }
         }
-        symbol_table.infix_ops.insert(lhs.operator.clone(), rhs.name.clone());
 
         Ok(())
     }

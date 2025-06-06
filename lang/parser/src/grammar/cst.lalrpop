@@ -234,7 +234,7 @@ pub TypApp: Call = {
 }
 
 Infix: Infix = {
-  <l: @L> <doc: DocComment?> "infix" <lhs: BinOp> ":=" <rhs: CallWithArgs> <r: @R> => Infix { span: span(l,r), doc, lhs, rhs }
+  <l: @L> <doc: DocComment?> "infix" <pattern: BinOp> ":=" <rhs: CallWithArgs> <r: @R> => Infix { span: span(l,r), doc, pattern, rhs }
 }
 
 // Expressions
@@ -253,13 +253,13 @@ pub NonLet: Box<Exp> = {
     Ops,
 }
 
-pub Ops = {
+pub Ops: Box<Exp> = {
     <e: DotCall> => Box::new(Exp::DotCall(e)),
     <e: LocalMatch> => Box::new(Exp::LocalMatch(e)),
     App,
 }
 
-pub App = {
+pub App: Box<Exp> = {
     <e: CallWithArgs> => Box::new(Exp::Call(e)),
     <e: LocalComatch> => Box::new(Exp::LocalComatch(e)),
     Holes,
@@ -283,8 +283,9 @@ pub Atom: Box<Exp> = {
 Anno: Anno = <l: @L> <exp: Ops> ":" <typ: Exp> <r: @R> =>
   Anno { span: span(l, r), exp, typ };
 
-BinOp: BinOp = <l: @L> <lhs: Ops> <operator: Operator> <rhs: Exp> <r: @R> =>
-  BinOp { span: span(l, r), operator, lhs, rhs };
+BinOps: (Operator, Exp) = <operator: Operator> <rhs: Ops> => (operator, *rhs);
+BinOp: BinOp = <l: @L> <lhs: Ops> <rhs: BinOps+> <r: @R> =>
+  BinOp { span: span(l, r), lhs, rhs };
 
 Lam: Lam = <l: @L> "\\" <case: Case<CopatternLam>> <r: @R> =>
   Lam { span: span(l, r), case };
