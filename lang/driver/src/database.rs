@@ -1,3 +1,4 @@
+use std::io;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -352,6 +353,16 @@ impl Database {
         self.ir.insert(uri.clone(), ir.clone());
 
         ir
+    }
+
+    // Core API: js
+    //
+    //
+
+    pub async fn js<W: io::Write>(&mut self, uri: &Url, output: W) -> Result<(), Error> {
+        let ir = self.ir(uri).await?;
+        backend::ir_to_js(&ir, output).map_err(Error::Backend)?;
+        Ok(())
     }
 
     // Core API: goto_by_id

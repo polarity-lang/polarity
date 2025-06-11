@@ -1,4 +1,4 @@
-use crate::result::BackendError;
+use crate::result::BackendResult;
 
 /// Convert AST to IR (intermediate representation)
 ///
@@ -7,13 +7,13 @@ use crate::result::BackendError;
 pub trait ToIR {
     type Target;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError>;
+    fn to_ir(&self) -> BackendResult<Self::Target>;
 }
 
 impl<T: ToIR> ToIR for Vec<T> {
     type Target = Vec<T::Target>;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         self.iter().map(|x| x.to_ir()).collect()
     }
 }
@@ -21,7 +21,7 @@ impl<T: ToIR> ToIR for Vec<T> {
 impl<T: ToIR> ToIR for Option<T> {
     type Target = Option<T::Target>;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         match self {
             Some(x) => Ok(Some(x.to_ir()?)),
             None => Ok(None),
