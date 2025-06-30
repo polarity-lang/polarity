@@ -7,9 +7,9 @@ impl Lower for cst::exp::LocalLet {
     type Target = ast::Exp;
 
     fn lower(&self, ctx: &mut crate::Ctx) -> crate::LoweringResult<Self::Target> {
-        let cst::exp::LocalLet { span, bs, typ, bound, body } = self;
+        let cst::exp::LocalLet { span, name, typ, bound, body } = self;
 
-        let name = match bs {
+        let name = match name {
             BindingSite::Var { span, name } => {
                 VarBind::Var { span: Some(*span), id: name.id.clone() }
             }
