@@ -302,6 +302,7 @@ impl Lift for Exp {
             Exp::Hole(e) => e.lift(ctx).into(),
             Exp::LocalMatch(e) => e.lift(ctx),
             Exp::LocalComatch(e) => e.lift(ctx),
+            Exp::LocalLet(_) => todo!(),
         }
     }
 }

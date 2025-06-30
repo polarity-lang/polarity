@@ -24,11 +24,13 @@ mod case;
 mod dot_call;
 mod hole;
 mod local_comatch;
+mod local_let;
 mod local_match;
 mod telescope_inst;
 mod typ_ctor;
 mod type_univ;
 mod variable;
+
 pub use anno::*;
 pub use args::*;
 pub use call::*;
@@ -36,6 +38,7 @@ pub use case::*;
 pub use dot_call::*;
 pub use hole::*;
 pub use local_comatch::*;
+pub use local_let::*;
 pub use local_match::*;
 pub use telescope_inst::*;
 pub use typ_ctor::*;
@@ -77,6 +80,7 @@ pub enum Exp {
     LocalMatch(LocalMatch),
     LocalComatch(LocalComatch),
     Hole(Hole),
+    LocalLet(LocalLet),
 }
 
 impl Exp {
@@ -100,6 +104,7 @@ impl HasSpan for Exp {
             Exp::LocalMatch(e) => e.span(),
             Exp::LocalComatch(e) => e.span(),
             Exp::Hole(e) => e.span(),
+            Exp::LocalLet(e) => e.span(),
         }
     }
 }
@@ -116,6 +121,7 @@ impl Shift for Exp {
             Exp::LocalMatch(e) => e.shift_in_range(range, by),
             Exp::LocalComatch(e) => e.shift_in_range(range, by),
             Exp::Hole(e) => e.shift_in_range(range, by),
+            Exp::LocalLet(e) => e.shift_in_range(range, by),
         }
     }
 }
@@ -144,6 +150,7 @@ impl Occurs for Exp {
             Exp::LocalMatch(e) => e.occurs(ctx, f),
             Exp::LocalComatch(e) => e.occurs(ctx, f),
             Exp::Hole(e) => e.occurs(ctx, f),
+            Exp::LocalLet(e) => e.occurs(ctx, f),
         }
     }
 }
@@ -160,6 +167,7 @@ impl HasType for Exp {
             Exp::LocalMatch(e) => e.typ(),
             Exp::LocalComatch(e) => e.typ(),
             Exp::Hole(e) => e.typ(),
+            Exp::LocalLet(e) => e.typ(),
         }
     }
 }
@@ -177,6 +185,7 @@ impl Substitutable for Exp {
             Exp::LocalMatch(e) => Ok(e.subst(ctx, by)?.into()),
             Exp::LocalComatch(e) => Ok(e.subst(ctx, by)?.into()),
             Exp::Hole(e) => Ok(e.subst(ctx, by)?.into()),
+            Exp::LocalLet(e) => Ok(e.subst(ctx, by)?.into()),
         }
     }
 }
@@ -198,6 +207,7 @@ impl Print for Exp {
             Exp::LocalMatch(e) => e.print_prec(cfg, alloc, prec),
             Exp::LocalComatch(e) => e.print_prec(cfg, alloc, prec),
             Exp::Hole(e) => e.print_prec(cfg, alloc, prec),
+            Exp::LocalLet(e) => e.print_prec(cfg, alloc, prec),
         }
     }
 }
@@ -217,6 +227,7 @@ impl Zonk for Exp {
             Exp::LocalMatch(e) => e.zonk(meta_vars),
             Exp::LocalComatch(e) => e.zonk(meta_vars),
             Exp::Hole(e) => e.zonk(meta_vars),
+            Exp::LocalLet(e) => e.zonk(meta_vars),
         }
     }
 }
@@ -233,6 +244,7 @@ impl ContainsMetaVars for Exp {
             Exp::LocalMatch(local_match) => local_match.contains_metavars(),
             Exp::LocalComatch(local_comatch) => local_comatch.contains_metavars(),
             Exp::Hole(hole) => hole.contains_metavars(),
+            Exp::LocalLet(local_let) => local_let.contains_metavars(),
         }
     }
 }
@@ -249,6 +261,7 @@ impl Rename for Exp {
             Exp::Call(e) => e.rename_in_ctx(ctx),
             Exp::LocalMatch(e) => e.rename_in_ctx(ctx),
             Exp::DotCall(e) => e.rename_in_ctx(ctx),
+            Exp::LocalLet(e) => e.rename_in_ctx(ctx),
         }
     }
 }

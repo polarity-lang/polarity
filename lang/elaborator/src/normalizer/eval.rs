@@ -42,6 +42,11 @@ impl Eval for Exp {
             Exp::LocalMatch(e) => e.eval(info_table, env),
             Exp::LocalComatch(e) => e.eval(info_table, env),
             Exp::Hole(e) => e.eval(info_table, env),
+            Exp::LocalLet(_) => Err(TypeError::Impossible {
+                message: "Evaluating local let expressions is not implemented yet".to_owned(),
+                span: self.span().to_miette(),
+            }
+            .into()),
         };
         trace!(
             "{} |- {} ▷ {}",
