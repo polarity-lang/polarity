@@ -313,8 +313,8 @@ Hole: Hole = {
 NatLit: NatLit = <l: @L> <n: "NumLit"> <r: @R> =>
   NatLit { span: span(l, r), val: n };
 
-LocalLet: LocalLet = <l: @L> "let" <bs: BindingSite> <typ: (":" <NonLet>)?> ":=" <bound: NonLet> ";" <body: Exp> <r: @R> =>
-  LocalLet { span: span(l,r), bs, typ, bound, body };
+LocalLet: LocalLet = <l: @L> "let" <name: BindingSite> <typ: (":" <NonLet>)?> ":=" <bound: NonLet> ";" <body: Exp> <r: @R> =>
+  LocalLet { span: span(l,r), name, typ, bound, body };
 
 ParensExp: Parens = <l: @L> "(" <exp: Exp> ")" <r: @R> =>
   Parens { span: span(l,r), exp };

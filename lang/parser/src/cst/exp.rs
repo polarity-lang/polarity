@@ -139,7 +139,7 @@ pub struct Anno {
 /// ```
 pub struct LocalLet {
     pub span: Span,
-    pub bs: BindingSite,
+    pub name: BindingSite,
     pub typ: Option<Box<Exp>>,
     pub bound: Box<Exp>,
     pub body: Box<Exp>,
