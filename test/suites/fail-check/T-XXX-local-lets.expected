@@ -1,0 +1,8 @@
+T-XXX
+
+  × An unexpected internal error occurred: Checking local let expressions is not implemented yet
+   ╭─[T-XXX-local-lets.pol:3:16]
+ 2 │     
+ 3 │ ╭─▶ let foo: Nat { let x := Z;
+ 4 │ ╰─▶                S(x) }
+   ╰────
