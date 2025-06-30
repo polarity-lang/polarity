@@ -19,6 +19,11 @@ impl ToIR for ast::Exp {
             ast::Exp::LocalMatch(local_match) => ir::Exp::LocalMatch(local_match.to_ir()?),
             ast::Exp::LocalComatch(local_comatch) => ir::Exp::LocalComatch(local_comatch.to_ir()?),
             ast::Exp::Hole(hole) => hole.to_ir()?,
+            ast::Exp::LocalLet(_) => {
+                return Err(BackendError::Impossible(
+                    "Compiling local let expressions is not implemented yet".to_owned(),
+                ));
+            }
         };
 
         Ok(out)

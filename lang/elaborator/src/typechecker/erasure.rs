@@ -34,6 +34,7 @@ pub fn is_runtime_irrelevant(typ: &ast::Exp) -> bool {
         ast::Exp::Hole(hole) => {
             hole.solution.as_ref().map(|s| is_runtime_irrelevant(s)).unwrap_or(false)
         }
+        ast::Exp::LocalLet(_) => false,
     }
 }
 

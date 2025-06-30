@@ -32,6 +32,9 @@ pub const COLONEQ: &str = ":=";
 /// The symbol `_`
 pub const UNDERSCORE: &str = "_";
 
+/// The symbol `;`
+pub const SEMICOLON: &str = ";";
+
 // Keywords
 //
 //
