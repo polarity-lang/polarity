@@ -22,16 +22,13 @@ impl CheckInfer for LocalLet {
             Some(typ) => {
                 let typ = typ.check(ctx, &TypeUniv::new().into())?;
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
-
                 let bound = bound.check(ctx, &typ_nf)?;
-
                 (Some(typ), typ_nf, bound)
             }
             None => {
                 let bound = bound.infer(ctx)?;
                 let typ = bound.expect_typ()?;
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
-
                 (None, typ_nf, bound)
             }
         };
@@ -65,16 +62,13 @@ impl CheckInfer for LocalLet {
             Some(typ) => {
                 let typ = typ.check(ctx, &TypeUniv::new().into())?;
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
-
                 let bound = bound.check(ctx, &typ_nf)?;
-
                 (Some(typ), typ_nf, bound)
             }
             None => {
                 let bound = bound.infer(ctx)?;
                 let typ = bound.expect_typ()?;
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
-
                 (None, typ_nf, bound)
             }
         };
