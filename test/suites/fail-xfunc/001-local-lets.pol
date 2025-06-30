@@ -1,5 +1,0 @@
-data Nat { Z, S(x : Nat)}
-
-// De-/refunctionalization for terms with local lets is not implemented yet.
-let let_without_annotated_type: Nat { let x := Z; S(x) }
-let let_with_annotated_type: Nat { let x : Nat := Z; S(x) }
