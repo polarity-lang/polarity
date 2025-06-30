@@ -7,6 +7,7 @@ pub mod local_match;
 pub mod typ_ctor;
 pub mod type_univ;
 pub mod variable;
+pub mod local_let;
 
 use miette_util::ToMiette;
 use miette_util::codespan::Span;
@@ -88,10 +89,7 @@ impl CheckInfer for Exp {
             Exp::Hole(e) => Ok(e.check(ctx, t)?.into()),
             Exp::LocalMatch(e) => Ok(e.check(ctx, t)?.into()),
             Exp::LocalComatch(e) => Ok(e.check(ctx, t)?.into()),
-            Exp::LocalLet(local_let) => Err(Box::new(TypeError::Impossible {
-                message: "Checking local let expressions is not implemented yet".to_owned(),
-                span: local_let.span().to_miette(),
-            })),
+            Exp::LocalLet(e) => Ok(e.check(ctx, t)?.into()),
         }
     }
 
@@ -106,10 +104,7 @@ impl CheckInfer for Exp {
             Exp::Hole(e) => Ok(e.infer(ctx)?.into()),
             Exp::LocalMatch(e) => Ok(e.infer(ctx)?.into()),
             Exp::LocalComatch(e) => Ok(e.infer(ctx)?.into()),
-            Exp::LocalLet(local_let) => Err(Box::new(TypeError::Impossible {
-                message: "Inferring local let expressions is not implemented yet".to_owned(),
-                span: local_let.span().to_miette(),
-            })),
+            Exp::LocalLet(e) => Ok(e.infer(ctx)?.into()),
         };
         trace!(
             "{} |- {} => {}",
