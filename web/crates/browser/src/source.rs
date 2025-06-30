@@ -60,9 +60,7 @@ impl FileSource for FetchSource {
     }
 
     async fn write_string(&mut self, uri: &reqwest::Url, _source: &str) -> Result<(), DriverError> {
-        web_sys::console::warn_1(
-            &format!("Attempted to write to read-only source: {}", uri).into(),
-        );
+        web_sys::console::warn_1(&format!("Attempted to write to read-only source: {uri}").into());
         Ok(())
     }
 }
