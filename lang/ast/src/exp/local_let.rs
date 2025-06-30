@@ -59,7 +59,7 @@ impl Occurs for LocalLet {
     where
         F: Fn(&crate::ctx::LevelCtx, &Exp) -> bool,
     {
-        let LocalLet { bound, body, span: _, name, typ, inferred_type: _ } = self;
+        let LocalLet { span: _, name, typ, bound, body, inferred_type: _ } = self;
         bound.occurs(ctx, f)
             || typ.as_ref().is_some_and(|t| t.occurs(ctx, f))
             || ctx.bind_single(name.clone(), |ctx| body.occurs(ctx, f))
