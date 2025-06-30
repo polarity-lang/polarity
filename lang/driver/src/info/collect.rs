@@ -157,7 +157,7 @@ impl CollectInfo for Data {
             add_doc_comment(&mut content, doc.clone().map(|doc| doc.docs));
             if !params.is_empty() {
                 content.push(MarkedString::String("---".to_owned()).to_owned());
-                content.push(MarkedString::String(format!("Parameters: `{}`", params)));
+                content.push(MarkedString::String(format!("Parameters: `{params}`")));
             }
             let hover_content = HoverContents::Array(content);
             collector.add_hover(*span, hover_content);
@@ -182,11 +182,11 @@ impl CollectInfo for Codata {
             // Add hover info
             let params = typ.params.print_to_string(None);
             let mut content: Vec<MarkedString> = Vec::new();
-            content.push(MarkedString::String(format!("Codata declaration: `{}`", name)));
+            content.push(MarkedString::String(format!("Codata declaration: `{name}`")));
             add_doc_comment(&mut content, doc.clone().map(|doc| doc.docs));
             if !params.is_empty() {
                 content.push(MarkedString::String("---".to_owned()).to_owned());
-                content.push(MarkedString::String(format!("Parameters: `{}`", params)));
+                content.push(MarkedString::String(format!("Parameters: `{params}`")));
             }
             let hover_content = HoverContents::Array(content);
             collector.add_hover(*span, hover_content);
@@ -246,7 +246,7 @@ impl CollectInfo for Ctor {
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
             let mut content: Vec<MarkedString> = Vec::new();
-            content.push(MarkedString::String(format!("Constructor: `{}`", name)));
+            content.push(MarkedString::String(format!("Constructor: `{name}`")));
             add_doc_comment(&mut content, doc);
             let hover_content = HoverContents::Array(content);
             collector.add_hover(*span, hover_content);
@@ -263,7 +263,7 @@ impl CollectInfo for Dtor {
             // Add info
             let doc = doc.clone().map(|doc| doc.docs);
             let mut content: Vec<MarkedString> = Vec::new();
-            content.push(MarkedString::String(format!("Destructor: `{}`", name)));
+            content.push(MarkedString::String(format!("Destructor: `{name}`")));
             add_doc_comment(&mut content, doc);
             let hover_content = HoverContents::Array(content);
             collector.add_hover(*span, hover_content);
@@ -355,7 +355,7 @@ impl CollectInfo for TypCtor {
 
             // Add hover info
             let mut content: Vec<MarkedString> = Vec::new();
-            content.push(MarkedString::String(format!("Type constructor: `{}`", name)));
+            content.push(MarkedString::String(format!("Type constructor: `{name}`")));
             add_doc_comment(&mut content, doc);
             let hover_contents = HoverContents::Array(content);
             collector.add_hover(*span, hover_contents);
@@ -509,7 +509,7 @@ impl CollectInfo for Hole {
             let metavar_state = collector
                 .meta_vars
                 .get(metavar)
-                .unwrap_or_else(|| panic!("Metavar {:?} not found", metavar));
+                .unwrap_or_else(|| panic!("Metavar {metavar:?} not found"));
 
             let metavar_str = metavar_state.solution().map(|e| {
                 e.print_to_string(Some(&PrintCfg { print_metavar_ids: true, ..Default::default() }))
@@ -532,15 +532,14 @@ impl CollectInfo for Hole {
             let hover_contents = if let Some(ctx) = ctx {
                 let mut value = String::new();
                 match metavar {
-                    Some(mv) => value.push_str(&format!("Hole: `{}`\n\n", mv)),
+                    Some(mv) => value.push_str(&format!("Hole: `{mv}`\n\n")),
                     None => value.push_str("Hole: `?`\n\n"),
                 }
                 goal_to_markdown(&goal, &mut value);
                 value.push_str("\n\n");
                 ctx_to_markdown(&ctx, &mut value);
                 value.push_str("\n\nArguments:\n\n");
-                let args_str =
-                    args.iter().cloned().map(comma_separated).map(|s| format!("({})", s));
+                let args_str = args.iter().cloned().map(comma_separated).map(|s| format!("({s})"));
                 let args_str = format!("({})", comma_separated(args_str));
                 value.push_str(&args_str);
                 if let Some(solution) = metavar_str {

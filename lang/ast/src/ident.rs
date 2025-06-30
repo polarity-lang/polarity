@@ -41,7 +41,7 @@ impl VarBind {
 impl fmt::Display for VarBind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            VarBind::Var { id, .. } => write!(f, "{}", id),
+            VarBind::Var { id, .. } => write!(f, "{id}"),
             VarBind::Wildcard { .. } => write!(f, "_"),
         }
     }
@@ -234,7 +234,7 @@ impl MetaVar {
 impl Print for MetaVar {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let MetaVar { kind, id, span: _ } = self;
-        let id = alloc.text(format!("{}", id));
+        let id = alloc.text(format!("{id}"));
         match kind {
             MetaVarKind::MustSolve => alloc.text(UNDERSCORE).append(id),
             MetaVarKind::CanSolve => alloc.text(QUESTION_MARK).append(id),

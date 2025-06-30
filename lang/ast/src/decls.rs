@@ -480,9 +480,9 @@ impl Print for Infix {
         let Infix { lhs, rhs, .. } = self;
         alloc
             .keyword(INFIX)
-            .append(format!(" _ {} _ ", lhs))
+            .append(format!(" _ {lhs} _ "))
             .append(COLONEQ)
-            .append(format!(" {}(_,_)", rhs))
+            .append(format!(" {rhs}(_,_)"))
     }
 }
 

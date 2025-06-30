@@ -12,7 +12,7 @@ const LATEX_END: &str = r"\end{alltt}
 fn latex_start(fontsize: &FontSize) -> String {
     let mut latex_start_string = "".to_string();
     latex_start_string.push_str("\\begin{alltt}\n");
-    latex_start_string.push_str(&format!("\\{}", fontsize));
+    latex_start_string.push_str(&format!("\\{fontsize}"));
     latex_start_string.push_str("\\ttfamily");
     latex_start_string
 }

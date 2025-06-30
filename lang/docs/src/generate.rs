@@ -18,9 +18,9 @@ impl Generate for Ctor {
         let doc_str = doc.generate();
         let head = format!("{}{}", name.id, parameter);
 
-        let head = if typ.is_simple() { head } else { format!("{}: {}", head, typs) };
+        let head = if typ.is_simple() { head } else { format!("{head}: {typs}") };
 
-        format!("<li>{}{}</li>", doc_str, head)
+        format!("<li>{doc_str}{head}</li>")
     }
 }
 
@@ -33,7 +33,7 @@ impl Generate for Dtor {
 
         let doc_str = doc.generate();
         let head =
-            if self_param.is_simple() { ".".to_owned() } else { format!("{}.", self_parameter) };
+            if self_param.is_simple() { ".".to_owned() } else { format!("{self_parameter}.") };
 
         format!("<li>{}{}{}{}: {}</li>", doc_str, head, name.id, parmeter, ret_typ)
     }
@@ -52,7 +52,7 @@ impl Generate for DocComment {
             .map(|doc| markdown_to_html(doc, &options))
             .collect::<Vec<String>>()
             .join("\n");
-        format!("{}{}{}", prefix, text, postfix)
+        format!("{prefix}{text}{postfix}")
     }
 }
 
