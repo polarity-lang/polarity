@@ -1,14 +1,14 @@
 use ast::LocalComatch;
 
 use crate::ir;
-use crate::result::BackendError;
+use crate::result::{BackendError, BackendResult};
 
 use super::traits::ToIR;
 
 impl ToIR for ast::Exp {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let out = match self {
             ast::Exp::Variable(variable) => ir::Exp::Variable(variable.to_ir()?),
             ast::Exp::TypCtor(typ_ctor) => typ_ctor.to_ir()?,
@@ -33,7 +33,7 @@ impl ToIR for ast::Exp {
 impl ToIR for ast::Variable {
     type Target = ir::Variable;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::Variable { name, .. } = self;
 
         Ok(ir::Variable { name: name.to_string() })
@@ -43,7 +43,7 @@ impl ToIR for ast::Variable {
 impl ToIR for ast::TypCtor {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         // Type constructors have no runtime relevance and is hence replaced by a zero-sized term.
         Ok(ir::Exp::ZST)
     }
@@ -52,7 +52,7 @@ impl ToIR for ast::TypCtor {
 impl ToIR for ast::Call {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::Call { kind, name, args, .. } = self;
 
         let args = args.to_ir()?;
@@ -70,7 +70,7 @@ impl ToIR for ast::Call {
 impl ToIR for ast::DotCall {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::DotCall { kind, exp, name, args, .. } = self;
 
         let args = args.to_ir()?;
@@ -89,7 +89,7 @@ impl ToIR for ast::DotCall {
 impl ToIR for ast::Anno {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::Anno { exp, .. } = self;
         // For type annotations `e: t`, we throw away the type `t` and convert `e` to IR.
         exp.to_ir()
@@ -99,7 +99,7 @@ impl ToIR for ast::Anno {
 impl ToIR for ast::TypeUniv {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         // The universe has no runtime relevance and is hence replaced by a zero-sized term.
         Ok(ir::Exp::ZST)
     }
@@ -108,7 +108,7 @@ impl ToIR for ast::TypeUniv {
 impl ToIR for ast::LocalMatch {
     type Target = ir::LocalMatch;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::LocalMatch { on_exp, cases, .. } = self;
 
         let on_exp = Box::new(on_exp.to_ir()?);
@@ -122,7 +122,7 @@ impl ToIR for ast::LocalMatch {
 impl ToIR for ast::LocalComatch {
     type Target = ir::LocalComatch;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let LocalComatch { cases, .. } = self;
 
         let cases =
@@ -135,7 +135,7 @@ impl ToIR for ast::LocalComatch {
 impl ToIR for ast::Hole {
     type Target = ir::Exp;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::Hole { kind, solution, .. } = self;
 
         let res =
@@ -159,7 +159,7 @@ impl ToIR for ast::Hole {
 impl ToIR for ast::Case {
     type Target = Option<ir::Case>;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::Case { pattern, body, .. } = self;
         let ast::Pattern { span: _, is_copattern, params, name } = pattern;
 
@@ -181,7 +181,7 @@ impl ToIR for ast::Case {
 impl ToIR for ast::Args {
     type Target = Vec<ir::Exp>;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::Args { args, .. } = self;
 
         args.iter()
@@ -195,7 +195,7 @@ impl ToIR for ast::Args {
 impl ToIR for ast::Telescope {
     type Target = Vec<String>;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::Telescope { params, .. } = self;
 
         Ok(params
@@ -209,7 +209,7 @@ impl ToIR for ast::Telescope {
 impl ToIR for ast::TelescopeInst {
     type Target = Vec<String>;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::TelescopeInst { params, .. } = self;
 
         Ok(params
