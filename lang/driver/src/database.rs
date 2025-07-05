@@ -99,7 +99,7 @@ impl Database {
     pub async fn source(&mut self, uri: &Url) -> Result<String, Error> {
         match self.files.get_unless_stale(uri) {
             Some(file) => {
-                log::debug!("Found source in cache: {}", uri);
+                log::debug!("Found source in cache: {uri}");
                 Ok(file.source.to_string())
             }
             None => self.recompute_source(uri).await,
@@ -107,7 +107,7 @@ impl Database {
     }
 
     async fn recompute_source(&mut self, uri: &Url) -> Result<String, Error> {
-        log::debug!("Recomputing source for: {}", uri);
+        log::debug!("Recomputing source for: {uri}");
         let source = self.source.read_to_string(uri).await?;
         let file = crate::codespan::File::new(source.clone());
         self.files.insert(uri.clone(), file);
@@ -121,7 +121,7 @@ impl Database {
     pub async fn cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
         match self.cst.get_unless_stale(uri) {
             Some(cst) => {
-                log::debug!("Found cst in cache: {}", uri);
+                log::debug!("Found cst in cache: {uri}");
                 cst.clone()
             }
             None => self.recompute_cst(uri).await,
@@ -129,7 +129,7 @@ impl Database {
     }
 
     async fn recompute_cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
-        log::debug!("Recomputing cst for: {}", uri);
+        log::debug!("Recomputing cst for: {uri}");
         let source = self.source(uri).await?;
         let module =
             parser::parse_module(uri.clone(), &source).map_err(Error::Parser).map(Arc::new);
@@ -144,7 +144,7 @@ impl Database {
     pub async fn symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
         match self.symbol_table.get_unless_stale(uri) {
             Some(symbol_table) => {
-                log::debug!("Found symbol table in cache: {}", uri);
+                log::debug!("Found symbol table in cache: {uri}");
                 Ok(symbol_table.clone())
             }
             None => self.recompute_symbol_table(uri).await,
@@ -152,7 +152,7 @@ impl Database {
     }
 
     async fn recompute_symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
-        log::debug!("Recomputing symbol table for: {}", uri);
+        log::debug!("Recomputing symbol table for: {uri}");
         let cst = self.cst(uri).await?;
         let module_symbol_table = lowering::build_symbol_table(&cst).map(Arc::new)?;
         self.symbol_table.insert(uri.clone(), module_symbol_table.clone());
@@ -166,7 +166,7 @@ impl Database {
     pub async fn ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
         match self.ust.get_unless_stale(uri) {
             Some(ust) => {
-                log::debug!("Found ust in cache: {}", uri);
+                log::debug!("Found ust in cache: {uri}");
                 ust.clone()
             }
             None => self.recompute_ust(uri).await,
@@ -174,7 +174,7 @@ impl Database {
     }
 
     pub async fn recompute_ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
-        log::debug!("Recomputing ust for: {}", uri);
+        log::debug!("Recomputing ust for: {uri}");
         let cst = self.cst(uri).await?;
         let deps = self.deps(uri).await?;
 
@@ -252,7 +252,7 @@ impl Database {
                     (OpenClosed::Open(table), false) => table,
                     (OpenClosed::Closed(table), _) => table,
                 };
-                log::debug!("Found type info table in cache: {}", uri);
+                log::debug!("Found type info table in cache: {uri}");
                 Ok(table.clone())
             }
             None => self.recompute_type_info_table(uri, closed).await,
@@ -305,7 +305,7 @@ impl Database {
     pub async fn ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
         match self.ast.get_unless_stale(uri) {
             Some(ast) => {
-                log::debug!("Found ast in cache: {}", uri);
+                log::debug!("Found ast in cache: {uri}");
                 ast.clone()
             }
             None => self.recompute_ast(uri).await,
@@ -313,7 +313,7 @@ impl Database {
     }
 
     pub async fn recompute_ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
-        log::debug!("Recomputing ast for: {}", uri);
+        log::debug!("Recomputing ast for: {uri}");
 
         // Compute the type info table
         let info_table = self.type_info_table(uri).await?;
@@ -334,7 +334,7 @@ impl Database {
     pub async fn ir(&mut self, uri: &Url) -> Result<Arc<ir::Module>, Error> {
         match self.ir.get_unless_stale(uri) {
             Some(module) => {
-                log::debug!("Found ir in cache: {}", uri);
+                log::debug!("Found ir in cache: {uri}");
                 module.clone()
             }
             None => self.recompute_ir(uri).await,
@@ -342,7 +342,7 @@ impl Database {
     }
 
     pub async fn recompute_ir(&mut self, uri: &Url) -> Result<Arc<ir::Module>, Error> {
-        log::debug!("Recomputing ir for: {}", uri);
+        log::debug!("Recomputing ir for: {uri}");
 
         let module = self.ast(uri).await?;
 
@@ -361,7 +361,7 @@ impl Database {
     pub async fn goto_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, (Url, Span)>, Error> {
         match self.goto_by_id.get_unless_stale(uri) {
             Some(loc) => {
-                log::debug!("Found goto_by_id in cache: {}", uri);
+                log::debug!("Found goto_by_id in cache: {uri}");
                 Ok(loc.clone())
             }
             None => self.recompute_goto_by_id(uri).await,
@@ -369,7 +369,7 @@ impl Database {
     }
 
     async fn recompute_goto_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, (Url, Span)>, Error> {
-        log::debug!("Recomputing goto_by_id for: {}", uri);
+        log::debug!("Recomputing goto_by_id for: {uri}");
         let (_hover_lapper, location_lapper, _item_lapper) = collect_info(self, uri).await?;
         self.goto_by_id.insert(uri.clone(), location_lapper.clone());
         Ok(location_lapper)
@@ -382,7 +382,7 @@ impl Database {
     pub async fn hover_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, HoverContents>, Error> {
         match self.hover_by_id.get_unless_stale(uri) {
             Some(hover) => {
-                log::debug!("Found hover_by_id in cache: {}", uri);
+                log::debug!("Found hover_by_id in cache: {uri}");
                 Ok(hover.clone())
             }
             None => self.recompute_hover_by_id(uri).await,
@@ -393,7 +393,7 @@ impl Database {
         &mut self,
         uri: &Url,
     ) -> Result<Lapper<u32, HoverContents>, Error> {
-        log::debug!("Recomputing hover_by_id for: {}", uri);
+        log::debug!("Recomputing hover_by_id for: {uri}");
         let (hover_lapper, _location_lapper, _item_lapper) = collect_info(self, uri).await?;
         self.hover_by_id.insert(uri.clone(), hover_lapper.clone());
         Ok(hover_lapper)
@@ -406,7 +406,7 @@ impl Database {
     pub async fn item_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Item>, Error> {
         match self.item_by_id.get_unless_stale(uri) {
             Some(items) => {
-                log::debug!("Found item_by_id in cache: {}", uri);
+                log::debug!("Found item_by_id in cache: {uri}");
                 Ok(items.clone())
             }
             None => self.recompute_item_by_id(uri).await,
@@ -414,7 +414,7 @@ impl Database {
     }
 
     async fn recompute_item_by_id(&mut self, uri: &Url) -> Result<Lapper<u32, Item>, Error> {
-        log::debug!("Recomputing item_by_id for: {}", uri);
+        log::debug!("Recomputing item_by_id for: {uri}");
         let (_info_lapper, _location_lapper, item_lapper) = collect_info(self, uri).await?;
         self.item_by_id.insert(uri.clone(), item_lapper.clone());
         Ok(item_lapper)
@@ -427,7 +427,7 @@ impl Database {
     pub async fn deps(&mut self, uri: &Url) -> Result<Vec<Url>, Error> {
         match self.deps.get(uri) {
             Some(deps) => {
-                log::debug!("Found dependencies in cache: {}", uri);
+                log::debug!("Found dependencies in cache: {uri}");
                 Ok(deps.clone())
             }
             None => Box::pin(self.recompute_deps(uri)).await,
@@ -435,7 +435,7 @@ impl Database {
     }
 
     pub async fn recompute_deps(&mut self, uri: &Url) -> Result<Vec<Url>, Error> {
-        log::debug!("Recomputing dependencies for: {}", uri);
+        log::debug!("Recomputing dependencies for: {uri}");
         self.source(uri).await?;
         self.build_dependency_dag().await?;
         self.deps(uri).await
