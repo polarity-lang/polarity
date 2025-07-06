@@ -1,12 +1,12 @@
 use crate::ir;
-use crate::result::BackendError;
+use crate::result::BackendResult;
 
 use super::traits::ToIR;
 
 impl ToIR for ast::Module {
     type Target = ir::Module;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::Module { uri, use_decls, decls, meta_vars: _ } = self;
 
         let mut def_decls = Vec::new();
@@ -37,7 +37,7 @@ impl ToIR for ast::Module {
 impl ToIR for ast::Def {
     type Target = ir::Def;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::Def { name, params, cases, .. } = self;
 
         let params = params.to_ir()?;
@@ -51,7 +51,7 @@ impl ToIR for ast::Def {
 impl ToIR for ast::Codef {
     type Target = ir::Codef;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::Codef { name, params, cases, .. } = self;
 
         let params = params.to_ir()?;
@@ -65,7 +65,7 @@ impl ToIR for ast::Codef {
 impl ToIR for ast::Let {
     type Target = ir::Let;
 
-    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+    fn to_ir(&self) -> BackendResult<Self::Target> {
         let ast::Let { name, params, body, .. } = self;
 
         let params = params.to_ir()?;
