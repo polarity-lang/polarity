@@ -153,7 +153,7 @@ where
     pub fn report(self) -> CaseResult {
         let result = match self.result {
             Ok(_) => Ok(()),
-            Err(PhasesError::AsExpected { .. }) => Ok(()),
+            Err(PhasesError::AsExpected) => Ok(()),
             Err(PhasesError::Mismatch { phase, expected, actual }) => {
                 Err(Failure::Mismatch { phase, expected, actual })
             }

@@ -210,19 +210,19 @@ impl CaseResult {
         match result {
             Ok(_) => {
                 let str = format!("{} ({:?})", case.name, case.path);
-                write!(&mut stdout, "    - {:70} ", str).unwrap();
+                write!(&mut stdout, "    - {str:70} ").unwrap();
                 stdout.set_color(ColorSpec::new().set_fg(Some(Color::Green))).unwrap();
                 writeln!(&mut stdout, "✓").unwrap();
                 stdout.set_color(ColorSpec::new().set_fg(Some(Color::White))).unwrap();
             }
             Err(err) => {
                 let str = format!("{} ({:?})", case.name, case.path);
-                write!(&mut stdout, "    - {:70} ", str).unwrap();
+                write!(&mut stdout, "    - {str:70} ").unwrap();
                 stdout.set_color(ColorSpec::new().set_fg(Some(Color::Red))).unwrap();
                 writeln!(&mut stdout, "✗").unwrap();
                 stdout.set_color(ColorSpec::new().set_fg(Some(Color::White))).unwrap();
                 println!();
-                println!("{}", err);
+                println!("{err}");
                 println!()
             }
         }
