@@ -302,7 +302,7 @@ impl Lift for Exp {
             Exp::Hole(e) => e.lift(ctx).into(),
             Exp::LocalMatch(e) => e.lift(ctx),
             Exp::LocalComatch(e) => e.lift(ctx),
-            Exp::LocalLet(_) => todo!(),
+            Exp::LocalLet(e) => e.lift(ctx),
         }
     }
 }
@@ -436,6 +436,24 @@ impl Lift for LocalComatch {
         )
     }
 }
+
+impl Lift for LocalLet {
+    type Target = Exp;
+
+    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
+        let LocalLet { span, name, typ, bound, body, inferred_type: _ } = self;
+
+        Exp::LocalLet(LocalLet {
+            span: *span,
+            name: name.clone(),
+            typ: typ.lift(ctx),
+            bound: bound.lift(ctx),
+            body: ctx.bind_single(name.clone(), |ctx| body.lift(ctx)),
+            inferred_type: None,
+        })
+    }
+}
+
 impl Lift for Motive {
     type Target = Motive;
 
