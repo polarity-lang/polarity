@@ -1,11 +1,11 @@
 use std::rc::Rc;
 use std::{error::Error, io};
-use url::Url;
 
 use pretty::{
     DocAllocator,
     termcolor::{Ansi, WriteColor},
 };
+use url::Url;
 
 use crate::{render, tokens::COMMA};
 
@@ -27,14 +27,24 @@ pub type Alloc<'a> = pretty::Arena<'a, Anno>;
 pub type Builder<'a> = pretty::DocBuilder<'a, Alloc<'a>, Anno>;
 
 /// Operator precedences
-pub type Precedence = u32;
+///
+/// This corresponds to the precedence specified by the parser grammar.
+#[derive(PartialOrd, Ord, PartialEq, Eq, Copy, Clone)]
+pub enum Precedence {
+    Exp,
+    NonLet,
+    Ops,
+    App,
+    Holes,
+    Atom,
+}
 
 /// We implement the `Print` trait for all types that we want to prettyprint.
 /// It is sufficient to implement either the `print` or the `print_prec` function, depending
 /// on whether you need information about operator precedences or not.
 pub trait Print {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        Print::print_prec(self, cfg, alloc, 0)
+        Print::print_prec(self, cfg, alloc, Precedence::Exp)
     }
 
     /// Print with precedence information about the enclosing context.
@@ -46,7 +56,7 @@ pub trait Print {
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        Print::print(self, cfg, alloc)
+        self.print(cfg, alloc)
     }
 
     fn print_io<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
@@ -242,5 +252,18 @@ impl Default for PrintCfg {
             print_metavar_ids: false,
             print_metavar_args: false,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test_precedence_ordering() {
+        use super::Precedence::*;
+        assert!(Exp < NonLet);
+        assert!(NonLet < Ops);
+        assert!(Ops < App);
+        assert!(App < Holes);
+        assert!(Holes < Atom);
     }
 }

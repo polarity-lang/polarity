@@ -2,7 +2,7 @@ use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{
-    Print,
+    Precedence, Print,
     theme::ThemeExt,
     tokens::{COLON, COLONEQ, LET, SEMICOLON},
 };
@@ -99,16 +99,21 @@ impl Substitutable for LocalLet {
 }
 
 impl Print for LocalLet {
-    fn print<'a>(
+    fn print_prec<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
+        _prec: printer::Precedence,
     ) -> printer::Builder<'a> {
         let LocalLet { span: _, name, typ, bound, body, inferred_type: _ } = self;
 
-        let typ = typ
-            .as_ref()
-            .map(|t| alloc.text(COLON).append(alloc.space()).append(t.print(cfg, alloc)));
+        let typ = typ.as_ref().map(|t| {
+            alloc.text(COLON).append(alloc.space()).append(t.print_prec(
+                cfg,
+                alloc,
+                printer::Precedence::NonLet,
+            ))
+        });
 
         let head = alloc
             .keyword(LET)
@@ -117,7 +122,7 @@ impl Print for LocalLet {
             .append(typ)
             .append(alloc.space())
             .append(COLONEQ)
-            .append(bound.print(cfg, alloc))
+            .append(bound.print_prec(cfg, alloc, Precedence::NonLet))
             .append(SEMICOLON)
             .group();
 

@@ -2,7 +2,7 @@ use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{
-    Alloc, Builder, Print, PrintCfg,
+    Alloc, Builder, Precedence, Print, PrintCfg,
     tokens::{COLONEQ, COMMA},
 };
 
@@ -121,7 +121,12 @@ impl Substitutable for Arg {
 }
 
 impl Print for Arg {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _: Precedence,
+    ) -> Builder<'a> {
         match self {
             Arg::UnnamedArg { arg, .. } => arg.print(cfg, alloc),
             Arg::NamedArg { name: var, arg, .. } => {
@@ -221,7 +226,12 @@ impl Substitutable for Args {
 }
 
 impl Print for Args {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _: Precedence,
+    ) -> Builder<'a> {
         if !self.args.iter().any(|x| !x.is_inserted_implicit()) {
             return alloc.nil();
         }

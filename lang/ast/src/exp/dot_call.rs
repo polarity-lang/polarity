@@ -124,7 +124,7 @@ impl Print for DotCall {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: Precedence,
+        _: Precedence,
     ) -> Builder<'a> {
         // A series of destructors forms an aligned group
         let mut dtors_group = alloc.nil();
@@ -137,15 +137,15 @@ impl Print for DotCall {
             .append(dtors_group);
 
         // Remaining DotCalls
-        let mut dtor: &Exp = &self.exp;
+        let mut head: &Exp = &self.exp;
         while let Exp::DotCall(DotCall { exp, name, args, .. }) = &dtor {
             let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
             dtors_group = alloc.line_().append(dtors_group);
             dtors_group =
                 alloc.text(DOT).append(alloc.dtor(&name.id)).append(psubst).append(dtors_group);
-            dtor = exp;
+            head = exp;
         }
-        dtor.print(cfg, alloc).append(dtors_group.align().group())
+        head.print_prec(cfg, alloc, Precedence::Ops).append(dtors_group.align().group())
     }
 }
 

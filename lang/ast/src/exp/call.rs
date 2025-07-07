@@ -99,7 +99,7 @@ impl Print for Call {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: Precedence,
+        _: Precedence,
     ) -> Builder<'a> {
         let Call { name, args, .. } = self;
         alloc.ctor(&name.id).append(args.print(cfg, alloc))

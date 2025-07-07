@@ -32,7 +32,12 @@ impl TelescopeInst {
 }
 
 impl Print for TelescopeInst {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: printer::Precedence,
+    ) -> Builder<'a> {
         if self.params.is_empty() { alloc.nil() } else { self.params.print(cfg, alloc).parens() }
     }
 }
@@ -96,7 +101,12 @@ pub struct ParamInst {
 }
 
 impl Print for ParamInst {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: printer::Precedence,
+    ) -> Builder<'a> {
         let ParamInst { span: _, name, typ: _, erased: _ } = self;
         name.print(cfg, alloc)
     }

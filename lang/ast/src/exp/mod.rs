@@ -303,7 +303,12 @@ impl Substitutable for Motive {
 }
 
 impl Print for Motive {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
         let Motive { span: _, param, ret_typ } = self;
 
         alloc

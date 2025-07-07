@@ -101,7 +101,7 @@ impl Print for LocalMatch {
     ) -> Builder<'a> {
         let LocalMatch { name, on_exp, motive, cases, .. } = self;
         on_exp
-            .print(cfg, alloc)
+            .print_prec(cfg, alloc, Precedence::Ops)
             .append(DOT)
             .append(alloc.keyword(MATCH))
             .append(match &name.user_name {

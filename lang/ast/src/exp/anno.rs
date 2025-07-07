@@ -1,13 +1,12 @@
-use derivative::Derivative;
-use miette_util::codespan::Span;
-use printer::{Alloc, Builder, Precedence, Print, PrintCfg, tokens::COLON};
-
 use crate::{
     ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
     Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
+use derivative::Derivative;
+use miette_util::codespan::Span;
+use printer::{Alloc, Builder, Precedence, Print, PrintCfg, tokens::COLON, util::ParensIfExt};
 
 use super::{Exp, MetaVar};
 
@@ -84,10 +83,14 @@ impl Print for Anno {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: Precedence,
+        prec: Precedence,
     ) -> Builder<'a> {
         let Anno { exp, typ, .. } = self;
-        exp.print(cfg, alloc).append(COLON).append(typ.print(cfg, alloc)).parens()
+
+        exp.print_prec(cfg, alloc, Precedence::Ops)
+            .append(COLON)
+            .append(typ.print(cfg, alloc))
+            .parens_if(prec > Precedence::NonLet)
     }
 }
 

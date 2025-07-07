@@ -20,6 +20,13 @@ where
     fn is_nil(&self) -> bool;
 }
 
+pub trait ParensIfExt<'a, D, A: 'a>
+where
+    D: ?Sized + DocAllocator<'a, A>,
+{
+    fn parens_if(self, cond: bool) -> pretty::DocBuilder<'a, D, A>;
+}
+
 impl<'a, D> BracesExt<'a, D> for pretty::DocBuilder<'a, D, Anno>
 where
     D: ?Sized + DocAllocator<'a, Anno>,
@@ -47,5 +54,14 @@ where
 {
     fn is_nil(&self) -> bool {
         matches!(self.1, pretty::BuildDoc::Doc(pretty::Doc::Nil))
+    }
+}
+
+impl<'a, D, A> ParensIfExt<'a, D, A> for pretty::DocBuilder<'a, D, A>
+where
+    D: ?Sized + DocAllocator<'a, A>,
+{
+    fn parens_if(self, cond: bool) -> pretty::DocBuilder<'a, D, A> {
+        if cond { self.parens() } else { self }
     }
 }

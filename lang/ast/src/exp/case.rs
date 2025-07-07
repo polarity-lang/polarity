@@ -2,7 +2,7 @@ use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
 use printer::{
-    Alloc, Builder, Print, PrintCfg,
+    Alloc, Builder, Precedence, Print, PrintCfg,
     theme::ThemeExt,
     tokens::{ABSURD, COMMA, DOT, FAT_ARROW},
     util::BracesExt,
@@ -31,7 +31,12 @@ pub struct Pattern {
 }
 
 impl Print for Pattern {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _: Precedence,
+    ) -> Builder<'a> {
         let Pattern { span: _, is_copattern, name, params } = self;
         if *is_copattern {
             alloc.text(DOT).append(alloc.dtor(&name.id)).append(params.print(cfg, alloc))
@@ -110,7 +115,12 @@ pub fn empty_braces<'a>(alloc: &'a Alloc<'a>) -> Builder<'a> {
 }
 
 impl Print for Case {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
         let Case { span: _, pattern, body } = self;
 
         let body = match body {
