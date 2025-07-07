@@ -90,6 +90,7 @@ pub async fn exec(cmd: Args) -> miette::Result<()> {
         print_function_sugar: !cmd.omit_function_sugar,
         print_metavar_ids: false,
         print_metavar_args: false,
+        print_metavar_solutions: false,
     };
 
     stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();

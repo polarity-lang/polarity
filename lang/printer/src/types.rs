@@ -105,6 +105,7 @@ pub trait Print {
             print_function_sugar: true,
             print_metavar_ids: true,
             print_metavar_args: true,
+            print_metavar_solutions: true,
         };
         self.print_to_colored_string(Some(&TRACE_CFG))
     }
@@ -237,6 +238,8 @@ pub struct PrintCfg {
     pub print_metavar_ids: bool,
     /// Whether to print the arguments of metavariables
     pub print_metavar_args: bool,
+    /// Whether to print the solution of metavariables
+    pub print_metavar_solutions: bool,
 }
 
 impl Default for PrintCfg {
@@ -251,6 +254,7 @@ impl Default for PrintCfg {
             print_function_sugar: true,
             print_metavar_ids: false,
             print_metavar_args: false,
+            print_metavar_solutions: false,
         }
     }
 }

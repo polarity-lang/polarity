@@ -144,8 +144,13 @@ impl Print for Hole {
                     doc = doc.append(print_hole_args(&self.args, cfg, alloc))
                 }
 
-                if let Some(solution) = &self.solution {
-                    doc = doc.append("<").append(solution.print_prec(cfg, alloc, prec)).append(">")
+                if cfg.print_metavar_solutions {
+                    if let Some(solution) = &self.solution {
+                        doc = doc
+                            .append("<")
+                            .append(solution.print_prec(cfg, alloc, prec))
+                            .append(">")
+                    }
                 }
 
                 doc
@@ -161,14 +166,19 @@ impl Print for Hole {
                     doc = doc.append(print_hole_args(&self.args, cfg, alloc))
                 }
 
-                if let Some(solution) = &self.solution {
-                    doc = doc.append("<").append(solution.print_prec(cfg, alloc, prec)).append(">")
+                if cfg.print_metavar_solutions {
+                    if let Some(solution) = &self.solution {
+                        doc = doc
+                            .append("<")
+                            .append(solution.print_prec(cfg, alloc, prec))
+                            .append(">")
+                    }
                 }
 
                 doc
             }
             MetaVarKind::Inserted => {
-                let mut doc = alloc.nil();
+                let mut doc = alloc.keyword(UNDERSCORE);
 
                 if cfg.print_metavar_ids {
                     doc = doc.append(self.metavar.id.to_string());
@@ -178,14 +188,16 @@ impl Print for Hole {
                     doc = doc.append(print_hole_args(&self.args, cfg, alloc))
                 }
 
-                match &self.solution {
-                    Some(solution) => {
-                        doc = doc
-                            .append("<")
-                            .append(solution.print_prec(cfg, alloc, prec))
-                            .append(">")
+                if cfg.print_metavar_solutions {
+                    match &self.solution {
+                        Some(solution) => {
+                            doc = doc
+                                .append("<")
+                                .append(solution.print_prec(cfg, alloc, prec))
+                                .append(">")
+                        }
+                        None => doc = doc.append("<Inserted>"),
                     }
-                    None => doc = doc.append("<Inserted>"),
                 }
 
                 doc
