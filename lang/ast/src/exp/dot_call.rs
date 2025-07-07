@@ -138,7 +138,7 @@ impl Print for DotCall {
 
         // Remaining DotCalls
         let mut head: &Exp = &self.exp;
-        while let Exp::DotCall(DotCall { exp, name, args, .. }) = &dtor {
+        while let Exp::DotCall(DotCall { exp, name, args, .. }) = &head {
             let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc) };
             dtors_group = alloc.line_().append(dtors_group);
             dtors_group =
