@@ -125,7 +125,7 @@ impl Print for Arg {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _: Precedence,
+        _prec: Precedence,
     ) -> Builder<'a> {
         match self {
             Arg::UnnamedArg { arg, .. } => arg.print(cfg, alloc),
@@ -230,7 +230,7 @@ impl Print for Args {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _: Precedence,
+        _prec: Precedence,
     ) -> Builder<'a> {
         if !self.args.iter().any(|x| !x.is_inserted_implicit()) {
             return alloc.nil();

@@ -124,7 +124,7 @@ impl Print for DotCall {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _: Precedence,
+        _prec: Precedence,
     ) -> Builder<'a> {
         // A series of destructors forms an aligned group
         let mut dtors_group = alloc.nil();

@@ -35,7 +35,7 @@ impl Print for Pattern {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _: Precedence,
+        _prec: Precedence,
     ) -> Builder<'a> {
         let Pattern { span: _, is_copattern, name, params } = self;
         if *is_copattern {
