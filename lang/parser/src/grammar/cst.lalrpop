@@ -262,15 +262,11 @@ pub Ops: Box<Exp> = {
 pub App: Box<Exp> = {
     <e: CallWithArgs> => Box::new(Exp::Call(e)),
     <e: LocalComatch> => Box::new(Exp::LocalComatch(e)),
-    Holes,
-}
-
-pub Holes: Box<Exp> = {
-    <e: Hole> => Box::new(Exp::Hole(e)),
     Atom,
 }
 
 pub Atom: Box<Exp> = {
+    <e: Hole> => Box::new(Exp::Hole(e)),
     <e: NatLit> => Box::new(Exp::NatLit(e)),
     <e: ParensExp> => Box::new(Exp::Parens(e)),
     <e: CallWithoutArgs> => Box::new(Exp::Call(e)),
