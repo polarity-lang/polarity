@@ -240,6 +240,26 @@ Infix: Infix = {
 // Expressions
 //
 //
+// Grammar:
+//
+// ```text
+// <Exp>    ::= <NonLet>
+//           | let x : NonLet := NonLet ; Exp
+// <NonLet> ::= <Ops>
+//           | <Ops> : <Exp>
+//           | <Ops> + <Ops>
+//           | \<pat> => <Exp>
+// <Ops>    ::= <Atom>
+//           | <Ops>.f(<Exp>,...,<Exp>)
+//           | <Ops>.match <Ident> as <Ident> => <Exp> { <pat> => <Exp>, ... }
+// <Atom>   ::= (<Exp>)
+//           | f(<Exp>,...,<Exp>)
+//           | comatch <Ident> { <copat> => <Exp>, ... }
+//           | _
+//           | ?
+//           | f
+//           | n      (Literal)
+// ```
 
 pub Exp: Box<Exp> = {
     <e: LocalLet> => Box::new(Exp::LocalLet(e)),
@@ -256,21 +276,13 @@ pub NonLet: Box<Exp> = {
 pub Ops: Box<Exp> = {
     <e: DotCall> => Box::new(Exp::DotCall(e)),
     <e: LocalMatch> => Box::new(Exp::LocalMatch(e)),
-    App,
-}
-
-pub App: Box<Exp> = {
-    <e: CallWithArgs> => Box::new(Exp::Call(e)),
-    <e: LocalComatch> => Box::new(Exp::LocalComatch(e)),
-    Holes,
-}
-
-pub Holes: Box<Exp> = {
-    <e: Hole> => Box::new(Exp::Hole(e)),
     Atom,
 }
 
 pub Atom: Box<Exp> = {
+    <e: CallWithArgs> => Box::new(Exp::Call(e)),
+    <e: LocalComatch> => Box::new(Exp::LocalComatch(e)),
+    <e: Hole> => Box::new(Exp::Hole(e)),
     <e: NatLit> => Box::new(Exp::NatLit(e)),
     <e: ParensExp> => Box::new(Exp::Parens(e)),
     <e: CallWithoutArgs> => Box::new(Exp::Call(e)),
