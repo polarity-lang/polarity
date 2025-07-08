@@ -256,16 +256,12 @@ pub NonLet: Box<Exp> = {
 pub Ops: Box<Exp> = {
     <e: DotCall> => Box::new(Exp::DotCall(e)),
     <e: LocalMatch> => Box::new(Exp::LocalMatch(e)),
-    App,
-}
-
-pub App: Box<Exp> = {
-    <e: CallWithArgs> => Box::new(Exp::Call(e)),
-    <e: LocalComatch> => Box::new(Exp::LocalComatch(e)),
     Atom,
 }
 
 pub Atom: Box<Exp> = {
+    <e: CallWithArgs> => Box::new(Exp::Call(e)),
+    <e: LocalComatch> => Box::new(Exp::LocalComatch(e)),
     <e: Hole> => Box::new(Exp::Hole(e)),
     <e: NatLit> => Box::new(Exp::NatLit(e)),
     <e: ParensExp> => Box::new(Exp::Parens(e)),
