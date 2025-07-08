@@ -240,6 +240,26 @@ Infix: Infix = {
 // Expressions
 //
 //
+// Grammar:
+//
+// ```text
+// <Exp>    ::= <NonLet>
+//           | let x : NonLet := NonLet ; Exp
+// <NonLet> ::= <Ops>
+//           | <Ops> : <Exp>
+//           | <Ops> + <Ops>
+//           | \<pat> => <Exp>
+// <Ops>    ::= <Atom>
+//           | <Ops>.f(<Exp>,...,<Exp>)
+//           | <Ops>.match <Ident> as <Ident> => <Exp> { <pat> => <Exp>, ... }
+// <Atom>   ::= (<Exp>)
+//           | f(<Exp>,...,<Exp>)
+//           | comatch <Ident> { <copat> => <Exp>, ... }
+//           | _
+//           | ?
+//           | f
+//           | n      (Literal)
+// ```
 
 pub Exp: Box<Exp> = {
     <e: LocalLet> => Box::new(Exp::LocalLet(e)),
