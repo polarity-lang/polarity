@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use driver::Database;
 use printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
@@ -8,8 +8,8 @@ use crate::utils::ignore_colors::IgnoreColors;
 
 #[derive(clap::Args)]
 pub struct Args {
-    #[clap(value_parser, value_name = "FILE")]
-    filepath: PathBuf,
+    #[clap(value_parser, value_name = "FILES", required = true)]
+    filepaths: Vec<PathBuf>,
     #[clap(long)]
     width: Option<usize>,
     #[clap(long, num_args = 0)]
@@ -33,13 +33,15 @@ pub struct Args {
 /// If an output filepath is specified, then that filepath is used.
 /// Otherwise, the formatted output is printed on the terminal.
 /// If the --inplace flag is specified, then the input file is overwritten.
-fn compute_output_stream(cmd: &Args) -> Box<dyn WriteColor> {
-    if cmd.inplace {
-        return Box::new(IgnoreColors::new(
-            File::create(cmd.filepath.clone()).expect("Failed to create file"),
-        ));
+fn compute_output_stream(
+    filepath: &Path,
+    inplace: bool,
+    output: &Option<PathBuf>,
+) -> Box<dyn WriteColor> {
+    if inplace {
+        return Box::new(IgnoreColors::new(File::create(filepath).expect("Failed to create file")));
     }
-    match &cmd.output {
+    match output {
         Some(path) => {
             Box::new(IgnoreColors::new(File::create(path).expect("Failed to create file")))
         }
@@ -48,34 +50,40 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn WriteColor> {
 }
 
 pub async fn exec(cmd: Args) -> miette::Result<()> {
-    let mut db = Database::from_path(&cmd.filepath);
-    let uri = db.resolve_path(&cmd.filepath)?;
-    let prg = if cmd.checked { db.ast(&uri).await } else { db.ust(&uri).await }
-        .map_err(|err| db.pretty_error(&uri, err))?;
+    for filepath in &cmd.filepaths {
+        let mut db = Database::from_path(filepath);
+        let uri = db.resolve_path(filepath)?;
+        let prg = if cmd.checked { db.ast(&uri).await } else { db.ust(&uri).await }
+            .map_err(|err| db.pretty_error(&uri, err))?;
 
-    // Write to file or to stdout
-    let mut stream: Box<dyn WriteColor> = compute_output_stream(&cmd);
+        // Write to file or to stdout
+        let mut stream: Box<dyn WriteColor> =
+            compute_output_stream(filepath, cmd.inplace, &cmd.output);
 
-    let cfg = PrintCfg {
-        width: cmd.width.unwrap_or_else(terminal_width),
-        latex: false,
-        omit_decl_sep: false,
-        de_bruijn: cmd.de_bruijn,
-        indent: cmd.indent,
-        print_lambda_sugar: !cmd.omit_lambda_sugar,
-        print_function_sugar: !cmd.omit_function_sugar,
-        print_metavar_ids: false,
-        print_metavar_args: false,
-    };
+        let cfg = PrintCfg {
+            width: cmd.width.unwrap_or_else(terminal_width),
+            latex: false,
+            omit_decl_sep: false,
+            de_bruijn: cmd.de_bruijn,
+            indent: cmd.indent,
+            print_lambda_sugar: !cmd.omit_lambda_sugar,
+            print_function_sugar: !cmd.omit_function_sugar,
+            print_metavar_ids: false,
+            print_metavar_args: false,
+        };
 
-    print_prg(&prg, &cfg, &mut stream);
+        print_prg(&prg, &cfg, &mut stream);
+
+        if !cmd.inplace {
+            println!();
+        }
+    }
 
     Ok(())
 }
 
 fn print_prg<W: WriteColor>(prg: &ast::Module, cfg: &PrintCfg, stream: &mut W) {
     prg.print_colored(cfg, stream).expect("Failed to print to stdout");
-    println!();
 }
 
 fn terminal_width() -> usize {
