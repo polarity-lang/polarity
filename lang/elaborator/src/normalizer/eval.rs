@@ -42,11 +42,7 @@ impl Eval for Exp {
             Exp::LocalMatch(e) => e.eval(info_table, env),
             Exp::LocalComatch(e) => e.eval(info_table, env),
             Exp::Hole(e) => e.eval(info_table, env),
-            Exp::LocalLet(_) => Err(TypeError::Impossible {
-                message: "Evaluating local let expressions is not implemented yet".to_owned(),
-                span: self.span().to_miette(),
-            }
-            .into()),
+            Exp::LocalLet(e) => e.eval(info_table, env),
         };
         trace!(
             "{} |- {} ▷ {}",
@@ -500,6 +496,18 @@ impl Eval for Case {
             name: pattern.name.clone(),
             params: pattern.params.clone(),
             body,
+        })
+    }
+}
+
+impl Eval for LocalLet {
+    type Val = Box<Val>;
+
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
+        let LocalLet { span: _, name, typ: _, bound, body, inferred_type: _ } = self;
+        let bound_val = bound.eval(info_table, env)?;
+        env.bind_iter([Binder { name: name.clone(), content: bound_val }].into_iter(), |env| {
+            body.eval(info_table, env)
         })
     }
 }
