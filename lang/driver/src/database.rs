@@ -17,6 +17,7 @@ use lowering::{ModuleSymbolTable, SymbolTable};
 use parser::cst;
 use parser::cst::decls::UseDecl;
 
+use crate::codespan::File;
 use crate::dependency_graph::DependencyGraph;
 use crate::fs::*;
 use crate::info::*;
@@ -527,8 +528,11 @@ impl Database {
 
     pub fn pretty_error(&self, uri: &Url, err: Error) -> miette::Report {
         let miette_error: miette::Error = err.into();
-        let source = &self.files.get_even_if_stale(uri).unwrap().source;
-        miette_error.with_source_code(miette::NamedSource::new(uri, source.to_owned()))
+        if let Some(File { source, .. }) = self.files.get_even_if_stale(uri) {
+            miette_error.with_source_code(miette::NamedSource::new(uri, source.to_owned()))
+        } else {
+            miette_error
+        }
     }
 
     pub async fn write_source(&mut self, uri: &Url, source: &str) -> Result<(), Error> {
