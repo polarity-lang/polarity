@@ -4,7 +4,7 @@
 //!
 //! * Andreas Abel, and Brigitte Pientka. "Higher-order dynamic pattern unification for dependent types and records." (2011)
 //! * Adam Gundry and Conor McBride. "A tutorial implementation of dynamic pattern unification." (2013).
-//! * András Kovács's elaboration-zoo (https://github.com/AndrasKovacs/elaboration-zoo)
+//! * András Kovács's elaboration-zoo (<https://github.com/AndrasKovacs/elaboration-zoo>)
 
 use ast::{Variable, ctx::values::Binder};
 use ctx::LevelCtx;
