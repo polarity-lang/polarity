@@ -1,4 +1,4 @@
-use ast::LocalComatch;
+use ast::{LocalComatch, LocalLet};
 
 use crate::ir;
 use crate::result::BackendError;
@@ -19,11 +19,7 @@ impl ToIR for ast::Exp {
             ast::Exp::LocalMatch(local_match) => ir::Exp::LocalMatch(local_match.to_ir()?),
             ast::Exp::LocalComatch(local_comatch) => ir::Exp::LocalComatch(local_comatch.to_ir()?),
             ast::Exp::Hole(hole) => hole.to_ir()?,
-            ast::Exp::LocalLet(_) => {
-                return Err(BackendError::Impossible(
-                    "Compiling local let expressions is not implemented yet".to_owned(),
-                ));
-            }
+            ast::Exp::LocalLet(local_let) => ir::Exp::LocalLet(local_let.to_ir()?),
         };
 
         Ok(out)
@@ -153,6 +149,20 @@ impl ToIR for ast::Hole {
             };
 
         Ok(res)
+    }
+}
+
+impl ToIR for LocalLet {
+    type Target = ir::LocalLet;
+
+    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+        let LocalLet { span: _, name, typ: _, bound, body, inferred_type: _ } = self;
+
+        Ok(ir::LocalLet {
+            name: name.to_string(),
+            bound: Box::new(bound.to_ir()?),
+            body: Box::new(body.to_ir()?),
+        })
     }
 }
 
