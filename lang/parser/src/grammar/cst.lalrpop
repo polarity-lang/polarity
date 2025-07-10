@@ -119,8 +119,8 @@ Attr: String = <s:"Identifier"> => s.to_owned();
 Attributes: Attributes = "#" <attrs: BracketedArgs<Attr>> => Attributes { attrs };
 OptAttributes: Attributes = <attr: Attributes? > => attr.unwrap_or_default();
 
-DocCommentHelper: String = <doc: "DocComment"> => doc.strip_prefix("///").unwrap().trim().to_owned();
-DocComment: DocComment = <docs: DocCommentHelper+> => DocComment { docs };
+DocCommentHelper: Vec<String> = <doc: "DocComment"> => doc.strip_prefix("///").unwrap().lines().map(|s| s.trim().to_owned()).collect();
+DocComment: DocComment = <docs: DocCommentHelper+> => DocComment { docs: docs.into_iter().flatten().collect() };
 
 Arg: Arg = {
   <e: Exp> => Arg::UnnamedArg(e),
