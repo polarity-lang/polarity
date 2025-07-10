@@ -26,9 +26,11 @@ pub enum Anno {
 pub type Alloc<'a> = pretty::Arena<'a, Anno>;
 pub type Builder<'a> = pretty::DocBuilder<'a, Alloc<'a>, Anno>;
 
-/// Operator precedences
+/// Precedence level of expressions.
 ///
-/// This corresponds to the precedence specified by the parser grammar.
+/// This corresponds to the precedence specified by the parser grammar
+/// and is used to determine when we have to add parentheses during
+/// prettyprinting.
 /// This data type must therefore be kept in sync with the file
 /// `lang/parser/src/grammar/cst.lalrpop`.
 #[derive(PartialOrd, Ord, PartialEq, Eq, Copy, Clone)]
@@ -39,12 +41,23 @@ pub enum Precedence {
     Atom,
 }
 
+impl Precedence {
+    /// Return the highest precedence level
+    pub fn highest() -> Self {
+        Precedence::Exp
+    }
+}
+
 /// We implement the `Print` trait for all types that we want to prettyprint.
 /// It is sufficient to implement either the `print` or the `print_prec` function, depending
 /// on whether you need information about operator precedences or not.
 pub trait Print {
+    /// This function should only be invoked when we know that we don't have to add
+    /// outermost parentheses.
+    /// When printing a subexpression of a more complex expression you should use
+    /// the function `print_prec` instead.
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        Print::print_prec(self, cfg, alloc, Precedence::Exp)
+        Print::print_prec(self, cfg, alloc, Precedence::highest())
     }
 
     /// Print with precedence information about the enclosing context.
