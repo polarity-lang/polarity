@@ -29,13 +29,13 @@ pub type Builder<'a> = pretty::DocBuilder<'a, Alloc<'a>, Anno>;
 /// Operator precedences
 ///
 /// This corresponds to the precedence specified by the parser grammar.
+/// This data type must therefore be kept in sync with the file
+/// `lang/parser/src/grammar/cst.lalrpop`.
 #[derive(PartialOrd, Ord, PartialEq, Eq, Copy, Clone)]
 pub enum Precedence {
     Exp,
     NonLet,
     Ops,
-    App,
-    Holes,
     Atom,
 }
 
@@ -266,8 +266,6 @@ mod test {
         use super::Precedence::*;
         assert!(Exp < NonLet);
         assert!(NonLet < Ops);
-        assert!(Ops < App);
-        assert!(App < Holes);
-        assert!(Holes < Atom);
+        assert!(Ops < Atom);
     }
 }
