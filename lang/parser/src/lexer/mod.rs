@@ -117,7 +117,7 @@ pub enum Token {
     //
     #[regex(r"0|[1-9][0-9]*", |lex| BigUint::parse_bytes(lex.slice().as_ref(), 10).unwrap())]
     NumLit(BigUint),
-    /// The regexp is from `https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5`
+    /// The regexp is from <https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5>
     /// We do not allow multi line strings.
     #[regex(r###""([^"\\]|\\.)*""###, |lex| {
         let slice = lex.slice();
