@@ -126,7 +126,7 @@ impl Print for LocalLet {
             .append(SEMICOLON)
             .group();
 
-        let body = body.print(cfg, alloc);
+        let body = body.print_prec(cfg, alloc, Precedence::Exp);
 
         head.append(alloc.hardline()).append(body)
     }

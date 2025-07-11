@@ -89,7 +89,7 @@ impl Print for Anno {
 
         exp.print_prec(cfg, alloc, Precedence::Ops)
             .append(COLON)
-            .append(typ.print(cfg, alloc))
+            .append(typ.print_prec(cfg, alloc, Precedence::Exp))
             .parens_if(prec > Precedence::NonLet)
     }
 }
