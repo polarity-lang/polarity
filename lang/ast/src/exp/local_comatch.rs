@@ -6,6 +6,7 @@ use printer::{
     theme::ThemeExt,
     tokens::{ABSURD, COMATCH, FAT_ARROW},
     util::BackslashExt,
+    util::ParensIfExt,
 };
 
 use crate::{
@@ -108,11 +109,11 @@ impl Print for LocalComatch {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: Precedence,
+        prec: Precedence,
     ) -> Builder<'a> {
         let LocalComatch { name, is_lambda_sugar, cases, .. } = self;
         if *is_lambda_sugar && cfg.print_lambda_sugar {
-            print_lambda_sugar(cases, cfg, alloc)
+            print_lambda_sugar(cases, cfg, alloc).parens_if(prec > Precedence::NonLet)
         } else {
             alloc
                 .keyword(COMATCH)

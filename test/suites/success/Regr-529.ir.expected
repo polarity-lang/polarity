@@ -1,0 +1,1 @@
+let foo { comatch { .ap(x1) => x1 }.ap(<ZST>) }

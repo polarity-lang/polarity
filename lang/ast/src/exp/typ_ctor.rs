@@ -1,7 +1,7 @@
 use derivative::Derivative;
 use miette_util::codespan::Span;
 use pretty::DocAllocator;
-use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt};
+use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, util::ParensIfExt};
 
 use crate::{
     ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
@@ -100,10 +100,12 @@ impl Print for TypCtor {
         match is_bin_op {
             Some(op) if cfg.print_function_sugar => {
                 assert!(args.len() == 2);
-                let arg = args.args[0].print_prec(cfg, alloc, 1);
-                let res = args.args[1].print_prec(cfg, alloc, 0);
+                // TODO: Currently this only works for right associative operators at the same precedence level (e.g. ->).
+                // We still need to properly implement precedence for user-defined operators.
+                let arg = args.args[0].print_prec(cfg, alloc, Precedence::Ops);
+                let res = args.args[1].print_prec(cfg, alloc, Precedence::Exp);
                 let fun = arg.append(alloc.space()).append(op).append(alloc.space()).append(res);
-                if prec == 0 { fun } else { fun.parens() }
+                fun.parens_if(prec > Precedence::NonLet)
             }
             _ => alloc
                 .typ(&name.id)
