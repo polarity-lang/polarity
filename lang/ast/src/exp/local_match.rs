@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    Substitution, Zonk, ZonkError,
     ctx::{LevelCtx, values::TypeCtx},
     rename::{Rename, RenameCtx},
 };
@@ -153,5 +153,24 @@ impl Rename for LocalMatch {
         self.motive.rename_in_ctx(ctx);
         self.ret_typ.rename_in_ctx(ctx);
         self.cases.rename_in_ctx(ctx);
+    }
+}
+
+impl FreeVars for LocalMatch {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
+        let LocalMatch {
+            span: _,
+            ctx: _,
+            name: _,
+            on_exp,
+            motive,
+            ret_typ: _,
+            cases,
+            inferred_type: _,
+        } = self;
+
+        on_exp.free_vars_mut(ctx, cutoff, fvs);
+        motive.free_vars_mut(ctx, cutoff, fvs);
+        cases.free_vars_mut(ctx, cutoff, fvs);
     }
 }

@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    Substitution, Zonk, ZonkError,
     ctx::{
         LevelCtx,
         values::{Binder, TypeCtx},
@@ -264,5 +264,22 @@ impl Rename for Hole {
         self.inferred_ctx = None;
         self.inferred_type.rename_in_ctx(ctx);
         self.args.rename_in_ctx(ctx);
+    }
+}
+
+impl FreeVars for Hole {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
+        let Hole {
+            span: _,
+            kind: _,
+            metavar: _,
+            inferred_type: _,
+            inferred_ctx: _,
+            args,
+            solution,
+        } = self;
+
+        args.free_vars_mut(ctx, cutoff, fvs);
+        solution.free_vars_mut(ctx, cutoff, fvs);
     }
 }

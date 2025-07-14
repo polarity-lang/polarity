@@ -9,7 +9,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::{BindContext, LevelCtx};
 use crate::rename::{Rename, RenameCtx};
-use crate::{ContainsMetaVars, Zonk, ZonkError};
+use crate::{ContainsMetaVars, FreeVars, Zonk, ZonkError};
 
 use super::HasType;
 use super::subst::{Substitutable, Substitution};
@@ -266,6 +266,23 @@ impl Rename for Exp {
     }
 }
 
+impl FreeVars for Exp {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<Lvl>) {
+        match self {
+            Exp::Variable(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::TypCtor(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::Call(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::DotCall(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::Anno(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::TypeUniv(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::LocalMatch(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::LocalComatch(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::Hole(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::LocalLet(e) => e.free_vars_mut(ctx, cutoff, fvs),
+        }
+    }
+}
+
 // Motive
 //
 //
@@ -359,5 +376,13 @@ impl Rename for Motive {
         ctx.bind_single(&self.param, |new_ctx| {
             self.ret_typ.rename_in_ctx(new_ctx);
         })
+    }
+}
+
+impl FreeVars for Motive {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<Lvl>) {
+        let Motive { span: _, param: _, ret_typ } = self;
+
+        ret_typ.free_vars_mut(ctx, cutoff + 1, fvs)
     }
 }

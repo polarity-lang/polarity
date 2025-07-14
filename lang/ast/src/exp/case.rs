@@ -9,8 +9,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Substitutable, Substitution, Zonk,
-    ZonkError,
+    ContainsMetaVars, FreeVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Substitutable,
+    Substitution, Zonk, ZonkError,
     ctx::{BindContext, LevelCtx},
     rename::{Rename, RenameCtx},
 };
@@ -187,5 +187,13 @@ impl Rename for Case {
         ctx.bind_iter(self.pattern.params.params.iter(), |new_ctx| {
             self.body.rename_in_ctx(new_ctx);
         })
+    }
+}
+
+impl FreeVars for Case {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
+        let Case { span: _, pattern: _, body } = self;
+
+        body.free_vars_mut(ctx, cutoff + 1, fvs)
     }
 }

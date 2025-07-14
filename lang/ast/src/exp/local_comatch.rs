@@ -10,8 +10,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    Substitution, Zonk, ZonkError,
     ctx::{LevelCtx, values::TypeCtx},
     rename::{Rename, RenameCtx},
 };
@@ -156,5 +156,14 @@ impl Rename for LocalComatch {
         self.ctx = None;
         self.inferred_type = None;
         self.cases.rename_in_ctx(ctx);
+    }
+}
+
+impl FreeVars for LocalComatch {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
+        let LocalComatch { span: _, ctx: _, name: _, is_lambda_sugar: _, cases, inferred_type: _ } =
+            self;
+
+        cases.free_vars_mut(ctx, cutoff, fvs)
     }
 }

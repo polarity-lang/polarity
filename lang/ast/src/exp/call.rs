@@ -3,8 +3,8 @@ use miette_util::codespan::Span;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt};
 
 use crate::{
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    Substitution, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -130,5 +130,13 @@ impl Rename for Call {
     fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
         self.args.rename_in_ctx(ctx);
         self.inferred_type.rename_in_ctx(ctx);
+    }
+}
+
+impl FreeVars for Call {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
+        let Call { span: _, kind: _, name: _, args, inferred_type: _ } = self;
+
+        args.free_vars_mut(ctx, cutoff, fvs)
     }
 }
