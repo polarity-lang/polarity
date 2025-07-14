@@ -317,7 +317,7 @@ impl CollectInfo for Exp {
             Exp::Anno(e) => e.collect_info(db, collector),
             Exp::LocalMatch(e) => e.collect_info(db, collector),
             Exp::LocalComatch(e) => e.collect_info(db, collector),
-            Exp::LocalLet(_) => todo!(),
+            Exp::LocalLet(e) => e.collect_info(db, collector),
         }
     }
 }
@@ -649,6 +649,23 @@ impl CollectInfo for Case {
         }
         pattern.collect_info(db, collector);
         body.collect_info(db, collector)
+    }
+}
+
+impl CollectInfo for LocalLet {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+        let LocalLet { span, name, typ, bound, body, inferred_type } = self;
+        typ.collect_info(db, collector);
+        bound.collect_info(db, collector);
+        body.collect_info(db, collector);
+        if let Some(typ) = inferred_type {
+            // Add info
+            let typ = typ.print_to_string(None);
+            let header = MarkedString::String(format!("Local let-binding: `{name}`"));
+            let typ = string_to_language_string(typ);
+            let hover_content = HoverContents::Array(vec![header, typ]);
+            collector.add_hover(*span, hover_content)
+        }
     }
 }
 
