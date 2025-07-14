@@ -124,10 +124,9 @@ impl Rename for Anno {
 }
 
 impl FreeVars for Anno {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         let Anno { span: _, exp, typ, normalized_type: _ } = self;
-        let mut fvs = exp.free_vars(ctx, cutoff);
-        fvs.extend(typ.free_vars(ctx, cutoff));
-        fvs
+        exp.free_vars_mut(ctx, cutoff, fvs);
+        typ.free_vars_mut(ctx, cutoff, fvs);
     }
 }

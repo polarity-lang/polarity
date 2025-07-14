@@ -268,7 +268,7 @@ impl Rename for Hole {
 }
 
 impl FreeVars for Hole {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         let Hole {
             span: _,
             kind: _,
@@ -279,8 +279,7 @@ impl FreeVars for Hole {
             solution,
         } = self;
 
-        let mut fvs = args.free_vars(ctx, cutoff);
-        fvs.extend(solution.free_vars(ctx, cutoff));
-        fvs
+        args.free_vars_mut(ctx, cutoff, fvs);
+        solution.free_vars_mut(ctx, cutoff, fvs);
     }
 }

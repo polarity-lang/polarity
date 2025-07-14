@@ -173,11 +173,11 @@ impl Rename for Arg {
 }
 
 impl FreeVars for Arg {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         match self {
-            Arg::UnnamedArg { arg, erased: _ } => arg.free_vars(ctx, cutoff),
-            Arg::NamedArg { name: _, arg, erased: _ } => arg.free_vars(ctx, cutoff),
-            Arg::InsertedImplicitArg { hole, erased: _ } => hole.free_vars(ctx, cutoff),
+            Arg::UnnamedArg { arg, erased: _ } => arg.free_vars_mut(ctx, cutoff, fvs),
+            Arg::NamedArg { name: _, arg, erased: _ } => arg.free_vars_mut(ctx, cutoff, fvs),
+            Arg::InsertedImplicitArg { hole, erased: _ } => hole.free_vars_mut(ctx, cutoff, fvs),
         }
     }
 }
@@ -292,10 +292,11 @@ impl Rename for Args {
 }
 
 impl FreeVars for Args {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         let Args { args } = self;
-
-        args.iter().flat_map(|arg| arg.free_vars(ctx, cutoff)).collect()
+        for arg in args {
+            arg.free_vars_mut(ctx, cutoff, fvs);
+        }
     }
 }
 

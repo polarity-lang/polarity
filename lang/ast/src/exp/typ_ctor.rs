@@ -144,9 +144,8 @@ impl Rename for TypCtor {
 }
 
 impl FreeVars for TypCtor {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         let TypCtor { span: _, name: _, args, is_bin_op: _ } = self;
-
-        args.free_vars(ctx, cutoff)
+        args.free_vars_mut(ctx, cutoff, fvs)
     }
 }

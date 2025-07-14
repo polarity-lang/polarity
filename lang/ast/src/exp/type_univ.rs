@@ -100,7 +100,11 @@ impl Rename for TypeUniv {
 }
 
 impl FreeVars for TypeUniv {
-    fn free_vars(&self, _ctx: &LevelCtx, _cutoff: usize) -> crate::HashSet<crate::Lvl> {
-        crate::HashSet::default()
+    fn free_vars_mut(
+        &self,
+        _ctx: &LevelCtx,
+        _cutoff: usize,
+        _fvs: &mut crate::HashSet<crate::Lvl>,
+    ) {
     }
 }

@@ -191,9 +191,9 @@ impl Rename for Case {
 }
 
 impl FreeVars for Case {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         let Case { span: _, pattern: _, body } = self;
 
-        body.free_vars(ctx, cutoff + 1)
+        body.free_vars_mut(ctx, cutoff + 1, fvs)
     }
 }

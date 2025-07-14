@@ -267,18 +267,18 @@ impl Rename for Exp {
 }
 
 impl FreeVars for Exp {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<Lvl>) {
         match self {
-            Exp::Variable(e) => e.free_vars(ctx, cutoff),
-            Exp::TypCtor(e) => e.free_vars(ctx, cutoff),
-            Exp::Call(e) => e.free_vars(ctx, cutoff),
-            Exp::DotCall(e) => e.free_vars(ctx, cutoff),
-            Exp::Anno(e) => e.free_vars(ctx, cutoff),
-            Exp::TypeUniv(e) => e.free_vars(ctx, cutoff),
-            Exp::LocalMatch(e) => e.free_vars(ctx, cutoff),
-            Exp::LocalComatch(e) => e.free_vars(ctx, cutoff),
-            Exp::Hole(e) => e.free_vars(ctx, cutoff),
-            Exp::LocalLet(e) => e.free_vars(ctx, cutoff),
+            Exp::Variable(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::TypCtor(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::Call(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::DotCall(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::Anno(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::TypeUniv(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::LocalMatch(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::LocalComatch(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::Hole(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::LocalLet(e) => e.free_vars_mut(ctx, cutoff, fvs),
         }
     }
 }
@@ -380,9 +380,9 @@ impl Rename for Motive {
 }
 
 impl FreeVars for Motive {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<Lvl>) {
         let Motive { span: _, param: _, ret_typ } = self;
 
-        ret_typ.free_vars(ctx, cutoff + 1)
+        ret_typ.free_vars_mut(ctx, cutoff + 1, fvs)
     }
 }

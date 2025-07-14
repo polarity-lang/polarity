@@ -129,14 +129,12 @@ impl Rename for Variable {
 }
 
 impl FreeVars for Variable {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         let Variable { span: _, idx, name: _, inferred_type: _ } = self;
 
-        if idx.fst < cutoff {
-            crate::HashSet::default()
-        } else {
+        if idx.fst >= cutoff {
             let idx = Idx { fst: idx.fst - cutoff, snd: idx.snd };
-            crate::HashSet::from_iter([ctx.idx_to_lvl(idx)])
+            fvs.extend([ctx.idx_to_lvl(idx)]);
         }
     }
 }

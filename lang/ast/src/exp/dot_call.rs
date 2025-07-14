@@ -158,9 +158,9 @@ impl Rename for DotCall {
 }
 
 impl FreeVars for DotCall {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         let DotCall { span: _, kind: _, exp, name: _, args, inferred_type: _ } = self;
-
-        exp.free_vars(ctx, cutoff).union(&args.free_vars(ctx, cutoff)).cloned().collect()
+        exp.free_vars_mut(ctx, cutoff, fvs);
+        args.free_vars_mut(ctx, cutoff, fvs);
     }
 }

@@ -157,7 +157,7 @@ impl Rename for LocalMatch {
 }
 
 impl FreeVars for LocalMatch {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         let LocalMatch {
             span: _,
             ctx: _,
@@ -169,9 +169,8 @@ impl FreeVars for LocalMatch {
             inferred_type: _,
         } = self;
 
-        let mut fvs = on_exp.free_vars(ctx, cutoff);
-        fvs.extend(motive.free_vars(ctx, cutoff));
-        fvs.extend(cases.free_vars(ctx, cutoff));
-        fvs
+        on_exp.free_vars_mut(ctx, cutoff, fvs);
+        motive.free_vars_mut(ctx, cutoff, fvs);
+        cases.free_vars_mut(ctx, cutoff, fvs);
     }
 }

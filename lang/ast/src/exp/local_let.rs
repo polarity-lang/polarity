@@ -177,11 +177,10 @@ impl From<LocalLet> for Exp {
 }
 
 impl FreeVars for LocalLet {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         let LocalLet { span: _, name: _, typ, bound, body, inferred_type: _ } = self;
-        let mut fvs = bound.free_vars(ctx, cutoff);
-        fvs.extend(typ.free_vars(ctx, cutoff));
-        fvs.extend(body.free_vars(ctx, cutoff + 1));
-        fvs
+        bound.free_vars_mut(ctx, cutoff, fvs);
+        typ.free_vars_mut(ctx, cutoff, fvs);
+        body.free_vars_mut(ctx, cutoff + 1, fvs);
     }
 }

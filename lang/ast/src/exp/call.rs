@@ -134,9 +134,9 @@ impl Rename for Call {
 }
 
 impl FreeVars for Call {
-    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         let Call { span: _, kind: _, name: _, args, inferred_type: _ } = self;
 
-        args.free_vars(ctx, cutoff)
+        args.free_vars_mut(ctx, cutoff, fvs)
     }
 }
