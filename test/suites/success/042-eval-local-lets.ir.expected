@@ -1,0 +1,12 @@
+def .add(y) {
+    Z => y,
+    S(x') => S(x'.add(y)),
+}
+
+let two_plus_three {
+    let x := S(S(Z));
+    let y := S(S(S(Z)));
+    x.add(y)
+}
+
+let two_plus_three_equals_five { Refl(S(S(S(S(S(Z)))))) }
