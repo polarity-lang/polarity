@@ -96,7 +96,7 @@ impl FV for Exp {
             Exp::Hole(hole) => hole.free_vars_closure(lvl_ctx, type_ctx),
             Exp::TypeUniv(_) => HashSet::default(),
             Exp::LocalMatch(local_match) => local_match.free_vars_closure(lvl_ctx, type_ctx),
-            Exp::LocalLet(_) => todo!(),
+            Exp::LocalLet(local_let) => local_let.free_vars_closure(lvl_ctx, type_ctx),
         }
     }
 }
@@ -159,6 +159,18 @@ impl FV for DotCall {
 impl FV for TypCtor {
     fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
         self.args.free_vars_closure(lvl_ctx, type_ctx)
+    }
+}
+
+impl FV for LocalLet {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        let LocalLet { span: _, name, typ, bound, body, inferred_type: _ } = self;
+        let mut fvs = typ.free_vars_closure(lvl_ctx, type_ctx);
+        fvs.extend(bound.free_vars_closure(lvl_ctx, type_ctx));
+        lvl_ctx.bind_iter([name.clone()].into_iter(), |ctx| {
+            fvs.extend(body.free_vars_closure(ctx, type_ctx));
+        });
+        fvs
     }
 }
 
