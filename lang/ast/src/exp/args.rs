@@ -7,8 +7,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    Substitution, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -172,6 +172,16 @@ impl Rename for Arg {
     }
 }
 
+impl FreeVars for Arg {
+    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+        match self {
+            Arg::UnnamedArg { arg, erased: _ } => arg.free_vars(ctx, cutoff),
+            Arg::NamedArg { name: _, arg, erased: _ } => arg.free_vars(ctx, cutoff),
+            Arg::InsertedImplicitArg { hole, erased: _ } => hole.free_vars(ctx, cutoff),
+        }
+    }
+}
+
 // Args
 //
 //
@@ -278,6 +288,14 @@ impl ContainsMetaVars for Args {
 impl Rename for Args {
     fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
         self.args.rename_in_ctx(ctx);
+    }
+}
+
+impl FreeVars for Args {
+    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+        let Args { args } = self;
+
+        args.iter().flat_map(|arg| arg.free_vars(ctx, cutoff)).collect()
     }
 }
 

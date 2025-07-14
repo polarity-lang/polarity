@@ -4,8 +4,8 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, util::ParensIfExt};
 
 use crate::{
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    Substitution, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -140,5 +140,13 @@ impl ContainsMetaVars for TypCtor {
 impl Rename for TypCtor {
     fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
         self.args.rename_in_ctx(ctx);
+    }
+}
+
+impl FreeVars for TypCtor {
+    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+        let TypCtor { span: _, name: _, args, is_bin_op: _ } = self;
+
+        args.free_vars(ctx, cutoff)
     }
 }

@@ -4,8 +4,8 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::DOT};
 
 use crate::{
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    Substitution, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -154,5 +154,13 @@ impl Rename for DotCall {
         self.exp.rename_in_ctx(ctx);
         self.args.rename_in_ctx(ctx);
         self.inferred_type.rename_in_ctx(ctx);
+    }
+}
+
+impl FreeVars for DotCall {
+    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+        let DotCall { span: _, kind: _, exp, name: _, args, inferred_type: _ } = self;
+
+        exp.free_vars(ctx, cutoff).union(&args.free_vars(ctx, cutoff)).cloned().collect()
     }
 }

@@ -4,8 +4,8 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ContainsMetaVars, HasSpan, HasType, Shift, ShiftRange, Substitutable, Substitution, VarBind,
-    Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Substitutable, Substitution,
+    VarBind, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -125,5 +125,17 @@ impl Rename for Variable {
         };
         self.name = VarBound::from_string(&name);
         self.inferred_type.rename_in_ctx(ctx);
+    }
+}
+
+impl FreeVars for Variable {
+    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+        let Variable { span: _, idx, name: _, inferred_type: _ } = self;
+
+        if idx.fst < cutoff {
+            crate::HashSet::default()
+        } else {
+            crate::HashSet::from_iter([ctx.idx_to_lvl(*idx)])
+        }
     }
 }

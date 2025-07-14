@@ -1,6 +1,6 @@
 use crate::{
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable, Substitution,
-    Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    Substitution, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -120,5 +120,14 @@ impl Rename for Anno {
         self.exp.rename_in_ctx(ctx);
         self.typ.rename_in_ctx(ctx);
         self.normalized_type.rename_in_ctx(ctx);
+    }
+}
+
+impl FreeVars for Anno {
+    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+        let Anno { span: _, exp, typ, normalized_type: _ } = self;
+        let mut fvs = exp.free_vars(ctx, cutoff);
+        fvs.extend(typ.free_vars(ctx, cutoff));
+        fvs
     }
 }

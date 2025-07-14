@@ -8,8 +8,10 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, HasSpan, HasType, Occurs, Shift, ShiftRangeExt, Substitutable, Zonk,
-    ctx::BindContext, rename::Rename,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRangeExt, Substitutable,
+    Zonk,
+    ctx::{BindContext, LevelCtx},
+    rename::Rename,
 };
 
 use super::{Exp, VarBind};
@@ -171,5 +173,15 @@ impl Rename for LocalLet {
 impl From<LocalLet> for Exp {
     fn from(val: LocalLet) -> Self {
         Exp::LocalLet(val)
+    }
+}
+
+impl FreeVars for LocalLet {
+    fn free_vars(&self, ctx: &LevelCtx, cutoff: usize) -> crate::HashSet<crate::Lvl> {
+        let LocalLet { span: _, name: _, typ, bound, body, inferred_type: _ } = self;
+        let mut fvs = bound.free_vars(ctx, cutoff);
+        fvs.extend(typ.free_vars(ctx, cutoff));
+        fvs.extend(body.free_vars(ctx, cutoff + 1));
+        fvs
     }
 }
