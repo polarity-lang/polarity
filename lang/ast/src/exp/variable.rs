@@ -135,7 +135,8 @@ impl FreeVars for Variable {
         if idx.fst < cutoff {
             crate::HashSet::default()
         } else {
-            crate::HashSet::from_iter([ctx.idx_to_lvl(*idx)])
+            let idx = Idx { fst: idx.fst - cutoff, snd: idx.snd };
+            crate::HashSet::from_iter([ctx.idx_to_lvl(idx)])
         }
     }
 }
