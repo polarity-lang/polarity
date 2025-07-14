@@ -1,3 +1,4 @@
+use ast::FreeVars;
 use parser::cst;
 
 use crate::{Ctx, LoweringResult, lower::Lower};
@@ -9,12 +10,16 @@ impl Lower for cst::exp::LocalComatch {
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::LocalComatch { span, name, is_lambda_sugar, cases } = self;
+        let cases = cases.lower(ctx)?;
+        let fvs = cases.free_vars(&ctx.binders);
+        let closure = ast::Closure::identity(&ctx.binders, &fvs);
         Ok(ast::LocalComatch {
             span: Some(*span),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
+            closure,
             is_lambda_sugar: *is_lambda_sugar,
-            cases: cases.lower(ctx)?,
+            cases,
             inferred_type: None,
         }
         .into())

@@ -2,6 +2,7 @@
 //!
 //! Tracks locally bound variables
 
+use derivative::Derivative;
 use pretty::DocAllocator;
 use printer::Print;
 
@@ -25,8 +26,10 @@ impl TypeCtx {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Derivative)]
+#[derivative(Eq, PartialEq, Hash)]
 pub struct Binder<T> {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub name: VarBind,
     pub content: T,
 }

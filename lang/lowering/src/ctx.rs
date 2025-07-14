@@ -18,7 +18,7 @@ pub struct Ctx {
     /// Tracking local binder names
     ///
     /// Used to convert names to De-Bruijn indices
-    binders: LevelCtx,
+    pub binders: LevelCtx,
     /// Metadata for top-level names
     pub symbol_table: SymbolTable,
     /// Counter for unique label ids

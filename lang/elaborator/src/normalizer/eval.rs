@@ -442,11 +442,12 @@ impl Eval for LocalComatch {
     type Val = Box<Val>;
 
     fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
-        let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
+        let LocalComatch { span, name, closure, is_lambda_sugar, cases, .. } = self;
         Ok(Box::new(
             val::LocalComatch {
                 span: *span,
                 name: name.clone(),
+                closure: closure.clone(),
                 is_lambda_sugar: *is_lambda_sugar,
                 cases: cases.eval(info_table, env)?,
             }

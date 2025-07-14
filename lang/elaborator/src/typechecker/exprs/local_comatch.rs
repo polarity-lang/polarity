@@ -18,7 +18,7 @@ use crate::result::TypeError;
 
 impl CheckInfer for LocalComatch {
     fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
-        let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
+        let LocalComatch { span, name, closure, is_lambda_sugar, cases, .. } = self;
         // The expected type that we check against should be a type constructor applied to
         // arguments.
         let expected_type_app: TypCtor = t.expect_typ_app()?.infer(ctx)?;
@@ -43,6 +43,7 @@ impl CheckInfer for LocalComatch {
             span: *span,
             ctx: Some(ctx.vars.clone()),
             name: name.clone(),
+            closure: closure.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             cases,
             inferred_type: Some(expected_type_app),

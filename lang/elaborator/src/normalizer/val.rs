@@ -270,6 +270,7 @@ impl ReadBack for TypeUniv {
 pub struct LocalComatch {
     pub span: Option<Span>,
     pub name: ast::Label,
+    pub closure: ast::Closure,
     pub is_lambda_sugar: bool,
     pub cases: Vec<Case>,
 }
@@ -282,7 +283,8 @@ impl Shift for LocalComatch {
 
 impl Print for LocalComatch {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let LocalComatch { span: _, name, is_lambda_sugar: _, cases } = self;
+        // TODO: We probably want to print the closure here
+        let LocalComatch { span: _, name, closure: _, is_lambda_sugar: _, cases } = self;
         alloc
             .keyword(COMATCH)
             .append(alloc.space())
@@ -301,11 +303,12 @@ impl From<LocalComatch> for Val {
 impl ReadBack for LocalComatch {
     type Nf = ast::LocalComatch;
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
-        let LocalComatch { span, name, is_lambda_sugar, cases } = self;
+        let LocalComatch { span, name, closure, is_lambda_sugar, cases } = self;
         Ok(ast::LocalComatch {
             span: *span,
             ctx: None,
             name: name.clone(),
+            closure: closure.clone(),
             is_lambda_sugar: *is_lambda_sugar,
             cases: cases.read_back(info_table)?,
             inferred_type: None,
