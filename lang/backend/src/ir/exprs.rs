@@ -16,6 +16,7 @@ pub enum Exp {
     DefCall(DotCall),
     LocalMatch(LocalMatch),
     LocalComatch(LocalComatch),
+    LocalLet(LocalLet),
     Panic(Panic),
     /// Zero-Sized Term
     /// This term has no runtime effect and is generated as a placeholder whenever types cannot be erased by the current implementation.
@@ -38,6 +39,7 @@ impl Print for Exp {
             Exp::DefCall(d) => d.print_prec(cfg, alloc, prec),
             Exp::LocalMatch(m) => m.print_prec(cfg, alloc, prec),
             Exp::LocalComatch(m) => m.print_prec(cfg, alloc, prec),
+            Exp::LocalLet(l) => l.print_prec(cfg, alloc, prec),
             Exp::Panic(p) => p.print_prec(cfg, alloc, prec),
             Exp::ZST => alloc.keyword("<ZST>"),
         }
@@ -158,6 +160,35 @@ impl Print for LocalComatch {
     ) -> Builder<'a> {
         let LocalComatch { cases, .. } = self;
         alloc.keyword(COMATCH).append(alloc.space()).append(print_cases(cases, cfg, alloc))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct LocalLet {
+    pub name: String,
+    pub bound: Box<Exp>,
+    pub body: Box<Exp>,
+}
+
+impl Print for LocalLet {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let LocalLet { name, bound, body } = self;
+        alloc
+            .keyword(LET)
+            .append(alloc.space())
+            .append(alloc.text(name))
+            .append(alloc.space())
+            .append(alloc.text(COLONEQ))
+            .append(alloc.space())
+            .append(bound.print(cfg, alloc))
+            .append(alloc.keyword(SEMICOLON))
+            .append(alloc.hardline())
+            .append(body.print(cfg, alloc))
     }
 }
 
