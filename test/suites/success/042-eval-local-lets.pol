@@ -1,0 +1,24 @@
+data Nat {
+    Z,
+    S(x: Nat)
+}
+
+data Eq(a: Type, x y: a) {
+    Refl(a: Type, x: a): Eq(a, x, x),
+}
+
+def Nat.add(y: Nat): Nat {
+    Z => y,
+    S(x') => S(x'.add(y))
+}
+
+#[transparent]
+let two_plus_three: Nat {
+    let x: Nat := 2;
+    let y: Nat := 3;
+    x.add(y)
+}
+
+let two_plus_three_equals_five: Eq(Nat, two_plus_three, 5) {
+    Refl(Nat, 5)
+}
