@@ -4,7 +4,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt};
 
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    Substitution, WHNF, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -138,5 +138,17 @@ impl FreeVars for Call {
         let Call { span: _, kind: _, name: _, args, inferred_type: _ } = self;
 
         args.free_vars_mut(ctx, cutoff, fvs)
+    }
+}
+
+impl WHNF for Call {
+    type Target = Exp;
+
+    fn whnf(&self, _ctx: super::Closure) -> (Self::Target, super::Closure) {
+        todo!()
+    }
+
+    fn inline(&mut self, _ctx: super::Closure) {
+        todo!()
     }
 }

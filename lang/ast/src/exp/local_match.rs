@@ -9,7 +9,7 @@ use printer::{
 
 use crate::{
     Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange,
-    Substitutable, Substitution, Zonk, ZonkError,
+    Substitutable, Substitution, WHNF, Zonk, ZonkError,
     ctx::{LevelCtx, values::TypeCtx},
     rename::{Rename, RenameCtx},
 };
@@ -196,5 +196,17 @@ impl FreeVars for LocalMatch {
         closure.free_vars_mut(ctx, cutoff, fvs);
         motive.free_vars_mut(ctx, cutoff, fvs);
         cases.free_vars_mut(ctx, cutoff, fvs);
+    }
+}
+
+impl WHNF for LocalMatch {
+    type Target = Exp;
+
+    fn whnf(&self, _ctx: super::Closure) -> (Self::Target, super::Closure) {
+        todo!()
+    }
+
+    fn inline(&mut self, _ctx: super::Closure) {
+        todo!()
     }
 }

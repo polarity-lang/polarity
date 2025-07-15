@@ -9,11 +9,14 @@ use printer::{
     util::ParensIfExt,
 };
 
-use crate::ctx::{LevelCtx, values::TypeCtx};
 use crate::rename::{Rename, RenameCtx};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
     Substitution, Zonk, ZonkError,
+};
+use crate::{
+    WHNF,
+    ctx::{LevelCtx, values::TypeCtx},
 };
 
 use super::{Case, Closure, Exp, Label, MetaVar, TypCtor, print_cases};
@@ -204,5 +207,17 @@ impl FreeVars for LocalComatch {
 
         closure.free_vars_mut(ctx, cutoff, fvs);
         cases.free_vars_mut(ctx, cutoff, fvs);
+    }
+}
+
+impl WHNF for LocalComatch {
+    type Target = Exp;
+
+    fn whnf(&self, _ctx: Closure) -> (Self::Target, Closure) {
+        todo!()
+    }
+
+    fn inline(&mut self, _ctx: Closure) {
+        todo!()
     }
 }

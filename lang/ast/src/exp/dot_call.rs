@@ -5,7 +5,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, toke
 
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    Substitution, WHNF, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -162,5 +162,17 @@ impl FreeVars for DotCall {
         let DotCall { span: _, kind: _, exp, name: _, args, inferred_type: _ } = self;
         exp.free_vars_mut(ctx, cutoff, fvs);
         args.free_vars_mut(ctx, cutoff, fvs);
+    }
+}
+
+impl WHNF for DotCall {
+    type Target = Exp;
+
+    fn whnf(&self, _ctx: super::Closure) -> (Self::Target, super::Closure) {
+        todo!()
+    }
+
+    fn inline(&mut self, _ctx: super::Closure) {
+        todo!()
     }
 }

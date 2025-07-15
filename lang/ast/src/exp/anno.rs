@@ -1,6 +1,6 @@
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    Substitution, WHNF, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -128,5 +128,17 @@ impl FreeVars for Anno {
         let Anno { span: _, exp, typ, normalized_type: _ } = self;
         exp.free_vars_mut(ctx, cutoff, fvs);
         typ.free_vars_mut(ctx, cutoff, fvs);
+    }
+}
+
+impl WHNF for Anno {
+    type Target = Exp;
+
+    fn whnf(&self, _ctx: super::Closure) -> (Self::Target, super::Closure) {
+        todo!()
+    }
+
+    fn inline(&mut self, _ctx: super::Closure) {
+        todo!()
     }
 }

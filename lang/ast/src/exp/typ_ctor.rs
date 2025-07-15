@@ -5,7 +5,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, util
 
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    Substitution, WHNF, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -147,5 +147,17 @@ impl FreeVars for TypCtor {
     fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         let TypCtor { span: _, name: _, args, is_bin_op: _ } = self;
         args.free_vars_mut(ctx, cutoff, fvs)
+    }
+}
+
+impl WHNF for TypCtor {
+    type Target = Exp;
+
+    fn whnf(&self, _ctx: super::Closure) -> (Self::Target, super::Closure) {
+        todo!()
+    }
+
+    fn inline(&mut self, _ctx: super::Closure) {
+        todo!()
     }
 }
