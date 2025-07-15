@@ -9,7 +9,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::{BindContext, LevelCtx};
 use crate::rename::{Rename, RenameCtx};
-use crate::{ContainsMetaVars, FreeVars, WHNF, Zonk, ZonkError};
+use crate::{ContainsMetaVars, FreeVars, MachineState, WHNF, WHNFResult, Zonk, ZonkError};
 
 use super::HasType;
 use super::subst::{Substitutable, Substitution};
@@ -391,7 +391,7 @@ impl FreeVars for Motive {
 
 impl WHNF for Exp {
     type Target = Exp;
-    fn whnf(&self, ctx: Closure) -> (Self::Target, Closure) {
+    fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
         match self {
             Exp::Variable(variable) => variable.whnf(ctx),
             Exp::TypCtor(typ_ctor) => typ_ctor.whnf(ctx),

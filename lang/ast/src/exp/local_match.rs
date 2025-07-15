@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    Call, CallKind, Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift,
-    ShiftRange, Substitutable, Substitution, WHNF, Zonk, ZonkError,
+    Call, CallKind, Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, MachineState, Occurs,
+    Shift, ShiftRange, Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::{LevelCtx, values::TypeCtx},
     rename::{Rename, RenameCtx},
 };
@@ -202,8 +202,8 @@ impl FreeVars for LocalMatch {
 impl WHNF for LocalMatch {
     type Target = Exp;
 
-    fn whnf(&self, ctx: super::Closure) -> (Self::Target, super::Closure) {
-        let (on_exp, new_ctx) = self.on_exp.whnf(ctx);
+    fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
+        let (on_exp, new_ctx, _) = self.on_exp.whnf(ctx)?;
         match *on_exp {
             Exp::Call(Call { kind: CallKind::Constructor, args: _, name, .. }) => {
                 // Find the correct case
@@ -217,12 +217,18 @@ impl WHNF for LocalMatch {
                 // The `on_exp` could not be evaluated to a constructor call
                 let mut new_self: LocalMatch = self.clone();
                 new_self.on_exp = on_exp;
-                (new_self.into(), new_ctx)
+                Ok((new_self.into(), new_ctx, true))
             }
         }
     }
 
     fn inline(&mut self, _ctx: &super::Closure) {
         todo!()
+    }
+
+    fn whnf_inline(&self, ctx: Closure) -> crate::WHNFResult<Self::Target> {
+        let (mut e, ctx, _) = self.whnf(ctx)?;
+        e.inline(&ctx);
+        Ok(e)
     }
 }

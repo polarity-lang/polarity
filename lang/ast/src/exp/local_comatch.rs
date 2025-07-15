@@ -9,10 +9,13 @@ use printer::{
     util::ParensIfExt,
 };
 
-use crate::rename::{Rename, RenameCtx};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
     Substitution, Zonk, ZonkError,
+};
+use crate::{
+    MachineState, WHNFResult,
+    rename::{Rename, RenameCtx},
 };
 use crate::{
     WHNF,
@@ -213,7 +216,7 @@ impl FreeVars for LocalComatch {
 impl WHNF for LocalComatch {
     type Target = Exp;
 
-    fn whnf(&self, _ctx: Closure) -> (Self::Target, Closure) {
+    fn whnf(&self, _ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
         todo!()
     }
 

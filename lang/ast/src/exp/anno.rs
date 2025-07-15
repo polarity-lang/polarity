@@ -1,6 +1,6 @@
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, WHNF, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, MachineState, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -134,7 +134,7 @@ impl FreeVars for Anno {
 impl WHNF for Anno {
     type Target = Exp;
 
-    fn whnf(&self, _ctx: super::Closure) -> (Self::Target, super::Closure) {
+    fn whnf(&self, _ctx: super::Closure) -> WHNFResult<MachineState<Self::Target>> {
         todo!()
     }
 

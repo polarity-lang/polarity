@@ -3,8 +3,8 @@ use miette_util::codespan::Span;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, WHNF, Zonk, ZonkError,
+    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, MachineState, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -144,9 +144,9 @@ impl FreeVars for Call {
 impl WHNF for Call {
     type Target = Exp;
 
-    fn whnf(&self, ctx: super::Closure) -> (Self::Target, super::Closure) {
+    fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
         match self.kind {
-            CallKind::Constructor | CallKind::Codefinition => (self.clone().into(), ctx),
+            CallKind::Constructor | CallKind::Codefinition => Ok((self.clone().into(), ctx, false)),
             CallKind::LetBound => todo!("Needs global context to implement"),
         }
     }

@@ -10,7 +10,7 @@ pub trait WHNF {
     ///
     /// is the tuple
     /// - `(Pair(x,x), [x -> 2])`
-    fn whnf(&self, ctx: Closure) -> (Self::Target, Closure);
+    fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>>;
 
     fn inline(&mut self, ctx: &Closure);
 
@@ -21,23 +21,27 @@ pub trait WHNF {
     ///
     /// is the tuple
     /// - `Pair(2,2)`
-    fn whnf_inline(&self, ctx: Closure) -> Self::Target {
-        let (mut e, ctx) = self.whnf(ctx);
+    fn whnf_inline(&self, ctx: Closure) -> WHNFResult<Self::Target> {
+        let (mut e, ctx, _) = self.whnf(ctx)?;
         e.inline(&ctx);
-        e
+        Ok(e)
     }
 }
+
+pub type WHNFResult<T> = Result<T, String>;
+
+pub type MachineState<T> = (T, Closure, bool);
 
 impl<T: WHNF> WHNF for Option<T> {
     type Target = Option<T::Target>;
 
-    fn whnf(&self, ctx: Closure) -> (Self::Target, Closure) {
+    fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
         match self {
             Some(x) => {
-                let (whnf, ctx) = x.whnf(ctx);
-                (Some(whnf), ctx)
+                let (whnf, ctx, is_neutral) = x.whnf(ctx)?;
+                Ok((Some(whnf), ctx, is_neutral))
             }
-            None => (None, ctx),
+            None => Ok((None, ctx, false)),
         }
     }
 
@@ -51,9 +55,9 @@ impl<T: WHNF> WHNF for Option<T> {
 impl<T: WHNF> WHNF for Box<T> {
     type Target = Box<T::Target>;
 
-    fn whnf(&self, ctx: Closure) -> (Self::Target, Closure) {
-        let (whnf, ctx) = (**self).whnf(ctx);
-        (Box::new(whnf), ctx)
+    fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
+        let (whnf, ctx, is_neutral) = (**self).whnf(ctx)?;
+        Ok((Box::new(whnf), ctx, is_neutral))
     }
 
     fn inline(&mut self, ctx: &Closure) {
