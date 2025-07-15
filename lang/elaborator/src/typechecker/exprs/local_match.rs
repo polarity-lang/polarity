@@ -98,7 +98,7 @@ fn compute_motive(
 
 impl CheckInfer for LocalMatch {
     fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
-        let LocalMatch { span, name, on_exp, motive, cases, .. } = self;
+        let LocalMatch { span, name, closure, on_exp, motive, cases, .. } = self;
 
         // Compute the type of the expression we are pattern matching on.
         // This should always be a type constructor for a data type.
@@ -129,6 +129,7 @@ impl CheckInfer for LocalMatch {
             span: *span,
             ctx: Some(ctx.vars.clone()),
             name: name.clone(),
+            closure: closure.clone(),
             on_exp: on_exp_out,
             motive: motive_out,
             ret_typ: Some(Box::new(t.clone())),

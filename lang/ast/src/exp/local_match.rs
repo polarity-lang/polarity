@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, Zonk, ZonkError,
     ctx::{LevelCtx, values::TypeCtx},
     rename::{Rename, RenameCtx},
 };
@@ -24,6 +24,7 @@ pub struct LocalMatch {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: Option<TypeCtx>,
     pub name: Label,
+    pub closure: Closure,
     pub on_exp: Box<Exp>,
     pub motive: Option<Motive>,
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
@@ -83,6 +84,7 @@ impl Substitutable for LocalMatch {
             span: *span,
             ctx: None,
             name: name.clone(),
+            closure: self.closure.subst(ctx, by)?,
             on_exp: on_exp.subst(ctx, by)?,
             motive: motive.as_ref().map(|m| m.subst(ctx, by)).transpose()?,
             ret_typ: ret_typ.as_ref().map(|t| t.subst(ctx, by)).transpose()?,
@@ -119,12 +121,22 @@ impl Zonk for LocalMatch {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        let LocalMatch { span: _, ctx: _, name: _, on_exp, motive, ret_typ, cases, inferred_type } =
-            self;
+        let LocalMatch {
+            span: _,
+            ctx: _,
+            name: _,
+            closure,
+            on_exp,
+            motive,
+            ret_typ,
+            cases,
+            inferred_type,
+        } = self;
         on_exp.zonk(meta_vars)?;
         motive.zonk(meta_vars)?;
         ret_typ.zonk(meta_vars)?;
         inferred_type.zonk(meta_vars)?;
+        closure.zonk(meta_vars)?;
         for case in cases {
             case.zonk(meta_vars)?;
         }
@@ -134,10 +146,20 @@ impl Zonk for LocalMatch {
 
 impl ContainsMetaVars for LocalMatch {
     fn contains_metavars(&self) -> bool {
-        let LocalMatch { span: _, ctx: _, name: _, on_exp, motive, ret_typ, cases, inferred_type } =
-            self;
+        let LocalMatch {
+            span: _,
+            ctx: _,
+            name: _,
+            closure,
+            on_exp,
+            motive,
+            ret_typ,
+            cases,
+            inferred_type,
+        } = self;
 
         on_exp.contains_metavars()
+            || closure.contains_metavars()
             || motive.contains_metavars()
             || ret_typ.contains_metavars()
             || cases.contains_metavars()
@@ -162,6 +184,7 @@ impl FreeVars for LocalMatch {
             span: _,
             ctx: _,
             name: _,
+            closure,
             on_exp,
             motive,
             ret_typ: _,
@@ -170,6 +193,7 @@ impl FreeVars for LocalMatch {
         } = self;
 
         on_exp.free_vars_mut(ctx, cutoff, fvs);
+        closure.free_vars_mut(ctx, cutoff, fvs);
         motive.free_vars_mut(ctx, cutoff, fvs);
         cases.free_vars_mut(ctx, cutoff, fvs);
     }

@@ -405,13 +405,23 @@ impl Lift for LocalMatch {
     type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let LocalMatch { span, ctx: type_ctx, name, on_exp, motive, ret_typ, cases, inferred_type } =
-            self;
+        let LocalMatch {
+            span,
+            ctx: type_ctx,
+            name,
+            closure,
+            on_exp,
+            motive,
+            ret_typ,
+            cases,
+            inferred_type,
+        } = self;
         ctx.lift_match(
             span,
             &inferred_type.clone().unwrap(),
             &type_ctx.clone().unwrap(),
             name,
+            closure,
             on_exp,
             motive,
             ret_typ,
@@ -591,6 +601,7 @@ impl Ctx {
         inferred_type: &TypCtor,
         type_ctx: &TypeCtx,
         name: &Label,
+        closure: &Closure,
         on_exp: &Exp,
         motive: &Option<Motive>,
         ret_typ: &Option<Box<Exp>>,
@@ -603,6 +614,7 @@ impl Ctx {
                 inferred_type: None,
                 ctx: None,
                 name: name.clone(),
+                closure: closure.clone(),
                 on_exp: Box::new(on_exp.lift(self)),
                 motive: motive.lift(self),
                 ret_typ: None,

@@ -151,11 +151,14 @@ impl Zonk for LocalComatch {
             name: _,
             closure,
             is_lambda_sugar: _,
-            cases: _,
+            cases,
             inferred_type,
         } = self;
         closure.zonk(meta_vars)?;
         inferred_type.zonk(meta_vars)?;
+        for case in cases.iter_mut() {
+            case.zonk(meta_vars)?;
+        }
         Ok(())
     }
 }
@@ -168,11 +171,13 @@ impl ContainsMetaVars for LocalComatch {
             name: _,
             closure,
             is_lambda_sugar: _,
-            cases: _,
+            cases,
             inferred_type,
         } = self;
 
-        closure.contains_metavars() || inferred_type.contains_metavars()
+        closure.contains_metavars()
+            || cases.contains_metavars()
+            || inferred_type.contains_metavars()
     }
 }
 
@@ -193,10 +198,11 @@ impl FreeVars for LocalComatch {
             name: _,
             closure,
             is_lambda_sugar: _,
-            cases: _,
+            cases,
             inferred_type: _,
         } = self;
 
-        closure.free_vars_mut(ctx, cutoff, fvs)
+        closure.free_vars_mut(ctx, cutoff, fvs);
+        cases.free_vars_mut(ctx, cutoff, fvs);
     }
 }

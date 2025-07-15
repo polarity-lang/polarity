@@ -1,3 +1,4 @@
+use ast::FreeVars;
 use parser::cst;
 
 use crate::{Ctx, LoweringResult, lower::Lower};
@@ -9,14 +10,18 @@ impl Lower for cst::exp::LocalMatch {
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::LocalMatch { span, name, on_exp, motive, cases } = self;
+        let cases = cases.lower(ctx)?;
+        let fvs = cases.free_vars(&ctx.binders);
+        let closure = ast::Closure::identity(&ctx.binders, &fvs);
         Ok(ast::LocalMatch {
             span: Some(*span),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
+            closure,
             on_exp: on_exp.lower(ctx)?,
             motive: motive.lower(ctx)?,
             ret_typ: None,
-            cases: cases.lower(ctx)?,
+            cases,
             inferred_type: None,
         }
         .into())

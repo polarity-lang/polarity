@@ -562,6 +562,7 @@ impl ReadBack for LocalMatch {
             span: *span,
             ctx: None,
             motive: None,
+            closure: ast::Closure { args: Vec::default() },
             ret_typ: None,
             name: name.clone(),
             on_exp: on_exp.read_back(info_table)?,
