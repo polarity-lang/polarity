@@ -9,8 +9,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Substitutable,
-    Substitution, Zonk, ZonkError,
+    Closure, ContainsMetaVars, FreeVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Substitutable,
+    Substitution, WHNF, Zonk, ZonkError,
     ctx::{BindContext, LevelCtx},
     rename::{Rename, RenameCtx},
 };
@@ -70,6 +70,11 @@ pub struct Case {
     pub body: Option<Box<Exp>>,
 }
 
+impl Case {
+    pub fn inline(&mut self, ctx: &Closure) {
+        self.body.inline(ctx);
+    }
+}
 impl Shift for Case {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         self.body.shift_in_range(&range.clone().shift(1), by);

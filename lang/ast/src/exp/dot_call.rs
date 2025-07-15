@@ -6,7 +6,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, toke
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
     Substitution, WHNF, Zonk, ZonkError,
-    ctx::LevelCtx,
+    ctx::{self, LevelCtx},
     rename::{Rename, RenameCtx},
 };
 
@@ -172,7 +172,8 @@ impl WHNF for DotCall {
         todo!()
     }
 
-    fn inline(&mut self, _ctx: &super::Closure) {
-        todo!()
+    fn inline(&mut self, ctx: &super::Closure) {
+        self.exp.inline(ctx);
+        self.args.inline(ctx);
     }
 }

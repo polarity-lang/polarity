@@ -27,3 +27,37 @@ pub trait WHNF {
         e
     }
 }
+
+impl<T: WHNF> WHNF for Option<T> {
+    type Target = Option<T::Target>;
+
+    fn whnf(&self, ctx: Closure) -> (Self::Target, Closure) {
+        match self {
+            Some(x) => {
+                let (whnf, ctx) = x.whnf(ctx);
+                (Some(whnf), ctx)
+            }
+            None => (None, ctx),
+        }
+    }
+
+    fn inline(&mut self, ctx: &Closure) {
+        match self {
+            Some(x) => x.inline(ctx),
+            None => {}
+        }
+    }
+}
+
+impl<T: WHNF> WHNF for Box<T> {
+    type Target = Box<T::Target>;
+
+    fn whnf(&self, ctx: Closure) -> (Self::Target, Closure) {
+        let (whnf, ctx) = (**self).whnf(ctx);
+        (Box::new(whnf), ctx)
+    }
+
+    fn inline(&mut self, ctx: &Closure) {
+        (**self).inline(ctx);
+    }
+}
