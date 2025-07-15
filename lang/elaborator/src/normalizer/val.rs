@@ -306,6 +306,7 @@ impl ReadBack for LocalComatch {
             span: *span,
             ctx: None,
             name: name.clone(),
+            closure: ast::Closure { args: Vec::default() },
             is_lambda_sugar: *is_lambda_sugar,
             cases: cases.read_back(info_table)?,
             inferred_type: None,

@@ -9,25 +9,34 @@ use printer::{
     util::ParensIfExt,
 };
 
+use crate::ctx::{LevelCtx, values::TypeCtx};
+use crate::rename::{Rename, RenameCtx};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
     Substitution, Zonk, ZonkError,
-    ctx::{LevelCtx, values::TypeCtx},
-    rename::{Rename, RenameCtx},
 };
 
-use super::{Case, Exp, Label, MetaVar, TypCtor, print_cases};
+use super::{Case, Closure, Exp, Label, MetaVar, TypCtor, print_cases};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub struct LocalComatch {
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
+    /// A label that uniquely identifies this comatch in the source code.
+    /// If not user-defined, it is generated during lowering.
+    pub name: Label,
+    /// The closure tracking the free variables of the comatch.
+    pub closure: Closure,
+    /// Whether the comatch was written using the syntax sugar `\dtor(params) => body`.
+    pub is_lambda_sugar: bool,
+    /// The cases of the comatch.
+    pub cases: Vec<Case>,
+    /// Typing context annotated during elaboration.
+    /// Used to display the context via LSP.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub ctx: Option<TypeCtx>,
-    pub name: Label,
-    pub is_lambda_sugar: bool,
-    pub cases: Vec<Case>,
+    /// The type of the comatch, if inferred during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<TypCtor>,
 }
@@ -48,6 +57,7 @@ impl Shift for LocalComatch {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         self.ctx = None;
         self.cases.shift_in_range(range, by);
+        self.closure.shift_in_range(range, by);
         self.inferred_type = None;
     }
 }
@@ -57,8 +67,8 @@ impl Occurs for LocalComatch {
     where
         F: Fn(&LevelCtx, &Exp) -> bool,
     {
-        let LocalComatch { cases, .. } = self;
-        cases.iter().any(|case| case.occurs(ctx, f))
+        let LocalComatch { closure, .. } = self;
+        closure.occurs(ctx, f)
     }
 }
 
@@ -72,13 +82,14 @@ impl Substitutable for LocalComatch {
     type Target = LocalComatch;
 
     fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        let LocalComatch { span, name, is_lambda_sugar, cases, .. } = self;
+        let LocalComatch { span, name, closure, is_lambda_sugar, cases, .. } = self;
         Ok(LocalComatch {
             span: *span,
-            ctx: None,
             name: name.clone(),
+            closure: closure.subst(ctx, by)?,
             is_lambda_sugar: *is_lambda_sugar,
             cases: cases.iter().map(|case| case.subst(ctx, by)).collect::<Result<Vec<_>, _>>()?,
+            ctx: None,
             inferred_type: None,
         })
     }
@@ -111,6 +122,8 @@ impl Print for LocalComatch {
         alloc: &'a Alloc<'a>,
         prec: Precedence,
     ) -> Builder<'a> {
+        // TODO: Printing currently does not take the closure into account.
+
         let LocalComatch { name, is_lambda_sugar, cases, .. } = self;
         if *is_lambda_sugar && cfg.print_lambda_sugar {
             print_lambda_sugar(cases, cfg, alloc).parens_if(prec > Precedence::NonLet)
@@ -132,22 +145,34 @@ impl Zonk for LocalComatch {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        let LocalComatch { span: _, ctx: _, name: _, is_lambda_sugar: _, cases, inferred_type } =
-            self;
+        let LocalComatch {
+            span: _,
+            ctx: _,
+            name: _,
+            closure,
+            is_lambda_sugar: _,
+            cases: _,
+            inferred_type,
+        } = self;
+        closure.zonk(meta_vars)?;
         inferred_type.zonk(meta_vars)?;
-        for case in cases {
-            case.zonk(meta_vars)?;
-        }
         Ok(())
     }
 }
 
 impl ContainsMetaVars for LocalComatch {
     fn contains_metavars(&self) -> bool {
-        let LocalComatch { span: _, ctx: _, name: _, is_lambda_sugar: _, cases, inferred_type } =
-            self;
+        let LocalComatch {
+            span: _,
+            ctx: _,
+            name: _,
+            closure,
+            is_lambda_sugar: _,
+            cases: _,
+            inferred_type,
+        } = self;
 
-        cases.contains_metavars() || inferred_type.contains_metavars()
+        closure.contains_metavars() || inferred_type.contains_metavars()
     }
 }
 
@@ -155,15 +180,23 @@ impl Rename for LocalComatch {
     fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
         self.ctx = None;
         self.inferred_type = None;
+        self.closure.rename_in_ctx(ctx);
         self.cases.rename_in_ctx(ctx);
     }
 }
 
 impl FreeVars for LocalComatch {
     fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
-        let LocalComatch { span: _, ctx: _, name: _, is_lambda_sugar: _, cases, inferred_type: _ } =
-            self;
+        let LocalComatch {
+            span: _,
+            ctx: _,
+            name: _,
+            closure,
+            is_lambda_sugar: _,
+            cases: _,
+            inferred_type: _,
+        } = self;
 
-        cases.free_vars_mut(ctx, cutoff, fvs)
+        closure.free_vars_mut(ctx, cutoff, fvs)
     }
 }

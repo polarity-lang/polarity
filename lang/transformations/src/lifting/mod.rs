@@ -424,13 +424,21 @@ impl Lift for LocalComatch {
     type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let LocalComatch { span, ctx: type_ctx, name, is_lambda_sugar, cases, inferred_type } =
-            self;
+        let LocalComatch {
+            span,
+            ctx: type_ctx,
+            name,
+            closure,
+            is_lambda_sugar,
+            cases,
+            inferred_type,
+        } = self;
         ctx.lift_comatch(
             span,
             &inferred_type.clone().unwrap(),
             &type_ctx.clone().unwrap(),
             name,
+            closure,
             *is_lambda_sugar,
             cases,
         )
@@ -674,6 +682,7 @@ impl Ctx {
         inferred_type: &TypCtor,
         type_ctx: &TypeCtx,
         name: &Label,
+        closure: &Closure,
         is_lambda_sugar: bool,
         cases: &Vec<Case>,
     ) -> Exp {
@@ -683,6 +692,7 @@ impl Ctx {
                 span: *span,
                 ctx: None,
                 name: name.clone(),
+                closure: closure.clone(),
                 is_lambda_sugar,
                 cases: cases.lift(self),
                 inferred_type: None,
