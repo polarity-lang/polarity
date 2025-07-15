@@ -14,6 +14,30 @@ pub struct Closure {
     pub args: Vec<Vec<Option<Binder<Box<Exp>>>>>,
 }
 
+/// Given a variable context and a level which is bound in that context compute a binder with
+/// corresponding bound variable.
+///
+/// # Assumes
+///
+/// - The given `lvl` must be bound in the given `ctx`
+///
+///  # Ensures
+///
+/// - The returned Binder contains an expression which is bound in the context.
+fn compute_binder(ctx: &LevelCtx, lvl: Lvl) -> Binder<Box<Exp>> {
+    let var_bind = ctx.bound[lvl.fst][lvl.snd].name.clone();
+    let name = match &var_bind {
+        VarBind::Var { id, .. } => VarBound { span: None, id: id.clone() },
+        // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
+        // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
+        // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
+        VarBind::Wildcard { .. } => VarBound::from_string("x"),
+    };
+    let exp =
+        Exp::Variable(Variable { span: None, idx: ctx.lvl_to_idx(lvl), name, inferred_type: None });
+    Binder { name: var_bind, content: Box::new(exp) }
+}
+
 impl Closure {
     /// Identity substitution for `ctx` restricted to `free_vars`.
     pub fn identity(ctx: &LevelCtx, free_vars: &HashSet<Lvl>) -> Self {
@@ -22,30 +46,13 @@ impl Closure {
             let mut inner = Vec::with_capacity(ctx.bound[fst].len());
             for snd in 0..ctx.bound[fst].len() {
                 let lvl = Lvl { fst, snd };
-                if free_vars.contains(&lvl) {
-                    let var_bind = ctx.bound[fst][snd].name.clone();
-                    inner.push(Some(Binder {
-                        name: var_bind.clone(),
-                        content: Box::new(Exp::Variable(Variable {
-                            span: None,
-                            idx: ctx.lvl_to_idx(lvl),
-                            name: match var_bind {
-                                VarBind::Var { id, .. } => VarBound { span: None, id },
-                                // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
-                                // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
-                                // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
-                                VarBind::Wildcard { .. } => VarBound::from_string("x"),
-                            },
-                            inferred_type: None,
-                        })),
-                    }));
-                } else {
-                    inner.push(None);
-                }
+                // The closure we compute should only contain binders for variables that occur free in the body.
+                let binder =
+                    if free_vars.contains(&lvl) { Some(compute_binder(ctx, lvl)) } else { None };
+                inner.push(binder);
             }
             args.push(inner);
         }
-
         Self { args }
     }
 }
