@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, MachineState, Occurs, Shift, ShiftRangeExt,
-    Substitutable, WHNF, WHNFResult, Zonk,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Occurs, Shift,
+    ShiftRangeExt, Substitutable, WHNF, WHNFResult, Zonk,
     ctx::{BindContext, LevelCtx, values::Binder},
     rename::Rename,
 };
@@ -185,6 +185,14 @@ impl FreeVars for LocalLet {
     }
 }
 
+impl Inline for LocalLet {
+    fn inline(&mut self, ctx: &super::Closure) {
+        self.bound.inline(ctx);
+        self.typ.inline(ctx);
+        self.body.inline(ctx);
+    }
+}
+
 impl WHNF for LocalLet {
     type Target = Exp;
 
@@ -194,11 +202,5 @@ impl WHNF for LocalLet {
             vec![Binder { name: name.clone(), content: Some(bound.clone()) }];
         ctx.args.push(elem);
         (**body).whnf(ctx)
-    }
-
-    fn inline(&mut self, ctx: &super::Closure) {
-        self.bound.inline(ctx);
-        self.typ.inline(ctx);
-        self.body.inline(ctx);
     }
 }

@@ -4,7 +4,7 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::DOT};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, MachineState, Occurs, Shift, ShiftRange,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Occurs, Shift, ShiftRange,
     Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
@@ -165,15 +165,17 @@ impl FreeVars for DotCall {
     }
 }
 
+impl Inline for DotCall {
+    fn inline(&mut self, ctx: &super::Closure) {
+        self.exp.inline(ctx);
+        self.args.inline(ctx);
+    }
+}
+
 impl WHNF for DotCall {
     type Target = Exp;
 
     fn whnf(&self, _ctx: super::Closure) -> WHNFResult<MachineState<Self::Target>> {
         todo!()
-    }
-
-    fn inline(&mut self, ctx: &super::Closure) {
-        self.exp.inline(ctx);
-        self.args.inline(ctx);
     }
 }

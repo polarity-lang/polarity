@@ -10,7 +10,7 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, Occurs, Shift, ShiftRange, Substitutable,
     Substitution, Zonk, ZonkError,
 };
 use crate::{
@@ -213,14 +213,16 @@ impl FreeVars for LocalComatch {
     }
 }
 
+impl Inline for LocalComatch {
+    fn inline(&mut self, _ctx: &Closure) {
+        todo!()
+    }
+}
+
 impl WHNF for LocalComatch {
     type Target = Exp;
 
-    fn whnf(&self, _ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
-        todo!()
-    }
-
-    fn inline(&mut self, _ctx: &Closure) {
-        todo!()
+    fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
+        Ok((self.clone().into(), ctx, true))
     }
 }

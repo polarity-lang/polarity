@@ -9,7 +9,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::{BindContext, LevelCtx};
 use crate::rename::{Rename, RenameCtx};
-use crate::{ContainsMetaVars, FreeVars, MachineState, WHNF, WHNFResult, Zonk, ZonkError};
+use crate::{ContainsMetaVars, FreeVars, Inline, MachineState, WHNF, WHNFResult, Zonk, ZonkError};
 
 use super::HasType;
 use super::subst::{Substitutable, Substitution};
@@ -389,6 +389,23 @@ impl FreeVars for Motive {
     }
 }
 
+impl Inline for Exp {
+    fn inline(&mut self, ctx: &Closure) {
+        match self {
+            Exp::Variable(variable) => variable.inline(ctx),
+            Exp::TypCtor(typ_ctor) => typ_ctor.inline(ctx),
+            Exp::Call(call) => call.inline(ctx),
+            Exp::DotCall(dot_call) => dot_call.inline(ctx),
+            Exp::Anno(anno) => anno.inline(ctx),
+            Exp::TypeUniv(type_univ) => type_univ.inline(ctx),
+            Exp::LocalMatch(local_match) => local_match.inline(ctx),
+            Exp::LocalComatch(local_comatch) => local_comatch.inline(ctx),
+            Exp::Hole(hole) => hole.inline(ctx),
+            Exp::LocalLet(local_let) => local_let.inline(ctx),
+        }
+    }
+}
+
 impl WHNF for Exp {
     type Target = Exp;
     fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
@@ -403,21 +420,6 @@ impl WHNF for Exp {
             Exp::LocalComatch(local_comatch) => local_comatch.whnf(ctx),
             Exp::Hole(hole) => hole.whnf(ctx),
             Exp::LocalLet(local_let) => local_let.whnf(ctx),
-        }
-    }
-
-    fn inline(&mut self, ctx: &Closure) {
-        match self {
-            Exp::Variable(variable) => variable.inline(ctx),
-            Exp::TypCtor(typ_ctor) => typ_ctor.inline(ctx),
-            Exp::Call(call) => call.inline(ctx),
-            Exp::DotCall(dot_call) => dot_call.inline(ctx),
-            Exp::Anno(anno) => anno.inline(ctx),
-            Exp::TypeUniv(type_univ) => type_univ.inline(ctx),
-            Exp::LocalMatch(local_match) => local_match.inline(ctx),
-            Exp::LocalComatch(local_comatch) => local_comatch.inline(ctx),
-            Exp::Hole(hole) => hole.inline(ctx),
-            Exp::LocalLet(local_let) => local_let.inline(ctx),
         }
     }
 }

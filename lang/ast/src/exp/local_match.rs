@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    Call, CallKind, Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, MachineState, Occurs,
-    Shift, ShiftRange, Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
+    Call, CallKind, Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState,
+    Occurs, Shift, ShiftRange, Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::{LevelCtx, values::TypeCtx},
     rename::{Rename, RenameCtx},
 };
@@ -199,6 +199,11 @@ impl FreeVars for LocalMatch {
     }
 }
 
+impl Inline for LocalMatch {
+    fn inline(&mut self, _ctx: &super::Closure) {
+        todo!()
+    }
+}
 impl WHNF for LocalMatch {
     type Target = Exp;
 
@@ -220,10 +225,6 @@ impl WHNF for LocalMatch {
                 Ok((new_self.into(), new_ctx, true))
             }
         }
-    }
-
-    fn inline(&mut self, _ctx: &super::Closure) {
-        todo!()
     }
 
     fn whnf_inline(&self, ctx: Closure) -> crate::WHNFResult<Self::Target> {

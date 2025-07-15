@@ -3,8 +3,8 @@ use miette_util::codespan::Span;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt};
 
 use crate::{
-    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, MachineState, Occurs, Shift, ShiftRange,
-    Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
+    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Occurs, Shift,
+    ShiftRange, Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -141,6 +141,12 @@ impl FreeVars for Call {
     }
 }
 
+impl Inline for Call {
+    fn inline(&mut self, ctx: &super::Closure) {
+        self.args.inline(ctx)
+    }
+}
+
 impl WHNF for Call {
     type Target = Exp;
 
@@ -149,9 +155,5 @@ impl WHNF for Call {
             CallKind::Constructor | CallKind::Codefinition => Ok((self.clone().into(), ctx, false)),
             CallKind::LetBound => todo!("Needs global context to implement"),
         }
-    }
-
-    fn inline(&mut self, ctx: &super::Closure) {
-        self.args.inline(ctx)
     }
 }

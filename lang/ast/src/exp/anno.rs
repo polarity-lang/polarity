@@ -1,5 +1,5 @@
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, MachineState, Occurs, Shift, ShiftRange,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Occurs, Shift, ShiftRange,
     Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
@@ -131,15 +131,17 @@ impl FreeVars for Anno {
     }
 }
 
+impl Inline for Anno {
+    fn inline(&mut self, ctx: &super::Closure) {
+        self.exp.inline(ctx);
+        self.typ.inline(ctx);
+    }
+}
+
 impl WHNF for Anno {
     type Target = Exp;
 
     fn whnf(&self, _ctx: super::Closure) -> WHNFResult<MachineState<Self::Target>> {
         todo!()
-    }
-
-    fn inline(&mut self, ctx: &super::Closure) {
-        self.exp.inline(ctx);
-        self.typ.inline(ctx);
     }
 }

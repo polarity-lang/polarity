@@ -8,7 +8,7 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, MachineState, Occurs, Shift, ShiftRange,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Occurs, Shift, ShiftRange,
     Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::{
         LevelCtx,
@@ -284,13 +284,15 @@ impl FreeVars for Hole {
     }
 }
 
+impl Inline for Hole {
+    fn inline(&mut self, _ctx: &super::Closure) {
+        todo!()
+    }
+}
+
 impl WHNF for Hole {
     type Target = Exp;
     fn whnf(&self, _ctx: super::Closure) -> WHNFResult<MachineState<Self::Target>> {
-        todo!()
-    }
-
-    fn inline(&mut self, _ctx: &super::Closure) {
         todo!()
     }
 }

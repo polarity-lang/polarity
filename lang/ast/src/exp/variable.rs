@@ -4,7 +4,7 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, MachineState, Shift, ShiftRange,
+    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Shift, ShiftRange,
     Substitutable, Substitution, VarBind, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::{GenericCtx, LevelCtx},
     rename::{Rename, RenameCtx},
@@ -139,6 +139,12 @@ impl FreeVars for Variable {
     }
 }
 
+impl Inline for Variable {
+    fn inline(&mut self, _ctx: &super::Closure) {
+        todo!()
+    }
+}
+
 impl WHNF for Variable {
     type Target = Exp;
 
@@ -149,9 +155,5 @@ impl WHNF for Variable {
             Some(exp) => Ok((*exp, ctx, false)),
             None => Ok((self.clone().into(), ctx, true)),
         }
-    }
-
-    fn inline(&mut self, _ctx: &super::Closure) {
-        todo!()
     }
 }

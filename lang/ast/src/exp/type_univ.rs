@@ -3,7 +3,7 @@ use miette_util::codespan::Span;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::TYPE};
 
 use crate::{
-    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, MachineState, Shift, ShiftRange,
+    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Shift, ShiftRange,
     Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
@@ -109,10 +109,13 @@ impl FreeVars for TypeUniv {
     }
 }
 
+impl Inline for TypeUniv {
+    fn inline(&mut self, _ctx: &super::Closure) {}
+}
+
 impl WHNF for TypeUniv {
     type Target = Exp;
     fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
         Ok((self.clone().into(), ctx, false))
     }
-    fn inline(&mut self, _ctx: &super::Closure) {}
 }

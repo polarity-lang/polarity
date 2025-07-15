@@ -1,8 +1,34 @@
 use crate::Closure;
 
+pub trait Inline {
+    fn inline(&mut self, ctx: &Closure);
+}
+
+impl<T: Inline> Inline for Option<T> {
+    fn inline(&mut self, ctx: &Closure) {
+        if let Some(x) = self {
+            x.inline(ctx)
+        }
+    }
+}
+
+impl<T: Inline> Inline for Box<T> {
+    fn inline(&mut self, ctx: &Closure) {
+        (**self).inline(ctx);
+    }
+}
+
+impl<T: Inline> Inline for Vec<T> {
+    fn inline(&mut self, ctx: &Closure) {
+        for x in self {
+            x.inline(ctx);
+        }
+    }
+}
+
 /// Expressions which can be evaluated to weak head normal form.
 pub trait WHNF {
-    type Target: WHNF;
+    type Target: Inline;
 
     /// Compute the weak head normal form of the expression in the given context.
     /// For example, the WHNF of
@@ -11,8 +37,6 @@ pub trait WHNF {
     /// is the tuple
     /// - `(Pair(x,x), [x -> 2])`
     fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>>;
-
-    fn inline(&mut self, ctx: &Closure);
 
     /// Compute the weak head normal form of the expression in the given context
     /// and inline the resulting environment.
@@ -49,12 +73,6 @@ impl<T: WHNF> WHNF for Option<T> {
             None => Ok((None, ctx, false)),
         }
     }
-
-    fn inline(&mut self, ctx: &Closure) {
-        if let Some(x) = self {
-            x.inline(ctx)
-        }
-    }
 }
 
 impl<T: WHNF> WHNF for Box<T> {
@@ -63,9 +81,5 @@ impl<T: WHNF> WHNF for Box<T> {
     fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
         let (whnf, ctx, is_neutral) = (**self).whnf(ctx)?;
         Ok((Box::new(whnf), ctx, is_neutral))
-    }
-
-    fn inline(&mut self, ctx: &Closure) {
-        (**self).inline(ctx);
     }
 }
