@@ -6,6 +6,7 @@ mod occurs;
 pub mod rename;
 mod shift;
 pub mod subst;
+mod whnf;
 mod zonk;
 
 pub use contains_metavars::*;
@@ -15,4 +16,5 @@ pub use has_type::*;
 pub use occurs::*;
 pub use shift::*;
 pub use subst::*;
+pub use whnf::*;
 pub use zonk::*;
