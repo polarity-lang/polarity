@@ -114,7 +114,5 @@ impl WHNF for TypeUniv {
     fn whnf(&self, ctx: super::Closure) -> (Self::Target, super::Closure) {
         (self.clone().into(), ctx)
     }
-    fn inline(&mut self, _ctx: &super::Closure) {
-        todo!()
-    }
+    fn inline(&mut self, _ctx: &super::Closure) {}
 }
