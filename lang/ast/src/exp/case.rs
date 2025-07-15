@@ -9,8 +9,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Substitutable,
-    Substitution, Zonk, ZonkError,
+    Closure, ContainsMetaVars, FreeVars, Inline, Occurs, Shift, ShiftRange, ShiftRangeExt,
+    Substitutable, Substitution, Zonk, ZonkError,
     ctx::{BindContext, LevelCtx},
     rename::{Rename, RenameCtx},
 };
@@ -68,6 +68,12 @@ pub struct Case {
     pub pattern: Pattern,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Box<Exp>>,
+}
+
+impl Inline for Case {
+    fn inline(&mut self, ctx: &Closure, recursive: bool) {
+        self.body.inline(ctx, recursive);
+    }
 }
 
 impl Shift for Case {

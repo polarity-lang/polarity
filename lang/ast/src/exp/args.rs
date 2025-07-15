@@ -7,8 +7,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -56,6 +56,16 @@ impl Arg {
             Arg::UnnamedArg { erased, .. } => *erased,
             Arg::NamedArg { erased, .. } => *erased,
             Arg::InsertedImplicitArg { erased, .. } => *erased,
+        }
+    }
+}
+
+impl Inline for Arg {
+    fn inline(&mut self, ctx: &Closure, recursive: bool) {
+        match self {
+            Arg::UnnamedArg { arg, .. } => arg.inline(ctx, recursive),
+            Arg::NamedArg { arg, .. } => arg.inline(ctx, recursive),
+            Arg::InsertedImplicitArg { hole, .. } => hole.inline(ctx, recursive),
         }
     }
 }
@@ -209,6 +219,12 @@ impl Args {
 
     pub fn is_empty(&self) -> bool {
         self.args.is_empty()
+    }
+}
+
+impl Inline for Args {
+    fn inline(&mut self, ctx: &Closure, recursive: bool) {
+        self.args.inline(ctx, recursive);
     }
 }
 

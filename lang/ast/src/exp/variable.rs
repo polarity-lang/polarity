@@ -4,9 +4,9 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Substitutable, Substitution,
-    VarBind, Zonk, ZonkError,
-    ctx::LevelCtx,
+    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Shift, ShiftRange,
+    Substitutable, Substitution, VarBind, WHNF, WHNFResult, Zonk, ZonkError,
+    ctx::{GenericCtx, LevelCtx},
     rename::{Rename, RenameCtx},
 };
 
@@ -135,6 +135,25 @@ impl FreeVars for Variable {
         if idx.fst >= cutoff {
             let idx = Idx { fst: idx.fst - cutoff, snd: idx.snd };
             fvs.extend([ctx.idx_to_lvl(idx)]);
+        }
+    }
+}
+
+impl Inline for Variable {
+    fn inline(&mut self, _ctx: &super::Closure, _recursive: bool) {
+        todo!()
+    }
+}
+
+impl WHNF for Variable {
+    type Target = Exp;
+
+    fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
+        let ctxt: GenericCtx<_> = GenericCtx { bound: ctx.args.clone() };
+        let res = ctxt.lookup(self.idx);
+        match res.content {
+            Some(exp) => Ok((*exp, ctx, false)),
+            None => Ok((self.clone().into(), ctx, true)),
         }
     }
 }
