@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRangeExt,
-    Substitutable, WHNF, Zonk,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRangeExt, Substitutable,
+    WHNF, Zonk,
     ctx::{BindContext, LevelCtx, values::Binder},
     rename::Rename,
 };

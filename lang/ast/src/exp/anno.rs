@@ -138,7 +138,8 @@ impl WHNF for Anno {
         todo!()
     }
 
-    fn inline(&mut self, _ctx: &super::Closure) {
-        todo!()
+    fn inline(&mut self, ctx: &super::Closure) {
+        self.exp.inline(ctx);
+        self.typ.inline(ctx);
     }
 }
