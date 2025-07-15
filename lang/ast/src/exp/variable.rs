@@ -6,7 +6,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Substitutable, Substitution,
     VarBind, WHNF, Zonk, ZonkError,
-    ctx::LevelCtx,
+    ctx::{GenericCtx, LevelCtx},
     rename::{Rename, RenameCtx},
 };
 
@@ -142,8 +142,13 @@ impl FreeVars for Variable {
 impl WHNF for Variable {
     type Target = Exp;
 
-    fn whnf(&self, _ctx: super::Closure) -> (Self::Target, super::Closure) {
-        todo!()
+    fn whnf(&self, ctx: super::Closure) -> (Self::Target, super::Closure) {
+        let ctxt: GenericCtx<_> = GenericCtx { bound: ctx.args.clone() };
+        let res = ctxt.lookup(self.idx);
+        match res.content {
+            Some(exp) => (*exp, ctx),
+            None => (self.clone().into(), ctx),
+        }
     }
 
     fn inline(&mut self, _ctx: &super::Closure) {
