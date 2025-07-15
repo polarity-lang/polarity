@@ -205,19 +205,19 @@ impl WHNF for LocalMatch {
     fn whnf(&self, ctx: super::Closure) -> (Self::Target, super::Closure) {
         let (on_exp, new_ctx) = self.on_exp.whnf(ctx);
         match *on_exp {
-            Exp::Call(Call { kind: CallKind::Constructor, args, name, .. }) => {
+            Exp::Call(Call { kind: CallKind::Constructor, args: _, name, .. }) => {
                 // Find the correct case
                 let case: &Case = self.cases.iter().find(|case| case.pattern.name == name).unwrap();
                 // Construct the new context
                 // TODO
                 let body: &Exp = case.body.as_ref().unwrap();
-                return body.whnf(new_ctx);
+                body.whnf(new_ctx)
             }
             _ => {
                 // The `on_exp` could not be evaluated to a constructor call
                 let mut new_self: LocalMatch = self.clone();
                 new_self.on_exp = on_exp;
-                return (new_self.into(), new_ctx);
+                (new_self.into(), new_ctx)
             }
         }
     }
