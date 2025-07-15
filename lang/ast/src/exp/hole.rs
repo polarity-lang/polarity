@@ -285,7 +285,7 @@ impl FreeVars for Hole {
 }
 
 impl Inline for Hole {
-    fn inline(&mut self, _ctx: &super::Closure) {
+    fn inline(&mut self, _ctx: &super::Closure, _recursive: bool) {
         todo!()
     }
 }

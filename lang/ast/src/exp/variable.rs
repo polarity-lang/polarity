@@ -140,7 +140,7 @@ impl FreeVars for Variable {
 }
 
 impl Inline for Variable {
-    fn inline(&mut self, _ctx: &super::Closure) {
+    fn inline(&mut self, _ctx: &super::Closure, _recursive: bool) {
         todo!()
     }
 }

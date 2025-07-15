@@ -110,7 +110,7 @@ impl FreeVars for TypeUniv {
 }
 
 impl Inline for TypeUniv {
-    fn inline(&mut self, _ctx: &super::Closure) {}
+    fn inline(&mut self, _ctx: &super::Closure, _recursive: bool) {}
 }
 
 impl WHNF for TypeUniv {

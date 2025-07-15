@@ -200,7 +200,7 @@ impl FreeVars for LocalMatch {
 }
 
 impl Inline for LocalMatch {
-    fn inline(&mut self, _ctx: &super::Closure) {
+    fn inline(&mut self, _ctx: &super::Closure, _recursive: bool) {
         todo!()
     }
 }
@@ -229,7 +229,7 @@ impl WHNF for LocalMatch {
 
     fn whnf_inline(&self, ctx: Closure) -> crate::WHNFResult<Self::Target> {
         let (mut e, ctx, _) = self.whnf(ctx)?;
-        e.inline(&ctx);
+        e.inline(&ctx, true);
         Ok(e)
     }
 }

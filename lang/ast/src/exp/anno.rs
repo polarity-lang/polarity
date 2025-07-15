@@ -132,9 +132,9 @@ impl FreeVars for Anno {
 }
 
 impl Inline for Anno {
-    fn inline(&mut self, ctx: &super::Closure) {
-        self.exp.inline(ctx);
-        self.typ.inline(ctx);
+    fn inline(&mut self, ctx: &super::Closure, recursive: bool) {
+        self.exp.inline(ctx, recursive);
+        self.typ.inline(ctx, recursive);
     }
 }
 

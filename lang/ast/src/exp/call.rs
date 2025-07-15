@@ -142,8 +142,8 @@ impl FreeVars for Call {
 }
 
 impl Inline for Call {
-    fn inline(&mut self, ctx: &super::Closure) {
-        self.args.inline(ctx)
+    fn inline(&mut self, ctx: &super::Closure, recursive: bool) {
+        self.args.inline(ctx, recursive)
     }
 }
 

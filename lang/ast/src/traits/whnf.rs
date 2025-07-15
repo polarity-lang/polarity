@@ -1,27 +1,33 @@
 use crate::Closure;
 
+/// Expressions into which we can inline a closure.
 pub trait Inline {
-    fn inline(&mut self, ctx: &Closure);
+    /// Replace every variable occurrence with the expression bound in `ctx`.
+    /// The `recursive` argument determines what we do when we encounter a
+    /// local match or comatch. If the `recursive` flag is true, then we
+    /// recursively call `inline` on the right-hand sides of the (co)cases
+    /// as well. Otherwise we only apply it in the locally bound closure.
+    fn inline(&mut self, ctx: &Closure, recursive: bool);
 }
 
 impl<T: Inline> Inline for Option<T> {
-    fn inline(&mut self, ctx: &Closure) {
+    fn inline(&mut self, ctx: &Closure, recursive: bool) {
         if let Some(x) = self {
-            x.inline(ctx)
+            x.inline(ctx, recursive)
         }
     }
 }
 
 impl<T: Inline> Inline for Box<T> {
-    fn inline(&mut self, ctx: &Closure) {
-        (**self).inline(ctx);
+    fn inline(&mut self, ctx: &Closure, recursive: bool) {
+        (**self).inline(ctx, recursive);
     }
 }
 
 impl<T: Inline> Inline for Vec<T> {
-    fn inline(&mut self, ctx: &Closure) {
+    fn inline(&mut self, ctx: &Closure, recursive: bool) {
         for x in self {
-            x.inline(ctx);
+            x.inline(ctx, recursive);
         }
     }
 }
@@ -47,7 +53,7 @@ pub trait WHNF {
     /// - `Pair(2,2)`
     fn whnf_inline(&self, ctx: Closure) -> WHNFResult<Self::Target> {
         let (mut e, ctx, _) = self.whnf(ctx)?;
-        e.inline(&ctx);
+        e.inline(&ctx, true);
         Ok(e)
     }
 }

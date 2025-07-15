@@ -61,11 +61,11 @@ impl Arg {
 }
 
 impl Inline for Arg {
-    fn inline(&mut self, ctx: &Closure) {
+    fn inline(&mut self, ctx: &Closure, recursive: bool) {
         match self {
-            Arg::UnnamedArg { arg, .. } => arg.inline(ctx),
-            Arg::NamedArg { arg, .. } => arg.inline(ctx),
-            Arg::InsertedImplicitArg { hole, .. } => hole.inline(ctx),
+            Arg::UnnamedArg { arg, .. } => arg.inline(ctx, recursive),
+            Arg::NamedArg { arg, .. } => arg.inline(ctx, recursive),
+            Arg::InsertedImplicitArg { hole, .. } => hole.inline(ctx, recursive),
         }
     }
 }
@@ -223,8 +223,8 @@ impl Args {
 }
 
 impl Inline for Args {
-    fn inline(&mut self, ctx: &Closure) {
-        self.args.inline(ctx);
+    fn inline(&mut self, ctx: &Closure, recursive: bool) {
+        self.args.inline(ctx, recursive);
     }
 }
 

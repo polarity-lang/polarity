@@ -186,10 +186,10 @@ impl FreeVars for LocalLet {
 }
 
 impl Inline for LocalLet {
-    fn inline(&mut self, ctx: &super::Closure) {
-        self.bound.inline(ctx);
-        self.typ.inline(ctx);
-        self.body.inline(ctx);
+    fn inline(&mut self, ctx: &super::Closure, recursive: bool) {
+        self.bound.inline(ctx, recursive);
+        self.typ.inline(ctx, recursive);
+        self.body.inline(ctx, recursive);
     }
 }
 

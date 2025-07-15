@@ -390,18 +390,18 @@ impl FreeVars for Motive {
 }
 
 impl Inline for Exp {
-    fn inline(&mut self, ctx: &Closure) {
+    fn inline(&mut self, ctx: &Closure, recursive: bool) {
         match self {
-            Exp::Variable(variable) => variable.inline(ctx),
-            Exp::TypCtor(typ_ctor) => typ_ctor.inline(ctx),
-            Exp::Call(call) => call.inline(ctx),
-            Exp::DotCall(dot_call) => dot_call.inline(ctx),
-            Exp::Anno(anno) => anno.inline(ctx),
-            Exp::TypeUniv(type_univ) => type_univ.inline(ctx),
-            Exp::LocalMatch(local_match) => local_match.inline(ctx),
-            Exp::LocalComatch(local_comatch) => local_comatch.inline(ctx),
-            Exp::Hole(hole) => hole.inline(ctx),
-            Exp::LocalLet(local_let) => local_let.inline(ctx),
+            Exp::Variable(variable) => variable.inline(ctx, recursive),
+            Exp::TypCtor(typ_ctor) => typ_ctor.inline(ctx, recursive),
+            Exp::Call(call) => call.inline(ctx, recursive),
+            Exp::DotCall(dot_call) => dot_call.inline(ctx, recursive),
+            Exp::Anno(anno) => anno.inline(ctx, recursive),
+            Exp::TypeUniv(type_univ) => type_univ.inline(ctx, recursive),
+            Exp::LocalMatch(local_match) => local_match.inline(ctx, recursive),
+            Exp::LocalComatch(local_comatch) => local_comatch.inline(ctx, recursive),
+            Exp::Hole(hole) => hole.inline(ctx, recursive),
+            Exp::LocalLet(local_let) => local_let.inline(ctx, recursive),
         }
     }
 }

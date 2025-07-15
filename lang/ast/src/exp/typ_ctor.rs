@@ -151,8 +151,8 @@ impl FreeVars for TypCtor {
 }
 
 impl Inline for TypCtor {
-    fn inline(&mut self, ctx: &super::Closure) {
-        self.args.inline(ctx);
+    fn inline(&mut self, ctx: &super::Closure, recursive: bool) {
+        self.args.inline(ctx, recursive);
     }
 }
 

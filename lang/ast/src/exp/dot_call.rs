@@ -166,9 +166,9 @@ impl FreeVars for DotCall {
 }
 
 impl Inline for DotCall {
-    fn inline(&mut self, ctx: &super::Closure) {
-        self.exp.inline(ctx);
-        self.args.inline(ctx);
+    fn inline(&mut self, ctx: &super::Closure, recursive: bool) {
+        self.exp.inline(ctx, recursive);
+        self.args.inline(ctx, recursive);
     }
 }
 

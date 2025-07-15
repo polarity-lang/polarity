@@ -71,8 +71,8 @@ pub struct Case {
 }
 
 impl Inline for Case {
-    fn inline(&mut self, ctx: &Closure) {
-        self.body.inline(ctx);
+    fn inline(&mut self, ctx: &Closure, recursive: bool) {
+        self.body.inline(ctx, recursive);
     }
 }
 

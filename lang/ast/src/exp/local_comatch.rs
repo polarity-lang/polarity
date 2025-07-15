@@ -214,7 +214,7 @@ impl FreeVars for LocalComatch {
 }
 
 impl Inline for LocalComatch {
-    fn inline(&mut self, _ctx: &Closure) {
+    fn inline(&mut self, _ctx: &Closure, _recursive: bool) {
         todo!()
     }
 }
