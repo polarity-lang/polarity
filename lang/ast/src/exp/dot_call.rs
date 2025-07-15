@@ -172,7 +172,7 @@ impl WHNF for DotCall {
         todo!()
     }
 
-    fn inline(&mut self, _ctx: super::Closure) {
+    fn inline(&mut self, _ctx: &super::Closure) {
         todo!()
     }
 }

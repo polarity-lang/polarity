@@ -12,7 +12,7 @@ pub trait WHNF {
     /// - `(Pair(x,x), [x -> 2])`
     fn whnf(&self, ctx: Closure) -> (Self::Target, Closure);
 
-    fn inline(&mut self, ctx: Closure);
+    fn inline(&mut self, ctx: &Closure);
 
     /// Compute the weak head normal form of the expression in the given context
     /// and inline the resulting environment.
@@ -23,7 +23,7 @@ pub trait WHNF {
     /// - `Pair(2,2)`
     fn whnf_inline(&self, ctx: Closure) -> Self::Target {
         let (mut e, ctx) = self.whnf(ctx);
-        e.inline(ctx);
+        e.inline(&ctx);
         e
     }
 }

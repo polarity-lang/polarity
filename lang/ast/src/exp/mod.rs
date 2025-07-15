@@ -406,7 +406,7 @@ impl WHNF for Exp {
         }
     }
 
-    fn inline(&mut self, ctx: Closure) {
+    fn inline(&mut self, ctx: &Closure) {
         match self {
             Exp::Variable(variable) => variable.inline(ctx),
             Exp::TypCtor(typ_ctor) => typ_ctor.inline(ctx),

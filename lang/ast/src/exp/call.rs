@@ -144,11 +144,14 @@ impl FreeVars for Call {
 impl WHNF for Call {
     type Target = Exp;
 
-    fn whnf(&self, _ctx: super::Closure) -> (Self::Target, super::Closure) {
-        todo!()
+    fn whnf(&self, ctx: super::Closure) -> (Self::Target, super::Closure) {
+        match self.kind {
+            CallKind::Constructor | CallKind::Codefinition => (self.clone().into(), ctx),
+            CallKind::LetBound => todo!("Needs global context to implement"),
+        }
     }
 
-    fn inline(&mut self, _ctx: super::Closure) {
-        todo!()
+    fn inline(&mut self, ctx: &super::Closure) {
+        self.args.inline(ctx)
     }
 }

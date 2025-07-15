@@ -217,7 +217,7 @@ impl WHNF for LocalComatch {
         todo!()
     }
 
-    fn inline(&mut self, _ctx: Closure) {
+    fn inline(&mut self, _ctx: &Closure) {
         todo!()
     }
 }
