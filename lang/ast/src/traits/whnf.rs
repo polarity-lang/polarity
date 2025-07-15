@@ -30,6 +30,11 @@ pub trait WHNF {
 
 pub type WHNFResult<T> = Result<T, String>;
 
+/// The machine state after one step of WHNF evaluation.
+/// The elements have the following meaning:
+/// - `T`: The WHNF expression.
+/// - `Closure`: The new context.
+/// - `is_neutral`: Whether the WHNF expression is neutral. If false, the expression is a value.
 pub type MachineState<T> = (T, Closure, bool);
 
 impl<T: WHNF> WHNF for Option<T> {
