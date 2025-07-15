@@ -42,9 +42,8 @@ impl<T: WHNF> WHNF for Option<T> {
     }
 
     fn inline(&mut self, ctx: &Closure) {
-        match self {
-            Some(x) => x.inline(ctx),
-            None => {}
+        if let Some(x) = self {
+            x.inline(ctx)
         }
     }
 }

@@ -6,7 +6,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, toke
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
     Substitution, WHNF, Zonk, ZonkError,
-    ctx::{self, LevelCtx},
+    ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
 
