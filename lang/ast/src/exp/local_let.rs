@@ -8,9 +8,9 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRangeExt, Substitutable,
-    WHNF, Zonk,
-    ctx::{BindContext, LevelCtx},
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRangeExt,
+    Substitutable, WHNF, Zonk,
+    ctx::{BindContext, LevelCtx, values::Binder},
     rename::Rename,
 };
 
@@ -188,11 +188,17 @@ impl FreeVars for LocalLet {
 impl WHNF for LocalLet {
     type Target = Exp;
 
-    fn whnf(&self, _ctx: super::Closure) -> (Self::Target, super::Closure) {
-        todo!()
+    fn whnf(&self, mut ctx: super::Closure) -> (Self::Target, super::Closure) {
+        let LocalLet { bound, body, name, .. } = self;
+        let elem: Vec<Binder<Option<Box<Exp>>>> =
+            vec![Binder { name: name.clone(), content: Some(bound.clone()) }];
+        ctx.args.push(elem);
+        (**body).whnf(ctx)
     }
 
-    fn inline(&mut self, _ctx: &super::Closure) {
-        todo!()
+    fn inline(&mut self, ctx: &super::Closure) {
+        self.bound.inline(ctx);
+        self.typ.inline(ctx);
+        self.body.inline(ctx);
     }
 }
