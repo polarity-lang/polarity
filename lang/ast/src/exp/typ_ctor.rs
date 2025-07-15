@@ -153,11 +153,11 @@ impl FreeVars for TypCtor {
 impl WHNF for TypCtor {
     type Target = Exp;
 
-    fn whnf(&self, _ctx: super::Closure) -> (Self::Target, super::Closure) {
-        todo!()
+    fn whnf(&self, ctx: super::Closure) -> (Self::Target, super::Closure) {
+        (self.clone().into(), ctx)
     }
 
-    fn inline(&mut self, _ctx: &super::Closure) {
-        todo!()
+    fn inline(&mut self, ctx: &super::Closure) {
+        self.args.inline(ctx);
     }
 }
