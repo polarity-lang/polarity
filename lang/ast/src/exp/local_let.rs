@@ -200,7 +200,7 @@ impl WHNF for LocalLet {
         let LocalLet { bound, body, name, .. } = self;
         let elem: Vec<Binder<Option<Box<Exp>>>> =
             vec![Binder { name: name.clone(), content: Some(bound.clone()) }];
-        ctx.args.push(elem);
+        ctx.bound.push(elem);
         (**body).whnf(ctx)
     }
 }

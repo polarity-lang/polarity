@@ -2,16 +2,16 @@ use crate::ctx::LevelCtx;
 use crate::ctx::values::Binder;
 use crate::rename::Rename;
 use crate::{
-    ContainsMetaVars, Exp, FreeVars, HashMap, HashSet, Lvl, MetaVar, MetaVarState, Occurs, Shift,
-    Substitutable, VarBind, VarBound, Variable, Zonk, ZonkError,
+    Args, ContainsMetaVars, Exp, FreeVars, HashMap, HashSet, Idx, Lvl, MetaVar, MetaVarState,
+    Occurs, Shift, Substitutable, TelescopeInst, VarBind, VarBound, Variable, Zonk, ZonkError,
 };
 
 /// A closure tracking free variables (and their substitution).
 /// This is used in (co)matches.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Closure {
     /// A map from de Bruijn level to substituted expression.
-    pub args: Vec<Vec<Binder<Option<Box<Exp>>>>>,
+    pub bound: Vec<Vec<Binder<Option<Box<Exp>>>>>,
 }
 
 /// Given a variable context and a level which is bound in that context compute a binder with
@@ -62,7 +62,65 @@ impl Closure {
             }
             args.push(inner);
         }
-        Self { args }
+        Self { bound: args }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.bound.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.bound.len()
+    }
+
+    pub fn lookup(&self, idx: Idx) -> Binder<Option<Box<Exp>>> {
+        let lvl = self.idx_to_lvl(idx);
+        self.bound
+            .get(lvl.fst)
+            .and_then(|ctx| ctx.get(lvl.snd))
+            .cloned()
+            .unwrap_or_else(|| panic!("Unbound variable {lvl}"))
+    }
+
+    pub fn idx_to_lvl(&self, idx: Idx) -> Lvl {
+        let fst = self.bound.len() - 1 - idx.fst;
+        let snd = self.bound[fst].len() - 1 - idx.snd;
+        Lvl { fst, snd }
+    }
+
+    /// Append a closure
+    pub fn append_closure(mut self, mut closure: Closure) -> Self {
+        self.shift((closure.len() as isize, 0));
+        closure.shift((closure.len() as isize, 0));
+        let mut bound = self.bound;
+        bound.extend(closure.bound);
+        Closure { bound }
+    }
+
+    /// Append arguments
+    pub fn append_args(mut self, tel: &TelescopeInst, args: &Args) -> Self {
+        self.shift((1, 0));
+        let mut bound = self.bound;
+        let binders: Vec<_> = tel
+            .params
+            .iter()
+            .zip(args.args.iter())
+            .map(|(param, arg)| {
+                let mut content = arg.exp().clone();
+                content.shift((1, 0));
+                Binder { name: param.name.clone(), content: Some(content) }
+            })
+            .collect();
+        bound.extend(vec![binders]);
+        Closure { bound }
+    }
+
+    pub fn append_binders(mut self, mut binders: Vec<Binder<Option<Box<Exp>>>>) -> Self {
+        self.shift((1, 0));
+        binders.shift((1, 0));
+        let mut bound = self.bound;
+        bound.push(binders);
+        Closure { bound }
     }
 }
 
@@ -74,12 +132,12 @@ impl Substitutable for Closure {
         ctx: &mut crate::ctx::LevelCtx,
         by: &S,
     ) -> Result<Self::Target, S::Err> {
-        let new_args = Vec::with_capacity(self.args.len());
+        let new_args = Vec::with_capacity(self.bound.len());
 
-        for fst in 0..self.args.len() {
-            let mut new_inner = Vec::with_capacity(self.args[fst].len());
-            for snd in 0..self.args[fst].len() {
-                let old_binder = &self.args[fst][snd];
+        for fst in 0..self.bound.len() {
+            let mut new_inner = Vec::with_capacity(self.bound[fst].len());
+            for snd in 0..self.bound[fst].len() {
+                let old_binder = &self.bound[fst][snd];
                 let new_binder = Binder {
                     name: old_binder.name.clone(),
                     content: old_binder.content.subst(ctx, by)?,
@@ -88,7 +146,7 @@ impl Substitutable for Closure {
             }
         }
 
-        Ok(Closure { args: new_args })
+        Ok(Closure { bound: new_args })
     }
 }
 
@@ -97,7 +155,7 @@ impl Occurs for Closure {
     where
         F: Fn(&LevelCtx, &Exp) -> bool,
     {
-        let Closure { args } = self;
+        let Closure { bound: args } = self;
 
         args.iter().flat_map(|inner| inner.iter()).any(|b| b.occurs(ctx, f))
     }
@@ -105,7 +163,7 @@ impl Occurs for Closure {
 
 impl Zonk for Closure {
     fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), ZonkError> {
-        for binder in self.args.iter_mut().flatten() {
+        for binder in self.bound.iter_mut().flatten() {
             binder.content.zonk(meta_vars)?;
         }
         Ok(())
@@ -114,13 +172,13 @@ impl Zonk for Closure {
 
 impl ContainsMetaVars for Closure {
     fn contains_metavars(&self) -> bool {
-        self.args.iter().flat_map(|inner| inner.iter()).any(|b| b.contains_metavars())
+        self.bound.iter().flat_map(|inner| inner.iter()).any(|b| b.contains_metavars())
     }
 }
 
 impl Shift for Closure {
     fn shift_in_range<R: crate::ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        for binder in &mut self.args.iter_mut().flatten() {
+        for binder in &mut self.bound.iter_mut().flatten() {
             binder.content.shift_in_range(range, by);
         }
     }
@@ -128,7 +186,7 @@ impl Shift for Closure {
 
 impl Rename for Closure {
     fn rename_in_ctx(&mut self, ctx: &mut crate::rename::RenameCtx) {
-        for binder in self.args.iter_mut().flatten() {
+        for binder in self.bound.iter_mut().flatten() {
             binder.rename_in_ctx(ctx);
         }
     }
@@ -136,7 +194,7 @@ impl Rename for Closure {
 
 impl FreeVars for Closure {
     fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut HashSet<Lvl>) {
-        for binder in self.args.iter().flatten() {
+        for binder in self.bound.iter().flatten() {
             binder.content.free_vars_mut(ctx, cutoff, fvs);
         }
     }

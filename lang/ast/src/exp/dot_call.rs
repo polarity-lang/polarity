@@ -4,13 +4,13 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::DOT};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Occurs, Shift, ShiftRange,
-    Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, LocalComatch, MachineState, Occurs,
+    Shift, ShiftRange, Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
 
-use super::{Args, Exp, IdBound, MetaVar};
+use super::{Args, Case, Exp, IdBound, MetaVar};
 
 /// A DotCall expression can be one of two different kinds:
 /// - A destructor introduced by a codata type declaration
@@ -175,7 +175,214 @@ impl Inline for DotCall {
 impl WHNF for DotCall {
     type Target = Exp;
 
-    fn whnf(&self, _ctx: super::Closure) -> WHNFResult<MachineState<Self::Target>> {
-        todo!()
+    fn whnf(&self, env: super::Closure) -> WHNFResult<MachineState<Self::Target>> {
+        let DotCall { span, kind, exp, name, args, inferred_type: _ } = self;
+
+        let (exp, env, is_neutral) = exp.whnf(env)?;
+
+        if is_neutral {
+            // The specific instance of the DotCall we are evaluating is:
+            //
+            // ```text
+            // n.d(e_1,...)
+            // ┳ ┳ ━━━┳━━━
+            // ┃ ┃    ┗━━━━━━━ args
+            // ┃ ┗━━━━━━━━━━━━ name
+            // ┗━━━━━━━━━━━━━━ exp (Neutral value)
+            // ```
+            // Evaluation is blocked by the neutral value `n`.
+            let dot_call = DotCall {
+                span: *span,
+                kind: *kind,
+                exp,
+                name: name.clone(),
+                args: args.clone(),
+                inferred_type: None,
+            };
+
+            return Ok((dot_call.into(), env, true));
+        }
+
+        match &*exp {
+            Exp::LocalComatch(LocalComatch { closure, cases, .. }) => {
+                // The specific instance of the DotCall we are evaluating is:
+                //
+                // ```text
+                //  comatch { ... }.d(e_1,...)
+                //            ━┳━   ┳ ━━━┳━━━
+                //             ┃    ┃    ┗━━━━ args
+                //             ┃    ┗━━━━━━━━━ name
+                //             ┗━━━━━━━━━━━━━━ cases
+                // ```
+                //
+                // where `d` is the name of a destructor declared in a
+                // codata type.
+
+                // First, we have to select the correct case from the comatch.
+                let Case { body, pattern, .. } =
+                    cases.iter().find(|cocase| cocase.pattern.name == *name).unwrap();
+
+                let body = body.clone().unwrap();
+
+                let body_env =
+                    env.append_closure(closure.clone()).append_args(&pattern.params, args);
+
+                let (mut body, mut body_env, is_neutral) = (*body).whnf(body_env)?;
+
+                body.shift((-1, 0));
+                body_env.bound.pop();
+                body_env.shift((-1, 0));
+
+                Ok((body, body_env, is_neutral))
+            }
+            _ => todo!(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use url::Url;
+
+    use crate::{ctx::values::Binder, *};
+
+    use super::*;
+
+    fn dummy_uri() -> Url {
+        Url::parse("inmemory://scratch.pol").unwrap()
+    }
+
+    /// ```text
+    /// [] |- comatch { .ap(x) => x }.ap(Type) ▷ Type
+    /// ```
+    #[test]
+    fn test_eval_id_in_empty_env() {
+        let env = Closure::default();
+        let body = Exp::Variable(Variable {
+            span: None,
+            idx: Idx { fst: 0, snd: 0 },
+            name: VarBound::from_string("x"),
+            inferred_type: None,
+        });
+        let case = Case {
+            span: None,
+            pattern: Pattern {
+                span: None,
+                is_copattern: true,
+                name: IdBound { span: None, id: "ap".to_owned(), uri: dummy_uri() },
+                params: TelescopeInst {
+                    params: vec![ParamInst {
+                        span: None,
+                        name: VarBind::from_string("x"),
+                        typ: None,
+                        erased: false,
+                    }],
+                },
+            },
+            body: Some(body.into()),
+        };
+        let comatch = Exp::LocalComatch(LocalComatch {
+            span: None,
+            name: Label { id: 0, user_name: None },
+            closure: Closure::default(),
+            is_lambda_sugar: false,
+            cases: vec![case],
+            ctx: None,
+            inferred_type: None,
+        });
+        let dot_call = DotCall {
+            span: None,
+            kind: DotCallKind::Destructor,
+            exp: Box::new(comatch),
+            name: IdBound { span: None, id: "ap".to_owned(), uri: dummy_uri() },
+            args: Args {
+                args: vec![Arg::UnnamedArg {
+                    arg: Box::new(Exp::TypeUniv(TypeUniv { span: None })),
+                    erased: false,
+                }],
+            },
+            inferred_type: None,
+        };
+        let (exp, env, is_neutral) = dot_call.whnf(env).unwrap();
+
+        assert!(!is_neutral);
+        assert!(matches!(exp, Exp::TypeUniv(_)));
+        assert_eq!(env.len(), 0);
+    }
+
+    /// ```text
+    /// [z] |- comatch { .ap(x) => x }.ap(z) ▷ z
+    /// ```
+    #[test]
+    fn test_eval_id_in_env() {
+        let env = Closure {
+            bound: vec![vec![Binder {
+                name: VarBind::from_string("z"),
+                content: Some(Box::new(Exp::Variable(Variable {
+                    span: None,
+                    idx: Idx { fst: 0, snd: 0 },
+                    name: VarBound::from_string("z"),
+                    inferred_type: None,
+                }))),
+            }]],
+        };
+
+        let body = Exp::Variable(Variable {
+            span: None,
+            idx: Idx { fst: 0, snd: 0 },
+            name: VarBound::from_string("x"),
+            inferred_type: None,
+        });
+        let case = Case {
+            span: None,
+            pattern: Pattern {
+                span: None,
+                is_copattern: true,
+                name: IdBound { span: None, id: "ap".to_owned(), uri: dummy_uri() },
+                params: TelescopeInst {
+                    params: vec![ParamInst {
+                        span: None,
+                        name: VarBind::from_string("x"),
+                        typ: None,
+                        erased: false,
+                    }],
+                },
+            },
+            body: Some(body.into()),
+        };
+        let comatch = Exp::LocalComatch(LocalComatch {
+            span: None,
+            name: Label { id: 0, user_name: None },
+            closure: Closure::default(),
+            is_lambda_sugar: false,
+            cases: vec![case],
+            ctx: None,
+            inferred_type: None,
+        });
+        let dot_call = DotCall {
+            span: None,
+            kind: DotCallKind::Destructor,
+            exp: Box::new(comatch),
+            name: IdBound { span: None, id: "ap".to_owned(), uri: dummy_uri() },
+            args: Args {
+                args: vec![Arg::UnnamedArg {
+                    arg: Box::new(Exp::Variable(Variable {
+                        span: None,
+                        idx: Idx { fst: 0, snd: 0 },
+                        name: VarBound::from_string("z"),
+                        inferred_type: None,
+                    })),
+                    erased: false,
+                }],
+            },
+            inferred_type: None,
+        };
+        let (exp, env, is_neutral) = dot_call.whnf(env).unwrap();
+
+        assert!(is_neutral);
+        assert!(
+            matches!(exp, Exp::Variable(var) if var.name == VarBound::from_string("z") && var.idx == Idx { fst: 0, snd: 0 })
+        );
+        assert_eq!(env.len(), 1);
     }
 }

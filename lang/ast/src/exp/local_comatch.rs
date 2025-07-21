@@ -223,6 +223,6 @@ impl WHNF for LocalComatch {
     type Target = Exp;
 
     fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
-        Ok((self.clone().into(), ctx, true))
+        Ok((self.clone().into(), ctx, false))
     }
 }
