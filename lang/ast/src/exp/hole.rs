@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::{
         LevelCtx,
         values::{Binder, TypeCtx},
@@ -281,5 +281,18 @@ impl FreeVars for Hole {
 
         args.free_vars_mut(ctx, cutoff, fvs);
         solution.free_vars_mut(ctx, cutoff, fvs);
+    }
+}
+
+impl Inline for Hole {
+    fn inline(&mut self, _ctx: &super::Closure, _recursive: bool) {
+        todo!()
+    }
+}
+
+impl WHNF for Hole {
+    type Target = Exp;
+    fn whnf(&self, _ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
+        todo!()
     }
 }

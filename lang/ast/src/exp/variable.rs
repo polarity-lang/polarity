@@ -4,8 +4,8 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Substitutable, Substitution,
-    VarBind, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, IsWHNF, MachineState, Shift, ShiftRange,
+    Substitutable, Substitution, VarBind, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -32,6 +32,15 @@ pub struct Variable {
     /// Inferred type annotated after elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<Box<Exp>>,
+}
+
+#[cfg(test)]
+impl Variable {
+    /// Create a variable with the given index and a dummy name.
+    pub fn mk_test(idx: Idx) -> Exp {
+        Variable { span: None, idx, name: VarBound::from_string("test_dummy"), inferred_type: None }
+            .into()
+    }
 }
 
 impl HasSpan for Variable {
@@ -136,5 +145,19 @@ impl FreeVars for Variable {
             let idx = Idx { fst: idx.fst - cutoff, snd: idx.snd };
             fvs.extend([ctx.idx_to_lvl(idx)]);
         }
+    }
+}
+
+impl Inline for Variable {
+    fn inline(&mut self, _ctx: &super::Closure, _recursive: bool) {
+        todo!()
+    }
+}
+
+impl WHNF for Variable {
+    type Target = Exp;
+
+    fn whnf(&self, _ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
+        Ok((self.clone().into(), IsWHNF::Neutral))
     }
 }
