@@ -408,18 +408,18 @@ impl Inline for Exp {
 
 impl WHNF for Exp {
     type Target = Exp;
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+    fn whnf(&self, ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
         match self {
-            Exp::Variable(variable) => variable.whnf(),
-            Exp::TypCtor(typ_ctor) => typ_ctor.whnf(),
-            Exp::Call(call) => call.whnf(),
-            Exp::DotCall(dot_call) => dot_call.whnf(),
-            Exp::Anno(anno) => anno.whnf(),
-            Exp::TypeUniv(type_univ) => type_univ.whnf(),
-            Exp::LocalMatch(local_match) => local_match.whnf(),
-            Exp::LocalComatch(local_comatch) => local_comatch.whnf(),
-            Exp::Hole(hole) => hole.whnf(),
-            Exp::LocalLet(local_let) => local_let.whnf(),
+            Exp::Variable(variable) => variable.whnf(ctx),
+            Exp::TypCtor(typ_ctor) => typ_ctor.whnf(ctx),
+            Exp::Call(call) => call.whnf(ctx),
+            Exp::DotCall(dot_call) => dot_call.whnf(ctx),
+            Exp::Anno(anno) => anno.whnf(ctx),
+            Exp::TypeUniv(type_univ) => type_univ.whnf(ctx),
+            Exp::LocalMatch(local_match) => local_match.whnf(ctx),
+            Exp::LocalComatch(local_comatch) => local_comatch.whnf(ctx),
+            Exp::Hole(hole) => hole.whnf(ctx),
+            Exp::LocalLet(local_let) => local_let.whnf(ctx),
         }
     }
 }

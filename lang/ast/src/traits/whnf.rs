@@ -1,4 +1,4 @@
-use crate::Closure;
+use crate::{Closure, ctx::LevelCtx};
 
 /// Expressions into which we can inline a closure.
 pub trait Inline {
@@ -42,7 +42,7 @@ pub trait WHNF {
     ///
     /// is the expression
     /// - `Pair(2,2)`
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>>;
+    fn whnf(&self, ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>>;
 }
 
 pub type WHNFResult<T> = Result<T, String>;
@@ -62,10 +62,10 @@ pub type MachineState<T> = (T, IsWHNF);
 impl<T: WHNF> WHNF for Option<T> {
     type Target = Option<T::Target>;
 
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+    fn whnf(&self, ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
         match self {
             Some(x) => {
-                let (whnf, is_whnf) = x.whnf()?;
+                let (whnf, is_whnf) = x.whnf(ctx)?;
                 Ok((Some(whnf), is_whnf))
             }
             None => Ok((None, IsWHNF::Neutral)),
@@ -76,8 +76,8 @@ impl<T: WHNF> WHNF for Option<T> {
 impl<T: WHNF> WHNF for Box<T> {
     type Target = Box<T::Target>;
 
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
-        let (whnf, is_whnf) = (**self).whnf()?;
+    fn whnf(&self, ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
+        let (whnf, is_whnf) = (**self).whnf(ctx)?;
         Ok((Box::new(whnf), is_whnf))
     }
 }

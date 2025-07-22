@@ -58,7 +58,8 @@ impl LocalComatch {
             cases,
             ctx: None,
             inferred_type: None,
-        }.into()
+        }
+        .into()
     }
 }
 impl HasSpan for LocalComatch {
@@ -236,7 +237,7 @@ impl Inline for LocalComatch {
 impl WHNF for LocalComatch {
     type Target = Exp;
 
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+    fn whnf(&self, _ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
         Ok((self.clone().into(), IsWHNF::WHNF))
     }
 }

@@ -150,7 +150,7 @@ impl Inline for Call {
 impl WHNF for Call {
     type Target = Exp;
 
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+    fn whnf(&self, _ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
         match self.kind {
             CallKind::Constructor | CallKind::Codefinition => {
                 Ok((self.clone().into(), IsWHNF::WHNF))

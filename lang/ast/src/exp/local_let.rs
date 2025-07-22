@@ -196,7 +196,7 @@ impl Inline for LocalLet {
 impl WHNF for LocalLet {
     type Target = Exp;
 
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+    fn whnf(&self, _ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
         todo!()
     }
 }

@@ -115,7 +115,7 @@ impl Inline for TypeUniv {
 
 impl WHNF for TypeUniv {
     type Target = Exp;
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+    fn whnf(&self, _ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
         Ok((self.clone().into(), IsWHNF::WHNF))
     }
 }

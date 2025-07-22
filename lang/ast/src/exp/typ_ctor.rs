@@ -159,7 +159,7 @@ impl Inline for TypCtor {
 impl WHNF for TypCtor {
     type Target = Exp;
 
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+    fn whnf(&self, ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
         Ok((self.clone().into(), IsWHNF::WHNF))
     }
 }

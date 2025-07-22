@@ -208,8 +208,8 @@ impl Inline for LocalMatch {
 impl WHNF for LocalMatch {
     type Target = Exp;
 
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
-        let (on_exp, _) = self.on_exp.whnf()?;
+    fn whnf(&self, ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
+        let (on_exp, _) = self.on_exp.whnf(ctx.clone())?;
         match *on_exp {
             Exp::Call(Call { kind: CallKind::Constructor, args: _, name, .. }) => {
                 // Find the correct case
@@ -217,7 +217,7 @@ impl WHNF for LocalMatch {
                 // Construct the new context
                 // TODO
                 let body: &Exp = case.body.as_ref().unwrap();
-                body.whnf()
+                body.whnf(ctx)
             }
             _ => {
                 // The `on_exp` could not be evaluated to a constructor call

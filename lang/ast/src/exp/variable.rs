@@ -157,7 +157,7 @@ impl Inline for Variable {
 impl WHNF for Variable {
     type Target = Exp;
 
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+    fn whnf(&self, _ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
         Ok((self.clone().into(), IsWHNF::Neutral))
     }
 }

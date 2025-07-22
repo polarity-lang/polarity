@@ -203,10 +203,10 @@ impl Inline for DotCall {
 impl WHNF for DotCall {
     type Target = Exp;
 
-    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+    fn whnf(&self, ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
         let DotCall { span, kind, exp, name, args, inferred_type: _ } = self;
 
-        let (exp, is_neutral) = exp.whnf()?;
+        let (exp, is_neutral) = exp.whnf(ctx.clone())?;
         match is_neutral {
             IsWHNF::Neutral => {
                 // The specific instance of the DotCall we are evaluating is:
@@ -252,7 +252,7 @@ impl WHNF for DotCall {
 
                         let body = body.clone().unwrap();
 
-                        let (mut body, is_neutral) = (*body).whnf()?;
+                        let (mut body, is_neutral) = (*body).whnf(ctx)?;
 
                         body.shift((-1, 0));
 
@@ -283,7 +283,7 @@ mod tests {
         let dot_call =
             DotCall::mk_test_destructor(comatch, "ap", vec![TypeUniv { span: None }.into()]);
 
-        let (exp, is_neutral) = dot_call.whnf().unwrap();
+        let (exp, is_neutral) = dot_call.whnf(LevelCtx::default()).unwrap();
 
         assert!(is_neutral == IsWHNF::WHNF);
         assert!(matches!(exp, Exp::TypeUniv(_)));
