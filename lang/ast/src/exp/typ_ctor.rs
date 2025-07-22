@@ -4,7 +4,7 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, util::ParensIfExt};
 
 use crate::{
-    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Occurs, Shift,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, IsWHNF, MachineState, Occurs, Shift,
     ShiftRange, Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
@@ -159,7 +159,7 @@ impl Inline for TypCtor {
 impl WHNF for TypCtor {
     type Target = Exp;
 
-    fn whnf(&self, ctx: Closure) -> WHNFResult<MachineState<Self::Target>> {
-        Ok((self.clone().into(), ctx, false))
+    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+        Ok((self.clone().into(), IsWHNF::WHNF))
     }
 }

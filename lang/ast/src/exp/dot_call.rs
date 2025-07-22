@@ -4,8 +4,8 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::DOT};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, LocalComatch, MachineState, Occurs,
-    Shift, ShiftRange, Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, IsWHNF, LocalComatch, MachineState,
+    Occurs, Shift, ShiftRange, Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -175,12 +175,12 @@ impl Inline for DotCall {
 impl WHNF for DotCall {
     type Target = Exp;
 
-    fn whnf(&self, env: super::Closure) -> WHNFResult<MachineState<Self::Target>> {
+    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
         let DotCall { span, kind, exp, name, args, inferred_type: _ } = self;
 
-        let (exp, env, is_neutral) = exp.whnf(env)?;
+        let (exp, is_neutral) = exp.whnf()?;
 
-        if is_neutral {
+        if is_neutral == IsWHNF::Neutral {
             // The specific instance of the DotCall we are evaluating is:
             //
             // ```text
@@ -200,11 +200,11 @@ impl WHNF for DotCall {
                 inferred_type: None,
             };
 
-            return Ok((dot_call.into(), env, true));
+            return Ok((dot_call.into(), IsWHNF::Neutral));
         }
 
         match &*exp {
-            Exp::LocalComatch(LocalComatch { closure, cases, .. }) => {
+            Exp::LocalComatch(LocalComatch { cases, .. }) => {
                 // The specific instance of the DotCall we are evaluating is:
                 //
                 // ```text
@@ -219,21 +219,16 @@ impl WHNF for DotCall {
                 // codata type.
 
                 // First, we have to select the correct case from the comatch.
-                let Case { body, pattern, .. } =
+                let Case { body, .. } =
                     cases.iter().find(|cocase| cocase.pattern.name == *name).unwrap();
 
                 let body = body.clone().unwrap();
 
-                let body_env =
-                    env.append_closure(closure.clone()).append_args(&pattern.params, args);
-
-                let (mut body, mut body_env, is_neutral) = (*body).whnf(body_env)?;
+                let (mut body, is_neutral) = (*body).whnf()?;
 
                 body.shift((-1, 0));
-                body_env.bound.pop();
-                body_env.shift((-1, 0));
 
-                Ok((body, body_env, is_neutral))
+                Ok((body, is_neutral))
             }
             _ => todo!(),
         }
@@ -303,9 +298,9 @@ mod tests {
             },
             inferred_type: None,
         };
-        let (exp, env, is_neutral) = dot_call.whnf(env).unwrap();
+        let (exp, is_neutral) = dot_call.whnf().unwrap();
 
-        assert!(!is_neutral);
+        assert!(is_neutral == IsWHNF::WHNF);
         assert!(matches!(exp, Exp::TypeUniv(_)));
         assert_eq!(env.len(), 0);
     }
@@ -377,9 +372,9 @@ mod tests {
             },
             inferred_type: None,
         };
-        let (exp, env, is_neutral) = dot_call.whnf(env).unwrap();
+        let (exp, is_neutral) = dot_call.whnf().unwrap();
 
-        assert!(is_neutral);
+        assert!(is_neutral == IsWHNF::Neutral);
         assert!(
             matches!(exp, Exp::Variable(var) if var.name == VarBound::from_string("z") && var.idx == Idx { fst: 0, snd: 0 })
         );

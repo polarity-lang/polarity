@@ -4,7 +4,7 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Shift, ShiftRange,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Shift, ShiftRange,
     Substitutable, Substitution, VarBind, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
@@ -148,13 +148,7 @@ impl Inline for Variable {
 impl WHNF for Variable {
     type Target = Exp;
 
-    fn whnf(&self, env: Closure) -> WHNFResult<MachineState<Self::Target>> {
-        match env.lookup(self.idx).content {
-            Some(exp) => match &*exp {
-                v @ Exp::Variable(var) if var.idx == self.idx => Ok((v.clone(), env, true)),
-                _ => (*exp).whnf(env),
-            },
-            None => Ok((self.clone().into(), env, true)),
-        }
+    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+        todo!()
     }
 }

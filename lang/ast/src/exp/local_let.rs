@@ -10,7 +10,7 @@ use printer::{
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Occurs, Shift,
     ShiftRangeExt, Substitutable, WHNF, WHNFResult, Zonk,
-    ctx::{BindContext, LevelCtx, values::Binder},
+    ctx::{BindContext, LevelCtx},
     rename::Rename,
 };
 
@@ -196,11 +196,7 @@ impl Inline for LocalLet {
 impl WHNF for LocalLet {
     type Target = Exp;
 
-    fn whnf(&self, mut ctx: super::Closure) -> WHNFResult<MachineState<Self::Target>> {
-        let LocalLet { bound, body, name, .. } = self;
-        let elem: Vec<Binder<Option<Box<Exp>>>> =
-            vec![Binder { name: name.clone(), content: Some(bound.clone()) }];
-        ctx.bound.push(elem);
-        (**body).whnf(ctx)
+    fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
+        todo!()
     }
 }
