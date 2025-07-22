@@ -47,6 +47,20 @@ pub struct LocalComatch {
     pub inferred_type: Option<TypCtor>,
 }
 
+#[cfg(test)]
+impl LocalComatch {
+    pub fn make_test(id: usize, closure: Closure, cases: Vec<Case>) -> Exp {
+        LocalComatch {
+            span: None,
+            name: Label { id, user_name: None },
+            closure,
+            is_lambda_sugar: false,
+            cases,
+            ctx: None,
+            inferred_type: None,
+        }.into()
+    }
+}
 impl HasSpan for LocalComatch {
     fn span(&self) -> Option<Span> {
         self.span

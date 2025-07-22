@@ -4,7 +4,7 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Shift, ShiftRange,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, IsWHNF, MachineState, Shift, ShiftRange,
     Substitutable, Substitution, VarBind, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
@@ -32,6 +32,15 @@ pub struct Variable {
     /// Inferred type annotated after elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<Box<Exp>>,
+}
+
+#[cfg(test)]
+impl Variable {
+    /// Create a variable with the given index and a dummy name.
+    pub fn mk_test(idx: Idx) -> Exp {
+        Variable { span: None, idx, name: VarBound::from_string("test_dummy"), inferred_type: None }
+            .into()
+    }
 }
 
 impl HasSpan for Variable {
@@ -149,6 +158,6 @@ impl WHNF for Variable {
     type Target = Exp;
 
     fn whnf(&self) -> WHNFResult<MachineState<Self::Target>> {
-        todo!()
+        Ok((self.clone().into(), IsWHNF::Neutral))
     }
 }

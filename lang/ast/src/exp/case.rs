@@ -70,6 +70,39 @@ pub struct Case {
     pub body: Option<Box<Exp>>,
 }
 
+#[cfg(test)]
+impl Case {
+    pub fn mk_test_cocase(name: &str, num_args: u64, exp: Exp) -> Case {
+        use crate::ParamInst;
+        use url::Url;
+
+        use crate::VarBind;
+
+        let mut params: Vec<ParamInst> = Vec::new();
+        for i in 0..num_args {
+            params.push(ParamInst {
+                span: None,
+                name: VarBind::Var { span: None, id: format!("x{i}") },
+                typ: None,
+                erased: false,
+            });
+        }
+        Case {
+            span: None,
+            pattern: Pattern {
+                span: None,
+                is_copattern: true,
+                name: IdBound {
+                    span: None,
+                    id: name.to_string(),
+                    uri: Url::parse("inmemory://scratch.pol").unwrap(),
+                },
+                params: TelescopeInst { params },
+            },
+            body: Some(Box::new(exp)),
+        }
+    }
+}
 impl Inline for Case {
     fn inline(&mut self, ctx: &Closure, recursive: bool) {
         self.body.inline(ctx, recursive);
