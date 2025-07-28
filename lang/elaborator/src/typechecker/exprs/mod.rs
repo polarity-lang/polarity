@@ -164,7 +164,7 @@ fn check_args(
     }
 
     let Telescope { params } =
-        params.subst_new(&LevelCtx::empty(), &Subst::from_args(&vec![this.args.clone()]));
+        params.subst_new(&LevelCtx::empty(), &Subst::from_args(&[this.args.clone()]));
 
     let args = this
         .args
