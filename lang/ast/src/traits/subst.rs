@@ -45,8 +45,15 @@ use crate::*;
 /// -----------------
 /// shift(θ) : Γ ⇒ Δ₁, Δ₂
 /// ```
+#[derive(Debug, Clone)]
 pub struct Subst {
     pub hm: HashMap<Lvl, Exp>,
+}
+
+impl Shift for Subst {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        todo!()
+    }
 }
 
 impl Subst {
@@ -84,27 +91,27 @@ pub trait SubstitutionNew: Sized {
     /// ## Ensures
     ///
     /// - `Δ ⊢ J θ` where `J θ` is the return value of the function.
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target;
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target;
 }
 
 impl<T: SubstitutionNew> SubstitutionNew for Option<T> {
     type Target = Option<T::Target>;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
-        self.as_ref().map(|x| x.subst(ctx, subst))
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        self.as_ref().map(|x| x.subst_new(ctx, subst))
     }
 }
 
 impl<T: SubstitutionNew> SubstitutionNew for Vec<T> {
     type Target = Vec<T::Target>;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
-        self.iter().map(|x| x.subst(ctx, subst)).collect::<Vec<_>>()
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        self.iter().map(|x| x.subst_new(ctx, subst)).collect::<Vec<_>>()
     }
 }
 
 impl<T: SubstitutionNew> SubstitutionNew for Box<T> {
     type Target = Box<T::Target>;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
-        Box::new((**self).subst(ctx, subst))
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        Box::new((**self).subst_new(ctx, subst))
     }
 }
 

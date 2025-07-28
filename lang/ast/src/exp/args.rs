@@ -7,8 +7,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
+    Substitution, SubstitutionNew, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -115,6 +115,23 @@ impl Substitutable for Arg {
             }
             Arg::InsertedImplicitArg { hole, erased } => {
                 Ok(Arg::InsertedImplicitArg { hole: hole.subst(ctx, by)?, erased: *erased })
+            }
+        }
+    }
+}
+
+impl SubstitutionNew for Arg {
+    type Target = Arg;
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        match self {
+            Arg::UnnamedArg { arg, erased } => {
+                Arg::UnnamedArg { arg: arg.subst_new(ctx, subst), erased: *erased }
+            }
+            Arg::NamedArg { name: var, arg, erased } => {
+                Arg::NamedArg { name: var.clone(), arg: arg.subst_new(ctx, subst), erased: *erased }
+            }
+            Arg::InsertedImplicitArg { hole, erased } => {
+                Arg::InsertedImplicitArg { hole: hole.subst_new(ctx, subst), erased: *erased }
             }
         }
     }
@@ -235,6 +252,13 @@ impl Substitutable for Args {
     }
 }
 
+impl SubstitutionNew for Args {
+    type Target = Args;
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        let args = self.args.iter().map(|arg| arg.subst_new(ctx, subst)).collect::<Vec<_>>();
+        Args { args }
+    }
+}
 impl Print for Args {
     fn print_prec<'a>(
         &'a self,
