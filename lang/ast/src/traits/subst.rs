@@ -20,25 +20,25 @@ use crate::*;
 /// ```
 /// which has a domain `Γ` and a codomain `Δ`.
 /// It can be applied to judgements having a context `Γ` as follows:
-/// ```
+/// ```txt
 /// Γ ⊢ J    θ : Γ ⇒ Δ
 /// ----------------
 ///    Δ ⊢ J θ
 /// ```
 /// ## Domain of a context morphism
 ///
-/// We represent the domain `Γ` using deBruijn levels which allows for automatic weakening, so every substitution:
+/// We represent the domain `Γ` using de Bruijn levels which allows for automatic weakening, so every substitution:
 /// ```txt
 /// θ : Γ₁ ⇒ Δ
 /// ```
 /// is also a valid substitution in an extended context:
-/// ```
+/// ```txt
 /// θ : Γ₁, Γ₂  ⇒ Δ
 /// ```
 ///
 /// ## Codomain of a context morphism
 ///
-/// The expressions of the substitution have variables which are encoded as deBruijn Indices relative to
+/// The expressions of the substitution have variables which are encoded as de Bruijn Indices relative to
 /// the codomain `Δ`. So if we want to apply the substitution under a binder we have to shift the expressions contained in it.
 /// ```txt
 ///        θ : Γ ⇒ Δ₁
@@ -52,12 +52,14 @@ pub struct Subst {
 
 impl Shift for Subst {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        todo!()
+        for (_, exp) in self.hm.iter_mut() {
+            exp.shift_in_range(range, by);
+        }
     }
 }
 
 impl Subst {
-    /// Construct a substitution from a deBruijn level and an expression
+    /// Construct a substitution from a de Bruijn level and an expression
     ///
     /// # Requires
     ///
@@ -158,32 +160,6 @@ impl Substitution for Vec<Vec<Arg>> {
             return Ok(None);
         }
         Ok(Some(self[lvl.fst][lvl.snd].exp().clone()))
-    }
-}
-
-// Assign
-//
-//
-
-/// An assignment is the simplest form of a substitution which provides just
-/// one mapping from a variable (represented by a DeBruijn Level) to an expression.
-#[derive(Clone, Debug)]
-pub struct Assign {
-    pub lvl: Lvl,
-    pub exp: Box<Exp>,
-}
-
-impl Shift for Assign {
-    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        self.exp.shift_in_range(range, by);
-    }
-}
-
-impl Substitution for Assign {
-    type Err = Infallible;
-
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
-        if self.lvl == lvl { Ok(Some(self.exp.clone())) } else { Ok(None) }
     }
 }
 

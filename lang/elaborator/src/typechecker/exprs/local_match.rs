@@ -72,10 +72,10 @@ fn compute_motive(
 
     // Ensure that the motive matches the expected type
     let motive_binder = Binder { name: motive.param.name.clone(), content: () };
-    let mut subst_ctx = ctx.levels().append(&vec![vec![motive_binder]].into());
+    let subst_ctx = ctx.levels().append(&vec![vec![motive_binder]].into());
     let on_exp = shift_and_clone(&on_exp, (1, 0));
-    let subst = Assign { lvl: Lvl { fst: subst_ctx.len() - 1, snd: 0 }, exp: on_exp };
-    let mut motive_t = ret_typ.subst(&mut subst_ctx, &subst)?;
+    let subst = Subst::assign(Lvl { fst: subst_ctx.len() - 1, snd: 0 }, *on_exp);
+    let mut motive_t = ret_typ.subst_new(&subst_ctx, &subst);
     motive_t.shift((-1, 0));
     let motive_t_nf = motive_t.normalize(&ctx.type_info_table, &mut ctx.env())?;
     convert(&ctx.vars, &mut ctx.meta_vars, motive_t_nf, expected_type, span)?;
@@ -247,7 +247,7 @@ impl WithScrutineeType<'_> {
                 ]
                 .into(),
             );
-            let mut subst_ctx_2 = ctx.levels().append(
+            let subst_ctx_2 = ctx.levels().append(
                 &vec![
                     params.params.iter().map(|p| p.name.clone()).collect(),
                     vec![scrutinee_name.clone()],
@@ -279,19 +279,20 @@ impl WithScrutineeType<'_> {
                             erased: false,
                         })
                         .collect();
-                    let ctor = Box::new(Exp::Call(Call {
+                    let ctor = Call {
                         span: None,
                         kind: CallKind::Constructor,
                         name: name.clone(),
                         args: Args { args },
                         inferred_type: None,
-                    }));
-                    let subst = Assign { lvl: Lvl { fst: curr_lvl, snd: 0 }, exp: ctor };
+                    }
+                    .into();
+                    let subst = Subst::assign(Lvl { fst: curr_lvl, snd: 0 }, ctor);
                     let mut t = t.clone();
                     t.shift((1, 0));
                     let mut t = t
                         .swap_with_ctx(&mut subst_ctx_1, curr_lvl, curr_lvl - 1)
-                        .subst(&mut subst_ctx_2, &subst)?;
+                        .subst_new(&subst_ctx_2, &subst);
                     t.shift((-1, 0));
 
                     // We have to check whether we have an absurd case or an ordinary case.

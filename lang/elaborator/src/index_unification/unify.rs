@@ -17,15 +17,15 @@ pub struct Unificator {
     map: HashMap<Lvl, Box<Exp>>,
 }
 
-impl Substitutable for Unificator {
+impl SubstitutionNew for Unificator {
     type Target = Unificator;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self, S::Err> {
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let mut map = HashMap::default();
         for (entry_lvl, entry_val) in self.map.iter() {
-            let entry_val = entry_val.subst(ctx, by)?;
+            let entry_val = entry_val.subst_new(ctx, subst);
             map.insert(*entry_lvl, entry_val);
         }
-        Ok(Self { map })
+        Self { map }
     }
 }
 
@@ -190,8 +190,7 @@ impl Ctx {
         }
         let insert_lvl = self.ctx.idx_to_lvl(idx);
         let exp = exp.subst(&mut self.ctx, &self.unif)?;
-        self.unif =
-            self.unif.subst(&mut self.ctx, &Assign { lvl: insert_lvl, exp: exp.clone() })?;
+        self.unif = self.unif.subst_new(&self.ctx, &Subst::assign(insert_lvl, *exp.clone()));
         match self.unif.map.get(&insert_lvl) {
             Some(other_exp) => {
                 let eqn = Constraint::Equality { lhs: exp, rhs: other_exp.clone() };
