@@ -88,12 +88,14 @@ impl Substitutable for LocalLet {
         let bound = bound.subst(ctx, by)?;
 
         ctx.bind_single(name.clone(), |ctx| {
+            let mut by = (*by).clone();
+            by.shift((1, 0));
             Ok(LocalLet {
                 span: *span,
                 name: name.clone(),
                 typ,
                 bound,
-                body: body.subst(ctx, by)?,
+                body: body.subst(ctx, &by)?,
                 inferred_type: None,
             })
         })
