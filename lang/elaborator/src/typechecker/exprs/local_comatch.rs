@@ -329,10 +329,11 @@ impl WithExpectedType<'_> {
 
                                 ctx.fork::<TcResult<_>, _>(|ctx| {
                                     let type_info_table = ctx.type_info_table.clone();
-                                    ctx.subst(&type_info_table, &unif)?;
-                                    let body = body.subst(&mut ctx.levels(), &unif)?;
+                                    let subst: Subst = unif.into();
+                                    ctx.subst(&type_info_table, &subst);
+                                    let body = body.subst_new(&mut ctx.levels(), &subst);
 
-                                    let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif)?;
+                                    let t_subst = ret_typ_nf.subst_new(&mut ctx.levels(), &subst);
                                     let t_nf =
                                         t_subst.normalize(&ctx.type_info_table, &mut ctx.env())?;
 

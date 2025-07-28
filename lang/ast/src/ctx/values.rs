@@ -167,6 +167,16 @@ impl Substitutable for Binding {
     }
 }
 
+impl SubstitutionNew for Binding {
+    type Target = Binding;
+
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        let Binding { typ, val } = self;
+
+        Binding { typ: typ.subst_new(ctx, subst), val: val.subst_new(ctx, subst) }
+    }
+}
+
 impl ContainsMetaVars for Binding {
     fn contains_metavars(&self) -> bool {
         self.typ.contains_metavars() || self.val.contains_metavars()
@@ -212,6 +222,21 @@ impl Substitutable for BoundValue {
             }
             BoundValue::LetBinding { val } => {
                 Ok(BoundValue::LetBinding { val: val.subst(ctx, by)? })
+            }
+        }
+    }
+}
+
+impl SubstitutionNew for BoundValue {
+    type Target = BoundValue;
+
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        match self {
+            BoundValue::PatternMatching { val } => {
+                BoundValue::PatternMatching { val: val.subst_new(ctx, subst) }
+            }
+            BoundValue::LetBinding { val } => {
+                BoundValue::LetBinding { val: val.subst_new(ctx, subst) }
             }
         }
     }
