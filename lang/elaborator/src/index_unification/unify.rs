@@ -35,11 +35,13 @@ impl Shift for Unificator {
     }
 }
 
-impl Substitution for Unificator {
-    type Err = Infallible;
-
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
-        Ok(self.map.get(&lvl).cloned())
+impl From<Unificator> for Subst {
+    fn from(value: Unificator) -> Self {
+        let mut hm = HashMap::new();
+        for (lvl, exp) in value.map {
+            hm.insert(lvl, *exp);
+        }
+        Subst { hm }
     }
 }
 
@@ -189,7 +191,7 @@ impl Ctx {
             return Err(TypeError::occurs_check_failed(idx, &exp));
         }
         let insert_lvl = self.ctx.idx_to_lvl(idx);
-        let exp = exp.subst(&mut self.ctx, &self.unif)?;
+        let exp = exp.subst_new(&mut self.ctx, &self.unif.clone().into());
         self.unif = self.unif.subst_new(&self.ctx, &Subst::assign(insert_lvl, *exp.clone()));
         match self.unif.map.get(&insert_lvl) {
             Some(other_exp) => {
