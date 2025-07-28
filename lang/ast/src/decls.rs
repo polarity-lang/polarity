@@ -25,6 +25,8 @@ use printer::util::IsNilExt;
 use url::Url;
 
 use crate::ContainsMetaVars;
+use crate::Subst;
+use crate::SubstitutionNew;
 use crate::Zonk;
 use crate::ctx::BindContext;
 use crate::ctx::LevelCtx;
@@ -1392,6 +1394,19 @@ impl Substitutable for Param {
             typ: typ.subst(ctx, by)?,
             erased: *erased,
         })
+    }
+}
+
+impl SubstitutionNew for Param {
+    type Target = Param;
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        let Param { implicit, name, typ, erased } = self;
+        Param {
+            implicit: *implicit,
+            name: name.clone(),
+            typ: typ.subst_new(ctx, subst),
+            erased: *erased,
+        }
     }
 }
 

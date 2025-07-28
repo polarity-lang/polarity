@@ -74,6 +74,36 @@ impl Subst {
         hm.insert(lvl, exp);
         Subst { hm }
     }
+
+    pub fn from_exps(exps: &Vec<Vec<Box<Exp>>>) -> Self {
+        let mut hm: HashMap<Lvl, Exp> = HashMap::new();
+        for (fst, vec) in exps.iter().enumerate() {
+            for (snd, exp) in vec.iter().enumerate() {
+                hm.insert(Lvl { fst, snd }, *exp.clone());
+            }
+        }
+        Subst { hm }
+    }
+
+    pub fn from_args(args: &Vec<Vec<Arg>>) -> Self {
+        let mut hm: HashMap<Lvl, Exp> = HashMap::new();
+        for (fst, vec) in args.iter().enumerate() {
+            for (snd, arg) in vec.iter().enumerate() {
+                hm.insert(Lvl { fst, snd }, *arg.exp());
+            }
+        }
+        Subst { hm }
+    }
+
+    pub fn from_binders(binders: &Vec<Vec<Binder<Box<Exp>>>>) -> Self {
+        let mut hm: HashMap<Lvl, Exp> = HashMap::new();
+        for (fst, vec) in binders.iter().enumerate() {
+            for (snd, binder) in vec.iter().enumerate() {
+                hm.insert(Lvl { fst, snd }, *binder.content.clone());
+            }
+        }
+        Subst { hm }
+    }
 }
 
 pub trait SubstitutionNew: Sized {
@@ -128,39 +158,6 @@ pub trait Substitution: Shift + Clone + Debug {
     type Err;
 
     fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err>;
-}
-
-impl Substitution for Vec<Vec<Box<Exp>>> {
-    type Err = Infallible;
-
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
-        if lvl.fst >= self.len() {
-            return Ok(None);
-        }
-        Ok(Some(self[lvl.fst][lvl.snd].clone()))
-    }
-}
-
-impl Substitution for Vec<Vec<Binder<Box<Exp>>>> {
-    type Err = Infallible;
-
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
-        if lvl.fst >= self.len() {
-            return Ok(None);
-        }
-        Ok(Some(self[lvl.fst][lvl.snd].content.clone()))
-    }
-}
-
-impl Substitution for Vec<Vec<Arg>> {
-    type Err = Infallible;
-
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
-        if lvl.fst >= self.len() {
-            return Ok(None);
-        }
-        Ok(Some(self[lvl.fst][lvl.snd].exp().clone()))
-    }
 }
 
 // Substitutable
@@ -264,23 +261,19 @@ impl Substitution for SwapSubst {
 
 pub trait SubstInTelescope: Sized {
     /// Substitute in a telescope
-    fn subst_in_telescope<S: Substitution>(&self, ctx: LevelCtx, s: &S) -> Result<Self, S::Err>;
+    fn subst_in_telescope(&self, ctx: LevelCtx, subst: &Subst) -> Self;
 }
 
 impl SubstInTelescope for Telescope {
-    fn subst_in_telescope<S: Substitution>(
-        &self,
-        mut ctx: LevelCtx,
-        s: &S,
-    ) -> Result<Self, S::Err> {
+    fn subst_in_telescope(&self, ctx: LevelCtx, subst: &Subst) -> Self {
         let Telescope { params } = self;
 
-        ctx.bind_fold_failable(
+        ctx.clone().bind_fold(
             params.iter(),
             Vec::new(),
             |ctx, params_out, param| {
-                params_out.push(param.subst(ctx, s)?);
-                Ok(Binder { name: param.name.clone(), content: () })
+                params_out.push(param.subst_new(ctx, subst));
+                Binder { name: param.name.clone(), content: () }
             },
             |_, params_out| Telescope { params: params_out },
         )

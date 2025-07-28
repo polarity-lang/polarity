@@ -250,7 +250,8 @@ impl Zonk for Hole {
                 // in the solutions contained in the metavars map.
                 // Assuming this invariant holds, we do not need to zonk here.
                 // Unwrap is safe here because we are unwrapping an infallible result.
-                self.solution = Some(solution.subst(&mut ctx.clone(), &self.args).unwrap());
+                let subst = Subst::from_binders(&self.args);
+                self.solution = Some(solution.subst_new(&ctx.clone(), &subst));
             }
             Some(crate::MetaVarState::Unsolved { .. }) => {
                 // Nothing to do, the hole remains unsolved
