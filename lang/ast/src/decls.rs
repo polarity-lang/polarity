@@ -1251,6 +1251,24 @@ impl Rename for Telescope {
     }
 }
 
+impl SubstitutionNew for Telescope {
+    type Target = Telescope;
+
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        let Telescope { params } = self;
+
+        ctx.clone().bind_fold(
+            params.iter(),
+            Vec::new(),
+            |ctx, params_out, param| {
+                params_out.push(param.subst_new(ctx, subst));
+                Binder { name: param.name.clone(), content: () }
+            },
+            |_, params_out| Telescope { params: params_out },
+        )
+    }
+}
+
 #[cfg(test)]
 mod print_telescope_tests {
 
