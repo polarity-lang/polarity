@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::convert::Infallible;
 
 use ast::ctx::LevelCtx;
 use ast::{Variable, occurs_in};
@@ -191,7 +190,7 @@ impl Ctx {
             return Err(TypeError::occurs_check_failed(idx, &exp));
         }
         let insert_lvl = self.ctx.idx_to_lvl(idx);
-        let exp = exp.subst_new(&mut self.ctx, &self.unif.clone().into());
+        let exp = exp.subst_new(&self.ctx, &self.unif.clone().into());
         self.unif = self.unif.subst_new(&self.ctx, &Subst::assign(insert_lvl, *exp.clone()));
         match self.unif.map.get(&insert_lvl) {
             Some(other_exp) => {

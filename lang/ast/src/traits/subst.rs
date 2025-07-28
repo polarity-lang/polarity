@@ -75,7 +75,7 @@ impl Subst {
         Subst { hm }
     }
 
-    pub fn from_exps(exps: &Vec<Vec<Box<Exp>>>) -> Self {
+    pub fn from_exps(exps: &[Vec<Box<Exp>>]) -> Self {
         let mut hm: HashMap<Lvl, Exp> = HashMap::new();
         for (fst, vec) in exps.iter().enumerate() {
             for (snd, exp) in vec.iter().enumerate() {
@@ -85,7 +85,7 @@ impl Subst {
         Subst { hm }
     }
 
-    pub fn from_args(args: &Vec<Vec<Arg>>) -> Self {
+    pub fn from_args(args: &[Vec<Arg>]) -> Self {
         let mut hm: HashMap<Lvl, Exp> = HashMap::new();
         for (fst, vec) in args.iter().enumerate() {
             for (snd, arg) in vec.iter().enumerate() {
@@ -95,7 +95,7 @@ impl Subst {
         Subst { hm }
     }
 
-    pub fn from_binders(binders: &Vec<Vec<Binder<Box<Exp>>>>) -> Self {
+    pub fn from_binders(binders: &[Vec<Binder<Box<Exp>>>]) -> Self {
         let mut hm: HashMap<Lvl, Exp> = HashMap::new();
         for (fst, vec) in binders.iter().enumerate() {
             for (snd, binder) in vec.iter().enumerate() {
