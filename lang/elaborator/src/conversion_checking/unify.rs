@@ -58,7 +58,7 @@ impl<'a> Ctx<'a> {
                     // For these, it is particularly important to have this early-return, because metavariables
                     // from other modules are not bound in the metavars map for this module!
                     if let Some(solution) = &h.solution {
-                        let lhs = solution.clone().subst(&mut h.levels(), &h.args)?;
+                        let lhs = solution.clone().subst_new(&mut h.levels(), &Subst::from_binders(&h.args));
                         self.add_constraint(Constraint::Equality {
                             ctx: constraint_cxt,
                             lhs,
@@ -86,7 +86,7 @@ impl<'a> Ctx<'a> {
                         )?,
                         // When we encounter a solved metavariable, we substitute the arguments in the solution.
                         MetaVarState::Solved { ctx, solution } => {
-                            let lhs = solution.clone().subst(&mut ctx.clone(), &h.args)?;
+                            let lhs = solution.clone().subst_new(&ctx.clone(), &Subst::from_binders(&h.args));
                             self.add_constraint(Constraint::Equality {
                                 ctx: constraint_cxt,
                                 lhs,
