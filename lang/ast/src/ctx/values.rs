@@ -57,6 +57,14 @@ impl<T: Substitutable> Substitutable for Binder<T> {
     }
 }
 
+impl<T: SubstitutionNew> SubstitutionNew for Binder<T> {
+    type Target = Binder<T::Target>;
+
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        Binder { name: self.name.clone(), content: self.content.subst_new(ctx, subst) }
+    }
+}
+
 impl<T: ContainsMetaVars> ContainsMetaVars for Binder<T> {
     fn contains_metavars(&self) -> bool {
         self.content.contains_metavars()
