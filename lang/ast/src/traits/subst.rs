@@ -254,28 +254,3 @@ impl Substitution for SwapSubst {
         }))
     }
 }
-
-// SubstInTelescope
-//
-//
-
-pub trait SubstInTelescope: Sized {
-    /// Substitute in a telescope
-    fn subst_in_telescope(&self, ctx: LevelCtx, subst: &Subst) -> Self;
-}
-
-impl SubstInTelescope for Telescope {
-    fn subst_in_telescope(&self, ctx: LevelCtx, subst: &Subst) -> Self {
-        let Telescope { params } = self;
-
-        ctx.clone().bind_fold(
-            params.iter(),
-            Vec::new(),
-            |ctx, params_out, param| {
-                params_out.push(param.subst_new(ctx, subst));
-                Binder { name: param.name.clone(), content: () }
-            },
-            |_, params_out| Telescope { params: params_out },
-        )
-    }
-}
