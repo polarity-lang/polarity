@@ -113,6 +113,65 @@ impl<T: Substitutable> Substitutable for Box<T> {
     }
 }
 
+// New concrete representation of Substitution
+//
+//
+
+/// # Substitutions as Context Morphisms
+///
+/// A substitution `θ` is a context morphism
+/// ```txt
+/// θ : Γ ⇒ Δ
+/// ```
+/// which has a domain `Γ` and a codomain `Δ`.
+/// It can be applied to judgements having a context `Γ` as follows:
+/// ```
+/// Γ ⊢ J    θ : Γ ⇒ Δ
+/// ----------------
+///    Δ ⊢ J θ
+/// ```
+/// ## Domain of a context morphism
+///
+/// We represent the domain `Γ` using deBruijn levels which allows for automatic weakening, so every substitution:
+/// ```txt
+/// θ : Γ₁ ⇒ Δ
+/// ```
+/// is also a valid substitution in an extended context:
+/// ```
+/// θ : Γ₁, Γ₂  ⇒ Δ
+/// ```
+///
+/// ## Codomain of a context morphism
+///
+/// The expressions of the substitution have variables which are encoded as deBruijn Indices relative to
+/// the codomain `Δ`. So if we want to apply the substitution under a binder we have to shift the expressions contained in it.
+/// ```txt
+///        θ : Γ ⇒ Δ₁
+/// -----------------
+/// shift(θ) : Γ ⇒ Δ₁, Δ₂
+/// ```
+pub struct Subst {
+    pub hm: HashMap<Lvl, Exp>,
+}
+
+pub trait SubstitutionNew: Sized {
+    type Target;
+    /// Apply a substitution to an entity.
+    ///
+    /// ## Input
+    /// - `ctx` This corresponds to `Γ` in the precondition and postcondition.
+    /// - `subst` This corresponds to `θ`
+    ///
+    /// ## Expects
+    /// - `Γ ⊢ J`
+    ///    Where `J` corresponds to the judgement form for the self parameter to which we apply the substitution
+    /// - `θ : Γ ⇒ Δ`
+    ///
+    /// ## Ensures
+    /// - `Δ ⊢ J θ` where `J θ` is the return value of the function.
+    fn subst(&self, ctx: &mut LevelCtx, subst: Subst) -> Self::Target;
+}
+
 // SwapWithCtx
 //
 //
