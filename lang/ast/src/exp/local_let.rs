@@ -111,13 +111,17 @@ impl SubstitutionNew for LocalLet {
         let typ = typ.subst_new(ctx, subst);
         let bound = bound.subst_new(ctx, subst);
 
-        ctx.clone().bind_single(name.clone(), |ctx| LocalLet {
-            span: *span,
-            name: name.clone(),
-            typ,
-            bound,
-            body: body.subst_new(ctx, subst),
-            inferred_type: None,
+        ctx.clone().bind_single(name.clone(), |ctx| {
+            let mut subst = (*subst).clone();
+            subst.shift((1, 0));
+            LocalLet {
+                span: *span,
+                name: name.clone(),
+                typ,
+                bound,
+                body: body.subst_new(ctx, &subst),
+                inferred_type: None,
+            }
         })
     }
 }
