@@ -1,4 +1,4 @@
-# Developer and Contributer Information
+# Developer and Contributor Information
 
 You can find a high-level overview of the architecture of the compiler in [ARCHITECTURE.md](ARCHITECTURE.md).
 This document contains information about the developer workflow, including our git conventions, information about how to use the testsuite effectively, and a guide to using the debugging infrastructure.
