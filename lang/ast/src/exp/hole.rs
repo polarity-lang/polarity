@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
+    Substitution, SubstitutionNew, Zonk, ZonkError,
     ctx::{
         LevelCtx,
         values::{Binder, TypeCtx},
@@ -125,6 +125,23 @@ impl Substitutable for Hole {
     }
 }
 
+impl SubstitutionNew for Hole {
+    type Target = Hole;
+
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        let Hole { span, kind, metavar, args, .. } = self;
+        Hole {
+            span: *span,
+            kind: *kind,
+            metavar: *metavar,
+            inferred_type: None,
+            inferred_ctx: None,
+            args: args.subst_new(ctx, subst),
+            solution: self.solution.as_ref().map(|s| s.subst_new(ctx, subst)),
+        }
+    }
+}
+
 impl Print for Hole {
     fn print_prec<'a>(
         &'a self,
@@ -233,7 +250,8 @@ impl Zonk for Hole {
                 // in the solutions contained in the metavars map.
                 // Assuming this invariant holds, we do not need to zonk here.
                 // Unwrap is safe here because we are unwrapping an infallible result.
-                self.solution = Some(solution.subst(&mut ctx.clone(), &self.args).unwrap());
+                let subst = Subst::from_binders(&self.args);
+                self.solution = Some(solution.subst_new(&ctx.clone(), &subst));
             }
             Some(crate::MetaVarState::Unsolved { .. }) => {
                 // Nothing to do, the hole remains unsolved
