@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRangeExt, Substitutable,
-    Zonk,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, MachineState, Occurs, Shift,
+    ShiftRangeExt, Substitutable, WHNF, WHNFResult, Zonk,
     ctx::{BindContext, LevelCtx},
     rename::Rename,
 };
@@ -184,5 +184,21 @@ impl FreeVars for LocalLet {
         bound.free_vars_mut(ctx, cutoff, fvs);
         typ.free_vars_mut(ctx, cutoff, fvs);
         body.free_vars_mut(ctx, cutoff + 1, fvs);
+    }
+}
+
+impl Inline for LocalLet {
+    fn inline(&mut self, ctx: &super::Closure, recursive: bool) {
+        self.bound.inline(ctx, recursive);
+        self.typ.inline(ctx, recursive);
+        self.body.inline(ctx, recursive);
+    }
+}
+
+impl WHNF for LocalLet {
+    type Target = Exp;
+
+    fn whnf(&self, _ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
+        todo!()
     }
 }

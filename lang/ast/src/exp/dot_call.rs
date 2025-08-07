@@ -4,13 +4,13 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::DOT};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, IsWHNF, LocalComatch, MachineState,
+    Occurs, Shift, ShiftRange, Substitutable, Substitution, WHNF, WHNFResult, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
 
-use super::{Args, Exp, IdBound, MetaVar};
+use super::{Args, Case, Exp, IdBound, MetaVar};
 
 /// A DotCall expression can be one of two different kinds:
 /// - A destructor introduced by a codata type declaration
@@ -45,6 +45,34 @@ pub struct DotCall {
     /// This type is annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<Box<Exp>>,
+}
+
+#[cfg(test)]
+impl DotCall {
+    pub fn mk_test_destructor(exp: Exp, name: &str, arguments: Vec<Exp>) -> Exp {
+        use url::Url;
+
+        use crate::Arg;
+        let mut args: Vec<Arg> = Vec::new();
+        for arg in arguments {
+            use crate::Arg;
+            args.push(Arg::UnnamedArg { arg: Box::new(arg), erased: false })
+        }
+
+        DotCall {
+            span: None,
+            kind: DotCallKind::Destructor,
+            exp: Box::new(exp),
+            name: IdBound {
+                span: None,
+                id: name.to_string(),
+                uri: Url::parse("inmemory://scratch.pol").unwrap(),
+            },
+            args: Args { args },
+            inferred_type: None,
+        }
+        .into()
+    }
 }
 
 impl HasSpan for DotCall {
@@ -162,5 +190,102 @@ impl FreeVars for DotCall {
         let DotCall { span: _, kind: _, exp, name: _, args, inferred_type: _ } = self;
         exp.free_vars_mut(ctx, cutoff, fvs);
         args.free_vars_mut(ctx, cutoff, fvs);
+    }
+}
+
+impl Inline for DotCall {
+    fn inline(&mut self, ctx: &super::Closure, recursive: bool) {
+        self.exp.inline(ctx, recursive);
+        self.args.inline(ctx, recursive);
+    }
+}
+
+impl WHNF for DotCall {
+    type Target = Exp;
+
+    fn whnf(&self, ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
+        let DotCall { span, kind, exp, name, args, inferred_type: _ } = self;
+
+        let (exp, is_neutral) = exp.whnf(ctx.clone())?;
+        match is_neutral {
+            IsWHNF::Neutral => {
+                // The specific instance of the DotCall we are evaluating is:
+                //
+                // ```text
+                // n.d(e_1,...)
+                // ┳ ┳ ━━━┳━━━
+                // ┃ ┃    ┗━━━━━━━ args
+                // ┃ ┗━━━━━━━━━━━━ name
+                // ┗━━━━━━━━━━━━━━ exp (Neutral value)
+                // ```
+                // Evaluation is blocked by the neutral value `n`.
+                let dot_call = DotCall {
+                    span: *span,
+                    kind: *kind,
+                    exp,
+                    name: name.clone(),
+                    args: args.clone(),
+                    inferred_type: None,
+                };
+
+                Ok((dot_call.into(), IsWHNF::Neutral))
+            }
+            IsWHNF::WHNF => {
+                match &*exp {
+                    Exp::LocalComatch(LocalComatch { cases, .. }) => {
+                        // The specific instance of the DotCall we are evaluating is:
+                        //
+                        // ```text
+                        //  comatch { ... }.d(e_1,...)
+                        //            ━┳━   ┳ ━━━┳━━━
+                        //             ┃    ┃    ┗━━━━ args
+                        //             ┃    ┗━━━━━━━━━ name
+                        //             ┗━━━━━━━━━━━━━━ cases
+                        // ```
+                        //
+                        // where `d` is the name of a destructor declared in a
+                        // codata type.
+
+                        // First, we have to select the correct case from the comatch.
+                        let Case { body, .. } =
+                            cases.iter().find(|cocase| cocase.pattern.name == *name).unwrap();
+
+                        let body = body.clone().unwrap();
+
+                        let (mut body, is_neutral) = (*body).whnf(ctx)?;
+
+                        body.shift((-1, 0));
+
+                        Ok((body, is_neutral))
+                    }
+                    _ => todo!(),
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::*;
+
+    /// ```text
+    /// [] |- comatch { .ap(x) => x }.ap(Type) ▷ Type
+    /// ```
+    #[test]
+    fn test_eval_id() {
+        // Build `comatch { .ap(x) => x }`
+        let body = Variable::mk_test(Idx { fst: 0, snd: 0 });
+        let case = Case::mk_test_cocase("ap", 1, body);
+        let comatch = LocalComatch::make_test(0, Closure::default(), vec![case]);
+
+        let dot_call =
+            DotCall::mk_test_destructor(comatch, "ap", vec![TypeUniv { span: None }.into()]);
+
+        let (exp, is_neutral) = dot_call.whnf(LevelCtx::default()).unwrap();
+
+        assert!(is_neutral == IsWHNF::WHNF);
+        assert!(matches!(exp, Exp::TypeUniv(_)));
     }
 }
