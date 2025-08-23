@@ -1,7 +1,5 @@
 #[cfg(not(target_arch = "wasm32"))]
 mod cli;
-#[cfg(not(target_arch = "wasm32"))]
-mod result;
 
 mod utils;
 
