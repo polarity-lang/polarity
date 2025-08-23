@@ -144,7 +144,7 @@ impl BuildSymbolTable for Let {
 
 impl BuildSymbolTable for Infix {
     fn build(&self, symbol_table: &mut ModuleSymbolTable) -> LoweringResult {
-        let Infix { span, doc: _, pattern, rhs } = self;
+        let Infix { span, doc: _, attr: _, pattern, rhs } = self;
 
         match pattern.rhs.as_slice() {
             [(operator, _)] => {
