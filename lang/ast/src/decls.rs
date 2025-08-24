@@ -1184,7 +1184,7 @@ impl Print for Telescope {
                         .append(alloc.line());
                     if *implicit {
                         output = output
-                            .append(IMPLICIT)
+                            .append(alloc.keyword(IMPLICIT))
                             .append(alloc.space())
                             .append(name.print(cfg, alloc));
                     } else {
@@ -1196,7 +1196,7 @@ impl Print for Telescope {
                     // If we are starting a chunk of implicit parameters then we also have to
                     // add the "implicit" keyword at this point.
                     if *implicit {
-                        output = output.append(IMPLICIT).append(alloc.space())
+                        output = output.append(alloc.keyword(IMPLICIT)).append(alloc.space())
                     }
 
                     output = output.append(name.print(cfg, alloc));
@@ -1400,7 +1400,7 @@ impl Print for Param {
         let Param { implicit, name, typ, erased: _ } = self;
         if *implicit {
             alloc
-                .text(IMPLICIT)
+                .keyword(IMPLICIT)
                 .append(alloc.space())
                 .append(name.print(cfg, alloc))
                 .append(COLON)
