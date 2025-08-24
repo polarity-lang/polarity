@@ -7,7 +7,7 @@ impl Lower for cst::decls::Infix {
     type Target = ast::Infix;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
-        let cst::decls::Infix { span, doc, pattern, rhs } = self;
+        let cst::decls::Infix { span, doc, attr, pattern, rhs } = self;
 
         let (operator, pattern_rhs) = match pattern.rhs.as_slice() {
             [x] => x,
@@ -59,7 +59,7 @@ impl Lower for cst::decls::Infix {
         Ok(ast::Infix {
             span: Some(*span),
             doc: doc.lower(ctx)?,
-            attr: Default::default(),
+            attr: attr.lower(ctx)?,
             lhs: operator.id.clone(),
             rhs: rhs.name.id.clone(),
         })

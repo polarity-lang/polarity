@@ -200,6 +200,10 @@ Codef: Codef = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codef" <name: I
 Let: Let = <l: @L> <doc: DocComment?> <attr: OptAttributes> "let" <name: Ident><params: OptTelescope> ":" <typ: Exp> "{" <body: Exp> "}" <r: @R> =>
   Let { span: span(l,r), doc, name, attr, params, typ, body };
 
+// Infix operator declaration
+Infix: Infix = {
+  <l: @L> <doc: DocComment?> <attr: OptAttributes> "infix" <pattern: BinOp> ":=" <rhs: CallWithArgs> <r: @R> => Infix { span: span(l,r), doc, attr, pattern, rhs }
+}
 
 Pattern: Pattern = {
   <l: @L><name: Ident><params: OptTelescopeInst><r: @R> => Pattern { span: span(l,r), name, params },
@@ -231,10 +235,6 @@ pub Scrutinee: Scrutinee = {
 
 pub TypApp: Call = {
     <l: @L> <name: Ident> <args: OptArgs> <r: @R> => Call { span: span(l, r), name, args },
-}
-
-Infix: Infix = {
-  <l: @L> <doc: DocComment?> "infix" <pattern: BinOp> ":=" <rhs: CallWithArgs> <r: @R> => Infix { span: span(l,r), doc, pattern, rhs }
 }
 
 // Expressions
