@@ -39,7 +39,7 @@ impl Index {
         Self { index, reader }
     }
 
-    pub fn writer(&mut self) -> Writer {
+    pub fn writer(&'_ mut self) -> Writer<'_> {
         let index_writer = self.index.writer(INDEX_WRITER_MEM).unwrap();
         Writer { index: self, writer: index_writer }
     }
