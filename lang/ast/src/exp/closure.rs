@@ -3,7 +3,7 @@ use crate::ctx::values::Binder;
 use crate::rename::Rename;
 use crate::{
     ContainsMetaVars, Exp, FreeVars, HashMap, HashSet, Lvl, MetaVar, MetaVarState, Occurs, Shift,
-    Substitutable, VarBind, VarBound, Variable, Zonk, ZonkError,
+    Subst, Substitutable, SubstitutionNew, VarBind, VarBound, Variable, Zonk, ZonkError,
 };
 
 /// A closure tracking free variables (and their substitution).
@@ -71,7 +71,7 @@ impl Substitutable for Closure {
 
     fn subst<S: crate::Substitution>(
         &self,
-        ctx: &mut crate::ctx::LevelCtx,
+        ctx: &mut LevelCtx,
         by: &S,
     ) -> Result<Self::Target, S::Err> {
         let new_args = Vec::with_capacity(self.args.len());
@@ -89,6 +89,28 @@ impl Substitutable for Closure {
         }
 
         Ok(Closure { args: new_args })
+    }
+}
+
+impl SubstitutionNew for Closure {
+    type Target = Closure;
+
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        let new_args = Vec::with_capacity(self.args.len());
+
+        for fst in 0..self.args.len() {
+            let mut new_inner = Vec::with_capacity(self.args[fst].len());
+            for snd in 0..self.args[fst].len() {
+                let old_binder = &self.args[fst][snd];
+                let new_binder = Binder {
+                    name: old_binder.name.clone(),
+                    content: old_binder.content.subst_new(ctx, subst),
+                };
+                new_inner.push(new_binder);
+            }
+        }
+
+        Closure { args: new_args }
     }
 }
 

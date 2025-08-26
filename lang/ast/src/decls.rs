@@ -25,6 +25,8 @@ use printer::util::IsNilExt;
 use url::Url;
 
 use crate::ContainsMetaVars;
+use crate::Subst;
+use crate::SubstitutionNew;
 use crate::Zonk;
 use crate::ctx::BindContext;
 use crate::ctx::LevelCtx;
@@ -1249,6 +1251,24 @@ impl Rename for Telescope {
     }
 }
 
+impl SubstitutionNew for Telescope {
+    type Target = Telescope;
+
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        let Telescope { params } = self;
+
+        ctx.clone().bind_fold(
+            params.iter(),
+            Vec::new(),
+            |ctx, params_out, param| {
+                params_out.push(param.subst_new(ctx, subst));
+                Binder { name: param.name.clone(), content: () }
+            },
+            |_, params_out| Telescope { params: params_out },
+        )
+    }
+}
+
 #[cfg(test)]
 mod print_telescope_tests {
 
@@ -1392,6 +1412,19 @@ impl Substitutable for Param {
             typ: typ.subst(ctx, by)?,
             erased: *erased,
         })
+    }
+}
+
+impl SubstitutionNew for Param {
+    type Target = Param;
+    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        let Param { implicit, name, typ, erased } = self;
+        Param {
+            implicit: *implicit,
+            name: name.clone(),
+            typ: typ.subst_new(ctx, subst),
+            erased: *erased,
+        }
     }
 }
 
