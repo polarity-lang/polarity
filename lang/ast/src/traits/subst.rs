@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use std::fmt::Debug;
 
 use values::Binder;
 
+use crate::HashMap;
 use crate::Variable;
 use crate::ctx::*;
 use crate::*;
@@ -69,13 +69,13 @@ impl Subst {
     ///
     /// - `θ ⊢ Γ ⇒ Δ` where `θ` is the output of the function.
     pub fn assign(lvl: Lvl, exp: Exp) -> Self {
-        let mut hm = HashMap::new();
+        let mut hm = HashMap::default();
         hm.insert(lvl, exp);
         Subst { hm }
     }
 
     pub fn from_exps(exps: &[Vec<Box<Exp>>]) -> Self {
-        let mut hm: HashMap<Lvl, Exp> = HashMap::new();
+        let mut hm: HashMap<Lvl, Exp> = HashMap::default();
         for (fst, vec) in exps.iter().enumerate() {
             for (snd, exp) in vec.iter().enumerate() {
                 hm.insert(Lvl { fst, snd }, *exp.clone());
@@ -85,7 +85,7 @@ impl Subst {
     }
 
     pub fn from_args(args: &[Vec<Arg>]) -> Self {
-        let mut hm: HashMap<Lvl, Exp> = HashMap::new();
+        let mut hm: HashMap<Lvl, Exp> = HashMap::default();
         for (fst, vec) in args.iter().enumerate() {
             for (snd, arg) in vec.iter().enumerate() {
                 hm.insert(Lvl { fst, snd }, *arg.exp());
@@ -95,7 +95,7 @@ impl Subst {
     }
 
     pub fn from_binders(binders: &[Vec<Binder<Box<Exp>>>]) -> Self {
-        let mut hm: HashMap<Lvl, Exp> = HashMap::new();
+        let mut hm: HashMap<Lvl, Exp> = HashMap::default();
         for (fst, vec) in binders.iter().enumerate() {
             for (snd, binder) in vec.iter().enumerate() {
                 hm.insert(Lvl { fst, snd }, *binder.content.clone());
@@ -122,7 +122,7 @@ impl Subst {
         let len1 = ctx.bound[fst1].len();
         let len2 = ctx.bound[fst2].len();
 
-        let mut hm = HashMap::new();
+        let mut hm = HashMap::default();
 
         for snd in 0..len1 {
             let from = Lvl { fst: fst1, snd };
