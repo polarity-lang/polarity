@@ -42,7 +42,10 @@ impl CheckInfer for DotCall {
 
         let self_param_out = self_param
             .typ
-            .subst_new(&vec![params.params.clone()].into(), &Subst::from_args(&[args.args.clone()]))
+            .subst_new(
+                &vec![params.params.clone()].into(),
+                &Subst::from_args(std::slice::from_ref(&args.args)),
+            )
             .to_exp();
         let self_param_nf = self_param_out.normalize(&ctx.type_info_table, &mut ctx.env())?;
 
