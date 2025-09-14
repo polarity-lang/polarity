@@ -9,7 +9,7 @@ use printer::{
 
 use crate::{
     Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst,
-    SubstitutionNew, Zonk, ZonkError,
+    Substitutable, Zonk, ZonkError,
     ctx::{LevelCtx, values::TypeCtx},
     rename::{Rename, RenameCtx},
 };
@@ -76,7 +76,7 @@ impl HasType for LocalMatch {
     }
 }
 
-impl SubstitutionNew for LocalMatch {
+impl Substitutable for LocalMatch {
     type Target = LocalMatch;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let LocalMatch { span, name, on_exp, motive, ret_typ, cases, .. } = self;

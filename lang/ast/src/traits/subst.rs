@@ -143,7 +143,7 @@ impl Subst {
 /// Trait for entities which can be used as a substitution.
 /// In order to be used as a substitution an entity has to provide a method
 /// to query it for a result for a given deBruijn Level.
-pub trait SubstitutionNew: Sized {
+pub trait Substitutable: Sized {
     type Target;
     /// Apply a substitution to an entity.
     ///
@@ -163,21 +163,21 @@ pub trait SubstitutionNew: Sized {
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target;
 }
 
-impl<T: SubstitutionNew> SubstitutionNew for Option<T> {
+impl<T: Substitutable> Substitutable for Option<T> {
     type Target = Option<T::Target>;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         self.as_ref().map(|x| x.subst_new(ctx, subst))
     }
 }
 
-impl<T: SubstitutionNew> SubstitutionNew for Vec<T> {
+impl<T: Substitutable> Substitutable for Vec<T> {
     type Target = Vec<T::Target>;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         self.iter().map(|x| x.subst_new(ctx, subst)).collect::<Vec<_>>()
     }
 }
 
-impl<T: SubstitutionNew> SubstitutionNew for Box<T> {
+impl<T: Substitutable> Substitutable for Box<T> {
     type Target = Box<T::Target>;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         Box::new((**self).subst_new(ctx, subst))
@@ -188,17 +188,17 @@ impl<T: SubstitutionNew> SubstitutionNew for Box<T> {
 //
 //
 
-pub trait SwapWithCtx: SubstitutionNew {
+pub trait SwapWithCtx: Substitutable {
     fn swap_with_ctx(&self, ctx: &mut LevelCtx, fst1: usize, fst2: usize) -> Self::Target;
 }
 
-impl<T: SubstitutionNew> SwapWithCtx for T {
+impl<T: Substitutable> SwapWithCtx for T {
     fn swap_with_ctx(
         &self,
         ctx: &mut LevelCtx,
         fst1: usize,
         fst2: usize,
-    ) -> <T as SubstitutionNew>::Target {
+    ) -> <T as Substitutable>::Target {
         self.subst_new(ctx, &Subst::swap(ctx, fst1, fst2))
     }
 }

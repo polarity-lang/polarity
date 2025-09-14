@@ -3,8 +3,8 @@ use miette_util::codespan::Span;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst,
-    SubstitutionNew, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
+    Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -80,7 +80,7 @@ impl HasType for Call {
     }
 }
 
-impl SubstitutionNew for Call {
+impl Substitutable for Call {
     type Target = Call;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Call { span, name, args, kind, .. } = self;

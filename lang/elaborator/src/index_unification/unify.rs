@@ -16,7 +16,7 @@ pub struct Unificator {
     map: HashMap<Lvl, Box<Exp>>,
 }
 
-impl SubstitutionNew for Unificator {
+impl Substitutable for Unificator {
     type Target = Unificator;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let mut map = HashMap::default();

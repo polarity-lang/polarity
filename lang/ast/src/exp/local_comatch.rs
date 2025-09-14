@@ -14,7 +14,7 @@ use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Zonk, ZonkError,
 };
 use crate::{
-    Subst, SubstitutionNew,
+    Subst, Substitutable,
     ctx::{LevelCtx, values::TypeCtx},
 };
 
@@ -80,7 +80,7 @@ impl HasType for LocalComatch {
     }
 }
 
-impl SubstitutionNew for LocalComatch {
+impl Substitutable for LocalComatch {
     type Target = LocalComatch;
 
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {

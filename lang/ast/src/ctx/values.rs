@@ -49,7 +49,7 @@ impl<T: Occurs> Occurs for Binder<T> {
     }
 }
 
-impl<T: SubstitutionNew> SubstitutionNew for Binder<T> {
+impl<T: Substitutable> Substitutable for Binder<T> {
     type Target = Binder<T::Target>;
 
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
@@ -149,7 +149,7 @@ impl Shift for Binding {
     }
 }
 
-impl SubstitutionNew for Binding {
+impl Substitutable for Binding {
     type Target = Binding;
 
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
@@ -194,7 +194,7 @@ impl Occurs for BoundValue {
     }
 }
 
-impl SubstitutionNew for BoundValue {
+impl Substitutable for BoundValue {
     type Target = BoundValue;
 
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {

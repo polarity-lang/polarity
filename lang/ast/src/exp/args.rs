@@ -7,8 +7,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst,
-    SubstitutionNew, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
+    Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -103,7 +103,7 @@ impl HasType for Arg {
     }
 }
 
-impl SubstitutionNew for Arg {
+impl Substitutable for Arg {
     type Target = Arg;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         match self {
@@ -227,7 +227,7 @@ impl Occurs for Args {
     }
 }
 
-impl SubstitutionNew for Args {
+impl Substitutable for Args {
     type Target = Args;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let args = self.args.iter().map(|arg| arg.subst_new(ctx, subst)).collect::<Vec<_>>();

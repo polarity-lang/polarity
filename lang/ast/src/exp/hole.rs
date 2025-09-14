@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst,
-    SubstitutionNew, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
+    Zonk, ZonkError,
     ctx::{
         LevelCtx,
         values::{Binder, TypeCtx},
@@ -108,7 +108,7 @@ impl HasType for Hole {
     }
 }
 
-impl SubstitutionNew for Hole {
+impl Substitutable for Hole {
     type Target = Hole;
 
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {

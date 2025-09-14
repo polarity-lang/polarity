@@ -9,7 +9,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::{BindContext, LevelCtx};
 use crate::rename::{Rename, RenameCtx};
-use crate::{ContainsMetaVars, FreeVars, Subst, SubstitutionNew, Zonk, ZonkError};
+use crate::{ContainsMetaVars, FreeVars, Subst, Substitutable, Zonk, ZonkError};
 
 use super::HasType;
 use super::traits::HasSpan;
@@ -173,7 +173,7 @@ impl HasType for Exp {
     }
 }
 
-impl SubstitutionNew for Exp {
+impl Substitutable for Exp {
     type Target = Exp;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         match self {
@@ -302,7 +302,7 @@ impl Shift for Motive {
     }
 }
 
-impl SubstitutionNew for Motive {
+impl Substitutable for Motive {
     type Target = Motive;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Motive { span, param, ret_typ } = self;

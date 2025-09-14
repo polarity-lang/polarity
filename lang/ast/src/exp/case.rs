@@ -9,7 +9,7 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Subst, SubstitutionNew,
+    ContainsMetaVars, FreeVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Subst, Substitutable,
     Zonk, ZonkError,
     ctx::{BindContext, LevelCtx},
     rename::{Rename, RenameCtx},
@@ -88,7 +88,7 @@ impl Occurs for Case {
     }
 }
 
-impl SubstitutionNew for Case {
+impl Substitutable for Case {
     type Target = Case;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Case { span, pattern, body } = self;

@@ -9,7 +9,7 @@ use printer::{
 
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRangeExt, Subst,
-    SubstitutionNew, Zonk,
+    Substitutable, Zonk,
     ctx::{BindContext, LevelCtx},
     rename::Rename,
 };
@@ -74,7 +74,7 @@ impl HasType for LocalLet {
     }
 }
 
-impl SubstitutionNew for LocalLet {
+impl Substitutable for LocalLet {
     type Target = LocalLet;
 
     fn subst_new(&self, ctx: &crate::ctx::LevelCtx, subst: &Subst) -> Self::Target {

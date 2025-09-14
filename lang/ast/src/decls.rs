@@ -26,7 +26,7 @@ use url::Url;
 
 use crate::ContainsMetaVars;
 use crate::Subst;
-use crate::SubstitutionNew;
+use crate::Substitutable;
 use crate::Zonk;
 use crate::ctx::BindContext;
 use crate::ctx::LevelCtx;
@@ -1250,7 +1250,7 @@ impl Rename for Telescope {
     }
 }
 
-impl SubstitutionNew for Telescope {
+impl Substitutable for Telescope {
     type Target = Telescope;
 
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
@@ -1401,7 +1401,7 @@ pub struct Param {
     pub erased: bool,
 }
 
-impl SubstitutionNew for Param {
+impl Substitutable for Param {
     type Target = Param;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Param { implicit, name, typ, erased } = self;
