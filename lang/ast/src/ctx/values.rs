@@ -52,7 +52,7 @@ impl<T: Occurs> Occurs for Binder<T> {
 impl<T: Substitutable> Substitutable for Binder<T> {
     type Target = Binder<T::Target>;
 
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         Binder { name: self.name.clone(), content: self.content.subst(ctx, subst) }
     }
 }
@@ -152,7 +152,7 @@ impl Shift for Binding {
 impl Substitutable for Binding {
     type Target = Binding;
 
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let Binding { typ, val } = self;
 
         Binding { typ: typ.subst(ctx, subst), val: val.subst(ctx, subst) }
@@ -197,7 +197,7 @@ impl Occurs for BoundValue {
 impl Substitutable for BoundValue {
     type Target = BoundValue;
 
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         match self {
             BoundValue::PatternMatching { val } => {
                 BoundValue::PatternMatching { val: val.subst(ctx, subst) }

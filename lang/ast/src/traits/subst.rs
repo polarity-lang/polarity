@@ -160,26 +160,26 @@ pub trait Substitutable: Sized {
     /// ## Ensures
     ///
     /// - `Δ ⊢ J θ` where `J θ` is the return value of the function.
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target;
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target;
 }
 
 impl<T: Substitutable> Substitutable for Option<T> {
     type Target = Option<T::Target>;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         self.as_ref().map(|x| x.subst(ctx, subst))
     }
 }
 
 impl<T: Substitutable> Substitutable for Vec<T> {
     type Target = Vec<T::Target>;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         self.iter().map(|x| x.subst(ctx, subst)).collect::<Vec<_>>()
     }
 }
 
 impl<T: Substitutable> Substitutable for Box<T> {
     type Target = Box<T::Target>;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         Box::new((**self).subst(ctx, subst))
     }
 }

@@ -69,7 +69,7 @@ impl Closure {
 impl Substitutable for Closure {
     type Target = Closure;
 
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let new_args = Vec::with_capacity(self.args.len());
 
         for fst in 0..self.args.len() {

@@ -105,7 +105,7 @@ impl HasType for Arg {
 
 impl Substitutable for Arg {
     type Target = Arg;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         match self {
             Arg::UnnamedArg { arg, erased } => {
                 Arg::UnnamedArg { arg: arg.subst(ctx, subst), erased: *erased }
@@ -229,7 +229,7 @@ impl Occurs for Args {
 
 impl Substitutable for Args {
     type Target = Args;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let args = self.args.iter().map(|arg| arg.subst(ctx, subst)).collect::<Vec<_>>();
         Args { args }
     }

@@ -42,7 +42,7 @@ impl CheckInfer for Call {
                 let mut args_out = check_args(args, &name.clone(), ctx, params, *span)?;
                 let typ_out = typ
                     .subst(
-                        &vec![params.params.clone()].into(),
+                        &mut vec![params.params.clone()].into(),
                         &Subst::from_args(std::slice::from_ref(&args.args)),
                     )
                     .to_exp();
@@ -64,7 +64,7 @@ impl CheckInfer for Call {
                 let typ = typ.clone();
                 let mut args_out = check_args(args, &name.clone(), ctx, &params, *span)?;
                 let typ_out = typ.subst(
-                    &vec![params.params.clone()].into(),
+                    &mut vec![params.params.clone()].into(),
                     &Subst::from_args(std::slice::from_ref(&args.args)),
                 );
                 let typ_nf = typ_out.normalize(&ctx.type_info_table, &mut ctx.env())?;

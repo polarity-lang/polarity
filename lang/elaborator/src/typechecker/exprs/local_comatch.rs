@@ -292,11 +292,11 @@ impl WithExpectedType<'_> {
                                     // Δ;Ξ |- [C id_Δ / self]t : Type
                                     //
                                     let subst = Subst::assign(Lvl { fst: 1, snd: 0 }, ctor);
-                                    let subst_ctx = LevelCtx::from(vec![
+                                    let mut subst_ctx = LevelCtx::from(vec![
                                         params.params.clone(),
                                         vec![self_param.to_param()],
                                     ]);
-                                    let mut ret_typ = ret_typ.subst(&subst_ctx, &subst);
+                                    let mut ret_typ = ret_typ.subst(&mut subst_ctx, &subst);
                                     ret_typ.shift((-1, 0));
                                     ret_typ.normalize(
                                         &ctx.type_info_table,
@@ -331,9 +331,9 @@ impl WithExpectedType<'_> {
                                     let type_info_table = ctx.type_info_table.clone();
                                     let subst: Subst = unif.into();
                                     ctx.subst(&type_info_table, &subst)?;
-                                    let body = body.subst(&ctx.levels(), &subst);
+                                    let body = body.subst(&mut ctx.levels(), &subst);
 
-                                    let t_subst = ret_typ_nf.subst(&ctx.levels(), &subst);
+                                    let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &subst);
                                     let t_nf =
                                         t_subst.normalize(&ctx.type_info_table, &mut ctx.env())?;
 

@@ -83,7 +83,7 @@ impl HasType for LocalComatch {
 impl Substitutable for LocalComatch {
     type Target = LocalComatch;
 
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let LocalComatch { span, name, closure, is_lambda_sugar, cases, .. } = self;
         LocalComatch {
             span: *span,

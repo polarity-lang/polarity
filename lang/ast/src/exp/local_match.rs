@@ -78,7 +78,7 @@ impl HasType for LocalMatch {
 
 impl Substitutable for LocalMatch {
     type Target = LocalMatch;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let LocalMatch { span, name, on_exp, motive, ret_typ, cases, .. } = self;
         LocalMatch {
             span: *span,

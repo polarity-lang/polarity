@@ -78,7 +78,7 @@ impl HasType for TypCtor {
 
 impl Substitutable for TypCtor {
     type Target = TypCtor;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let TypCtor { span, name, args, is_bin_op } = self;
         TypCtor {
             span: *span,

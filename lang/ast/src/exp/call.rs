@@ -82,7 +82,7 @@ impl HasType for Call {
 
 impl Substitutable for Call {
     type Target = Call;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let Call { span, name, args, kind, .. } = self;
         Call {
             span: *span,

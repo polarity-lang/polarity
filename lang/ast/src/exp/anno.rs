@@ -67,7 +67,7 @@ impl HasType for Anno {
 impl Substitutable for Anno {
     type Target = Anno;
 
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let Anno { span, exp, typ, .. } = self;
         Anno {
             span: *span,

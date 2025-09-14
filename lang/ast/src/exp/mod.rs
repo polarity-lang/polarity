@@ -175,7 +175,7 @@ impl HasType for Exp {
 
 impl Substitutable for Exp {
     type Target = Exp;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         match self {
             Exp::Variable(e) => *e.subst(ctx, subst),
             Exp::TypCtor(e) => e.subst(ctx, subst).into(),
@@ -304,13 +304,13 @@ impl Shift for Motive {
 
 impl Substitutable for Motive {
     type Target = Motive;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let Motive { span, param, ret_typ } = self;
 
         Motive {
             span: *span,
             param: param.clone(),
-            ret_typ: ctx.clone().bind_single(param, |ctx| {
+            ret_typ: ctx.bind_single(param, |ctx| {
                 let mut subst = (*subst).clone();
                 subst.shift((1, 0));
                 ret_typ.subst(ctx, &subst)

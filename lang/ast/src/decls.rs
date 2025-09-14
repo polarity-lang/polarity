@@ -1253,10 +1253,10 @@ impl Rename for Telescope {
 impl Substitutable for Telescope {
     type Target = Telescope;
 
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let Telescope { params } = self;
 
-        ctx.clone().bind_fold(
+        ctx.bind_fold(
             params.iter(),
             Vec::new(),
             |ctx, params_out, param| {
@@ -1403,7 +1403,7 @@ pub struct Param {
 
 impl Substitutable for Param {
     type Target = Param;
-    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let Param { implicit, name, typ, erased } = self;
         Param {
             implicit: *implicit,
