@@ -49,7 +49,7 @@ pub fn lifted_signature(fvs: HashSet<FreeVar>, base_ctx: &LevelCtx) -> LiftedSig
     for fv in fvs.into_iter() {
         let FreeVar { name, lvl, typ, ctx } = fv;
 
-        let typ = typ.subst_new(&ctx, &free_vars.to_param_subst());
+        let typ = typ.subst(&ctx, &free_vars.to_param_subst());
 
         let param = Param {
             implicit: false,

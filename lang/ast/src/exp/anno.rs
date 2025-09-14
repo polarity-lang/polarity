@@ -67,12 +67,12 @@ impl HasType for Anno {
 impl Substitutable for Anno {
     type Target = Anno;
 
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Anno { span, exp, typ, .. } = self;
         Anno {
             span: *span,
-            exp: exp.subst_new(ctx, subst),
-            typ: typ.subst_new(ctx, subst),
+            exp: exp.subst(ctx, subst),
+            typ: typ.subst(ctx, subst),
             normalized_type: None,
         }
     }

@@ -105,16 +105,16 @@ impl HasType for Arg {
 
 impl Substitutable for Arg {
     type Target = Arg;
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         match self {
             Arg::UnnamedArg { arg, erased } => {
-                Arg::UnnamedArg { arg: arg.subst_new(ctx, subst), erased: *erased }
+                Arg::UnnamedArg { arg: arg.subst(ctx, subst), erased: *erased }
             }
             Arg::NamedArg { name: var, arg, erased } => {
-                Arg::NamedArg { name: var.clone(), arg: arg.subst_new(ctx, subst), erased: *erased }
+                Arg::NamedArg { name: var.clone(), arg: arg.subst(ctx, subst), erased: *erased }
             }
             Arg::InsertedImplicitArg { hole, erased } => {
-                Arg::InsertedImplicitArg { hole: hole.subst_new(ctx, subst), erased: *erased }
+                Arg::InsertedImplicitArg { hole: hole.subst(ctx, subst), erased: *erased }
             }
         }
     }
@@ -229,8 +229,8 @@ impl Occurs for Args {
 
 impl Substitutable for Args {
     type Target = Args;
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
-        let args = self.args.iter().map(|arg| arg.subst_new(ctx, subst)).collect::<Vec<_>>();
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+        let args = self.args.iter().map(|arg| arg.subst(ctx, subst)).collect::<Vec<_>>();
         Args { args }
     }
 }

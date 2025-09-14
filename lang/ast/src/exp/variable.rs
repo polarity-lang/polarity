@@ -61,7 +61,7 @@ impl HasType for Variable {
 
 impl Substitutable for Variable {
     type Target = Box<Exp>;
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Variable { span, idx, name, .. } = self;
         let lvl = ctx.idx_to_lvl(*idx);
         match subst.map.get(&lvl) {

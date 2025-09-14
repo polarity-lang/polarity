@@ -85,14 +85,14 @@ impl HasType for DotCall {
 
 impl Substitutable for DotCall {
     type Target = DotCall;
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let DotCall { span, kind, exp, name, args, .. } = self;
         DotCall {
             span: *span,
             kind: *kind,
-            exp: exp.subst_new(ctx, subst),
+            exp: exp.subst(ctx, subst),
             name: name.clone(),
-            args: args.subst_new(ctx, subst),
+            args: args.subst(ctx, subst),
             inferred_type: None,
         }
     }

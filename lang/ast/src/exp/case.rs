@@ -90,7 +90,7 @@ impl Occurs for Case {
 
 impl Substitutable for Case {
     type Target = Case;
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Case { span, pattern, body } = self;
         ctx.clone().bind_iter(pattern.params.params.iter(), |ctx| Case {
             span: *span,
@@ -98,7 +98,7 @@ impl Substitutable for Case {
             body: body.as_ref().map(|body| {
                 let mut subst = (*subst).clone();
                 subst.shift((1, 0));
-                body.subst_new(ctx, &subst)
+                body.subst(ctx, &subst)
             }),
         })
     }

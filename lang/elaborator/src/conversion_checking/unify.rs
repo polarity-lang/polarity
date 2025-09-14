@@ -59,7 +59,7 @@ impl<'a> Ctx<'a> {
                     // from other modules are not bound in the metavars map for this module!
                     if let Some(solution) = &h.solution {
                         let lhs =
-                            solution.clone().subst_new(&h.levels(), &Subst::from_binders(&h.args));
+                            solution.clone().subst(&h.levels(), &Subst::from_binders(&h.args));
                         self.add_constraint(Constraint::Equality {
                             ctx: constraint_cxt,
                             lhs,
@@ -87,9 +87,8 @@ impl<'a> Ctx<'a> {
                         )?,
                         // When we encounter a solved metavariable, we substitute the arguments in the solution.
                         MetaVarState::Solved { ctx, solution } => {
-                            let lhs = solution
-                                .clone()
-                                .subst_new(&ctx.clone(), &Subst::from_binders(&h.args));
+                            let lhs =
+                                solution.clone().subst(&ctx.clone(), &Subst::from_binders(&h.args));
                             self.add_constraint(Constraint::Equality {
                                 ctx: constraint_cxt,
                                 lhs,
@@ -372,7 +371,7 @@ impl<'a> Ctx<'a> {
             &candidate,
             while_elaborating_span,
         )?;
-        let mut solution = candidate.subst_new(&constraint_ctx.clone(), &subst);
+        let mut solution = candidate.subst(&constraint_ctx.clone(), &subst);
         solution
             .zonk(meta_vars)
             .map_err(|err| TypeError::Impossible { message: err.to_string(), span: None })?;

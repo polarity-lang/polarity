@@ -61,7 +61,7 @@ impl ContextSubstExt for Ctx {
                     .enumerate()
                     .map(|(snd, Binder { name, content: binding })| {
                         let lvl = Lvl { fst, snd };
-                        let mut binding = binding.subst_new(&levels.clone(), subst);
+                        let mut binding = binding.subst(&levels.clone(), subst);
                         if binding.val.is_none() {
                             if let Some(val) = subst.map.get(&lvl) {
                                 binding.val = Some(ctx::values::BoundValue::PatternMatching {

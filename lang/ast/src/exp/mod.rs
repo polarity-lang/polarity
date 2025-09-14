@@ -175,18 +175,18 @@ impl HasType for Exp {
 
 impl Substitutable for Exp {
     type Target = Exp;
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         match self {
-            Exp::Variable(e) => *e.subst_new(ctx, subst),
-            Exp::TypCtor(e) => e.subst_new(ctx, subst).into(),
-            Exp::Call(e) => e.subst_new(ctx, subst).into(),
-            Exp::DotCall(e) => e.subst_new(ctx, subst).into(),
-            Exp::Anno(e) => e.subst_new(ctx, subst).into(),
-            Exp::TypeUniv(e) => e.subst_new(ctx, subst).into(),
-            Exp::LocalMatch(e) => e.subst_new(ctx, subst).into(),
-            Exp::LocalComatch(e) => e.subst_new(ctx, subst).into(),
-            Exp::Hole(e) => e.subst_new(ctx, subst).into(),
-            Exp::LocalLet(e) => e.subst_new(ctx, subst).into(),
+            Exp::Variable(e) => *e.subst(ctx, subst),
+            Exp::TypCtor(e) => e.subst(ctx, subst).into(),
+            Exp::Call(e) => e.subst(ctx, subst).into(),
+            Exp::DotCall(e) => e.subst(ctx, subst).into(),
+            Exp::Anno(e) => e.subst(ctx, subst).into(),
+            Exp::TypeUniv(e) => e.subst(ctx, subst).into(),
+            Exp::LocalMatch(e) => e.subst(ctx, subst).into(),
+            Exp::LocalComatch(e) => e.subst(ctx, subst).into(),
+            Exp::Hole(e) => e.subst(ctx, subst).into(),
+            Exp::LocalLet(e) => e.subst(ctx, subst).into(),
         }
     }
 }
@@ -304,7 +304,7 @@ impl Shift for Motive {
 
 impl Substitutable for Motive {
     type Target = Motive;
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Motive { span, param, ret_typ } = self;
 
         Motive {
@@ -313,7 +313,7 @@ impl Substitutable for Motive {
             ret_typ: ctx.clone().bind_single(param, |ctx| {
                 let mut subst = (*subst).clone();
                 subst.shift((1, 0));
-                ret_typ.subst_new(ctx, &subst)
+                ret_typ.subst(ctx, &subst)
             }),
         }
     }

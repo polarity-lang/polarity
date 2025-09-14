@@ -61,7 +61,7 @@ impl HasType for TypeUniv {
 impl Substitutable for TypeUniv {
     type Target = TypeUniv;
 
-    fn subst_new(&self, _ctx: &LevelCtx, _subst: &Subst) -> Self::Target {
+    fn subst(&self, _ctx: &LevelCtx, _subst: &Subst) -> Self::Target {
         let TypeUniv { span } = self;
         TypeUniv { span: *span }
     }

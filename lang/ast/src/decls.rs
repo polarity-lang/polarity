@@ -1253,14 +1253,14 @@ impl Rename for Telescope {
 impl Substitutable for Telescope {
     type Target = Telescope;
 
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Telescope { params } = self;
 
         ctx.clone().bind_fold(
             params.iter(),
             Vec::new(),
             |ctx, params_out, param| {
-                params_out.push(param.subst_new(ctx, subst));
+                params_out.push(param.subst(ctx, subst));
                 Binder { name: param.name.clone(), content: () }
             },
             |_, params_out| Telescope { params: params_out },
@@ -1403,12 +1403,12 @@ pub struct Param {
 
 impl Substitutable for Param {
     type Target = Param;
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Param { implicit, name, typ, erased } = self;
         Param {
             implicit: *implicit,
             name: name.clone(),
-            typ: typ.subst_new(ctx, subst),
+            typ: typ.subst(ctx, subst),
             erased: *erased,
         }
     }

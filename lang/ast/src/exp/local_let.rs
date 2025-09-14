@@ -77,11 +77,11 @@ impl HasType for LocalLet {
 impl Substitutable for LocalLet {
     type Target = LocalLet;
 
-    fn subst_new(&self, ctx: &crate::ctx::LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &crate::ctx::LevelCtx, subst: &Subst) -> Self::Target {
         let LocalLet { span, name, typ, bound, body, inferred_type: _ } = self;
 
-        let typ = typ.subst_new(ctx, subst);
-        let bound = bound.subst_new(ctx, subst);
+        let typ = typ.subst(ctx, subst);
+        let bound = bound.subst(ctx, subst);
 
         ctx.clone().bind_single(name.clone(), |ctx| {
             let mut subst = (*subst).clone();
@@ -91,7 +91,7 @@ impl Substitutable for LocalLet {
                 name: name.clone(),
                 typ,
                 bound,
-                body: body.subst_new(ctx, &subst),
+                body: body.subst(ctx, &subst),
                 inferred_type: None,
             }
         })

@@ -78,12 +78,12 @@ impl HasType for TypCtor {
 
 impl Substitutable for TypCtor {
     type Target = TypCtor;
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let TypCtor { span, name, args, is_bin_op } = self;
         TypCtor {
             span: *span,
             name: name.clone(),
-            args: args.subst_new(ctx, subst),
+            args: args.subst(ctx, subst),
             is_bin_op: is_bin_op.clone(),
         }
     }

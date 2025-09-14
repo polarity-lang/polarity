@@ -82,13 +82,13 @@ impl HasType for Call {
 
 impl Substitutable for Call {
     type Target = Call;
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Call { span, name, args, kind, .. } = self;
         Call {
             span: *span,
             kind: *kind,
             name: name.clone(),
-            args: args.subst_new(ctx, subst),
+            args: args.subst(ctx, subst),
             inferred_type: None,
         }
     }

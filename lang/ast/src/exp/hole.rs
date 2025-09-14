@@ -111,7 +111,7 @@ impl HasType for Hole {
 impl Substitutable for Hole {
     type Target = Hole;
 
-    fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
+    fn subst(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Hole { span, kind, metavar, args, .. } = self;
         Hole {
             span: *span,
@@ -119,8 +119,8 @@ impl Substitutable for Hole {
             metavar: *metavar,
             inferred_type: None,
             inferred_ctx: None,
-            args: args.subst_new(ctx, subst),
-            solution: self.solution.as_ref().map(|s| s.subst_new(ctx, subst)),
+            args: args.subst(ctx, subst),
+            solution: self.solution.as_ref().map(|s| s.subst(ctx, subst)),
         }
     }
 }
@@ -234,7 +234,7 @@ impl Zonk for Hole {
                 // Assuming this invariant holds, we do not need to zonk here.
                 // Unwrap is safe here because we are unwrapping an infallible result.
                 let subst = Subst::from_binders(&self.args);
-                self.solution = Some(solution.subst_new(&ctx.clone(), &subst));
+                self.solution = Some(solution.subst(&ctx.clone(), &subst));
             }
             Some(crate::MetaVarState::Unsolved { .. }) => {
                 // Nothing to do, the hole remains unsolved
