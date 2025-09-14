@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::convert::Infallible;
 use std::fmt::Debug;
 
 use values::Binder;
@@ -104,6 +103,41 @@ impl Subst {
         }
         Subst { hm }
     }
+
+    /// Build a substitution that swaps all variables at de Bruijn levels
+    /// with first dimension `fst1` and `fst2`, preserving the second dimension
+    /// and leaving all other levels unmapped.
+    pub fn swap(ctx: &LevelCtx, fst1: usize, fst2: usize) -> Self {
+        let new_ctx = ctx.swap(fst1, fst2);
+
+        let make_var = |lvl: Lvl| {
+            Exp::Variable(Variable {
+                span: None,
+                idx: new_ctx.lvl_to_idx(lvl),
+                name: VarBound::from_string(""),
+                inferred_type: None,
+            })
+        };
+
+        let len1 = ctx.bound[fst1].len();
+        let len2 = ctx.bound[fst2].len();
+
+        let mut hm = HashMap::new();
+
+        for snd in 0..len1 {
+            let from = Lvl { fst: fst1, snd };
+            let to = Lvl { fst: fst2, snd };
+            hm.insert(from, make_var(to));
+        }
+
+        for snd in 0..len2 {
+            let from = Lvl { fst: fst2, snd };
+            let to = Lvl { fst: fst1, snd };
+            hm.insert(from, make_var(to));
+        }
+
+        Subst { hm }
+    }
 }
 
 pub trait SubstitutionNew: Sized {
@@ -198,59 +232,17 @@ impl<T: Substitutable> Substitutable for Box<T> {
 //
 //
 
-pub trait SwapWithCtx: Substitutable {
+pub trait SwapWithCtx: SubstitutionNew {
     fn swap_with_ctx(&self, ctx: &mut LevelCtx, fst1: usize, fst2: usize) -> Self::Target;
 }
 
-impl<T: Substitutable> SwapWithCtx for T {
+impl<T: SubstitutionNew> SwapWithCtx for T {
     fn swap_with_ctx(
         &self,
         ctx: &mut LevelCtx,
         fst1: usize,
         fst2: usize,
-    ) -> <T as Substitutable>::Target {
-        // Unwrap is safe here because we are unwrapping an infallible result
-        self.subst(ctx, &SwapSubst { fst1, fst2 }).unwrap()
-    }
-}
-
-// SwapSubst
-//
-//
-
-#[derive(Clone, Debug)]
-struct SwapSubst {
-    fst1: usize,
-    fst2: usize,
-}
-
-impl Shift for SwapSubst {
-    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
-        // Since SwapSubst works with levels, it is shift-invariant
-    }
-}
-
-impl Substitution for SwapSubst {
-    type Err = Infallible;
-
-    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
-        let new_lvl = if lvl.fst == self.fst1 {
-            Some(Lvl { fst: self.fst2, snd: lvl.snd })
-        } else if lvl.fst == self.fst2 {
-            Some(Lvl { fst: self.fst1, snd: lvl.snd })
-        } else {
-            None
-        };
-
-        let new_ctx = ctx.swap(self.fst1, self.fst2);
-
-        Ok(new_lvl.map(|new_lvl| {
-            Box::new(Exp::Variable(Variable {
-                span: None,
-                idx: new_ctx.lvl_to_idx(new_lvl),
-                name: VarBound::from_string(""),
-                inferred_type: None,
-            }))
-        }))
+    ) -> <T as SubstitutionNew>::Target {
+        self.subst_new(ctx, &Subst::swap(ctx, fst1, fst2))
     }
 }
