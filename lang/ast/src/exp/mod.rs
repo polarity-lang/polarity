@@ -12,7 +12,6 @@ use crate::rename::{Rename, RenameCtx};
 use crate::{ContainsMetaVars, FreeVars, Subst, SubstitutionNew, Zonk, ZonkError};
 
 use super::HasType;
-use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
 use super::traits::Occurs;
 use super::{Shift, ShiftRange, ShiftRangeExt, ident::*};
@@ -174,24 +173,6 @@ impl HasType for Exp {
     }
 }
 
-impl Substitutable for Exp {
-    type Target = Exp;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        match self {
-            Exp::Variable(e) => Ok(*e.subst(ctx, by)?),
-            Exp::TypCtor(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::Call(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::DotCall(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::Anno(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::TypeUniv(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::LocalMatch(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::LocalComatch(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::Hole(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::LocalLet(e) => Ok(e.subst(ctx, by)?.into()),
-        }
-    }
-}
-
 impl SubstitutionNew for Exp {
     type Target = Exp;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
@@ -318,23 +299,6 @@ pub struct Motive {
 impl Shift for Motive {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         self.ret_typ.shift_in_range(&range.clone().shift(1), by);
-    }
-}
-
-impl Substitutable for Motive {
-    type Target = Motive;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        let Motive { span, param, ret_typ } = self;
-
-        Ok(Motive {
-            span: *span,
-            param: param.clone(),
-            ret_typ: ctx.bind_single(param, |ctx| {
-                let mut by = (*by).clone();
-                by.shift((1, 0));
-                ret_typ.subst(ctx, &by)
-            })?,
-        })
     }
 }
 

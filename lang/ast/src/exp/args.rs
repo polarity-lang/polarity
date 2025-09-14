@@ -7,8 +7,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
-    Substitution, SubstitutionNew, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst,
+    SubstitutionNew, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -99,23 +99,6 @@ impl HasType for Arg {
             Arg::UnnamedArg { arg, .. } => arg.typ(),
             Arg::NamedArg { arg, .. } => arg.typ(),
             Arg::InsertedImplicitArg { hole, .. } => hole.typ(),
-        }
-    }
-}
-
-impl Substitutable for Arg {
-    type Target = Arg;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        match self {
-            Arg::UnnamedArg { arg, erased } => {
-                Ok(Arg::UnnamedArg { arg: arg.subst(ctx, by)?, erased: *erased })
-            }
-            Arg::NamedArg { name: var, arg, erased } => {
-                Ok(Arg::NamedArg { name: var.clone(), arg: arg.subst(ctx, by)?, erased: *erased })
-            }
-            Arg::InsertedImplicitArg { hole, erased } => {
-                Ok(Arg::InsertedImplicitArg { hole: hole.subst(ctx, by)?, erased: *erased })
-            }
         }
     }
 }
@@ -241,14 +224,6 @@ impl Occurs for Args {
         F: Fn(&LevelCtx, &Exp) -> bool,
     {
         self.args.iter().any(|arg| arg.occurs(ctx, f))
-    }
-}
-
-impl Substitutable for Args {
-    type Target = Args;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        let args = self.args.iter().map(|arg| arg.subst(ctx, by)).collect::<Result<Vec<_>, _>>()?;
-        Ok(Args { args })
     }
 }
 

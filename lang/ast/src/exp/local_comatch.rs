@@ -11,8 +11,7 @@ use printer::{
 
 use crate::rename::{Rename, RenameCtx};
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Zonk, ZonkError,
 };
 use crate::{
     Subst, SubstitutionNew,
@@ -78,23 +77,6 @@ impl Occurs for LocalComatch {
 impl HasType for LocalComatch {
     fn typ(&self) -> Option<Box<Exp>> {
         self.inferred_type.clone().map(|x| Box::new(x.into()))
-    }
-}
-
-impl Substitutable for LocalComatch {
-    type Target = LocalComatch;
-
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        let LocalComatch { span, name, closure, is_lambda_sugar, cases, .. } = self;
-        Ok(LocalComatch {
-            span: *span,
-            name: name.clone(),
-            closure: closure.subst(ctx, by)?,
-            is_lambda_sugar: *is_lambda_sugar,
-            cases: cases.iter().map(|case| case.subst(ctx, by)).collect::<Result<Vec<_>, _>>()?,
-            ctx: None,
-            inferred_type: None,
-        })
     }
 }
 

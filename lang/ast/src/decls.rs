@@ -39,7 +39,6 @@ use super::HashMap;
 use super::exp::*;
 use super::ident::*;
 use super::traits::HasSpan;
-use super::traits::subst::{Substitutable, Substitution};
 
 fn print_return_type<'a, T: Print>(
     cfg: &PrintCfg,
@@ -1400,19 +1399,6 @@ pub struct Param {
     pub typ: Box<Exp>,
     /// Whether the parameter is erased during compilation.
     pub erased: bool,
-}
-
-impl Substitutable for Param {
-    type Target = Param;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        let Param { implicit, name, typ, erased } = self;
-        Ok(Param {
-            implicit: *implicit,
-            name: name.clone(),
-            typ: typ.subst(ctx, by)?,
-            erased: *erased,
-        })
-    }
 }
 
 impl SubstitutionNew for Param {

@@ -3,8 +3,8 @@ use miette_util::codespan::Span;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::TYPE};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Subst, Substitutable,
-    Substitution, SubstitutionNew, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Subst, SubstitutionNew, Zonk,
+    ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -55,15 +55,6 @@ impl Shift for TypeUniv {
 impl HasType for TypeUniv {
     fn typ(&self) -> Option<Box<Exp>> {
         Some(Box::new(TypeUniv::new().into()))
-    }
-}
-
-impl Substitutable for TypeUniv {
-    type Target = TypeUniv;
-
-    fn subst<S: Substitution>(&self, _ctx: &mut LevelCtx, _by: &S) -> Result<Self::Target, S::Err> {
-        let TypeUniv { span } = self;
-        Ok(TypeUniv { span: *span })
     }
 }
 

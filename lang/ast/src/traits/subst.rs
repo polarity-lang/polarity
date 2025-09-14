@@ -7,7 +7,7 @@ use crate::Variable;
 use crate::ctx::*;
 use crate::*;
 
-// New concrete representation of Substitution
+// Substitution
 //
 //
 
@@ -140,6 +140,9 @@ impl Subst {
     }
 }
 
+/// Trait for entities which can be used as a substitution.
+/// In order to be used as a substitution an entity has to provide a method
+/// to query it for a result for a given deBruijn Level.
 pub trait SubstitutionNew: Sized {
     type Target;
     /// Apply a substitution to an entity.
@@ -178,53 +181,6 @@ impl<T: SubstitutionNew> SubstitutionNew for Box<T> {
     type Target = Box<T::Target>;
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         Box::new((**self).subst_new(ctx, subst))
-    }
-}
-
-// Substitution
-//
-//
-
-/// Trait for entities which can be used as a substitution.
-/// In order to be used as a substitution an entity has to provide a method
-/// to query it for a result for a given deBruijn Level.
-pub trait Substitution: Shift + Clone + Debug {
-    type Err;
-
-    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err>;
-}
-
-// Substitutable
-//
-//
-
-/// A trait for all entities to which we can apply a substitution.
-/// Every syntax node should implement this trait.
-/// The result type of applying a substitution is parameterized, because substituting for
-/// a variable does not, in general, yield another variable.
-pub trait Substitutable: Sized {
-    type Target;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err>;
-}
-
-impl<T: Substitutable> Substitutable for Option<T> {
-    type Target = Option<T::Target>;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        self.as_ref().map(|x| x.subst(ctx, by)).transpose()
-    }
-}
-
-impl<T: Substitutable> Substitutable for Vec<T> {
-    type Target = Vec<T::Target>;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        self.iter().map(|x| x.subst(ctx, by)).collect::<Result<Vec<_>, _>>()
-    }
-}
-
-impl<T: Substitutable> Substitutable for Box<T> {
-    type Target = Box<T::Target>;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        Ok(Box::new((**self).subst(ctx, by)?))
     }
 }
 

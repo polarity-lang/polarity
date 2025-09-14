@@ -1,6 +1,6 @@
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
-    Substitution, SubstitutionNew, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst,
+    SubstitutionNew, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -61,20 +61,6 @@ impl Occurs for Anno {
 impl HasType for Anno {
     fn typ(&self) -> Option<Box<Exp>> {
         self.normalized_type.clone()
-    }
-}
-
-impl Substitutable for Anno {
-    type Target = Anno;
-
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        let Anno { span, exp, typ, .. } = self;
-        Ok(Anno {
-            span: *span,
-            exp: exp.subst(ctx, by)?,
-            typ: typ.subst(ctx, by)?,
-            normalized_type: None,
-        })
     }
 }
 

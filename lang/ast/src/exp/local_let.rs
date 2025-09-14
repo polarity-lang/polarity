@@ -9,7 +9,7 @@ use printer::{
 
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRangeExt, Subst,
-    Substitutable, SubstitutionNew, Zonk,
+    SubstitutionNew, Zonk,
     ctx::{BindContext, LevelCtx},
     rename::Rename,
 };
@@ -71,34 +71,6 @@ impl Occurs for LocalLet {
 impl HasType for LocalLet {
     fn typ(&self) -> Option<Box<Exp>> {
         self.inferred_type.clone()
-    }
-}
-
-impl Substitutable for LocalLet {
-    type Target = LocalLet;
-
-    fn subst<S: crate::Substitution>(
-        &self,
-        ctx: &mut crate::ctx::LevelCtx,
-        by: &S,
-    ) -> Result<Self::Target, S::Err> {
-        let LocalLet { span, name, typ, bound, body, inferred_type: _ } = self;
-
-        let typ = typ.subst(ctx, by)?;
-        let bound = bound.subst(ctx, by)?;
-
-        ctx.bind_single(name.clone(), |ctx| {
-            let mut by = (*by).clone();
-            by.shift((1, 0));
-            Ok(LocalLet {
-                span: *span,
-                name: name.clone(),
-                typ,
-                bound,
-                body: body.subst(ctx, &by)?,
-                inferred_type: None,
-            })
-        })
     }
 }
 

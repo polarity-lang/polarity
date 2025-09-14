@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
-    Substitution, SubstitutionNew, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst,
+    SubstitutionNew, Zonk, ZonkError,
     ctx::{
         LevelCtx,
         values::{Binder, TypeCtx},
@@ -105,23 +105,6 @@ impl Occurs for Hole {
 impl HasType for Hole {
     fn typ(&self) -> Option<Box<Exp>> {
         self.inferred_type.clone()
-    }
-}
-
-impl Substitutable for Hole {
-    type Target = Hole;
-
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        let Hole { span, kind, metavar, args, .. } = self;
-        Ok(Hole {
-            span: *span,
-            kind: *kind,
-            metavar: *metavar,
-            inferred_type: None,
-            inferred_ctx: None,
-            args: args.subst(ctx, by)?,
-            solution: self.solution.as_ref().map(|s| s.subst(ctx, by)).transpose()?,
-        })
     }
 }
 
