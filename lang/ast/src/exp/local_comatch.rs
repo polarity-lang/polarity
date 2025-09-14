@@ -9,11 +9,17 @@ use printer::{
     util::ParensIfExt,
 };
 
-use crate::ctx::{LevelCtx, values::TypeCtx};
-use crate::rename::{Rename, RenameCtx};
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Inline, IsWHNF, Occurs, Shift, ShiftRange,
+    Substitutable, Substitution, Zonk, ZonkError,
+};
+use crate::{
+    MachineState, WHNFResult,
+    rename::{Rename, RenameCtx},
+};
+use crate::{
+    WHNF,
+    ctx::{LevelCtx, values::TypeCtx},
 };
 
 use super::{Case, Closure, Exp, Label, MetaVar, TypCtor, print_cases};
@@ -41,6 +47,21 @@ pub struct LocalComatch {
     pub inferred_type: Option<TypCtor>,
 }
 
+#[cfg(test)]
+impl LocalComatch {
+    pub fn make_test(id: usize, closure: Closure, cases: Vec<Case>) -> Exp {
+        LocalComatch {
+            span: None,
+            name: Label { id, user_name: None },
+            closure,
+            is_lambda_sugar: false,
+            cases,
+            ctx: None,
+            inferred_type: None,
+        }
+        .into()
+    }
+}
 impl HasSpan for LocalComatch {
     fn span(&self) -> Option<Span> {
         self.span
@@ -204,5 +225,19 @@ impl FreeVars for LocalComatch {
 
         closure.free_vars_mut(ctx, cutoff, fvs);
         cases.free_vars_mut(ctx, cutoff, fvs);
+    }
+}
+
+impl Inline for LocalComatch {
+    fn inline(&mut self, _ctx: &Closure, _recursive: bool) {
+        todo!()
+    }
+}
+
+impl WHNF for LocalComatch {
+    type Target = Exp;
+
+    fn whnf(&self, _ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
+        Ok((self.clone().into(), IsWHNF::WHNF))
     }
 }

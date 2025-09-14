@@ -9,7 +9,7 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::{BindContext, LevelCtx};
 use crate::rename::{Rename, RenameCtx};
-use crate::{ContainsMetaVars, FreeVars, Zonk, ZonkError};
+use crate::{ContainsMetaVars, FreeVars, Inline, MachineState, WHNF, WHNFResult, Zonk, ZonkError};
 
 use super::HasType;
 use super::subst::{Substitutable, Substitution};
@@ -386,5 +386,40 @@ impl FreeVars for Motive {
         let Motive { span: _, param: _, ret_typ } = self;
 
         ret_typ.free_vars_mut(ctx, cutoff + 1, fvs)
+    }
+}
+
+impl Inline for Exp {
+    fn inline(&mut self, ctx: &Closure, recursive: bool) {
+        match self {
+            Exp::Variable(variable) => variable.inline(ctx, recursive),
+            Exp::TypCtor(typ_ctor) => typ_ctor.inline(ctx, recursive),
+            Exp::Call(call) => call.inline(ctx, recursive),
+            Exp::DotCall(dot_call) => dot_call.inline(ctx, recursive),
+            Exp::Anno(anno) => anno.inline(ctx, recursive),
+            Exp::TypeUniv(type_univ) => type_univ.inline(ctx, recursive),
+            Exp::LocalMatch(local_match) => local_match.inline(ctx, recursive),
+            Exp::LocalComatch(local_comatch) => local_comatch.inline(ctx, recursive),
+            Exp::Hole(hole) => hole.inline(ctx, recursive),
+            Exp::LocalLet(local_let) => local_let.inline(ctx, recursive),
+        }
+    }
+}
+
+impl WHNF for Exp {
+    type Target = Exp;
+    fn whnf(&self, ctx: LevelCtx) -> WHNFResult<MachineState<Self::Target>> {
+        match self {
+            Exp::Variable(variable) => variable.whnf(ctx),
+            Exp::TypCtor(typ_ctor) => typ_ctor.whnf(ctx),
+            Exp::Call(call) => call.whnf(ctx),
+            Exp::DotCall(dot_call) => dot_call.whnf(ctx),
+            Exp::Anno(anno) => anno.whnf(ctx),
+            Exp::TypeUniv(type_univ) => type_univ.whnf(ctx),
+            Exp::LocalMatch(local_match) => local_match.whnf(ctx),
+            Exp::LocalComatch(local_comatch) => local_comatch.whnf(ctx),
+            Exp::Hole(hole) => hole.whnf(ctx),
+            Exp::LocalLet(local_let) => local_let.whnf(ctx),
+        }
     }
 }
