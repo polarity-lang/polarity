@@ -80,7 +80,7 @@ impl SubstitutionNew for Variable {
     fn subst_new(&self, ctx: &LevelCtx, subst: &Subst) -> Self::Target {
         let Variable { span, idx, name, .. } = self;
         let lvl = ctx.idx_to_lvl(*idx);
-        match subst.hm.get(&lvl) {
+        match subst.map.get(&lvl) {
             None => Box::new(Exp::Variable(Variable {
                 span: *span,
                 idx: *idx,

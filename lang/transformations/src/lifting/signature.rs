@@ -140,10 +140,10 @@ impl FreeVarsMap {
 
     fn to_param_subst(&self) -> Subst {
         let n = self.map.len();
-        let mut hm = HashMap::default();
+        let mut map = HashMap::default();
         for (orig_lvl, nv) in &self.map {
             let idx = Idx { fst: 0, snd: n - 1 - nv.lvl.snd };
-            hm.insert(
+            map.insert(
                 *orig_lvl,
                 Exp::Variable(Variable {
                     span: None,
@@ -153,7 +153,7 @@ impl FreeVarsMap {
                 }),
             );
         }
-        Subst { hm }
+        Subst { map }
     }
 
     fn into_body_subst(self, ctx: &LevelCtx) -> Subst {
@@ -165,9 +165,9 @@ impl FreeVarsMap {
             .collect::<Vec<_>>();
         let new_ctx = LevelCtx::from(vec![free_vars]).append(&ctx.tail(self.cutoff));
 
-        let mut hm = HashMap::default();
+        let mut map = HashMap::default();
         for (orig_lvl, nv) in self.map.into_iter() {
-            hm.insert(
+            map.insert(
                 orig_lvl,
                 Exp::Variable(Variable {
                     span: None,
@@ -177,6 +177,6 @@ impl FreeVarsMap {
                 }),
             );
         }
-        Subst { hm }
+        Subst { map }
     }
 }

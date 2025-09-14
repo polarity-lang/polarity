@@ -139,8 +139,8 @@ mod test {
             Constraint::Equality { ctx, lhs: Box::new(e1.into()), rhs: Box::new(e2.into()) };
 
         let mut ctx = Ctx::new(vec![constraint]);
-        let mut hm: HashMap<MetaVar, MetaVarState> = Default::default();
-        assert!(ctx.unify(&mut hm, &None).is_ok())
+        let mut map: HashMap<MetaVar, MetaVarState> = Default::default();
+        assert!(ctx.unify(&mut map, &None).is_ok())
     }
 
     /// Assert that the two expressions are not convertible
@@ -149,8 +149,8 @@ mod test {
             Constraint::Equality { ctx, lhs: Box::new(e1.into()), rhs: Box::new(e2.into()) };
 
         let mut ctx = Ctx::new(vec![constraint]);
-        let mut hm: HashMap<MetaVar, MetaVarState> = Default::default();
-        assert!(ctx.unify(&mut hm, &None).is_err())
+        let mut map: HashMap<MetaVar, MetaVarState> = Default::default();
+        assert!(ctx.unify(&mut map, &None).is_err())
     }
 
     /// Check that `[[a: Type, v: a]] |- v =? v` holds.

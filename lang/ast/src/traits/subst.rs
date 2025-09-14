@@ -46,12 +46,12 @@ use crate::*;
 /// ```
 #[derive(Debug, Clone)]
 pub struct Subst {
-    pub hm: HashMap<Lvl, Exp>,
+    pub map: HashMap<Lvl, Exp>,
 }
 
 impl Shift for Subst {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        for (_, exp) in self.hm.iter_mut() {
+        for (_, exp) in self.map.iter_mut() {
             exp.shift_in_range(range, by);
         }
     }
@@ -69,39 +69,39 @@ impl Subst {
     ///
     /// - `θ ⊢ Γ ⇒ Δ` where `θ` is the output of the function.
     pub fn assign(lvl: Lvl, exp: Exp) -> Self {
-        let mut hm = HashMap::default();
-        hm.insert(lvl, exp);
-        Subst { hm }
+        let mut map = HashMap::default();
+        map.insert(lvl, exp);
+        Subst { map }
     }
 
     pub fn from_exps(exps: &[Vec<Box<Exp>>]) -> Self {
-        let mut hm: HashMap<Lvl, Exp> = HashMap::default();
+        let mut map: HashMap<Lvl, Exp> = HashMap::default();
         for (fst, vec) in exps.iter().enumerate() {
             for (snd, exp) in vec.iter().enumerate() {
-                hm.insert(Lvl { fst, snd }, *exp.clone());
+                map.insert(Lvl { fst, snd }, *exp.clone());
             }
         }
-        Subst { hm }
+        Subst { map }
     }
 
     pub fn from_args(args: &[Vec<Arg>]) -> Self {
-        let mut hm: HashMap<Lvl, Exp> = HashMap::default();
+        let mut map: HashMap<Lvl, Exp> = HashMap::default();
         for (fst, vec) in args.iter().enumerate() {
             for (snd, arg) in vec.iter().enumerate() {
-                hm.insert(Lvl { fst, snd }, *arg.exp());
+                map.insert(Lvl { fst, snd }, *arg.exp());
             }
         }
-        Subst { hm }
+        Subst { map }
     }
 
     pub fn from_binders(binders: &[Vec<Binder<Box<Exp>>>]) -> Self {
-        let mut hm: HashMap<Lvl, Exp> = HashMap::default();
+        let mut map: HashMap<Lvl, Exp> = HashMap::default();
         for (fst, vec) in binders.iter().enumerate() {
             for (snd, binder) in vec.iter().enumerate() {
-                hm.insert(Lvl { fst, snd }, *binder.content.clone());
+                map.insert(Lvl { fst, snd }, *binder.content.clone());
             }
         }
-        Subst { hm }
+        Subst { map }
     }
 
     /// Build a substitution that swaps all variables at de Bruijn levels
@@ -122,21 +122,21 @@ impl Subst {
         let len1 = ctx.bound[fst1].len();
         let len2 = ctx.bound[fst2].len();
 
-        let mut hm = HashMap::default();
+        let mut map = HashMap::default();
 
         for snd in 0..len1 {
             let from = Lvl { fst: fst1, snd };
             let to = Lvl { fst: fst2, snd };
-            hm.insert(from, make_var(to));
+            map.insert(from, make_var(to));
         }
 
         for snd in 0..len2 {
             let from = Lvl { fst: fst2, snd };
             let to = Lvl { fst: fst1, snd };
-            hm.insert(from, make_var(to));
+            map.insert(from, make_var(to));
         }
 
-        Subst { hm }
+        Subst { map }
     }
 }
 

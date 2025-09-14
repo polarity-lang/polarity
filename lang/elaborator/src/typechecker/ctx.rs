@@ -63,7 +63,7 @@ impl ContextSubstExt for Ctx {
                         let lvl = Lvl { fst, snd };
                         let mut binding = binding.subst_new(&levels.clone(), subst);
                         if binding.val.is_none() {
-                            if let Some(val) = subst.hm.get(&lvl) {
+                            if let Some(val) = subst.map.get(&lvl) {
                                 binding.val = Some(ctx::values::BoundValue::PatternMatching {
                                     val: Box::new(val.clone()),
                                 })

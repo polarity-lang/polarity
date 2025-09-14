@@ -36,11 +36,11 @@ impl Shift for Unificator {
 
 impl From<Unificator> for Subst {
     fn from(value: Unificator) -> Self {
-        let mut hm = HashMap::default();
+        let mut map = HashMap::default();
         for (lvl, exp) in value.map {
-            hm.insert(lvl, *exp);
+            map.insert(lvl, *exp);
         }
-        Subst { hm }
+        Subst { map }
     }
 }
 

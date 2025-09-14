@@ -426,7 +426,7 @@ fn create_partial_renaming(
         }
     }
 
-    let mut hm: HashMap<Lvl, Exp> = HashMap::default();
+    let mut map: HashMap<Lvl, Exp> = HashMap::default();
     let fvs = candidate.free_vars(constraint_ctx);
 
     for lvl in fvs {
@@ -463,10 +463,10 @@ fn create_partial_renaming(
             ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
         };
 
-        hm.insert(lvl, Exp::Variable(Variable { span: None, idx, name, inferred_type: None }));
+        map.insert(lvl, Exp::Variable(Variable { span: None, idx, name, inferred_type: None }));
     }
 
-    Ok(Subst { hm })
+    Ok(Subst { map })
 }
 
 /// Extract the variable from an expression.
