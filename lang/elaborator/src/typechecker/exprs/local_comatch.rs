@@ -254,13 +254,13 @@ impl WithExpectedType<'_> {
                                             }
                                         })
                                         .collect();
-                                    let ctor = Box::new(Exp::Call(Call {
+                                    let ctor = Exp::Call(Call {
                                         span: None,
                                         kind: CallKind::Codefinition,
                                         name: label.clone(),
                                         args: Args { args },
                                         inferred_type: None,
-                                    }));
+                                    });
 
                                     // Recall that we are in the following situation:
                                     //
@@ -291,12 +291,12 @@ impl WithExpectedType<'_> {
                                     // So we finally have:
                                     // Δ;Ξ |- [C id_Δ / self]t : Type
                                     //
-                                    let subst = Assign { lvl: Lvl { fst: 1, snd: 0 }, exp: ctor };
+                                    let subst = Subst::assign(Lvl { fst: 1, snd: 0 }, ctor);
                                     let mut subst_ctx = LevelCtx::from(vec![
                                         params.params.clone(),
                                         vec![self_param.to_param()],
                                     ]);
-                                    let mut ret_typ = ret_typ.subst(&mut subst_ctx, &subst)?;
+                                    let mut ret_typ = ret_typ.subst(&mut subst_ctx, &subst);
                                     ret_typ.shift((-1, 0));
                                     ret_typ.normalize(
                                         &ctx.type_info_table,
@@ -329,10 +329,11 @@ impl WithExpectedType<'_> {
 
                                 ctx.fork::<TcResult<_>, _>(|ctx| {
                                     let type_info_table = ctx.type_info_table.clone();
-                                    ctx.subst(&type_info_table, &unif)?;
-                                    let body = body.subst(&mut ctx.levels(), &unif)?;
+                                    let subst: Subst = unif.into();
+                                    ctx.subst(&type_info_table, &subst)?;
+                                    let body = body.subst(&mut ctx.levels(), &subst);
 
-                                    let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &unif)?;
+                                    let t_subst = ret_typ_nf.subst(&mut ctx.levels(), &subst);
                                     let t_nf =
                                         t_subst.normalize(&ctx.type_info_table, &mut ctx.env())?;
 

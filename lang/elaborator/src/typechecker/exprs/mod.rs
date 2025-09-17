@@ -164,7 +164,7 @@ fn check_args(
     }
 
     let Telescope { params } =
-        params.subst_in_telescope(LevelCtx::empty(), &vec![this.args.clone()])?;
+        params.subst(&mut LevelCtx::empty(), &Subst::from_args(std::slice::from_ref(&this.args)));
 
     let args = this
         .args

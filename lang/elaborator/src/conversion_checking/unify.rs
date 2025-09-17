@@ -58,7 +58,8 @@ impl<'a> Ctx<'a> {
                     // For these, it is particularly important to have this early-return, because metavariables
                     // from other modules are not bound in the metavars map for this module!
                     if let Some(solution) = &h.solution {
-                        let lhs = solution.clone().subst(&mut h.levels(), &h.args)?;
+                        let lhs =
+                            solution.clone().subst(&mut h.levels(), &Subst::from_binders(&h.args));
                         self.add_constraint(Constraint::Equality {
                             ctx: constraint_cxt,
                             lhs,
@@ -86,7 +87,9 @@ impl<'a> Ctx<'a> {
                         )?,
                         // When we encounter a solved metavariable, we substitute the arguments in the solution.
                         MetaVarState::Solved { ctx, solution } => {
-                            let lhs = solution.clone().subst(&mut ctx.clone(), &h.args)?;
+                            let lhs = solution
+                                .clone()
+                                .subst(&mut ctx.clone(), &Subst::from_binders(&h.args));
                             self.add_constraint(Constraint::Equality {
                                 ctx: constraint_cxt,
                                 lhs,
@@ -361,14 +364,15 @@ impl<'a> Ctx<'a> {
             .into());
         }
 
-        let subst = PartialRenaming::from_args(
+        let subst = create_partial_renaming(
             &constraint_ctx,
             &metavar_ctx,
             &metavar,
             args,
+            &candidate,
             while_elaborating_span,
         )?;
-        let mut solution = candidate.subst(&mut constraint_ctx.clone(), &subst)?;
+        let mut solution = candidate.subst(&mut constraint_ctx.clone(), &subst);
         solution
             .zonk(meta_vars)
             .map_err(|err| TypeError::Impossible { message: err.to_string(), span: None })?;
@@ -392,59 +396,77 @@ impl<'a> Ctx<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
-struct PartialRenaming {
-    /// Map from the metavariable arguments to the levels in the solution
-    args_map: HashMap<Lvl, HashSet<Lvl>>,
-    /// The names of the variables supplied as arguments to the metavariable, tracked here for better error messages
-    arg_var_names: HashMap<Lvl, String>,
-    /// The context of the metavariable (and its solution)
-    metavar_ctx: LevelCtx,
-    /// The metavariable, tracked here for better error messages
-    meta_var: MetaVar,
-    /// The origin of the unification call, tracked here for better error messages
-    while_elaborating_span: Option<Span>,
-}
+fn create_partial_renaming(
+    constraint_ctx: &LevelCtx,
+    metavar_ctx: &LevelCtx,
+    meta_var: &MetaVar,
+    args: &[Vec<Binder<Box<Exp>>>],
+    candidate: &Exp,
+    while_elaborating_span: &Option<Span>,
+) -> TcResult<Subst> {
+    let mut args_map: HashMap<Lvl, HashSet<Lvl>> = HashMap::default();
+    let mut arg_var_names: HashMap<Lvl, String> = HashMap::default();
 
-impl PartialRenaming {
-    #[allow(clippy::vec_box)]
-    fn from_args(
-        constraint_ctx: &LevelCtx,
-        metavar_ctx: &LevelCtx,
-        meta_var: &MetaVar,
-        args: &[Vec<Binder<Box<Exp>>>],
-        while_elaborating_span: &Option<Span>,
-    ) -> TcResult<Self> {
-        let mut args_map = HashMap::default();
-        let mut arg_var_names = HashMap::default();
+    for (fst, telescope) in args.iter().enumerate() {
+        for (snd, arg) in telescope.iter().enumerate() {
+            let to_lvl = Lvl { fst, snd };
+            let Some(Variable { idx, name, .. }) = expect_variable(&arg.content) else {
+                // Condition 1: `args` consists of distinct bound *variables*
+                return Err(TypeError::MetaArgNotVariable {
+                    span: meta_var.span.to_miette(),
+                    meta_var: meta_var.print_to_string(None),
+                    arg: arg.print_to_string(None),
+                    while_elaborating_span: while_elaborating_span.to_miette(),
+                }
+                .into());
+            };
+            let from_lvl = constraint_ctx.idx_to_lvl(*idx);
+            args_map.entry(from_lvl).or_default().insert(to_lvl);
+            arg_var_names.insert(from_lvl, name.id.to_string());
+        }
+    }
 
-        for (fst, telescope) in args.iter().enumerate() {
-            for (snd, arg) in telescope.iter().enumerate() {
-                let to_lvl = Lvl { fst, snd };
-                let Some(Variable { idx, name, .. }) = expect_variable(&arg.content) else {
-                    // Condition 1: `args` consists of distinct bound *variables*
-                    return Err(TypeError::MetaArgNotVariable {
-                        span: meta_var.span.to_miette(),
-                        meta_var: meta_var.print_to_string(None),
-                        arg: arg.print_to_string(None),
-                        while_elaborating_span: while_elaborating_span.to_miette(),
-                    }
-                    .into());
-                };
-                let from_lvl = constraint_ctx.idx_to_lvl(*idx);
-                args_map.entry(from_lvl).or_insert(HashSet::default()).insert(to_lvl);
-                arg_var_names.insert(from_lvl, name.id.to_string());
+    let mut map: HashMap<Lvl, Exp> = HashMap::default();
+    let fvs = candidate.free_vars(constraint_ctx);
+
+    for lvl in fvs {
+        let from_binder = constraint_ctx.lookup(lvl);
+
+        let Some(target_lvls) = args_map.get(&lvl) else {
+            // Condition 2: every free variable of `candidate` occurs in `args`
+            return Err(TypeError::MetaEquatedToOutOfScope {
+                span: meta_var.span.to_miette(),
+                meta_var: meta_var.print_to_string(None),
+                out_of_scope: from_binder.name.to_string(),
+                while_elaborating_span: while_elaborating_span.to_miette(),
             }
+            .into());
+        };
+
+        if target_lvls.len() > 1 {
+            // Condition 1: `args` consists of *distinct* bound variables
+            return Err(TypeError::MetaArgNotDistinct {
+                span: meta_var.span.to_miette(),
+                meta_var: meta_var.print_to_string(None),
+                arg: arg_var_names[&lvl].clone(),
+                while_elaborating_span: while_elaborating_span.to_miette(),
+            }
+            .into());
         }
 
-        Ok(Self {
-            args_map,
-            arg_var_names,
-            metavar_ctx: metavar_ctx.clone(),
-            meta_var: *meta_var,
-            while_elaborating_span: *while_elaborating_span,
-        })
+        let target_lvl = *target_lvls.iter().next().unwrap();
+        let idx = metavar_ctx.lvl_to_idx(target_lvl);
+        let to_binder = metavar_ctx.lookup(target_lvl);
+
+        let name = match to_binder.name {
+            VarBind::Var { id, .. } => VarBound { span: None, id },
+            ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
+        };
+
+        map.insert(lvl, Exp::Variable(Variable { span: None, idx, name, inferred_type: None }));
     }
+
+    Ok(Subst { map })
 }
 
 /// Extract the variable from an expression.
@@ -468,57 +490,6 @@ fn expect_variable(exp: &Exp) -> Option<&Variable> {
         Exp::Hole(Hole { solution, .. }) => solution.as_ref().and_then(|sol| expect_variable(sol)),
         Exp::Anno(Anno { exp, .. }) => expect_variable(exp),
         _ => None,
-    }
-}
-
-impl Shift for PartialRenaming {
-    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {
-        // PartialRenaming is shift-invariant, so nothing to do here
-    }
-}
-
-impl Substitution for PartialRenaming {
-    type Err = TypeError;
-
-    fn get_subst(&self, ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
-        let from_binder = ctx.lookup(lvl);
-
-        let Some(target_lvls) = self.args_map.get(&lvl) else {
-            // Condition 2: every free variable of `candidate` occurs in `args`
-            return Err(TypeError::MetaEquatedToOutOfScope {
-                span: self.meta_var.span.to_miette(),
-                meta_var: self.meta_var.print_to_string(None),
-                out_of_scope: from_binder.name.to_string(),
-                while_elaborating_span: self.while_elaborating_span.to_miette(),
-            });
-        };
-
-        if target_lvls.len() > 1 {
-            // Condition 1: `args` consists of *distinct* bound variables
-            return Err(TypeError::MetaArgNotDistinct {
-                span: self.meta_var.span.to_miette(),
-                meta_var: self.meta_var.print_to_string(None),
-                arg: self.arg_var_names[&lvl].clone(),
-                while_elaborating_span: self.while_elaborating_span.to_miette(),
-            });
-        };
-        assert_eq!(target_lvls.len(), 1);
-        let target_lvl = target_lvls.iter().next().unwrap();
-        let idx = self.metavar_ctx.lvl_to_idx(*target_lvl);
-        let to_binder = self.metavar_ctx.lookup(*target_lvl);
-
-        Ok(Some(Box::new(Exp::Variable(Variable {
-            span: None,
-            idx,
-            name: match to_binder.name {
-                VarBind::Var { id, .. } => VarBound { span: None, id },
-                // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
-                // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
-                // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
-                ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
-            },
-            inferred_type: None,
-        }))))
     }
 }
 

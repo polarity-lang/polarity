@@ -8,8 +8,8 @@ use printer::{
 };
 
 use crate::{
-    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange,
-    Substitutable, Substitution, Zonk, ZonkError,
+    Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst,
+    Substitutable, Zonk, ZonkError,
     ctx::{LevelCtx, values::TypeCtx},
     rename::{Rename, RenameCtx},
 };
@@ -78,19 +78,19 @@ impl HasType for LocalMatch {
 
 impl Substitutable for LocalMatch {
     type Target = LocalMatch;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let LocalMatch { span, name, on_exp, motive, ret_typ, cases, .. } = self;
-        Ok(LocalMatch {
+        LocalMatch {
             span: *span,
             ctx: None,
             name: name.clone(),
-            closure: self.closure.subst(ctx, by)?,
-            on_exp: on_exp.subst(ctx, by)?,
-            motive: motive.as_ref().map(|m| m.subst(ctx, by)).transpose()?,
-            ret_typ: ret_typ.as_ref().map(|t| t.subst(ctx, by)).transpose()?,
-            cases: cases.iter().map(|case| case.subst(ctx, by)).collect::<Result<Vec<_>, _>>()?,
+            closure: self.closure.subst(ctx, subst),
+            on_exp: on_exp.subst(ctx, subst),
+            motive: motive.as_ref().map(|m| m.subst(ctx, subst)),
+            ret_typ: ret_typ.as_ref().map(|t| t.subst(ctx, subst)),
+            cases: cases.iter().map(|case| case.subst(ctx, subst)).collect::<Vec<_>>(),
             inferred_type: None,
-        })
+        }
     }
 }
 

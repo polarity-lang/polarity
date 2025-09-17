@@ -9,10 +9,9 @@ use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::{BindContext, LevelCtx};
 use crate::rename::{Rename, RenameCtx};
-use crate::{ContainsMetaVars, FreeVars, Zonk, ZonkError};
+use crate::{ContainsMetaVars, FreeVars, Subst, Substitutable, Zonk, ZonkError};
 
 use super::HasType;
-use super::subst::{Substitutable, Substitution};
 use super::traits::HasSpan;
 use super::traits::Occurs;
 use super::{Shift, ShiftRange, ShiftRangeExt, ident::*};
@@ -176,22 +175,21 @@ impl HasType for Exp {
 
 impl Substitutable for Exp {
     type Target = Exp;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         match self {
-            Exp::Variable(e) => Ok(*e.subst(ctx, by)?),
-            Exp::TypCtor(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::Call(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::DotCall(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::Anno(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::TypeUniv(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::LocalMatch(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::LocalComatch(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::Hole(e) => Ok(e.subst(ctx, by)?.into()),
-            Exp::LocalLet(e) => Ok(e.subst(ctx, by)?.into()),
+            Exp::Variable(e) => *e.subst(ctx, subst),
+            Exp::TypCtor(e) => e.subst(ctx, subst).into(),
+            Exp::Call(e) => e.subst(ctx, subst).into(),
+            Exp::DotCall(e) => e.subst(ctx, subst).into(),
+            Exp::Anno(e) => e.subst(ctx, subst).into(),
+            Exp::TypeUniv(e) => e.subst(ctx, subst).into(),
+            Exp::LocalMatch(e) => e.subst(ctx, subst).into(),
+            Exp::LocalComatch(e) => e.subst(ctx, subst).into(),
+            Exp::Hole(e) => e.subst(ctx, subst).into(),
+            Exp::LocalLet(e) => e.subst(ctx, subst).into(),
         }
     }
 }
-
 impl Print for Exp {
     fn print_prec<'a>(
         &'a self,
@@ -306,18 +304,18 @@ impl Shift for Motive {
 
 impl Substitutable for Motive {
     type Target = Motive;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let Motive { span, param, ret_typ } = self;
 
-        Ok(Motive {
+        Motive {
             span: *span,
             param: param.clone(),
             ret_typ: ctx.bind_single(param, |ctx| {
-                let mut by = (*by).clone();
-                by.shift((1, 0));
-                ret_typ.subst(ctx, &by)
-            })?,
-        })
+                let mut subst = (*subst).clone();
+                subst.shift((1, 0));
+                ret_typ.subst(ctx, &subst)
+            }),
+        }
     }
 }
 

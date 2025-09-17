@@ -4,8 +4,8 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, util::ParensIfExt};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
+    Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -78,14 +78,14 @@ impl HasType for TypCtor {
 
 impl Substitutable for TypCtor {
     type Target = TypCtor;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let TypCtor { span, name, args, is_bin_op } = self;
-        Ok(TypCtor {
+        TypCtor {
             span: *span,
             name: name.clone(),
-            args: args.subst(ctx, by)?,
+            args: args.subst(ctx, subst),
             is_bin_op: is_bin_op.clone(),
-        })
+        }
     }
 }
 

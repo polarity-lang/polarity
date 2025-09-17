@@ -25,6 +25,8 @@ use printer::util::IsNilExt;
 use url::Url;
 
 use crate::ContainsMetaVars;
+use crate::Subst;
+use crate::Substitutable;
 use crate::Zonk;
 use crate::ctx::BindContext;
 use crate::ctx::LevelCtx;
@@ -37,7 +39,6 @@ use super::HashMap;
 use super::exp::*;
 use super::ident::*;
 use super::traits::HasSpan;
-use super::traits::subst::{Substitutable, Substitution};
 
 fn print_return_type<'a, T: Print>(
     cfg: &PrintCfg,
@@ -1249,6 +1250,24 @@ impl Rename for Telescope {
     }
 }
 
+impl Substitutable for Telescope {
+    type Target = Telescope;
+
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
+        let Telescope { params } = self;
+
+        ctx.bind_fold(
+            params.iter(),
+            Vec::new(),
+            |ctx, params_out, param| {
+                params_out.push(param.subst(ctx, subst));
+                Binder { name: param.name.clone(), content: () }
+            },
+            |_, params_out| Telescope { params: params_out },
+        )
+    }
+}
+
 #[cfg(test)]
 mod print_telescope_tests {
 
@@ -1384,14 +1403,14 @@ pub struct Param {
 
 impl Substitutable for Param {
     type Target = Param;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let Param { implicit, name, typ, erased } = self;
-        Ok(Param {
+        Param {
             implicit: *implicit,
             name: name.clone(),
-            typ: typ.subst(ctx, by)?,
+            typ: typ.subst(ctx, subst),
             erased: *erased,
-        })
+        }
     }
 }
 

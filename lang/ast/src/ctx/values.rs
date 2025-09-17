@@ -52,8 +52,8 @@ impl<T: Occurs> Occurs for Binder<T> {
 impl<T: Substitutable> Substitutable for Binder<T> {
     type Target = Binder<T::Target>;
 
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
-        Ok(Binder { name: self.name.clone(), content: self.content.subst(ctx, by)? })
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
+        Binder { name: self.name.clone(), content: self.content.subst(ctx, subst) }
     }
 }
 
@@ -152,10 +152,10 @@ impl Shift for Binding {
 impl Substitutable for Binding {
     type Target = Binding;
 
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let Binding { typ, val } = self;
 
-        Ok(Binding { typ: typ.subst(ctx, by)?, val: val.subst(ctx, by)? })
+        Binding { typ: typ.subst(ctx, subst), val: val.subst(ctx, subst) }
     }
 }
 
@@ -197,14 +197,12 @@ impl Occurs for BoundValue {
 impl Substitutable for BoundValue {
     type Target = BoundValue;
 
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         match self {
             BoundValue::PatternMatching { val } => {
-                Ok(BoundValue::PatternMatching { val: val.subst(ctx, by)? })
+                BoundValue::PatternMatching { val: val.subst(ctx, subst) }
             }
-            BoundValue::LetBinding { val } => {
-                Ok(BoundValue::LetBinding { val: val.subst(ctx, by)? })
-            }
+            BoundValue::LetBinding { val } => BoundValue::LetBinding { val: val.subst(ctx, subst) },
         }
     }
 }

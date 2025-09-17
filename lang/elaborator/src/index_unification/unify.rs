@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::convert::Infallible;
 
 use ast::ctx::LevelCtx;
 use ast::{Variable, occurs_in};
@@ -19,13 +18,13 @@ pub struct Unificator {
 
 impl Substitutable for Unificator {
     type Target = Unificator;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let mut map = HashMap::default();
         for (entry_lvl, entry_val) in self.map.iter() {
-            let entry_val = entry_val.subst(ctx, by)?;
+            let entry_val = entry_val.subst(ctx, subst);
             map.insert(*entry_lvl, entry_val);
         }
-        Ok(Self { map })
+        Self { map }
     }
 }
 
@@ -35,11 +34,13 @@ impl Shift for Unificator {
     }
 }
 
-impl Substitution for Unificator {
-    type Err = Infallible;
-
-    fn get_subst(&self, _ctx: &LevelCtx, lvl: Lvl) -> Result<Option<Box<Exp>>, Self::Err> {
-        Ok(self.map.get(&lvl).cloned())
+impl From<Unificator> for Subst {
+    fn from(value: Unificator) -> Self {
+        let mut map = HashMap::default();
+        for (lvl, exp) in value.map {
+            map.insert(lvl, *exp);
+        }
+        Subst { map }
     }
 }
 
@@ -189,9 +190,8 @@ impl Ctx {
             return Err(TypeError::occurs_check_failed(idx, &exp));
         }
         let insert_lvl = self.ctx.idx_to_lvl(idx);
-        let exp = exp.subst(&mut self.ctx, &self.unif)?;
-        self.unif =
-            self.unif.subst(&mut self.ctx, &Assign { lvl: insert_lvl, exp: exp.clone() })?;
+        let exp = exp.subst(&mut self.ctx, &self.unif.clone().into());
+        self.unif = self.unif.subst(&mut self.ctx, &Subst::assign(insert_lvl, *exp.clone()));
         match self.unif.map.get(&insert_lvl) {
             Some(other_exp) => {
                 let eqn = Constraint::Equality { lhs: exp, rhs: other_exp.clone() };

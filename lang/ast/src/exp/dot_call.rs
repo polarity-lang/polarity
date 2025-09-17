@@ -4,8 +4,8 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::DOT};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
+    Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -85,16 +85,16 @@ impl HasType for DotCall {
 
 impl Substitutable for DotCall {
     type Target = DotCall;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let DotCall { span, kind, exp, name, args, .. } = self;
-        Ok(DotCall {
+        DotCall {
             span: *span,
             kind: *kind,
-            exp: exp.subst(ctx, by)?,
+            exp: exp.subst(ctx, subst),
             name: name.clone(),
-            args: args.subst(ctx, by)?,
+            args: args.subst(ctx, subst),
             inferred_type: None,
-        })
+        }
     }
 }
 

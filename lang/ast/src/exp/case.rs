@@ -9,8 +9,8 @@ use printer::{
 };
 
 use crate::{
-    ContainsMetaVars, FreeVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Subst, Substitutable,
+    Zonk, ZonkError,
     ctx::{BindContext, LevelCtx},
     rename::{Rename, RenameCtx},
 };
@@ -90,21 +90,16 @@ impl Occurs for Case {
 
 impl Substitutable for Case {
     type Target = Case;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let Case { span, pattern, body } = self;
-        ctx.bind_iter(pattern.params.params.iter(), |ctx| {
-            Ok(Case {
-                span: *span,
-                pattern: pattern.clone(),
-                body: body
-                    .as_ref()
-                    .map(|body| {
-                        let mut by = (*by).clone();
-                        by.shift((1, 0));
-                        body.subst(ctx, &by)
-                    })
-                    .transpose()?,
-            })
+        ctx.bind_iter(pattern.params.params.iter(), |ctx| Case {
+            span: *span,
+            pattern: pattern.clone(),
+            body: body.as_ref().map(|body| {
+                let mut subst = (*subst).clone();
+                subst.shift((1, 0));
+                body.subst(ctx, &subst)
+            }),
         })
     }
 }

@@ -9,11 +9,13 @@ use printer::{
     util::ParensIfExt,
 };
 
-use crate::ctx::{LevelCtx, values::TypeCtx};
 use crate::rename::{Rename, RenameCtx};
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Substitutable,
-    Substitution, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Zonk, ZonkError,
+};
+use crate::{
+    Subst, Substitutable,
+    ctx::{LevelCtx, values::TypeCtx},
 };
 
 use super::{Case, Closure, Exp, Label, MetaVar, TypCtor, print_cases};
@@ -81,17 +83,17 @@ impl HasType for LocalComatch {
 impl Substitutable for LocalComatch {
     type Target = LocalComatch;
 
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let LocalComatch { span, name, closure, is_lambda_sugar, cases, .. } = self;
-        Ok(LocalComatch {
+        LocalComatch {
             span: *span,
             name: name.clone(),
-            closure: closure.subst(ctx, by)?,
+            closure: closure.subst(ctx, subst),
             is_lambda_sugar: *is_lambda_sugar,
-            cases: cases.iter().map(|case| case.subst(ctx, by)).collect::<Result<Vec<_>, _>>()?,
+            cases: cases.iter().map(|case| case.subst(ctx, subst)).collect::<Vec<_>>(),
             ctx: None,
             inferred_type: None,
-        })
+        }
     }
 }
 

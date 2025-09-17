@@ -4,8 +4,8 @@ use pretty::DocAllocator;
 use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Substitutable, Substitution,
-    VarBind, Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Subst, Substitutable, VarBind,
+    Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -61,16 +61,17 @@ impl HasType for Variable {
 
 impl Substitutable for Variable {
     type Target = Box<Exp>;
-    fn subst<S: Substitution>(&self, ctx: &mut LevelCtx, by: &S) -> Result<Self::Target, S::Err> {
+    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         let Variable { span, idx, name, .. } = self;
-        match by.get_subst(ctx, ctx.idx_to_lvl(*idx))? {
-            Some(exp) => Ok(exp),
-            None => Ok(Box::new(Exp::Variable(Variable {
+        let lvl = ctx.idx_to_lvl(*idx);
+        match subst.map.get(&lvl) {
+            None => Box::new(Exp::Variable(Variable {
                 span: *span,
                 idx: *idx,
                 name: name.clone(),
                 inferred_type: None,
-            }))),
+            })),
+            Some(exp) => Box::new(exp.clone()),
         }
     }
 }

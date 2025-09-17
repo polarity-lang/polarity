@@ -13,7 +13,6 @@ use printer::Print;
 
 use crate::result::TcResult;
 
-use super::TypeError;
 use super::type_info_table::TypeInfoTable;
 
 #[derive(Debug, Clone)]
@@ -43,16 +42,11 @@ impl Ctx {
     }
 }
 pub trait ContextSubstExt: Sized {
-    fn subst<S: Substitution>(&mut self, type_info_table: &Rc<TypeInfoTable>, s: &S) -> TcResult
-    where
-        S::Err: Into<TypeError>;
+    fn subst(&mut self, type_info_table: &Rc<TypeInfoTable>, subst: &Subst) -> TcResult;
 }
 
 impl ContextSubstExt for Ctx {
-    fn subst<S: Substitution>(&mut self, type_info_table: &Rc<TypeInfoTable>, s: &S) -> TcResult
-    where
-        S::Err: Into<TypeError>,
-    {
+    fn subst(&mut self, type_info_table: &Rc<TypeInfoTable>, subst: &Subst) -> TcResult {
         let env = self.vars.env();
         let levels = self.vars.levels();
 
@@ -67,13 +61,12 @@ impl ContextSubstExt for Ctx {
                     .enumerate()
                     .map(|(snd, Binder { name, content: binding })| {
                         let lvl = Lvl { fst, snd };
-                        let mut binding =
-                            binding.subst(&mut levels.clone(), s).map_err(Into::into)?;
+                        let mut binding = binding.subst(&mut levels.clone(), subst);
                         if binding.val.is_none() {
-                            if let Some(val) =
-                                s.get_subst(&levels, lvl).map_err(|e| Box::new(e.into()))?
-                            {
-                                binding.val = Some(ctx::values::BoundValue::PatternMatching { val })
+                            if let Some(val) = subst.map.get(&lvl) {
+                                binding.val = Some(ctx::values::BoundValue::PatternMatching {
+                                    val: Box::new(val.clone()),
+                                })
                             }
                         }
                         binding.typ = binding.typ.normalize(type_info_table, &mut env.clone())?;
