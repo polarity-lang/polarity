@@ -70,6 +70,7 @@ impl Lower for cst::exp::Call {
                 args: lower_args(*span, args, params.clone(), ctx)?,
                 inferred_type: None,
             })),
+            DeclMeta::Note => Err(LoweringError::MisusedNote { span: span.to_miette(), name: name.id }.into()),
         }
     }
 }

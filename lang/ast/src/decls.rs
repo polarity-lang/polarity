@@ -19,6 +19,7 @@ use printer::tokens::HASH;
 use printer::tokens::IMPLICIT;
 use printer::tokens::INFIX;
 use printer::tokens::LET;
+use printer::tokens::NOTE;
 use printer::tokens::USE;
 use printer::util::BracesExt;
 use printer::util::IsNilExt;
@@ -327,6 +328,7 @@ pub enum Decl {
     Codef(Codef),
     Let(Let),
     Infix(Infix),
+    Note(Note),
 }
 
 impl From<Data> for Decl {
@@ -365,6 +367,12 @@ impl From<Infix> for Decl {
     }
 }
 
+impl From<Note> for Decl {
+    fn from(value: Note) -> Self {
+        Decl::Note(value)
+    }
+}
+
 impl Decl {
     /// A list of all attributes attached to the declaration.
     pub fn attributes(&self) -> &Attributes {
@@ -375,6 +383,7 @@ impl Decl {
             Decl::Codef(Codef { attr, .. }) => attr,
             Decl::Let(Let { attr, .. }) => attr,
             Decl::Infix(Infix { attr, .. }) => attr,
+            Decl::Note(Note { attr, .. }) => attr,
         }
     }
 
@@ -395,6 +404,7 @@ impl Decl {
             Decl::Codef(Codef { name, .. }) => Some(name),
             Decl::Let(Let { name, .. }) => Some(name),
             Decl::Infix(_) => None,
+            Decl::Note(Note { name, .. }) => Some(name),
         }
     }
 }
@@ -408,6 +418,7 @@ impl HasSpan for Decl {
             Decl::Codef(codef) => codef.span,
             Decl::Let(tl_let) => tl_let.span,
             Decl::Infix(infix) => infix.span,
+            Decl::Note(note) => note.span,
         }
     }
 }
@@ -421,6 +432,7 @@ impl Print for Decl {
             Decl::Codef(codef) => codef.print(cfg, alloc),
             Decl::Let(tl_let) => tl_let.print(cfg, alloc),
             Decl::Infix(infix) => infix.print(cfg, alloc),
+            Decl::Note(note) => note.print(cfg, alloc),
         }
     }
 }
@@ -434,6 +446,7 @@ impl Zonk for Decl {
             Decl::Codef(codef) => codef.zonk(meta_vars),
             Decl::Let(tl_let) => tl_let.zonk(meta_vars),
             Decl::Infix(infix) => infix.zonk(meta_vars),
+            Decl::Note(note) => note.zonk(meta_vars),
         }
     }
 }
@@ -447,6 +460,7 @@ impl ContainsMetaVars for Decl {
             Decl::Codef(codef) => codef.contains_metavars(),
             Decl::Let(tl_let) => tl_let.contains_metavars(),
             Decl::Infix(infix) => infix.contains_metavars(),
+            Decl::Note(note) => note.contains_metavars(),
         }
     }
 }
@@ -459,6 +473,7 @@ impl Rename for Decl {
             Decl::Codef(codef) => codef.rename_in_ctx(ctx),
             Decl::Let(lets) => lets.rename_in_ctx(ctx),
             Decl::Infix(infix) => infix.rename_in_ctx(ctx),
+            Decl::Note(note) => note.rename_in_ctx(ctx),
         }
     }
 }
@@ -1451,4 +1466,50 @@ impl Rename for Param {
         self.typ.rename_in_ctx(ctx);
         self.name = ctx.disambiguate_var_bind(self.name.clone());
     }
+}
+
+// Note
+//
+//
+
+#[derive(Debug, Clone)]
+pub struct Note {
+    pub span: Option<Span>,
+    pub doc: Option<DocComment>,
+    pub name: IdBind,
+    pub attr: Attributes,
+}
+
+impl Print for Note {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Note { span: _, doc, name, attr } = self;
+        if !attr.is_visible() {
+            return alloc.nil();
+        }
+
+        let doc = doc.print(cfg, alloc).append(attr.print(cfg, alloc));
+
+        let note = alloc.keyword(NOTE).append(alloc.space()).append(&name.id).group();
+
+        doc.append(note)
+    }
+}
+
+impl Zonk for Note {
+    fn zonk(
+        &mut self,
+        _meta_vars: &HashMap<MetaVar, MetaVarState>,
+    ) -> Result<(), crate::ZonkError> {
+        Ok(())
+    }
+}
+
+impl ContainsMetaVars for Note {
+    fn contains_metavars(&self) -> bool {
+        false
+    }
+}
+
+impl Rename for Note {
+    fn rename_in_ctx(&mut self, _ctx: &mut RenameCtx) {}
 }

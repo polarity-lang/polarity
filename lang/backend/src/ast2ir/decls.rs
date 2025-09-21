@@ -21,6 +21,7 @@ impl ToIR for ast::Module {
                 ast::Decl::Data(_) => {}
                 ast::Decl::Codata(_) => {}
                 ast::Decl::Infix(_) => {}
+                ast::Decl::Note(_) => {}
             }
         }
 

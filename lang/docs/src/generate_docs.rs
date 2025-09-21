@@ -1,6 +1,6 @@
 use askama::Template;
 
-use ast::{Codata, Codef, Data, Decl, Def, Infix, Let, Module};
+use ast::{Codata, Codef, Data, Decl, Def, Infix, Let, Module, Note};
 use printer::PrintCfg;
 
 use crate::generate::Generate;
@@ -25,6 +25,7 @@ impl GenerateDocs for Decl {
             Decl::Codef(codef) => codef.generate_docs(),
             Decl::Let(l) => l.generate_docs(),
             Decl::Infix(i) => i.generate_docs(),
+            Decl::Note(n) => n.generate_docs(),
         }
     }
 }
@@ -142,6 +143,19 @@ impl GenerateDocs for Infix {
     }
 }
 
+impl GenerateDocs for Note {
+    fn generate_docs(&self) -> String {
+        let Note { span: _, doc, name, attr } = self;
+
+        let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
+        let name = &name.id;
+        let attr: String = print_html_to_string(attr, Some(&PrintCfg::default()));
+
+        let note_template = NoteTemplate { doc: &doc, name, attr: &attr };
+        note_template.render().unwrap()
+    }
+}
+
 #[derive(Template)]
 #[template(path = "data.html", escape = "none")]
 struct DataTemplate<'a> {
@@ -199,4 +213,12 @@ struct InfixTemplate<'a> {
     pub doc: &'a str,
     pub lhs: &'a str,
     pub rhs: &'a str,
+}
+
+#[derive(Template)]
+#[template(path = "note.html", escape = "none")]
+struct NoteTemplate<'a> {
+    pub doc: &'a str,
+    pub name: &'a str,
+    pub attr: &'a str,
 }

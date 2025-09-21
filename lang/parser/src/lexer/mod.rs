@@ -52,6 +52,8 @@ pub enum Token {
     Use,
     #[token("infix")]
     Infix,
+    #[token("note")]
+    Note,
 
     // Parens, Braces and Brackets
     //
