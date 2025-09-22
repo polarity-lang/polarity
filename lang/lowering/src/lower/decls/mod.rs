@@ -12,8 +12,8 @@ mod codefinition;
 mod data_declaration;
 mod definition;
 mod infix_declaration;
-mod toplevel_let;
 mod note_declaration;
+mod toplevel_let;
 
 // Doc Comments
 //
