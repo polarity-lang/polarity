@@ -228,6 +228,12 @@ pub struct Infix {
     pub rhs: Call,
 }
 
+/// A note declaration, used for holding doc-comments
+///
+/// ```text
+/// /// Some documentation
+/// note foo
+/// ```
 #[derive(Debug, Clone)]
 pub struct Note {
     pub span: Span,
