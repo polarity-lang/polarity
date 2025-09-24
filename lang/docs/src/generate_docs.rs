@@ -145,13 +145,12 @@ impl GenerateDocs for Infix {
 
 impl GenerateDocs for Note {
     fn generate_docs(&self) -> String {
-        let Note { span: _, doc, name, attr } = self;
+        let Note { span: _, doc, name, attr: _ } = self;
 
         let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
         let name = &name.id;
-        let attr: String = print_html_to_string(attr, Some(&PrintCfg::default()));
 
-        let note_template = NoteTemplate { doc: &doc, name, attr: &attr };
+        let note_template = NoteTemplate { doc: &doc, name };
         note_template.render().unwrap()
     }
 }
@@ -220,5 +219,4 @@ struct InfixTemplate<'a> {
 struct NoteTemplate<'a> {
     pub doc: &'a str,
     pub name: &'a str,
-    pub attr: &'a str,
 }
