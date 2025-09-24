@@ -1,0 +1,8 @@
+L-016
+
+  × "Type" is not a valid identifier
+   ╭─[L-016g.pol:1:1]
+ 1 │ note Type
+   · ─────────
+   ╰────
+  help: "Type" is the name of the impredicative type universe.

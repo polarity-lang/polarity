@@ -1,0 +1,14 @@
+/// This is a note, containing top-level documentation.
+note Foo
+
+/// We can define the data type Bool with constructors T and F.
+data Bool { T, F }
+
+/// This is another note.
+note Bar
+
+/// We can define `not`, which negates a boolean value, by case distinction.
+def Bool.not: Bool {
+    T => F,
+    F => T,
+}
