@@ -25,7 +25,7 @@ rust-version = "1.85"
 authors = ["Tim Süberkrüb", "David Binder"]
 license = "MIT OR Apache-2.0"
 homepage = "https://polarity-lang.github.io/"
-repository = "https://github.com/polarity/polarity"
+repository = "https://github.com/polarity-lang/polarity"
 categories = ["compilers"]
 
 [workspace.dependencies]
