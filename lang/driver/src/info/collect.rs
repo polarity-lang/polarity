@@ -674,10 +674,6 @@ impl CollectInfo for Note {
     fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
         let Note { name, span, doc, attr: _ } = self;
         if let Some(span) = span {
-            // Add item
-            let item = Item::Data(name.clone().id);
-            collector.add_item(*span, item);
-
             // Add hover info
             let mut content: Vec<MarkedString> = Vec::new();
             content.push(MarkedString::String(format!("Note: `{name}`")));
