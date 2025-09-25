@@ -138,6 +138,7 @@ impl CollectInfo for Decl {
             Decl::Codef(codef) => codef.collect_info(db, collector),
             Decl::Let(lets) => lets.collect_info(db, collector),
             Decl::Infix(infix) => infix.collect_info(db, collector),
+            Decl::Note(note) => note.collect_info(db, collector),
         }
     }
 }
@@ -665,6 +666,20 @@ impl CollectInfo for LocalLet {
             let typ = string_to_language_string(typ);
             let hover_content = HoverContents::Array(vec![header, typ]);
             collector.add_hover(*span, hover_content)
+        }
+    }
+}
+
+impl CollectInfo for Note {
+    fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
+        let Note { name, span, doc, attr: _ } = self;
+        if let Some(span) = span {
+            // Add hover info
+            let mut content: Vec<MarkedString> = Vec::new();
+            content.push(MarkedString::String(format!("Note: `{name}`")));
+            add_doc_comment(&mut content, doc.clone().map(|doc| doc.docs));
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
         }
     }
 }

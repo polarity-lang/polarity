@@ -133,6 +133,13 @@ pub enum LoweringError {
         span: SourceSpan,
         message: String,
     },
+    #[error("Invalid usage of note {}", name)]
+    #[diagnostic(code("L-020"))]
+    MisusedNote {
+        #[label]
+        span: SourceSpan,
+        name: String,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("L-XXX"))]
     /// This error should not occur.

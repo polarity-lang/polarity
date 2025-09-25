@@ -115,6 +115,7 @@ impl Lift for Decl {
             Decl::Codef(codef) => Decl::Codef(codef.lift(ctx)),
             Decl::Let(tl_let) => Decl::Let(tl_let.lift(ctx)),
             Decl::Infix(infix) => Decl::Infix(infix.lift(ctx)),
+            Decl::Note(note) => Decl::Note(note.lift(ctx)),
         }
     }
 }
@@ -781,6 +782,13 @@ impl Ctx {
 
 impl Lift for Infix {
     type Target = Infix;
+    fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
+        self.clone()
+    }
+}
+
+impl Lift for Note {
+    type Target = Note;
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
         self.clone()
     }

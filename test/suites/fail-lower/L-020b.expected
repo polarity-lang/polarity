@@ -1,0 +1,8 @@
+L-020
+
+  × Invalid usage of note Foo
+   ╭─[L-020b.pol:3:8]
+ 2 │ note Foo
+ 3 │ let x: Foo { B }
+   ·        ───
+   ╰────

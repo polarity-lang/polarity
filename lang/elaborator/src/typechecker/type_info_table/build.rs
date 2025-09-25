@@ -27,6 +27,7 @@ impl BuildTypeInfoTable for Decl {
             Decl::Codef(codef) => codef.build(info_table),
             Decl::Let(tl_let) => tl_let.build(info_table),
             Decl::Infix(infix) => infix.build(info_table),
+            Decl::Note(note) => note.build(info_table),
         }
     }
 }
@@ -99,5 +100,9 @@ impl BuildTypeInfoTable for Let {
 }
 
 impl BuildTypeInfoTable for Infix {
+    fn build(&self, _info_table: &mut ModuleTypeInfoTable) {}
+}
+
+impl BuildTypeInfoTable for Note {
     fn build(&self, _info_table: &mut ModuleTypeInfoTable) {}
 }

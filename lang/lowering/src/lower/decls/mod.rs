@@ -12,6 +12,7 @@ mod codefinition;
 mod data_declaration;
 mod definition;
 mod infix_declaration;
+mod note_declaration;
 mod toplevel_let;
 
 // Doc Comments
@@ -74,6 +75,7 @@ impl Lower for cst::decls::Decl {
             cst::decls::Decl::Codef(codef) => codef.lower(ctx)?.into(),
             cst::decls::Decl::Let(tl_let) => tl_let.lower(ctx)?.into(),
             cst::decls::Decl::Infix(infix) => infix.lower(ctx)?.into(),
+            cst::decls::Decl::Note(note) => note.lower(ctx)?.into(),
         };
         Ok(decl)
     }

@@ -1,0 +1,3 @@
+data Bar { B }
+note Foo
+let x: Foo { B }

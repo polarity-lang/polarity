@@ -31,6 +31,7 @@ extern {
     "implicit" => Token::Implicit,
     "use" => Token::Use,
     "infix" => Token::Infix,
+    "note" => Token::Note,
 
     // Parens, Braces and Brackets
     //
@@ -149,7 +150,8 @@ Decl: Decl = {
     <d: Def> => Decl::Def(d),
     <d: Codef> => Decl::Codef(d),
     <d: Let> => Decl::Let(d),
-    <d: Infix> => Decl::Infix(d)
+    <d: Infix> => Decl::Infix(d),
+    <d: Note> => Decl::Note(d),
 }
 
 // Data Type Declarations
@@ -203,6 +205,11 @@ Let: Let = <l: @L> <doc: DocComment?> <attr: OptAttributes> "let" <name: Ident><
 // Infix operator declaration
 Infix: Infix = {
   <l: @L> <doc: DocComment?> <attr: OptAttributes> "infix" <pattern: BinOp> ":=" <rhs: CallWithArgs> <r: @R> => Infix { span: span(l,r), doc, attr, pattern, rhs }
+}
+
+// Toplevel note declaration
+Note: Note = {
+  <l: @L> <doc: DocComment?> <attr: OptAttributes> "note" <name: Ident> <r: @R> => Note { span: span(l, r), doc, name, attr }
 }
 
 Pattern: Pattern = {

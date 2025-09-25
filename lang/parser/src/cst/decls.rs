@@ -46,6 +46,7 @@ pub enum Decl {
     Codef(Codef),
     Let(Let),
     Infix(Infix),
+    Note(Note),
 }
 
 /// Data type declaration
@@ -225,6 +226,20 @@ pub struct Infix {
     pub attr: Attributes,
     pub pattern: BinOp,
     pub rhs: Call,
+}
+
+/// A note declaration, used for holding doc-comments
+///
+/// ```text
+/// /// Some documentation
+/// note foo
+/// ```
+#[derive(Debug, Clone)]
+pub struct Note {
+    pub span: Span,
+    pub doc: Option<DocComment>,
+    pub name: Ident,
+    pub attr: Attributes,
 }
 
 /// A `Param` can either be a single parameter, like `x : T`, or a list of parameters, like `x y z: T`.

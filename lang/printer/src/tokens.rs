@@ -57,6 +57,9 @@ pub const CODEF: &str = "codef";
 /// The keyword `let`
 pub const LET: &str = "let";
 
+/// The keyword `note`
+pub const NOTE: &str = "note";
+
 /// The keyword `match`
 pub const MATCH: &str = "match";
 
