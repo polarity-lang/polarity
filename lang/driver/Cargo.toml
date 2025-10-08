@@ -34,4 +34,4 @@ polarity-lang-printer = { path = "../printer" }
 polarity-lang-parser = { path = "../parser" }
 polarity-lang-transformations = { path = "../transformations" }
 polarity-lang-backend = { path = "../backend" }
-polarity-lang-miette_util = { path = "../miette_util" }
+polarity-lang-miette-util = { path = "../miette_util" }

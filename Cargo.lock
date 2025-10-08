@@ -2415,7 +2415,7 @@ dependencies = [
  "fxhash",
  "miette",
  "num-bigint",
- "polarity-lang-miette_util",
+ "polarity-lang-miette-util",
  "polarity-lang-printer",
  "pretty",
  "thiserror",
@@ -2460,7 +2460,7 @@ dependencies = [
  "polarity-lang-backend",
  "polarity-lang-elaborator",
  "polarity-lang-lowering",
- "polarity-lang-miette_util",
+ "polarity-lang-miette-util",
  "polarity-lang-parser",
  "polarity-lang-printer",
  "polarity-lang-transformations",
@@ -2478,7 +2478,7 @@ dependencies = [
  "log",
  "miette",
  "polarity-lang-ast",
- "polarity-lang-miette_util",
+ "polarity-lang-miette-util",
  "polarity-lang-printer",
  "pretty",
  "thiserror",
@@ -2493,7 +2493,7 @@ dependencies = [
  "miette",
  "num-bigint",
  "polarity-lang-ast",
- "polarity-lang-miette_util",
+ "polarity-lang-miette-util",
  "polarity-lang-parser",
  "polarity-lang-printer",
  "thiserror",
@@ -2508,14 +2508,14 @@ dependencies = [
  "miette",
  "polarity-lang-ast",
  "polarity-lang-driver",
- "polarity-lang-miette_util",
+ "polarity-lang-miette-util",
  "polarity-lang-printer",
  "tower-lsp-server",
  "url",
 ]
 
 [[package]]
-name = "polarity-lang-miette_util"
+name = "polarity-lang-miette-util"
 version = "0.1.0"
 dependencies = [
  "miette",
@@ -2532,7 +2532,7 @@ dependencies = [
  "logos",
  "miette",
  "num-bigint",
- "polarity-lang-miette_util",
+ "polarity-lang-miette-util",
  "thiserror",
  "url",
 ]
@@ -2553,7 +2553,7 @@ dependencies = [
  "derivative",
  "miette",
  "polarity-lang-ast",
- "polarity-lang-miette_util",
+ "polarity-lang-miette-util",
  "thiserror",
  "url",
 ]

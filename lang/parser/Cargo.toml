@@ -25,7 +25,7 @@ miette = { workspace = true }
 thiserror = { workspace = true }
 num-bigint = { workspace = true }
 # Workspace members
-polarity-lang-miette_util = { path = "../miette_util" }
+polarity-lang-miette-util = { path = "../miette_util" }
 
 [build-dependencies.lalrpop]
 version = "0.19"

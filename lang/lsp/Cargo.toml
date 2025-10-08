@@ -24,4 +24,4 @@ url = { workspace = true }
 polarity-lang-ast = { path = "../ast" }
 polarity-lang-driver = { path = "../driver" }
 polarity-lang-printer = { path = "../printer" }
-polarity-lang-miette_util = { path = "../miette_util" }
+polarity-lang-miette-util = { path = "../miette_util" }

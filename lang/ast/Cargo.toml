@@ -26,5 +26,5 @@ fxhash = "0.2.1"
 # prettyprinting
 pretty = { version = "0.11", features = ["termcolor"] }
 # workspace members
-polarity-lang-miette_util = { path = "../miette_util" }
+polarity-lang-miette-util = { path = "../miette_util" }
 polarity-lang-printer = { path = "../printer" }
