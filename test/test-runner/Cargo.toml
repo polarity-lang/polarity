@@ -8,33 +8,25 @@ autobins = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# async
-tokio = { version = "1", features = ["rt-multi-thread"] }
-# cli
-clap = { version = "4", features = ["derive"] }
-# full text search engine
-tantivy = "0.18"
-# url (for file locations)
-url = { workspace = true }
-# Logging infrastructure
-env_logger = { workspace = true }
-log = { workspace = true }
-# error handling
-miette = { workspace = true, features = ["fancy"] }
-# config
-serde = "1"
-serde_derive = "1"
-toml = "0.5"
-# Colored output
-termcolor = { version = "1.4.1" }
-# Find files recursively
-walkdir = "2.5.0"
+clap         = { workspace = true, features = ["derive"] }
+env_logger   = { workspace = true }
+log          = { workspace = true }
+miette       = { workspace = true, features = ["fancy"] }
+tantivy      = { workspace = true }
+termcolor    = { workspace = true }
+tokio        = { workspace = true, features = ["rt-multi-thread"] }
+toml         = { workspace = true }
+serde        = { workspace = true }
+serde_derive = { workspace = true }
+url          = { workspace = true }
+walkdir      = { workspace = true }
+
 # workspace members
-polarity-lang-ast = { path = "../../lang/ast" }
-polarity-lang-parser = { path = "../../lang/parser" }
+polarity-lang-ast        = { path = "../../lang/ast" }
+polarity-lang-driver     = { path = "../../lang/driver" }
 polarity-lang-elaborator = { path = "../../lang/elaborator" }
-polarity-lang-printer = { path = "../../lang/printer" }
-polarity-lang-driver = { path = "../../lang/driver" }
+polarity-lang-parser     = { path = "../../lang/parser" }
+polarity-lang-printer    = { path = "../../lang/printer" }
 
 [[test]]
 name = "integration"

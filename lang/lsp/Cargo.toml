@@ -1,7 +1,6 @@
 [package]
 name = "polarity-lang-lsp-server"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -12,16 +11,13 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-# lsp
+async-lock       = { workspace = true }
+miette           = { workspace = true }
 tower-lsp-server = { workspace = true }
-# asynchronous locks
-async-lock = "2"
-# fancy error messages
-miette = { workspace = true }
-# URLs
-url = { workspace = true }
-# workspace members
-polarity-lang-ast = { path = "../ast" }
-polarity-lang-driver = { path = "../driver" }
-polarity-lang-printer = { path = "../printer" }
+url              = { workspace = true }
+
+# workspace dependencies
+polarity-lang-ast         = { path = "../ast" }
+polarity-lang-driver      = { path = "../driver" }
 polarity-lang-miette-util = { path = "../miette_util" }
+polarity-lang-printer     = { path = "../printer" }

@@ -1,7 +1,6 @@
 [package]
 name = "polarity"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -16,30 +15,26 @@ name = "pol"
 path = "src/main.rs"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-# cli
-clap = { version = "4", features = ["derive"] }
-clap_complete = { version = "4.5.38" }
-termsize = "0.1"
-# fancy error messages
-miette = { workspace = true, features = ["fancy"] }
-thiserror = { workspace = true }
-# Logging infrastructure
-env_logger = { workspace = true }
-log = { workspace = true }
-# lsp
-tokio = { version = "1", features = ["rt-multi-thread"] }
-futures = "0.3"
-async-std = "1"
+async-std        = { workspace = true }
+clap             = { workspace = true, features = ["derive"] }
+clap_complete    = { workspace = true }
+env_logger       = { workspace = true }
+futures          = { workspace = true }
+log              = { workspace = true }
+miette           = { workspace = true, features = ["fancy"] }
+termsize         = { workspace = true }
+thiserror        = { workspace = true }
+tokio            = { workspace = true, features = ["rt-multi-thread"] }
 tower-lsp-server = { workspace = true }
-# workspace members
-polarity-lang-driver = { path = "../lang/driver" }
+
+# workspace dependencies
+polarity-lang-ast        = { path = "../lang/ast" }
+polarity-lang-docs       = { path = "../lang/docs" }
+polarity-lang-driver     = { path = "../lang/driver" }
 polarity-lang-elaborator = { path = "../lang/elaborator" }
-polarity-lang-ast = { path = "../lang/ast" }
-polarity-lang-printer = { path = "../lang/printer" }
-polarity-lang-parser = { path = "../lang/parser" }
+polarity-lang-parser     = { path = "../lang/parser" }
+polarity-lang-printer    = { path = "../lang/printer" }
 polarity-lang-lsp-server = { path = "../lang/lsp" }
-polarity-lang-docs = { path = "../lang/docs" }
 
 [dev-dependencies]
-# For testing the binary
-assert_cmd = "2.0.14"
+assert_cmd = { workspace = true }

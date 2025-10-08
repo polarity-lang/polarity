@@ -1,5 +1,6 @@
 [package]
 name = "polarity-lang-backend"
+
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,11 +11,10 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-# ir structures
-url = { workspace = true }
-# error handling
-miette = { workspace = true }
+miette    = { workspace = true }
 thiserror = { workspace = true }
+url       = { workspace = true }
+
 # workspace dependencies
-polarity-lang-ast = { path = "../ast" }
+polarity-lang-ast     = { path = "../ast" }
 polarity-lang-printer = { path = "../printer" }

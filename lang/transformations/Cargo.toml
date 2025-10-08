@@ -12,11 +12,11 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-url = "2"
-# error handling
-miette = { workspace = true }
-thiserror = { workspace = true }
 derivative = { workspace = true }
-# workspace members
-polarity-lang-ast = { path = "../ast" }
+miette     = { workspace = true }
+thiserror  = { workspace = true }
+url        = { workspace = true }
+
+# workspace dependencies
+polarity-lang-ast         = { path = "../ast" }
 polarity-lang-miette-util = { path = "../miette_util" }

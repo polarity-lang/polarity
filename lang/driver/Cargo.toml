@@ -1,7 +1,6 @@
 [package]
 name = "polarity-lang-driver"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -12,26 +11,21 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-# async
-async-trait = "0.1"
-# adressing symbols
-url = { workspace = true }
-lsp-types = { workspace = true }
-# index of source code intervals
-rust-lapper = "1"
-# text rope
-ropey = "1"
-# fancy error messages
-miette = { workspace = true }
-thiserror = { workspace = true }
-# logging
-log = { workspace = true }
-# workspace members
-polarity-lang-ast = { path = "../ast" }
-polarity-lang-lowering = { path = "../lowering" }
-polarity-lang-elaborator = { path = "../elaborator" }
-polarity-lang-printer = { path = "../printer" }
-polarity-lang-parser = { path = "../parser" }
+async-trait = { workspace = true }
+log         = { workspace = true }
+lsp-types   = { workspace = true }
+miette      = { workspace = true }
+ropey       = { workspace = true }
+rust-lapper = { workspace = true }
+thiserror   = { workspace = true }
+url         = { workspace = true }
+
+# workspace dependencies
+polarity-lang-ast             = { path = "../ast" }
+polarity-lang-lowering        = { path = "../lowering" }
+polarity-lang-elaborator      = { path = "../elaborator" }
+polarity-lang-printer         = { path = "../printer" }
+polarity-lang-parser          = { path = "../parser" }
 polarity-lang-transformations = { path = "../transformations" }
-polarity-lang-backend = { path = "../backend" }
-polarity-lang-miette-util = { path = "../miette_util" }
+polarity-lang-backend         = { path = "../backend" }
+polarity-lang-miette-util     = { path = "../miette_util" }
