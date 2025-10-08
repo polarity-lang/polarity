@@ -25,5 +25,4 @@ url          = { workspace = true }
 polarity-lang-miette-util = { path = "../miette_util" }
 
 [build-dependencies.lalrpop]
-version = "0.19"
-features = ["lexer"]
+workspace = true
