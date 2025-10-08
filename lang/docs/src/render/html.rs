@@ -1,6 +1,6 @@
 use std::{io, path::Path};
 
-use printer::Anno;
+use polarity_lang_printer::Anno;
 
 use crate::util::get_target_path;
 

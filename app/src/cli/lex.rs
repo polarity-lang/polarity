@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use parser::lexer::Lexer;
+use polarity_lang_parser::lexer::Lexer;
 
 pub async fn exec(args: Args) -> miette::Result<()> {
     let src = fs::read_to_string(&args.filepath).expect("Failed to read file");

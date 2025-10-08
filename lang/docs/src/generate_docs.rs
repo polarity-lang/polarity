@@ -1,7 +1,7 @@
 use askama::Template;
 
-use ast::{Codata, Codef, Data, Decl, Def, Infix, Let, Module, Note};
-use printer::PrintCfg;
+use polarity_lang_ast::{Codata, Codef, Data, Decl, Def, Infix, Let, Module, Note};
+use polarity_lang_printer::PrintCfg;
 
 use crate::generate::Generate;
 use crate::printer::print_html_to_string;

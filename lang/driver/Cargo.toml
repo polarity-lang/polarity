@@ -1,5 +1,5 @@
 [package]
-name = "driver"
+name = "polarity-lang-driver"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true
@@ -27,11 +27,11 @@ thiserror = { workspace = true }
 # logging
 log = { workspace = true }
 # workspace members
-ast = { path = "../ast" }
-lowering = { path = "../lowering" }
-elaborator = { path = "../elaborator" }
-printer = { path = "../printer" }
-parser = { path = "../parser" }
-transformations = { path = "../transformations" }
-backend = { path = "../backend" }
-miette_util = { path = "../miette_util" }
+polarity-lang-ast = { path = "../ast" }
+polarity-lang-lowering = { path = "../lowering" }
+polarity-lang-elaborator = { path = "../elaborator" }
+polarity-lang-printer = { path = "../printer" }
+polarity-lang-parser = { path = "../parser" }
+polarity-lang-transformations = { path = "../transformations" }
+polarity-lang-backend = { path = "../backend" }
+polarity-lang-miette-util = { path = "../miette_util" }

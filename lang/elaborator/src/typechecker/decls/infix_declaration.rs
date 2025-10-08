@@ -1,4 +1,4 @@
-use ast::Infix;
+use polarity_lang_ast::Infix;
 
 use super::CheckToplevel;
 

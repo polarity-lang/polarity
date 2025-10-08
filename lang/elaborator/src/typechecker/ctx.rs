@@ -6,10 +6,10 @@ use std::rc::Rc;
 
 use crate::normalizer::env::{Env, ToEnv};
 use crate::normalizer::normalize::Normalize;
-use ast::ctx::values::{Binder, Binding, TypeCtx};
-use ast::ctx::{BindContext, LevelCtx};
-use ast::*;
-use printer::Print;
+use polarity_lang_ast::ctx::values::{Binder, Binding, TypeCtx};
+use polarity_lang_ast::ctx::{BindContext, LevelCtx};
+use polarity_lang_ast::*;
+use polarity_lang_printer::Print;
 
 use crate::result::TcResult;
 
@@ -128,9 +128,9 @@ impl Ctx {
 impl Print for Ctx {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+        cfg: &polarity_lang_printer::PrintCfg,
+        alloc: &'a polarity_lang_printer::Alloc<'a>,
+    ) -> polarity_lang_printer::Builder<'a> {
         self.vars.print(cfg, alloc)
     }
 }

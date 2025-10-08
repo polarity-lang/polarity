@@ -3,8 +3,8 @@ use std::path::Path;
 
 use askama::Template;
 
-use driver::Database;
-use driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH};
+use polarity_lang_driver::Database;
+use polarity_lang_driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH};
 
 use crate::generate_docs::GenerateDocs;
 use crate::generate_html_from_paths;

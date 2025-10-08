@@ -1,19 +1,19 @@
 use derivative::Derivative;
-use miette_util::codespan::Span;
 use pretty::DocAllocator;
-use printer::{
+
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{
     Alloc, Builder, Precedence, Print, PrintCfg,
     tokens::{COLONEQ, COMMA},
 };
 
+use super::{Exp, Hole, MetaVar, VarBound};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
     Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
-
-use super::{Exp, Hole, MetaVar, VarBound};
 
 // Arg
 //
@@ -301,7 +301,7 @@ impl FreeVars for Args {
 
 #[cfg(test)]
 mod args_tests {
-    use printer::Print;
+    use polarity_lang_printer::Print;
     use url::Url;
 
     use crate::{Arg, Call, CallKind, Exp, Hole, IdBound, MetaVarKind};

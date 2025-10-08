@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use driver::{Database, IR_PATH};
-use printer::{Print, PrintCfg};
+use polarity_lang_driver::{Database, IR_PATH};
+use polarity_lang_printer::{Print, PrintCfg};
 
 #[derive(clap::Args)]
 pub struct Args {

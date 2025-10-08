@@ -3,8 +3,8 @@ mod lower;
 mod result;
 mod symbol_table;
 
-use ast::{self};
-use parser::cst;
+use polarity_lang_ast::{self};
+use polarity_lang_parser::cst;
 
 use crate::lower::Lower;
 
@@ -21,11 +21,16 @@ pub use symbol_table::build::build_symbol_table;
 pub fn lower_module_with_symbol_table(
     prg: &cst::decls::Module,
     symbol_table: &SymbolTable,
-) -> LoweringResult<ast::Module> {
+) -> LoweringResult<polarity_lang_ast::Module> {
     let mut ctx = Ctx::empty(prg.uri.clone(), symbol_table.clone());
 
     let use_decls = prg.use_decls.lower(&mut ctx)?;
     let decls = prg.decls.lower(&mut ctx)?;
 
-    Ok(ast::Module { uri: prg.uri.clone(), use_decls, decls, meta_vars: ctx.meta_vars })
+    Ok(polarity_lang_ast::Module {
+        uri: prg.uri.clone(),
+        use_decls,
+        decls,
+        meta_vars: ctx.meta_vars,
+    })
 }

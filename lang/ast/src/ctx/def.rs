@@ -1,8 +1,8 @@
 //! Generic definition of variable contexts
 
 use derivative::Derivative;
+use polarity_lang_printer::{Alloc, Builder, Print, PrintCfg, tokens::*};
 use pretty::DocAllocator;
-use printer::{Alloc, Builder, Print, PrintCfg, tokens::*};
 
 use crate::{Idx, Lvl, Shift, ShiftRange, Var};
 

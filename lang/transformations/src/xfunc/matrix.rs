@@ -1,9 +1,9 @@
 use url::Url;
 
-use ast::ctx::{BindContext, LevelCtx};
-use ast::{self, HashMap, IdBound, SwapWithCtx};
-use ast::{Attributes, DocComment};
-use miette_util::codespan::Span;
+use polarity_lang_ast::ctx::{BindContext, LevelCtx};
+use polarity_lang_ast::{self, HashMap, IdBound, SwapWithCtx};
+use polarity_lang_ast::{Attributes, DocComment};
+use polarity_lang_miette_util::codespan::Span;
 
 use crate::result::XfuncError;
 
@@ -18,11 +18,11 @@ pub struct XData {
     pub repr: Repr,
     pub span: Option<Span>,
     pub doc: Option<DocComment>,
-    pub name: ast::IdBind,
-    pub typ: Box<ast::Telescope>,
-    pub ctors: HashMap<String, ast::Ctor>,
-    pub dtors: HashMap<String, ast::Dtor>,
-    pub exprs: HashMap<Key, Option<Box<ast::Exp>>>,
+    pub name: polarity_lang_ast::IdBind,
+    pub typ: Box<polarity_lang_ast::Telescope>,
+    pub ctors: HashMap<String, polarity_lang_ast::Ctor>,
+    pub dtors: HashMap<String, polarity_lang_ast::Dtor>,
+    pub exprs: HashMap<Key, Option<Box<polarity_lang_ast::Exp>>>,
 }
 
 /// A key points to a matrix cell
@@ -46,7 +46,7 @@ pub enum Repr {
 }
 
 /// Take the red pill
-pub fn build(prg: &ast::Module) -> Result<Prg, XfuncError> {
+pub fn build(prg: &polarity_lang_ast::Module) -> Result<Prg, XfuncError> {
     let mut out = Prg { map: HashMap::default(), uri: prg.uri.clone() };
     prg.build_matrix(&mut out)?;
     Ok(out)
@@ -56,22 +56,22 @@ pub trait BuildMatrix {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError>;
 }
 
-impl BuildMatrix for ast::Module {
+impl BuildMatrix for polarity_lang_ast::Module {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
-        let ast::Module { decls, .. } = self;
+        let polarity_lang_ast::Module { decls, .. } = self;
 
         for decl in decls {
             match decl {
-                ast::Decl::Data(data) => data.build_matrix(out),
-                ast::Decl::Codata(codata) => codata.build_matrix(out),
+                polarity_lang_ast::Decl::Data(data) => data.build_matrix(out),
+                polarity_lang_ast::Decl::Codata(codata) => codata.build_matrix(out),
                 _ => Ok(()),
             }?
         }
 
         for decl in decls {
             match decl {
-                ast::Decl::Def(def) => def.build_matrix(out),
-                ast::Decl::Codef(codef) => codef.build_matrix(out),
+                polarity_lang_ast::Decl::Def(def) => def.build_matrix(out),
+                polarity_lang_ast::Decl::Codef(codef) => codef.build_matrix(out),
                 _ => Ok(()),
             }?
         }
@@ -80,9 +80,9 @@ impl BuildMatrix for ast::Module {
     }
 }
 
-impl BuildMatrix for ast::Data {
+impl BuildMatrix for polarity_lang_ast::Data {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
-        let ast::Data { span, doc, name, attr: _, typ, ctors } = self;
+        let polarity_lang_ast::Data { span, doc, name, attr: _, typ, ctors } = self;
 
         let mut xdata = XData {
             repr: Repr::Data,
@@ -102,9 +102,9 @@ impl BuildMatrix for ast::Data {
         Ok(())
     }
 }
-impl BuildMatrix for ast::Codata {
+impl BuildMatrix for polarity_lang_ast::Codata {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
-        let ast::Codata { span, doc, name, attr: _, typ, dtors } = self;
+        let polarity_lang_ast::Codata { span, doc, name, attr: _, typ, dtors } = self;
 
         let mut xdata = XData {
             repr: Repr::Codata,
@@ -126,7 +126,7 @@ impl BuildMatrix for ast::Codata {
     }
 }
 
-impl BuildMatrix for ast::Def {
+impl BuildMatrix for polarity_lang_ast::Def {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.self_param.typ.name;
         // Only add to the matrix if the type is declared in this module
@@ -136,7 +136,7 @@ impl BuildMatrix for ast::Def {
         let cases = &self.cases;
 
         for case in cases {
-            let ast::Case { pattern, body, .. } = case;
+            let polarity_lang_ast::Case { pattern, body, .. } = case;
             let key = Key { dtor: self.name.id.clone(), ctor: pattern.name.id.clone() };
             xdata.exprs.insert(key, body.clone());
         }
@@ -144,7 +144,7 @@ impl BuildMatrix for ast::Def {
     }
 }
 
-impl BuildMatrix for ast::Codef {
+impl BuildMatrix for polarity_lang_ast::Codef {
     fn build_matrix(&self, out: &mut Prg) -> Result<(), XfuncError> {
         let type_name = &self.typ.name;
         // Only add to the matrix if the type is declared in this module
@@ -156,7 +156,7 @@ impl BuildMatrix for ast::Codef {
         let cases = &self.cases;
 
         for case in cases {
-            let ast::Case { pattern, body, .. } = case;
+            let polarity_lang_ast::Case { pattern, body, .. } = case;
             let key = Key { ctor: self.name.id.clone(), dtor: pattern.name.id.clone() };
             // Swap binding order to the order imposed by the matrix representation
             let body = body.as_ref().map(|body| {
@@ -175,10 +175,10 @@ impl BuildMatrix for ast::Codef {
 }
 
 impl XData {
-    pub fn as_data(&self, uri: &Url) -> (ast::Data, Vec<ast::Def>) {
+    pub fn as_data(&self, uri: &Url) -> (polarity_lang_ast::Data, Vec<polarity_lang_ast::Def>) {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
-        let data = ast::Data {
+        let data = polarity_lang_ast::Data {
             span: None,
             doc: doc.clone(),
             name: name.clone(),
@@ -195,9 +195,9 @@ impl XData {
                     .flat_map(|ctor| {
                         let key = Key { dtor: dtor.name.id.clone(), ctor: ctor.name.id.clone() };
                         let body = exprs.get(&key).cloned();
-                        body.map(|body| ast::Case {
+                        body.map(|body| polarity_lang_ast::Case {
                             span: None,
-                            pattern: ast::Pattern {
+                            pattern: polarity_lang_ast::Pattern {
                                 span: None,
                                 is_copattern: false,
                                 name: IdBound {
@@ -212,7 +212,7 @@ impl XData {
                     })
                     .collect();
 
-                ast::Def {
+                polarity_lang_ast::Def {
                     span: None,
                     doc: dtor.doc.clone(),
                     name: dtor.name.clone(),
@@ -228,10 +228,13 @@ impl XData {
         (data, defs)
     }
 
-    pub fn as_codata(&self, uri: &Url) -> (ast::Codata, Vec<ast::Codef>) {
+    pub fn as_codata(
+        &self,
+        uri: &Url,
+    ) -> (polarity_lang_ast::Codata, Vec<polarity_lang_ast::Codef>) {
         let XData { name, doc, typ, ctors, dtors, exprs, .. } = self;
 
-        let codata = ast::Codata {
+        let codata = polarity_lang_ast::Codata {
             span: None,
             doc: doc.clone(),
             name: name.clone(),
@@ -257,9 +260,9 @@ impl XData {
                                 })
                             })
                         });
-                        body.map(|body| ast::Case {
+                        body.map(|body| polarity_lang_ast::Case {
                             span: None,
-                            pattern: ast::Pattern {
+                            pattern: polarity_lang_ast::Pattern {
                                 span: None,
                                 is_copattern: true,
                                 name: IdBound {
@@ -274,7 +277,7 @@ impl XData {
                     })
                     .collect();
 
-                ast::Codef {
+                polarity_lang_ast::Codef {
                     span: None,
                     doc: ctor.doc.clone(),
                     name: ctor.name.clone(),

@@ -1,6 +1,6 @@
-use ast::IdBound;
-use miette_util::ToMiette;
-use parser::cst::ident::{Ident, Operator};
+use polarity_lang_ast::IdBound;
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_parser::cst::ident::{Ident, Operator};
 use url::Url;
 
 use crate::{LoweringError, LoweringResult};

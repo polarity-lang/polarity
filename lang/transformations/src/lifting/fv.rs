@@ -1,8 +1,8 @@
 use derivative::Derivative;
 
-use ast::ctx::values::{Binder, TypeCtx};
-use ast::ctx::*;
-use ast::*;
+use polarity_lang_ast::ctx::values::{Binder, TypeCtx};
+use polarity_lang_ast::ctx::*;
+use polarity_lang_ast::*;
 
 /// Compute the closure of free variables in `arg` closed under type dependencies
 ///

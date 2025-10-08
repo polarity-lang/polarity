@@ -1,5 +1,5 @@
 [package]
-name = "docs"
+name = "polarity-lang-docs"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -15,10 +15,11 @@ opener = "0.5"
 askama = "0.12.1"
 askama_escape = "0.10.3"
 comrak = "0.32"
-
-# workspace members
-ast = { path = "../ast" }
-printer = { path = "../printer" }
-driver = { path = "../driver" }
 # url (for file locations)
 url = "2.5.0"
+
+# workspace members
+polarity-lang-ast = { path = "../ast" }
+polarity-lang-printer = { path = "../printer" }
+polarity-lang-driver = { path = "../driver" }
+

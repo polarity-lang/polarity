@@ -1,12 +1,12 @@
-use ast::{Lvl, Shift, ShiftRange, VarBound};
+use polarity_lang_ast::{Lvl, Shift, ShiftRange, VarBound};
 use pretty::DocAllocator;
 
-use ast::ctx::LevelCtx;
-use ast::ctx::map_idx::*;
-use ast::ctx::values::{Binder, TypeCtx};
-use ast::{Idx, Var};
-use printer::Print;
-use printer::tokens::COMMA;
+use polarity_lang_ast::ctx::LevelCtx;
+use polarity_lang_ast::ctx::map_idx::*;
+use polarity_lang_ast::ctx::values::{Binder, TypeCtx};
+use polarity_lang_ast::{Idx, Var};
+use polarity_lang_printer::Print;
+use polarity_lang_printer::tokens::COMMA;
 
 use crate::normalizer::val::*;
 
@@ -50,7 +50,10 @@ impl Env {
             .map(|inner| {
                 inner
                     .into_iter()
-                    .map(|v| Binder { name: ast::VarBind::Wildcard { span: None }, content: v })
+                    .map(|v| Binder {
+                        name: polarity_lang_ast::VarBind::Wildcard { span: None },
+                        content: v,
+                    })
                     .collect()
             })
             .collect();
@@ -131,11 +134,13 @@ impl ToEnv for TypeCtx {
                 Box::new(Val::Neu(Neu::Variable(Variable {
                     span: None,
                     name: match &binder.name {
-                        ast::VarBind::Var { span, id } => VarBound { span: *span, id: id.clone() },
+                        polarity_lang_ast::VarBind::Var { span, id } => {
+                            VarBound { span: *span, id: id.clone() }
+                        }
                         // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
                         // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
                         // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
-                        ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
+                        polarity_lang_ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
                     },
                     idx,
                 })))
@@ -149,9 +154,9 @@ impl ToEnv for TypeCtx {
 impl Print for Env {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+        cfg: &polarity_lang_printer::PrintCfg,
+        alloc: &'a polarity_lang_printer::Alloc<'a>,
+    ) -> polarity_lang_printer::Builder<'a> {
         let iter = self.bound_vars.iter().map(|ctx| {
             alloc
                 .intersperse(ctx.iter().map(|v| v.content.print(cfg, alloc)), alloc.text(COMMA))

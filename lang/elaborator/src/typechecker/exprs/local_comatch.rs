@@ -7,9 +7,9 @@ use crate::normalizer::normalize::Normalize;
 use crate::result::TcResult;
 use crate::typechecker::exprs::CheckTelescope;
 use crate::typechecker::type_info_table::DtorMeta;
-use ast::ctx::LevelCtx;
-use ast::*;
-use miette_util::ToMiette;
+use polarity_lang_ast::ctx::LevelCtx;
+use polarity_lang_ast::*;
+use polarity_lang_miette_util::ToMiette;
 
 use super::super::ctx::*;
 use super::super::util::*;

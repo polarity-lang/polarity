@@ -1,5 +1,5 @@
 [package]
-name = "elaborator"
+name = "polarity-lang-elaborator"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true
@@ -20,6 +20,6 @@ log = { workspace = true }
 url = { workspace = true }
 
 # workspace members
-ast = { path = "../ast" }
-printer = { path = "../printer" }
-miette_util = { path = "../miette_util" }
+polarity-lang-ast = { path = "../ast" }
+polarity-lang-printer = { path = "../printer" }
+polarity-lang-miette-util = { path = "../miette_util" }

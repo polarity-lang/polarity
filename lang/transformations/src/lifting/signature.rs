@@ -1,8 +1,8 @@
 use std::cmp;
 
-use ast::ctx::*;
-use ast::*;
-use ast::{Occurs, Variable};
+use polarity_lang_ast::ctx::*;
+use polarity_lang_ast::*;
+use polarity_lang_ast::{Occurs, Variable};
 
 use super::fv::*;
 

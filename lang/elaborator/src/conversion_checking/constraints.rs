@@ -1,7 +1,7 @@
 //! This module defines the language of constraints that can be solved by the constraint solver.
-use ast::{Args, Exp, ctx::values::TypeCtx};
 use derivative::Derivative;
-use printer::Print;
+use polarity_lang_ast::{Args, Exp, ctx::values::TypeCtx};
+use polarity_lang_printer::Print;
 
 /// A constraint that can be solved by the constraint solver.
 #[derive(Debug, Clone, Derivative)]
@@ -28,9 +28,9 @@ pub enum Constraint<'a> {
 impl Print for Constraint<'_> {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+        cfg: &polarity_lang_printer::PrintCfg,
+        alloc: &'a polarity_lang_printer::Alloc<'a>,
+    ) -> polarity_lang_printer::Builder<'a> {
         match self {
             Constraint::Equality { ctx, lhs, rhs } => ctx
                 .print(cfg, alloc)

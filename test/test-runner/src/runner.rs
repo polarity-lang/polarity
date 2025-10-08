@@ -1,8 +1,8 @@
 use std::io::Write;
 use std::path::Path;
 
-use ast::HashMap;
-use printer::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
+use polarity_lang_ast::HashMap;
+use polarity_lang_printer::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 use crate::Args;
 

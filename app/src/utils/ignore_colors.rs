@@ -1,6 +1,6 @@
 use std::io;
 
-use printer::termcolor::WriteColor;
+use polarity_lang_printer::termcolor::WriteColor;
 
 pub struct IgnoreColors<W: io::Write> {
     inner: W,
@@ -27,7 +27,7 @@ impl<W: io::Write> WriteColor for IgnoreColors<W> {
         false
     }
 
-    fn set_color(&mut self, _spec: &printer::ColorSpec) -> io::Result<()> {
+    fn set_color(&mut self, _spec: &polarity_lang_printer::ColorSpec) -> io::Result<()> {
         Ok(())
     }
 

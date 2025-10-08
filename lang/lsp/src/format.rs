@@ -2,7 +2,7 @@
 use tower_lsp_server::jsonrpc::Result;
 use tower_lsp_server::lsp_types::*;
 
-use printer::Print;
+use polarity_lang_printer::Print;
 
 use crate::conversion::FromLsp;
 

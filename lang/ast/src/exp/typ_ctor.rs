@@ -1,16 +1,18 @@
 use derivative::Derivative;
-use miette_util::codespan::Span;
 use pretty::DocAllocator;
-use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, util::ParensIfExt};
 
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{
+    Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, util::ParensIfExt,
+};
+
+use super::{Args, Exp, IdBound, MetaVar, TypeUniv};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
     Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
-
-use super::{Args, Exp, IdBound, MetaVar, TypeUniv};
 
 /// A type constructor applied to arguments. The type of `TypCtor`
 /// is always the type universe `Type`.
@@ -109,7 +111,7 @@ impl Print for TypCtor {
             }
             _ => alloc
                 .typ(&name.id)
-                .annotate(printer::Anno::Reference {
+                .annotate(polarity_lang_printer::Anno::Reference {
                     module_uri: name.uri.to_owned(),
                     name: name.id.clone(),
                 })

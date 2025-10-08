@@ -1,15 +1,17 @@
 use derivative::Derivative;
-use miette_util::codespan::Span;
-use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::TYPE};
 
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{
+    Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::TYPE,
+};
+
+use super::{Exp, MetaVar};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Subst, Substitutable, Zonk,
     ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
-
-use super::{Exp, MetaVar};
 
 /// The impredicative type universe "Type" is used
 /// for typing data and codata types. I.e. we have

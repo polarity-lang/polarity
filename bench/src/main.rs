@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use driver::{Database, FileSource, InMemorySource};
+use polarity_lang_driver::{Database, FileSource, InMemorySource};
 use url::Url;
 
 const EXAMPLE_STLC: &str = include_str!("../../examples/stlc.pol");

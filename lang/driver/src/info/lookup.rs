@@ -1,4 +1,4 @@
-use ast::{Codef, Ctor, Decl, Def, Dtor, IdBound, Let};
+use polarity_lang_ast::{Codef, Ctor, Decl, Def, Dtor, IdBound, Let};
 use url::Url;
 
 use crate::Database;

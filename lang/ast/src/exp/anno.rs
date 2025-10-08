@@ -1,14 +1,17 @@
+use derivative::Derivative;
+
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{
+    Alloc, Builder, Precedence, Print, PrintCfg, tokens::COLON, util::ParensIfExt,
+};
+
+use super::{Exp, MetaVar};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
     Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
-use derivative::Derivative;
-use miette_util::codespan::Span;
-use printer::{Alloc, Builder, Precedence, Print, PrintCfg, tokens::COLON, util::ParensIfExt};
-
-use super::{Exp, MetaVar};
 
 /// Type annotated term `e : t`
 #[derive(Debug, Clone, Derivative)]

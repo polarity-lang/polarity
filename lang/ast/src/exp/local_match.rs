@@ -1,20 +1,20 @@
 use derivative::Derivative;
-use miette_util::codespan::Span;
 use pretty::DocAllocator;
-use printer::{
+
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{
     Alloc, Builder, Precedence, Print, PrintCfg,
     theme::ThemeExt,
     tokens::{DOT, MATCH},
 };
 
+use super::{Case, Exp, Label, MetaVar, Motive, TypCtor, print_cases};
 use crate::{
     Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst,
     Substitutable, Zonk, ZonkError,
     ctx::{LevelCtx, values::TypeCtx},
     rename::{Rename, RenameCtx},
 };
-
-use super::{Case, Exp, Label, MetaVar, Motive, TypCtor, print_cases};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]

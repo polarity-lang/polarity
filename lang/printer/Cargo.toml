@@ -1,5 +1,5 @@
 [package]
-name = "printer"
+name = "polarity-lang-printer"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true

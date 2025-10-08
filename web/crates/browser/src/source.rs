@@ -1,6 +1,6 @@
 use async_trait::async_trait;
-use driver::{DriverError, FileSource};
 use futures::channel::oneshot;
+use polarity_lang_driver::{DriverError, FileSource};
 use reqwest::Url;
 use wasm_bindgen_futures::spawn_local;
 

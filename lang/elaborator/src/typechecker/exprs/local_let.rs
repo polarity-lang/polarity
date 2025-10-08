@@ -1,10 +1,10 @@
 //! Bidirectional type checker
 
-use ast::ctx::BindContext;
-use ast::ctx::values::Binder;
-use ast::ctx::values::Binding;
-use ast::ctx::values::BoundValue;
-use ast::*;
+use polarity_lang_ast::ctx::BindContext;
+use polarity_lang_ast::ctx::values::Binder;
+use polarity_lang_ast::ctx::values::Binding;
+use polarity_lang_ast::ctx::values::BoundValue;
+use polarity_lang_ast::*;
 
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;

@@ -4,9 +4,9 @@ use miette::SourceSpan;
 use tower_lsp_server::lsp_types;
 use url::Url;
 
-use driver::Database;
-use driver::Error;
-use miette_util::FromMiette;
+use polarity_lang_driver::Database;
+use polarity_lang_driver::Error;
+use polarity_lang_miette_util::FromMiette;
 
 use crate::conversion::ToLsp;
 
@@ -17,13 +17,13 @@ pub trait Diagnostics {
     fn error_diagnostics(&self, uri: &Url, error: Error) -> Vec<lsp_types::Diagnostic>;
 }
 
-pub type DiagnosticsPerUri = ast::HashMap<Url, Vec<lsp_types::Diagnostic>>;
+pub type DiagnosticsPerUri = polarity_lang_ast::HashMap<Url, Vec<lsp_types::Diagnostic>>;
 
 impl Diagnostics for Database {
     async fn diagnostics(&mut self, uri: &Url, result: Result<(), Error>) -> DiagnosticsPerUri {
         // When computing the diagnostics for an URI, we also need to recompute the diagnostics for all of its reverse dependencies.
         let rev_deps: Vec<_> = self.deps.reverse_dependencies(uri).into_iter().cloned().collect();
-        let mut diagnostics = ast::HashMap::default();
+        let mut diagnostics = polarity_lang_ast::HashMap::default();
 
         for uri in rev_deps {
             let mut diagnostics_for_uri = vec![];

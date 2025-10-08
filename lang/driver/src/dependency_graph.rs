@@ -1,6 +1,6 @@
 use url::Url;
 
-use ast::{HashMap, HashSet};
+use polarity_lang_ast::{HashMap, HashSet};
 
 #[derive(Default)]
 pub struct DependencyGraph {

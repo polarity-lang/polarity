@@ -23,12 +23,13 @@ async-std = "1"
 url = "2"
 # fancy error messages
 miette = { workspace = true, features = ["fancy"] }
-# workspace members
-driver = { path = "../lang/driver" }
-elaborator = { path = "../lang/elaborator" }
-ast = { path = "../lang/ast" }
-printer = { path = "../lang/printer" }
-lsp-server = { path = "../lang/lsp" }
-docs = { path = "../lang/docs" }
 # benchmarking
 criterion = { version = "0.5", features = ["html_reports"] }
+# workspace members
+polarity-lang-driver = { path = "../lang/driver" }
+polarity-lang-elaborator = { path = "../lang/elaborator" }
+polarity-lang-ast = { path = "../lang/ast" }
+polarity-lang-printer = { path = "../lang/printer" }
+polarity-lang-lsp-server = { path = "../lang/lsp" }
+polarity-lang-docs = { path = "../lang/docs" }
+

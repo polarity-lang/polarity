@@ -1,5 +1,5 @@
 [package]
-name = "parser"
+name = "polarity-lang-parser"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true
@@ -24,7 +24,8 @@ url = "2.5.0"
 miette = { workspace = true }
 thiserror = { workspace = true }
 num-bigint = { workspace = true }
-miette_util = { path = "../miette_util" }
+# Workspace members
+polarity-lang-miette-util = { path = "../miette_util" }
 
 [build-dependencies.lalrpop]
 version = "0.19"

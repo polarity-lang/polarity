@@ -1,9 +1,9 @@
 use lsp_types::{HoverContents, LanguageString, MarkedString, MarkupContent, MarkupKind};
-use miette_util::codespan::Span;
+use polarity_lang_miette_util::codespan::Span;
 use rust_lapper::{Interval, Lapper};
 
-use ast::*;
-use printer::{Print, PrintCfg};
+use polarity_lang_ast::*;
+use polarity_lang_printer::{Print, PrintCfg};
 use url::Url;
 
 use crate::{Database, Error};

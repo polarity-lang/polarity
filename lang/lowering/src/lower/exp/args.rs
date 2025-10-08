@@ -1,7 +1,7 @@
-use ast::{Hole, MetaVarKind, VarBound};
-use miette_util::{ToMiette, codespan::Span};
-use parser::cst::{self, exp::BindingSite};
-use printer::Print;
+use polarity_lang_ast::{Hole, MetaVarKind, VarBound};
+use polarity_lang_miette_util::{ToMiette, codespan::Span};
+use polarity_lang_parser::cst::{self, exp::BindingSite};
+use polarity_lang_printer::Print;
 
 use crate::{Ctx, LoweringError, LoweringResult, lower::Lower};
 
@@ -55,7 +55,7 @@ pub fn lower_args(
     given: &[cst::exp::Arg],
     expected: cst::decls::Telescope,
     ctx: &mut Ctx,
-) -> LoweringResult<ast::Args> {
+) -> LoweringResult<polarity_lang_ast::Args> {
     let mut args_out = vec![];
 
     // Ensure that the number of given arguments does not exceed the number of expected parameters.
@@ -91,7 +91,7 @@ pub fn lower_args(
         span: Span,
         given: &mut impl Iterator<Item = &'a cst::exp::Arg>,
         expected_bs: &BindingSite,
-        args_out: &mut Vec<ast::Arg>,
+        args_out: &mut Vec<polarity_lang_ast::Arg>,
         ctx: &mut Ctx,
     ) -> LoweringResult {
         let Some(arg) = given.next() else {
@@ -103,7 +103,10 @@ pub fn lower_args(
         };
         match arg {
             cst::exp::Arg::UnnamedArg(exp) => {
-                args_out.push(ast::Arg::UnnamedArg { arg: exp.lower(ctx)?, erased: false });
+                args_out.push(polarity_lang_ast::Arg::UnnamedArg {
+                    arg: exp.lower(ctx)?,
+                    erased: false,
+                });
             }
             cst::exp::Arg::NamedArg(name, exp) => {
                 let expected_name = match &expected_bs {
@@ -125,7 +128,11 @@ pub fn lower_args(
                     .into());
                 }
                 let name = VarBound { span: Some(name.span), id: name.id.clone() };
-                args_out.push(ast::Arg::NamedArg { name, arg: exp.lower(ctx)?, erased: false });
+                args_out.push(polarity_lang_ast::Arg::NamedArg {
+                    name,
+                    arg: exp.lower(ctx)?,
+                    erased: false,
+                });
             }
         }
         Ok(())
@@ -154,7 +161,7 @@ pub fn lower_args(
                 let args = ctx.subst_from_ctx();
                 let hole = Hole {
                     span: None,
-                    kind: ast::MetaVarKind::Inserted,
+                    kind: polarity_lang_ast::MetaVarKind::Inserted,
                     metavar: mv,
                     inferred_type: None,
                     inferred_ctx: None,
@@ -162,7 +169,7 @@ pub fn lower_args(
                     solution: None,
                 };
 
-                args_out.push(ast::Arg::InsertedImplicitArg { hole, erased: false });
+                args_out.push(polarity_lang_ast::Arg::InsertedImplicitArg { hole, erased: false });
             } else {
                 pop_arg(span, &mut given_iter, expected_bs, &mut args_out, ctx)?;
             }
@@ -175,14 +182,14 @@ pub fn lower_args(
     }
 
     // All arguments have been successfully processed.
-    Ok(ast::Args { args: args_out })
+    Ok(polarity_lang_ast::Args { args: args_out })
 }
 
 #[cfg(test)]
 mod lower_args_tests {
     use url::Url;
 
-    use parser::cst::decls::Telescope;
+    use polarity_lang_parser::cst::decls::Telescope;
 
     use crate::symbol_table::SymbolTable;
 
@@ -195,6 +202,6 @@ mod lower_args_tests {
         let mut ctx =
             Ctx::empty(Url::parse("inmemory:///scratch.pol").unwrap(), SymbolTable::default());
         let res = lower_args(Span::default(), &given, expected, &mut ctx);
-        assert_eq!(res.unwrap(), ast::Args { args: vec![] })
+        assert_eq!(res.unwrap(), polarity_lang_ast::Args { args: vec![] })
     }
 }

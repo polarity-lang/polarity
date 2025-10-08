@@ -1,9 +1,9 @@
-use ast::{
+use polarity_lang_ast::{
     VarBind,
     ctx::{BindContext, values::Binder},
 };
-use miette_util::ToMiette;
-use parser::cst::{self};
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_parser::cst::{self};
 
 use super::*;
 
@@ -20,10 +20,10 @@ mod toplevel_let;
 //
 
 impl Lower for cst::decls::DocComment {
-    type Target = ast::DocComment;
+    type Target = polarity_lang_ast::DocComment;
 
     fn lower(&self, _ctx: &mut Ctx) -> LoweringResult<Self::Target> {
-        Ok(ast::DocComment { docs: self.docs.clone() })
+        Ok(polarity_lang_ast::DocComment { docs: self.docs.clone() })
     }
 }
 
@@ -31,19 +31,21 @@ impl Lower for cst::decls::DocComment {
 //
 //
 
-fn parse_attribute(s: String) -> ast::Attribute {
+fn parse_attribute(s: String) -> polarity_lang_ast::Attribute {
     match s.as_str() {
-        "omit_print" => ast::Attribute::OmitPrint,
-        "transparent" => ast::Attribute::Transparent,
-        "opaque" => ast::Attribute::Opaque,
-        v => ast::Attribute::Other(v.to_string()),
+        "omit_print" => polarity_lang_ast::Attribute::OmitPrint,
+        "transparent" => polarity_lang_ast::Attribute::Transparent,
+        "opaque" => polarity_lang_ast::Attribute::Opaque,
+        v => polarity_lang_ast::Attribute::Other(v.to_string()),
     }
 }
 impl Lower for cst::decls::Attributes {
-    type Target = ast::Attributes;
+    type Target = polarity_lang_ast::Attributes;
 
     fn lower(&self, _ctx: &mut Ctx) -> LoweringResult<Self::Target> {
-        Ok(ast::Attributes { attrs: self.attrs.clone().into_iter().map(parse_attribute).collect() })
+        Ok(polarity_lang_ast::Attributes {
+            attrs: self.attrs.clone().into_iter().map(parse_attribute).collect(),
+        })
     }
 }
 
@@ -52,11 +54,11 @@ impl Lower for cst::decls::Attributes {
 //
 
 impl Lower for cst::decls::UseDecl {
-    type Target = ast::UseDecl;
+    type Target = polarity_lang_ast::UseDecl;
 
     fn lower(&self, _ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::decls::UseDecl { span, path } = self;
-        Ok(ast::UseDecl { span: *span, path: path.clone() })
+        Ok(polarity_lang_ast::UseDecl { span: *span, path: path.clone() })
     }
 }
 
@@ -65,7 +67,7 @@ impl Lower for cst::decls::UseDecl {
 //
 
 impl Lower for cst::decls::Decl {
-    type Target = ast::Decl;
+    type Target = polarity_lang_ast::Decl;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let decl = match self {
@@ -85,7 +87,7 @@ impl Lower for cst::decls::Decl {
 //
 //
 
-fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> LoweringResult<T>>(
+fn lower_self_param<T, F: FnOnce(&mut Ctx, polarity_lang_ast::SelfParam) -> LoweringResult<T>>(
     self_param: &cst::decls::SelfParam,
     ctx: &mut Ctx,
     f: F,
@@ -99,7 +101,7 @@ fn lower_self_param<T, F: FnOnce(&mut Ctx, ast::SelfParam) -> LoweringResult<T>>
         None => VarBind::Wildcard { span: None },
     };
     ctx.bind_single(name.clone(), |ctx| {
-        f(ctx, ast::SelfParam { info: Some(*span), name, typ: typ_ctor })
+        f(ctx, polarity_lang_ast::SelfParam { info: Some(*span), name, typ: typ_ctor })
     })
 }
 
@@ -137,7 +139,7 @@ fn desugar_param(param: &cst::decls::Param) -> Vec<cst::decls::Param> {
 /// of the telescope are in scope.
 fn lower_telescope<T, F>(tele: &cst::decls::Telescope, ctx: &mut Ctx, f: F) -> LoweringResult<T>
 where
-    F: FnOnce(&mut Ctx, ast::Telescope) -> LoweringResult<T>,
+    F: FnOnce(&mut Ctx, polarity_lang_ast::Telescope) -> LoweringResult<T>,
 {
     let tel = desugar_telescope(tele);
     ctx.bind_fold_failable(
@@ -147,11 +149,15 @@ where
             let cst::decls::Param { implicit, name, names: _, typ } = param; // The `names` field has been removed by `desugar_telescope`.
             let typ_out = typ.lower(ctx)?;
             let name = name.lower(ctx)?;
-            let param_out =
-                ast::Param { implicit: *implicit, name: name.clone(), typ: typ_out, erased: false };
+            let param_out = polarity_lang_ast::Param {
+                implicit: *implicit,
+                name: name.clone(),
+                typ: typ_out,
+                erased: false,
+            };
             params_out.push(param_out);
             Ok(Binder { name, content: () })
         },
-        |ctx, params| f(ctx, ast::Telescope { params }),
+        |ctx, params| f(ctx, polarity_lang_ast::Telescope { params }),
     )?
 }

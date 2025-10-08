@@ -8,9 +8,9 @@ mod global_let;
 mod infix_declaration;
 mod note_declaration;
 
-use ast::*;
-use miette_util::ToMiette;
-use printer::Print;
+use polarity_lang_ast::*;
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_printer::Print;
 
 use crate::result::TcResult;
 

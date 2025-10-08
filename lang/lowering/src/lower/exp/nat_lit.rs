@@ -1,11 +1,11 @@
-use miette_util::ToMiette;
 use num_bigint::BigUint;
-use parser::cst::{self, Ident};
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_parser::cst::{self, Ident};
 
 use crate::{Ctx, DeclMeta, LoweringError, LoweringResult, lower::Lower};
 
 impl Lower for cst::exp::NatLit {
-    type Target = ast::Exp;
+    type Target = polarity_lang_ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::NatLit { span, val } = self;
@@ -17,8 +17,8 @@ impl Lower for cst::exp::NatLit {
                 LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() }
             })?;
         let call_kind = match z_kind {
-            DeclMeta::Codef { .. } => ast::CallKind::Codefinition,
-            DeclMeta::Ctor { .. } => ast::CallKind::Constructor,
+            DeclMeta::Codef { .. } => polarity_lang_ast::CallKind::Codefinition,
+            DeclMeta::Ctor { .. } => polarity_lang_ast::CallKind::Constructor,
             _ => {
                 return Err(
                     LoweringError::NatLiteralCannotBeDesugared { span: span.to_miette() }.into()
@@ -26,11 +26,11 @@ impl Lower for cst::exp::NatLit {
             }
         };
 
-        let mut out = ast::Exp::Call(ast::Call {
+        let mut out = polarity_lang_ast::Exp::Call(polarity_lang_ast::Call {
             span: Some(*span),
             kind: call_kind,
             name: name.clone(),
-            args: ast::Args { args: vec![] },
+            args: polarity_lang_ast::Args { args: vec![] },
             inferred_type: None,
         });
 
@@ -38,12 +38,19 @@ impl Lower for cst::exp::NatLit {
 
         while &i != val {
             i += 1usize;
-            out = ast::Exp::Call(ast::Call {
+            out = polarity_lang_ast::Exp::Call(polarity_lang_ast::Call {
                 span: Some(*span),
                 kind: call_kind,
-                name: ast::IdBound { span: Some(*span), id: "S".to_owned(), uri: name.uri.clone() },
-                args: ast::Args {
-                    args: vec![ast::Arg::UnnamedArg { arg: Box::new(out), erased: false }],
+                name: polarity_lang_ast::IdBound {
+                    span: Some(*span),
+                    id: "S".to_owned(),
+                    uri: name.uri.clone(),
+                },
+                args: polarity_lang_ast::Args {
+                    args: vec![polarity_lang_ast::Arg::UnnamedArg {
+                        arg: Box::new(out),
+                        erased: false,
+                    }],
                 },
                 inferred_type: None,
             });

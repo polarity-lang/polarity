@@ -1,6 +1,6 @@
 use std::io;
 
-use printer::{Alloc, Print, PrintCfg};
+use polarity_lang_printer::{Alloc, Print, PrintCfg};
 
 use crate::render;
 

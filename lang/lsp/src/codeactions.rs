@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use tower_lsp_server::{jsonrpc, lsp_types::*};
 
-use driver::{Database, Item, Xfunc};
+use polarity_lang_driver::{Database, Item, Xfunc};
 
 use super::conversion::*;
 use super::server::*;
@@ -27,8 +27,9 @@ pub async fn code_action(
     let mut db = server.database.write().await;
     let span_start = db.location_to_index(&text_document.uri.from_lsp(), range.start);
     let span_end = db.location_to_index(&text_document.uri.from_lsp(), range.end);
-    let span =
-        span_start.and_then(|start| span_end.map(|end| miette_util::codespan::Span { start, end }));
+    let span = span_start.and_then(|start| {
+        span_end.map(|end| polarity_lang_miette_util::codespan::Span { start, end })
+    });
     let item = if let Some(span) = span {
         db.item_at_span(&text_document.uri.from_lsp(), span).await
     } else {

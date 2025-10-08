@@ -1,5 +1,5 @@
 [package]
-name = "lowering"
+name = "polarity-lang-lowering"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true
@@ -20,7 +20,7 @@ log = { workspace = true }
 url = { workspace = true }
 
 # workspace members
-printer = { path = "../printer" }
-parser = { path = "../parser" }
-ast = { path = "../ast" }
-miette_util = { path = "../miette_util" }
+polarity-lang-printer = { path = "../printer" }
+polarity-lang-parser = { path = "../parser" }
+polarity-lang-ast = { path = "../ast" }
+polarity-lang-miette-util = { path = "../miette_util" }

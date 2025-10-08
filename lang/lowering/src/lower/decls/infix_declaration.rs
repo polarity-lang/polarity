@@ -1,10 +1,10 @@
-use miette_util::ToMiette;
-use parser::cst;
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_parser::cst;
 
 use super::super::*;
 
 impl Lower for cst::decls::Infix {
-    type Target = ast::Infix;
+    type Target = polarity_lang_ast::Infix;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::decls::Infix { span, doc, attr, pattern, rhs } = self;
@@ -56,7 +56,7 @@ impl Lower for cst::decls::Infix {
         // of the infix declaration.
         ctx.symbol_table.lookup(&rhs.name)?;
 
-        Ok(ast::Infix {
+        Ok(polarity_lang_ast::Infix {
             span: Some(*span),
             doc: doc.lower(ctx)?,
             attr: attr.lower(ctx)?,

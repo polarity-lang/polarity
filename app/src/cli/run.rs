@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use miette::Diagnostic;
 use thiserror::Error;
 
-use driver::Database;
-use printer::{ColorChoice, Print, StandardStream};
+use polarity_lang_driver::Database;
+use polarity_lang_printer::{ColorChoice, Print, StandardStream};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -24,7 +24,7 @@ pub async fn exec(cmd: Args) -> miette::Result<()> {
     Ok(())
 }
 
-fn print_nf(nf: &ast::Exp) {
+fn print_nf(nf: &polarity_lang_ast::Exp) {
     let mut stream = StandardStream::stdout(ColorChoice::Auto);
     nf.print_colored(&Default::default(), &mut stream).expect("Failed to print to stdout");
     println!();

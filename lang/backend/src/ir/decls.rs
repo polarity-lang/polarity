@@ -1,10 +1,10 @@
 use url::Url;
 
-use ast::UseDecl;
-use printer::theme::ThemeExt;
-use printer::tokens::*;
-use printer::util::{BracesExt, IsNilExt};
-use printer::{Alloc, Builder, DocAllocator, Print, PrintCfg};
+use polarity_lang_ast::UseDecl;
+use polarity_lang_printer::theme::ThemeExt;
+use polarity_lang_printer::tokens::*;
+use polarity_lang_printer::util::{BracesExt, IsNilExt};
+use polarity_lang_printer::{Alloc, Builder, DocAllocator, Print, PrintCfg};
 
 use super::exprs::{Case, Exp};
 use super::exprs::{print_cases, print_params};

@@ -1,5 +1,5 @@
 [package]
-name = "miette_util"
+name = "polarity-lang-miette-util"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true

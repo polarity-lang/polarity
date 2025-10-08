@@ -2,10 +2,10 @@ use std::rc::Rc;
 
 use log::trace;
 
-use ast::*;
 use ctx::values::Binder;
-use miette_util::ToMiette;
-use printer::types::Print;
+use polarity_lang_ast::*;
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_printer::types::Print;
 
 use crate::normalizer::env::*;
 use crate::normalizer::val::{self, Closure, Val};

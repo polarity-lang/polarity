@@ -1,6 +1,6 @@
 use std::fs;
 
-use driver::paths::TARGET_PATH;
+use polarity_lang_driver::paths::TARGET_PATH;
 
 pub async fn exec() -> miette::Result<()> {
     if std::path::Path::new(TARGET_PATH).exists() {

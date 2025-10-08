@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
-use ast::rename::Rename;
+use polarity_lang_ast::rename::Rename;
 use url::Url;
 
-use ast::ctx::BindContext;
-use ast::ctx::LevelCtx;
-use ast::ctx::values::TypeCtx;
-use ast::*;
 use ctx::values::Binder;
-use miette_util::codespan::Span;
+use polarity_lang_ast::ctx::BindContext;
+use polarity_lang_ast::ctx::LevelCtx;
+use polarity_lang_ast::ctx::values::TypeCtx;
+use polarity_lang_ast::*;
+use polarity_lang_miette_util::codespan::Span;
 
 mod fv;
 mod signature;

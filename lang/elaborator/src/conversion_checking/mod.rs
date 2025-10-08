@@ -54,9 +54,9 @@
 
 use log::trace;
 
-use ast::{Exp, HasSpan, HashMap, MetaVar, MetaVarState, ctx::values::TypeCtx};
-use miette_util::{ToMiette, codespan::Span};
-use printer::Print;
+use polarity_lang_ast::{Exp, HasSpan, HashMap, MetaVar, MetaVarState, ctx::values::TypeCtx};
+use polarity_lang_miette_util::{ToMiette, codespan::Span};
+use polarity_lang_printer::Print;
 
 use crate::result::{TcResult, TypeError};
 
@@ -126,7 +126,7 @@ pub fn convert(
 
 #[cfg(test)]
 mod test {
-    use ast::{
+    use polarity_lang_ast::{
         HashMap, Idx, MetaVar, MetaVarState, TypeUniv, VarBind, VarBound, Variable,
         ctx::values::{Binder, Binding, TypeCtx},
     };
@@ -134,7 +134,7 @@ mod test {
     use crate::conversion_checking::{constraints::Constraint, unify::Ctx};
 
     /// Assert that the two expressions are convertible
-    fn check_eq<E: Into<ast::Exp>>(ctx: &TypeCtx, e1: E, e2: E) {
+    fn check_eq<E: Into<polarity_lang_ast::Exp>>(ctx: &TypeCtx, e1: E, e2: E) {
         let constraint =
             Constraint::Equality { ctx, lhs: Box::new(e1.into()), rhs: Box::new(e2.into()) };
 
@@ -144,7 +144,7 @@ mod test {
     }
 
     /// Assert that the two expressions are not convertible
-    fn check_neq<E: Into<ast::Exp>>(ctx: &TypeCtx, e1: E, e2: E) {
+    fn check_neq<E: Into<polarity_lang_ast::Exp>>(ctx: &TypeCtx, e1: E, e2: E) {
         let constraint =
             Constraint::Equality { ctx, lhs: Box::new(e1.into()), rhs: Box::new(e2.into()) };
 

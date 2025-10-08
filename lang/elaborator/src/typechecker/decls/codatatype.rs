@@ -1,8 +1,8 @@
 //! Checking the well-formedness of toplevel codata type declarations
 use log::trace;
-use miette_util::ToMiette;
+use polarity_lang_miette_util::ToMiette;
 
-use ast::*;
+use polarity_lang_ast::*;
 
 use crate::{
     result::TcResult,

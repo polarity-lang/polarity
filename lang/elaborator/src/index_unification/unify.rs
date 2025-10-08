@@ -1,12 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
-use ast::ctx::LevelCtx;
-use ast::{Variable, occurs_in};
-use miette_util::codespan::Span;
+use polarity_lang_ast::ctx::LevelCtx;
+use polarity_lang_ast::{Variable, occurs_in};
+use polarity_lang_miette_util::codespan::Span;
 
 use crate::result::{TcResult, TypeError};
-use ast::*;
-use printer::{DocAllocator, Print};
+use polarity_lang_ast::*;
+use polarity_lang_printer::{DocAllocator, Print};
 
 use super::constraints::Constraint;
 use super::dec::{Dec, No, Yes};
@@ -217,9 +217,9 @@ impl Ctx {
 impl Print for Unificator {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+        cfg: &polarity_lang_printer::PrintCfg,
+        alloc: &'a polarity_lang_printer::Alloc<'a>,
+    ) -> polarity_lang_printer::Builder<'a> {
         let mut keys: Vec<_> = self.map.keys().collect();
         keys.sort();
         let exps = keys.into_iter().map(|key| {

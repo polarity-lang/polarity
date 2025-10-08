@@ -1,6 +1,6 @@
 //! Implementation of the type-on-hover functionality of the LSP server
-use driver::*;
-use miette_util::codespan::Span;
+use polarity_lang_driver::*;
+use polarity_lang_miette_util::codespan::Span;
 use tower_lsp_server::{jsonrpc, lsp_types::*};
 
 use super::conversion::*;

@@ -1,10 +1,10 @@
-use ast::{VarBind, ctx::BindContext};
-use parser::cst::{self, exp::BindingSite};
+use polarity_lang_ast::{VarBind, ctx::BindContext};
+use polarity_lang_parser::cst::{self, exp::BindingSite};
 
 use crate::lower::Lower;
 
 impl Lower for cst::exp::LocalLet {
-    type Target = ast::Exp;
+    type Target = polarity_lang_ast::Exp;
 
     fn lower(&self, ctx: &mut crate::Ctx) -> crate::LoweringResult<Self::Target> {
         let cst::exp::LocalLet { span, name, typ, bound, body } = self;
@@ -21,7 +21,15 @@ impl Lower for cst::exp::LocalLet {
 
         ctx.bind_single(name.clone(), |ctx| {
             let body = body.lower(ctx)?;
-            Ok(ast::LocalLet { span: *span, name, typ, bound, body, inferred_type: None }.into())
+            Ok(polarity_lang_ast::LocalLet {
+                span: *span,
+                name,
+                typ,
+                bound,
+                body,
+                inferred_type: None,
+            }
+            .into())
         })
     }
 }

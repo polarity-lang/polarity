@@ -1,7 +1,7 @@
 use decls::*;
-use miette_util::ToMiette;
-use miette_util::codespan::Span;
-use parser::cst::*;
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_parser::cst::*;
 
 use crate::{LoweringError, LoweringResult};
 

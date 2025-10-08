@@ -1,10 +1,10 @@
 use crate::lower::*;
 
-use ast::IdBind;
-use parser::cst;
+use polarity_lang_ast::IdBind;
+use polarity_lang_parser::cst;
 
 impl Lower for cst::decls::Note {
-    type Target = ast::Note;
+    type Target = polarity_lang_ast::Note;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::decls::Note { span, doc, name, attr } = self;

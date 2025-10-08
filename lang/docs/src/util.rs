@@ -2,7 +2,7 @@ use std::fs;
 
 use std::path::{Path, PathBuf};
 
-use driver::CSS_PATH;
+use polarity_lang_driver::CSS_PATH;
 
 pub fn get_target_path(path: &Path) -> PathBuf {
     let cwd = std::env::current_dir().expect("Failed to get current working directory");

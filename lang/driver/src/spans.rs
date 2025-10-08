@@ -1,5 +1,5 @@
 use lsp_types::{HoverContents, Position, Range};
-use miette_util::codespan::{ByteIndex, LineIndex, Span};
+use polarity_lang_miette_util::codespan::{ByteIndex, LineIndex, Span};
 use url::Url;
 
 use crate::database::Database;

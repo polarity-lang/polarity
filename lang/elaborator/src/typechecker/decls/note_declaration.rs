@@ -1,4 +1,4 @@
-use ast::Note;
+use polarity_lang_ast::Note;
 
 use super::CheckToplevel;
 

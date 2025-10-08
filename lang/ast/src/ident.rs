@@ -1,13 +1,14 @@
 use std::fmt;
 
 use derivative::Derivative;
-use miette_util::codespan::Span;
 use pretty::DocAllocator;
-use printer::{
+use url::Url;
+
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{
     Alloc, Builder, Print, PrintCfg,
     tokens::{AT, DOT, QUESTION_MARK, UNDERSCORE},
 };
-use url::Url;
 
 use crate::HasSpan;
 

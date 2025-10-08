@@ -1,7 +1,8 @@
 use derivative::Derivative;
-use miette_util::codespan::Span;
 use pretty::DocAllocator;
-use printer::{
+
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{
     Alloc, Builder, Precedence, Print, PrintCfg,
     theme::ThemeExt,
     tokens::{ABSURD, COMATCH, FAT_ARROW},
@@ -9,6 +10,7 @@ use printer::{
     util::ParensIfExt,
 };
 
+use super::{Case, Closure, Exp, Label, MetaVar, TypCtor, print_cases};
 use crate::rename::{Rename, RenameCtx};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Zonk, ZonkError,
@@ -17,8 +19,6 @@ use crate::{
     Subst, Substitutable,
     ctx::{LevelCtx, values::TypeCtx},
 };
-
-use super::{Case, Closure, Exp, Label, MetaVar, TypCtor, print_cases};
 
 #[derive(Debug, Clone, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]

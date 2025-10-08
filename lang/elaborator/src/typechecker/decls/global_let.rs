@@ -2,7 +2,7 @@
 
 use log::trace;
 
-use ast::*;
+use polarity_lang_ast::*;
 
 use super::CheckToplevel;
 use crate::normalizer::env::ToEnv;

@@ -1,13 +1,13 @@
-use ast::{TypeUniv, VarBound, Variable};
-use miette_util::ToMiette;
-use parser::cst;
+use polarity_lang_ast::{TypeUniv, VarBound, Variable};
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_parser::cst;
 
 use crate::{Ctx, DeclMeta, LoweringError, LoweringResult, lower::Lower};
 
 use super::args::lower_args;
 
 impl Lower for cst::exp::Call {
-    type Target = ast::Exp;
+    type Target = polarity_lang_ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::Call { span, name, args } = self;
@@ -25,7 +25,7 @@ impl Lower for cst::exp::Call {
         // it to a variable.
         if let Some(idx) = ctx.lookup_local(name) {
             let name = VarBound { span: Some(name.span), id: name.id.clone() };
-            return Ok(ast::Exp::Variable(Variable {
+            return Ok(polarity_lang_ast::Exp::Variable(Variable {
                 span: Some(*span),
                 idx,
                 name,
@@ -38,7 +38,7 @@ impl Lower for cst::exp::Call {
         let (meta, name) = ctx.symbol_table.lookup(name)?;
         match meta {
             DeclMeta::Data { params, .. } | DeclMeta::Codata { params, .. } => {
-                Ok(ast::Exp::TypCtor(ast::TypCtor {
+                Ok(polarity_lang_ast::Exp::TypCtor(polarity_lang_ast::TypCtor {
                     span: Some(*span),
                     name,
                     args: lower_args(*span, args, params.clone(), ctx)?,
@@ -49,27 +49,33 @@ impl Lower for cst::exp::Call {
                 Err(LoweringError::MustUseAsDotCall { name: name.clone(), span: span.to_miette() }
                     .into())
             }
-            DeclMeta::Ctor { params, .. } => Ok(ast::Exp::Call(ast::Call {
-                span: Some(*span),
-                kind: ast::CallKind::Constructor,
-                name,
-                args: lower_args(*span, args, params.clone(), ctx)?,
-                inferred_type: None,
-            })),
-            DeclMeta::Codef { params, .. } => Ok(ast::Exp::Call(ast::Call {
-                span: Some(*span),
-                kind: ast::CallKind::Codefinition,
-                name,
-                args: lower_args(*span, args, params.clone(), ctx)?,
-                inferred_type: None,
-            })),
-            DeclMeta::Let { params, .. } => Ok(ast::Exp::Call(ast::Call {
-                span: Some(*span),
-                kind: ast::CallKind::LetBound,
-                name,
-                args: lower_args(*span, args, params.clone(), ctx)?,
-                inferred_type: None,
-            })),
+            DeclMeta::Ctor { params, .. } => {
+                Ok(polarity_lang_ast::Exp::Call(polarity_lang_ast::Call {
+                    span: Some(*span),
+                    kind: polarity_lang_ast::CallKind::Constructor,
+                    name,
+                    args: lower_args(*span, args, params.clone(), ctx)?,
+                    inferred_type: None,
+                }))
+            }
+            DeclMeta::Codef { params, .. } => {
+                Ok(polarity_lang_ast::Exp::Call(polarity_lang_ast::Call {
+                    span: Some(*span),
+                    kind: polarity_lang_ast::CallKind::Codefinition,
+                    name,
+                    args: lower_args(*span, args, params.clone(), ctx)?,
+                    inferred_type: None,
+                }))
+            }
+            DeclMeta::Let { params, .. } => {
+                Ok(polarity_lang_ast::Exp::Call(polarity_lang_ast::Call {
+                    span: Some(*span),
+                    kind: polarity_lang_ast::CallKind::LetBound,
+                    name,
+                    args: lower_args(*span, args, params.clone(), ctx)?,
+                    inferred_type: None,
+                }))
+            }
             DeclMeta::Note => {
                 Err(LoweringError::MisusedNote { span: span.to_miette(), name: name.id }.into())
             }

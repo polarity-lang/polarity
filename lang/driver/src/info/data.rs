@@ -1,6 +1,6 @@
-use printer::Print;
+use polarity_lang_printer::Print;
 
-use ast::ctx::values::{Binder as TypeCtxBinder, Binding, TypeCtx};
+use polarity_lang_ast::ctx::values::{Binder as TypeCtxBinder, Binding, TypeCtx};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ctx {
@@ -24,10 +24,10 @@ impl From<TypeCtx> for Ctx {
 impl From<TypeCtxBinder<Binding>> for Binder {
     fn from(binder: TypeCtxBinder<Binding>) -> Self {
         match binder.name {
-            ast::VarBind::Var { id, .. } => {
+            polarity_lang_ast::VarBind::Var { id, .. } => {
                 Binder::Var { name: id, typ: binder.content.typ.print_to_string(None) }
             }
-            ast::VarBind::Wildcard { .. } => {
+            polarity_lang_ast::VarBind::Wildcard { .. } => {
                 Binder::Wildcard { typ: binder.content.typ.print_to_string(None) }
             }
         }

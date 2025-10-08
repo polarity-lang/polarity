@@ -1,9 +1,9 @@
-use parser::cst;
+use polarity_lang_parser::cst;
 
 use crate::{Ctx, LoweringResult, lower::Lower};
 
 impl Lower for cst::exp::Lam {
-    type Target = ast::Exp;
+    type Target = polarity_lang_ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::Lam { span, case } = self;
