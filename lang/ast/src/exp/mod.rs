@@ -1,20 +1,20 @@
 use std::fmt;
 
 use derivative::Derivative;
+use pretty::DocAllocator;
+
 use polarity_lang_miette_util::codespan::Span;
 use polarity_lang_printer::theme::ThemeExt;
 use polarity_lang_printer::tokens::{AS, FAT_ARROW};
 use polarity_lang_printer::{Alloc, Builder, Precedence, Print, PrintCfg};
-use pretty::DocAllocator;
-
-use crate::ctx::{BindContext, LevelCtx};
-use crate::rename::{Rename, RenameCtx};
-use crate::{ContainsMetaVars, FreeVars, Subst, Substitutable, Zonk, ZonkError};
 
 use super::HasType;
 use super::traits::HasSpan;
 use super::traits::Occurs;
 use super::{Shift, ShiftRange, ShiftRangeExt, ident::*};
+use crate::ctx::{BindContext, LevelCtx};
+use crate::rename::{Rename, RenameCtx};
+use crate::{ContainsMetaVars, FreeVars, Subst, Substitutable, Zonk, ZonkError};
 
 mod anno;
 mod args;

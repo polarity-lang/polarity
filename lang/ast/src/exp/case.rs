@@ -1,4 +1,6 @@
 use derivative::Derivative;
+use pretty::DocAllocator;
+
 use polarity_lang_miette_util::codespan::Span;
 use polarity_lang_printer::{
     Alloc, Builder, Precedence, Print, PrintCfg,
@@ -6,16 +8,14 @@ use polarity_lang_printer::{
     tokens::{ABSURD, COMMA, DOT, FAT_ARROW},
     util::BracesExt,
 };
-use pretty::DocAllocator;
 
+use super::{Exp, IdBound, MetaVar, TelescopeInst};
 use crate::{
     ContainsMetaVars, FreeVars, Occurs, Shift, ShiftRange, ShiftRangeExt, Subst, Substitutable,
     Zonk, ZonkError,
     ctx::{BindContext, LevelCtx},
     rename::{Rename, RenameCtx},
 };
-
-use super::{Exp, IdBound, MetaVar, TelescopeInst};
 
 // Pattern
 //

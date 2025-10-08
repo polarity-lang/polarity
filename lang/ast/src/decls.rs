@@ -1,4 +1,7 @@
 use derivative::Derivative;
+use pretty::DocAllocator;
+use url::Url;
+
 use polarity_lang_miette_util::codespan::Span;
 use polarity_lang_printer::Alloc;
 use polarity_lang_printer::Builder;
@@ -22,9 +25,11 @@ use polarity_lang_printer::tokens::NOTE;
 use polarity_lang_printer::tokens::USE;
 use polarity_lang_printer::util::BracesExt;
 use polarity_lang_printer::util::IsNilExt;
-use pretty::DocAllocator;
-use url::Url;
 
+use super::HashMap;
+use super::exp::*;
+use super::ident::*;
+use super::traits::HasSpan;
 use crate::ContainsMetaVars;
 use crate::Subst;
 use crate::Substitutable;
@@ -35,11 +40,6 @@ use crate::ctx::values::Binder;
 use crate::rename::Rename;
 use crate::rename::RenameCtx;
 use crate::shift_and_clone;
-
-use super::HashMap;
-use super::exp::*;
-use super::ident::*;
-use super::traits::HasSpan;
 
 fn print_return_type<'a, T: Print>(
     cfg: &PrintCfg,

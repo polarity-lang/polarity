@@ -1,16 +1,16 @@
 use derivative::Derivative;
-use polarity_lang_miette_util::codespan::Span;
-use polarity_lang_printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 use pretty::DocAllocator;
 
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{Alloc, Builder, Precedence, Print, PrintCfg};
+
+use super::{Exp, Idx, MetaVar, VarBound};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Subst, Substitutable, VarBind,
     Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
-
-use super::{Exp, Idx, MetaVar, VarBound};
 
 /// A bound variable occurrence. The variable is represented
 /// using a de-Bruijn index, but we keep the information

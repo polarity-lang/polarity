@@ -1,18 +1,18 @@
 use derivative::Derivative;
+use pretty::DocAllocator;
+
 use polarity_lang_miette_util::codespan::Span;
 use polarity_lang_printer::{
     Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::DOT,
 };
-use pretty::DocAllocator;
 
+use super::{Args, Exp, IdBound, MetaVar};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
     Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
-
-use super::{Args, Exp, IdBound, MetaVar};
 
 /// A DotCall expression can be one of two different kinds:
 /// - A destructor introduced by a codata type declaration

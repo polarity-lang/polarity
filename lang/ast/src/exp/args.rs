@@ -1,19 +1,19 @@
 use derivative::Derivative;
+use pretty::DocAllocator;
+
 use polarity_lang_miette_util::codespan::Span;
 use polarity_lang_printer::{
     Alloc, Builder, Precedence, Print, PrintCfg,
     tokens::{COLONEQ, COMMA},
 };
-use pretty::DocAllocator;
 
+use super::{Exp, Hole, MetaVar, VarBound};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
     Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
-
-use super::{Exp, Hole, MetaVar, VarBound};
 
 // Arg
 //

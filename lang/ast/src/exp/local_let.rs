@@ -1,20 +1,20 @@
 use derivative::Derivative;
+use pretty::DocAllocator;
+
 use polarity_lang_miette_util::codespan::Span;
 use polarity_lang_printer::{
     Precedence, Print,
     theme::ThemeExt,
     tokens::{COLON, COLONEQ, LET, SEMICOLON},
 };
-use pretty::DocAllocator;
 
+use super::{Exp, VarBind};
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRangeExt, Subst,
     Substitutable, Zonk,
     ctx::{BindContext, LevelCtx},
     rename::Rename,
 };
-
-use super::{Exp, VarBind};
 
 /// Local let bindings:
 /// ```text

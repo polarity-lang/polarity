@@ -1,15 +1,16 @@
 use derivative::Derivative;
-use polarity_lang_miette_util::codespan::Span;
-use polarity_lang_printer::{Alloc, Builder, Print, PrintCfg};
 use pretty::DocAllocator;
 
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{Alloc, Builder, Print, PrintCfg};
+
+use super::{Exp, MetaVar, VarBind};
 use crate::{
     ContainsMetaVars, Zonk, ZonkError,
     ctx::{BindContext, values::Binder},
     rename::{Rename, RenameCtx},
 };
 
-use super::{Exp, MetaVar, VarBind};
 // Telescope Inst
 //
 //
