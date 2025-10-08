@@ -1,7 +1,9 @@
 use derivative::Derivative;
-use miette_util::codespan::Span;
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{
+    Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::DOT,
+};
 use pretty::DocAllocator;
-use printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, tokens::DOT};
 
 use crate::{
     ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,

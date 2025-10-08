@@ -1,13 +1,13 @@
-use ast::{IdBind, IdBound};
-use miette_util::ToMiette;
-use parser::cst::ident::Ident;
-use parser::cst::{self};
+use polarity_lang_ast::{IdBind, IdBound};
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_parser::cst::ident::Ident;
+use polarity_lang_parser::cst::{self};
 
 use super::super::*;
 use super::lower_telescope;
 
 impl Lower for cst::decls::Data {
-    type Target = ast::Data;
+    type Target = polarity_lang_ast::Data;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         log::trace!("Lowering data declaration: {}", self.name.id);
@@ -18,7 +18,7 @@ impl Lower for cst::decls::Data {
             .map(|ctor| lower_constructor(ctor, ctx, name, params.len()))
             .collect::<Result<_, _>>()?;
 
-        Ok(ast::Data {
+        Ok(polarity_lang_ast::Data {
             span: Some(*span),
             doc: doc.lower(ctx)?,
             name: IdBind { span: Some(name.span), id: name.id.clone() },
@@ -34,7 +34,7 @@ fn lower_constructor(
     ctx: &mut Ctx,
     typ_name: &Ident,
     type_arity: usize,
-) -> LoweringResult<ast::Ctor> {
+) -> LoweringResult<polarity_lang_ast::Ctor> {
     log::trace!("Lowering constructor: {:?}", ctor.name);
     let cst::decls::Ctor { span, doc, name, params, typ } = ctor;
 
@@ -47,14 +47,14 @@ fn lower_constructor(
                 .ok_or(LoweringError::ExpectedTypCtor { span: span.to_miette() })?,
             None => {
                 if type_arity == 0 {
-                    ast::TypCtor {
+                    polarity_lang_ast::TypCtor {
                         span: None,
                         name: IdBound {
                             span: Some(typ_name.span),
                             id: typ_name.id.clone(),
                             uri: ctx.uri.clone(),
                         },
-                        args: ast::Args { args: vec![] },
+                        args: polarity_lang_ast::Args { args: vec![] },
                         is_bin_op: None,
                     }
                 } else {
@@ -68,7 +68,7 @@ fn lower_constructor(
             }
         };
 
-        Ok(ast::Ctor {
+        Ok(polarity_lang_ast::Ctor {
             span: Some(*span),
             doc: doc.lower(ctx)?,
             name: IdBind { span: Some(name.span), id: name.id.clone() },

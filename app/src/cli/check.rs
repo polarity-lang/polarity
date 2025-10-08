@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use driver::Database;
+use polarity_lang_driver::Database;
 
 #[derive(clap::Args)]
 pub struct Args {

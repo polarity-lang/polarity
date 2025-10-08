@@ -1,4 +1,4 @@
-use miette_util::codespan::Span;
+use polarity_lang_miette_util::codespan::Span;
 
 /// Trait for syntactic entities which have a source-code span.
 ///

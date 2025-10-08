@@ -1,9 +1,9 @@
-use ast::HasSpan;
-use ast::ctx::BindContext;
-use ast::ctx::values::Binder;
-use miette_util::ToMiette;
-use parser::cst;
-use parser::cst::exp::BindingSite;
+use polarity_lang_ast::HasSpan;
+use polarity_lang_ast::ctx::BindContext;
+use polarity_lang_ast::ctx::values::Binder;
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_parser::cst;
+use polarity_lang_parser::cst::exp::BindingSite;
 
 use super::Lower;
 use crate::ctx::*;
@@ -23,7 +23,7 @@ mod nat_lit;
 mod parens;
 
 impl Lower for cst::exp::Exp {
-    type Target = ast::Exp;
+    type Target = polarity_lang_ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         match self {
@@ -42,7 +42,10 @@ impl Lower for cst::exp::Exp {
     }
 }
 
-fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> LoweringResult<T>>(
+fn lower_telescope_inst<
+    T,
+    F: FnOnce(&mut Ctx, polarity_lang_ast::TelescopeInst) -> LoweringResult<T>,
+>(
     tel_inst: &[cst::exp::BindingSite],
     ctx: &mut Ctx,
     f: F,
@@ -52,17 +55,21 @@ fn lower_telescope_inst<T, F: FnOnce(&mut Ctx, ast::TelescopeInst) -> LoweringRe
         tel_inst.into_iter(),
         vec![],
         |_ctx, params_out, name| -> LoweringResult<Binder<()>> {
-            let param_out =
-                ast::ParamInst { span: name.span(), name: name.clone(), typ: None, erased: false };
+            let param_out = polarity_lang_ast::ParamInst {
+                span: name.span(),
+                name: name.clone(),
+                typ: None,
+                erased: false,
+            };
             params_out.push(param_out);
             Ok(Binder { name, content: () })
         },
-        |ctx, params| f(ctx, ast::TelescopeInst { params }),
+        |ctx, params| f(ctx, polarity_lang_ast::TelescopeInst { params }),
     )?
 }
 
 impl Lower for cst::exp::BindingSite {
-    type Target = ast::VarBind;
+    type Target = polarity_lang_ast::VarBind;
 
     fn lower(&self, _ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         match self {
@@ -70,25 +77,27 @@ impl Lower for cst::exp::BindingSite {
                 if name.id == "Type" {
                     Err(LoweringError::TypeUnivIdentifier { span: span.to_miette() }.into())
                 } else {
-                    Ok(ast::VarBind::Var { span: Some(*span), id: name.id.clone() })
+                    Ok(polarity_lang_ast::VarBind::Var { span: Some(*span), id: name.id.clone() })
                 }
             }
-            BindingSite::Wildcard { span } => Ok(ast::VarBind::Wildcard { span: Some(*span) }),
+            BindingSite::Wildcard { span } => {
+                Ok(polarity_lang_ast::VarBind::Wildcard { span: Some(*span) })
+            }
         }
     }
 }
 
 impl Lower for cst::exp::Motive {
-    type Target = ast::Motive;
+    type Target = polarity_lang_ast::Motive;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::Motive { span, param, ret_typ } = self;
 
         let name = param.lower(ctx)?;
 
-        Ok(ast::Motive {
+        Ok(polarity_lang_ast::Motive {
             span: Some(*span),
-            param: ast::ParamInst {
+            param: polarity_lang_ast::ParamInst {
                 span: name.span(),
                 name: name.clone(),
                 typ: None,

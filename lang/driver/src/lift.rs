@@ -1,9 +1,9 @@
 use url::Url;
 
-use ast::*;
-use miette_util::codespan::Span;
-use printer::Print;
-use transformations::LiftResult;
+use polarity_lang_ast::*;
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::Print;
+use polarity_lang_transformations::LiftResult;
 
 use crate::{DriverError, Edit, database::Database};
 
@@ -22,7 +22,7 @@ impl Database {
             .ok_or(DriverError::Impossible(format!("Could not resolve {type_name}")))?;
 
         let LiftResult { module: prg, modified_decls, new_decls } =
-            transformations::lift(prg, type_name);
+            polarity_lang_transformations::lift(prg, type_name);
 
         let edits = generate_edits(type_span, &prg, modified_decls, new_decls);
 
@@ -32,7 +32,7 @@ impl Database {
 
 fn generate_edits(
     type_span: Span,
-    module: &ast::Module,
+    module: &polarity_lang_ast::Module,
     modified_decls: HashSet<IdBind>,
     new_decls: HashSet<IdBind>,
 ) -> Vec<Edit> {

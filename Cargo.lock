@@ -175,21 +175,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ast"
-version = "0.1.0"
-dependencies = [
- "derivative",
- "fxhash",
- "miette",
- "miette_util",
- "num-bigint",
- "pretty",
- "printer",
- "thiserror",
- "url",
-]
-
-[[package]]
 name = "async-channel"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -350,17 +335,6 @@ name = "autocfg"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
-
-[[package]]
-name = "backend"
-version = "0.1.0"
-dependencies = [
- "ast",
- "miette",
- "printer",
- "thiserror",
- "url",
-]
 
 [[package]]
 name = "backtrace"
@@ -931,68 +905,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
-name = "docs"
-version = "0.1.0"
-dependencies = [
- "askama",
- "askama_escape",
- "ast",
- "comrak",
- "driver",
- "opener",
- "pretty",
- "printer",
- "url",
-]
-
-[[package]]
 name = "downcast-rs"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 
 [[package]]
-name = "driver"
-version = "0.1.0"
-dependencies = [
- "ast",
- "async-trait",
- "backend",
- "elaborator",
- "log",
- "lowering",
- "lsp-types",
- "miette",
- "miette_util",
- "parser",
- "printer",
- "ropey",
- "rust-lapper",
- "thiserror",
- "transformations",
- "url",
-]
-
-[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
-
-[[package]]
-name = "elaborator"
-version = "0.1.0"
-dependencies = [
- "ast",
- "derivative",
- "log",
- "miette",
- "miette_util",
- "pretty",
- "printer",
- "thiserror",
- "url",
-]
 
 [[package]]
 name = "ena"
@@ -1958,21 +1880,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lowering"
-version = "0.1.0"
-dependencies = [
- "ast",
- "log",
- "miette",
- "miette_util",
- "num-bigint",
- "parser",
- "printer",
- "thiserror",
- "url",
-]
-
-[[package]]
 name = "lru"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1988,31 +1895,17 @@ dependencies = [
  "async-trait",
  "console_error_panic_hook",
  "console_log",
- "driver",
  "futures",
  "js-sys",
  "log",
- "lsp-server",
+ "polarity-lang-driver",
+ "polarity-lang-lsp-server",
  "reqwest",
  "tower-lsp-server",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-streams",
  "web-sys",
-]
-
-[[package]]
-name = "lsp-server"
-version = "0.1.0"
-dependencies = [
- "ast",
- "async-lock 2.8.0",
- "driver",
- "miette",
- "miette_util",
- "printer",
- "tower-lsp-server",
- "url",
 ]
 
 [[package]]
@@ -2087,13 +1980,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.104",
-]
-
-[[package]]
-name = "miette_util"
-version = "0.1.0"
-dependencies = [
- "miette",
 ]
 
 [[package]]
@@ -2378,22 +2264,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "parser"
-version = "0.1.0"
-dependencies = [
- "derivative",
- "lalrpop 0.19.12",
- "lalrpop 0.20.2",
- "lalrpop-util 0.20.2",
- "logos",
- "miette",
- "miette_util",
- "num-bigint",
- "thiserror",
- "url",
-]
-
-[[package]]
 name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2499,20 +2369,20 @@ name = "polarity"
 version = "0.1.0"
 dependencies = [
  "assert_cmd",
- "ast",
  "async-std",
  "clap",
  "clap_complete",
- "docs",
- "driver",
- "elaborator",
  "env_logger",
  "futures",
  "log",
- "lsp-server",
  "miette",
- "parser",
- "printer",
+ "polarity-lang-ast",
+ "polarity-lang-docs",
+ "polarity-lang-driver",
+ "polarity-lang-elaborator",
+ "polarity-lang-lsp-server",
+ "polarity-lang-parser",
+ "polarity-lang-printer",
  "termsize",
  "thiserror",
  "tokio",
@@ -2523,17 +2393,168 @@ dependencies = [
 name = "polarity-bench"
 version = "0.1.0"
 dependencies = [
- "ast",
  "async-std",
  "criterion",
- "docs",
- "driver",
- "elaborator",
  "futures",
- "lsp-server",
  "miette",
- "printer",
+ "polarity-lang-ast",
+ "polarity-lang-docs",
+ "polarity-lang-driver",
+ "polarity-lang-elaborator",
+ "polarity-lang-lsp-server",
+ "polarity-lang-printer",
  "tokio",
+ "url",
+]
+
+[[package]]
+name = "polarity-lang-ast"
+version = "0.1.0"
+dependencies = [
+ "derivative",
+ "fxhash",
+ "miette",
+ "num-bigint",
+ "polarity-lang-miette_util",
+ "polarity-lang-printer",
+ "pretty",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "polarity-lang-backend"
+version = "0.1.0"
+dependencies = [
+ "miette",
+ "polarity-lang-ast",
+ "polarity-lang-printer",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "polarity-lang-docs"
+version = "0.1.0"
+dependencies = [
+ "askama",
+ "askama_escape",
+ "comrak",
+ "opener",
+ "polarity-lang-ast",
+ "polarity-lang-driver",
+ "polarity-lang-printer",
+ "pretty",
+ "url",
+]
+
+[[package]]
+name = "polarity-lang-driver"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "log",
+ "lsp-types",
+ "miette",
+ "polarity-lang-ast",
+ "polarity-lang-backend",
+ "polarity-lang-elaborator",
+ "polarity-lang-lowering",
+ "polarity-lang-miette_util",
+ "polarity-lang-parser",
+ "polarity-lang-printer",
+ "polarity-lang-transformations",
+ "ropey",
+ "rust-lapper",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "polarity-lang-elaborator"
+version = "0.1.0"
+dependencies = [
+ "derivative",
+ "log",
+ "miette",
+ "polarity-lang-ast",
+ "polarity-lang-miette_util",
+ "polarity-lang-printer",
+ "pretty",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "polarity-lang-lowering"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "miette",
+ "num-bigint",
+ "polarity-lang-ast",
+ "polarity-lang-miette_util",
+ "polarity-lang-parser",
+ "polarity-lang-printer",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "polarity-lang-lsp-server"
+version = "0.1.0"
+dependencies = [
+ "async-lock 2.8.0",
+ "miette",
+ "polarity-lang-ast",
+ "polarity-lang-driver",
+ "polarity-lang-miette_util",
+ "polarity-lang-printer",
+ "tower-lsp-server",
+ "url",
+]
+
+[[package]]
+name = "polarity-lang-miette_util"
+version = "0.1.0"
+dependencies = [
+ "miette",
+]
+
+[[package]]
+name = "polarity-lang-parser"
+version = "0.1.0"
+dependencies = [
+ "derivative",
+ "lalrpop 0.19.12",
+ "lalrpop 0.20.2",
+ "lalrpop-util 0.20.2",
+ "logos",
+ "miette",
+ "num-bigint",
+ "polarity-lang-miette_util",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "polarity-lang-printer"
+version = "0.1.0"
+dependencies = [
+ "askama_escape",
+ "pretty",
+ "url",
+]
+
+[[package]]
+name = "polarity-lang-transformations"
+version = "0.1.0"
+dependencies = [
+ "derivative",
+ "miette",
+ "polarity-lang-ast",
+ "polarity-lang-miette_util",
+ "thiserror",
  "url",
 ]
 
@@ -2655,15 +2676,6 @@ checksum = "061c1221631e079b26479d25bbf2275bfe5917ae8419cd7e34f13bfc2aa7539a"
 dependencies = [
  "proc-macro2",
  "syn 2.0.104",
-]
-
-[[package]]
-name = "printer"
-version = "0.1.0"
-dependencies = [
- "askama_escape",
- "pretty",
- "url",
 ]
 
 [[package]]
@@ -3404,15 +3416,15 @@ checksum = "8f50febec83f5ee1df3015341d8bd429f2d1cc62bcba7ea2076759d315084683"
 name = "test-runner"
 version = "0.1.0"
 dependencies = [
- "ast",
  "clap",
- "driver",
- "elaborator",
  "env_logger",
  "log",
  "miette",
- "parser",
- "printer",
+ "polarity-lang-ast",
+ "polarity-lang-driver",
+ "polarity-lang-elaborator",
+ "polarity-lang-parser",
+ "polarity-lang-printer",
  "serde",
  "serde_derive",
  "tantivy",
@@ -3680,18 +3692,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9d12581f227e93f094d3af2ae690a574abb8a2b9b7a96e7cfe9647b2b617678"
 dependencies = [
  "once_cell",
-]
-
-[[package]]
-name = "transformations"
-version = "0.1.0"
-dependencies = [
- "ast",
- "derivative",
- "miette",
- "miette_util",
- "thiserror",
- "url",
 ]
 
 [[package]]

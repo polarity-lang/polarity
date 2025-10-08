@@ -1,14 +1,14 @@
-use ast::IdBind;
-use miette_util::ToMiette;
-use parser::cst::ident::Ident;
-use parser::cst::{self};
+use polarity_lang_ast::IdBind;
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_parser::cst::ident::Ident;
+use polarity_lang_parser::cst::{self};
 
 use super::super::*;
 use super::lower_self_param;
 use super::lower_telescope;
 
 impl Lower for cst::decls::Codata {
-    type Target = ast::Codata;
+    type Target = polarity_lang_ast::Codata;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         log::trace!("Lowering codata declaration: {}", self.name.id);
@@ -19,7 +19,7 @@ impl Lower for cst::decls::Codata {
             .map(|dtor| lower_destructor(dtor, ctx, name, params.len()))
             .collect::<Result<_, _>>()?;
 
-        Ok(ast::Codata {
+        Ok(polarity_lang_ast::Codata {
             span: Some(*span),
             doc: doc.lower(ctx)?,
             name: IdBind { span: Some(name.span), id: name.id.clone() },
@@ -35,7 +35,7 @@ fn lower_destructor(
     ctx: &mut Ctx,
     type_name: &Ident,
     type_arity: usize,
-) -> LoweringResult<ast::Dtor> {
+) -> LoweringResult<polarity_lang_ast::Dtor> {
     log::trace!("Lowering destructor: {:?}", dtor.name);
     let cst::decls::Dtor { span, doc, name, params, destructee, ret_typ } = dtor;
 
@@ -68,7 +68,7 @@ fn lower_destructor(
         };
 
         lower_self_param(&self_param, ctx, |ctx, self_param| {
-            Ok(ast::Dtor {
+            Ok(polarity_lang_ast::Dtor {
                 span: Some(*span),
                 doc: doc.lower(ctx)?,
                 name: IdBind { span: Some(name.span), id: name.id.clone() },

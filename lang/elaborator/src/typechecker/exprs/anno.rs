@@ -3,7 +3,7 @@
 use crate::conversion_checking::convert;
 use crate::normalizer::env::ToEnv;
 use crate::normalizer::normalize::Normalize;
-use ast::*;
+use polarity_lang_ast::*;
 
 use super::CheckInfer;
 use super::{super::ctx::*, ExpectType};

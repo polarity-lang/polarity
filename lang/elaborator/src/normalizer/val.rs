@@ -1,23 +1,23 @@
 use std::rc::Rc;
 
-use ast;
-use ast::Idx;
-use ast::MetaVar;
-use ast::Shift;
-use ast::ShiftRange;
-use ast::ShiftRangeExt;
-use ast::VarBind;
-use ast::VarBound;
-use ast::ctx::values::Binder;
-use ast::shift_and_clone;
 use log::trace;
-use miette_util::codespan::Span;
+use polarity_lang_ast;
+use polarity_lang_ast::Idx;
+use polarity_lang_ast::MetaVar;
+use polarity_lang_ast::Shift;
+use polarity_lang_ast::ShiftRange;
+use polarity_lang_ast::ShiftRangeExt;
+use polarity_lang_ast::VarBind;
+use polarity_lang_ast::VarBound;
+use polarity_lang_ast::ctx::values::Binder;
+use polarity_lang_ast::shift_and_clone;
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::theme::ThemeExt;
+use polarity_lang_printer::tokens::*;
+use polarity_lang_printer::types::Print;
+use polarity_lang_printer::types::*;
+use polarity_lang_printer::util::*;
 use pretty::DocAllocator;
-use printer::theme::ThemeExt;
-use printer::tokens::*;
-use printer::types::Print;
-use printer::types::*;
-use printer::util::*;
 
 use crate::TypeInfoTable;
 use crate::normalizer::env::*;
@@ -119,7 +119,7 @@ impl Print for Val {
 }
 
 impl ReadBack for Val {
-    type Nf = ast::Exp;
+    type Nf = polarity_lang_ast::Exp;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let res = match self {
@@ -142,7 +142,7 @@ impl ReadBack for Val {
 #[derive(Debug, Clone)]
 pub struct TypCtor {
     pub span: Option<Span>,
-    pub name: ast::IdBound,
+    pub name: polarity_lang_ast::IdBound,
     pub args: Args,
     pub is_bin_op: Option<String>,
 }
@@ -168,14 +168,14 @@ impl From<TypCtor> for Val {
 }
 
 impl ReadBack for TypCtor {
-    type Nf = ast::TypCtor;
+    type Nf = polarity_lang_ast::TypCtor;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let TypCtor { span, name, args, is_bin_op } = self;
-        Ok(ast::TypCtor {
+        Ok(polarity_lang_ast::TypCtor {
             span: *span,
             name: name.clone(),
-            args: ast::Args { args: args.read_back(info_table)? },
+            args: polarity_lang_ast::Args { args: args.read_back(info_table)? },
             is_bin_op: is_bin_op.clone(),
         })
     }
@@ -188,8 +188,8 @@ impl ReadBack for TypCtor {
 #[derive(Debug, Clone)]
 pub struct Call {
     pub span: Option<Span>,
-    pub kind: ast::CallKind,
-    pub name: ast::IdBound,
+    pub kind: polarity_lang_ast::CallKind,
+    pub name: polarity_lang_ast::IdBound,
     pub args: Args,
 }
 
@@ -214,15 +214,15 @@ impl From<Call> for Val {
 }
 
 impl ReadBack for Call {
-    type Nf = ast::Call;
+    type Nf = polarity_lang_ast::Call;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let Call { span, kind, name, args } = self;
-        Ok(ast::Call {
+        Ok(polarity_lang_ast::Call {
             span: *span,
             kind: *kind,
             name: name.clone(),
-            args: ast::Args { args: args.read_back(info_table)? },
+            args: polarity_lang_ast::Args { args: args.read_back(info_table)? },
             inferred_type: None,
         })
     }
@@ -254,11 +254,11 @@ impl From<TypeUniv> for Val {
 }
 
 impl ReadBack for TypeUniv {
-    type Nf = ast::TypeUniv;
+    type Nf = polarity_lang_ast::TypeUniv;
 
     fn read_back(&self, _info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let TypeUniv { span } = self;
-        Ok(ast::TypeUniv { span: *span })
+        Ok(polarity_lang_ast::TypeUniv { span: *span })
     }
 }
 
@@ -269,7 +269,7 @@ impl ReadBack for TypeUniv {
 #[derive(Debug, Clone)]
 pub struct LocalComatch {
     pub span: Option<Span>,
-    pub name: ast::Label,
+    pub name: polarity_lang_ast::Label,
     pub is_lambda_sugar: bool,
     pub cases: Vec<Case>,
 }
@@ -299,14 +299,14 @@ impl From<LocalComatch> for Val {
 }
 
 impl ReadBack for LocalComatch {
-    type Nf = ast::LocalComatch;
+    type Nf = polarity_lang_ast::LocalComatch;
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let LocalComatch { span, name, is_lambda_sugar, cases } = self;
-        Ok(ast::LocalComatch {
+        Ok(polarity_lang_ast::LocalComatch {
             span: *span,
             ctx: None,
             name: name.clone(),
-            closure: ast::Closure { args: Vec::default() },
+            closure: polarity_lang_ast::Closure { args: Vec::default() },
             is_lambda_sugar: *is_lambda_sugar,
             cases: cases.read_back(info_table)?,
             inferred_type: None,
@@ -346,12 +346,12 @@ impl From<AnnoVal> for Val {
 }
 
 impl ReadBack for AnnoVal {
-    type Nf = ast::Anno;
+    type Nf = polarity_lang_ast::Anno;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let AnnoVal { span, exp, typ } = self;
         let typ_nf = typ.read_back(info_table)?;
-        Ok(ast::Anno {
+        Ok(polarity_lang_ast::Anno {
             span: *span,
             exp: exp.read_back(info_table)?,
             typ: typ_nf.clone(),
@@ -410,7 +410,7 @@ impl From<Neu> for Val {
 }
 
 impl ReadBack for Neu {
-    type Nf = ast::Exp;
+    type Nf = polarity_lang_ast::Exp;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let res = match self {
@@ -432,7 +432,7 @@ impl ReadBack for Neu {
 #[derive(Debug, Clone)]
 pub struct Variable {
     pub span: Option<Span>,
-    pub name: ast::VarBound,
+    pub name: polarity_lang_ast::VarBound,
     pub idx: Idx,
 }
 
@@ -456,11 +456,16 @@ impl From<Variable> for Neu {
 }
 
 impl ReadBack for Variable {
-    type Nf = ast::Variable;
+    type Nf = polarity_lang_ast::Variable;
 
     fn read_back(&self, _info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let Variable { span, name, idx } = self;
-        Ok(ast::Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: None })
+        Ok(polarity_lang_ast::Variable {
+            span: *span,
+            idx: *idx,
+            name: name.clone(),
+            inferred_type: None,
+        })
     }
 }
 
@@ -471,9 +476,9 @@ impl ReadBack for Variable {
 #[derive(Debug, Clone)]
 pub struct DotCall {
     pub span: Option<Span>,
-    pub kind: ast::DotCallKind,
+    pub kind: polarity_lang_ast::DotCallKind,
     pub exp: Box<Neu>,
-    pub name: ast::IdBound,
+    pub name: polarity_lang_ast::IdBound,
     pub args: Args,
 }
 
@@ -499,16 +504,16 @@ impl From<DotCall> for Neu {
 }
 
 impl ReadBack for DotCall {
-    type Nf = ast::DotCall;
+    type Nf = polarity_lang_ast::DotCall;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let DotCall { span, kind, exp, name, args } = self;
-        Ok(ast::DotCall {
+        Ok(polarity_lang_ast::DotCall {
             span: *span,
             kind: *kind,
             exp: exp.read_back(info_table)?,
             name: name.clone(),
-            args: ast::Args { args: args.read_back(info_table)? },
+            args: polarity_lang_ast::Args { args: args.read_back(info_table)? },
             inferred_type: None,
         })
     }
@@ -521,7 +526,7 @@ impl ReadBack for DotCall {
 #[derive(Debug, Clone)]
 pub struct LocalMatch {
     pub span: Option<Span>,
-    pub name: ast::Label,
+    pub name: polarity_lang_ast::Label,
     pub on_exp: Box<Neu>,
     pub cases: Vec<Case>,
 }
@@ -554,15 +559,15 @@ impl From<LocalMatch> for Neu {
 }
 
 impl ReadBack for LocalMatch {
-    type Nf = ast::LocalMatch;
+    type Nf = polarity_lang_ast::LocalMatch;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let LocalMatch { span, name, on_exp, cases } = self;
-        Ok(ast::LocalMatch {
+        Ok(polarity_lang_ast::LocalMatch {
             span: *span,
             ctx: None,
             motive: None,
-            closure: ast::Closure { args: Vec::default() },
+            closure: polarity_lang_ast::Closure { args: Vec::default() },
             ret_typ: None,
             name: name.clone(),
             on_exp: on_exp.read_back(info_table)?,
@@ -579,7 +584,7 @@ impl ReadBack for LocalMatch {
 #[derive(Debug, Clone)]
 pub struct Hole {
     pub span: Option<Span>,
-    pub kind: ast::MetaVarKind,
+    pub kind: polarity_lang_ast::MetaVarKind,
     pub metavar: MetaVar,
     /// Explicit substitution of the context, compare documentation of ast::Hole
     pub args: Vec<Vec<Binder<Box<Val>>>>,
@@ -610,12 +615,12 @@ impl From<Hole> for Neu {
 }
 
 impl ReadBack for Hole {
-    type Nf = ast::Hole;
+    type Nf = polarity_lang_ast::Hole;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let Hole { span, kind, metavar, args, solution } = self;
         let args = args.read_back(info_table)?;
-        Ok(ast::Hole {
+        Ok(polarity_lang_ast::Hole {
             span: *span,
             kind: *kind,
             metavar: *metavar,
@@ -645,8 +650,8 @@ impl<T: ReadBack> ReadBack for Binder<T> {
 pub struct Case {
     pub span: Option<Span>,
     pub is_copattern: bool,
-    pub name: ast::IdBound,
-    pub params: ast::TelescopeInst,
+    pub name: polarity_lang_ast::IdBound,
+    pub params: polarity_lang_ast::TelescopeInst,
     /// Body being `None` represents an absurd pattern
     pub body: Option<Closure>,
 }
@@ -681,14 +686,14 @@ impl Print for Case {
 }
 
 impl ReadBack for Case {
-    type Nf = ast::Case;
+    type Nf = polarity_lang_ast::Case;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let Case { span, is_copattern, name, params, body } = self;
 
-        Ok(ast::Case {
+        Ok(polarity_lang_ast::Case {
             span: *span,
-            pattern: ast::Pattern {
+            pattern: polarity_lang_ast::Pattern {
                 span: None,
                 is_copattern: *is_copattern,
                 name: name.clone(),
@@ -706,7 +711,7 @@ impl ReadBack for Case {
 #[derive(Debug, Clone)]
 pub struct OpaqueCall {
     pub span: Option<Span>,
-    pub name: ast::IdBound,
+    pub name: polarity_lang_ast::IdBound,
     pub args: Args,
 }
 
@@ -731,15 +736,15 @@ impl From<OpaqueCall> for Neu {
 }
 
 impl ReadBack for OpaqueCall {
-    type Nf = ast::Call;
+    type Nf = polarity_lang_ast::Call;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let OpaqueCall { span, name, args } = self;
-        Ok(ast::Call {
+        Ok(polarity_lang_ast::Call {
             span: *span,
-            kind: ast::CallKind::LetBound,
+            kind: polarity_lang_ast::CallKind::LetBound,
             name: name.clone(),
-            args: ast::Args { args: args.read_back(info_table)? },
+            args: polarity_lang_ast::Args { args: args.read_back(info_table)? },
             inferred_type: None,
         })
     }
@@ -775,12 +780,12 @@ impl From<AnnoNeu> for Neu {
 }
 
 impl ReadBack for AnnoNeu {
-    type Nf = ast::Anno;
+    type Nf = polarity_lang_ast::Anno;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let AnnoNeu { span, exp, typ } = self;
         let typ_nf = typ.read_back(info_table)?;
-        Ok(ast::Anno {
+        Ok(polarity_lang_ast::Anno {
             span: *span,
             exp: exp.read_back(info_table)?,
             typ: typ_nf.clone(),
@@ -817,7 +822,7 @@ impl Shift for Args {
 }
 
 impl ReadBack for Args {
-    type Nf = Vec<ast::Arg>;
+    type Nf = Vec<polarity_lang_ast::Arg>;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         self.0.read_back(info_table)
@@ -846,7 +851,7 @@ impl Print for Args {
 #[derive(Debug, Clone)]
 pub enum Arg {
     UnnamedArg(Box<Val>),
-    NamedArg(ast::VarBound, Box<Val>),
+    NamedArg(polarity_lang_ast::VarBound, Box<Val>),
     InsertedImplicitArg(Box<Val>),
 }
 
@@ -867,21 +872,23 @@ impl Shift for Arg {
 }
 
 impl ReadBack for Arg {
-    type Nf = ast::Arg;
+    type Nf = polarity_lang_ast::Arg;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         match self {
-            Arg::UnnamedArg(val) => {
-                Ok(ast::Arg::UnnamedArg { arg: val.read_back(info_table)?, erased: false })
-            }
-            Arg::NamedArg(name, val) => Ok(ast::Arg::NamedArg {
+            Arg::UnnamedArg(val) => Ok(polarity_lang_ast::Arg::UnnamedArg {
+                arg: val.read_back(info_table)?,
+                erased: false,
+            }),
+            Arg::NamedArg(name, val) => Ok(polarity_lang_ast::Arg::NamedArg {
                 name: name.clone(),
                 arg: val.read_back(info_table)?,
                 erased: false,
             }),
-            Arg::InsertedImplicitArg(val) => {
-                Ok(ast::Arg::UnnamedArg { arg: val.read_back(info_table)?, erased: false })
-            }
+            Arg::InsertedImplicitArg(val) => Ok(polarity_lang_ast::Arg::UnnamedArg {
+                arg: val.read_back(info_table)?,
+                erased: false,
+            }),
         }
     }
 }
@@ -921,7 +928,7 @@ impl Arg {
 pub struct Closure {
     pub env: Env,
     pub params: Vec<VarBind>,
-    pub body: Box<ast::Exp>,
+    pub body: Box<polarity_lang_ast::Exp>,
 }
 
 impl Shift for Closure {
@@ -937,7 +944,7 @@ impl Print for Closure {
 }
 
 impl ReadBack for Closure {
-    type Nf = Box<ast::Exp>;
+    type Nf = Box<polarity_lang_ast::Exp>;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
         let args: Vec<Box<Val>> = (0..self.params.len())

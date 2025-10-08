@@ -1,9 +1,9 @@
 use std::fs;
 use std::path::PathBuf;
 
-use docs::get_target_path;
-use docs::open;
-use docs::write_html;
+use polarity_lang_docs::get_target_path;
+use polarity_lang_docs::open;
+use polarity_lang_docs::write_html;
 
 #[derive(clap::Args)]
 pub struct Args {

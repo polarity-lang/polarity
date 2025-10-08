@@ -4,16 +4,16 @@ use miette::Diagnostic;
 use thiserror::Error;
 use url::Url;
 
-use backend::result::BackendError;
+use polarity_lang_backend::result::BackendError;
 
 #[derive(Error, Diagnostic, Debug, Clone)]
 #[diagnostic(transparent)]
 #[error(transparent)]
 pub enum Error {
-    Parser(#[from] parser::ParseError),
-    Lowering(#[from] Box<lowering::LoweringError>),
-    Type(#[from] Box<elaborator::result::TypeError>),
-    Xfunc(#[from] transformations::result::XfuncError),
+    Parser(#[from] polarity_lang_parser::ParseError),
+    Lowering(#[from] Box<polarity_lang_lowering::LoweringError>),
+    Type(#[from] Box<polarity_lang_elaborator::result::TypeError>),
+    Xfunc(#[from] polarity_lang_transformations::result::XfuncError),
     Driver(#[from] DriverError),
     Backend(#[from] BackendError),
 }

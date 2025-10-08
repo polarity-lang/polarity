@@ -6,7 +6,7 @@ use crate::normalizer::normalize::Normalize;
 use crate::result::TcResult;
 use crate::typechecker::erasure;
 use crate::typechecker::type_info_table::CtorMeta;
-use ast::*;
+use polarity_lang_ast::*;
 
 use super::super::ctx::*;
 use super::CheckInfer;

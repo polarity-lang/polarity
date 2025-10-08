@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::path::{Path, PathBuf};
 
-use driver::Database;
-use printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
+use polarity_lang_driver::Database;
+use polarity_lang_printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
 
 use crate::utils::ignore_colors::IgnoreColors;
 
@@ -83,10 +83,10 @@ pub async fn exec(cmd: Args) -> miette::Result<()> {
     Ok(())
 }
 
-fn print_prg<W: WriteColor>(prg: &ast::Module, cfg: &PrintCfg, stream: &mut W) {
+fn print_prg<W: WriteColor>(prg: &polarity_lang_ast::Module, cfg: &PrintCfg, stream: &mut W) {
     prg.print_colored(cfg, stream).expect("Failed to print to stdout");
 }
 
 fn terminal_width() -> usize {
-    termsize::get().map(|size| size.cols as usize).unwrap_or(printer::DEFAULT_WIDTH)
+    termsize::get().map(|size| size.cols as usize).unwrap_or(polarity_lang_printer::DEFAULT_WIDTH)
 }

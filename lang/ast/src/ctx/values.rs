@@ -3,8 +3,8 @@
 //! Tracks locally bound variables
 
 use derivative::Derivative;
+use polarity_lang_printer::Print;
 use pretty::DocAllocator;
-use printer::Print;
 
 use crate::traits::Shift;
 use crate::*;
@@ -66,10 +66,10 @@ impl<T: ContainsMetaVars> ContainsMetaVars for Binder<T> {
 impl Print for Binder<Box<Exp>> {
     fn print_prec<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-        prec: printer::Precedence,
-    ) -> printer::Builder<'a> {
+        cfg: &polarity_lang_printer::PrintCfg,
+        alloc: &'a polarity_lang_printer::Alloc<'a>,
+        prec: polarity_lang_printer::Precedence,
+    ) -> polarity_lang_printer::Builder<'a> {
         let Binder { name, content } = self;
 
         alloc
@@ -82,10 +82,10 @@ impl Print for Binder<Box<Exp>> {
 impl Print for Binder<Binding> {
     fn print_prec<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-        prec: printer::Precedence,
-    ) -> printer::Builder<'a> {
+        cfg: &polarity_lang_printer::PrintCfg,
+        alloc: &'a polarity_lang_printer::Alloc<'a>,
+        prec: polarity_lang_printer::Precedence,
+    ) -> polarity_lang_printer::Builder<'a> {
         let Binder { name, content: Binding { typ, val } } = self;
 
         let doc = alloc
@@ -108,9 +108,9 @@ impl Print for Binder<Binding> {
 impl Print for Binder<()> {
     fn print<'a>(
         &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+        _cfg: &polarity_lang_printer::PrintCfg,
+        alloc: &'a polarity_lang_printer::Alloc<'a>,
+    ) -> polarity_lang_printer::Builder<'a> {
         let Binder { name, content: () } = self;
 
         alloc.text(name.to_string())

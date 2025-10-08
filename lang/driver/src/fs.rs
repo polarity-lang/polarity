@@ -3,7 +3,7 @@ use async_trait::async_trait;
 #[cfg(not(target_arch = "wasm32"))]
 pub use file_system::FileSystemSource;
 
-use ast::HashMap;
+use polarity_lang_ast::HashMap;
 use url::Url;
 
 use crate::result::DriverError;

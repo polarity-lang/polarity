@@ -2,10 +2,10 @@
 
 use std::collections::HashSet;
 
-use ast::ctx::values::{Binder, Binding};
-use ast::ctx::{BindContext, LevelCtx};
-use ast::*;
-use miette_util::ToMiette;
+use polarity_lang_ast::ctx::values::{Binder, Binding};
+use polarity_lang_ast::ctx::{BindContext, LevelCtx};
+use polarity_lang_ast::*;
+use polarity_lang_miette_util::ToMiette;
 
 use crate::conversion_checking::convert;
 use crate::index_unification::constraints::Constraint;

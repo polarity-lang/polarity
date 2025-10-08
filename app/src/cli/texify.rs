@@ -3,8 +3,8 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-use driver::Database;
-use printer::{Print, PrintCfg};
+use polarity_lang_driver::Database;
+use polarity_lang_printer::{Print, PrintCfg};
 
 const LATEX_END: &str = r"\end{alltt}
 ";
@@ -99,7 +99,7 @@ pub async fn exec(cmd: Args) -> miette::Result<()> {
     Ok(())
 }
 
-fn print_prg<W: io::Write>(prg: &ast::Module, cfg: &PrintCfg, stream: &mut W) {
+fn print_prg<W: io::Write>(prg: &polarity_lang_ast::Module, cfg: &PrintCfg, stream: &mut W) {
     prg.print_latex(cfg, stream).expect("Failed to print to stdout");
     println!();
 }

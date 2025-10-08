@@ -1,7 +1,7 @@
 use derivative::Derivative;
-use miette_util::codespan::Span;
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{Alloc, Builder, Print, PrintCfg};
 use pretty::DocAllocator;
-use printer::{Alloc, Builder, Print, PrintCfg};
 
 use crate::{
     ContainsMetaVars, Zonk, ZonkError,
@@ -36,7 +36,7 @@ impl Print for TelescopeInst {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: printer::Precedence,
+        _prec: polarity_lang_printer::Precedence,
     ) -> Builder<'a> {
         if self.params.is_empty() { alloc.nil() } else { self.params.print(cfg, alloc).parens() }
     }
@@ -105,7 +105,7 @@ impl Print for ParamInst {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: printer::Precedence,
+        _prec: polarity_lang_printer::Precedence,
     ) -> Builder<'a> {
         let ParamInst { span: _, name, typ: _, erased: _ } = self;
         name.print(cfg, alloc)

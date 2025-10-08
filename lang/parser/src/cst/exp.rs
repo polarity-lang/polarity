@@ -1,5 +1,5 @@
-use miette_util::codespan::Span;
 use num_bigint::BigUint;
+use polarity_lang_miette_util::codespan::Span;
 
 use super::ident::*;
 

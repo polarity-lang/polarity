@@ -1,5 +1,5 @@
 [package]
-name = "backend"
+name = "polarity-lang-backend"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -16,5 +16,5 @@ url = { workspace = true }
 miette = { workspace = true }
 thiserror = { workspace = true }
 # workspace dependencies
-ast = { path = "../ast" }
-printer = { path = "../printer" }
+polarity-lang-ast = { path = "../ast" }
+polarity-lang-printer = { path = "../printer" }

@@ -1,7 +1,9 @@
 pub mod matrix;
 pub mod result;
 
-pub fn as_matrix(prg: &ast::Module) -> Result<matrix::Prg, crate::result::XfuncError> {
+pub fn as_matrix(
+    prg: &polarity_lang_ast::Module,
+) -> Result<matrix::Prg, crate::result::XfuncError> {
     matrix::build(prg)
 }
 
@@ -18,7 +20,7 @@ pub fn repr(prg: &matrix::Prg, name: &str) -> Result<matrix::Repr, crate::result
 pub fn as_data(
     prg: &matrix::Prg,
     name: &str,
-) -> Result<(ast::Data, Vec<ast::Def>), crate::result::XfuncError> {
+) -> Result<(polarity_lang_ast::Data, Vec<polarity_lang_ast::Def>), crate::result::XfuncError> {
     prg.map
         .get(name)
         .ok_or_else(|| crate::result::XfuncError::Impossible {
@@ -31,7 +33,7 @@ pub fn as_data(
 pub fn as_codata(
     prg: &matrix::Prg,
     name: &str,
-) -> Result<(ast::Codata, Vec<ast::Codef>), crate::result::XfuncError> {
+) -> Result<(polarity_lang_ast::Codata, Vec<polarity_lang_ast::Codef>), crate::result::XfuncError> {
     prg.map
         .get(name)
         .ok_or_else(|| crate::result::XfuncError::Impossible {

@@ -2,9 +2,9 @@ use async_lock::RwLock;
 use tower_lsp_server::jsonrpc::Result;
 use tower_lsp_server::{LanguageServer, jsonrpc, lsp_types::*};
 
-use driver::Database;
+use polarity_lang_driver::Database;
 #[cfg(not(target_arch = "wasm32"))]
-use driver::{FileSource, FileSystemSource, InMemorySource};
+use polarity_lang_driver::{FileSource, FileSystemSource, InMemorySource};
 
 use crate::conversion::{FromLsp, ToLsp};
 

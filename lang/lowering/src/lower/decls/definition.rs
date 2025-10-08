@@ -1,12 +1,12 @@
-use ast::IdBind;
-use parser::cst::{self};
+use polarity_lang_ast::IdBind;
+use polarity_lang_parser::cst::{self};
 
 use super::super::*;
 use super::lower_self_param;
 use super::lower_telescope;
 
 impl Lower for cst::decls::Def {
-    type Target = ast::Def;
+    type Target = polarity_lang_ast::Def;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         log::trace!("Lowering definition: {}", self.name.id);
@@ -18,7 +18,7 @@ impl Lower for cst::decls::Def {
         lower_telescope(params, ctx, |ctx, params| {
             let cases = cases.lower(ctx)?;
             lower_self_param(&self_param, ctx, |ctx, self_param| {
-                Ok(ast::Def {
+                Ok(polarity_lang_ast::Def {
                     span: Some(*span),
                     doc: doc.lower(ctx)?,
                     name: IdBind { span: Some(name.span), id: name.id.clone() },

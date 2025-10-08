@@ -1,5 +1,5 @@
 [package]
-name = "ast"
+name = "polarity-lang-ast"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true
@@ -26,5 +26,5 @@ fxhash = "0.2.1"
 # prettyprinting
 pretty = { version = "0.11", features = ["termcolor"] }
 # workspace members
-miette_util = { path = "../miette_util" }
-printer = { path = "../printer" }
+polarity-lang-miette_util = { path = "../miette_util" }
+polarity-lang-printer = { path = "../printer" }

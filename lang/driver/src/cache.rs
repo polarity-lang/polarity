@@ -1,6 +1,6 @@
 use url::Url;
 
-use ast::HashMap;
+use polarity_lang_ast::HashMap;
 
 pub struct Cache<T> {
     entries: HashMap<Url, CacheEntry<T>>,

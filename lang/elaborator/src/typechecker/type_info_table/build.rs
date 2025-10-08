@@ -1,4 +1,4 @@
-use ast::*;
+use polarity_lang_ast::*;
 
 use crate::typechecker::erasure;
 

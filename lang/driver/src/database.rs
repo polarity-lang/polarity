@@ -1,21 +1,21 @@
 use std::rc::Rc;
 use std::sync::Arc;
 
-use ast::rename::Rename;
 use lsp_types::HoverContents;
-use miette_util::codespan::Span;
+use polarity_lang_ast::rename::Rename;
+use polarity_lang_miette_util::codespan::Span;
 use url::Url;
 
-use ast::Exp;
-use ast::HashSet;
-use ast::Zonk;
-use backend::ast2ir::traits::ToIR;
-use backend::ir;
-use elaborator::normalizer::normalize::Normalize;
-use elaborator::{ModuleTypeInfoTable, TypeInfoTable, build_type_info_table};
-use lowering::{ModuleSymbolTable, SymbolTable};
-use parser::cst;
-use parser::cst::decls::UseDecl;
+use polarity_lang_ast::Exp;
+use polarity_lang_ast::HashSet;
+use polarity_lang_ast::Zonk;
+use polarity_lang_backend::ast2ir::traits::ToIR;
+use polarity_lang_backend::ir;
+use polarity_lang_elaborator::normalizer::normalize::Normalize;
+use polarity_lang_elaborator::{ModuleTypeInfoTable, TypeInfoTable, build_type_info_table};
+use polarity_lang_lowering::{ModuleSymbolTable, SymbolTable};
+use polarity_lang_parser::cst;
+use polarity_lang_parser::cst::decls::UseDecl;
 
 use crate::codespan::File;
 use crate::dependency_graph::DependencyGraph;
@@ -37,11 +37,11 @@ pub struct Database {
     /// The CST of each file (once parsed)
     pub cst: Cache<Result<Arc<cst::decls::Module>, Error>>,
     /// The symbol table constructed during lowering
-    pub symbol_table: Cache<Arc<lowering::ModuleSymbolTable>>,
+    pub symbol_table: Cache<Arc<polarity_lang_lowering::ModuleSymbolTable>>,
     /// The lowered, but not yet typechecked, UST
-    pub ust: Cache<Result<Arc<ast::Module>, Error>>,
+    pub ust: Cache<Result<Arc<polarity_lang_ast::Module>, Error>>,
     /// The typechecked AST of a module
-    pub ast: Cache<Result<Arc<ast::Module>, Error>>,
+    pub ast: Cache<Result<Arc<polarity_lang_ast::Module>, Error>>,
     /// The IR of a module
     pub ir: Cache<Result<Arc<ir::Module>, Error>>,
     /// The type info table, either open or closed
@@ -59,11 +59,11 @@ pub enum OpenClosed {
     /// The type info table constructed *before* elaboration.
     /// This table is used to lookup top-level signatures in the module that is currently being checked.
     /// "open" means there may be unsolved metavariables in the table.
-    Open(elaborator::ModuleTypeInfoTable),
+    Open(polarity_lang_elaborator::ModuleTypeInfoTable),
     /// The type info table constructed *after* elaboration.
     /// This table is used to lookup top-level signatures in dependencies.
     /// "closed" means that no unsolved metavariables occur in the table.
-    Closed(elaborator::ModuleTypeInfoTable),
+    Closed(polarity_lang_elaborator::ModuleTypeInfoTable),
 }
 
 impl Database {
@@ -132,8 +132,9 @@ impl Database {
     async fn recompute_cst(&mut self, uri: &Url) -> Result<Arc<cst::decls::Module>, Error> {
         log::debug!("Recomputing cst for: {uri}");
         let source = self.source(uri).await?;
-        let module =
-            parser::parse_module(uri.clone(), &source).map_err(Error::Parser).map(Arc::new);
+        let module = polarity_lang_parser::parse_module(uri.clone(), &source)
+            .map_err(Error::Parser)
+            .map(Arc::new);
         self.cst.insert(uri.clone(), module.clone());
         module
     }
@@ -155,7 +156,7 @@ impl Database {
     async fn recompute_symbol_table(&mut self, uri: &Url) -> Result<Arc<ModuleSymbolTable>, Error> {
         log::debug!("Recomputing symbol table for: {uri}");
         let cst = self.cst(uri).await?;
-        let module_symbol_table = lowering::build_symbol_table(&cst).map(Arc::new)?;
+        let module_symbol_table = polarity_lang_lowering::build_symbol_table(&cst).map(Arc::new)?;
         self.symbol_table.insert(uri.clone(), module_symbol_table.clone());
         Ok(module_symbol_table)
     }
@@ -164,7 +165,7 @@ impl Database {
     //
     //
 
-    pub async fn ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+    pub async fn ust(&mut self, uri: &Url) -> Result<Arc<polarity_lang_ast::Module>, Error> {
         match self.ust.get_unless_stale(uri) {
             Some(ust) => {
                 log::debug!("Found ust in cache: {uri}");
@@ -174,7 +175,10 @@ impl Database {
         }
     }
 
-    pub async fn recompute_ust(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+    pub async fn recompute_ust(
+        &mut self,
+        uri: &Url,
+    ) -> Result<Arc<polarity_lang_ast::Module>, Error> {
         log::debug!("Recomputing ust for: {uri}");
         let cst = self.cst(uri).await?;
         let deps = self.deps(uri).await?;
@@ -190,7 +194,7 @@ impl Database {
             symbol_table.insert(dep.clone(), module_symbol_table);
         }
 
-        let ust = lowering::lower_module_with_symbol_table(&cst, &symbol_table)
+        let ust = polarity_lang_lowering::lower_module_with_symbol_table(&cst, &symbol_table)
             .map_err(Error::Lowering)
             .map(Arc::new);
 
@@ -303,7 +307,7 @@ impl Database {
     //
     //
 
-    pub async fn ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+    pub async fn ast(&mut self, uri: &Url) -> Result<Arc<polarity_lang_ast::Module>, Error> {
         match self.ast.get_unless_stale(uri) {
             Some(ast) => {
                 log::debug!("Found ast in cache: {uri}");
@@ -313,7 +317,10 @@ impl Database {
         }
     }
 
-    pub async fn recompute_ast(&mut self, uri: &Url) -> Result<Arc<ast::Module>, Error> {
+    pub async fn recompute_ast(
+        &mut self,
+        uri: &Url,
+    ) -> Result<Arc<polarity_lang_ast::Module>, Error> {
         log::debug!("Recomputing ast for: {uri}");
 
         // Compute the type info table
@@ -321,9 +328,12 @@ impl Database {
 
         // Typecheck module
         let ust = self.ust(uri).await.map(|x| (*x).clone())?;
-        let ast = elaborator::typechecker::check_with_lookup_table(Rc::new(ust), &info_table)
-            .map(Arc::new)
-            .map_err(Error::Type);
+        let ast = polarity_lang_elaborator::typechecker::check_with_lookup_table(
+            Rc::new(ust),
+            &info_table,
+        )
+        .map(Arc::new)
+        .map_err(Error::Type);
         self.ast.insert(uri.clone(), ast.clone());
         ast
     }
@@ -544,7 +554,7 @@ impl Database {
         let module = self.ust(uri).await?;
         let mut module = (*module).clone();
         module.rename();
-        Ok(printer::Print::print_to_string(&module, None))
+        Ok(polarity_lang_printer::Print::print_to_string(&module, None))
     }
 
     pub async fn load_imports(&mut self, module_uri: &Url) -> Result<(), Error> {

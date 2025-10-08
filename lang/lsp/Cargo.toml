@@ -1,5 +1,5 @@
 [package]
-name = "lsp-server"
+name = "polarity-lang-lsp-server"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true
@@ -21,7 +21,7 @@ miette = { workspace = true }
 # URLs
 url = { workspace = true }
 # workspace members
-ast = { path = "../ast" }
-driver = { path = "../driver" }
-printer = { path = "../printer" }
-miette_util = { path = "../miette_util" }
+polarity-lang-ast = { path = "../ast" }
+polarity-lang-driver = { path = "../driver" }
+polarity-lang-printer = { path = "../printer" }
+polarity-lang-miette_util = { path = "../miette_util" }

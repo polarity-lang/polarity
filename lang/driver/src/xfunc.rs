@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use ast::rename::Rename;
-use miette_util::codespan::Span;
-use printer::Print;
-use transformations::LiftResult;
+use polarity_lang_ast::rename::Rename;
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::Print;
+use polarity_lang_transformations::LiftResult;
 
-use ast::*;
-use parser::cst;
-use transformations::matrix;
-use transformations::result::XfuncError;
+use polarity_lang_ast::*;
+use polarity_lang_parser::cst;
+use polarity_lang_transformations::matrix;
+use polarity_lang_transformations::result::XfuncError;
 use url::Url;
 
 use crate::database::Database;
@@ -60,10 +60,10 @@ impl Database {
         filter_out.extend(xtors);
 
         let LiftResult { module, modified_decls: mut dirty_decls, .. } =
-            transformations::lift(module, type_name);
+            polarity_lang_transformations::lift(module, type_name);
         dirty_decls.retain(|name| !filter_out.contains(name));
 
-        let mat = transformations::as_matrix(&module)?;
+        let mat = polarity_lang_transformations::as_matrix(&module)?;
 
         let type_span =
             mat.map.get(type_name).and_then(|x| x.span).ok_or(XfuncError::Impossible {
@@ -73,11 +73,11 @@ impl Database {
 
         let original = Original { type_span, decl_spans, xdefs };
 
-        let repr = transformations::repr(&mat, type_name)?;
+        let repr = polarity_lang_transformations::repr(&mat, type_name)?;
 
         let result = match repr {
-            transformations::matrix::Repr::Data => refunctionalize(&mat, type_name),
-            transformations::matrix::Repr::Codata => defunctionalize(&mat, type_name),
+            polarity_lang_transformations::matrix::Repr::Data => refunctionalize(&mat, type_name),
+            polarity_lang_transformations::matrix::Repr::Codata => defunctionalize(&mat, type_name),
         }?;
 
         Ok(generate_edits(&module, original, dirty_decls, result))
@@ -140,7 +140,7 @@ fn generate_edits(
 }
 
 fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
-    let (mut codata, mut codefs) = transformations::as_codata(mat, type_name)?;
+    let (mut codata, mut codefs) = polarity_lang_transformations::as_codata(mat, type_name)?;
 
     codata.rename();
     codefs.iter_mut().for_each(|codef| codef.rename());
@@ -152,7 +152,7 @@ fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, cr
 }
 
 fn defunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
-    let (mut data, mut defs) = transformations::as_data(mat, type_name)?;
+    let (mut data, mut defs) = polarity_lang_transformations::as_data(mat, type_name)?;
 
     data.rename();
     defs.iter_mut().for_each(|def| def.rename());

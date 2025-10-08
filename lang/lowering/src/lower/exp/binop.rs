@@ -1,9 +1,9 @@
-use parser::cst::{self};
+use polarity_lang_parser::cst::{self};
 
 use crate::{Ctx, LoweringResult, lower::Lower};
 
 impl Lower for cst::exp::BinOp {
-    type Target = ast::Exp;
+    type Target = polarity_lang_ast::Exp;
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::BinOp { span, lhs, rhs } = self;
 
@@ -23,13 +23,19 @@ impl Lower for cst::exp::BinOp {
                     cst::exp::BinOp { span: *span, lhs: Box::new(rhs.clone()), rhs: tail.to_vec() };
                 let rhs_lowered = new_bin_op.lower(ctx)?;
 
-                Ok(ast::TypCtor {
+                Ok(polarity_lang_ast::TypCtor {
                     span: Some(*span),
                     name,
-                    args: ast::Args {
+                    args: polarity_lang_ast::Args {
                         args: vec![
-                            ast::Arg::UnnamedArg { arg: lhs.lower(ctx)?, erased: false },
-                            ast::Arg::UnnamedArg { arg: Box::new(rhs_lowered), erased: false },
+                            polarity_lang_ast::Arg::UnnamedArg {
+                                arg: lhs.lower(ctx)?,
+                                erased: false,
+                            },
+                            polarity_lang_ast::Arg::UnnamedArg {
+                                arg: Box::new(rhs_lowered),
+                                erased: false,
+                            },
                         ],
                     },
                     is_bin_op: Some(operator.id.clone()),

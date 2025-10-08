@@ -1,5 +1,5 @@
-use ast::ctx::LevelCtx;
-use ast::*;
+use polarity_lang_ast::ctx::LevelCtx;
+use polarity_lang_ast::*;
 
 use crate::result::TcResult;
 

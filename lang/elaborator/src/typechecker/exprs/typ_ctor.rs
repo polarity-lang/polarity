@@ -1,6 +1,6 @@
 //! Bidirectional type checking for type constructors
 
-use ast::*;
+use polarity_lang_ast::*;
 
 use super::super::ctx::*;
 use super::CheckInfer;

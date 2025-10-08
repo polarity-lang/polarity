@@ -1,6 +1,6 @@
-use ast::IdBound;
 use miette::{Diagnostic, SourceSpan};
-use parser::cst::ident::Ident;
+use polarity_lang_ast::IdBound;
+use polarity_lang_parser::cst::ident::Ident;
 use thiserror::Error;
 
 /// The result type specialized to lowering errors.

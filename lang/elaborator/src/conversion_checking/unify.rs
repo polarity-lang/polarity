@@ -6,12 +6,12 @@
 //! * Adam Gundry and Conor McBride. "A tutorial implementation of dynamic pattern unification." (2013).
 //! * András Kovács's elaboration-zoo (<https://github.com/AndrasKovacs/elaboration-zoo>)
 
-use ast::{Variable, ctx::values::Binder};
 use ctx::LevelCtx;
-use miette_util::{ToMiette, codespan::Span};
+use polarity_lang_ast::{Variable, ctx::values::Binder};
+use polarity_lang_miette_util::{ToMiette, codespan::Span};
 
-use ast::*;
-use printer::Print;
+use polarity_lang_ast::*;
+use polarity_lang_printer::Print;
 
 use crate::result::{TcResult, TypeError};
 
@@ -460,7 +460,7 @@ fn create_partial_renaming(
 
         let name = match to_binder.name {
             VarBind::Var { id, .. } => VarBound { span: None, id },
-            ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
+            VarBind::Wildcard { .. } => VarBound::from_string("x"),
         };
 
         map.insert(lvl, Exp::Variable(Variable { span: None, idx, name, inferred_type: None }));

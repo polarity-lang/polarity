@@ -1,13 +1,13 @@
 use derivative::Derivative;
-use miette_util::codespan::Span;
-use pretty::DocAllocator;
-use printer::{
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{
     Alloc, Builder, Precedence, Print, PrintCfg,
     theme::ThemeExt,
     tokens::{ABSURD, COMATCH, FAT_ARROW},
     util::BackslashExt,
     util::ParensIfExt,
 };
+use pretty::DocAllocator;
 
 use crate::rename::{Rename, RenameCtx};
 use crate::{

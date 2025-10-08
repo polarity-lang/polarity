@@ -1,7 +1,7 @@
 //! Bidirectional type checker
 
-use ast::{ctx::values::Binder, *};
-use miette_util::ToMiette;
+use polarity_lang_ast::{ctx::values::Binder, *};
+use polarity_lang_miette_util::ToMiette;
 
 use super::super::ctx::*;
 use super::CheckInfer;

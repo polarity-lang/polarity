@@ -1,19 +1,19 @@
-use ast::FreeVars;
-use parser::cst;
+use polarity_lang_ast::FreeVars;
+use polarity_lang_parser::cst;
 
 use crate::{Ctx, LoweringResult, lower::Lower};
 
 use super::lower_telescope_inst;
 
 impl Lower for cst::exp::LocalComatch {
-    type Target = ast::Exp;
+    type Target = polarity_lang_ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::LocalComatch { span, name, is_lambda_sugar, cases } = self;
         let cases = cases.lower(ctx)?;
         let fvs = cases.free_vars(&ctx.binders);
-        let closure = ast::Closure::identity(&ctx.binders, &fvs);
-        Ok(ast::LocalComatch {
+        let closure = polarity_lang_ast::Closure::identity(&ctx.binders, &fvs);
+        Ok(polarity_lang_ast::LocalComatch {
             span: Some(*span),
             ctx: None,
             name: ctx.unique_label(name.to_owned(), span)?,
@@ -27,16 +27,16 @@ impl Lower for cst::exp::LocalComatch {
 }
 
 impl Lower for cst::exp::Case<cst::exp::Copattern> {
-    type Target = ast::Case;
+    type Target = polarity_lang_ast::Case;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::Case { span, pattern, body } = self;
 
         lower_telescope_inst(&pattern.params, ctx, |ctx, params| {
             let (_, name) = ctx.symbol_table.lookup(&pattern.name)?;
-            Ok(ast::Case {
+            Ok(polarity_lang_ast::Case {
                 span: Some(*span),
-                pattern: ast::Pattern {
+                pattern: polarity_lang_ast::Pattern {
                     span: Some(pattern.span),
                     is_copattern: true,
                     name,

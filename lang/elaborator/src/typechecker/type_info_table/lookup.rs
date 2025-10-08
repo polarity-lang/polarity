@@ -1,5 +1,5 @@
-use ast::*;
-use miette_util::ToMiette;
+use polarity_lang_ast::*;
+use polarity_lang_miette_util::ToMiette;
 
 use super::{CtorMeta, DtorMeta, ModuleTypeInfoTable, TyCtorMeta, TypeError, TypeInfoTable};
 use crate::result::TcResult;

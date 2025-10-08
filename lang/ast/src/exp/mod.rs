@@ -1,11 +1,11 @@
 use std::fmt;
 
 use derivative::Derivative;
-use miette_util::codespan::Span;
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::theme::ThemeExt;
+use polarity_lang_printer::tokens::{AS, FAT_ARROW};
+use polarity_lang_printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 use pretty::DocAllocator;
-use printer::theme::ThemeExt;
-use printer::tokens::{AS, FAT_ARROW};
-use printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use crate::ctx::{BindContext, LevelCtx};
 use crate::rename::{Rename, RenameCtx};

@@ -2,7 +2,7 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-use driver::{Database, Xfunc};
+use polarity_lang_driver::{Database, Xfunc};
 
 #[derive(clap::Args)]
 pub struct Args {

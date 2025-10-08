@@ -1,10 +1,10 @@
 use url::Url;
 
-use ast::empty_braces;
-use printer::theme::ThemeExt;
-use printer::tokens::*;
-use printer::util::BracesExt;
-use printer::{Alloc, Builder, DocAllocator, Precedence, Print, PrintCfg};
+use polarity_lang_ast::empty_braces;
+use polarity_lang_printer::theme::ThemeExt;
+use polarity_lang_printer::tokens::*;
+use polarity_lang_printer::util::BracesExt;
+use polarity_lang_printer::{Alloc, Builder, DocAllocator, Precedence, Print, PrintCfg};
 
 #[derive(Debug, Clone)]
 pub enum Exp {

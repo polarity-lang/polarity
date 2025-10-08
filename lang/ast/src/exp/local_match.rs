@@ -1,11 +1,11 @@
 use derivative::Derivative;
-use miette_util::codespan::Span;
-use pretty::DocAllocator;
-use printer::{
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_printer::{
     Alloc, Builder, Precedence, Print, PrintCfg,
     theme::ThemeExt,
     tokens::{DOT, MATCH},
 };
+use pretty::DocAllocator;
 
 use crate::{
     Closure, ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst,

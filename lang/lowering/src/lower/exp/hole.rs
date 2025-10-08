@@ -1,21 +1,21 @@
-use ast::Hole;
-use parser::cst;
+use polarity_lang_ast::Hole;
+use polarity_lang_parser::cst;
 
 use crate::{Ctx, LoweringResult, lower::Lower};
 
 impl Lower for cst::exp::HoleKind {
-    type Target = ast::MetaVarKind;
+    type Target = polarity_lang_ast::MetaVarKind;
 
     fn lower(&self, _ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         match self {
-            cst::exp::HoleKind::MustSolve => Ok(ast::MetaVarKind::MustSolve),
-            cst::exp::HoleKind::CanSolve => Ok(ast::MetaVarKind::CanSolve),
+            cst::exp::HoleKind::MustSolve => Ok(polarity_lang_ast::MetaVarKind::MustSolve),
+            cst::exp::HoleKind::CanSolve => Ok(polarity_lang_ast::MetaVarKind::CanSolve),
         }
     }
 }
 
 impl Lower for cst::exp::Hole {
-    type Target = ast::Exp;
+    type Target = polarity_lang_ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::Hole { span, kind, .. } = self;

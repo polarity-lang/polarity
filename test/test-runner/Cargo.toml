@@ -30,11 +30,11 @@ termcolor = { version = "1.4.1" }
 # Find files recursively
 walkdir = "2.5.0"
 # workspace members
-ast = { path = "../../lang/ast" }
-parser = { path = "../../lang/parser" }
-elaborator = { path = "../../lang/elaborator" }
-printer = { path = "../../lang/printer" }
-driver = { path = "../../lang/driver" }
+polarity-lang-ast = { path = "../../lang/ast" }
+polarity-lang-parser = { path = "../../lang/parser" }
+polarity-lang-elaborator = { path = "../../lang/elaborator" }
+polarity-lang-printer = { path = "../../lang/printer" }
+polarity-lang-driver = { path = "../../lang/driver" }
 
 [[test]]
 name = "integration"

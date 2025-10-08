@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use ast::HashMap;
 use decls::*;
 use ident::Ident;
-use parser::cst::{ident::Operator, *};
+use polarity_lang_ast::HashMap;
+use polarity_lang_parser::cst::{ident::Operator, *};
 use url::Url;
 
 pub mod build;

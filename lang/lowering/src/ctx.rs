@@ -1,12 +1,11 @@
-use ast::ctx::values::Binder;
-use miette_util::ToMiette;
-use miette_util::codespan::Span;
-
-use ast::ctx::{BindContext, LevelCtx};
-use ast::{self, MetaVar, MetaVarKind, MetaVarState, VarBound};
-use ast::{HashMap, HashSet};
-use ast::{Idx, Lvl};
-use parser::cst::ident::Ident;
+use polarity_lang_ast::ctx::values::Binder;
+use polarity_lang_ast::ctx::{BindContext, LevelCtx};
+use polarity_lang_ast::{self, MetaVar, MetaVarKind, MetaVarState, VarBound};
+use polarity_lang_ast::{HashMap, HashSet};
+use polarity_lang_ast::{Idx, Lvl};
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_miette_util::codespan::Span;
+use polarity_lang_parser::cst::ident::Ident;
 use url::Url;
 
 use crate::LoweringResult;
@@ -51,7 +50,7 @@ impl Ctx {
         for fst in (0..self.binders.len()).rev() {
             let inner = &self.binders.bound[fst];
             for snd in (0..inner.len()).rev() {
-                let ast::VarBind::Var { id, .. } = &inner[snd].name else {
+                let polarity_lang_ast::VarBind::Var { id, .. } = &inner[snd].name else {
                     continue;
                 };
                 if id == &name.id {
@@ -66,7 +65,7 @@ impl Ctx {
         &mut self,
         user_name: Option<Ident>,
         info: &Span,
-    ) -> LoweringResult<ast::Label> {
+    ) -> LoweringResult<polarity_lang_ast::Label> {
         if let Some(user_name) = &user_name {
             if self.symbol_table.lookup_exists(user_name) {
                 return Err(LoweringError::LabelNotUnique {
@@ -95,9 +94,10 @@ impl Ctx {
         }
         let id = self.next_label_id;
         self.next_label_id += 1;
-        Ok(ast::Label {
+        Ok(polarity_lang_ast::Label {
             id,
-            user_name: user_name.map(|name| ast::IdBind { span: Some(name.span), id: name.id }),
+            user_name: user_name
+                .map(|name| polarity_lang_ast::IdBind { span: Some(name.span), id: name.id }),
         })
     }
 
@@ -124,22 +124,24 @@ impl Ctx {
     /// all variables in Γ. This function computes the substitution id_Γ.
     /// This substitution is needed when lowering typed holes since they stand for unknown terms which
     /// could potentially use all variables in the context.
-    pub fn subst_from_ctx(&self) -> Vec<Vec<Binder<Box<ast::Exp>>>> {
-        let mut args: Vec<Vec<Binder<Box<ast::Exp>>>> = Vec::new();
+    pub fn subst_from_ctx(&self) -> Vec<Vec<Binder<Box<polarity_lang_ast::Exp>>>> {
+        let mut args: Vec<Vec<Binder<Box<polarity_lang_ast::Exp>>>> = Vec::new();
         let mut curr_subst = Vec::new();
 
         for (fst, inner) in self.binders.iter().enumerate() {
             for (snd, binder) in inner.iter().enumerate() {
                 let var = Box::new(
-                    ast::Variable {
+                    polarity_lang_ast::Variable {
                         span: None,
                         idx: self.level_to_index(Lvl { fst, snd }),
                         name: match &binder.name {
-                            ast::VarBind::Var { id, .. } => VarBound::from_string(id),
+                            polarity_lang_ast::VarBind::Var { id, .. } => VarBound::from_string(id),
                             // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
                             // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
                             // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
-                            ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
+                            polarity_lang_ast::VarBind::Wildcard { .. } => {
+                                VarBound::from_string("x")
+                            }
                         },
                         inferred_type: None,
                     }

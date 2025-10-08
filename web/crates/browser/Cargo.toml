@@ -29,8 +29,8 @@ console_log = "1"
 # fetch sources
 reqwest = { version = "0.12" }
 # workspace
-lsp-server = { path = "../../../lang/lsp" }
-driver = { path = "../../../lang/driver" }
+polarity-lang-lsp-server = { path = "../../../lang/lsp" }
+polarity-lang-driver = { path = "../../../lang/driver" }
 
 [dependencies.web-sys]
 version = "0.3"

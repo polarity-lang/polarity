@@ -1,7 +1,7 @@
-use ast::{Case, Ctor, DocComment, Dtor};
+use polarity_lang_ast::{Case, Ctor, DocComment, Dtor};
 
 use comrak::{Options, markdown_to_html};
-use printer::PrintCfg;
+use polarity_lang_printer::PrintCfg;
 
 use crate::printer::print_html_to_string;
 

@@ -1,12 +1,12 @@
 use std::convert::Infallible;
 
 use miette::{Diagnostic, SourceSpan};
-use miette_util::ToMiette;
-use miette_util::codespan::Span;
+use polarity_lang_miette_util::ToMiette;
+use polarity_lang_miette_util::codespan::Span;
 use thiserror::Error;
 
-use ast::*;
-use printer::types::Print;
+use polarity_lang_ast::*;
+use polarity_lang_printer::types::Print;
 
 fn comma_separated<I: IntoIterator<Item = String>>(iter: I) -> String {
     separated(", ", iter)

@@ -1,8 +1,8 @@
 #![deny(clippy::all)]
 #![deny(unsafe_code)]
 
-use driver::{FileSource, InMemorySource};
 use futures::stream::TryStreamExt;
+use polarity_lang_driver::{FileSource, InMemorySource};
 use tower_lsp_server::{LspService, Server};
 use wasm_bindgen::{JsCast, prelude::*};
 use wasm_bindgen_futures::stream::JsStream;
@@ -65,8 +65,8 @@ pub async fn serve(config: ServerConfig) -> Result<(), JsValue> {
 
     let create_server = |client| {
         let source = InMemorySource::new().fallback_to(FetchSource::default());
-        let database = driver::Database::from_source(source);
-        lsp_server::Server::with_database(client, database)
+        let database = polarity_lang_driver::Database::from_source(source);
+        polarity_lang_lsp_server::Server::with_database(client, database)
     };
 
     let (service, messages) = LspService::new(create_server);

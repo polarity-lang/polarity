@@ -1,5 +1,5 @@
 [package]
-name = "transformations"
+name = "polarity-lang-transformations"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true
@@ -18,5 +18,5 @@ miette = { workspace = true }
 thiserror = { workspace = true }
 derivative = { workspace = true }
 # workspace members
-ast = { path = "../ast" }
-miette_util = { path = "../miette_util" }
+polarity-lang-ast = { path = "../ast" }
+polarity-lang-miette_util = { path = "../miette_util" }
