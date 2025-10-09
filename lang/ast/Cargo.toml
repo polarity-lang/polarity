@@ -20,5 +20,5 @@ thiserror  = { workspace = true }
 url        = { workspace = true }
 
 # workspace dependencies
-polarity-lang-miette-util = { path = "../miette_util" }
-polarity-lang-printer     = { path = "../printer" }
+polarity-lang-miette-util = { workspace = true }
+polarity-lang-printer     = { workspace = true }

@@ -19,8 +19,6 @@ pretty        = { workspace = true }
 url           = { workspace = true }
 
 # workspace dependencies
-polarity-lang-ast     = { path = "../ast" }
-polarity-lang-driver  = { path = "../driver" }
-polarity-lang-printer = { path = "../printer" }
-
-
+polarity-lang-ast     = { workspace = true }
+polarity-lang-driver  = { workspace = true }
+polarity-lang-printer = { workspace = true }

@@ -17,7 +17,7 @@ tower-lsp-server = { workspace = true }
 url              = { workspace = true }
 
 # workspace dependencies
-polarity-lang-ast         = { path = "../ast" }
-polarity-lang-driver      = { path = "../driver" }
-polarity-lang-miette-util = { path = "../miette_util" }
-polarity-lang-printer     = { path = "../printer" }
+polarity-lang-ast         = { workspace = true }
+polarity-lang-driver      = { workspace = true }
+polarity-lang-miette-util = { workspace = true }
+polarity-lang-printer     = { workspace = true }

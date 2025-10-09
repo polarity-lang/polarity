@@ -22,7 +22,7 @@ thiserror    = { workspace = true }
 url          = { workspace = true }
 
 # workspace dependencies
-polarity-lang-miette-util = { path = "../miette_util" }
+polarity-lang-miette-util = { workspace = true }
 
 [build-dependencies.lalrpop]
 workspace = true

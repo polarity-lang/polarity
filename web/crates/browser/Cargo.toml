@@ -34,5 +34,5 @@ web-sys                  = { workspace = true, features = [
 ] }
 
 # workspace dependencies
-polarity-lang-driver     = { path = "../../../lang/driver" }
-polarity-lang-lsp-server = { path = "../../../lang/lsp" }
+polarity-lang-driver     = { workspace = true }
+polarity-lang-lsp-server = { workspace = true }
