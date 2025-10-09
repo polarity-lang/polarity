@@ -19,31 +19,61 @@ resolver = "2"
 default-members = ["app"]
 
 [workspace.package]
-version = "0.1.0"
-edition = "2024"
+version      = "0.1.0"
+edition      = "2024"
 rust-version = "1.85"
-authors = ["Tim Süberkrüb", "David Binder"]
-license = "MIT OR Apache-2.0"
-homepage = "https://polarity-lang.github.io/"
-repository = "https://github.com/polarity-lang/polarity"
-categories = ["compilers"]
+authors      = ["Tim Süberkrüb", "David Binder"]
+license      = "MIT OR Apache-2.0"
+homepage     = "https://polarity-lang.github.io/"
+repository   = "https://github.com/polarity-lang/polarity"
+categories   = ["compilers"]
 
+# In order to keep all the information about the version bounds of our dependencies in one place we
+# define these here.
 [workspace.dependencies]
-# fancy error messages
-miette = { version = "7" }
-thiserror = { version = "1" }
-# lsp server
-lsp-types = { version = "0.97" }
-tower-lsp-server = { version = "0.21" , default-features = false, features = [
+askama                   = { version = "0.12.1" }
+askama_escape            = { version = "0.10.3" }
+assert_cmd               = { version = "2.0.14" }
+async-lock               = { version = "2" }
+async-std                = { version = "1" }
+async-trait              = { version = "0.1"}
+clap                     = { version = "4" }
+clap_complete            = { version = "4.5.38"}
+comrak                   = { version = "0.32" }
+console_error_panic_hook = { version = "0.1" }
+console_log              = { version = "1" }
+criterion                = { version = "0.5" }
+derivative               = { version = "2" }
+env_logger               = { version = "0.11.3" }
+futures                  = { version = "0.3" }
+fxhash                   = { version = "0.2.1" }
+js-sys                   = { version = "0.3" }
+lalrpop                  = { version = "0.20" }
+lalrpop-util             = { version = "0.20" }
+log                      = { version = "0.4.21" }
+logos                    = { version = "0.14.0" }
+lsp-types                = { version = "0.97" }
+miette                   = { version = "7" }
+num-bigint               = { version = "0.4" }
+opener                   = { version = "0.5" }
+pretty                   = { version = "0.11", features = ["termcolor"] }
+reqwest                  = { version = "0.12" }
+ropey                    = { version = "1" }
+rust-lapper              = { version = "1" }
+serde                    = { version = "1" }
+serde_derive             = { version = "1" }
+tantivy                  = { version = "0.18" }
+termcolor                = { version = "1.4.1" }
+termsize                 = { version = "0.1" }
+thiserror                = { version = "1" }
+tokio                    = { version = "1" }
+toml                     = { version = "0.5" }
+tower-lsp-server         = { version = "0.21" , default-features = false, features = [
     "runtime-agnostic",
 ] }
-# ignoring fields when deriving traits (e.g. Eq, Hash)
-derivative = { version = "2" }
-# big integers
-num-bigint = { version = "0.4" }
-# url (for file locations)
-url = { version = "2.5.0" }
-pretty = { version = "0.11", features = ["termcolor"] }
-# logging infrastructure
-log = "0.4.21"
-env_logger = "0.11.3"
+url                      = { version = "2.5.0" }
+walkdir                  = { version = "2.5.0" }
+wasm-bindgen             = { version = "0.2" }
+wasm-bindgen-futures     = { version = "0.4" }
+wasm-streams             = { version = "0.2" }
+web-sys                  = { version = "0.3" }

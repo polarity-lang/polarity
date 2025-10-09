@@ -1,7 +1,6 @@
 [package]
 name = "polarity-lang-ast"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -12,19 +11,14 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-# fancy error messages
-miette = { workspace = true }
-thiserror = "1"
-# url (for file locations)
-url = "2.5.0"
-# ignoring fields when deriving traits (e.g. Eq, Hash)
-derivative = "2"
-# big integers
-num-bigint = "0.4"
-# lazy static
-fxhash = "0.2.1"
-# prettyprinting
-pretty = { version = "0.11", features = ["termcolor"] }
-# workspace members
+derivative = { workspace = true }
+fxhash     = { workspace = true }
+miette     = { workspace = true }
+num-bigint = { workspace = true }
+pretty     = { workspace = true }
+thiserror  = { workspace = true }
+url        = { workspace = true }
+
+# workspace dependencies
 polarity-lang-miette-util = { path = "../miette_util" }
-polarity-lang-printer = { path = "../printer" }
+polarity-lang-printer     = { path = "../printer" }

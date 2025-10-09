@@ -1,7 +1,6 @@
 [package]
 name = "polarity-lang-elaborator"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -12,14 +11,14 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-miette = { workspace = true }
-thiserror = { workspace = true }
 derivative = { workspace = true }
-pretty = { workspace = true }
-log = { workspace = true }
-url = { workspace = true }
+log        = { workspace = true }
+miette     = { workspace = true }
+pretty     = { workspace = true }
+thiserror  = { workspace = true }
+url        = { workspace = true }
 
-# workspace members
-polarity-lang-ast = { path = "../ast" }
-polarity-lang-printer = { path = "../printer" }
+# workspace dependencies
+polarity-lang-ast         = { path = "../ast" }
 polarity-lang-miette-util = { path = "../miette_util" }
+polarity-lang-printer     = { path = "../printer" }

@@ -1,7 +1,6 @@
 [package]
 name = "polarity-lang-miette-util"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

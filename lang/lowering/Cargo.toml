@@ -1,7 +1,6 @@
 [package]
 name = "polarity-lang-lowering"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -12,15 +11,14 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-miette = { workspace = true }
-thiserror = { workspace = true }
-# big integers
+log        = { workspace = true }
+miette     = { workspace = true }
 num-bigint = { workspace = true }
-log = { workspace = true }
-url = { workspace = true }
+thiserror  = { workspace = true }
+url        = { workspace = true }
 
-# workspace members
-polarity-lang-printer = { path = "../printer" }
-polarity-lang-parser = { path = "../parser" }
-polarity-lang-ast = { path = "../ast" }
+# workspace dependencies
+polarity-lang-ast         = { path = "../ast" }
 polarity-lang-miette-util = { path = "../miette_util" }
+polarity-lang-parser      = { path = "../parser" }
+polarity-lang-printer     = { path = "../printer" }

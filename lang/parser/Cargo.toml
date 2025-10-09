@@ -12,21 +12,17 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-# lexer generator
-logos = "0.14.0"
-# Deriving
-derivative = { workspace = true }
-# parser generator
-lalrpop = "0.20"
-lalrpop-util = "0.20"
-# url (for file locations)
-url = "2.5.0"
-miette = { workspace = true }
-thiserror = { workspace = true }
-num-bigint = { workspace = true }
-# Workspace members
+derivative   = { workspace = true }
+lalrpop      = { workspace = true }
+lalrpop-util = { workspace = true }
+logos        = { workspace = true }
+miette       = { workspace = true }
+num-bigint   = { workspace = true }
+thiserror    = { workspace = true }
+url          = { workspace = true }
+
+# workspace dependencies
 polarity-lang-miette-util = { path = "../miette_util" }
 
 [build-dependencies.lalrpop]
-version = "0.19"
-features = ["lexer"]
+workspace = true
