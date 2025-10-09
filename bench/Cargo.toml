@@ -10,6 +10,8 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+publish = false
+
 [[bin]]
 name = "pol-bench"
 path = "src/main.rs"
