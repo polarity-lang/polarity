@@ -31,6 +31,3 @@ polarity-lang-driver     = { workspace = true }
 polarity-lang-elaborator = { workspace = true }
 polarity-lang-lsp-server = { workspace = true }
 polarity-lang-printer    = { workspace = true }
-
-
-
