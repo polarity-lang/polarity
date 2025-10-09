@@ -10,6 +10,8 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+include = ["/src", "/templates"]
+
 [dependencies]
 askama        = { workspace = true }
 askama_escape = { workspace = true }
