@@ -33,8 +33,8 @@ coverage:
 
 .PHONY: package-quick
 package-quick:
-	@cargo package --workspace --no-verify --exclude polarity-bench --exclude test-runner
+	@cargo package --workspace --no-verify --exclude polarity-bench --exclude test-runner --exclude lsp-browser
 
 .PHONY: package
 package:
-	@cargo package --workspace --no-verify --exclude polarity-bench --exclude test-runner
+	@cargo package --workspace --no-verify --exclude polarity-bench --exclude test-runner --exclude lsp-browser
