@@ -10,6 +10,8 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+description = "Internal component of the polarity language: Type inference and elaboration"
+
 [dependencies]
 derivative = { workspace = true }
 log        = { workspace = true }

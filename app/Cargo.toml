@@ -10,6 +10,8 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+description = "Binary of the polarity programming language"
+
 [[bin]]
 name = "pol"
 path = "src/main.rs"
