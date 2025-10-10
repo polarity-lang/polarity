@@ -10,6 +10,8 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+description = "Internal component of the Polarity language: Type inference and elaboration"
+
 [dependencies]
 derivative = { workspace = true }
 log        = { workspace = true }
@@ -19,6 +21,6 @@ thiserror  = { workspace = true }
 url        = { workspace = true }
 
 # workspace dependencies
-polarity-lang-ast         = { path = "../ast" }
-polarity-lang-miette-util = { path = "../miette_util" }
-polarity-lang-printer     = { path = "../printer" }
+polarity-lang-ast         = { workspace = true }
+polarity-lang-miette-util = { workspace = true }
+polarity-lang-printer     = { workspace = true }

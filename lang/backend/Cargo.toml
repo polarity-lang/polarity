@@ -10,11 +10,13 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+description = "Internal component of the Polarity language: Code generation"
+
 [dependencies]
 miette    = { workspace = true }
 thiserror = { workspace = true }
 url       = { workspace = true }
 
 # workspace dependencies
-polarity-lang-ast     = { path = "../ast" }
-polarity-lang-printer = { path = "../printer" }
+polarity-lang-ast     = { workspace = true }
+polarity-lang-printer = { workspace = true }

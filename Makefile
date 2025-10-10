@@ -31,3 +31,10 @@ coverage:
 	@cargo llvm-cov --workspace --html
 	@cargo llvm-cov --workspace --open
 
+.PHONY: package-quick
+package-quick:
+	@cargo package --workspace --no-verify --exclude polarity-bench --exclude test-runner --exclude lsp-browser
+
+.PHONY: package
+package:
+	@cargo package --workspace --no-verify --exclude polarity-bench --exclude test-runner --exclude lsp-browser

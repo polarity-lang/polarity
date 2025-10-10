@@ -1,8 +1,16 @@
 [package]
-publish = false
-edition = "2024"
 name = "lsp-browser"
-version = "0.0.0"
+
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories.workspace = true
+
+publish = false
 
 [features]
 default = ["tower-lsp-server/runtime-agnostic"]
@@ -34,5 +42,5 @@ web-sys                  = { workspace = true, features = [
 ] }
 
 # workspace dependencies
-polarity-lang-driver     = { path = "../../../lang/driver" }
-polarity-lang-lsp-server = { path = "../../../lang/lsp" }
+polarity-lang-driver     = { workspace = true }
+polarity-lang-lsp-server = { workspace = true }

@@ -82,6 +82,19 @@ jobs:
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all -- -D warnings
+  
+  package:  
+    name: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify metadata
+        run: cargo package --workspace --no-verify --exclude polarity-bench --exclude test-runner --exclude lsp-browser
+      # The next step is very time intensive, so we only execute it on main.
+      - name: Verify that tarballs can be built
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: cargo package --workspace --exclude polarity-bench --exclude test-runner --exclude lsp-browser
 
   line-endings:
     name: Check line endings

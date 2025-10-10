@@ -10,6 +10,8 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+description = "Internal component of the Polarity language: Demand-driven compiler driver"
+
 [dependencies]
 async-trait = { workspace = true }
 log         = { workspace = true }
@@ -21,11 +23,11 @@ thiserror   = { workspace = true }
 url         = { workspace = true }
 
 # workspace dependencies
-polarity-lang-ast             = { path = "../ast" }
-polarity-lang-lowering        = { path = "../lowering" }
-polarity-lang-elaborator      = { path = "../elaborator" }
-polarity-lang-printer         = { path = "../printer" }
-polarity-lang-parser          = { path = "../parser" }
-polarity-lang-transformations = { path = "../transformations" }
-polarity-lang-backend         = { path = "../backend" }
-polarity-lang-miette-util     = { path = "../miette_util" }
+polarity-lang-ast             = { workspace = true }
+polarity-lang-lowering        = { workspace = true }
+polarity-lang-elaborator      = { workspace = true }
+polarity-lang-printer         = { workspace = true }
+polarity-lang-parser          = { workspace = true }
+polarity-lang-transformations = { workspace = true }
+polarity-lang-backend         = { workspace = true }
+polarity-lang-miette-util     = { workspace = true }

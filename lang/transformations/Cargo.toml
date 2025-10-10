@@ -1,7 +1,6 @@
 [package]
 name = "polarity-lang-transformations"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,6 +10,8 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+description = "Internal component of the Polarity language: Code transformations"
+
 [dependencies]
 derivative = { workspace = true }
 miette     = { workspace = true }
@@ -18,5 +19,5 @@ thiserror  = { workspace = true }
 url        = { workspace = true }
 
 # workspace dependencies
-polarity-lang-ast         = { path = "../ast" }
-polarity-lang-miette-util = { path = "../miette_util" }
+polarity-lang-ast         = { workspace = true }
+polarity-lang-miette-util = { workspace = true }

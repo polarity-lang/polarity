@@ -4,17 +4,19 @@ use std::path::Path;
 use askama::Template;
 
 use polarity_lang_driver::Database;
-use polarity_lang_driver::paths::{CSS_PATH, CSS_TEMPLATE_PATH};
+use polarity_lang_driver::paths::CSS_PATH;
 
 use crate::generate_docs::GenerateDocs;
 use crate::generate_html_from_paths;
 use crate::util::{get_absolut_css_path, get_files};
 
+const CSS_CONTENT: &str = include_str!("../templates/style.css");
+
 pub async fn write_html() {
     if !Path::new(CSS_PATH).exists() {
         fs::create_dir_all(Path::new(CSS_PATH).parent().unwrap())
             .expect("Failed to create CSS directory");
-        fs::write(CSS_PATH, CSS_TEMPLATE_PATH).expect("Failed to create CSS file");
+        fs::write(CSS_PATH, CSS_CONTENT).expect("Failed to create CSS file");
     }
     write_modules().await;
 }
