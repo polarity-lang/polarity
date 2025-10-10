@@ -10,7 +10,7 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
-description = "Internal component of the polarity language: Code transformations"
+description = "Internal component of the Polarity language: Code transformations"
 
 [dependencies]
 derivative = { workspace = true }

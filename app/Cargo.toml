@@ -10,7 +10,7 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
-description = "Binary of the polarity programming language"
+description = "Binary of the Polarity programming language"
 
 [[bin]]
 name = "pol"

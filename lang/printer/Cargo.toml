@@ -10,7 +10,7 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
-description = "Internal component of the polarity language: Prettyprinter with multiple backends"
+description = "Internal component of the Polarity language: Prettyprinter with multiple backends"
 
 [dependencies]
 askama_escape = { workspace = true }

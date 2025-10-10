@@ -10,7 +10,7 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
-description = "Internal component of the polarity language: Lowering and name resolution"
+description = "Internal component of the Polarity language: Lowering and name resolution"
 
 [dependencies]
 log        = { workspace = true }

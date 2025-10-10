@@ -10,7 +10,7 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
-description = "Internal component of the polarity language: Language server protocol implementation"
+description = "Internal component of the Polarity language: Language server protocol implementation"
 
 [dependencies]
 async-lock       = { workspace = true }
