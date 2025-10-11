@@ -7,6 +7,12 @@ use num_bigint::BigUint;
 pub enum LexicalError {
     #[default]
     InvalidToken,
+
+    CharLiteralEmpty,
+    CharLiteralTooLong,
+    EscapeSequenceUnknown,
+    EscapeSequenceMissing,
+    EscapeSequenceInvalidUnicode,
 }
 
 impl fmt::Display for LexicalError {
@@ -121,13 +127,10 @@ pub enum Token {
     NumLit(BigUint),
     /// The regexp is from <https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5>
     /// We do not allow multi line strings.
-    #[regex(r###""([^"\\]|\\.)*""###, |lex| {
-        let slice = lex.slice();
-        // Remove the surrounding quotation marks
-        let inner = &slice[1..slice.len()-1];
-        inner.to_string()
-    })]
+    #[regex(r###""([^"\\]|\\.)*""###, |lex| parse_string_literal(lex.slice()))]
     StringLit(String),
+    #[regex(r###"'([^'\\]|\\.)*'"###, |lex| parse_char_literal(lex.slice()))]
+    CharLit(char),
 
     // DocComments
     //
@@ -167,6 +170,82 @@ impl Iterator for Lexer<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         self.token_stream.next().map(|(token, span)| Ok((span.start, token?, span.end)))
     }
+}
+
+/// Process, validate and unescape a string literal
+fn parse_string_literal(literal: &str) -> Result<String, LexicalError> {
+    let inner = &literal[1..literal.len() - 1];
+    let mut chars = inner.chars();
+
+    let mut str = String::new();
+    while let Some(mut ch) = chars.next() {
+        if ch == '\\' {
+            ch = unescape(&mut chars)?;
+        }
+
+        str.push(ch);
+    }
+
+    Ok(str)
+}
+
+/// Process, validate and unescape a character literal
+fn parse_char_literal(literal: &str) -> Result<char, LexicalError> {
+    let inner = &literal[1..literal.len() - 1];
+    let mut chars = inner.chars();
+
+    if let Some(mut ch) = chars.next() {
+        if ch == '\\' {
+            ch = unescape(&mut chars)?;
+        }
+
+        if chars.next().is_some() {
+            return Err(LexicalError::CharLiteralTooLong);
+        }
+
+        return Ok(ch);
+    }
+
+    // empty char literal
+    Err(LexicalError::CharLiteralEmpty)
+}
+
+/// Unescape a single escape sequence in a character iterator and consume it
+fn unescape(seq: &mut std::str::Chars) -> Result<char, LexicalError> {
+    let Some(escape_code) = seq.next() else {
+        return Err(LexicalError::EscapeSequenceMissing);
+    };
+
+    let unescaped_char = match escape_code {
+        // control characters
+        'n' => '\n',
+        'r' => '\r',
+        't' => '\t',
+
+        // quotes
+        '"' => '"',
+        '\'' => '\'',
+
+        // backslash
+        '\\' => '\\',
+
+        // unicode codepoints (four hex digits)
+        'u' => {
+            let hex_str: String = seq.take(4).collect();
+            if hex_str.chars().count() != 4 {
+                return Err(LexicalError::EscapeSequenceInvalidUnicode);
+            }
+
+            let hex = u32::from_str_radix(&hex_str, 16)
+                .map_err(|_| LexicalError::EscapeSequenceInvalidUnicode)?;
+
+            char::from_u32(hex).ok_or(LexicalError::EscapeSequenceInvalidUnicode)?
+        }
+
+        _ => return Err(LexicalError::EscapeSequenceUnknown),
+    };
+
+    Ok(unescaped_char)
 }
 
 #[cfg(test)]
