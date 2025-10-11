@@ -277,13 +277,58 @@ mod lexer_tests {
     fn string_lit_newline() {
         let str = r###""h\ni""###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("h\\ni".to_string()))
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("h\ni".to_string()))
     }
 
     #[test]
     fn string_lit_escaped_quote() {
         let str = r###""h\"i""###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("h\\\"i".to_string()))
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("h\"i".to_string()))
+    }
+
+    #[test]
+    fn char_lit_simple() {
+        let str = r###"'h'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::CharLit('h'))
+    }
+
+    #[test]
+    fn char_lit_unicode() {
+        let str = r###"'π'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::CharLit('π'))
+    }
+
+    #[test]
+    fn char_lit_newline() {
+        let str = r###"'\n'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::CharLit('\n'))
+    }
+
+    #[test]
+    fn char_lit_escaped_quote() {
+        let str = r###"'\''"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::CharLit('\''))
+    }
+
+    #[test]
+    fn escape_control_chars() {
+        let str = r###""A\nB\rC\t\\""###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("A\nB\rC\t\\".to_string()))
+    }
+
+    #[test]
+    fn escape_unicode_literals() {
+        let str = r###""\u03BB \u03bb""###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(
+            lexer.next().unwrap().unwrap().1,
+            Token::StringLit("\u{03bb} \u{03bb}".to_string())
+        )
     }
 }
