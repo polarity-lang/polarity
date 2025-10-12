@@ -194,20 +194,19 @@ fn parse_char_literal(literal: &str) -> Result<char, LexicalError> {
     let inner = &literal[1..literal.len() - 1];
     let mut chars = inner.chars();
 
-    if let Some(mut ch) = chars.next() {
-        if ch == '\\' {
-            ch = unescape(&mut chars)?;
-        }
+    let Some(mut ch) = chars.next() else {
+        return Err(LexicalError::CharLiteralEmpty);
+    };
 
-        if chars.next().is_some() {
-            return Err(LexicalError::CharLiteralTooLong);
-        }
-
-        return Ok(ch);
+    if ch == '\\' {
+        ch = unescape(&mut chars)?;
     }
 
-    // empty char literal
-    Err(LexicalError::CharLiteralEmpty)
+    if chars.next().is_some() {
+        return Err(LexicalError::CharLiteralTooLong);
+    }
+
+    Ok(ch)
 }
 
 /// Unescape a single escape sequence in a character iterator and consume it
