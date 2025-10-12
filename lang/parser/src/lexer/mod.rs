@@ -7,7 +7,6 @@ use num_bigint::BigUint;
 pub enum LexicalError {
     #[default]
     InvalidToken,
-
     CharLiteralEmpty,
     CharLiteralTooLong,
     EscapeSequenceUnknown,
