@@ -248,7 +248,7 @@ fn unescape(seq: &mut std::str::Chars) -> Result<char, LexicalError> {
 
 #[cfg(test)]
 mod lexer_tests {
-    use super::{Lexer, Token};
+    use super::{Lexer, LexicalError, Token};
 
     #[test]
     fn doc_comment_1() {
@@ -328,5 +328,33 @@ mod lexer_tests {
             lexer.next().unwrap().unwrap().1,
             Token::StringLit("\u{03bb} \u{03bb}".to_string())
         )
+    }
+
+    #[test]
+    fn escape_unknown() {
+        let str = r###""\x""###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::EscapeSequenceUnknown))
+    }
+
+    #[test]
+    fn char_too_long() {
+        let str = r###"'aa'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::CharLiteralTooLong))
+    }
+
+    #[test]
+    fn char_empty() {
+        let str = r###"''"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::CharLiteralEmpty))
+    }
+
+    #[test]
+    fn invalid_unicode_escape() {
+        let str = r###"'\u123'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::EscapeSequenceInvalidUnicode))
     }
 }
