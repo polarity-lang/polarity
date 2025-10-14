@@ -11,7 +11,9 @@ pub enum LexicalError {
     CharLiteralTooLong,
     EscapeSequenceUnknown,
     EscapeSequenceMissing,
-    EscapeSequenceInvalidUnicode,
+    MalformedUnicodeEscape,
+    InvalidUnicodeLiteral,
+    InvalidUnicodeLiteralSurrogate,
 }
 
 impl fmt::Display for LexicalError {
@@ -227,17 +229,41 @@ fn unescape(seq: &mut std::str::Chars) -> Result<char, LexicalError> {
         // backslash
         '\\' => '\\',
 
-        // unicode codepoints (four hex digits)
+        // unicode codepoints
         'u' => {
-            let hex_str: String = seq.take(4).collect();
-            if hex_str.chars().count() != 4 {
-                return Err(LexicalError::EscapeSequenceInvalidUnicode);
+            if seq.next() != Some('{') {
+                return Err(LexicalError::MalformedUnicodeEscape);
             }
 
-            let hex = u32::from_str_radix(&hex_str, 16)
-                .map_err(|_| LexicalError::EscapeSequenceInvalidUnicode)?;
+            let mut hex_str = String::new();
+            while let Some(hex_digit) = seq.next() {
+                hex_str.push(hex_digit);
+                if hex_digit == '}' {
+                    break;
+                }
+            }
 
-            char::from_u32(hex).ok_or(LexicalError::EscapeSequenceInvalidUnicode)?
+            if hex_str.pop() != Some('}') {
+                return Err(LexicalError::MalformedUnicodeEscape);
+            }
+
+            // check hex code length (between 1 and 6)
+            let hex_length = hex_str.chars().count();
+            if hex_length > 6 || hex_length < 1 {
+                return Err(LexicalError::MalformedUnicodeEscape);
+            }
+
+            // parse to numeral
+            let hex = u32::from_str_radix(&hex_str, 16)
+                .map_err(|_| LexicalError::InvalidUnicodeLiteral)?;
+
+            // filter out surrogates
+            if hex >= 0xD800 && hex <= 0xDFFF {
+                return Err(LexicalError::InvalidUnicodeLiteralSurrogate);
+            }
+
+            // convert to character
+            char::from_u32(hex).ok_or(LexicalError::InvalidUnicodeLiteral)?
         }
 
         _ => return Err(LexicalError::EscapeSequenceUnknown),
@@ -322,12 +348,19 @@ mod lexer_tests {
 
     #[test]
     fn escape_unicode_literals() {
-        let str = r###""\u03BB \u03bb""###;
+        let str = r###""\u{03BB} \u{03bb}""###;
         let mut lexer = Lexer::new(str);
         assert_eq!(
             lexer.next().unwrap().unwrap().1,
             Token::StringLit("\u{03bb} \u{03bb}".to_string())
         )
+    }
+
+    #[test]
+    fn escape_unicode_emoji() {
+        let str = r###"'\u{1f60e}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap().unwrap().1, Token::CharLit('😎'))
     }
 
     #[test]
@@ -352,9 +385,51 @@ mod lexer_tests {
     }
 
     #[test]
-    fn invalid_unicode_escape() {
-        let str = r###"'\u123'"###;
+    fn invalid_unicode_escape_1() {
+        let str = r###"'\u1234'"###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap(), Err(LexicalError::EscapeSequenceInvalidUnicode))
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::MalformedUnicodeEscape))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_2() {
+        let str = r###"'\u{1234'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::MalformedUnicodeEscape))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_3() {
+        let str = r###"'\u1234}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::MalformedUnicodeEscape))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_4() {
+        let str = r###"'\u{}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::MalformedUnicodeEscape))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_5() {
+        let str = r###"'\u{1234567}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::MalformedUnicodeEscape))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_surrogate_1() {
+        let str = r###"'\u{D800}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeLiteralSurrogate))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_surrogate_2() {
+        let str = r###"'\u{DFFF}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeLiteralSurrogate))
     }
 }
