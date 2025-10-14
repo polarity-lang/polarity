@@ -7,6 +7,13 @@ use num_bigint::BigUint;
 pub enum LexicalError {
     #[default]
     InvalidToken,
+    CharLiteralEmpty,
+    CharLiteralTooLong,
+    EscapeSequenceUnknown,
+    EscapeSequenceMissing,
+    MalformedUnicodeEscape,
+    InvalidUnicodeCodepoint,
+    InvalidHexNumber,
 }
 
 impl fmt::Display for LexicalError {
@@ -121,13 +128,10 @@ pub enum Token {
     NumLit(BigUint),
     /// The regexp is from <https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5>
     /// We do not allow multi line strings.
-    #[regex(r###""([^"\\]|\\.)*""###, |lex| {
-        let slice = lex.slice();
-        // Remove the surrounding quotation marks
-        let inner = &slice[1..slice.len()-1];
-        inner.to_string()
-    })]
-    StringLit(String),
+    #[regex(r###""([^"\\]|\\.)*""###, |lex| StringLit::parse(lex.slice()))]
+    StringLit(StringLit),
+    #[regex(r###"'([^'\\]|\\.)*'"###, |lex| CharLit::parse(lex.slice()))]
+    CharLit(CharLit),
 
     // DocComments
     //
@@ -169,9 +173,119 @@ impl Iterator for Lexer<'_> {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct StringLit {
+    pub original: String,
+    pub unescaped: String,
+}
+
+impl StringLit {
+    /// Validate and unescape a string literal
+    fn parse(literal: &str) -> Result<Self, LexicalError> {
+        let inner = &literal[1..literal.len() - 1];
+        let mut chars = inner.chars();
+
+        let mut unescaped = String::new();
+        while let Some(mut ch) = chars.next() {
+            if ch == '\\' {
+                ch = unescape(&mut chars)?;
+            }
+
+            unescaped.push(ch);
+        }
+
+        Ok(Self { original: inner.to_string(), unescaped })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct CharLit {
+    pub original: String,
+    pub unescaped: char,
+}
+
+impl CharLit {
+    /// Validate and unescape a character literal
+    fn parse(literal: &str) -> Result<Self, LexicalError> {
+        let inner = &literal[1..literal.len() - 1];
+        let mut chars = inner.chars();
+
+        let Some(mut unescaped) = chars.next() else {
+            return Err(LexicalError::CharLiteralEmpty);
+        };
+
+        if unescaped == '\\' {
+            unescaped = unescape(&mut chars)?;
+        }
+
+        if chars.next().is_some() {
+            return Err(LexicalError::CharLiteralTooLong);
+        }
+
+        Ok(Self { original: inner.to_string(), unescaped })
+    }
+}
+
+/// Unescape a single escape sequence in a character iterator and consume it
+fn unescape(seq: &mut std::str::Chars) -> Result<char, LexicalError> {
+    let Some(escape_code) = seq.next() else {
+        return Err(LexicalError::EscapeSequenceMissing);
+    };
+
+    let unescaped_char = match escape_code {
+        // control characters
+        'n' => '\n',
+        'r' => '\r',
+        't' => '\t',
+
+        // quotes
+        '"' => '"',
+        '\'' => '\'',
+
+        // backslash
+        '\\' => '\\',
+
+        // unicode codepoints
+        'u' => {
+            if seq.next() != Some('{') {
+                return Err(LexicalError::MalformedUnicodeEscape);
+            }
+
+            let mut hex_str = String::new();
+            for hex_digit in seq.by_ref() {
+                hex_str.push(hex_digit);
+                if hex_digit == '}' {
+                    break;
+                }
+            }
+
+            if hex_str.pop() != Some('}') {
+                return Err(LexicalError::MalformedUnicodeEscape);
+            }
+
+            // check hex code length (between 1 and 6)
+            let hex_length = hex_str.chars().count();
+            if !(1..=6).contains(&hex_length) {
+                return Err(LexicalError::MalformedUnicodeEscape);
+            }
+
+            // parse to numeral
+            let hex =
+                u32::from_str_radix(&hex_str, 16).map_err(|_| LexicalError::InvalidHexNumber)?;
+
+            // convert to character
+            char::from_u32(hex).ok_or(LexicalError::InvalidUnicodeCodepoint)?
+        }
+
+        _ => return Err(LexicalError::EscapeSequenceUnknown),
+    };
+
+    Ok(unescaped_char)
+}
+
 #[cfg(test)]
 mod lexer_tests {
-    use super::{Lexer, Token};
+    use super::{CharLit, Lexer, LexicalError, StringLit, Token};
 
     #[test]
     fn doc_comment_1() {
@@ -187,24 +301,170 @@ mod lexer_tests {
         assert_eq!(lexer.next().unwrap().unwrap().1, Token::DocComment("/// hello".to_string()))
     }
 
+    fn assert_eq_string_lit(str: &str, unescaped: &str) {
+        let without_quotes = &str[1..str.len() - 1];
+        let mut lexer = Lexer::new(str);
+
+        assert_eq!(
+            lexer.next().unwrap().unwrap().1,
+            Token::StringLit(StringLit {
+                original: without_quotes.to_string(),
+                unescaped: unescaped.to_string(),
+            })
+        )
+    }
+
+    fn assert_eq_char_lit(str: &str, unescaped: char) {
+        let without_quotes = &str[1..str.len() - 1];
+        let mut lexer = Lexer::new(str);
+
+        assert_eq!(
+            lexer.next().unwrap().unwrap().1,
+            Token::CharLit(CharLit { original: without_quotes.to_string(), unescaped: unescaped })
+        )
+    }
+
     #[test]
     fn string_lit_simple() {
         let str = r###""hi""###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("hi".to_string()))
+        assert_eq_string_lit(str, "hi");
     }
 
     #[test]
     fn string_lit_newline() {
         let str = r###""h\ni""###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("h\\ni".to_string()))
+        assert_eq_string_lit(str, "h\ni");
     }
 
     #[test]
     fn string_lit_escaped_quote() {
         let str = r###""h\"i""###;
+        assert_eq_string_lit(str, "h\"i");
+    }
+
+    #[test]
+    fn char_lit_simple() {
+        let str = r###"'h'"###;
+        assert_eq_char_lit(str, 'h');
+    }
+
+    #[test]
+    fn char_lit_unicode() {
+        let str = r###"'π'"###;
+        assert_eq_char_lit(str, 'π');
+    }
+
+    #[test]
+    fn char_lit_newline() {
+        let str = r###"'\n'"###;
+        assert_eq_char_lit(str, '\n');
+    }
+
+    #[test]
+    fn char_lit_escaped_quote() {
+        let str = r###"'\''"###;
+        assert_eq_char_lit(str, '\'');
+    }
+
+    #[test]
+    fn escape_control_chars() {
+        let str = r###""A\nB\rC\t\\""###;
+        assert_eq_string_lit(str, "A\nB\rC\t\\");
+    }
+
+    #[test]
+    fn escape_unicode_literals() {
+        let str = r###""\u{03BB} \u{03bb}""###;
+        assert_eq_string_lit(str, "\u{03bb} \u{03bb}");
+    }
+
+    #[test]
+    fn escape_unicode_emoji() {
+        let str = r###"'\u{1f60e}'"###;
+        assert_eq_char_lit(str, '😎');
+    }
+
+    #[test]
+    fn escape_unknown() {
+        let str = r###""\x""###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("h\\\"i".to_string()))
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::EscapeSequenceUnknown))
+    }
+
+    #[test]
+    fn char_too_long() {
+        let str = r###"'aa'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::CharLiteralTooLong))
+    }
+
+    #[test]
+    fn char_empty() {
+        let str = r###"''"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::CharLiteralEmpty))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_1() {
+        let str = r###"'\u1234'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::MalformedUnicodeEscape))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_2() {
+        let str = r###"'\u{1234'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::MalformedUnicodeEscape))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_3() {
+        let str = r###"'\u1234}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::MalformedUnicodeEscape))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_4() {
+        let str = r###"'\u{}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::MalformedUnicodeEscape))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_5() {
+        let str = r###"'\u{1234567}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::MalformedUnicodeEscape))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_surrogate_1() {
+        let str = r###"'\u{D800}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeCodepoint))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_surrogate_2() {
+        let str = r###"'\u{DFFF}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeCodepoint))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_too_big() {
+        let str = r###"'\u{FFFFFF}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeCodepoint))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_bad_hex() {
+        let str = r###"'\u{123g4}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidHexNumber))
     }
 }

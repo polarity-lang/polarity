@@ -38,14 +38,19 @@
           "name": "string.quoted.double",
           "begin": "\"",
           "end": "\"",
-          "patterns": [
-            {
-              "name": "constant.character.escape",
-              "match": "\\\\."
-            }
-          ]
+          "patterns": [ { "include": "#escapes" } ]
+        },
+        {
+          "name": "string.quoted.single.char",
+          "begin": "'",
+          "end": "'",
+          "patterns": [ { "include": "#escapes" } ]
         }
       ]
+    },
+    "escapes": {
+      "name": "constant.character.escape",
+      "match": "\\\\(u\\{[\\da-fA-F]{1,6}\\}|.)"
     }
   },
   "scopeName": "source.pol"
