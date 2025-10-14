@@ -12,8 +12,8 @@ pub enum LexicalError {
     EscapeSequenceUnknown,
     EscapeSequenceMissing,
     MalformedUnicodeEscape,
-    InvalidUnicodeLiteral,
-    InvalidUnicodeLiteralSurrogate,
+    InvalidUnicodeCodepoint,
+    InvalidHexNumber,
 }
 
 impl fmt::Display for LexicalError {
@@ -255,15 +255,10 @@ fn unescape(seq: &mut std::str::Chars) -> Result<char, LexicalError> {
 
             // parse to numeral
             let hex = u32::from_str_radix(&hex_str, 16)
-                .map_err(|_| LexicalError::InvalidUnicodeLiteral)?;
-
-            // filter out surrogates
-            if (0xD800..=0xDFFF).contains(&hex) {
-                return Err(LexicalError::InvalidUnicodeLiteralSurrogate);
-            }
+                .map_err(|_| LexicalError::InvalidHexNumber)?;
 
             // convert to character
-            char::from_u32(hex).ok_or(LexicalError::InvalidUnicodeLiteral)?
+            char::from_u32(hex).ok_or(LexicalError::InvalidUnicodeCodepoint)?
         }
 
         _ => return Err(LexicalError::EscapeSequenceUnknown),
@@ -423,13 +418,27 @@ mod lexer_tests {
     fn invalid_unicode_escape_surrogate_1() {
         let str = r###"'\u{D800}'"###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeLiteralSurrogate))
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeCodepoint))
     }
 
     #[test]
     fn invalid_unicode_escape_surrogate_2() {
         let str = r###"'\u{DFFF}'"###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeLiteralSurrogate))
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeCodepoint))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_too_big() {
+        let str = r###"'\u{FFFFFF}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeCodepoint))
+    }
+
+    #[test]
+    fn invalid_unicode_escape_bad_hex() {
+        let str = r###"'\u{123g4}'"###;
+        let mut lexer = Lexer::new(str);
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidHexNumber))
     }
 }
