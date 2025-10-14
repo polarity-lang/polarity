@@ -50,7 +50,7 @@
     },
     "escapes": {
       "name": "constant.character.escape",
-      "match": "\\\\(u[\\da-fA-F]{4}|.)"
+      "match": "\\\\(u\\{[\\da-fA-F]{1,6}\\}|.)"
     }
   },
   "scopeName": "source.pol"
