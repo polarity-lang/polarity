@@ -3,7 +3,7 @@ use num_bigint::BigUint;
 use crate::cst::exp::*;
 use crate::cst::decls::*;
 use crate::cst::ident::*;
-use crate::lexer::{Token, LexicalError};
+use crate::lexer::{Token, LexicalError, StringLit};
 
 use super::util::span;
 
@@ -67,7 +67,7 @@ extern {
     //
     //
     "NumLit" => Token::NumLit(<BigUint>),
-    "StringLit" => Token::StringLit(<String>),
+    "StringLit" => Token::StringLit(<StringLit>),
 
     // DocComments
     "DocComment" => Token::DocComment(<String>),
@@ -137,7 +137,7 @@ pub ModuleContents: (Vec<UseDecl>, Vec<Decl>) = {
 }
 
 UseDecl: UseDecl = {
-  <l: @L> "use" <path: "StringLit"> <r: @R> => UseDecl { span: span(l,r), path },
+  <l: @L> "use" <path: "StringLit"> <r: @R> => UseDecl { span: span(l,r), path: path.unescaped },
 }
 
 Decls: Vec<Decl> = {

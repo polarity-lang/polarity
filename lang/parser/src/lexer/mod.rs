@@ -128,10 +128,10 @@ pub enum Token {
     NumLit(BigUint),
     /// The regexp is from <https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5>
     /// We do not allow multi line strings.
-    #[regex(r###""([^"\\]|\\.)*""###, |lex| parse_string_literal(lex.slice()))]
-    StringLit(String),
-    #[regex(r###"'([^'\\]|\\.)*'"###, |lex| parse_char_literal(lex.slice()))]
-    CharLit(char),
+    #[regex(r###""([^"\\]|\\.)*""###, |lex| StringLit::parse(lex.slice()))]
+    StringLit(StringLit),
+    #[regex(r###"'([^'\\]|\\.)*'"###, |lex| CharLit::parse(lex.slice()))]
+    CharLit(CharLit),
 
     // DocComments
     //
@@ -173,41 +173,57 @@ impl Iterator for Lexer<'_> {
     }
 }
 
-/// Process, validate and unescape a string literal
-fn parse_string_literal(literal: &str) -> Result<String, LexicalError> {
-    let inner = &literal[1..literal.len() - 1];
-    let mut chars = inner.chars();
-
-    let mut str = String::new();
-    while let Some(mut ch) = chars.next() {
-        if ch == '\\' {
-            ch = unescape(&mut chars)?;
-        }
-
-        str.push(ch);
-    }
-
-    Ok(str)
+#[derive(Debug, Clone, PartialEq)]
+pub struct StringLit {
+    pub original: String,
+    pub unescaped: String,
 }
 
-/// Process, validate and unescape a character literal
-fn parse_char_literal(literal: &str) -> Result<char, LexicalError> {
-    let inner = &literal[1..literal.len() - 1];
-    let mut chars = inner.chars();
+impl StringLit {
+    /// Validate and unescape a string literal
+    fn parse(literal: &str) -> Result<Self, LexicalError> {
+        let inner = &literal[1..literal.len() - 1];
+        let mut chars = inner.chars();
 
-    let Some(mut ch) = chars.next() else {
-        return Err(LexicalError::CharLiteralEmpty);
-    };
+        let mut unescaped = String::new();
+        while let Some(mut ch) = chars.next() {
+            if ch == '\\' {
+                ch = unescape(&mut chars)?;
+            }
 
-    if ch == '\\' {
-        ch = unescape(&mut chars)?;
+            unescaped.push(ch);
+        }
+
+        Ok(Self { original: inner.to_string(), unescaped })
     }
+}
 
-    if chars.next().is_some() {
-        return Err(LexicalError::CharLiteralTooLong);
+#[derive(Debug, Clone, PartialEq)]
+pub struct CharLit {
+    pub original: String,
+    pub unescaped: char,
+}
+
+impl CharLit {
+    /// Validate and unescape a character literal
+    fn parse(literal: &str) -> Result<Self, LexicalError> {
+        let inner = &literal[1..literal.len() - 1];
+        let mut chars = inner.chars();
+
+        let Some(mut unescaped) = chars.next() else {
+            return Err(LexicalError::CharLiteralEmpty);
+        };
+
+        if unescaped == '\\' {
+            unescaped = unescape(&mut chars)?;
+        }
+
+        if chars.next().is_some() {
+            return Err(LexicalError::CharLiteralTooLong);
+        }
+
+        Ok(Self { original: inner.to_string(), unescaped })
     }
-
-    Ok(ch)
 }
 
 /// Unescape a single escape sequence in a character iterator and consume it
@@ -254,8 +270,8 @@ fn unescape(seq: &mut std::str::Chars) -> Result<char, LexicalError> {
             }
 
             // parse to numeral
-            let hex = u32::from_str_radix(&hex_str, 16)
-                .map_err(|_| LexicalError::InvalidHexNumber)?;
+            let hex =
+                u32::from_str_radix(&hex_str, 16).map_err(|_| LexicalError::InvalidHexNumber)?;
 
             // convert to character
             char::from_u32(hex).ok_or(LexicalError::InvalidUnicodeCodepoint)?
@@ -269,7 +285,7 @@ fn unescape(seq: &mut std::str::Chars) -> Result<char, LexicalError> {
 
 #[cfg(test)]
 mod lexer_tests {
-    use super::{Lexer, LexicalError, Token};
+    use super::{CharLit, Lexer, LexicalError, StringLit, Token};
 
     #[test]
     fn doc_comment_1() {
@@ -285,77 +301,87 @@ mod lexer_tests {
         assert_eq!(lexer.next().unwrap().unwrap().1, Token::DocComment("/// hello".to_string()))
     }
 
+    fn assert_eq_string_lit(str: &str, unescaped: &str) {
+        let without_quotes = &str[1..str.len() - 1];
+        let mut lexer = Lexer::new(str);
+
+        assert_eq!(
+            lexer.next().unwrap().unwrap().1,
+            Token::StringLit(StringLit {
+                original: without_quotes.to_string(),
+                unescaped: unescaped.to_string(),
+            })
+        )
+    }
+
+    fn assert_eq_char_lit(str: &str, unescaped: char) {
+        let without_quotes = &str[1..str.len() - 1];
+        let mut lexer = Lexer::new(str);
+
+        assert_eq!(
+            lexer.next().unwrap().unwrap().1,
+            Token::CharLit(CharLit { original: without_quotes.to_string(), unescaped: unescaped })
+        )
+    }
+
     #[test]
     fn string_lit_simple() {
         let str = r###""hi""###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("hi".to_string()))
+        assert_eq_string_lit(str, "hi");
     }
 
     #[test]
     fn string_lit_newline() {
         let str = r###""h\ni""###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("h\ni".to_string()))
+        assert_eq_string_lit(str, "h\ni");
     }
 
     #[test]
     fn string_lit_escaped_quote() {
         let str = r###""h\"i""###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("h\"i".to_string()))
+        assert_eq_string_lit(str, "h\"i");
     }
 
     #[test]
     fn char_lit_simple() {
         let str = r###"'h'"###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::CharLit('h'))
+        assert_eq_char_lit(str, 'h');
     }
 
     #[test]
     fn char_lit_unicode() {
         let str = r###"'π'"###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::CharLit('π'))
+        assert_eq_char_lit(str, 'π');
     }
 
     #[test]
     fn char_lit_newline() {
         let str = r###"'\n'"###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::CharLit('\n'))
+        assert_eq_char_lit(str, '\n');
     }
 
     #[test]
     fn char_lit_escaped_quote() {
         let str = r###"'\''"###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::CharLit('\''))
+        assert_eq_char_lit(str, '\'');
     }
 
     #[test]
     fn escape_control_chars() {
         let str = r###""A\nB\rC\t\\""###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::StringLit("A\nB\rC\t\\".to_string()))
+        assert_eq_string_lit(str, "A\nB\rC\t\\");
     }
 
     #[test]
     fn escape_unicode_literals() {
         let str = r###""\u{03BB} \u{03bb}""###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(
-            lexer.next().unwrap().unwrap().1,
-            Token::StringLit("\u{03bb} \u{03bb}".to_string())
-        )
+        assert_eq_string_lit(str, "\u{03bb} \u{03bb}");
     }
 
     #[test]
     fn escape_unicode_emoji() {
         let str = r###"'\u{1f60e}'"###;
-        let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap().unwrap().1, Token::CharLit('😎'))
+        assert_eq_char_lit(str, '😎');
     }
 
     #[test]
