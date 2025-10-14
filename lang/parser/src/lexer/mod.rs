@@ -236,7 +236,7 @@ fn unescape(seq: &mut std::str::Chars) -> Result<char, LexicalError> {
             }
 
             let mut hex_str = String::new();
-            while let Some(hex_digit) = seq.next() {
+            for hex_digit in seq.by_ref() {
                 hex_str.push(hex_digit);
                 if hex_digit == '}' {
                     break;
@@ -249,7 +249,7 @@ fn unescape(seq: &mut std::str::Chars) -> Result<char, LexicalError> {
 
             // check hex code length (between 1 and 6)
             let hex_length = hex_str.chars().count();
-            if hex_length > 6 || hex_length < 1 {
+            if !(1..=6).contains(&hex_length) {
                 return Err(LexicalError::MalformedUnicodeEscape);
             }
 
@@ -258,7 +258,7 @@ fn unescape(seq: &mut std::str::Chars) -> Result<char, LexicalError> {
                 .map_err(|_| LexicalError::InvalidUnicodeLiteral)?;
 
             // filter out surrogates
-            if hex >= 0xD800 && hex <= 0xDFFF {
+            if (0xD800..=0xDFFF).contains(&hex) {
                 return Err(LexicalError::InvalidUnicodeLiteralSurrogate);
             }
 
