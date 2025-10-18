@@ -1,3 +1,4 @@
+use lalrpop_util::ErrorRecovery;
 use num_bigint::BigUint;
 
 use crate::cst::exp::*;
@@ -8,7 +9,7 @@ use crate::lexer::{Token, LexicalError, StringLit};
 use super::util::span;
 
 #[LALR]
-grammar;
+grammar<'err>(errors: &'err mut Vec<ErrorRecovery<usize, Token, LexicalError>>);
 
 // Tokens
 extern {
@@ -271,6 +272,7 @@ pub TypApp: Call = {
 pub Exp: Box<Exp> = {
     <e: LocalLet> => Box::new(Exp::LocalLet(e)),
     NonLet,
+    <l:@L> <err: !> <r: @R> => { errors.push(err); Box::new(Exp::Error(span(l, r))) }
 }
 
 pub NonLet: Box<Exp> = {

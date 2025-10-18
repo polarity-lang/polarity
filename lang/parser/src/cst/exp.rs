@@ -78,6 +78,7 @@ pub enum Exp {
     Lam(Lam),
     LocalLet(LocalLet),
     Parens(Parens),
+    Error(Span),
 }
 
 impl Exp {
@@ -94,6 +95,7 @@ impl Exp {
             Exp::Lam(lam) => lam.span,
             Exp::LocalLet(local_let) => local_let.span,
             Exp::Parens(parens) => parens.span,
+            Exp::Error(span) => *span,
         }
     }
 
