@@ -48,10 +48,10 @@ env_logger               = { version = "0.11.3" }
 futures                  = { version = "0.3" }
 fxhash                   = { version = "0.2.1" }
 js-sys                   = { version = "0.3" }
-lalrpop                  = { version = "0.20" }
-lalrpop-util             = { version = "0.20" }
+lalrpop                  = { version = "0.22.2" }
+lalrpop-util             = { version = "0.22.2" }
 log                      = { version = "0.4.21" }
-logos                    = { version = "0.14.0" }
+logos                    = { version = "0.15.1" }
 lsp-types                = { version = "0.97" }
 miette                   = { version = "7" }
 num-bigint               = { version = "0.4" }
