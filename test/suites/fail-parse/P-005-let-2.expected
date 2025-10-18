@@ -1,4 +1,6 @@
-P-003
+  × Failed parsing
+
+Error: P-003
 
   × Unexpected "Let", expected "comatch", "(", "?", "\\", "_", "Identifier", "NumLit"
    ╭─[P-005-let-2.pol:3:30]

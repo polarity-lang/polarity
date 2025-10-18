@@ -1,4 +1,6 @@
-P-002
+  × Failed parsing
+
+Error: P-002
 
   × Unexpected end of file. Expected "}", "Identifier", "DocComment"
    ╭─[P-002.pol:1:12]
