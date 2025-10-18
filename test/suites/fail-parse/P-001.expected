@@ -1,3 +1,7 @@
-P-005
+P-001
 
-  × InvalidToken
+  × Invalid token
+   ╭─[P-001.pol:1:1]
+ 1 │ @
+   · ─
+   ╰────
