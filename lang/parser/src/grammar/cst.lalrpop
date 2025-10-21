@@ -153,6 +153,7 @@ Decl: Decl = {
     <d: Let> => Decl::Let(d),
     <d: Infix> => Decl::Infix(d),
     <d: Note> => Decl::Note(d),
+    ! => { errors.push(<>); Decl::Error }
 }
 
 // Data Type Declarations
