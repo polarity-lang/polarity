@@ -78,6 +78,10 @@ pub enum Exp {
     Lam(Lam),
     LocalLet(LocalLet),
     Parens(Parens),
+
+    /// The parser generates an `Error` node when it encounters a syntactically invalid expression.
+    /// This is used for error recovery to find multiple errors.
+    /// <https://lalrpop.github.io/lalrpop/tutorial/008_error_recovery.html>
     Error(Span),
 }
 

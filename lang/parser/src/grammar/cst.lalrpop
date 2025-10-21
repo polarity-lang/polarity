@@ -272,6 +272,8 @@ pub TypApp: Call = {
 pub Exp: Box<Exp> = {
     <e: LocalLet> => Box::new(Exp::LocalLet(e)),
     NonLet,
+
+    // error recovery for invalid expressions
     <l:@L> <err: !> <r: @R> => { errors.push(err); Box::new(Exp::Error(span(l, r))) }
 }
 
