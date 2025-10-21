@@ -3,7 +3,7 @@
 Error: P-002
 
   × Unexpected end of file. Expected "}", "identifier", "doc comment"
-   ╭─[P-002.pol:1:12]
+   ╭─[P-002-01.pol:1:12]
  1 │ data Bool { 
    ·            ▲
    ╰────
