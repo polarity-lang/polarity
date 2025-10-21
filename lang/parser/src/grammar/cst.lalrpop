@@ -61,17 +61,17 @@ extern {
     // Identifiers
     //
     //
-    "Identifier" => Token::Ident(<String>),
-    "Operator" => Token::Operator(<String>),
+    "identifier" => Token::Ident(<String>),
+    "operator" => Token::Operator(<String>),
 
     // Literals
     //
     //
-    "NumLit" => Token::NumLit(<BigUint>),
-    "StringLit" => Token::StringLit(<StringLit>),
+    "number literal" => Token::NumLit(<BigUint>),
+    "string literal" => Token::StringLit(<StringLit>),
 
     // DocComments
-    "DocComment" => Token::DocComment(<String>),
+    "doc comment" => Token::DocComment(<String>),
   }
 }
 
@@ -117,11 +117,11 @@ OptTelescopeInst: Vec<BindingSite> = <params: Parens<Comma<BindingSite>>?> => pa
 Args: Vec<Arg> = ParenthesizedArgs<Arg>;
 OptArgs: Vec<Arg> = OptParenthesizedArgs<Arg>;
 
-Attr: String = <s:"Identifier"> => s.to_owned();
+Attr: String = <s:"identifier"> => s.to_owned();
 Attributes: Attributes = "#" <attrs: BracketedArgs<Attr>> => Attributes { attrs };
 OptAttributes: Attributes = <attr: Attributes? > => attr.unwrap_or_default();
 
-DocCommentHelper: Vec<String> = <doc: "DocComment"> => doc.strip_prefix("///").unwrap().lines().map(|s| s.trim().to_owned()).collect();
+DocCommentHelper: Vec<String> = <doc: "doc comment"> => doc.strip_prefix("///").unwrap().lines().map(|s| s.trim().to_owned()).collect();
 DocComment: DocComment = <docs: DocCommentHelper+> => DocComment { docs: docs.into_iter().flatten().collect() };
 
 Arg: Arg = {
@@ -138,7 +138,7 @@ pub ModuleContents: (Vec<UseDecl>, Vec<Decl>) = {
 }
 
 UseDecl: UseDecl = {
-  <l: @L> "use" <path: "StringLit"> <r: @R> => UseDecl { span: span(l,r), path: path.unescaped },
+  <l: @L> "use" <path: "string literal"> <r: @R> => UseDecl { span: span(l,r), path: path.unescaped },
 }
 
 Decls: Vec<Decl> = {
@@ -333,7 +333,7 @@ Hole: Hole = {
   <l: @L> "?" <r: @R> => Hole { span: span(l, r), kind: HoleKind::CanSolve },
 }
 
-NatLit: NatLit = <l: @L> <n: "NumLit"> <r: @R> =>
+NatLit: NatLit = <l: @L> <n: "number literal"> <r: @R> =>
   NatLit { span: span(l, r), val: n };
 
 LocalLet: LocalLet = <l: @L> "let" <name: BindingSite> <typ: (":" <NonLet>)?> ":=" <bound: NonLet> ";" <body: Exp> <r: @R> =>
@@ -358,9 +358,9 @@ BindingSite: BindingSite = {
 }
 
 Ident: Ident = {
-   <l: @L> <i: "Identifier"> <r: @R> => Ident { span: span(l,r), id: i.to_owned() }
+   <l: @L> <i: "identifier"> <r: @R> => Ident { span: span(l,r), id: i.to_owned() }
 }
 
 Operator: Operator = {
-  <l: @L> <i: "Operator"> <r: @R> => Operator { span: span(l,r), id: i.to_owned() }
+  <l: @L> <i: "operator"> <r: @R> => Operator { span: span(l,r), id: i.to_owned() }
 }

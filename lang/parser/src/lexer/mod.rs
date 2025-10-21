@@ -162,7 +162,43 @@ pub enum Token {
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{self:?}")
+        match self {
+            Token::Data => write!(f, r#""data""#),
+            Token::Codata => write!(f, r#""codata""#),
+            Token::Def => write!(f, r#""def""#),
+            Token::Codef => write!(f, r#""codef""#),
+            Token::Let => write!(f, r#""let""#),
+            Token::Match => write!(f, r#""match""#),
+            Token::As => write!(f, r#""as""#),
+            Token::Comatch => write!(f, r#""comatch""#),
+            Token::Absurd => write!(f, r#""absurd""#),
+            Token::Implicit => write!(f, r#""implicit""#),
+            Token::Use => write!(f, r#""use""#),
+            Token::Infix => write!(f, r#""infix""#),
+            Token::Note => write!(f, r#""note""#),
+            Token::LParen => write!(f, r#""(""#),
+            Token::RParen => write!(f, r#"")""#),
+            Token::LBrace => write!(f, r#""{{""#),
+            Token::RBrace => write!(f, r#""}}""#),
+            Token::LBracket => write!(f, r#""[""#),
+            Token::RBracket => write!(f, r#""]""#),
+            Token::Semicolon => write!(f, r#"";""#),
+            Token::ColonEq => write!(f, r#"":=""#),
+            Token::DoubleRightArrow => write!(f, r#""=>""#),
+            Token::Comma => write!(f, r#"",""#),
+            Token::Colon => write!(f, r#"":""#),
+            Token::Dot => write!(f, r#"".""#),
+            Token::QuestionMark => write!(f, r#""?""#),
+            Token::Backslash => write!(f, r#""\""#),
+            Token::Hash => write!(f, r##""#""##),
+            Token::Underscore => write!(f, r#""_""#),
+            Token::Ident(_) => write!(f, r#""identifier""#),
+            Token::Operator(_) => write!(f, r#""operator""#),
+            Token::NumLit(_) => write!(f, r#""number literal""#),
+            Token::StringLit(_) => write!(f, r#""string literal""#),
+            Token::CharLit(_) => write!(f, r#""character literal""#),
+            Token::DocComment(_) => write!(f, r#""doc comment""#),
+        }
     }
 }
 
