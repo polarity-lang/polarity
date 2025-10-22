@@ -153,6 +153,8 @@ Decl: Decl = {
     <d: Let> => Decl::Let(d),
     <d: Infix> => Decl::Infix(d),
     <d: Note> => Decl::Note(d),
+
+    // error recovery for invalid declarations
     ! => { errors.push(<>); Decl::Error }
 }
 
