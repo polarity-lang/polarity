@@ -41,7 +41,7 @@ impl Lower for cst::exp::Exp {
 
             // In the future, we plan to handle these as holes, for now this is caught in parsing.
             cst::exp::Exp::Error(_) => Err(Box::new(LoweringError::Impossible {
-                message: "An erroneous CST must be catched in parsing stage".to_string(),
+                message: "An erroneous CST must be caught in parsing stage".to_string(),
                 span: None,
             })),
         }
