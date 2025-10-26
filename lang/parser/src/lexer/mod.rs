@@ -17,8 +17,8 @@ pub enum LexicalError {
     /// Unicode escape sequence that is syntactically incorrect
     MalformedUnicodeEscape(Span),
 
-    /// Unicode literal that does not correspond to a valid codepoint
-    InvalidUnicodeCodepoint(Span),
+    /// Unicode literal that does not correspond to a valid scalar value
+    InvalidUnicodeScalarValue(Span),
 
     /// An invalid hexadecimal number literal
     InvalidHexNumber(Span),
@@ -296,7 +296,7 @@ fn unescape(seq: &mut std::str::Chars, span: Span) -> Result<char, LexicalError>
         // backslash
         '\\' => '\\',
 
-        // unicode codepoints
+        // unicode
         'u' => {
             if seq.next() != Some('{') {
                 return Err(LexicalError::MalformedUnicodeEscape(span));
@@ -325,7 +325,7 @@ fn unescape(seq: &mut std::str::Chars, span: Span) -> Result<char, LexicalError>
                 .map_err(|_| LexicalError::InvalidHexNumber(span.clone()))?;
 
             // convert to character
-            char::from_u32(hex).ok_or(LexicalError::InvalidUnicodeCodepoint(span))?
+            char::from_u32(hex).ok_or(LexicalError::InvalidUnicodeScalarValue(span))?
         }
 
         _ => return Err(LexicalError::InvalidEscapeSequence(span)),
@@ -495,21 +495,21 @@ mod lexer_tests {
     fn invalid_unicode_escape_surrogate_1() {
         let str = r###"'\u{D800}'"###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeCodepoint(0..10)))
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeScalarValue(0..10)))
     }
 
     #[test]
     fn invalid_unicode_escape_surrogate_2() {
         let str = r###"'\u{DFFF}'"###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeCodepoint(0..10)))
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeScalarValue(0..10)))
     }
 
     #[test]
     fn invalid_unicode_escape_too_big() {
         let str = r###"'\u{FFFFFF}'"###;
         let mut lexer = Lexer::new(str);
-        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeCodepoint(0..12)))
+        assert_eq!(lexer.next().unwrap(), Err(LexicalError::InvalidUnicodeScalarValue(0..12)))
     }
 
     #[test]

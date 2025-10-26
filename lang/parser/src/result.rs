@@ -74,9 +74,9 @@ pub enum ParseError {
         span: SourceSpan,
     },
 
-    #[error("This does not correspond to a valid unicode codepoint")]
+    #[error("This does not correspond to a valid unicode scalar value")]
     #[diagnostic(code("P-008"))]
-    InvalidUnicodeCodepoint {
+    InvalidUnicodeScalarValue {
         #[label]
         span: SourceSpan,
     },
@@ -129,7 +129,7 @@ impl From<lalrpop_util::ParseError<usize, Token, LexicalError>> for ParseError {
                 LexicalError::InvalidCharLiteral(span) => ParseError::InvalidCharLiteral { span: span.into() },
                 LexicalError::InvalidEscapeSequence(span) => ParseError::InvalidEscapeSequence { span: span.into() },
                 LexicalError::MalformedUnicodeEscape(span) => ParseError::MalformedUnicodeEscape { span: span.into() },
-                LexicalError::InvalidUnicodeCodepoint(span) => ParseError::InvalidUnicodeCodepoint { span: span.into() },
+                LexicalError::InvalidUnicodeScalarValue(span) => ParseError::InvalidUnicodeScalarValue { span: span.into() },
                 LexicalError::InvalidHexNumber(span) => ParseError::InvalidHexNumber { span: span.into() },
             }
         }
