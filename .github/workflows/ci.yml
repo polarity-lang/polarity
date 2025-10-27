@@ -82,8 +82,8 @@ jobs:
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all -- -D warnings
-  
-  package:  
+
+  package:
     name: package
     runs-on: ubuntu-latest
     steps:

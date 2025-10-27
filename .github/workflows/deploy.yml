@@ -1,8 +1,13 @@
-name: Deploy Web Demo
+name: Build and deploy web demo
 on:
   push:
     branches:
       - main
+  # We run this action also on PRs but skip the deployment part
+  pull_request:
+    types:
+      - opened
+      - synchronize
 
 permissions:
   contents: write
@@ -12,13 +17,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
+      - name: Web build
+        run: |
           cd web/
           make deps
           make build
-      - run: |
+      - name: Create zip package
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
           cd web/packages/app/dist && zip -r ../../../../web-demo-latest.zip ./*
-      - uses: softprops/action-gh-release@v1
+      - name: Create release
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: latest
           draft: false
@@ -26,7 +36,9 @@ jobs:
           files: web-demo-latest.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
+      - name: Trigger website build
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token ${{ secrets.WEB_TRIGGER_DEPLOY_TOKEN }}" \
