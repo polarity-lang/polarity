@@ -47,6 +47,11 @@ pub enum Decl {
     Let(Let),
     Infix(Infix),
     Note(Note),
+
+    /// The parser generates an `Error` node when it encounters a syntactically invalid declaration.
+    /// This is used for error recovery to find multiple errors.
+    /// <https://lalrpop.github.io/lalrpop/tutorial/008_error_recovery.html>
+    Error,
 }
 
 /// Data type declaration

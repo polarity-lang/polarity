@@ -38,6 +38,12 @@ impl Lower for cst::exp::Exp {
             cst::exp::Exp::Lam(e) => e.lower(ctx),
             cst::exp::Exp::LocalLet(e) => e.lower(ctx),
             cst::exp::Exp::Parens(e) => e.lower(ctx),
+
+            // In the future, we plan to handle these as holes, for now this is caught in parsing.
+            cst::exp::Exp::Error(_) => Err(Box::new(LoweringError::Impossible {
+                message: "An erroneous CST must be caught in parsing stage".to_string(),
+                span: None,
+            })),
         }
     }
 }

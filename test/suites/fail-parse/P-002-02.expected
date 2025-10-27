@@ -1,6 +1,8 @@
-P-002
+  × Failed parsing
+
+Error: P-002
 
   × Unexpected end of file. Expected "(", "{"
-   ╭─[P-003.pol:1:9]
+   ╭─[P-002-02.pol:1:9]
  1 │ data foo
    ╰────

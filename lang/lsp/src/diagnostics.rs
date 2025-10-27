@@ -44,33 +44,51 @@ impl Diagnostics for Database {
     }
 
     fn error_diagnostics(&self, uri: &Url, error: Error) -> Vec<lsp_types::Diagnostic> {
-        // Compute the range where the error should be displayed.
-        // The range is computed from the first available label, otherwise
-        // the default range is used, which corresponds to the beginning of the
-        // file.
-        let span = get_span(&error);
-        let range =
-            span.and_then(|x| self.span_to_locations(uri, x.from_miette())).unwrap_or_default();
+        if let Error::Parser(parser_errs) = error {
+            return parser_errs
+                .into_iter()
+                .map(|e| error_diagnostics_helper(self, uri, e))
+                .reduce(|mut acc, d| {
+                    acc.extend(d);
+                    acc
+                })
+                .unwrap_or_default();
+        }
 
-        // Compute the message.
-        let message = error.to_string();
-
-        let diag = lsp_types::Diagnostic {
-            range,
-            message,
-            severity: match error.severity() {
-                Some(sev) => Some(sev.to_lsp()),
-                None => Some(lsp_types::DiagnosticSeverity::ERROR),
-            },
-            code: error.code().map(|x| NumberOrString::String(format!("{x}"))),
-            code_description: None,
-            source: None,
-            related_information: None,
-            tags: None,
-            data: None,
-        };
-        vec![diag]
+        error_diagnostics_helper(self, uri, error)
     }
+}
+
+fn error_diagnostics_helper<E: Diagnostic>(
+    db: &Database,
+    uri: &Url,
+    error: E,
+) -> Vec<lsp_types::Diagnostic> {
+    // Compute the range where the error should be displayed.
+    // The range is computed from the first available label, otherwise
+    // the default range is used, which corresponds to the beginning of the
+    // file.
+    let span = get_span(&error);
+    let range = span.and_then(|x| db.span_to_locations(uri, x.from_miette())).unwrap_or_default();
+
+    // Compute the message.
+    let message = error.to_string();
+
+    let diag = lsp_types::Diagnostic {
+        range,
+        message,
+        severity: match error.severity() {
+            Some(sev) => Some(sev.to_lsp()),
+            None => Some(lsp_types::DiagnosticSeverity::ERROR),
+        },
+        code: error.code().map(|x| NumberOrString::String(format!("{x}"))),
+        code_description: None,
+        source: None,
+        related_information: None,
+        tags: None,
+        data: None,
+    };
+    vec![diag]
 }
 
 fn get_span<T: Diagnostic>(err: &T) -> Option<SourceSpan> {

@@ -48,6 +48,12 @@ impl BuildSymbolTable for Decl {
             Decl::Let(tl_let) => tl_let.build(symbol_table),
             Decl::Infix(infix) => infix.build(symbol_table),
             Decl::Note(note) => note.build(symbol_table),
+
+            // In the future, we plan to handle these as holes, for now this is catched in parsing.
+            Decl::Error => Err(Box::new(LoweringError::Impossible {
+                message: "An erroneous CST must be catched in parsing stage".to_string(),
+                span: None,
+            })),
         }
     }
 }

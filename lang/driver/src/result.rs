@@ -7,14 +7,24 @@ use url::Url;
 use polarity_lang_backend::result::BackendError;
 
 #[derive(Error, Diagnostic, Debug, Clone)]
-#[diagnostic(transparent)]
 #[error(transparent)]
 pub enum Error {
-    Parser(#[from] polarity_lang_parser::ParseError),
+    #[error("Failed parsing")]
+    Parser(#[related] Vec<polarity_lang_parser::ParseError>),
+
+    #[diagnostic(transparent)]
     Lowering(#[from] Box<polarity_lang_lowering::LoweringError>),
+
+    #[diagnostic(transparent)]
     Type(#[from] Box<polarity_lang_elaborator::result::TypeError>),
+
+    #[diagnostic(transparent)]
     Xfunc(#[from] polarity_lang_transformations::result::XfuncError),
+
+    #[diagnostic(transparent)]
     Driver(#[from] DriverError),
+
+    #[diagnostic(transparent)]
     Backend(#[from] BackendError),
 }
 

@@ -78,6 +78,14 @@ impl Lower for cst::decls::Decl {
             cst::decls::Decl::Let(tl_let) => tl_let.lower(ctx)?.into(),
             cst::decls::Decl::Infix(infix) => infix.lower(ctx)?.into(),
             cst::decls::Decl::Note(note) => note.lower(ctx)?.into(),
+
+            // In the future, we plan to handle these as holes, for now this is caught in parsing.
+            cst::decls::Decl::Error => {
+                return Err(Box::new(LoweringError::Impossible {
+                    message: "An erroneous CST must be caught in parsing stage".to_string(),
+                    span: None,
+                }));
+            }
         };
         Ok(decl)
     }

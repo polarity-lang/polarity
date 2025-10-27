@@ -1,0 +1,19 @@
+  × Failed parsing
+
+Error: P-003
+
+  × Unexpected "let", expected "comatch", "(", "?", "\\", "_", "identifier", "number literal"
+   ╭─[P-003-let-2.pol:3:30]
+ 2 │ 
+ 3 │ let x : Nat { let x : Nat := let y := Z; y ; S(x) }
+   ·                              ───
+   ╰────
+
+Error: P-003
+
+  × Unexpected ":=", expected "(", ":"
+   ╭─[P-003-let-2.pol:3:36]
+ 2 │ 
+ 3 │ let x : Nat { let x : Nat := let y := Z; y ; S(x) }
+   ·                                    ──
+   ╰────
