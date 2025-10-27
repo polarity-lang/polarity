@@ -1,4 +1,4 @@
-name: Deploy Web Demo
+name: Build and deploy web demo
 on:
   push:
     branches:
