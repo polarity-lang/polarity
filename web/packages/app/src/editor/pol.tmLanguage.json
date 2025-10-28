@@ -5,7 +5,8 @@
     { "include": "#keywords" },
     { "include": "#symbols" },
     { "include": "#comments" },
-    { "include": "#strings" }
+    { "include": "#strings" },
+    { "include": "#variables" }
   ],
   "repository": {
     "keywords": {
@@ -51,6 +52,10 @@
     "escapes": {
       "name": "constant.character.escape",
       "match": "\\\\(u\\{[\\da-fA-F]{1,6}\\}|.)"
+    },
+    "variables": {
+      "name": "variables.other",
+      "match": "[\\p{Ll}\\p{Lu}][\\p{Ll}\\p{Lu}\\p{No}0-9_']*"
     }
   },
   "scopeName": "source.pol"
