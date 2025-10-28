@@ -5,22 +5,22 @@ use tower_lsp_server::lsp_types;
 use url::Url;
 
 use polarity_lang_driver::Database;
-use polarity_lang_driver::Error;
+use polarity_lang_driver::MainError;
 use polarity_lang_miette_util::FromMiette;
 
 use crate::conversion::ToLsp;
 
 pub trait Diagnostics {
     /// Compute the diagnostics for the given URI and all of its reverse dependencies.
-    async fn diagnostics(&mut self, uri: &Url, result: Result<(), Error>) -> DiagnosticsPerUri;
+    async fn diagnostics(&mut self, uri: &Url, result: Result<(), MainError>) -> DiagnosticsPerUri;
 
-    fn error_diagnostics(&self, uri: &Url, error: Error) -> Vec<lsp_types::Diagnostic>;
+    fn error_diagnostics(&self, uri: &Url, error: MainError) -> Vec<lsp_types::Diagnostic>;
 }
 
 pub type DiagnosticsPerUri = polarity_lang_ast::HashMap<Url, Vec<lsp_types::Diagnostic>>;
 
 impl Diagnostics for Database {
-    async fn diagnostics(&mut self, uri: &Url, result: Result<(), Error>) -> DiagnosticsPerUri {
+    async fn diagnostics(&mut self, uri: &Url, result: Result<(), MainError>) -> DiagnosticsPerUri {
         // When computing the diagnostics for an URI, we also need to recompute the diagnostics for all of its reverse dependencies.
         let rev_deps: Vec<_> = self.deps.reverse_dependencies(uri).into_iter().cloned().collect();
         let mut diagnostics = polarity_lang_ast::HashMap::default();
@@ -43,8 +43,8 @@ impl Diagnostics for Database {
         diagnostics
     }
 
-    fn error_diagnostics(&self, uri: &Url, error: Error) -> Vec<lsp_types::Diagnostic> {
-        if let Error::Parser(parser_errs) = error {
+    fn error_diagnostics(&self, uri: &Url, error: MainError) -> Vec<lsp_types::Diagnostic> {
+        if let MainError::Parser(parser_errs) = error {
             return parser_errs
                 .into_iter()
                 .map(|e| error_diagnostics_helper(self, uri, e))

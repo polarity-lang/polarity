@@ -6,25 +6,28 @@ use url::Url;
 
 use polarity_lang_backend::result::BackendError;
 
+pub type MainResult<T = ()> = Result<T, MainErrors>;
+
+#[derive(Error, Diagnostic, Debug, Clone)]
+#[error("TODO: Good message")]
+pub struct MainErrors(#[related] pub Vec<MainError>);
+
+impl<T: Into<MainError>> From<T> for MainErrors {
+    fn from(value: T) -> Self {
+        let err: MainError = value.into();
+        MainErrors(vec![err])
+    }
+}
+
 #[derive(Error, Diagnostic, Debug, Clone)]
 #[error(transparent)]
-pub enum Error {
-    #[error("Failed parsing")]
-    Parser(#[related] Vec<polarity_lang_parser::ParseError>),
-
-    #[diagnostic(transparent)]
+#[diagnostic(transparent)]
+pub enum MainError {
+    Parser(#[from] polarity_lang_parser::ParseError),
     Lowering(#[from] Box<polarity_lang_lowering::LoweringError>),
-
-    #[diagnostic(transparent)]
     Type(#[from] Box<polarity_lang_elaborator::result::TypeError>),
-
-    #[diagnostic(transparent)]
     Xfunc(#[from] polarity_lang_transformations::result::XfuncError),
-
-    #[diagnostic(transparent)]
     Driver(#[from] DriverError),
-
-    #[diagnostic(transparent)]
     Backend(#[from] BackendError),
 }
 

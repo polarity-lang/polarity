@@ -1,4 +1,4 @@
-pub use result::Error;
+pub use result::MainError;
 
 mod asserts;
 mod cache;
