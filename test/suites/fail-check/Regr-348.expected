@@ -1,4 +1,6 @@
-T-022
+  × One or more errors occured.
+
+Error: T-022
 
   × The metavariable ?1 was equated with an expression that contains f which is not in scope for ?1
    ╭─[Regr-348.pol:5:19]

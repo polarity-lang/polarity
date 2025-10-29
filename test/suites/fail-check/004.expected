@@ -1,4 +1,6 @@
-T-013
+  × One or more errors occured.
+
+Error: T-013
 
   × Local comatch not supported for type Bool because Bool contains destructors with self parameters
     ╭─[004.pol:13:12]

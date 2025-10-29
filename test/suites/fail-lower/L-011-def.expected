@@ -1,4 +1,6 @@
-L-011
+  × One or more errors occured.
+
+Error: L-011
 
   × Mismatched named arguments: given other_wrong, expected other
    ╭─[L-011-def.pol:8:45]
