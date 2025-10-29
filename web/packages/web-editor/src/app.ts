@@ -13,10 +13,10 @@ import {
 
 import { WrapperConfig, MonacoEditorLanguageClientWrapper } from "monaco-editor-wrapper";
 
-import Client from "./client";
-import Server from "./server";
+import Client from "polarity-lang-lsp-web/client";
+import Server from "polarity-lang-lsp-web/server";
 import { configureMonacoWorkers } from "./workers";
-import { FromServer, IntoServer } from "./codec";
+import { FromServer, IntoServer } from "polarity-lang-lsp-web/codec";
 import Language from "./language";
 
 import polarityLanguageConfig from "./language-configuration.json?raw";

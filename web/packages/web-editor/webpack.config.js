@@ -5,18 +5,11 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
 const webpack = require("webpack");
-const fs = require("fs");
 
-const loadExamples = () => {
-  const dir = fs.readdirSync("../../../examples");
-  const files = dir.filter((filename) => filename.endsWith(".pol")).map((filename) => `../../../examples/${filename}`);
-  let out = [];
-  for (const filename of files) {
-    out.push(path.basename(filename, ".pol"));
-  }
-  return out;
-};
-
+/**
+ * @param {Record<string, unknown>} env
+ * @param {{ mode?: string }} argv
+ */
 module.exports = (env, argv) => {
   const prod = argv.mode === "production";
   console.log(prod ? "Production mode" : "Development mode");
@@ -29,11 +22,14 @@ module.exports = (env, argv) => {
     mode: "production",
     target: "web",
     entry: {
-      editor: "./src/editor/index.ts",
+      editor: "./src/index.ts",
       "editor.worker": "monaco-editor-core/esm/vs/editor/editor.worker.js",
     },
     resolve: {
       extensions: [".ts", ".js", ".json", ".ttf"],
+      alias: {
+        "polarity-lang-lsp-web": path.resolve(__dirname, "../lsp-web/src/lsp-web"),
+      },
       fallback: {
         vm: require.resolve("vm-browserify"),
         module: false,

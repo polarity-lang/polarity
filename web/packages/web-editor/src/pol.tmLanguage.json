@@ -39,13 +39,13 @@
           "name": "string.quoted.double",
           "begin": "\"",
           "end": "\"",
-          "patterns": [ { "include": "#escapes" } ]
+          "patterns": [{ "include": "#escapes" }]
         },
         {
           "name": "string.quoted.single.char",
           "begin": "'",
           "end": "'",
-          "patterns": [ { "include": "#escapes" } ]
+          "patterns": [{ "include": "#escapes" }]
         }
       ]
     },

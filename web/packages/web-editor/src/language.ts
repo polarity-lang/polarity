@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as proto from "vscode-languageserver-protocol";
 import { createConverter as createCodeConverter } from "vscode-languageclient/lib/common/codeConverter.js";
 import { createConverter as createProtocolConverter } from "vscode-languageclient/lib/common/protocolConverter.js";
-import Client from "./client";
+import Client from "polarity-lang-lsp-web/client";
 
 const code2Protocol = createCodeConverter();
 const protocol2Code = createProtocolConverter(undefined, true, true);
