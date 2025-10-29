@@ -1,4 +1,6 @@
-T-002
+  × One or more errors occured.
+
+Error: T-002
 
   × The following terms are not equal:
   │   1: Eq(Nat, S(S(Z)), S(S(Z)))
