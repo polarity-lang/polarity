@@ -22,9 +22,9 @@ use crate::dependency_graph::DependencyGraph;
 use crate::fs::*;
 use crate::info::*;
 use crate::result::DriverError;
-use crate::result::MainErrors;
-use crate::result::MainResult;
-use crate::{MainError, FileSource, cache::*};
+use crate::result::AppErrors;
+use crate::result::AppResult;
+use crate::{FileSource, AppError, cache::*};
 
 use rust_lapper::Lapper;
 
@@ -37,15 +37,15 @@ pub struct Database {
     /// The source code text of each file
     pub files: Cache<crate::codespan::File>,
     /// The CST of each file (once parsed)
-    pub cst: Cache<MainResult<Arc<cst::decls::Module>>>,
+    pub cst: Cache<AppResult<Arc<cst::decls::Module>>>,
     /// The symbol table constructed during lowering
     pub symbol_table: Cache<Arc<polarity_lang_lowering::ModuleSymbolTable>>,
     /// The lowered, but not yet typechecked, UST
-    pub ust: Cache<MainResult<Arc<polarity_lang_ast::Module>>>,
+    pub ust: Cache<AppResult<Arc<polarity_lang_ast::Module>>>,
     /// The typechecked AST of a module
-    pub ast: Cache<MainResult<Arc<polarity_lang_ast::Module>>>,
+    pub ast: Cache<AppResult<Arc<polarity_lang_ast::Module>>>,
     /// The IR of a module
-    pub ir: Cache<MainResult<Arc<ir::Module>>>,
+    pub ir: Cache<AppResult<Arc<ir::Module>>>,
     /// The type info table, either open or closed
     pub type_info_table: Cache<OpenClosed>,
     /// Hover information for spans
@@ -99,7 +99,7 @@ impl Database {
     //
     //
 
-    pub async fn source(&mut self, uri: &Url) -> MainResult<String> {
+    pub async fn source(&mut self, uri: &Url) -> AppResult<String> {
         match self.files.get_unless_stale(uri) {
             Some(file) => {
                 log::debug!("Found source in cache: {uri}");
@@ -109,7 +109,7 @@ impl Database {
         }
     }
 
-    async fn recompute_source(&mut self, uri: &Url) -> MainResult<String> {
+    async fn recompute_source(&mut self, uri: &Url) -> AppResult<String> {
         log::debug!("Recomputing source for: {uri}");
         let source = self.source.read_to_string(uri).await?;
         let file = crate::codespan::File::new(source.clone());
@@ -121,7 +121,7 @@ impl Database {
     //
     //
 
-    pub async fn cst(&mut self, uri: &Url) -> MainResult<Arc<cst::decls::Module>> {
+    pub async fn cst(&mut self, uri: &Url) -> AppResult<Arc<cst::decls::Module>> {
         match self.cst.get_unless_stale(uri) {
             Some(cst) => {
                 log::debug!("Found cst in cache: {uri}");
@@ -131,12 +131,12 @@ impl Database {
         }
     }
 
-    async fn recompute_cst(&mut self, uri: &Url) -> MainResult<Arc<cst::decls::Module>> {
+    async fn recompute_cst(&mut self, uri: &Url) -> AppResult<Arc<cst::decls::Module>> {
         log::debug!("Recomputing cst for: {uri}");
         let source = self.source(uri).await?;
         let module = polarity_lang_parser::parse_module(uri.clone(), &source)
-            .map_err(|errs| errs.into_iter().map(MainError::Parser).collect())
-            .map_err(MainErrors)
+            .map_err(|errs| errs.into_iter().map(AppError::Parser).collect())
+            .map_err(AppErrors::from_errors)
             .map(Arc::new);
         self.cst.insert(uri.clone(), module.clone());
         module
@@ -146,7 +146,7 @@ impl Database {
     //
     //
 
-    pub async fn symbol_table(&mut self, uri: &Url) -> MainResult<Arc<ModuleSymbolTable>> {
+    pub async fn symbol_table(&mut self, uri: &Url) -> AppResult<Arc<ModuleSymbolTable>> {
         match self.symbol_table.get_unless_stale(uri) {
             Some(symbol_table) => {
                 log::debug!("Found symbol table in cache: {uri}");
@@ -156,7 +156,7 @@ impl Database {
         }
     }
 
-    async fn recompute_symbol_table(&mut self, uri: &Url) -> MainResult<Arc<ModuleSymbolTable>> {
+    async fn recompute_symbol_table(&mut self, uri: &Url) -> AppResult<Arc<ModuleSymbolTable>> {
         log::debug!("Recomputing symbol table for: {uri}");
         let cst = self.cst(uri).await?;
         let module_symbol_table = polarity_lang_lowering::build_symbol_table(&cst).map(Arc::new)?;
@@ -168,7 +168,7 @@ impl Database {
     //
     //
 
-    pub async fn ust(&mut self, uri: &Url) -> MainResult<Arc<polarity_lang_ast::Module>> {
+    pub async fn ust(&mut self, uri: &Url) -> AppResult<Arc<polarity_lang_ast::Module>> {
         match self.ust.get_unless_stale(uri) {
             Some(ust) => {
                 log::debug!("Found ust in cache: {uri}");
@@ -178,10 +178,7 @@ impl Database {
         }
     }
 
-    pub async fn recompute_ust(
-        &mut self,
-        uri: &Url,
-    ) -> MainResult<Arc<polarity_lang_ast::Module>> {
+    pub async fn recompute_ust(&mut self, uri: &Url) -> AppResult<Arc<polarity_lang_ast::Module>> {
         log::debug!("Recomputing ust for: {uri}");
         let cst = self.cst(uri).await?;
         let deps = self.deps(uri).await?;
@@ -198,7 +195,7 @@ impl Database {
         }
 
         let ust = polarity_lang_lowering::lower_module_with_symbol_table(&cst, &symbol_table)
-            .map_err(MainErrors::from)
+            .map_err(AppErrors::from)
             .map(Arc::new);
 
         self.ust.insert(uri.clone(), ust.clone());
@@ -209,7 +206,7 @@ impl Database {
     //
     //
 
-    pub async fn type_info_table(&mut self, uri: &Url) -> MainResult<TypeInfoTable> {
+    pub async fn type_info_table(&mut self, uri: &Url) -> AppResult<TypeInfoTable> {
         Box::pin(async move {
             let deps = self.deps(uri).await?;
 
@@ -249,7 +246,7 @@ impl Database {
         &mut self,
         uri: &Url,
         closed: bool,
-    ) -> MainResult<ModuleTypeInfoTable> {
+    ) -> AppResult<ModuleTypeInfoTable> {
         match self.type_info_table.get_unless_stale(uri) {
             Some(open_closed) => {
                 let table = match (open_closed, closed) {
@@ -287,7 +284,7 @@ impl Database {
         &mut self,
         uri: &Url,
         closed: bool,
-    ) -> MainResult<ModuleTypeInfoTable> {
+    ) -> AppResult<ModuleTypeInfoTable> {
         log::debug!(
             "Recomputing {} type info table for: {}",
             if closed { "closed" } else { "open" },
@@ -310,7 +307,7 @@ impl Database {
     //
     //
 
-    pub async fn ast(&mut self, uri: &Url) -> MainResult<Arc<polarity_lang_ast::Module>> {
+    pub async fn ast(&mut self, uri: &Url) -> AppResult<Arc<polarity_lang_ast::Module>> {
         match self.ast.get_unless_stale(uri) {
             Some(ast) => {
                 log::debug!("Found ast in cache: {uri}");
@@ -320,10 +317,7 @@ impl Database {
         }
     }
 
-    pub async fn recompute_ast(
-        &mut self,
-        uri: &Url,
-    ) -> MainResult<Arc<polarity_lang_ast::Module>> {
+    pub async fn recompute_ast(&mut self, uri: &Url) -> AppResult<Arc<polarity_lang_ast::Module>> {
         log::debug!("Recomputing ast for: {uri}");
 
         // Compute the type info table
@@ -336,7 +330,7 @@ impl Database {
             &info_table,
         )
         .map(Arc::new)
-        .map_err(MainErrors::from);
+        .map_err(AppErrors::from);
         self.ast.insert(uri.clone(), ast.clone());
         ast
     }
@@ -345,7 +339,7 @@ impl Database {
     //
     //
 
-    pub async fn ir(&mut self, uri: &Url) -> MainResult<Arc<ir::Module>> {
+    pub async fn ir(&mut self, uri: &Url) -> AppResult<Arc<ir::Module>> {
         match self.ir.get_unless_stale(uri) {
             Some(module) => {
                 log::debug!("Found ir in cache: {uri}");
@@ -355,13 +349,13 @@ impl Database {
         }
     }
 
-    pub async fn recompute_ir(&mut self, uri: &Url) -> MainResult<Arc<ir::Module>> {
+    pub async fn recompute_ir(&mut self, uri: &Url) -> AppResult<Arc<ir::Module>> {
         log::debug!("Recomputing ir for: {uri}");
 
         let module = self.ast(uri).await?;
 
         // Convert to intermediate representation (IR)
-        let ir = module.to_ir().map(Arc::new).map_err(MainErrors::from);
+        let ir = module.to_ir().map(Arc::new).map_err(AppErrors::from);
 
         self.ir.insert(uri.clone(), ir.clone());
 
@@ -372,7 +366,7 @@ impl Database {
     //
     //
 
-    pub async fn goto_by_id(&mut self, uri: &Url) -> MainResult<Lapper<u32, (Url, Span)>> {
+    pub async fn goto_by_id(&mut self, uri: &Url) -> AppResult<Lapper<u32, (Url, Span)>> {
         match self.goto_by_id.get_unless_stale(uri) {
             Some(loc) => {
                 log::debug!("Found goto_by_id in cache: {uri}");
@@ -382,7 +376,7 @@ impl Database {
         }
     }
 
-    async fn recompute_goto_by_id(&mut self, uri: &Url) -> MainResult<Lapper<u32, (Url, Span)>> {
+    async fn recompute_goto_by_id(&mut self, uri: &Url) -> AppResult<Lapper<u32, (Url, Span)>> {
         log::debug!("Recomputing goto_by_id for: {uri}");
         let (_hover_lapper, location_lapper, _item_lapper) = collect_info(self, uri).await?;
         self.goto_by_id.insert(uri.clone(), location_lapper.clone());
@@ -393,7 +387,7 @@ impl Database {
     //
     //
 
-    pub async fn hover_by_id(&mut self, uri: &Url) -> MainResult<Lapper<u32, HoverContents>> {
+    pub async fn hover_by_id(&mut self, uri: &Url) -> AppResult<Lapper<u32, HoverContents>> {
         match self.hover_by_id.get_unless_stale(uri) {
             Some(hover) => {
                 log::debug!("Found hover_by_id in cache: {uri}");
@@ -403,10 +397,7 @@ impl Database {
         }
     }
 
-    async fn recompute_hover_by_id(
-        &mut self,
-        uri: &Url,
-    ) -> MainResult<Lapper<u32, HoverContents>> {
+    async fn recompute_hover_by_id(&mut self, uri: &Url) -> AppResult<Lapper<u32, HoverContents>> {
         log::debug!("Recomputing hover_by_id for: {uri}");
         let (hover_lapper, _location_lapper, _item_lapper) = collect_info(self, uri).await?;
         self.hover_by_id.insert(uri.clone(), hover_lapper.clone());
@@ -417,7 +408,7 @@ impl Database {
     //
     //
 
-    pub async fn item_by_id(&mut self, uri: &Url) -> MainResult<Lapper<u32, Item>> {
+    pub async fn item_by_id(&mut self, uri: &Url) -> AppResult<Lapper<u32, Item>> {
         match self.item_by_id.get_unless_stale(uri) {
             Some(items) => {
                 log::debug!("Found item_by_id in cache: {uri}");
@@ -427,7 +418,7 @@ impl Database {
         }
     }
 
-    async fn recompute_item_by_id(&mut self, uri: &Url) -> MainResult<Lapper<u32, Item>> {
+    async fn recompute_item_by_id(&mut self, uri: &Url) -> AppResult<Lapper<u32, Item>> {
         log::debug!("Recomputing item_by_id for: {uri}");
         let (_info_lapper, _location_lapper, item_lapper) = collect_info(self, uri).await?;
         self.item_by_id.insert(uri.clone(), item_lapper.clone());
@@ -438,7 +429,7 @@ impl Database {
     //
     //
 
-    pub async fn deps(&mut self, uri: &Url) -> MainResult<Vec<Url>> {
+    pub async fn deps(&mut self, uri: &Url) -> AppResult<Vec<Url>> {
         match self.deps.get(uri) {
             Some(deps) => {
                 log::debug!("Found dependencies in cache: {uri}");
@@ -448,7 +439,7 @@ impl Database {
         }
     }
 
-    pub async fn recompute_deps(&mut self, uri: &Url) -> MainResult<Vec<Url>> {
+    pub async fn recompute_deps(&mut self, uri: &Url) -> AppResult<Vec<Url>> {
         log::debug!("Recomputing dependencies for: {uri}");
         self.source(uri).await?;
         self.build_dependency_dag().await?;
@@ -524,7 +515,7 @@ impl Database {
         self.item_by_id.invalidate(uri);
     }
 
-    pub async fn run(&mut self, uri: &Url) -> MainResult<Option<Box<Exp>>> {
+    pub async fn run(&mut self, uri: &Url) -> AppResult<Option<Box<Exp>>> {
         let ast = self.ast(uri).await?;
 
         let main = ast.find_main();
@@ -533,13 +524,13 @@ impl Database {
         match main {
             Some(exp) => {
                 let nf = exp.normalize_in_empty_env(&Rc::new(info_table));
-                nf.map(Some).map_err(MainErrors::from)
+                nf.map(Some).map_err(AppErrors::from)
             }
             None => Ok(None),
         }
     }
 
-    pub fn pretty_error(&self, uri: &Url, err: MainError) -> miette::Report {
+    pub fn pretty_error(&self, uri: &Url, err: AppErrors) -> miette::Report {
         let miette_error: miette::Error = err.into();
         if let Some(File { source, .. }) = self.files.get_even_if_stale(uri) {
             miette_error.with_source_code(miette::NamedSource::new(uri, source.to_owned()))
@@ -548,19 +539,19 @@ impl Database {
         }
     }
 
-    pub async fn write_source(&mut self, uri: &Url, source: &str) -> MainResult {
+    pub async fn write_source(&mut self, uri: &Url, source: &str) -> AppResult {
         self.invalidate(uri).await;
         self.source.write_string(uri, source).await.map_err(|err| err.into())
     }
 
-    pub async fn print_to_string(&mut self, uri: &Url) -> MainResult<String> {
+    pub async fn print_to_string(&mut self, uri: &Url) -> AppResult<String> {
         let module = self.ust(uri).await?;
         let mut module = (*module).clone();
         module.rename();
         Ok(polarity_lang_printer::Print::print_to_string(&module, None))
     }
 
-    pub async fn load_imports(&mut self, module_uri: &Url) -> MainResult {
+    pub async fn load_imports(&mut self, module_uri: &Url) -> AppResult {
         self.build_dependency_dag().await?;
         let empty_vec = Vec::new();
         let direct_deps = self.deps.get(module_uri).unwrap_or(&empty_vec).clone();
@@ -578,7 +569,7 @@ impl Database {
     /// # Errors
     ///
     /// Returns an error if a cycle is detected or if a module cannot be found or loaded.
-    pub async fn build_dependency_dag(&mut self) -> MainResult {
+    pub async fn build_dependency_dag(&mut self) -> AppResult {
         let mut visited = HashSet::default();
         let mut stack = Vec::new();
         let mut graph = DependencyGraph::default();
@@ -597,7 +588,7 @@ impl Database {
         visited: &mut HashSet<Url>,
         stack: &mut Vec<Url>,
         graph: &mut DependencyGraph,
-    ) -> MainResult {
+    ) -> AppResult {
         if stack.contains(module_uri) {
             // Cycle detected
             let cycle = stack.to_vec();
@@ -634,7 +625,7 @@ impl Database {
     }
 
     /// Resolves a module name to a `Url` relative to the current module.
-    pub fn resolve_module_name(&self, name: &str, current_module: &Url) -> MainResult<Url> {
+    pub fn resolve_module_name(&self, name: &str, current_module: &Url) -> AppResult<Url> {
         current_module.join(name).map_err(|err| DriverError::Url(err).into())
     }
 }
@@ -662,7 +653,7 @@ mod path_support {
         }
 
         /// Open a file by its path and load it into the database
-        pub fn resolve_path<P: AsRef<std::path::Path>>(&mut self, path: P) -> MainResult<Url> {
+        pub fn resolve_path<P: AsRef<std::path::Path>>(&mut self, path: P) -> AppResult<Url> {
             let path = path.as_ref().canonicalize().expect("Could not canonicalize path");
             Ok(Url::from_file_path(path).expect("Could not convert path to URI"))
         }

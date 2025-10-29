@@ -3,7 +3,7 @@ use std::fmt;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
-use polarity_lang_driver::{Database, FileSource, FileSystemSource, InMemorySource};
+use polarity_lang_driver::{Database, FileSource, FileSystemSource, InMemorySource, AppResult};
 use polarity_lang_printer::Print as _;
 use url::Url;
 
@@ -22,7 +22,10 @@ pub trait Phase {
 
     fn new(name: &'static str) -> Self;
     fn name(&self) -> &'static str;
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::MainError>;
+    async fn run(
+        db: &mut Database,
+        uri: &Url,
+    ) -> AppResult<Self::Out>;
 }
 
 /// Represents a partially completed run of a testcase, where we have
@@ -226,7 +229,10 @@ impl Phase for Parse {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::MainError> {
+    async fn run(
+        db: &mut Database,
+        uri: &Url,
+    ) -> AppResult<Self::Out> {
         db.cst(uri).await
     }
 }
@@ -246,7 +252,10 @@ impl Phase for Imports {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::MainError> {
+    async fn run(
+        db: &mut Database,
+        uri: &Url,
+    ) -> AppResult<Self::Out> {
         db.load_imports(uri).await
     }
 }
@@ -271,7 +280,10 @@ impl Phase for Lower {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::MainError> {
+    async fn run(
+        db: &mut Database,
+        uri: &Url,
+    ) -> AppResult<Self::Out> {
         db.ust(uri).await.map(|x| (*x).clone())
     }
 }
@@ -297,7 +309,10 @@ impl Phase for Check {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::MainError> {
+    async fn run(
+        db: &mut Database,
+        uri: &Url,
+    ) -> AppResult<Self::Out> {
         db.ast(uri).await
     }
 }
@@ -324,7 +339,10 @@ impl Phase for Print {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::MainError> {
+    async fn run(
+        db: &mut Database,
+        uri: &Url,
+    ) -> AppResult<Self::Out> {
         let output = db.print_to_string(uri).await?;
         db.write_source(uri, &output).await?;
         Ok(output)
@@ -351,7 +369,10 @@ impl Phase for Xfunc {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::MainError> {
+    async fn run(
+        db: &mut Database,
+        uri: &Url,
+    ) -> AppResult<Self::Out> {
         // xfunc tests for these examples are currently disabled due to
         // https://github.com/polarity-lang/polarity/issues/317
         if uri.as_str().ends_with("suites/success/023-comatches.pol")
@@ -371,7 +392,7 @@ impl Phase for Xfunc {
             let new_source = db.edited(uri, xfunc_out.edits);
             db.write_source(&new_uri, &new_source.to_string()).await?;
             db.ast(&new_uri).await.map_err(|err| {
-                polarity_lang_driver::MainError::Type(Box::new(
+                polarity_lang_driver::AppError::Type(Box::new(
                     polarity_lang_elaborator::result::TypeError::Impossible {
                         message: format!("Failed to xfunc {type_name}: {err}"),
                         span: None,
@@ -403,7 +424,10 @@ impl Phase for IR {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::MainError> {
+    async fn run(
+        db: &mut Database,
+        uri: &Url,
+    ) -> AppResult<Self::Out> {
         let ir = db.ir(uri).await?;
         let pretty_ir = ir.print_to_string(None);
         Ok(pretty_ir)
@@ -466,9 +490,9 @@ impl<S: TestOutput, T: TestOutput> TestOutput for (S, T) {
 async fn pretty_error(
     db: &mut Database,
     uri: &Url,
-    err: polarity_lang_driver::MainError,
+    errs: polarity_lang_driver::AppErrors,
 ) -> miette::Report {
-    let miette_error: miette::Error = err.into();
+    let miette_error: miette::Error = errs.into();
     let source = db.source(uri).await.expect("Failed to get source");
     let filepath = uri.to_file_path().expect("Failed to convert URI to file path");
 

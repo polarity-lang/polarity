@@ -5,10 +5,10 @@ use polarity_lang_miette_util::codespan::Span;
 use polarity_lang_printer::Print;
 use polarity_lang_transformations::LiftResult;
 
-use crate::{database::Database, result::MainResult, DriverError, Edit};
+use crate::{DriverError, Edit, database::Database, result::AppResult};
 
 impl Database {
-    pub async fn lift(&mut self, uri: &Url, type_name: &str) -> MainResult<Vec<Edit>> {
+    pub async fn lift(&mut self, uri: &Url, type_name: &str) -> AppResult<Vec<Edit>> {
         let prg = self.ast(uri).await?;
 
         let type_span = prg
