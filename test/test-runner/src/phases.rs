@@ -3,7 +3,7 @@ use std::fmt;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
-use polarity_lang_driver::{Database, FileSource, FileSystemSource, InMemorySource, AppResult};
+use polarity_lang_driver::{AppResult, Database, FileSource, FileSystemSource, InMemorySource};
 use polarity_lang_printer::Print as _;
 use url::Url;
 
@@ -22,10 +22,7 @@ pub trait Phase {
 
     fn new(name: &'static str) -> Self;
     fn name(&self) -> &'static str;
-    async fn run(
-        db: &mut Database,
-        uri: &Url,
-    ) -> AppResult<Self::Out>;
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out>;
 }
 
 /// Represents a partially completed run of a testcase, where we have
@@ -229,10 +226,7 @@ impl Phase for Parse {
         self.name
     }
 
-    async fn run(
-        db: &mut Database,
-        uri: &Url,
-    ) -> AppResult<Self::Out> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         db.cst(uri).await
     }
 }
@@ -252,10 +246,7 @@ impl Phase for Imports {
         self.name
     }
 
-    async fn run(
-        db: &mut Database,
-        uri: &Url,
-    ) -> AppResult<Self::Out> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         db.load_imports(uri).await
     }
 }
@@ -280,10 +271,7 @@ impl Phase for Lower {
         self.name
     }
 
-    async fn run(
-        db: &mut Database,
-        uri: &Url,
-    ) -> AppResult<Self::Out> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         db.ust(uri).await.map(|x| (*x).clone())
     }
 }
@@ -309,10 +297,7 @@ impl Phase for Check {
         self.name
     }
 
-    async fn run(
-        db: &mut Database,
-        uri: &Url,
-    ) -> AppResult<Self::Out> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         db.ast(uri).await
     }
 }
@@ -339,10 +324,7 @@ impl Phase for Print {
         self.name
     }
 
-    async fn run(
-        db: &mut Database,
-        uri: &Url,
-    ) -> AppResult<Self::Out> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         let output = db.print_to_string(uri).await?;
         db.write_source(uri, &output).await?;
         Ok(output)
@@ -369,10 +351,7 @@ impl Phase for Xfunc {
         self.name
     }
 
-    async fn run(
-        db: &mut Database,
-        uri: &Url,
-    ) -> AppResult<Self::Out> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         // xfunc tests for these examples are currently disabled due to
         // https://github.com/polarity-lang/polarity/issues/317
         if uri.as_str().ends_with("suites/success/023-comatches.pol")
@@ -424,10 +403,7 @@ impl Phase for IR {
         self.name
     }
 
-    async fn run(
-        db: &mut Database,
-        uri: &Url,
-    ) -> AppResult<Self::Out> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         let ir = db.ir(uri).await?;
         let pretty_ir = ir.print_to_string(None);
         Ok(pretty_ir)

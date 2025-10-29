@@ -21,10 +21,10 @@ use crate::codespan::File;
 use crate::dependency_graph::DependencyGraph;
 use crate::fs::*;
 use crate::info::*;
-use crate::result::DriverError;
 use crate::result::AppErrors;
 use crate::result::AppResult;
-use crate::{FileSource, AppError, cache::*};
+use crate::result::DriverError;
+use crate::{AppError, FileSource, cache::*};
 
 use rust_lapper::Lapper;
 
