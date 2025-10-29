@@ -6,8 +6,8 @@ use polarity_lang_ast::*;
 use polarity_lang_printer::{Print, PrintCfg};
 use url::Url;
 
-use crate::result::AppResult;
 use crate::Database;
+use crate::result::AppResult;
 
 use super::item::Item;
 use super::lookup::{lookup_codef, lookup_ctor, lookup_decl, lookup_def, lookup_dtor, lookup_let};
