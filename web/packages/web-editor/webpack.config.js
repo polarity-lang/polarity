@@ -22,7 +22,7 @@ module.exports = (env, argv) => {
     mode: "production",
     target: "web",
     entry: {
-      editor: "./src/editor/index.ts",
+      editor: "./src/index.ts",
       "editor.worker": "monaco-editor-core/esm/vs/editor/editor.worker.js",
     },
     resolve: {
