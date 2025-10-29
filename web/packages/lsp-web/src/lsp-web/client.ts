@@ -27,7 +27,7 @@ export default class Client extends jsrpc.JSONRPCServerAndClient {
     // process "window/logMessage": client <- server
     this.addMethod(proto.LogMessageNotification.type.method, (params) => {
       const { type, message } = params as { type: proto.MessageType; message: string };
-      let msgKind: string;
+      let msgKind: string = "[other]";
       switch (type) {
         case proto.MessageType.Error: {
           msgKind = "[error]";

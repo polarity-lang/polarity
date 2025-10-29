@@ -10,6 +10,14 @@ overrides:
   - files: "webpack.config.js"
     env:
       "node": true
+  - files:
+      - "packages/lsp-web/src/**/*.js"
+    env:
+      browser: true
+    globals:
+      TextDecoder: readonly
+      TextEncoder: readonly
+      WritableStream: readonly
   - files: ["*.ts", "*.tsx"]
     extends:
       - plugin:@typescript-eslint/eslint-recommended

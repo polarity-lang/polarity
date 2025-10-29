@@ -90,11 +90,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Verify metadata
-        run: cargo package --workspace --no-verify --exclude polarity-bench --exclude test-runner --exclude lsp-browser
+        run: cargo package --workspace --no-verify --exclude polarity-bench --exclude test-runner --exclude polarity-lang-lsp-wasm
       # The next step is very time intensive, so we only execute it on main.
       - name: Verify that tarballs can be built
         if: ${{ github.ref == 'refs/heads/main' }}
-        run: cargo package --workspace --exclude polarity-bench --exclude test-runner --exclude lsp-browser
+        run: cargo package --workspace --exclude polarity-bench --exclude test-runner --exclude polarity-lang-lsp-wasm
 
   line-endings:
     name: Check line endings
