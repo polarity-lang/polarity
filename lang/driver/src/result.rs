@@ -6,23 +6,44 @@ use url::Url;
 
 use polarity_lang_backend::result::BackendError;
 
-pub type MainResult<T = ()> = Result<T, MainErrors>;
+/// A Result type that can contain multiple errors from any stage of the pipeline
+pub type AppResult<T = ()> = Result<T, AppErrors>;
 
+/// A non-empty vector of [AppError]s
 #[derive(Error, Diagnostic, Debug, Clone)]
-#[error("TODO: Good message")]
-pub struct MainErrors(#[related] pub Vec<MainError>);
+#[error("One or more errors occured.")]
+pub struct AppErrors(#[related] Vec<AppError>);
 
-impl<T: Into<MainError>> From<T> for MainErrors {
-    fn from(value: T) -> Self {
-        let err: MainError = value.into();
-        MainErrors(vec![err])
+impl AppErrors {
+    pub fn from_single_error(error: AppError) -> Self {
+        Self(vec![error])
+    }
+
+    pub fn from_errors(errors: Vec<AppError>) -> Self {
+        if errors.is_empty() {
+            let impossible = DriverError::Impossible("Empty / unknown error".to_string());
+            Self::from_single_error(impossible.into())
+        } else {
+            Self(errors)
+        }
+    }
+
+    pub fn into_errors(self) -> Vec<AppError> {
+        self.0
     }
 }
 
+impl<T: Into<AppError>> From<T> for AppErrors {
+    fn from(value: T) -> Self {
+        AppErrors::from_single_error(value.into())
+    }
+}
+
+/// The sum of all single errors that can occur in the pipeline
 #[derive(Error, Diagnostic, Debug, Clone)]
 #[error(transparent)]
 #[diagnostic(transparent)]
-pub enum MainError {
+pub enum AppError {
     Parser(#[from] polarity_lang_parser::ParseError),
     Lowering(#[from] Box<polarity_lang_lowering::LoweringError>),
     Type(#[from] Box<polarity_lang_elaborator::result::TypeError>),
@@ -31,6 +52,7 @@ pub enum MainError {
     Backend(#[from] BackendError),
 }
 
+/// An error that can occur in the driver itself
 #[derive(Error, Debug, Diagnostic, Clone)]
 pub enum DriverError {
     #[error("Import cycle detected for module {0:?}: {1:?}")]
