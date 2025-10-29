@@ -1884,26 +1884,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lsp-browser"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "console_error_panic_hook",
- "console_log",
- "futures",
- "js-sys",
- "log",
- "polarity-lang-driver",
- "polarity-lang-lsp-server",
- "reqwest",
- "tower-lsp-server",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wasm-streams",
- "web-sys",
-]
-
-[[package]]
 name = "lsp-types"
 version = "0.97.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2508,6 +2488,26 @@ dependencies = [
  "polarity-lang-printer",
  "tower-lsp-server",
  "url",
+]
+
+[[package]]
+name = "polarity-lang-lsp-wasm"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "console_error_panic_hook",
+ "console_log",
+ "futures",
+ "js-sys",
+ "log",
+ "polarity-lang-driver",
+ "polarity-lang-lsp-server",
+ "reqwest",
+ "tower-lsp-server",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-streams",
+ "web-sys",
 ]
 
 [[package]]

@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "polarity-lang-lsp-web/*": ["../lsp-web/src/lsp-web/*"]
+    }
+  },
+  "exclude": []
+}
