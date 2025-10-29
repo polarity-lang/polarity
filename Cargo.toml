@@ -10,7 +10,7 @@ members = [
     "lang/driver",
     "lang/transformations",
     "lang/backend",
-    "web/crates/browser",
+    "web/crates/lsp-wasm",
     "app",
     "bench",
     "test/test-runner",
