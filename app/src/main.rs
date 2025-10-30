@@ -4,7 +4,7 @@ mod cli;
 mod utils;
 
 #[cfg(not(target_arch = "wasm32"))]
-fn main() -> Result<(), ()> {
+fn main() {
     miette::set_panic_hook();
     let result = cli::exec();
 
@@ -12,9 +12,8 @@ fn main() -> Result<(), ()> {
         for error in errors {
             eprintln!("{error:?}");
         }
-        return Err(());
+        std::process::exit(1);
     }
-    Ok(())
 }
 
 #[cfg(target_arch = "wasm32")]
