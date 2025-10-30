@@ -530,7 +530,6 @@ impl Database {
         }
     }
 
-
     pub fn pretty_errors(&self, uri: &Url, errs: AppErrors) -> Vec<miette::Report> {
         errs.into_errors().into_iter().map(|err| self.pretty_error(uri, err)).collect()
     }
@@ -658,7 +657,10 @@ mod path_support {
         }
 
         /// Open a file by its path and load it into the database
-        pub fn resolve_path<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<Url, DriverError> {
+        pub fn resolve_path<P: AsRef<std::path::Path>>(
+            &mut self,
+            path: P,
+        ) -> Result<Url, DriverError> {
             let path = path.as_ref().canonicalize().expect("Could not canonicalize path");
             Ok(Url::from_file_path(path).expect("Could not convert path to URI"))
         }
