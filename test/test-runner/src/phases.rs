@@ -114,14 +114,9 @@ where
                             .unwrap()
                             .block_on(pretty_errors(&mut self.database, &self.case.uri(), err));
 
-                        let reports_string = reports.iter().fold(String::new(), |mut acc, r| {
-                            acc.push_str(&r.to_string());
-                            acc
-                        });
-
                         // There was no panic and `run` returned with an error.
                         self.report_phases
-                            .push(PhaseReport { name: phase.name(), output: reports_string });
+                            .push(PhaseReport { name: phase.name(), output: format!("{reports:?}") });
                         if expect_success {
                             return Err(PhasesError::ExpectedSuccess { got: reports });
                         }
