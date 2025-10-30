@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: L-003
+L-003
 
   × d must be used as destructor
    ╭─[L-003.pol:7:15]

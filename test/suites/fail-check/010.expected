@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: T-016
+T-016
 
   × Cannot automatically decide whether T and ? unify
     ╭─[010.pol:4:14]

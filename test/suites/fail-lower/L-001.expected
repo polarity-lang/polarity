@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: L-001
+L-001
 
   × Undefined identifier MkUnit
    ╭─[L-001.pol:2:5]

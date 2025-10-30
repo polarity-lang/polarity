@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: T-016
+T-016
 
   × Cannot automatically decide whether Type and Foo unify
    ╭─[009.pol:2:15]

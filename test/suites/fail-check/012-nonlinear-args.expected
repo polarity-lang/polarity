@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: T-020
+T-020
 
   × The metavariable ?0 received b2 as an argument more than once
     ╭─[012-nonlinear-args.pol:9:46]

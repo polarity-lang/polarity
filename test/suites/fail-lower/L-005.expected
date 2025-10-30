@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: L-005
+L-005
 
   × Arguments to type constructor List must be provided for Cons
    ╭─[L-005.pol:3:5]

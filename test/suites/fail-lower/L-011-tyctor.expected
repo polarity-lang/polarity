@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: L-011
+L-011
 
   × Mismatched named arguments: given wrong, expected elem
    ╭─[L-011-tyctor.pol:8:31]
