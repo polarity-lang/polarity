@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: L-002
+L-002
 
   × Duplicate definition of Foo
    ╭─[L-002-07.pol:2:1]

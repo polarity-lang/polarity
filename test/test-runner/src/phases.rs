@@ -110,17 +110,23 @@ where
                         Ok(out2)
                     }
                     Ok(Err(err)) => {
-                        let report = tokio::runtime::Runtime::new()
+                        let reports = tokio::runtime::Runtime::new()
                             .unwrap()
-                            .block_on(pretty_error(&mut self.database, &self.case.uri(), err));
+                            .block_on(pretty_errors(&mut self.database, &self.case.uri(), err));
+
+                        let reports_string = reports.iter().fold(String::new(), |mut acc, r| {
+                            acc.push_str(&r.to_string());
+                            acc
+                        });
+
                         // There was no panic and `run` returned with an error.
                         self.report_phases
-                            .push(PhaseReport { name: phase.name(), output: report.to_string() });
+                            .push(PhaseReport { name: phase.name(), output: reports_string });
                         if expect_success {
-                            return Err(PhasesError::ExpectedSuccess { got: report });
+                            return Err(PhasesError::ExpectedSuccess { got: reports });
                         }
                         if let Some(expected) = expected_output {
-                            let actual = render_report(&report, false);
+                            let actual = render_reports(&reports, false);
                             if actual != expected {
                                 return Err(PhasesError::Mismatch {
                                     phase: phase.name(),
@@ -175,7 +181,7 @@ pub enum Failure {
     #[allow(clippy::enum_variant_names)]
     ExpectedFailure { got: String },
     /// The test was expected to succeed, but it failed.
-    ExpectedSuccess { got: miette::Report },
+    ExpectedSuccess { got: Vec<miette::Report> },
     /// The test panicked during execution.
     Panic { msg: String },
 }
@@ -191,7 +197,7 @@ impl fmt::Display for Failure {
             Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
             Failure::ExpectedSuccess { got } => {
                 write!(f, "Expected success, got:\n\n")?;
-                let report_str = render_report(got, true);
+                let report_str = render_reports(got, true);
                 write!(f, "{report_str}")
             }
             Failure::Panic { msg } => write!(f, "Code panicked during test execution\n {msg}"),
@@ -204,7 +210,7 @@ enum PhasesError {
     Panic { msg: String },
     Mismatch { phase: &'static str, expected: String, actual: String },
     ExpectedFailure { got: String },
-    ExpectedSuccess { got: miette::Report },
+    ExpectedSuccess { got: Vec<miette::Report> },
 }
 
 // Parse Phase
@@ -373,7 +379,7 @@ impl Phase for Xfunc {
             db.ast(&new_uri).await.map_err(|err| {
                 polarity_lang_driver::AppError::Type(Box::new(
                     polarity_lang_elaborator::result::TypeError::Impossible {
-                        message: format!("Failed to xfunc {type_name}: {err}"),
+                        message: format!("Failed to xfunc {type_name}: {err:?}"),
                         span: None,
                     },
                 ))
@@ -460,15 +466,24 @@ impl<S: TestOutput, T: TestOutput> TestOutput for (S, T) {
     }
 }
 
+async fn pretty_errors(db: &mut Database, uri: &Url, errs: polarity_lang_driver::AppErrors) -> Vec<miette::Report> {
+    let errs = errs.into_errors();
+    let mut reports = Vec::with_capacity(errs.len());
+    for err in errs {
+        reports.push(pretty_error(db, uri, err).await);
+    }
+    reports
+}
+
 /// Associate error with the relevant source code for pretty-printing.
 /// This function differs from `Database::pretty_error` in that it does not display the full URI but only the filename.
 /// This is necessary to have reproducible test output (e.g. the `*.expected` files).
 async fn pretty_error(
     db: &mut Database,
     uri: &Url,
-    errs: polarity_lang_driver::AppErrors,
+    err: polarity_lang_driver::AppError,
 ) -> miette::Report {
-    let miette_error: miette::Error = errs.into();
+    let miette_error: miette::Error = err.into();
     let source = db.source(uri).await.expect("Failed to get source");
     let filepath = uri.to_file_path().expect("Failed to convert URI to file path");
 
@@ -480,7 +495,7 @@ async fn pretty_error(
     miette_error.with_source_code(miette::NamedSource::new(filename, source.to_owned()))
 }
 
-fn render_report(report: &miette::Report, colorize: bool) -> String {
+fn render_reports(reports: &[miette::Report], colorize: bool) -> String {
     let theme = if colorize {
         miette::GraphicalTheme::unicode()
     } else {
@@ -488,6 +503,8 @@ fn render_report(report: &miette::Report, colorize: bool) -> String {
     };
     let handler = miette::GraphicalReportHandler::new_themed(theme).with_width(TERMINAL_WIDTH);
     let mut output = String::new();
-    handler.render_report(&mut output, report.as_ref()).expect("Failed to render report");
+    for report in reports {
+        handler.render_report(&mut output, report.as_ref()).expect("Failed to render report");
+    }
     output
 }

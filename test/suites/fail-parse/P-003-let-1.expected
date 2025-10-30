@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: P-003
+P-003
 
   × Unexpected "let", expected "comatch", "(", "?", "\\", "_", "identifier", "number literal"
    ╭─[P-003-let-1.pol:3:23]
@@ -8,8 +6,7 @@ Error: P-003
  3 │ let x : Nat { let x : let ty := Nat; ty := Z; S(x) }
    ·                       ───
    ╰────
-
-Error: P-003
+P-003
 
   × Unexpected ":=", expected "(", ":"
    ╭─[P-003-let-1.pol:3:30]

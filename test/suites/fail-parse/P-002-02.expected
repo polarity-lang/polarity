@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: P-002
+P-002
 
   × Unexpected end of file. Expected "(", "{"
    ╭─[P-002-02.pol:1:9]

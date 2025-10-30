@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: L-019
+L-019
 
   × Invalid infix declaration: More than one operator on left hand side
    ╭─[L-infix-strange.pol:1:1]

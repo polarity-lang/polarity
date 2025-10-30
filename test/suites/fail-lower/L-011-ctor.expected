@@ -1,6 +1,4 @@
-  × One or more errors occured.
-
-Error: L-011
+L-011
 
   × Mismatched named arguments: given x, expected head
     ╭─[L-011-ctor.pol:9:15]
