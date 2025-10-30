@@ -10,10 +10,10 @@ pub struct Args {
     filepath: PathBuf,
 }
 
-pub async fn exec(cmd: Args) -> miette::Result<()> {
+pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
     let mut db = Database::from_path(&cmd.filepath);
-    let uri = db.resolve_path(&cmd.filepath)?;
-    let ir = db.ir(&uri).await.map_err(|err| db.pretty_error(&uri, err))?;
+    let uri = db.resolve_path(&cmd.filepath).unwrap();
+    let ir = db.ir(&uri).await.map_err(|errs| db.pretty_errors(&uri, errs))?;
 
     if !Path::new(IR_PATH).exists() {
         fs::create_dir_all(IR_PATH).expect("Failed to create IR directory");

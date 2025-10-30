@@ -530,7 +530,12 @@ impl Database {
         }
     }
 
-    pub fn pretty_error(&self, uri: &Url, err: AppErrors) -> miette::Report {
+
+    pub fn pretty_errors(&self, uri: &Url, errs: AppErrors) -> Vec<miette::Report> {
+        errs.into_errors().into_iter().map(|err| self.pretty_error(uri, err)).collect()
+    }
+
+    pub fn pretty_error(&self, uri: &Url, err: AppError) -> miette::Report {
         let miette_error: miette::Error = err.into();
         if let Some(File { source, .. }) = self.files.get_even_if_stale(uri) {
             miette_error.with_source_code(miette::NamedSource::new(uri, source.to_owned()))

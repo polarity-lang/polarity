@@ -27,7 +27,7 @@ pub struct Args {
     filepath: PathBuf,
 }
 
-pub async fn exec(cmd: Args) -> miette::Result<()> {
+pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
     let mut file = BufWriter::new(File::create(cmd.filepath).expect("Failed to create file"));
     match cmd.shell {
         Shell::Bash => generate(Bash, &mut Cli::command(), "pol", &mut file),

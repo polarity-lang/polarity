@@ -13,7 +13,7 @@ pub struct Args {
     open: bool,
 }
 
-pub async fn exec(cmd: Args) -> miette::Result<()> {
+pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
     let filepath = &cmd.filepath;
     let htmlpath =
         get_target_path(&fs::canonicalize(filepath).expect("failed to canonicalize path"));

@@ -10,9 +10,8 @@ use polarity_lang_backend::result::BackendError;
 pub type AppResult<T = ()> = Result<T, AppErrors>;
 
 /// A non-empty vector of [AppError]s
-#[derive(Error, Diagnostic, Debug, Clone)]
-#[error("One or more errors occured.")]
-pub struct AppErrors(#[related] Vec<AppError>);
+#[derive(Debug, Clone)]
+pub struct AppErrors(Vec<AppError>);
 
 impl AppErrors {
     pub fn from_single_error(error: AppError) -> Self {
