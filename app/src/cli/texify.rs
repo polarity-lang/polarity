@@ -75,7 +75,7 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
 
 pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
     let mut db = Database::from_path(&cmd.filepath);
-    let uri = db.resolve_path(&cmd.filepath).unwrap();
+    let uri = db.resolve_path(&cmd.filepath).map_err(|e| vec![e.into()])?;
     let prg = db.ust(&uri).await.map_err(|errs| db.pretty_errors(&uri, errs))?;
 
     let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);

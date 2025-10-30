@@ -16,7 +16,7 @@ pub struct Args {
 
 pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
     let mut db = Database::from_path(&cmd.filepath);
-    let uri = db.resolve_path(&cmd.filepath).unwrap();
+    let uri = db.resolve_path(&cmd.filepath).map_err(|e| vec![e.into()])?;
     let edits = db.lift(&uri, &cmd.r#type).await.map_err(|errs| db.pretty_errors(&uri, errs))?;
 
     // Write to file or to stdout

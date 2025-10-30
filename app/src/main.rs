@@ -12,8 +12,8 @@ fn main() -> Result<(), ()> {
         for error in errors {
             eprintln!("{error:?}");
         }
+        return Err(());
     }
-
     Ok(())
 }
 

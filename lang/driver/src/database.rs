@@ -658,7 +658,7 @@ mod path_support {
         }
 
         /// Open a file by its path and load it into the database
-        pub fn resolve_path<P: AsRef<std::path::Path>>(&mut self, path: P) -> AppResult<Url> {
+        pub fn resolve_path<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<Url, DriverError> {
             let path = path.as_ref().canonicalize().expect("Could not canonicalize path");
             Ok(Url::from_file_path(path).expect("Could not convert path to URI"))
         }

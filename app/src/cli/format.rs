@@ -52,7 +52,7 @@ fn compute_output_stream(
 pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
     for filepath in &cmd.filepaths {
         let mut db = Database::from_path(filepath);
-        let uri = db.resolve_path(filepath).unwrap();
+        let uri = db.resolve_path(filepath).map_err(|e| vec![e.into()])?;
         let prg = if cmd.checked { db.ast(&uri).await } else { db.ust(&uri).await }
             .map_err(|errs| db.pretty_errors(&uri, errs))?;
 
