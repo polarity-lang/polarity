@@ -3,7 +3,7 @@ use std::fmt;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
-use polarity_lang_driver::{Database, FileSource, FileSystemSource, InMemorySource};
+use polarity_lang_driver::{AppResult, Database, FileSource, FileSystemSource, InMemorySource};
 use polarity_lang_printer::Print as _;
 use url::Url;
 
@@ -22,7 +22,7 @@ pub trait Phase {
 
     fn new(name: &'static str) -> Self;
     fn name(&self) -> &'static str;
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::Error>;
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out>;
 }
 
 /// Represents a partially completed run of a testcase, where we have
@@ -75,72 +75,74 @@ where
         };
 
         // Run the phase and handle the result
-        let result =
-            self.result.and_then(|_| {
-                // The implementation of the compiler might contain a bug which
-                // triggers a panic. We catch this panic here so that we can report the bug as a failing case.
+        let result = self.result.and_then(|_| {
+            // The implementation of the compiler might contain a bug which
+            // triggers a panic. We catch this panic here so that we can report the bug as a failing case.
 
-                // Run the phase and catch any panics that might occur.
-                // We need to use `AssertUnwindSafe` because the compiler can not automatically
-                // guarantee that passing mutable references across a catch_unwind boundary is safe.
-                let run_result = catch_unwind(AssertUnwindSafe(|| {
-                    tokio::runtime::Runtime::new()
-                        .unwrap()
-                        .block_on(P::run(&mut self.database, &self.case.uri()))
-                }));
+            // Run the phase and catch any panics that might occur.
+            // We need to use `AssertUnwindSafe` because the compiler can not automatically
+            // guarantee that passing mutable references across a catch_unwind boundary is safe.
+            let run_result = catch_unwind(AssertUnwindSafe(|| {
+                tokio::runtime::Runtime::new()
+                    .unwrap()
+                    .block_on(P::run(&mut self.database, &self.case.uri()))
+            }));
 
-                match run_result {
-                    Ok(Ok(out2)) => {
-                        // There was no panic and `run` returned with a result.
-                        self.report_phases
-                            .push(PhaseReport { name: phase.name(), output: out2.test_output() });
-                        if !expect_success {
-                            return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
-                        }
-                        if let Some(expected) = expected_output {
-                            let actual = out2.test_output();
-                            if actual != expected {
-                                return Err(PhasesError::Mismatch {
-                                    phase: phase.name(),
-                                    expected,
-                                    actual,
-                                });
-                            }
-                        }
-                        Ok(out2)
+            match run_result {
+                Ok(Ok(out2)) => {
+                    // There was no panic and `run` returned with a result.
+                    self.report_phases
+                        .push(PhaseReport { name: phase.name(), output: out2.test_output() });
+                    if !expect_success {
+                        return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
                     }
-                    Ok(Err(err)) => {
-                        let report = tokio::runtime::Runtime::new()
-                            .unwrap()
-                            .block_on(pretty_error(&mut self.database, &self.case.uri(), err));
-                        // There was no panic and `run` returned with an error.
-                        self.report_phases
-                            .push(PhaseReport { name: phase.name(), output: report.to_string() });
-                        if expect_success {
-                            return Err(PhasesError::ExpectedSuccess { got: report });
+                    if let Some(expected) = expected_output {
+                        let actual = out2.test_output();
+                        if actual != expected {
+                            return Err(PhasesError::Mismatch {
+                                phase: phase.name(),
+                                expected,
+                                actual,
+                            });
                         }
-                        if let Some(expected) = expected_output {
-                            let actual = render_report(&report, false);
-                            if actual != expected {
-                                return Err(PhasesError::Mismatch {
-                                    phase: phase.name(),
-                                    expected,
-                                    actual,
-                                });
-                            }
-                        }
-                        Err(PhasesError::AsExpected)
                     }
-                    Err(err) => {
-                        // There was a panic
-                        self.report_phases.push(PhaseReport {
-                            name: phase.name(),
-                            output: "Panic occurred".to_string(),
-                        });
-                        Err(PhasesError::Panic { msg: err.downcast::<&str>().unwrap().to_string() })
-                    }
+                    Ok(out2)
                 }
-            });
+                Ok(Err(err)) => {
+                    let reports = tokio::runtime::Runtime::new().unwrap().block_on(pretty_errors(
+                        &mut self.database,
+                        &self.case.uri(),
+                        err,
+                    ));
+
+                    // There was no panic and `run` returned with an error.
+                    self.report_phases
+                        .push(PhaseReport { name: phase.name(), output: format!("{reports:?}") });
+                    if expect_success {
+                        return Err(PhasesError::ExpectedSuccess { got: reports });
+                    }
+                    if let Some(expected) = expected_output {
+                        let actual = render_reports(&reports, false);
+                        if actual != expected {
+                            return Err(PhasesError::Mismatch {
+                                phase: phase.name(),
+                                expected,
+                                actual,
+                            });
+                        }
+                    }
+                    Err(PhasesError::AsExpected)
+                }
+                Err(err) => {
+                    // There was a panic
+                    self.report_phases.push(PhaseReport {
+                        name: phase.name(),
+                        output: "Panic occurred".to_string(),
+                    });
+                    Err(PhasesError::Panic { msg: err.downcast::<&str>().unwrap().to_string() })
+                }
+            }
+        });
 
         PartialRun {
             database: self.database,
@@ -175,7 +177,7 @@ pub enum Failure {
     #[allow(clippy::enum_variant_names)]
     ExpectedFailure { got: String },
     /// The test was expected to succeed, but it failed.
-    ExpectedSuccess { got: miette::Report },
+    ExpectedSuccess { got: Vec<miette::Report> },
     /// The test panicked during execution.
     Panic { msg: String },
 }
@@ -191,7 +193,7 @@ impl fmt::Display for Failure {
             Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
             Failure::ExpectedSuccess { got } => {
                 write!(f, "Expected success, got:\n\n")?;
-                let report_str = render_report(got, true);
+                let report_str = render_reports(got, true);
                 write!(f, "{report_str}")
             }
             Failure::Panic { msg } => write!(f, "Code panicked during test execution\n {msg}"),
@@ -204,7 +206,7 @@ enum PhasesError {
     Panic { msg: String },
     Mismatch { phase: &'static str, expected: String, actual: String },
     ExpectedFailure { got: String },
-    ExpectedSuccess { got: miette::Report },
+    ExpectedSuccess { got: Vec<miette::Report> },
 }
 
 // Parse Phase
@@ -226,7 +228,7 @@ impl Phase for Parse {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::Error> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         db.cst(uri).await
     }
 }
@@ -246,7 +248,7 @@ impl Phase for Imports {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::Error> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         db.load_imports(uri).await
     }
 }
@@ -271,7 +273,7 @@ impl Phase for Lower {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::Error> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         db.ust(uri).await.map(|x| (*x).clone())
     }
 }
@@ -297,7 +299,7 @@ impl Phase for Check {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::Error> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         db.ast(uri).await
     }
 }
@@ -324,7 +326,7 @@ impl Phase for Print {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::Error> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         let output = db.print_to_string(uri).await?;
         db.write_source(uri, &output).await?;
         Ok(output)
@@ -351,7 +353,7 @@ impl Phase for Xfunc {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::Error> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         // xfunc tests for these examples are currently disabled due to
         // https://github.com/polarity-lang/polarity/issues/317
         if uri.as_str().ends_with("suites/success/023-comatches.pol")
@@ -371,9 +373,9 @@ impl Phase for Xfunc {
             let new_source = db.edited(uri, xfunc_out.edits);
             db.write_source(&new_uri, &new_source.to_string()).await?;
             db.ast(&new_uri).await.map_err(|err| {
-                polarity_lang_driver::Error::Type(Box::new(
+                polarity_lang_driver::AppError::Type(Box::new(
                     polarity_lang_elaborator::result::TypeError::Impossible {
-                        message: format!("Failed to xfunc {type_name}: {err}"),
+                        message: format!("Failed to xfunc {type_name}: {err:?}"),
                         span: None,
                     },
                 ))
@@ -403,7 +405,7 @@ impl Phase for IR {
         self.name
     }
 
-    async fn run(db: &mut Database, uri: &Url) -> Result<Self::Out, polarity_lang_driver::Error> {
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
         let ir = db.ir(uri).await?;
         let pretty_ir = ir.print_to_string(None);
         Ok(pretty_ir)
@@ -460,13 +462,26 @@ impl<S: TestOutput, T: TestOutput> TestOutput for (S, T) {
     }
 }
 
+async fn pretty_errors(
+    db: &mut Database,
+    uri: &Url,
+    errs: polarity_lang_driver::AppErrors,
+) -> Vec<miette::Report> {
+    let errs = errs.into_errors();
+    let mut reports = Vec::with_capacity(errs.len());
+    for err in errs {
+        reports.push(pretty_error(db, uri, err).await);
+    }
+    reports
+}
+
 /// Associate error with the relevant source code for pretty-printing.
 /// This function differs from `Database::pretty_error` in that it does not display the full URI but only the filename.
 /// This is necessary to have reproducible test output (e.g. the `*.expected` files).
 async fn pretty_error(
     db: &mut Database,
     uri: &Url,
-    err: polarity_lang_driver::Error,
+    err: polarity_lang_driver::AppError,
 ) -> miette::Report {
     let miette_error: miette::Error = err.into();
     let source = db.source(uri).await.expect("Failed to get source");
@@ -480,7 +495,7 @@ async fn pretty_error(
     miette_error.with_source_code(miette::NamedSource::new(filename, source.to_owned()))
 }
 
-fn render_report(report: &miette::Report, colorize: bool) -> String {
+fn render_reports(reports: &[miette::Report], colorize: bool) -> String {
     let theme = if colorize {
         miette::GraphicalTheme::unicode()
     } else {
@@ -488,6 +503,8 @@ fn render_report(report: &miette::Report, colorize: bool) -> String {
     };
     let handler = miette::GraphicalReportHandler::new_themed(theme).with_width(TERMINAL_WIDTH);
     let mut output = String::new();
-    handler.render_report(&mut output, report.as_ref()).expect("Failed to render report");
+    for report in reports {
+        handler.render_report(&mut output, report.as_ref()).expect("Failed to render report");
+    }
     output
 }

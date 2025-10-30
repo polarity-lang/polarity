@@ -1,4 +1,4 @@
-pub use result::Error;
+pub use result::{AppError, AppErrors, AppResult};
 
 mod asserts;
 mod cache;
