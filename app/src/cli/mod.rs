@@ -13,7 +13,7 @@ mod run;
 mod texify;
 mod xfunc;
 
-pub fn exec() -> miette::Result<()> {
+pub fn exec() -> Result<(), Vec<miette::Report>> {
     let cli = Cli::parse();
     // Initialize the logger based on the flags
     let mut builder = env_logger::Builder::from_default_env();

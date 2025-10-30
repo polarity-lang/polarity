@@ -12,14 +12,16 @@ pub struct Args {
     filepath: PathBuf,
 }
 
-pub async fn exec(cmd: Args) -> miette::Result<()> {
+pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
     let mut db = Database::from_path(&cmd.filepath);
-    let uri = db.resolve_path(&cmd.filepath)?;
-    let nf = db.run(&uri).await.map_err(|err| db.pretty_error(&uri, err))?;
+    // TODO
+    let uri = db.resolve_path(&cmd.filepath).unwrap();
+
+    let nf = db.run(&uri).await.map_err(|errs| db.pretty_errors(&uri, errs))?;
 
     match nf {
         Some(nf) => print_nf(&nf),
-        None => return Err(miette::Report::from(MainNotFound {})),
+        None => return Err(vec![miette::Report::from(MainNotFound {})]),
     }
     Ok(())
 }
