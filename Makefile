@@ -37,4 +37,4 @@ package-quick:
 
 .PHONY: package
 package:
-	@cargo package --workspace --no-verify --exclude polarity-bench --exclude test-runner --exclude polarity-lang-lsp-wasm
+	@cargo package --workspace --exclude polarity-bench --exclude test-runner --exclude polarity-lang-lsp-wasm
