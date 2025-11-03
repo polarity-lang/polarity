@@ -37,7 +37,7 @@ where
     };
     let handler = miette::GraphicalReportHandler::new_themed(theme).with_width(TERMINAL_WIDTH);
 
-    let mut reports = reports.into_iter().peekable();
+    let mut reports = reports.iter().peekable();
     while let Some(report) = reports.next() {
         handler.render_report(output, report.as_ref()).expect("Failed to render report");
         if reports.peek().is_some() {
