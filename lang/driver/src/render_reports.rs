@@ -1,3 +1,5 @@
+use miette::{GraphicalReportHandler, GraphicalTheme, Report};
+
 /// Terminal width for pretty-printing error messages.
 const TERMINAL_WIDTH: usize = 200;
 
@@ -10,13 +12,13 @@ impl<O: std::io::Write> std::fmt::Write for WriteAdapter<'_, O> {
     }
 }
 
-pub fn render_reports_to_string(reports: &[miette::Report], colorize: bool) -> String {
+pub fn render_reports_to_string(reports: &[Report], colorize: bool) -> String {
     let mut output = String::new();
     render_reports(&mut output, reports, colorize);
     output
 }
 
-pub fn render_reports_io<O>(output: &mut O, reports: &[miette::Report], colorize: bool)
+pub fn render_reports_io<O>(output: &mut O, reports: &[Report], colorize: bool)
 where
     O: std::io::Write,
 {
@@ -24,16 +26,13 @@ where
     render_reports(&mut adapter, reports, colorize);
 }
 
-pub fn render_reports<O>(output: &mut O, reports: &[miette::Report], colorize: bool)
+pub fn render_reports<O>(output: &mut O, reports: &[Report], colorize: bool)
 where
     O: std::fmt::Write,
 {
-    let theme = if colorize {
-        miette::GraphicalTheme::unicode()
-    } else {
-        miette::GraphicalTheme::unicode_nocolor()
-    };
-    let handler = miette::GraphicalReportHandler::new_themed(theme).with_width(TERMINAL_WIDTH);
+    let theme =
+        if colorize { GraphicalTheme::unicode() } else { GraphicalTheme::unicode_nocolor() };
+    let handler = GraphicalReportHandler::new_themed(theme).with_width(TERMINAL_WIDTH);
     for report in reports {
         handler.render_report(output, report.as_ref()).expect("Failed to render report");
     }
