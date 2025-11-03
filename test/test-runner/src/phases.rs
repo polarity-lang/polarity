@@ -75,74 +75,75 @@ where
         };
 
         // Run the phase and handle the result
-        let result = self.result.and_then(|_| {
-            // The implementation of the compiler might contain a bug which
-            // triggers a panic. We catch this panic here so that we can report the bug as a failing case.
+        let result =
+            self.result.and_then(|_| {
+                // The implementation of the compiler might contain a bug which
+                // triggers a panic. We catch this panic here so that we can report the bug as a failing case.
 
-            // Run the phase and catch any panics that might occur.
-            // We need to use `AssertUnwindSafe` because the compiler can not automatically
-            // guarantee that passing mutable references across a catch_unwind boundary is safe.
-            let run_result = catch_unwind(AssertUnwindSafe(|| {
-                tokio::runtime::Runtime::new()
-                    .unwrap()
-                    .block_on(P::run(&mut self.database, &self.case.uri()))
-            }));
+                // Run the phase and catch any panics that might occur.
+                // We need to use `AssertUnwindSafe` because the compiler can not automatically
+                // guarantee that passing mutable references across a catch_unwind boundary is safe.
+                let run_result = catch_unwind(AssertUnwindSafe(|| {
+                    tokio::runtime::Runtime::new()
+                        .unwrap()
+                        .block_on(P::run(&mut self.database, &self.case.uri()))
+                }));
 
-            match run_result {
-                Ok(Ok(out2)) => {
-                    // There was no panic and `run` returned with a result.
-                    self.report_phases
-                        .push(PhaseReport { name: phase.name(), output: out2.test_output() });
-                    if !expect_success {
-                        return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
-                    }
-                    if let Some(expected) = expected_output {
-                        let actual = out2.test_output();
-                        if actual != expected {
-                            return Err(PhasesError::Mismatch {
-                                phase: phase.name(),
-                                expected,
-                                actual,
-                            });
+                match run_result {
+                    Ok(Ok(out2)) => {
+                        // There was no panic and `run` returned with a result.
+                        self.report_phases
+                            .push(PhaseReport { name: phase.name(), output: out2.test_output() });
+                        if !expect_success {
+                            return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
                         }
-                    }
-                    Ok(out2)
-                }
-                Ok(Err(err)) => {
-                    let reports = tokio::runtime::Runtime::new().unwrap().block_on(pretty_errors(
-                        &mut self.database,
-                        &self.case.uri(),
-                        err,
-                    ));
-
-                    // There was no panic and `run` returned with an error.
-                    self.report_phases
-                        .push(PhaseReport { name: phase.name(), output: format!("{reports:?}") });
-                    if expect_success {
-                        return Err(PhasesError::ExpectedSuccess { got: reports });
-                    }
-                    if let Some(expected) = expected_output {
-                        let actual = render_reports(&reports, false);
-                        if actual != expected {
-                            return Err(PhasesError::Mismatch {
-                                phase: phase.name(),
-                                expected,
-                                actual,
-                            });
+                        if let Some(expected) = expected_output {
+                            let actual = out2.test_output();
+                            if actual != expected {
+                                return Err(PhasesError::Mismatch {
+                                    phase: phase.name(),
+                                    expected,
+                                    actual,
+                                });
+                            }
                         }
+                        Ok(out2)
                     }
-                    Err(PhasesError::AsExpected)
+                    Ok(Err(err)) => {
+                        let reports = tokio::runtime::Runtime::new()
+                            .unwrap()
+                            .block_on(pretty_errors(&mut self.database, &self.case.uri(), err));
+
+                        // There was no panic and `run` returned with an error.
+                        self.report_phases.push(PhaseReport {
+                            name: phase.name(),
+                            output: render_reports(&reports, true),
+                        });
+                        if expect_success {
+                            return Err(PhasesError::ExpectedSuccess { got: reports });
+                        }
+                        if let Some(expected) = expected_output {
+                            let actual = render_reports(&reports, false);
+                            if actual != expected {
+                                return Err(PhasesError::Mismatch {
+                                    phase: phase.name(),
+                                    expected,
+                                    actual,
+                                });
+                            }
+                        }
+                        Err(PhasesError::AsExpected)
+                    }
+                    Err(err) => {
+                        // There was a panic
+                        self.report_phases.push(PhaseReport {
+                            name: phase.name(),
+                            output: "Panic occurred".to_string(),
+                        });
+                        Err(PhasesError::Panic { msg: err.downcast::<&str>().unwrap().to_string() })
+                    }
                 }
-                Err(err) => {
-                    // There was a panic
-                    self.report_phases.push(PhaseReport {
-                        name: phase.name(),
-                        output: "Panic occurred".to_string(),
-                    });
-                    Err(PhasesError::Panic { msg: err.downcast::<&str>().unwrap().to_string() })
-                }
-            }
-        });
+            });
 
         PartialRun {
             database: self.database,
