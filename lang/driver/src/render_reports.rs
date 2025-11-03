@@ -36,7 +36,12 @@ where
         miette::GraphicalTheme::unicode_nocolor()
     };
     let handler = miette::GraphicalReportHandler::new_themed(theme).with_width(TERMINAL_WIDTH);
-    for report in reports {
+
+    let mut reports = reports.into_iter().peekable();
+    while let Some(report) = reports.next() {
         handler.render_report(output, report.as_ref()).expect("Failed to render report");
+        if reports.peek().is_some() {
+            writeln!(output).expect("Failed to render newline in report");
+        }
     }
 }

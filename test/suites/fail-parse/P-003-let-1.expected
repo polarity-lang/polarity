@@ -6,6 +6,7 @@ P-003
  3 │ let x : Nat { let x : let ty := Nat; ty := Z; S(x) }
    ·                       ───
    ╰────
+
 P-003
 
   × Unexpected ":=", expected "(", ":"
