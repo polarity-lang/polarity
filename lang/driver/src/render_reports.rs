@@ -3,9 +3,10 @@ const TERMINAL_WIDTH: usize = 200;
 
 struct WriteAdapter<'a, O: std::io::Write>(pub &'a mut O);
 
-impl<'a, O: std::io::Write> std::fmt::Write for WriteAdapter<'a, O> {
+impl<O: std::io::Write> std::fmt::Write for WriteAdapter<'_, O> {
     fn write_str(&mut self, s: &str) -> std::fmt::Result {
-        Ok(write!(self.0, "{s}").expect("Failed to write in adapter"))
+        write!(self.0, "{s}").expect("Failed to write in adapter");
+        Ok(())
     }
 }
 
