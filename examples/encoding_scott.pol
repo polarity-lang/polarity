@@ -1,14 +1,16 @@
 use "../std/codata/fun.pol"
-// Using the Scott encoding we can represent a natural number using its
-// pattern matching principle.
-//
-// The pattern matching principle for the number "n" allows to distinguish the zero
-// case from the successor case by either returning a value "z : A" if the number is zero,
-// or by applying a function "f : Nat -> A" to the predecessor of the number if it isn't zero.
-//
-// By defunctionalizing and refunctionalizing the type "Nat" you can observe how
-// the Scott encoding corresponds to a program which defines a pattern matching principle
-// on Peano natural numbers.
+
+/// Using the Scott encoding we can represent a natural number using its
+/// pattern matching principle.
+///
+/// The pattern matching principle for the number "n" allows to distinguish the zero
+/// case from the successor case by either returning a value "z : A" if the number is zero,
+/// or by applying a function "f : Nat -> A" to the predecessor of the number if it isn't zero.
+///
+/// By defunctionalizing and refunctionalizing the type "Nat" you can observe how
+/// the Scott encoding corresponds to a program which defines a pattern matching principle
+/// on Peano natural numbers.
+note scott_encoding
 
 codata Nat { .case(A: Type, z: A, s: Nat -> A): A }
 

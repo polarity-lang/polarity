@@ -2,9 +2,11 @@ use "../std/data/bool.pol"
 use "../std/data/eq.pol"
 use "../std/data/nat.pol"
 use "../std/data/ordering.pol"
-// An example of various implementations of the set interface from Section 3
-// of William R. Cook’s essay, “On Understanding Data Abstraction, Revisited”
-// https://www.cs.utexas.edu/~wcook/Drafts/2009/essay.pdf
+
+/// An example of various implementations of the set interface from Section 3
+/// of William R. Cook’s essay, “On Understanding Data Abstraction, Revisited”
+/// https://www.cs.utexas.edu/~wcook/Drafts/2009/essay.pdf
+note set_example
 
 /// An interface for sets of natural numbers
 codata Set {

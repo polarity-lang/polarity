@@ -1,14 +1,16 @@
 use "../std/codata/fun.pol"
-// Using the Church encoding we can represent a natural number using its
-// iteration principle.
-//
-// The iteration principle for the number "n" allows to construct, for any type "A",
-// an inhabitant of "A" by applying a function "s : A -> A" n-times to the
-// starting value "z : A".
-//
-// By defunctionalizing and refunctionalizing the type "Nat" you can observe how
-// the Church encoding corresponds to a program which defines an iteration principle
-// on Peano natural numbers.
+
+/// Using the Church encoding we can represent a natural number using its
+/// iteration principle.
+///
+/// The iteration principle for the number "n" allows to construct, for any type "A",
+/// an inhabitant of "A" by applying a function "s : A -> A" n-times to the
+/// starting value "z : A".
+///
+/// By defunctionalizing and refunctionalizing the type "Nat" you can observe how
+/// the Church encoding corresponds to a program which defines an iteration principle
+/// on Peano natural numbers.
+note church_encoding
 
 codata Nat { .iter(A: Type, z: A, s: A -> A): A }
 
