@@ -10,7 +10,7 @@ fn main() {
 
     if let Err(errors) = result {
         let mut stderr = std::io::stderr().lock();
-        polarity_lang_driver::render_reports_io(&mut stderr, &errors, false);
+        polarity_lang_driver::render_reports_io(&mut stderr, &errors, true);
         std::process::exit(1);
     }
 }
