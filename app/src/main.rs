@@ -9,9 +9,8 @@ fn main() {
     let result = cli::exec();
 
     if let Err(errors) = result {
-        for error in errors {
-            eprintln!("{error:?}");
-        }
+        let mut stderr = std::io::stderr().lock();
+        polarity_lang_driver::render_reports_io(&mut stderr, &errors, false);
         std::process::exit(1);
     }
 }

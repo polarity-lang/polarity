@@ -1,5 +1,3 @@
-pub use result::{AppError, AppErrors, AppResult};
-
 mod asserts;
 mod cache;
 mod codespan;
@@ -10,6 +8,7 @@ mod fs;
 mod info;
 mod lift;
 pub mod paths;
+mod render_reports;
 mod result;
 mod spans;
 mod xfunc;
@@ -20,5 +19,6 @@ pub use edit::*;
 pub use fs::*;
 pub use info::*;
 pub use paths::*;
-pub use result::DriverError;
+pub use render_reports::*;
+pub use result::*;
 pub use xfunc::*;

@@ -3,7 +3,9 @@ use std::fmt;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
-use polarity_lang_driver::{AppResult, Database, FileSource, FileSystemSource, InMemorySource};
+use polarity_lang_driver::{
+    AppResult, Database, FileSource, FileSystemSource, InMemorySource, render_reports_to_string,
+};
 use polarity_lang_printer::Print as _;
 use url::Url;
 
@@ -13,9 +15,6 @@ use crate::{
     runner::CaseResult,
     suites::{self, Case},
 };
-
-/// Terminal width for pretty-printing error messages.
-const TERMINAL_WIDTH: usize = 200;
 
 pub trait Phase {
     type Out: TestOutput;
@@ -117,13 +116,13 @@ where
                         // There was no panic and `run` returned with an error.
                         self.report_phases.push(PhaseReport {
                             name: phase.name(),
-                            output: render_reports(&reports, true),
+                            output: render_reports_to_string(&reports, true),
                         });
                         if expect_success {
                             return Err(PhasesError::ExpectedSuccess { got: reports });
                         }
                         if let Some(expected) = expected_output {
-                            let actual = render_reports(&reports, false);
+                            let actual = render_reports_to_string(&reports, false);
                             if actual != expected {
                                 return Err(PhasesError::Mismatch {
                                     phase: phase.name(),
@@ -194,7 +193,7 @@ impl fmt::Display for Failure {
             Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
             Failure::ExpectedSuccess { got } => {
                 write!(f, "Expected success, got:\n\n")?;
-                let report_str = render_reports(got, true);
+                let report_str = render_reports_to_string(got, true);
                 write!(f, "{report_str}")
             }
             Failure::Panic { msg } => write!(f, "Code panicked during test execution\n {msg}"),
@@ -494,18 +493,4 @@ async fn pretty_error(
         .to_str()
         .expect("Failed to convert file name to string");
     miette_error.with_source_code(miette::NamedSource::new(filename, source.to_owned()))
-}
-
-fn render_reports(reports: &[miette::Report], colorize: bool) -> String {
-    let theme = if colorize {
-        miette::GraphicalTheme::unicode()
-    } else {
-        miette::GraphicalTheme::unicode_nocolor()
-    };
-    let handler = miette::GraphicalReportHandler::new_themed(theme).with_width(TERMINAL_WIDTH);
-    let mut output = String::new();
-    for report in reports {
-        handler.render_report(&mut output, report.as_ref()).expect("Failed to render report");
-    }
-    output
 }
