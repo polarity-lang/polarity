@@ -1,7 +1,6 @@
 use miette::Report;
 
 /// Terminal width for pretty-printing error messages.
-#[cfg(not(target_arch = "wasm32"))]
 const TERMINAL_WIDTH: usize = 200;
 
 struct WriteAdapter<'a, O: std::io::Write>(pub &'a mut O);
@@ -27,7 +26,6 @@ where
     render_reports(&mut adapter, reports, colorize);
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub fn render_reports<O>(output: &mut O, reports: &[Report], colorize: bool)
 where
     O: std::fmt::Write,
@@ -40,15 +38,5 @@ where
     let handler = miette::GraphicalReportHandler::new_themed(theme).with_width(TERMINAL_WIDTH);
     for report in reports {
         handler.render_report(output, report.as_ref()).expect("Failed to render report");
-    }
-}
-
-#[cfg(target_arch = "wasm32")]
-pub fn render_reports<O>(output: &mut O, reports: &[Report], _colorize: bool)
-where
-    O: std::fmt::Write,
-{
-    for report in reports {
-        write!(output, "{report:?}").expect("Failed to render report");
     }
 }

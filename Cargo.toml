@@ -53,7 +53,7 @@ lalrpop-util             = { version = "0.22.2" }
 log                      = { version = "0.4.21" }
 logos                    = { version = "0.15.1" }
 lsp-types                = { version = "0.97" }
-miette                   = { version = "7" }
+miette                   = { version = "7", features = ["fancy"] }
 num-bigint               = { version = "0.4" }
 opener                   = { version = "0.5" }
 pretty                   = { version = "0.11", features = ["termcolor"] }

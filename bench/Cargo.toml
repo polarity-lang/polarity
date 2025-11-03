@@ -20,7 +20,7 @@ path = "src/main.rs"
 async-std = { workspace = true }
 criterion = { workspace = true, features = ["html_reports"] }
 futures   = { workspace = true }
-miette    = { workspace = true, features = ["fancy"] }
+miette    = { workspace = true }
 tokio     = { workspace = true, features = ["rt-multi-thread"] }
 url       = { workspace = true }
 

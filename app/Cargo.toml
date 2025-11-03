@@ -23,7 +23,7 @@ clap_complete    = { workspace = true }
 env_logger       = { workspace = true }
 futures          = { workspace = true }
 log              = { workspace = true }
-miette           = { workspace = true, features = ["fancy"] }
+miette           = { workspace = true }
 termsize         = { workspace = true }
 thiserror        = { workspace = true }
 tokio            = { workspace = true, features = ["rt-multi-thread"] }
