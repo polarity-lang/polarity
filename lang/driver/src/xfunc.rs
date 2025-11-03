@@ -12,6 +12,7 @@ use polarity_lang_transformations::result::XfuncError;
 use url::Url;
 
 use crate::database::Database;
+use crate::result::AppResult;
 
 use super::Edit;
 
@@ -21,10 +22,7 @@ pub struct Xfunc {
 }
 
 impl Database {
-    pub async fn all_declared_type_names(
-        &mut self,
-        uri: &Url,
-    ) -> Result<Vec<cst::Ident>, crate::Error> {
+    pub async fn all_declared_type_names(&mut self, uri: &Url) -> AppResult<Vec<cst::Ident>> {
         let ust = self.cst(uri).await?;
         Ok(ust
             .decls
@@ -37,7 +35,7 @@ impl Database {
             .collect())
     }
 
-    pub async fn xfunc(&mut self, uri: &Url, type_name: &str) -> Result<Xfunc, crate::Error> {
+    pub async fn xfunc(&mut self, uri: &Url, type_name: &str) -> AppResult<Xfunc> {
         let module = self.ast(uri).await?;
 
         let mut decl_spans: HashMap<IdBind, Span> = HashMap::new();
@@ -139,7 +137,7 @@ fn generate_edits(
     Xfunc { title, edits }
 }
 
-fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
+fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::AppError> {
     let (mut codata, mut codefs) = polarity_lang_transformations::as_codata(mat, type_name)?;
 
     codata.rename();
@@ -151,7 +149,7 @@ fn refunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, cr
     Ok(XfuncResult { title: format!("Refunctionalize {type_name}"), new_decls })
 }
 
-fn defunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::Error> {
+fn defunctionalize(mat: &matrix::Prg, type_name: &str) -> Result<XfuncResult, crate::AppError> {
     let (mut data, mut defs) = polarity_lang_transformations::as_data(mat, type_name)?;
 
     data.rename();

@@ -1,6 +1,4 @@
-  × Failed parsing
-
-Error: P-003
+P-003
 
   × Unexpected "let", expected "comatch", "(", "?", "\\", "_", "identifier", "number literal"
    ╭─[P-003-let-1.pol:3:23]
@@ -9,7 +7,7 @@ Error: P-003
    ·                       ───
    ╰────
 
-Error: P-003
+P-003
 
   × Unexpected ":=", expected "(", ":"
    ╭─[P-003-let-1.pol:3:30]

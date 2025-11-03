@@ -14,10 +14,10 @@ pub struct Args {
     output: Option<PathBuf>,
 }
 
-pub async fn exec(cmd: Args) -> miette::Result<()> {
+pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
     let mut db = Database::from_path(&cmd.filepath);
-    let uri = db.resolve_path(&cmd.filepath)?;
-    let edits = db.lift(&uri, &cmd.r#type).await.map_err(miette::Report::msg)?;
+    let uri = db.resolve_path(&cmd.filepath).map_err(|e| vec![e.into()])?;
+    let edits = db.lift(&uri, &cmd.r#type).await.map_err(|errs| db.pretty_errors(&uri, errs))?;
 
     // Write to file or to stdout
     let stream: Box<dyn io::Write> = match cmd.output {

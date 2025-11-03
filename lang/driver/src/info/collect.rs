@@ -6,7 +6,8 @@ use polarity_lang_ast::*;
 use polarity_lang_printer::{Print, PrintCfg};
 use url::Url;
 
-use crate::{Database, Error};
+use crate::Database;
+use crate::result::AppResult;
 
 use super::item::Item;
 use super::lookup::{lookup_codef, lookup_ctor, lookup_decl, lookup_def, lookup_dtor, lookup_let};
@@ -17,7 +18,7 @@ use super::{Binder, Ctx};
 pub async fn collect_info(
     db: &mut Database,
     uri: &Url,
-) -> Result<(Lapper<u32, HoverContents>, Lapper<u32, (Url, Span)>, Lapper<u32, Item>), Error> {
+) -> AppResult<(Lapper<u32, HoverContents>, Lapper<u32, (Url, Span)>, Lapper<u32, Item>)> {
     let module = db.ast(uri).await?;
     let mut collector = InfoCollector::new(module.meta_vars.clone());
 
