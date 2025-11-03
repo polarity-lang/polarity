@@ -1,5 +1,5 @@
 [package]
-name = "lsp-browser"
+name = "polarity-lang-lsp-wasm"
 
 version.workspace = true
 edition.workspace = true
@@ -38,7 +38,7 @@ web-sys                  = { workspace = true, features = [
   "Location",
   "HtmlTextAreaElement",
   "ReadableStream",
-  "WritableStream",  
+  "WritableStream",
 ] }
 
 # workspace dependencies

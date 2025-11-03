@@ -1,4 +1,4 @@
-import "../../assets/editor.css";
+import "../assets/editor.css";
 
 import App from "./app";
 
