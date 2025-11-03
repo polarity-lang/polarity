@@ -74,8 +74,8 @@ impl Database {
     // The core API of the Database consists of functions which have the following forms:
     //
     // ```text
-    // pub fn xxx(&mut self, uri: &Url) -> Result<xxx, Error>
-    // fn recompute_xxx(&mut self, uri: &Url) -> Result<(xxx, Error>
+    // pub fn xxx(&mut self, uri: &Url) -> AppResult<xxx>
+    // fn recompute_xxx(&mut self, uri: &Url) -> AppResult<xxx>
     // ```
     // where `xxx` can be the cst, ust, ast, or any other sort of information about a module.
     // These functions are all implemented in a similar way.
