@@ -73,6 +73,8 @@ tower-lsp-server         = { version = "0.21" , default-features = false, featur
 ] }
 url                      = { version = "2.5.0" }
 walkdir                  = { version = "2.5.0" }
+# We pin the version because a matching `wasm-bindgen-cli` is needed.
+# If you update the version, make sure to update the nix flake accordingly.
 wasm-bindgen             = { version = "=0.2.104" }
 wasm-bindgen-futures     = { version = "0.4" }
 wasm-streams             = { version = "0.2" }
