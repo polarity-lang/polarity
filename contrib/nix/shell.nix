@@ -4,22 +4,35 @@
   ...
 }:
 pkgs.mkShell.override { inherit stdenv; } {
+  name = "polarity";
+
   nativeBuildInputs =
+    with pkgs;
     [
-      pkgs.cargo
-      pkgs.clippy
-      pkgs.rust-analyzer
-      pkgs.rustc
-      pkgs.rustfmt
+      # rust
+      cargo
+      clippy
+      rust-analyzer
+      rustc
+      rustfmt
+      rustup
 
-      pkgs.nixfmt-rfc-style
+      # linker
+      lld
 
-      pkgs.pkg-config
-      pkgs.openssl
+      # web
+      nodejs
+      wasm-bindgen-cli
+
+      # formatting
+      nixfmt-rfc-style
+
+      # libraries
+      pkg-config
+      openssl
     ]
     ++ pkgs.lib.optionals stdenv.isDarwin [
       pkgs.libiconv
-      pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
     ];
 
   # Certain Rust tools won't work without this, for example VS Code with rust analyzer
