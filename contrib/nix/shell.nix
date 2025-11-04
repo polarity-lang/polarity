@@ -33,7 +33,6 @@ pkgs.mkShell.override { inherit stdenv; } {
     ]
     ++ pkgs.lib.optionals stdenv.isDarwin [
       pkgs.libiconv
-      pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
     ];
 
   # Certain Rust tools won't work without this, for example VS Code with rust analyzer
