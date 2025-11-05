@@ -140,6 +140,13 @@ pub enum LoweringError {
         span: SourceSpan,
         name: String,
     },
+    #[error("Could not find module {}", import)]
+    #[diagnostic(code("L-021"))]
+    InvalidImport {
+        #[label]
+        span: SourceSpan,
+        import: String,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("L-XXX"))]
     /// This error should not occur.

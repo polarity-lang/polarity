@@ -3,6 +3,8 @@ use std::sync::Arc;
 
 use lsp_types::HoverContents;
 use polarity_lang_ast::rename::Rename;
+use polarity_lang_lowering::LoweringError;
+use polarity_lang_miette_util::ToMiette;
 use polarity_lang_miette_util::codespan::Span;
 use url::Url;
 
@@ -612,10 +614,20 @@ impl Database {
         // Collect dependencies from `use` declarations
         let mut dependencies = Vec::new();
         for use_decl in &module.use_decls {
-            let UseDecl { path, .. } = use_decl;
+            let UseDecl { path, span } = use_decl;
             // Resolve the module name to a `Url`
             let dep_url = self.resolve_module_name(path, module_uri)?;
             dependencies.push(dep_url.clone());
+
+            let dep_path = dep_url.to_file_path().unwrap();
+
+            if !dep_path.exists() {
+                let err = AppError::Lowering(Box::new(LoweringError::InvalidImport {
+                    span: span.to_miette(),
+                    import: path.clone(),
+                }));
+                return Err(crate::result::AppErrors::from_single_error(err));
+            };
 
             // Recursively visit the dependency
             Box::pin(self.visit_module(&dep_url, visited, stack, graph)).await?;
