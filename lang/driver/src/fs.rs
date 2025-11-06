@@ -149,15 +149,15 @@ impl FileSource for InMemorySource {
     }
 }
 
-/// A source that first tries to access files from the first source, and falls back to the second
+/// A source that first tries to access files from the primary source, and falls back if necessary
 pub struct OverlaySource<S1, S2> {
-    first: S1,
-    second: S2,
+    primary: S1,
+    fallback: S2,
 }
 
 impl<S1, S2> OverlaySource<S1, S2> {
-    pub fn new(first: S1, second: S2) -> Self {
-        Self { first, second }
+    pub fn new(primary: S1, fallback: S2) -> Self {
+        Self { primary, fallback }
     }
 }
 
@@ -168,30 +168,30 @@ where
     S2: FileSource,
 {
     async fn exists(&mut self, uri: &Url) -> Result<bool, DriverError> {
-        Ok(self.first.exists(uri).await? || self.second.exists(uri).await?)
+        Ok(self.primary.exists(uri).await? || self.fallback.exists(uri).await?)
     }
 
     fn register(&mut self, uri: &Url) -> bool {
-        self.first.register(uri) || self.second.register(uri)
+        self.primary.register(uri) || self.fallback.register(uri)
     }
 
     fn forget(&mut self, uri: &Url) -> bool {
-        self.first.forget(uri) || self.second.forget(uri)
+        self.primary.forget(uri) || self.fallback.forget(uri)
     }
 
     async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
-        match self.first.read_to_string(uri).await {
+        match self.primary.read_to_string(uri).await {
             Ok(source) => Ok(source),
-            Err(DriverError::FileNotFound(_)) => self.second.read_to_string(uri).await,
+            Err(DriverError::FileNotFound(_)) => self.fallback.read_to_string(uri).await,
             Err(err) => Err(err),
         }
     }
 
     async fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
-        if self.first.exists(uri).await? {
-            self.first.write_string(uri, source).await
+        if self.primary.exists(uri).await? {
+            self.primary.write_string(uri, source).await
         } else {
-            self.second.write_string(uri, source).await
+            self.fallback.write_string(uri, source).await
         }
     }
 }
