@@ -15,6 +15,7 @@ pub trait FileSource: Send + Sync {
     /// Instruct the source to register a file with the given URI.
     ///
     /// Typically used when keeping the source in-memory.
+    /// Returns `true` if registration was successful.
     fn register(&mut self, uri: &Url) -> bool;
     /// Stop keeping track of a file with the given URI
     ///
