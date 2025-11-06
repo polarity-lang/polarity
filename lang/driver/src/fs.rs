@@ -11,7 +11,7 @@ use crate::result::DriverError;
 #[async_trait]
 pub trait FileSource: Send + Sync {
     /// Check if a file with the given URI exists
-    fn exists(&self, uri: &Url) -> bool;
+    async fn exists(&mut self, uri: &Url) -> Result<bool, DriverError>;
     /// Instruct the source to manage a file with the given URI
     ///
     /// Typically used when keeping the source in-memory
@@ -58,9 +58,9 @@ mod file_system {
 
     #[async_trait]
     impl FileSource for FileSystemSource {
-        fn exists(&self, uri: &Url) -> bool {
+        async fn exists(&mut self, uri: &Url) -> Result<bool, DriverError> {
             let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
-            self.root.join(filepath).exists()
+            Ok(self.root.join(filepath).exists())
         }
 
         fn manage(&mut self, uri: &Url) -> bool {
@@ -123,8 +123,8 @@ impl InMemorySource {
 
 #[async_trait]
 impl FileSource for InMemorySource {
-    fn exists(&self, uri: &Url) -> bool {
-        self.files.contains_key(uri)
+    async fn exists(&mut self, uri: &Url) -> Result<bool, DriverError> {
+        Ok(self.files.contains_key(uri))
     }
 
     fn manage(&mut self, uri: &Url) -> bool {
@@ -177,8 +177,8 @@ where
     S1: FileSource,
     S2: FileSource,
 {
-    fn exists(&self, uri: &Url) -> bool {
-        self.first.exists(uri) || self.second.exists(uri)
+    async fn exists(&mut self, uri: &Url) -> Result<bool, DriverError> {
+        Ok(self.first.exists(uri).await? || self.second.exists(uri).await?)
     }
 
     fn manage(&mut self, uri: &Url) -> bool {
