@@ -378,7 +378,7 @@ impl Phase for Xfunc {
 
         let new_uri =
             uri.to_string().replacen("file", "inmemory", 1).parse().expect("Failed to parse URI");
-        db.source.manage(&new_uri);
+        db.source.register(&new_uri);
 
         for type_name in type_names.iter().map(|tn| &tn.id) {
             let xfunc_out = db.xfunc(uri, type_name).await?;

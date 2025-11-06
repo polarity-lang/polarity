@@ -35,11 +35,7 @@ impl FileSource for FetchSource {
         }
     }
 
-    fn manage(&mut self, _uri: &reqwest::Url) -> bool {
-        true
-    }
-
-    fn manages(&self, _uri: &reqwest::Url) -> bool {
+    fn register(&mut self, _uri: &reqwest::Url) -> bool {
         true
     }
 

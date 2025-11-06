@@ -12,16 +12,14 @@ use crate::result::DriverError;
 pub trait FileSource: Send + Sync {
     /// Check if a file with the given URI exists
     async fn exists(&mut self, uri: &Url) -> Result<bool, DriverError>;
-    /// Instruct the source to manage a file with the given URI
+    /// Instruct the source to register a file with the given URI.
     ///
-    /// Typically used when keeping the source in-memory
-    fn manage(&mut self, uri: &Url) -> bool;
-    /// Check if the source manages a file with the given URI
-    fn manages(&self, uri: &Url) -> bool;
-    /// Stop managing a file with the given URI
+    /// Typically used when keeping the source in-memory.
+    fn register(&mut self, uri: &Url) -> bool;
+    /// Stop keeping track of a file with the given URI
     ///
     /// This is mostly relevant for in-memory sources.
-    /// Returns `true` if the source was managing the file.
+    /// Returns `true` if the source had the file registered.
     fn forget(&mut self, uri: &Url) -> bool;
     /// Read the contents of a file with the given URI
     async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError>;
@@ -63,12 +61,7 @@ mod file_system {
             Ok(self.root.join(filepath).exists())
         }
 
-        fn manage(&mut self, uri: &Url) -> bool {
-            let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
-            self.root.join(filepath).exists()
-        }
-
-        fn manages(&self, uri: &Url) -> bool {
+        fn register(&mut self, uri: &Url) -> bool {
             let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
             self.root.join(filepath).exists()
         }
@@ -127,14 +120,10 @@ impl FileSource for InMemorySource {
         Ok(self.files.contains_key(uri))
     }
 
-    fn manage(&mut self, uri: &Url) -> bool {
+    fn register(&mut self, uri: &Url) -> bool {
         self.files.insert(uri.clone(), String::default());
         self.modified.insert(uri.clone(), false);
         true
-    }
-
-    fn manages(&self, uri: &Url) -> bool {
-        self.files.contains_key(uri)
     }
 
     fn forget(&mut self, uri: &Url) -> bool {
@@ -144,7 +133,7 @@ impl FileSource for InMemorySource {
     }
 
     async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
-        if self.manages(uri) {
+        if self.exists(uri).await? {
             self.modified.insert(uri.clone(), false);
             Ok(self.files.get(uri).cloned().unwrap_or_default())
         } else {
@@ -181,12 +170,8 @@ where
         Ok(self.first.exists(uri).await? || self.second.exists(uri).await?)
     }
 
-    fn manage(&mut self, uri: &Url) -> bool {
-        self.first.manage(uri) || self.second.manage(uri)
-    }
-
-    fn manages(&self, uri: &Url) -> bool {
-        self.first.manages(uri) || self.second.manages(uri)
+    fn register(&mut self, uri: &Url) -> bool {
+        self.first.register(uri) || self.second.register(uri)
     }
 
     fn forget(&mut self, uri: &Url) -> bool {
@@ -202,7 +187,7 @@ where
     }
 
     async fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
-        if self.first.manages(uri) {
+        if self.first.exists(uri).await? {
             self.first.write_string(uri, source).await
         } else {
             self.second.write_string(uri, source).await
