@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use miette::Diagnostic;
+use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 use url::Url;
 
@@ -54,6 +54,13 @@ pub enum AppError {
 /// An error that can occur in the driver itself
 #[derive(Error, Debug, Diagnostic, Clone)]
 pub enum DriverError {
+    #[error("Could not find module {}", import)]
+    #[diagnostic(code("D-001"))]
+    InvalidImport {
+        #[label]
+        span: SourceSpan,
+        import: String,
+    },
     #[error("Import cycle detected for module {0:?}: {1:?}")]
     ImportCycle(Url, Vec<Url>),
     #[error("Invalid URI: {0}")]
