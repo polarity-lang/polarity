@@ -94,7 +94,10 @@ where
                         self.report_phases
                             .push(PhaseReport { name: phase.name(), output: out2.test_output() });
                         if !expect_success {
-                            return Err(PhasesError::ExpectedFailure { got: out2.test_output() });
+                            return Err(PhasesError::ExpectedFailure {
+                                phase: phase.name(),
+                                got: out2.test_output(),
+                            });
                         }
                         if let Some(expected) = expected_output {
                             let actual = out2.test_output();
@@ -119,7 +122,10 @@ where
                             output: render_reports_to_string(&reports, true),
                         });
                         if expect_success {
-                            return Err(PhasesError::ExpectedSuccess { got: reports });
+                            return Err(PhasesError::ExpectedSuccess {
+                                phase: phase.name(),
+                                got: reports,
+                            });
                         }
                         if let Some(expected) = expected_output {
                             let actual = render_reports_to_string(&reports, false);
@@ -159,8 +165,12 @@ where
             Err(PhasesError::Mismatch { phase, expected, actual }) => {
                 Err(Failure::Mismatch { phase, expected, actual })
             }
-            Err(PhasesError::ExpectedFailure { got }) => Err(Failure::ExpectedFailure { got }),
-            Err(PhasesError::ExpectedSuccess { got }) => Err(Failure::ExpectedSuccess { got }),
+            Err(PhasesError::ExpectedFailure { phase, got }) => {
+                Err(Failure::ExpectedFailure { phase, got })
+            }
+            Err(PhasesError::ExpectedSuccess { phase, got }) => {
+                Err(Failure::ExpectedSuccess { phase, got })
+            }
             Err(PhasesError::Panic { msg }) => Err(Failure::Panic { msg }),
         };
 
@@ -175,9 +185,9 @@ pub enum Failure {
     Mismatch { phase: &'static str, expected: String, actual: String },
     /// The test was expected to fail, but it succeeded.
     #[allow(clippy::enum_variant_names)]
-    ExpectedFailure { got: String },
+    ExpectedFailure { phase: &'static str, got: String },
     /// The test was expected to succeed, but it failed.
-    ExpectedSuccess { got: Vec<miette::Report> },
+    ExpectedSuccess { phase: &'static str, got: Vec<miette::Report> },
     /// The test panicked during execution.
     Panic { msg: String },
 }
@@ -190,9 +200,11 @@ impl fmt::Display for Failure {
             Failure::Mismatch { phase: _, expected, actual } => {
                 write!(f, "\n  Expected : {expected}\n  Got      : {actual}")
             }
-            Failure::ExpectedFailure { got } => write!(f, "Expected failure, got {got}"),
-            Failure::ExpectedSuccess { got } => {
-                write!(f, "Expected success, got:\n\n")?;
+            Failure::ExpectedFailure { phase, got } => {
+                write!(f, "Expected failure in phase {phase}, but got {got}")
+            }
+            Failure::ExpectedSuccess { phase, got } => {
+                write!(f, "Expected success in phase {phase}, but got:\n\n")?;
                 let report_str = render_reports_to_string(got, true);
                 write!(f, "{report_str}")
             }
@@ -205,8 +217,8 @@ enum PhasesError {
     AsExpected,
     Panic { msg: String },
     Mismatch { phase: &'static str, expected: String, actual: String },
-    ExpectedFailure { got: String },
-    ExpectedSuccess { got: Vec<miette::Report> },
+    ExpectedFailure { phase: &'static str, got: String },
+    ExpectedSuccess { phase: &'static str, got: Vec<miette::Report> },
 }
 
 // Parse Phase
