@@ -71,8 +71,6 @@ pub enum DriverError {
     Io(#[from] Arc<std::io::Error>),
     #[error("URL error: {0}")]
     Url(#[from] url::ParseError),
-    #[error("Impossible: {0}")]
-    Impossible(String),
     #[error("The file is present, but does not contain the specified byte index.")]
     IndexTooLarge { given: usize, max: usize },
     #[error("The file is present, but does not contain the specified line index.")]
@@ -81,4 +79,6 @@ pub enum DriverError {
         "The given index is contained in the file, but is not a boundary of a UTF-8 code point."
     )]
     InvalidCharBoundary { given: usize },
+    #[error("Impossible: {0}")]
+    Impossible(String),
 }
