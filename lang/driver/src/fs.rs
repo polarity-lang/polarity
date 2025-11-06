@@ -10,6 +10,8 @@ use crate::result::DriverError;
 
 #[async_trait]
 pub trait FileSource: Send + Sync {
+    /// Check if a file with the given URI exists
+    fn exists(&self, uri: &Url) -> bool;
     /// Instruct the source to manage a file with the given URI
     ///
     /// Typically used when keeping the source in-memory
@@ -56,6 +58,11 @@ mod file_system {
 
     #[async_trait]
     impl FileSource for FileSystemSource {
+        fn exists(&self, uri: &Url) -> bool {
+            let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
+            self.root.join(filepath).exists()
+        }
+
         fn manage(&mut self, uri: &Url) -> bool {
             let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
             self.root.join(filepath).exists()
@@ -116,6 +123,10 @@ impl InMemorySource {
 
 #[async_trait]
 impl FileSource for InMemorySource {
+    fn exists(&self, uri: &Url) -> bool {
+        self.files.contains_key(uri)
+    }
+
     fn manage(&mut self, uri: &Url) -> bool {
         self.files.insert(uri.clone(), String::default());
         self.modified.insert(uri.clone(), false);
@@ -166,6 +177,10 @@ where
     S1: FileSource,
     S2: FileSource,
 {
+    fn exists(&self, uri: &Url) -> bool {
+        self.first.exists(uri) || self.second.exists(uri)
+    }
+
     fn manage(&mut self, uri: &Url) -> bool {
         self.first.manage(uri) || self.second.manage(uri)
     }

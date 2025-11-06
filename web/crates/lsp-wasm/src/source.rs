@@ -11,6 +11,13 @@ pub struct FetchSource {
 
 #[async_trait]
 impl FileSource for FetchSource {
+    fn exists(&self, _uri: &reqwest::Url) -> bool {
+        // FIXME: We don't make a request here to check for existence.
+        // This leads to a bad error message later on if the file doesn't exist,
+        // but avoids an extra network round-trip.
+        true
+    }
+
     fn manage(&mut self, _uri: &reqwest::Url) -> bool {
         true
     }
@@ -40,6 +47,14 @@ impl FileSource for FetchSource {
             let result = async {
                 let response = client.get(url_clone.clone()).send().await.map_err(|e| {
                     DriverError::Impossible(format!("Failed to fetch {}: {}", &url_clone, e))
+                })?;
+
+                let response = response.error_for_status().map_err(|e| {
+                    if e.status() == Some(reqwest::StatusCode::NOT_FOUND) {
+                        DriverError::FileNotFound(url_clone.clone())
+                    } else {
+                        DriverError::Impossible(format!("HTTP error from {}: {}", url_clone, e))
+                    }
                 })?;
 
                 let text = response.text().await.map_err(|e| {

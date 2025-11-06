@@ -618,9 +618,7 @@ impl Database {
             let dep_url = self.resolve_module_name(path, module_uri)?;
             dependencies.push(dep_url.clone());
 
-            let dep_path = dep_url.to_file_path().unwrap();
-
-            if !dep_path.exists() {
+            if !self.source.exists(&dep_url) {
                 let err = AppError::Driver(DriverError::InvalidImport {
                     span: span.to_miette(),
                     import: path.clone(),
