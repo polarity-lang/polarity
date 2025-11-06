@@ -10,16 +10,17 @@ use crate::result::DriverError;
 
 #[async_trait]
 pub trait FileSource: Send + Sync {
-    /// Instruct the source to manage a file with the given URI
+    /// Check if a file with the given URI exists
+    async fn exists(&mut self, uri: &Url) -> Result<bool, DriverError>;
+    /// Instruct the source to register a file with the given URI.
     ///
-    /// Typically used when keeping the source in-memory
-    fn manage(&mut self, uri: &Url) -> bool;
-    /// Check if the source manages a file with the given URI
-    fn manages(&self, uri: &Url) -> bool;
-    /// Stop managing a file with the given URI
+    /// Typically used when keeping the source in-memory.
+    /// Returns `true` if registration was successful.
+    fn register(&mut self, uri: &Url) -> bool;
+    /// Stop keeping track of a file with the given URI
     ///
     /// This is mostly relevant for in-memory sources.
-    /// Returns `true` if the source was managing the file.
+    /// Returns `true` if the source had the file registered.
     fn forget(&mut self, uri: &Url) -> bool;
     /// Read the contents of a file with the given URI
     async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError>;
@@ -56,12 +57,12 @@ mod file_system {
 
     #[async_trait]
     impl FileSource for FileSystemSource {
-        fn manage(&mut self, uri: &Url) -> bool {
+        async fn exists(&mut self, uri: &Url) -> Result<bool, DriverError> {
             let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
-            self.root.join(filepath).exists()
+            Ok(self.root.join(filepath).exists())
         }
 
-        fn manages(&self, uri: &Url) -> bool {
+        fn register(&mut self, uri: &Url) -> bool {
             let filepath = uri.to_file_path().expect("Failed to convert URI to filepath");
             self.root.join(filepath).exists()
         }
@@ -116,14 +117,14 @@ impl InMemorySource {
 
 #[async_trait]
 impl FileSource for InMemorySource {
-    fn manage(&mut self, uri: &Url) -> bool {
+    async fn exists(&mut self, uri: &Url) -> Result<bool, DriverError> {
+        Ok(self.files.contains_key(uri))
+    }
+
+    fn register(&mut self, uri: &Url) -> bool {
         self.files.insert(uri.clone(), String::default());
         self.modified.insert(uri.clone(), false);
         true
-    }
-
-    fn manages(&self, uri: &Url) -> bool {
-        self.files.contains_key(uri)
     }
 
     fn forget(&mut self, uri: &Url) -> bool {
@@ -133,7 +134,7 @@ impl FileSource for InMemorySource {
     }
 
     async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
-        if self.manages(uri) {
+        if self.exists(uri).await? {
             self.modified.insert(uri.clone(), false);
             Ok(self.files.get(uri).cloned().unwrap_or_default())
         } else {
@@ -148,15 +149,15 @@ impl FileSource for InMemorySource {
     }
 }
 
-/// A source that first tries to access files from the first source, and falls back to the second
+/// A source that first tries to access files from the primary source, and falls back if necessary
 pub struct OverlaySource<S1, S2> {
-    first: S1,
-    second: S2,
+    primary: S1,
+    fallback: S2,
 }
 
 impl<S1, S2> OverlaySource<S1, S2> {
-    pub fn new(first: S1, second: S2) -> Self {
-        Self { first, second }
+    pub fn new(primary: S1, fallback: S2) -> Self {
+        Self { primary, fallback }
     }
 }
 
@@ -166,31 +167,31 @@ where
     S1: FileSource,
     S2: FileSource,
 {
-    fn manage(&mut self, uri: &Url) -> bool {
-        self.first.manage(uri) || self.second.manage(uri)
+    async fn exists(&mut self, uri: &Url) -> Result<bool, DriverError> {
+        Ok(self.primary.exists(uri).await? || self.fallback.exists(uri).await?)
     }
 
-    fn manages(&self, uri: &Url) -> bool {
-        self.first.manages(uri) || self.second.manages(uri)
+    fn register(&mut self, uri: &Url) -> bool {
+        self.primary.register(uri) || self.fallback.register(uri)
     }
 
     fn forget(&mut self, uri: &Url) -> bool {
-        self.first.forget(uri) || self.second.forget(uri)
+        self.primary.forget(uri) || self.fallback.forget(uri)
     }
 
     async fn read_to_string(&mut self, uri: &Url) -> Result<String, DriverError> {
-        match self.first.read_to_string(uri).await {
+        match self.primary.read_to_string(uri).await {
             Ok(source) => Ok(source),
-            Err(DriverError::FileNotFound(_)) => self.second.read_to_string(uri).await,
+            Err(DriverError::FileNotFound(_)) => self.fallback.read_to_string(uri).await,
             Err(err) => Err(err),
         }
     }
 
     async fn write_string(&mut self, uri: &Url, source: &str) -> Result<(), DriverError> {
-        if self.first.manages(uri) {
-            self.first.write_string(uri, source).await
+        if self.primary.exists(uri).await? {
+            self.primary.write_string(uri, source).await
         } else {
-            self.second.write_string(uri, source).await
+            self.fallback.write_string(uri, source).await
         }
     }
 }

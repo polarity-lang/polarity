@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use miette::Diagnostic;
+use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 use url::Url;
 
@@ -54,6 +54,13 @@ pub enum AppError {
 /// An error that can occur in the driver itself
 #[derive(Error, Debug, Diagnostic, Clone)]
 pub enum DriverError {
+    #[error("Could not find module {}", import)]
+    #[diagnostic(code("D-001"))]
+    InvalidImport {
+        #[label]
+        span: SourceSpan,
+        import: String,
+    },
     #[error("Import cycle detected for module {0:?}: {1:?}")]
     ImportCycle(Url, Vec<Url>),
     #[error("Invalid URI: {0}")]
@@ -64,8 +71,6 @@ pub enum DriverError {
     Io(#[from] Arc<std::io::Error>),
     #[error("URL error: {0}")]
     Url(#[from] url::ParseError),
-    #[error("Impossible: {0}")]
-    Impossible(String),
     #[error("The file is present, but does not contain the specified byte index.")]
     IndexTooLarge { given: usize, max: usize },
     #[error("The file is present, but does not contain the specified line index.")]
@@ -74,4 +79,6 @@ pub enum DriverError {
         "The given index is contained in the file, but is not a boundary of a UTF-8 code point."
     )]
     InvalidCharBoundary { given: usize },
+    #[error("Impossible: {0}")]
+    Impossible(String),
 }

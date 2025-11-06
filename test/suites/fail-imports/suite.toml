@@ -1,0 +1,2 @@
+description = "Tests which fail with import errors"
+fail = "imports"

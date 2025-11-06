@@ -1,0 +1,7 @@
+D-001
+
+  × Could not find module foobar
+   ╭─[Regr-405.pol:1:1]
+ 1 │ use "foobar"
+   · ────────────
+   ╰────

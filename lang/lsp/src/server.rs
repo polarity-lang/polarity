@@ -69,7 +69,7 @@ impl LanguageServer for Server {
             .await;
 
         let source_mut = db.file_source_mut();
-        assert!(source_mut.manage(&text_document.uri.from_lsp()));
+        assert!(source_mut.register(&text_document.uri.from_lsp()));
         source_mut.write_string(&text_document.uri.from_lsp(), &text_document.text).await.unwrap();
 
         let res = db.ast(&text_document.uri.from_lsp()).await.map(|_| ());
@@ -107,7 +107,7 @@ impl LanguageServer for Server {
         let text = content_changes.drain(0..).next().unwrap().text;
 
         let source_mut = db.file_source_mut();
-        assert!(source_mut.manage(&text_document.uri.from_lsp()));
+        assert!(source_mut.register(&text_document.uri.from_lsp()));
         source_mut.write_string(&text_document.uri.from_lsp(), &text).await.unwrap();
 
         db.invalidate(&text_document.uri.from_lsp()).await;
