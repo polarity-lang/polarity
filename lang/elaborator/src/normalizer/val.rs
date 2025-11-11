@@ -371,7 +371,7 @@ pub enum Neu {
     DotCall(DotCall),
     LocalMatch(LocalMatch),
     Hole(Hole),
-    /// A call which corresponds to an opaque let-bound definition on the toplevel
+    /// A call which corresponds to an extern call or an opaque let-bound definition on the toplevel
     /// cannot be inlined and must therefore block computation.
     OpaqueCall(OpaqueCall),
     AnnoNeu(AnnoNeu),
