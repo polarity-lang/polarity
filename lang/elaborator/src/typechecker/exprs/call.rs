@@ -79,7 +79,28 @@ impl CheckInfer for Call {
                     inferred_type: Some(typ_nf),
                 })
             }
-            CallKind::Extern => todo!(),
+            CallKind::Extern => {
+                let Extern { params, typ, .. } =
+                    ctx.type_info_table.lookup_extern(&name.clone())?;
+                let params = params.clone();
+                let typ = typ.clone();
+                let mut args_out = check_args(args, &name.clone(), ctx, &params, *span)?;
+                let typ_out = typ.subst(
+                    &mut vec![params.params.clone()].into(),
+                    &Subst::from_args(std::slice::from_ref(&args.args)),
+                );
+                let typ_nf = typ_out.normalize(&ctx.type_info_table, &mut ctx.env())?;
+
+                erasure::mark_erased_args(&params, &mut args_out);
+
+                Ok(Call {
+                    span: *span,
+                    kind: *kind,
+                    name: name.clone(),
+                    args: args_out,
+                    inferred_type: Some(typ_nf),
+                })
+            }
         }
     }
 }
