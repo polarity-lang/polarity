@@ -15,6 +15,7 @@ use crate::{
 /// - A constructor introduced by a data type declaration
 /// - A codefinition introduced at the toplevel
 /// - A LetBound definition introduced at the toplevel
+/// - An extern declaration at the toplevel
 #[derive(Debug, Clone, Copy, Derivative)]
 #[derivative(Eq, PartialEq, Hash)]
 pub enum CallKind {
