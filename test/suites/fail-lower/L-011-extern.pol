@@ -1,0 +1,5 @@
+data Bool { True, False }
+
+extern foo(b: Bool) : Bool
+
+let example: Bool { foo(a := True) }

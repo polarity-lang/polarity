@@ -1,0 +1,8 @@
+L-011
+
+  × Mismatched named arguments: given a, expected b
+   ╭─[L-011-extern.pol:5:30]
+ 4 │ 
+ 5 │ let example: Bool { foo(a := True) }
+   ·                              ────
+   ╰────
