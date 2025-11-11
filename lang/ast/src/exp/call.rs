@@ -21,6 +21,7 @@ pub enum CallKind {
     Constructor,
     Codefinition,
     LetBound,
+    Extern,
 }
 
 /// A Call invokes a constructor, a codefinition or a toplevel let-bound definition.
@@ -31,7 +32,7 @@ pub struct Call {
     /// Source code location
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub span: Option<Span>,
-    /// Whether the call is a constructor, codefinition or let bound definition.
+    /// Whether the call is a constructor, codefinition, let bound definition or extern.
     pub kind: CallKind,
     /// The name of the call.
     /// The `f` in `f(e1...en)`

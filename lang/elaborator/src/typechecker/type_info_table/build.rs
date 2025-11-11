@@ -26,6 +26,7 @@ impl BuildTypeInfoTable for Decl {
             Decl::Def(def) => def.build(info_table),
             Decl::Codef(codef) => codef.build(info_table),
             Decl::Let(tl_let) => tl_let.build(info_table),
+            Decl::Extern(_) => todo!(),
             Decl::Infix(infix) => infix.build(info_table),
             Decl::Note(note) => note.build(info_table),
         }

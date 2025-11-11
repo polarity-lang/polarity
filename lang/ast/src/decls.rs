@@ -17,6 +17,7 @@ use polarity_lang_printer::tokens::COMMA;
 use polarity_lang_printer::tokens::DATA;
 use polarity_lang_printer::tokens::DEF;
 use polarity_lang_printer::tokens::DOT;
+use polarity_lang_printer::tokens::EXTERN;
 use polarity_lang_printer::tokens::HASH;
 use polarity_lang_printer::tokens::IMPLICIT;
 use polarity_lang_printer::tokens::INFIX;
@@ -327,6 +328,7 @@ pub enum Decl {
     Def(Def),
     Codef(Codef),
     Let(Let),
+    Extern(Extern),
     Infix(Infix),
     Note(Note),
 }
@@ -361,6 +363,12 @@ impl From<Let> for Decl {
     }
 }
 
+impl From<Extern> for Decl {
+    fn from(extern_decl: Extern) -> Self {
+        Decl::Extern(extern_decl)
+    }
+}
+
 impl From<Infix> for Decl {
     fn from(value: Infix) -> Self {
         Decl::Infix(value)
@@ -382,6 +390,7 @@ impl Decl {
             Decl::Def(Def { attr, .. }) => attr,
             Decl::Codef(Codef { attr, .. }) => attr,
             Decl::Let(Let { attr, .. }) => attr,
+            Decl::Extern(Extern { attr, .. }) => attr,
             Decl::Infix(Infix { attr, .. }) => attr,
             Decl::Note(Note { attr, .. }) => attr,
         }
@@ -403,6 +412,7 @@ impl Decl {
             Decl::Def(Def { name, .. }) => Some(name),
             Decl::Codef(Codef { name, .. }) => Some(name),
             Decl::Let(Let { name, .. }) => Some(name),
+            Decl::Extern(Extern { name, .. }) => Some(name),
             Decl::Infix(_) => None,
             Decl::Note(Note { name, .. }) => Some(name),
         }
@@ -417,6 +427,7 @@ impl HasSpan for Decl {
             Decl::Def(def) => def.span,
             Decl::Codef(codef) => codef.span,
             Decl::Let(tl_let) => tl_let.span,
+            Decl::Extern(extern_decl) => extern_decl.span,
             Decl::Infix(infix) => infix.span,
             Decl::Note(note) => note.span,
         }
@@ -431,6 +442,7 @@ impl Print for Decl {
             Decl::Def(def) => def.print(cfg, alloc),
             Decl::Codef(codef) => codef.print(cfg, alloc),
             Decl::Let(tl_let) => tl_let.print(cfg, alloc),
+            Decl::Extern(extern_decl) => extern_decl.print(cfg, alloc),
             Decl::Infix(infix) => infix.print(cfg, alloc),
             Decl::Note(note) => note.print(cfg, alloc),
         }
@@ -445,6 +457,7 @@ impl Zonk for Decl {
             Decl::Def(def) => def.zonk(meta_vars),
             Decl::Codef(codef) => codef.zonk(meta_vars),
             Decl::Let(tl_let) => tl_let.zonk(meta_vars),
+            Decl::Extern(extern_decl) => extern_decl.zonk(meta_vars),
             Decl::Infix(infix) => infix.zonk(meta_vars),
             Decl::Note(note) => note.zonk(meta_vars),
         }
@@ -459,6 +472,7 @@ impl ContainsMetaVars for Decl {
             Decl::Def(def) => def.contains_metavars(),
             Decl::Codef(codef) => codef.contains_metavars(),
             Decl::Let(tl_let) => tl_let.contains_metavars(),
+            Decl::Extern(extern_decl) => extern_decl.contains_metavars(),
             Decl::Infix(infix) => infix.contains_metavars(),
             Decl::Note(note) => note.contains_metavars(),
         }
@@ -472,6 +486,7 @@ impl Rename for Decl {
             Decl::Def(def) => def.rename_in_ctx(ctx),
             Decl::Codef(codef) => codef.rename_in_ctx(ctx),
             Decl::Let(lets) => lets.rename_in_ctx(ctx),
+            Decl::Extern(extern_decl) => extern_decl.rename_in_ctx(ctx),
             Decl::Infix(infix) => infix.rename_in_ctx(ctx),
             Decl::Note(note) => note.rename_in_ctx(ctx),
         }
@@ -1042,6 +1057,67 @@ impl Rename for Let {
         ctx.bind_iter(self.params.params.iter(), |new_ctx| {
             self.typ.rename_in_ctx(new_ctx);
             self.body.rename_in_ctx(new_ctx);
+        })
+    }
+}
+
+// Extern declaration
+//
+//
+
+#[derive(Debug, Clone)]
+pub struct Extern {
+    pub span: Option<Span>,
+    pub doc: Option<DocComment>,
+    pub name: IdBind,
+    pub attr: Attributes,
+    pub params: Telescope,
+    pub typ: Box<Exp>,
+}
+
+impl Print for Extern {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let Extern { span: _, doc, name, attr, params, typ } = self;
+        if !attr.is_visible() {
+            return alloc.nil();
+        }
+
+        let doc = doc.print(cfg, alloc).append(attr.print(cfg, alloc));
+
+        let head = alloc
+            .keyword(EXTERN)
+            .append(alloc.space())
+            .append(&name.id)
+            .append(params.print(cfg, alloc))
+            .append(print_return_type(cfg, alloc, typ))
+            .group();
+
+        doc.append(head)
+    }
+}
+
+impl Zonk for Extern {
+    fn zonk(&mut self, meta_vars: &HashMap<MetaVar, MetaVarState>) -> Result<(), crate::ZonkError> {
+        let Extern { params, typ, .. } = self;
+        params.zonk(meta_vars)?;
+        typ.zonk(meta_vars)?;
+        Ok(())
+    }
+}
+
+impl ContainsMetaVars for Extern {
+    fn contains_metavars(&self) -> bool {
+        let Extern { params, typ, .. } = self;
+
+        params.contains_metavars() || typ.contains_metavars()
+    }
+}
+
+impl Rename for Extern {
+    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
+        self.params.rename_in_ctx(ctx);
+        ctx.bind_iter(self.params.params.iter(), |new_ctx| {
+            self.typ.rename_in_ctx(new_ctx);
         })
     }
 }

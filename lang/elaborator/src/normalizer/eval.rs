@@ -120,6 +120,7 @@ impl Eval for Call {
                 }
                 .into(),
             )),
+            CallKind::Extern => todo!(),
         }
     }
 }
@@ -235,6 +236,7 @@ impl Eval for DotCall {
                         // turned into a neutral `OpaqueCall` if they are opaque.
                         unreachable!()
                     }
+                    CallKind::Extern => todo!(),
                 }
             }
             Val::LocalComatch(val::LocalComatch { cases, .. }) => {

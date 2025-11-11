@@ -24,6 +24,7 @@ impl GenerateDocs for Decl {
             Decl::Def(def) => def.generate_docs(),
             Decl::Codef(codef) => codef.generate_docs(),
             Decl::Let(l) => l.generate_docs(),
+            Decl::Extern(_) => todo!(),
             Decl::Infix(i) => i.generate_docs(),
             Decl::Note(n) => n.generate_docs(),
         }

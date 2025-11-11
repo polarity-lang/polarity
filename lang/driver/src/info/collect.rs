@@ -138,6 +138,7 @@ impl CollectInfo for Decl {
             Decl::Def(def) => def.collect_info(db, collector),
             Decl::Codef(codef) => codef.collect_info(db, collector),
             Decl::Let(lets) => lets.collect_info(db, collector),
+            Decl::Extern(_) => todo!(),
             Decl::Infix(infix) => infix.collect_info(db, collector),
             Decl::Note(note) => note.collect_info(db, collector),
         }
@@ -401,6 +402,7 @@ impl CollectInfo for Call {
                     }
                     None => (None, None),
                 },
+                CallKind::Extern => todo!(),
             };
             // Add hover info
             let typ = typ.print_to_string(None);
@@ -415,6 +417,7 @@ impl CollectInfo for Call {
                 CallKind::LetBound => {
                     MarkedString::String(format!("Let-bound definition: `{}`", name.id))
                 }
+                CallKind::Extern => todo!(),
             });
             add_doc_comment(&mut content, doc);
             content.push(MarkedString::String("---".to_owned()));

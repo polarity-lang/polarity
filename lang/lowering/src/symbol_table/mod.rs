@@ -40,5 +40,6 @@ pub enum DeclMeta {
     Ctor { params: Telescope },
     Dtor { params: Telescope },
     Let { params: Telescope },
+    Extern { params: Telescope },
     Note,
 }
