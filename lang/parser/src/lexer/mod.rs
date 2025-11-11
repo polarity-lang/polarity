@@ -76,6 +76,8 @@ pub enum Token {
     Infix,
     #[token("note")]
     Note,
+    #[token("extern")]
+    Extern,
 
     // Parens, Braces and Brackets
     //
@@ -176,6 +178,7 @@ impl fmt::Display for Token {
             Token::Use => write!(f, r#""use""#),
             Token::Infix => write!(f, r#""infix""#),
             Token::Note => write!(f, r#""note""#),
+            Token::Extern => write!(f, r#""extern""#),
             Token::LParen => write!(f, r#""(""#),
             Token::RParen => write!(f, r#"")""#),
             Token::LBrace => write!(f, r#""{{""#),

@@ -33,6 +33,7 @@ extern {
     "use" => Token::Use,
     "infix" => Token::Infix,
     "note" => Token::Note,
+    "extern" => Token::Extern,
 
     // Parens, Braces and Brackets
     //
@@ -151,6 +152,7 @@ Decl: Decl = {
     <d: Def> => Decl::Def(d),
     <d: Codef> => Decl::Codef(d),
     <d: Let> => Decl::Let(d),
+    <d: Extern> => Decl::Extern(d),
     <d: Infix> => Decl::Infix(d),
     <d: Note> => Decl::Note(d),
 
@@ -205,6 +207,12 @@ Codef: Codef = <l: @L> <doc: DocComment?> <attr: OptAttributes> "codef" <name: I
 // Toplevel let binding
 Let: Let = <l: @L> <doc: DocComment?> <attr: OptAttributes> "let" <name: Ident><params: OptTelescope> ":" <typ: Exp> "{" <body: Exp> "}" <r: @R> =>
   Let { span: span(l,r), doc, name, attr, params, typ, body };
+
+// Extern declaration
+Extern: Extern = {
+  <l: @L> <doc: DocComment?> <attr: OptAttributes> "extern" <name: Ident><params: OptTelescope> ":" <typ: Exp> <r: @R> =>
+    Extern { span: span(l, r), doc, name, attr, params, typ }
+}
 
 // Infix operator declaration
 Infix: Infix = {
