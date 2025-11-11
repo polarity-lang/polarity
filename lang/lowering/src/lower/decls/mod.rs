@@ -76,6 +76,7 @@ impl Lower for cst::decls::Decl {
             cst::decls::Decl::Def(def) => def.lower(ctx)?.into(),
             cst::decls::Decl::Codef(codef) => codef.lower(ctx)?.into(),
             cst::decls::Decl::Let(tl_let) => tl_let.lower(ctx)?.into(),
+            cst::decls::Decl::Extern(_) => todo!(),
             cst::decls::Decl::Infix(infix) => infix.lower(ctx)?.into(),
             cst::decls::Decl::Note(note) => note.lower(ctx)?.into(),
 

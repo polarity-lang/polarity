@@ -46,6 +46,7 @@ impl BuildSymbolTable for Decl {
             Decl::Def(def) => def.build(symbol_table),
             Decl::Codef(codef) => codef.build(symbol_table),
             Decl::Let(tl_let) => tl_let.build(symbol_table),
+            Decl::Extern(_) => todo!(),
             Decl::Infix(infix) => infix.build(symbol_table),
             Decl::Note(note) => note.build(symbol_table),
 

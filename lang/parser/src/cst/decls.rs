@@ -45,6 +45,7 @@ pub enum Decl {
     Def(Def),
     Codef(Codef),
     Let(Let),
+    Extern(Extern),
     Infix(Infix),
     Note(Note),
 
@@ -222,6 +223,26 @@ pub struct Let {
     pub params: Telescope,
     pub typ: Box<exp::Exp>,
     pub body: Box<exp::Exp>,
+}
+
+/// Toplevel extern declaration
+///
+/// ```text
+/// extern d(...) : t
+///        ^  ^     ^
+///        |  |     |
+///        |  |     \-------- typ
+///        |  \-------------- params
+///        \----------------- name
+/// ```
+#[derive(Debug, Clone)]
+pub struct Extern {
+    pub span: Span,
+    pub doc: Option<DocComment>,
+    pub name: Ident,
+    pub attr: Attributes,
+    pub params: Telescope,
+    pub typ: Box<exp::Exp>,
 }
 
 #[derive(Debug, Clone)]
