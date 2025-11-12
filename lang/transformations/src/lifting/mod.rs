@@ -114,7 +114,7 @@ impl Lift for Decl {
             Decl::Def(def) => Decl::Def(def.lift(ctx)),
             Decl::Codef(codef) => Decl::Codef(codef.lift(ctx)),
             Decl::Let(tl_let) => Decl::Let(tl_let.lift(ctx)),
-            Decl::Extern(_) => todo!(),
+            Decl::Extern(extern_decl) => Decl::Extern(extern_decl.lift(ctx)),
             Decl::Infix(infix) => Decl::Infix(infix.lift(ctx)),
             Decl::Note(note) => Decl::Note(note.lift(ctx)),
         }
@@ -254,6 +254,24 @@ impl Lift for Let {
             params,
             typ: typ.lift(ctx),
             body: body.lift(ctx),
+        })
+    }
+}
+
+impl Lift for Extern {
+    type Target = Extern;
+
+    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
+        let Extern { span, doc, name, attr, params, typ } = self;
+        ctx.set_curr_decl(name.clone());
+
+        params.lift_telescope(ctx, |ctx, params| Extern {
+            span: *span,
+            doc: doc.clone(),
+            name: name.clone(),
+            attr: attr.clone(),
+            params,
+            typ: typ.lift(ctx),
         })
     }
 }
