@@ -19,7 +19,7 @@ impl CheckToplevel for Extern {
         let Extern { span, doc, name, attr, params, typ } = self;
 
         params.infer_telescope(ctx, |ctx, mut params_out| {
-            let typ_out = typ.infer(ctx)?;
+            let typ_out = typ.check(ctx, &TypeUniv::new().into())?;
 
             erasure::mark_erased_params(&mut params_out);
 
