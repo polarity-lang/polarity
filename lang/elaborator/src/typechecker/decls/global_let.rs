@@ -21,7 +21,7 @@ impl CheckToplevel for Let {
         let Let { span, doc, name, attr, params, typ, body } = self;
 
         params.infer_telescope(ctx, |ctx, mut params_out| {
-            let typ_out = typ.infer(ctx)?;
+            let typ_out = typ.check(ctx, &TypeUniv::new().into())?;
             let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
             let body_out = body.check(ctx, &typ_nf)?;
 
