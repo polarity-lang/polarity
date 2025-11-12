@@ -142,8 +142,8 @@ impl GenerateDocs for Extern {
         let params: String = print_html_to_string(params, Some(&PrintCfg::default()));
         let typ: String = print_html_to_string(typ, Some(&PrintCfg::default()));
 
-        let let_template = ExternTemplate { doc: &doc, name, params: &params, typ: &typ };
-        let_template.render().unwrap()
+        let extern_template = ExternTemplate { doc: &doc, name, params: &params, typ: &typ };
+        extern_template.render().unwrap()
     }
 }
 
