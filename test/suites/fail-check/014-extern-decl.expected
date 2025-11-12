@@ -1,0 +1,9 @@
+T-016
+
+  × Cannot automatically decide whether Foo and Type unify
+   ╭─[014-extern-decl.pol:2:13]
+ 1 │ data Foo { C }
+ 2 │ extern Bar: C
+   ·             ┬
+   ·             ╰── While elaborating
+   ╰────
