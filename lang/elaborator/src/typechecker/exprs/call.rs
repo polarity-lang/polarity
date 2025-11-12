@@ -79,6 +79,7 @@ impl CheckInfer for Call {
                     inferred_type: Some(typ_nf),
                 })
             }
+            CallKind::Extern => todo!(),
         }
     }
 }

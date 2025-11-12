@@ -46,7 +46,7 @@ impl BuildSymbolTable for Decl {
             Decl::Def(def) => def.build(symbol_table),
             Decl::Codef(codef) => codef.build(symbol_table),
             Decl::Let(tl_let) => tl_let.build(symbol_table),
-            Decl::Extern(_) => todo!(),
+            Decl::Extern(extern_decl) => extern_decl.build(symbol_table),
             Decl::Infix(infix) => infix.build(symbol_table),
             Decl::Note(note) => note.build(symbol_table),
 
@@ -144,6 +144,18 @@ impl BuildSymbolTable for Let {
         check_name(symbol_table, name, span)?;
 
         let meta = DeclMeta::Let { params: params.clone() };
+        symbol_table.idents.insert(name.clone(), meta);
+
+        Ok(())
+    }
+}
+
+impl BuildSymbolTable for Extern {
+    fn build(&self, symbol_table: &mut ModuleSymbolTable) -> LoweringResult {
+        let Extern { span, name, params, .. } = self;
+        check_name(symbol_table, name, span)?;
+
+        let meta = DeclMeta::Extern { params: params.clone() };
         symbol_table.idents.insert(name.clone(), meta);
 
         Ok(())

@@ -1,0 +1,8 @@
+L-002
+
+  × Duplicate definition of Foo
+   ╭─[L-002-08.pol:3:1]
+ 2 │ 
+ 3 │ extern Foo : Type
+   · ─────────────────
+   ╰────

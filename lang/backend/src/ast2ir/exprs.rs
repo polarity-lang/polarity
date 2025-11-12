@@ -63,6 +63,7 @@ impl ToIR for polarity_lang_ast::Call {
             polarity_lang_ast::CallKind::Constructor => ir::Exp::CtorCall(call),
             polarity_lang_ast::CallKind::Codefinition => ir::Exp::CodefCall(call),
             polarity_lang_ast::CallKind::LetBound => ir::Exp::LetCall(call),
+            polarity_lang_ast::CallKind::Extern => todo!(),
         })
     }
 }

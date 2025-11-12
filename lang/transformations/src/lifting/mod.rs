@@ -114,6 +114,7 @@ impl Lift for Decl {
             Decl::Def(def) => Decl::Def(def.lift(ctx)),
             Decl::Codef(codef) => Decl::Codef(codef.lift(ctx)),
             Decl::Let(tl_let) => Decl::Let(tl_let.lift(ctx)),
+            Decl::Extern(_) => todo!(),
             Decl::Infix(infix) => Decl::Infix(infix.lift(ctx)),
             Decl::Note(note) => Decl::Note(note.lift(ctx)),
         }

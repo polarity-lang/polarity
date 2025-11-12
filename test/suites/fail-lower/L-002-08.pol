@@ -1,0 +1,3 @@
+data Bar { Foo }
+
+extern Foo : Type
