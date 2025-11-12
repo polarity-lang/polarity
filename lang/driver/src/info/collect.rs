@@ -7,6 +7,7 @@ use polarity_lang_printer::{Print, PrintCfg};
 use url::Url;
 
 use crate::Database;
+use crate::info::lookup::lookup_extern;
 use crate::result::AppResult;
 
 use super::item::Item;
@@ -138,7 +139,7 @@ impl CollectInfo for Decl {
             Decl::Def(def) => def.collect_info(db, collector),
             Decl::Codef(codef) => codef.collect_info(db, collector),
             Decl::Let(lets) => lets.collect_info(db, collector),
-            Decl::Extern(_) => todo!(),
+            Decl::Extern(extern_decl) => extern_decl.collect_info(db, collector),
             Decl::Infix(infix) => infix.collect_info(db, collector),
             Decl::Note(note) => note.collect_info(db, collector),
         }
@@ -292,6 +293,20 @@ impl CollectInfo for Let {
     }
 }
 
+impl CollectInfo for Extern {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+        let Extern { span, typ, params, .. } = self;
+        if let Some(span) = span {
+            // Add hover info
+            let header = MarkedString::String("Extern declaration".to_owned());
+            let hover_content = HoverContents::Scalar(header);
+            collector.add_hover(*span, hover_content);
+        }
+        typ.collect_info(db, collector);
+        params.collect_info(db, collector)
+    }
+}
+
 impl CollectInfo for Infix {
     fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
         let Infix { span, .. } = self;
@@ -402,7 +417,14 @@ impl CollectInfo for Call {
                     }
                     None => (None, None),
                 },
-                CallKind::Extern => todo!(),
+                CallKind::Extern => match lookup_extern(db, name) {
+                    Some((uri, extern_decl)) => {
+                        let uri_span = extern_decl.span.map(|span| (uri.clone(), span));
+                        let doc = extern_decl.doc.clone().map(|doc| doc.docs);
+                        (uri_span, doc)
+                    }
+                    None => (None, None),
+                },
             };
             // Add hover info
             let typ = typ.print_to_string(None);
@@ -417,7 +439,9 @@ impl CollectInfo for Call {
                 CallKind::LetBound => {
                     MarkedString::String(format!("Let-bound definition: `{}`", name.id))
                 }
-                CallKind::Extern => todo!(),
+                CallKind::Extern => {
+                    MarkedString::String(format!("Extern declaration: `{}`", name.id))
+                }
             });
             add_doc_comment(&mut content, doc);
             content.push(MarkedString::String("---".to_owned()));

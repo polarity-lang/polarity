@@ -1,4 +1,4 @@
-use polarity_lang_ast::{Codef, Ctor, Decl, Def, Dtor, IdBound, Let};
+use polarity_lang_ast::{Codef, Ctor, Decl, Def, Dtor, Extern, IdBound, Let};
 use url::Url;
 
 use crate::Database;
@@ -37,6 +37,15 @@ pub fn lookup_let<'a>(db: &'a Database, name: &IdBound) -> Option<(Url, &'a Let)
         _ => None,
     })?;
     Some((name.uri.clone(), tl_let))
+}
+
+pub fn lookup_extern<'a>(db: &'a Database, name: &IdBound) -> Option<(Url, &'a Extern)> {
+    let module = db.ust.get_unless_stale(&name.uri)?.as_ref().ok()?;
+    let extern_decl = module.decls.iter().find_map(|decl| match decl {
+        Decl::Extern(extern_decl) if extern_decl.name == *name => Some(extern_decl),
+        _ => None,
+    })?;
+    Some((name.uri.clone(), extern_decl))
 }
 
 pub fn lookup_dtor<'a>(db: &'a Database, name: &IdBound) -> Option<(Url, &'a Dtor)> {

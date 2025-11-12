@@ -1,6 +1,6 @@
 use askama::Template;
 
-use polarity_lang_ast::{Codata, Codef, Data, Decl, Def, Infix, Let, Module, Note};
+use polarity_lang_ast::{Codata, Codef, Data, Decl, Def, Extern, Infix, Let, Module, Note};
 use polarity_lang_printer::PrintCfg;
 
 use crate::generate::Generate;
@@ -24,7 +24,7 @@ impl GenerateDocs for Decl {
             Decl::Def(def) => def.generate_docs(),
             Decl::Codef(codef) => codef.generate_docs(),
             Decl::Let(l) => l.generate_docs(),
-            Decl::Extern(_) => todo!(),
+            Decl::Extern(e) => e.generate_docs(),
             Decl::Infix(i) => i.generate_docs(),
             Decl::Note(n) => n.generate_docs(),
         }
@@ -133,6 +133,20 @@ impl GenerateDocs for Let {
     }
 }
 
+impl GenerateDocs for Extern {
+    fn generate_docs(&self) -> String {
+        let Extern { span: _, doc, name, attr: _, params, typ } = self;
+
+        let doc = if doc.is_none() { "".to_string() } else { format!("{}<br>", doc.generate()) };
+        let name = &name.id;
+        let params: String = print_html_to_string(params, Some(&PrintCfg::default()));
+        let typ: String = print_html_to_string(typ, Some(&PrintCfg::default()));
+
+        let let_template = ExternTemplate { doc: &doc, name, params: &params, typ: &typ };
+        let_template.render().unwrap()
+    }
+}
+
 impl GenerateDocs for Infix {
     fn generate_docs(&self) -> String {
         let Infix { span: _, doc, attr: _, lhs, rhs } = self;
@@ -205,6 +219,15 @@ struct LetTemplate<'a> {
     pub params: &'a str,
     pub typ: &'a str,
     pub body: &'a str,
+}
+
+#[derive(Template)]
+#[template(path = "extern.html", escape = "none")]
+struct ExternTemplate<'a> {
+    pub doc: &'a str,
+    pub name: &'a str,
+    pub params: &'a str,
+    pub typ: &'a str,
 }
 
 #[derive(Template)]
