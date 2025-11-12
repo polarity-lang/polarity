@@ -1,0 +1,9 @@
+T-016
+
+  × Cannot automatically decide whether Foo and Type unify
+   ╭─[Regr-598.pol:2:10]
+ 1 │ data Foo { C }
+ 2 │ let bug: C { bug }
+   ·          ┬
+   ·          ╰── While elaborating
+   ╰────
