@@ -1,0 +1,3 @@
+extern Foo: Type
+extern foo(a: Foo): Type
+let wrong: Type { foo(Type) }

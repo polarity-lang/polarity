@@ -80,6 +80,19 @@ impl TypeInfoTable {
         .into())
     }
 
+    pub fn lookup_extern(&self, name: &IdBound) -> TcResult<&Extern> {
+        let map = self.get_map(name)?;
+
+        if let Some(meta) = map.map_extern.get(&name.id) {
+            return Ok(meta);
+        }
+        Err(TypeError::Impossible {
+            message: format!("Extern declaration {name} not found"),
+            span: name.span.to_miette(),
+        }
+        .into())
+    }
+
     pub fn lookup_tyctor(&self, name: &IdBound) -> TcResult<&TyCtorMeta> {
         let map = self.get_map(name)?;
 

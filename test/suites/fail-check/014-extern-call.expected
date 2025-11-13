@@ -1,0 +1,11 @@
+T-016
+
+  × Cannot automatically decide whether Type and Foo unify
+   ╭─[014-extern-call.pol:2:15]
+ 1 │ extern Foo: Type
+ 2 │ extern foo(a: Foo): Type
+   ·               ───
+ 3 │ let wrong: Type { foo(Type) }
+   ·                       ──┬─
+   ·                         ╰── While elaborating
+   ╰────

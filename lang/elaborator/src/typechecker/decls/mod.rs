@@ -4,6 +4,7 @@ mod codatatype;
 mod codefinition;
 mod datatype;
 mod definition;
+mod extern_declaration;
 mod global_let;
 mod infix_declaration;
 mod note_declaration;
@@ -112,7 +113,7 @@ impl CheckToplevel for Decl {
             Decl::Def(def) => Decl::Def(def.check_wf(ctx)?),
             Decl::Codef(codef) => Decl::Codef(codef.check_wf(ctx)?),
             Decl::Let(tl_let) => Decl::Let(tl_let.check_wf(ctx)?),
-            Decl::Extern(_) => todo!(),
+            Decl::Extern(extern_decl) => Decl::Extern(extern_decl.check_wf(ctx)?),
             Decl::Infix(infix) => Decl::Infix(infix.check_wf(ctx)?),
             Decl::Note(note) => Decl::Note(note.check_wf(ctx)?),
         };

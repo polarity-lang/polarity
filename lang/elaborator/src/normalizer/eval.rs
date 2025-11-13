@@ -111,6 +111,14 @@ impl Eval for Call {
                     )))
                 }
             }
+            CallKind::Extern => Ok(Box::new(Val::Neu(
+                val::OpaqueCall {
+                    span: *span,
+                    name: name.clone(),
+                    args: args.eval(info_table, env)?,
+                }
+                .into(),
+            ))),
             CallKind::Constructor | CallKind::Codefinition => Ok(Box::new(
                 val::Call {
                     span: *span,
@@ -120,7 +128,6 @@ impl Eval for Call {
                 }
                 .into(),
             )),
-            CallKind::Extern => todo!(),
         }
     }
 }
@@ -236,7 +243,10 @@ impl Eval for DotCall {
                         // turned into a neutral `OpaqueCall` if they are opaque.
                         unreachable!()
                     }
-                    CallKind::Extern => todo!(),
+                    CallKind::Extern => {
+                        // All extern calls haven beed turned into a neutral `OpaqueCall`.
+                        unreachable!()
+                    }
                 }
             }
             Val::LocalComatch(val::LocalComatch { cases, .. }) => {

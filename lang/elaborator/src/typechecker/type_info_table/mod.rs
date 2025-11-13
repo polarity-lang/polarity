@@ -28,6 +28,7 @@ pub struct ModuleTypeInfoTable {
     //
     //
     map_let: HashMap<String, Let>,
+    map_extern: HashMap<String, Extern>,
     map_tyctor: HashMap<String, TyCtorMeta>,
     map_codef: HashMap<String, Codef>,
     map_ctor: HashMap<String, CtorMeta>,
@@ -74,6 +75,7 @@ impl Zonk for ModuleTypeInfoTable {
             map_data,
             map_codata,
             map_let,
+            map_extern,
             map_tyctor,
             map_codef,
             map_ctor,
@@ -91,6 +93,10 @@ impl Zonk for ModuleTypeInfoTable {
 
         for (_, let_) in map_let.iter_mut() {
             let_.zonk(meta_vars)?;
+        }
+
+        for (_, extern_) in map_extern.iter_mut() {
+            extern_.zonk(meta_vars)?;
         }
 
         for (_, tyctor) in map_tyctor.iter_mut() {

@@ -26,7 +26,7 @@ impl BuildTypeInfoTable for Decl {
             Decl::Def(def) => def.build(info_table),
             Decl::Codef(codef) => codef.build(info_table),
             Decl::Let(tl_let) => tl_let.build(info_table),
-            Decl::Extern(_) => todo!(),
+            Decl::Extern(extern_decl) => extern_decl.build(info_table),
             Decl::Infix(infix) => infix.build(info_table),
             Decl::Note(note) => note.build(info_table),
         }
@@ -97,6 +97,14 @@ impl BuildTypeInfoTable for Let {
         let mut tl_let = self.clone();
         erasure::mark_erased_params(&mut tl_let.params);
         info_table.map_let.insert(self.name.id.clone(), tl_let);
+    }
+}
+
+impl BuildTypeInfoTable for Extern {
+    fn build(&self, info_table: &mut ModuleTypeInfoTable) {
+        let mut extern_decl = self.clone();
+        erasure::mark_erased_params(&mut extern_decl.params);
+        info_table.map_extern.insert(self.name.id.clone(), extern_decl);
     }
 }
 
