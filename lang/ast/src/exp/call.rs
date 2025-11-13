@@ -104,7 +104,13 @@ impl Print for Call {
         _prec: Precedence,
     ) -> Builder<'a> {
         let Call { name, args, .. } = self;
-        alloc.ctor(&name.id).append(args.print(cfg, alloc))
+        alloc
+            .ctor(&name.id)
+            .annotate(polarity_lang_printer::Anno::Reference {
+                module_uri: name.uri.to_owned(),
+                name: name.id.clone(),
+            })
+            .append(args.print(cfg, alloc))
     }
 }
 
