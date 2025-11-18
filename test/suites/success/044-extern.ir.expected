@@ -1,0 +1,1 @@
+let foo { append(one_i64, one_i64, singleton(T), singleton(F)) }
