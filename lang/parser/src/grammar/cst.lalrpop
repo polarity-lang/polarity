@@ -53,6 +53,7 @@ extern {
     "=>" => Token::DoubleRightArrow,
     "," => Token::Comma,
     ":" => Token::Colon,
+    "::" => Token::DoubleColon,
     "." => Token::Dot,
     "?" => Token::QuestionMark,
     "\\" => Token::Backslash,
@@ -370,6 +371,14 @@ BindingSite: BindingSite = {
 
 Ident: Ident = {
    <l: @L> <i: "identifier"> <r: @R> => Ident { span: span(l,r), id: i.to_owned() }
+}
+
+Qualifier: String = {
+  <i: "identifier"> "::" => i.to_owned()
+}
+
+QIdent: QIdent = {
+  <l: @L> <quals: Qualifier*> <i: "identifier"> <r: @R> =>  QIdent { span: span(l,r), quals: quals, id: i.to_owned() }
 }
 
 Operator: Operator = {
