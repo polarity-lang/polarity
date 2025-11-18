@@ -5,9 +5,9 @@ mod suites;
 
 use clap::Parser;
 
-pub const TEST_SUITES_PATH: &str = "../suites";
-pub const EXAMPLES_PATH: &str = "../../examples";
-pub const STDLIB_PATH: &str = "../../std";
+pub const TEST_SUITES_PATH: &str = "test/suites";
+pub const EXAMPLES_PATH: &str = "examples";
+pub const STDLIB_PATH: &str = "std";
 
 /// Polarity Testsuite Runner
 #[derive(Parser)]
@@ -27,6 +27,8 @@ pub struct Args {
 
 fn main() {
     let args = Args::parse();
+
+    std::env::set_current_dir("../..").expect("Can't set cwd to root dir");
 
     // Initialize the logger based on the flags
     let mut builder = env_logger::Builder::from_default_env();
