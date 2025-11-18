@@ -18,7 +18,7 @@ impl ToIR for polarity_lang_ast::Module {
                 polarity_lang_ast::Decl::Def(def) => def_decls.push(def.to_ir()?),
                 polarity_lang_ast::Decl::Codef(codef) => codef_decls.push(codef.to_ir()?),
                 polarity_lang_ast::Decl::Let(tl_let) => let_decls.push(tl_let.to_ir()?),
-                polarity_lang_ast::Decl::Extern(_) => todo!(),
+                polarity_lang_ast::Decl::Extern(_) => {}
                 polarity_lang_ast::Decl::Data(_) => {}
                 polarity_lang_ast::Decl::Codata(_) => {}
                 polarity_lang_ast::Decl::Infix(_) => {}

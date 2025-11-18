@@ -1,0 +1,10 @@
+extern I64: Type
+extern one_i64: I64
+extern add_i64(x y: I64): I64
+extern Array(a: Type, n: I64): Type
+extern singleton(a: Type, x: a): Array(a, one_i64)
+extern append(a: Type, n m: I64, arr1: Array(a, n), arr2: Array(a, m)): Array(a, add_i64(n, m))
+data Bool { T, F }
+let foo: Array(Bool, add_i64(one_i64, one_i64)) {
+    append(Bool, one_i64, one_i64, singleton(Bool, T), singleton(Bool, F))
+}
