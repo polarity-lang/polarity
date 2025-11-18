@@ -226,16 +226,16 @@ Note: Note = {
 }
 
 Pattern: Pattern = {
-  <l: @L><name: Ident><params: OptTelescopeInst><r: @R> => Pattern { span: span(l,r), name, params },
+  <l: @L><name: QIdent><params: OptTelescopeInst><r: @R> => Pattern { span: span(l,r), name, params },
 }
 
 Copattern: Copattern = {
-  <l: @L> "." <name: Ident><params: OptTelescopeInst> <r: @R> => Copattern { span: span(l,r), name, params },
+  <l: @L> "." <name: QIdent><params: OptTelescopeInst> <r: @R> => Copattern { span: span(l,r), name, params },
 }
 
 // In the syntactic sugar `\ap(x) => e` we do not need to parse the `.` in front of the identifier.
 CopatternLam: Copattern = {
-  <l: @L> <name: Ident><params: OptTelescopeInst> <r: @R> => Copattern { span: span(l,r), name, params },
+  <l: @L> <name: QIdent><params: OptTelescopeInst> <r: @R> => Copattern { span: span(l,r), name, params },
 }
 
 Case<P> : Case<P> = {
@@ -254,7 +254,7 @@ pub Scrutinee: Scrutinee = {
 }
 
 pub TypApp: Call = {
-    <l: @L> <name: Ident> <args: OptArgs> <r: @R> => Call { span: span(l, r), name, args },
+    <l: @L> <name: QIdent> <args: OptArgs> <r: @R> => Call { span: span(l, r), name, args },
 }
 
 // Expressions
@@ -325,16 +325,16 @@ BinOp: BinOp = <l: @L> <lhs: Ops> <rhs: BinOps+> <r: @R> =>
 Lam: Lam = <l: @L> "\\" <case: Case<CopatternLam>> <r: @R> =>
   Lam { span: span(l, r), case };
 
-DotCall: DotCall = <l: @L> <exp: Ops> "." <name: Ident> <args: OptArgs> <r: @R> =>
+DotCall: DotCall = <l: @L> <exp: Ops> "." <name: QIdent> <args: OptArgs> <r: @R> =>
   DotCall { span: span(l, r), exp, name, args };
 
 LocalMatch: LocalMatch = <l: @L> <on_exp: Ops> "." "match" <name: Ident?> <motive: Motive?> "{" <cases: Comma<Case<Pattern>>> "}" <r: @R> =>
   LocalMatch { span: span(l, r), name, on_exp, motive, cases };
 
-CallWithArgs: Call = <l: @L> <name: Ident> <args: Args> <r: @R> =>
+CallWithArgs: Call = <l: @L> <name: QIdent> <args: Args> <r: @R> =>
   Call { span: span(l, r), name, args };
 
-CallWithoutArgs: Call = <l: @L> <name: Ident> <r: @R> =>
+CallWithoutArgs: Call = <l: @L> <name: QIdent> <r: @R> =>
   Call { span: span(l, r), name, args: vec![] };
 
 LocalComatch: LocalComatch = <l: @L> "comatch" <name: Ident?> "{" <cases: Comma<Case<Copattern>>> "}" <r: @R> =>

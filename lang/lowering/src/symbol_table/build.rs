@@ -3,7 +3,7 @@ use polarity_lang_miette_util::ToMiette;
 use polarity_lang_miette_util::codespan::Span;
 use polarity_lang_parser::cst::*;
 
-use crate::{LoweringError, LoweringResult};
+use crate::{LoweringError, LoweringResult, expect_ident};
 
 use super::{DeclMeta, ModuleSymbolTable};
 
@@ -175,7 +175,8 @@ impl BuildSymbolTable for Infix {
                     }
                     .into());
                 }
-                symbol_table.infix_ops.insert(operator.clone(), rhs.name.clone());
+                let id = expect_ident(rhs.name.clone())?;
+                symbol_table.infix_ops.insert(operator.clone(), id);
             }
             _ => {
                 let err = LoweringError::InvalidInfixDeclaration {

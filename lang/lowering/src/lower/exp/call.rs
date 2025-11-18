@@ -2,7 +2,7 @@ use polarity_lang_ast::{TypeUniv, VarBound, Variable};
 use polarity_lang_miette_util::ToMiette;
 use polarity_lang_parser::cst;
 
-use crate::{Ctx, DeclMeta, LoweringError, LoweringResult, lower::Lower};
+use crate::{Ctx, DeclMeta, LoweringError, LoweringResult, expect_ident, lower::Lower};
 
 use super::args::lower_args;
 
@@ -23,7 +23,8 @@ impl Lower for cst::exp::Call {
 
         // If we find the identifier in the local context then we have to lower
         // it to a variable.
-        if let Some(idx) = ctx.lookup_local(name) {
+        let name = expect_ident(name.clone())?;
+        if let Some(idx) = ctx.lookup_local(&name) {
             let name = VarBound { span: Some(name.span), id: name.id.clone() };
             return Ok(polarity_lang_ast::Exp::Variable(Variable {
                 span: Some(*span),
@@ -35,7 +36,7 @@ impl Lower for cst::exp::Call {
 
         // If we find the identifier in the global context then we have to lower
         // it to a call or a type constructor.
-        let (meta, name) = ctx.symbol_table.lookup(name)?;
+        let (meta, name) = ctx.symbol_table.lookup(&name)?;
         match meta {
             DeclMeta::Data { params, .. } | DeclMeta::Codata { params, .. } => {
                 Ok(polarity_lang_ast::Exp::TypCtor(polarity_lang_ast::TypCtor {
