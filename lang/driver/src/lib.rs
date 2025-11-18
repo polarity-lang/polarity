@@ -7,6 +7,7 @@ mod edit;
 mod fs;
 mod info;
 mod lift;
+mod locate_std;
 pub mod paths;
 mod render_reports;
 mod result;

@@ -22,6 +22,7 @@ use crate::codespan::File;
 use crate::dependency_graph::DependencyGraph;
 use crate::fs::*;
 use crate::info::*;
+use crate::locate_std::locate_std;
 use crate::result::AppErrors;
 use crate::result::AppResult;
 use crate::result::DriverError;
@@ -35,6 +36,8 @@ pub struct Database {
     pub source: Box<dyn FileSource>,
     /// Dependency graph for each module
     pub deps: DependencyGraph,
+    /// Location of the std library
+    pub std_location: Url,
     /// The source code text of each file
     pub files: Cache<crate::codespan::File>,
     /// The CST of each file (once parsed)
@@ -462,6 +465,7 @@ impl Database {
             source: Box::new(source),
             files: Cache::default(),
             deps: DependencyGraph::default(),
+            std_location: locate_std().expect("Couldn't locate std location"),
             cst: Cache::default(),
             symbol_table: Cache::default(),
             ust: Cache::default(),
