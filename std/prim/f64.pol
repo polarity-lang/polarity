@@ -11,4 +11,4 @@ extern sub_F64(x y : F64) : F64
 extern mul_F64(x y : F64) : F64
 
 /// Division of 64-Bit floating point numbers
-extern div_F64(x y : F64) : F64
+extern div_F64(x y: F64): F64

@@ -11,4 +11,4 @@ extern sub_I64(x y : I64) : I64
 extern mul_I64(x y : I64) : I64
 
 /// Division of signed 64-Bit integers
-extern div_I64(x y : I64) : I64
+extern div_I64(x y: I64): I64
