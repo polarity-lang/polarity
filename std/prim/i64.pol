@@ -1,0 +1,14 @@
+/// Signed 64-Bit Integer
+extern I64: Type
+
+/// Addition of signed 64-Bit integers
+extern add_i64(x y: I64): I64
+
+/// Subtraction of signed 64-Bit integers
+extern sub_i64(x y: I64): I64
+
+/// Multiplication of signed 64-Bit integers
+extern mul_i64(x y: I64): I64
+
+/// Division of signed 64-Bit integers
+extern div_i64(x y: I64): I64

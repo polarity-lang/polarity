@@ -1,0 +1,14 @@
+/// 64-Bit floating-point number according to the IEEE 754 standard
+extern F64: Type
+
+/// Addition of 64-Bit floating point numbers
+extern add_f64(x y: F64): F64
+
+/// Subtraction of 64-Bit floating point numbers
+extern sub_f64(x y: F64): F64
+
+/// Multiplication of 64-Bit floating point numbers
+extern mul_f64(x y: F64): F64
+
+/// Division of 64-Bit floating point numbers
+extern div_f64(x y: F64): F64

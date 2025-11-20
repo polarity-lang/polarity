@@ -7,7 +7,8 @@ The Polarity Standard Library.
 ```text
 ├── std                     The Polarity Standard Library
 │   ├── codata              A collection of commonly used codata types
-│   └── data                A collection of commonly used data types
+│   ├── data                A collection of commonly used data types
+│   └── prim                Primitive numeric and textual types provided by the system
 ```
 
 ## Conventions
