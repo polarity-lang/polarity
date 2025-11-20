@@ -21,14 +21,14 @@ impl BindingSite {
 #[derive(Debug, Clone)]
 pub struct Pattern {
     pub span: Span,
-    pub name: Ident,
+    pub name: QIdent,
     pub params: Vec<BindingSite>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Copattern {
     pub span: Span,
-    pub name: Ident,
+    pub name: QIdent,
     pub params: Vec<BindingSite>,
 }
 
@@ -116,7 +116,7 @@ impl Exp {
 /// Either a constructor or call of a toplevel let or a variable
 pub struct Call {
     pub span: Span,
-    pub name: Ident,
+    pub name: QIdent,
     pub args: Vec<Arg>,
 }
 
@@ -125,7 +125,7 @@ pub struct Call {
 pub struct DotCall {
     pub span: Span,
     pub exp: Box<Exp>,
-    pub name: Ident,
+    pub name: QIdent,
     pub args: Vec<Arg>,
 }
 

@@ -1,6 +1,7 @@
 use polarity_lang_ast::IdBind;
 use polarity_lang_miette_util::ToMiette;
 use polarity_lang_parser::cst::ident::Ident;
+use polarity_lang_parser::cst::ident::QIdent;
 use polarity_lang_parser::cst::{self};
 
 use super::super::*;
@@ -47,7 +48,11 @@ fn lower_destructor(
                 if type_arity == 0 {
                     cst::exp::Call {
                         span: Default::default(),
-                        name: type_name.clone(),
+                        name: QIdent {
+                            span: type_name.span,
+                            quals: vec![],
+                            id: type_name.id.clone(),
+                        },
                         args: vec![],
                     }
                 } else {

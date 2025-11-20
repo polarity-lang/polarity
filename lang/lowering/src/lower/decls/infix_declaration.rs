@@ -1,6 +1,8 @@
 use polarity_lang_miette_util::ToMiette;
 use polarity_lang_parser::cst;
 
+use crate::expect_ident;
+
 use super::super::*;
 
 impl Lower for cst::decls::Infix {
@@ -54,7 +56,8 @@ impl Lower for cst::decls::Infix {
 
         // Check that the name on the RHS is available at the location
         // of the infix declaration.
-        ctx.symbol_table.lookup(&rhs.name)?;
+        let name = expect_ident(rhs.name.clone())?;
+        ctx.symbol_table.lookup(&name)?;
 
         Ok(polarity_lang_ast::Infix {
             span: Some(*span),

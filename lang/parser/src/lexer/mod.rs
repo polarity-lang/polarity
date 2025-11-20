@@ -106,6 +106,8 @@ pub enum Token {
     DoubleRightArrow,
     #[token(",")]
     Comma,
+    #[token("::")]
+    DoubleColon,
     #[token(":")]
     Colon,
     #[token(".")]
@@ -189,6 +191,7 @@ impl fmt::Display for Token {
             Token::ColonEq => write!(f, r#"":=""#),
             Token::DoubleRightArrow => write!(f, r#""=>""#),
             Token::Comma => write!(f, r#"",""#),
+            Token::DoubleColon => write!(f, r#""::""#),
             Token::Colon => write!(f, r#"":""#),
             Token::Dot => write!(f, r#"".""#),
             Token::QuestionMark => write!(f, r#""?""#),

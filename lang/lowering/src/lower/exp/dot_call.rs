@@ -1,7 +1,7 @@
 use polarity_lang_miette_util::ToMiette;
 use polarity_lang_parser::cst;
 
-use crate::{Ctx, DeclMeta, LoweringError, LoweringResult, lower::Lower};
+use crate::{Ctx, DeclMeta, LoweringError, LoweringResult, expect_ident, lower::Lower};
 
 use super::args::lower_args;
 
@@ -11,7 +11,8 @@ impl Lower for cst::exp::DotCall {
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::DotCall { span, exp, name, args } = self;
 
-        let (meta, name) = ctx.symbol_table.lookup(name)?;
+        let name = expect_ident(name.clone())?;
+        let (meta, name) = ctx.symbol_table.lookup(&name)?;
 
         match meta.clone() {
             DeclMeta::Dtor { params, .. } => {
