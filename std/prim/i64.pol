@@ -2,13 +2,13 @@
 extern I64: Type
 
 /// Addition of signed 64-Bit integers
-extern add_I64(x y: I64): I64
+extern add_i64(x y: I64): I64
 
 /// Subtraction of signed 64-Bit integers
-extern sub_I64(x y: I64): I64
+extern sub_i64(x y: I64): I64
 
 /// Multiplication of signed 64-Bit integers
-extern mul_I64(x y: I64): I64
+extern mul_i64(x y: I64): I64
 
 /// Division of signed 64-Bit integers
-extern div_I64(x y: I64): I64
+extern div_i64(x y: I64): I64

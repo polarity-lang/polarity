@@ -2,13 +2,13 @@
 extern F64: Type
 
 /// Addition of 64-Bit floating point numbers
-extern add_F64(x y: F64): F64
+extern add_f64(x y: F64): F64
 
 /// Subtraction of 64-Bit floating point numbers
-extern sub_F64(x y: F64): F64
+extern sub_f64(x y: F64): F64
 
 /// Multiplication of 64-Bit floating point numbers
-extern mul_F64(x y: F64): F64
+extern mul_f64(x y: F64): F64
 
 /// Division of 64-Bit floating point numbers
-extern div_F64(x y: F64): F64
+extern div_f64(x y: F64): F64
