@@ -6,5 +6,5 @@ extern String: Type
 /// Concatenation of two strings.
 extern concat(x y: String): String
 
-/// Prepending a single unicode character to a string.
-extern prepend_char(c: Char, s: String): String
+/// Appending a single unicode character to a string.
+extern append_char(c: Char, s: String): String
