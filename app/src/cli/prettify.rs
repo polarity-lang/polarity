@@ -104,7 +104,10 @@ pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
 
     let cfg = PrintCfg {
         width: cmd.width,
-        latex: true,
+        backend: match cmd.backend {
+            Backend::Latex => polarity_lang_printer::Backend::Latex,
+            Backend::Typst => polarity_lang_printer::Backend::Typst,
+        },
         omit_decl_sep: true,
         de_bruijn: false,
         indent: cmd.indent,
