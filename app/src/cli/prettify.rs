@@ -77,15 +77,19 @@ pub struct Args {
     output: Option<PathBuf>,
 }
 
-/// Compute the output stream for the "texify" subcommand.
+/// Compute the output stream for the "prettify" subcommand.
 /// If an output filepath is specified, then that filepath is used.
-/// Otherwise, the file extension is replaced by the `.tex` file extension.
+/// Otherwise, the file extension is replaced by the `.tex` or `.typ` file extension.
 fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
+    let file_extension = match cmd.backend {
+        Backend::Latex => "tex",
+        Backend::Typst => "typ",
+    };
     match &cmd.output {
         Some(path) => Box::new(fs::File::create(path).expect("Failed to create file")),
         None => {
             let mut fp = cmd.filepath.clone();
-            fp.set_extension("tex");
+            fp.set_extension(file_extension);
             Box::new(fs::File::create(fp).expect("Failed to create file"))
         }
     }
