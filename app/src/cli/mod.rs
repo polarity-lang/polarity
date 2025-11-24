@@ -9,8 +9,8 @@ mod gen_completions;
 mod lex;
 mod lift;
 mod lsp;
+mod prettify;
 mod run;
-mod texify;
 mod xfunc;
 
 pub fn exec() -> Result<(), Vec<miette::Report>> {
@@ -35,7 +35,7 @@ pub fn exec() -> Result<(), Vec<miette::Report>> {
             Run(args) => run::exec(args).await,
             Check(args) => check::exec(args).await,
             Fmt(args) => format::exec(args).await,
-            Texify(args) => texify::exec(args).await,
+            Prettify(args) => prettify::exec(args).await,
             Xfunc(args) => xfunc::exec(args).await,
             Lex(args) => lex::exec(args).await,
             Lsp(args) => lsp::exec(args).await,
@@ -71,8 +71,8 @@ enum Command {
     Check(check::Args),
     /// Format a code file
     Fmt(format::Args),
-    /// Render a code file as a latex document
-    Texify(texify::Args),
+    /// Render a code file using the LaTeX or Typst backend
+    Prettify(prettify::Args),
     /// De-/Refunctionalize a type in a code file
     Xfunc(xfunc::Args),
     /// Start an LSP server

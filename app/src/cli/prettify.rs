@@ -41,8 +41,26 @@ impl fmt::Display for FontSize {
     }
 }
 
+#[derive(clap::ValueEnum, Clone)]
+enum Backend {
+    Latex,
+    Typst,
+}
+
+impl fmt::Display for Backend {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Backend::*;
+        match self {
+            Latex => write!(f, "latex"),
+            Typst => write!(f, "typst"),
+        }
+    }
+}
+
 #[derive(clap::Args)]
 pub struct Args {
+    #[clap(long, default_value_t=Backend::Latex)]
+    backend: Backend,
     #[clap(value_parser, value_name = "FILE")]
     filepath: PathBuf,
     #[clap(long, default_value_t = 80)]
@@ -93,13 +111,17 @@ pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
         print_metavar_solutions: false,
     };
 
-    stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
-    print_prg(&prg, &cfg, &mut stream);
-    stream.write_all(LATEX_END.as_bytes()).unwrap();
+    match cmd.backend {
+        Backend::Latex => {
+            stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
+            prg.print_latex(&cfg, &mut stream).expect("Failed to print to stdout");
+            println!();
+            stream.write_all(LATEX_END.as_bytes()).unwrap();
+        }
+        Backend::Typst => {
+            prg.print_typst(&cfg, &mut stream).expect("Failed to print to stdout");
+            println!();
+        }
+    }
     Ok(())
-}
-
-fn print_prg<W: io::Write>(prg: &polarity_lang_ast::Module, cfg: &PrintCfg, stream: &mut W) {
-    prg.print_latex(cfg, stream).expect("Failed to print to stdout");
-    println!();
 }
