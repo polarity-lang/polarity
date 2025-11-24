@@ -1,4 +1,5 @@
 use derivative::Derivative;
+use polarity_lang_printer::Backend;
 use pretty::DocAllocator;
 use url::Url;
 
@@ -61,10 +62,13 @@ pub struct DocComment {
 }
 
 impl Print for DocComment {
-    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let DocComment { docs } = self;
-        let nonempty_prefix = "/// ";
-        let empty_prefix = "///";
+
+        let nonempty_prefix =
+            if matches!(cfg.backend, Backend::Typst) { "\\/\\/\\/ " } else { "/// " };
+        let empty_prefix = if matches!(cfg.backend, Backend::Typst) { "\\/\\/\\/" } else { "///" };
+
         alloc.concat(docs.iter().map(|doc| {
             let prefix = if doc.is_empty() { empty_prefix } else { nonempty_prefix };
             alloc.comment(prefix).append(alloc.comment(doc)).append(alloc.hardline())
