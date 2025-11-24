@@ -17,6 +17,12 @@ fn latex_start(fontsize: &FontSize) -> String {
     latex_start_string
 }
 
+const TYPST_END: &str = "]";
+
+fn typst_start() -> String {
+    "#text(font: \"DejaVu Sans Mono\")[\n".to_string()
+}
+
 #[derive(clap::ValueEnum, Clone)]
 pub enum FontSize {
     Tiny,
@@ -126,8 +132,10 @@ pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
             stream.write_all(LATEX_END.as_bytes()).unwrap();
         }
         Backend::Typst => {
+            stream.write_all(typst_start().as_bytes()).unwrap();
             prg.print_typst(&cfg, &mut stream).expect("Failed to print to stdout");
             println!();
+            stream.write_all(TYPST_END.as_bytes()).unwrap();
         }
     }
     Ok(())

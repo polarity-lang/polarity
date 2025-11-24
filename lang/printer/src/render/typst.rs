@@ -39,29 +39,21 @@ where
     fn push_annotation(&mut self, anno: &Anno) -> Result<(), Self::Error> {
         self.anno_stack.push(anno.clone());
         let out = match anno {
-            Anno::Keyword => r"\polKw{",
-            Anno::Ctor => r"\polCtor{",
-            Anno::Dtor => r"\polDtor{",
-            Anno::Type => r"\polType{",
-            Anno::Comment => r"\polComment{",
-            // Produce a backslash
-            Anno::Backslash => r"\polBackslash{",
-            // Escape an opening brace that follows immediately
-            Anno::BraceOpen => r"\",
-            // Escape a closing brace that follows immediately
-            Anno::BraceClose => r"\",
-            Anno::Error => r"\textcolor{polRed}{",
-            Anno::Reference { module_uri: _, name: _ } => "",
+            Anno::Keyword => r"#text(blue)[",
+            Anno::Ctor => r"#text(red)[",
+            Anno::Dtor => r"#text(green)[",
+            Anno::Type => r"#text(yellow)[",
+            Anno::Comment => r"#text(maroon)[",
+            _ => "",
         };
         self.upstream.write_all(out.as_bytes())
     }
 
     fn pop_annotation(&mut self) -> Result<(), Self::Error> {
         let res = match self.anno_stack.last() {
-            Some(Anno::BraceOpen)
-            | Some(Anno::BraceClose)
-            | Some(Anno::Reference { module_uri: _, name: _ }) => Ok(()),
-            _ => self.upstream.write_all("}".as_bytes()),
+            Some(Anno::Keyword) | Some(Anno::Ctor) | Some(Anno::Dtor) | Some(Anno::Type)
+            | Some(Anno::Comment) => self.upstream.write_all("] ".as_bytes()),
+            _ => Ok(()),
         };
         self.anno_stack.pop();
         res
