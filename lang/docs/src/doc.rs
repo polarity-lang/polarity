@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use askama::Template;
 
@@ -12,22 +12,22 @@ use crate::util::{get_absolut_css_path, get_files};
 
 const CSS_CONTENT: &str = include_str!("../templates/style.css");
 
-pub async fn write_html() {
+pub async fn write_html(lib_paths: &[PathBuf]) {
     if !Path::new(CSS_PATH).exists() {
         fs::create_dir_all(Path::new(CSS_PATH).parent().unwrap())
             .expect("Failed to create CSS directory");
         fs::write(CSS_PATH, CSS_CONTENT).expect("Failed to create CSS file");
     }
-    write_modules().await;
+    write_modules(lib_paths).await;
 }
 
-async fn write_modules() {
+async fn write_modules(lib_paths: &[PathBuf]) {
     let css_path = get_absolut_css_path();
     let folders: Vec<&Path> = vec![Path::new("examples/"), Path::new("std")];
     let path_list = get_files(folders.clone());
     let list = generate_html_from_paths(folders);
     for (source_path, target_path) in path_list {
-        let mut db = Database::from_path(&source_path);
+        let mut db = Database::from_path(&source_path, lib_paths);
         let uri = db.resolve_path(&source_path).expect("Failed to resolve path");
         let prg = db.ust(&uri).await.expect("Failed to get UST");
 

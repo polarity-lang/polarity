@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use polarity_lang_driver::Database;
 use polarity_lang_printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
 
+use crate::cli::locate_libs::locate_libs;
 use crate::utils::ignore_colors::IgnoreColors;
 
 #[derive(clap::Args)]
@@ -27,6 +28,8 @@ pub struct Args {
     /// Print the typechecked instead of renamed syntax tree
     #[clap(long, num_args = 0)]
     checked: bool,
+    #[clap(long)]
+    lib_path: Option<Vec<PathBuf>>,
 }
 
 /// Compute the output stream for the "fmt" subcommand.
@@ -50,8 +53,9 @@ fn compute_output_stream(
 }
 
 pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
+    let lib_paths = locate_libs(cmd.lib_path);
     for filepath in &cmd.filepaths {
-        let mut db = Database::from_path(filepath);
+        let mut db = Database::from_path(filepath, &lib_paths);
         let uri = db.resolve_path(filepath).map_err(|e| vec![e.into()])?;
         let prg = if cmd.checked { db.ast(&uri).await } else { db.ust(&uri).await }
             .map_err(|errs| db.pretty_errors(&uri, errs))?;

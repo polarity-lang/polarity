@@ -6,6 +6,8 @@ use std::path::PathBuf;
 use polarity_lang_driver::Database;
 use polarity_lang_printer::{Print, PrintCfg};
 
+use crate::cli::locate_libs::locate_libs;
+
 const LATEX_END: &str = r"\end{alltt}
 ";
 
@@ -57,6 +59,8 @@ pub struct Args {
     indent: isize,
     #[clap(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
+    #[clap(long)]
+    lib_path: Option<Vec<PathBuf>>,
 }
 
 /// Compute the output stream for the "texify" subcommand.
@@ -74,7 +78,8 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
 }
 
 pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
-    let mut db = Database::from_path(&cmd.filepath);
+    let lib_paths = locate_libs(cmd.lib_path.clone());
+    let mut db = Database::from_path(&cmd.filepath, &lib_paths);
     let uri = db.resolve_path(&cmd.filepath).map_err(|e| vec![e.into()])?;
     let prg = db.ust(&uri).await.map_err(|errs| db.pretty_errors(&uri, errs))?;
 

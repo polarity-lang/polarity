@@ -17,12 +17,7 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn new(client: tower_lsp_server::Client) -> Self {
-        let database = Database::in_memory();
-        Self::with_database(client, database)
-    }
-
-    pub fn with_database(client: tower_lsp_server::Client, database: Database) -> Self {
+    pub fn new(client: tower_lsp_server::Client, database: Database) -> Self {
         Server { client, database: RwLock::new(database) }
     }
 }

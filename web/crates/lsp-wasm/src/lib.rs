@@ -65,8 +65,8 @@ pub async fn serve(config: ServerConfig) -> Result<(), JsValue> {
 
     let create_server = |client| {
         let source = InMemorySource::new().fallback_to(FetchSource::default());
-        let database = polarity_lang_driver::Database::from_source(source);
-        polarity_lang_lsp_server::Server::with_database(client, database)
+        let database = polarity_lang_driver::Database::new(source);
+        polarity_lang_lsp_server::Server::new(client, database)
     };
 
     let (service, messages) = LspService::new(create_server);

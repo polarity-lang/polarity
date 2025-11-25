@@ -49,7 +49,7 @@ impl PartialRun<()> {
         let mut source = InMemorySource::new();
         source.insert(case.uri(), case.content().unwrap());
         let source = source.fallback_to(FileSystemSource::new(&case.path));
-        let database = Database::from_source(source);
+        let database = Database::new(source);
         PartialRun { case, database, result: Ok(()), report_phases: vec![] }
     }
 }

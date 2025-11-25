@@ -8,6 +8,7 @@ mod format;
 mod gen_completions;
 mod lex;
 mod lift;
+mod locate_libs;
 mod lsp;
 mod run;
 mod texify;

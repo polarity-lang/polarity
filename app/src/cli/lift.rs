@@ -4,6 +4,8 @@ use std::path::PathBuf;
 
 use polarity_lang_driver::Database;
 
+use crate::cli::locate_libs::locate_libs;
+
 #[derive(clap::Args)]
 pub struct Args {
     #[clap(value_parser, value_name = "TYPE")]
@@ -12,10 +14,13 @@ pub struct Args {
     filepath: PathBuf,
     #[clap(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
+    #[clap(long)]
+    lib_path: Option<Vec<PathBuf>>,
 }
 
 pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
-    let mut db = Database::from_path(&cmd.filepath);
+    let lib_paths = locate_libs(cmd.lib_path);
+    let mut db = Database::from_path(&cmd.filepath, &lib_paths);
     let uri = db.resolve_path(&cmd.filepath).map_err(|e| vec![e.into()])?;
     let edits = db.lift(&uri, &cmd.r#type).await.map_err(|errs| db.pretty_errors(&uri, errs))?;
 

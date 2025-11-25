@@ -25,7 +25,7 @@ async fn run_async(example: &str) -> miette::Result<()> {
     let mut inmemory_source = InMemorySource::new();
     let uri: Url = "inmemory:///bench.pol".parse().expect("Failed to parse URI");
     inmemory_source.write_string(&uri, example).await.expect("Failed to write inmemory source");
-    let mut db = Database::from_source(inmemory_source);
+    let mut db = Database::new(inmemory_source);
     let _ = db.ast(&uri).await.map_err(|errs| db.pretty_errors(&uri, errs));
     Ok(())
 }
