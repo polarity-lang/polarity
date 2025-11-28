@@ -67,7 +67,7 @@ impl Print for DocComment {
         let empty_prefix = "///";
         alloc.concat(docs.iter().map(|doc| {
             let prefix = if doc.is_empty() { empty_prefix } else { nonempty_prefix };
-            alloc.comment(format!("{}{}", prefix, doc)).append(alloc.hardline())
+            alloc.comment(format!("{}{}", prefix, doc).as_str()).append(alloc.hardline())
         }))
     }
 }
