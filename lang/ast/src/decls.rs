@@ -67,7 +67,7 @@ impl Print for DocComment {
         let empty_prefix = "///";
         alloc.concat(docs.iter().map(|doc| {
             let prefix = if doc.is_empty() { empty_prefix } else { nonempty_prefix };
-            alloc.comment(prefix).append(alloc.comment(doc)).append(alloc.hardline())
+            alloc.comment(format!("{}{}", prefix, doc).as_str()).append(alloc.hardline())
         }))
     }
 }
@@ -181,7 +181,7 @@ pub struct UseDecl {
 impl Print for UseDecl {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let UseDecl { path, .. } = self;
-        alloc.text(USE).append(alloc.space()).append(alloc.text(path).double_quotes())
+        alloc.keyword(USE).append(alloc.space()).append(alloc.text(path).double_quotes())
     }
 }
 
