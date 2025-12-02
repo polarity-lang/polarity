@@ -336,7 +336,7 @@ impl CollectInfo for Exp {
             Exp::LocalMatch(e) => e.collect_info(db, collector),
             Exp::LocalComatch(e) => e.collect_info(db, collector),
             Exp::LocalLet(e) => e.collect_info(db, collector),
-            Exp::Literal(_) => todo!(),
+            Exp::Literal(e) => e.collect_info(db, collector),
         }
     }
 }
@@ -707,6 +707,23 @@ impl CollectInfo for Note {
             let mut content: Vec<MarkedString> = Vec::new();
             content.push(MarkedString::String(format!("Note: `{name}`")));
             add_doc_comment(&mut content, doc.clone().map(|doc| doc.docs));
+            let hover_content = HoverContents::Array(content);
+            collector.add_hover(*span, hover_content);
+        }
+    }
+}
+
+impl CollectInfo for Literal {
+    fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
+        let Literal { span, kind, inferred_type: _ } = self;
+        if let Some(span) = span {
+            // Add hover info
+            let mut content: Vec<MarkedString> = Vec::new();
+            match kind {
+                LiteralKind::Str { .. } => {
+                    content.push(MarkedString::String("String literal".to_owned()))
+                }
+            }
             let hover_content = HoverContents::Array(content);
             collector.add_hover(*span, hover_content);
         }
