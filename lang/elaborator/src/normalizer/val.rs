@@ -3,6 +3,7 @@ use std::rc::Rc;
 use log::trace;
 use polarity_lang_ast;
 use polarity_lang_ast::Idx;
+use polarity_lang_ast::Literal;
 use polarity_lang_ast::MetaVar;
 use polarity_lang_ast::Shift;
 use polarity_lang_ast::ShiftRange;
@@ -89,6 +90,8 @@ pub enum Val {
     TypeUniv(TypeUniv),
     LocalComatch(LocalComatch),
     Anno(AnnoVal),
+    // Use the definition from the AST
+    Literal(Literal),
     Neu(Neu),
 }
 
@@ -100,6 +103,7 @@ impl Shift for Val {
             Val::TypeUniv(e) => e.shift_in_range(range, by),
             Val::LocalComatch(e) => e.shift_in_range(range, by),
             Val::Anno(e) => e.shift_in_range(range, by),
+            Val::Literal(e) => e.shift_in_range(range, by),
             Val::Neu(exp) => exp.shift_in_range(range, by),
         }
     }
@@ -113,6 +117,7 @@ impl Print for Val {
             Val::TypeUniv(e) => e.print(cfg, alloc),
             Val::LocalComatch(e) => e.print(cfg, alloc),
             Val::Anno(e) => e.print(cfg, alloc),
+            Val::Literal(e) => e.print(cfg, alloc),
             Val::Neu(exp) => exp.print(cfg, alloc),
         }
     }
@@ -128,6 +133,7 @@ impl ReadBack for Val {
             Val::TypeUniv(e) => e.read_back(info_table)?.into(),
             Val::LocalComatch(e) => e.read_back(info_table)?.into(),
             Val::Anno(e) => e.read_back(info_table)?.into(),
+            Val::Literal(e) => e.read_back(info_table)?.into(),
             Val::Neu(exp) => exp.read_back(info_table)?,
         };
         trace!("↓{} ~> {}", self.print_trace(), res.print_trace());
@@ -965,5 +971,17 @@ impl ReadBack for Closure {
             .map(|(name, arg)| Binder { name: name.clone(), content: arg });
         let mut shifted_env = shift_and_clone(&self.env, (1, 0));
         shifted_env.bind_iter(binders, |env| self.body.eval(info_table, env))?.read_back(info_table)
+    }
+}
+
+// Literal
+//
+//
+
+impl ReadBack for Literal {
+    type Nf = polarity_lang_ast::Literal;
+
+    fn read_back(&self, _info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
+        Ok(self.clone())
     }
 }
