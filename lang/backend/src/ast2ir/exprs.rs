@@ -24,6 +24,7 @@ impl ToIR for polarity_lang_ast::Exp {
             }
             polarity_lang_ast::Exp::Hole(hole) => hole.to_ir()?,
             polarity_lang_ast::Exp::LocalLet(local_let) => ir::Exp::LocalLet(local_let.to_ir()?),
+            polarity_lang_ast::Exp::Literal(_) => todo!(),
         };
 
         Ok(out)

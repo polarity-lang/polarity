@@ -35,6 +35,7 @@ pub fn is_runtime_irrelevant(typ: &polarity_lang_ast::Exp) -> bool {
             hole.solution.as_ref().map(|s| is_runtime_irrelevant(s)).unwrap_or(false)
         }
         polarity_lang_ast::Exp::LocalLet(_) => false,
+        polarity_lang_ast::Exp::Literal(_) => todo!(),
     }
 }
 

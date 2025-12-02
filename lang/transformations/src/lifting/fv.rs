@@ -97,6 +97,7 @@ impl FV for Exp {
             Exp::TypeUniv(_) => HashSet::default(),
             Exp::LocalMatch(local_match) => local_match.free_vars_closure(lvl_ctx, type_ctx),
             Exp::LocalLet(local_let) => local_let.free_vars_closure(lvl_ctx, type_ctx),
+            Exp::Literal(_) => todo!(),
         }
     }
 }

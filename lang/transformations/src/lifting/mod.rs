@@ -323,6 +323,7 @@ impl Lift for Exp {
             Exp::LocalMatch(e) => e.lift(ctx),
             Exp::LocalComatch(e) => e.lift(ctx),
             Exp::LocalLet(e) => e.lift(ctx),
+            Exp::Literal(_) => todo!(),
         }
     }
 }

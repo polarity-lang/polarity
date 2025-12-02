@@ -43,6 +43,7 @@ impl Eval for Exp {
             Exp::LocalComatch(e) => e.eval(info_table, env),
             Exp::Hole(e) => e.eval(info_table, env),
             Exp::LocalLet(e) => e.eval(info_table, env),
+            Exp::Literal(_) => todo!(),
         };
         trace!(
             "{} |- {} ▷ {}",

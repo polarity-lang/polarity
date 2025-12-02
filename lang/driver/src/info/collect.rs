@@ -336,6 +336,7 @@ impl CollectInfo for Exp {
             Exp::LocalMatch(e) => e.collect_info(db, collector),
             Exp::LocalComatch(e) => e.collect_info(db, collector),
             Exp::LocalLet(e) => e.collect_info(db, collector),
+            Exp::Literal(_) => todo!(),
         }
     }
 }
