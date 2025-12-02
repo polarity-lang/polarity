@@ -34,6 +34,7 @@ impl Lower for cst::exp::Exp {
             cst::exp::Exp::LocalComatch(e) => e.lower(ctx),
             cst::exp::Exp::Hole(e) => e.lower(ctx),
             cst::exp::Exp::NatLit(e) => e.lower(ctx),
+            cst::exp::Exp::StrLit(_) => todo!(),
             cst::exp::Exp::BinOp(e) => e.lower(ctx),
             cst::exp::Exp::Lam(e) => e.lower(ctx),
             cst::exp::Exp::LocalLet(e) => e.lower(ctx),
