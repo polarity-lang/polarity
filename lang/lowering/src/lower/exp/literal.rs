@@ -36,7 +36,7 @@ impl Lower for cst::exp::StrLit {
                     )),
                 }))
             }
-            _ => todo!(),
+            _ => todo!("Handle malformed String declaration"),
         }
     }
 }
