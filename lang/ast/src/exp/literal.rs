@@ -1,3 +1,4 @@
+use derivative::Derivative;
 use pretty::DocAllocator;
 
 use polarity_lang_miette_util::codespan::Span;
@@ -10,12 +11,17 @@ use crate::{
     rename::{Rename, RenameCtx},
 };
 
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Hash, Derivative)]
 pub struct Literal {
     /// Source code location
     pub span: Option<Span>,
 
+    /// The kind of literals with its concrete payload
     pub kind: LiteralKind,
+
+    /// The type for literals gets resolved at lowering and will not change
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub inferred_type: Box<Exp>,
 }
 
 #[derive(Debug, Clone, PartialEq, Hash)]
