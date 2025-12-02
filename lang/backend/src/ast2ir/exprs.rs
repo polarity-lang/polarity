@@ -24,7 +24,7 @@ impl ToIR for polarity_lang_ast::Exp {
             }
             polarity_lang_ast::Exp::Hole(hole) => hole.to_ir()?,
             polarity_lang_ast::Exp::LocalLet(local_let) => ir::Exp::LocalLet(local_let.to_ir()?),
-            polarity_lang_ast::Exp::Literal(_) => todo!(),
+            polarity_lang_ast::Exp::Literal(literal) => ir::Exp::Literal(literal.to_ir()?),
         };
 
         Ok(out)
@@ -170,6 +170,19 @@ impl ToIR for LocalLet {
             bound: Box::new(bound.to_ir()?),
             body: Box::new(body.to_ir()?),
         })
+    }
+}
+
+impl ToIR for polarity_lang_ast::Literal {
+    type Target = ir::Literal;
+
+    fn to_ir(&self) -> Result<Self::Target, BackendError> {
+        let polarity_lang_ast::Literal { span: _, kind, inferred_type: _ } = self;
+        match kind {
+            polarity_lang_ast::LiteralKind::Str { unescaped, .. } => {
+                Ok(ir::Literal::Str(unescaped.clone()))
+            }
+        }
     }
 }
 

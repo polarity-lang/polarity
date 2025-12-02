@@ -18,6 +18,7 @@ pub enum Exp {
     LocalMatch(LocalMatch),
     LocalComatch(LocalComatch),
     LocalLet(LocalLet),
+    Literal(Literal),
     Panic(Panic),
     /// Zero-Sized Term
     /// This term has no runtime effect and is generated as a placeholder whenever types cannot be erased by the current implementation.
@@ -42,6 +43,7 @@ impl Print for Exp {
             Exp::LocalMatch(m) => m.print_prec(cfg, alloc, prec),
             Exp::LocalComatch(m) => m.print_prec(cfg, alloc, prec),
             Exp::LocalLet(l) => l.print_prec(cfg, alloc, prec),
+            Exp::Literal(l) => l.print_prec(cfg, alloc, prec),
             Exp::Panic(p) => p.print_prec(cfg, alloc, prec),
             Exp::ZST => alloc.keyword("<ZST>"),
         }
@@ -145,6 +147,24 @@ impl Print for LocalMatch {
             .append(alloc.keyword(MATCH))
             .append(alloc.space())
             .append(print_cases(cases, cfg, alloc))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Literal {
+    Str(String),
+}
+
+impl Print for Literal {
+    fn print_prec<'a>(
+        &'a self,
+        _cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        match self {
+            Literal::Str(val) => alloc.text(format!(r#""{val}""#)),
+        }
     }
 }
 
