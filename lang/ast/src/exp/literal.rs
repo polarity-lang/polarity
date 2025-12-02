@@ -56,7 +56,7 @@ impl Occurs for Literal {
 
 impl HasType for Literal {
     fn typ(&self) -> Option<Box<Exp>> {
-        todo!()
+        Some(self.inferred_type.clone())
     }
 }
 
