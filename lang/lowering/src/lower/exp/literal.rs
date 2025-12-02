@@ -15,6 +15,7 @@ impl Lower for cst::exp::StrLit {
             id: "String".to_owned(),
         };
         let (string_decl, string_name) = ctx.symbol_table.lookup(&string_ident)?;
+
         match string_decl {
             DeclMeta::Extern { params } if params.is_empty() => {
                 Ok(polarity_lang_ast::Exp::Literal(polarity_lang_ast::Literal {
@@ -23,13 +24,14 @@ impl Lower for cst::exp::StrLit {
                         original: original.clone(),
                         unescaped: unescaped.clone(),
                     },
-                    inferred_type: Box::new(polarity_lang_ast::Exp::TypCtor(
-                        polarity_lang_ast::TypCtor {
+                    inferred_type: Box::new(polarity_lang_ast::Exp::Call(
+                        polarity_lang_ast::Call {
                             // Use literal's span as dummy
                             span: Some(*span),
                             name: string_name,
+                            kind: polarity_lang_ast::CallKind::Extern,
                             args: polarity_lang_ast::Args { args: vec![] },
-                            is_bin_op: None,
+                            inferred_type: None,
                         },
                     )),
                 }))
