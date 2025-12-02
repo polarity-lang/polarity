@@ -350,7 +350,7 @@ NatLit: NatLit = <l: @L> <n: "number literal"> <r: @R> =>
   NatLit { span: span(l, r), val: n };
 
 StrLit: StrLit = <l: @L> <s: "string literal"> <r: @R> =>
-  StrLit { span: span(l, r), val: s };
+  StrLit { span: span(l, r), original: s.original, unescaped: s.unescaped };
 
 LocalLet: LocalLet = <l: @L> "let" <name: BindingSite> <typ: (":" <NonLet>)?> ":=" <bound: NonLet> ";" <body: Exp> <r: @R> =>
   LocalLet { span: span(l,r), name, typ, bound, body };

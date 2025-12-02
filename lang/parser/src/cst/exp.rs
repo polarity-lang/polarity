@@ -199,7 +199,11 @@ pub struct NatLit {
 /// Literal for a string
 pub struct StrLit {
     pub span: Span,
-    pub val: lexer::StringLit,
+
+    /// The string as written in the source code
+    pub original: String,
+    /// The unescaped version of the string literal
+    pub unescaped: String,
 }
 
 #[derive(Debug, Clone)]
