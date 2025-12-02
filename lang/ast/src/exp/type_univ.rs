@@ -7,8 +7,8 @@ use polarity_lang_printer::{
 
 use super::{Exp, MetaVar};
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Subst, Substitutable, Zonk,
-    ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
+    Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -52,6 +52,15 @@ impl Default for TypeUniv {
 
 impl Shift for TypeUniv {
     fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {}
+}
+
+impl Occurs for TypeUniv {
+    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
+        false
+    }
 }
 
 impl HasType for TypeUniv {

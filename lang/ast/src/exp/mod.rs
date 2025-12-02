@@ -141,18 +141,12 @@ impl Occurs for Exp {
             return true;
         }
         match self {
-            Exp::Variable(_) => {
-                // Variables have no subexpressions, therefore the check above is sufficient
-                false
-            }
+            Exp::Variable(e) => e.occurs(ctx, f),
             Exp::TypCtor(e) => e.occurs(ctx, f),
             Exp::Call(e) => e.occurs(ctx, f),
             Exp::DotCall(e) => e.occurs(ctx, f),
             Exp::Anno(e) => e.occurs(ctx, f),
-            Exp::TypeUniv(_) => {
-                // The type universe has no subexpressions, therefore the check above is sufficient
-                false
-            }
+            Exp::TypeUniv(e) => e.occurs(ctx, f),
             Exp::LocalMatch(e) => e.occurs(ctx, f),
             Exp::LocalComatch(e) => e.occurs(ctx, f),
             Exp::Hole(e) => e.occurs(ctx, f),
