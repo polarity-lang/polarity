@@ -1,8 +1,6 @@
 use num_bigint::BigUint;
 use polarity_lang_miette_util::codespan::Span;
 
-use crate::lexer;
-
 use super::ident::*;
 
 #[derive(Debug, Clone)]

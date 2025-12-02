@@ -55,7 +55,7 @@ impl Shift for TypeUniv {
 }
 
 impl Occurs for TypeUniv {
-    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    fn occurs<F>(&self, _ctx: &mut LevelCtx, _f: &F) -> bool
     where
         F: Fn(&LevelCtx, &Exp) -> bool,
     {
