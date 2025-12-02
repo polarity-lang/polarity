@@ -1,3 +1,5 @@
+use pretty::DocAllocator;
+
 use polarity_lang_miette_util::codespan::Span;
 use polarity_lang_printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
@@ -18,7 +20,7 @@ pub struct Literal {
 
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub enum LiteralKind {
-    Str(String),
+    Str { original: String, unescaped: String },
 }
 
 impl HasSpan for Literal {
@@ -34,17 +36,15 @@ impl From<Literal> for Exp {
 }
 
 impl Shift for Literal {
-    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        todo!()
-    }
+    fn shift_in_range<R: ShiftRange>(&mut self, _range: &R, _by: (isize, isize)) {}
 }
 
 impl Occurs for Literal {
-    fn occurs<F>(&self, ctx: &mut LevelCtx, f: &F) -> bool
+    fn occurs<F>(&self, _ctx: &mut LevelCtx, _f: &F) -> bool
     where
         F: Fn(&LevelCtx, &Exp) -> bool,
     {
-        todo!()
+        false
     }
 }
 
@@ -57,45 +57,50 @@ impl HasType for Literal {
 impl Substitutable for Literal {
     type Target = Literal;
 
-    fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
-        todo!()
+    fn subst(&self, _ctx: &mut LevelCtx, _subst: &Subst) -> Self::Target {
+        self.clone()
     }
 }
 
 impl Print for Literal {
     fn print_prec<'a>(
         &'a self,
-        cfg: &PrintCfg,
+        _cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
         _prec: Precedence,
     ) -> Builder<'a> {
-        todo!()
+        let Literal { kind, .. } = self;
+        match kind {
+            LiteralKind::Str { original, .. } => alloc.text(format!(r#""{}""#, original)),
+        }
     }
 }
 
 impl Zonk for Literal {
     fn zonk(
         &mut self,
-        meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
+        _meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        todo!()
+        Ok(())
     }
 }
 
 impl ContainsMetaVars for Literal {
     fn contains_metavars(&self) -> bool {
-        todo!()
+        false
     }
 }
 
 impl Rename for Literal {
-    fn rename_in_ctx(&mut self, ctx: &mut RenameCtx) {
-        todo!()
-    }
+    fn rename_in_ctx(&mut self, _ctx: &mut RenameCtx) {}
 }
 
 impl FreeVars for Literal {
-    fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
-        todo!()
+    fn free_vars_mut(
+        &self,
+        _ctx: &LevelCtx,
+        _cutoff: usize,
+        _fvs: &mut crate::HashSet<crate::Lvl>,
+    ) {
     }
 }
