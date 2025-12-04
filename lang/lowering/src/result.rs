@@ -140,6 +140,13 @@ pub enum LoweringError {
         span: SourceSpan,
         name: String,
     },
+    #[error("Found invalid type declaration for {typ} literal")]
+    #[diagnostic(code("L-021"))]
+    InvalidTypeDeclForLiteral {
+        #[label]
+        span: SourceSpan,
+        typ: String,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("L-XXX"))]
     /// This error should not occur.

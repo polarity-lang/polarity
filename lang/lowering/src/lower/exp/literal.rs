@@ -1,6 +1,7 @@
+use polarity_lang_miette_util::ToMiette;
 use polarity_lang_parser::cst::{self, Ident};
 
-use crate::{Ctx, DeclMeta, LoweringResult, lower::Lower};
+use crate::{Ctx, DeclMeta, LoweringError, LoweringResult, lower::Lower};
 
 impl Lower for cst::exp::StrLit {
     type Target = polarity_lang_ast::Exp;
@@ -36,7 +37,10 @@ impl Lower for cst::exp::StrLit {
                     )),
                 }))
             }
-            _ => todo!("Handle malformed String declaration"),
+            _ => Err(Box::new(LoweringError::InvalidTypeDeclForLiteral {
+                span: span.to_miette(),
+                typ: string_name.id,
+            })),
         }
     }
 }
