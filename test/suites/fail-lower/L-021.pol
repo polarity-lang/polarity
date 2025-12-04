@@ -1,0 +1,2 @@
+data String { Foo }
+let error: String { "foo" }
