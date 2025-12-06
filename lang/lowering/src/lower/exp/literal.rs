@@ -11,7 +11,7 @@ impl Lower for cst::exp::StringLit {
 
         // Lookup what "String" type is in scope
         let string_ident = Ident {
-            // Use literal's span as dummy
+            // Use literal's span as synthetic span
             span: *span,
             id: "String".to_owned(),
         };
@@ -27,7 +27,7 @@ impl Lower for cst::exp::StringLit {
                     },
                     inferred_type: Box::new(polarity_lang_ast::Exp::Call(
                         polarity_lang_ast::Call {
-                            // Use literal's span as dummy
+                            // Use literal's span as synthetic span
                             span: Some(*span),
                             name: string_name,
                             kind: polarity_lang_ast::CallKind::Extern,
