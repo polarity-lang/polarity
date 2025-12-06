@@ -715,7 +715,7 @@ impl CollectInfo for Note {
 
 impl CollectInfo for Literal {
     fn collect_info(&self, _db: &Database, collector: &mut InfoCollector) {
-        let Literal { span, kind, inferred_type: _ } = self;
+        let Literal { span, kind, inferred_type } = self;
         if let Some(span) = span {
             // Add hover info
             let mut content: Vec<MarkedString> = Vec::new();
@@ -724,6 +724,8 @@ impl CollectInfo for Literal {
                     content.push(MarkedString::String("String literal".to_owned()))
                 }
             }
+            let typ = string_to_language_string(inferred_type.print_to_string(None));
+            content.push(typ);
             let hover_content = HoverContents::Array(content);
             collector.add_hover(*span, hover_content);
         }
