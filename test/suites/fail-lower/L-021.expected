@@ -1,0 +1,8 @@
+L-021
+
+  × Found invalid type declaration for String literal
+   ╭─[L-021.pol:2:21]
+ 1 │ data String { Foo }
+ 2 │ let error: String { "foo" }
+   ·                     ─────
+   ╰────

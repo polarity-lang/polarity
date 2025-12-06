@@ -23,6 +23,7 @@ mod case;
 mod closure;
 mod dot_call;
 mod hole;
+mod literal;
 mod local_comatch;
 mod local_let;
 mod local_match;
@@ -38,6 +39,7 @@ pub use case::*;
 pub use closure::*;
 pub use dot_call::*;
 pub use hole::*;
+pub use literal::*;
 pub use local_comatch::*;
 pub use local_let::*;
 pub use local_match::*;
@@ -82,6 +84,7 @@ pub enum Exp {
     LocalComatch(LocalComatch),
     Hole(Hole),
     LocalLet(LocalLet),
+    Literal(Literal),
 }
 
 impl Exp {
@@ -106,6 +109,7 @@ impl HasSpan for Exp {
             Exp::LocalComatch(e) => e.span(),
             Exp::Hole(e) => e.span(),
             Exp::LocalLet(e) => e.span(),
+            Exp::Literal(e) => e.span(),
         }
     }
 }
@@ -123,6 +127,7 @@ impl Shift for Exp {
             Exp::LocalComatch(e) => e.shift_in_range(range, by),
             Exp::Hole(e) => e.shift_in_range(range, by),
             Exp::LocalLet(e) => e.shift_in_range(range, by),
+            Exp::Literal(e) => e.shift_in_range(range, by),
         }
     }
 }
@@ -136,22 +141,17 @@ impl Occurs for Exp {
             return true;
         }
         match self {
-            Exp::Variable(_) => {
-                // Variables have no subexpressions, therefore the check above is sufficient
-                false
-            }
+            Exp::Variable(e) => e.occurs(ctx, f),
             Exp::TypCtor(e) => e.occurs(ctx, f),
             Exp::Call(e) => e.occurs(ctx, f),
             Exp::DotCall(e) => e.occurs(ctx, f),
             Exp::Anno(e) => e.occurs(ctx, f),
-            Exp::TypeUniv(_) => {
-                // The type universe has no subexpressions, therefore the check above is sufficient
-                false
-            }
+            Exp::TypeUniv(e) => e.occurs(ctx, f),
             Exp::LocalMatch(e) => e.occurs(ctx, f),
             Exp::LocalComatch(e) => e.occurs(ctx, f),
             Exp::Hole(e) => e.occurs(ctx, f),
             Exp::LocalLet(e) => e.occurs(ctx, f),
+            Exp::Literal(e) => e.occurs(ctx, f),
         }
     }
 }
@@ -169,6 +169,7 @@ impl HasType for Exp {
             Exp::LocalComatch(e) => e.typ(),
             Exp::Hole(e) => e.typ(),
             Exp::LocalLet(e) => e.typ(),
+            Exp::Literal(e) => e.typ(),
         }
     }
 }
@@ -187,6 +188,7 @@ impl Substitutable for Exp {
             Exp::LocalComatch(e) => e.subst(ctx, subst).into(),
             Exp::Hole(e) => e.subst(ctx, subst).into(),
             Exp::LocalLet(e) => e.subst(ctx, subst).into(),
+            Exp::Literal(e) => e.subst(ctx, subst).into(),
         }
     }
 }
@@ -208,6 +210,7 @@ impl Print for Exp {
             Exp::LocalComatch(e) => e.print_prec(cfg, alloc, prec),
             Exp::Hole(e) => e.print_prec(cfg, alloc, prec),
             Exp::LocalLet(e) => e.print_prec(cfg, alloc, prec),
+            Exp::Literal(e) => e.print_prec(cfg, alloc, prec),
         }
     }
 }
@@ -228,6 +231,7 @@ impl Zonk for Exp {
             Exp::LocalComatch(e) => e.zonk(meta_vars),
             Exp::Hole(e) => e.zonk(meta_vars),
             Exp::LocalLet(e) => e.zonk(meta_vars),
+            Exp::Literal(e) => e.zonk(meta_vars),
         }
     }
 }
@@ -245,6 +249,7 @@ impl ContainsMetaVars for Exp {
             Exp::LocalComatch(local_comatch) => local_comatch.contains_metavars(),
             Exp::Hole(hole) => hole.contains_metavars(),
             Exp::LocalLet(local_let) => local_let.contains_metavars(),
+            Exp::Literal(literal) => literal.contains_metavars(),
         }
     }
 }
@@ -262,6 +267,7 @@ impl Rename for Exp {
             Exp::LocalMatch(e) => e.rename_in_ctx(ctx),
             Exp::DotCall(e) => e.rename_in_ctx(ctx),
             Exp::LocalLet(e) => e.rename_in_ctx(ctx),
+            Exp::Literal(e) => e.rename_in_ctx(ctx),
         }
     }
 }
@@ -279,6 +285,7 @@ impl FreeVars for Exp {
             Exp::LocalComatch(e) => e.free_vars_mut(ctx, cutoff, fvs),
             Exp::Hole(e) => e.free_vars_mut(ctx, cutoff, fvs),
             Exp::LocalLet(e) => e.free_vars_mut(ctx, cutoff, fvs),
+            Exp::Literal(e) => e.free_vars_mut(ctx, cutoff, fvs),
         }
     }
 }

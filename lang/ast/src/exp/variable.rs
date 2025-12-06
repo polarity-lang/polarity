@@ -6,8 +6,8 @@ use polarity_lang_printer::{Alloc, Builder, Precedence, Print, PrintCfg};
 
 use super::{Exp, Idx, MetaVar, VarBound};
 use crate::{
-    ContainsMetaVars, FreeVars, HasSpan, HasType, Shift, ShiftRange, Subst, Substitutable, VarBind,
-    Zonk, ZonkError,
+    ContainsMetaVars, FreeVars, HasSpan, HasType, Occurs, Shift, ShiftRange, Subst, Substitutable,
+    VarBind, Zonk, ZonkError,
     ctx::LevelCtx,
     rename::{Rename, RenameCtx},
 };
@@ -50,6 +50,15 @@ impl Shift for Variable {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         self.idx.shift_in_range(range, by);
         self.inferred_type = None;
+    }
+}
+
+impl Occurs for Variable {
+    fn occurs<F>(&self, _ctx: &mut LevelCtx, _f: &F) -> bool
+    where
+        F: Fn(&LevelCtx, &Exp) -> bool,
+    {
+        false
     }
 }
 

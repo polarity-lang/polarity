@@ -2,6 +2,10 @@ use crate::ctx::LevelCtx;
 use crate::exp::Exp;
 use crate::{Hole, Idx, Lvl, MetaVar, Variable};
 
+/// Whether a subexpression that fulfills a predicate occurs
+///
+/// The actual check is done in the implementation for [Exp].
+/// The other implementations just pass the call to all subexpressions.
 pub trait Occurs {
     /// Whether a subexpression that fulfills a predicate occurs
     ///

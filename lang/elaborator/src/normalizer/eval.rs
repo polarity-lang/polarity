@@ -43,6 +43,7 @@ impl Eval for Exp {
             Exp::LocalComatch(e) => e.eval(info_table, env),
             Exp::Hole(e) => e.eval(info_table, env),
             Exp::LocalLet(e) => e.eval(info_table, env),
+            Exp::Literal(e) => e.eval(info_table, env),
         };
         trace!(
             "{} |- {} ▷ {}",
@@ -279,7 +280,6 @@ impl Eval for DotCall {
                     .collect::<Vec<_>>();
                 body.clone().unwrap().apply(info_table, binders)
             }
-
             Val::Neu(exp) => {
                 // The specific instance of the DotCall we are evaluating is:
                 //
@@ -314,6 +314,11 @@ impl Eval for DotCall {
             .into()),
             Val::TypeUniv(_) => Err(TypeError::Impossible {
                 message: "Cannot apply DotCall to type universe".to_owned(),
+                span: span.to_miette(),
+            }
+            .into()),
+            Val::Literal(_) => Err(TypeError::Impossible {
+                message: "Cannot apply DotCall to literal".to_owned(),
                 span: span.to_miette(),
             }
             .into()),
@@ -441,6 +446,11 @@ impl Eval for LocalMatch {
                 span: local_comatch.span.to_miette(),
             }
             .into()),
+            Val::Literal(literal) => Err(TypeError::Impossible {
+                message: "Cannot match on a literal".to_owned(),
+                span: literal.span.to_miette(),
+            }
+            .into()),
             Val::Anno(anno_val) => Err(TypeError::Impossible {
                 message: "Type annotation was not stripped when evaluating local match".to_owned(),
                 span: anno_val.span.to_miette(),
@@ -521,6 +531,14 @@ impl Eval for LocalLet {
         env.bind_iter([Binder { name: name.clone(), content: bound_val }].into_iter(), |env| {
             body.eval(info_table, env)
         })
+    }
+}
+
+impl Eval for Literal {
+    type Val = Box<Val>;
+
+    fn eval(&self, _info_table: &Rc<TypeInfoTable>, _env: &mut Env) -> TcResult<Self::Val> {
+        Ok(Box::new(Val::Literal(self.clone())))
     }
 }
 

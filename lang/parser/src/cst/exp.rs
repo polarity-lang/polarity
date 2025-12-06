@@ -74,6 +74,7 @@ pub enum Exp {
     LocalComatch(LocalComatch),
     Hole(Hole),
     NatLit(NatLit),
+    StringLit(StringLit),
     BinOp(BinOp),
     Lam(Lam),
     LocalLet(LocalLet),
@@ -95,6 +96,7 @@ impl Exp {
             Exp::LocalComatch(local_comatch) => local_comatch.span,
             Exp::Hole(hole) => hole.span,
             Exp::NatLit(nat_lit) => nat_lit.span,
+            Exp::StringLit(str_lit) => str_lit.span,
             Exp::BinOp(binop) => binop.span,
             Exp::Lam(lam) => lam.span,
             Exp::LocalLet(local_let) => local_let.span,
@@ -189,6 +191,17 @@ pub struct Hole {
 pub struct NatLit {
     pub span: Span,
     pub val: BigUint,
+}
+
+#[derive(Debug, Clone)]
+/// Literal for a string
+pub struct StringLit {
+    pub span: Span,
+
+    /// The string as written in the source code
+    pub original: String,
+    /// The unescaped version of the string literal
+    pub unescaped: String,
 }
 
 #[derive(Debug, Clone)]

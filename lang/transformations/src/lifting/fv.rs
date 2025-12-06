@@ -97,6 +97,7 @@ impl FV for Exp {
             Exp::TypeUniv(_) => HashSet::default(),
             Exp::LocalMatch(local_match) => local_match.free_vars_closure(lvl_ctx, type_ctx),
             Exp::LocalLet(local_let) => local_let.free_vars_closure(lvl_ctx, type_ctx),
+            Exp::Literal(literal) => literal.free_vars_closure(lvl_ctx, type_ctx),
         }
     }
 }
@@ -171,6 +172,12 @@ impl FV for LocalLet {
             fvs.extend(body.free_vars_closure(ctx, type_ctx));
         });
         fvs
+    }
+}
+
+impl FV for Literal {
+    fn free_vars_closure(&self, _lvl_ctx: &mut LevelCtx, _type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        HashSet::default()
     }
 }
 

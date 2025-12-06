@@ -323,6 +323,7 @@ impl Lift for Exp {
             Exp::LocalMatch(e) => e.lift(ctx),
             Exp::LocalComatch(e) => e.lift(ctx),
             Exp::LocalLet(e) => e.lift(ctx),
+            Exp::Literal(e) => e.lift(ctx),
         }
     }
 }
@@ -489,6 +490,14 @@ impl Lift for LocalLet {
             body: ctx.bind_single(name.clone(), |ctx| body.lift(ctx)),
             inferred_type: None,
         })
+    }
+}
+
+impl Lift for Literal {
+    type Target = Exp;
+
+    fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
+        Exp::Literal(self.clone())
     }
 }
 
