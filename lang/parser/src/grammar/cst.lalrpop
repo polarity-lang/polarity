@@ -70,7 +70,7 @@ extern {
     //
     //
     "number literal" => Token::NumLit(<BigUint>),
-    "string literal" => Token::StringLit(<StringLit>),
+    "string literal" => Token::StringLit(<crate::lexer::StringLit>),
 
     // DocComments
     "doc comment" => Token::DocComment(<String>),
@@ -307,7 +307,7 @@ pub Atom: Box<Exp> = {
     <e: LocalComatch> => Box::new(Exp::LocalComatch(e)),
     <e: Hole> => Box::new(Exp::Hole(e)),
     <e: NatLit> => Box::new(Exp::NatLit(e)),
-    <e: StrLit> => Box::new(Exp::StrLit(e)),
+    <e: StringLit> => Box::new(Exp::StringLit(e)),
     <e: ParensExp> => Box::new(Exp::Parens(e)),
     <e: CallWithoutArgs> => Box::new(Exp::Call(e)),
 }
@@ -349,8 +349,8 @@ Hole: Hole = {
 NatLit: NatLit = <l: @L> <n: "number literal"> <r: @R> =>
   NatLit { span: span(l, r), val: n };
 
-StrLit: StrLit = <l: @L> <s: "string literal"> <r: @R> =>
-  StrLit { span: span(l, r), original: s.original, unescaped: s.unescaped };
+StringLit: crate::cst::exp::StringLit = <l: @L> <s: "string literal"> <r: @R> =>
+  crate::cst::exp::StringLit { span: span(l, r), original: s.original, unescaped: s.unescaped };
 
 LocalLet: LocalLet = <l: @L> "let" <name: BindingSite> <typ: (":" <NonLet>)?> ":=" <bound: NonLet> ";" <body: Exp> <r: @R> =>
   LocalLet { span: span(l,r), name, typ, bound, body };

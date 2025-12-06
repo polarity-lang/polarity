@@ -179,8 +179,8 @@ impl ToIR for polarity_lang_ast::Literal {
     fn to_ir(&self) -> Result<Self::Target, BackendError> {
         let polarity_lang_ast::Literal { span: _, kind, inferred_type: _ } = self;
         match kind {
-            polarity_lang_ast::LiteralKind::Str { unescaped, .. } => {
-                Ok(ir::Literal::Str(unescaped.clone()))
+            polarity_lang_ast::LiteralKind::String { unescaped, .. } => {
+                Ok(ir::Literal::String(unescaped.clone()))
             }
         }
     }

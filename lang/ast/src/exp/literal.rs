@@ -26,7 +26,7 @@ pub struct Literal {
 
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub enum LiteralKind {
-    Str { original: String, unescaped: String },
+    String { original: String, unescaped: String },
 }
 
 impl HasSpan for Literal {
@@ -77,7 +77,7 @@ impl Print for Literal {
     ) -> Builder<'a> {
         let Literal { kind, .. } = self;
         match kind {
-            LiteralKind::Str { original, .. } => alloc.text(format!(r#""{}""#, original)),
+            LiteralKind::String { original, .. } => alloc.text(format!(r#""{}""#, original)),
         }
     }
 }

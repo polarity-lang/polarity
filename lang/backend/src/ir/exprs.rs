@@ -152,7 +152,7 @@ impl Print for LocalMatch {
 
 #[derive(Debug, Clone)]
 pub enum Literal {
-    Str(String),
+    String(String),
 }
 
 impl Print for Literal {
@@ -163,7 +163,7 @@ impl Print for Literal {
         _prec: Precedence,
     ) -> Builder<'a> {
         match self {
-            Literal::Str(val) => alloc.text(format!(r#""{val}""#)),
+            Literal::String(val) => alloc.text(format!(r#""{val}""#)),
         }
     }
 }

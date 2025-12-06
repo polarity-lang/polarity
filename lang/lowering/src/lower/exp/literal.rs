@@ -3,11 +3,11 @@ use polarity_lang_parser::cst::{self, Ident};
 
 use crate::{Ctx, DeclMeta, LoweringError, LoweringResult, lower::Lower};
 
-impl Lower for cst::exp::StrLit {
+impl Lower for cst::exp::StringLit {
     type Target = polarity_lang_ast::Exp;
 
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
-        let cst::exp::StrLit { span, original, unescaped } = self;
+        let cst::exp::StringLit { span, original, unescaped } = self;
 
         // Lookup what "String" type is in scope
         let string_ident = Ident {
@@ -21,7 +21,7 @@ impl Lower for cst::exp::StrLit {
             DeclMeta::Extern { params } if params.is_empty() => {
                 Ok(polarity_lang_ast::Exp::Literal(polarity_lang_ast::Literal {
                     span: Some(*span),
-                    kind: polarity_lang_ast::LiteralKind::Str {
+                    kind: polarity_lang_ast::LiteralKind::String {
                         original: original.clone(),
                         unescaped: unescaped.clone(),
                     },

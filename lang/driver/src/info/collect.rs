@@ -720,7 +720,7 @@ impl CollectInfo for Literal {
             // Add hover info
             let mut content: Vec<MarkedString> = Vec::new();
             match kind {
-                LiteralKind::Str { .. } => {
+                LiteralKind::String { .. } => {
                     content.push(MarkedString::String("String literal".to_owned()))
                 }
             }
