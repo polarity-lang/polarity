@@ -17,6 +17,12 @@ fn latex_start(fontsize: &FontSize) -> String {
     latex_start_string
 }
 
+const TYPST_END: &str = "]";
+
+fn typst_start() -> String {
+    "#text(font: \"DejaVu Sans Mono\")[\n".to_string()
+}
+
 #[derive(clap::ValueEnum, Clone)]
 pub enum FontSize {
     Tiny,
@@ -41,8 +47,26 @@ impl fmt::Display for FontSize {
     }
 }
 
+#[derive(clap::ValueEnum, Clone)]
+enum Backend {
+    Latex,
+    Typst,
+}
+
+impl fmt::Display for Backend {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Backend::*;
+        match self {
+            Latex => write!(f, "latex"),
+            Typst => write!(f, "typst"),
+        }
+    }
+}
+
 #[derive(clap::Args)]
 pub struct Args {
+    #[clap(long, default_value_t=Backend::Latex)]
+    backend: Backend,
     #[clap(value_parser, value_name = "FILE")]
     filepath: PathBuf,
     #[clap(long, default_value_t = 80)]
@@ -59,15 +83,19 @@ pub struct Args {
     output: Option<PathBuf>,
 }
 
-/// Compute the output stream for the "texify" subcommand.
+/// Compute the output stream for the "prettify" subcommand.
 /// If an output filepath is specified, then that filepath is used.
-/// Otherwise, the file extension is replaced by the `.tex` file extension.
+/// Otherwise, the file extension is replaced by the `.tex` or `.typ` file extension.
 fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
+    let file_extension = match cmd.backend {
+        Backend::Latex => "tex",
+        Backend::Typst => "typ",
+    };
     match &cmd.output {
         Some(path) => Box::new(fs::File::create(path).expect("Failed to create file")),
         None => {
             let mut fp = cmd.filepath.clone();
-            fp.set_extension("tex");
+            fp.set_extension(file_extension);
             Box::new(fs::File::create(fp).expect("Failed to create file"))
         }
     }
@@ -82,7 +110,10 @@ pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
 
     let cfg = PrintCfg {
         width: cmd.width,
-        latex: true,
+        backend: match cmd.backend {
+            Backend::Latex => polarity_lang_printer::Backend::Latex,
+            Backend::Typst => polarity_lang_printer::Backend::Typst,
+        },
         omit_decl_sep: true,
         de_bruijn: false,
         indent: cmd.indent,
@@ -93,13 +124,19 @@ pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
         print_metavar_solutions: false,
     };
 
-    stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
-    print_prg(&prg, &cfg, &mut stream);
-    stream.write_all(LATEX_END.as_bytes()).unwrap();
+    match cmd.backend {
+        Backend::Latex => {
+            stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
+            prg.print_latex(&cfg, &mut stream).expect("Failed to print to stdout");
+            println!();
+            stream.write_all(LATEX_END.as_bytes()).unwrap();
+        }
+        Backend::Typst => {
+            stream.write_all(typst_start().as_bytes()).unwrap();
+            prg.print_typst(&cfg, &mut stream).expect("Failed to print to stdout");
+            println!();
+            stream.write_all(TYPST_END.as_bytes()).unwrap();
+        }
+    }
     Ok(())
-}
-
-fn print_prg<W: io::Write>(prg: &polarity_lang_ast::Module, cfg: &PrintCfg, stream: &mut W) {
-    prg.print_latex(cfg, stream).expect("Failed to print to stdout");
-    println!();
 }

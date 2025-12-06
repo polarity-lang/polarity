@@ -90,6 +90,12 @@ pub trait Print {
         doc_builder.render_raw(cfg.width, &mut render::RenderLatex::new(out))
     }
 
+    fn print_typst<W: io::Write>(&self, cfg: &PrintCfg, out: &mut W) -> io::Result<()> {
+        let alloc = Alloc::new();
+        let doc_builder = self.print(cfg, &alloc);
+        doc_builder.render_raw(cfg.width, &mut render::RenderTypst::new(out))
+    }
+
     fn print_to_string(&self, cfg: Option<&PrintCfg>) -> String {
         let mut buf = Vec::new();
         let def = PrintCfg::default();
@@ -110,7 +116,7 @@ pub trait Print {
     fn print_trace(&self) -> String {
         const TRACE_CFG: PrintCfg = PrintCfg {
             width: 80,
-            latex: false,
+            backend: Backend::Default,
             omit_decl_sep: false,
             de_bruijn: true,
             indent: 4,
@@ -230,13 +236,22 @@ impl Print for () {
     }
 }
 
+/// Determines use of backend-specific escape sequences.
+#[derive(Copy, Clone)]
+pub enum Backend {
+    Default,
+    Latex,
+    Typst,
+}
+
 #[derive(Clone)]
 pub struct PrintCfg {
     /// The width of the output terminal/device. Width is used for
     /// the insertion of linebreaks.
     pub width: usize,
-    /// Whether to escape braces and backslashes
-    pub latex: bool,
+    /// Whether to apply specific backend-specific escapes:
+    /// - *Latex*: escape braces and backslashes
+    pub backend: Backend,
     /// Whether to omit the empty line between toplevel declarations.
     pub omit_decl_sep: bool,
     /// Whether to print the De-Bruijn representation of variables
@@ -259,7 +274,7 @@ impl Default for PrintCfg {
     fn default() -> Self {
         Self {
             width: crate::DEFAULT_WIDTH,
-            latex: false,
+            backend: Backend::Default,
             omit_decl_sep: false,
             de_bruijn: false,
             indent: 4,
