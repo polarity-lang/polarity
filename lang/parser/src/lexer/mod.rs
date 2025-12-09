@@ -144,7 +144,7 @@ pub enum Token {
     // Literals
     //
     //
-    #[regex(r"0|-?[1-9][0-9_]*", |lex| parse_i64(lex.slice(), lex.span()))]
+    #[regex(r"[+-]?[0-9][0-9_]*", |lex| parse_i64(lex.slice(), lex.span()))]
     I64Lit(i64),
     /// The regexp is from <https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5>
     /// TODO: Maybe forbid multi-line strings or have a separate syntax?
