@@ -12,6 +12,8 @@ impl Lower for cst::exp::Literal {
         // Get the correct name we are binding to
         let type_id = match kind {
             LiteralKind::I64(_) => "I64".to_owned(),
+            LiteralKind::F64(_) => "F64".to_owned(),
+            LiteralKind::Char { .. } => "Char".to_owned(),
             LiteralKind::String { .. } => "String".to_owned(),
         };
         let type_ident = Ident {
@@ -26,6 +28,11 @@ impl Lower for cst::exp::Literal {
         // Lower to AST variant
         let ast_literal = match kind {
             LiteralKind::I64(v) => polarity_lang_ast::LiteralKind::I64(*v),
+            LiteralKind::F64(v) => polarity_lang_ast::LiteralKind::F64(*v),
+            LiteralKind::Char { original, unescaped } => polarity_lang_ast::LiteralKind::Char {
+                original: original.clone(),
+                unescaped: unescaped.clone(),
+            },
             LiteralKind::String { original, unescaped } => polarity_lang_ast::LiteralKind::String {
                 original: original.clone(),
                 unescaped: unescaped.clone(),
