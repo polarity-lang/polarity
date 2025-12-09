@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use polarity_lang_driver::Database;
 use polarity_lang_printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
 
+use crate::global_settings::GlobalSettings;
 use crate::utils::ignore_colors::IgnoreColors;
 
 #[derive(clap::Args)]
@@ -37,6 +38,7 @@ fn compute_output_stream(
     filepath: &Path,
     inplace: bool,
     output: &Option<PathBuf>,
+    colorize: ColorChoice,
 ) -> Box<dyn WriteColor> {
     if inplace {
         return Box::new(IgnoreColors::new(File::create(filepath).expect("Failed to create file")));
@@ -45,11 +47,11 @@ fn compute_output_stream(
         Some(path) => {
             Box::new(IgnoreColors::new(File::create(path).expect("Failed to create file")))
         }
-        None => Box::new(StandardStream::stdout(ColorChoice::Auto)),
+        None => Box::new(StandardStream::stdout(colorize)),
     }
 }
 
-pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
+pub async fn exec(cmd: Args, settings: &GlobalSettings) -> Result<(), Vec<miette::Report>> {
     for filepath in &cmd.filepaths {
         let mut db = Database::from_path(filepath);
         let uri = db.resolve_path(filepath).map_err(|e| vec![e.into()])?;
@@ -58,7 +60,7 @@ pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
 
         // Write to file or to stdout
         let mut stream: Box<dyn WriteColor> =
-            compute_output_stream(filepath, cmd.inplace, &cmd.output);
+            compute_output_stream(filepath, cmd.inplace, &cmd.output, settings.colorize);
 
         let cfg = PrintCfg {
             width: cmd.width.unwrap_or_else(terminal_width),

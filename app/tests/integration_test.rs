@@ -34,7 +34,7 @@ fn check_command_2() {
 #[test]
 fn run_command() {
     let assert = pol_cmd()
-        .env("NO_COLOR", "1")
+        .env("POLARITY_COLORIZE", "never")
         .args(vec!["run", "../test/suites/success/037-vect.pol"])
         .assert();
     assert
