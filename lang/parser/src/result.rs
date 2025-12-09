@@ -95,6 +95,13 @@ pub enum ParseError {
         span: SourceSpan,
     },
 
+    #[error("Cannot parse F64 literal")]
+    #[diagnostic(code("P-011"))]
+    InvalidF64Literal {
+        #[label]
+        span: SourceSpan,
+    },
+
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("P-XXX"))]
     /// This error should not occur.
@@ -134,6 +141,7 @@ impl From<lalrpop_util::ParseError<usize, Token, LexicalError>> for ParseError {
             User { error } => match error {
                 LexicalError::InvalidToken(span) => ParseError::InvalidToken { span: span.map(Into::into) },
                 LexicalError::InvalidI64Literal(span) => ParseError::InvalidI64Literal { span: span.into() },
+                LexicalError::InvalidF64Literal(span) => ParseError::InvalidF64Literal { span: span.into() },
                 LexicalError::InvalidCharLiteral(span) => ParseError::InvalidCharLiteral { span: span.into() },
                 LexicalError::InvalidEscapeSequence(span) => ParseError::InvalidEscapeSequence { span: span.into() },
                 LexicalError::MalformedUnicodeEscape(span) => ParseError::MalformedUnicodeEscape { span: span.into() },

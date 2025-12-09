@@ -13,12 +13,13 @@ categories.workspace = true
 description = "Internal component of the Polarity language: Abstract syntax trees"
 
 [dependencies]
-derivative = { workspace = true }
-fxhash     = { workspace = true }
-miette     = { workspace = true }
-pretty     = { workspace = true }
-thiserror  = { workspace = true }
-url        = { workspace = true }
+derivative    = { workspace = true }
+fxhash        = { workspace = true }
+miette        = { workspace = true }
+ordered-float = { workspace = true }
+pretty        = { workspace = true }
+thiserror     = { workspace = true }
+url           = { workspace = true }
 
 # workspace dependencies
 polarity-lang-miette-util = { workspace = true }

@@ -1,4 +1,5 @@
 use derivative::Derivative;
+use ordered_float::NotNan;
 use pretty::DocAllocator;
 
 use polarity_lang_miette_util::codespan::Span;
@@ -27,6 +28,9 @@ pub struct Literal {
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub enum LiteralKind {
     I64(i64),
+    // NOTE: We don't allow NaN literals because it is not yet clear how to properly handle them during conversion
+    F64(NotNan<f64>),
+    Char { original: String, unescaped: char },
     String { original: String, unescaped: String },
 }
 
@@ -79,6 +83,8 @@ impl Print for Literal {
         let Literal { kind, .. } = self;
         match kind {
             LiteralKind::I64(v) => alloc.text(format!("{v}")),
+            LiteralKind::F64(v) => alloc.text(format!("{v:?}")),
+            LiteralKind::Char { original, .. } => alloc.text(format!(r#"'{}'"#, original)),
             LiteralKind::String { original, .. } => alloc.text(format!(r#""{}""#, original)),
         }
     }

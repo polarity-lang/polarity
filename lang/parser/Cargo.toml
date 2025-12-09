@@ -13,13 +13,14 @@ categories.workspace = true
 description = "Internal component of the Polarity language: Lexing and parsing"
 
 [dependencies]
-derivative   = { workspace = true }
-lalrpop      = { workspace = true }
-lalrpop-util = { workspace = true }
-logos        = { workspace = true }
-miette       = { workspace = true }
-thiserror    = { workspace = true }
-url          = { workspace = true }
+derivative    = { workspace = true }
+lalrpop       = { workspace = true }
+lalrpop-util  = { workspace = true }
+logos         = { workspace = true }
+miette        = { workspace = true }
+ordered-float = { workspace = true }
+thiserror     = { workspace = true }
+url           = { workspace = true }
 
 # workspace dependencies
 polarity-lang-miette-util = { workspace = true }

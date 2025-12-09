@@ -153,6 +153,8 @@ impl Print for LocalMatch {
 #[derive(Debug, Clone)]
 pub enum Literal {
     I64(i64),
+    F64(f64),
+    Char(char),
     String(String),
 }
 
@@ -165,6 +167,8 @@ impl Print for Literal {
     ) -> Builder<'a> {
         match self {
             Literal::I64(val) => alloc.text(format!("{val}")),
+            Literal::F64(val) => alloc.text(format!("{val:?}")),
+            Literal::Char(val) => alloc.text(format!(r#"'{val}'"#)),
             Literal::String(val) => alloc.text(format!(r#""{val}""#)),
         }
     }

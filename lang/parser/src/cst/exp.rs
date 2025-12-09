@@ -1,3 +1,5 @@
+use ordered_float::NotNan;
+
 use polarity_lang_miette_util::codespan::Span;
 
 use super::ident::*;
@@ -193,6 +195,19 @@ pub struct Literal {
 pub enum LiteralKind {
     /// Literal for a 64-bit signed integer
     I64(i64),
+
+    /// Literal for a 64-bit floating-point number
+    ///
+    /// NOTE: We don't allow NaN literals because it is not yet clear how to properly handle them during conversion
+    F64(NotNan<f64>),
+
+    /// Literal for a character
+    Char {
+        /// The character as written in the source code
+        original: String,
+        /// The unescaped version of the character literal
+        unescaped: char,
+    },
 
     /// Literal for a string
     String {
