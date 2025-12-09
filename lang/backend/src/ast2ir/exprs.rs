@@ -180,6 +180,10 @@ impl ToIR for polarity_lang_ast::Literal {
         let polarity_lang_ast::Literal { span: _, kind, inferred_type: _ } = self;
         match kind {
             polarity_lang_ast::LiteralKind::I64(v) => Ok(ir::Literal::I64(*v)),
+            polarity_lang_ast::LiteralKind::F64(v) => Ok(ir::Literal::F64(**v)),
+            polarity_lang_ast::LiteralKind::Char { unescaped, .. } => {
+                Ok(ir::Literal::Char(*unescaped))
+            }
             polarity_lang_ast::LiteralKind::String { unescaped, .. } => {
                 Ok(ir::Literal::String(unescaped.clone()))
             }

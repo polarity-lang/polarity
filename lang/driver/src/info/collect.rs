@@ -723,6 +723,12 @@ impl CollectInfo for Literal {
                 LiteralKind::I64(_) => {
                     content.push(MarkedString::String("I64 literal".to_owned()));
                 }
+                LiteralKind::F64(_) => {
+                    content.push(MarkedString::String("F64 literal".to_owned()));
+                }
+                LiteralKind::Char { .. } => {
+                    content.push(MarkedString::String("Char literal".to_owned()))
+                }
                 LiteralKind::String { .. } => {
                     content.push(MarkedString::String("String literal".to_owned()))
                 }

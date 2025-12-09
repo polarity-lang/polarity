@@ -31,7 +31,7 @@ impl Lower for cst::exp::Literal {
             LiteralKind::F64(v) => polarity_lang_ast::LiteralKind::F64(*v),
             LiteralKind::Char { original, unescaped } => polarity_lang_ast::LiteralKind::Char {
                 original: original.clone(),
-                unescaped: unescaped.clone(),
+                unescaped: *unescaped,
             },
             LiteralKind::String { original, unescaped } => polarity_lang_ast::LiteralKind::String {
                 original: original.clone(),
