@@ -7,6 +7,8 @@ pub enum LexicalError {
     /// A generic lexer error
     InvalidToken(Option<Span>),
 
+    InvalidI64Literal(Span),
+
     /// Char literal that does not contain exactly one char
     InvalidCharLiteral(Span),
 
@@ -142,7 +144,7 @@ pub enum Token {
     // Literals
     //
     //
-    #[regex(r"0|-?[1-9][0-9_]*", |lex| lex.slice().parse::<i64>().unwrap())]
+    #[regex(r"0|-?[1-9][0-9_]*", |lex| parse_i64(lex.slice(), lex.span()))]
     I64Lit(i64),
     /// The regexp is from <https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5>
     /// TODO: Maybe forbid multi-line strings or have a separate syntax?
@@ -337,6 +339,13 @@ fn unescape(seq: &mut std::str::Chars, span: Span) -> Result<char, LexicalError>
     };
 
     Ok(unescaped_char)
+}
+
+fn parse_i64(literal: &str, span: Span) -> Result<i64, LexicalError> {
+    // filter out underscores
+    let without_underscores: String = literal.chars().filter(|c| *c != '_').collect();
+
+    without_underscores.parse::<i64>().map_err(|_| LexicalError::InvalidI64Literal(span))
 }
 
 #[cfg(test)]
