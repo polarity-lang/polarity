@@ -11,10 +11,10 @@ fn main() {
     miette::set_panic_hook();
 
     // Get global settings from environment
-    let settings = global_settings::GlobalSettings::from_env();
+    let mut settings = global_settings::GlobalSettings::from_env();
 
     // Run app
-    let result = cli::exec();
+    let result = cli::exec(&mut settings);
 
     // Output any errors
     if let Err(errors) = result {

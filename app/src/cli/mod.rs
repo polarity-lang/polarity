@@ -1,5 +1,7 @@
 use clap::{Parser, Subcommand};
 
+use crate::global_settings::GlobalSettings;
+
 mod check;
 mod clean;
 mod compile;
@@ -13,28 +15,27 @@ mod run;
 mod texify;
 mod xfunc;
 
-pub fn exec() -> Result<(), Vec<miette::Report>> {
+pub fn exec(settings: &mut GlobalSettings) -> Result<(), Vec<miette::Report>> {
     let cli = Cli::parse();
     // Initialize the logger based on the flags
     let mut builder = env_logger::Builder::from_default_env();
     builder.format_timestamp(None).format_level(false).format_target(false);
 
     if cli.trace {
-        builder.filter_level(log::LevelFilter::Trace);
+        settings.log_level = log::LevelFilter::Trace;
     } else if cli.debug {
-        builder.filter_level(log::LevelFilter::Debug);
-    } else {
-        builder.filter_level(log::LevelFilter::Info);
+        settings.log_level = log::LevelFilter::Debug;
     }
+    builder.filter_level(settings.log_level);
 
     builder.init();
 
     use Command::*;
     let fut = async {
         match cli.command {
-            Run(args) => run::exec(args).await,
+            Run(args) => run::exec(args, settings).await,
             Check(args) => check::exec(args).await,
-            Fmt(args) => format::exec(args).await,
+            Fmt(args) => format::exec(args, settings).await,
             Texify(args) => texify::exec(args).await,
             Xfunc(args) => xfunc::exec(args).await,
             Lex(args) => lex::exec(args).await,
