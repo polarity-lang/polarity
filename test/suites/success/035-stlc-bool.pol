@@ -27,7 +27,7 @@ def Ctx.append(other: Ctx): Ctx {
 }
 
 def Ctx.len: Nat {
-    Nil => 0,
+    Nil => Z,
     Cons(_, ts) => S(ts.len)
 }
 
@@ -65,7 +65,7 @@ data HasType(ctx: Ctx, e: Exp, t: Typ) {
 }
 
 data Eval(e1 e2: Exp) {
-    EBeta(e1 e2: Exp): Eval(App(Lam(e1), e2), e1.subst(0, e2)),
+    EBeta(e1 e2: Exp): Eval(App(Lam(e1), e2), e1.subst(Z, e2)),
     ECongApp1(e1 e1': Exp, h: Eval(e1, e1'), e2: Exp): Eval(App(e1, e2), App(e1', e2)),
     ECongApp2(e1 e2 e2': Exp, h: Eval(e2, e2')): Eval(App(e1, e2), App(e1, e2')),
     ECongIf(cond cond' then else: Exp, h: Eval(cond, cond')): Eval(If(cond, then, else), If(cond', then, else)),
@@ -114,7 +114,7 @@ def (e: Exp).progress(t: Typ): HasType(Nil, e, t) -> Progress(e)
                             TIf(_, _, _, _, _, _, _, _) absurd,
                             TLit(_, _) absurd,
                         },
-                        VLam(e) => PStep(App(Lam(e), e2), e.subst(0, e2), EBeta(e, e2))
+                        VLam(e) => PStep(App(Lam(e), e2), e.subst(Z, e2), EBeta(e, e2))
                     }
                 }
         },
@@ -215,12 +215,12 @@ def (e1: Exp).preservation(e2: Exp, t: Typ)
                     e1.subst_lemma(Nil, Nil, t1, t2, e2)
                         .ap(
                             HasType(Cons(t1, Nil), e1, t2),
-                            HasType(Nil, e2, t1) -> HasType(Nil, e1.subst(0, e2), t2),
+                            HasType(Nil, e2, t1) -> HasType(Nil, e1.subst(Z, e2), t2),
                             h_e1
                         )
                         .ap(
                             HasType(Nil, e2, t1),
-                            HasType(Nil, e1.subst(0, e2), t2),
+                            HasType(Nil, e1.subst(Z, e2), t2),
                             h_e2
                         ),
             },
@@ -576,7 +576,7 @@ def Elem(x, t, Nil).empty_absurd(x: Nat, t: Typ) : Bot {
     There(_, _, _, _, _) absurd,
 }
 
-def Elem(0, t1, Cons(t2, ctx)).elem_unique(ctx: Ctx, t1 t2: Typ): Eq(Typ, t2, t1) {
+def Elem(Z, t1, Cons(t2, ctx)).elem_unique(ctx: Ctx, t1 t2: Typ): Eq(Typ, t2, t1) {
     Here(_, _) => Refl(Typ, t1),
     There(_, _, _, _, _) absurd,
 }
@@ -734,12 +734,12 @@ data CmpReflect(x y: Nat) {
 }
 
 def (x: Nat).cmp_reflect(y: Nat): CmpReflect(x, y) {
-    Z => y.match as y => CmpReflect(0, y) {
-        Z => IsEQ(0, 0, Refl(Cmp, EQ), Refl(Nat, 0)),
-        S(y) => IsLT(0, S(y), Refl(Cmp, LT), y.z_le.le_succ(0, y)),
+    Z => y.match as y => CmpReflect(Z, y) {
+        Z => IsEQ(Z, Z, Refl(Cmp, EQ), Refl(Nat, Z)),
+        S(y) => IsLT(Z, S(y), Refl(Cmp, LT), y.z_le.le_succ(Z, y)),
     },
     S(x) => y.match as y => CmpReflect(S(x), y) {
-        Z => IsGT(S(x), 0, Refl(Cmp, GT), x.z_le.le_succ(0, x)),
+        Z => IsGT(S(x), Z, Refl(Cmp, GT), x.z_le.le_succ(Z, x)),
         S(y) => x.cmp_reflect(y).match {
             IsLT(_, _, h1, h2) => IsLT(S(x), S(y), h1, h2.le_succ(S(x), y)),
             IsEQ(_, _, h1, h2) => IsEQ(S(x), S(y), h1, h2.eq_s(x, y)),
@@ -748,9 +748,9 @@ def (x: Nat).cmp_reflect(y: Nat): CmpReflect(x, y) {
     }
 }
 
-def (x: Nat).z_le: LE(0, x) {
-    Z => LERefl(0),
-    S(x) => LESucc(0, x, x.z_le),
+def (x: Nat).z_le: LE(Z, x) {
+    Z => LERefl(Z),
+    S(x) => LESucc(Z, x, x.z_le),
 }
 
 def LE(x, y).le_succ(x y: Nat): LE(S(x), S(y)) {

@@ -10,6 +10,6 @@ data Eq(a: Type, x y : a) {
     Refl(a: Type, x: a) : Eq(a,x,x)
 }
 
-let test : Eq(Nat, 4, 2.add(2)) {
-    Refl(Nat, 4)
+let test : Eq(Nat, S(S(S(S(Z)))), S(S(Z)).add(S(S(Z)))) {
+    Refl(Nat, S(S(S(S(Z)))))
 }

@@ -14,11 +14,11 @@ def Nat.add(y: Nat): Nat {
 
 #[transparent]
 let two_plus_three: Nat {
-    let x: Nat := 2;
-    let y: Nat := 3;
+    let x: Nat := S(S(Z));
+    let y: Nat := S(S(S(Z)));
     x.add(y)
 }
 
-let two_plus_three_equals_five: Eq(Nat, two_plus_three, 5) {
-    Refl(Nat, 5)
+let two_plus_three_equals_five: Eq(Nat, two_plus_three, S(S(S(S(S(Z)))))) {
+    Refl(Nat, S(S(S(S(S(Z))))))
 }
