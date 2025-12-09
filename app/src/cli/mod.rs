@@ -30,6 +30,19 @@ pub fn exec(settings: &mut GlobalSettings) -> Result<(), Vec<miette::Report>> {
 
     builder.init();
 
+    match cli.colorize {
+        Some(clap::ColorChoice::Auto) => {
+            settings.colorize = polarity_lang_printer::ColorChoice::Auto
+        }
+        Some(clap::ColorChoice::Always) => {
+            settings.colorize = polarity_lang_printer::ColorChoice::Always
+        }
+        Some(clap::ColorChoice::Never) => {
+            settings.colorize = polarity_lang_printer::ColorChoice::Never
+        }
+        None => (),
+    }
+
     use Command::*;
     let fut = async {
         match cli.command {
@@ -60,6 +73,8 @@ struct Cli {
     /// Enable debug logging
     #[clap(long)]
     debug: bool,
+    #[clap(long)]
+    colorize: Option<clap::ColorChoice>,
     #[clap(subcommand)]
     command: Command,
 }
