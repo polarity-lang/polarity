@@ -28,7 +28,7 @@ pub struct Literal {
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub enum LiteralKind {
     I64(i64),
-    // NOTE: We don't allow NaN literals because they don't work well with equality and hashing.
+    // NOTE: We don't allow NaN literals because it is not yet clear how to properly handle them during conversion
     F64(NotNan<f64>),
     Char { original: String, unescaped: char },
     String { original: String, unescaped: String },

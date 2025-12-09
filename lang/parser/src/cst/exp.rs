@@ -198,7 +198,7 @@ pub enum LiteralKind {
 
     /// Literal for a 64-bit floating-point number
     ///
-    /// NOTE: We don't allow NaN literals because they don't work well with equality and hashing.
+    /// NOTE: We don't allow NaN literals because it is not yet clear how to properly handle them during conversion
     F64(NotNan<f64>),
 
     /// Literal for a character
