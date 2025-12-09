@@ -1,7 +1,6 @@
 use std::fmt;
 
 use logos::{Logos, Span, SpannedIter};
-use num_bigint::BigUint;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LexicalError {
@@ -143,8 +142,8 @@ pub enum Token {
     // Literals
     //
     //
-    #[regex(r"0|[1-9][0-9]*", |lex| BigUint::parse_bytes(lex.slice().as_ref(), 10).unwrap())]
-    NumLit(BigUint),
+    #[regex(r"0|-?[1-9][0-9_]*", |lex| i64::from_str_radix(lex.slice(), 10).unwrap())]
+    I64Lit(i64),
     /// The regexp is from <https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5>
     /// TODO: Maybe forbid multi-line strings or have a separate syntax?
     #[regex(r###""([^"\\]|\\.)*""###, |lex| StringLit::parse(lex.slice(), lex.span()))]
@@ -200,7 +199,7 @@ impl fmt::Display for Token {
             Token::Underscore => write!(f, r#""_""#),
             Token::Ident(_) => write!(f, r#""identifier""#),
             Token::Operator(_) => write!(f, r#""operator""#),
-            Token::NumLit(_) => write!(f, r#""number literal""#),
+            Token::I64Lit(_) => write!(f, r#"integer literal"#),
             Token::StringLit(_) => write!(f, r#""string literal""#),
             Token::CharLit(_) => write!(f, r#""character literal""#),
             Token::DocComment(_) => write!(f, r#""doc comment""#),

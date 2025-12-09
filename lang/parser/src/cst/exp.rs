@@ -1,4 +1,3 @@
-use num_bigint::BigUint;
 use polarity_lang_miette_util::codespan::Span;
 
 use super::ident::*;
@@ -73,7 +72,7 @@ pub enum Exp {
     LocalMatch(LocalMatch),
     LocalComatch(LocalComatch),
     Hole(Hole),
-    NatLit(NatLit),
+    I64Lit(I64Lit),
     StringLit(StringLit),
     BinOp(BinOp),
     Lam(Lam),
@@ -95,7 +94,7 @@ impl Exp {
             Exp::LocalMatch(local_match) => local_match.span,
             Exp::LocalComatch(local_comatch) => local_comatch.span,
             Exp::Hole(hole) => hole.span,
-            Exp::NatLit(nat_lit) => nat_lit.span,
+            Exp::I64Lit(int_lit) => int_lit.span,
             Exp::StringLit(str_lit) => str_lit.span,
             Exp::BinOp(binop) => binop.span,
             Exp::Lam(lam) => lam.span,
@@ -187,10 +186,10 @@ pub struct Hole {
 }
 
 #[derive(Debug, Clone)]
-/// Literal for a natural number
-pub struct NatLit {
+/// Literal for a 64-bit signed integer
+pub struct I64Lit {
     pub span: Span,
-    pub val: BigUint,
+    pub val: i64,
 }
 
 #[derive(Debug, Clone)]
