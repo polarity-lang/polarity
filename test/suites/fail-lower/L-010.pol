@@ -1,3 +1,0 @@
-data Nat {}
-
-let foo : Nat { 5 }

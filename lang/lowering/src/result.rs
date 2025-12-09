@@ -65,12 +65,6 @@ pub enum LoweringError {
         #[label]
         span: SourceSpan,
     },
-    #[error("Literal cannot be desugared because S/Z are not in program")]
-    #[diagnostic(code("L-010"))]
-    NatLiteralCannotBeDesugared {
-        #[label]
-        span: SourceSpan,
-    },
     #[error("Mismatched named arguments: given {}, expected {}", given.id, expected.id)]
     #[diagnostic(code("L-011"))]
     MismatchedNamedArgs {
