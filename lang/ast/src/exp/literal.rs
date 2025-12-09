@@ -83,7 +83,7 @@ impl Print for Literal {
         let Literal { kind, .. } = self;
         match kind {
             LiteralKind::I64(v) => alloc.text(format!("{v}")),
-            LiteralKind::F64(v) => alloc.text(format!("{v}")),
+            LiteralKind::F64(v) => alloc.text(format!("{v:?}")),
             LiteralKind::Char { original, .. } => alloc.text(format!(r#"'{}'"#, original)),
             LiteralKind::String { original, .. } => alloc.text(format!(r#""{}""#, original)),
         }
