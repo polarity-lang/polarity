@@ -72,8 +72,7 @@ pub enum Exp {
     LocalMatch(LocalMatch),
     LocalComatch(LocalComatch),
     Hole(Hole),
-    I64Lit(I64Lit),
-    StringLit(StringLit),
+    Literal(Literal),
     BinOp(BinOp),
     Lam(Lam),
     LocalLet(LocalLet),
@@ -94,8 +93,7 @@ impl Exp {
             Exp::LocalMatch(local_match) => local_match.span,
             Exp::LocalComatch(local_comatch) => local_comatch.span,
             Exp::Hole(hole) => hole.span,
-            Exp::I64Lit(int_lit) => int_lit.span,
-            Exp::StringLit(str_lit) => str_lit.span,
+            Exp::Literal(lit) => lit.span,
             Exp::BinOp(binop) => binop.span,
             Exp::Lam(lam) => lam.span,
             Exp::LocalLet(local_let) => local_let.span,
@@ -186,21 +184,23 @@ pub struct Hole {
 }
 
 #[derive(Debug, Clone)]
-/// Literal for a 64-bit signed integer
-pub struct I64Lit {
+pub struct Literal {
     pub span: Span,
-    pub val: i64,
+    pub kind: LiteralKind,
 }
 
 #[derive(Debug, Clone)]
-/// Literal for a string
-pub struct StringLit {
-    pub span: Span,
+pub enum LiteralKind {
+    /// Literal for a 64-bit signed integer
+    I64(i64),
 
-    /// The string as written in the source code
-    pub original: String,
-    /// The unescaped version of the string literal
-    pub unescaped: String,
+    /// Literal for a string
+    String {
+        /// The string as written in the source code
+        original: String,
+        /// The unescaped version of the string literal
+        unescaped: String,
+    },
 }
 
 #[derive(Debug, Clone)]
