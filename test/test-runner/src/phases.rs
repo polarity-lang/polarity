@@ -6,6 +6,7 @@ use std::sync::Arc;
 use polarity_lang_driver::{
     AppResult, Database, FileSource, FileSystemSource, InMemorySource, render_reports_to_string,
 };
+use polarity_lang_printer::ColorChoice;
 use polarity_lang_printer::Print as _;
 use url::Url;
 
@@ -119,7 +120,7 @@ where
                         // There was no panic and `run` returned with an error.
                         self.report_phases.push(PhaseReport {
                             name: phase.name(),
-                            output: render_reports_to_string(&reports, true),
+                            output: render_reports_to_string(&reports, ColorChoice::Auto),
                         });
                         if expect_success {
                             return Err(PhasesError::ExpectedSuccess {
@@ -128,7 +129,7 @@ where
                             });
                         }
                         if let Some(expected) = expected_output {
-                            let actual = render_reports_to_string(&reports, false);
+                            let actual = render_reports_to_string(&reports, ColorChoice::Never);
                             if actual != expected {
                                 return Err(PhasesError::Mismatch {
                                     phase: phase.name(),
@@ -205,7 +206,7 @@ impl fmt::Display for Failure {
             }
             Failure::ExpectedSuccess { phase, got } => {
                 write!(f, "Expected success in phase {phase}, but got:\n\n")?;
-                let report_str = render_reports_to_string(got, true);
+                let report_str = render_reports_to_string(got, ColorChoice::Auto);
                 write!(f, "{report_str}")
             }
             Failure::Panic { msg } => write!(f, "Code panicked during test execution\n {msg}"),

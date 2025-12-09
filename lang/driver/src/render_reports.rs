@@ -1,5 +1,7 @@
 use miette::Report;
 
+use polarity_lang_printer::ColorChoice;
+
 /// Terminal width for pretty-printing error messages.
 const TERMINAL_WIDTH: usize = 200;
 
@@ -12,13 +14,13 @@ impl<O: std::io::Write> std::fmt::Write for WriteAdapter<'_, O> {
     }
 }
 
-pub fn render_reports_to_string(reports: &[Report], colorize: bool) -> String {
+pub fn render_reports_to_string(reports: &[Report], colorize: ColorChoice) -> String {
     let mut output = String::new();
     render_reports(&mut output, reports, colorize);
     output
 }
 
-pub fn render_reports_io<O>(output: &mut O, reports: &[Report], colorize: bool)
+pub fn render_reports_io<O>(output: &mut O, reports: &[Report], colorize: ColorChoice)
 where
     O: std::io::Write,
 {
@@ -26,14 +28,14 @@ where
     render_reports(&mut adapter, reports, colorize);
 }
 
-pub fn render_reports<O>(output: &mut O, reports: &[Report], colorize: bool)
+pub fn render_reports<O>(output: &mut O, reports: &[Report], colorize: ColorChoice)
 where
     O: std::fmt::Write,
 {
-    let theme = if colorize {
-        miette::GraphicalTheme::unicode()
-    } else {
-        miette::GraphicalTheme::unicode_nocolor()
+    let theme = match colorize {
+        ColorChoice::Always | ColorChoice::AlwaysAnsi => miette::GraphicalTheme::unicode(),
+        ColorChoice::Auto => miette::GraphicalTheme::default(),
+        ColorChoice::Never => miette::GraphicalTheme::unicode_nocolor(),
     };
     let handler = miette::GraphicalReportHandler::new_themed(theme).with_width(TERMINAL_WIDTH);
 

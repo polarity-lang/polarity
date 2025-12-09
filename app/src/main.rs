@@ -19,11 +19,7 @@ fn main() {
     // Output any errors
     if let Err(errors) = result {
         let mut stderr = std::io::stderr().lock();
-        polarity_lang_driver::render_reports_io(
-            &mut stderr,
-            &errors,
-            settings.colorize != polarity_lang_printer::ColorChoice::Never,
-        );
+        polarity_lang_driver::render_reports_io(&mut stderr, &errors, settings.colorize);
         std::process::exit(1);
     }
 }
