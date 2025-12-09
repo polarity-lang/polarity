@@ -25,7 +25,7 @@ impl Lower for cst::exp::Literal {
 
         // Lower to AST variant
         let ast_literal = match kind {
-            LiteralKind::I64(v) => polarity_lang_ast::LiteralKind::I64(v),
+            LiteralKind::I64(v) => polarity_lang_ast::LiteralKind::I64(*v),
             LiteralKind::String { original, unescaped } => polarity_lang_ast::LiteralKind::String {
                 original: original.clone(),
                 unescaped: unescaped.clone(),

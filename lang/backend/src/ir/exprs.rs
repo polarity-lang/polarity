@@ -152,6 +152,7 @@ impl Print for LocalMatch {
 
 #[derive(Debug, Clone)]
 pub enum Literal {
+    I64(i64),
     String(String),
 }
 
@@ -163,6 +164,7 @@ impl Print for Literal {
         _prec: Precedence,
     ) -> Builder<'a> {
         match self {
+            Literal::I64(val) => alloc.text(format!("{val}")),
             Literal::String(val) => alloc.text(format!(r#""{val}""#)),
         }
     }
