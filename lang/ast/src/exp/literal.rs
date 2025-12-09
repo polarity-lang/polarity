@@ -26,6 +26,7 @@ pub struct Literal {
 
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub enum LiteralKind {
+    I64(i64),
     String { original: String, unescaped: String },
 }
 
@@ -77,6 +78,7 @@ impl Print for Literal {
     ) -> Builder<'a> {
         let Literal { kind, .. } = self;
         match kind {
+            LiteralKind::I64(v) => alloc.text(format!("{v}")),
             LiteralKind::String { original, .. } => alloc.text(format!(r#""{}""#, original)),
         }
     }

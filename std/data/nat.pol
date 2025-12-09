@@ -33,7 +33,7 @@ def Nat.monus(other: Nat): Nat {
 
 /// The factorial of a natural number.
 def Nat.fact: Nat {
-    Z => 1,
+    Z => S(Z),
     S(pred) => S(pred).mul(pred.fact),
 }
 

@@ -15,7 +15,6 @@ description = "Internal component of the Polarity language: Lowering and name re
 [dependencies]
 log        = { workspace = true }
 miette     = { workspace = true }
-num-bigint = { workspace = true }
 thiserror  = { workspace = true }
 url        = { workspace = true }
 

@@ -1,12 +1,13 @@
 use std::fmt;
 
 use logos::{Logos, Span, SpannedIter};
-use num_bigint::BigUint;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LexicalError {
     /// A generic lexer error
     InvalidToken(Option<Span>),
+
+    InvalidI64Literal(Span),
 
     /// Char literal that does not contain exactly one char
     InvalidCharLiteral(Span),
@@ -143,8 +144,8 @@ pub enum Token {
     // Literals
     //
     //
-    #[regex(r"0|[1-9][0-9]*", |lex| BigUint::parse_bytes(lex.slice().as_ref(), 10).unwrap())]
-    NumLit(BigUint),
+    #[regex(r"[+-]?[0-9][0-9_]*", |lex| parse_i64(lex.slice(), lex.span()))]
+    I64Lit(i64),
     /// The regexp is from <https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5>
     /// TODO: Maybe forbid multi-line strings or have a separate syntax?
     #[regex(r###""([^"\\]|\\.)*""###, |lex| StringLit::parse(lex.slice(), lex.span()))]
@@ -200,7 +201,7 @@ impl fmt::Display for Token {
             Token::Underscore => write!(f, r#""_""#),
             Token::Ident(_) => write!(f, r#""identifier""#),
             Token::Operator(_) => write!(f, r#""operator""#),
-            Token::NumLit(_) => write!(f, r#""number literal""#),
+            Token::I64Lit(_) => write!(f, r#"integer literal"#),
             Token::StringLit(_) => write!(f, r#""string literal""#),
             Token::CharLit(_) => write!(f, r#""character literal""#),
             Token::DocComment(_) => write!(f, r#""doc comment""#),
@@ -338,6 +339,13 @@ fn unescape(seq: &mut std::str::Chars, span: Span) -> Result<char, LexicalError>
     };
 
     Ok(unescaped_char)
+}
+
+fn parse_i64(literal: &str, span: Span) -> Result<i64, LexicalError> {
+    // filter out underscores
+    let without_underscores: String = literal.chars().filter(|c| *c != '_').collect();
+
+    without_underscores.parse::<i64>().map_err(|_| LexicalError::InvalidI64Literal(span))
 }
 
 #[cfg(test)]

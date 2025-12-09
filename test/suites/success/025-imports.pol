@@ -1,7 +1,7 @@
 use "../../../std/data/nat.pol"
 use "../../../std/data/bool.pol"
 
-let one: Nat { 1 }
+let one: Nat { S(Z) }
 
 let true: Bool {T}
 

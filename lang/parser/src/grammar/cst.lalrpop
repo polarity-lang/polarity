@@ -1,5 +1,4 @@
 use lalrpop_util::ErrorRecovery;
-use num_bigint::BigUint;
 
 use crate::cst::exp::*;
 use crate::cst::decls::*;
@@ -69,7 +68,7 @@ extern {
     // Literals
     //
     //
-    "number literal" => Token::NumLit(<BigUint>),
+    "integer literal" => Token::I64Lit(<i64>),
     "string literal" => Token::StringLit(<crate::lexer::StringLit>),
 
     // DocComments
@@ -306,8 +305,7 @@ pub Atom: Box<Exp> = {
     <e: CallWithArgs> => Box::new(Exp::Call(e)),
     <e: LocalComatch> => Box::new(Exp::LocalComatch(e)),
     <e: Hole> => Box::new(Exp::Hole(e)),
-    <e: NatLit> => Box::new(Exp::NatLit(e)),
-    <e: StringLit> => Box::new(Exp::StringLit(e)),
+    <e: Literal> => Box::new(Exp::Literal(e)),
     <e: ParensExp> => Box::new(Exp::Parens(e)),
     <e: CallWithoutArgs> => Box::new(Exp::Call(e)),
 }
@@ -346,11 +344,16 @@ Hole: Hole = {
   <l: @L> "?" <r: @R> => Hole { span: span(l, r), kind: HoleKind::CanSolve },
 }
 
-NatLit: NatLit = <l: @L> <n: "number literal"> <r: @R> =>
-  NatLit { span: span(l, r), val: n };
-
-StringLit: crate::cst::exp::StringLit = <l: @L> <s: "string literal"> <r: @R> =>
-  crate::cst::exp::StringLit { span: span(l, r), original: s.original, unescaped: s.unescaped };
+Literal: Literal = {
+  <l: @L> <i: "integer literal"> <r: @R> => Literal {
+    span: span(l, r),
+    kind: LiteralKind::I64(i),
+  },
+  <l: @L> <s: "string literal"> <r: @R> => Literal {
+    span: span(l, r),
+    kind: LiteralKind::String { original: s.original, unescaped: s.unescaped },
+  },
+}
 
 LocalLet: LocalLet = <l: @L> "let" <name: BindingSite> <typ: (":" <NonLet>)?> ":=" <bound: NonLet> ";" <body: Exp> <r: @R> =>
   LocalLet { span: span(l,r), name, typ, bound, body };

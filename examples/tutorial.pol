@@ -61,7 +61,7 @@ codef Pred: NatToNat {
 /// This definition (main) is the main entry point for running programs
 /// in polarity. When invoking pol run tutorial.pol, this will print S(S(S(S(Z))))
 /// (also known as 4) as expected
-let main: Nat { Pred.ap(2.add(3)) }
+let main: Nat { Pred.ap(S(S(Z)).add(S(S(S(Z))))) }
 
 // Now that we covered all the basics, lets look at some more examples:
 

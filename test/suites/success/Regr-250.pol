@@ -13,7 +13,7 @@ codata ProductN(arity: Nat) {
     (self: ProductN(S(arity))).dataAt(arity: Nat, pos: Fin(arity)): self.typeAt(arity, pos),
 }
 
-codef Unit: ProductN(0) {
+codef Unit: ProductN(Z) {
     .typeAt(_, _) absurd,
     .dataAt(_, _) absurd,
 }
