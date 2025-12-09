@@ -16,7 +16,6 @@ description = "Internal component of the Polarity language: Abstract syntax tree
 derivative = { workspace = true }
 fxhash     = { workspace = true }
 miette     = { workspace = true }
-num-bigint = { workspace = true }
 pretty     = { workspace = true }
 thiserror  = { workspace = true }
 url        = { workspace = true }

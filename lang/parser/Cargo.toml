@@ -18,7 +18,6 @@ lalrpop      = { workspace = true }
 lalrpop-util = { workspace = true }
 logos        = { workspace = true }
 miette       = { workspace = true }
-num-bigint   = { workspace = true }
 thiserror    = { workspace = true }
 url          = { workspace = true }
 
