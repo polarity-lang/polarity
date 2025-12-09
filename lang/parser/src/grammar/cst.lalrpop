@@ -69,7 +69,7 @@ extern {
     //
     //
     "integer literal" => Token::I64Lit(<i64>),
-    "float literal" => Token::F64Lit(<f64>),
+    "float literal" => Token::F64Lit(<ordered_float::NotNan<f64>>),
     "char literal" => Token::CharLit(<crate::lexer::CharLit>),
     "string literal" => Token::StringLit(<crate::lexer::StringLit>),
 

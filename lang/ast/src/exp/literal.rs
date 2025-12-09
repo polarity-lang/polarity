@@ -1,4 +1,5 @@
 use derivative::Derivative;
+use ordered_float::NotNan;
 use pretty::DocAllocator;
 
 use polarity_lang_miette_util::codespan::Span;
@@ -27,7 +28,8 @@ pub struct Literal {
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub enum LiteralKind {
     I64(i64),
-    F64(f64),
+    // NOTE: We don't allow NaN literals because they don't work well with equality and hashing.
+    F64(NotNan<f64>),
     Char { original: String, unescaped: char },
     String { original: String, unescaped: String },
 }

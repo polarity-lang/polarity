@@ -1,13 +1,18 @@
 use std::fmt;
 
 use logos::{Logos, Span, SpannedIter};
+use ordered_float::NotNan;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LexicalError {
     /// A generic lexer error
     InvalidToken(Option<Span>),
 
+    /// Couldn't parse to i64 integer
     InvalidI64Literal(Span),
+
+    /// Couldn't parse to f64 float
+    InvalidF64Literal(Span),
 
     /// Char literal that does not contain exactly one char
     InvalidCharLiteral(Span),
@@ -147,7 +152,7 @@ pub enum Token {
     #[regex(r"[+-]?[0-9][0-9_]*", |lex| parse_i64(lex.slice(), lex.span()))]
     I64Lit(i64),
     #[regex(r"[+-]?[0-9][0-9_]*\.[0-9][0-9_]*", |lex| parse_f64(lex.slice(), lex.span()))]
-    F64Lit(f64),
+    F64Lit(NotNan<f64>),
     /// The regexp is from <https://gist.github.com/cellularmitosis/6fd5fc2a65225364f72d3574abd9d5d5>
     /// TODO: Maybe forbid multi-line strings or have a separate syntax?
     #[regex(r###""([^"\\]|\\.)*""###, |lex| StringLit::parse(lex.slice(), lex.span()))]
@@ -351,11 +356,14 @@ fn parse_i64(literal: &str, span: Span) -> Result<i64, LexicalError> {
     without_underscores.parse::<i64>().map_err(|_| LexicalError::InvalidI64Literal(span))
 }
 
-fn parse_f64(literal: &str, span: Span) -> Result<f64, LexicalError> {
+fn parse_f64(literal: &str, span: Span) -> Result<NotNan<f64>, LexicalError> {
     // filter out underscores
     let without_underscores: String = literal.chars().filter(|c| *c != '_').collect();
+    let float = without_underscores
+        .parse::<f64>()
+        .map_err(|_| LexicalError::InvalidF64Literal(span.clone()))?;
 
-    without_underscores.parse::<f64>().map_err(|_| LexicalError::InvalidI64Literal(span))
+    Ok(NotNan::new(float).expect("Syntax ensures that literal is not a NaN"))
 }
 
 #[cfg(test)]

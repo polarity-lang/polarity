@@ -1,3 +1,5 @@
+use ordered_float::NotNan;
+
 use polarity_lang_miette_util::codespan::Span;
 
 use super::ident::*;
@@ -195,7 +197,9 @@ pub enum LiteralKind {
     I64(i64),
 
     /// Literal for a 64-bit floating-point number
-    F64(f64),
+    ///
+    /// NOTE: We don't allow NaN literals because they don't work well with equality and hashing.
+    F64(NotNan<f64>),
 
     /// Literal for a character
     Char {
