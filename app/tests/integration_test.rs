@@ -1,10 +1,11 @@
 use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 
 /// The name of the CLI binary
 const BINARY: &str = "pol";
 
 fn pol_cmd() -> Command {
-    Command::cargo_bin("pol").unwrap()
+    cargo_bin_cmd!("pol")
 }
 
 /// Check that "pol --version" works correctly
