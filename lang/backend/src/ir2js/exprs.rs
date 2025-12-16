@@ -21,7 +21,7 @@ impl ToJSExpr for ir::Exp {
             ir::Exp::LocalMatch(local_match) => local_match.to_js_expr(),
             ir::Exp::LocalComatch(local_comatch) => local_comatch.to_js_expr(),
             ir::Exp::Panic(panic) => panic.to_js_expr(),
-            ir::Exp::LocalLet(_) => todo!(),
+            ir::Exp::LocalLet(local_let) => local_let.to_js_expr(),
             ir::Exp::ExternCall(_) => Err(BackendError::Unimplemented {
                 feature: "extern call".to_string(),
                 backend: "JavaScript".to_string(),
@@ -362,6 +362,49 @@ impl ToJSExpr for ir::Panic {
                 expr: Box::new(js::Expr::Arrow(arrow_fn)),
             }))),
             args: vec![],
+            type_args: None,
+        }))
+    }
+}
+
+/// Input:
+///
+/// ```text
+/// let x := foo;
+/// body
+/// ```
+///
+/// Output:
+///
+/// ```js
+/// ((x) => 〚 body 〛)(〚 foo 〛)
+/// ```
+impl ToJSExpr for ir::LocalLet {
+    fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
+        let Self { name, bound, body } = self;
+
+        let arrow_fn = js::ArrowExpr {
+            span: DUMMY_SP,
+            ctxt: SyntaxContext::empty(),
+            params: vec![js::Pat::Ident(js::BindingIdent {
+                id: js::Ident::new(name.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+                type_ann: None,
+            })],
+            body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(body.to_js_expr()?))),
+            is_async: false,
+            is_generator: false,
+            type_params: None,
+            return_type: None,
+        };
+
+        Ok(js::Expr::Call(js::CallExpr {
+            span: DUMMY_SP,
+            ctxt: SyntaxContext::empty(),
+            callee: js::Callee::Expr(Box::new(js::Expr::Paren(js::ParenExpr {
+                span: DUMMY_SP,
+                expr: Box::new(js::Expr::Arrow(arrow_fn)),
+            }))),
+            args: args_to_js_exprs(&[*bound.clone()])?,
             type_args: None,
         }))
     }
