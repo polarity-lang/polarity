@@ -4,7 +4,7 @@ use swc_common::{DUMMY_SP, SyntaxContext};
 use swc_ecma_ast as js;
 
 use crate::ir;
-use crate::result::BackendResult;
+use crate::result::{BackendError, BackendResult};
 
 use super::tokens::*;
 use super::traits::ToJSExpr;
@@ -21,9 +21,15 @@ impl ToJSExpr for ir::Exp {
             ir::Exp::LocalMatch(local_match) => local_match.to_js_expr(),
             ir::Exp::LocalComatch(local_comatch) => local_comatch.to_js_expr(),
             ir::Exp::Panic(panic) => panic.to_js_expr(),
-            ir::Exp::ExternCall(_) => todo!(),
             ir::Exp::LocalLet(_) => todo!(),
-            ir::Exp::Literal(_) => todo!(),
+            ir::Exp::ExternCall(_) => Err(BackendError::Unimplemented {
+                feature: "extern call".to_string(),
+                backend: "JavaScript".to_string(),
+            }),
+            ir::Exp::Literal(_) => Err(BackendError::Unimplemented {
+                feature: "literal".to_string(),
+                backend: "JavaScript".to_string(),
+            }),
             ir::Exp::ZST => Ok(js::Expr::Ident(js::Ident::new(
                 "undefined".into(),
                 DUMMY_SP,
