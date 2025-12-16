@@ -1,3 +1,7 @@
+// FIXME: Ignore lints introduced by a bug in Rust
+// https://github.com/rust-lang/rust/issues/147648
+#![allow(unused_assignments)]
+
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
