@@ -22,14 +22,12 @@ impl ToJSExpr for ir::Exp {
             ir::Exp::LocalComatch(local_comatch) => local_comatch.to_js_expr(),
             ir::Exp::Panic(panic) => panic.to_js_expr(),
             ir::Exp::LocalLet(local_let) => local_let.to_js_expr(),
-            ir::Exp::ExternCall(_) => Err(BackendError::Unimplemented {
-                feature: "extern call".to_string(),
-                backend: "JavaScript".to_string(),
-            }),
-            ir::Exp::Literal(_) => Err(BackendError::Unimplemented {
-                feature: "literal".to_string(),
-                backend: "JavaScript".to_string(),
-            }),
+            ir::Exp::ExternCall(_) => Err(BackendError::Impossible(
+                "Extern calls are not yet implemented for the JavaScript backend".to_owned(),
+            )),
+            ir::Exp::Literal(_) => Err(BackendError::Impossible(
+                "Literals are not yet implemented for the JavaScript backend".to_owned(),
+            )),
             ir::Exp::ZST => Ok(js::Expr::Ident(js::Ident::new(
                 "undefined".into(),
                 DUMMY_SP,

@@ -5,8 +5,6 @@ use thiserror::Error;
 pub enum BackendError {
     #[error("Code generation error: {0}")]
     CodegenError(String),
-    #[error("The feature '{feature}' is not implemented for the '{backend}' backend")]
-    Unimplemented { feature: String, backend: String },
     #[error("Impossible: {0}")]
     Impossible(String),
 }
