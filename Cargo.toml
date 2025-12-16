@@ -62,6 +62,9 @@ ropey                    = { version = "1" }
 rust-lapper              = { version = "1" }
 serde                    = { version = "1" }
 serde_derive             = { version = "1" }
+swc_ecma_ast             = { version = "11" }
+swc_ecma_codegen         = { version = "13" }
+swc_common               = { version = "11" }
 tantivy                  = { version = "0.18" }
 termcolor                = { version = "1.4.1" }
 termsize                 = { version = "0.1" }
