@@ -1,3 +1,4 @@
+use std::io;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -529,6 +530,13 @@ impl Database {
             }
             None => Ok(None),
         }
+    }
+
+    /// Compile to JavaScript
+    pub async fn js<W: io::Write>(&mut self, uri: &Url, output: W) -> AppResult<()> {
+        let ir = self.ir(uri).await?;
+        polarity_lang_backend::ir_to_js(&ir, output).map_err(AppError::Backend)?;
+        Ok(())
     }
 
     pub fn pretty_errors(&self, uri: &Url, errs: AppErrors) -> Vec<miette::Report> {

@@ -1,3 +1,7 @@
+// FIXME: Ignore false positive lints resulting from a bug in Rust 1.92
+// https://github.com/rust-lang/rust/issues/147648
+#![allow(unused_assignments)]
+
 use miette::{Diagnostic, SourceSpan};
 use polarity_lang_ast::IdBound;
 use polarity_lang_parser::cst::ident::Ident;

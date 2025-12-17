@@ -17,6 +17,11 @@ miette    = { workspace = true }
 thiserror = { workspace = true }
 url       = { workspace = true }
 
+# SWC for JS code generation
+swc_ecma_ast     = { workspace = true }
+swc_ecma_codegen = { workspace = true }
+swc_common       = { workspace = true }
+
 # workspace dependencies
 polarity-lang-ast     = { workspace = true }
 polarity-lang-printer = { workspace = true }
