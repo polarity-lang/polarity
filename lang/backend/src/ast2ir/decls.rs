@@ -46,7 +46,7 @@ impl ToIR for polarity_lang_ast::Def {
         let cases =
             cases.iter().flat_map(|c| c.to_ir().transpose()).collect::<Result<Vec<_>, _>>()?;
 
-        Ok(ir::Def { name: name.to_string(), params, cases })
+        Ok(ir::Def { name: name.to_string().into(), params, cases })
     }
 }
 
@@ -60,7 +60,7 @@ impl ToIR for polarity_lang_ast::Codef {
         let cases =
             cases.iter().flat_map(|c| c.to_ir().transpose()).collect::<Result<Vec<_>, _>>()?;
 
-        Ok(ir::Codef { name: name.to_string(), params, cases })
+        Ok(ir::Codef { name: name.to_string().into(), params, cases })
     }
 }
 
@@ -73,6 +73,6 @@ impl ToIR for polarity_lang_ast::Let {
         let params = params.to_ir()?;
         let body = Box::new(body.to_ir()?);
 
-        Ok(ir::Let { name: name.to_string(), params, body })
+        Ok(ir::Let { name: name.to_string().into(), params, body })
     }
 }

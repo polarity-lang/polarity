@@ -1,6 +1,7 @@
 use polarity_lang_ast::{LocalComatch, LocalLet};
 
 use crate::ir;
+use crate::ir::ident::Ident;
 use crate::result::{BackendError, BackendResult};
 
 use super::traits::ToIR;
@@ -37,7 +38,7 @@ impl ToIR for polarity_lang_ast::Variable {
     fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Variable { name, .. } = self;
 
-        Ok(ir::Variable { name: name.to_string() })
+        Ok(ir::Variable { name: name.to_string().into() })
     }
 }
 
@@ -58,7 +59,7 @@ impl ToIR for polarity_lang_ast::Call {
 
         let args = args.to_ir()?;
 
-        let call = ir::Call { name: name.to_string(), module_uri: name.uri.clone(), args };
+        let call = ir::Call { name: name.to_string().into(), module_uri: name.uri.clone(), args };
 
         Ok(match kind {
             polarity_lang_ast::CallKind::Constructor => ir::Exp::CtorCall(call),
@@ -79,7 +80,7 @@ impl ToIR for polarity_lang_ast::DotCall {
         let exp = Box::new(exp.to_ir()?);
 
         let dot_call =
-            ir::DotCall { exp, module_uri: name.uri.clone(), name: name.to_string(), args };
+            ir::DotCall { exp, module_uri: name.uri.clone(), name: name.to_string().into(), args };
 
         Ok(match kind {
             polarity_lang_ast::DotCallKind::Destructor => ir::Exp::DtorCall(dot_call),
@@ -166,7 +167,7 @@ impl ToIR for LocalLet {
         let LocalLet { span: _, name, typ: _, bound, body, inferred_type: _ } = self;
 
         Ok(ir::LocalLet {
-            name: name.to_string(),
+            name: name.to_string().into(),
             bound: Box::new(bound.to_ir()?),
             body: Box::new(body.to_ir()?),
         })
@@ -202,7 +203,7 @@ impl ToIR for polarity_lang_ast::Case {
 
         let pattern = ir::Pattern {
             is_copattern: *is_copattern,
-            name: name.to_string(),
+            name: name.to_string().into(),
             module_uri: name.uri.clone(),
             params,
         };
@@ -228,7 +229,7 @@ impl ToIR for polarity_lang_ast::Args {
 }
 
 impl ToIR for polarity_lang_ast::Telescope {
-    type Target = Vec<String>;
+    type Target = Vec<Ident>;
 
     fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Telescope { params, .. } = self;
@@ -236,13 +237,13 @@ impl ToIR for polarity_lang_ast::Telescope {
         Ok(params
             .iter()
             .filter(|param| !param.erased)
-            .map(|param| param.name.to_string())
+            .map(|param| param.name.to_string().into())
             .collect())
     }
 }
 
 impl ToIR for polarity_lang_ast::TelescopeInst {
-    type Target = Vec<String>;
+    type Target = Vec<Ident>;
 
     fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::TelescopeInst { params, .. } = self;
@@ -250,7 +251,7 @@ impl ToIR for polarity_lang_ast::TelescopeInst {
         Ok(params
             .iter()
             .filter(|param| !param.erased)
-            .map(|param| param.name.to_string())
+            .map(|param| param.name.to_string().into())
             .collect())
     }
 }

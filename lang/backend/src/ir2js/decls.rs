@@ -2,6 +2,7 @@ use swc_common::{DUMMY_SP, SyntaxContext};
 use swc_ecma_ast as js;
 
 use crate::ir;
+use crate::ir::ident::Ident;
 use crate::result::BackendResult;
 
 use super::tokens::*;
@@ -51,7 +52,7 @@ impl ToJSStmt for ir::Let {
         let body_expr = body.to_js_expr()?;
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
-            ident: js::Ident::new(name.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+            ident: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
             declare: false,
             function: Box::new(js::Function {
                 params,
@@ -128,7 +129,7 @@ impl ToJSStmt for ir::Def {
         })];
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
-            ident: js::Ident::new(name.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+            ident: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
             declare: false,
             function: Box::new(js::Function {
                 params: all_params,
@@ -181,7 +182,7 @@ impl ToJSStmt for ir::Codef {
         });
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
-            ident: js::Ident::new(name.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+            ident: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
             declare: false,
             function: Box::new(js::Function {
                 params,
@@ -202,14 +203,14 @@ impl ToJSStmt for ir::Codef {
     }
 }
 
-fn params_to_js_params(params: &[String]) -> Vec<js::Param> {
+fn params_to_js_params(params: &[Ident]) -> Vec<js::Param> {
     params
         .iter()
         .map(|p| js::Param {
             span: DUMMY_SP,
             decorators: vec![],
             pat: js::Pat::Ident(js::BindingIdent {
-                id: js::Ident::new(p.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+                id: js::Ident::new(p.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
                 type_ann: None,
             }),
         })

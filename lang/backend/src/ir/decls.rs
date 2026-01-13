@@ -6,6 +6,8 @@ use polarity_lang_printer::tokens::*;
 use polarity_lang_printer::util::{BracesExt, IsNilExt};
 use polarity_lang_printer::{Alloc, Builder, DocAllocator, Print, PrintCfg};
 
+use crate::ir::ident::Ident;
+
 use super::exprs::{Case, Exp};
 use super::exprs::{print_cases, print_params};
 
@@ -59,8 +61,8 @@ impl Print for Module {
 
 #[derive(Debug, Clone)]
 pub struct Def {
-    pub name: String,
-    pub params: Vec<String>,
+    pub name: Ident,
+    pub params: Vec<Ident>,
     pub cases: Vec<Case>,
 }
 
@@ -83,8 +85,8 @@ impl Print for Def {
 
 #[derive(Debug, Clone)]
 pub struct Codef {
-    pub name: String,
-    pub params: Vec<String>,
+    pub name: Ident,
+    pub params: Vec<Ident>,
     pub cases: Vec<Case>,
 }
 
@@ -106,8 +108,8 @@ impl Print for Codef {
 
 #[derive(Debug, Clone)]
 pub struct Let {
-    pub name: String,
-    pub params: Vec<String>,
+    pub name: Ident,
+    pub params: Vec<Ident>,
     pub body: Box<Exp>,
 }
 
@@ -118,7 +120,7 @@ impl Print for Let {
         let head = alloc
             .keyword(LET)
             .append(alloc.space())
-            .append(name)
+            .append(name.to_string())
             .append(print_params(params, alloc))
             .group();
 

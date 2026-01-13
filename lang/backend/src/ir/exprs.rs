@@ -6,6 +6,7 @@ use polarity_lang_printer::tokens::*;
 use polarity_lang_printer::util::BracesExt;
 use polarity_lang_printer::{Alloc, Builder, DocAllocator, Precedence, Print, PrintCfg};
 
+use crate::ir::ident::Ident;
 use crate::ir::rename::{Rename, RenameCtx};
 
 #[derive(Debug, Clone)]
@@ -74,17 +75,17 @@ impl Rename for Exp {
 
 #[derive(Debug, Clone)]
 pub struct Variable {
-    pub name: String,
+    pub name: Ident,
 }
 
 impl Print for Variable {
     fn print_prec<'a>(
         &'a self,
-        _cfg: &PrintCfg,
+        cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: Precedence,
+        prec: Precedence,
     ) -> Builder<'a> {
-        alloc.text(&self.name)
+        self.name.print_prec(cfg, alloc, prec)
     }
 }
 
@@ -96,7 +97,7 @@ impl Rename for Variable {
 
 #[derive(Debug, Clone)]
 pub struct Call {
-    pub name: String,
+    pub name: Ident,
     /// The URI of the module where `name` is defined.
     pub module_uri: Url,
     pub args: Vec<Exp>,
@@ -125,7 +126,7 @@ pub struct DotCall {
     pub exp: Box<Exp>,
     /// The URI of the module where `name` is defined.
     pub module_uri: Url,
-    pub name: String,
+    pub name: Ident,
     pub args: Vec<Exp>,
 }
 
@@ -245,7 +246,7 @@ impl Rename for LocalComatch {
 
 #[derive(Debug, Clone)]
 pub struct LocalLet {
-    pub name: String,
+    pub name: Ident,
     pub bound: Box<Exp>,
     pub body: Box<Exp>,
 }
@@ -261,7 +262,7 @@ impl Print for LocalLet {
         alloc
             .keyword(LET)
             .append(alloc.space())
-            .append(alloc.text(name))
+            .append(alloc.text(name.to_string()))
             .append(alloc.space())
             .append(alloc.text(COLONEQ))
             .append(alloc.space())
@@ -318,10 +319,10 @@ impl Print for Case {
 #[derive(Debug, Clone)]
 pub struct Pattern {
     pub is_copattern: bool,
-    pub name: String,
+    pub name: Ident,
     /// The URI of the module where `name` is defined.
     pub module_uri: Url,
-    pub params: Vec<String>,
+    pub params: Vec<Ident>,
 }
 
 impl Print for Pattern {
@@ -341,7 +342,7 @@ impl Rename for Pattern {
     }
 }
 
-pub fn print_params<'a>(params: &'a [String], alloc: &'a Alloc<'a>) -> Builder<'a> {
+pub fn print_params<'a>(params: &'a [Ident], alloc: &'a Alloc<'a>) -> Builder<'a> {
     if params.is_empty() {
         return alloc.nil();
     }
@@ -353,7 +354,7 @@ pub fn print_params<'a>(params: &'a [String], alloc: &'a Alloc<'a>) -> Builder<'
         if !first {
             doc = doc.append(COMMA).append(alloc.space());
         }
-        doc = doc.append(alloc.text(param));
+        doc = doc.append(alloc.text(param.to_string()));
         first = false;
     }
 
