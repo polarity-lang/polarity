@@ -35,7 +35,7 @@ pub fn rename_ir_for_js(ir: &mut Module) {
     rename_ir(ir, Backend::Javascript);
 }
 
-pub fn rename_to_valid_identifer(ident: &mut String, backend: Backend) {
+pub fn rename_to_valid_identifier(ident: &mut String, backend: Backend) {
     match backend {
         Backend::Javascript => rename_to_valid_js_identifier(ident),
     }
