@@ -4,3 +4,8 @@ pub mod ir2js;
 pub mod result;
 
 pub use ir2js::ir_to_js;
+
+#[derive(Debug, Clone, Copy)]
+pub enum Backend {
+    Javascript,
+}

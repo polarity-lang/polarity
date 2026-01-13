@@ -2,7 +2,7 @@ use std::fmt::{self, Display};
 
 use polarity_lang_printer::{Alloc, Builder, DocAllocator, Precedence, Print, PrintCfg};
 
-use crate::ir::rename::{Rename, RenameCtx};
+use crate::ir::rename::{Rename, RenameCtx, rename_to_valid_identifer};
 
 #[derive(Debug, Clone)]
 pub struct Ident {
@@ -38,6 +38,21 @@ impl Print for Ident {
 
 impl Rename for Ident {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        todo!()
+        let original_name = self.name.clone();
+
+        rename_to_valid_identifer(&mut self.name, ctx.backend);
+
+        for (source_name, ident) in &ctx.binders {
+            if original_name == *source_name {
+                *self = ident.clone();
+                return;
+            }
+
+            if self.name == ident.name {
+                self.id = Some(ident.id.map_or(0, |x| x + 1));
+            }
+        }
+
+        ctx.binders.push((original_name, self.clone()));
     }
 }
