@@ -42,14 +42,14 @@ impl Rename for Ident {
 
         rename_to_valid_identifer(&mut self.name, ctx.backend);
 
-        for (source_name, ident) in &ctx.binders {
-            if original_name == *source_name {
-                *self = ident.clone();
+        for (other_original_name, other) in &ctx.binders {
+            if original_name == *other_original_name {
+                *self = other.clone();
                 return;
             }
 
-            if self.name == ident.name {
-                self.id = Some(ident.id.map_or(0, |x| x + 1));
+            if self.name == other.name {
+                self.id = Some(other.id.map_or(0, |x| x + 1));
             }
         }
 
