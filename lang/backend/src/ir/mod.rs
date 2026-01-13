@@ -3,6 +3,7 @@
 
 pub mod decls;
 pub mod exprs;
+pub mod rename;
 
 pub use decls::*;
 pub use exprs::*;

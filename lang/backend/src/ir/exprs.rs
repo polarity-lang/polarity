@@ -6,6 +6,8 @@ use polarity_lang_printer::tokens::*;
 use polarity_lang_printer::util::BracesExt;
 use polarity_lang_printer::{Alloc, Builder, DocAllocator, Precedence, Print, PrintCfg};
 
+use crate::ir::rename::{Rename, RenameCtx};
+
 #[derive(Debug, Clone)]
 pub enum Exp {
     Variable(Variable),
@@ -50,6 +52,26 @@ impl Print for Exp {
     }
 }
 
+impl Rename for Exp {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        match self {
+            Exp::Variable(variable) => variable.rename(ctx),
+            Exp::CtorCall(call) => call.rename(ctx),
+            Exp::CodefCall(call) => call.rename(ctx),
+            Exp::LetCall(call) => call.rename(ctx),
+            Exp::ExternCall(call) => call.rename(ctx),
+            Exp::DtorCall(dot_call) => dot_call.rename(ctx),
+            Exp::DefCall(dot_call) => dot_call.rename(ctx),
+            Exp::LocalMatch(local_match) => local_match.rename(ctx),
+            Exp::LocalComatch(local_comatch) => local_comatch.rename(ctx),
+            Exp::LocalLet(local_let) => local_let.rename(ctx),
+            Exp::Literal(_) => (),
+            Exp::Panic(_) => (),
+            Exp::ZST => (),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Variable {
     pub name: String,
@@ -63,6 +85,12 @@ impl Print for Variable {
         _prec: Precedence,
     ) -> Builder<'a> {
         alloc.text(&self.name)
+    }
+}
+
+impl Rename for Variable {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        todo!()
     }
 }
 
@@ -83,6 +111,12 @@ impl Print for Call {
     ) -> Builder<'a> {
         let Call { name, args, .. } = self;
         alloc.ctor(name).append(print_args(args, cfg, alloc))
+    }
+}
+
+impl Rename for Call {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        todo!()
     }
 }
 
@@ -127,6 +161,12 @@ impl Print for DotCall {
     }
 }
 
+impl Rename for DotCall {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        todo!()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LocalMatch {
     pub on_exp: Box<Exp>,
@@ -147,6 +187,12 @@ impl Print for LocalMatch {
             .append(alloc.keyword(MATCH))
             .append(alloc.space())
             .append(print_cases(cases, cfg, alloc))
+    }
+}
+
+impl Rename for LocalMatch {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        todo!()
     }
 }
 
@@ -191,6 +237,12 @@ impl Print for LocalComatch {
     }
 }
 
+impl Rename for LocalComatch {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        todo!()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LocalLet {
     pub name: String,
@@ -217,6 +269,12 @@ impl Print for LocalLet {
             .append(alloc.keyword(SEMICOLON))
             .append(alloc.hardline())
             .append(body.print(cfg, alloc))
+    }
+}
+
+impl Rename for LocalLet {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        todo!()
     }
 }
 
@@ -274,6 +332,12 @@ impl Print for Pattern {
         } else {
             alloc.ctor(name).append(print_params(params, alloc))
         }
+    }
+}
+
+impl Rename for Pattern {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        todo!()
     }
 }
 
