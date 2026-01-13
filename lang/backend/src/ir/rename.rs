@@ -73,7 +73,7 @@ fn rename_to_valid_js_identifier(ident: &mut String) {
     *ident = ident.chars().filter(|&c| c.is_ascii() && c != '\'').collect();
 
     // make sure the ident is non-empty
-    if ident == "" {
+    if ident.is_empty() {
         *ident = String::from("x");
     }
 
