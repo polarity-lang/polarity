@@ -91,7 +91,7 @@ impl Print for Variable {
 
 impl Rename for Variable {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        todo!()
+        self.name.rename(ctx);
     }
 }
 
@@ -117,7 +117,7 @@ impl Print for Call {
 
 impl Rename for Call {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        todo!()
+        self.name.rename(ctx);
     }
 }
 
@@ -164,7 +164,9 @@ impl Print for DotCall {
 
 impl Rename for DotCall {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        todo!()
+        self.exp.rename(ctx);
+        self.name.rename(ctx);
+        self.args.rename(ctx);
     }
 }
 
@@ -193,7 +195,8 @@ impl Print for LocalMatch {
 
 impl Rename for LocalMatch {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        todo!()
+        self.on_exp.rename(ctx);
+        self.cases.rename(ctx);
     }
 }
 
@@ -240,7 +243,7 @@ impl Print for LocalComatch {
 
 impl Rename for LocalComatch {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        todo!()
+        self.cases.rename(ctx);
     }
 }
 
@@ -275,7 +278,9 @@ impl Print for LocalLet {
 
 impl Rename for LocalLet {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        todo!()
+        self.name.rename(ctx);
+        self.bound.rename(ctx);
+        self.body.rename(ctx);
     }
 }
 
@@ -316,6 +321,13 @@ impl Print for Case {
     }
 }
 
+impl Rename for Case {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        self.pattern.rename(ctx);
+        self.body.rename(ctx);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Pattern {
     pub is_copattern: bool,
@@ -338,7 +350,8 @@ impl Print for Pattern {
 
 impl Rename for Pattern {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        todo!()
+        self.name.rename(ctx);
+        self.params.rename(ctx);
     }
 }
 

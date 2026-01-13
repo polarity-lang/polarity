@@ -5,6 +5,14 @@ pub trait Rename {
     fn rename(&mut self, ctx: &mut RenameCtx);
 }
 
+impl<T: Rename> Rename for Vec<T> {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        for x in self.iter_mut() {
+            x.rename(ctx);
+        }
+    }
+}
+
 pub struct RenameCtx {
     pub binders: Vec<(String, Ident)>,
     pub backend: Backend,
