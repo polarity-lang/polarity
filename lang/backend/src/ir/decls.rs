@@ -7,6 +7,7 @@ use polarity_lang_printer::util::{BracesExt, IsNilExt};
 use polarity_lang_printer::{Alloc, Builder, DocAllocator, Print, PrintCfg};
 
 use crate::ir::ident::Ident;
+use crate::ir::rename::{Rename, RenameCtx};
 
 use super::exprs::{Case, Exp};
 use super::exprs::{print_cases, print_params};
@@ -59,6 +60,12 @@ impl Print for Module {
     }
 }
 
+impl Rename for Module {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        todo!()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Def {
     pub name: Ident,
@@ -83,6 +90,12 @@ impl Print for Def {
     }
 }
 
+impl Rename for Def {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        todo!()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Codef {
     pub name: Ident,
@@ -103,6 +116,12 @@ impl Print for Codef {
         let body = print_cases(cases, cfg, alloc);
 
         head.append(alloc.space()).append(body)
+    }
+}
+
+impl Rename for Codef {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        todo!()
     }
 }
 
@@ -133,5 +152,11 @@ impl Print for Let {
             .group();
 
         head.append(alloc.space()).append(body)
+    }
+}
+
+impl Rename for Let {
+    fn rename(&mut self, ctx: &mut RenameCtx) {
+        todo!()
     }
 }
