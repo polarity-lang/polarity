@@ -65,17 +65,14 @@ impl Rename for Module {
         for decl in &self.def_decls {
             let mut name = decl.name.clone();
             name.rename(ctx);
-            ctx.binders.push((decl.name.name.to_owned(), name));
         }
         for decl in &self.codef_decls {
             let mut name = decl.name.clone();
             name.rename(ctx);
-            ctx.binders.push((decl.name.name.to_owned(), name));
         }
         for decl in &self.let_decls {
             let mut name = decl.name.clone();
             name.rename(ctx);
-            ctx.binders.push((decl.name.name.to_owned(), name));
         }
 
         self.def_decls.rename(ctx);

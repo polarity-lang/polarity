@@ -1,4 +1,5 @@
 use crate::Backend;
+use crate::ir::Module;
 use crate::ir::ident::Ident;
 
 pub trait Rename {
@@ -13,9 +14,25 @@ impl<T: Rename> Rename for Vec<T> {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct RenameCtx {
     pub binders: Vec<(String, Ident)>,
     pub backend: Backend,
+}
+
+impl RenameCtx {
+    pub fn new(backend: Backend) -> Self {
+        Self { binders: Vec::new(), backend }
+    }
+}
+
+pub fn rename_ir(ir: &mut Module, backend: Backend) {
+    let mut ctx = RenameCtx::new(backend);
+    ir.rename(&mut ctx);
+}
+
+pub fn rename_ir_for_js(ir: &mut Module) {
+    rename_ir(ir, Backend::Javascript);
 }
 
 pub fn rename_to_valid_identifer(ident: &mut String, backend: Backend) {
