@@ -118,6 +118,7 @@ impl Print for Call {
 impl Rename for Call {
     fn rename(&mut self, ctx: &mut RenameCtx) {
         self.name.rename(ctx);
+        self.args.rename(ctx);
     }
 }
 
