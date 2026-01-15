@@ -62,22 +62,24 @@ impl Print for Module {
 
 impl Rename for Module {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        for decl in &self.def_decls {
+        let Module { uri: _, use_decls: _, def_decls, codef_decls, let_decls } = self;
+
+        for decl in def_decls.iter() {
             let mut name = decl.name.clone();
             name.rename(ctx);
         }
-        for decl in &self.codef_decls {
+        for decl in codef_decls.iter() {
             let mut name = decl.name.clone();
             name.rename(ctx);
         }
-        for decl in &self.let_decls {
+        for decl in let_decls.iter() {
             let mut name = decl.name.clone();
             name.rename(ctx);
         }
 
-        self.def_decls.rename(ctx);
-        self.codef_decls.rename(ctx);
-        self.let_decls.rename(ctx);
+        def_decls.rename(ctx);
+        codef_decls.rename(ctx);
+        let_decls.rename(ctx);
     }
 }
 
@@ -107,9 +109,11 @@ impl Print for Def {
 
 impl Rename for Def {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        self.name.rename(ctx);
-        self.params.rename(ctx);
-        self.cases.rename(ctx);
+        let Def { name, params, cases } = self;
+
+        name.rename(ctx);
+        params.rename(ctx);
+        cases.rename(ctx);
     }
 }
 
@@ -138,9 +142,11 @@ impl Print for Codef {
 
 impl Rename for Codef {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        self.name.rename(ctx);
-        self.params.rename(ctx);
-        self.cases.rename(ctx);
+        let Codef { name, params, cases } = self;
+
+        name.rename(ctx);
+        params.rename(ctx);
+        cases.rename(ctx);
     }
 }
 
@@ -176,8 +182,10 @@ impl Print for Let {
 
 impl Rename for Let {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        self.name.rename(ctx);
-        self.params.rename(ctx);
-        self.body.rename(ctx);
+        let Let { name, params, body } = self;
+
+        name.rename(ctx);
+        params.rename(ctx);
+        body.rename(ctx);
     }
 }

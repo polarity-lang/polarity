@@ -12,9 +12,11 @@ pub struct Ident {
 
 impl Display for Ident {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.id {
-            Some(id) => write!(f, "{}{id}", self.name),
-            None => write!(f, "{}", self.name),
+        let Ident { name, id } = self;
+
+        match id {
+            Some(id) => write!(f, "{name}{id}"),
+            None => write!(f, "{name}"),
         }
     }
 }

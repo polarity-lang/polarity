@@ -85,13 +85,17 @@ impl Print for Variable {
         alloc: &'a Alloc<'a>,
         prec: Precedence,
     ) -> Builder<'a> {
-        self.name.print_prec(cfg, alloc, prec)
+        let Variable { name } = self;
+
+        name.print_prec(cfg, alloc, prec)
     }
 }
 
 impl Rename for Variable {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        self.name.rename(ctx);
+        let Variable { name } = self;
+
+        name.rename(ctx);
     }
 }
 
@@ -117,8 +121,10 @@ impl Print for Call {
 
 impl Rename for Call {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        self.name.rename(ctx);
-        self.args.rename(ctx);
+        let Call { name, module_uri: _, args } = self;
+
+        name.rename(ctx);
+        args.rename(ctx);
     }
 }
 
@@ -165,9 +171,11 @@ impl Print for DotCall {
 
 impl Rename for DotCall {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        self.exp.rename(ctx);
-        self.name.rename(ctx);
-        self.args.rename(ctx);
+        let DotCall { exp, module_uri: _, name, args } = self;
+
+        exp.rename(ctx);
+        name.rename(ctx);
+        args.rename(ctx);
     }
 }
 
@@ -196,8 +204,10 @@ impl Print for LocalMatch {
 
 impl Rename for LocalMatch {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        self.on_exp.rename(ctx);
-        self.cases.rename(ctx);
+        let LocalMatch { on_exp, cases } = self;
+
+        on_exp.rename(ctx);
+        cases.rename(ctx);
     }
 }
 
@@ -244,7 +254,9 @@ impl Print for LocalComatch {
 
 impl Rename for LocalComatch {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        self.cases.rename(ctx);
+        let LocalComatch { cases } = self;
+
+        cases.rename(ctx);
     }
 }
 
@@ -279,9 +291,11 @@ impl Print for LocalLet {
 
 impl Rename for LocalLet {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        self.name.rename(ctx);
-        self.bound.rename(ctx);
-        self.body.rename(ctx);
+        let LocalLet { name, bound, body } = self;
+
+        name.rename(ctx);
+        bound.rename(ctx);
+        body.rename(ctx);
     }
 }
 
@@ -324,8 +338,10 @@ impl Print for Case {
 
 impl Rename for Case {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        self.pattern.rename(ctx);
-        self.body.rename(ctx);
+        let Case { pattern, body } = self;
+
+        pattern.rename(ctx);
+        body.rename(ctx);
     }
 }
 
@@ -351,8 +367,10 @@ impl Print for Pattern {
 
 impl Rename for Pattern {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        self.name.rename(ctx);
-        self.params.rename(ctx);
+        let Pattern { is_copattern: _, name, module_uri: _, params } = self;
+
+        name.rename(ctx);
+        params.rename(ctx);
     }
 }
 
