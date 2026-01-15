@@ -16,7 +16,7 @@ impl<T: Rename> Rename for Vec<T> {
 
 #[derive(Debug, Clone)]
 pub struct RenameCtx {
-    pub binders: Vec<(String, Ident)>,
+    pub binders: Vec<(Ident, Ident)>,
     pub backend: Backend,
 }
 
@@ -88,6 +88,11 @@ const JS_RESERVED_WORDS: [&str; 38] = [
 fn rename_to_valid_js_identifier(ident: &mut String) {
     // discard unicode and '
     *ident = ident.chars().filter(|&c| c.is_ascii() && c != '\'').collect();
+
+    // discard trailing digits (to avoid id conflicts)
+    if ident.ends_with(|c: char| c.is_ascii_digit()) {
+        *ident = ident.trim_end_matches(|c: char| c.is_ascii_digit()).to_string()
+    }
 
     // make sure the ident is non-empty
     if ident.is_empty() {
