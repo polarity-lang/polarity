@@ -2,7 +2,6 @@ use swc_common::{DUMMY_SP, SyntaxContext};
 use swc_ecma_ast as js;
 
 use crate::ir;
-use crate::ir::ident::Ident;
 use crate::result::BackendResult;
 
 use super::tokens::*;
@@ -204,7 +203,7 @@ impl ToJSStmt for ir::Codef {
     }
 }
 
-fn params_to_js_params(params: &[Ident]) -> Vec<js::Param> {
+fn params_to_js_params(params: &[ir::Ident]) -> Vec<js::Param> {
     params
         .iter()
         .map(|p| js::Param {

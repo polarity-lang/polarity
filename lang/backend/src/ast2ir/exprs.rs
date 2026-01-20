@@ -1,7 +1,6 @@
 use polarity_lang_ast::{LocalComatch, LocalLet};
 
 use crate::ir;
-use crate::ir::ident::Ident;
 use crate::result::{BackendError, BackendResult};
 
 use super::traits::ToIR;
@@ -229,7 +228,7 @@ impl ToIR for polarity_lang_ast::Args {
 }
 
 impl ToIR for polarity_lang_ast::Telescope {
-    type Target = Vec<Ident>;
+    type Target = Vec<ir::Ident>;
 
     fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Telescope { params, .. } = self;
@@ -243,7 +242,7 @@ impl ToIR for polarity_lang_ast::Telescope {
 }
 
 impl ToIR for polarity_lang_ast::TelescopeInst {
-    type Target = Vec<Ident>;
+    type Target = Vec<ir::Ident>;
 
     fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::TelescopeInst { params, .. } = self;

@@ -8,3 +8,4 @@ pub mod rename;
 
 pub use decls::*;
 pub use exprs::*;
+pub use ident::Ident;
