@@ -25,30 +25,47 @@ pub fn rename_ir_for_js(ir: &mut Module) {
 
 #[derive(Debug, Clone)]
 pub struct RenameCtx {
-    pub bindings: Vec<Binding>,
+    active_bindings: Vec<Binding>,
+    inactive_bindings: Vec<Binding>,
     pub backend: Backend,
 }
 
 impl RenameCtx {
     pub fn new(backend: Backend) -> Self {
-        Self { bindings: Vec::new(), backend }
+        Self { active_bindings: Vec::new(), inactive_bindings: Vec::new(), backend }
     }
 
-    pub fn rename_binder(&mut self, ident: &mut Ident) {
+    pub fn rename_binder<F>(&mut self, ident: &mut Ident, f: F)
+    where
+        F: FnOnce(&mut RenameCtx),
+    {
         let original = ident.clone();
         self.rename_to_valid_identifier(&mut ident.name);
         self.disambiguate_ident(ident);
-        self.bindings.push(Binding { original, renamed: ident.clone() });
+        self.active_bindings.push(Binding { original, renamed: ident.clone() });
+        f(self);
+        let binding = self
+            .active_bindings
+            .pop()
+            .expect("This is the only place where active_bindings are modified.");
+        self.inactive_bindings.push(binding);
     }
 
-    pub fn rename_binders(&mut self, idents: &mut [Ident]) {
-        idents.iter_mut().for_each(|ident| self.rename_binder(ident));
+    pub fn rename_binders<F>(&mut self, idents: &mut [Ident], f: F)
+    where
+        F: FnOnce(&mut RenameCtx),
+    {
+        match idents.split_first_mut() {
+            None => f(self),
+            Some((x, xs)) => self.rename_binder(x, |extended| extended.rename_binders(xs, f)),
+        }
     }
 
     fn disambiguate_ident(&self, ident: &mut Ident) {
         let occupied_ids: Vec<_> = self
-            .bindings
+            .active_bindings
             .iter()
+            .chain(self.inactive_bindings.iter())
             .filter(|other| *ident.name == other.renamed.name)
             .map(|other| other.renamed.id)
             .collect();
@@ -70,7 +87,8 @@ impl RenameCtx {
 
     #[allow(clippy::result_unit_err)]
     pub fn rename_bound(&self, ident: &mut Ident) -> Result<(), ()> {
-        let binding = self.bindings.iter().rfind(|binding| *ident == binding.original).ok_or(())?;
+        let binding =
+            self.active_bindings.iter().rfind(|binding| *ident == binding.original).ok_or(())?;
         *ident = binding.renamed.clone();
         Ok(())
     }

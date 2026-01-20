@@ -292,9 +292,10 @@ impl Rename for LocalLet {
     fn rename(&mut self, ctx: &mut RenameCtx) {
         let LocalLet { name, bound, body } = self;
 
-        ctx.rename_binder(name);
         bound.rename(ctx);
-        body.rename(ctx);
+        ctx.rename_binder(name, |ctx| {
+            body.rename(ctx);
+        });
     }
 }
 
@@ -338,9 +339,12 @@ impl Print for Case {
 impl Rename for Case {
     fn rename(&mut self, ctx: &mut RenameCtx) {
         let Case { pattern, body } = self;
+        let Pattern { is_copattern: _, name, module_uri: _, params } = pattern;
 
-        pattern.rename(ctx);
-        body.rename(ctx);
+        ctx.rename_bound(name).expect("Pattern name is bound by toplevel.");
+        ctx.rename_binders(params, |ctx| {
+            body.rename(ctx);
+        });
     }
 }
 
@@ -361,15 +365,6 @@ impl Print for Pattern {
         } else {
             alloc.ctor(name).append(print_params(params, alloc))
         }
-    }
-}
-
-impl Rename for Pattern {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
-        let Pattern { is_copattern: _, name, module_uri: _, params } = self;
-
-        ctx.rename_bound(name).expect("Pattern is bound by toplevel.");
-        ctx.rename_binders(params);
     }
 }
 

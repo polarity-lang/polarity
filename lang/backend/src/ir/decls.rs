@@ -67,13 +67,11 @@ impl Rename for Module {
         let Module { uri: _, toplevel_names, use_decls: _, def_decls, codef_decls, let_decls } =
             self;
 
-        for name in toplevel_names {
-            ctx.rename_binder(name);
-        }
-
-        def_decls.rename(ctx);
-        codef_decls.rename(ctx);
-        let_decls.rename(ctx);
+        ctx.rename_binders(toplevel_names, |ctx| {
+            def_decls.rename(ctx);
+            codef_decls.rename(ctx);
+            let_decls.rename(ctx);
+        });
     }
 }
 
@@ -106,8 +104,9 @@ impl Rename for Def {
         let Def { name, params, cases } = self;
 
         ctx.rename_bound(name).expect("Def is bound by toplevel.");
-        ctx.rename_binders(params);
-        cases.rename(ctx);
+        ctx.rename_binders(params, |ctx| {
+            cases.rename(ctx);
+        });
     }
 }
 
@@ -139,8 +138,9 @@ impl Rename for Codef {
         let Codef { name, params, cases } = self;
 
         ctx.rename_bound(name).expect("Codef is bound by toplevel.");
-        ctx.rename_binders(params);
-        cases.rename(ctx);
+        ctx.rename_binders(params, |ctx| {
+            cases.rename(ctx);
+        });
     }
 }
 
@@ -179,7 +179,8 @@ impl Rename for Let {
         let Let { name, params, body } = self;
 
         ctx.rename_bound(name).expect("Toplevel let is bound by toplevel.");
-        ctx.rename_binders(params);
-        body.rename(ctx);
+        ctx.rename_binders(params, |ctx| {
+            body.rename(ctx);
+        });
     }
 }
