@@ -1,8 +1,10 @@
+use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::Backend;
 use crate::ir::Module;
 use crate::ir::ident::Ident;
+use crate::result::BackendResult;
 
 pub type RenameResult<T = ()> = Result<T, RenameError>;
 
@@ -19,18 +21,22 @@ impl<T: Rename> Rename for Vec<T> {
     }
 }
 
-#[derive(Debug, Clone, Error)]
+#[derive(Debug, Clone, Error, Diagnostic)]
 pub enum RenameError {
     #[error("The name {name} is not bound in the renaming context.")]
     UnboundName { name: Ident },
+
+    #[error("Active bindings are empty when they shouldn't.")]
+    #[diagnostic(help = "This is a bug in the renaming logic.")]
+    EmptyBindings,
 }
 
-pub fn rename_ir(ir: &mut Module, backend: Backend) -> RenameResult {
+pub fn rename_ir(ir: &mut Module, backend: Backend) -> BackendResult {
     let mut ctx = RenameCtx::new(backend);
-    ir.rename(&mut ctx)
+    ir.rename(&mut ctx).map_err(Into::into)
 }
 
-pub fn rename_ir_for_js(ir: &mut Module) -> RenameResult {
+pub fn rename_ir_for_js(ir: &mut Module) -> BackendResult {
     rename_ir(ir, Backend::Javascript)
 }
 
@@ -55,10 +61,7 @@ impl RenameCtx {
         self.disambiguate_ident(ident);
         self.active_bindings.push(Binding { original, renamed: ident.clone() });
         f(self)?;
-        let binding = self
-            .active_bindings
-            .pop()
-            .expect("This is the only place where active_bindings are modified.");
+        let binding = self.active_bindings.pop().ok_or(RenameError::EmptyBindings)?;
         self.inactive_bindings.push(binding);
 
         Ok(())

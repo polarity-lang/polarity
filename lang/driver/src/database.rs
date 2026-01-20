@@ -535,7 +535,7 @@ impl Database {
     /// Compile to JavaScript
     pub async fn js<W: io::Write>(&mut self, uri: &Url, output: W) -> AppResult<()> {
         let mut ir = Arc::unwrap_or_clone(self.ir(uri).await?);
-        polarity_lang_backend::rename_ir_for_js(&mut ir).unwrap();
+        polarity_lang_backend::rename_ir_for_js(&mut ir).map_err(AppError::Backend)?;
         polarity_lang_backend::ir_to_js(&ir, output).map_err(AppError::Backend)?;
         Ok(())
     }

@@ -72,9 +72,7 @@ impl Rename for Module {
             codef_decls.rename(ctx)?;
             let_decls.rename(ctx)?;
             Ok(())
-        })?;
-
-        Ok(())
+        })
     }
 }
 
