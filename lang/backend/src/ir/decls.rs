@@ -15,6 +15,7 @@ use super::exprs::{print_cases, print_params};
 #[derive(Debug, Clone)]
 pub struct Module {
     pub uri: Url,
+    pub toplevel_names: Vec<Ident>,
     pub use_decls: Vec<UseDecl>,
     pub def_decls: Vec<Def>,
     pub codef_decls: Vec<Codef>,
@@ -23,7 +24,8 @@ pub struct Module {
 
 impl Print for Module {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Module { uri: _, use_decls, def_decls, codef_decls, let_decls } = self;
+        let Module { uri: _, toplevel_names: _, use_decls, def_decls, codef_decls, let_decls } =
+            self;
 
         // UseDecls
         //
@@ -62,7 +64,8 @@ impl Print for Module {
 
 impl Rename for Module {
     fn rename(&mut self, ctx: &mut RenameCtx) {
-        let Module { uri: _, use_decls: _, def_decls, codef_decls, let_decls } = self;
+        let Module { uri: _, toplevel_names, use_decls: _, def_decls, codef_decls, let_decls } =
+            self;
 
         for decl in def_decls.iter() {
             let mut name = decl.name.clone();

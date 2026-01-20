@@ -1,3 +1,4 @@
+use crate::ir;
 use crate::result::BackendResult;
 
 /// Convert AST to IR (intermediate representation)
@@ -26,5 +27,15 @@ impl<T: ToIR> ToIR for Option<T> {
             Some(x) => Ok(Some(x.to_ir()?)),
             None => Ok(None),
         }
+    }
+}
+
+pub trait CollectToplevelNames {
+    fn collect_toplevel_names(&self, names: &mut Vec<ir::ident::Ident>);
+}
+
+impl<T: CollectToplevelNames> CollectToplevelNames for Vec<T> {
+    fn collect_toplevel_names(&self, names: &mut Vec<ir::ident::Ident>) {
+        self.iter().for_each(|x| x.collect_toplevel_names(names));
     }
 }
