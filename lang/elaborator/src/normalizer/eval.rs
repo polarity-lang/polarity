@@ -107,6 +107,7 @@ impl Eval for Call {
                             span: *span,
                             name: name.clone(),
                             args: args.eval(info_table, env)?,
+                            kind: *kind,
                         }
                         .into(),
                     )))
@@ -117,6 +118,7 @@ impl Eval for Call {
                     span: *span,
                     name: name.clone(),
                     args: args.eval(info_table, env)?,
+                    kind: *kind,
                 }
                 .into(),
             ))),

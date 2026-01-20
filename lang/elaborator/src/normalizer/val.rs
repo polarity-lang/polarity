@@ -719,6 +719,7 @@ pub struct OpaqueCall {
     pub span: Option<Span>,
     pub name: polarity_lang_ast::IdBound,
     pub args: Args,
+    pub kind: polarity_lang_ast::CallKind,
 }
 
 impl Shift for OpaqueCall {
@@ -729,7 +730,7 @@ impl Shift for OpaqueCall {
 
 impl Print for OpaqueCall {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let OpaqueCall { span: _, name, args } = self;
+        let OpaqueCall { span: _, name, args, kind: _ } = self;
         let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
         alloc.ctor(&name.id).append(psubst)
     }
@@ -745,10 +746,10 @@ impl ReadBack for OpaqueCall {
     type Nf = polarity_lang_ast::Call;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
-        let OpaqueCall { span, name, args } = self;
+        let OpaqueCall { span, name, args, kind } = self;
         Ok(polarity_lang_ast::Call {
             span: *span,
-            kind: polarity_lang_ast::CallKind::LetBound,
+            kind: *kind,
             name: name.clone(),
             args: polarity_lang_ast::Args { args: args.read_back(info_table)? },
             inferred_type: None,
