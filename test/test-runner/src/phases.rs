@@ -425,6 +425,33 @@ impl Phase for IR {
     }
 }
 
+// JS Phase
+//
+// This phase generates the compiled Javascript code of the module.
+
+pub struct JS {
+    name: &'static str,
+}
+
+impl Phase for JS {
+    type Out = String;
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
+        let mut out = Vec::new();
+        db.js(uri, &mut out).await?;
+        let out = String::from_utf8(out).unwrap();
+        Ok(out)
+    }
+}
+
 // TestOutput
 
 pub trait TestOutput {
