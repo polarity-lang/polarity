@@ -7,7 +7,7 @@ use polarity_lang_printer::util::BracesExt;
 use polarity_lang_printer::{Alloc, Builder, DocAllocator, Precedence, Print, PrintCfg};
 
 use crate::ir::ident::Ident;
-use crate::ir::rename::{Rename, RenameCtx};
+use crate::ir::rename::{Rename, RenameCtx, RenameResult};
 
 #[derive(Debug, Clone)]
 pub enum Exp {
@@ -54,7 +54,7 @@ impl Print for Exp {
 }
 
 impl Rename for Exp {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         match self {
             Exp::Variable(variable) => variable.rename(ctx),
             Exp::CtorCall(call) => call.rename(ctx),
@@ -66,9 +66,9 @@ impl Rename for Exp {
             Exp::LocalMatch(local_match) => local_match.rename(ctx),
             Exp::LocalComatch(local_comatch) => local_comatch.rename(ctx),
             Exp::LocalLet(local_let) => local_let.rename(ctx),
-            Exp::Literal(_) => (),
-            Exp::Panic(_) => (),
-            Exp::ZST => (),
+            Exp::Literal(_) => Ok(()),
+            Exp::Panic(_) => Ok(()),
+            Exp::ZST => Ok(()),
         }
     }
 }
@@ -92,9 +92,10 @@ impl Print for Variable {
 }
 
 impl Rename for Variable {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let Variable { name } = self;
-        ctx.rename_bound(name).expect("Variable must be bound.");
+        ctx.rename_bound(name)?;
+        Ok(())
     }
 }
 
@@ -119,11 +120,11 @@ impl Print for Call {
 }
 
 impl Rename for Call {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let Call { name, module_uri: _, args } = self;
-
-        ctx.rename_bound(name).expect("Call name must be bound.");
-        args.rename(ctx);
+        ctx.rename_bound(name)?;
+        args.rename(ctx)?;
+        Ok(())
     }
 }
 
@@ -169,12 +170,12 @@ impl Print for DotCall {
 }
 
 impl Rename for DotCall {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let DotCall { exp, module_uri: _, name, args } = self;
-
-        exp.rename(ctx);
-        ctx.rename_bound(name).expect("DotCall name must be bound.");
-        args.rename(ctx);
+        exp.rename(ctx)?;
+        ctx.rename_bound(name)?;
+        args.rename(ctx)?;
+        Ok(())
     }
 }
 
@@ -202,11 +203,11 @@ impl Print for LocalMatch {
 }
 
 impl Rename for LocalMatch {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let LocalMatch { on_exp, cases } = self;
-
-        on_exp.rename(ctx);
-        cases.rename(ctx);
+        on_exp.rename(ctx)?;
+        cases.rename(ctx)?;
+        Ok(())
     }
 }
 
@@ -252,10 +253,9 @@ impl Print for LocalComatch {
 }
 
 impl Rename for LocalComatch {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let LocalComatch { cases } = self;
-
-        cases.rename(ctx);
+        cases.rename(ctx)
     }
 }
 
@@ -289,13 +289,11 @@ impl Print for LocalLet {
 }
 
 impl Rename for LocalLet {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let LocalLet { name, bound, body } = self;
-
-        bound.rename(ctx);
-        ctx.rename_binder(name, |ctx| {
-            body.rename(ctx);
-        });
+        bound.rename(ctx)?;
+        ctx.rename_binder(name, |ctx| body.rename(ctx))?;
+        Ok(())
     }
 }
 
@@ -337,14 +335,12 @@ impl Print for Case {
 }
 
 impl Rename for Case {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let Case { pattern, body } = self;
         let Pattern { is_copattern: _, name, module_uri: _, params } = pattern;
-
-        ctx.rename_bound(name).expect("Pattern name is bound by toplevel.");
-        ctx.rename_binders(params, |ctx| {
-            body.rename(ctx);
-        });
+        ctx.rename_bound(name)?;
+        ctx.rename_binders(params, |ctx| body.rename(ctx))?;
+        Ok(())
     }
 }
 

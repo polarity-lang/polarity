@@ -7,7 +7,7 @@ use polarity_lang_printer::util::{BracesExt, IsNilExt};
 use polarity_lang_printer::{Alloc, Builder, DocAllocator, Print, PrintCfg};
 
 use crate::ir::ident::Ident;
-use crate::ir::rename::{Rename, RenameCtx};
+use crate::ir::rename::{Rename, RenameCtx, RenameResult};
 
 use super::exprs::{Case, Exp};
 use super::exprs::{print_cases, print_params};
@@ -63,15 +63,18 @@ impl Print for Module {
 }
 
 impl Rename for Module {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let Module { uri: _, toplevel_names, use_decls: _, def_decls, codef_decls, let_decls } =
             self;
 
         ctx.rename_binders(toplevel_names, |ctx| {
-            def_decls.rename(ctx);
-            codef_decls.rename(ctx);
-            let_decls.rename(ctx);
-        });
+            def_decls.rename(ctx)?;
+            codef_decls.rename(ctx)?;
+            let_decls.rename(ctx)?;
+            Ok(())
+        })?;
+
+        Ok(())
     }
 }
 
@@ -100,13 +103,16 @@ impl Print for Def {
 }
 
 impl Rename for Def {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let Def { name, params, cases } = self;
 
-        ctx.rename_bound(name).expect("Def is bound by toplevel.");
+        ctx.rename_bound(name)?;
         ctx.rename_binders(params, |ctx| {
-            cases.rename(ctx);
-        });
+            cases.rename(ctx)?;
+            Ok(())
+        })?;
+
+        Ok(())
     }
 }
 
@@ -134,13 +140,13 @@ impl Print for Codef {
 }
 
 impl Rename for Codef {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let Codef { name, params, cases } = self;
 
-        ctx.rename_bound(name).expect("Codef is bound by toplevel.");
-        ctx.rename_binders(params, |ctx| {
-            cases.rename(ctx);
-        });
+        ctx.rename_bound(name)?;
+        ctx.rename_binders(params, |ctx| cases.rename(ctx))?;
+
+        Ok(())
     }
 }
 
@@ -175,12 +181,12 @@ impl Print for Let {
 }
 
 impl Rename for Let {
-    fn rename(&mut self, ctx: &mut RenameCtx) {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let Let { name, params, body } = self;
 
-        ctx.rename_bound(name).expect("Toplevel let is bound by toplevel.");
-        ctx.rename_binders(params, |ctx| {
-            body.rename(ctx);
-        });
+        ctx.rename_bound(name)?;
+        ctx.rename_binders(params, |ctx| body.rename(ctx))?;
+
+        Ok(())
     }
 }
