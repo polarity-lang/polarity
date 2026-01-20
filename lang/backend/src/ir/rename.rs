@@ -14,18 +14,6 @@ impl<T: Rename> Rename for Vec<T> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct RenameCtx {
-    pub binders: Vec<(Ident, Ident)>,
-    pub backend: Backend,
-}
-
-impl RenameCtx {
-    pub fn new(backend: Backend) -> Self {
-        Self { binders: Vec::new(), backend }
-    }
-}
-
 pub fn rename_ir(ir: &mut Module, backend: Backend) {
     let mut ctx = RenameCtx::new(backend);
     ir.rename(&mut ctx);
@@ -35,11 +23,74 @@ pub fn rename_ir_for_js(ir: &mut Module) {
     rename_ir(ir, Backend::Javascript);
 }
 
-pub fn rename_to_valid_identifier(ident: &mut String, backend: Backend) {
-    match backend {
-        Backend::Javascript => rename_to_valid_js_identifier(ident),
+#[derive(Debug, Clone)]
+pub struct RenameCtx {
+    pub bindings: Vec<Binding>,
+    pub backend: Backend,
+}
+
+impl RenameCtx {
+    pub fn new(backend: Backend) -> Self {
+        Self { bindings: Vec::new(), backend }
+    }
+
+    pub fn rename_binder(&mut self, ident: &mut Ident) {
+        let original = ident.clone();
+        self.rename_to_valid_identifier(&mut ident.name);
+        self.disambiguate_ident(ident);
+        self.bindings.push(Binding { original, renamed: ident.clone() });
+    }
+
+    pub fn rename_binders(&mut self, idents: &mut [Ident]) {
+        idents.iter_mut().for_each(|ident| self.rename_binder(ident));
+    }
+
+    fn disambiguate_ident(&self, ident: &mut Ident) {
+        let occupied_ids: Vec<_> = self
+            .bindings
+            .iter()
+            .filter(|other| *ident.name == other.renamed.name)
+            .map(|other| other.renamed.id)
+            .collect();
+
+        if occupied_ids.contains(&ident.id) {
+            // find smallest non-occupied id
+            if !occupied_ids.contains(&None) {
+                ident.id = None;
+            } else {
+                for id in 0.. {
+                    if !occupied_ids.contains(&Some(id)) {
+                        ident.id = Some(id);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    #[allow(clippy::result_unit_err)]
+    pub fn rename_bound(&self, ident: &mut Ident) -> Result<(), ()> {
+        let binding = self.bindings.iter().rfind(|binding| *ident == binding.original).ok_or(())?;
+        *ident = binding.renamed.clone();
+        Ok(())
+    }
+
+    pub fn rename_to_valid_identifier(&self, ident: &mut String) {
+        match self.backend {
+            Backend::Javascript => rename_to_valid_js_identifier(ident),
+        }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct Binding {
+    pub original: Ident,
+    pub renamed: Ident,
+}
+
+//
+// Javascript
+//
 
 /// Reserved words in ECMAScript.
 ///

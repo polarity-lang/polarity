@@ -94,8 +94,7 @@ impl Print for Variable {
 impl Rename for Variable {
     fn rename(&mut self, ctx: &mut RenameCtx) {
         let Variable { name } = self;
-
-        name.rename(ctx);
+        ctx.rename_bound(name).expect("Variable must be bound.");
     }
 }
 
@@ -123,7 +122,7 @@ impl Rename for Call {
     fn rename(&mut self, ctx: &mut RenameCtx) {
         let Call { name, module_uri: _, args } = self;
 
-        name.rename(ctx);
+        ctx.rename_bound(name).expect("Call name must be bound.");
         args.rename(ctx);
     }
 }
@@ -174,7 +173,7 @@ impl Rename for DotCall {
         let DotCall { exp, module_uri: _, name, args } = self;
 
         exp.rename(ctx);
-        name.rename(ctx);
+        ctx.rename_bound(name).expect("DotCall name must be bound.");
         args.rename(ctx);
     }
 }
@@ -293,7 +292,7 @@ impl Rename for LocalLet {
     fn rename(&mut self, ctx: &mut RenameCtx) {
         let LocalLet { name, bound, body } = self;
 
-        name.rename(ctx);
+        ctx.rename_binder(name);
         bound.rename(ctx);
         body.rename(ctx);
     }
@@ -369,8 +368,8 @@ impl Rename for Pattern {
     fn rename(&mut self, ctx: &mut RenameCtx) {
         let Pattern { is_copattern: _, name, module_uri: _, params } = self;
 
-        name.rename(ctx);
-        params.rename(ctx);
+        ctx.rename_bound(name).expect("Pattern is bound by toplevel.");
+        ctx.rename_binders(params);
     }
 }
 

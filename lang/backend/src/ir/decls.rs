@@ -67,17 +67,8 @@ impl Rename for Module {
         let Module { uri: _, toplevel_names, use_decls: _, def_decls, codef_decls, let_decls } =
             self;
 
-        for decl in def_decls.iter() {
-            let mut name = decl.name.clone();
-            name.rename(ctx);
-        }
-        for decl in codef_decls.iter() {
-            let mut name = decl.name.clone();
-            name.rename(ctx);
-        }
-        for decl in let_decls.iter() {
-            let mut name = decl.name.clone();
-            name.rename(ctx);
+        for name in toplevel_names {
+            ctx.rename_binder(name);
         }
 
         def_decls.rename(ctx);
@@ -114,8 +105,8 @@ impl Rename for Def {
     fn rename(&mut self, ctx: &mut RenameCtx) {
         let Def { name, params, cases } = self;
 
-        name.rename(ctx);
-        params.rename(ctx);
+        ctx.rename_bound(name).expect("Def is bound by toplevel.");
+        ctx.rename_binders(params);
         cases.rename(ctx);
     }
 }
@@ -147,8 +138,8 @@ impl Rename for Codef {
     fn rename(&mut self, ctx: &mut RenameCtx) {
         let Codef { name, params, cases } = self;
 
-        name.rename(ctx);
-        params.rename(ctx);
+        ctx.rename_bound(name).expect("Codef is bound by toplevel.");
+        ctx.rename_binders(params);
         cases.rename(ctx);
     }
 }
@@ -187,8 +178,8 @@ impl Rename for Let {
     fn rename(&mut self, ctx: &mut RenameCtx) {
         let Let { name, params, body } = self;
 
-        name.rename(ctx);
-        params.rename(ctx);
+        ctx.rename_bound(name).expect("Toplevel let is bound by toplevel.");
+        ctx.rename_binders(params);
         body.rename(ctx);
     }
 }
