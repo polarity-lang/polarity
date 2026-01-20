@@ -452,6 +452,38 @@ impl Phase for JS {
     }
 }
 
+// NodeCheck phase
+//
+// This phase checks the validity of the generated JS code by running `node --check` on it.
+
+pub struct NodeCheck {
+    name: &'static str,
+}
+
+impl Phase for NodeCheck {
+    type Out = ();
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        db.js(uri, &mut file).await?;
+
+        // TODO: Handle error. This just crashes on failure.
+        let assert =
+            assert_cmd::Command::new("node").arg("--check").arg(file.path().as_os_str()).assert();
+        assert.stdout("").stderr("");
+
+        Ok(())
+    }
+}
+
 // TestOutput
 
 pub trait TestOutput {

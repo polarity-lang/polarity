@@ -115,6 +115,7 @@ impl Runner {
             .then(config, Xfunc::new("xfunc"))
             .then(config, IR::new("ir"))
             .then(config, JS::new("js"))
+            .then(config, NodeCheck::new("node"))
             .report()
     }
 }

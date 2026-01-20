@@ -16,11 +16,13 @@ autobins = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+assert_cmd   = { workspace = true }
 clap         = { workspace = true, features = ["derive"] }
 env_logger   = { workspace = true }
 log          = { workspace = true }
 miette       = { workspace = true }
 tantivy      = { workspace = true }
+tempfile     = { workspace = true }
 termcolor    = { workspace = true }
 tokio        = { workspace = true, features = ["rt-multi-thread"] }
 toml         = { workspace = true }
