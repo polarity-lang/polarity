@@ -101,7 +101,6 @@ impl RenameCtx {
         }
     }
 
-    #[allow(clippy::result_unit_err)]
     pub fn rename_bound(&self, ident: &mut Ident) -> RenameResult {
         let binding = self
             .active_bindings
