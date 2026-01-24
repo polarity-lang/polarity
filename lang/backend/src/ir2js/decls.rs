@@ -9,8 +9,17 @@ use super::traits::{ToJSExpr, ToJSStmt};
 
 impl ir::Module {
     pub fn to_js_module(&self) -> BackendResult<js::Module> {
-        let Self { uri: _, toplevel_names: _, use_decls: _, def_decls, codef_decls, let_decls } =
-            self;
+        let Self {
+            uri: _,
+            constructors: _,
+            destructors: _,
+            externs: _,
+            use_decls: _,
+            def_decls,
+            codef_decls,
+            let_decls,
+        } = self;
+
         let mut body = vec![];
 
         for let_decl in let_decls {

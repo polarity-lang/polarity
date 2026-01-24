@@ -15,7 +15,9 @@ use super::exprs::{print_cases, print_params};
 #[derive(Debug, Clone)]
 pub struct Module {
     pub uri: Url,
-    pub toplevel_names: Vec<Ident>,
+    pub constructors: Vec<Ident>,
+    pub destructors: Vec<Ident>,
+    pub externs: Vec<Ident>,
     pub use_decls: Vec<UseDecl>,
     pub def_decls: Vec<Def>,
     pub codef_decls: Vec<Codef>,
@@ -24,8 +26,16 @@ pub struct Module {
 
 impl Print for Module {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Module { uri: _, toplevel_names: _, use_decls, def_decls, codef_decls, let_decls } =
-            self;
+        let Module {
+            uri: _,
+            constructors: _,
+            destructors: _,
+            externs: _,
+            use_decls,
+            def_decls,
+            codef_decls,
+            let_decls,
+        } = self;
 
         // UseDecls
         //
@@ -62,12 +72,47 @@ impl Print for Module {
     }
 }
 
+impl Module {
+    pub fn toplevel_names(&self) -> Vec<Ident> {
+        let Module {
+            uri: _,
+            constructors,
+            destructors,
+            externs,
+            use_decls: _,
+            def_decls,
+            codef_decls,
+            let_decls,
+        } = self;
+
+        constructors
+            .iter()
+            .cloned()
+            .chain(destructors.iter().cloned())
+            .chain(externs.iter().cloned())
+            .chain(def_decls.iter().map(|decl| decl.name.clone()))
+            .chain(codef_decls.iter().map(|decl| decl.name.clone()))
+            .chain(let_decls.iter().map(|decl| decl.name.clone()))
+            .collect()
+    }
+}
+
 impl Rename for Module {
     fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
-        let Module { uri: _, toplevel_names, use_decls: _, def_decls, codef_decls, let_decls } =
-            self;
+        let mut toplevel_names = self.toplevel_names();
 
-        ctx.rename_binders(toplevel_names, |ctx| {
+        let Module {
+            uri: _,
+            constructors: _,
+            destructors: _,
+            externs: _,
+            use_decls: _,
+            def_decls,
+            codef_decls,
+            let_decls,
+        } = self;
+
+        ctx.rename_binders(&mut toplevel_names, |ctx| {
             def_decls.rename(ctx)?;
             codef_decls.rename(ctx)?;
             let_decls.rename(ctx)?;
