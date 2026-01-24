@@ -1,0 +1,4 @@
+def .eval {
+    Lit(n) => n,
+    Add(l, r) => add_i64(l.eval, r.eval),
+}
