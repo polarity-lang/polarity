@@ -23,7 +23,7 @@ impl<T: Rename> Rename for Vec<T> {
 
 #[derive(Debug, Clone, Error, Diagnostic)]
 pub enum RenameError {
-    #[error("The name {name} is not bound in the renaming context.")]
+    #[error("The name `{name}` is not bound in the renaming context.")]
     UnboundName { name: Ident },
 
     #[error("Active bindings are empty when they shouldn't.")]
