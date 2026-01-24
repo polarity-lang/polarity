@@ -42,7 +42,9 @@ pub fn rename_ir_for_js(ir: &mut Module) -> BackendResult {
 
 #[derive(Debug, Clone)]
 pub struct RenameCtx {
+    /// Bindings that are currently in scope where later entries shadow earlier ones.
     active_bindings: Vec<Binding>,
+    /// Remember bindings that are not in scope anymore to ensure uniqueness of names.
     inactive_bindings: Vec<Binding>,
     pub backend: Backend,
 }
