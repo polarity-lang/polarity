@@ -1,0 +1,11 @@
+extern I64: Type
+extern add_i64(x y: I64): I64
+
+data Expr { Lit(n: I64), Add(l r: Expr) }
+//                 ^^^
+// An unexpected internal error occurred: Top-level let I64 not found(T-XXX)
+
+def Expr.eval: I64 {
+    Lit(n) => n,
+    Add(l, r) => add_i64(l.eval, r.eval),
+}
