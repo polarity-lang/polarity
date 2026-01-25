@@ -9,7 +9,17 @@ use super::traits::{ToJSExpr, ToJSStmt};
 
 impl ir::Module {
     pub fn to_js_module(&self) -> BackendResult<js::Module> {
-        let Self { uri: _, use_decls: _, def_decls, codef_decls, let_decls } = self;
+        let Self {
+            uri: _,
+            constructors: _,
+            destructors: _,
+            externs: _,
+            use_decls: _,
+            def_decls,
+            codef_decls,
+            let_decls,
+        } = self;
+
         let mut body = vec![];
 
         for let_decl in let_decls {
@@ -51,7 +61,7 @@ impl ToJSStmt for ir::Let {
         let body_expr = body.to_js_expr()?;
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
-            ident: js::Ident::new(name.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+            ident: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
             declare: false,
             function: Box::new(js::Function {
                 params,
@@ -128,7 +138,7 @@ impl ToJSStmt for ir::Def {
         })];
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
-            ident: js::Ident::new(name.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+            ident: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
             declare: false,
             function: Box::new(js::Function {
                 params: all_params,
@@ -181,7 +191,7 @@ impl ToJSStmt for ir::Codef {
         });
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
-            ident: js::Ident::new(name.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+            ident: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
             declare: false,
             function: Box::new(js::Function {
                 params,
@@ -202,14 +212,14 @@ impl ToJSStmt for ir::Codef {
     }
 }
 
-fn params_to_js_params(params: &[String]) -> Vec<js::Param> {
+fn params_to_js_params(params: &[ir::Ident]) -> Vec<js::Param> {
     params
         .iter()
         .map(|p| js::Param {
             span: DUMMY_SP,
             decorators: vec![],
             pat: js::Pat::Ident(js::BindingIdent {
-                id: js::Ident::new(p.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+                id: js::Ident::new(p.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
                 type_ann: None,
             }),
         })

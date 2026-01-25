@@ -6,6 +6,9 @@ use polarity_lang_printer::tokens::*;
 use polarity_lang_printer::util::BracesExt;
 use polarity_lang_printer::{Alloc, Builder, DocAllocator, Precedence, Print, PrintCfg};
 
+use crate::ir::ident::Ident;
+use crate::ir::rename::{Rename, RenameCtx, RenameResult};
+
 #[derive(Debug, Clone)]
 pub enum Exp {
     Variable(Variable),
@@ -50,25 +53,55 @@ impl Print for Exp {
     }
 }
 
+impl Rename for Exp {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
+        match self {
+            Exp::Variable(variable) => variable.rename(ctx),
+            Exp::CtorCall(call) => call.rename(ctx),
+            Exp::CodefCall(call) => call.rename(ctx),
+            Exp::LetCall(call) => call.rename(ctx),
+            Exp::ExternCall(call) => call.rename(ctx),
+            Exp::DtorCall(dot_call) => dot_call.rename(ctx),
+            Exp::DefCall(dot_call) => dot_call.rename(ctx),
+            Exp::LocalMatch(local_match) => local_match.rename(ctx),
+            Exp::LocalComatch(local_comatch) => local_comatch.rename(ctx),
+            Exp::LocalLet(local_let) => local_let.rename(ctx),
+            Exp::Literal(_) => Ok(()),
+            Exp::Panic(_) => Ok(()),
+            Exp::ZST => Ok(()),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Variable {
-    pub name: String,
+    pub name: Ident,
 }
 
 impl Print for Variable {
     fn print_prec<'a>(
         &'a self,
-        _cfg: &PrintCfg,
+        cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: Precedence,
+        prec: Precedence,
     ) -> Builder<'a> {
-        alloc.text(&self.name)
+        let Variable { name } = self;
+
+        name.print_prec(cfg, alloc, prec)
+    }
+}
+
+impl Rename for Variable {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
+        let Variable { name } = self;
+        ctx.rename_bound(name)?;
+        Ok(())
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct Call {
-    pub name: String,
+    pub name: Ident,
     /// The URI of the module where `name` is defined.
     pub module_uri: Url,
     pub args: Vec<Exp>,
@@ -86,12 +119,21 @@ impl Print for Call {
     }
 }
 
+impl Rename for Call {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
+        let Call { name, module_uri: _, args } = self;
+        ctx.rename_bound(name)?;
+        args.rename(ctx)?;
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DotCall {
     pub exp: Box<Exp>,
     /// The URI of the module where `name` is defined.
     pub module_uri: Url,
-    pub name: String,
+    pub name: Ident,
     pub args: Vec<Exp>,
 }
 
@@ -127,6 +169,16 @@ impl Print for DotCall {
     }
 }
 
+impl Rename for DotCall {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
+        let DotCall { exp, module_uri: _, name, args } = self;
+        exp.rename(ctx)?;
+        ctx.rename_bound(name)?;
+        args.rename(ctx)?;
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LocalMatch {
     pub on_exp: Box<Exp>,
@@ -147,6 +199,15 @@ impl Print for LocalMatch {
             .append(alloc.keyword(MATCH))
             .append(alloc.space())
             .append(print_cases(cases, cfg, alloc))
+    }
+}
+
+impl Rename for LocalMatch {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
+        let LocalMatch { on_exp, cases } = self;
+        on_exp.rename(ctx)?;
+        cases.rename(ctx)?;
+        Ok(())
     }
 }
 
@@ -191,9 +252,16 @@ impl Print for LocalComatch {
     }
 }
 
+impl Rename for LocalComatch {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
+        let LocalComatch { cases } = self;
+        cases.rename(ctx)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LocalLet {
-    pub name: String,
+    pub name: Ident,
     pub bound: Box<Exp>,
     pub body: Box<Exp>,
 }
@@ -209,7 +277,7 @@ impl Print for LocalLet {
         alloc
             .keyword(LET)
             .append(alloc.space())
-            .append(alloc.text(name))
+            .append(alloc.text(name.to_string()))
             .append(alloc.space())
             .append(alloc.text(COLONEQ))
             .append(alloc.space())
@@ -217,6 +285,15 @@ impl Print for LocalLet {
             .append(alloc.keyword(SEMICOLON))
             .append(alloc.hardline())
             .append(body.print(cfg, alloc))
+    }
+}
+
+impl Rename for LocalLet {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
+        let LocalLet { name, bound, body } = self;
+        bound.rename(ctx)?;
+        ctx.rename_binder(name, |ctx| body.rename(ctx))?;
+        Ok(())
     }
 }
 
@@ -257,13 +334,23 @@ impl Print for Case {
     }
 }
 
+impl Rename for Case {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
+        let Case { pattern, body } = self;
+        let Pattern { is_copattern: _, name, module_uri: _, params } = pattern;
+        ctx.rename_bound(name)?;
+        ctx.rename_binders(params, |ctx| body.rename(ctx))?;
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Pattern {
     pub is_copattern: bool,
-    pub name: String,
+    pub name: Ident,
     /// The URI of the module where `name` is defined.
     pub module_uri: Url,
-    pub params: Vec<String>,
+    pub params: Vec<Ident>,
 }
 
 impl Print for Pattern {
@@ -277,7 +364,7 @@ impl Print for Pattern {
     }
 }
 
-pub fn print_params<'a>(params: &'a [String], alloc: &'a Alloc<'a>) -> Builder<'a> {
+pub fn print_params<'a>(params: &'a [Ident], alloc: &'a Alloc<'a>) -> Builder<'a> {
     if params.is_empty() {
         return alloc.nil();
     }
@@ -289,7 +376,7 @@ pub fn print_params<'a>(params: &'a [String], alloc: &'a Alloc<'a>) -> Builder<'
         if !first {
             doc = doc.append(COMMA).append(alloc.space());
         }
-        doc = doc.append(alloc.text(param));
+        doc = doc.append(alloc.text(param.to_string()));
         first = false;
     }
 

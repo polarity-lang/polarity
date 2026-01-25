@@ -9,6 +9,9 @@ impl ToIR for polarity_lang_ast::Module {
     fn to_ir(&self) -> BackendResult<Self::Target> {
         let polarity_lang_ast::Module { uri, use_decls, decls, meta_vars: _ } = self;
 
+        let mut constructors = Vec::new();
+        let mut destructors = Vec::new();
+        let mut externs = Vec::new();
         let mut def_decls = Vec::new();
         let mut codef_decls = Vec::new();
         let mut let_decls = Vec::new();
@@ -18,9 +21,15 @@ impl ToIR for polarity_lang_ast::Module {
                 polarity_lang_ast::Decl::Def(def) => def_decls.push(def.to_ir()?),
                 polarity_lang_ast::Decl::Codef(codef) => codef_decls.push(codef.to_ir()?),
                 polarity_lang_ast::Decl::Let(tl_let) => let_decls.push(tl_let.to_ir()?),
-                polarity_lang_ast::Decl::Extern(_) => {}
-                polarity_lang_ast::Decl::Data(_) => {}
-                polarity_lang_ast::Decl::Codata(_) => {}
+                polarity_lang_ast::Decl::Extern(ext) => externs.push(ext.name.to_string().into()),
+                polarity_lang_ast::Decl::Data(data) => data
+                    .ctors
+                    .iter()
+                    .for_each(|ctor| constructors.push(ctor.name.to_string().into())),
+                polarity_lang_ast::Decl::Codata(codata) => codata
+                    .dtors
+                    .iter()
+                    .for_each(|dtor| destructors.push(dtor.name.to_string().into())),
                 polarity_lang_ast::Decl::Infix(_) => {}
                 polarity_lang_ast::Decl::Note(_) => {}
             }
@@ -28,6 +37,9 @@ impl ToIR for polarity_lang_ast::Module {
 
         Ok(ir::Module {
             uri: uri.clone(),
+            constructors,
+            destructors,
+            externs,
             use_decls: use_decls.clone(),
             def_decls,
             codef_decls,
@@ -46,7 +58,7 @@ impl ToIR for polarity_lang_ast::Def {
         let cases =
             cases.iter().flat_map(|c| c.to_ir().transpose()).collect::<Result<Vec<_>, _>>()?;
 
-        Ok(ir::Def { name: name.to_string(), params, cases })
+        Ok(ir::Def { name: name.to_string().into(), params, cases })
     }
 }
 
@@ -60,7 +72,7 @@ impl ToIR for polarity_lang_ast::Codef {
         let cases =
             cases.iter().flat_map(|c| c.to_ir().transpose()).collect::<Result<Vec<_>, _>>()?;
 
-        Ok(ir::Codef { name: name.to_string(), params, cases })
+        Ok(ir::Codef { name: name.to_string().into(), params, cases })
     }
 }
 
@@ -73,6 +85,6 @@ impl ToIR for polarity_lang_ast::Let {
         let params = params.to_ir()?;
         let body = Box::new(body.to_ir()?);
 
-        Ok(ir::Let { name: name.to_string(), params, body })
+        Ok(ir::Let { name: name.to_string().into(), params, body })
     }
 }

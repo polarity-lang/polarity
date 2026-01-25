@@ -3,6 +3,9 @@
 
 pub mod decls;
 pub mod exprs;
+pub mod ident;
+pub mod rename;
 
 pub use decls::*;
 pub use exprs::*;
+pub use ident::Ident;

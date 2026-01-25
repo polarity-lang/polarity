@@ -52,7 +52,11 @@ impl ToJSExpr for ir::Variable {
     fn to_js_expr(&self) -> BackendResult<js::Expr> {
         let Self { name } = self;
         let name = name.clone();
-        Ok(js::Expr::Ident(js::Ident::new(name.into(), DUMMY_SP, SyntaxContext::empty())))
+        Ok(js::Expr::Ident(js::Ident::new(
+            name.to_string().into(),
+            DUMMY_SP,
+            SyntaxContext::empty(),
+        )))
     }
 }
 
@@ -77,7 +81,7 @@ impl ir::Call {
                 key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: CTOR_TAG.into() }),
                 value: Box::new(js::Expr::Lit(js::Lit::Str(js::Str {
                     span: DUMMY_SP,
-                    value: name.clone().into(),
+                    value: name.to_string().into(),
                     raw: None,
                 }))),
             }))),
@@ -109,7 +113,7 @@ impl ir::Call {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
             callee: js::Callee::Expr(Box::new(js::Expr::Ident(js::Ident::new(
-                name.clone().into(),
+                name.to_string().into(),
                 DUMMY_SP,
                 SyntaxContext::empty(),
             )))),
@@ -144,7 +148,7 @@ impl ir::DotCall {
                 obj: Box::new(obj_expr),
                 prop: js::MemberProp::Ident(js::IdentName {
                     span: DUMMY_SP,
-                    sym: name.clone().into(),
+                    sym: name.to_string().into(),
                 }),
             }))),
             args,
@@ -174,7 +178,7 @@ impl ir::DotCall {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
             callee: js::Callee::Expr(Box::new(js::Expr::Ident(js::Ident::new(
-                name.clone().into(),
+                name.to_string().into(),
                 DUMMY_SP,
                 SyntaxContext::empty(),
             )))),
@@ -385,7 +389,7 @@ impl ToJSExpr for ir::LocalLet {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
             params: vec![js::Pat::Ident(js::BindingIdent {
-                id: js::Ident::new(name.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+                id: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
                 type_ann: None,
             })],
             body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(body.to_js_expr()?))),
@@ -428,7 +432,7 @@ impl ir::Case {
         let pattern_name = pattern.name.clone();
         let test = js::Expr::Lit(js::Lit::Str(js::Str {
             span: DUMMY_SP,
-            value: pattern_name.into(),
+            value: pattern_name.to_string().into(),
             raw: None,
         }));
 
@@ -445,7 +449,11 @@ impl ir::Case {
                 decls: vec![js::VarDeclarator {
                     span: DUMMY_SP,
                     name: js::Pat::Ident(js::BindingIdent {
-                        id: js::Ident::new(param_name.into(), DUMMY_SP, SyntaxContext::empty()),
+                        id: js::Ident::new(
+                            param_name.to_string().into(),
+                            DUMMY_SP,
+                            SyntaxContext::empty(),
+                        ),
                         type_ann: None,
                     }),
                     init: Some(Box::new(js::Expr::Member(js::MemberExpr {
@@ -506,7 +514,7 @@ impl ir::Case {
             .iter()
             .map(|p| {
                 js::Pat::Ident(js::BindingIdent {
-                    id: js::Ident::new(p.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+                    id: js::Ident::new(p.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
                     type_ann: None,
                 })
             })
@@ -531,7 +539,10 @@ impl ir::Case {
         });
 
         Ok(js::PropOrSpread::Prop(Box::new(js::Prop::KeyValue(js::KeyValueProp {
-            key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: method_name.into() }),
+            key: js::PropName::Ident(js::IdentName {
+                span: DUMMY_SP,
+                sym: method_name.to_string().into(),
+            }),
             value: Box::new(arrow),
         }))))
     }
