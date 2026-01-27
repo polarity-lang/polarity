@@ -66,10 +66,10 @@ trait ExpectType {
 
 impl<T: HasType> ExpectType for T {
     fn expect_typ(&self) -> TcResult<Box<Exp>> {
-        self.typ().ok_or(Box::new(TypeError::Impossible {
+        self.typ().ok_or(TypeError::Impossible {
             message: "Expected inferred type".to_owned(),
             span: None,
-        }))
+        })
     }
 }
 

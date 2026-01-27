@@ -22,7 +22,7 @@ fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
 }
 
 /// The result type specialized to type errors.
-pub type TcResult<T = ()> = Result<T, Box<TypeError>>;
+pub type TcResult<T = ()> = Result<T, TypeError>;
 
 /// This enum contains all errors that can be emitted during elaboration, i.e. either
 /// during bidirectional type inference, normalization, index unification or conversion checking.
@@ -268,7 +268,7 @@ impl TypeError {
         undeclared: HashSet<String>,
         duplicate: HashSet<String>,
         info: &Option<Span>,
-    ) -> Box<Self> {
+    ) -> Self {
         let mut msgs = Vec::new();
 
         if !missing.is_empty() {
@@ -281,23 +281,22 @@ impl TypeError {
             msgs.push(format!("duplicate {}", comma_separated(duplicate.iter().cloned())));
         }
 
-        Self::InvalidMatch { msg: separated("; ", msgs), span: info.to_miette() }.into()
+        Self::InvalidMatch { msg: separated("; ", msgs), span: info.to_miette() }
     }
 
     pub fn expected_typ_app(got: &Exp) -> Self {
         Self::ExpectedTypApp { got: got.print_to_string(None), span: got.span().to_miette() }
     }
 
-    pub fn occurs_check_failed(idx: Idx, exp: &Exp) -> Box<Self> {
+    pub fn occurs_check_failed(idx: Idx, exp: &Exp) -> Self {
         Self::OccursCheckFailed {
             idx,
             exp: exp.print_to_string(None),
             span: exp.span().to_miette(),
         }
-        .into()
     }
 
-    pub fn cannot_decide(lhs: &Exp, rhs: &Exp, while_elaborating_span: &Option<Span>) -> Box<Self> {
+    pub fn cannot_decide(lhs: &Exp, rhs: &Exp, while_elaborating_span: &Option<Span>) -> Self {
         Self::CannotDecide {
             lhs: lhs.print_to_string(None),
             rhs: rhs.print_to_string(None),
@@ -305,7 +304,6 @@ impl TypeError {
             rhs_span: rhs.span().to_miette(),
             while_elaborating_span: while_elaborating_span.to_miette(),
         }
-        .into()
     }
 }
 

@@ -49,7 +49,7 @@ impl<T: Into<AppError>> From<T> for AppErrors {
 pub enum AppError {
     Parser(#[from] polarity_lang_parser::ParseError),
     Lowering(#[from] Box<polarity_lang_lowering::LoweringError>),
-    Type(#[from] Box<polarity_lang_elaborator::result::TypeError>),
+    Type(#[from] polarity_lang_elaborator::result::TypeError),
     Xfunc(#[from] polarity_lang_transformations::result::XfuncError),
     Driver(#[from] DriverError),
     Backend(#[from] BackendError),
