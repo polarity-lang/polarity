@@ -1,4 +1,4 @@
-use polarity_lang_ast::{Lvl, Shift, ShiftRange, VarBound};
+use polarity_lang_ast::{Lvl, Shift, ShiftRange};
 use pretty::DocAllocator;
 
 use polarity_lang_ast::ctx::LevelCtx;
