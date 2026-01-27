@@ -332,8 +332,7 @@ impl Database {
             &info_table,
         )
         .map(Arc::new)
-        .map_err(|errs| errs.into_iter().map(|err| AppError::from(Box::new(err))).collect())
-        .map_err(AppErrors::from_errors);
+        .map_err(AppErrors::from);
 
         self.ast.insert(uri.clone(), ast.clone());
         ast
@@ -532,7 +531,7 @@ impl Database {
         match main {
             Some(exp) => {
                 let nf = exp.normalize_in_empty_env(&Rc::new(info_table));
-                nf.map(Some).map_err(|err| AppErrors::from_single_error((*err).into()))
+                nf.map(Some).map_err(|err| AppErrors::from_single_error(err.into()))
             }
             None => Ok(None),
         }
