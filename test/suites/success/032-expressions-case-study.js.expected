@@ -1,0 +1,55 @@
+function pres(__self, e, ty) {
+    switch(__self.tag){
+        case "TTrue":
+            return {
+                preservationStep: (e1, e2, ty0, s)=>(s.d_step1(e2))
+            };
+        case "TFalse":
+            return {
+                preservationStep: (e0, e3, ty1, s0)=>(s0.d_step3(e3))
+            };
+        case "TIte":
+            const e4 = __self.args[0];
+            const e5 = __self.args[1];
+            const e6 = __self.args[2];
+            const ty2 = __self.args[3];
+            const t1 = __self.args[4];
+            const t2 = __self.args[5];
+            const t3 = __self.args[6];
+            return {
+                preservationStep: (e7, e8, ty3, s1)=>(s1.d_step5(e4, e5, e6, e8, ty, t1, t2, t3))
+            };
+    }
+}
+function StIteT(e9, e10) {
+    return {
+        d_step5: (e11, e12, e13, e14, ty4, t, t0, t4)=>(t0)
+    };
+}
+function StIteF(e15, e16) {
+    return {
+        d_step5: (e17, e18, e19, e20, ty5, t5, t6, t7)=>(t7)
+    };
+}
+function StIte(e21, e22, e23, e24, s2) {
+    return {
+        d_step5: (e25, e26, e27, e28, ty6, t8, t9, t10)=>({
+                tag: "TIte",
+                args: [
+                    e22,
+                    e23,
+                    e24,
+                    ty6,
+                    pres(t8, e21, {
+                        tag: "TyBool",
+                        args: []
+                    }).preservationStep(e21, e22, {
+                        tag: "TyBool",
+                        args: []
+                    }, s2),
+                    t9,
+                    t10
+                ]
+            })
+    };
+}

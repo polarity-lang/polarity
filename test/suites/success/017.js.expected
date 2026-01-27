@@ -1,0 +1,15 @@
+function example1() {
+    return {
+        tag: "MkPair",
+        args: [
+            {
+                tag: "True",
+                args: []
+            },
+            {
+                tag: "False",
+                args: []
+            }
+        ]
+    };
+}

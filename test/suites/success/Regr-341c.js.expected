@@ -1,0 +1,30 @@
+function foo() {
+    return {
+        ap: (x)=>(neg(x))
+    };
+}
+function bar() {
+    return {
+        tag: "Refl",
+        args: [
+            {
+                tag: "F",
+                args: []
+            }
+        ]
+    };
+}
+function neg(__self) {
+    switch(__self.tag){
+        case "T":
+            return {
+                tag: "F",
+                args: []
+            };
+        case "F":
+            return {
+                tag: "T",
+                args: []
+            };
+    }
+}

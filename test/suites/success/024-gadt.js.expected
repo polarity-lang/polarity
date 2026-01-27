@@ -1,0 +1,10 @@
+function unwrap(__self) {
+    switch(__self.tag){
+        case "WrapFoo":
+            const x = __self.args[0];
+            return x;
+        case "WrapBar":
+            const x0 = __self.args[0];
+            return x0;
+    }
+}

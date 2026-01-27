@@ -1,0 +1,12 @@
+function ind(__self, P, step) {
+    switch(__self.tag){
+        case "True":
+            return (()=>{
+                throw new Error("not yet implemented");
+            })();
+        case "False":
+            return (()=>{
+                throw new Error("not yet implemented");
+            })();
+    }
+}

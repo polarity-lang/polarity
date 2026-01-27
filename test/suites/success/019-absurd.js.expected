@@ -1,0 +1,14 @@
+function elim_zero(__self) {
+    switch(__self.tag){
+    }
+}
+function elim(__self) {
+    switch(__self.tag){
+        case "Ok":
+            const x = __self.args[0];
+            return x;
+        case "Absurd":
+            const x0 = __self.args[0];
+            return elim_zero(x0);
+    }
+}

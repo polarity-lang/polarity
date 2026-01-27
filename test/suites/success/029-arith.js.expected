@@ -1,0 +1,246 @@
+function example() {
+    return {
+        tag: "And",
+        args: [
+            {
+                tag: "IsZero",
+                args: [
+                    {
+                        tag: "Add",
+                        args: [
+                            {
+                                tag: "Num",
+                                args: [
+                                    {
+                                        tag: "Z",
+                                        args: []
+                                    }
+                                ]
+                            },
+                            {
+                                tag: "Num",
+                                args: [
+                                    {
+                                        tag: "Z",
+                                        args: []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                tag: "Boo",
+                args: [
+                    {
+                        tag: "T",
+                        args: []
+                    }
+                ]
+            }
+        ]
+    };
+}
+function example_has_type() {
+    return {
+        tag: "TAnd",
+        args: [
+            {
+                tag: "IsZero",
+                args: [
+                    {
+                        tag: "Add",
+                        args: [
+                            {
+                                tag: "Num",
+                                args: [
+                                    {
+                                        tag: "Z",
+                                        args: []
+                                    }
+                                ]
+                            },
+                            {
+                                tag: "Num",
+                                args: [
+                                    {
+                                        tag: "Z",
+                                        args: []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                tag: "Boo",
+                args: [
+                    {
+                        tag: "T",
+                        args: []
+                    }
+                ]
+            },
+            {
+                tag: "TIsZero",
+                args: [
+                    {
+                        tag: "Add",
+                        args: [
+                            {
+                                tag: "Num",
+                                args: [
+                                    {
+                                        tag: "Z",
+                                        args: []
+                                    }
+                                ]
+                            },
+                            {
+                                tag: "Num",
+                                args: [
+                                    {
+                                        tag: "Z",
+                                        args: []
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        tag: "TAdd",
+                        args: [
+                            {
+                                tag: "Num",
+                                args: [
+                                    {
+                                        tag: "Z",
+                                        args: []
+                                    }
+                                ]
+                            },
+                            {
+                                tag: "Num",
+                                args: [
+                                    {
+                                        tag: "Z",
+                                        args: []
+                                    }
+                                ]
+                            },
+                            {
+                                tag: "TNum",
+                                args: [
+                                    {
+                                        tag: "Z",
+                                        args: []
+                                    }
+                                ]
+                            },
+                            {
+                                tag: "TNum",
+                                args: [
+                                    {
+                                        tag: "Z",
+                                        args: []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                tag: "TBoo",
+                args: [
+                    {
+                        tag: "T",
+                        args: []
+                    }
+                ]
+            }
+        ]
+    };
+}
+function add(__self, y) {
+    switch(__self.tag){
+        case "Z":
+            return y;
+        case "S":
+            const x = __self.args[0];
+            return {
+                tag: "S",
+                args: [
+                    add(x, y)
+                ]
+            };
+    }
+}
+function and(__self, y0) {
+    switch(__self.tag){
+        case "T":
+            return y0;
+        case "F":
+            return {
+                tag: "F",
+                args: []
+            };
+    }
+}
+function preserves(__self, e1, e2, t, h1) {
+    switch(__self.tag){
+        case "EAddCongL":
+            const lhs = __self.args[0];
+            const lhs0 = __self.args[1];
+            const rhs = __self.args[2];
+            const h_lhs = __self.args[3];
+            return (()=>{
+                throw new Error("not yet implemented");
+            })();
+        case "EAddCongR":
+            const lhs1 = __self.args[0];
+            const rhs0 = __self.args[1];
+            const rhs1 = __self.args[2];
+            const h_rhs = __self.args[3];
+            return (()=>{
+                throw new Error("not yet implemented");
+            })();
+        case "EAddRed":
+            const n1 = __self.args[0];
+            const n2 = __self.args[1];
+            return (()=>{
+                throw new Error("not yet implemented");
+            })();
+        case "EIsZeroCong":
+            const e = __self.args[0];
+            const e0 = __self.args[1];
+            const h_e = __self.args[2];
+            return (()=>{
+                throw new Error("not yet implemented");
+            })();
+        case "EAndCongL":
+            const lhs2 = __self.args[0];
+            const lhs3 = __self.args[1];
+            const rhs2 = __self.args[2];
+            const h_lhs0 = __self.args[3];
+            return (()=>{
+                throw new Error("not yet implemented");
+            })();
+        case "EAndCongR":
+            const lhs4 = __self.args[0];
+            const rhs3 = __self.args[1];
+            const rhs4 = __self.args[2];
+            const h_rhs0 = __self.args[3];
+            return (()=>{
+                throw new Error("not yet implemented");
+            })();
+        case "EAndRed":
+            const b1 = __self.args[0];
+            const b2 = __self.args[1];
+            return (()=>{
+                throw new Error("not yet implemented");
+            })();
+    }
+}

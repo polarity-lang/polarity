@@ -1,0 +1,15 @@
+function example() {
+    return {
+        tag: "Cons",
+        args: [
+            {
+                tag: "Unit",
+                args: []
+            },
+            {
+                tag: "Nil",
+                args: []
+            }
+        ]
+    };
+}

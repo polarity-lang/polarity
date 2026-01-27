@@ -1,0 +1,34 @@
+function rep(__self) {
+    switch(__self.tag){
+        case "T":
+            return {
+                tag: "TrueRep",
+                args: []
+            };
+        case "F":
+            return {
+                tag: "FalseRep",
+                args: []
+            };
+    }
+}
+function example(__self, b) {
+    switch(__self.tag){
+        case "Unit":
+            return (()=>{
+                const __scrutinee = b;
+                switch(__scrutinee.tag){
+                    case "T":
+                        return {
+                            tag: "TrueRep",
+                            args: []
+                        };
+                    case "F":
+                        return {
+                            tag: "FalseRep",
+                            args: []
+                        };
+                }
+            })();
+    }
+}

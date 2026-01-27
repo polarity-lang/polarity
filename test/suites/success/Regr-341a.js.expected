@@ -1,0 +1,15 @@
+function foo(x) {
+    return (()=>{
+        throw new Error("not yet implemented");
+    })();
+}
+function T() {
+    return foo({
+        ap: (x0)=>(F().ap(x0))
+    });
+}
+function F() {
+    return {
+        ap: (x1)=>(undefined)
+    };
+}

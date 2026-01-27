@@ -1,0 +1,29 @@
+function head(__self, n) {
+    switch(__self.tag){
+        case "Cons":
+            const n0 = __self.args[0];
+            const x = __self.args[1];
+            const xs = __self.args[2];
+            return x;
+    }
+}
+function tail(__self, n1) {
+    switch(__self.tag){
+        case "Cons":
+            const n2 = __self.args[0];
+            const x0 = __self.args[1];
+            const xs0 = __self.args[2];
+            return xs0;
+    }
+}
+function Empty() {
+    return {};
+}
+function FromVec(n3, xs1) {
+    return {
+        read: (n4)=>({
+                proj1: ()=>(head(xs1, n4)),
+                proj2: ()=>(FromVec(n4, tail(xs1, n4)))
+            })
+    };
+}

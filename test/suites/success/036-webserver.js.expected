@@ -1,0 +1,120 @@
+function cong_pair(__self, a, b, c) {
+    switch(__self.tag){
+        case "Refl":
+            const x0 = __self.args[0];
+            return {
+                tag: "Refl",
+                args: [
+                    Pair(b, c)
+                ]
+            };
+    }
+}
+function Pair(x, y) {
+    return {
+        fst: ()=>(x),
+        snd: ()=>(y)
+    };
+}
+function MkUtils() {
+    return {
+        put_twice: (n, route, state)=>(route.put(n).ap(route.put(n).ap(state).fst()))
+    };
+}
+function Index() {
+    return {
+        requiresLogin: ()=>({
+                tag: "F",
+                args: []
+            }),
+        post: ()=>({
+                ap: (state0)=>({
+                        fst: ()=>(state0),
+                        snd: ()=>({
+                                tag: "Forbidden",
+                                args: []
+                            })
+                    })
+            }),
+        get: ()=>({
+                ap: (state1)=>({
+                        tag: "Return",
+                        args: [
+                            state1.counter({
+                                tag: "F",
+                                args: []
+                            })
+                        ]
+                    })
+            }),
+        put: (n0)=>({
+                ap: (state2)=>(Pair(state2, {
+                        tag: "Forbidden",
+                        args: []
+                    }))
+            }),
+        put_idempotent: (n1)=>({
+                dap: (x1, state3)=>({
+                        tag: "Refl",
+                        args: [
+                            Pair(state3, {
+                                tag: "Forbidden",
+                                args: []
+                            })
+                        ]
+                    })
+            })
+    };
+}
+function Admin() {
+    return {
+        requiresLogin: ()=>({
+                tag: "T",
+                args: []
+            }),
+        post: ()=>({
+                ap: (state4)=>({
+                        fst: ()=>(state4.increment()),
+                        snd: ()=>({
+                                tag: "Return",
+                                args: [
+                                    state4.increment().counter({
+                                        tag: "T",
+                                        args: []
+                                    })
+                                ]
+                            })
+                    })
+            }),
+        get: ()=>({
+                ap: (state5)=>({
+                        tag: "Return",
+                        args: [
+                            state5.counter({
+                                tag: "T",
+                                args: []
+                            })
+                        ]
+                    })
+            }),
+        put: (n2)=>({
+                ap: (state6)=>(Pair(state6.set(n2), {
+                        tag: "Return",
+                        args: [
+                            n2
+                        ]
+                    }))
+            }),
+        put_idempotent: (n3)=>({
+                dap: (x2, state7)=>(cong_pair(state7.set_idempotent({
+                        tag: "T",
+                        args: []
+                    }, n3), state7.set(n3), state7.set(n3).set(n3), {
+                        tag: "Return",
+                        args: [
+                            n3
+                        ]
+                    }))
+            })
+    };
+}
