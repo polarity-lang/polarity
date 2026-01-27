@@ -80,7 +80,7 @@ pub fn convert(
     let mut ctx = Ctx::new(vec![constraint]);
     match ctx.unify(meta_vars, while_elaborating_span) {
         Ok(()) => Ok(()),
-        Err(err) => match *err {
+        Err(err) => match err {
             // The code below is responsible for generating improved error messages.
             // See in particular the documentation at [crate::result::TypeError::NotEq].
             //

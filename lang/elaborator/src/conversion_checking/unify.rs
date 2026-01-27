@@ -616,7 +616,7 @@ mod tests {
             .unwrap_err();
 
         assert_eq!(
-            *err,
+            err,
             MetaArgNotVariable {
                 span: None,
                 meta_var: "_0".to_owned(),
@@ -660,7 +660,7 @@ mod tests {
             .unwrap_err();
 
         assert_eq!(
-            *err,
+            err,
             MetaEquatedToOutOfScope {
                 span: None,
                 meta_var: "_0".to_owned(),
@@ -713,7 +713,7 @@ mod tests {
             .unwrap_err();
 
         assert_eq!(
-            *err,
+            err,
             MetaOccursCheckFailed {
                 span: None,
                 meta_var: "_0".to_owned(),
