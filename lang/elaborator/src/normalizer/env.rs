@@ -114,7 +114,7 @@ impl ToEnv for LevelCtx {
                         let idx = Idx { fst: self.bound.len() - 1 - fst, snd: v.len() - 1 - snd };
                         Box::new(Val::Neu(Neu::Variable(Variable {
                             span: None,
-                            name: VarBound::from_string(""),
+                            name: v[snd].name.clone().into(),
                             idx,
                         })))
                     })
