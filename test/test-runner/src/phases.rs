@@ -445,6 +445,18 @@ impl Phase for JS {
     }
 
     async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
+        let ir = db.ir(uri).await?;
+
+        // TODO: multiple modules are not yet implemented for the backend
+        if !ir.use_decls.is_empty() {
+            return Ok(String::from("NOT YET IMPLEMENTED"));
+        }
+
+        // TODO: extern calls are not yet implemented for the backend
+        if !ir.externs.is_empty() {
+            return Ok(String::from("NOT YET IMPLEMENTED"));
+        }
+
         let mut out = Vec::new();
         db.js(uri, &mut out).await?;
         let out = String::from_utf8(out).unwrap();
@@ -472,10 +484,21 @@ impl Phase for NodeCheck {
     }
 
     async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
+        let ir = db.ir(uri).await?;
+
+        // TODO: multiple modules are not yet implemented for the backend
+        if !ir.use_decls.is_empty() {
+            return Ok(());
+        }
+
+        // TODO: extern calls are not yet implemented for the backend
+        if !ir.externs.is_empty() {
+            return Ok(());
+        }
+
         let mut file = tempfile::NamedTempFile::new().unwrap();
         db.js(uri, &mut file).await?;
 
-        // TODO: Handle error. This just crashes on failure.
         let assert =
             assert_cmd::Command::new("node").arg("--check").arg(file.path().as_os_str()).assert();
         assert.stdout("").stderr("");
