@@ -1,6 +1,6 @@
 use polarity_lang_ast::ctx::values::Binder;
 use polarity_lang_ast::ctx::{BindContext, LevelCtx};
-use polarity_lang_ast::{self, MetaVar, MetaVarKind, MetaVarState, VarBound};
+use polarity_lang_ast::{self, MetaVar, MetaVarKind, MetaVarState};
 use polarity_lang_ast::{HashMap, HashSet};
 use polarity_lang_ast::{Idx, Lvl};
 use polarity_lang_miette_util::ToMiette;

@@ -3,7 +3,7 @@ use crate::ctx::values::Binder;
 use crate::rename::Rename;
 use crate::{
     ContainsMetaVars, Exp, FreeVars, HashMap, HashSet, Lvl, MetaVar, MetaVarState, Occurs, Shift,
-    Subst, Substitutable, VarBind, VarBound, Variable, Zonk, ZonkError,
+    Subst, Substitutable, Variable, Zonk, ZonkError,
 };
 
 /// A closure tracking free variables (and their substitution).
