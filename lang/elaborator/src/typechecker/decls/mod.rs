@@ -20,20 +20,28 @@ use super::{TypeError, ctx::Ctx, type_info_table::TypeInfoTable};
 /// Check a module
 ///
 /// The caller of this function needs to resolve module dependencies, check all dependencies, and provide a info table with all symbols from these dependencies.
-pub fn check_with_lookup_table(prg: Rc<Module>, info_table: &TypeInfoTable) -> TcResult<Module> {
+pub fn check_with_lookup_table(
+    prg: Rc<Module>,
+    info_table: &TypeInfoTable,
+) -> Result<Module, Vec<TypeError>> {
     log::debug!("Checking module: {}", prg.uri);
 
     let mut ctx = Ctx::new(prg.meta_vars.clone(), info_table.clone(), prg.clone());
 
-    let mut decls =
-        prg.decls.iter().map(|decl| decl.check_wf(&mut ctx)).collect::<TcResult<Vec<_>>>()?;
+    let mut decls = prg
+        .decls
+        .iter()
+        .map(|decl| decl.check_wf(&mut ctx))
+        .collect::<TcResult<Vec<_>>>()
+        .map_err(|err| vec![err])?;
 
     decls
         .zonk(&ctx.meta_vars)
-        .map_err(|err| TypeError::Impossible { message: err.to_string(), span: None })?;
+        .map_err(|err| TypeError::Impossible { message: err.to_string(), span: None })
+        .map_err(|err| vec![err])?;
 
     check_metavars_solved(&ctx.meta_vars)?;
-    check_metavars_resolved(&ctx.meta_vars, &decls)?;
+    check_metavars_resolved(&ctx.meta_vars, &decls).map_err(|err| vec![err])?;
 
     Ok(Module {
         uri: prg.uri.clone(),
@@ -44,7 +52,9 @@ pub fn check_with_lookup_table(prg: Rc<Module>, info_table: &TypeInfoTable) -> T
 }
 
 /// Check that there are no unresolved metavariables that remain after typechecking.
-pub fn check_metavars_solved(meta_vars: &HashMap<MetaVar, MetaVarState>) -> TcResult {
+pub fn check_metavars_solved(
+    meta_vars: &HashMap<MetaVar, MetaVarState>,
+) -> Result<(), Vec<TypeError>> {
     let mut unsolved: HashSet<MetaVar> = HashSet::default();
     for (var, state) in meta_vars.iter() {
         // We only have to throw an error for unsolved metavars which were either
@@ -56,16 +66,18 @@ pub fn check_metavars_solved(meta_vars: &HashMap<MetaVar, MetaVarState>) -> TcRe
         }
     }
 
-    // We are only throwing one error for the first unresolved metavariable in the hashset.
-    // Ideally we want to throw multiple errors here, but this functionality is
-    // not yet implemented.
-    if let Some(mv) = unsolved.iter().next() {
-        let err = TypeError::UnresolvedMeta {
+    let errs: Vec<_> = unsolved
+        .into_iter()
+        .map(|mv| TypeError::UnresolvedMeta {
             span: mv.span.to_miette(),
             meta_var: mv.print_to_string(None),
-        };
-        return Err(err.into());
+        })
+        .collect();
+
+    if !errs.is_empty() {
+        return Err(errs);
     }
+
     Ok(())
 }
 
