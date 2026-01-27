@@ -332,7 +332,7 @@ impl Database {
             &info_table,
         )
         .map(Arc::new)
-        .map_err(|errs| errs.into_iter().map(AppError::from).collect())
+        .map_err(|errs| errs.into_iter().map(|err| AppError::from(Box::new(err))).collect())
         .map_err(AppErrors::from_errors);
 
         self.ast.insert(uri.clone(), ast.clone());
