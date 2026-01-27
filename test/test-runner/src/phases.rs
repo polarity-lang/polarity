@@ -386,12 +386,12 @@ impl Phase for Xfunc {
             let new_source = db.edited(uri, xfunc_out.edits);
             db.write_source(&new_uri, &new_source.to_string()).await?;
             db.ast(&new_uri).await.map_err(|err| {
-                polarity_lang_driver::AppError::Type(Box::new(
+                polarity_lang_driver::AppError::Type(
                     polarity_lang_elaborator::result::TypeError::Impossible {
                         message: format!("Failed to xfunc {type_name}: {err:?}"),
                         span: None,
                     },
-                ))
+                )
             })?;
         }
 

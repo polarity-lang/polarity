@@ -33,7 +33,7 @@ pub fn check_with_lookup_table(
         .iter()
         .map(|decl| decl.check_wf(&mut ctx))
         .collect::<TcResult<Vec<_>>>()
-        .map_err(|err| vec![err])?;
+        .map_err(|err| vec![*err])?;
 
     decls
         .zonk(&ctx.meta_vars)
@@ -41,7 +41,7 @@ pub fn check_with_lookup_table(
         .map_err(|err| vec![err])?;
 
     check_metavars_solved(&ctx.meta_vars)?;
-    check_metavars_resolved(&ctx.meta_vars, &decls).map_err(|err| vec![err])?;
+    check_metavars_resolved(&ctx.meta_vars, &decls).map_err(|err| vec![*err])?;
 
     Ok(Module {
         uri: prg.uri.clone(),

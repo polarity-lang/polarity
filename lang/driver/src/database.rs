@@ -528,7 +528,7 @@ impl Database {
         match main {
             Some(exp) => {
                 let nf = exp.normalize_in_empty_env(&Rc::new(info_table));
-                nf.map(Some).map_err(AppErrors::from)
+                nf.map(Some).map_err(|err| AppErrors::from_single_error((*err).into()))
             }
             None => Ok(None),
         }
