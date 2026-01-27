@@ -103,6 +103,18 @@ impl Print for VarBound {
     }
 }
 
+impl From<VarBind> for VarBound {
+    fn from(value: VarBind) -> Self {
+        match &value {
+            VarBind::Var { id, .. } => VarBound::from_string(id),
+            // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
+            // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
+            // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
+            VarBind::Wildcard { .. } => VarBound::from_string("x"),
+        }
+    }
+}
+
 // Global identifiers (binding site)
 //
 //

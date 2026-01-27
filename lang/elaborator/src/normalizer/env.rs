@@ -133,15 +133,7 @@ impl ToEnv for TypeCtx {
             .map_idx(|idx, binder| {
                 Box::new(Val::Neu(Neu::Variable(Variable {
                     span: None,
-                    name: match &binder.name {
-                        polarity_lang_ast::VarBind::Var { span, id } => {
-                            VarBound { span: *span, id: id.clone() }
-                        }
-                        // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
-                        // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
-                        // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
-                        polarity_lang_ast::VarBind::Wildcard { .. } => VarBound::from_string("x"),
-                    },
+                    name: binder.name.clone().into(),
                     idx,
                 })))
             })

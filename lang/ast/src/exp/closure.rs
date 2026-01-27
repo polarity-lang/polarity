@@ -26,13 +26,7 @@ pub struct Closure {
 /// - The returned Binder contains an expression which is bound in the context.
 fn compute_binder(ctx: &LevelCtx, lvl: Lvl, has_content: bool) -> Binder<Option<Box<Exp>>> {
     let var_bind = ctx.bound[lvl.fst][lvl.snd].name.clone();
-    let name = match &var_bind {
-        VarBind::Var { id, .. } => VarBound { span: None, id: id.clone() },
-        // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
-        // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
-        // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
-        VarBind::Wildcard { .. } => VarBound::from_string("x"),
-    };
+    let name = var_bind.clone().into();
     Binder {
         name: var_bind,
         content: has_content.then(|| {

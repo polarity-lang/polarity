@@ -134,15 +134,7 @@ impl Ctx {
                     polarity_lang_ast::Variable {
                         span: None,
                         idx: self.level_to_index(Lvl { fst, snd }),
-                        name: match &binder.name {
-                            polarity_lang_ast::VarBind::Var { id, .. } => VarBound::from_string(id),
-                            // When we encouter a wildcard, we use `x` as a placeholder name for the variable referencing this binder.
-                            // Of course, `x` is not guaranteed to be unique; in general we do not guarantee that the string representation of variables remains intact during elaboration.
-                            // When reliable variable names are needed (e.g. for printing source code or code generation), the `renaming` transformation needs to be applied to the AST first.
-                            polarity_lang_ast::VarBind::Wildcard { .. } => {
-                                VarBound::from_string("x")
-                            }
-                        },
+                        name: binder.name.clone().into(),
                         inferred_type: None,
                     }
                     .into(),
