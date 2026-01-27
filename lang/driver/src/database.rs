@@ -356,6 +356,10 @@ impl Database {
 
         let module = self.ast(uri).await?;
 
+        // TODO: This is very inefficient, we should fix this in the future.
+        let mut module = Arc::unwrap_or_clone(module);
+        module.rename();
+
         // Convert to intermediate representation (IR)
         let ir = module.to_ir().map(Arc::new).map_err(AppErrors::from);
 
