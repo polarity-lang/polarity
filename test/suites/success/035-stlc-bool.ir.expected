@@ -386,7 +386,7 @@ def .elem_append_first(ctx2, t, x) {
                                       t',
                                       ts,
                                       ts.elem_append_first(ctx2, t, x')
-                                        .ap(h_lt.le_unsucc(S(), ts.len))
+                                        .ap(h_lt.le_unsucc(S(x'), ts.len))
                                         .ap(h)),
                         }
                 }
@@ -500,7 +500,7 @@ def .s_le(x, y) {
 
 def .s_pred(x, y) {
     LERefl(x0) => Refl(S(x)),
-    LESucc(x0, y', x1) => Refl(S()),
+    LESucc(x0, y', x1) => Refl(S(y')),
 }
 
 def .not {
