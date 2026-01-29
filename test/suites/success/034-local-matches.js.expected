@@ -1,0 +1,29 @@
+function top_is_zero(__self, n) {
+    switch(__self.tag){
+        case "Unit":
+            return (()=>{
+                const __scrutinee = n;
+                switch(__scrutinee.tag){
+                    case "Z":
+                        return {
+                            tag: "T",
+                            args: []
+                        };
+                    case "S":
+                        const n0 = __scrutinee.args[0];
+                        return {
+                            tag: "F",
+                            args: []
+                        };
+                }
+            })();
+    }
+}
+function top_id(__self) {
+    switch(__self.tag){
+        case "Unit":
+            return {
+                ap: (x)=>(x)
+            };
+    }
+}

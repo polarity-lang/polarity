@@ -1,0 +1,11 @@
+function example() {
+    return Id().ap({
+        tag: "Unit",
+        args: []
+    });
+}
+function Id() {
+    return {
+        ap: (x1)=>(x1)
+    };
+}

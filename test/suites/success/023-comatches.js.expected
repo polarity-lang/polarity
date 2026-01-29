@@ -1,0 +1,29 @@
+function id(__self) {
+    switch(__self.tag){
+        case "Unit":
+            return {
+                pi_elim: (x0, a)=>({
+                        ap: (x3)=>(x3)
+                    })
+            };
+    }
+}
+function const_(__self) {
+    switch(__self.tag){
+        case "Unit":
+            return {
+                pi_elim: (x, a0)=>({
+                        pi_elim: (x2, b)=>({
+                                ap: (x5)=>({
+                                        ap: (y)=>(x5)
+                                    })
+                            })
+                    })
+            };
+    }
+}
+function IdType() {
+    return {
+        ap: (a1)=>(undefined)
+    };
+}

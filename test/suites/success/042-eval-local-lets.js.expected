@@ -1,0 +1,84 @@
+function two_plus_three() {
+    return ((x0)=>((y0)=>add(x0, y0))({
+            tag: "S",
+            args: [
+                {
+                    tag: "S",
+                    args: [
+                        {
+                            tag: "S",
+                            args: [
+                                {
+                                    tag: "Z",
+                                    args: []
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }))({
+        tag: "S",
+        args: [
+            {
+                tag: "S",
+                args: [
+                    {
+                        tag: "Z",
+                        args: []
+                    }
+                ]
+            }
+        ]
+    });
+}
+function two_plus_three_equals_five() {
+    return {
+        tag: "Refl",
+        args: [
+            {
+                tag: "S",
+                args: [
+                    {
+                        tag: "S",
+                        args: [
+                            {
+                                tag: "S",
+                                args: [
+                                    {
+                                        tag: "S",
+                                        args: [
+                                            {
+                                                tag: "S",
+                                                args: [
+                                                    {
+                                                        tag: "Z",
+                                                        args: []
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+}
+function add(__self, y) {
+    switch(__self.tag){
+        case "Z":
+            return y;
+        case "S":
+            const x = __self.args[0];
+            return {
+                tag: "S",
+                args: [
+                    add(x, y)
+                ]
+            };
+    }
+}

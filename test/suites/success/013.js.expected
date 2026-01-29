@@ -1,0 +1,14 @@
+function add(x, y) {
+    return (()=>{
+        const __scrutinee = x;
+        switch(__scrutinee.tag){
+            case "Z":
+                return y;
+            case "S":
+                const x0 = __scrutinee.args[0];
+                return (()=>{
+                    throw new Error("not yet implemented");
+                })();
+        }
+    })();
+}

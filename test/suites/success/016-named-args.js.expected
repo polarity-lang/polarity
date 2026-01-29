@@ -1,0 +1,41 @@
+function example1() {
+    return {
+        tag: "Cons",
+        args: [
+            {
+                tag: "True",
+                args: []
+            },
+            {
+                tag: "Nil",
+                args: []
+            }
+        ]
+    };
+}
+function example2() {
+    return and({
+        tag: "True",
+        args: []
+    }, {
+        tag: "False",
+        args: []
+    });
+}
+function example3() {
+    return {
+        tag: "None",
+        args: []
+    };
+}
+function and(__self, other) {
+    switch(__self.tag){
+        case "True":
+            return other;
+        case "False":
+            return {
+                tag: "False",
+                args: []
+            };
+    }
+}

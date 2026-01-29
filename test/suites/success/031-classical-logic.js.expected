@@ -1,0 +1,32 @@
+function contra(__self, prf, ref) {
+    switch(__self.tag){
+        case "Unit":
+            return ref.ret(prf);
+    }
+}
+function lem(__self) {
+    switch(__self.tag){
+        case "Unit":
+            return {
+                given: (k)=>(contra({
+                        tag: "Unit",
+                        args: []
+                    }, {
+                        tag: "Right",
+                        args: [
+                            {
+                                ret: (x1)=>(contra({
+                                        tag: "Unit",
+                                        args: []
+                                    }, {
+                                        tag: "Left",
+                                        args: [
+                                            x1
+                                        ]
+                                    }, k))
+                            }
+                        ]
+                    }, k))
+            };
+    }
+}

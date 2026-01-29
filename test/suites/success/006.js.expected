@@ -1,0 +1,30 @@
+function foo(__self, a, d) {
+    switch(__self.tag){
+        case "Unit":
+            return (()=>{
+                const __scrutinee = d;
+                switch(__scrutinee.tag){
+                    case "MkD":
+                        const a0 = __scrutinee.args[0];
+                        return (()=>{
+                            const __scrutinee = {
+                                tag: "MkD",
+                                args: [
+                                    a
+                                ]
+                            };
+                            switch(__scrutinee.tag){
+                                case "MkD":
+                                    const x = __scrutinee.args[0];
+                                    return {
+                                        tag: "MkD",
+                                        args: [
+                                            a
+                                        ]
+                                    };
+                            }
+                        })();
+                }
+            })();
+    }
+}

@@ -1,0 +1,8 @@
+function MyFoo() {
+    return {
+        foo1: ()=>({
+                tag: "True",
+                args: []
+            })
+    };
+}

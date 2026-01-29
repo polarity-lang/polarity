@@ -1,0 +1,17 @@
+function foo() {
+    return {
+        tag: "T",
+        args: []
+    };
+}
+function bar() {
+    return {
+        tag: "Refl",
+        args: [
+            {
+                tag: "T",
+                args: []
+            }
+        ]
+    };
+}

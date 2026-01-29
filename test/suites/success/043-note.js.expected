@@ -1,0 +1,14 @@
+function not(__self) {
+    switch(__self.tag){
+        case "T":
+            return {
+                tag: "F",
+                args: []
+            };
+        case "F":
+            return {
+                tag: "T",
+                args: []
+            };
+    }
+}

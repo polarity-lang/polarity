@@ -1,0 +1,30 @@
+function id(__self) {
+    switch(__self.tag){
+        case "App":
+            const e = __self.args[0];
+            return {
+                tag: "App",
+                args: [
+                    e
+                ]
+            };
+    }
+}
+function preservation(__self, e2) {
+    switch(__self.tag){
+        case "App":
+            const e0 = __self.args[0];
+            return {
+                ap: (h_eval)=>((()=>{
+                        const __scrutinee = h_eval;
+                        switch(__scrutinee.tag){
+                            case "EBeta":
+                                const f = __scrutinee.args[0];
+                                return (()=>{
+                                    throw new Error("not yet implemented");
+                                })();
+                        }
+                    })())
+            };
+    }
+}

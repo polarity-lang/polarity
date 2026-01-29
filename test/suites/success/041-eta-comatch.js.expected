@@ -1,0 +1,18 @@
+function eq() {
+    return {
+        tag: "Refl",
+        args: [
+            f().ap({
+                tag: "T",
+                args: []
+            })
+        ]
+    };
+}
+function f() {
+    return {
+        ap: (x)=>({
+                test: (x0)=>(x0)
+            })
+    };
+}

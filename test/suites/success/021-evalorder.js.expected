@@ -1,0 +1,31 @@
+function diverge(__self) {
+    switch(__self.tag){
+        case "Unit":
+            return diverge({
+                tag: "Unit",
+                args: []
+            });
+    }
+}
+function before(__self) {
+    switch(__self.tag){
+        case "Unit":
+            return Ignore(diverge({
+                tag: "Unit",
+                args: []
+            }));
+    }
+}
+function after(__self) {
+    switch(__self.tag){
+        case "Unit":
+            return {
+                ap: (x)=>(x)
+            };
+    }
+}
+function Ignore(y) {
+    return {
+        ap: (x0)=>(x0)
+    };
+}

@@ -1,0 +1,35 @@
+function append0(n1, m0, xs0, ys0) {
+    return append(xs0, n1, m0, ys0);
+}
+function add(__self, y) {
+    switch(__self.tag){
+        case "Z":
+            return y;
+        case "S":
+            const x = __self.args[0];
+            return {
+                tag: "S",
+                args: [
+                    add(x, y)
+                ]
+            };
+    }
+}
+function append(__self, n, m, ys) {
+    switch(__self.tag){
+        case "Cons":
+            const n0 = __self.args[0];
+            const x0 = __self.args[1];
+            const xs = __self.args[2];
+            return {
+                tag: "Cons",
+                args: [
+                    add(n0, m),
+                    x0,
+                    append(xs, n0, m, ys)
+                ]
+            };
+        case "Nil":
+            return ys;
+    }
+}

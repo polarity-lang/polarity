@@ -1,0 +1,23 @@
+function not(__self) {
+    switch(__self.tag){
+        case "True":
+            return {
+                tag: "False",
+                args: []
+            };
+        case "False":
+            return {
+                tag: "True",
+                args: []
+            };
+    }
+}
+function false_(__self) {
+    switch(__self.tag){
+        case "Unit":
+            return not({
+                tag: "True",
+                args: []
+            });
+    }
+}

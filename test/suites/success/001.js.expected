@@ -1,0 +1,5 @@
+function Id() {
+    return {
+        ap: (x)=>(x)
+    };
+}

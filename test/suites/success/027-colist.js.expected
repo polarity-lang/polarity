@@ -1,0 +1,43 @@
+function pred(__self) {
+    switch(__self.tag){
+        case "Z":
+            return {
+                tag: "Z",
+                args: []
+            };
+        case "S":
+            const n = __self.args[0];
+            return n;
+        case "Omega":
+            return {
+                tag: "Omega",
+                args: []
+            };
+    }
+}
+function CountUp(from) {
+    return {
+        head: (n0, p)=>(from),
+        tail: (n1)=>(CountUp({
+                tag: "S",
+                args: [
+                    from
+                ]
+            }))
+    };
+}
+function TakeN(n2, s) {
+    return {
+        head: (n3, p0)=>(s.head({
+                tag: "Omega",
+                args: []
+            }, {
+                tag: "OmegaNotZero",
+                args: []
+            })),
+        tail: (n4)=>(TakeN(pred(n2), s.tail({
+                tag: "Omega",
+                args: []
+            })))
+    };
+}

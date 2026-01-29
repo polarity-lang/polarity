@@ -1,0 +1,37 @@
+function transparentTwo() {
+    return {
+        tag: "S",
+        args: [
+            {
+                tag: "S",
+                args: [
+                    {
+                        tag: "Z",
+                        args: []
+                    }
+                ]
+            }
+        ]
+    };
+}
+function p2() {
+    return {
+        tag: "Refl",
+        args: [
+            {
+                tag: "S",
+                args: [
+                    {
+                        tag: "S",
+                        args: [
+                            {
+                                tag: "Z",
+                                args: []
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+}

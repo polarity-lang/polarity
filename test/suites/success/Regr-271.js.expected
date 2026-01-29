@@ -1,0 +1,18 @@
+function test() {
+    return {
+        tag: "Refl",
+        args: [
+            S(S(S(S(Z()))))
+        ]
+    };
+}
+function S(n) {
+    return {
+        add: (m)=>(n.add(S(m)))
+    };
+}
+function Z() {
+    return {
+        add: (m0)=>(m0)
+    };
+}

@@ -1,0 +1,9 @@
+function foo(__self) {
+    switch(__self.tag){
+        case "Bar":
+            return {
+                tag: "T",
+                args: []
+            };
+    }
+}

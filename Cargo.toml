@@ -66,6 +66,7 @@ swc_ecma_ast             = { version = "19" }
 swc_ecma_codegen         = { version = "21" }
 swc_common               = { version = "18" }
 tantivy                  = { version = "0.18" }
+tempfile                 = { version = "3.23.0" }
 termcolor                = { version = "1.4.1" }
 termsize                 = { version = "0.1" }
 thiserror                = { version = "1" }

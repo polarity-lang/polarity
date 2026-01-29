@@ -1,0 +1,76 @@
+function sym(__self, x, y) {
+    switch(__self.tag){
+        case "Refl":
+            const x0 = __self.args[0];
+            return {
+                tag: "Refl",
+                args: [
+                    y
+                ]
+            };
+    }
+}
+function subst(__self, x1, y0, p) {
+    switch(__self.tag){
+        case "Refl":
+            const x2 = __self.args[0];
+            return p;
+    }
+}
+function trans(__self, x3, y1, z, h) {
+    switch(__self.tag){
+        case "Refl":
+            const x4 = __self.args[0];
+            return h;
+    }
+}
+function cong(__self, x5, y2, f) {
+    switch(__self.tag){
+        case "Refl":
+            const x6 = __self.args[0];
+            return {
+                tag: "Refl",
+                args: [
+                    f.ap0(y2)
+                ]
+            };
+    }
+}
+function not(__self) {
+    switch(__self.tag){
+        case "True":
+            return {
+                tag: "False",
+                args: []
+            };
+        case "False":
+            return {
+                tag: "True",
+                args: []
+            };
+    }
+}
+function not_inverse(__self) {
+    switch(__self.tag){
+        case "True":
+            return {
+                tag: "Refl",
+                args: [
+                    {
+                        tag: "True",
+                        args: []
+                    }
+                ]
+            };
+        case "False":
+            return {
+                tag: "Refl",
+                args: [
+                    {
+                        tag: "False",
+                        args: []
+                    }
+                ]
+            };
+    }
+}

@@ -1,0 +1,51 @@
+function two() {
+    return {
+        tag: "S",
+        args: [
+            {
+                tag: "S",
+                args: [
+                    {
+                        tag: "Z",
+                        args: []
+                    }
+                ]
+            }
+        ]
+    };
+}
+function foo() {
+    return {
+        tag: "Refl",
+        args: [
+            add(two(), {
+                tag: "S",
+                args: [
+                    {
+                        tag: "S",
+                        args: [
+                            {
+                                tag: "Z",
+                                args: []
+                            }
+                        ]
+                    }
+                ]
+            })
+        ]
+    };
+}
+function add(__self, m) {
+    switch(__self.tag){
+        case "Z":
+            return m;
+        case "S":
+            const n = __self.args[0];
+            return {
+                tag: "S",
+                args: [
+                    add(n, m)
+                ]
+            };
+    }
+}

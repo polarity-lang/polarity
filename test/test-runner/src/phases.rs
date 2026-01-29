@@ -425,6 +425,88 @@ impl Phase for IR {
     }
 }
 
+// JS Phase
+//
+// This phase generates the compiled Javascript code of the module.
+
+pub struct JS {
+    name: &'static str,
+}
+
+impl Phase for JS {
+    type Out = String;
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
+        let ir = db.ir(uri).await?;
+
+        // TODO: multiple modules are not yet implemented for the backend
+        if !ir.use_decls.is_empty() {
+            return Ok(String::from("NOT YET IMPLEMENTED"));
+        }
+
+        // TODO: extern calls are not yet implemented for the backend
+        if !ir.externs.is_empty() {
+            return Ok(String::from("NOT YET IMPLEMENTED"));
+        }
+
+        let mut out = Vec::new();
+        db.js(uri, &mut out).await?;
+        let out = String::from_utf8(out).unwrap();
+        Ok(out)
+    }
+}
+
+// NodeCheck phase
+//
+// This phase checks the validity of the generated JS code by running `node --check` on it.
+
+pub struct NodeCheck {
+    name: &'static str,
+}
+
+impl Phase for NodeCheck {
+    type Out = ();
+
+    fn new(name: &'static str) -> Self {
+        Self { name }
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
+    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
+        let ir = db.ir(uri).await?;
+
+        // TODO: multiple modules are not yet implemented for the backend
+        if !ir.use_decls.is_empty() {
+            return Ok(());
+        }
+
+        // TODO: extern calls are not yet implemented for the backend
+        if !ir.externs.is_empty() {
+            return Ok(());
+        }
+
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        db.js(uri, &mut file).await?;
+
+        let assert =
+            assert_cmd::Command::new("node").arg("--check").arg(file.path().as_os_str()).assert();
+        assert.stdout("").stderr("");
+
+        Ok(())
+    }
+}
+
 // TestOutput
 
 pub trait TestOutput {
