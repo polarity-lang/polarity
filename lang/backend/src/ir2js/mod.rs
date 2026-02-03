@@ -44,6 +44,7 @@ fn emit_js<W: io::Write>(
         .emit_module(js_module)
         .map_err(|e| BackendError::CodegenError(format!("Failed to emit module: {}", e)))?;
 
+    // NOTE: This is a temporary solution until we have IO support
     if call_to_main {
         write!(writer, "\nconsole.log(JSON.stringify(main()))").map_err(|e| {
             BackendError::CodegenError(format!("Failed to write call to main: {e}"))
