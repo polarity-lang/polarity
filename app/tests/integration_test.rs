@@ -30,12 +30,12 @@ fn check_command_2() {
     assert.success().stdout("../examples/encoding_church.pol typechecked successfully!\n");
 }
 
-/// Check that "pol run" works correctly
+/// Check that "pol run --normalize" works correctly
 #[test]
-fn run_command() {
+fn run_normalize_command() {
     let assert = pol_cmd()
         .env("POLARITY_COLORIZE", "never")
-        .args(vec!["run", "../test/suites/success/037-vect.pol"])
+        .args(vec!["run", "--normalize", "../test/suites/success/037-vect.pol"])
         .assert();
     assert
         .success()
