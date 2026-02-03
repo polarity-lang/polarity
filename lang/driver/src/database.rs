@@ -521,7 +521,7 @@ impl Database {
         self.item_by_id.invalidate(uri);
     }
 
-    pub async fn run(&mut self, uri: &Url) -> AppResult<Option<Box<Exp>>> {
+    pub async fn normalize_main(&mut self, uri: &Url) -> AppResult<Option<Box<Exp>>> {
         let ast = self.ast(uri).await?;
 
         let main = ast.find_main();
