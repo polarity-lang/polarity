@@ -124,15 +124,19 @@ impl ir::Call {
         let args = args_to_js_exprs(args)?;
 
         match name.to_string().as_str() {
+            // (〚x 〛 + 〚y 〛)
             "add_f64" => {
                 Ok(js_binary_expr(js::BinaryOp::Add, args[0].expr.clone(), args[1].expr.clone()))
             }
+            // (〚x 〛 - 〚y 〛)
             "sub_f64" => {
                 Ok(js_binary_expr(js::BinaryOp::Sub, args[0].expr.clone(), args[1].expr.clone()))
             }
+            // (〚x 〛 * 〚y 〛)
             "mul_f64" => {
                 Ok(js_binary_expr(js::BinaryOp::Mul, args[0].expr.clone(), args[1].expr.clone()))
             }
+            // (〚x 〛 / 〚y 〛)
             "div_f64" => {
                 Ok(js_binary_expr(js::BinaryOp::Div, args[0].expr.clone(), args[1].expr.clone()))
             }
