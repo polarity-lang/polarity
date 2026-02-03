@@ -19,19 +19,36 @@ use super::ir;
 
 /// Convert an IR module to JavaScript
 pub fn ir_to_js<W: io::Write>(ir_module: &ir::Module, writer: W) -> BackendResult {
+    let call_to_main = ir_module
+        .let_decls
+        .iter()
+        .any(|x| x.name == "main".to_owned().into() && x.params.is_empty());
+
     let js_module = ir_module.to_js_module()?;
-    emit_js(&js_module, writer)
+    emit_js(&js_module, writer, call_to_main)
 }
 
 /// Emit a JavaScript module
-fn emit_js<W: io::Write>(js_module: &js::Module, writer: W) -> BackendResult {
+fn emit_js<W: io::Write>(
+    js_module: &js::Module,
+    mut writer: W,
+    call_to_main: bool,
+) -> BackendResult {
     let config = CodegenConfig::default();
     let cm = Rc::new(SourceMap::default());
 
-    let js_writer = JsWriter::new(cm.clone(), "\n", writer, None);
+    let js_writer = JsWriter::new(cm.clone(), "\n", &mut writer, None);
     let mut emitter = Emitter { cfg: config, cm, comments: None, wr: Box::new(js_writer) };
 
     emitter
         .emit_module(js_module)
-        .map_err(|e| BackendError::CodegenError(format!("Failed to emit module: {}", e)))
+        .map_err(|e| BackendError::CodegenError(format!("Failed to emit module: {}", e)))?;
+
+    if call_to_main {
+        write!(writer, "\nconsole.log(JSON.stringify(main()))").map_err(|e| {
+            BackendError::CodegenError(format!("Failed to write call to main: {e}"))
+        })?;
+    }
+
+    Ok(())
 }
