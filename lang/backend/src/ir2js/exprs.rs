@@ -118,6 +118,7 @@ impl ir::Call {
         }))
     }
 
+    /// Handle builtin extern calls and pass the rest to [Self::to_js_function_call].
     fn to_js_extern_function_call(&self) -> BackendResult<js::Expr> {
         let Self { name, module_uri: _, args } = self;
         let args = args_to_js_exprs(args)?;
@@ -429,6 +430,23 @@ impl ToJSExpr for ir::LocalLet {
     }
 }
 
+/// Input:
+///
+/// ```text
+/// 42
+/// 42.42
+/// 'a'
+/// "somestring"
+/// ```
+///
+/// Output:
+///
+/// ```js
+/// TODO
+/// 42.42
+/// TODO
+/// TODO
+/// ```
 impl ToJSExpr for ir::Literal {
     fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
         match self {
