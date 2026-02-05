@@ -42,7 +42,7 @@ If you want to install polarity locally on your system then you can use the nix 
   The binary `pol` gets installed to `~/.cargo/bin/pol`; make sure that this directory is in your `$PATH`.
 - From the root of this repository, run:
   ```console
-  $ pol run examples/example.pol
+  $ pol run --normalize examples/example.pol
   S(S(S(S(S(Z)))))
   ```
 - For more information about available subcommands, run:
