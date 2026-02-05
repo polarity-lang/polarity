@@ -140,6 +140,18 @@ impl ir::Call {
             "div_f64" => {
                 Ok(js_binary_expr(js::BinaryOp::Div, args[0].expr.clone(), args[1].expr.clone()))
             }
+            // 〚x 〛.concat(〚y 〛)
+            "concat" => Ok(js::Expr::Call(js::CallExpr {
+                span: DUMMY_SP,
+                ctxt: SyntaxContext::empty(),
+                callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
+                    span: DUMMY_SP,
+                    obj: args[0].expr.clone(),
+                    prop: js::MemberProp::Ident(js::IdentName::from("concat")),
+                }))),
+                args: vec![js::ExprOrSpread { spread: None, expr: args[1].expr.clone() }],
+                type_args: None,
+            })),
             _ => self.to_js_function_call(),
         }
     }
@@ -457,7 +469,9 @@ impl ToJSExpr for ir::Literal {
             ir::Literal::I64(_) => todo!(),
             ir::Literal::F64(float) => Ok(js::Expr::Lit(js::Lit::Num(js::Number::from(*float)))),
             ir::Literal::Char(_) => todo!(),
-            ir::Literal::String(_) => todo!(),
+            ir::Literal::String(string) => {
+                Ok(js::Expr::Lit(js::Lit::Str(js::Str::from(string.as_str()))))
+            }
         }
     }
 }
