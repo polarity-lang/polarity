@@ -42,7 +42,7 @@ fn emit_js<W: io::Write>(
 
     // NOTE: This is a temporary solution until we have IO support
     if call_to_main {
-        write!(writer, "\nconsole.log(JSON.stringify(main()))").map_err(|e| {
+        write!(writer, "\nconsole.log(JSON.stringify(main()))\n").map_err(|e| {
             BackendError::CodegenError(format!("Failed to write call to main: {e}"))
         })?;
     }
