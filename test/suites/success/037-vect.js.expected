@@ -123,3 +123,5 @@ function example1(__self) {
             };
     }
 }
+
+console.log(JSON.stringify(main()))
