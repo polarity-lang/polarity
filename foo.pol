@@ -1,0 +1,13 @@
+/// An opaque Unicode string.
+extern String: Type
+
+/// Concatenation of two strings.
+extern concat(x y: String): String
+
+let foo: String { "foo" }
+let bar: String { "bar" }
+let baz: String { "baz" }
+
+let main: String {
+    concat(concat(foo, bar), baz)
+}

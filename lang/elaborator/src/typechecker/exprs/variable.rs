@@ -6,6 +6,7 @@ use super::super::ctx::*;
 use super::{CheckInfer, ExpectType};
 use crate::conversion_checking::convert;
 use crate::result::TcResult;
+use crate::typechecker::erasure::is_runtime_irrelevant;
 
 impl CheckInfer for Variable {
     /// The *checking* rule for variables is:
@@ -31,6 +32,13 @@ impl CheckInfer for Variable {
     fn infer(&self, ctx: &mut Ctx) -> TcResult<Self> {
         let Variable { span, idx, name, .. } = self;
         let typ_nf = ctx.lookup(*idx);
-        Ok(Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: Some(typ_nf) })
+        let erased = is_runtime_irrelevant(&typ_nf);
+        Ok(Variable {
+            span: *span,
+            idx: *idx,
+            name: name.clone(),
+            inferred_type: Some(typ_nf),
+            erased,
+        })
     }
 }

@@ -1,0 +1,7 @@
+data Bool { T, F }
+
+let foo(x: Type): Bool { let b := x; T }
+
+let main: Bool {
+    foo(Type)
+}

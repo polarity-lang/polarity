@@ -1,0 +1,6 @@
+let foo {
+    let b := <ZST>;
+    T
+}
+
+let main { foo }

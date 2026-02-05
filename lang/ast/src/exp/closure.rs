@@ -35,6 +35,7 @@ fn compute_binder(ctx: &LevelCtx, lvl: Lvl, has_content: bool) -> Binder<Option<
                 idx: ctx.lvl_to_idx(lvl),
                 name,
                 inferred_type: None,
+                erased: false,
             });
 
             Box::new(exp)

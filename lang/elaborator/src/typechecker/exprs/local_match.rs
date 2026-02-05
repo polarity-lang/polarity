@@ -275,6 +275,7 @@ impl WithScrutineeType<'_> {
                                 idx: Idx { fst: 1, snd },
                                 name: VarBound::from_string(""),
                                 inferred_type: None,
+                                erased: false,
                             })),
                             erased: false,
                         })

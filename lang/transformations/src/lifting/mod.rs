@@ -333,7 +333,13 @@ impl Lift for Variable {
 
     fn lift(&self, _ctx: &mut Ctx) -> Self::Target {
         let Variable { span, idx, name, .. } = self;
-        Exp::Variable(Variable { span: *span, idx: *idx, name: name.clone(), inferred_type: None })
+        Exp::Variable(Variable {
+            span: *span,
+            idx: *idx,
+            name: name.clone(),
+            inferred_type: None,
+            erased: false,
+        })
     }
 }
 
