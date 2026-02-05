@@ -19,11 +19,7 @@ use super::ir;
 
 /// Convert an IR module to JavaScript
 pub fn ir_to_js<W: io::Write>(ir_module: &ir::Module, writer: W) -> BackendResult {
-    let call_to_main = ir_module
-        .let_decls
-        .iter()
-        .any(|x| x.name == "main".to_owned().into() && x.params.is_empty());
-
+    let call_to_main = ir_module.has_main();
     let js_module = ir_module.to_js_module()?;
     emit_js(&js_module, writer, call_to_main)
 }

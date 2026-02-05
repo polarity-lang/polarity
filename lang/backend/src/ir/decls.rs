@@ -24,6 +24,35 @@ pub struct Module {
     pub let_decls: Vec<Let>,
 }
 
+impl Module {
+    pub fn toplevel_names(&self) -> Vec<Ident> {
+        let Module {
+            uri: _,
+            constructors,
+            destructors,
+            externs,
+            use_decls: _,
+            def_decls,
+            codef_decls,
+            let_decls,
+        } = self;
+
+        constructors
+            .iter()
+            .cloned()
+            .chain(destructors.iter().cloned())
+            .chain(externs.iter().cloned())
+            .chain(def_decls.iter().map(|decl| decl.name.clone()))
+            .chain(codef_decls.iter().map(|decl| decl.name.clone()))
+            .chain(let_decls.iter().map(|decl| decl.name.clone()))
+            .collect()
+    }
+
+    pub fn has_main(&self) -> bool {
+        self.let_decls.iter().any(|x| x.name == "main".to_owned().into() && x.params.is_empty())
+    }
+}
+
 impl Print for Module {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Module {
@@ -69,31 +98,6 @@ impl Print for Module {
         };
 
         if doc.is_nil() { doc } else { doc.append(alloc.hardline()) }
-    }
-}
-
-impl Module {
-    pub fn toplevel_names(&self) -> Vec<Ident> {
-        let Module {
-            uri: _,
-            constructors,
-            destructors,
-            externs,
-            use_decls: _,
-            def_decls,
-            codef_decls,
-            let_decls,
-        } = self;
-
-        constructors
-            .iter()
-            .cloned()
-            .chain(destructors.iter().cloned())
-            .chain(externs.iter().cloned())
-            .chain(def_decls.iter().map(|decl| decl.name.clone()))
-            .chain(codef_decls.iter().map(|decl| decl.name.clone()))
-            .chain(let_decls.iter().map(|decl| decl.name.clone()))
-            .collect()
     }
 }
 
