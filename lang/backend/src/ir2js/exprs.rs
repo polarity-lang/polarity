@@ -4,7 +4,7 @@ use swc_common::{DUMMY_SP, SyntaxContext};
 use swc_ecma_ast as js;
 
 use crate::ir;
-use crate::result::{BackendError, BackendResult};
+use crate::result::BackendResult;
 
 use super::tokens::*;
 use super::traits::ToJSExpr;
@@ -16,18 +16,14 @@ impl ToJSExpr for ir::Exp {
             ir::Exp::CtorCall(call) => call.to_js_ctor_record(),
             ir::Exp::CodefCall(call) => call.to_js_function_call(),
             ir::Exp::LetCall(call) => call.to_js_function_call(),
+            ir::Exp::ExternCall(call) => call.to_js_extern_function_call(),
             ir::Exp::DtorCall(dot_call) => dot_call.to_js_record_member_call(),
             ir::Exp::DefCall(dot_call) => dot_call.to_js_function_call_with_self(),
             ir::Exp::LocalMatch(local_match) => local_match.to_js_expr(),
             ir::Exp::LocalComatch(local_comatch) => local_comatch.to_js_expr(),
             ir::Exp::Panic(panic) => panic.to_js_expr(),
             ir::Exp::LocalLet(local_let) => local_let.to_js_expr(),
-            ir::Exp::ExternCall(_) => Err(BackendError::Impossible(
-                "Extern calls are not yet implemented for the JavaScript backend".to_owned(),
-            )),
-            ir::Exp::Literal(_) => Err(BackendError::Impossible(
-                "Literals are not yet implemented for the JavaScript backend".to_owned(),
-            )),
+            ir::Exp::Literal(lit) => lit.to_js_expr(),
             ir::Exp::ZST => Ok(js::Expr::Ident(js::Ident::new(
                 "undefined".into(),
                 DUMMY_SP,
@@ -120,6 +116,32 @@ impl ir::Call {
             args,
             type_args: None,
         }))
+    }
+
+    /// Handle builtin extern calls and pass the rest to [Self::to_js_function_call].
+    fn to_js_extern_function_call(&self) -> BackendResult<js::Expr> {
+        let Self { name, module_uri: _, args } = self;
+        let args = args_to_js_exprs(args)?;
+
+        match name.to_string().as_str() {
+            // (〚x 〛 + 〚y 〛)
+            "add_f64" => {
+                Ok(js_binary_expr(js::BinaryOp::Add, args[0].expr.clone(), args[1].expr.clone()))
+            }
+            // (〚x 〛 - 〚y 〛)
+            "sub_f64" => {
+                Ok(js_binary_expr(js::BinaryOp::Sub, args[0].expr.clone(), args[1].expr.clone()))
+            }
+            // (〚x 〛 * 〚y 〛)
+            "mul_f64" => {
+                Ok(js_binary_expr(js::BinaryOp::Mul, args[0].expr.clone(), args[1].expr.clone()))
+            }
+            // (〚x 〛 / 〚y 〛)
+            "div_f64" => {
+                Ok(js_binary_expr(js::BinaryOp::Div, args[0].expr.clone(), args[1].expr.clone()))
+            }
+            _ => self.to_js_function_call(),
+        }
     }
 }
 
@@ -412,6 +434,34 @@ impl ToJSExpr for ir::LocalLet {
     }
 }
 
+/// Input:
+///
+/// ```text
+/// 42
+/// 42.42
+/// 'a'
+/// "somestring"
+/// ```
+///
+/// Output:
+///
+/// ```js
+/// TODO
+/// 42.42
+/// TODO
+/// TODO
+/// ```
+impl ToJSExpr for ir::Literal {
+    fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
+        match self {
+            ir::Literal::I64(_) => todo!(),
+            ir::Literal::F64(float) => Ok(js::Expr::Lit(js::Lit::Num(js::Number::from(*float)))),
+            ir::Literal::Char(_) => todo!(),
+            ir::Literal::String(_) => todo!(),
+        }
+    }
+}
+
 impl ir::Case {
     /// Input:
     ///
@@ -559,4 +609,11 @@ fn args_to_js_exprs(args: &[ir::Exp]) -> BackendResult<Vec<js::ExprOrSpread>> {
             arg.to_js_expr().map(|expr| js::ExprOrSpread { spread: None, expr: Box::new(expr) })
         })
         .collect()
+}
+
+fn js_binary_expr(op: js::BinaryOp, left: Box<js::Expr>, right: Box<js::Expr>) -> js::Expr {
+    js::Expr::Paren(js::ParenExpr {
+        span: DUMMY_SP,
+        expr: Box::new(js::Expr::Bin(js::BinExpr { span: DUMMY_SP, op, left, right })),
+    })
 }
