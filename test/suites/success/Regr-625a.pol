@@ -1,0 +1,5 @@
+let bar(x: Type): Type { x }
+
+let main: Type {
+    bar(Type)
+}

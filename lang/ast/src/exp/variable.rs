@@ -32,6 +32,9 @@ pub struct Variable {
     /// Inferred type annotated after elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub inferred_type: Option<Box<Exp>>,
+    /// Whether this variable can be erased because it is not runtime-relevant
+    /// For example, this is the case when the variable has type `Type`.
+    pub erased: bool,
 }
 
 impl HasSpan for Variable {
@@ -79,6 +82,7 @@ impl Substitutable for Variable {
                 idx: *idx,
                 name: name.clone(),
                 inferred_type: None,
+                erased: false,
             })),
             Some(exp) => Box::new(exp.clone()),
         }
@@ -108,7 +112,7 @@ impl Zonk for Variable {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        let Variable { span: _, idx: _, name: _, inferred_type } = self;
+        let Variable { span: _, idx: _, name: _, inferred_type, erased: _ } = self;
         inferred_type.zonk(meta_vars)?;
         Ok(())
     }
@@ -116,7 +120,7 @@ impl Zonk for Variable {
 
 impl ContainsMetaVars for Variable {
     fn contains_metavars(&self) -> bool {
-        let Variable { span: _, idx: _, name: _, inferred_type } = self;
+        let Variable { span: _, idx: _, name: _, inferred_type, erased: _ } = self;
 
         inferred_type.contains_metavars()
     }
@@ -140,7 +144,7 @@ impl Rename for Variable {
 
 impl FreeVars for Variable {
     fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
-        let Variable { span: _, idx, name: _, inferred_type: _ } = self;
+        let Variable { span: _, idx, name: _, inferred_type: _, erased: _ } = self;
 
         if idx.fst >= cutoff {
             let idx = Idx { fst: idx.fst - cutoff, snd: idx.snd };

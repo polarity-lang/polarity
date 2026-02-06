@@ -10,7 +10,7 @@ impl ToIR for polarity_lang_ast::Exp {
 
     fn to_ir(&self) -> BackendResult<Self::Target> {
         let out = match self {
-            polarity_lang_ast::Exp::Variable(variable) => ir::Exp::Variable(variable.to_ir()?),
+            polarity_lang_ast::Exp::Variable(variable) => variable.to_ir()?,
             polarity_lang_ast::Exp::TypCtor(typ_ctor) => typ_ctor.to_ir()?,
             polarity_lang_ast::Exp::Call(call) => call.to_ir()?,
             polarity_lang_ast::Exp::DotCall(dot_call) => dot_call.to_ir()?,
@@ -32,12 +32,16 @@ impl ToIR for polarity_lang_ast::Exp {
 }
 
 impl ToIR for polarity_lang_ast::Variable {
-    type Target = ir::Variable;
+    type Target = ir::Exp;
 
     fn to_ir(&self) -> BackendResult<Self::Target> {
-        let polarity_lang_ast::Variable { name, .. } = self;
+        let polarity_lang_ast::Variable { name, erased, .. } = self;
 
-        Ok(ir::Variable { name: name.to_string().into() })
+        if *erased {
+            Ok(ir::Exp::ZST)
+        } else {
+            Ok(ir::Exp::Variable(ir::Variable { name: name.to_string().into() }))
+        }
     }
 }
 

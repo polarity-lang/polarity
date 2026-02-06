@@ -1,0 +1,3 @@
+let bar { <ZST> }
+
+let main { bar }

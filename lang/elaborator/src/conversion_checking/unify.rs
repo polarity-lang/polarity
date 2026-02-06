@@ -463,7 +463,10 @@ fn create_partial_renaming(
             VarBind::Wildcard { .. } => VarBound::from_string("x"),
         };
 
-        map.insert(lvl, Exp::Variable(Variable { span: None, idx, name, inferred_type: None }));
+        map.insert(
+            lvl,
+            Exp::Variable(Variable { span: None, idx, name, inferred_type: None, erased: false }),
+        );
     }
 
     Ok(Subst { map })
@@ -523,6 +526,7 @@ mod tests {
             idx: Idx { fst: idx.0, snd: idx.1 },
             name: VarBound::from_string(name),
             inferred_type: None,
+            erased: false,
         }))
     }
 
@@ -744,7 +748,8 @@ mod tests {
                 span: None,
                 idx: Idx { fst: 0, snd: 0 },
                 name: VarBound::from_string("x"),
-                inferred_type: None
+                inferred_type: None,
+                erased: false,
             }
         );
     }

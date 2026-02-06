@@ -161,6 +161,7 @@ mod test {
             idx: Idx { fst: 0, snd: 0 },
             name: VarBound { span: None, id: "x".to_string() },
             inferred_type: None,
+            erased: false,
         };
         let ctx = vec![vec![
             Binder {
@@ -175,6 +176,7 @@ mod test {
                         idx: Idx { fst: 0, snd: 1 },
                         name: VarBound { span: None, id: "a".to_string() },
                         inferred_type: None,
+                        erased: false,
                     }
                     .into(),
                 )),
@@ -191,6 +193,7 @@ mod test {
             idx: Idx { fst: 0, snd: 0 },
             name: VarBound { span: None, id: "v".to_string() },
             inferred_type: None,
+            erased: false,
         };
 
         let v2 = Variable {
@@ -198,6 +201,7 @@ mod test {
             idx: Idx { fst: 1, snd: 0 },
             name: VarBound { span: None, id: "v'".to_string() },
             inferred_type: None,
+            erased: false,
         };
 
         let ctx = vec![vec![
@@ -213,6 +217,7 @@ mod test {
                         idx: Idx { fst: 0, snd: 2 },
                         name: VarBound { span: None, id: "a".to_string() },
                         inferred_type: None,
+                        erased: false,
                     }
                     .into(),
                 )),
@@ -225,6 +230,7 @@ mod test {
                         idx: Idx { fst: 0, snd: 2 },
                         name: VarBound { span: None, id: "a".to_string() },
                         inferred_type: None,
+                        erased: false,
                     }
                     .into(),
                 )),

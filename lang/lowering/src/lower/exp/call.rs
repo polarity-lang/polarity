@@ -31,6 +31,7 @@ impl Lower for cst::exp::Call {
                 idx,
                 name,
                 inferred_type: None,
+                erased: false,
             }));
         }
 

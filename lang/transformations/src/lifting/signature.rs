@@ -63,6 +63,7 @@ pub fn lifted_signature(fvs: HashSet<FreeVar>, base_ctx: &LevelCtx) -> LiftedSig
                 idx: base_ctx.lvl_to_idx(lvl),
                 name: VarBound::from_string(&name),
                 inferred_type: None,
+                erased: false,
             })),
             erased: false,
         };
@@ -150,6 +151,7 @@ impl FreeVarsMap {
                     idx,
                     name: VarBound::from_string(&nv.name),
                     inferred_type: None,
+                    erased: false,
                 }),
             );
         }
@@ -174,6 +176,7 @@ impl FreeVarsMap {
                     idx: new_ctx.lvl_to_idx(nv.lvl),
                     name: VarBound::from_string(&nv.name),
                     inferred_type: None,
+                    erased: false,
                 }),
             );
         }

@@ -1458,6 +1458,7 @@ mod print_telescope_tests {
                 idx: Idx { fst: 0, snd: 0 },
                 name: VarBound::from_string("a"),
                 inferred_type: None,
+                erased: false,
             })),
             erased: false,
         };
@@ -1469,6 +1470,7 @@ mod print_telescope_tests {
                 idx: Idx { fst: 0, snd: 1 },
                 name: VarBound::from_string("a"),
                 inferred_type: None,
+                erased: false,
             })),
             erased: false,
         };

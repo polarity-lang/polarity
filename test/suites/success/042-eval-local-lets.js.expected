@@ -1,5 +1,5 @@
 function two_plus_three() {
-    return ((x0)=>((y0)=>add(x0, y0))({
+    return ((x0)=>(((y0)=>(add(x0, y0)))({
             tag: "S",
             args: [
                 {
@@ -17,7 +17,7 @@ function two_plus_three() {
                     ]
                 }
             ]
-        }))({
+        })))({
         tag: "S",
         args: [
             {

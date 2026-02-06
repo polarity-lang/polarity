@@ -5,7 +5,7 @@ function foo(x) {
 }
 function T() {
     return foo({
-        ap: (x0)=>(F().ap(x0))
+        ap: (x0)=>(F().ap(undefined))
     });
 }
 function F() {

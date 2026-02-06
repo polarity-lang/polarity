@@ -471,6 +471,7 @@ impl ReadBack for Variable {
             idx: *idx,
             name: name.clone(),
             inferred_type: None,
+            erased: false,
         })
     }
 }
