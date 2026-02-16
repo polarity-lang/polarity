@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Süberkrüb"
+  given-names: "Tim"
+  orcid: "https://orcid.org/0000-0001-8709-6321"
+- family-names: "Binder"
+  given-names: "David"
+  orcid: "https://orcid.org/0000-0003-1272-0972"
+title: "Polarity Lang"
+url: "https://github.com/polarity-lang/polarity"
