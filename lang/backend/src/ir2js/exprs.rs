@@ -490,15 +490,17 @@ impl ToJSExpr for ir::LocalLet {
 /// Output:
 ///
 /// ```js
-/// TODO
+/// 42n
 /// 42.42
 /// 97
-/// TODO
+/// "somestring"
 /// ```
 impl ToJSExpr for ir::Literal {
     fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
         match self {
-            ir::Literal::I64(_) => todo!(),
+            ir::Literal::I64(int) => {
+                Ok(js::Expr::Lit(js::Lit::BigInt(js::BigIntValue::from(*int).into())))
+            }
             ir::Literal::F64(float) => Ok(js::Expr::Lit(js::Lit::Num(js::Number::from(*float)))),
             ir::Literal::Char(c) => Ok(js::Expr::Lit(js::Lit::Num(js::Number::from(*c as usize)))),
             ir::Literal::String(string) => {
