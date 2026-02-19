@@ -116,6 +116,7 @@ impl Subst {
                 idx: new_ctx.lvl_to_idx(lvl),
                 name: VarBound::from_string(""),
                 inferred_type: None,
+                erased: false,
             })
         };
 

@@ -1,0 +1,11 @@
+function foo() {
+    return ((b)=>({
+            tag: "T",
+            args: []
+        }))(undefined);
+}
+function main() {
+    return foo();
+}
+
+console.log(JSON.stringify(main()))

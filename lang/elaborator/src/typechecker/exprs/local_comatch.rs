@@ -249,6 +249,7 @@ impl WithExpectedType<'_> {
                                                     idx: Idx { fst: 2, snd },
                                                     name: VarBound::from_string(""),
                                                     inferred_type: None,
+                                                    erased: false,
                                                 })),
                                                 erased: false,
                                             }

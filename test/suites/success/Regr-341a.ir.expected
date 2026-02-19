@@ -2,4 +2,4 @@ codef F { .ap(x1) => <ZST> }
 
 let foo(x) { panic!("not yet implemented") }
 
-let T { foo(comatch { .ap(x1) => F.ap(x1) }) }
+let T { foo(comatch { .ap(x1) => F.ap(<ZST>) }) }

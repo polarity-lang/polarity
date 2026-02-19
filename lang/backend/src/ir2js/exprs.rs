@@ -419,6 +419,13 @@ impl ToJSExpr for ir::LocalLet {
     fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
         let Self { name, bound, body } = self;
 
+        let body_expr = body.to_js_expr()?;
+
+        // Wrap the body expression in parentheses.
+        // Without them, returning some expressions (such as objects literals) from an arrow function is not valid JavaScript syntax.
+        let paren_body =
+            js::Expr::Paren(js::ParenExpr { span: DUMMY_SP, expr: Box::new(body_expr) });
+
         let arrow_fn = js::ArrowExpr {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
@@ -426,7 +433,7 @@ impl ToJSExpr for ir::LocalLet {
                 id: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
                 type_ann: None,
             })],
-            body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(body.to_js_expr()?))),
+            body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(paren_body))),
             is_async: false,
             is_generator: false,
             type_params: None,

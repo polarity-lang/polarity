@@ -1,0 +1,8 @@
+function bar() {
+    return undefined;
+}
+function main() {
+    return bar();
+}
+
+console.log(JSON.stringify(main()))

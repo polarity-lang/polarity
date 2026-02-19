@@ -136,6 +136,7 @@ impl Ctx {
                         idx: self.level_to_index(Lvl { fst, snd }),
                         name: binder.name.clone().into(),
                         inferred_type: None,
+                        erased: false,
                     }
                     .into(),
                 );
