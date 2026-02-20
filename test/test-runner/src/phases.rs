@@ -452,11 +452,6 @@ impl Phase for JS {
             return Ok(String::from("NOT YET IMPLEMENTED"));
         }
 
-        // TODO: extern calls are not yet implemented for the backend
-        if !ir.externs.is_empty() {
-            return Ok(String::from("NOT YET IMPLEMENTED"));
-        }
-
         let mut out = Vec::new();
         db.js(uri, &mut out).await?;
         let out = String::from_utf8(out).unwrap();
@@ -464,16 +459,16 @@ impl Phase for JS {
     }
 }
 
-// NodeCheck phase
+// NodeOutput phase
 //
-// This phase checks the validity of the generated JS code by running `node --check` on it.
+// This phase run `node` on the generated JS file.
 
-pub struct NodeCheck {
+pub struct NodeOutput {
     name: &'static str,
 }
 
-impl Phase for NodeCheck {
-    type Out = ();
+impl Phase for NodeOutput {
+    type Out = String;
 
     fn new(name: &'static str) -> Self {
         Self { name }
@@ -488,22 +483,16 @@ impl Phase for NodeCheck {
 
         // TODO: multiple modules are not yet implemented for the backend
         if !ir.use_decls.is_empty() {
-            return Ok(());
-        }
-
-        // TODO: extern calls are not yet implemented for the backend
-        if !ir.externs.is_empty() {
-            return Ok(());
+            return Ok(String::from("NOT YET IMPLEMENTED"));
         }
 
         let mut file = tempfile::NamedTempFile::new().unwrap();
         db.js(uri, &mut file).await?;
 
-        let assert =
-            assert_cmd::Command::new("node").arg("--check").arg(file.path().as_os_str()).assert();
-        assert.stdout("").stderr("");
-
-        Ok(())
+        let assert = assert_cmd::Command::new("node").arg(file.path().as_os_str()).assert();
+        let out = assert.success().stderr("").get_output().stdout.clone();
+        let out = String::from_utf8(out).unwrap();
+        Ok(out)
     }
 }
 

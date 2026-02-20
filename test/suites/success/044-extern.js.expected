@@ -1,1 +1,9 @@
-NOT YET IMPLEMENTED
+function foo() {
+    return append(one_i64(), one_i64(), singleton({
+        tag: "T",
+        args: []
+    }), singleton({
+        tag: "F",
+        args: []
+    }));
+}
