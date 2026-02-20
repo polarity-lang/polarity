@@ -1,0 +1,11 @@
+extern F64: Type
+extern add_f64(x y: F64): F64
+extern sub_f64(x y: F64): F64
+extern mul_f64(x y: F64): F64
+extern div_f64(x y: F64): F64
+
+let main: F64 {
+	let x := mul_f64(3.0, 4.0);
+	let y := sub_f64(1.0, x);
+	add_f64(div_f64(y, 2.0), x)
+}

@@ -1,0 +1,5 @@
+function main() {
+    return "Hello".concat(", World").concat(String.fromCodePoint(33));
+}
+
+console.log(JSON.stringify(main(), (k, v) => typeof v == "bigint" ? v.toString() : v))

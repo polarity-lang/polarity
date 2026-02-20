@@ -1,0 +1,8 @@
+extern Char: Type
+extern String: Type
+extern concat(x y: String): String
+extern append_char(c: Char, s: String): String
+
+let main: String {
+	append_char('!', concat("Hello", ", World"))
+}
