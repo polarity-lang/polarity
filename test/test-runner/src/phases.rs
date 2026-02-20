@@ -459,15 +459,15 @@ impl Phase for JS {
     }
 }
 
-// NodeOutput phase
+// Node phase
 //
 // This phase run `node` on the generated JS file.
 
-pub struct NodeOutput {
+pub struct Node {
     name: &'static str,
 }
 
-impl Phase for NodeOutput {
+impl Phase for Node {
     type Out = String;
 
     fn new(name: &'static str) -> Self {
