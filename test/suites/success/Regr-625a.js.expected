@@ -5,4 +5,4 @@ function main() {
     return bar();
 }
 
-console.log(JSON.stringify(main(), (k, v) => typeof v == "bigint" ? Number(v) : v))
+console.log(JSON.stringify(main(), (k, v) => typeof v == "bigint" ? v.toString() : v))
