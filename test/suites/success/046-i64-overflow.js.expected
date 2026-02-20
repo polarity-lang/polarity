@@ -1,0 +1,11 @@
+function MAX() {
+    return 9223372036854775807n;
+}
+function MIN() {
+    return -9223372036854775808n;
+}
+function main() {
+    return BigInt.asIntN(64, MAX() + 1n);
+}
+
+console.log(JSON.stringify(main(), (k, v) => typeof v == "bigint" ? v.toString() : v))

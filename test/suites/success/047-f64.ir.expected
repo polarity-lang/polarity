@@ -1,0 +1,5 @@
+let main {
+    let x := mul_f64(3.0, 4.0);
+    let y := sub_f64(1.0, x);
+    add_f64(div_f64(y, 2.0), x)
+}

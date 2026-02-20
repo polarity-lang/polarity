@@ -1,0 +1,5 @@
+let main {
+    let x := mul_i64(3, 4);
+    let y := sub_i64(1, x);
+    add_i64(div_i64(y, 2), x)
+}

@@ -1,0 +1,11 @@
+extern I64: Type
+extern add_i64(x y: I64): I64
+extern sub_i64(x y: I64): I64
+extern mul_i64(x y: I64): I64
+extern div_i64(x y: I64): I64
+
+let main: I64 {
+	let x := mul_i64(3, 4);
+	let y := sub_i64(1, x);
+	add_i64(div_i64(y, 2), x)
+}

@@ -1,0 +1,5 @@
+function main() {
+    return ((x)=>(((y)=>(BigInt.asIntN(64, BigInt.asIntN(64, y / 2n) + x)))(BigInt.asIntN(64, 1n - x))))(BigInt.asIntN(64, 3n * 4n));
+}
+
+console.log(JSON.stringify(main(), (k, v) => typeof v == "bigint" ? v.toString() : v))

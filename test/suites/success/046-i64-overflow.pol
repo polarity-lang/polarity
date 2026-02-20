@@ -1,0 +1,9 @@
+extern I64: Type
+extern add_i64(x y: I64): I64
+
+let MAX: I64 { 9223372036854775807 }
+let MIN: I64 { -9223372036854775808 }
+
+let main: I64 {
+	add_i64(MAX, 1)
+}
