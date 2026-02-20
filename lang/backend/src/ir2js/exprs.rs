@@ -152,6 +152,31 @@ impl ir::Call {
                 args: vec![js::ExprOrSpread { spread: None, expr: args[1].expr.clone() }],
                 type_args: None,
             })),
+            // 〚s 〛.concat(String.fromCodePoint(〚c 〛))
+            "append_char" => Ok(js::Expr::Call(js::CallExpr {
+                span: DUMMY_SP,
+                ctxt: SyntaxContext::empty(),
+                callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
+                    span: DUMMY_SP,
+                    obj: args[1].expr.clone(),
+                    prop: js::MemberProp::Ident(js::IdentName::from("concat")),
+                }))),
+                args: vec![js::ExprOrSpread {
+                    spread: None,
+                    expr: Box::new(js::Expr::Call(js::CallExpr {
+                        span: DUMMY_SP,
+                        ctxt: SyntaxContext::empty(),
+                        callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
+                            span: DUMMY_SP,
+                            obj: Box::new(js::Expr::Ident(js::Ident::from("String"))),
+                            prop: js::MemberProp::Ident(js::IdentName::from("fromCodePoint")),
+                        }))),
+                        args: vec![js::ExprOrSpread { spread: None, expr: args[0].expr.clone() }],
+                        type_args: None,
+                    })),
+                }],
+                type_args: None,
+            })),
             _ => self.to_js_function_call(),
         }
     }
@@ -467,7 +492,7 @@ impl ToJSExpr for ir::LocalLet {
 /// ```js
 /// TODO
 /// 42.42
-/// TODO
+/// 97
 /// TODO
 /// ```
 impl ToJSExpr for ir::Literal {
@@ -475,7 +500,7 @@ impl ToJSExpr for ir::Literal {
         match self {
             ir::Literal::I64(_) => todo!(),
             ir::Literal::F64(float) => Ok(js::Expr::Lit(js::Lit::Num(js::Number::from(*float)))),
-            ir::Literal::Char(_) => todo!(),
+            ir::Literal::Char(c) => Ok(js::Expr::Lit(js::Lit::Num(js::Number::from(*c as usize)))),
             ir::Literal::String(string) => {
                 Ok(js::Expr::Lit(js::Lit::Str(js::Str::from(string.as_str()))))
             }
