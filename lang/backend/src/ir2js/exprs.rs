@@ -124,6 +124,30 @@ impl ir::Call {
         let args = args_to_js_exprs(args)?;
 
         match name.to_string().as_str() {
+            // BigInt.asIntN(64, 〚x 〛 + 〚y 〛)
+            "add_i64" => Ok(js_binary_expr_i64(
+                js::BinaryOp::Add,
+                args[0].expr.clone(),
+                args[1].expr.clone(),
+            )),
+            // BigInt.asIntN(64, 〚x 〛 - 〚y 〛)
+            "sub_i64" => Ok(js_binary_expr_i64(
+                js::BinaryOp::Sub,
+                args[0].expr.clone(),
+                args[1].expr.clone(),
+            )),
+            // BigInt.asIntN(64, 〚x 〛 * 〚y 〛)
+            "mul_i64" => Ok(js_binary_expr_i64(
+                js::BinaryOp::Mul,
+                args[0].expr.clone(),
+                args[1].expr.clone(),
+            )),
+            // BigInt.asIntN(64, 〚x 〛 / 〚y 〛)
+            "div_i64" => Ok(js_binary_expr_i64(
+                js::BinaryOp::Div,
+                args[0].expr.clone(),
+                args[1].expr.clone(),
+            )),
             // (〚x 〛 + 〚y 〛)
             "add_f64" => {
                 Ok(js_binary_expr(js::BinaryOp::Add, args[0].expr.clone(), args[1].expr.clone()))
@@ -490,15 +514,17 @@ impl ToJSExpr for ir::LocalLet {
 /// Output:
 ///
 /// ```js
-/// TODO
+/// 42n
 /// 42.42
 /// 97
-/// TODO
+/// "somestring"
 /// ```
 impl ToJSExpr for ir::Literal {
     fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
         match self {
-            ir::Literal::I64(_) => todo!(),
+            ir::Literal::I64(int) => {
+                Ok(js::Expr::Lit(js::Lit::BigInt(js::BigIntValue::from(*int).into())))
+            }
             ir::Literal::F64(float) => Ok(js::Expr::Lit(js::Lit::Num(js::Number::from(*float)))),
             ir::Literal::Char(c) => Ok(js::Expr::Lit(js::Lit::Num(js::Number::from(*c as usize)))),
             ir::Literal::String(string) => {
@@ -661,5 +687,28 @@ fn js_binary_expr(op: js::BinaryOp, left: Box<js::Expr>, right: Box<js::Expr>) -
     js::Expr::Paren(js::ParenExpr {
         span: DUMMY_SP,
         expr: Box::new(js::Expr::Bin(js::BinExpr { span: DUMMY_SP, op, left, right })),
+    })
+}
+
+fn js_binary_expr_i64(op: js::BinaryOp, left: Box<js::Expr>, right: Box<js::Expr>) -> js::Expr {
+    js::Expr::Call(js::CallExpr {
+        span: DUMMY_SP,
+        ctxt: SyntaxContext::empty(),
+        callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
+            span: DUMMY_SP,
+            obj: Box::new(js::Expr::Ident(js::Ident::from("BigInt"))),
+            prop: js::MemberProp::Ident(js::IdentName::from("asIntN")),
+        }))),
+        args: vec![
+            js::ExprOrSpread {
+                spread: None,
+                expr: Box::new(js::Expr::Lit(js::Lit::Num(js::Number::from(64)))),
+            },
+            js::ExprOrSpread {
+                spread: None,
+                expr: Box::new(js::Expr::Bin(js::BinExpr { span: DUMMY_SP, op, left, right })),
+            },
+        ],
+        type_args: None,
     })
 }

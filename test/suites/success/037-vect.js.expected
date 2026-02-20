@@ -124,4 +124,4 @@ function example1(__self) {
     }
 }
 
-console.log(JSON.stringify(main()))
+console.log(JSON.stringify(main(), (k, v) => typeof v == "bigint" ? v.toString() : v))
