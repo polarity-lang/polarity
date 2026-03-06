@@ -33,6 +33,7 @@ extern {
     "infix" => Token::Infix,
     "note" => Token::Note,
     "extern" => Token::Extern,
+    "do" => Token::Do,
 
     // Parens, Braces and Brackets
     //
@@ -58,6 +59,7 @@ extern {
     "\\" => Token::Backslash,
     "#" => Token::Hash,
     "_" => Token::Underscore,
+    "<-" => Token::LeftArrow,
 
     // Identifiers
     //
