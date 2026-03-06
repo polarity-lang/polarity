@@ -174,6 +174,7 @@ pub struct LocalComatch {
 }
 
 #[derive(Debug, Clone)]
+/// Do block, e.g. do { let x := foo(); y <- bar(); x }
 pub struct DoBlock {
     pub span: Span,
     pub statements: Vec<DoStatement>,
