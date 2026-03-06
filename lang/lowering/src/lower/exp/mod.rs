@@ -37,6 +37,10 @@ impl Lower for cst::exp::Exp {
             cst::exp::Exp::BinOp(e) => e.lower(ctx),
             cst::exp::Exp::Lam(e) => e.lower(ctx),
             cst::exp::Exp::LocalLet(e) => e.lower(ctx),
+            cst::exp::Exp::DoBlock(_) => Err(Box::new(LoweringError::Impossible {
+                message: "Do blocks not yet implemented".to_string(),
+                span: None,
+            })),
             cst::exp::Exp::Parens(e) => e.lower(ctx),
 
             // In the future, we plan to handle these as holes, for now this is caught in parsing.

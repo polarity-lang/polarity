@@ -266,22 +266,27 @@ pub TypApp: Call = {
 // Grammar:
 //
 // ```text
-// <Exp>    ::= <NonLet>
-//           | let x : NonLet := NonLet ; Exp
-// <NonLet> ::= <Ops>
-//           | <Ops> : <Exp>
-//           | <Ops> + <Ops>
-//           | \<pat> => <Exp>
-// <Ops>    ::= <Atom>
-//           | <Ops>.f(<Exp>,...,<Exp>)
-//           | <Ops>.match <Ident> as <Ident> => <Exp> { <pat> => <Exp>, ... }
-// <Atom>   ::= (<Exp>)
-//           | f(<Exp>,...,<Exp>)
-//           | comatch <Ident> { <copat> => <Exp>, ... }
-//           | _
-//           | ?
-//           | f
-//           | n      (Literal)
+// <Exp>     ::= <NonLet>
+//            | let x : <NonLet> := <NonLet> ; <Exp>
+// <NonLet>  ::= <Ops>
+//            | <Ops> : <Exp>
+//            | <Ops> + <Ops>
+//            | \<pat> => <Exp>
+//            | do { <DoStmts> }
+// <Ops>     ::= <Atom>
+//            | <Ops>.f(<Exp>,...,<Exp>)
+//            | <Ops>.match <Ident> as <Ident> => <Exp> { <pat> => <Exp>, ... }
+// <Atom>    ::= (<Exp>)
+//            | f(<Exp>,...,<Exp>)
+//            | comatch <Ident> { <copat> => <Exp>, ... }
+//            | _
+//            | ?
+//            | f
+//            | n      (Literal)
+// <DoStmts> ::= <NonLet>
+//            | let x := <NonLet>; <DoStmts>
+//            | x <- <NonLet>; <DoStmts>
+//            | <NonLet> ; <DoStmts>
 // ```
 
 pub Exp: Box<Exp> = {
@@ -296,6 +301,7 @@ pub NonLet: Box<Exp> = {
     <e: Anno> => Box::new(Exp::Anno(e)),
     <e: BinOp> => Box::new(Exp::BinOp(e)),
     <e: Lam> => Box::new(Exp::Lam(e)),
+    <e: DoBlock> => Box::new(Exp::DoBlock(e)),
     Ops,
 }
 
@@ -369,6 +375,20 @@ Literal: Literal = {
 
 LocalLet: LocalLet = <l: @L> "let" <name: BindingSite> <typ: (":" <NonLet>)?> ":=" <bound: NonLet> ";" <body: Exp> <r: @R> =>
   LocalLet { span: span(l,r), name, typ, bound, body };
+
+DoBlock: DoBlock = <l: @L> "do" "{" <mut statements: (<DoStatement> ";")*> <lret: @L> <ret: NonLet> <rret: @R> "}" <r: @R> => {
+  statements.push(DoStatement::Exp {
+    span: span(lret, rret),
+    exp: ret,
+  });
+  DoBlock { span: span(l, r), statements }
+};
+
+DoStatement: DoStatement = {
+  <l: @L> <exp: NonLet> <r: @R> => DoStatement::Exp { span: span(l, r), exp },
+  <l: @L> "let" <var: Ident> <typ: (":" <NonLet>)?> ":=" <exp: NonLet> <r: @R> => DoStatement::Let { span: span(l, r), var, typ, exp },
+  <l: @L> <var: Ident> "<-" <exp: NonLet> <r: @R> => DoStatement::Bind { span: span(l, r), var, exp },
+};
 
 ParensExp: Parens = <l: @L> "(" <exp: Exp> ")" <r: @R> =>
   Parens { span: span(l,r), exp };
