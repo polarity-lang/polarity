@@ -386,8 +386,8 @@ DoBlock: DoBlock = <l: @L> "do" "{" <mut statements: (<DoStatement> ";")*> <lret
 
 DoStatement: DoStatement = {
   <l: @L> <exp: NonLet> <r: @R> => DoStatement::Exp { span: span(l, r), exp },
-  <l: @L> "let" <var: Ident> <typ: (":" <NonLet>)?> ":=" <exp: NonLet> <r: @R> => DoStatement::Let { span: span(l, r), var, typ, exp },
-  <l: @L> <var: Ident> "<-" <exp: NonLet> <r: @R> => DoStatement::Bind { span: span(l, r), var, exp },
+  <l: @L> "let" <var: BindingSite> <typ: (":" <NonLet>)?> ":=" <exp: NonLet> <r: @R> => DoStatement::Let { span: span(l, r), var, typ, exp },
+  <l: @L> <var: BindingSite> "<-" <exp: NonLet> <r: @R> => DoStatement::Bind { span: span(l, r), var, exp },
 };
 
 ParensExp: Parens = <l: @L> "(" <exp: Exp> ")" <r: @R> =>
