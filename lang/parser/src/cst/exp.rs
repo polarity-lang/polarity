@@ -78,6 +78,7 @@ pub enum Exp {
     BinOp(BinOp),
     Lam(Lam),
     LocalLet(LocalLet),
+    DoBlock(DoBlock),
     Parens(Parens),
 
     /// The parser generates an `Error` node when it encounters a syntactically invalid expression.
@@ -99,6 +100,7 @@ impl Exp {
             Exp::BinOp(binop) => binop.span,
             Exp::Lam(lam) => lam.span,
             Exp::LocalLet(local_let) => local_let.span,
+            Exp::DoBlock(do_block) => do_block.span,
             Exp::Parens(parens) => parens.span,
             Exp::Error(span) => *span,
         }
@@ -169,6 +171,20 @@ pub struct LocalComatch {
     pub name: Option<Ident>,
     pub is_lambda_sugar: bool,
     pub cases: Vec<Case<Copattern>>,
+}
+
+#[derive(Debug, Clone)]
+/// Do block, e.g. do { let x := foo(); y <- bar(); x }
+pub struct DoBlock {
+    pub span: Span,
+    pub statements: Vec<DoStatement>,
+}
+
+#[derive(Debug, Clone)]
+pub enum DoStatement {
+    Exp { span: Span, exp: Box<Exp> },
+    Bind { span: Span, var: BindingSite, exp: Box<Exp> },
+    Let { span: Span, var: BindingSite, typ: Option<Box<Exp>>, exp: Box<Exp> },
 }
 
 #[derive(Debug, Clone)]

@@ -84,6 +84,8 @@ pub enum Token {
     Note,
     #[token("extern")]
     Extern,
+    #[token("do")]
+    Do,
 
     // Parens, Braces and Brackets
     //
@@ -126,6 +128,8 @@ pub enum Token {
     Hash,
     #[token("_")]
     Underscore,
+    #[token("<-")]
+    LeftArrow,
 
     // Identifiers
     //
@@ -189,6 +193,7 @@ impl fmt::Display for Token {
             Token::Infix => write!(f, r#""infix""#),
             Token::Note => write!(f, r#""note""#),
             Token::Extern => write!(f, r#""extern""#),
+            Token::Do => write!(f, r#""do""#),
             Token::LParen => write!(f, r#""(""#),
             Token::RParen => write!(f, r#"")""#),
             Token::LBrace => write!(f, r#""{{""#),
@@ -206,6 +211,7 @@ impl fmt::Display for Token {
             Token::Backslash => write!(f, r#""\""#),
             Token::Hash => write!(f, r##""#""##),
             Token::Underscore => write!(f, r#""_""#),
+            Token::LeftArrow => write!(f, r#""<-""#),
             Token::Ident(_) => write!(f, r#""identifier""#),
             Token::Operator(_) => write!(f, r#""operator""#),
             Token::I64Lit(_) => write!(f, r#"integer literal"#),

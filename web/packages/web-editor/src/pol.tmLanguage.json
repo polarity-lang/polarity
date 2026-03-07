@@ -13,14 +13,14 @@
       "patterns": [
         {
           "name": "keyword.control",
-          "match": "\\b(data|codata|let|def|codef|match|comatch|absurd|Type|implicit|use|infix|note|extern)\\b"
+          "match": "\\b(data|codata|let|def|codef|match|comatch|absurd|Type|implicit|use|infix|note|extern|do)\\b"
         }
       ]
     },
     "symbols": {
       "patterns": [
         {
-          "match": "(;|=>|,|:|\\.)",
+          "match": "(;|=>|<-|,|:|\\.)",
           "name": "keyword.syntax"
         }
       ]
