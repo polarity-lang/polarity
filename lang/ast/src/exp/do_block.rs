@@ -20,7 +20,7 @@ use crate::{
 /// Do block:
 /// ```text
 /// do {
-///   let x <- foo();
+///   let x := foo();
 ///   y <- bar();
 ///   x
 /// }
