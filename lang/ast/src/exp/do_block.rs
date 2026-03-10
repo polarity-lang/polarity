@@ -189,7 +189,13 @@ impl Print for DoBlock {
     ) -> polarity_lang_printer::Builder<'a> {
         let DoBlock { span: _, statements, inferred_type: _ } = self;
 
-        let body = statements.print(cfg, alloc).braces_anno();
+        let body = alloc
+            .line()
+            .append(statements.print(cfg, alloc))
+            .nest(cfg.indent)
+            .append(alloc.line())
+            .braces_anno();
+
         alloc.keyword(DO).append(alloc.space()).append(body)
     }
 }
@@ -232,6 +238,7 @@ impl Print for DoStatements {
                     .append(typ)
                     .append(alloc.space())
                     .append(COLONEQ)
+                    .append(alloc.space())
                     .append(bound.print_prec(cfg, alloc, Precedence::NonLet))
                     .append(SEMICOLON)
                     .group();
