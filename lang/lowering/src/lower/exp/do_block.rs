@@ -11,7 +11,10 @@ impl Lower for cst::exp::DoBlock {
     fn lower(&self, ctx: &mut Ctx) -> LoweringResult<Self::Target> {
         let cst::exp::DoBlock { span, statements } = self;
 
-        let Some(cst::exp::DoStatement::Exp { span: _, exp: return_exp }) = statements.last()
+        let mut statements = statements.iter().rev();
+
+        // The last element must be the final return expression.
+        let Some(cst::exp::DoStatement::Exp { span: ret_span, exp: ret_exp }) = statements.next()
         else {
             // This is impossible because the parser's grammar ensures that the last statement must
             // always be the return expression.
@@ -20,34 +23,40 @@ impl Lower for cst::exp::DoBlock {
                 span: Some(span.to_miette()),
             }));
         };
-        let return_exp = return_exp.lower(ctx)?;
 
-        let mut bindings = Vec::new();
-        for s in statements.iter().take(statements.len() - 1) {
-            let binding = match s {
-                cst::exp::DoStatement::Exp { span, exp } => ast::DoBinding::Bind {
-                    span: *span,
-                    var: ast::VarBind::Wildcard { span: None },
-                    exp: exp.lower(ctx)?,
-                },
-                cst::exp::DoStatement::Bind { span, var, exp } => {
-                    ast::DoBinding::Bind { span: *span, var: var.lower(ctx)?, exp: exp.lower(ctx)? }
+        // Build the statement list from bottom to top.
+        let mut builder = ast::DoStatements::Return { span: *ret_span, exp: ret_exp.lower(ctx)? };
+        for statement in statements {
+            match statement {
+                cst::exp::DoStatement::Exp { span, exp } => {
+                    builder = ast::DoStatements::Bind {
+                        span: *span,
+                        name: ast::VarBind::Wildcard { span: None },
+                        bound: exp.lower(ctx)?,
+                        body: Box::new(builder),
+                    }
                 }
-                cst::exp::DoStatement::Let { span, var, typ, exp } => ast::DoBinding::Let {
-                    span: *span,
-                    var: var.lower(ctx)?,
-                    typ: typ.lower(ctx)?,
-                    exp: exp.lower(ctx)?,
-                },
-            };
-            bindings.push(binding);
+                cst::exp::DoStatement::Bind { span, name, bound } => {
+                    builder = ast::DoStatements::Bind {
+                        span: *span,
+                        name: name.lower(ctx)?,
+                        bound: bound.lower(ctx)?,
+                        body: Box::new(builder),
+                    }
+                }
+                cst::exp::DoStatement::Let { span, name, typ, bound } => {
+                    builder = ast::DoStatements::Let {
+                        span: *span,
+                        name: name.lower(ctx)?,
+                        typ: typ.lower(ctx)?,
+                        bound: bound.lower(ctx)?,
+                        body: Box::new(builder),
+                    }
+                }
+            }
         }
 
-        Ok(ast::Exp::DoBlock(ast::DoBlock {
-            span: *span,
-            bindings,
-            return_exp,
-            inferred_type: None,
-        }))
+        let block = ast::DoBlock { span: *span, statements: builder, inferred_type: None };
+        Ok(ast::Exp::DoBlock(block))
     }
 }
