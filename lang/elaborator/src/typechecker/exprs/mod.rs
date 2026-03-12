@@ -1,5 +1,6 @@
 pub mod anno;
 pub mod call;
+pub mod do_block;
 pub mod dot_call;
 pub mod hole;
 pub mod literal;
