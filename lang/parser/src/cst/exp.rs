@@ -183,8 +183,8 @@ pub struct DoBlock {
 #[derive(Debug, Clone)]
 pub enum DoStatement {
     Exp { span: Span, exp: Box<Exp> },
-    Bind { span: Span, var: BindingSite, exp: Box<Exp> },
-    Let { span: Span, var: BindingSite, typ: Option<Box<Exp>>, exp: Box<Exp> },
+    Bind { span: Span, name: BindingSite, bound: Box<Exp> },
+    Let { span: Span, name: BindingSite, typ: Option<Box<Exp>>, bound: Box<Exp> },
 }
 
 #[derive(Debug, Clone)]

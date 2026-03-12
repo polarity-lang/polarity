@@ -91,6 +91,7 @@ impl CheckInfer for Exp {
             Exp::LocalMatch(e) => Ok(e.check(ctx, t)?.into()),
             Exp::LocalComatch(e) => Ok(e.check(ctx, t)?.into()),
             Exp::LocalLet(e) => Ok(e.check(ctx, t)?.into()),
+            Exp::DoBlock(_) => todo!(),
             Exp::Literal(e) => Ok(e.check(ctx, t)?.into()),
         }
     }
@@ -107,6 +108,7 @@ impl CheckInfer for Exp {
             Exp::LocalMatch(e) => Ok(e.infer(ctx)?.into()),
             Exp::LocalComatch(e) => Ok(e.infer(ctx)?.into()),
             Exp::LocalLet(e) => Ok(e.infer(ctx)?.into()),
+            Exp::DoBlock(_) => todo!(),
             Exp::Literal(e) => Ok(e.infer(ctx)?.into()),
         };
         trace!(

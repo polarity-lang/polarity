@@ -35,6 +35,8 @@ pub const UNDERSCORE: &str = "_";
 /// The symbol `;`
 pub const SEMICOLON: &str = ";";
 
+pub const LEFT_ARROW: &str = "<-";
+
 // Keywords
 //
 //
@@ -83,3 +85,6 @@ pub const IMPLICIT: &str = "implicit";
 
 /// The keyword `use`
 pub const USE: &str = "use";
+
+/// The keyword `do`
+pub const DO: &str = "do";
