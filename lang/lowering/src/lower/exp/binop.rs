@@ -1,6 +1,8 @@
+use polarity_lang_ast::{Args, Call, CallKind, TypCtor};
+use polarity_lang_miette_util::ToMiette;
 use polarity_lang_parser::cst::{self};
 
-use crate::{Ctx, LoweringResult, lower::Lower};
+use crate::{Ctx, DeclMeta, LoweringError, LoweringResult, lower::Lower};
 
 impl Lower for cst::exp::BinOp {
     type Target = polarity_lang_ast::Exp;
@@ -17,30 +19,47 @@ impl Lower for cst::exp::BinOp {
             }
             [(operator, rhs), tail @ ..] => {
                 let (id, _url) = ctx.symbol_table.lookup_operator(operator)?;
-                let (_, name) = ctx.symbol_table.lookup(id)?;
+                let (meta, name) = ctx.symbol_table.lookup(id)?;
+                let meta = meta.clone();
 
                 let new_bin_op =
                     cst::exp::BinOp { span: *span, lhs: Box::new(rhs.clone()), rhs: tail.to_vec() };
                 let rhs_lowered = new_bin_op.lower(ctx)?;
+                let args = Args {
+                    args: vec![
+                        polarity_lang_ast::Arg::UnnamedArg { arg: lhs.lower(ctx)?, erased: false },
+                        polarity_lang_ast::Arg::UnnamedArg {
+                            arg: Box::new(rhs_lowered),
+                            erased: false,
+                        },
+                    ],
+                };
 
-                Ok(polarity_lang_ast::TypCtor {
-                    span: Some(*span),
-                    name,
-                    args: polarity_lang_ast::Args {
-                        args: vec![
-                            polarity_lang_ast::Arg::UnnamedArg {
-                                arg: lhs.lower(ctx)?,
-                                erased: false,
-                            },
-                            polarity_lang_ast::Arg::UnnamedArg {
-                                arg: Box::new(rhs_lowered),
-                                erased: false,
-                            },
-                        ],
-                    },
-                    is_bin_op: Some(operator.id.clone()),
-                }
-                .into())
+                if let DeclMeta::Data { .. } | DeclMeta::Codata { .. } = meta {
+                    return Ok(TypCtor {
+                        span: Some(*span),
+                        name,
+                        args,
+                        is_bin_op: Some(operator.id.clone()),
+                    }
+                    .into());
+                };
+
+                let kind = match meta {
+                    DeclMeta::Ctor { .. } => CallKind::Constructor,
+                    DeclMeta::Codef { .. } => CallKind::Codefinition,
+                    DeclMeta::Let { .. } => CallKind::LetBound,
+                    DeclMeta::Extern { .. } => CallKind::Extern,
+                    _ => {
+                        return Err(LoweringError::Impossible {
+                            message: "Unexpected declaration kind in infix lowering".to_owned(),
+                            span: Some(span.to_miette()),
+                        }
+                        .into());
+                    }
+                };
+
+                Ok(Call { span: Some(*span), kind, name, args, inferred_type: None }.into())
             }
         }
     }
