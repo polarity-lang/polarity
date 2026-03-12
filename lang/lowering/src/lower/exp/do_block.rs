@@ -28,7 +28,11 @@ impl Lower for cst::exp::DoBlock {
                 span: Some(span.to_miette()),
             }));
         };
-        let return_exp = ast::DoStatements::Return { span: *ret_span, exp: ret_exp.lower(ctx)? };
+        let return_exp = ast::DoStatements::Return {
+            span: *ret_span,
+            exp: ret_exp.lower(ctx)?,
+            inferred_type: None,
+        };
 
         let statements = lower_do_statements(statements, return_exp, ctx)?;
 
@@ -52,6 +56,7 @@ fn lower_do_statements(
             name: ast::VarBind::Wildcard { span: None },
             bound: exp.lower(ctx)?,
             body: Box::new(lower_do_statements(tail, return_exp, ctx)?),
+            inferred_type: None,
         }),
         cst::exp::DoStatement::Bind { span, name, bound } => {
             let name = name.lower(ctx)?;
@@ -59,7 +64,13 @@ fn lower_do_statements(
 
             ctx.bind_single(name.clone(), |ctx| {
                 let body = lower_do_statements(tail, return_exp, ctx)?;
-                Ok(ast::DoStatements::Bind { span: *span, name, bound, body: Box::new(body) })
+                Ok(ast::DoStatements::Bind {
+                    span: *span,
+                    name,
+                    bound,
+                    body: Box::new(body),
+                    inferred_type: None,
+                })
             })
         }
         cst::exp::DoStatement::Let { span, name, typ, bound } => {
@@ -69,7 +80,14 @@ fn lower_do_statements(
 
             ctx.bind_single(name.clone(), |ctx| {
                 let body = lower_do_statements(tail, return_exp, ctx)?;
-                Ok(ast::DoStatements::Let { span: *span, name, typ, bound, body: Box::new(body) })
+                Ok(ast::DoStatements::Let {
+                    span: *span,
+                    name,
+                    typ,
+                    bound,
+                    body: Box::new(body),
+                    inferred_type: None,
+                })
             })
         }
     }
