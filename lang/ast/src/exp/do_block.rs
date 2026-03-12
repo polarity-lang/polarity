@@ -45,22 +45,34 @@ pub enum DoStatements {
     Bind {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Span,
+
         name: VarBind,
         bound: Box<Exp>,
         body: Box<DoStatements>,
+
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        inferred_type: Option<Box<Exp>>,
     },
     Let {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Span,
+
         name: VarBind,
         typ: Option<Box<Exp>>,
         bound: Box<Exp>,
         body: Box<DoStatements>,
+
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        inferred_type: Option<Box<Exp>>,
     },
     Return {
         #[derivative(PartialEq = "ignore", Hash = "ignore")]
         span: Span,
+
         exp: Box<Exp>,
+
+        #[derivative(PartialEq = "ignore", Hash = "ignore")]
+        inferred_type: Option<Box<Exp>>,
     },
 }
 
@@ -81,16 +93,21 @@ impl Shift for DoBlock {
 impl Shift for DoStatements {
     fn shift_in_range<R: crate::ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
         match self {
-            DoStatements::Bind { span: _, name: _, bound, body } => {
+            DoStatements::Bind { span: _, name: _, bound, body, inferred_type } => {
                 bound.shift_in_range(range, by);
                 body.shift_in_range(&range.clone().shift(1), by);
+                *inferred_type = None;
             }
-            DoStatements::Let { span: _, name: _, typ, bound, body } => {
+            DoStatements::Let { span: _, name: _, typ, bound, body, inferred_type } => {
                 typ.shift_in_range(range, by);
                 bound.shift_in_range(range, by);
                 body.shift_in_range(&range.clone().shift(1), by);
+                *inferred_type = None;
             }
-            DoStatements::Return { span: _, exp } => exp.shift_in_range(range, by),
+            DoStatements::Return { span: _, exp, inferred_type } => {
+                exp.shift_in_range(range, by);
+                *inferred_type = None;
+            }
         }
     }
 }
@@ -111,15 +128,15 @@ impl Occurs for DoStatements {
         F: Fn(&LevelCtx, &Exp) -> bool,
     {
         match self {
-            DoStatements::Bind { span: _, name, bound, body } => {
+            DoStatements::Bind { span: _, name, bound, body, inferred_type: _ } => {
                 bound.occurs(ctx, f) || ctx.bind_single(name.clone(), |ctx| body.occurs(ctx, f))
             }
-            DoStatements::Let { span: _, name, typ, bound, body } => {
+            DoStatements::Let { span: _, name, typ, bound, body, inferred_type: _ } => {
                 typ.as_ref().is_some_and(|t| t.occurs(ctx, f))
                     || bound.occurs(ctx, f)
                     || ctx.bind_single(name.clone(), |ctx| body.occurs(ctx, f))
             }
-            DoStatements::Return { span: _, exp } => exp.occurs(ctx, f),
+            DoStatements::Return { span: _, exp, inferred_type: _ } => exp.occurs(ctx, f),
         }
     }
 }
@@ -144,7 +161,7 @@ impl Substitutable for DoStatements {
 
     fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
         match self {
-            DoStatements::Bind { span, name, bound, body } => {
+            DoStatements::Bind { span, name, bound, body, inferred_type: _ } => {
                 let bound = bound.subst(ctx, subst);
                 ctx.bind_single(name.clone(), |ctx| {
                     let mut subst = (*subst).clone();
@@ -154,10 +171,11 @@ impl Substitutable for DoStatements {
                         name: name.clone(),
                         bound,
                         body: body.subst(ctx, &subst),
+                        inferred_type: None,
                     }
                 })
             }
-            DoStatements::Let { span, name, typ, bound, body } => {
+            DoStatements::Let { span, name, typ, bound, body, inferred_type: _ } => {
                 let typ = typ.subst(ctx, subst);
                 let bound = bound.subst(ctx, subst);
                 ctx.bind_single(name.clone(), |ctx| {
@@ -169,12 +187,13 @@ impl Substitutable for DoStatements {
                         typ,
                         bound,
                         body: body.subst(ctx, &subst),
+                        inferred_type: None,
                     }
                 })
             }
-            DoStatements::Return { span, exp } => {
+            DoStatements::Return { span, exp, inferred_type: _ } => {
                 let exp = exp.subst(ctx, subst);
-                DoStatements::Return { span: *span, exp }
+                DoStatements::Return { span: *span, exp, inferred_type: None }
             }
         }
     }
@@ -208,7 +227,7 @@ impl Print for DoStatements {
         _prec: polarity_lang_printer::Precedence,
     ) -> polarity_lang_printer::Builder<'a> {
         match self {
-            DoStatements::Bind { span: _, name, bound, body } => {
+            DoStatements::Bind { span: _, name, bound, body, inferred_type: _ } => {
                 let head = name
                     .print(cfg, alloc)
                     .append(alloc.space())
@@ -222,7 +241,7 @@ impl Print for DoStatements {
 
                 head.append(alloc.hardline()).append(body)
             }
-            DoStatements::Let { span: _, name, typ, bound, body } => {
+            DoStatements::Let { span: _, name, typ, bound, body, inferred_type: _ } => {
                 let typ = typ.as_ref().map(|t| {
                     alloc.text(COLON).append(alloc.space()).append(t.print_prec(
                         cfg,
@@ -247,7 +266,9 @@ impl Print for DoStatements {
 
                 head.append(alloc.hardline()).append(body)
             }
-            DoStatements::Return { span: _, exp } => exp.print_prec(cfg, alloc, Precedence::Exp),
+            DoStatements::Return { span: _, exp, inferred_type: _ } => {
+                exp.print_prec(cfg, alloc, Precedence::Exp)
+            }
         }
     }
 }
@@ -268,18 +289,18 @@ impl Zonk for DoStatements {
         meta_vars: &crate::HashMap<crate::MetaVar, crate::MetaVarState>,
     ) -> Result<(), crate::ZonkError> {
         match self {
-            DoStatements::Bind { span: _, name: _, bound, body } => {
+            DoStatements::Bind { span: _, name: _, bound, body, inferred_type: _ } => {
                 bound.zonk(meta_vars)?;
                 body.zonk(meta_vars)?;
                 Ok(())
             }
-            DoStatements::Let { span: _, name: _, typ, bound, body } => {
+            DoStatements::Let { span: _, name: _, typ, bound, body, inferred_type: _ } => {
                 typ.zonk(meta_vars)?;
                 bound.zonk(meta_vars)?;
                 body.zonk(meta_vars)?;
                 Ok(())
             }
-            DoStatements::Return { span: _, exp } => exp.zonk(meta_vars),
+            DoStatements::Return { span: _, exp, inferred_type: _ } => exp.zonk(meta_vars),
         }
     }
 }
@@ -287,21 +308,27 @@ impl Zonk for DoStatements {
 impl ContainsMetaVars for DoBlock {
     fn contains_metavars(&self) -> bool {
         let DoBlock { span: _, statements, inferred_type } = self;
-        statements.contains_metavars()
-            || inferred_type.as_ref().is_some_and(|t| t.contains_metavars())
+        statements.contains_metavars() || inferred_type.contains_metavars()
     }
 }
 
 impl ContainsMetaVars for DoStatements {
     fn contains_metavars(&self) -> bool {
         match self {
-            DoStatements::Bind { span: _, name: _, bound, body } => {
-                bound.contains_metavars() || body.contains_metavars()
+            DoStatements::Bind { span: _, name: _, bound, body, inferred_type } => {
+                bound.contains_metavars()
+                    || body.contains_metavars()
+                    || inferred_type.contains_metavars()
             }
-            DoStatements::Let { span: _, name: _, typ, bound, body } => {
-                typ.contains_metavars() || bound.contains_metavars() || body.contains_metavars()
+            DoStatements::Let { span: _, name: _, typ, bound, body, inferred_type } => {
+                typ.contains_metavars()
+                    || bound.contains_metavars()
+                    || body.contains_metavars()
+                    || inferred_type.contains_metavars()
             }
-            DoStatements::Return { span: _, exp } => exp.contains_metavars(),
+            DoStatements::Return { span: _, exp, inferred_type } => {
+                exp.contains_metavars() || inferred_type.contains_metavars()
+            }
         }
     }
 }
@@ -316,20 +343,20 @@ impl Rename for DoBlock {
 impl Rename for DoStatements {
     fn rename_in_ctx(&mut self, ctx: &mut crate::rename::RenameCtx) {
         match self {
-            DoStatements::Bind { span: _, name, bound, body } => {
+            DoStatements::Bind { span: _, name, bound, body, inferred_type: _ } => {
                 bound.rename_in_ctx(ctx);
                 ctx.bind_single(name.clone(), |ctx| {
                     body.rename_in_ctx(ctx);
                 })
             }
-            DoStatements::Let { span: _, name, typ, bound, body } => {
+            DoStatements::Let { span: _, name, typ, bound, body, inferred_type: _ } => {
                 typ.rename_in_ctx(ctx);
                 bound.rename_in_ctx(ctx);
                 ctx.bind_single(name.clone(), |ctx| {
                     body.rename_in_ctx(ctx);
                 })
             }
-            DoStatements::Return { span: _, exp } => exp.rename_in_ctx(ctx),
+            DoStatements::Return { span: _, exp, inferred_type: _ } => exp.rename_in_ctx(ctx),
         }
     }
 }
@@ -350,16 +377,18 @@ impl FreeVars for DoBlock {
 impl FreeVars for DoStatements {
     fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
         match self {
-            DoStatements::Bind { span: _, name: _, bound, body } => {
+            DoStatements::Bind { span: _, name: _, bound, body, inferred_type: _ } => {
                 bound.free_vars_mut(ctx, cutoff, fvs);
                 body.free_vars_mut(ctx, cutoff + 1, fvs);
             }
-            DoStatements::Let { span: _, name: _, typ, bound, body } => {
+            DoStatements::Let { span: _, name: _, typ, bound, body, inferred_type: _ } => {
                 typ.free_vars_mut(ctx, cutoff, fvs);
                 bound.free_vars_mut(ctx, cutoff, fvs);
                 body.free_vars_mut(ctx, cutoff + 1, fvs);
             }
-            DoStatements::Return { span: _, exp } => exp.free_vars_mut(ctx, cutoff, fvs),
+            DoStatements::Return { span: _, exp, inferred_type: _ } => {
+                exp.free_vars_mut(ctx, cutoff, fvs)
+            }
         }
     }
 }
