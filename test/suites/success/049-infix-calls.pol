@@ -1,0 +1,12 @@
+infix _ + _ := add_i64(_, _)
+infix _ <+> _ := keep_left(_, _)
+
+extern I64: Type
+extern add_i64(x y: I64): I64
+
+let keep_left(x y: I64): I64 { x }
+
+let main: I64 {
+    let x := 1 + 2;
+    x <+> 42
+}

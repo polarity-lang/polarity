@@ -1,0 +1,8 @@
+function keep_left(x, y) {
+    return x;
+}
+function main() {
+    return ((x0)=>(keep_left(x0, 42n)))(BigInt.asIntN(64, 1n + 2n));
+}
+
+console.log(JSON.stringify(main(), (k, v) => typeof v == "bigint" ? v.toString() : v))
