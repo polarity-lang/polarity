@@ -1,10 +1,17 @@
+use polarity_lang_ast::ctx::BindContext;
+use polarity_lang_ast::ctx::values::Binder;
+use polarity_lang_ast::ctx::values::Binding;
+use polarity_lang_ast::ctx::values::BoundValue;
 use polarity_lang_ast::*;
 
+use crate::normalizer::env::ToEnv;
+use crate::normalizer::normalize::Normalize;
 use crate::result::TcResult;
-use crate::typechecker::exprs::ExpectType;
+use crate::typechecker::util::ExpectIo;
 
 use super::super::ctx::*;
 use super::CheckInfer;
+use super::ExpectType;
 
 impl CheckInfer for DoBlock {
     fn check(&self, ctx: &mut Ctx, t: &polarity_lang_ast::Exp) -> TcResult<Self> {
@@ -24,10 +31,168 @@ impl CheckInfer for DoBlock {
 
 impl CheckInfer for DoStatements {
     fn check(&self, ctx: &mut Ctx, t: &Exp) -> TcResult<Self> {
-        todo!()
+        match self {
+            DoStatements::Bind { span, name, bound, body, inferred_type: _ } => {
+                let bound = bound.infer(ctx)?;
+                let typ = bound.expect_typ()?;
+                let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
+                let inner_typ = typ_nf.expect_io()?;
+
+                let elem = Binder {
+                    name: name.clone(),
+                    content: Binding {
+                        typ: inner_typ,
+                        val: Some(ctx::values::BoundValue::LetBinding { val: bound.clone() }),
+                    },
+                };
+
+                // We need to shift the binder type here because we treat it as a 1-element telescope
+                let body =
+                    ctx.bind_single(shift_and_clone(&elem, (1, 0)), |ctx| body.check(ctx, t))?;
+                let inferred_type = body.expect_typ()?;
+
+                Ok(DoStatements::Bind {
+                    span: *span,
+                    name: name.clone(),
+                    bound,
+                    body,
+                    inferred_type: Some(inferred_type),
+                })
+            }
+            DoStatements::Let { span, name, typ, bound, body, inferred_type: _ } => {
+                let (typ, typ_nf, bound) = match typ {
+                    Some(typ) => {
+                        let typ = typ.check(ctx, &TypeUniv::new().into())?;
+                        let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
+                        let bound = bound.check(ctx, &typ_nf)?;
+                        (Some(typ), typ_nf, bound)
+                    }
+                    None => {
+                        let bound = bound.infer(ctx)?;
+                        let typ = bound.expect_typ()?;
+                        let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
+                        (None, typ_nf, bound)
+                    }
+                };
+
+                let elem = Binder {
+                    name: name.clone(),
+                    content: Binding {
+                        typ: typ_nf,
+                        val: Some(BoundValue::LetBinding { val: bound.clone() }),
+                    },
+                };
+
+                // We need to shift the binder type here because we treat it as a 1-element telescope
+                let body =
+                    ctx.bind_single(shift_and_clone(&elem, (1, 0)), |ctx| body.check(ctx, t))?;
+                let inferred_type = body.expect_typ()?;
+
+                Ok(DoStatements::Let {
+                    span: *span,
+                    name: name.clone(),
+                    typ,
+                    bound,
+                    body,
+                    inferred_type: Some(inferred_type),
+                })
+            }
+            DoStatements::Return { span, exp, inferred_type: _ } => {
+                let t_nf = t.normalize(&ctx.type_info_table, &mut ctx.env())?;
+                let inner_type = t_nf.expect_io()?;
+
+                let exp = exp.check(ctx, &inner_type)?;
+                let inferred_type = exp.expect_typ()?;
+
+                Ok(DoStatements::Return { span: *span, exp, inferred_type: Some(inferred_type) })
+            }
+        }
     }
 
     fn infer(&self, ctx: &mut Ctx) -> TcResult<Self> {
-        todo!()
+        match self {
+            DoStatements::Bind { span, name, bound, body, inferred_type: _ } => {
+                let bound = bound.infer(ctx)?;
+                let typ = bound.expect_typ()?;
+                let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
+                let inner_typ = typ_nf.expect_io()?;
+
+                let elem = Binder {
+                    name: name.clone(),
+                    content: Binding {
+                        typ: inner_typ,
+                        val: Some(BoundValue::LetBinding { val: bound.clone() }),
+                    },
+                };
+
+                // We need to shift the binder type here because we treat it as a 1-element telescope
+                let body =
+                    ctx.bind_single(shift_and_clone(&elem, (1, 0)), |ctx| body.infer(ctx))?;
+                let inferred_type = body.expect_typ()?;
+
+                Ok(DoStatements::Bind {
+                    span: *span,
+                    name: name.clone(),
+                    bound,
+                    body,
+                    inferred_type: Some(inferred_type),
+                })
+            }
+            DoStatements::Let { span, name, typ, bound, body, inferred_type: _ } => {
+                let (typ, typ_nf, bound) = match typ {
+                    Some(typ) => {
+                        let typ = typ.check(ctx, &TypeUniv::new().into())?;
+                        let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
+                        let bound = bound.check(ctx, &typ_nf)?;
+                        (Some(typ), typ_nf, bound)
+                    }
+                    None => {
+                        let bound = bound.infer(ctx)?;
+                        let typ = bound.expect_typ()?;
+                        let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
+                        (None, typ_nf, bound)
+                    }
+                };
+
+                let elem = Binder {
+                    name: name.clone(),
+                    content: Binding {
+                        typ: typ_nf,
+                        val: Some(BoundValue::LetBinding { val: bound.clone() }),
+                    },
+                };
+
+                // We need to shift the binder type here because we treat it as a 1-element telescope
+                let body =
+                    ctx.bind_single(shift_and_clone(&elem, (1, 0)), |ctx| body.infer(ctx))?;
+                let inferred_type = body.expect_typ()?;
+
+                Ok(DoStatements::Let {
+                    span: *span,
+                    name: name.clone(),
+                    typ,
+                    bound,
+                    body,
+                    inferred_type: Some(inferred_type),
+                })
+            }
+            DoStatements::Return { span, exp, inferred_type: _ } => {
+                let exp = exp.infer(ctx)?;
+                let inner_type = exp.expect_typ()?;
+
+                let io_id =
+                    IdBound { span: None, id: String::from("IO"), uri: ctx.module.uri.clone() };
+                let _ = ctx.type_info_table.lookup_tyctor(&io_id)?;
+
+                let inferred_type = Box::new(Exp::TypCtor(TypCtor {
+                    span: None,
+                    name: io_id,
+                    args: Args { args: vec![Arg::UnnamedArg { arg: inner_type, erased: false }] },
+                    is_bin_op: None,
+                }));
+
+                Ok(DoStatements::Return { span: *span, exp, inferred_type: Some(inferred_type) })
+            }
+        }
     }
 }

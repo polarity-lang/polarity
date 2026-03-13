@@ -34,3 +34,34 @@ impl ExpectTypApp for Exp {
         }
     }
 }
+
+pub trait ExpectIo {
+    fn expect_io(&self) -> TcResult<Box<Exp>>;
+}
+
+impl ExpectIo for Exp {
+    fn expect_io(&self) -> TcResult<Box<Exp>> {
+        let Exp::Call(Call {
+            span: _,
+            kind: CallKind::Extern,
+            name: IdBound { span: _, id: name, uri: _ },
+            args,
+            inferred_type: _,
+        }) = self
+        else {
+            todo!()
+        };
+
+        if name.as_str() != "IO" {
+            todo!()
+        }
+
+        let args = args.to_exps();
+        if args.len() != 1 {
+            todo!()
+        }
+
+        let inner_typ = args.into_iter().next().unwrap();
+        Ok(inner_typ)
+    }
+}
