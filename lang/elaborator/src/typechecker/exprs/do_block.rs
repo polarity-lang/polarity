@@ -98,10 +98,8 @@ impl CheckInfer for DoStatements {
                 })
             }
             DoStatements::Return { span, exp, inferred_type: _ } => {
-                let t_nf = t.normalize(&ctx.type_info_table, &mut ctx.env())?;
-                let inner_type = t_nf.expect_io()?;
-
-                let exp = exp.check(ctx, &inner_type)?;
+                let _ = t.expect_io()?;
+                let exp = exp.check(ctx, &t)?;
                 let inferred_type = exp.expect_typ()?;
 
                 Ok(DoStatements::Return { span: *span, exp, inferred_type: Some(inferred_type) })
@@ -178,18 +176,8 @@ impl CheckInfer for DoStatements {
             }
             DoStatements::Return { span, exp, inferred_type: _ } => {
                 let exp = exp.infer(ctx)?;
-                let inner_type = exp.expect_typ()?;
-
-                let io_id =
-                    IdBound { span: None, id: String::from("IO"), uri: ctx.module.uri.clone() };
-                let _ = ctx.type_info_table.lookup_tyctor(&io_id)?;
-
-                let inferred_type = Box::new(Exp::TypCtor(TypCtor {
-                    span: None,
-                    name: io_id,
-                    args: Args { args: vec![Arg::UnnamedArg { arg: inner_type, erased: false }] },
-                    is_bin_op: None,
-                }));
+                let inferred_type = exp.expect_typ()?;
+                let _ = inferred_type.expect_io()?;
 
                 Ok(DoStatements::Return { span: *span, exp, inferred_type: Some(inferred_type) })
             }
