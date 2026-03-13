@@ -1,6 +1,7 @@
 use polarity_lang_ast as ast;
 use polarity_lang_ast::ctx::BindContext;
 use polarity_lang_miette_util::ToMiette;
+use polarity_lang_miette_util::codespan::Span;
 use polarity_lang_parser::cst;
 
 use crate::Ctx;
@@ -28,13 +29,8 @@ impl Lower for cst::exp::DoBlock {
                 span: Some(span.to_miette()),
             }));
         };
-        let return_exp = ast::DoStatements::Return {
-            span: *ret_span,
-            exp: ret_exp.lower(ctx)?,
-            inferred_type: None,
-        };
 
-        let statements = lower_do_statements(statements, return_exp, ctx)?;
+        let statements = lower_do_statements(statements, ret_exp, ret_span, ctx)?;
 
         let block = ast::DoBlock { span: *span, statements, inferred_type: None };
         Ok(ast::Exp::DoBlock(block))
@@ -43,11 +39,17 @@ impl Lower for cst::exp::DoBlock {
 
 fn lower_do_statements(
     statements: &[cst::exp::DoStatement],
-    return_exp: ast::DoStatements,
+    return_exp: &cst::exp::Exp,
+    return_exp_span: &Span,
     ctx: &mut Ctx,
 ) -> LoweringResult<ast::DoStatements> {
     let Some((head, tail)) = statements.split_first() else {
-        return Ok(return_exp);
+        let return_exp = return_exp.lower(ctx)?;
+        return Ok(ast::DoStatements::Return {
+            span: *return_exp_span,
+            exp: Box::new(return_exp),
+            inferred_type: None,
+        });
     };
 
     match head {
@@ -55,7 +57,7 @@ fn lower_do_statements(
             span: *span,
             name: ast::VarBind::Wildcard { span: None },
             bound: exp.lower(ctx)?,
-            body: Box::new(lower_do_statements(tail, return_exp, ctx)?),
+            body: Box::new(lower_do_statements(tail, return_exp, return_exp_span, ctx)?),
             inferred_type: None,
         }),
         cst::exp::DoStatement::Bind { span, name, bound } => {
@@ -63,7 +65,7 @@ fn lower_do_statements(
             let bound = bound.lower(ctx)?;
 
             ctx.bind_single(name.clone(), |ctx| {
-                let body = lower_do_statements(tail, return_exp, ctx)?;
+                let body = lower_do_statements(tail, return_exp, return_exp_span, ctx)?;
                 Ok(ast::DoStatements::Bind {
                     span: *span,
                     name,
@@ -79,7 +81,7 @@ fn lower_do_statements(
             let bound = bound.lower(ctx)?;
 
             ctx.bind_single(name.clone(), |ctx| {
-                let body = lower_do_statements(tail, return_exp, ctx)?;
+                let body = lower_do_statements(tail, return_exp, return_exp_span, ctx)?;
                 Ok(ast::DoStatements::Let {
                     span: *span,
                     name,
