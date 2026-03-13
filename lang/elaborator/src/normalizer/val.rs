@@ -197,6 +197,7 @@ pub struct Call {
     pub kind: polarity_lang_ast::CallKind,
     pub name: polarity_lang_ast::IdBound,
     pub args: Args,
+    pub is_bin_op: Option<String>,
 }
 
 impl Shift for Call {
@@ -206,10 +207,27 @@ impl Shift for Call {
 }
 
 impl Print for Call {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Call { span: _, kind: _, name, args } = self;
-        let psubst = if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
-        alloc.ctor(&name.id).append(psubst)
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        prec: Precedence,
+    ) -> Builder<'a> {
+        let Call { span: _, kind: _, name, args, is_bin_op } = self;
+        match is_bin_op {
+            Some(op) => {
+                assert!(args.0.len() == 2);
+                let arg = args.0[0].print_prec(cfg, alloc, Precedence::Ops);
+                let res = args.0[1].print_prec(cfg, alloc, Precedence::Exp);
+                let fun = arg.append(alloc.space()).append(op).append(alloc.space()).append(res);
+                fun.parens_if(prec > Precedence::NonLet)
+            }
+            _ => {
+                let psubst =
+                    if args.is_empty() { alloc.nil() } else { args.print(cfg, alloc).parens() };
+                alloc.ctor(&name.id).append(psubst)
+            }
+        }
     }
 }
 
@@ -223,12 +241,13 @@ impl ReadBack for Call {
     type Nf = polarity_lang_ast::Call;
 
     fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
-        let Call { span, kind, name, args } = self;
+        let Call { span, kind, name, args, is_bin_op } = self;
         Ok(polarity_lang_ast::Call {
             span: *span,
             kind: *kind,
             name: name.clone(),
             args: polarity_lang_ast::Args { args: args.read_back(info_table)? },
+            is_bin_op: is_bin_op.clone(),
             inferred_type: None,
         })
     }
@@ -753,6 +772,7 @@ impl ReadBack for OpaqueCall {
             kind: *kind,
             name: name.clone(),
             args: polarity_lang_ast::Args { args: args.read_back(info_table)? },
+            is_bin_op: None,
             inferred_type: None,
         })
     }

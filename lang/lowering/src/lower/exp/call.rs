@@ -57,6 +57,7 @@ impl Lower for cst::exp::Call {
                     kind: polarity_lang_ast::CallKind::Constructor,
                     name,
                     args: lower_args(*span, args, params.clone(), ctx)?,
+                    is_bin_op: None,
                     inferred_type: None,
                 }))
             }
@@ -66,6 +67,7 @@ impl Lower for cst::exp::Call {
                     kind: polarity_lang_ast::CallKind::Codefinition,
                     name,
                     args: lower_args(*span, args, params.clone(), ctx)?,
+                    is_bin_op: None,
                     inferred_type: None,
                 }))
             }
@@ -75,6 +77,7 @@ impl Lower for cst::exp::Call {
                     kind: polarity_lang_ast::CallKind::LetBound,
                     name,
                     args: lower_args(*span, args, params.clone(), ctx)?,
+                    is_bin_op: None,
                     inferred_type: None,
                 }))
             }
@@ -84,6 +87,7 @@ impl Lower for cst::exp::Call {
                     kind: polarity_lang_ast::CallKind::Extern,
                     name,
                     args: lower_args(*span, args, params.clone(), ctx)?,
+                    is_bin_op: None,
                     inferred_type: None,
                 }))
             }

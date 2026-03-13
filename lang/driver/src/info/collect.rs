@@ -392,7 +392,7 @@ impl CollectInfo for TypCtor {
 
 impl CollectInfo for Call {
     fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
-        let Call { span, kind, args, inferred_type, name } = self;
+        let Call { span, kind, args, inferred_type, name, is_bin_op: _ } = self;
         if let (Some(span), Some(typ)) = (span, inferred_type) {
             let (definition_site, doc) = match kind {
                 CallKind::Constructor => match lookup_ctor(db, name) {

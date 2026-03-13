@@ -86,7 +86,7 @@ impl Eval for Call {
     type Val = Box<Val>;
 
     fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
-        let Call { span, name, kind, args, .. } = self;
+        let Call { span, name, kind, args, is_bin_op, .. } = self;
         match kind {
             CallKind::LetBound => {
                 let Let { attr, body, params, .. } = info_table.lookup_let(name)?;
@@ -129,6 +129,7 @@ impl Eval for Call {
                     kind: *kind,
                     name: name.clone(),
                     args: args.eval(info_table, env)?,
+                    is_bin_op: is_bin_op.clone(),
                 }
                 .into(),
             )),

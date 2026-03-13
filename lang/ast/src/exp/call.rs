@@ -1,7 +1,10 @@
 use derivative::Derivative;
+use pretty::DocAllocator;
 
 use polarity_lang_miette_util::codespan::Span;
-use polarity_lang_printer::{Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt};
+use polarity_lang_printer::{
+    Alloc, Builder, Precedence, Print, PrintCfg, theme::ThemeExt, util::ParensIfExt,
+};
 
 use super::{Args, Exp, IdBound, MetaVar};
 use crate::{
@@ -41,6 +44,9 @@ pub struct Call {
     /// The arguments to the call.
     /// The `(e1...en)` in `f(e1...en)`
     pub args: Args,
+    /// If this Call has been lowered from a binary operator.
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub is_bin_op: Option<String>,
     /// The inferred result type of the call.
     /// This type is annotated during elaboration.
     #[derivative(PartialEq = "ignore", Hash = "ignore")]
@@ -85,12 +91,13 @@ impl HasType for Call {
 impl Substitutable for Call {
     type Target = Call;
     fn subst(&self, ctx: &mut LevelCtx, subst: &Subst) -> Self::Target {
-        let Call { span, name, args, kind, .. } = self;
+        let Call { span, name, args, kind, is_bin_op, .. } = self;
         Call {
             span: *span,
             kind: *kind,
             name: name.clone(),
             args: args.subst(ctx, subst),
+            is_bin_op: is_bin_op.clone(),
             inferred_type: None,
         }
     }
@@ -101,16 +108,25 @@ impl Print for Call {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: Precedence,
+        prec: Precedence,
     ) -> Builder<'a> {
-        let Call { name, args, .. } = self;
-        alloc
-            .ctor(&name.id)
-            .annotate(polarity_lang_printer::Anno::Reference {
-                module_uri: name.uri.to_owned(),
-                name: name.id.clone(),
-            })
-            .append(args.print(cfg, alloc))
+        let Call { name, args, is_bin_op, .. } = self;
+        match is_bin_op {
+            Some(op) => {
+                assert!(args.len() == 2);
+                let arg = args.args[0].print_prec(cfg, alloc, Precedence::Ops);
+                let res = args.args[1].print_prec(cfg, alloc, Precedence::Exp);
+                let fun = arg.append(alloc.space()).append(op).append(alloc.space()).append(res);
+                fun.parens_if(prec > Precedence::NonLet)
+            }
+            _ => alloc
+                .ctor(&name.id)
+                .annotate(polarity_lang_printer::Anno::Reference {
+                    module_uri: name.uri.to_owned(),
+                    name: name.id.clone(),
+                })
+                .append(args.print(cfg, alloc)),
+        }
     }
 }
 
@@ -119,7 +135,7 @@ impl Zonk for Call {
         &mut self,
         meta_vars: &crate::HashMap<MetaVar, crate::MetaVarState>,
     ) -> Result<(), ZonkError> {
-        let Call { span: _, kind: _, name: _, args, inferred_type } = self;
+        let Call { span: _, kind: _, name: _, args, is_bin_op: _, inferred_type } = self;
         args.zonk(meta_vars)?;
         inferred_type.zonk(meta_vars)?;
         Ok(())
@@ -128,7 +144,7 @@ impl Zonk for Call {
 
 impl ContainsMetaVars for Call {
     fn contains_metavars(&self) -> bool {
-        let Call { span: _, kind: _, name: _, args, inferred_type } = self;
+        let Call { span: _, kind: _, name: _, args, is_bin_op: _, inferred_type } = self;
 
         args.contains_metavars() || inferred_type.contains_metavars()
     }
@@ -143,7 +159,7 @@ impl Rename for Call {
 
 impl FreeVars for Call {
     fn free_vars_mut(&self, ctx: &LevelCtx, cutoff: usize, fvs: &mut crate::HashSet<crate::Lvl>) {
-        let Call { span: _, kind: _, name: _, args, inferred_type: _ } = self;
+        let Call { span: _, kind: _, name: _, args, is_bin_op: _, inferred_type: _ } = self;
 
         args.free_vars_mut(ctx, cutoff, fvs)
     }

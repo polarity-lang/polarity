@@ -33,7 +33,7 @@ impl CheckInfer for Call {
     ///            P, Γ ⊢ Cσ ⇒ ...
     /// ```
     fn infer(&self, ctx: &mut Ctx) -> TcResult<Self> {
-        let Call { span, kind, name, args, .. } = self;
+        let Call { span, kind, name, args, is_bin_op, .. } = self;
 
         match kind {
             CallKind::Codefinition | CallKind::Constructor => {
@@ -55,6 +55,7 @@ impl CheckInfer for Call {
                     kind: *kind,
                     name: name.clone(),
                     args: args_out,
+                    is_bin_op: is_bin_op.clone(),
                     inferred_type: Some(typ_nf),
                 })
             }
@@ -76,6 +77,7 @@ impl CheckInfer for Call {
                     kind: *kind,
                     name: name.clone(),
                     args: args_out,
+                    is_bin_op: is_bin_op.clone(),
                     inferred_type: Some(typ_nf),
                 })
             }
@@ -98,6 +100,7 @@ impl CheckInfer for Call {
                     kind: *kind,
                     name: name.clone(),
                     args: args_out,
+                    is_bin_op: is_bin_op.clone(),
                     inferred_type: Some(typ_nf),
                 })
             }

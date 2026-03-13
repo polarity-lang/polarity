@@ -260,6 +260,7 @@ impl WithExpectedType<'_> {
                                         kind: CallKind::Codefinition,
                                         name: label.clone(),
                                         args: Args { args },
+                                        is_bin_op: None,
                                         inferred_type: None,
                                     });
 

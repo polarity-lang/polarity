@@ -2,5 +2,6 @@ let keep_left(x, y) { x }
 
 let main {
     let x := add_i64(1, 2);
-    keep_left(x, 42)
+    let y := add_i64(keep_left(x, 7), 1);
+    y
 }
