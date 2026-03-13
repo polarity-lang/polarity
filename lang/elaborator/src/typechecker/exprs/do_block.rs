@@ -99,7 +99,7 @@ impl CheckInfer for DoStatements {
             }
             DoStatements::Return { span, exp, inferred_type: _ } => {
                 let _ = t.expect_io()?;
-                let exp = exp.check(ctx, &t)?;
+                let exp = exp.check(ctx, t)?;
                 let inferred_type = exp.expect_typ()?;
 
                 Ok(DoStatements::Return { span: *span, exp, inferred_type: Some(inferred_type) })
