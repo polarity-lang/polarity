@@ -251,6 +251,13 @@ pub enum TypeError {
         #[label("While elaborating")]
         while_elaborating_span: Option<SourceSpan>,
     },
+    #[error("Expected some IO type, got {got}")]
+    #[diagnostic(code("T-024"))]
+    ExpectedIoType {
+        got: String,
+        #[label]
+        span: Option<SourceSpan>,
+    },
     #[error("An unexpected internal error occurred: {message}")]
     #[diagnostic(code("T-XXX"))]
     /// This error should not occur.
@@ -286,6 +293,10 @@ impl TypeError {
 
     pub fn expected_typ_app(got: &Exp) -> Self {
         Self::ExpectedTypApp { got: got.print_to_string(None), span: got.span().to_miette() }
+    }
+
+    pub fn expected_io_type(got: &Exp) -> Self {
+        Self::ExpectedIoType { got: got.print_to_string(None), span: got.span().to_miette() }
     }
 
     pub fn occurs_check_failed(idx: Idx, exp: &Exp) -> Box<Self> {

@@ -49,16 +49,16 @@ impl ExpectIo for Exp {
             inferred_type: _,
         }) = self
         else {
-            todo!()
+            return Err(TypeError::expected_io_type(self).into());
         };
 
         if name.as_str() != "IO" {
-            todo!()
+            return Err(TypeError::expected_io_type(self).into());
         }
 
         let args = args.to_exps();
         if args.len() != 1 {
-            todo!()
+            return Err(TypeError::expected_io_type(self).into());
         }
 
         let inner_typ = args.into_iter().next().unwrap();
