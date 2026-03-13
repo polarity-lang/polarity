@@ -53,13 +53,21 @@ fn lower_do_statements(
     };
 
     match head {
-        cst::exp::DoStatement::Exp { span, exp } => Ok(ast::DoStatements::Bind {
-            span: *span,
-            name: ast::VarBind::Wildcard { span: None },
-            bound: exp.lower(ctx)?,
-            body: Box::new(lower_do_statements(tail, return_exp, return_exp_span, ctx)?),
-            inferred_type: None,
-        }),
+        cst::exp::DoStatement::Exp { span, exp } => {
+            let name = ast::VarBind::Wildcard { span: None };
+            let bound = exp.lower(ctx)?;
+
+            ctx.bind_single(name.clone(), |ctx| {
+                let body = lower_do_statements(tail, return_exp, return_exp_span, ctx)?;
+                Ok(ast::DoStatements::Bind {
+                    span: *span,
+                    name,
+                    bound,
+                    body: Box::new(body),
+                    inferred_type: None,
+                })
+            })
+        }
         cst::exp::DoStatement::Bind { span, name, bound } => {
             let name = name.lower(ctx)?;
             let bound = bound.lower(ctx)?;
