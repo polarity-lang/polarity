@@ -32,6 +32,7 @@ use super::exp::*;
 use super::ident::*;
 use super::traits::HasSpan;
 use crate::ContainsMetaVars;
+use crate::Occurs;
 use crate::Subst;
 use crate::Substitutable;
 use crate::Zonk;
@@ -53,6 +54,31 @@ fn print_return_type<'a, T: Print>(
         .append(alloc.space())
         .append(ret_typ.print(cfg, alloc).group())
         .nest(cfg.indent)
+}
+
+fn self_param_occurs_in_ret_typ(params: &Telescope, self_param: &SelfParam, ret_typ: &Exp) -> bool {
+    let mut ctx = LevelCtx::from(vec![params.params.clone(), vec![self_param.to_param()]]);
+    ret_typ.occurs_var(&mut ctx, Lvl { fst: 1, snd: 0 })
+}
+
+fn print_self_param<'a>(
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+    params: &Telescope,
+    self_param: &'a SelfParam,
+    ret_typ: &'a Exp,
+    omit_simple_type: bool,
+) -> Builder<'a> {
+    let mut cfg = cfg.clone();
+    cfg.print_function_sugar = false;
+
+    if self_param_occurs_in_ret_typ(params, self_param, ret_typ) {
+        self_param.print(&cfg, alloc).append(DOT)
+    } else if omit_simple_type && self_param.typ.is_simple() {
+        alloc.text(DOT)
+    } else {
+        self_param.typ.print(&cfg, alloc).append(DOT)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -768,11 +794,7 @@ impl Print for Dtor {
         let Dtor { span: _, doc, name, params, self_param, ret_typ } = self;
 
         let doc = doc.print(cfg, alloc);
-        let head = if self_param.is_simple() {
-            alloc.text(DOT)
-        } else {
-            self_param.print(&PrintCfg { print_function_sugar: false, ..*cfg }, alloc).append(DOT)
-        };
+        let head = print_self_param(cfg, alloc, params, self_param, ret_typ, true);
         let head = head
             .append(alloc.dtor(&name.id))
             .append(params.print(cfg, alloc))
@@ -854,8 +876,7 @@ impl Print for Def {
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
-            .append(self_param.print(cfg, alloc))
-            .append(DOT)
+            .append(print_self_param(cfg, alloc, params, self_param, ret_typ, false))
             .append(alloc.dtor(&name.id))
             .append(params.print(cfg, alloc))
             .append(print_return_type(cfg, alloc, ret_typ))
@@ -1476,6 +1497,45 @@ mod print_telescope_tests {
         };
         let tele = Telescope { params: vec![param1, param2, param3] };
         assert_eq!(tele.print_to_string(Default::default()), "(a: Type, x y: a)")
+    }
+}
+
+#[cfg(test)]
+mod print_def_tests {
+
+    use super::*;
+
+    fn simple_typ(name: &str) -> TypCtor {
+        TypCtor {
+            span: None,
+            name: IdBound {
+                span: None,
+                id: name.to_owned(),
+                uri: Url::parse("file:///test").unwrap(),
+            },
+            args: Args { args: vec![] },
+            is_bin_op: None,
+        }
+    }
+
+    #[test]
+    fn print_simple_def_without_leading_dot() {
+        let def = Def {
+            span: None,
+            doc: None,
+            name: IdBind::from_string("foo"),
+            attr: Default::default(),
+            params: Telescope { params: vec![] },
+            self_param: SelfParam {
+                info: None,
+                name: VarBind::Wildcard { span: None },
+                typ: simple_typ("Nat"),
+            },
+            ret_typ: Box::new(simple_typ("Nat").into()),
+            cases: vec![],
+        };
+
+        assert_eq!(def.print_to_string(Default::default()), "def Nat.foo: Nat { }");
     }
 }
 
