@@ -42,7 +42,7 @@ impl CheckInfer for DoStatements {
                     name: name.clone(),
                     content: Binding {
                         typ: inner_typ,
-                        val: Some(ctx::values::BoundValue::LetBinding { val: bound.clone() }),
+                        val: Some(BoundValue::LetBinding { val: bound.clone() }),
                     },
                 };
 
