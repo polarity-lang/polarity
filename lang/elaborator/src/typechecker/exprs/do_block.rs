@@ -38,13 +38,8 @@ impl CheckInfer for DoStatements {
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
                 let inner_typ = typ_nf.expect_io_with_span(bound.span().or(Some(*span)))?;
 
-                let elem = Binder {
-                    name: name.clone(),
-                    content: Binding {
-                        typ: inner_typ,
-                        val: Some(BoundValue::LetBinding { val: bound.clone() }),
-                    },
-                };
+                let elem =
+                    Binder { name: name.clone(), content: Binding { typ: inner_typ, val: None } };
 
                 // We need to shift the binder type here because we treat it as a 1-element telescope
                 let body =
@@ -115,13 +110,8 @@ impl CheckInfer for DoStatements {
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
                 let inner_typ = typ_nf.expect_io_with_span(bound.span().or(Some(*span)))?;
 
-                let elem = Binder {
-                    name: name.clone(),
-                    content: Binding {
-                        typ: inner_typ,
-                        val: Some(BoundValue::LetBinding { val: bound.clone() }),
-                    },
-                };
+                let elem =
+                    Binder { name: name.clone(), content: Binding { typ: inner_typ, val: None } };
 
                 // We need to shift the binder type here because we treat it as a 1-element telescope
                 let body =
