@@ -30,6 +30,7 @@ pub struct TypCtor {
     /// If this TypCtor has been lowered from a binary operator.
     ///
     /// If the user has written "->" then we populate this field with `Some("->")`
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
     pub is_bin_op: Option<String>,
 }
 

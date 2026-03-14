@@ -125,12 +125,12 @@ impl Print for Arg {
         &'a self,
         cfg: &PrintCfg,
         alloc: &'a Alloc<'a>,
-        _prec: Precedence,
+        prec: Precedence,
     ) -> Builder<'a> {
         match self {
-            Arg::UnnamedArg { arg, .. } => arg.print(cfg, alloc),
+            Arg::UnnamedArg { arg, .. } => arg.print_prec(cfg, alloc, prec),
             Arg::NamedArg { name: var, arg, .. } => {
-                alloc.text(&var.id).append(COLONEQ).append(arg.print(cfg, alloc))
+                alloc.text(&var.id).append(COLONEQ).append(arg.print_prec(cfg, alloc, prec))
             }
             Arg::InsertedImplicitArg { .. } => {
                 panic!("Inserted implicit arguments should not be printed")
@@ -326,6 +326,7 @@ mod args_tests {
                     uri: Url::parse("inmemory:///scratch.pol").unwrap(),
                 },
                 args: Args { args: vec![] },
+                is_bin_op: None,
                 inferred_type: None,
             }
             .into(),

@@ -59,7 +59,15 @@ impl Lower for cst::exp::BinOp {
                     }
                 };
 
-                Ok(Call { span: Some(*span), kind, name, args, inferred_type: None }.into())
+                Ok(Call {
+                    span: Some(*span),
+                    kind,
+                    name,
+                    args,
+                    is_bin_op: Some(operator.id.clone()),
+                    inferred_type: None,
+                }
+                .into())
             }
         }
     }

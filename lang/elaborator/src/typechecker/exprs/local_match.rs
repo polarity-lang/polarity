@@ -285,6 +285,7 @@ impl WithScrutineeType<'_> {
                         kind: CallKind::Constructor,
                         name: name.clone(),
                         args: Args { args },
+                        is_bin_op: None,
                         inferred_type: None,
                     }
                     .into();

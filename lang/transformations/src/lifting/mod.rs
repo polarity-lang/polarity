@@ -362,12 +362,13 @@ impl Lift for Call {
     type Target = Exp;
 
     fn lift(&self, ctx: &mut Ctx) -> Self::Target {
-        let Call { span, name, args, kind, .. } = self;
+        let Call { span, name, args, kind, is_bin_op, .. } = self;
         Exp::Call(Call {
             span: *span,
             kind: *kind,
             name: name.clone(),
             args: args.lift(ctx),
+            is_bin_op: is_bin_op.clone(),
             inferred_type: None,
         })
     }
@@ -783,6 +784,7 @@ impl Ctx {
             kind: CallKind::Codefinition,
             name: IdBound { span: None, id: name.id.clone(), uri: self.uri.clone() },
             args,
+            is_bin_op: None,
             inferred_type: None,
         })
     }

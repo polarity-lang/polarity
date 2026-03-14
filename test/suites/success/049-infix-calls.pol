@@ -8,5 +8,6 @@ let keep_left(x y: I64): I64 { x }
 
 let main: I64 {
     let x := 1 + 2;
-    x <+> 42
+    let y := (x <+> 7) + 1;
+    y
 }

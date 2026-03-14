@@ -51,6 +51,7 @@ impl Lower for cst::exp::Literal {
                             name: type_name,
                             kind: polarity_lang_ast::CallKind::Extern,
                             args: polarity_lang_ast::Args { args: vec![] },
+                            is_bin_op: None,
                             inferred_type: None,
                         },
                     )),
