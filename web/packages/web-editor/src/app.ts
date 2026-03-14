@@ -2,6 +2,9 @@ import * as vscode from "vscode";
 import * as proto from "vscode-languageserver-protocol";
 import { createConverter as createCodeConverter } from "vscode-languageclient/lib/common/codeConverter.js";
 import { createConverter as createProtocolConverter } from "vscode-languageclient/lib/common/protocolConverter.js";
+import { registerAssets } from "vscode/assets";
+import { ITextMateTokenizationService } from "@codingame/monaco-vscode-textmate-service-override";
+import { getService } from "vscode/services";
 
 import getKeybindingsServiceOverride from "@codingame/monaco-vscode-keybindings-service-override";
 import "@codingame/monaco-vscode-theme-defaults-default-extension";
@@ -18,12 +21,18 @@ import Server from "polarity-lang-lsp-web/server";
 import { configureMonacoWorkers } from "./workers";
 import { FromServer, IntoServer } from "polarity-lang-lsp-web/codec";
 import Language from "./language";
-
-import polarityLanguageConfig from "./language-configuration.json?raw";
-import polarityTextmateGrammar from "./pol.tmLanguage.json?raw";
+import onigWasmUrl from "vscode-oniguruma/release/onig.wasm?url";
 
 const code2Protocol = createCodeConverter();
 const protocol2Code = createProtocolConverter(undefined, true, true);
+
+// The TextMate service looks up Oniguruma through VS Code-style asset ids.
+// Under Vite, those default paths do not point at a browser-served WASM file, so we remap them
+// to the emitted `?url` asset here; otherwise TextMate fails to load and syntax highlighting breaks.
+registerAssets({
+  "vscode-oniguruma/../onig.wasm": onigWasmUrl,
+  "vs/../../node_modules/vscode-oniguruma/release/onig.wasm": onigWasmUrl,
+});
 
 export default class App {
   private diagnosticCollection: vscode.DiagnosticCollection | undefined;
@@ -49,8 +58,8 @@ export default class App {
 
     const languageId = "polarity";
     const extensionFilesOrContents = new Map<string, string | URL>();
-    extensionFilesOrContents.set("/language-configuration.json", JSON.stringify(polarityLanguageConfig));
-    extensionFilesOrContents.set("/syntaxes/pol.tmLanguage.json", JSON.stringify(polarityTextmateGrammar));
+    extensionFilesOrContents.set("./language-configuration.json", new URL("./language-configuration.json", import.meta.url));
+    extensionFilesOrContents.set("./syntaxes/pol.tmLanguage.json", new URL("./pol.tmLanguage.json", import.meta.url));
 
     const wrapperConfig: WrapperConfig = {
       $type: "extended",
@@ -68,7 +77,7 @@ export default class App {
                 : "Default Light Modern",
             "editor.guides.bracketPairsHorizontal": "active",
             "editor.lightbulb.enabled": "On",
-            "editor.experimental.asyncTokenization": true,
+            "editor.experimental.asyncTokenization": false,
           }),
         },
       },
@@ -117,6 +126,10 @@ export default class App {
     this.wrapper = new MonacoEditorLanguageClientWrapper();
     await this.wrapper.init(wrapperConfig);
     await this.wrapper.start();
+    // The TextMate service is initialized lazily. In this Vite setup, the first editor/model can appear
+    // before that service has finished wiring up tokenization, which leaves the initial document unhighlighted.
+    // Forcing service initialization up front avoids that.
+    await getService(ITextMateTokenizationService);
 
     this.diagnosticCollection = vscode.languages.createDiagnosticCollection("pol");
     this.fileSystemProvider = new RegisteredFileSystemProvider(false);

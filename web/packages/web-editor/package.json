@@ -6,10 +6,10 @@
   "main": "index.js",
   "scripts": {
     "check": "tsc -p tsconfig.json",
-    "build": "webpack --mode production",
+    "build": "vite build",
     "format": "prettier --write '**/*.{js,json,ts,tsx,yml,yaml}'",
     "lint": "eslint 'src/**/*.{js,ts,tsx}' && prettier --check '**/*.{json,yml,yaml}'",
-    "app": "webpack-dev-server --open"
+    "app": "vite --open /editor/"
   },
   "devDependencies": {
     "@types/debounce": "^1.2.1",

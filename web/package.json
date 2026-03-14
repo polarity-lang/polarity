@@ -3,5 +3,8 @@
   "workspaces": [
     "packages/web-editor",
     "packages/lsp-web"
-  ]
+  ],
+  "devDependencies": {
+    "vite": "^8.0.0"
+  }
 }
