@@ -1,5 +1,6 @@
 use polarity_lang_ast::ctx::LevelCtx;
 use polarity_lang_ast::*;
+use polarity_lang_miette_util::codespan::Span;
 
 use crate::result::TcResult;
 
@@ -36,11 +37,15 @@ impl ExpectTypApp for Exp {
 }
 
 pub trait ExpectIo {
-    fn expect_io(&self) -> TcResult<Box<Exp>>;
+    fn expect_io(&self) -> TcResult<Box<Exp>> {
+        self.expect_io_with_span(None)
+    }
+
+    fn expect_io_with_span(&self, span: Option<Span>) -> TcResult<Box<Exp>>;
 }
 
 impl ExpectIo for Exp {
-    fn expect_io(&self) -> TcResult<Box<Exp>> {
+    fn expect_io_with_span(&self, span: Option<Span>) -> TcResult<Box<Exp>> {
         let Exp::Call(Call {
             span: _,
             kind: CallKind::Extern,
@@ -50,16 +55,16 @@ impl ExpectIo for Exp {
             inferred_type: _,
         }) = self
         else {
-            return Err(TypeError::expected_io_type(self).into());
+            return Err(TypeError::expected_io_type(self, span).into());
         };
 
         if name.as_str() != "IO" {
-            return Err(TypeError::expected_io_type(self).into());
+            return Err(TypeError::expected_io_type(self, span).into());
         }
 
         let args = args.to_exps();
         if args.len() != 1 {
-            return Err(TypeError::expected_io_type(self).into());
+            return Err(TypeError::expected_io_type(self, span).into());
         }
 
         let inner_typ = args.into_iter().next().unwrap();

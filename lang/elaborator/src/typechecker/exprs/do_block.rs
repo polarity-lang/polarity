@@ -36,7 +36,7 @@ impl CheckInfer for DoStatements {
                 let bound = bound.infer(ctx)?;
                 let typ = bound.expect_typ()?;
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
-                let inner_typ = typ_nf.expect_io()?;
+                let inner_typ = typ_nf.expect_io_with_span(bound.span().or(Some(*span)))?;
 
                 let elem = Binder {
                     name: name.clone(),
@@ -98,7 +98,7 @@ impl CheckInfer for DoStatements {
                 })
             }
             DoStatements::Return { span, exp, inferred_type: _ } => {
-                let _ = t.expect_io()?;
+                let _ = t.expect_io_with_span(Some(*span))?;
                 let exp = exp.check(ctx, t)?;
                 let inferred_type = exp.expect_typ()?;
 
@@ -113,7 +113,7 @@ impl CheckInfer for DoStatements {
                 let bound = bound.infer(ctx)?;
                 let typ = bound.expect_typ()?;
                 let typ_nf = typ.normalize(&ctx.type_info_table, &mut ctx.env())?;
-                let inner_typ = typ_nf.expect_io()?;
+                let inner_typ = typ_nf.expect_io_with_span(bound.span().or(Some(*span)))?;
 
                 let elem = Binder {
                     name: name.clone(),
@@ -177,7 +177,7 @@ impl CheckInfer for DoStatements {
             DoStatements::Return { span, exp, inferred_type: _ } => {
                 let exp = exp.infer(ctx)?;
                 let inferred_type = exp.expect_typ()?;
-                let _ = inferred_type.expect_io()?;
+                let _ = inferred_type.expect_io_with_span(Some(*span))?;
 
                 Ok(DoStatements::Return { span: *span, exp, inferred_type: Some(inferred_type) })
             }

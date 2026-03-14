@@ -295,8 +295,9 @@ impl TypeError {
         Self::ExpectedTypApp { got: got.print_to_string(None), span: got.span().to_miette() }
     }
 
-    pub fn expected_io_type(got: &Exp) -> Self {
-        Self::ExpectedIoType { got: got.print_to_string(None), span: got.span().to_miette() }
+    pub fn expected_io_type(got: &Exp, span: Option<Span>) -> Self {
+        let span = span.or(got.span()).to_miette();
+        Self::ExpectedIoType { got: got.print_to_string(None), span }
     }
 
     pub fn occurs_check_failed(idx: Idx, exp: &Exp) -> Box<Self> {
