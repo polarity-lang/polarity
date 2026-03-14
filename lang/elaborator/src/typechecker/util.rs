@@ -46,6 +46,7 @@ impl ExpectIo for Exp {
             kind: CallKind::Extern,
             name: IdBound { span: _, id: name, uri: _ },
             args,
+            is_bin_op: _,
             inferred_type: _,
         }) = self
         else {
