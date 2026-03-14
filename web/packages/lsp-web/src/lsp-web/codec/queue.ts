@@ -1,4 +1,4 @@
-export default class Queue<T> implements WritableStream<T>, AsyncGenerator<T, never, void> {
+export default class Queue<T> implements WritableStream<T>, AsyncIterableIterator<T> {
   readonly #promises: Promise<T>[] = [];
   readonly #resolvers: ((item: T) => void)[] = [];
   readonly #observers: ((item: T) => void)[] = [];
@@ -81,7 +81,7 @@ export default class Queue<T> implements WritableStream<T>, AsyncGenerator<T, ne
     });
   }
 
-  [Symbol.asyncIterator](): AsyncGenerator<T, never, void> {
+  [Symbol.asyncIterator](): AsyncIterableIterator<T> {
     return this;
   }
 

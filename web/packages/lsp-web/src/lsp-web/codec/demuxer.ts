@@ -25,11 +25,18 @@ export default class StreamDemuxer extends Queue<Uint8Array> {
     while (true) {
       if (contentLength === null || buffer.length < contentLength) {
         const bytes = await this.next();
-        buffer = Bytes.append(Uint8Array, buffer, bytes.value);
+        const nextBuffer = new Uint8Array(buffer.length + bytes.value.length);
+        nextBuffer.set(buffer);
+        nextBuffer.set(bytes.value, buffer.length);
+        buffer = nextBuffer;
       }
 
       if (contentLength === null) {
-        ({ contentLength, buffer } = this.parseContentLength(buffer));
+        const parsed = this.parseContentLength(buffer);
+        contentLength = parsed.contentLength;
+        if (contentLength !== null) {
+          buffer = buffer.slice(parsed.headerLength);
+        }
       }
 
       if (contentLength === null) {
@@ -43,7 +50,11 @@ export default class StreamDemuxer extends Queue<Uint8Array> {
       const delimited = Bytes.decode(buffer.slice(0, contentLength));
 
       buffer = buffer.slice(contentLength);
-      ({ contentLength, buffer } = this.parseContentLength(buffer));
+      const parsed = this.parseContentLength(buffer);
+      contentLength = parsed.contentLength;
+      if (contentLength !== null) {
+        buffer = buffer.slice(parsed.headerLength);
+      }
 
       try {
         const message = JSON.parse(delimited) as vsrpc.Message;
@@ -55,15 +66,14 @@ export default class StreamDemuxer extends Queue<Uint8Array> {
     }
   }
 
-  private parseContentLength(buffer: Uint8Array): { buffer: Uint8Array; contentLength: number | null } {
+  private parseContentLength(buffer: Uint8Array): { contentLength: number | null; headerLength: number } {
     const match = Bytes.decode(buffer).match(/^Content-Length:\s*(\d+)\s*/);
-    if (match === null) return { buffer, contentLength: null };
+    if (match === null) return { contentLength: null, headerLength: 0 };
 
     const length = parseInt(match[1], 10);
     if (isNaN(length)) throw new Error("Invalid content length");
 
-    buffer = buffer.slice(match[0].length);
-    return { buffer, contentLength: length };
+    return { contentLength: length, headerLength: match[0].length };
   }
 
   private demuxMessage(message: vsrpc.Message): void {

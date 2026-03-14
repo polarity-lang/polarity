@@ -31,7 +31,7 @@ export class Codec {
 }
 
 // FIXME: tracing effiency
-export class IntoServer extends Queue<Uint8Array> implements AsyncGenerator<Uint8Array, never, void> {
+export class IntoServer extends Queue<Uint8Array> {
   enqueue(item: Uint8Array): void {
     Tracer.client(Headers.remove(decoder.decode(item)));
     super.enqueue(item);
@@ -40,8 +40,8 @@ export class IntoServer extends Queue<Uint8Array> implements AsyncGenerator<Uint
 
 export interface FromServer extends WritableStream<Uint8Array> {
   readonly responses: { get(key: number | string): null | Promise<vsrpc.ResponseMessage> };
-  readonly notifications: AsyncGenerator<vsrpc.NotificationMessage, never, void>;
-  readonly requests: AsyncGenerator<vsrpc.RequestMessage, never, void>;
+  readonly notifications: AsyncIterable<vsrpc.NotificationMessage>;
+  readonly requests: AsyncIterable<vsrpc.RequestMessage>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace

@@ -1,2 +1,3 @@
 packages/app/assets/hljs-vs-dark.css
 packages/app/assets/hljs-vs-light.css
+packages/web-editor/dist/**/*.css

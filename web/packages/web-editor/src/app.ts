@@ -58,7 +58,10 @@ export default class App {
 
     const languageId = "polarity";
     const extensionFilesOrContents = new Map<string, string | URL>();
-    extensionFilesOrContents.set("./language-configuration.json", new URL("./language-configuration.json", import.meta.url));
+    extensionFilesOrContents.set(
+      "./language-configuration.json",
+      new URL("./language-configuration.json", import.meta.url),
+    );
     extensionFilesOrContents.set("./syntaxes/pol.tmLanguage.json", new URL("./pol.tmLanguage.json", import.meta.url));
 
     const wrapperConfig: WrapperConfig = {
