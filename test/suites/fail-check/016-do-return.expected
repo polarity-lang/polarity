@@ -1,0 +1,14 @@
+T-016
+
+  × Cannot automatically decide whether Unit and IO(Unit) unify
+    ╭─[016-do-return.pol:6:10]
+  5 │ 
+  6 │ let foo: IO(Unit) {
+    ·          ────────
+  7 │     do {
+  8 │         x <- return_io(Unit, MkUnit);
+  9 │         MkUnit
+    ·         ───┬──
+    ·            ╰── While elaborating
+ 10 │     }
+    ╰────

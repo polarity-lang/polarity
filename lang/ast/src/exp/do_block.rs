@@ -147,6 +147,16 @@ impl HasType for DoBlock {
     }
 }
 
+impl HasType for DoStatements {
+    fn typ(&self) -> Option<Box<Exp>> {
+        match self {
+            DoStatements::Bind { inferred_type, .. } => inferred_type.clone(),
+            DoStatements::Let { inferred_type, .. } => inferred_type.clone(),
+            DoStatements::Return { inferred_type, .. } => inferred_type.clone(),
+        }
+    }
+}
+
 impl Substitutable for DoBlock {
     type Target = DoBlock;
 
