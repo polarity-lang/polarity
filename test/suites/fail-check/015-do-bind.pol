@@ -4,8 +4,8 @@ extern return_io(a: Type, x: a): IO(a)
 data Unit { MkUnit }
 
 let foo: IO(Unit) {
-	do {
-		x <- MkUnit;
-		return_io(Unit, MkUnit)
-	}
+    do {
+        x <- MkUnit;
+        return_io(Unit, MkUnit)
+    }
 }
