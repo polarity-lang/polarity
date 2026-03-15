@@ -25,6 +25,12 @@ import polarityTextmateGrammar from "./pol.tmLanguage.json?raw";
 const code2Protocol = createCodeConverter();
 const protocol2Code = createProtocolConverter(undefined, true, true);
 
+function getPresentationExamplesBaseUrl(): URL {
+  const [siteBasePath] = location.pathname.split("/polarity-demo/");
+  const normalizedSiteBasePath = siteBasePath === "" ? "/" : `${siteBasePath.replace(/\/+$/, "")}/`;
+  return new URL(`${normalizedSiteBasePath}examples/`, location.origin);
+}
+
 export default class App {
   private diagnosticCollection: vscode.DiagnosticCollection | undefined;
   private client: Client | undefined;
@@ -171,7 +177,7 @@ export default class App {
         return;
       }
 
-      const url = `${location.protocol}//${location.host}/examples/${encodeURIComponent(filepath)}`;
+      const url = new URL(encodeURIComponent(filepath), getPresentationExamplesBaseUrl());
       const response = await fetch(url);
       const text = await response.text();
 
