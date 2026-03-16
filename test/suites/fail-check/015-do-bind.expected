@@ -1,0 +1,9 @@
+T-024
+
+  × Expected some IO type, got Unit
+   ╭─[015-do-bind.pol:8:14]
+ 7 │     do {
+ 8 │         x <- MkUnit;
+   ·              ──────
+ 9 │         return_io(Unit, MkUnit)
+   ╰────

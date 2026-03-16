@@ -1,5 +1,6 @@
 pub mod anno;
 pub mod call;
+pub mod do_block;
 pub mod dot_call;
 pub mod hole;
 pub mod literal;
@@ -91,7 +92,7 @@ impl CheckInfer for Exp {
             Exp::LocalMatch(e) => Ok(e.check(ctx, t)?.into()),
             Exp::LocalComatch(e) => Ok(e.check(ctx, t)?.into()),
             Exp::LocalLet(e) => Ok(e.check(ctx, t)?.into()),
-            Exp::DoBlock(_) => todo!(),
+            Exp::DoBlock(e) => Ok(e.check(ctx, t)?.into()),
             Exp::Literal(e) => Ok(e.check(ctx, t)?.into()),
         }
     }
@@ -108,7 +109,7 @@ impl CheckInfer for Exp {
             Exp::LocalMatch(e) => Ok(e.infer(ctx)?.into()),
             Exp::LocalComatch(e) => Ok(e.infer(ctx)?.into()),
             Exp::LocalLet(e) => Ok(e.infer(ctx)?.into()),
-            Exp::DoBlock(_) => todo!(),
+            Exp::DoBlock(e) => Ok(e.infer(ctx)?.into()),
             Exp::Literal(e) => Ok(e.infer(ctx)?.into()),
         };
         trace!(

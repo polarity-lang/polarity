@@ -1,0 +1,11 @@
+extern IO(a: Type): Type
+extern return_io(a: Type, x: a): IO(a)
+
+data Unit { MkUnit }
+
+let foo: IO(Unit) {
+    do {
+        x <- return_io(Unit, MkUnit);
+        MkUnit
+    }
+}
