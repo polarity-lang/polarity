@@ -336,7 +336,7 @@ impl CollectInfo for Exp {
             Exp::LocalMatch(e) => e.collect_info(db, collector),
             Exp::LocalComatch(e) => e.collect_info(db, collector),
             Exp::LocalLet(e) => e.collect_info(db, collector),
-            Exp::DoBlock(_) => todo!(),
+            Exp::DoBlock(e) => e.collect_info(db, collector),
             Exp::Literal(e) => e.collect_info(db, collector),
         }
     }
@@ -696,6 +696,64 @@ impl CollectInfo for LocalLet {
             let typ = string_to_language_string(typ);
             let hover_content = HoverContents::Array(vec![header, typ]);
             collector.add_hover(*span, hover_content)
+        }
+    }
+}
+
+impl CollectInfo for DoBlock {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+        let DoBlock { span, statements, inferred_type } = self;
+        statements.collect_info(db, collector);
+        if let Some(typ) = inferred_type {
+            // Add info
+            let typ = typ.print_to_string(None);
+            let header = MarkedString::String("Do block".to_string());
+            let typ = string_to_language_string(typ);
+            let hover_content = HoverContents::Array(vec![header, typ]);
+            collector.add_hover(*span, hover_content)
+        }
+    }
+}
+
+impl CollectInfo for DoStatements {
+    fn collect_info(&self, db: &Database, collector: &mut InfoCollector) {
+        match self {
+            DoStatements::Bind { span, name, bound, body, inferred_type } => {
+                bound.collect_info(db, collector);
+                body.collect_info(db, collector);
+                if let Some(typ) = inferred_type {
+                    // Add info
+                    let typ = typ.print_to_string(None);
+                    let header = MarkedString::String(format!("Bind: `{name}` (do block)"));
+                    let typ = string_to_language_string(typ);
+                    let hover_content = HoverContents::Array(vec![header, typ]);
+                    collector.add_hover(*span, hover_content)
+                }
+            }
+            DoStatements::Let { span, name, typ, bound, body, inferred_type } => {
+                typ.collect_info(db, collector);
+                bound.collect_info(db, collector);
+                body.collect_info(db, collector);
+                if let Some(typ) = inferred_type {
+                    // Add info
+                    let typ = typ.print_to_string(None);
+                    let header = MarkedString::String(format!("Let-binding: `{name}` (do block)"));
+                    let typ = string_to_language_string(typ);
+                    let hover_content = HoverContents::Array(vec![header, typ]);
+                    collector.add_hover(*span, hover_content)
+                }
+            }
+            DoStatements::Return { span, exp, inferred_type } => {
+                exp.collect_info(db, collector);
+                if let Some(typ) = inferred_type {
+                    // Add info
+                    let typ = typ.print_to_string(None);
+                    let header = MarkedString::String("Return expression (do block)".to_string());
+                    let typ = string_to_language_string(typ);
+                    let hover_content = HoverContents::Array(vec![header, typ]);
+                    collector.add_hover(*span, hover_content)
+                }
+            }
         }
     }
 }
