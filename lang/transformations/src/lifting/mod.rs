@@ -323,7 +323,7 @@ impl Lift for Exp {
             Exp::LocalMatch(e) => e.lift(ctx),
             Exp::LocalComatch(e) => e.lift(ctx),
             Exp::LocalLet(e) => e.lift(ctx),
-            Exp::DoBlock(_) => todo!(),
+            Exp::DoBlock(e) => e.lift(ctx),
             Exp::Literal(e) => e.lift(ctx),
         }
     }
@@ -498,6 +498,47 @@ impl Lift for LocalLet {
             body: ctx.bind_single(name.clone(), |ctx| body.lift(ctx)),
             inferred_type: None,
         })
+    }
+}
+
+impl Lift for DoBlock {
+    type Target = Exp;
+
+    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
+        let DoBlock { span, statements, inferred_type: _ } = self;
+        let statements = statements.lift(ctx);
+        Exp::DoBlock(DoBlock { span: *span, statements, inferred_type: None })
+    }
+}
+
+impl Lift for DoStatements {
+    type Target = DoStatements;
+
+    fn lift(&self, ctx: &mut Ctx) -> Self::Target {
+        match self {
+            DoStatements::Bind { span, name, bound, body, inferred_type: _ } => {
+                DoStatements::Bind {
+                    span: *span,
+                    name: name.clone(),
+                    bound: bound.lift(ctx),
+                    body: ctx.bind_single(name.clone(), |ctx| body.lift(ctx)),
+                    inferred_type: None,
+                }
+            }
+            DoStatements::Let { span, name, typ, bound, body, inferred_type: _ } => {
+                DoStatements::Let {
+                    span: *span,
+                    name: name.clone(),
+                    typ: typ.lift(ctx),
+                    bound: bound.lift(ctx),
+                    body: ctx.bind_single(name.clone(), |ctx| body.lift(ctx)),
+                    inferred_type: None,
+                }
+            }
+            DoStatements::Return { span, exp, inferred_type: _ } => {
+                DoStatements::Return { span: *span, exp: exp.lift(ctx), inferred_type: None }
+            }
+        }
     }
 }
 

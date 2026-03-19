@@ -97,7 +97,7 @@ impl FV for Exp {
             Exp::TypeUniv(_) => HashSet::default(),
             Exp::LocalMatch(local_match) => local_match.free_vars_closure(lvl_ctx, type_ctx),
             Exp::LocalLet(local_let) => local_let.free_vars_closure(lvl_ctx, type_ctx),
-            Exp::DoBlock(_) => todo!(),
+            Exp::DoBlock(do_block) => do_block.free_vars_closure(lvl_ctx, type_ctx),
             Exp::Literal(literal) => literal.free_vars_closure(lvl_ctx, type_ctx),
         }
     }
@@ -173,6 +173,38 @@ impl FV for LocalLet {
             fvs.extend(body.free_vars_closure(ctx, type_ctx));
         });
         fvs
+    }
+}
+
+impl FV for DoBlock {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        let DoBlock { span: _, statements, inferred_type: _ } = self;
+        statements.free_vars_closure(lvl_ctx, type_ctx)
+    }
+}
+
+impl FV for DoStatements {
+    fn free_vars_closure(&self, lvl_ctx: &mut LevelCtx, type_ctx: &TypeCtx) -> HashSet<FreeVar> {
+        match self {
+            DoStatements::Bind { span: _, name, bound, body, inferred_type: _ } => {
+                let mut fvs = bound.free_vars_closure(lvl_ctx, type_ctx);
+                lvl_ctx.bind_single(name.clone(), |ctx| {
+                    fvs.extend(body.free_vars_closure(ctx, type_ctx));
+                });
+                fvs
+            }
+            DoStatements::Let { span: _, name, typ, bound, body, inferred_type: _ } => {
+                let mut fvs = typ.free_vars_closure(lvl_ctx, type_ctx);
+                fvs.extend(bound.free_vars_closure(lvl_ctx, type_ctx));
+                lvl_ctx.bind_single(name.clone(), |ctx| {
+                    fvs.extend(body.free_vars_closure(ctx, type_ctx));
+                });
+                fvs
+            }
+            DoStatements::Return { span: _, exp, inferred_type: _ } => {
+                exp.free_vars_closure(lvl_ctx, type_ctx)
+            }
+        }
     }
 }
 
