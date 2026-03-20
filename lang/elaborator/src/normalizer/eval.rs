@@ -43,7 +43,7 @@ impl Eval for Exp {
             Exp::LocalComatch(e) => e.eval(info_table, env),
             Exp::Hole(e) => e.eval(info_table, env),
             Exp::LocalLet(e) => e.eval(info_table, env),
-            Exp::DoBlock(_) => todo!(),
+            Exp::DoBlock(e) => e.eval(info_table, env),
             Exp::Literal(e) => e.eval(info_table, env),
         };
         trace!(
@@ -535,6 +535,33 @@ impl Eval for LocalLet {
         env.bind_iter([Binder { name: name.clone(), content: bound_val }].into_iter(), |env| {
             body.eval(info_table, env)
         })
+    }
+}
+
+impl Eval for DoBlock {
+    type Val = Box<Val>;
+
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
+        let DoBlock { span: _, statements, inferred_type: _ } = self;
+        todo!()
+    }
+}
+
+impl Eval for DoStatements {
+    type Val;
+
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
+        match self {
+            DoStatements::Bind { span, name, bound, body, inferred_type } => todo!(),
+            DoStatements::Let { span: _, name, typ: _, bound, body, inferred_type: _ } => {
+                let bound_val = bound.eval(info_table, env)?;
+                env.bind_iter(
+                    [Binder { name: name.clone(), content: bound_val }].into_iter(),
+                    |env| body.eval(info_table, env),
+                )
+            }
+            DoStatements::Return { span, exp, inferred_type } => todo!(),
+        }
     }
 }
 
