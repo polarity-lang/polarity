@@ -187,35 +187,23 @@ impl ToIR for polarity_lang_ast::DoBlock {
 
         let mut current_statements = statements;
         let return_exp = loop {
+            use polarity_lang_ast::DoStatements;
             match current_statements {
-                polarity_lang_ast::DoStatements::Bind {
-                    span: _,
-                    name,
-                    bound,
-                    body,
-                    inferred_type: _,
-                } => {
+                DoStatements::Bind { span: _, name, bound, body, inferred_type: _ } => {
                     let binding = ir::DoBinding::Bind {
                         name: name.to_string().into(),
                         bound: Box::new(bound.to_ir()?),
                     };
                     bindings.push(binding);
-                    current_statements = &*body;
+                    current_statements = body.as_ref();
                 }
-                polarity_lang_ast::DoStatements::Let {
-                    span: _,
-                    name,
-                    typ: _,
-                    bound,
-                    body,
-                    inferred_type: _,
-                } => {
+                DoStatements::Let { span: _, name, typ: _, bound, body, inferred_type: _ } => {
                     let binding = ir::DoBinding::Let {
                         name: name.to_string().into(),
                         bound: Box::new(bound.to_ir()?),
                     };
                     bindings.push(binding);
-                    current_statements = &*body;
+                    current_statements = body.as_ref();
                 }
                 polarity_lang_ast::DoStatements::Return { span: _, exp, inferred_type: _ } => {
                     break Box::new(exp.to_ir()?);

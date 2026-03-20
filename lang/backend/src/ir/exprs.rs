@@ -323,7 +323,7 @@ impl Print for DoBlock {
 
         let body = alloc
             .line()
-            .append(print_do_bindings(&bindings, cfg, alloc))
+            .append(print_do_bindings(bindings, cfg, alloc))
             .append(alloc.line())
             .append(return_exp.print(cfg, alloc))
             .nest(cfg.indent)
