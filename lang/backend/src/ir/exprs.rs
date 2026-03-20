@@ -324,6 +324,7 @@ impl Print for DoBlock {
         let body = alloc
             .line()
             .append(print_do_bindings(&bindings, cfg, alloc))
+            .append(alloc.line())
             .append(return_exp.print(cfg, alloc))
             .nest(cfg.indent)
             .append(alloc.line())
@@ -503,7 +504,6 @@ fn print_do_bindings<'a>(
     for binding in bindings {
         if !first {
             doc = doc.append(alloc.line());
-            first = false;
         }
 
         let binding_doc = match binding {
@@ -525,7 +525,8 @@ fn print_do_bindings<'a>(
                 .append(alloc.text(SEMICOLON)),
         };
 
-        doc = doc.append(binding_doc)
+        doc = doc.append(binding_doc);
+        first = false;
     }
 
     doc
