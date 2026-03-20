@@ -21,6 +21,7 @@ pub enum Exp {
     LocalMatch(LocalMatch),
     LocalComatch(LocalComatch),
     LocalLet(LocalLet),
+    DoBlock(DoBlock),
     Literal(Literal),
     Panic(Panic),
     /// Zero-Sized Term
@@ -46,6 +47,7 @@ impl Print for Exp {
             Exp::LocalMatch(m) => m.print_prec(cfg, alloc, prec),
             Exp::LocalComatch(m) => m.print_prec(cfg, alloc, prec),
             Exp::LocalLet(l) => l.print_prec(cfg, alloc, prec),
+            Exp::DoBlock(d) => d.print_prec(cfg, alloc, prec),
             Exp::Literal(l) => l.print_prec(cfg, alloc, prec),
             Exp::Panic(p) => p.print_prec(cfg, alloc, prec),
             Exp::ZST => alloc.keyword("<ZST>"),
@@ -66,6 +68,7 @@ impl Rename for Exp {
             Exp::LocalMatch(local_match) => local_match.rename(ctx),
             Exp::LocalComatch(local_comatch) => local_comatch.rename(ctx),
             Exp::LocalLet(local_let) => local_let.rename(ctx),
+            Exp::DoBlock(do_block) => do_block.rename(ctx),
             Exp::Literal(_) => Ok(()),
             Exp::Panic(_) => Ok(()),
             Exp::ZST => Ok(()),
@@ -298,6 +301,66 @@ impl Rename for LocalLet {
 }
 
 #[derive(Debug, Clone)]
+pub struct DoBlock {
+    pub bindings: Vec<DoBinding>,
+    pub return_exp: Box<Exp>,
+}
+
+#[derive(Debug, Clone)]
+pub enum DoBinding {
+    Let { name: Ident, bound: Box<Exp> },
+    Bind { name: Ident, bound: Box<Exp> },
+}
+
+impl Print for DoBlock {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let DoBlock { bindings, return_exp } = self;
+
+        let body = alloc
+            .line()
+            .append(print_do_bindings(&bindings, cfg, alloc))
+            .append(return_exp.print(cfg, alloc))
+            .nest(cfg.indent)
+            .append(alloc.line())
+            .braces_anno();
+
+        alloc.keyword(DO).append(alloc.space()).append(body)
+    }
+}
+
+impl Rename for DoBlock {
+    fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
+        let DoBlock { bindings, return_exp } = self;
+        rename_do_block(bindings, return_exp, ctx)
+    }
+}
+
+fn rename_do_block(
+    bindings: &mut [DoBinding],
+    return_exp: &mut Box<Exp>,
+    ctx: &mut RenameCtx,
+) -> RenameResult {
+    match bindings.split_first_mut() {
+        None => return_exp.rename(ctx),
+        Some((binding, bindings)) => match binding {
+            DoBinding::Let { name, bound } => {
+                bound.rename(ctx)?;
+                ctx.rename_binder(name, |ctx| rename_do_block(bindings, return_exp, ctx))
+            }
+            DoBinding::Bind { name, bound } => {
+                bound.rename(ctx)?;
+                ctx.rename_binder(name, |ctx| rename_do_block(bindings, return_exp, ctx))
+            }
+        },
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Panic {
     pub message: String,
 }
@@ -427,4 +490,43 @@ fn print_args<'a>(args: &'a [Exp], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Buil
     }
 
     doc.align().parens().group()
+}
+
+fn print_do_bindings<'a>(
+    bindings: &'a [DoBinding],
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a> {
+    let mut doc = alloc.nil();
+    let mut first = true;
+
+    for binding in bindings {
+        if !first {
+            doc = doc.append(alloc.line());
+            first = false;
+        }
+
+        let binding_doc = match binding {
+            DoBinding::Let { name, bound } => alloc
+                .keyword(LET)
+                .append(alloc.space())
+                .append(alloc.text(name.to_string()))
+                .append(alloc.space())
+                .append(alloc.text(COLONEQ))
+                .append(alloc.space())
+                .append(bound.print(cfg, alloc))
+                .append(alloc.keyword(SEMICOLON)),
+            DoBinding::Bind { name, bound } => alloc
+                .text(name.to_string())
+                .append(alloc.space())
+                .append(alloc.text(LEFT_ARROW))
+                .append(alloc.space())
+                .append(bound.print(cfg, alloc))
+                .append(alloc.text(SEMICOLON)),
+        };
+
+        doc = doc.append(binding_doc)
+    }
+
+    doc
 }
