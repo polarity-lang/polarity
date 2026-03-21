@@ -23,6 +23,7 @@ impl ToJSExpr for ir::Exp {
             ir::Exp::LocalComatch(local_comatch) => local_comatch.to_js_expr(),
             ir::Exp::Panic(panic) => panic.to_js_expr(),
             ir::Exp::LocalLet(local_let) => local_let.to_js_expr(),
+            ir::Exp::DoBlock(_) => todo!(),
             ir::Exp::Literal(lit) => lit.to_js_expr(),
             ir::Exp::ZST => Ok(js::Expr::Ident(js::Ident::new(
                 "undefined".into(),

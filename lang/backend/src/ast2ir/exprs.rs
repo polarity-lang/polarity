@@ -24,7 +24,7 @@ impl ToIR for polarity_lang_ast::Exp {
             }
             polarity_lang_ast::Exp::Hole(hole) => hole.to_ir()?,
             polarity_lang_ast::Exp::LocalLet(local_let) => ir::Exp::LocalLet(local_let.to_ir()?),
-            polarity_lang_ast::Exp::DoBlock(_) => todo!(),
+            polarity_lang_ast::Exp::DoBlock(do_block) => ir::Exp::DoBlock(do_block.to_ir()?),
             polarity_lang_ast::Exp::Literal(literal) => ir::Exp::Literal(literal.to_ir()?),
         };
 
@@ -175,6 +175,43 @@ impl ToIR for LocalLet {
             bound: Box::new(bound.to_ir()?),
             body: Box::new(body.to_ir()?),
         })
+    }
+}
+
+impl ToIR for polarity_lang_ast::DoBlock {
+    type Target = ir::DoBlock;
+
+    fn to_ir(&self) -> BackendResult<Self::Target> {
+        let polarity_lang_ast::DoBlock { span: _, statements, inferred_type: _ } = self;
+        let mut bindings = Vec::new();
+
+        let mut current_statements = statements;
+        let return_exp = loop {
+            use polarity_lang_ast::DoStatements;
+            match current_statements {
+                DoStatements::Bind { span: _, name, bound, body, inferred_type: _ } => {
+                    let binding = ir::DoBinding::Bind {
+                        name: name.to_string().into(),
+                        bound: Box::new(bound.to_ir()?),
+                    };
+                    bindings.push(binding);
+                    current_statements = body.as_ref();
+                }
+                DoStatements::Let { span: _, name, typ: _, bound, body, inferred_type: _ } => {
+                    let binding = ir::DoBinding::Let {
+                        name: name.to_string().into(),
+                        bound: Box::new(bound.to_ir()?),
+                    };
+                    bindings.push(binding);
+                    current_statements = body.as_ref();
+                }
+                polarity_lang_ast::DoStatements::Return { span: _, exp, inferred_type: _ } => {
+                    break Box::new(exp.to_ir()?);
+                }
+            }
+        };
+
+        Ok(ir::DoBlock { bindings, return_exp })
     }
 }
 
