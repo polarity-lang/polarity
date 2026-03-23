@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use log::trace;
 use polarity_lang_ast;
-use polarity_lang_ast::DoBlock;
 use polarity_lang_ast::Idx;
 use polarity_lang_ast::Literal;
 use polarity_lang_ast::MetaVar;
@@ -93,6 +92,7 @@ pub enum Val {
     Anno(AnnoVal),
     // Use the definition from the AST
     Literal(Literal),
+    DoBlock(DoBlock),
     Neu(Neu),
 }
 
@@ -105,6 +105,7 @@ impl Shift for Val {
             Val::LocalComatch(e) => e.shift_in_range(range, by),
             Val::Anno(e) => e.shift_in_range(range, by),
             Val::Literal(e) => e.shift_in_range(range, by),
+            Val::DoBlock(e) => e.shift_in_range(range, by),
             Val::Neu(exp) => exp.shift_in_range(range, by),
         }
     }
@@ -119,6 +120,7 @@ impl Print for Val {
             Val::LocalComatch(e) => e.print(cfg, alloc),
             Val::Anno(e) => e.print(cfg, alloc),
             Val::Literal(e) => e.print(cfg, alloc),
+            Val::DoBlock(e) => e.print(cfg, alloc),
             Val::Neu(exp) => exp.print(cfg, alloc),
         }
     }
@@ -135,6 +137,7 @@ impl ReadBack for Val {
             Val::LocalComatch(e) => e.read_back(info_table)?.into(),
             Val::Anno(e) => e.read_back(info_table)?.into(),
             Val::Literal(e) => e.read_back(info_table)?.into(),
+            Val::DoBlock(e) => e.read_back(info_table)?.into(),
             Val::Neu(exp) => exp.read_back(info_table)?,
         };
         trace!("↓{} ~> {}", self.print_trace(), res.print_trace());
@@ -386,6 +389,187 @@ impl ReadBack for AnnoVal {
     }
 }
 
+// DoBlock
+//
+//
+
+#[derive(Debug, Clone)]
+pub struct DoBlock {
+    pub span: Span,
+    pub statements: DoStatements,
+}
+
+#[derive(Debug, Clone)]
+pub enum DoStatements {
+    Bind {
+        span: Span,
+        name: VarBind,
+        bound: Box<Val>,
+        body: Box<DoStatements>,
+    },
+    Let {
+        span: Span,
+        name: VarBind,
+        typ: Option<Box<Val>>,
+        bound: Box<Val>,
+        body: Box<DoStatements>,
+    },
+    Return {
+        span: Span,
+        exp: Box<Val>,
+    },
+}
+
+impl Shift for DoBlock {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        let DoBlock { span: _, statements } = self;
+        statements.shift_in_range(range, by);
+    }
+}
+
+impl Shift for DoStatements {
+    fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
+        match self {
+            DoStatements::Bind { span: _, name: _, bound, body } => {
+                bound.shift_in_range(range, by);
+                body.shift_in_range(&range.clone().shift(1), by);
+            }
+            DoStatements::Let { span: _, name: _, typ, bound, body } => {
+                typ.shift_in_range(range, by);
+                bound.shift_in_range(range, by);
+                body.shift_in_range(&range.clone().shift(1), by);
+            }
+            DoStatements::Return { span: _, exp } => {
+                exp.shift_in_range(range, by);
+            }
+        }
+    }
+}
+
+impl Print for DoBlock {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &PrintCfg,
+        alloc: &'a Alloc<'a>,
+        _prec: Precedence,
+    ) -> Builder<'a> {
+        let DoBlock { span: _, statements } = self;
+
+        let body = alloc
+            .line()
+            .append(statements.print(cfg, alloc))
+            .nest(cfg.indent)
+            .append(alloc.line())
+            .braces_anno();
+
+        alloc.keyword(DO).append(alloc.space()).append(body)
+    }
+}
+
+impl Print for DoStatements {
+    fn print_prec<'a>(
+        &'a self,
+        cfg: &polarity_lang_printer::PrintCfg,
+        alloc: &'a polarity_lang_printer::Alloc<'a>,
+        _prec: polarity_lang_printer::Precedence,
+    ) -> polarity_lang_printer::Builder<'a> {
+        match self {
+            DoStatements::Bind { span: _, name, bound, body } => {
+                let head = name
+                    .print(cfg, alloc)
+                    .append(alloc.space())
+                    .append(LEFT_ARROW)
+                    .append(alloc.space())
+                    .append(bound.print_prec(cfg, alloc, Precedence::NonLet))
+                    .append(SEMICOLON)
+                    .group();
+
+                let body = body.print_prec(cfg, alloc, Precedence::Exp);
+
+                head.append(alloc.hardline()).append(body)
+            }
+            DoStatements::Let { span: _, name, typ, bound, body } => {
+                let typ = typ.as_ref().map(|t| {
+                    alloc.text(COLON).append(alloc.space()).append(t.print_prec(
+                        cfg,
+                        alloc,
+                        polarity_lang_printer::Precedence::NonLet,
+                    ))
+                });
+
+                let head = alloc
+                    .keyword(LET)
+                    .append(alloc.space())
+                    .append(name.print(cfg, alloc))
+                    .append(typ)
+                    .append(alloc.space())
+                    .append(COLONEQ)
+                    .append(alloc.space())
+                    .append(bound.print_prec(cfg, alloc, Precedence::NonLet))
+                    .append(SEMICOLON)
+                    .group();
+
+                let body = body.print_prec(cfg, alloc, Precedence::Exp);
+
+                head.append(alloc.hardline()).append(body)
+            }
+            DoStatements::Return { span: _, exp } => exp.print_prec(cfg, alloc, Precedence::Exp),
+        }
+    }
+}
+
+impl From<DoBlock> for Val {
+    fn from(value: DoBlock) -> Self {
+        Val::DoBlock(value)
+    }
+}
+
+impl ReadBack for DoBlock {
+    type Nf = polarity_lang_ast::DoBlock;
+
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
+        let DoBlock { span, statements } = self;
+        Ok(polarity_lang_ast::DoBlock {
+            span: *span,
+            statements: statements.read_back(info_table)?,
+            inferred_type: None,
+        })
+    }
+}
+
+impl ReadBack for DoStatements {
+    type Nf = polarity_lang_ast::DoStatements;
+
+    fn read_back(&self, info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
+        match self {
+            DoStatements::Bind { span, name, bound, body } => {
+                Ok(polarity_lang_ast::DoStatements::Bind {
+                    span: *span,
+                    name: name.clone(),
+                    bound: bound.read_back(info_table)?,
+                    body: body.read_back(info_table)?,
+                    inferred_type: None,
+                })
+            }
+            DoStatements::Let { span, name, typ, bound, body } => {
+                Ok(polarity_lang_ast::DoStatements::Let {
+                    span: *span,
+                    name: name.clone(),
+                    typ: typ.read_back(info_table)?,
+                    bound: bound.read_back(info_table)?,
+                    body: body.read_back(info_table)?,
+                    inferred_type: None,
+                })
+            }
+            DoStatements::Return { span, exp } => Ok(polarity_lang_ast::DoStatements::Return {
+                span: *span,
+                exp: exp.read_back(info_table)?,
+                inferred_type: None,
+            }),
+        }
+    }
+}
+
 // Neu
 //
 //
@@ -401,7 +585,6 @@ pub enum Neu {
     /// cannot be inlined and must therefore block computation.
     OpaqueCall(OpaqueCall),
     AnnoNeu(AnnoNeu),
-    DoBlock(DoBlock),
 }
 
 impl Shift for Neu {
@@ -413,7 +596,6 @@ impl Shift for Neu {
             Neu::Hole(e) => e.shift_in_range(range, by),
             Neu::OpaqueCall(e) => e.shift_in_range(range, by),
             Neu::AnnoNeu(e) => e.shift_in_range(range, by),
-            Neu::DoBlock(e) => e.shift_in_range(range, by),
         }
     }
 }
@@ -427,7 +609,6 @@ impl Print for Neu {
             Neu::Hole(e) => e.print(cfg, alloc),
             Neu::OpaqueCall(e) => e.print(cfg, alloc),
             Neu::AnnoNeu(e) => e.print(cfg, alloc),
-            Neu::DoBlock(e) => e.print(cfg, alloc),
         }
     }
 }
@@ -449,7 +630,6 @@ impl ReadBack for Neu {
             Neu::Hole(e) => e.read_back(info_table)?.into(),
             Neu::OpaqueCall(e) => e.read_back(info_table)?.into(),
             Neu::AnnoNeu(e) => e.read_back(info_table)?.into(),
-            Neu::DoBlock(e) => e.read_back(info_table)?.into(),
         };
         Ok(res)
     }
@@ -824,14 +1004,6 @@ impl ReadBack for AnnoNeu {
             typ: typ_nf.clone(),
             normalized_type: Some(typ_nf),
         })
-    }
-}
-
-impl ReadBack for DoBlock {
-    type Nf = polarity_lang_ast::DoBlock;
-
-    fn read_back(&self, _info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
-        Ok(self.clone())
     }
 }
 

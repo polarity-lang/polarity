@@ -326,6 +326,11 @@ impl Eval for DotCall {
                 span: span.to_miette(),
             }
             .into()),
+            Val::DoBlock(_) => Err(TypeError::Impossible {
+                message: "Cannot apply DotCall to do block".to_owned(),
+                span: span.to_miette(),
+            }
+            .into()),
         }
     }
 }
@@ -455,6 +460,11 @@ impl Eval for LocalMatch {
                 span: literal.span.to_miette(),
             }
             .into()),
+            Val::DoBlock(do_block) => Err(TypeError::Impossible {
+                message: "Cannot match on a do block".to_owned(),
+                span: Some(do_block.span.to_miette()),
+            }
+            .into()),
             Val::Anno(anno_val) => Err(TypeError::Impossible {
                 message: "Type annotation was not stripped when evaluating local match".to_owned(),
                 span: anno_val.span.to_miette(),
@@ -541,8 +551,66 @@ impl Eval for LocalLet {
 impl Eval for DoBlock {
     type Val = Box<Val>;
 
-    fn eval(&self, _info_table: &Rc<TypeInfoTable>, _env: &mut Env) -> TcResult<Self::Val> {
-        Ok(Box::new(Val::Neu(val::Neu::DoBlock(self.clone()))))
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
+        let DoBlock { span, statements, inferred_type: _ } = self;
+        Ok(Box::new(Val::DoBlock(val::DoBlock {
+            span: *span,
+            statements: statements.eval(info_table, env)?,
+        })))
+    }
+}
+
+impl Eval for DoStatements {
+    type Val = val::DoStatements;
+
+    fn eval(&self, info_table: &Rc<TypeInfoTable>, env: &mut Env) -> TcResult<Self::Val> {
+        match self {
+            DoStatements::Bind { span, name, bound, body, inferred_type: _ } => {
+                let bound = bound.eval(info_table, env)?;
+                let binder = Binder {
+                    name: name.clone(),
+                    content: Box::new(Val::Neu(val::Neu::Variable(val::Variable {
+                        span: name.span(),
+                        name: name.clone().into(),
+                        idx: Idx { fst: 0, snd: 0 },
+                    }))),
+                };
+                let mut env = shift_and_clone(env, (1, 0));
+                let body = env.bind_iter([binder].into_iter(), |env| body.eval(info_table, env))?;
+
+                Ok(val::DoStatements::Bind {
+                    span: *span,
+                    name: name.clone(),
+                    bound,
+                    body: Box::new(body),
+                })
+            }
+            DoStatements::Let { span, name, typ, bound, body, inferred_type: _ } => {
+                let bound = bound.eval(info_table, env)?;
+                let typ = typ.eval(info_table, env)?;
+                let binder = Binder {
+                    name: name.clone(),
+                    content: Box::new(Val::Neu(val::Neu::Variable(val::Variable {
+                        span: name.span(),
+                        name: name.clone().into(),
+                        idx: Idx { fst: 0, snd: 0 },
+                    }))),
+                };
+                let mut env = shift_and_clone(env, (1, 0));
+                let body = env.bind_iter([binder].into_iter(), |env| body.eval(info_table, env))?;
+
+                Ok(val::DoStatements::Let {
+                    span: *span,
+                    name: name.clone(),
+                    typ,
+                    bound,
+                    body: Box::new(body),
+                })
+            }
+            DoStatements::Return { span, exp, inferred_type: _ } => {
+                Ok(val::DoStatements::Return { span: *span, exp: exp.eval(info_table, env)? })
+            }
+        }
     }
 }
 
