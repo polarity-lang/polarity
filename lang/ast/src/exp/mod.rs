@@ -97,6 +97,32 @@ impl Exp {
             _ => None,
         }
     }
+
+    pub fn unwrap_io(&self) -> Option<Box<Exp>> {
+        let Exp::Call(Call {
+            span: _,
+            kind: CallKind::Extern,
+            name: IdBound { span: _, id: name, uri: _ },
+            args,
+            is_bin_op: _,
+            inferred_type: _,
+        }) = self
+        else {
+            return None;
+        };
+
+        if name.as_str() != "IO" {
+            return None;
+        }
+
+        let args = args.to_exps();
+        if args.len() != 1 {
+            return None;
+        }
+
+        let inner_typ = args.into_iter().next().unwrap();
+        Some(inner_typ)
+    }
 }
 
 impl HasSpan for Exp {

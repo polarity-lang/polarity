@@ -55,10 +55,23 @@ impl ir::Module {
 /// }
 impl ToJSStmt for ir::Let {
     fn to_js_stmt(&self) -> BackendResult<js::Stmt> {
-        let Self { name, params, body } = self;
+        let Self { name, params, body, is_main_with_io: is_main_io } = self;
 
         let params = params_to_js_params(params);
-        let body_expr = body.to_js_expr()?;
+        let mut body_expr = body.to_js_expr()?;
+
+        if *is_main_io {
+            body_expr = js::Expr::Call(js::CallExpr {
+                span: DUMMY_SP,
+                ctxt: SyntaxContext::empty(),
+                callee: js::Callee::Expr(Box::new(js::Expr::Paren(js::ParenExpr {
+                    span: DUMMY_SP,
+                    expr: Box::new(body_expr),
+                }))),
+                args: vec![],
+                type_args: None,
+            });
+        }
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
             ident: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),

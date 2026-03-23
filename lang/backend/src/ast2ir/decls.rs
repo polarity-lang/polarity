@@ -80,11 +80,13 @@ impl ToIR for polarity_lang_ast::Let {
     type Target = ir::Let;
 
     fn to_ir(&self) -> BackendResult<Self::Target> {
-        let polarity_lang_ast::Let { name, params, body, .. } = self;
+        let polarity_lang_ast::Let { name, params, body, typ, .. } = self;
 
         let params = params.to_ir()?;
         let body = Box::new(body.to_ir()?);
 
-        Ok(ir::Let { name: name.to_string().into(), params, body })
+        let is_main_io = self.is_main() && typ.unwrap_io().is_some();
+
+        Ok(ir::Let { name: name.to_string().into(), params, body, is_main_with_io: is_main_io })
     }
 }
