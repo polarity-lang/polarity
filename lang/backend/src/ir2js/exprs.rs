@@ -504,6 +504,20 @@ impl ToJSExpr for ir::LocalLet {
     }
 }
 
+/// Input:
+///
+/// ```text
+/// do { b; ... b; e }
+/// ```
+///
+/// Output:
+///
+/// ```js
+/// (() => {
+///     〚 b; ... b; 〛
+///     return 〚 foo 〛();
+/// })
+/// ```
 impl ToJSExpr for ir::DoBlock {
     fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
         let Self { bindings, return_exp } = self;
@@ -541,6 +555,19 @@ impl ToJSExpr for ir::DoBlock {
     }
 }
 
+/// Input:
+///
+/// ```text
+/// let x := e1;
+/// y <- e2;
+/// ```
+///
+/// Output:
+///
+/// ```js
+/// const x = 〚 e1 〛;
+/// const y = 〚 e2 〛();
+/// ```
 impl ToJSStmt for ir::DoBinding {
     fn to_js_stmt(&self) -> BackendResult<swc_ecma_ast::Stmt> {
         let vardecl: js::VarDecl = match self {
