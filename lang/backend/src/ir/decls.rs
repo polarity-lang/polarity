@@ -48,8 +48,8 @@ impl Module {
             .collect()
     }
 
-    pub fn has_main(&self) -> bool {
-        self.let_decls.iter().any(|x| x.name == "main".to_owned().into() && x.params.is_empty())
+    pub fn find_main(&self) -> Option<&Let> {
+        self.let_decls.iter().find(|x| x.name == "main".to_owned().into() && x.params.is_empty())
     }
 }
 
