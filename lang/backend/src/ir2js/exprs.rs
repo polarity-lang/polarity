@@ -5,6 +5,7 @@ use swc_ecma_ast as js;
 
 use crate::ir;
 use crate::ir2js::traits::ToJSStmt;
+use crate::ir2js::util::{force_expr, paren_expr};
 use crate::result::BackendResult;
 
 use super::tokens::*;
@@ -474,8 +475,7 @@ impl ToJSExpr for ir::LocalLet {
 
         // Wrap the body expression in parentheses.
         // Without them, returning some expressions (such as objects literals) from an arrow function is not valid JavaScript syntax.
-        let paren_body =
-            js::Expr::Paren(js::ParenExpr { span: DUMMY_SP, expr: Box::new(body_expr) });
+        let paren_body = paren_expr(body_expr);
 
         let arrow_fn = js::ArrowExpr {
             span: DUMMY_SP,
@@ -537,10 +537,7 @@ impl ToJSExpr for ir::DoBlock {
             return_type: None,
         });
 
-        let paren_expr =
-            js::Expr::Paren(js::ParenExpr { span: DUMMY_SP, expr: Box::new(arrow_fn) });
-
-        Ok(paren_expr)
+        Ok(paren_expr(arrow_fn))
     }
 }
 
@@ -573,13 +570,7 @@ impl ToJSStmt for ir::DoBinding {
                         id: js::Ident::from(name.to_string()),
                         type_ann: None,
                     }),
-                    init: Some(Box::new(js::Expr::Call(js::CallExpr {
-                        span: DUMMY_SP,
-                        ctxt: SyntaxContext::empty(),
-                        callee: js::Callee::Expr(Box::new(bound.to_js_expr()?)),
-                        args: vec![],
-                        type_args: None,
-                    }))),
+                    init: Some(Box::new(force_expr(bound.to_js_expr()?))),
                     definite: false,
                 }],
             },
@@ -733,14 +724,13 @@ impl ir::Case {
 
         // Wrap the body expression in parentheses.
         // Without them, returning some expressions (such as objects literals) from an arrow function is not valid JavaScript syntax.
-        let paren_expr =
-            js::Expr::Paren(js::ParenExpr { span: DUMMY_SP, expr: Box::new(body_expr) });
+        let paren_body = paren_expr(body_expr);
 
         let arrow = js::Expr::Arrow(js::ArrowExpr {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
             params,
-            body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(paren_expr))),
+            body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(paren_body))),
             is_async: false,
             is_generator: false,
             type_params: None,

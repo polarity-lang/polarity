@@ -2,6 +2,7 @@ use swc_common::{DUMMY_SP, SyntaxContext};
 use swc_ecma_ast as js;
 
 use crate::ir;
+use crate::ir2js::util::{force_expr, paren_expr};
 use crate::result::BackendResult;
 
 use super::tokens::*;
@@ -61,16 +62,7 @@ impl ToJSStmt for ir::Let {
         let mut body_expr = body.to_js_expr()?;
 
         if *is_main_io {
-            body_expr = js::Expr::Call(js::CallExpr {
-                span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                callee: js::Callee::Expr(Box::new(js::Expr::Paren(js::ParenExpr {
-                    span: DUMMY_SP,
-                    expr: Box::new(body_expr),
-                }))),
-                args: vec![],
-                type_args: None,
-            });
+            body_expr = force_expr(paren_expr(body_expr));
         }
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
