@@ -570,40 +570,36 @@ impl ToJSExpr for ir::DoBlock {
 /// ```
 impl ToJSStmt for ir::DoBinding {
     fn to_js_stmt(&self) -> BackendResult<swc_ecma_ast::Stmt> {
-        let vardecl: js::VarDecl = match self {
-            ir::DoBinding::Let { name, bound } => js::VarDecl {
+        let var_declarator = match self {
+            ir::DoBinding::Let { name, bound } => js::VarDeclarator {
                 span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                kind: js::VarDeclKind::Const,
-                declare: false,
-                decls: vec![js::VarDeclarator {
-                    span: DUMMY_SP,
-                    name: js::Pat::Ident(js::BindingIdent {
-                        id: js::Ident::from(name.to_string()),
-                        type_ann: None,
-                    }),
-                    init: Some(Box::new(bound.to_js_expr()?)),
-                    definite: false,
-                }],
+                name: js::Pat::Ident(js::BindingIdent {
+                    id: js::Ident::from(name.to_string()),
+                    type_ann: None,
+                }),
+                init: Some(Box::new(bound.to_js_expr()?)),
+                definite: false,
             },
-            ir::DoBinding::Bind { name, bound } => js::VarDecl {
+            ir::DoBinding::Bind { name, bound } => js::VarDeclarator {
                 span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                kind: js::VarDeclKind::Const,
-                declare: false,
-                decls: vec![js::VarDeclarator {
-                    span: DUMMY_SP,
-                    name: js::Pat::Ident(js::BindingIdent {
-                        id: js::Ident::from(name.to_string()),
-                        type_ann: None,
-                    }),
-                    init: Some(Box::new(force_expr(bound.to_js_expr()?))),
-                    definite: false,
-                }],
+                name: js::Pat::Ident(js::BindingIdent {
+                    id: js::Ident::from(name.to_string()),
+                    type_ann: None,
+                }),
+                init: Some(Box::new(force_expr(bound.to_js_expr()?))),
+                definite: false,
             },
         };
 
-        Ok(js::Stmt::Decl(js::Decl::Var(Box::new(vardecl))))
+        let var_decl = js::VarDecl {
+            span: DUMMY_SP,
+            ctxt: SyntaxContext::empty(),
+            kind: js::VarDeclKind::Const,
+            declare: false,
+            decls: vec![var_declarator],
+        };
+
+        Ok(js::Stmt::Decl(js::Decl::Var(Box::new(var_decl))))
     }
 }
 
