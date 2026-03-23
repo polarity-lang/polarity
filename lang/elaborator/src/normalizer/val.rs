@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use log::trace;
 use polarity_lang_ast;
+use polarity_lang_ast::DoBlock;
 use polarity_lang_ast::Idx;
 use polarity_lang_ast::Literal;
 use polarity_lang_ast::MetaVar;
@@ -400,6 +401,7 @@ pub enum Neu {
     /// cannot be inlined and must therefore block computation.
     OpaqueCall(OpaqueCall),
     AnnoNeu(AnnoNeu),
+    DoBlock(DoBlock),
 }
 
 impl Shift for Neu {
@@ -411,6 +413,7 @@ impl Shift for Neu {
             Neu::Hole(e) => e.shift_in_range(range, by),
             Neu::OpaqueCall(e) => e.shift_in_range(range, by),
             Neu::AnnoNeu(e) => e.shift_in_range(range, by),
+            Neu::DoBlock(e) => e.shift_in_range(range, by),
         }
     }
 }
@@ -424,6 +427,7 @@ impl Print for Neu {
             Neu::Hole(e) => e.print(cfg, alloc),
             Neu::OpaqueCall(e) => e.print(cfg, alloc),
             Neu::AnnoNeu(e) => e.print(cfg, alloc),
+            Neu::DoBlock(e) => e.print(cfg, alloc),
         }
     }
 }
@@ -445,6 +449,7 @@ impl ReadBack for Neu {
             Neu::Hole(e) => e.read_back(info_table)?.into(),
             Neu::OpaqueCall(e) => e.read_back(info_table)?.into(),
             Neu::AnnoNeu(e) => e.read_back(info_table)?.into(),
+            Neu::DoBlock(e) => e.read_back(info_table)?.into(),
         };
         Ok(res)
     }
@@ -819,6 +824,14 @@ impl ReadBack for AnnoNeu {
             typ: typ_nf.clone(),
             normalized_type: Some(typ_nf),
         })
+    }
+}
+
+impl ReadBack for DoBlock {
+    type Nf = polarity_lang_ast::DoBlock;
+
+    fn read_back(&self, _info_table: &Rc<TypeInfoTable>) -> TcResult<Self::Nf> {
+        Ok(self.clone())
     }
 }
 
