@@ -516,7 +516,7 @@ impl ToJSExpr for ir::DoBlock {
 
         let js_return_stmt = js::Stmt::Return(js::ReturnStmt {
             span: DUMMY_SP,
-            arg: Some(Box::new(return_exp.to_js_expr()?)),
+            arg: Some(Box::new(force_expr(paren_expr(return_exp.to_js_expr()?)))),
         });
 
         let mut js_stmts = js_bindings;
