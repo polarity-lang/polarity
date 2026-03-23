@@ -4,6 +4,7 @@ use swc_common::{DUMMY_SP, SyntaxContext};
 use swc_ecma_ast as js;
 
 use crate::ir;
+use crate::ir2js::traits::ToJSStmt;
 use crate::result::BackendResult;
 
 use super::tokens::*;
@@ -23,7 +24,7 @@ impl ToJSExpr for ir::Exp {
             ir::Exp::LocalComatch(local_comatch) => local_comatch.to_js_expr(),
             ir::Exp::Panic(panic) => panic.to_js_expr(),
             ir::Exp::LocalLet(local_let) => local_let.to_js_expr(),
-            ir::Exp::DoBlock(_) => todo!(),
+            ir::Exp::DoBlock(do_block) => do_block.to_js_expr(),
             ir::Exp::Literal(lit) => lit.to_js_expr(),
             ir::Exp::ZST => Ok(js::Expr::Ident(js::Ident::new(
                 "undefined".into(),
@@ -500,6 +501,91 @@ impl ToJSExpr for ir::LocalLet {
             args: args_to_js_exprs(&[*bound.clone()])?,
             type_args: None,
         }))
+    }
+}
+
+impl ToJSExpr for ir::DoBlock {
+    fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
+        let Self { bindings, return_exp } = self;
+
+        let mut js_bindings = Vec::with_capacity(bindings.len());
+        for binding in bindings {
+            let js_binding = binding.to_js_stmt()?;
+            js_bindings.push(js_binding);
+        }
+
+        let js_return_stmt = js::Stmt::Return(js::ReturnStmt {
+            span: DUMMY_SP,
+            arg: Some(Box::new(return_exp.to_js_expr()?)),
+        });
+
+        let mut js_stmts = js_bindings;
+        js_stmts.push(js_return_stmt);
+
+        let arrow_fn = js::Expr::Arrow(js::ArrowExpr {
+            span: DUMMY_SP,
+            ctxt: SyntaxContext::empty(),
+            params: vec![],
+            body: Box::new(js::BlockStmtOrExpr::BlockStmt(js::BlockStmt {
+                span: DUMMY_SP,
+                ctxt: SyntaxContext::empty(),
+                stmts: js_stmts,
+            })),
+            is_async: false,
+            is_generator: false,
+            type_params: None,
+            return_type: None,
+        });
+
+        let paren_expr =
+            js::Expr::Paren(js::ParenExpr { span: DUMMY_SP, expr: Box::new(arrow_fn) });
+
+        Ok(paren_expr)
+    }
+}
+
+impl ToJSStmt for ir::DoBinding {
+    fn to_js_stmt(&self) -> BackendResult<swc_ecma_ast::Stmt> {
+        let vardecl: js::VarDecl = match self {
+            ir::DoBinding::Let { name, bound } => js::VarDecl {
+                span: DUMMY_SP,
+                ctxt: SyntaxContext::empty(),
+                kind: js::VarDeclKind::Const,
+                declare: false,
+                decls: vec![js::VarDeclarator {
+                    span: DUMMY_SP,
+                    name: js::Pat::Ident(js::BindingIdent {
+                        id: js::Ident::from(name.to_string()),
+                        type_ann: None,
+                    }),
+                    init: Some(Box::new(bound.to_js_expr()?)),
+                    definite: false,
+                }],
+            },
+            ir::DoBinding::Bind { name, bound } => js::VarDecl {
+                span: DUMMY_SP,
+                ctxt: SyntaxContext::empty(),
+                kind: js::VarDeclKind::Const,
+                declare: false,
+                decls: vec![js::VarDeclarator {
+                    span: DUMMY_SP,
+                    name: js::Pat::Ident(js::BindingIdent {
+                        id: js::Ident::from(name.to_string()),
+                        type_ann: None,
+                    }),
+                    init: Some(Box::new(js::Expr::Call(js::CallExpr {
+                        span: DUMMY_SP,
+                        ctxt: SyntaxContext::empty(),
+                        callee: js::Callee::Expr(Box::new(bound.to_js_expr()?)),
+                        args: vec![],
+                        type_args: None,
+                    }))),
+                    definite: false,
+                }],
+            },
+        };
+
+        Ok(js::Stmt::Decl(js::Decl::Var(Box::new(vardecl))))
     }
 }
 
