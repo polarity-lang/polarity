@@ -204,7 +204,8 @@ impl ir::Call {
                 }],
                 type_args: None,
             })),
-            // undefined
+            // void 0
+            // (This is a safe way to evaluate to undefined)
             "unit" => Ok(*js::Expr::undefined(DUMMY_SP)),
             // (() => 〚x 〛)
             "return_io" => Ok(thunk_expr(*args[0].expr.clone())),
