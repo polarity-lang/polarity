@@ -204,6 +204,8 @@ impl ir::Call {
                 }],
                 type_args: None,
             })),
+            // undefined
+            "unit" => Ok(*js::Expr::undefined(DUMMY_SP)),
             _ => self.to_js_function_call(),
         }
     }
