@@ -1,0 +1,6 @@
+use "io.pol"
+use "../prim/string.pol"
+use "../prim/unit.pol"
+
+/// Print a string to the console, appending a newline.
+extern println(s: String): IO(Unit)

@@ -1,0 +1,5 @@
+// Input/Output type.
+extern IO(a: Type): Type
+
+// Wrap a value into an IO context without performing any side-effect.
+extern return_io(a: Type, x: a): IO(a)
