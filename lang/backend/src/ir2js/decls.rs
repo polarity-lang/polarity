@@ -55,7 +55,7 @@ impl ir::Module {
 /// }
 impl ToJSStmt for ir::Let {
     fn to_js_stmt(&self) -> BackendResult<js::Stmt> {
-        let Self { name, params, body } = self;
+        let Self { name, params, body, is_main_with_io: _ } = self;
 
         let params = params_to_js_params(params);
         let body_expr = body.to_js_expr()?;

@@ -48,8 +48,8 @@ impl Module {
             .collect()
     }
 
-    pub fn has_main(&self) -> bool {
-        self.let_decls.iter().any(|x| x.name == "main".to_owned().into() && x.params.is_empty())
+    pub fn find_main(&self) -> Option<&Let> {
+        self.let_decls.iter().find(|x| x.name == "main".to_owned().into() && x.params.is_empty())
     }
 }
 
@@ -202,11 +202,14 @@ pub struct Let {
     pub name: Ident,
     pub params: Vec<Ident>,
     pub body: Box<Exp>,
+
+    /// Whether the let decl is the main function and has an IO type
+    pub is_main_with_io: bool,
 }
 
 impl Print for Let {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let Let { name, params, body } = self;
+        let Let { name, params, body, is_main_with_io: _ } = self;
 
         let head = alloc
             .keyword(LET)
@@ -229,7 +232,7 @@ impl Print for Let {
 
 impl Rename for Let {
     fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
-        let Let { name, params, body } = self;
+        let Let { name, params, body, is_main_with_io: _ } = self;
 
         ctx.rename_bound(name)?;
         ctx.rename_binders(params, |ctx| body.rename(ctx))?;

@@ -4,6 +4,8 @@ use swc_common::{DUMMY_SP, SyntaxContext};
 use swc_ecma_ast as js;
 
 use crate::ir;
+use crate::ir2js::traits::ToJSStmt;
+use crate::ir2js::util::{force_expr, paren_expr};
 use crate::result::BackendResult;
 
 use super::tokens::*;
@@ -23,7 +25,7 @@ impl ToJSExpr for ir::Exp {
             ir::Exp::LocalComatch(local_comatch) => local_comatch.to_js_expr(),
             ir::Exp::Panic(panic) => panic.to_js_expr(),
             ir::Exp::LocalLet(local_let) => local_let.to_js_expr(),
-            ir::Exp::DoBlock(_) => todo!(),
+            ir::Exp::DoBlock(do_block) => do_block.to_js_expr(),
             ir::Exp::Literal(lit) => lit.to_js_expr(),
             ir::Exp::ZST => Ok(js::Expr::Ident(js::Ident::new(
                 "undefined".into(),
@@ -473,8 +475,7 @@ impl ToJSExpr for ir::LocalLet {
 
         // Wrap the body expression in parentheses.
         // Without them, returning some expressions (such as objects literals) from an arrow function is not valid JavaScript syntax.
-        let paren_body =
-            js::Expr::Paren(js::ParenExpr { span: DUMMY_SP, expr: Box::new(body_expr) });
+        let paren_body = paren_expr(body_expr);
 
         let arrow_fn = js::ArrowExpr {
             span: DUMMY_SP,
@@ -500,6 +501,105 @@ impl ToJSExpr for ir::LocalLet {
             args: args_to_js_exprs(&[*bound.clone()])?,
             type_args: None,
         }))
+    }
+}
+
+/// Input:
+///
+/// ```text
+/// do { b; ... b; e }
+/// ```
+///
+/// Output:
+///
+/// ```js
+/// (() => {
+///     〚 b; ... b; 〛
+///     return 〚 foo 〛();
+/// })
+/// ```
+impl ToJSExpr for ir::DoBlock {
+    fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
+        let Self { bindings, return_exp } = self;
+
+        let mut js_bindings = Vec::with_capacity(bindings.len());
+        for binding in bindings {
+            let js_binding = binding.to_js_stmt()?;
+            js_bindings.push(js_binding);
+        }
+
+        let js_return_stmt = js::Stmt::Return(js::ReturnStmt {
+            span: DUMMY_SP,
+            arg: Some(Box::new(force_expr(paren_expr(return_exp.to_js_expr()?)))),
+        });
+
+        let mut js_stmts = js_bindings;
+        js_stmts.push(js_return_stmt);
+
+        let arrow_fn = js::Expr::Arrow(js::ArrowExpr {
+            span: DUMMY_SP,
+            ctxt: SyntaxContext::empty(),
+            params: vec![],
+            body: Box::new(js::BlockStmtOrExpr::BlockStmt(js::BlockStmt {
+                span: DUMMY_SP,
+                ctxt: SyntaxContext::empty(),
+                stmts: js_stmts,
+            })),
+            is_async: false,
+            is_generator: false,
+            type_params: None,
+            return_type: None,
+        });
+
+        Ok(paren_expr(arrow_fn))
+    }
+}
+
+/// Input:
+///
+/// ```text
+/// let x := e1;
+/// y <- e2;
+/// ```
+///
+/// Output:
+///
+/// ```js
+/// const x = 〚 e1 〛;
+/// const y = 〚 e2 〛();
+/// ```
+impl ToJSStmt for ir::DoBinding {
+    fn to_js_stmt(&self) -> BackendResult<swc_ecma_ast::Stmt> {
+        let var_declarator = match self {
+            ir::DoBinding::Let { name, bound } => js::VarDeclarator {
+                span: DUMMY_SP,
+                name: js::Pat::Ident(js::BindingIdent {
+                    id: js::Ident::from(name.to_string()),
+                    type_ann: None,
+                }),
+                init: Some(Box::new(bound.to_js_expr()?)),
+                definite: false,
+            },
+            ir::DoBinding::Bind { name, bound } => js::VarDeclarator {
+                span: DUMMY_SP,
+                name: js::Pat::Ident(js::BindingIdent {
+                    id: js::Ident::from(name.to_string()),
+                    type_ann: None,
+                }),
+                init: Some(Box::new(force_expr(bound.to_js_expr()?))),
+                definite: false,
+            },
+        };
+
+        let var_decl = js::VarDecl {
+            span: DUMMY_SP,
+            ctxt: SyntaxContext::empty(),
+            kind: js::VarDeclKind::Const,
+            declare: false,
+            decls: vec![var_declarator],
+        };
+
+        Ok(js::Stmt::Decl(js::Decl::Var(Box::new(var_decl))))
     }
 }
 
@@ -647,14 +747,13 @@ impl ir::Case {
 
         // Wrap the body expression in parentheses.
         // Without them, returning some expressions (such as objects literals) from an arrow function is not valid JavaScript syntax.
-        let paren_expr =
-            js::Expr::Paren(js::ParenExpr { span: DUMMY_SP, expr: Box::new(body_expr) });
+        let paren_body = paren_expr(body_expr);
 
         let arrow = js::Expr::Arrow(js::ArrowExpr {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
             params,
-            body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(paren_expr))),
+            body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(paren_body))),
             is_async: false,
             is_generator: false,
             type_params: None,
