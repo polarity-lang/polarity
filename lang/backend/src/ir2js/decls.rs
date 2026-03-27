@@ -2,7 +2,6 @@ use swc_common::{DUMMY_SP, SyntaxContext};
 use swc_ecma_ast as js;
 
 use crate::ir;
-use crate::ir2js::util::{force_expr, paren_expr};
 use crate::result::BackendResult;
 
 use super::tokens::*;
@@ -56,14 +55,10 @@ impl ir::Module {
 /// }
 impl ToJSStmt for ir::Let {
     fn to_js_stmt(&self) -> BackendResult<js::Stmt> {
-        let Self { name, params, body, is_main_with_io: is_main_io } = self;
+        let Self { name, params, body, is_main_with_io: _ } = self;
 
         let params = params_to_js_params(params);
-        let mut body_expr = body.to_js_expr()?;
-
-        if *is_main_io {
-            body_expr = force_expr(paren_expr(body_expr));
-        }
+        let body_expr = body.to_js_expr()?;
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
             ident: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),

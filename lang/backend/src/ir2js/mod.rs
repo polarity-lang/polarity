@@ -19,15 +19,28 @@ use crate::result::{BackendError, BackendResult};
 use super::ir;
 
 enum CallToMain {
-    Simple,
+    None,
+    RunIO,
     DebugPrint,
+}
+
+impl CallToMain {
+    fn generated_call(&self) -> Option<&str> {
+        match self {
+            CallToMain::None => None,
+            CallToMain::RunIO => Some("main()()"),
+            CallToMain::DebugPrint => Some(
+                "console.log(JSON.stringify(main(), (k, v) => typeof v == \"bigint\" ? v.toString() : v))",
+            ),
+        }
+    }
 }
 
 /// Convert an IR module to JavaScript
 pub fn ir_to_js<W: io::Write>(ir_module: &ir::Module, writer: W) -> BackendResult {
-    let call_to_main = ir_module
-        .find_main()
-        .map(|main| if main.is_main_with_io { CallToMain::Simple } else { CallToMain::DebugPrint });
+    let call_to_main = ir_module.find_main().map_or(CallToMain::None, |main| {
+        if main.is_main_with_io { CallToMain::RunIO } else { CallToMain::DebugPrint }
+    });
     let js_module = ir_module.to_js_module()?;
     emit_js(&js_module, writer, call_to_main)
 }
@@ -36,7 +49,7 @@ pub fn ir_to_js<W: io::Write>(ir_module: &ir::Module, writer: W) -> BackendResul
 fn emit_js<W: io::Write>(
     js_module: &js::Module,
     mut writer: W,
-    call_to_main: Option<CallToMain>,
+    call_to_main: CallToMain,
 ) -> BackendResult {
     let config = CodegenConfig::default();
     let cm = Rc::new(SourceMap::default());
@@ -48,14 +61,8 @@ fn emit_js<W: io::Write>(
         .emit_module(js_module)
         .map_err(|e| BackendError::CodegenError(format!("Failed to emit module: {}", e)))?;
 
-    if let Some(call_to_main) = call_to_main {
-        let call = match call_to_main {
-            CallToMain::Simple => "main()",
-            CallToMain::DebugPrint => {
-                "console.log(JSON.stringify(main(), (k, v) => typeof v == \"bigint\" ? v.toString() : v))"
-            }
-        };
-        write!(writer, "\n{call}\n").map_err(|e| {
+    if let Some(generated_call) = call_to_main.generated_call() {
+        write!(writer, "\n{generated_call}\n").map_err(|e| {
             BackendError::CodegenError(format!("Failed to write call to main: {e}"))
         })?;
     }
