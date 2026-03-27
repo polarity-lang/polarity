@@ -5,7 +5,7 @@ use swc_ecma_ast as js;
 
 use crate::ir;
 use crate::ir2js::traits::ToJSStmt;
-use crate::ir2js::util::{force_expr, paren_expr};
+use crate::ir2js::util::{force_expr, paren_expr, thunk_expr};
 use crate::result::BackendResult;
 
 use super::tokens::*;
@@ -206,6 +206,8 @@ impl ir::Call {
             })),
             // undefined
             "unit" => Ok(*js::Expr::undefined(DUMMY_SP)),
+            // (() => 〚x 〛)
+            "return_io" => Ok(thunk_expr(*args[0].expr.clone())),
             _ => self.to_js_function_call(),
         }
     }

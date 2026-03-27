@@ -16,3 +16,18 @@ pub fn force_expr(e: js::Expr) -> js::Expr {
         type_args: None,
     })
 }
+
+/// Wrap expression in a thunk
+pub fn thunk_expr(e: js::Expr) -> js::Expr {
+    let arr = js::Expr::Arrow(js::ArrowExpr {
+        span: DUMMY_SP,
+        ctxt: SyntaxContext::empty(),
+        params: vec![],
+        body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(e))),
+        is_async: false,
+        is_generator: false,
+        type_params: None,
+        return_type: None,
+    });
+    paren_expr(arr)
+}
