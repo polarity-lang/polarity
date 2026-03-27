@@ -1,0 +1,9 @@
+extern String: Type
+extern Unit: Type
+
+extern IO(a: Type): Type
+extern println(s: String): IO(Unit)
+
+let main: IO(Unit) {
+    println("Hello, World!")
+}

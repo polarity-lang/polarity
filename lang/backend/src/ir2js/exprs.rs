@@ -5,7 +5,7 @@ use swc_ecma_ast as js;
 
 use crate::ir;
 use crate::ir2js::traits::ToJSStmt;
-use crate::ir2js::util::{force_expr, paren_expr};
+use crate::ir2js::util::{force_expr, paren_expr, thunk_block, thunk_expr};
 use crate::result::BackendResult;
 
 use super::tokens::*;
@@ -204,6 +204,32 @@ impl ir::Call {
                 }],
                 type_args: None,
             })),
+            // void 0
+            // (This is a safe way to evaluate to undefined)
+            "unit" => Ok(*js::Expr::undefined(DUMMY_SP)),
+            // (() => 〚x 〛)
+            "return_io" => Ok(thunk_expr(*args[0].expr.clone())),
+            // (() => { console.log(〚s 〛); return void 0; })
+            "println" => Ok(thunk_block(vec![
+                js::Stmt::Expr(js::ExprStmt {
+                    span: DUMMY_SP,
+                    expr: Box::new(js::Expr::Call(js::CallExpr {
+                        span: DUMMY_SP,
+                        ctxt: SyntaxContext::empty(),
+                        callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
+                            span: DUMMY_SP,
+                            obj: Box::new(js::Expr::Ident(js::Ident::from("console"))),
+                            prop: js::MemberProp::Ident(js::IdentName::from("log")),
+                        }))),
+                        args: vec![js::ExprOrSpread { spread: None, expr: args[0].expr.clone() }],
+                        type_args: None,
+                    })),
+                }),
+                js::Stmt::Return(js::ReturnStmt {
+                    span: DUMMY_SP,
+                    arg: Some(js::Expr::undefined(DUMMY_SP)),
+                }),
+            ])),
             _ => self.to_js_function_call(),
         }
     }
@@ -335,31 +361,8 @@ impl ToJSExpr for ir::LocalMatch {
             cases,
         });
 
-        let arrow_fn = js::ArrowExpr {
-            span: DUMMY_SP,
-            ctxt: SyntaxContext::empty(),
-            params: vec![],
-            body: Box::new(js::BlockStmtOrExpr::BlockStmt(js::BlockStmt {
-                span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                stmts: vec![var_decl, switch_stmt],
-            })),
-            is_async: false,
-            is_generator: false,
-            type_params: None,
-            return_type: None,
-        };
-
-        Ok(js::Expr::Call(js::CallExpr {
-            span: DUMMY_SP,
-            ctxt: SyntaxContext::empty(),
-            callee: js::Callee::Expr(Box::new(js::Expr::Paren(js::ParenExpr {
-                span: DUMMY_SP,
-                expr: Box::new(js::Expr::Arrow(arrow_fn)),
-            }))),
-            args: vec![],
-            type_args: None,
-        }))
+        let thunk = thunk_block(vec![var_decl, switch_stmt]);
+        Ok(force_expr(thunk))
     }
 }
 
@@ -427,31 +430,8 @@ impl ToJSExpr for ir::Panic {
             })),
         });
 
-        let arrow_fn = js::ArrowExpr {
-            span: DUMMY_SP,
-            ctxt: SyntaxContext::empty(),
-            params: vec![],
-            body: Box::new(js::BlockStmtOrExpr::BlockStmt(js::BlockStmt {
-                span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                stmts: vec![throw_stmt],
-            })),
-            is_async: false,
-            is_generator: false,
-            type_params: None,
-            return_type: None,
-        };
-
-        Ok(js::Expr::Call(js::CallExpr {
-            span: DUMMY_SP,
-            ctxt: SyntaxContext::empty(),
-            callee: js::Callee::Expr(Box::new(js::Expr::Paren(js::ParenExpr {
-                span: DUMMY_SP,
-                expr: Box::new(js::Expr::Arrow(arrow_fn)),
-            }))),
-            args: vec![],
-            type_args: None,
-        }))
+        let thunk = thunk_block(vec![throw_stmt]);
+        Ok(force_expr(thunk))
     }
 }
 
@@ -536,22 +516,7 @@ impl ToJSExpr for ir::DoBlock {
         let mut js_stmts = js_bindings;
         js_stmts.push(js_return_stmt);
 
-        let arrow_fn = js::Expr::Arrow(js::ArrowExpr {
-            span: DUMMY_SP,
-            ctxt: SyntaxContext::empty(),
-            params: vec![],
-            body: Box::new(js::BlockStmtOrExpr::BlockStmt(js::BlockStmt {
-                span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                stmts: js_stmts,
-            })),
-            is_async: false,
-            is_generator: false,
-            type_params: None,
-            return_type: None,
-        });
-
-        Ok(paren_expr(arrow_fn))
+        Ok(thunk_block(js_stmts))
     }
 }
 

@@ -42,5 +42,9 @@
     {
         "name": "λ-Encoding: Scott",
         "path": "encoding_scott.pol"
+    },
+    {
+        "name": "Hello World",
+        "path": "hello_world.pol"
     }
   ]

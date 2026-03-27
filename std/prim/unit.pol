@@ -1,0 +1,3 @@
+/// An opaque unit type with a single constructor.
+extern Unit: Type
+extern unit: Unit
