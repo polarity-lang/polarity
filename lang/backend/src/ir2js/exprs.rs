@@ -209,6 +209,27 @@ impl ir::Call {
             "unit" => Ok(*js::Expr::undefined(DUMMY_SP)),
             // (() => 〚x 〛)
             "return_io" => Ok(thunk_expr(*args[0].expr.clone())),
+            // (() => { console.log(〚s 〛); return void 0; })
+            "println" => Ok(thunk_block(vec![
+                js::Stmt::Expr(js::ExprStmt {
+                    span: DUMMY_SP,
+                    expr: Box::new(js::Expr::Call(js::CallExpr {
+                        span: DUMMY_SP,
+                        ctxt: SyntaxContext::empty(),
+                        callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
+                            span: DUMMY_SP,
+                            obj: Box::new(js::Expr::Ident(js::Ident::from("console"))),
+                            prop: js::MemberProp::Ident(js::IdentName::from("log")),
+                        }))),
+                        args: vec![js::ExprOrSpread { spread: None, expr: args[0].expr.clone() }],
+                        type_args: None,
+                    })),
+                }),
+                js::Stmt::Return(js::ReturnStmt {
+                    span: DUMMY_SP,
+                    arg: Some(js::Expr::undefined(DUMMY_SP)),
+                }),
+            ])),
             _ => self.to_js_function_call(),
         }
     }
