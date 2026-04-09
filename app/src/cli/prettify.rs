@@ -20,7 +20,7 @@ fn latex_start(fontsize: &FontSize) -> String {
 const TYPST_END: &str = "]";
 
 fn typst_start() -> String {
-    "#text(font: \"DejaVu Sans Mono\")[\n".to_string()
+    "#text(font: \"DejaVu Sans Mono\", size: 0.8em)[\n".to_string()
 }
 
 #[derive(clap::ValueEnum, Clone)]

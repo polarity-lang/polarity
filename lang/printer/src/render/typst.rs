@@ -13,6 +13,12 @@ impl<W> RenderTypst<W> {
     }
 }
 
+/// - Replace `\n` line endings by explicit `#linebreak()` functions.
+/// - Replace whitespace by `#h(0.1cm)`
+fn make_layout_explicit(s: &str) -> String {
+    s.to_string().replace('\n', "#linebreak()\n").replace(' ', "#h(0.1cm)").replace('_', "\\_")
+}
+
 impl<W> pretty::Render for RenderTypst<W>
 where
     W: io::Write,
@@ -20,11 +26,13 @@ where
     type Error = io::Error;
 
     fn write_str(&mut self, s: &str) -> io::Result<usize> {
-        self.upstream.write(s.as_bytes())
+        let s_replaced = make_layout_explicit(s);
+        self.upstream.write(s_replaced.as_bytes())
     }
 
     fn write_str_all(&mut self, s: &str) -> io::Result<()> {
-        self.upstream.write_all(s.as_bytes())
+        let s_replaced = make_layout_explicit(s);
+        self.upstream.write_all(s_replaced.as_bytes())
     }
 
     fn fail_doc(&self) -> Self::Error {
@@ -42,7 +50,7 @@ where
             Anno::Keyword => r"#text(blue)[",
             Anno::Ctor => r"#text(red)[",
             Anno::Dtor => r"#text(green)[",
-            Anno::Type => r"#text(yellow)[",
+            Anno::Type => r"#text(olive)[",
             Anno::Comment => r"#text(maroon)[",
             _ => "",
         };
