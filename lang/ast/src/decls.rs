@@ -232,15 +232,11 @@ impl Module {
 
         for decl in &self.decls {
             match decl {
-                Decl::Def(def) => {
-                    if def.self_param.typ.name.id == type_name {
-                        out.push(def.name.clone());
-                    }
+                Decl::Def(def) if def.self_param.typ.name.id == type_name => {
+                    out.push(def.name.clone());
                 }
-                Decl::Codef(codef) => {
-                    if codef.typ.name.id == type_name {
-                        out.push(codef.name.clone());
-                    }
+                Decl::Codef(codef) if codef.typ.name.id == type_name => {
+                    out.push(codef.name.clone());
                 }
                 _ => {}
             }
@@ -254,18 +250,14 @@ impl Module {
 
         for decl in &self.decls {
             match decl {
-                Decl::Data(data) => {
-                    if data.name.id == type_name {
-                        for ctor in &data.ctors {
-                            out.push(ctor.name.clone());
-                        }
+                Decl::Data(data) if data.name.id == type_name => {
+                    for ctor in &data.ctors {
+                        out.push(ctor.name.clone());
                     }
                 }
-                Decl::Codata(codata) => {
-                    if codata.name.id == type_name {
-                        for dtor in &codata.dtors {
-                            out.push(dtor.name.clone());
-                        }
+                Decl::Codata(codata) if codata.name.id == type_name => {
+                    for dtor in &codata.dtors {
+                        out.push(dtor.name.clone());
                     }
                 }
                 _ => {}
