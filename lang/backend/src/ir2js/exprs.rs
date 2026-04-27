@@ -6,7 +6,7 @@ use swc_core::quote_expr;
 
 use crate::ir;
 use crate::ir2js::traits::ToJSStmt;
-use crate::ir2js::util::{force_expr, paren_expr, thunk_block, thunk_expr};
+use crate::ir2js::util::{force_expr, paren_expr, thunk_block};
 use crate::result::BackendResult;
 
 use super::tokens::*;
@@ -47,12 +47,7 @@ impl ToJSExpr for ir::Exp {
 impl ToJSExpr for ir::Variable {
     fn to_js_expr(&self) -> BackendResult<js::Expr> {
         let Self { name } = self;
-        let name = name.clone();
-        Ok(js::Expr::Ident(js::Ident::new(
-            name.to_string().into(),
-            DUMMY_SP,
-            SyntaxContext::empty(),
-        )))
+        Ok(js::Expr::Ident(name.to_string().into()))
     }
 }
 
@@ -74,15 +69,11 @@ impl ir::Call {
 
         let props = vec![
             js::PropOrSpread::Prop(Box::new(js::Prop::KeyValue(js::KeyValueProp {
-                key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: CTOR_TAG.into() }),
-                value: Box::new(js::Expr::Lit(js::Lit::Str(js::Str {
-                    span: DUMMY_SP,
-                    value: name.to_string().into(),
-                    raw: None,
-                }))),
+                key: js::PropName::Ident(CTOR_TAG.into()),
+                value: Box::new(js_str_lit(name.to_string())),
             }))),
             js::PropOrSpread::Prop(Box::new(js::Prop::KeyValue(js::KeyValueProp {
-                key: js::PropName::Ident(js::IdentName { span: DUMMY_SP, sym: CTOR_ARGS.into() }),
+                key: js::PropName::Ident(CTOR_ARGS.into()),
                 value: Box::new(js::Expr::Array(args)),
             }))),
         ];
@@ -108,11 +99,7 @@ impl ir::Call {
         Ok(js::Expr::Call(js::CallExpr {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
-            callee: js::Callee::Expr(Box::new(js::Expr::Ident(js::Ident::new(
-                name.to_string().into(),
-                DUMMY_SP,
-                SyntaxContext::empty(),
-            )))),
+            callee: js::Callee::Expr(Box::new(js::Expr::Ident(name.to_string().into()))),
             args,
             type_args: None,
         }))
@@ -153,10 +140,7 @@ impl ir::DotCall {
             callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
                 span: DUMMY_SP,
                 obj: Box::new(obj_expr),
-                prop: js::MemberProp::Ident(js::IdentName {
-                    span: DUMMY_SP,
-                    sym: name.to_string().into(),
-                }),
+                prop: js::MemberProp::Ident(name.to_string().into()),
             }))),
             args,
             type_args: None,
@@ -184,11 +168,7 @@ impl ir::DotCall {
         Ok(js::Expr::Call(js::CallExpr {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
-            callee: js::Callee::Expr(Box::new(js::Expr::Ident(js::Ident::new(
-                name.to_string().into(),
-                DUMMY_SP,
-                SyntaxContext::empty(),
-            )))),
+            callee: js::Callee::Expr(Box::new(js::Expr::Ident(name.to_string().into()))),
             args: all_args,
             type_args: None,
         }))
@@ -300,33 +280,9 @@ impl ToJSExpr for ir::LocalComatch {
 impl ToJSExpr for ir::Panic {
     fn to_js_expr(&self) -> BackendResult<js::Expr> {
         let Self { message } = self;
-        let message = message.clone();
+        let message = js_str_lit(message.as_str());
 
-        // Generate IIFE: (() => { throw new Error("message"); })()
-        let throw_stmt = js::Stmt::Throw(js::ThrowStmt {
-            span: DUMMY_SP,
-            arg: Box::new(js::Expr::New(js::NewExpr {
-                span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                callee: Box::new(js::Expr::Ident(js::Ident::new(
-                    "Error".into(),
-                    DUMMY_SP,
-                    SyntaxContext::empty(),
-                ))),
-                args: Some(vec![js::ExprOrSpread {
-                    spread: None,
-                    expr: Box::new(js::Expr::Lit(js::Lit::Str(js::Str {
-                        span: DUMMY_SP,
-                        value: message.into(),
-                        raw: None,
-                    }))),
-                }]),
-                type_args: None,
-            })),
-        });
-
-        let thunk = thunk_block(vec![throw_stmt]);
-        Ok(force_expr(thunk))
+        Ok(*quote_expr!(r#"(() => { throw new Error($msg)})()"#, msg: Expr = message))
     }
 }
 
@@ -346,36 +302,15 @@ impl ToJSExpr for ir::LocalLet {
     fn to_js_expr(&self) -> BackendResult<js::Expr> {
         let Self { name, bound, body } = self;
 
-        let body_expr = body.to_js_expr()?;
+        let body = body.to_js_expr()?;
+        let bound = bound.to_js_expr()?;
 
-        // Wrap the body expression in parentheses.
-        // Without them, returning some expressions (such as objects literals) from an arrow function is not valid JavaScript syntax.
-        let paren_body = paren_expr(body_expr);
-
-        let arrow_fn = js::ArrowExpr {
-            span: DUMMY_SP,
-            ctxt: SyntaxContext::empty(),
-            params: vec![js::Pat::Ident(js::BindingIdent {
-                id: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
-                type_ann: None,
-            })],
-            body: Box::new(js::BlockStmtOrExpr::Expr(Box::new(paren_body))),
-            is_async: false,
-            is_generator: false,
-            type_params: None,
-            return_type: None,
-        };
-
-        Ok(js::Expr::Call(js::CallExpr {
-            span: DUMMY_SP,
-            ctxt: SyntaxContext::empty(),
-            callee: js::Callee::Expr(Box::new(js::Expr::Paren(js::ParenExpr {
-                span: DUMMY_SP,
-                expr: Box::new(js::Expr::Arrow(arrow_fn)),
-            }))),
-            args: args_to_js_exprs(&[*bound.clone()])?,
-            type_args: None,
-        }))
+        Ok(*quote_expr!(
+            "(($name) => ($body))($bound)",
+            name = name.to_string().into(),
+            body: Expr = body,
+            bound: Expr = bound
+        ))
     }
 }
 
@@ -433,19 +368,13 @@ impl ToJSStmt for ir::DoBinding {
         let var_declarator = match self {
             ir::DoBinding::Let { name, bound } => js::VarDeclarator {
                 span: DUMMY_SP,
-                name: js::Pat::Ident(js::BindingIdent {
-                    id: js::Ident::from(name.to_string()),
-                    type_ann: None,
-                }),
+                name: js::Pat::Ident(js::BindingIdent::from(js::Ident::from(name.to_string()))),
                 init: Some(Box::new(bound.to_js_expr()?)),
                 definite: false,
             },
             ir::DoBinding::Bind { name, bound } => js::VarDeclarator {
                 span: DUMMY_SP,
-                name: js::Pat::Ident(js::BindingIdent {
-                    id: js::Ident::from(name.to_string()),
-                    type_ann: None,
-                }),
+                name: js::Pat::Ident(js::BindingIdent::from(js::Ident::from(name.to_string()))),
                 init: Some(Box::new(force_expr(bound.to_js_expr()?))),
                 definite: false,
             },
@@ -482,16 +411,12 @@ impl ToJSStmt for ir::DoBinding {
 /// ```
 impl ToJSExpr for ir::Literal {
     fn to_js_expr(&self) -> BackendResult<js::Expr> {
-        match self {
-            ir::Literal::I64(int) => {
-                Ok(js::Expr::Lit(js::Lit::BigInt(js::BigIntValue::from(*int).into())))
-            }
-            ir::Literal::F64(float) => Ok(js::Expr::Lit(js::Lit::Num(js::Number::from(*float)))),
-            ir::Literal::Char(c) => Ok(js::Expr::Lit(js::Lit::Num(js::Number::from(*c as usize)))),
-            ir::Literal::String(string) => {
-                Ok(js::Expr::Lit(js::Lit::Str(js::Str::from(string.as_str()))))
-            }
-        }
+        Ok(match self {
+            ir::Literal::I64(int) => js_bigint_lit(*int),
+            ir::Literal::F64(float) => js_num_lit(*float),
+            ir::Literal::Char(c) => js_num_lit(*c as usize),
+            ir::Literal::String(string) => js_str_lit(string.as_str()),
+        })
     }
 }
 
@@ -513,11 +438,7 @@ impl ir::Case {
     pub fn to_js_switch_case(&self, scrutinee_name: &str) -> BackendResult<js::SwitchCase> {
         let Self { pattern, body } = self;
         let pattern_name = pattern.name.clone();
-        let test = js::Expr::Lit(js::Lit::Str(js::Str {
-            span: DUMMY_SP,
-            value: pattern_name.to_string().into(),
-            raw: None,
-        }));
+        let test = js_str_lit(pattern_name.to_string());
 
         let mut stmts = vec![];
 
@@ -531,35 +452,19 @@ impl ir::Case {
                 declare: false,
                 decls: vec![js::VarDeclarator {
                     span: DUMMY_SP,
-                    name: js::Pat::Ident(js::BindingIdent {
-                        id: js::Ident::new(
-                            param_name.to_string().into(),
-                            DUMMY_SP,
-                            SyntaxContext::empty(),
-                        ),
-                        type_ann: None,
-                    }),
+                    name: js::Pat::Ident(js::BindingIdent::from(js::Ident::from(
+                        param_name.to_string(),
+                    ))),
                     init: Some(Box::new(js::Expr::Member(js::MemberExpr {
                         span: DUMMY_SP,
                         obj: Box::new(js::Expr::Member(js::MemberExpr {
                             span: DUMMY_SP,
-                            obj: Box::new(js::Expr::Ident(js::Ident::new(
-                                scrutinee_name.into(),
-                                DUMMY_SP,
-                                SyntaxContext::empty(),
-                            ))),
-                            prop: js::MemberProp::Ident(js::IdentName {
-                                span: DUMMY_SP,
-                                sym: CTOR_ARGS.into(),
-                            }),
+                            obj: Box::new(js::Expr::Ident(scrutinee_name.into())),
+                            prop: js::MemberProp::Ident(CTOR_ARGS.into()),
                         })),
                         prop: js::MemberProp::Computed(js::ComputedPropName {
                             span: DUMMY_SP,
-                            expr: Box::new(js::Expr::Lit(js::Lit::Num(js::Number {
-                                span: DUMMY_SP,
-                                value: i as f64,
-                                raw: None,
-                            }))),
+                            expr: Box::new(js_num_lit(i)),
                         }),
                     }))),
                     definite: false,
@@ -595,12 +500,7 @@ impl ir::Case {
         let params: Vec<_> = pattern
             .params
             .iter()
-            .map(|p| {
-                js::Pat::Ident(js::BindingIdent {
-                    id: js::Ident::new(p.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
-                    type_ann: None,
-                })
-            })
+            .map(|p| js::Pat::Ident(js::BindingIdent::from(js::Ident::from(p.to_string()))))
             .collect();
 
         let body_expr = body.to_js_expr()?;
@@ -621,10 +521,7 @@ impl ir::Case {
         });
 
         Ok(js::PropOrSpread::Prop(Box::new(js::Prop::KeyValue(js::KeyValueProp {
-            key: js::PropName::Ident(js::IdentName {
-                span: DUMMY_SP,
-                sym: method_name.to_string().into(),
-            }),
+            key: js::PropName::Ident(js::IdentName::from(method_name.to_string())),
             value: Box::new(arrow),
         }))))
     }
@@ -641,6 +538,19 @@ fn args_to_js_exprs(args: &[ir::Exp]) -> BackendResult<Vec<js::ExprOrSpread>> {
             arg.to_js_expr().map(|expr| js::ExprOrSpread { spread: None, expr: Box::new(expr) })
         })
         .collect()
+}
+
+fn js_str_lit(str: impl Into<js::Str>) -> js::Expr {
+    js::Expr::Lit(js::Lit::Str(str.into()))
+}
+
+fn js_num_lit(num: impl Into<js::Number>) -> js::Expr {
+    js::Expr::Lit(js::Lit::Num(num.into()))
+}
+
+fn js_bigint_lit(bigint: impl Into<js::BigIntValue>) -> js::Expr {
+    let bigint: js::BigIntValue = bigint.into();
+    js::Expr::Lit(js::Lit::BigInt(bigint.into()))
 }
 
 fn extern_call_to_js_expr(name: &str, args: Vec<js::Expr>) -> Option<Box<js::Expr>> {
@@ -685,8 +595,7 @@ fn extern_call_to_js_expr(name: &str, args: Vec<js::Expr>) -> Option<Box<js::Exp
             let (c, s) = take2(args);
             quote_expr!("$s.concat(String.fromCodePoint($c))", s: Expr = s, c: Expr = c)
         }
-        // This is a safe way to evaluate to undefined.
-        "unit" => quote_expr!("(void 0)"),
+        "unit" => js::Expr::undefined(DUMMY_SP),
         "return_io" => {
             let x = take1(args);
             quote_expr!("(() => $x)", x: Expr = x)
