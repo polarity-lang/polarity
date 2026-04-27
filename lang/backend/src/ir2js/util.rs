@@ -1,5 +1,5 @@
-use swc_common::{DUMMY_SP, SyntaxContext};
-use swc_ecma_ast as js;
+use swc_core::common::{DUMMY_SP, SyntaxContext};
+use swc_core::ecma::ast as js;
 
 /// Wrap expression in parentheses.
 pub fn paren_expr(e: js::Expr) -> js::Expr {

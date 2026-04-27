@@ -1,4 +1,4 @@
-use swc_ecma_ast as js;
+use swc_core::ecma::ast as js;
 
 use crate::result::BackendResult;
 

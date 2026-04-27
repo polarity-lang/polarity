@@ -1,7 +1,8 @@
 //! JavaScript code generation for IR expressions using SWC AST.
 
-use swc_common::{DUMMY_SP, SyntaxContext};
-use swc_ecma_ast as js;
+use swc_core::common::{DUMMY_SP, SyntaxContext};
+use swc_core::ecma::ast as js;
+use swc_core::quote_expr;
 
 use crate::ir;
 use crate::ir2js::traits::ToJSStmt;
@@ -448,7 +449,7 @@ impl ToJSExpr for ir::Panic {
 /// ((x) => 〚 body 〛)(〚 foo 〛)
 /// ```
 impl ToJSExpr for ir::LocalLet {
-    fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
+    fn to_js_expr(&self) -> BackendResult<js::Expr> {
         let Self { name, bound, body } = self;
 
         let body_expr = body.to_js_expr()?;
@@ -499,7 +500,7 @@ impl ToJSExpr for ir::LocalLet {
 /// })
 /// ```
 impl ToJSExpr for ir::DoBlock {
-    fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
+    fn to_js_expr(&self) -> BackendResult<js::Expr> {
         let Self { bindings, return_exp } = self;
 
         let mut js_bindings = Vec::with_capacity(bindings.len());
@@ -534,7 +535,7 @@ impl ToJSExpr for ir::DoBlock {
 /// const y = 〚 e2 〛();
 /// ```
 impl ToJSStmt for ir::DoBinding {
-    fn to_js_stmt(&self) -> BackendResult<swc_ecma_ast::Stmt> {
+    fn to_js_stmt(&self) -> BackendResult<js::Stmt> {
         let var_declarator = match self {
             ir::DoBinding::Let { name, bound } => js::VarDeclarator {
                 span: DUMMY_SP,
@@ -586,7 +587,7 @@ impl ToJSStmt for ir::DoBinding {
 /// "somestring"
 /// ```
 impl ToJSExpr for ir::Literal {
-    fn to_js_expr(&self) -> BackendResult<swc_ecma_ast::Expr> {
+    fn to_js_expr(&self) -> BackendResult<js::Expr> {
         match self {
             ir::Literal::I64(int) => {
                 Ok(js::Expr::Lit(js::Lit::BigInt(js::BigIntValue::from(*int).into())))

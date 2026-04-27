@@ -3,10 +3,10 @@
 use std::io;
 use std::rc::Rc;
 
-use swc_common::SourceMap;
-use swc_ecma_ast as js;
-use swc_ecma_codegen::text_writer::JsWriter;
-use swc_ecma_codegen::{Config as CodegenConfig, Emitter};
+use swc_core::common::SourceMap;
+use swc_core::ecma::ast as js;
+use swc_core::ecma::codegen::text_writer::JsWriter;
+use swc_core::ecma::codegen::{Config as CodegenConfig, Emitter};
 
 mod decls;
 mod exprs;
