@@ -125,113 +125,11 @@ impl ir::Call {
     /// Handle builtin extern calls and pass the rest to [Self::to_js_function_call].
     fn to_js_extern_function_call(&self) -> BackendResult<js::Expr> {
         let Self { name, module_uri: _, args } = self;
-        let args = args_to_js_exprs(args)?;
+        let args = args_to_js_exprs(args)?.into_iter().map(|arg| *arg.expr).collect();
 
-        match name.to_string().as_str() {
-            // BigInt.asIntN(64, 〚x 〛 + 〚y 〛)
-            "add_i64" => Ok(js_binary_expr_i64(
-                js::BinaryOp::Add,
-                args[0].expr.clone(),
-                args[1].expr.clone(),
-            )),
-            // BigInt.asIntN(64, 〚x 〛 - 〚y 〛)
-            "sub_i64" => Ok(js_binary_expr_i64(
-                js::BinaryOp::Sub,
-                args[0].expr.clone(),
-                args[1].expr.clone(),
-            )),
-            // BigInt.asIntN(64, 〚x 〛 * 〚y 〛)
-            "mul_i64" => Ok(js_binary_expr_i64(
-                js::BinaryOp::Mul,
-                args[0].expr.clone(),
-                args[1].expr.clone(),
-            )),
-            // BigInt.asIntN(64, 〚x 〛 / 〚y 〛)
-            "div_i64" => Ok(js_binary_expr_i64(
-                js::BinaryOp::Div,
-                args[0].expr.clone(),
-                args[1].expr.clone(),
-            )),
-            // (〚x 〛 + 〚y 〛)
-            "add_f64" => {
-                Ok(js_binary_expr(js::BinaryOp::Add, args[0].expr.clone(), args[1].expr.clone()))
-            }
-            // (〚x 〛 - 〚y 〛)
-            "sub_f64" => {
-                Ok(js_binary_expr(js::BinaryOp::Sub, args[0].expr.clone(), args[1].expr.clone()))
-            }
-            // (〚x 〛 * 〚y 〛)
-            "mul_f64" => {
-                Ok(js_binary_expr(js::BinaryOp::Mul, args[0].expr.clone(), args[1].expr.clone()))
-            }
-            // (〚x 〛 / 〚y 〛)
-            "div_f64" => {
-                Ok(js_binary_expr(js::BinaryOp::Div, args[0].expr.clone(), args[1].expr.clone()))
-            }
-            // 〚x 〛.concat(〚y 〛)
-            "concat" => Ok(js::Expr::Call(js::CallExpr {
-                span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
-                    span: DUMMY_SP,
-                    obj: args[0].expr.clone(),
-                    prop: js::MemberProp::Ident(js::IdentName::from("concat")),
-                }))),
-                args: vec![js::ExprOrSpread { spread: None, expr: args[1].expr.clone() }],
-                type_args: None,
-            })),
-            // 〚s 〛.concat(String.fromCodePoint(〚c 〛))
-            "append_char" => Ok(js::Expr::Call(js::CallExpr {
-                span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
-                    span: DUMMY_SP,
-                    obj: args[1].expr.clone(),
-                    prop: js::MemberProp::Ident(js::IdentName::from("concat")),
-                }))),
-                args: vec![js::ExprOrSpread {
-                    spread: None,
-                    expr: Box::new(js::Expr::Call(js::CallExpr {
-                        span: DUMMY_SP,
-                        ctxt: SyntaxContext::empty(),
-                        callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
-                            span: DUMMY_SP,
-                            obj: Box::new(js::Expr::Ident(js::Ident::from("String"))),
-                            prop: js::MemberProp::Ident(js::IdentName::from("fromCodePoint")),
-                        }))),
-                        args: vec![js::ExprOrSpread { spread: None, expr: args[0].expr.clone() }],
-                        type_args: None,
-                    })),
-                }],
-                type_args: None,
-            })),
-            // void 0
-            // (This is a safe way to evaluate to undefined)
-            "unit" => Ok(*js::Expr::undefined(DUMMY_SP)),
-            // (() => 〚x 〛)
-            "return_io" => Ok(thunk_expr(*args[0].expr.clone())),
-            // (() => { console.log(〚s 〛); return void 0; })
-            "println" => Ok(thunk_block(vec![
-                js::Stmt::Expr(js::ExprStmt {
-                    span: DUMMY_SP,
-                    expr: Box::new(js::Expr::Call(js::CallExpr {
-                        span: DUMMY_SP,
-                        ctxt: SyntaxContext::empty(),
-                        callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
-                            span: DUMMY_SP,
-                            obj: Box::new(js::Expr::Ident(js::Ident::from("console"))),
-                            prop: js::MemberProp::Ident(js::IdentName::from("log")),
-                        }))),
-                        args: vec![js::ExprOrSpread { spread: None, expr: args[0].expr.clone() }],
-                        type_args: None,
-                    })),
-                }),
-                js::Stmt::Return(js::ReturnStmt {
-                    span: DUMMY_SP,
-                    arg: Some(js::Expr::undefined(DUMMY_SP)),
-                }),
-            ])),
-            _ => self.to_js_function_call(),
+        match extern_call_to_js_expr(name.to_string().as_str(), args) {
+            Some(expr) => Ok(*expr),
+            None => self.to_js_function_call(),
         }
     }
 }
@@ -749,32 +647,72 @@ fn args_to_js_exprs(args: &[ir::Exp]) -> BackendResult<Vec<js::ExprOrSpread>> {
         .collect()
 }
 
-fn js_binary_expr(op: js::BinaryOp, left: Box<js::Expr>, right: Box<js::Expr>) -> js::Expr {
-    js::Expr::Paren(js::ParenExpr {
-        span: DUMMY_SP,
-        expr: Box::new(js::Expr::Bin(js::BinExpr { span: DUMMY_SP, op, left, right })),
+fn extern_call_to_js_expr(name: &str, args: Vec<js::Expr>) -> Option<Box<js::Expr>> {
+    Some(match name {
+        "add_i64" => {
+            let (x, y) = take2(args);
+            quote_expr!("BigInt.asIntN(64, $x + $y)", x: Expr = x, y: Expr = y)
+        }
+        "sub_i64" => {
+            let (x, y) = take2(args);
+            quote_expr!("BigInt.asIntN(64, $x - $y)", x: Expr = x, y: Expr = y)
+        }
+        "mul_i64" => {
+            let (x, y) = take2(args);
+            quote_expr!("BigInt.asIntN(64, $x * $y)", x: Expr = x, y: Expr = y)
+        }
+        "div_i64" => {
+            let (x, y) = take2(args);
+            quote_expr!("BigInt.asIntN(64, $x / $y)", x: Expr = x, y: Expr = y)
+        }
+        "add_f64" => {
+            let (x, y) = take2(args);
+            quote_expr!("($x + $y)", x: Expr = x, y: Expr = y)
+        }
+        "sub_f64" => {
+            let (x, y) = take2(args);
+            quote_expr!("($x - $y)", x: Expr = x, y: Expr = y)
+        }
+        "mul_f64" => {
+            let (x, y) = take2(args);
+            quote_expr!("($x * $y)", x: Expr = x, y: Expr = y)
+        }
+        "div_f64" => {
+            let (x, y) = take2(args);
+            quote_expr!("($x / $y)", x: Expr = x, y: Expr = y)
+        }
+        "concat" => {
+            let (x, y) = take2(args);
+            quote_expr!("$x.concat($y)", x: Expr = x, y: Expr = y)
+        }
+        "append_char" => {
+            let (c, s) = take2(args);
+            quote_expr!("$s.concat(String.fromCodePoint($c))", s: Expr = s, c: Expr = c)
+        }
+        // This is a safe way to evaluate to undefined.
+        "unit" => quote_expr!("(void 0)"),
+        "return_io" => {
+            let x = take1(args);
+            quote_expr!("(() => $x)", x: Expr = x)
+        }
+        "println" => {
+            let s = take1(args);
+            quote_expr!("(() => { console.log($s); return void 0; })", s: Expr = s)
+        }
+        _ => return None,
     })
 }
 
-fn js_binary_expr_i64(op: js::BinaryOp, left: Box<js::Expr>, right: Box<js::Expr>) -> js::Expr {
-    js::Expr::Call(js::CallExpr {
-        span: DUMMY_SP,
-        ctxt: SyntaxContext::empty(),
-        callee: js::Callee::Expr(Box::new(js::Expr::Member(js::MemberExpr {
-            span: DUMMY_SP,
-            obj: Box::new(js::Expr::Ident(js::Ident::from("BigInt"))),
-            prop: js::MemberProp::Ident(js::IdentName::from("asIntN")),
-        }))),
-        args: vec![
-            js::ExprOrSpread {
-                spread: None,
-                expr: Box::new(js::Expr::Lit(js::Lit::Num(js::Number::from(64)))),
-            },
-            js::ExprOrSpread {
-                spread: None,
-                expr: Box::new(js::Expr::Bin(js::BinExpr { span: DUMMY_SP, op, left, right })),
-            },
-        ],
-        type_args: None,
-    })
+// Get the value of a Vec with *exactly* one element.
+fn take1(mut args: Vec<js::Expr>) -> js::Expr {
+    debug_assert_eq!(args.len(), 1);
+    args.swap_remove(0)
+}
+
+// Get the values of a Vec with *exactly* two elements.
+fn take2(mut args: Vec<js::Expr>) -> (js::Expr, js::Expr) {
+    debug_assert_eq!(args.len(), 2);
+    let y = args.swap_remove(1);
+    let x = args.swap_remove(0);
+    (x, y)
 }
