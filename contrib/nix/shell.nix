@@ -25,7 +25,7 @@ pkgs.mkShell.override { inherit stdenv; } {
       wasm-bindgen-cli
 
       # formatting
-      nixfmt-rfc-style
+      nixfmt
 
       # libraries
       pkg-config

@@ -18,7 +18,7 @@
           packages = import ./contrib/nix/default.nix { inherit pkgs; } // {
             default = config.packages.polarity;
           };
-          formatter = pkgs.nixfmt-rfc-style;
+          formatter = pkgs.nixfmt;
         };
     };
 }
