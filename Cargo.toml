@@ -62,9 +62,7 @@ ropey                    = { version = "1" }
 rust-lapper              = { version = "1" }
 serde                    = { version = "1" }
 serde_derive             = { version = "1" }
-swc_ecma_ast             = { version = "19" }
-swc_ecma_codegen         = { version = "21" }
-swc_common               = { version = "18" }
+swc_core                 = { version = "65", features = ["__common", "__ecma", "ecma_ast", "ecma_codegen", "ecma_quote"] }
 tantivy                  = { version = "0.18" }
 tempfile                 = { version = "3.23.0" }
 termcolor                = { version = "1.4.1" }
