@@ -2,7 +2,7 @@ function foo() {
     return ((b)=>({
             tag: "T",
             args: []
-        }))(undefined);
+        }))((void 0));
 }
 function main() {
     return foo();

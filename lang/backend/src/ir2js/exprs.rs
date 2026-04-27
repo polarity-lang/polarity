@@ -28,11 +28,7 @@ impl ToJSExpr for ir::Exp {
             ir::Exp::LocalLet(local_let) => local_let.to_js_expr(),
             ir::Exp::DoBlock(do_block) => do_block.to_js_expr(),
             ir::Exp::Literal(lit) => lit.to_js_expr(),
-            ir::Exp::ZST => Ok(js::Expr::Ident(js::Ident::new(
-                "undefined".into(),
-                DUMMY_SP,
-                SyntaxContext::empty(),
-            ))),
+            ir::Exp::ZST => Ok(paren_expr(*js::Expr::undefined(DUMMY_SP))),
         }
     }
 }

@@ -1,5 +1,5 @@
 function foo() {
     return {
         ap: (x1)=>(x1)
-    }.ap(undefined);
+    }.ap((void 0));
 }

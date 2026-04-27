@@ -629,7 +629,7 @@ function subst_lemma(__self, ctx1, ctx2, t7, t8, by_e) {
                                                         tag: "LT",
                                                         args: []
                                                     }, cmp(x47, len(ctx1)), {
-                                                        ap: (cmp0)=>(undefined)
+                                                        ap: (cmp0)=>((void 0))
                                                     }, weaken_append(ctx2, ctx1, {
                                                         tag: "Var",
                                                         args: [
@@ -659,14 +659,14 @@ function subst_lemma(__self, ctx1, ctx2, t7, t8, by_e) {
                                                         tag: "EQ",
                                                         args: []
                                                     }, cmp(x47, len(ctx1)), {
-                                                        ap: (cmp1)=>(undefined)
+                                                        ap: (cmp1)=>((void 0))
                                                     }, weaken_append(append(ctx1, ctx2), {
                                                         tag: "Nil",
                                                         args: []
                                                     }, by_e, t8).ap(transport(ctx_lookup(ctx1, ctx2, t8, t7).ap(transport(h_eq, x47, len(ctx1), {
-                                                        ap: (x55)=>(undefined)
+                                                        ap: (x55)=>((void 0))
                                                     }, h_elem)), t7, t8, {
-                                                        ap: (t9)=>(undefined)
+                                                        ap: (t9)=>((void 0))
                                                     }, h_by)));
                                                 case "IsGT":
                                                     const x56 = __scrutinee.args[0];
@@ -677,7 +677,7 @@ function subst_lemma(__self, ctx1, ctx2, t7, t8, by_e) {
                                                         tag: "GT",
                                                         args: []
                                                     }, cmp(x47, len(ctx1)), {
-                                                        ap: (cmp2)=>(undefined)
+                                                        ap: (cmp2)=>((void 0))
                                                     }, {
                                                         tag: "TVar",
                                                         args: [
@@ -838,7 +838,7 @@ function weaken_append(__self, ctx, e15, t11) {
                         tag: "Nil",
                         args: []
                     }), {
-                        ap: (ctx0)=>(undefined)
+                        ap: (ctx0)=>((void 0))
                     }, h_e9))
             };
         case "Cons":
@@ -870,7 +870,7 @@ function weaken_append(__self, ctx, e15, t11) {
                             ts1
                         ]
                     }), {
-                        ap: (ctx3)=>(undefined)
+                        ap: (ctx3)=>((void 0))
                     }, weaken_append(ts1, append(ctx, {
                         tag: "Cons",
                         args: [
@@ -1329,7 +1329,7 @@ function elem_append_pred(__self, ctx11, t29, t30, x100) {
                                                 pred(x109)
                                             ]
                                         }, x109, {
-                                            ap: (x113)=>(undefined)
+                                            ap: (x113)=>((void 0))
                                         }, {
                                             tag: "There",
                                             args: [

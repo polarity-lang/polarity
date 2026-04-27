@@ -5,11 +5,11 @@ function foo(x) {
 }
 function T() {
     return foo({
-        ap: (x0)=>(F().ap(undefined))
+        ap: (x0)=>(F().ap((void 0)))
     });
 }
 function F() {
     return {
-        ap: (x1)=>(undefined)
+        ap: (x1)=>((void 0))
     };
 }
