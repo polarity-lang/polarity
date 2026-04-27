@@ -7,6 +7,7 @@ use swc_core::common::SourceMap;
 use swc_core::ecma::ast as js;
 use swc_core::ecma::codegen::text_writer::JsWriter;
 use swc_core::ecma::codegen::{Config as CodegenConfig, Emitter};
+use swc_core::quote;
 
 mod decls;
 mod exprs;
@@ -25,32 +26,34 @@ enum CallToMain {
 }
 
 impl CallToMain {
-    fn generated_call(&self) -> Option<&str> {
+    fn generated_call(&self) -> Option<js::Stmt> {
         match self {
             CallToMain::None => None,
-            CallToMain::RunIO => Some("main()()"),
-            CallToMain::DebugPrint => Some(
-                "console.log(JSON.stringify(main(), (k, v) => typeof v == \"bigint\" ? v.toString() : v))",
-            ),
+            CallToMain::RunIO => Some(quote!("main()()" as Stmt)),
+            CallToMain::DebugPrint => Some(quote!(
+                "console.log(JSON.stringify(main(), (k, v) => typeof v == \"bigint\" ? v.toString() : v))"
+                    as Stmt
+            )),
         }
     }
 }
 
 /// Convert an IR module to JavaScript
 pub fn ir_to_js<W: io::Write>(ir_module: &ir::Module, writer: W) -> BackendResult {
+    let mut js_module = ir_module.to_js_module()?;
+
     let call_to_main = ir_module.find_main().map_or(CallToMain::None, |main| {
         if main.is_main_with_io { CallToMain::RunIO } else { CallToMain::DebugPrint }
     });
-    let js_module = ir_module.to_js_module()?;
-    emit_js(&js_module, writer, call_to_main)
+    if let Some(call) = call_to_main.generated_call() {
+        js_module.body.push(js::ModuleItem::Stmt(call));
+    }
+
+    emit_js(&js_module, writer)
 }
 
 /// Emit a JavaScript module
-fn emit_js<W: io::Write>(
-    js_module: &js::Module,
-    mut writer: W,
-    call_to_main: CallToMain,
-) -> BackendResult {
+fn emit_js<W: io::Write>(js_module: &js::Module, mut writer: W) -> BackendResult {
     let config = CodegenConfig::default();
     let cm = Rc::new(SourceMap::default());
 
@@ -60,12 +63,6 @@ fn emit_js<W: io::Write>(
     emitter
         .emit_module(js_module)
         .map_err(|e| BackendError::CodegenError(format!("Failed to emit module: {}", e)))?;
-
-    if let Some(generated_call) = call_to_main.generated_call() {
-        write!(writer, "\n{generated_call}\n").map_err(|e| {
-            BackendError::CodegenError(format!("Failed to write call to main: {e}"))
-        })?;
-    }
 
     Ok(())
 }
