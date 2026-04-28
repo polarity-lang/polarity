@@ -1,8 +1,7 @@
 function bar() {
-    return undefined;
+    return (void 0);
 }
 function main() {
     return bar();
 }
-
-console.log(JSON.stringify(main(), (k, v) => typeof v == "bigint" ? v.toString() : v))
+console.log(JSON.stringify(main(), (k, v)=>typeof v == "bigint" ? v.toString() : v));

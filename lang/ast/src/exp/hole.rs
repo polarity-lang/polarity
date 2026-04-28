@@ -144,13 +144,10 @@ impl Print for Hole {
                     doc = doc.append(print_hole_args(&self.args, cfg, alloc))
                 }
 
-                if cfg.print_metavar_solutions {
-                    if let Some(solution) = &self.solution {
-                        doc = doc
-                            .append("<")
-                            .append(solution.print_prec(cfg, alloc, prec))
-                            .append(">")
-                    }
+                if cfg.print_metavar_solutions
+                    && let Some(solution) = &self.solution
+                {
+                    doc = doc.append("<").append(solution.print_prec(cfg, alloc, prec)).append(">")
                 }
 
                 doc
@@ -166,13 +163,10 @@ impl Print for Hole {
                     doc = doc.append(print_hole_args(&self.args, cfg, alloc))
                 }
 
-                if cfg.print_metavar_solutions {
-                    if let Some(solution) = &self.solution {
-                        doc = doc
-                            .append("<")
-                            .append(solution.print_prec(cfg, alloc, prec))
-                            .append(">")
-                    }
+                if cfg.print_metavar_solutions
+                    && let Some(solution) = &self.solution
+                {
+                    doc = doc.append("<").append(solution.print_prec(cfg, alloc, prec)).append(">")
                 }
 
                 doc

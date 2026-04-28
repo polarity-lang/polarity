@@ -7,5 +7,4 @@ function MIN() {
 function main() {
     return BigInt.asIntN(64, MAX() + 1n);
 }
-
-console.log(JSON.stringify(main(), (k, v) => typeof v == "bigint" ? v.toString() : v))
+console.log(JSON.stringify(main(), (k, v)=>typeof v == "bigint" ? v.toString() : v));

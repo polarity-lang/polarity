@@ -21,7 +21,7 @@ default-members = ["app"]
 [workspace.package]
 version      = "0.1.0"
 edition      = "2024"
-rust-version = "1.85"
+rust-version = "1.91"
 authors      = ["Tim Süberkrüb", "David Binder"]
 license      = "MIT OR Apache-2.0"
 homepage     = "https://polarity-lang.github.io/"
@@ -62,9 +62,7 @@ ropey                    = { version = "1" }
 rust-lapper              = { version = "1" }
 serde                    = { version = "1" }
 serde_derive             = { version = "1" }
-swc_ecma_ast             = { version = "19" }
-swc_ecma_codegen         = { version = "21" }
-swc_common               = { version = "18" }
+swc_core                 = { version = "65", features = ["__common", "__ecma", "ecma_ast", "ecma_codegen", "ecma_quote"] }
 tantivy                  = { version = "0.18" }
 tempfile                 = { version = "3.23.0" }
 termcolor                = { version = "1.4.1" }
@@ -79,7 +77,7 @@ url                      = { version = "2.5.0" }
 walkdir                  = { version = "2.5.0" }
 # We pin the version because a matching `wasm-bindgen-cli` is needed.
 # If you update the version, make sure to update the nix flake accordingly.
-wasm-bindgen             = { version = "=0.2.104" }
+wasm-bindgen             = { version = "=0.2.117" }
 wasm-bindgen-futures     = { version = "0.4" }
 wasm-streams             = { version = "0.2" }
 web-sys                  = { version = "0.3" }

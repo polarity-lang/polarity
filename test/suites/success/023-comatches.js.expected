@@ -24,6 +24,6 @@ function const_(__self) {
 }
 function IdType() {
     return {
-        ap: (a1)=>(undefined)
+        ap: (a1)=>((void 0))
     };
 }

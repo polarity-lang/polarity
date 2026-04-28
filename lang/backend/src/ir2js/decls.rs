@@ -1,5 +1,5 @@
-use swc_common::{DUMMY_SP, SyntaxContext};
-use swc_ecma_ast as js;
+use swc_core::common::{DUMMY_SP, SyntaxContext};
+use swc_core::ecma::ast as js;
 
 use crate::ir;
 use crate::result::BackendResult;
@@ -61,7 +61,7 @@ impl ToJSStmt for ir::Let {
         let body_expr = body.to_js_expr()?;
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
-            ident: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
+            ident: name.to_string().into(),
             declare: false,
             function: Box::new(js::Function {
                 params,
@@ -110,10 +110,7 @@ impl ToJSStmt for ir::Def {
         let mut all_params = vec![js::Param {
             span: DUMMY_SP,
             decorators: vec![],
-            pat: js::Pat::Ident(js::BindingIdent {
-                id: js::Ident::new(SELF_PARAM_NAME.into(), DUMMY_SP, SyntaxContext::empty()),
-                type_ann: None,
-            }),
+            pat: js::Pat::Ident(js::BindingIdent::from(js::Ident::from(SELF_PARAM_NAME))),
         }];
         all_params.extend(params_to_js_params(params));
 
@@ -127,18 +124,14 @@ impl ToJSStmt for ir::Def {
             span: DUMMY_SP,
             discriminant: Box::new(js::Expr::Member(js::MemberExpr {
                 span: DUMMY_SP,
-                obj: Box::new(js::Expr::Ident(js::Ident::new(
-                    SELF_PARAM_NAME.into(),
-                    DUMMY_SP,
-                    SyntaxContext::empty(),
-                ))),
-                prop: js::MemberProp::Ident(js::IdentName { span: DUMMY_SP, sym: CTOR_TAG.into() }),
+                obj: Box::new(js::Expr::Ident(SELF_PARAM_NAME.into())),
+                prop: js::MemberProp::Ident(CTOR_TAG.into()),
             })),
             cases,
         })];
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
-            ident: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
+            ident: name.to_string().into(),
             declare: false,
             function: Box::new(js::Function {
                 params: all_params,
@@ -191,7 +184,7 @@ impl ToJSStmt for ir::Codef {
         });
 
         Ok(js::Stmt::Decl(js::Decl::Fn(js::FnDecl {
-            ident: js::Ident::new(name.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
+            ident: name.to_string().into(),
             declare: false,
             function: Box::new(js::Function {
                 params,
@@ -218,10 +211,7 @@ fn params_to_js_params(params: &[ir::Ident]) -> Vec<js::Param> {
         .map(|p| js::Param {
             span: DUMMY_SP,
             decorators: vec![],
-            pat: js::Pat::Ident(js::BindingIdent {
-                id: js::Ident::new(p.to_string().into(), DUMMY_SP, SyntaxContext::empty()),
-                type_ann: None,
-            }),
+            pat: js::Pat::Ident(js::BindingIdent::from(js::Ident::from(p.to_string()))),
         })
         .collect()
 }

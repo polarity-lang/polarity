@@ -2,10 +2,9 @@ function foo() {
     return ((b)=>({
             tag: "T",
             args: []
-        }))(undefined);
+        }))((void 0));
 }
 function main() {
     return foo();
 }
-
-console.log(JSON.stringify(main(), (k, v) => typeof v == "bigint" ? v.toString() : v))
+console.log(JSON.stringify(main(), (k, v)=>typeof v == "bigint" ? v.toString() : v));
