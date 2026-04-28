@@ -105,8 +105,9 @@ impl DependencyGraph {
 fn url_to_label(url: &Url) -> String {
     // Extract the file name from the path
     if let Some(mut path_segments) = url.path_segments()
-        && let Some(file_name) = path_segments.next_back() {
-            return file_name.to_string();
-        }
+        && let Some(file_name) = path_segments.next_back()
+    {
+        return file_name.to_string();
+    }
     url.path().to_string()
 }
