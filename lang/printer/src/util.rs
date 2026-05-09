@@ -43,7 +43,7 @@ where
     T: DocAllocator<'a, Anno>,
 {
     fn backslash_anno(&'a self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, Self, Anno> {
-        let backlash = if cfg.latex { " " } else { "\\" };
+        let backlash = if matches!(cfg.backend, Backend::Latex) { " " } else { "\\" };
         self.text(backlash).annotate(Anno::Backslash)
     }
 }

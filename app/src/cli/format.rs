@@ -64,7 +64,7 @@ pub async fn exec(cmd: Args, settings: &GlobalSettings) -> Result<(), Vec<miette
 
         let cfg = PrintCfg {
             width: cmd.width.unwrap_or_else(terminal_width),
-            latex: false,
+            backend: polarity_lang_printer::Backend::Default,
             omit_decl_sep: false,
             de_bruijn: cmd.de_bruijn,
             indent: cmd.indent,
