@@ -37,7 +37,7 @@
     "vm-browserify": "^1.1.2",
     "webpack": "^5.104.1",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.2.4"
+    "webpack-dev-server": "^5.2.5"
   },
   "dependencies": {
     "@codingame/monaco-vscode-files-service-override": "~11.1.1",
