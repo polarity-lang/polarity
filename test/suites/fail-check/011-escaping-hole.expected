@@ -13,3 +13,23 @@ T-022
  12 │ }
     ╰────
   help: This means that the metavariable cannot be solved automatically.
+
+T-017
+
+  × The metavariable _0 could not be solved
+   ╭─[011-escaping-hole.pol:8:19]
+ 7 │ #[transparent]
+ 8 │ let foo(): Bool { _ }
+   ·                   ─
+ 9 │ 
+   ╰────
+
+T-XXX
+
+  × An unexpected internal error occurred: Declaration Some(IdBind { span: Some(Span { start: ByteIndex(106), end: ByteIndex(109) }), id: "foo" }) contains unresolved metavariables
+   ╭─[011-escaping-hole.pol:7:1]
+ 6 │     
+ 7 │ ╭─▶ #[transparent]
+ 8 │ ╰─▶ let foo(): Bool { _ }
+ 9 │     
+   ╰────

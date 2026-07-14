@@ -38,6 +38,13 @@ impl<T: Into<AppError>> From<T> for AppErrors {
     }
 }
 
+impl<T: Into<AppError>> From<Vec<T>> for AppErrors {
+    fn from(value: Vec<T>) -> Self {
+        let errors = value.into_iter().map(Into::into).collect();
+        AppErrors::from_errors(errors)
+    }
+}
+
 /// The sum of all single errors that can occur in the pipeline
 #[derive(Error, Diagnostic, Debug, Clone)]
 #[error(transparent)]
@@ -49,6 +56,12 @@ pub enum AppError {
     Xfunc(#[from] polarity_lang_transformations::result::XfuncError),
     Driver(#[from] DriverError),
     Backend(#[from] BackendError),
+}
+
+impl From<polarity_lang_elaborator::result::TypeError> for AppError {
+    fn from(value: polarity_lang_elaborator::result::TypeError) -> Self {
+        AppError::Type(Box::new(value))
+    }
 }
 
 /// An error that can occur in the driver itself

@@ -20,20 +20,38 @@ use super::{TypeError, ctx::Ctx, type_info_table::TypeInfoTable};
 /// Check a module
 ///
 /// The caller of this function needs to resolve module dependencies, check all dependencies, and provide a info table with all symbols from these dependencies.
-pub fn check_with_lookup_table(prg: Rc<Module>, info_table: &TypeInfoTable) -> TcResult<Module> {
+pub fn check_with_lookup_table(
+    prg: Rc<Module>,
+    info_table: &TypeInfoTable,
+) -> Result<Module, Vec<TypeError>> {
     log::debug!("Checking module: {}", prg.uri);
 
     let mut ctx = Ctx::new(prg.meta_vars.clone(), info_table.clone(), prg.clone());
+    let mut errs = Vec::new();
+    let mut decls = Vec::new();
 
-    let mut decls =
-        prg.decls.iter().map(|decl| decl.check_wf(&mut ctx)).collect::<TcResult<Vec<_>>>()?;
+    for decl in &prg.decls {
+        match decl.check_wf(&mut ctx) {
+            Ok(decl) => decls.push(decl),
+            Err(err) => errs.push(*err),
+        }
+    }
 
-    decls
-        .zonk(&ctx.meta_vars)
-        .map_err(|err| TypeError::Impossible { message: err.to_string(), span: None })?;
+    if let Err(err) = decls.zonk(&ctx.meta_vars) {
+        errs.push(TypeError::Impossible { message: err.to_string(), span: None });
+    }
 
-    check_metavars_solved(&ctx.meta_vars)?;
-    check_metavars_resolved(&ctx.meta_vars, &decls)?;
+    if let Err(err) = check_metavars_solved(&ctx.meta_vars) {
+        errs.extend(err)
+    }
+
+    if let Err(err) = check_metavars_resolved(&ctx.meta_vars, &decls) {
+        errs.extend(err)
+    }
+
+    if !errs.is_empty() {
+        return Err(errs);
+    }
 
     Ok(Module {
         uri: prg.uri.clone(),
@@ -44,7 +62,9 @@ pub fn check_with_lookup_table(prg: Rc<Module>, info_table: &TypeInfoTable) -> T
 }
 
 /// Check that there are no unresolved metavariables that remain after typechecking.
-pub fn check_metavars_solved(meta_vars: &HashMap<MetaVar, MetaVarState>) -> TcResult {
+pub fn check_metavars_solved(
+    meta_vars: &HashMap<MetaVar, MetaVarState>,
+) -> Result<(), Vec<TypeError>> {
     let mut unsolved: HashSet<MetaVar> = HashSet::default();
     for (var, state) in meta_vars.iter() {
         // We only have to throw an error for unsolved metavars which were either
@@ -56,47 +76,59 @@ pub fn check_metavars_solved(meta_vars: &HashMap<MetaVar, MetaVarState>) -> TcRe
         }
     }
 
-    // We are only throwing one error for the first unresolved metavariable in the hashset.
-    // Ideally we want to throw multiple errors here, but this functionality is
-    // not yet implemented.
-    if let Some(mv) = unsolved.iter().next() {
-        let err = TypeError::UnresolvedMeta {
+    let errs: Vec<_> = unsolved
+        .into_iter()
+        .map(|mv| TypeError::UnresolvedMeta {
             span: mv.span.to_miette(),
             meta_var: mv.print_to_string(None),
-        };
-        return Err(err.into());
+        })
+        .collect();
+
+    if !errs.is_empty() {
+        return Err(errs);
     }
+
     Ok(())
 }
 
 /// Check that there are no must-solve metavariables whose solution references
 /// other metavariables.
-fn check_metavars_resolved(meta_vars: &HashMap<MetaVar, MetaVarState>, decls: &[Decl]) -> TcResult {
+fn check_metavars_resolved(
+    meta_vars: &HashMap<MetaVar, MetaVarState>,
+    decls: &[Decl],
+) -> Result<(), Vec<TypeError>> {
+    let mut errs = Vec::new();
+
     // Check in module metavars table
     for (var, state) in meta_vars.iter() {
-        if var.must_be_solved() {
-            let solution = state.solution().unwrap();
-            if solution.contains_metavars() {
-                return Err(TypeError::Impossible { message:
-                    format!("Metavariable {} must be solved, but its solution references other metavariables", var.id),
-                    span: None,
-                }.into());
-            }
+        if var.must_be_solved()
+            && let Some(solution) = state.solution()
+            && solution.contains_metavars()
+        {
+            errs.push(TypeError::Impossible { message:
+                format!("Metavariable {} must be solved, but its solution references other metavariables", var.id),
+                span: None,
+            });
         }
     }
+
     // Check in all declarations
     for decl in decls {
         if decl.contains_metavars() {
-            return Err(TypeError::Impossible {
+            errs.push(TypeError::Impossible {
                 message: format!(
                     "Declaration {:?} contains unresolved metavariables",
                     decl.ident()
                 ),
                 span: decl.span().to_miette(),
-            }
-            .into());
+            });
         }
     }
+
+    if !errs.is_empty() {
+        return Err(errs);
+    }
+
     Ok(())
 }
 

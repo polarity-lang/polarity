@@ -1,3 +1,13 @@
 T-018
 
   × A case for constructor C was missing during evaluation.
+
+T-005
+
+  × Invalid pattern match: missing C
+   ╭─[Regr-321.pol:7:5]
+ 6 │ 
+ 7 │ def Foo.type: Type {
+   ·     ───
+ 8 │     A => Foo,
+   ╰────
