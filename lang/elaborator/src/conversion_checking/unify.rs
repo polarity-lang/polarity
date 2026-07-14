@@ -379,7 +379,7 @@ impl<'a> Ctx<'a> {
         log::trace!("solution = {}", solution.print_trace());
         meta_vars.insert(metavar, MetaVarState::Solved { ctx: metavar_ctx.clone(), solution });
         let meta_vars_snapshot = meta_vars.clone();
-        for (_, state) in meta_vars.iter_mut() {
+        for state in meta_vars.values_mut() {
             match state {
                 MetaVarState::Solved { ctx: _, solution } => {
                     solution.zonk(&meta_vars_snapshot).map_err(|err| TypeError::Impossible {

@@ -77,7 +77,7 @@ async fn fetch_text(client: reqwest::Client, url: Url) -> Result<String, DriverE
     spawn_local(async move {
         let result = async {
             let response = client.get(url_clone.clone()).send().await.map_err(|e| {
-                DriverError::Impossible(format!("Failed to fetch {}: {}", &url_clone, e))
+                DriverError::Impossible(format!("Failed to fetch {}: {}", url_clone, e))
             })?;
 
             let response = response.error_for_status().map_err(|e| {
@@ -89,7 +89,7 @@ async fn fetch_text(client: reqwest::Client, url: Url) -> Result<String, DriverE
             })?;
 
             response.text().await.map_err(|e| {
-                DriverError::Impossible(format!("Failed to read text from {}: {}", &url_clone, e))
+                DriverError::Impossible(format!("Failed to read text from {}: {}", url_clone, e))
             })
         }
         .await;
