@@ -7,3 +7,13 @@ T-017
    ·                    ─────
  4 │ }
    ╰────
+
+T-XXX
+
+  × An unexpected internal error occurred: Declaration Some(IdBind { span: Some(Span { start: ByteIndex(108), end: ByteIndex(112) }), id: "List" }) contains unresolved metavariables
+   ╭─[006.pol:2:1]
+ 1 │     // We cannot infer the implicit argument to List, which should be passed explicitly via `List(a:= a)`.
+ 2 │ ╭─▶ data List(implicit a: Type) {
+ 3 │ │       Nil(a: Type) : List
+ 4 │ ╰─▶ }
+   ╰────

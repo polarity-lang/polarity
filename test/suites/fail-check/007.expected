@@ -6,3 +6,16 @@ T-017
  6 │ let example : Option(_) { None(_) }
    ·                      ─
    ╰────
+
+T-XXX
+
+  × An unexpected internal error occurred: Metavariable 1 must be solved, but its solution references other metavariables
+
+T-XXX
+
+  × An unexpected internal error occurred: Declaration Some(IdBind { span: Some(Span { start: ByteIndex(96), end: ByteIndex(103) }), id: "example" }) contains unresolved metavariables
+   ╭─[007.pol:6:1]
+ 5 │ 
+ 6 │ let example : Option(_) { None(_) }
+   · ───────────────────────────────────
+   ╰────
