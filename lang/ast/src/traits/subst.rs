@@ -51,7 +51,7 @@ pub struct Subst {
 
 impl Shift for Subst {
     fn shift_in_range<R: ShiftRange>(&mut self, range: &R, by: (isize, isize)) {
-        for (_, exp) in self.map.iter_mut() {
+        for exp in self.map.values_mut() {
             exp.shift_in_range(range, by);
         }
     }
