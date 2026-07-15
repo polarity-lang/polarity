@@ -31,17 +31,17 @@ jobs:
 
       # Step that runs on all branches
       - name: Evaluate nix code
-        run: nix -Lv flake check
+        run: nix -Lv flake check --fallback
 
       # Time-intensive steps only run on the main branch
       - name: Build and run polarity using nix
         if: ${{ github.ref == 'refs/heads/main' }}
-        run: nix -Lv run .# -- --help
+        run: nix -Lv run --fallback .# -- --help
 
       - name: Build and run a static polarity exe
         if: ${{ github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest' }}
-        run: nix -Lv run .#polarity-static -- --help
+        run: nix -Lv run --fallback .#polarity-static -- --help
 
       - name: Drop into nix devshell and run tests
         if: ${{ github.ref == 'refs/heads/main' }}
-        run: nix develop -Lv -c bash -c "make test"
+        run: nix develop -Lv --fallback -c bash -c "make test"
