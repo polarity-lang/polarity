@@ -1,0 +1,6 @@
+use "io.pol"
+use "../prim/string.pol"
+use "../data/option.pol"
+
+/// Read a file into a string.
+extern read_file(path: String): IO(Option(String))

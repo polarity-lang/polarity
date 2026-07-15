@@ -604,6 +604,17 @@ fn extern_call_to_js_expr(name: &str, args: Vec<js::Expr>) -> Option<Box<js::Exp
             let s = take1(args);
             quote_expr!("(() => { console.log($s); return void 0; })", s: Expr = s)
         }
+        "read_file" => {
+            let path = take1(args);
+            let read = quote_expr!("require('node:fs').readFileSync($p, 'utf8')", p: Expr = path);
+            let success = quote_expr!(r#"{ tag: "Some", args: [$r] }"#, r: Expr = *read);
+            let failure = quote_expr!(r#"{ tag: "None", args: [] }"#);
+            quote_expr!(
+                "(() => { try { return $s; } catch { return $f; } })",
+                s: Expr = *success,
+                f: Expr = *failure
+            )
+        }
         _ => return None,
     })
 }
