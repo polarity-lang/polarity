@@ -598,7 +598,7 @@ fn extern_call_to_js_expr(name: &str, args: Vec<js::Expr>) -> Option<Box<js::Exp
         "unit" => js::Expr::undefined(DUMMY_SP),
         "return_io" => {
             let x = take1(args);
-            quote_expr!("(() => $x)", x: Expr = x)
+            quote_expr!("(() => { return $x; })", x: Expr = x)
         }
         "println" => {
             let s = take1(args);
