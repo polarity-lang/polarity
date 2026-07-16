@@ -31,13 +31,8 @@ pub enum RenameError {
     EmptyBindings,
 }
 
-pub fn rename_ir(ir: &mut Module, backend: Backend) -> BackendResult {
-    let mut ctx = RenameCtx::new(backend);
-    ir.rename(&mut ctx).map_err(Into::into)
-}
-
-pub fn rename_ir_for_js(ir: &mut Module) -> BackendResult {
-    rename_ir(ir, Backend::Javascript)
+pub fn rename_ir(ir: &mut Module, ctx: &mut RenameCtx) -> BackendResult {
+    ir.rename(ctx).map_err(Into::into)
 }
 
 #[derive(Debug, Clone)]
