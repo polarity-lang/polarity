@@ -20,7 +20,19 @@ impl ir::Module {
             let_decls,
         } = self;
 
-        let mut body = vec![];
+        let runtime_import = js::ModuleItem::ModuleDecl(js::ModuleDecl::Import(js::ImportDecl {
+            span: DUMMY_SP,
+            specifiers: vec![js::ImportSpecifier::Namespace(js::ImportStarAsSpecifier {
+                span: DUMMY_SP,
+                local: js::Ident::from("__rt"),
+            })],
+            src: Box::new("./runtime.mjs".into()),
+            type_only: false,
+            with: None,
+            phase: js::ImportPhase::Evaluation,
+        }));
+
+        let mut body = vec![runtime_import];
 
         for let_decl in let_decls {
             let stmt = let_decl.to_js_stmt()?;
