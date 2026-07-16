@@ -295,7 +295,7 @@ impl Rename for LocalLet {
     fn rename(&mut self, ctx: &mut RenameCtx) -> RenameResult {
         let LocalLet { name, bound, body } = self;
         bound.rename(ctx)?;
-        ctx.rename_binder(name, |ctx| body.rename(ctx))?;
+        ctx.rename_local_binder(name, |ctx| body.rename(ctx))?;
         Ok(())
     }
 }
@@ -351,11 +351,11 @@ fn rename_do_block(
         Some((binding, bindings)) => match binding {
             DoBinding::Let { name, bound } => {
                 bound.rename(ctx)?;
-                ctx.rename_binder(name, |ctx| rename_do_block(bindings, return_exp, ctx))
+                ctx.rename_local_binder(name, |ctx| rename_do_block(bindings, return_exp, ctx))
             }
             DoBinding::Bind { name, bound } => {
                 bound.rename(ctx)?;
-                ctx.rename_binder(name, |ctx| rename_do_block(bindings, return_exp, ctx))
+                ctx.rename_local_binder(name, |ctx| rename_do_block(bindings, return_exp, ctx))
             }
         },
     }
@@ -403,7 +403,7 @@ impl Rename for Case {
         let Case { pattern, body } = self;
         let Pattern { is_copattern: _, name, module_uri: _, params } = pattern;
         ctx.rename_bound(name)?;
-        ctx.rename_binders(params, |ctx| body.rename(ctx))?;
+        ctx.rename_local_binders(params, |ctx| body.rename(ctx))?;
         Ok(())
     }
 }
