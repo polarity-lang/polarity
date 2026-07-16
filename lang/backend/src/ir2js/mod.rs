@@ -39,7 +39,7 @@ impl CallToMain {
 }
 
 /// Convert an IR module to JavaScript
-pub fn ir_to_js<W: io::Write>(ir_module: &ir::Module, writer: W) -> BackendResult {
+pub fn ir_to_js<W: io::Write>(ir_module: &ir::Module, writer: &mut W) -> BackendResult {
     let mut js_module = ir_module.to_js_module()?;
 
     let call_to_main = ir_module.find_main().map_or(CallToMain::None, |main| {
