@@ -538,11 +538,17 @@ impl Database {
     }
 
     /// Compile to JavaScript
-    pub async fn js<W: io::Write>(&mut self, uri: &Url, output: W) -> AppResult<()> {
-        let mut ir = Arc::unwrap_or_clone(self.ir(uri).await?);
+    pub async fn js<W: io::Write>(&mut self, uri: &Url, mut output: W) -> AppResult<()> {
+        self.build_dependency_dag().await?;
+        let modules: Vec<Url> = self.deps.topological_sort(uri).into_iter().cloned().collect();
         let mut ctx = polarity_lang_backend::RenameCtx::new(Backend::Javascript);
-        polarity_lang_backend::rename_ir(&mut ir, &mut ctx).map_err(AppError::Backend)?;
-        polarity_lang_backend::ir_to_js(&ir, output).map_err(AppError::Backend)?;
+
+        for module in &modules {
+            let mut module = Arc::unwrap_or_clone(self.ir(module).await?);
+            polarity_lang_backend::rename_ir(&mut module, &mut ctx).map_err(AppError::Backend)?;
+            polarity_lang_backend::ir_to_js(&module, &mut output).map_err(AppError::Backend)?;
+        }
+
         Ok(())
     }
 
