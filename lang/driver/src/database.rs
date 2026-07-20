@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use lsp_types::HoverContents;
 use polarity_lang_ast::rename::Rename;
+use polarity_lang_backend::Backend;
 use polarity_lang_miette_util::ToMiette;
 use polarity_lang_miette_util::codespan::Span;
 use url::Url;
@@ -537,10 +538,17 @@ impl Database {
     }
 
     /// Compile to JavaScript
-    pub async fn js<W: io::Write>(&mut self, uri: &Url, output: W) -> AppResult<()> {
-        let mut ir = Arc::unwrap_or_clone(self.ir(uri).await?);
-        polarity_lang_backend::rename_ir_for_js(&mut ir).map_err(AppError::Backend)?;
-        polarity_lang_backend::ir_to_js(&ir, output).map_err(AppError::Backend)?;
+    pub async fn js<W: io::Write>(&mut self, uri: &Url, mut output: W) -> AppResult<()> {
+        self.build_dependency_dag().await?;
+        let modules: Vec<Url> = self.deps.topological_sort(uri).into_iter().cloned().collect();
+        let mut ctx = polarity_lang_backend::RenameCtx::new(Backend::Javascript);
+
+        for module in &modules {
+            let mut module = Arc::unwrap_or_clone(self.ir(module).await?);
+            polarity_lang_backend::rename_ir(&mut module, &mut ctx).map_err(AppError::Backend)?;
+            polarity_lang_backend::ir_to_js(&module, &mut output).map_err(AppError::Backend)?;
+        }
+
         Ok(())
     }
 

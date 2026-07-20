@@ -116,12 +116,13 @@ impl Rename for Module {
             let_decls,
         } = self;
 
-        ctx.rename_binders(&mut toplevel_names, |ctx| {
-            def_decls.rename(ctx)?;
-            codef_decls.rename(ctx)?;
-            let_decls.rename(ctx)?;
-            Ok(())
-        })
+        ctx.rename_global_binders(&mut toplevel_names);
+
+        def_decls.rename(ctx)?;
+        codef_decls.rename(ctx)?;
+        let_decls.rename(ctx)?;
+
+        Ok(())
     }
 }
 
@@ -154,7 +155,7 @@ impl Rename for Def {
         let Def { name, params, cases } = self;
 
         ctx.rename_bound(name)?;
-        ctx.rename_binders(params, |ctx| {
+        ctx.rename_local_binders(params, |ctx| {
             cases.rename(ctx)?;
             Ok(())
         })?;
@@ -191,7 +192,7 @@ impl Rename for Codef {
         let Codef { name, params, cases } = self;
 
         ctx.rename_bound(name)?;
-        ctx.rename_binders(params, |ctx| cases.rename(ctx))?;
+        ctx.rename_local_binders(params, |ctx| cases.rename(ctx))?;
 
         Ok(())
     }
@@ -235,7 +236,7 @@ impl Rename for Let {
         let Let { name, params, body, is_main_with_io: _ } = self;
 
         ctx.rename_bound(name)?;
-        ctx.rename_binders(params, |ctx| body.rename(ctx))?;
+        ctx.rename_local_binders(params, |ctx| body.rename(ctx))?;
 
         Ok(())
     }

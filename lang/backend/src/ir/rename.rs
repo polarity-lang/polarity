@@ -31,13 +31,8 @@ pub enum RenameError {
     EmptyBindings,
 }
 
-pub fn rename_ir(ir: &mut Module, backend: Backend) -> BackendResult {
-    let mut ctx = RenameCtx::new(backend);
-    ir.rename(&mut ctx).map_err(Into::into)
-}
-
-pub fn rename_ir_for_js(ir: &mut Module) -> BackendResult {
-    rename_ir(ir, Backend::Javascript)
+pub fn rename_ir(ir: &mut Module, ctx: &mut RenameCtx) -> BackendResult {
+    ir.rename(ctx).map_err(Into::into)
 }
 
 #[derive(Debug, Clone)]
@@ -54,7 +49,20 @@ impl RenameCtx {
         Self { active_bindings: Vec::new(), inactive_bindings: Vec::new(), backend }
     }
 
-    pub fn rename_binder<F>(&mut self, ident: &mut Ident, f: F) -> RenameResult
+    pub fn rename_global_binder(&mut self, ident: &mut Ident) {
+        let original = ident.clone();
+        self.rename_to_valid_identifier(&mut ident.name);
+        self.disambiguate_ident(ident);
+        self.active_bindings.push(Binding { original, renamed: ident.clone() });
+    }
+
+    pub fn rename_global_binders(&mut self, idents: &mut [Ident]) {
+        for ident in idents {
+            self.rename_global_binder(ident);
+        }
+    }
+
+    pub fn rename_local_binder<F>(&mut self, ident: &mut Ident, f: F) -> RenameResult
     where
         F: FnOnce(&mut RenameCtx) -> RenameResult,
     {
@@ -69,13 +77,15 @@ impl RenameCtx {
         Ok(())
     }
 
-    pub fn rename_binders<F>(&mut self, idents: &mut [Ident], f: F) -> RenameResult
+    pub fn rename_local_binders<F>(&mut self, idents: &mut [Ident], f: F) -> RenameResult
     where
         F: FnOnce(&mut RenameCtx) -> RenameResult,
     {
         match idents.split_first_mut() {
             None => f(self),
-            Some((x, xs)) => self.rename_binder(x, |extended| extended.rename_binders(xs, f)),
+            Some((x, xs)) => {
+                self.rename_local_binder(x, |extended| extended.rename_local_binders(xs, f))
+            }
         }
     }
 

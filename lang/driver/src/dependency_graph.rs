@@ -41,6 +41,34 @@ impl DependencyGraph {
         closure
     }
 
+    pub fn topological_sort<'a>(&'a self, uri: &'a Url) -> Vec<&'a Url> {
+        fn visit<'a>(
+            graph: &'a DependencyGraph,
+            node: &'a Url,
+            visited: &mut HashSet<&'a Url>,
+            order: &mut Vec<&'a Url>,
+        ) {
+            if !visited.insert(node) {
+                return;
+            }
+
+            if let Some(deps) = graph.get(node) {
+                for dep in deps {
+                    visit(graph, dep, visited, order);
+                }
+            }
+
+            order.push(node);
+        }
+
+        let mut visited = HashSet::default();
+        let mut order = Vec::new();
+
+        visit(self, uri, &mut visited, &mut order);
+
+        order
+    }
+
     /// Prints the dependency graph as an indented tree.
     ///
     /// Each module is printed with its dependencies indented below it.
