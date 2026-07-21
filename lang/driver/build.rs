@@ -19,9 +19,7 @@ fn generate_js_runtime() {
 
     assert!(status.success());
 
-    for file in
-        ["builtin.ts", "package.json", "package-lock.json", "tsconfig.json", "dist/builtin.js"]
-    {
+    for file in ["runtime.ts", "runtime.js", "package.json", "package-lock.json", "tsconfig.json"] {
         println!("cargo:rerun-if-changed={}", runtime_dir.join(file).display())
     }
 }

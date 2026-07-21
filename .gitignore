@@ -16,4 +16,4 @@ result-
 
 # Node
 node_modules
-/runtime/dist
+/runtime/runtime.js

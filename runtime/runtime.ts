@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+const __fs = require("node:fs");
 
 // primitives
 type I64 = bigint
@@ -75,7 +75,7 @@ function println(s: String_): IO<Unit> {
 function read_file(path: String_): IO<Option<String_>> {
     return function() {
         try {
-            const data: String_ = readFileSync(path, "utf8");
+            const data: String_ = __fs.readFileSync(path, "utf8");
             return {
                 tag: "Some",
                 args: [data]

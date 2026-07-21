@@ -1,11 +1,9 @@
 {
   "compilerOptions": {
-    "module": "esnext",
     "target": "esnext",
-    "lib": ["esnext"],
+    "module": "esnext",
     "types": ["node"],
-    "strict": true,
-    "outDir": "dist"
+    "strict": true
   },
-  "include": ["builtin.ts"]
+  "include": ["runtime.ts"]
 }
