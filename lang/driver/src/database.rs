@@ -31,6 +31,8 @@ use crate::{AppError, FileSource, cache::*};
 
 use rust_lapper::Lapper;
 
+const BUILTIN_JS: &str = include_str!("../../../runtime/dist/builtin.js");
+
 /// A database tracking a set of source files
 pub struct Database {
     /// The source provider of the files (file system or in-memory)
@@ -542,6 +544,9 @@ impl Database {
         self.build_dependency_dag().await?;
         let modules: Vec<Url> = self.deps.topological_sort(uri).into_iter().cloned().collect();
         let mut ctx = polarity_lang_backend::RenameCtx::new(Backend::Javascript);
+
+        write!(output, "{}", BUILTIN_JS)
+            .map_err(|err| AppError::Driver(DriverError::Io(Arc::new(err))))?;
 
         for module in &modules {
             let mut module = Arc::unwrap_or_clone(self.ir(module).await?);

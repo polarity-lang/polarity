@@ -16,3 +16,4 @@ result-
 
 # Node
 node_modules
+/runtime/dist
