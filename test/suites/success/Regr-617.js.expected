@@ -61,7 +61,7 @@ function read_file(path) {
         }
     };
 }
-function eval(__self) {
+function eval_(__self) {
     switch(__self.tag){
         case "Lit":
             const n = __self.args[0];
@@ -69,6 +69,6 @@ function eval(__self) {
         case "Add":
             const l = __self.args[0];
             const r = __self.args[1];
-            return add_i64(eval(l), eval(r));
+            return add_i64(eval_(l), eval_(r));
     }
 }

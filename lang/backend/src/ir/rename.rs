@@ -140,10 +140,10 @@ pub struct Binding {
 // Javascript
 //
 
-/// Reserved words in ECMAScript.
-///
-/// See <https://tc39.es/ecma262/#prod-ReservedWord>.
-const JS_RESERVED_WORDS: [&str; 38] = [
+/// Reserved identifiers in ECMAScript/Node.
+const JS_RESERVED_WORDS: &[&str] = &[
+    // ECMAScript keywords
+    // See <https://tc39.es/ecma262/#prod-ReservedWord>.
     "await",
     "break",
     "case",
@@ -182,6 +182,74 @@ const JS_RESERVED_WORDS: [&str; 38] = [
     "while",
     "with",
     "yield",
+    // strict mode
+    "arguments",
+    "eval",
+    "implements",
+    "interface",
+    "let",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "static",
+    // Node.js/CommonJS
+    "require",
+    "module",
+    "exports",
+    "global",
+    "globalThis",
+    "process",
+    "Buffer",
+    "console",
+    "URL",
+    "URLSearchParams",
+    "TextEncoder",
+    "TextDecoder",
+    "AbortController",
+    "AbortSignal",
+    "setTimeout",
+    "clearTimeout",
+    "setInterval",
+    "clearInterval",
+    "setImmediate",
+    "clearImmediate",
+    "Event",
+    "EventTarget",
+    // Common built-in JS objects
+    "Object",
+    "Function",
+    "Array",
+    "Number",
+    "BigInt",
+    "Boolean",
+    "String",
+    "Symbol",
+    "Date",
+    "RegExp",
+    "Error",
+    "EvalError",
+    "RangeError",
+    "ReferenceError",
+    "SyntaxError",
+    "TypeError",
+    "URIError",
+    "Map",
+    "Set",
+    "WeakMap",
+    "WeakSet",
+    "WeakRef",
+    "FinalizationRegistry",
+    "Promise",
+    "Proxy",
+    "Reflect",
+    "JSON",
+    "Math",
+    "Intl",
+    // JS meta identifiers
+    "NaN",
+    "Infinity",
+    "undefined",
 ];
 
 fn rename_to_valid_js_identifier(ident: &mut String) {
