@@ -58,20 +58,20 @@ function unit(): Unit {
 }
 
 function return_io<T>(x: T): IO<T> {
-  return function() {
+  return function () {
     return x;
   };
 }
 
 function println(s: String_): IO<Unit> {
-  return function() {
+  return function () {
     console.log(s);
     return void 0;
   };
 }
 
 function read_file(path: String_): IO<Option<String_>> {
-  return function() {
+  return function () {
     try {
       const data: String_ = __fs.readFileSync(path, "utf8");
       return {

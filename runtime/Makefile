@@ -6,6 +6,7 @@ format:
 
 check:
 	@npm run format:check
+	@../scripts/check_js_runtime.sh
 
 clean:
 	@rm -rf dist
