@@ -19,7 +19,7 @@ impl ToJSExpr for ir::Exp {
             ir::Exp::CtorCall(call) => call.to_js_ctor_record(),
             ir::Exp::CodefCall(call) => call.to_js_function_call(),
             ir::Exp::LetCall(call) => call.to_js_function_call(),
-            ir::Exp::ExternCall(call) => call.to_js_extern_function_call(),
+            ir::Exp::ExternCall(call) => call.to_js_function_call(),
             ir::Exp::DtorCall(dot_call) => dot_call.to_js_record_member_call(),
             ir::Exp::DefCall(dot_call) => dot_call.to_js_function_call_with_self(),
             ir::Exp::LocalMatch(local_match) => local_match.to_js_expr(),
@@ -100,26 +100,6 @@ impl ir::Call {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
             callee: js::Callee::Expr(Box::new(js::Expr::Ident(name.to_string().into()))),
-            args,
-            type_args: None,
-        }))
-    }
-
-    /// Handle builtin extern calls and pass the rest to [Self::to_js_function_call].
-    fn to_js_extern_function_call(&self) -> BackendResult<js::Expr> {
-        let Self { name, module_uri: _, args } = self;
-        let args = args_to_js_exprs(args)?;
-
-        let extern_func = js::Expr::Member(js::MemberExpr {
-            span: DUMMY_SP,
-            obj: quote_expr!("__rt"),
-            prop: js::MemberProp::Ident(js::IdentName::from(name.to_string())),
-        });
-
-        Ok(js::Expr::Call(js::CallExpr {
-            span: DUMMY_SP,
-            ctxt: SyntaxContext::empty(),
-            callee: js::Callee::Expr(Box::new(extern_func)),
             args,
             type_args: None,
         }))
