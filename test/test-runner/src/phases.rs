@@ -455,6 +455,7 @@ impl Phase for JS {
         let mut out = Vec::new();
         db.js(uri, &mut out).await?;
         let out = String::from_utf8(out).unwrap();
+        let out = out.replace("\r\n", "\n");
         Ok(out)
     }
 }
