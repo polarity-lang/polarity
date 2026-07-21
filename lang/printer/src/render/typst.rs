@@ -16,7 +16,7 @@ impl<W> RenderTypst<W> {
 /// - Replace `\n` line endings by explicit `#linebreak()` functions.
 /// - Replace whitespace by `#h(0.1cm)`
 fn make_layout_explicit(s: &str) -> String {
-    s.to_string().replace('\n', "#linebreak()\n").replace(' ', "#h(0.1cm)").replace('_', "\\_")
+    s.to_string().replace('\n', "#linebreak()\n").replace(' ', "#\" \"").replace('_', "\\_")
 }
 
 impl<W> pretty::Render for RenderTypst<W>
@@ -60,7 +60,7 @@ where
     fn pop_annotation(&mut self) -> Result<(), Self::Error> {
         let res = match self.anno_stack.last() {
             Some(Anno::Keyword) | Some(Anno::Ctor) | Some(Anno::Dtor) | Some(Anno::Type)
-            | Some(Anno::Comment) => self.upstream.write_all("] ".as_bytes()),
+            | Some(Anno::Comment) => self.upstream.write_all("]\u{200B}".as_bytes()),
             _ => Ok(()),
         };
         self.anno_stack.pop();
