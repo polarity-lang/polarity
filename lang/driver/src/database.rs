@@ -31,7 +31,7 @@ use crate::{AppError, FileSource, cache::*};
 
 use rust_lapper::Lapper;
 
-const RUNTIME_JS: &str = include_str!("../../../runtime/runtime.js");
+const RUNTIME_JS: &str = include_str!("../../../runtime/dist/runtime.js");
 
 /// A database tracking a set of source files
 pub struct Database {

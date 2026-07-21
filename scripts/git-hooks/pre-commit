@@ -9,4 +9,5 @@ cargo test --all
 cargo clippy --all -- -Dwarnings
 cargo fmt --all --check
 ./scripts/check_examples_index.sh
+(cd runtime; make build)
 (cd web; make lint)
