@@ -50,13 +50,13 @@ function read_file(path) {
             const data = __fs.readFileSync(path, "utf8");
             return {
                 tag: "Some",
-                args: [data]
+                args: [data],
             };
         }
         catch (err) {
             return {
                 tag: "None",
-                args: []
+                args: [],
             };
         }
     };
