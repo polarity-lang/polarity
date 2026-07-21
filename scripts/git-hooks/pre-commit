@@ -5,8 +5,7 @@
 
 set -e
 
-(cd runtime; make build)
-git add runtime/dist/runtime.js
+./scripts/check_js_runtime.sh
 cargo test --all
 cargo clippy --all -- -Dwarnings
 cargo fmt --all --check
