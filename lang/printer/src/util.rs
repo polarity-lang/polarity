@@ -10,7 +10,7 @@ where
 }
 
 pub trait BackslashExt<'a>: DocAllocator<'a, Anno> {
-    fn backslash_anno(&'a self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, Self, Anno>;
+    fn backslash_anno(&'a self) -> pretty::DocBuilder<'a, Self, Anno>;
 }
 
 pub trait IsNilExt<'a, D, A: 'a>
@@ -42,9 +42,8 @@ impl<'a, T> BackslashExt<'a> for T
 where
     T: DocAllocator<'a, Anno>,
 {
-    fn backslash_anno(&'a self, cfg: &PrintCfg) -> pretty::DocBuilder<'a, Self, Anno> {
-        let backlash = if cfg.latex { " " } else { "\\" };
-        self.text(backlash).annotate(Anno::Backslash)
+    fn backslash_anno(&'a self) -> pretty::DocBuilder<'a, Self, Anno> {
+        self.text("\\").annotate(Anno::Backslash)
     }
 }
 

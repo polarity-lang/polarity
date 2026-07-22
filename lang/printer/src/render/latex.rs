@@ -20,11 +20,18 @@ where
     type Error = io::Error;
 
     fn write_str(&mut self, s: &str) -> io::Result<usize> {
-        self.upstream.write(s.as_bytes())
+        self.write_str_all(s).map(|()| s.len())
     }
 
     fn write_str_all(&mut self, s: &str) -> io::Result<()> {
-        self.upstream.write_all(s.as_bytes())
+        if matches!(self.anno_stack.last(), Some(Anno::Backslash)) {
+            // `Anno::Backslash` contains the source character `\`.
+            // In `RenderAnnotated::push_annotation` below, we emit `\polBackslash` for this annotation.
+            // This already renders the backslash character, so we do not render `s` here.
+            Ok(())
+        } else {
+            self.upstream.write_all(s.as_bytes())
+        }
     }
 
     fn fail_doc(&self) -> Self::Error {
@@ -65,5 +72,24 @@ where
         };
         self.anno_stack.pop();
         res
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use pretty::{Render, RenderAnnotated};
+
+    use super::*;
+
+    #[test]
+    fn backslash_is_rendered_to_proper_latex_command() {
+        let mut output = Vec::new();
+        let mut renderer = RenderLatex::new(&mut output);
+
+        renderer.push_annotation(&Anno::Backslash).unwrap();
+        renderer.write_str_all("\\").unwrap();
+        renderer.pop_annotation().unwrap();
+
+        assert_eq!(String::from_utf8(output).unwrap(), r"\polBackslash{}");
     }
 }

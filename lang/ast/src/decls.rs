@@ -89,10 +89,8 @@ pub struct DocComment {
 impl Print for DocComment {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let DocComment { docs } = self;
-        let nonempty_prefix = "/// ";
-        let empty_prefix = "///";
         alloc.concat(docs.iter().map(|doc| {
-            let prefix = if doc.is_empty() { empty_prefix } else { nonempty_prefix };
+            let prefix = if doc.is_empty() { "///" } else { "/// " };
             alloc.comment(format!("{}{}", prefix, doc).as_str()).append(alloc.hardline())
         }))
     }

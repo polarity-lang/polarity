@@ -114,7 +114,7 @@ fn print_lambda_sugar<'a>(cases: &'a [Case], cfg: &PrintCfg, alloc: &'a Alloc<'a
             .nest(cfg.indent),
     };
     let pattern = alloc.ctor(&pattern.name.id).append(pattern.params.print(cfg, alloc));
-    alloc.backslash_anno(cfg).append(pattern).append(alloc.space()).append(body).group()
+    alloc.backslash_anno().append(pattern).append(alloc.space()).append(body).group()
 }
 
 impl Print for LocalComatch {
