@@ -20,7 +20,7 @@ jobs:
 
       - name: Setup dependencies
         run: |
-          cd runtime/
+          cd lang/backend/runtime/
           make deps
 
       - name: Check runtime
