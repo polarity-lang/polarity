@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-runtime_dir="runtime"
-runtime_js="runtime/dist/runtime.js"
+runtime_dir="lang/backend/runtime"
+runtime_js="$runtime_dir/dist/runtime.js"
 
 tmpdir=$(mktemp -d)
 tmpdir_js="$tmpdir/runtime.js"
