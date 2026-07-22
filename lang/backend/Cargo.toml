@@ -11,6 +11,7 @@ repository.workspace = true
 categories.workspace = true
 
 description = "Internal component of the Polarity language: Code generation"
+include = ["/src", "/runtime/dist/runtime.js"]
 
 [dependencies]
 miette    = { workspace = true }
