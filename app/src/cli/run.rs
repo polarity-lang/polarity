@@ -19,6 +19,10 @@ pub struct Args {
     /// Only output the normal form of main and don't compile.
     #[clap(long, short)]
     normalize: bool,
+
+    /// Arguments to pass to the executed program.
+    #[clap(trailing_var_arg = true)]
+    args: Vec<String>,
 }
 
 pub async fn exec(cmd: Args, settings: &GlobalSettings) -> Result<(), Vec<miette::Report>> {
@@ -35,7 +39,7 @@ pub async fn exec(cmd: Args, settings: &GlobalSettings) -> Result<(), Vec<miette
         codegen::generate_ir(&mut db, &cmd.filepath).await?;
         let js_file = codegen::generate_js(&mut db, &cmd.filepath).await?;
 
-        run_node(&js_file).map_err(|err| vec![NodeFailed { err }.into()])?;
+        run_node(&js_file, &cmd.args).map_err(|err| vec![NodeFailed { err }.into()])?;
     }
 
     Ok(())
@@ -47,8 +51,8 @@ fn print_nf(nf: &polarity_lang_ast::Exp, colorize: ColorChoice) {
     println!();
 }
 
-fn run_node(path: &PathBuf) -> io::Result<()> {
-    let cmd = Command::new("node").arg(path).output()?;
+fn run_node(path: &PathBuf, args: &[String]) -> io::Result<()> {
+    let cmd = Command::new("node").arg(path).args(args).output()?;
     io::stdout().write_all(&cmd.stdout)?;
     io::stderr().write_all(&cmd.stderr)?;
     Ok(())
