@@ -30,9 +30,6 @@ function concat(s1, s2) {
 function append_char(c, s) {
     return s.concat(String.fromCodePoint(c));
 }
-function unit() {
-    return void 0;
-}
 function return_io(x) {
     return function () {
         return x;
@@ -41,7 +38,10 @@ function return_io(x) {
 function println(s) {
     return function () {
         console.log(s);
-        return void 0;
+        return {
+            tag: "MkUnit",
+            args: [],
+        };
     };
 }
 function read_file(path) {

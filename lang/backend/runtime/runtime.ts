@@ -5,9 +5,9 @@ type I64 = bigint;
 type F64 = number;
 type String_ = string;
 type Char = number;
-type Unit = undefined;
 
 // data
+type Unit = { tag: "MkUnit"; args: [] };
 type Option<T> = { tag: "Some"; args: [T] } | { tag: "None"; args: [] };
 
 // IO
@@ -53,10 +53,6 @@ function append_char(c: Char, s: String_): String_ {
   return s.concat(String.fromCodePoint(c));
 }
 
-function unit(): Unit {
-  return void 0;
-}
-
 function return_io<T>(x: T): IO<T> {
   return function () {
     return x;
@@ -66,7 +62,10 @@ function return_io<T>(x: T): IO<T> {
 function println(s: String_): IO<Unit> {
   return function () {
     console.log(s);
-    return void 0;
+    return {
+      tag: "MkUnit",
+      args: [],
+    };
   };
 }
 
