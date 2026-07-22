@@ -19,7 +19,7 @@ impl ToJSExpr for ir::Exp {
             ir::Exp::CtorCall(call) => call.to_js_ctor_record(),
             ir::Exp::CodefCall(call) => call.to_js_function_call(),
             ir::Exp::LetCall(call) => call.to_js_function_call(),
-            ir::Exp::ExternCall(call) => call.to_js_extern_function_call(),
+            ir::Exp::ExternCall(call) => call.to_js_function_call(),
             ir::Exp::DtorCall(dot_call) => dot_call.to_js_record_member_call(),
             ir::Exp::DefCall(dot_call) => dot_call.to_js_function_call_with_self(),
             ir::Exp::LocalMatch(local_match) => local_match.to_js_expr(),
@@ -103,17 +103,6 @@ impl ir::Call {
             args,
             type_args: None,
         }))
-    }
-
-    /// Handle builtin extern calls and pass the rest to [Self::to_js_function_call].
-    fn to_js_extern_function_call(&self) -> BackendResult<js::Expr> {
-        let Self { name, module_uri: _, args } = self;
-        let args = args_to_js_exprs(args)?.into_iter().map(|arg| *arg.expr).collect();
-
-        match extern_call_to_js_expr(name.to_string().as_str(), args) {
-            Some(expr) => Ok(*expr),
-            None => self.to_js_function_call(),
-        }
     }
 }
 
@@ -551,84 +540,4 @@ fn js_num_lit(num: impl Into<js::Number>) -> js::Expr {
 fn js_bigint_lit(bigint: impl Into<js::BigIntValue>) -> js::Expr {
     let bigint: js::BigIntValue = bigint.into();
     js::Expr::Lit(js::Lit::BigInt(bigint.into()))
-}
-
-fn extern_call_to_js_expr(name: &str, args: Vec<js::Expr>) -> Option<Box<js::Expr>> {
-    Some(match name {
-        "add_i64" => {
-            let (x, y) = take2(args);
-            quote_expr!("BigInt.asIntN(64, $x + $y)", x: Expr = x, y: Expr = y)
-        }
-        "sub_i64" => {
-            let (x, y) = take2(args);
-            quote_expr!("BigInt.asIntN(64, $x - $y)", x: Expr = x, y: Expr = y)
-        }
-        "mul_i64" => {
-            let (x, y) = take2(args);
-            quote_expr!("BigInt.asIntN(64, $x * $y)", x: Expr = x, y: Expr = y)
-        }
-        "div_i64" => {
-            let (x, y) = take2(args);
-            quote_expr!("BigInt.asIntN(64, $x / $y)", x: Expr = x, y: Expr = y)
-        }
-        "add_f64" => {
-            let (x, y) = take2(args);
-            quote_expr!("($x + $y)", x: Expr = x, y: Expr = y)
-        }
-        "sub_f64" => {
-            let (x, y) = take2(args);
-            quote_expr!("($x - $y)", x: Expr = x, y: Expr = y)
-        }
-        "mul_f64" => {
-            let (x, y) = take2(args);
-            quote_expr!("($x * $y)", x: Expr = x, y: Expr = y)
-        }
-        "div_f64" => {
-            let (x, y) = take2(args);
-            quote_expr!("($x / $y)", x: Expr = x, y: Expr = y)
-        }
-        "concat" => {
-            let (x, y) = take2(args);
-            quote_expr!("$x.concat($y)", x: Expr = x, y: Expr = y)
-        }
-        "append_char" => {
-            let (c, s) = take2(args);
-            quote_expr!("$s.concat(String.fromCodePoint($c))", s: Expr = s, c: Expr = c)
-        }
-        "unit" => js::Expr::undefined(DUMMY_SP),
-        "return_io" => {
-            let x = take1(args);
-            quote_expr!("(() => { return $x; })", x: Expr = x)
-        }
-        "println" => {
-            let s = take1(args);
-            quote_expr!("(() => { console.log($s); return void 0; })", s: Expr = s)
-        }
-        "read_file" => {
-            let path = take1(args);
-            let read = quote_expr!("require('node:fs').readFileSync($p, 'utf8')", p: Expr = path);
-            let success = quote_expr!(r#"{ tag: "Some", args: [$r] }"#, r: Expr = *read);
-            let failure = quote_expr!(r#"{ tag: "None", args: [] }"#);
-            quote_expr!(
-                "(() => { try { return $s; } catch { return $f; } })",
-                s: Expr = *success,
-                f: Expr = *failure
-            )
-        }
-        _ => return None,
-    })
-}
-
-// Get the value of a Vec with *exactly* one element.
-fn take1(mut args: Vec<js::Expr>) -> js::Expr {
-    debug_assert_eq!(args.len(), 1);
-    args.swap_remove(0)
-}
-
-// Get the values of a Vec with *exactly* two elements.
-fn take2(mut args: Vec<js::Expr>) -> (js::Expr, js::Expr) {
-    debug_assert_eq!(args.len(), 2);
-    let y = args.swap_remove(1);
-    let x = args.swap_remove(0);
-    (x, y)
 }

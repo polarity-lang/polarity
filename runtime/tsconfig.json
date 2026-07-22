@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "types": ["node"],
+    "strict": true,
+    "outDir": "dist"
+  },
+  "include": ["runtime.ts"]
+}

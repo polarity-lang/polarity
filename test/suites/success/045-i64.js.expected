@@ -1,4 +1,67 @@
+"use strict";
+const __fs = require("node:fs");
+function add_i64(x, y) {
+    return BigInt.asIntN(64, x + y);
+}
+function sub_i64(x, y) {
+    return BigInt.asIntN(64, x - y);
+}
+function mul_i64(x, y) {
+    return BigInt.asIntN(64, x * y);
+}
+function div_i64(x, y) {
+    return BigInt.asIntN(64, x / y);
+}
+function add_f64(x, y) {
+    return x + y;
+}
+function sub_f64(x, y) {
+    return x - y;
+}
+function mul_f64(x, y) {
+    return x * y;
+}
+function div_f64(x, y) {
+    return x / y;
+}
+function concat(s1, s2) {
+    return s1.concat(s2);
+}
+function append_char(c, s) {
+    return s.concat(String.fromCodePoint(c));
+}
+function unit() {
+    return void 0;
+}
+function return_io(x) {
+    return function () {
+        return x;
+    };
+}
+function println(s) {
+    return function () {
+        console.log(s);
+        return void 0;
+    };
+}
+function read_file(path) {
+    return function () {
+        try {
+            const data = __fs.readFileSync(path, "utf8");
+            return {
+                tag: "Some",
+                args: [data],
+            };
+        }
+        catch (err) {
+            return {
+                tag: "None",
+                args: [],
+            };
+        }
+    };
+}
 function main() {
-    return ((x)=>(((y)=>(BigInt.asIntN(64, BigInt.asIntN(64, y / 2n) + x)))(BigInt.asIntN(64, 1n - x))))(BigInt.asIntN(64, 3n * 4n));
+    return ((x)=>(((y)=>(add_i64(div_i64(y, 2n), x)))(sub_i64(1n, x))))(mul_i64(3n, 4n));
 }
 console.log(JSON.stringify(main(), (k, v)=>typeof v == "bigint" ? v.toString() : v));

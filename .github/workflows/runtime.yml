@@ -1,0 +1,28 @@
+name: Check JS Runtime
+
+on:
+  push:
+    paths:
+      - 'runtime/**'
+  pull_request:
+    paths:
+      - 'runtime/**'
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  check-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup dependencies
+        run: |
+          cd runtime/
+          make deps
+
+      - name: Check runtime
+        run: |
+          ./scripts/check_js_runtime.sh

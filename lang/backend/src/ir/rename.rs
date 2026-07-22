@@ -140,10 +140,10 @@ pub struct Binding {
 // Javascript
 //
 
-/// Reserved words in ECMAScript.
-///
-/// See <https://tc39.es/ecma262/#prod-ReservedWord>.
-const JS_RESERVED_WORDS: [&str; 38] = [
+/// Reserved identifiers in ECMAScript/Node.
+const JS_RESERVED_WORDS: &[&str] = &[
+    // ECMAScript keywords
+    // See <https://tc39.es/ecma262/#prod-ReservedWord>.
     "await",
     "break",
     "case",
@@ -182,6 +182,21 @@ const JS_RESERVED_WORDS: [&str; 38] = [
     "while",
     "with",
     "yield",
+    // The following identifiers are prohibited in strict mode, which TypeScript compiles to by default.
+    // The specification defines these in two separate places:
+    // * https://tc39.es/ecma262/multipage/strict-mode-of-ecmascript.html#sec-strict-mode-of-ecmascript
+    // * https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-identifiers-static-semantics-early-errors
+    "implements",
+    "interface",
+    "let",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "static",
+    "yield",
+    "arguments",
+    "eval",
 ];
 
 fn rename_to_valid_js_identifier(ident: &mut String) {

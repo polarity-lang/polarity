@@ -5,6 +5,7 @@
 
 set -e
 
+./scripts/check_js_runtime.sh
 cargo test --all
 cargo clippy --all -- -Dwarnings
 cargo fmt --all --check

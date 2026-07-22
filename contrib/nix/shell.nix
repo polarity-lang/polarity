@@ -23,6 +23,7 @@ pkgs.mkShell.override { inherit stdenv; } {
       # web
       nodejs
       wasm-bindgen-cli
+      typescript-language-server
 
       # formatting
       nixfmt
