@@ -86,17 +86,17 @@ pub struct Args {
 /// Compute the output stream for the "prettify" subcommand.
 /// If an output filepath is specified, then that filepath is used.
 /// Otherwise, the file extension is replaced by the `.tex` or `.typ` file extension.
-fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
+fn compute_output_stream(cmd: &Args) -> io::Result<Box<dyn io::Write>> {
     let file_extension = match cmd.backend {
         Backend::Latex => "tex",
         Backend::Typst => "typ",
     };
     match &cmd.output {
-        Some(path) => Box::new(fs::File::create(path).expect("Failed to create file")),
+        Some(path) => fs::File::create(path).map(|file| Box::new(file) as Box<dyn io::Write>),
         None => {
             let mut fp = cmd.filepath.clone();
             fp.set_extension(file_extension);
-            Box::new(fs::File::create(fp).expect("Failed to create file"))
+            fs::File::create(fp).map(|file| Box::new(file) as Box<dyn io::Write>)
         }
     }
 }
@@ -106,14 +106,11 @@ pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
     let uri = db.resolve_path(&cmd.filepath).map_err(|e| vec![e.into()])?;
     let prg = db.ust(&uri).await.map_err(|errs| db.pretty_errors(&uri, errs))?;
 
-    let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
+    let mut stream = compute_output_stream(&cmd)
+        .map_err(|err| vec![miette::miette!("Failed to create output file: {err}")])?;
 
     let cfg = PrintCfg {
         width: cmd.width,
-        backend: match cmd.backend {
-            Backend::Latex => polarity_lang_printer::Backend::Latex,
-            Backend::Typst => polarity_lang_printer::Backend::Typst,
-        },
         omit_decl_sep: true,
         de_bruijn: false,
         indent: cmd.indent,
@@ -126,16 +123,20 @@ pub async fn exec(cmd: Args) -> Result<(), Vec<miette::Report>> {
 
     match cmd.backend {
         Backend::Latex => {
-            stream.write_all(latex_start(&cmd.fontsize).as_bytes()).unwrap();
-            prg.print_latex(&cfg, &mut stream).expect("Failed to print to stdout");
-            println!();
-            stream.write_all(LATEX_END.as_bytes()).unwrap();
+            stream
+                .write_all(latex_start(&cmd.fontsize).as_bytes())
+                .and_then(|()| prg.print_latex(&cfg, &mut stream))
+                .and_then(|()| stream.write_all(b"\n"))
+                .and_then(|()| stream.write_all(LATEX_END.as_bytes()))
+                .map_err(|err| vec![miette::miette!("Failed to write LaTeX output: {err}")])?;
         }
         Backend::Typst => {
-            stream.write_all(typst_start().as_bytes()).unwrap();
-            prg.print_typst(&cfg, &mut stream).expect("Failed to print to stdout");
-            println!();
-            stream.write_all(TYPST_END.as_bytes()).unwrap();
+            stream
+                .write_all(typst_start().as_bytes())
+                .and_then(|()| prg.print_typst(&cfg, &mut stream))
+                .and_then(|()| stream.write_all(b"\n"))
+                .and_then(|()| stream.write_all(TYPST_END.as_bytes()))
+                .map_err(|err| vec![miette::miette!("Failed to write Typst output: {err}")])?;
         }
     }
     Ok(())
