@@ -445,13 +445,6 @@ impl Phase for Node {
     }
 
     async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
-        let ir = db.ir(uri).await?;
-
-        // TODO: multiple modules are not yet implemented for the backend
-        if !ir.use_decls.is_empty() {
-            return Ok(String::from("NOT YET IMPLEMENTED"));
-        }
-
         let mut file = tempfile::NamedTempFile::new().unwrap();
         db.js(uri, &mut file).await?;
 
