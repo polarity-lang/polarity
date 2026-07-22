@@ -19,6 +19,9 @@ use crate::result::{BackendError, BackendResult};
 
 use super::ir;
 
+pub const RUNTIME_JS: &str =
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/runtime/dist/runtime.js"));
+
 enum CallToMain {
     None,
     RunIO,

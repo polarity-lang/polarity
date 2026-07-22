@@ -31,8 +31,6 @@ use crate::{AppError, FileSource, cache::*};
 
 use rust_lapper::Lapper;
 
-const RUNTIME_JS: &str = include_str!("../../../runtime/dist/runtime.js");
-
 /// A database tracking a set of source files
 pub struct Database {
     /// The source provider of the files (file system or in-memory)
@@ -545,7 +543,7 @@ impl Database {
         let modules: Vec<Url> = self.deps.topological_sort(uri).into_iter().cloned().collect();
         let mut ctx = polarity_lang_backend::RenameCtx::new(Backend::Javascript);
 
-        write!(output, "{}", RUNTIME_JS)
+        write!(output, "{}", polarity_lang_backend::ir2js::RUNTIME_JS)
             .map_err(|err| AppError::Driver(DriverError::Io(Arc::new(err))))?;
 
         for module in &modules {
