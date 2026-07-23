@@ -1,6 +1,12 @@
 use "io.pol"
 use "../prim/string.pol"
+use "../prim/char.pol"
 use "../data/unit.pol"
 
+/// Print a string to the console.
+extern print(s: String): IO(Unit)
+
 /// Print a string to the console, appending a newline.
-extern println(s: String): IO(Unit)
+let println(s: String): IO(Unit) {
+    print(append_char('\n', s))
+}

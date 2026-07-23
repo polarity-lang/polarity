@@ -35,9 +35,9 @@ function return_io(x) {
         return x;
     };
 }
-function println(s) {
+function print(s) {
     return function () {
-        console.log(s);
+        process.stdout.write(s);
         return {
             tag: "MkUnit",
             args: [],

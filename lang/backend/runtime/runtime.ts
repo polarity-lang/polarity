@@ -60,9 +60,9 @@ function return_io<T>(x: T): IO<T> {
   };
 }
 
-function println(s: String_): IO<Unit> {
+function print(s: String_): IO<Unit> {
   return function () {
-    console.log(s);
+    process.stdout.write(s);
     return {
       tag: "MkUnit",
       args: [],
