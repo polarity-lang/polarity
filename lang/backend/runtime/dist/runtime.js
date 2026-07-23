@@ -1,4 +1,5 @@
 import * as __fs from "node:fs";
+import * as __readline from "node:readline/promises";
 const __true = { tag: "T", args: [] };
 const __false = { tag: "F", args: [] };
 function __arr_to_list(arr) {
@@ -82,6 +83,17 @@ function $read_file(path) {
                 args: [],
             };
         }
+    };
+}
+function $readln(prompt) {
+    return async function () {
+        const rl = __readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+        });
+        const answer = await rl.question(prompt);
+        rl.close();
+        return answer;
     };
 }
 function $args() {
