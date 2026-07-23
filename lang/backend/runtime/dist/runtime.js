@@ -61,3 +61,18 @@ function read_file(path) {
         }
     };
 }
+function args() {
+    return function () {
+        let args = {
+            tag: "Nil",
+            args: [],
+        };
+        for (const arg of process.argv.slice(2).reverse()) {
+            args = {
+                tag: "Cons",
+                args: [arg, args],
+            };
+        }
+        return args;
+    };
+}

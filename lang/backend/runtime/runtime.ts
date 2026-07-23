@@ -9,6 +9,7 @@ type Char = number;
 // data
 type Unit = { tag: "MkUnit"; args: [] };
 type Option<T> = { tag: "Some"; args: [T] } | { tag: "None"; args: [] };
+type List<T> = { tag: "Cons"; args: [T, List<T>] } | { tag: "Nil"; args: [] };
 
 // IO
 type IO<T> = () => T;
@@ -83,5 +84,23 @@ function read_file(path: String_): IO<Option<String_>> {
         args: [],
       };
     }
+  };
+}
+
+function args(): IO<List<String_>> {
+  return function () {
+    let args: List<String_> = {
+      tag: "Nil",
+      args: [],
+    };
+
+    for (const arg of process.argv.slice(2).reverse()) {
+      args = {
+        tag: "Cons",
+        args: [arg, args],
+      };
+    }
+
+    return args;
   };
 }
