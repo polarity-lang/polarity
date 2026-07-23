@@ -1,5 +1,6 @@
 "use strict";
 const __fs = require("node:fs");
+const __readline = require("node:readline/promises");
 function $add_i64(x, y) {
     return BigInt.asIntN(64, x + y);
 }
@@ -59,6 +60,17 @@ function $read_file(path) {
                 args: [],
             };
         }
+    };
+}
+function $readln(prompt) {
+    return async function () {
+        const rl = __readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+        });
+        const answer = await rl.question(prompt);
+        rl.close();
+        return answer;
     };
 }
 function $args() {

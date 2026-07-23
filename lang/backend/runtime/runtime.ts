@@ -1,4 +1,5 @@
 const __fs = require("node:fs");
+const __readline = require("node:readline/promises");
 
 // primitives
 type I64 = bigint;
@@ -84,6 +85,18 @@ function $read_file(path: String_): IO<Option<String_>> {
         args: [],
       };
     }
+  };
+}
+
+function $readln(prompt: String_): IO<String_> {
+  return async function () {
+    const rl = __readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    const answer = await rl.question(prompt);
+    rl.close();
+    return answer;
   };
 }
 
