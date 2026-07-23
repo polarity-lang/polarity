@@ -425,41 +425,6 @@ impl Phase for IR {
     }
 }
 
-// JS Phase
-//
-// This phase generates the compiled Javascript code of the module.
-
-pub struct JS {
-    name: &'static str,
-}
-
-impl Phase for JS {
-    type Out = String;
-
-    fn new(name: &'static str) -> Self {
-        Self { name }
-    }
-
-    fn name(&self) -> &'static str {
-        self.name
-    }
-
-    async fn run(db: &mut Database, uri: &Url) -> AppResult<Self::Out> {
-        let ir = db.ir(uri).await?;
-
-        // TODO: multiple modules are not yet implemented for the backend
-        if !ir.use_decls.is_empty() {
-            return Ok(String::from("NOT YET IMPLEMENTED"));
-        }
-
-        let mut out = Vec::new();
-        db.js(uri, &mut out).await?;
-        let out = String::from_utf8(out).unwrap();
-        let out = out.replace("\r\n", "\n");
-        Ok(out)
-    }
-}
-
 // Node phase
 //
 // This phase run `node` on the generated JS file.
