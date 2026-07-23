@@ -18,7 +18,7 @@ pub fn force_expr(e: js::Expr) -> js::Expr {
 }
 
 /// Wrap expression in a thunk
-pub fn thunk_block(block: Vec<js::Stmt>) -> js::Expr {
+pub fn thunk_block(block: Vec<js::Stmt>, is_async: bool) -> js::Expr {
     let arr = js::Expr::Arrow(js::ArrowExpr {
         span: DUMMY_SP,
         ctxt: SyntaxContext::empty(),
@@ -28,7 +28,7 @@ pub fn thunk_block(block: Vec<js::Stmt>) -> js::Expr {
             ctxt: SyntaxContext::empty(),
             stmts: block,
         })),
-        is_async: false,
+        is_async,
         is_generator: false,
         type_params: None,
         return_type: None,

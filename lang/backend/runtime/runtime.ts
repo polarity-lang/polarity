@@ -12,7 +12,7 @@ type Option<T> = { tag: "Some"; args: [T] } | { tag: "None"; args: [] };
 type List<T> = { tag: "Cons"; args: [T, List<T>] } | { tag: "Nil"; args: [] };
 
 // IO
-type IO<T> = () => T;
+type IO<T> = () => Promise<T>;
 
 function $add_i64(x: I64, y: I64): I64 {
   return BigInt.asIntN(64, x + y);
@@ -55,13 +55,13 @@ function $append_char(c: Char, s: String_): String_ {
 }
 
 function $return_io<T>(x: T): IO<T> {
-  return function () {
+  return async function () {
     return x;
   };
 }
 
 function $print(s: String_): IO<Unit> {
-  return function () {
+  return async function () {
     process.stdout.write(s);
     return {
       tag: "MkUnit",
@@ -71,7 +71,7 @@ function $print(s: String_): IO<Unit> {
 }
 
 function $read_file(path: String_): IO<Option<String_>> {
-  return function () {
+  return async function () {
     try {
       const data: String_ = __fs.readFileSync(path, "utf8");
       return {
@@ -88,7 +88,7 @@ function $read_file(path: String_): IO<Option<String_>> {
 }
 
 function $args(): IO<List<String_>> {
-  return function () {
+  return async function () {
     let args: List<String_> = {
       tag: "Nil",
       args: [],

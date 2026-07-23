@@ -2,7 +2,7 @@
 
 use swc_core::common::{DUMMY_SP, SyntaxContext};
 use swc_core::ecma::ast as js;
-use swc_core::quote_expr;
+use swc_core::{quote, quote_expr};
 
 use crate::ir;
 use crate::ir2js::traits::ToJSStmt;
@@ -249,7 +249,7 @@ impl ToJSExpr for ir::LocalMatch {
             cases,
         });
 
-        let thunk = thunk_block(vec![var_decl, switch_stmt]);
+        let thunk = thunk_block(vec![var_decl, switch_stmt], false);
         Ok(force_expr(thunk))
     }
 }
@@ -359,7 +359,7 @@ impl ToJSExpr for ir::DoBlock {
         let mut js_stmts = js_bindings;
         js_stmts.push(js_return_stmt);
 
-        Ok(thunk_block(js_stmts))
+        Ok(thunk_block(js_stmts, true))
     }
 }
 
@@ -378,30 +378,18 @@ impl ToJSExpr for ir::DoBlock {
 /// ```
 impl ToJSStmt for ir::DoBinding {
     fn to_js_stmt(&self) -> BackendResult<js::Stmt> {
-        let var_declarator = match self {
-            ir::DoBinding::Let { name, bound } => js::VarDeclarator {
-                span: DUMMY_SP,
-                name: js::Pat::Ident(js::BindingIdent::from(js::Ident::from(name.to_string()))),
-                init: Some(Box::new(bound.to_js_expr()?)),
-                definite: false,
-            },
-            ir::DoBinding::Bind { name, bound } => js::VarDeclarator {
-                span: DUMMY_SP,
-                name: js::Pat::Ident(js::BindingIdent::from(js::Ident::from(name.to_string()))),
-                init: Some(Box::new(force_expr(bound.to_js_expr()?))),
-                definite: false,
-            },
-        };
-
-        let var_decl = js::VarDecl {
-            span: DUMMY_SP,
-            ctxt: SyntaxContext::empty(),
-            kind: js::VarDeclKind::Const,
-            declare: false,
-            decls: vec![var_declarator],
-        };
-
-        Ok(js::Stmt::Decl(js::Decl::Var(Box::new(var_decl))))
+        match self {
+            ir::DoBinding::Let { name, bound } => {
+                let x: js::Ident = name.to_string().into();
+                let e: js::Expr = bound.to_js_expr()?;
+                Ok(quote!("const $x = $e;" as Stmt, x: Ident = x, e: Expr = e))
+            }
+            ir::DoBinding::Bind { name, bound } => {
+                let x: js::Ident = name.to_string().into();
+                let e: js::Expr = bound.to_js_expr()?;
+                Ok(quote!("const $x = await $e();" as Stmt, x: Ident = x, e: Expr = e))
+            }
+        }
     }
 }
 
