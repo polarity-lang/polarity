@@ -62,7 +62,7 @@ impl Rename for Exp {
             Exp::CtorCall(call) => call.rename(ctx),
             Exp::CodefCall(call) => call.rename(ctx),
             Exp::LetCall(call) => call.rename(ctx),
-            Exp::ExternCall(call) => call.rename(ctx),
+            Exp::ExternCall(call) => call.args.rename(ctx),
             Exp::DtorCall(dot_call) => dot_call.rename(ctx),
             Exp::DefCall(dot_call) => dot_call.rename(ctx),
             Exp::LocalMatch(local_match) => local_match.rename(ctx),
