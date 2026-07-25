@@ -4,7 +4,9 @@ use "./char.pol"
 extern String: Type
 
 /// Concatenation of two strings.
-extern concat(x y: String): String
+extern concat_string(x y: String): String
+
+infix _ ++ _ := concat_string(_, _)
 
 /// Appending a single unicode character to a string.
 extern append_char(c: Char, s: String): String
