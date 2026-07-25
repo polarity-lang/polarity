@@ -24,7 +24,7 @@ function $mul_f64(x, y) {
 function $div_f64(x, y) {
     return x / y;
 }
-function $concat(s1, s2) {
+function $concat_string(s1, s2) {
     return s1.concat(s2);
 }
 function $append_char(c, s) {

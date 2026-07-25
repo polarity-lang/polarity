@@ -46,7 +46,7 @@ function $div_f64(x: F64, y: F64): F64 {
   return x / y;
 }
 
-function $concat(s1: String_, s2: String_): String_ {
+function $concat_string(s1: String_, s2: String_): String_ {
   return s1.concat(s2);
 }
 
