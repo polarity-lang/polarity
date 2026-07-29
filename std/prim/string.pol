@@ -1,4 +1,5 @@
 use "./char.pol"
+use "../data/bool.pol"
 
 /// An opaque Unicode string.
 extern String: Type
@@ -10,3 +11,6 @@ infix _ ++ _ := concat_string(_, _)
 
 /// Appending a single unicode character to a string.
 extern append_char(c: Char, s: String): String
+
+/// Return whether two strings are equal.
+extern eq_string(x y: String): Bool
