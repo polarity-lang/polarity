@@ -2,5 +2,8 @@ use "io.pol"
 use "../prim/string.pol"
 use "../data/option.pol"
 
+/// Read one line from the console.
+extern readln(prompt: String): IO(String)
+
 /// Read a file into a string.
 extern read_file(path: String): IO(Option(String))
