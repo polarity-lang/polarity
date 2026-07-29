@@ -1,5 +1,12 @@
 "use strict";
 const __fs = require("node:fs");
+function __arr_to_list(arr) {
+    let list = { tag: "Nil", args: [] };
+    for (const x of [...arr].reverse()) {
+        list = { tag: "Cons", args: [x, list] };
+    }
+    return list;
+}
 function $add_i64(x, y) {
     return BigInt.asIntN(64, x + y);
 }
@@ -29,6 +36,9 @@ function $concat_string(s1, s2) {
 }
 function $append_char(c, s) {
     return s.concat(String.fromCodePoint(c));
+}
+function $string_to_chars(s) {
+    return __arr_to_list(Array.from(s, (c) => c.codePointAt(0)));
 }
 function $return_io(x) {
     return function () {
@@ -63,16 +73,6 @@ function $read_file(path) {
 }
 function $args() {
     return function () {
-        let args = {
-            tag: "Nil",
-            args: [],
-        };
-        for (const arg of process.argv.slice(2).reverse()) {
-            args = {
-                tag: "Cons",
-                args: [arg, args],
-            };
-        }
-        return args;
+        return __arr_to_list(process.argv.slice(2));
     };
 }
