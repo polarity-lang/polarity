@@ -1,3 +1,5 @@
+use "../data/bool.pol"
+
 /// Signed 64-Bit Integer
 extern I64: Type
 
@@ -12,3 +14,6 @@ extern mul_i64(x y: I64): I64
 
 /// Division of signed 64-Bit integers
 extern div_i64(x y: I64): I64
+
+/// Return whether two integers are equal.
+extern eq_i64(x y: I64): Bool
