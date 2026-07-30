@@ -1,0 +1,71 @@
+use "../std/prim/string.pol"
+use "../std/prim/char.pol"
+use "../std/data/unit.pol"
+use "../std/data/bool.pol"
+use "../std/data/list.pol"
+
+data Reg {
+    /// Matches nothing
+    Nothing,
+    /// Matches the empty string
+    Empty,
+    /// Matches a single character `c`
+    Single(c: Char),
+    /// Matches the sequence `r1 r2`
+    Seq(r1 r2: Reg),
+    /// Matches the alternation `r1 | r2`
+    Alt(r1 r2: Reg),
+    /// Kleene closure `r*`
+    Star(r: Reg),
+}
+
+def Reg.nullable: Bool {
+    Nothing => F,
+    Empty => T,
+    Single(_) => F,
+    Seq(r1, r2) => r1.nullable.and(r2.nullable),
+    Alt(r1, r2) => r1.nullable.or(r2.nullable),
+    Star(_) => T,
+}
+
+def Reg.deriv(c: Char): Reg {
+    Nothing => Nothing,
+    Empty => Nothing,
+    Single(c') =>
+        eq_char(c, c').match {
+            T => Empty,
+            F => Nothing,
+        },
+    Seq(r1, r2) => r1.nullable.match {
+        T => Alt(Seq(r1.deriv(c), r2), r2.deriv(c)),
+        F => Seq(r1.deriv(c), r2)
+    },
+    Alt(r1, r2) => Alt(r1.deriv(c), r2.deriv(c)),
+    Star(r) => Seq(r.deriv(c), Star(r))
+}
+
+let multiple(cs: List(Char)): Reg {
+    cs.match {
+        Nil(_) => Empty,
+        Cons(_, c1, cs1) => cs1.match {
+            Nil(_) => Single(c1),
+            Cons(_, c2, _) => Seq(Single(c1), multiple(cs1)),
+        },
+    }
+}
+
+let matches(reg: Reg, chars: List(Char)): Bool {
+    chars.match {
+        Nil(_) => reg.nullable,
+        Cons(_, c, cs) => matches(reg.deriv(c), cs),
+    }
+}
+
+let matches_string(reg: Reg, s: String): Bool {
+    matches(reg, string_to_chars(s))
+}
+
+let main: Bool {
+    let hello := string_to_chars("hello");
+    matches_string(Seq(multiple(hello), Star(Alt(Single('!'), Single('?')))), "hello!!?!")
+}

@@ -1,0 +1,34 @@
+use "../std/prim/f64.pol"
+use "../std/prim/string.pol"
+use "../std/data/unit.pol"
+use "../std/io/io.pol"
+use "../std/io/read.pol"
+use "../std/io/print.pol"
+
+data Exp {
+    Lit(lit: F64),
+    Add(e1 e2: Exp),
+    Sub(e1 e2: Exp),
+    Mul(e1 e2: Exp),
+    Div(e1 e2: Exp),
+}
+
+def Exp.eval: F64 {
+    Lit(lit) => lit,
+    Add(e1, e2) => add_f64(e1.eval, e2.eval),
+    Sub(e1, e2) => sub_f64(e1.eval, e2.eval),
+    Mul(e1, e2) => mul_f64(e1.eval, e2.eval),
+    Div(e1, e2) => div_f64(e1.eval, e2.eval),
+}
+
+let main_loop: IO(Unit) {
+    do {
+        input <- readln("> ");
+        println(input);
+        main_loop
+    }
+}
+
+let main: IO(Unit) {
+    main_loop
+}
