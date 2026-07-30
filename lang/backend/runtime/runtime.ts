@@ -1,5 +1,5 @@
-const __fs = require("node:fs");
-const __readline = require("node:readline/promises");
+import * as __fs from "node:fs";
+import * as __readline from "node:readline/promises";
 
 // primitives
 type I64 = bigint;
