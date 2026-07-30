@@ -1,3 +1,5 @@
+use "../data/bool.pol"
+
 /// 64-Bit floating-point number according to the IEEE 754 standard
 extern F64: Type
 
@@ -12,3 +14,6 @@ extern mul_f64(x y: F64): F64
 
 /// Division of 64-Bit floating point numbers
 extern div_f64(x y: F64): F64
+
+/// Return whether two floating point numbers are equal.
+extern eq_f64(x y: F64): Bool
