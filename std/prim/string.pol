@@ -1,5 +1,6 @@
 use "./char.pol"
 use "../data/bool.pol"
+use "../data/list.pol"
 
 /// An opaque Unicode string.
 extern String: Type
@@ -14,3 +15,6 @@ extern append_char(c: Char, s: String): String
 
 /// Return whether two strings are equal.
 extern eq_string(x y: String): Bool
+
+/// Converting a string into a list of characters.
+extern string_to_chars(s: String): List(Char)
