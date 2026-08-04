@@ -31,12 +31,12 @@ function $append_char(c, s) {
     return s.concat(String.fromCodePoint(c));
 }
 function $return_io(x) {
-    return function () {
+    return async function () {
         return x;
     };
 }
 function $print(s) {
-    return function () {
+    return async function () {
         process.stdout.write(s);
         return {
             tag: "MkUnit",
@@ -45,7 +45,7 @@ function $print(s) {
     };
 }
 function $read_file(path) {
-    return function () {
+    return async function () {
         try {
             const data = __fs.readFileSync(path, "utf8");
             return {
@@ -62,7 +62,7 @@ function $read_file(path) {
     };
 }
 function $args() {
-    return function () {
+    return async function () {
         let args = {
             tag: "Nil",
             args: [],
