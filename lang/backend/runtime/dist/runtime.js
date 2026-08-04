@@ -1,5 +1,4 @@
-"use strict";
-const __fs = require("node:fs");
+import * as __fs from "node:fs";
 function $add_i64(x, y) {
     return BigInt.asIntN(64, x + y);
 }

@@ -32,7 +32,7 @@ impl CallToMain {
     fn generated_call(&self) -> Option<js::Stmt> {
         match self {
             CallToMain::None => None,
-            CallToMain::RunIO => Some(quote!("main()()" as Stmt)),
+            CallToMain::RunIO => Some(quote!("await main()();" as Stmt)),
             CallToMain::DebugPrint => Some(quote!(
                 "console.log(JSON.stringify(main(), (k, v) => typeof v == \"bigint\" ? v.toString() : v))"
                     as Stmt

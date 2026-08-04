@@ -1,4 +1,4 @@
-const __fs = require("node:fs");
+import * as __fs from "node:fs";
 
 // primitives
 type I64 = bigint;
