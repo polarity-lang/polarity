@@ -1,3 +1,8 @@
+use "../data/bool.pol"
+
 /// Unicode scalar values according to definition D76 of the
 /// [Unicode standard](https://www.unicode.org/versions/Unicode15.0.0/ch03.pdf#G2212)
 extern Char: Type
+
+/// Return whether two characters are equal.
+extern eq_char(x y: Char): Bool
