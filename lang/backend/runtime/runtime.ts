@@ -60,7 +60,7 @@ function $div_f64(x: F64, y: F64): F64 {
   return x / y;
 }
 
-function $eq_f64(x: I64, y: I64): Bool {
+function $eq_f64(x: F64, y: F64): Bool {
   return x === y ? __true : __false;
 }
 
