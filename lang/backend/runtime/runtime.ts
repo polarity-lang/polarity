@@ -10,6 +10,13 @@ type Char = number;
 type Unit = { tag: "MkUnit"; args: [] };
 type Option<T> = { tag: "Some"; args: [T] } | { tag: "None"; args: [] };
 type List<T> = { tag: "Cons"; args: [T, List<T>] } | { tag: "Nil"; args: [] };
+function __arr_to_list<T>(arr: T[]): List<T> {
+  let list: List<T> = { tag: "Nil", args: [] };
+  for (const x of [...arr].reverse()) {
+    list = { tag: "Cons", args: [x, list] };
+  }
+  return list;
+}
 
 // IO
 type IO<T> = () => Promise<T>;
@@ -54,14 +61,18 @@ function $append_char(c: Char, s: String_): String_ {
   return s.concat(String.fromCodePoint(c));
 }
 
+function $string_to_chars(s: String_): List<Char> {
+  return __arr_to_list(Array.from(s, (c) => c.codePointAt(0)!));
+}
+
 function $return_io<T>(x: T): IO<T> {
-  return async function () {
+  return async function() {
     return x;
   };
 }
 
 function $print(s: String_): IO<Unit> {
-  return async function () {
+  return async function() {
     process.stdout.write(s);
     return {
       tag: "MkUnit",
@@ -71,7 +82,7 @@ function $print(s: String_): IO<Unit> {
 }
 
 function $read_file(path: String_): IO<Option<String_>> {
-  return async function () {
+  return async function() {
     try {
       const data: String_ = __fs.readFileSync(path, "utf8");
       return {
@@ -88,19 +99,7 @@ function $read_file(path: String_): IO<Option<String_>> {
 }
 
 function $args(): IO<List<String_>> {
-  return async function () {
-    let args: List<String_> = {
-      tag: "Nil",
-      args: [],
-    };
-
-    for (const arg of process.argv.slice(2).reverse()) {
-      args = {
-        tag: "Cons",
-        args: [arg, args],
-      };
-    }
-
-    return args;
+  return async function() {
+    return __arr_to_list(process.argv.slice(2));
   };
 }
