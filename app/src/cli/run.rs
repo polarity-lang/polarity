@@ -1,6 +1,6 @@
-use std::io::{self, Write};
+use std::io;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, ExitStatus};
 
 use miette::Diagnostic;
 use thiserror::Error;
@@ -51,11 +51,8 @@ fn print_nf(nf: &polarity_lang_ast::Exp, colorize: ColorChoice) {
     println!();
 }
 
-fn run_node(path: &PathBuf, args: &[String]) -> io::Result<()> {
-    let cmd = Command::new("node").arg(path).args(args).output()?;
-    io::stdout().write_all(&cmd.stdout)?;
-    io::stderr().write_all(&cmd.stderr)?;
-    Ok(())
+fn run_node(path: &PathBuf, args: &[String]) -> io::Result<ExitStatus> {
+    Command::new("node").arg(path).args(args).status()
 }
 
 #[derive(Error, Diagnostic, Debug)]
