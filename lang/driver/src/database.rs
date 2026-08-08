@@ -3,6 +3,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use lsp_types::HoverContents;
+use lsp_types::SemanticToken;
 use polarity_lang_ast::rename::Rename;
 use polarity_lang_backend::Backend;
 use polarity_lang_miette_util::ToMiette;
@@ -27,6 +28,7 @@ use crate::info::*;
 use crate::result::AppErrors;
 use crate::result::AppResult;
 use crate::result::DriverError;
+use crate::semantic_tokens::compute_semantic_tokens;
 use crate::{AppError, FileSource, cache::*};
 
 use rust_lapper::Lapper;
@@ -57,6 +59,8 @@ pub struct Database {
     pub goto_by_id: Cache<Lapper<u32, (Url, Span)>>,
     /// Spans of top-level items
     pub item_by_id: Cache<Lapper<u32, Item>>,
+    /// Semantic tokens for syntax highlighting
+    pub semantic_tokens: Cache<Vec<SemanticToken>>,
 }
 
 /// Open or closed type info table
@@ -432,6 +436,28 @@ impl Database {
         Ok(item_lapper)
     }
 
+    // Core API: Semantic Tokens
+    //
+    //
+
+    pub async fn semantic_tokens(&mut self, uri: &Url) -> AppResult<Vec<SemanticToken>> {
+        match self.semantic_tokens.get_unless_stale(uri) {
+            Some(tokens) => {
+                log::debug!("Found semantic_tokens in cache: {}", uri);
+                Ok(tokens.clone())
+            }
+            None => self.recompute_semantic_tokens(uri).await,
+        }
+    }
+
+    pub async fn recompute_semantic_tokens(&mut self, uri: &Url) -> AppResult<Vec<SemanticToken>> {
+        log::debug!("Recomputing semantic_tokens for: {}", uri);
+        let ust = self.ust(uri).await?;
+        let semantic_tokens = compute_semantic_tokens(self, uri, ust);
+        self.semantic_tokens.insert(uri.clone(), semantic_tokens.clone());
+        Ok(semantic_tokens)
+    }
+
     // Core API: Dependencies
     //
     //
@@ -477,6 +503,7 @@ impl Database {
             hover_by_id: Cache::default(),
             goto_by_id: Cache::default(),
             item_by_id: Cache::default(),
+            semantic_tokens: Cache::default(),
         }
     }
 
